@@ -2,11 +2,6 @@
 -- Executing sp_enum_oledb_providers without tds_fdw extension (should not return anything)
 EXEC sp_enum_oledb_providers
 GO
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-TDS_FDW#!#{f34cef3b-778b-23ac-4fff-7d01c089051e}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
-~~END~~
-
 
 -- Creating a simple login which has lesser privilege than sysadmin role
 create login linked_server_login with password = 'password'
