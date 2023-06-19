@@ -55,11 +55,7 @@ go
 exec sp_execute_postgresql 'drop extension pg_stat_statements';
 go
 
--- allowed extensions are tds_fdw, pg_stat_statements and fuzzystrmatch for now
-select  extname, extowner, extversion from pg_extension where extname = 'fuzzystrmatch'
-go
-
--- throw an error if user creates anything other than allowed extensions
+-- throw an error if user creates anything other than allowed extensions(tds_fdw, pg_stat_statements and fuzzystrmatch for now)
 exec sp_execute_postgresql 'create extension pg_visibility';
 go
 
