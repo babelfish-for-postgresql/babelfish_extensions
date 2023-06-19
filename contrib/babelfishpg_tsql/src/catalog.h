@@ -20,6 +20,7 @@ extern void rename_update_bbf_catalog(RenameStmt *stmt);
 extern bool IsPLtsqlExtendedCatalog(Oid relationId);
 extern bool IsPltsqlToastRelationHook(Relation relation);
 extern bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup);
+extern void pltsql_drop_relation_refcnt_hook(Relation relation);
 
 /*****************************************
  *			SYS schema

@@ -193,6 +193,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
+static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -322,8 +323,12 @@ InstallExtendedHooks(void)
 
 	PrevIsToastClassHook = IsToastClassHook;
 	IsToastClassHook = IsPltsqlToastClassHook;
+
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
+
+	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
+	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 }
 
 void
@@ -376,6 +381,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
+	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 }
 
 /*****************************************
