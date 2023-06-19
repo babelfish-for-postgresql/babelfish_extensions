@@ -2434,9 +2434,11 @@ pg_extension_config_remove(PG_FUNCTION_ARGS)
 Datum
 EOMONTH(PG_FUNCTION_ARGS)
 {
-    int year, month, day, original_year;
+    int year, month, day;
     int offset = 0;
     DateADT date;
+    bool isOffsetGiven = false;
+    bool isOriginalDateOutsideTSQLEndLimit = false;
 
     if (PG_ARGISNULL(0))
     {
@@ -2448,12 +2450,16 @@ EOMONTH(PG_FUNCTION_ARGS)
     }
 
     if (!PG_ARGISNULL(1))
+    {
         offset = PG_GETARG_INT32(1);
+        isOffsetGiven = true;
+    }
 
     /* Convert the date to year, month, day */
     j2date(date + POSTGRES_EPOCH_JDATE, &year, &month, &day);
 
-    original_year = year;
+    /* This flag is required later to check and throw the T-SQL compatibility error. */
+    isOriginalDateOutsideTSQLEndLimit = year < 1 || year > 9999;
 
     /* Adjust the month based on the offset */
     month += offset;
@@ -2500,20 +2506,22 @@ EOMONTH(PG_FUNCTION_ARGS)
     /* Now move to the first day of the next month */
     month++;
 
-    /* Check if the year is a BC year and if yes, throw an error. BC year range is 4713 BC to 5874897 AD. */
-    if (original_year < 1 && year < 1)
+    /* If the new year is less than 1 or greater than 9999, report an error. */
+    if (year < 1 || year > 9999)
     {
-        ereport(ERROR,
-            (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
-             errmsg("The date exceeds T-SQL compatibility limits.")));
-    }
-
-    /* If the new year is less than 1 or greater than 9999, report an error that an overflow occurred. */
-    if (year < 1 || year > 9999) 
-    {
-        ereport(ERROR,
-            (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
-             errmsg("Adding a value to a 'date' column caused an overflow.")));
+        /* If the offset was given by the user and the provided year was within T-SQL range, throw overflow error else throw T-SQL compatibility error. */
+        if (isOffsetGiven && !isOriginalDateOutsideTSQLEndLimit)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+                 errmsg("Adding a value to a 'date' column caused an overflow.")));
+        }
+        else
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+                 errmsg("The date exceeds T-SQL compatibility limits.")));
+        }
     }
 
     /* 

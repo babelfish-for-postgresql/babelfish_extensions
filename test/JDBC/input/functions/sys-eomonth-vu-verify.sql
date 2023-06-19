@@ -78,6 +78,20 @@ GO
 SELECT EOMONTH('0001-01-01',-1)
 GO
 
+--In this test case we are checking if the year is within T-SQL range and offset is 1 it
+--should return an error “Adding a value to a 'date' column caused an overflow.“ because it was within T-SQL range after adding offset it crosses T-SQL range.
+SELECT EOMONTH ('9999-12-31',1)
+GO
+
+--In this test case we are checking if the year is outside T-SQL range, it should return T-SQL compatibility error.
+SELECT EOMONTH ('10000-01-01')
+GO
+
+--In this test case we are checking if the year is outside T-SQL range and offset is -1, so after adding offest its within the T-SQL range and it should return the value. 
+SELECT EOMONTH ('10000-01-01',-1)
+GO
+
+
 --Checking the last date for every month
 --Checking if it returns 31 as the last day for January.
 SELECT EOMONTH('1996-01-01')
