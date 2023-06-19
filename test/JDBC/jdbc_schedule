@@ -9,6 +9,8 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
+# BABEL-3215-vu-prepare
+# BABEL-3215-vu-verify
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 

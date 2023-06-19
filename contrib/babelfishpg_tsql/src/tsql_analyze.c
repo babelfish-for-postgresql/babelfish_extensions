@@ -348,28 +348,25 @@ post_transform_from_clause(ParseState *pstate)
 void
 pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 {
-	namespace_stack_t *old_ns_stack_item = set_op_ns_stack;
 	ListCell *lc, *lc_l;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	sv_setop_exprs = NIL;
 	forboth(lc, qry->targetList, lc_l, leftmostQuery->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
 		TargetEntry *lefttle = (TargetEntry *) lfirst(lc_l);
 
 		Assert(!lefttle->resjunk);
-		sv_setop_exprs = lappend(sv_setop_exprs, tle->expr);
-		if (IsA(lefttle->expr, Var))
-			tle->expr = (Expr*) lefttle->expr;
+		// if (IsA(lefttle->expr, Var))
+		tle->ressortgroupref = lefttle->ressortgroupref;
 	}
 
-	pstate->p_namespace = set_op_ns_stack->namespace;
+	// pstate->p_namespace = set_op_ns_stack->namespace;
 
-	set_op_ns_stack = set_op_ns_stack->prev;
-	pfree(old_ns_stack_item);
+	// set_op_ns_stack = set_op_ns_stack->prev;
+	// pfree(old_ns_stack_item);
 }
 
 /* 

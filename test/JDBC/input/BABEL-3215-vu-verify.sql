@@ -103,6 +103,13 @@ SELECT u.c1, u.c1 FROM unionorder1 u
 ORDER BY u1.c1
 go
 
+SELECT c1 FROM unionorder1
+ORDER BY c1
+UNION
+SELECT c2 FROM unionorder2
+ORDER BY c2
+go
+
 SELECT u1.c1 FROM unionorder1 u1
 UNION 
 SELECT c2 FROM unionorder2
