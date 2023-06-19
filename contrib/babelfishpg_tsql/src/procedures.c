@@ -1605,7 +1605,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
 	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
-	const char *new_path = "public, %s, \"$user\", sys, pg_catalog";
+	const char *new_path = "public, \"$user\", sys, pg_catalog";
 	
 	PG_TRY();
 	{
