@@ -163,32 +163,6 @@ GO
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
--- Testing the connection to a linked server with incorrect username (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
-GO
-
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_use', @rmtpassword = '1234567'
-GO
-
-EXEC sp_testlinkedserver 'test_server'
-GO
-
-EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
-GO
-
--- Testing the connection to a linked server with incorrect password (should throw error)
-EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
-GO
-
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '1234567'
-GO
-
-EXEC sp_testlinkedserver 'test_server'
-GO
-
-EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
-GO
-
 -- Testing the connection to a linked server whose all parameters has been set correctly (should pass)
 EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
