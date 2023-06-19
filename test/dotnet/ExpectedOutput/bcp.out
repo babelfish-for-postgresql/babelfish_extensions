@@ -644,3 +644,19 @@ bcp -k#!#in#!#bcp_source#!#destinationTable
 
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Create table sourceTable(a int, b text, c int) 
+#Q#Create table destinationTable(a int, b text, c int) 
+#Q#insert into sourceTable values (1, 'hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello', 2)
+#Q#insert into sourceTable values (NULL, NULL, NULL)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+#Q#Select * from sourceTable
+#D#int#!#text#!#int
+1#!#hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello#!#2
+#!##!#
+#Q#select * from destinationTable
+#D#int#!#text#!#int
+1#!#hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello#!#2
+#!##!#
+#Q#drop table sourceTable
+#Q#drop table destinationTable
