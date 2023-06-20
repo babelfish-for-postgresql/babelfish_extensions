@@ -1638,7 +1638,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
 
-        stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
+		stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
 			
 		/* need to make a wrapper PlannedStmt */
 		wrapper = makeNode(PlannedStmt);
@@ -1782,11 +1782,11 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
                 break;
             }
             default:
-            ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                    errmsg("Only Create/alter/drop extension statements are currently supported in Babelfish.")));
-            break;
-        }
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Only Create/alter/drop extension statements are currently supported in Babelfish.")));
+				break;
+		}
 	}
 	PG_FINALLY();
 	{
