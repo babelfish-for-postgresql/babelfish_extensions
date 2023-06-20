@@ -15,21 +15,21 @@ go
 insert into t values ('AAA');
 go
 
-create table t1 (b varchar(30));
+create table t2 (b varchar(30));
 go
 
-insert into t1 values ('a%');
+insert into t2 values ('a%');
 go
 
-insert into t1 values ('A%');
+insert into t2 values ('A%');
 go
 
 CREATE VIEW babel4046 as 
-select * from t join t1 on a like b;
+select * from t join t2 on a like b;
 GO
 
 CREATE VIEW babel4046_2 as
-select * from t join t1 on a like 'aa%';
+select * from t join t2 on a like 'aa%';
 GO
 
 CREATE TABLE [dbo].[t3](
