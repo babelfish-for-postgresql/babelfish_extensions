@@ -355,7 +355,7 @@ sys-sysobjects
 sys-system_objects
 sys-system_sql_modules
 sys-system_sql_modules-dep
-sys-systypes
+sys-systypes-after
 sys_sysusers_dep
 sys-tables
 sys-tables-dep
@@ -368,7 +368,7 @@ sys-trigger_events
 sys-trigger_nestlevel
 sys-triggers
 sys-triggers-dep
-sys-types
+sys-types-after
 sys-types-dep
 sys-userid
 sys-views
