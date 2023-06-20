@@ -1708,80 +1708,80 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				}
 
 				/* do this step */
-                ProcessUtility(wrapper,
-                            postgresStmt,
-                            false,
-                            PROCESS_UTILITY_SUBCOMMAND,
-                            NULL,
-                            NULL,
-                            None_Receiver,
-                            NULL);
+				ProcessUtility(wrapper,
+							postgresStmt,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
 
-                /* make sure later steps can see the object created here */
-                    CommandCounterIncrement();
-                break;
-            }
-            case T_DropStmt:
-            {
-                DropStmt *drstmt = (DropStmt *) parsetree;
+				/* make sure later steps can see the object created here */
+					CommandCounterIncrement();
+				break;
+			}
+			case T_DropStmt:
+			{
+				DropStmt *drstmt = (DropStmt *) parsetree;
 
-                SetCurrentRoleId(GetSessionUserId(), false);
+				SetCurrentRoleId(GetSessionUserId(), false);
 
-                if(drstmt->behavior == DROP_CASCADE)
-                {
-                    ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-                                errmsg("'cascade' is not yet supported in Babelfish")));
-                }
+				if(drstmt->behavior == DROP_CASCADE)
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("'cascade' is not yet supported in Babelfish")));
+				}
 
-                if (drstmt->removeType == OBJECT_EXTENSION)
-                {
-                    /* do this step */
-                    ProcessUtility(wrapper,
-                                postgresStmt,
-                                false,
-                                PROCESS_UTILITY_SUBCOMMAND,
-                                NULL,
-                                NULL,
-                                None_Receiver,
-                                NULL);
+				if (drstmt->removeType == OBJECT_EXTENSION)
+				{
+					/* do this step */
+					ProcessUtility(wrapper,
+								postgresStmt,
+								false,
+								PROCESS_UTILITY_SUBCOMMAND,
+								NULL,
+								NULL,
+								None_Receiver,
+								NULL);
 
-                    /* make sure later steps can see the object created here */
-                    CommandCounterIncrement();
-                }
-                break;
-            }
-            case T_AlterExtensionStmt:
-            {
-                SetCurrentRoleId(GetSessionUserId(), false);
-                /* do this step */
-                ProcessUtility(wrapper,
-                            postgresStmt,
-                            false,
-                            PROCESS_UTILITY_SUBCOMMAND,
-                            NULL,
-                            NULL,
-                            None_Receiver,
-                            NULL);
+					/* make sure later steps can see the object created here */
+					CommandCounterIncrement();
+				}
+				break;
+			}
+			case T_AlterExtensionStmt:
+			{
+				SetCurrentRoleId(GetSessionUserId(), false);
+				/* do this step */
+				ProcessUtility(wrapper,
+							postgresStmt,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
 
-                /* make sure later steps can see the object created here */
-                CommandCounterIncrement();
-                break;
-            } 
-            case T_AlterObjectSchemaStmt:
-            {
-                ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                    errmsg("Alter extension schema is not currently supported in Babelfish")));
-                break;
-            }
-            case  T_AlterExtensionContentsStmt:
-            {
-                ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                    errmsg("Alter extension to Add/Drop object in extension is not currently supported in Babelfish")));
-                break;
-            }
-            default:
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+				break;
+			} 
+			case T_AlterObjectSchemaStmt:
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Alter extension schema is not currently supported in Babelfish")));
+				break;
+			}
+			case  T_AlterExtensionContentsStmt:
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Alter extension to Add/Drop object in extension is not currently supported in Babelfish")));
+				break;
+			}
+			default:
 				ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("Only Create/alter/drop extension statements are currently supported in Babelfish.")));
