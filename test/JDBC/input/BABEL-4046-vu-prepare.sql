@@ -1,15 +1,9 @@
-create table options(name varchar(30) collate bbf_unicode_cp1_ci_as)
+create table options(name varchar(30))
 insert options values('abc')
 go
 
-create table svc_defs(svc_name varchar(30) collate bbf_unicode_cp1_ci_as)
+create table svc_defs(svc_name varchar(30))
 insert svc_defs values('def')
-go
-
-select options.name
-  from options
- inner join svc_defs
-    on options.name like 'UM\_%' + svc_defs.svc_name escape '\'
 go
 
 create table t (a varchar(30));
@@ -21,7 +15,7 @@ go
 insert into t values ('AAA');
 go
 
-create table t1 (a varchar(30));
+create table t1 (b varchar(30));
 go
 
 insert into t1 values ('a%');
@@ -30,25 +24,14 @@ go
 insert into t1 values ('A%');
 go
 
-select * from t join t1 on t.a like t1.a;
-go
+CREATE VIEW babel4046 as 
+select * from t join t1 on a like b;
+GO
 
-select * from t join t1 on t.a like 'aa%';
-go
+CREATE VIEW babel4046_2 as
+select * from t join t1 on a like 'aa%';
+GO
 
-drop table t;
-go
-
-drop table t1;
-go
-
-drop table svc_defs;
-go
-
-drop table options;
-go
-
---Table and data
 CREATE TABLE [dbo].[t3](
 	[EMPNO] [int] NOT NULL,
 	[ENAME] [nvarchar](10) NULL,
@@ -86,34 +69,4 @@ INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7698, N'BLAKE'
 INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7782, N'CLARK', N'NEW YORK', 10)
 INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7788, N'SCOTT', N'NEW YORK', 20)
 INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7839, N'KING', N'AUSTIN', 100)
-GO
-
-;with EMP_T AS (
-                select empno,
-				ename,
-				CASE			            
-			            WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A')
-					    WHEN baseloc LIKE 'CHI%' THEN REPLACE(baseloc,'CHICAGO','C')
-						WHEN baseloc LIKE 'BOS%' THEN REPLACE(baseloc,'BOSTON','B')
-                ELSE
-		                baseloc
-                END AS baseloc,
-				deptno
-				from t3)
-				select
-				DM.empno,
-				DM.ename,
-				DM.baseloc
-				from EMP_T DM
-				INNER JOIN t4 SR ON DM.baseloc = SR.loc AND DM.deptno = SR.deptno
-GO
-
-;with EMP_T AS ( select empno, ename, CASE WHEN baseloc LIKE 'AUS%' THEN REPLACE(baseloc,'AUSTIN','A') ELSE baseloc END AS baseloc, deptno from t3)
-	select DM.empno, DM.ename, DM.baseloc from EMP_T DM where DM.baseloc in (select baseloc from t4) 
-GO
-
-drop table [dbo].[t3];
-go
-
-drop table [dbo].[t4];
 GO
