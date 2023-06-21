@@ -19,6 +19,8 @@
 #include "tsearch/ts_locale.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -57,6 +59,7 @@ PG_FUNCTION_INFO_V1(version);
 PG_FUNCTION_INFO_V1(error);
 PG_FUNCTION_INFO_V1(pgerror);
 PG_FUNCTION_INFO_V1(datalength);
+PG_FUNCTION_INFO_V1(EOMONTH);
 PG_FUNCTION_INFO_V1(int_floor);
 PG_FUNCTION_INFO_V1(int_ceiling);
 PG_FUNCTION_INFO_V1(bit_floor);
@@ -2422,4 +2425,109 @@ pg_extension_config_remove(PG_FUNCTION_ARGS)
 	extension_config_remove_wrapper(CurrentExtensionObject, tableoid);
 
 	PG_RETURN_VOID();
+}
+
+/*
+ * The EOMONTH function is a Transact-SQL function in SQL Server that returns 
+ * the last day of the month of a specified date, with an optional offset.
+ */
+Datum
+EOMONTH(PG_FUNCTION_ARGS)
+{
+    int year, month, day;
+    int offset = 0;
+    DateADT date;
+    bool isOffsetGiven = false;
+    bool isOriginalDateOutsideTSQLEndLimit = false;
+
+    if (PG_ARGISNULL(0))
+    {
+        PG_RETURN_NULL();
+    }
+    else
+    {
+        date = PG_GETARG_DATEADT(0);
+    }
+
+    if (!PG_ARGISNULL(1))
+    {
+        offset = PG_GETARG_INT32(1);
+        isOffsetGiven = true;
+    }
+
+    /* Convert the date to year, month, day */
+    j2date(date + POSTGRES_EPOCH_JDATE, &year, &month, &day);
+
+    /* This flag is required later to check and throw the T-SQL compatibility error. */
+    isOriginalDateOutsideTSQLEndLimit = year < 1 || year > 9999;
+
+    /* Adjust the month based on the offset */
+    month += offset;
+
+    /* 
+     * Check if the new month is greater than 0, which indicates a positive offset. 
+     * If it is true, the months continue to increase one by one, until they reach 12. After this point, they revert back to 1 and 
+     * if the months exceed 12, it signifies that we must also increment the year.
+     * 
+     * If it is false, the months continue to decrease one by one, until they reach 1. After this point, they will reset to 12 and 
+     * if the months go below 1, it signifies that we must also decrement the year.
+     */
+    if(month > 0)
+    {
+        /* 
+         * The year value is incremented by how many full sets of 12 months fit into the 'month' value.
+         * Subtracting 1 from 'month' before dividing ensures we don't count an extra year when 'month' is exactly divisible by 12.
+         * We are considering 12 months as a full year, so if we have exactly 12 months, we should not increment the year yet.
+         */
+        year += (month - 1) / 12;
+		
+        /* 
+         * The new month value is calculated based on the remainder when divided by 12.
+         * This makes sure the month value stays within the range of 1 to 12. The subtraction by 1 and addition by 1
+         * ensure that the month value starts from 1 (January) rather than 0.
+         */
+        month = (month - 1) % 12 + 1; 
+    }
+    else
+    {
+        /* 
+         * The year value is decremented based on how many full sets of 12 months fit into the 'month' value.
+         * This calculates how many years to decrement given the total number of negative months.
+         */
+        year += month / 12 - 1;
+
+        /* 
+         * The new month value is calculated based on the modulus operation when divided by 12.
+         * If the month value is negative, this operation makes sure the month value stays within the range of 1 to 12.
+         */
+        month = month % 12 + 12;
+    }
+
+    /* Now move to the first day of the next month */
+    month++;
+
+    /* If the new year is less than 1 or greater than 9999, report an error. */
+    if (year < 1 || year > 9999)
+    {
+        /* If the offset was given by the user and the provided year was within T-SQL range, throw overflow error else throw T-SQL compatibility error. */
+        if (isOffsetGiven && !isOriginalDateOutsideTSQLEndLimit)
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+                 errmsg("Adding a value to a 'date' column caused an overflow.")));
+        }
+        else
+        {
+            ereport(ERROR,
+                (errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+                 errmsg("The date exceeds T-SQL compatibility limits.")));
+        }
+    }
+
+    /* 
+     * Convert the year, month, and day (1st day of the new month) back date format, then subtract one day 
+     * to get the last day of the "offset" month.
+     */
+    date = date2j(year, month, 1) - POSTGRES_EPOCH_JDATE - 1;
+    PG_RETURN_DATEADT(date);
 }
