@@ -115,6 +115,14 @@ go
 drop table demo
 go
 
+-- throw error if we drop any other object other than extension
+create table proc_tmp(A int)
+go
+exec sp_execute_postgresql 'drop table proc_tmp'
+go
+drop table proc_tmp
+go
+
 -- cannot drop extension if other objects depend on it
 create view pg_view as select query, queryid from [public].pg_stat_statements;
 go
@@ -136,7 +144,6 @@ go
 
 exec sp_execute_postgresql 'create extension pg_stat_statements'
 go
-
 
 -- Restrict option prevents the specified extensions from being dropped if other objects depend on table_schema
 create view pg_view as select query, queryid from [public].pg_stat_statements;
