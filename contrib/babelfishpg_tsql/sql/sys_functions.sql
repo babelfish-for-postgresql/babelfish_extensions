@@ -3609,3 +3609,8 @@ IN query text)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'openquery_internal'
 LANGUAGE C VOLATILE;
+
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
+RETURNS date
+AS 'babelfishpg_tsql', 'EOMONTH'
+LANGUAGE C STABLE PARALLEL SAFE;
