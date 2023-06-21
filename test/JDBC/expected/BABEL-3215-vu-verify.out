@@ -82,6 +82,20 @@ int
 
 
 SELECT u.c1 FROM unionorder1 u
+UNION
+SELECT c2 FROM unionorder2
+ORDER BY c1;
+go
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
+
+SELECT u.c1 FROM unionorder1 u
 UNION ALL
 SELECT u.c1 FROM unionorder1 u
 ORDER BY u.c1;
@@ -109,6 +123,26 @@ int
 3
 4
 ~~END~~
+
+
+SELECT c1 FROM unionorder1 u
+UNION
+SELECT c2 FROM unionorder2
+ORDER BY unionorder1.c1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "unionorder1")~~
+
+
+SELECT u.c1 FROM dbo.unionorder1 u
+UNION
+SELECT c2 FROM dbo.unionorder2
+ORDER BY dbo.unionorder1.c1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "unionorder1")~~
 
 
 SELECT c1 FROM master.dbo.unionorder1
@@ -145,6 +179,16 @@ int
 2
 3
 ~~END~~
+
+
+SELECT u.* FROM unionorder1 u
+UNION
+SELECT u.*  FROM unionorder1 u
+ORDER BY unionorder1.c1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "unionorder1")~~
 
 
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
@@ -225,20 +269,29 @@ int#!#int
 ~~END~~
 
 
+SELECT c1 FROM unionorder1
+ORDER BY c1
+UNION
+SELECT c2 FROM unionorder2
+ORDER BY c2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "UNION")~~
+
+
 SELECT u1.c1 FROM unionorder1 u1
 UNION 
 SELECT c2 FROM unionorder2
 WHERE c2 IN (
-    SELECT TOP 5 c2 FROM unionorder2
+    SELECT c2 FROM unionorder2
     UNION
-    SELECT TOP 5 c1 FROM unionorder1
+    SELECT c1 FROM unionorder1
     WHERE c1 IN (
-        SELECT TOP 5 c1 FROM unionorder1
+        SELECT c1 FROM unionorder1
         UNION
-        SELECT TOP 5 c2 FROM unionorder2
-        ORDER BY unionorder1.c1
+        SELECT c2 FROM unionorder2
     )
-    ORDER BY unionorder2.c2
 )
 ORDER BY u1.c1;
 go
@@ -261,13 +314,13 @@ WHERE c2 IN (
     SELECT TOP 5 c1 FROM unionorder1
     ORDER BY unionorder2.c2
 )
-ORDER BY col2;
+ORDER BY col2, u1.c1;
 go
 ~~START~~
 int#!#int
-3#!#2
 1#!#2
 2#!#2
+3#!#2
 3#!#3
 4#!#4
 ~~END~~
@@ -275,10 +328,9 @@ int#!#int
 
 SELECT c1 FROM unionorder1
 WHERE c1 IN (
-    SELECT TOP 5 c2 FROM unionorder2
+    SELECT c2 FROM unionorder2
     UNION
-    SELECT TOP 5 c1 FROM unionorder1
-    ORDER BY unionorder2.c2
+    SELECT c1 FROM unionorder1
 )
 UNION 
 SELECT c2 FROM unionorder2
@@ -295,10 +347,9 @@ int
 
 SELECT c1 FROM unionorder1
 WHERE c1 IN (
-    SELECT TOP 5 c2 FROM unionorder2
+    SELECT c2 FROM unionorder2
     UNION
-    SELECT TOP 5 c1 FROM unionorder1
-    ORDER BY unionorder2.c2
+    SELECT c1 FROM unionorder1
 )
 UNION 
 SELECT c2 FROM unionorder2
@@ -310,10 +361,9 @@ go
 
 
 SELECT c2 FROM (
-    SELECT TOP 5 c2 FROM unionorder2
+    SELECT c2 FROM unionorder2
     UNION
-    SELECT TOP 5 c1 FROM unionorder1
-    ORDER BY unionorder2.c2
+    SELECT c1 FROM unionorder1
 ) u
 UNION 
 SELECT c1 FROM unionorder1
@@ -459,34 +509,215 @@ order by c
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid UNION/INTERSECT/EXCEPT ORDER BY clause)~~
+~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
 
 
-create function babel4169_add_one (@x INT)
-RETURNS INT
-AS BEGIN
-    RETURN @x + 1;
-END;
-GO
+drop table dbo.babel4169_t1;
+drop table dbo.babel4169_t2;
+go
 
-select babel4169_add_one(a) as added, b from dbo.babel4169_t1
-union
-select a, b from dbo.babel4169_t2
-order by added
+-- BABEL-4210
+create table babel4210_t1(id INT, val VARCHAR(20));
+create table babel4210_t2(t1_id INT, val VARCHAR(20));
+create table babel4210_t3(t1_id INT, val VARCHAR(20));
+go
+
+insert into babel4210_t1 values (1, 'a'), (2, 'b'), (3, 'c');
+insert into babel4210_t2 values (1, 'A'), (2, 'B'), (3, 'C');
+insert into babel4210_t3 values (1, 'x'), (2, 'Y'), (3, 'z');
+go
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+
+select babel4210_t1.id,  babel4210_t2.val, babel4210_t3.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+UNION
+select babel4210_t1.id, babel4210_t2.val, babel4210_t3.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+ORDER BY babel4210_t3.val;
 go
 ~~START~~
-int#!#int
-2#!#2
-4#!#5
-11#!#2
-40#!#5
-101#!#2
-400#!#5
+int#!#varchar#!#varchar
+1#!#A#!#x
+2#!#B#!#Y
+3#!#C#!#z
 ~~END~~
 
 
-drop function babel4169_add_one;
+select babel4210_t1.id,  babel4210_t2.val, upper(babel4210_t3.val) from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+UNION
+select babel4210_t1.id, babel4210_t3.val, upper(babel4210_t2.val) from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+ORDER BY upper(babel4210_t3.val);
 go
-drop table dbo.babel4169_t1;
-drop table dbo.babel4169_t2;
+~~START~~
+int#!#varchar#!#text
+1#!#x#!#A
+2#!#Y#!#B
+3#!#z#!#C
+1#!#A#!#X
+2#!#B#!#Y
+3#!#C#!#Z
+~~END~~
+
+
+select babel4210_t1.id,  babel4210_t2.val, upper(babel4210_t3.val) from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+UNION
+select babel4210_t1.id, babel4210_t3.val, upper(babel4210_t2.val) from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+ORDER BY babel4210_t3.val;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+
+
+select babel4210_t1.id,  babel4210_t2.val, babel4210_t3.t1_id from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+UNION
+select babel4210_t1.id, babel4210_t2.val, babel4210_t3.t1_id from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+ORDER BY babel4210_t3.val;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+
+
+select babel4210_t3.val from babel4210_t3
+UNION
+select babel4210_t1.val from babel4210_t1
+ORDER BY (CASE WHEN babel4210_t3.val = 'b' THEN 1 ELSE 2 END)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+
+
+select DISTINCT babel4210_t1.id, babel4210_t2.val, babel4210_t3.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+UNION
+select babel4210_t1.id, babel4210_t2.val, babel4210_t3.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+ORDER BY babel4210_t2.val;
+go
+~~START~~
+int#!#varchar#!#varchar
+1#!#A#!#x
+2#!#B#!#Y
+3#!#C#!#z
+~~END~~
+
+
+select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+GROUP BY babel4210_t2.val, babel4210_t3.val
+UNION ALL
+select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+GROUP BY babel4210_t2.val, babel4210_t3.val
+ORDER BY babel4210_t3.val;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+
+
+select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+GROUP BY babel4210_t2.val
+UNION ALL
+select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
+inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+GROUP BY babel4210_t2.val
+ORDER BY COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val;
+go
+~~START~~
+int#!#varchar
+1#!#A
+1#!#A
+1#!#B
+1#!#B
+1#!#C
+1#!#C
+~~END~~
+
+
+WITH babel4210_cte (id, val) AS
+(
+    select babel4210_t1.id, babel4210_t3.val FROM babel4210_t1
+    INNER JOIN babel4210_t3 ON babel4210_t1.id = babel4210_t3.t1_id
+    UNION
+    select babel4210_t1.id, babel4210_t1.val from babel4210_t1
+    INNER JOIN babel4210_t3 ON babel4210_t1.id = babel4210_t3.t1_id
+)
+SELECT babel4210_cte.* FROM babel4210_cte
+UNION ALL
+SELECT babel4210_cte.* FROM babel4210_cte
+ORDER BY babel4210_cte.val, babel4210_cte.id;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+1#!#a
+2#!#b
+2#!#b
+3#!#c
+3#!#c
+1#!#x
+1#!#x
+2#!#Y
+2#!#Y
+3#!#z
+3#!#z
+~~END~~
+
+
+WITH babel4210_cte (id, val) AS
+(
+    select babel4210_t1.id, babel4210_t3.val FROM babel4210_t1
+    INNER JOIN babel4210_t3 ON babel4210_t1.id = babel4210_t3.t1_id
+    UNION
+    select babel4210_t1.id, babel4210_t1.val from babel4210_t1
+    INNER JOIN babel4210_t3 ON babel4210_t1.id = babel4210_t3.t1_id
+)
+SELECT babel4210_cte.* FROM babel4210_cte
+INTERSECT
+SELECT babel4210_cte.* FROM babel4210_cte
+ORDER BY babel4210_cte.val, babel4210_cte.id;
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+1#!#x
+2#!#Y
+3#!#z
+~~END~~
+
+
+drop table babel4210_t1;
+drop table babel4210_t2;
+drop table babel4210_t3;
 go
