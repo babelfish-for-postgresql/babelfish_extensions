@@ -13,7 +13,7 @@ go
 drop table svc_defs;
 go
 
-drop table options;
+drop table options_t;
 go
 
 drop table [dbo].[t3];

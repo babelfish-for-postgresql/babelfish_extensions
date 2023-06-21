@@ -1,8 +1,8 @@
 
-select options.name
-  from options
+select options_t.name
+  from options_t
  inner join svc_defs
-    on options.name like 'UM\_%' + svc_defs.svc_name escape '\'
+    on options_t.name like 'UM\_%' + svc_defs.svc_name escape '\'
 go
 
 select * from babel4046;

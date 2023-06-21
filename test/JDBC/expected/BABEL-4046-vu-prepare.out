@@ -1,5 +1,5 @@
-create table options(name varchar(30))
-insert options values('abc')
+create table options_t(name varchar(30))
+insert options_t values('abc')
 go
 ~~ROW COUNT: 1~~
 

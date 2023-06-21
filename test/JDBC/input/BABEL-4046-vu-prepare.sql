@@ -1,5 +1,5 @@
-create table options(name varchar(30))
-insert options values('abc')
+create table options_t(name varchar(30))
+insert options_t values('abc')
 go
 
 create table svc_defs(svc_name varchar(30))
