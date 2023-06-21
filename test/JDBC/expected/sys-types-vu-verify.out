@@ -33,7 +33,6 @@ sysname#!#256#!#0#!#0#!#bbf_unicode_cp1_ci_as
 text#!#16#!#0#!#0#!#sql_latin1_general_cp1_ci_as
 time#!#5#!#15#!#6#!#<NULL>
 timestamp#!#8#!#0#!#0#!#<NULL>
-timestamp#!#8#!#0#!#0#!#<NULL>
 tinyint#!#1#!#3#!#0#!#<NULL>
 uniqueidentifier#!#16#!#0#!#0#!#<NULL>
 varbinary#!#8000#!#0#!#0#!#<NULL>

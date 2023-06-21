@@ -16,10 +16,13 @@ all
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
-ignore#!#BABEL-2869
-ignore#!#sys-systypes-vu-verify
-ignore#!#sys-types-vu-verify
-ignore#!#sys-types
+ignore#!#BABEL-before-2869
+ignore#!#sys-systypes-before-vu-prepare
+ignore#!#sys-systypes-before-vu-verify
+ignore#!#sys-types-before-vu-prepare
+ignore#!#sys-types-before-vu-verify
+ignore#!#sys-types-before-vu-cleanup
+ignore#!#sys-types-before
 
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
