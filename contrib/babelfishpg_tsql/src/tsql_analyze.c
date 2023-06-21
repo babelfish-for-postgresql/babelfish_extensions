@@ -345,4 +345,5 @@ post_transform_sort_clause(Query *qry, Query *leftmostQuery)
 	}
 
 	qry->sortClause = leftmostQuery->sortClause;
+	leftmostQuery->sortClause = NIL;
 }
