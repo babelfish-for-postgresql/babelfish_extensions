@@ -1,8 +1,3 @@
--- procedure dependent on sp_execute_postgresql proc
-CREATE PROC test_sp_execute_postgresql_proc
-AS
-BEGIN
-    EXEC sp_execute_postgresql 'create extension fuzzystrmatch'
-END
+-- execute the procedure dependent on sp_execute_postgresql proc
+EXEC test_sp_execute_postgresql_proc
 go
-

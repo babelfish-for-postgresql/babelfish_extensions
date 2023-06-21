@@ -1,4 +1,7 @@
--- create a temporary table
-CREATE TABLE tmp_sp_execute_postgresql(addStmt sys.nvarchar)
-GO
-
+-- procedure dependent on sp_execute_postgresql proc
+CREATE PROC test_sp_execute_postgresql_proc
+AS
+BEGIN
+    EXEC sp_execute_postgresql 'create extension fuzzystrmatch'
+END
+go
