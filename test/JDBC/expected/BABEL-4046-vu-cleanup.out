@@ -7,7 +7,7 @@ GO
 drop table t;
 go
 
-drop table t2;
+drop table t_babel4046;
 go
 
 drop table svc_defs;
