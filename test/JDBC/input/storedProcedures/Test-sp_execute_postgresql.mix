@@ -62,11 +62,6 @@ GO
 select pg_sleep(1);
 GO
 
--- psql
--- revoke superuser
-alter user l1 with NOSUPERUSER;
-go
-
 -- tsql
 drop login l1
 go

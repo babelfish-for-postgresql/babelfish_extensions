@@ -123,11 +123,6 @@ void
 ~~END~~
 
 
--- psql
--- revoke superuser
-alter user l1 with NOSUPERUSER;
-go
-
 -- tsql
 drop login l1
 go
