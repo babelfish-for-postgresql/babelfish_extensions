@@ -41,6 +41,17 @@ SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('sear
 
 ALTER TABLE sys.babelfish_server_options ADD COLUMN connect_timeout INT;
 
+CREATE OR REPLACE PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+AS 'babelfishpg_tsql', 'sp_serveroption_internal'
+LANGUAGE C;
+
+GRANT EXECUTE ON PROCEDURE sys.sp_serveroption( IN "@server" sys.sysname,
+                                                    IN "@optname" sys.varchar(35),
+                                                    IN "@optvalue" sys.varchar(10))
+TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.servers
 AS
 SELECT
