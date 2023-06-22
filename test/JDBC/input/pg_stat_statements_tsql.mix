@@ -206,6 +206,24 @@ FROM pg_stat_statements where wal_bytes != 0 and wal_records != 0 ORDER BY query
 go
 
 -- tsql
+--
+-- insert, update, delete on test table to validate time generation metrics
+--
+CREATE TABLE pgss_test (a int, b char(20));
+
+INSERT INTO pgss_test VALUES(generate_series(1, 10), 'aaa');
+UPDATE pgss_test SET b = 'bbb' WHERE a > 7;
+DELETE FROM pgss_test WHERE a > 9;
+-- DROP test table
+DROP TABLE pgss_test;
+go
+
+-- Check Time related columns is generated for the above statements
+SELECT query, calls, rows
+FROM pg_stat_statements where total_exec_time != 0 and min_exec_time != 0  ORDER BY query COLLATE "C";
+go
+
+-- tsql
 -- join, aggregate functions, view, constraints
 CREATE TABLE pgss_cust(customerid int not null, name varchar(22), age int, check (age>=18), primary key(customerid))
 CREATE TABLE pgss_orders(orderid int not null, customerid int, country varchar(20) default 'INDIA', primary key(orderid), foreign key(customerid) references pgss_cust(customerid))
