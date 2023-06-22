@@ -268,7 +268,7 @@ sys-table_types_internal
 SYSTEM_USER
 sys-trigger_nestlevel
 sys-triggers
-sys-types-before
+sys-types
 sys-types-dep
 sys-userid-dep
 sys-views

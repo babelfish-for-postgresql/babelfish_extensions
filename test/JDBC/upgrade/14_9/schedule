@@ -326,7 +326,7 @@ sys-sql_modules
 sys-table_types
 sys-tables
 sys-triggers
-sys-types-before
+sys-types
 sys-views
 sys-xml_indexes
 sys-xml_schema_collections
@@ -387,7 +387,7 @@ bbf_view_def
 BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
-sys-systypes-before
+sys-systypes
 BABEL_OBJECT_DEFINITION
 datediff_internal_date
 Test-sp_rename
