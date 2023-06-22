@@ -2939,7 +2939,7 @@ SELECT
                   else NULL
                   end, ',')
           from unnest(f.srvoptions) as option) as sys.sysname) AS catalog,
-  CAST(0 as int) AS connect_timeout,
+  CAST(s.connect_timeout as int) AS connect_timeout,
   CAST(s.query_timeout as int) AS query_timeout,
   CAST(1 as sys.bit) AS is_linked,
   CAST(0 as sys.bit) AS is_remote_login_enabled,

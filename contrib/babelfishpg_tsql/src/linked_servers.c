@@ -742,6 +742,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	char	*data_src = NULL;
 	char	*database = NULL;
 	int 	query_timeout = 0;
+	int		connect_timeout = 0;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -801,7 +802,10 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		/* fetch query timeout from the servername */
-		query_timeout = get_query_timeout_from_server_name(servername);
+		query_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_query_timeout);
+
+		/* fetch query timeout from the servername */
+		connect_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_connect_timeout);
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
@@ -831,6 +835,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_DBNAME(login, database);
 		}
 
+		if(connect_timeout > 0)
+		{
+			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
+		}
+
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
 
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
@@ -845,6 +854,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		{
 			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
 		}
+
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
 	}

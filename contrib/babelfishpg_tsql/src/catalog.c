@@ -1223,13 +1223,13 @@ get_bbf_servers_def_idx_oid()
 }
 
 int 
-get_query_timeout_from_server_name(char *servername)
+get_timeout_from_server_name(char *servername,int attnum)
 {
 	Relation	bbf_servers_def_rel;
 	HeapTuple	tuple;
 	ScanKeyData	key;
 	TableScanDesc	scan;
-	int		query_timeout = 0;
+	int		timeout = 0;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 										 RowExclusiveLock);
@@ -1245,15 +1245,15 @@ get_query_timeout_from_server_name(char *servername)
 	if (HeapTupleIsValid(tuple))
 	{
 		bool	isNull;
-		query_timeout = DatumGetInt32(heap_getattr(tuple, Anum_bbf_servers_def_query_timeout,
+		timeout = DatumGetInt32(heap_getattr(tuple, attnum,
 														 RelationGetDescr(bbf_servers_def_rel), &isNull));
 		if (isNull)
-			query_timeout = 0;
+			timeout = 0;
 	}
 
 	table_endscan(scan);
 	table_close(bbf_servers_def_rel, RowExclusiveLock);
-	return query_timeout;
+	return timeout;
 }
 
 void

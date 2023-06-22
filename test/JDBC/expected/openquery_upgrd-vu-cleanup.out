@@ -6,15 +6,15 @@ DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: drop cascades to 5 other objects  Server SQLState: 00000)~~
+~~WARNING (Message: drop cascades to 2 other objects  Server SQLState: 00000)~~
 
 
 -- tsql
 -- check if all the linked servers are dropped after dropping tds_fdw
-SELECT servername, query_timeout FROM babelfish_server_options
+SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options
 GO
 ~~START~~
-varchar#!#int
+varchar#!#int#!#int
 ~~END~~
 
 

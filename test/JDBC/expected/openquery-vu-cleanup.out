@@ -13,10 +13,10 @@ GO
 
 -- tsql
 -- check if all the linked servers are dropped after dropping tds_fdw
-SELECT servername, query_timeout FROM babelfish_server_options
+SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options
 GO
 ~~START~~
-varchar#!#int
+varchar#!#int#!#int
 ~~END~~
 
 

@@ -31,12 +31,18 @@ GO
 EXEC sp_serveroption @server='invalid_server', @optname='query timeout', @optvalue='1'
 GO
 
+EXEC sp_serveroption @server='invalid_server', @optname='connect timeout', @optvalue='1'
+GO
+
 -- sp_serveroption with invalid server option. Should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalue='1'
 GO
 
 -- sp_serveroption with server as NULL. Should throw error
 EXEC sp_serveroption @server=NULL, @optname='query timeout', @optvalue='1'
+GO
+
+EXEC sp_serveroption @server=NULL, @optname='connect timeout', @optvalue='1'
 GO
 
 -- sp_serveroption with optname as NULL. Should throw error
@@ -47,92 +53,146 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=NULL
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue=NULL
+GO
+
 -- sp_serveroption with negative optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='-5'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='-55'
 GO
 
 -- sp_serveroption with float optvalue. should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='1.0001'
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='1.0001'
+GO
+
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='2147483648'
 GO
 
 -- sp_serveroption with optvalue containing characters other than 0-9. should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0abdejc'
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='0abcsdejc'
+GO
+
 -- sp_serveroption with optvalue = INT_MAX
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483647'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='2147483647'
 GO
 
 -- sp_serveroption with optvalue containing leading zeroes
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0000002'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='00000007'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
 -- sp_serveroption with optvalue containing + at the beginning
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+9'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='+11'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
 -- more than one + . Should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='++7'
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='++6'
+GO
+
 -- sp_serveroption with optvalue empty. should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=''
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue=''
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
 -- sp_serveroption with optvalue '+'.
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='+'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
 -- sp_serveroption with optvalue '+0'.
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+0'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='+0'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 
 -- sp_serveroption with valid server, optname and optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='5'
+GO
+
 -- optname is case insensitive
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='coNNect TiMeouT', @optvalue='1'
 GO
 
 -- ignore trailing spaces in all the arguments
 EXEC sp_serveroption @server='bbf_server_1  ', @optname='query timeout   ', @optvalue='1    '
 GO
 
+EXEC sp_serveroption @server='bbf_server_1  ', @optname='connect timeout   ', @optvalue='1    '
+GO
+
 -- do not ignore leading spaces in @server argument
 EXEC sp_serveroption @server='  bbf_server_1', @optname='query timeout', @optvalue='1'
+GO
+
+EXEC sp_serveroption @server='  bbf_server_1', @optname='connect timeout', @optvalue='1'
 GO
 
 -- do not ignore leading spaces in @optname argument
 EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optvalue='1'
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='  connect timeout', @optvalue='1'
+GO
+
 -- ignore leading spaces in @optvalue argument
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='  1'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='  1'
 GO
 
 -- psql
