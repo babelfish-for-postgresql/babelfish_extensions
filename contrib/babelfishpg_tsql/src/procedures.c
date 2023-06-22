@@ -1770,14 +1770,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 			} 
 			case T_AlterObjectSchemaStmt:
 			{
-				AlterObjectSchemaStmt *alstmt = (AlterObjectSchemaStmt *) parsetree;
-				if (alstmt->objectType != OBJECT_EXTENSION)
-				{
-					ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("only create/alter/drop extension statements are currently supported in Babelfish")));
-				}
-				
 				ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("alter extension schema is not currently supported in Babelfish")));
