@@ -220,7 +220,7 @@ go
 
 -- Check Time related columns is generated for the above statements
 SELECT query, calls, rows
-FROM pg_stat_statements where total_exec_time != 0 and min_exec_time != 0  ORDER BY query COLLATE "C";
+FROM pg_stat_statements where total_exec_time > 0 and min_exec_time > 0  ORDER BY query COLLATE "C";
 go
 
 -- tsql
