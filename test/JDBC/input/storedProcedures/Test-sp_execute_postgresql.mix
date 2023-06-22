@@ -34,6 +34,42 @@ go
 select current_setting('babelfishpg_tsql.sql_dialect')
 go
 
+-- throw error if statements has syntax error
+exec sp_execute_postgresql 'crete extension pg_stat_statements';
+go
+
+
+-- throw error if anything other than extension object is created
+exec sp_execute_postgresql 'create table test(A int)'
+go
+
+-- throw error if unprivileged login tries to create the extension
+create login l1 with password = '12345678'
+go
+create user u1 for login l1
+go
+
+-- tsql user=l1 password=12345678
+exec sp_execute_postgresql 'create extension pg_stat_statements';
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+
+-- psql
+select pg_sleep(1);
+GO
+
+-- tsql
+drop user u1
+go
+drop login l1
+go
+
 -- Create extension
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go

@@ -45,7 +45,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
-#include "../src/rolecmds.h"
+#include "rolecmds.h"
 
 #include "catalog.h"
 #include "multidb.h"
@@ -1599,7 +1599,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	Node	   *parsetree;
 	size_t		len;
 	PlannedStmt *wrapper;
-	bool flag = false;
 	const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "fuzzystrmatch"};
 	int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
@@ -1630,7 +1629,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 							errmsg("statement cannot be NULL")));
 
 		parsetree_list = raw_parser(postgresStmt, RAW_PARSE_DEFAULT);
-		stmt = parsetree_nth_stmt(parsetree_list, 0);
 
 		if (list_length(parsetree_list) != 1)
 			ereport(ERROR,
@@ -1657,16 +1655,18 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				DefElem    *d_schema = NULL;
 				ListCell   *lc;
 				char	   *schemaName = NULL;
+				bool ext_found = false;
 
 				for(int i = 0; i < allowed_extns_size; i++)
 				{
 					if(!(strcmp(crstmt->extname, allowed_extns[i])))
 					{
-						flag = true;
+						ext_found = true;
+						break;
 					}
 				}
 
-				if(!flag)
+				if(!ext_found)
 				{
 					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 		errmsg("'%s' extension creation is not supported", crstmt->extname)));
