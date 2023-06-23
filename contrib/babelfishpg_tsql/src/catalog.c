@@ -219,6 +219,21 @@ bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
 	return IsToastNamespace(pg_class_tup->relnamespace);
 }
 
+void pltsql_drop_relation_refcnt_hook(Relation relation)
+{
+	int expected_refcnt = 0;
+	if (sql_dialect != SQL_DIALECT_TSQL ||
+		!RelationIsBBFTableVariable(relation))
+		return;
+
+	expected_refcnt = relation->rd_isnailed ? 2 : 1;
+
+	while (relation->rd_refcnt > expected_refcnt)
+	{
+		RelationDecrementReferenceCount(relation);
+	}
+}
+
 /*****************************************
  *			SYSDATABASES
  *****************************************/
