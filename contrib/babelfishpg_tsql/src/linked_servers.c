@@ -1359,6 +1359,6 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	if(servername)
 		pfree(servername);
 
-	return (Datum) 0;
+	PG_RETURN_VOID();
 
 }
