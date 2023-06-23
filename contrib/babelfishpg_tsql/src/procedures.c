@@ -2278,7 +2278,7 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 				table_close(bbf_servers_def_rel, RowExclusiveLock);
 				ereport(ERROR,
 						(errcode(ERRCODE_FDW_ERROR),
-				 		errmsg("server \"%s\" does not exist", servername)));
+				 		errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
 			}
 			new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
 			tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
@@ -2693,7 +2693,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' option is supported")));
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' is currently supported.")));
 
 	if(servername)
 		pfree(servername);
