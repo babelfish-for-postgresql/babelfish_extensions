@@ -1703,7 +1703,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				if(schemaName != NULL && !(is_shared_schema(schemaName)))
 				{
 					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							errmsg("'%s' is not a valid schema", schemaName)));
+							errmsg("extension creation in '%s' is not supported from TSQL", schemaName)));
 				}
 
 				/* do this step */
