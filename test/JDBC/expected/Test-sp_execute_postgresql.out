@@ -279,7 +279,7 @@ exec sp_execute_postgresql 'create extension pg_stat_statements with schema sch1
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'sch1' is not a valid schema)~~
+~~ERROR (Message: extension creation in 'sch1' is not supported from TSQL)~~
 
 
 -- babelfish schema
