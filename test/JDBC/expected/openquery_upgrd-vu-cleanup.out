@@ -6,7 +6,7 @@ DROP EXTENSION IF EXISTS tds_fdw CASCADE;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: drop cascades to 2 other objects  Server SQLState: 00000)~~
+~~WARNING (Message: drop cascades to 5 other objects  Server SQLState: 00000)~~
 
 
 -- tsql
