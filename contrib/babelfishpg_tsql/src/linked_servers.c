@@ -741,7 +741,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	ListCell	*option;
 	char	*data_src = NULL;
 	char	*database = NULL;
-	int 	query_timeout = 0;
+	int		query_timeout = 0;
 	int		connect_timeout = 0;
 
 	if (!pltsql_enable_linked_servers)
