@@ -280,6 +280,7 @@ sys-dm_hadr_cluster
 sys-dm_hadr_database_replica_states
 sys-dm_os_host_info
 sys-endpoints
+sys-eomonth
 sys-events
 sys-extended_properties
 sys-filegroups
@@ -433,3 +434,4 @@ TestXML
 timefromparts
 triggers_with_transaction
 datetimeoffset-timezone
+BABEL-4046
