@@ -52,7 +52,7 @@ runs:
         ~/${{ inputs.pg_new_dir }}/bin/initdb -D ~/${{ inputs.pg_new_dir }}/data
         cd ~/${{ inputs.pg_new_dir }}/data
         sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
-        sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
+        sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds,  pg_stat_statements'/g" postgresql.conf
         ipaddress=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
         sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
       shell: bash

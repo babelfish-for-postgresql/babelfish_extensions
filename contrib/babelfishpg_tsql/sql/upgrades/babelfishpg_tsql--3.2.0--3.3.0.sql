@@ -31,6 +31,10 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@postgresStmt" sys.nvarchar)
+AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
+
 ALTER FUNCTION sys.parsename(VARCHAR,INT) RENAME TO parsename_deprecated_in_3_3_0;
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
