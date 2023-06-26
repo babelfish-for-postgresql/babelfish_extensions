@@ -2221,7 +2221,6 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
 	int		nargs = isInsert?BBF_SERVERS_DEF_NUM_COLS - 1:1;
-	int		nargs_check = 0;
 
 	if(optname == NULL || optvalue == NULL)
 		{
@@ -2269,7 +2268,6 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 				new_record_repl[Anum_bbf_servers_def_connect_timeout - 1] = true;
 				new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
 			}
-			nargs_check ++;
 		}
 		else
 		{
@@ -2287,12 +2285,9 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 
 		if(isInsert)
 		{
-			if(nargs_check == BBF_SERVERS_DEF_NUM_COLS-1)
-			{
-				tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
+			tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
 									new_record, new_record_nulls);
-				CatalogTupleInsert(bbf_servers_def_rel, tuple);
-			}
+			CatalogTupleInsert(bbf_servers_def_rel, tuple);
 		}
 		else
 		{

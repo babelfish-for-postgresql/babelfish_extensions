@@ -93,3 +93,7 @@ SELECT @i = COUNT(*) FROM OPENQUERY(bbf_server, 'SELECT 2')
 RETURN @i
 END
 GO
+
+-- psql
+DROP EXTENSION IF EXISTS tds_fdw CASCADE;
+GO
