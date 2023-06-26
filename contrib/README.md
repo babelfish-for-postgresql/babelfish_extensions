@@ -45,6 +45,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     make check
     ```
 
+    Alternatively, if you want build the Postgres engine with SSL support, call the configure script with `--with-openssl` flag:
+    ```
+    ./configure --prefix=$HOME/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --with-openssl
+    ```
+
       Also build and install the extensions because uuid-ossp.so is a runtime dependency for babelfish:
       ```
       cd contrib && make && sudo make install
@@ -173,9 +178,22 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     shared_preload_libraries = 'babelfishpg_tds'
     ```
 
+- Additionally, if you want to enable SSL, create a private server key and certificate as mentioned [here](https://www.postgresql.org/docs/current/ssl-tcp.html#SSL-CERTIFICATE-CREATION) and modify the `~/postgres/data/postgresql.conf` by uncommenting and adjusting the following 3 properties:
+
+    ```
+    ssl = on
+    ssl_cert_file = 'server.crt'
+    ssl_key_file = 'server.key'
+    ```
+
 - Modify `~/postgres/data/pg_hba.conf` to allow connections from allowed IP addresses, replacing `10.x.y.z` with your IP address. E.g.
     ```
       host    all             all     10.x.y.z/32            trust
+    ```
+
+- Alternatively, modify `~/postgres/data/pg_hba.conf` to allow SSL connections from allowed IP addresses, replacing `10.x.y.z` with your IP address. E.g.
+    ```
+    hostssl    all             all     10.x.y.z/32            trust
     ```
 
 - Now run this to apply the changes:
@@ -206,6 +224,23 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
       ```
       sqlcmd -S localhost -U babelfish_user -P 12345678
       ```
+
+   You can also enforce encryption from SQLCMD and connect to Babelfish
+      ```
+      sqlcmd -N -C -S localhost -U babelfish_user -P 12345678
+      ```
+
+   You can query the pg_stat_ssl view to see if the connection is encrypted using SSL
+      ```
+      1> select ssl from pg_stat_ssl where pid = @@spid
+      2> go
+      ssl
+      ---
+        1
+
+      (1 rows affected)
+      ```
+
 # How to run the JDBC regression tests?
 1. Install Maven: https://maven.apache.org/install.html
 2. cd to test/JDBC
