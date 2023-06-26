@@ -234,6 +234,10 @@ protected:
 
 	void checkSupportedGrantStmt(TSqlParser::Grant_statementContext *grant);
 	void checkSupportedRevokeStmt(TSqlParser::Revoke_statementContext *revoke);
+
+	void visitSqlClauses(vector<TSqlParser::Sql_clausesContext *> sql_clauses);
+	void visitSqlClauses(TSqlParser::Sql_clausesContext* option);
+
 };
 
 std::unique_ptr<TsqlUnsupportedFeatureHandler> TsqlUnsupportedFeatureHandler::create()
@@ -311,6 +315,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 		}
 	}
 
+	if(ctx->func_body_returns_table())
+		visitSqlClauses(ctx->func_body_returns_table()->sql_clauses());
+	if(ctx->func_body_returns_scalar())
+		visitSqlClauses(ctx->func_body_returns_scalar()->sql_clauses());
+
 	if (ctx->func_body_returns_scalar() && ctx->func_body_returns_scalar()->external_name())
 		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_EXTERNAL_NAME_OPTION, "EXTERNAL NAME", getLineAndPos(ctx->func_body_returns_scalar()->external_name()));
 	if (ctx->func_body_returns_table_clr() && ctx->func_body_returns_table_clr()->external_name())
@@ -360,6 +369,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 				handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
 		}
 	}
+
+	visitSqlClauses(ctx->sql_clauses());
 
 	if (ctx->atomic_proc_body())
 		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_ATOMIC_WITH_OPTION, "ATOMIC WITH", getLineAndPos(ctx->atomic_proc_body()));
@@ -429,6 +440,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 			}
 		}
 
+		visitSqlClauses(dctx->sql_clauses());
+
 		if (dctx->external_name())
 			handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME", getLineAndPos(dctx->external_name()));
 	}
@@ -449,6 +462,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 					handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS SELF|OWNER|<user>|<login>", getLineAndPos(option->execute_as_clause()));
 			}
 		}
+
+		visitSqlClauses(dctx->sql_clauses());
 
 		if (dctx->external_name())
 			handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME", getLineAndPos(dctx->external_name()));
@@ -1667,6 +1682,39 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "GRANT AS", getLineAndPos(grant->AS()));
 }
 
+void TsqlUnsupportedFeatureHandlerImpl::visitSqlClauses(vector<TSqlParser::Sql_clausesContext *> sql_clauses)
+{
+	for (auto option : sql_clauses)
+	{
+		visitSqlClauses(option);
+	}
+}
+
+void TsqlUnsupportedFeatureHandlerImpl::visitSqlClauses(TSqlParser::Sql_clausesContext* option)
+{
+	if(option->another_statement() && option->another_statement()->use_statement())
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "a USE database statement is not allowed in a procedure, function or trigger.", getLineAndPos(option));
+
+	if(option->cfl_statement())
+	{
+		if(option->cfl_statement()->block_statement())
+			visitSqlClauses(option->cfl_statement()->block_statement()->sql_clauses());
+
+		if(option->cfl_statement()->if_statement())
+			visitSqlClauses(option->cfl_statement()->if_statement()->sql_clauses());
+
+		if(option->cfl_statement()->while_statement())
+			visitSqlClauses(option->cfl_statement()->while_statement()->sql_clauses());
+		if(option->cfl_statement()->try_catch_statement())
+		{
+			if(option->cfl_statement()->try_catch_statement()->try_block())
+				visitSqlClauses(option->cfl_statement()->try_catch_statement()->try_block()->sql_clauses());
+
+			if(option->cfl_statement()->try_catch_statement()->catch_block())
+				visitSqlClauses(option->cfl_statement()->try_catch_statement()->catch_block()->sql_clauses());
+		}
+	}
+}
 void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Revoke_statementContext *revoke)
 {
 	std::string unsupported_feature;
