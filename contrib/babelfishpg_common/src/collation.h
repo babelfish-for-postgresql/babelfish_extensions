@@ -164,4 +164,4 @@ extern set_like_collation_hook_type prev_set_like_collation_hook;
 extern get_like_collation_hook_type prev_get_like_collation_hook;
 
 extern void bbf_set_like_collation(Oid collation);
-extern Oid bbf_get_like_collation();
+extern Oid bbf_get_like_collation(void);

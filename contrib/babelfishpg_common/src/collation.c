@@ -1595,7 +1595,7 @@ void bbf_set_like_collation(Oid collation)
 	like_cid = collation;
 }
 
-Oid bbf_get_like_collation()
+Oid bbf_get_like_collation(void)
 {
 	return like_cid;
 }
