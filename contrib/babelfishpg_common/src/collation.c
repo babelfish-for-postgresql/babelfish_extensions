@@ -1588,7 +1588,7 @@ babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-Oid like_cid;
+Oid like_cid = InvalidOid;
 
 void bbf_set_like_collation(Oid collation)
 {
