@@ -227,7 +227,7 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 objectpropertyex
 openjson
-openquery_upgrd
+openquery_upgrd_before_15_4
 orderby
 routines_definition
 rowcount

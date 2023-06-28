@@ -9,6 +9,14 @@ GO
 SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
 GO
 
+-- check whether connect_timeout value is getting persisted after the upgrade
+SELECT name, query_timeout FROM sys.servers WHERE name = 'bbf_server_2'
+GO
+
+-- should throw connection timeout error in one second as the server does not exist
+SELECT * FROM OPENQUERY(bbf_server_2, 'select 1')
+GO
+
 -- SELECT * FROM openquery_vu_prepare__openquery_view
 GO
 

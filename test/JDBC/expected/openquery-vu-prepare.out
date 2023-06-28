@@ -19,6 +19,13 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_unreachable', @useself = 'FALSE', @rmtuser = 'dummy_usr', @rmtpassword = 'dummy_pwd'
 GO
 
+-- Create a non-existing linked server to test connection timeout
+EXEC sp_addlinkedserver  @server = N'bbf_server_2', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc='1.2.3.4', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_2', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
 -- Test sp_serveroption procedure
 EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
@@ -302,7 +309,7 @@ GO
 ~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connection timeout' are currently supported.)~~
 
 
-EXEC sp_serveroption @server='bbf_server_1', @optname='  connect timeout', @optvalue='1'
+EXEC sp_serveroption @server='bbf_server_2', @optname='  connect timeout', @optvalue='1'
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -332,17 +339,18 @@ varchar#!#varchar#!#varchar#!#jsonb
 name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
+name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 ~~END~~
 
 
 -- tsql
 -- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
+SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
 GO
 ~~START~~
-varchar#!#int
-bbf_server#!#0
-bbf_server_1#!#1
+varchar#!#int#!#int
+bbf_server#!#0#!#0
+bbf_server_1#!#1#!#1
 ~~END~~
 
 

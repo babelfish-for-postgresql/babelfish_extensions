@@ -3511,6 +3511,22 @@ text
 ~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
 
 
+# Test connect timeout behaviour in OPENQUERY
+# check the value of connect timeout from sys.servers
+select name, connect_timeout from sys.servers where name = 'bbf_server_2'
+~~START~~
+varchar#!#int
+bbf_server_2#!#0
+~~END~~
+
+
+# Make openquery against a non-existing server
+SELECT * FROM OPENQUERY(bbf_server_2, 'select 1')
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: DB #: 20009, DB Msg: Unable to connect: server is unavailable or does not exist (1.2.3.4), OS #: 110, OS Msg: Connection timed out, Level: 9)~~
+
+
 # Test procedure dependent on OPENQUERY
 EXEC openquery_vu_prepare__openquery_proc
 ~~START~~

@@ -19,6 +19,13 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_unreachable', @useself = 'FALSE', @rmtuser = 'dummy_usr', @rmtpassword = 'dummy_pwd'
 GO
 
+-- Create a non-existing linked server to test connection timeout
+EXEC sp_addlinkedserver  @server = N'bbf_server_2', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc='1.2.3.4', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_2', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
 -- Test sp_serveroption procedure
 EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
@@ -185,7 +192,7 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optvalue='1'
 GO
 
-EXEC sp_serveroption @server='bbf_server_1', @optname='  connect timeout', @optvalue='1'
+EXEC sp_serveroption @server='bbf_server_2', @optname='  connect timeout', @optvalue='1'
 GO
 
 -- ignore leading spaces in @optvalue argument
@@ -205,7 +212,7 @@ GO
 
 -- tsql
 -- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
+SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
 GO
 
 -- Create a view dependent on OPENQUERY
