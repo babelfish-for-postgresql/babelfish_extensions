@@ -1362,3 +1362,4 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 
 }
+
