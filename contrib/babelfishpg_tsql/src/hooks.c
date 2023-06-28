@@ -209,6 +209,7 @@ static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfi
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
+static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -354,6 +355,9 @@ InstallExtendedHooks(void)
 
 	PrevIsToastClassHook = IsToastClassHook;
 	IsToastClassHook = IsPltsqlToastClassHook;
+
+	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
+	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 }
 
 void
@@ -411,6 +415,7 @@ UninstallExtendedHooks(void)
 	table_variable_satisfies_vacuum_horizon_hook = prev_table_variable_satisfies_vacuum_horizon;
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
+	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 }
 
 /*****************************************
