@@ -104,11 +104,11 @@ go
 insert t1 values
 (null,null,null),
 ('ABCD', 'AB[C]D', 'X'),
-('ABCD', 'ABcD', null), --- BABEL-4271
+('ABCD', 'ABcD', null), 
 ('AB[C]D', 'ABZ[C]D', 'Z'),
 ('AB[C]D', 'ABZ[C]D', 'z')
 go
--- returns 2,3,4
+-- returns 2,3,4 , babel return 2,4 BABEL-4271
 select c1 from t1 where string like patt escape esc 
 and c1 > 1 order by c1
 go
@@ -568,10 +568,10 @@ select 1 where @v like @p
 go
 
 -- the following currently returns wrong result in BBF!
-select 1 where '_ab' like '\_ab'          -- no row, but returns 1  in BBF
+select 1 where '_ab' like '\_ab'          -- no row, but returns 1  in BBF , BABEL-4270
 GO
 
-select 1 where '%AAABBB%' like '\%AAA%'   -- no row, but returns 1  in BBF
+select 1 where '%AAABBB%' like '\%AAA%'   -- no row, but returns 1  in BBF , BABEL-4270
 go
 
 select 1 where '_ab' like '\_ab'  escape '\'         -- 1 
@@ -609,7 +609,7 @@ select 1 where 'ABC' like null -- no row
 go
 
  
-select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE ''  -- raise error
+select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE ''  -- should raise error , BABEL-4271
 go
 select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
 go
