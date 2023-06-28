@@ -102,3 +102,93 @@ GO
 
 SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server2'
 GO
+
+-- Testing the sp_testlinkedserver stored procedure with NULL servername argument (should throw error)
+EXEC sp_testlinkedserver NULL
+GO
+
+-- Testing the sp_testlinkedserver stored procedure with servername argument whose length is more than 128 chars (should throw error)
+EXEC sp_testlinkedserver 'LjW4d3W5DcAMPlqprZ3jhgYfKbU1e8nV20ovRmJH7kbv9iXq4SNlTIQxAloKOze1f2tsnPLRu9BFyUgQYvKLpN3CBNTZP4zIZT4koPloGBYhWvg2c0qD6nM5aChQolTmzq32yGFAgXaj5rdxOXTSNwTIjxGZTVzhr39EhObE3k2DHExzS5Wg6SE1ZFLIjVJWlxibh7Xa8OzU0xQrI1VdmVuPS9vllwTQfNRzxv2etZXJdfVgR2p9bMkprV7SZtcP97bDluDk3hqV0D8Qy0U2LsdAMbHwPb5m6SE2n0seInwq2t4sN'
+GO
+
+-- Testing the connection to a linked server using a server name that does not exist (should throw error)
+IF EXISTS(SELECT * FROM sys.servers WHERE name = 'test_server')
+    EXEC sp_dropserver 'test_server', 'droplogins'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+
+-- Testing the connection to a existing linked server using the server name with leading spaces (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+EXEC sp_testlinkedserver ' test_server'
+GO
+
+-- Testing the connection to a existing linked server using the server name with mixed spaces (should throw error)
+EXEC sp_testlinkedserver ' test_server '
+GO
+
+-- Tesing the connection to a linked server for which user mapping does not exist (should throw error)
+EXEC sp_testlinkedserver 'test_server'
+GO
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server whose data source is incorrect (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhos', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server whose catalog name is incorrect (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'maste'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server whose all parameters has been set correctly (should pass)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+
+-- Testing the connection to a right linked server with trailing spaces in the servername argument (should pass)
+EXEC sp_testlinkedserver 'test_server  '
+GO
+
+-- Testing the connection to a right linked server with double-quoted(delimiter) servername argument (should pass)
+EXEC sp_testlinkedserver "test_server"
+GO
+
+-- Testing the connection to a right linked server with master.dbo prefix to stored procedure (should pass)
+EXEC master.dbo.sp_testlinkedserver 'test_server'
+GO
+
+-- Testing the connection to a right linked server without the EXEC keyword (should pass)
+sp_testlinkedserver 'test_server'
+GO
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+

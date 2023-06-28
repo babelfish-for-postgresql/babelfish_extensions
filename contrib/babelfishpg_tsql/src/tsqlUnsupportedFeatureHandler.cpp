@@ -1604,7 +1604,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_revokelogin",
 	"sp_setapprole",
 	"sp_srvrolepermission",
-	"sp_testlinkedserver",
 	"sp_unsetapprole",
 	"sp_validatelogins",
 	"sp_verify_database_ledger",
