@@ -9,6 +9,10 @@ tds_backend = $(tds_top_dir)/src/backend
 tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
+# ifeq ($(TSQL_SRC),)
+#     $(error TSQL_SRC is not defined. Please define it before running this target.)
+# endif
+
 PG_CFLAGS += -Werror
 PG_CFLAGS += -fstack-protector-strong
 PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
