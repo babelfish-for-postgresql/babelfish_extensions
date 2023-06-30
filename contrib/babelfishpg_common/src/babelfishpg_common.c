@@ -40,6 +40,10 @@ CLUSTER_COLLATION_OID_hook_type prev_CLUSTER_COLLATION_OID_hook = NULL;
 TranslateCollation_hook_type prev_TranslateCollation_hook = NULL;
 PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
 
+set_like_collation_hook_type prev_set_like_collation_hook = NULL;
+get_like_collation_hook_type prev_get_like_collation_hook = NULL;
+
+
 /* Module callbacks */
 void		_PG_init(void);
 void		_PG_fini(void);
@@ -137,6 +141,12 @@ _PG_init(void)
 
 	prev_PreCreateCollation_hook = PreCreateCollation_hook;
 	PreCreateCollation_hook = BabelfishPreCreateCollation_hook;
+
+	prev_set_like_collation_hook = set_like_collation_hook;
+	set_like_collation_hook = bbf_set_like_collation;
+ 	prev_get_like_collation_hook = get_like_collation_hook;
+	get_like_collation_hook = bbf_get_like_collation;
+
 }
 void
 _PG_fini(void)
@@ -147,6 +157,8 @@ _PG_fini(void)
 	CLUSTER_COLLATION_OID_hook = prev_CLUSTER_COLLATION_OID_hook;
 	TranslateCollation_hook = prev_TranslateCollation_hook;
 	PreCreateCollation_hook = prev_PreCreateCollation_hook;
+	set_like_collation_hook = prev_set_like_collation_hook;
+	get_like_collation_hook = prev_get_like_collation_hook;
 }
 
 common_utility_plugin *
