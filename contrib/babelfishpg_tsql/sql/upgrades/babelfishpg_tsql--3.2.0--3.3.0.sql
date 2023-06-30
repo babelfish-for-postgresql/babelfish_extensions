@@ -63,8 +63,8 @@ select
     ELSE  c.collname
     END as collation_name
   , CASE ti.tsql_type_name
-    WHEN 'timestamp' THEN 0
-    WHEN 'sysname' THEN 0
+      WHEN 'timestamp' THEN 0
+      WHEN 'sysname' THEN 0
     ELSE case when typnotnull then 0 else 1 end
     end as is_nullable
   , 0 as is_user_defined
