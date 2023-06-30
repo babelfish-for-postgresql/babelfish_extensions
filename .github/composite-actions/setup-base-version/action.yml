@@ -121,6 +121,7 @@ runs:
         fi
 
         export inputFilesPath=upgrade/$base_dir/preparation
+        export URL=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
         mvn test
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 

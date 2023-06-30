@@ -132,6 +132,7 @@ jobs:
           cd test/JDBC/
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
+          export URL=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
           mvn test
      
       - name: Upload Postgres log

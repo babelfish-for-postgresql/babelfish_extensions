@@ -60,6 +60,7 @@ runs:
         tar_dir: ${{ matrix.upgrade-path.last_version }}
       run: |
         cd test/JDBC/
+        export URL=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
         export isUpgradeTestMode=false
         base_dir=${{ matrix.upgrade-path.path[0] }}
         tar_dir=${{ matrix.upgrade-path.last_version }}
