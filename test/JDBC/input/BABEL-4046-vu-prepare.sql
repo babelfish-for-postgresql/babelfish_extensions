@@ -1,0 +1,72 @@
+create table options_t(name varchar(30))
+insert options_t values('abc')
+go
+
+create table svc_defs(svc_name varchar(30))
+insert svc_defs values('def')
+go
+
+create table t (a varchar(30));
+go
+
+insert into t values ('aaa');
+go
+
+insert into t values ('AAA');
+go
+
+create table t_babel4046 (b varchar(30));
+go
+
+insert into t_babel4046 values ('a%');
+go
+
+insert into t_babel4046 values ('A%');
+go
+
+CREATE VIEW babel4046 as 
+select * from t join t_babel4046 on a like b;
+GO
+
+CREATE VIEW babel4046_2 as
+select * from t join t_babel4046 on a like 'aa%';
+GO
+
+CREATE TABLE [dbo].[t3](
+	[EMPNO] [int] NOT NULL,
+	[ENAME] [nvarchar](10) NULL,
+	[BASELOC] [nvarchar](13) NULL,
+	[DEPTNO] [int] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[EMPNO] ASC
+) ON [PRIMARY])
+GO
+
+CREATE TABLE [dbo].[t4](
+	[DEPTNO] [int] NOT NULL,
+	[DNAME] [nvarchar](14) NULL,
+	[LOC] [nvarchar](13) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[DEPTNO] ASC
+) ON [PRIMARY])
+GO
+
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (10, N'ACCOUNTING', N'NEW YORK')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (20, N'RESEARCH', N'DALLAS')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (30, N'SALES', N'CHICAGO')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (40, N'SECURITY', N'BOSTON')
+INSERT [dbo].[t4] ([DEPTNO], [DNAME], [LOC]) VALUES (50, N'LEGAL', N'AUSTIN')
+GO
+
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7369, N'SMITH', N'BOSTON', 20)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7499, N'ALLEN', N'CHICAGO', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7521, N'WARD', N'CHICAGO', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7566, N'JONES', N'AUSTIN', 20)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7654, N'MARTIN', N'AUSTIN', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7698, N'BLAKE', N'BOSTON', 30)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7782, N'CLARK', N'NEW YORK', 10)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7788, N'SCOTT', N'NEW YORK', 20)
+INSERT [dbo].[t3] ([EMPNO], [ENAME], [BASELOC], [DEPTNO]) VALUES (7839, N'KING', N'AUSTIN', 100)
+GO

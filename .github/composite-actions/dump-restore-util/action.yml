@@ -45,11 +45,11 @@ runs:
         cd upgrade
         if [[ '${{ inputs.logical_database }}' == 'null' ]];then
           echo 'Starting to dump whole Babelfish physical database'
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump --create --username jdbc_user --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords -f pg_dump_globals.sql 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump --username jdbc_user --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
         else
           echo "Starting to dump Babelfish logical database ${{ inputs.logical_database }}"
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --bbf-database-name='${{ inputs.logical_database }}' -f pg_dump_globals.sql 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords --bbf-database-name='${{ inputs.logical_database }}' -f pg_dump_globals.sql 2>>error.log
           ~/${{ inputs.pg_new_dir }}/bin/pg_dump --username jdbc_user --quote-all-identifiers --verbose --bbf-database-name='${{ inputs.logical_database }}' --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
         fi
 
@@ -59,23 +59,13 @@ runs:
         cd ~/work/babelfish_extensions/babelfish_extensions/
         echo 'Database dump complete.'
 
-        if [[ '${{ inputs.logical_database }}' == 'null' ]];then
-          echo 'Restoring from pg_dumpall'
-          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
-          echo 'Restoring from pg_dump'
-          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
-        else
-          # Create and initialise Babelfish extensions in the new server if we are restoring a logical database.
-          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
-          echo 'Restoring from pg_dumpall'
-          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
-          echo 'Restoring from pg_dump'
-          sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
-        fi
+        # Create and initialise Babelfish extensions in the new server to perform restore.
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
+        echo 'Restoring from pg_dumpall'
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
+        echo 'Restoring from pg_dump'
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
 
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT pg_reload_conf();"
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
@@ -101,9 +91,6 @@ runs:
 
         # Temporarily disable certain tests until fixed
         sed -i "/BABEL-3513/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/TestNotNull/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/TestSQLVariant/d" test/JDBC/upgrade/$base_dir/schedule
-        sed -i "/babel_datatype_sqlvariant/d" test/JDBC/upgrade/$base_dir/schedule
       shell: bash
 
     - name: Run Verify Tests

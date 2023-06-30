@@ -1331,7 +1331,9 @@ openquery_internal(PG_FUNCTION_ARGS)
 Datum
 sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 {
-	#ifdef ENABLE_TDS_LIB
+
+#ifdef ENABLE_TDS_LIB
+
 	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 
 	LinkedServerProcess lsproc = NULL;

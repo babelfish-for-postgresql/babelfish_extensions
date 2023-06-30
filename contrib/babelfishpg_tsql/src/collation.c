@@ -504,6 +504,10 @@ pltsql_predicate_transformer(Node *expr)
 			expr = expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
 			return transform_funcexpr(expr);
 		}
+		else if (IsA(expr, SubLink))
+		{
+			return expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
+		}
 		else
 			return expr;
 
@@ -522,8 +526,9 @@ pltsql_predicate_transformer(Node *expr)
 			}
 			else if (IsA(qual, OpExpr))
 			{
+				qual = transform_likenode(qual);
 				new_predicates = lappend(new_predicates,
-										 transform_likenode(qual));
+										 expression_tree_mutator(qual, pgtsql_expression_tree_mutator, NULL));
 			}
 			else
 				new_predicates = lappend(new_predicates, qual);

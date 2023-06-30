@@ -280,6 +280,7 @@ sys-dm_hadr_cluster
 sys-dm_hadr_database_replica_states
 sys-dm_os_host_info
 sys-endpoints
+sys-eomonth
 sys-events
 sys-extended_properties
 sys-filegroups
@@ -406,6 +407,7 @@ Test-sp_addrolemember
 Test-sp_babelfish_volatility
 Test-sp_droprole
 Test-sp_droprolemember
+Test-sp_execute_postgresql
 Test-sp_helpdbfixedrole
 Test-sp_helprole-dep
 Test-sp_helprolemember-dep
@@ -433,3 +435,4 @@ TestXML
 timefromparts
 triggers_with_transaction
 datetimeoffset-timezone
+BABEL-4046
