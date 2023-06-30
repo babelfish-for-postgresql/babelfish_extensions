@@ -1359,10 +1359,8 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	if(servername)
 		pfree(servername);
-
 #else
 	NO_CLIENT_LIB_ERROR();
-
 #endif
 	PG_RETURN_VOID();
 
