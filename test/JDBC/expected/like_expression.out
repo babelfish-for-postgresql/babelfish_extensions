@@ -1350,3 +1350,29 @@ go
 
 ~~ERROR (Message: invalid escape string)~~
 
+
+create table tt ( a bytea);
+go
+
+insert into tt values (0xdaa)
+GO
+~~ROW COUNT: 1~~
+
+
+select * from tt where a like 'da[%]';
+GO
+~~START~~
+varbinary
+~~END~~
+
+
+select * from tt where a not like 'da[%]';
+go
+~~START~~
+varbinary
+0DAA
+~~END~~
+
+
+drop table tt;
+GO

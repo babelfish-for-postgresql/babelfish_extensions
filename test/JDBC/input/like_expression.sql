@@ -613,3 +613,18 @@ select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE ''  -- should raise error , BABEL-427
 go
 select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
 go
+
+create table tt ( a bytea);
+go
+
+insert into tt values (0xdaa)
+GO
+
+select * from tt where a like 'da[%]';
+GO
+
+select * from tt where a not like 'da[%]';
+go
+
+drop table tt;
+GO
