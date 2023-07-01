@@ -56,6 +56,16 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
+CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
+
 CREATE OR REPLACE PROCEDURE sys.sp_testlinkedserver(IN "@servername" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_testlinkedserver(IN sys.sysname) TO PUBLIC;
@@ -79,6 +89,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
     ('sp_dropserver', 'master_dbo', 'P'),
     ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_enum_oledb_providers','master_dbo','P'),
     ('sp_testlinkedserver', 'master_dbo', 'P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
@@ -98,4 +109,3 @@ select t.name,t.type, ns.oid as schemaid from
 inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
-

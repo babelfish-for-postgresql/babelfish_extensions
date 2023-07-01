@@ -103,6 +103,18 @@ GO
 SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name = 'mssql_server2'
 GO
 
+-- Testing the stored procedure sp_enum_oledb_providers as a sysadmin user and with tds_fdw extension
+EXEC sp_enum_oledb_providers
+GO
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.dbo prefix
+EXEC master.dbo.sp_enum_oledb_providers
+GO
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.sys prefix
+EXEC master.sys.sp_enum_oledb_providers
+GO
+
 -- Testing the sp_testlinkedserver stored procedure with NULL servername argument (should throw error)
 EXEC sp_testlinkedserver NULL
 GO

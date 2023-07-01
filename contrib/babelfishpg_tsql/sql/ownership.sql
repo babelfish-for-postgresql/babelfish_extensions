@@ -199,6 +199,12 @@ BEGIN
 
   ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
+  AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
+
   CREATE OR REPLACE PROCEDURE master_dbo.sp_testlinkedserver( IN "@servername" sys.sysname)
   AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal'
   LANGUAGE C;

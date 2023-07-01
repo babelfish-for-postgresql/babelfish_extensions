@@ -276,6 +276,10 @@ GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.va
 CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
 AS 'babelfishpg_tsql' LANGUAGE C;
 
+CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_testlinkedserver(IN "@servername" sys.sysname)
 AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_testlinkedserver(IN sys.sysname) TO PUBLIC;

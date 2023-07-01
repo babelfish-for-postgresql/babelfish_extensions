@@ -222,6 +222,33 @@ varchar#!#varchar
 ~~END~~
 
 
+-- Testing the stored procedure sp_enum_oledb_providers as a sysadmin user and with tds_fdw extension
+EXEC sp_enum_oledb_providers
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TDS_FDW#!#{f34cef3b-778b-23ac-4fff-7d01c089051e}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
+~~END~~
+
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.dbo prefix
+EXEC master.dbo.sp_enum_oledb_providers
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TDS_FDW#!#{f34cef3b-778b-23ac-4fff-7d01c089051e}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
+~~END~~
+
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.sys prefix
+EXEC master.sys.sp_enum_oledb_providers
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+TDS_FDW#!#{f34cef3b-778b-23ac-4fff-7d01c089051e}#!#A PostgreSQL foreign data wrapper to connect to TDS databases 2.0.3
+~~END~~
+
+
 -- Testing the sp_testlinkedserver stored procedure with NULL servername argument (should throw error)
 EXEC sp_testlinkedserver NULL
 GO
