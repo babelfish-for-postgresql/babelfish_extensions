@@ -233,6 +233,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
+sys-parsename
 sys-procedures
 sys-proc_param_helper-dep
 sys-registered_search_property_lists
@@ -331,3 +332,4 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
+BABEL-4046

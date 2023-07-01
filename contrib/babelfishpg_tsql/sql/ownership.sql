@@ -199,6 +199,12 @@ BEGIN
 
   ALTER PROCEDURE master_dbo.sp_dropserver OWNER TO sysadmin;
 
+  CREATE OR REPLACE PROCEDURE master_dbo.sp_testlinkedserver( IN "@servername" sys.sysname)
+  AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal'
+  LANGUAGE C;
+
+  ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
+
   -- let sysadmin only to update babelfish_domain_mapping
   GRANT ALL ON TABLE sys.babelfish_domain_mapping TO sysadmin;
 END

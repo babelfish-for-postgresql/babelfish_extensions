@@ -35,6 +35,8 @@ sudo apt-get update && sudo apt install -y --no-install-recommends \
   gnupg unixodbc-dev net-tools unzip
 ```
 
+If you would like to work with Kerberos authentication then additional dependency is required on `libkrb5-dev` package.
+
 Many of the Babelfish prerequisites are part of a typical Linux distribution.  You may find that the packages on your distribution use a similar (but not identical) name.  
 
 To build Babelfish, you will need access to a user with root privileges, so you can convey privileges with `sudo`. You'll also need a non-root user to initialize the database; PostgreSQL does not allow a root user to own the `data` directory or start the server.
@@ -108,6 +110,7 @@ make DESTDIR=${BABELFISH_HOME}/ -j $JOBS 2>error.txt
           
 sudo make install
 ```
+> NOTE: To build Babelfish with Kerberos authentication support, use the option `--with-gssapi` during configuration. 
 
 > WARNING: Using the --with-extra-version option during the configuration phase can break the sys.get_host_os() output; we do not recommend including it.
 
@@ -307,7 +310,7 @@ sqlcmd -S localhost -U babelfish_user -P 12345678
 
 ## How to build the babelfishpg_tsql extension with linked servers enabled
 
-- To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md).
+- To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md). The linked servers feature is supported using the FreeTDS library which is licensed under the GNU LGPL license. See [COPYING_LIB.txt](https://github.com/FreeTDS/freetds/blob/master/COPYING_LIB.txt) for details.
 - Build the babelfishpg_tsql extension as follows:
 ```
 PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make

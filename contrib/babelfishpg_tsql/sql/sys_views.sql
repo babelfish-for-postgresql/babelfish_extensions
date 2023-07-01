@@ -1254,6 +1254,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
     ('sp_dropserver', 'master_dbo', 'P'),
     ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_testlinkedserver', 'master_dbo', 'P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
