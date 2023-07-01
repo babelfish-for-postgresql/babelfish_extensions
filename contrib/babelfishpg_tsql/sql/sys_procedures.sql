@@ -202,6 +202,10 @@ CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@postgresStmt" sys.nvarchar)
+AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
                                                     IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
@@ -275,3 +279,7 @@ AS 'babelfishpg_tsql' LANGUAGE C;
 CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
 AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_testlinkedserver(IN "@servername" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_testlinkedserver(IN sys.sysname) TO PUBLIC;

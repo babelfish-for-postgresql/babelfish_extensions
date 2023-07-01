@@ -223,7 +223,7 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
 
 # How to build the babelfishpg_tsql extension with linked servers enabled
 
-1. To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md).
+1. To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md). The linked servers feature is supported using the FreeTDS library which is licensed under the GNU LGPL license. See [COPYING_LIB.txt](https://github.com/FreeTDS/freetds/blob/master/COPYING_LIB.txt) for details.
 2. Build the babelfishpg_tsql extension as follows:
     ```
     PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
@@ -235,3 +235,11 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
     babelfish_db=> CREATE EXTENSION tds_fdw;
     CREATE EXTENSION
     ```
+
+
+# How to build the Babelfish server with Kerberos authentication enabled
+
+Please note that Kerberos authentication feature is available on Babelfish server with version 3.1.0 or higher. 
+
+1. To build the Babelfish server with Kerberos authentication enabled, you will need to install `build-essential` and `libkrb5-dev` packages. 
+2. Build the Babelfish server according to the instructions mentioned [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_3_X_DEV/contrib/README.md#build-the-postgres-engine) and use --with-gssapi flag to configure Babelfish in order to enable the GSSAPI APIs.

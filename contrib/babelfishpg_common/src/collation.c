@@ -423,7 +423,7 @@ locale_info locales[] =
 	{0x043e, 1252, PG_WIN1252, "ms-MY"}, //Malay:Malaysia
 	/* {0x044e, 	0, 	"mr-IN"}, // Marathi: India */
 	{0x0450, 1251, PG_WIN1251, "mn-MN"}, //Mongolian:Mongolia
-	{0x0414, 1252, PG_WIN1252, "nb-NO"}, //Norwegian:Norway(Bokm√ • l)
+	{0x0414, 1252, PG_WIN1252, "nb-NO"}, //Norwegian:Norway(bokm√•l)
 	{0x0814, 1252, PG_WIN1252, "nn-NO"}, //Norwegian:Norway(Nynorsk)
 	{0x0415, 1250, PG_WIN1250, "pl-PL"}, //Polish:Poland
 	{0x0416, 1252, PG_WIN1252, "pt-BR"}, //Portuguese:Brazil
@@ -1586,4 +1586,16 @@ babelfish_update_server_collation_name(PG_FUNCTION_ARGS)
 	server_collation_name = pstrdup(babelfish_restored_server_collation_name);
 	MemoryContextSwitchTo(oldContext);
 	PG_RETURN_VOID();
+}
+
+Oid like_cid = InvalidOid;
+
+void bbf_set_like_collation(Oid collation)
+{
+	like_cid = collation;
+}
+
+Oid bbf_get_like_collation(void)
+{
+	return like_cid;
 }

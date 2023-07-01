@@ -31,6 +31,23 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@postgresStmt" sys.nvarchar)
+AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
+
+ALTER FUNCTION sys.parsename(VARCHAR,INT) RENAME TO parsename_deprecated_in_3_3_0;
+
+CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
+RETURNS sys.SYSNAME
+AS 'babelfishpg_tsql', 'parsename'
+LANGUAGE C IMMUTABLE STRICT;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_3_0');
+
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
+RETURNS date
+AS 'babelfishpg_tsql', 'EOMONTH'
+LANGUAGE C STABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
@@ -49,6 +66,16 @@ LANGUAGE C;
 
 ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
 
+CREATE OR REPLACE PROCEDURE sys.sp_testlinkedserver(IN "@servername" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_testlinkedserver(IN sys.sysname) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_testlinkedserver( IN "@servername" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
+
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
 -- For example, 'master_dbo' schema can only exist in the 'master' database.
@@ -63,6 +90,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('sp_dropserver', 'master_dbo', 'P'),
     ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
     ('sp_enum_oledb_providers','master_dbo','P'),
+    ('sp_testlinkedserver', 'master_dbo', 'P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
