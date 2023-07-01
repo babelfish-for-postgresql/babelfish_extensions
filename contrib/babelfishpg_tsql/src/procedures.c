@@ -2450,15 +2450,15 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 
 	for(int i = 0; i < nargs; i++)
 	{
-		if(optname[i] != NULL && (strlen(optname[i]) == 13 || strlen(optname[i]) == 15) && (strncmp(optname[i], "query timeout", 13) == 0 || strncmp(optname[i], "connect timeout", 15) == 0))
+		if(optname[i] != NULL && (strlen(optname[i]) == 13 && strncmp(optname[i], "query timeout", 13) == 0) || (strlen(optname[i]) == 15 && strncmp(optname[i], "connect timeout", 15) == 0))
 		{
 			int32	timeout;
 
 			/* we throw error when optvalue == NULL or empty */
 			if (strlen(optvalue[i]) == 0)
-				ereport(ERROR,
+			    ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("Invalid option value for %s", optname[i])));
+					 errmsg("Invalid option value for %s", optname[i])));
 
 			if (optvalue[i][0] == '+')
 				optvalue[i]++;
@@ -2466,14 +2466,14 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 			if (strspn(optvalue[i], "0123456789") != strlen(optvalue[i]))
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("Invalid option value for %s", optname[i])));
+					 errmsg("Invalid option value for %s", optname[i])));
 			else
 				timeout = atoi(optvalue[i]);
 
 			if (timeout < 0)
 				ereport(ERROR,
 					(errcode(ERRCODE_FDW_ERROR),
-					errmsg("%s value provided is out of range",optname[i])));
+					 errmsg("%s value provided is out of range",optname[i])));
 
 			if(strlen(optname[i]) == 13 && strncmp(optname[i], "query timeout", 13) == 0)
 			{
@@ -2490,7 +2490,7 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 		{
 			ereport(ERROR,
 				(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption")));
+				 errmsg("Invalid option provided for sp_serveroption")));
 		}
 	}
 
@@ -2939,7 +2939,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
-	if (optionname && (strlen(optionname) == 13 || strlen(optionname) == 15) && (strncmp(optionname, "query timeout", 13) == 0 || strncmp(optionname, "connect timeout", 15) == 0))
+	if (optionname && (strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0))
 		{
 			optname[0] = optionname;
 			optvalue[0] = newoptionvalue;

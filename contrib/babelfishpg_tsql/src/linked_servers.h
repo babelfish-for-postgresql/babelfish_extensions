@@ -142,6 +142,7 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_SET_VERSION(login)                ((void)0)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)         ((void)0)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	((void)0)
+#define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout)	((void)0)
 
 #define LS_NTBSTRINGBING	0
 #define	LS_INTBIND		0

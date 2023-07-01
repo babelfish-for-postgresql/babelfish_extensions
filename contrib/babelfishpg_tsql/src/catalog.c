@@ -1237,8 +1237,8 @@ get_bbf_servers_def_idx_oid()
 	return bbf_servers_def_idx_oid;
 }
 
-int 
-get_timeout_from_server_name(char *servername,int attnum)
+int
+get_timeout_from_server_name(char *servername, int attnum)
 {
 	Relation	bbf_servers_def_rel;
 	HeapTuple	tuple;
