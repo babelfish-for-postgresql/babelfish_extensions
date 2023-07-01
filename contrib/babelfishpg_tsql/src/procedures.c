@@ -2450,7 +2450,7 @@ update_bbf_server_options(char *servername, char **optname, char **optvalue, boo
 
 	for(int i = 0; i < nargs; i++)
 	{
-		if(optname[i] != NULL && (strlen(optname[i]) == 13 && strncmp(optname[i], "query timeout", 13) == 0) || (strlen(optname[i]) == 15 && strncmp(optname[i], "connect timeout", 15) == 0))
+		if(optname[i] != NULL && ((strlen(optname[i]) == 13 && strncmp(optname[i], "query timeout", 13) == 0) || (strlen(optname[i]) == 15 && strncmp(optname[i], "connect timeout", 15) == 0)))
 		{
 			int32	timeout;
 
@@ -2939,7 +2939,7 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
-	if (optionname && (strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0))
+	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0)))
 		{
 			optname[0] = optionname;
 			optvalue[0] = newoptionvalue;
