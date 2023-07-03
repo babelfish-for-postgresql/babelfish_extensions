@@ -41,6 +41,7 @@ int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
 int pltsql_lock_timeout = -1;
+char	*pltsql_psql_logical_babelfish_db_name = NULL;
 
 
 bool	pltsql_xact_abort = false;
@@ -732,6 +733,15 @@ define_custom_variables(void)
 				 PGC_SUSET,
 				 GUC_NOT_IN_SAMPLE | GUC_NO_RESET_ALL,
 				 NULL, NULL, NULL);
+
+	DefineCustomStringVariable("psql_logical_babelfish_db_name",
+							   gettext_noop("Sets a Babelfish database name from PG endpoint"),
+							   NULL,
+							   &pltsql_psql_logical_babelfish_db_name,
+							   NULL,
+							   PGC_USERSET,
+							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							   NULL, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
 				 gettext_noop("Sets the first day of the week to a number from 1 through 7."),
