@@ -96,9 +96,9 @@ select cast(t.typname as text) as name
     ELSE  c.collname
     END as collation_name
   , case when tt.typrelid is not null then 0
-        else CASE t.typbasetype
-              WHEN 18043 THEN 0
-              WHEN 17171 THEN 0
+        else CASE tsql_base_type_name
+              WHEN 'timestamp' THEN 0
+              WHEN 'sysname' THEN 0
               ELSE case when typnotnull then 0 else 1 end
     end end as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
