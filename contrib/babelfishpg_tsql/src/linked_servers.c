@@ -802,7 +802,7 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 						 ));
 		}
 
-		/* fetch query timeout from the servername */
+		/* fetch connect timeout from the servername */
 		connect_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_connect_timeout);
 
 		/*
