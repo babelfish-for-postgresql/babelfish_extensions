@@ -2752,12 +2752,12 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * We prepare the following query to create a user mapping. This will be
 	 * executed using ProcessUtility():
 	 *
-	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS
+	 * CREATE USER MAPPING FOR PUBLIC SERVER <servername> OPTIONS
 	 * (username '<remote server user name>', password '<remote server user
 	 * password>')
 	 *
 	 */
-	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
+	appendStringInfo(&query, "CREATE USER MAPPING FOR PUBLIC SERVER \"%s\" ", servername);
 
 	/*
 	 * Add the relevant options

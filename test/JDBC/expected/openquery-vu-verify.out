@@ -3542,3 +3542,23 @@ int
 1
 ~~END~~
 
+
+# Call OPENQUERY from a database other than master
+USE tempdb
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Called from tempdb''')
+~~START~~
+varchar
+Called from tempdb
+~~END~~
+
+
+CREATE DATABASE openquery_db
+USE openquery_db
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Called from openquery_db''')
+~~START~~
+varchar
+Called from openquery_db
+~~END~~
+
+USE master
+DROP DATABASE openquery_db

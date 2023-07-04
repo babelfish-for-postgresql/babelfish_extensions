@@ -266,3 +266,13 @@ EXEC openquery_vu_prepare__openquery_proc
 
 # Test function dependent on OPENQUERY
 SELECT openquery_vu_prepare__openquery_func()
+
+# Call OPENQUERY from a database other than master
+USE tempdb
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Called from tempdb''')
+
+CREATE DATABASE openquery_db
+USE openquery_db
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Called from openquery_db''')
+USE master
+DROP DATABASE openquery_db
