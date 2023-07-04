@@ -3,31 +3,36 @@
 
 /*
  * These are the test functions which returns a TestResult structure containing the result of the test.
+ * We will expect some result and the obtained result is compared with the expected result using the TEST_ASSERT and TEST_ASSERT_TESTCASE macro.
+ * If the obtained result matches the expected result, the test passes; otherwise, it fails.
  */
 
 TestResult*
 test_int4_fixeddecimal_ge(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is greater than or equal to val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 1522;
-    val2 = 982;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] >= val2[i]);
+        Datum temp = DirectFunctionCall2(int4_fixeddecimal_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = true;
-    Datum temp = DirectFunctionCall2(int4_fixeddecimal_ge, val1, val2);
-    bool obtained = DatumGetBool(temp);  
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    /*
-     * The expected result is true, indicating that val1 is greater than or equal to val2.
-     * The obtained result is compared with the expected result using the TEST_ASSERT macro.
-     * If the obtained result matches the expected result, the test passes; otherwise, it fails.
-     */  
+    TEST_ASSERT(expected == obtained, testResult);
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
     return testResult;
 }
 
@@ -35,20 +40,30 @@ test_int4_fixeddecimal_ge(void)
 TestResult*
 test_int4_fixeddecimal_le(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is lesser than or equal to val2 or not.
+     */   
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 2345;
-    val2 = 1245;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] <= val2[i]);
+        Datum temp = DirectFunctionCall2(int4_fixeddecimal_le, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = false;
-    Datum temp = DirectFunctionCall2(int4_fixeddecimal_le, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    if(testResult->result == false)
+        TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -56,20 +71,30 @@ test_int4_fixeddecimal_le(void)
 TestResult*
 test_int4_fixeddecimal_ne(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is not equal to val2 or not.
+     */   
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 56;
-    val2 = 198;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] != val2[i]);
+        Datum temp = DirectFunctionCall2(int4_fixeddecimal_ne, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = true;
-    Datum temp = DirectFunctionCall2(int4_fixeddecimal_ne, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    if(testResult->result == false)
+        TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -77,20 +102,30 @@ test_int4_fixeddecimal_ne(void)
 TestResult*
 test_int4_fixeddecimal_eq(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is equal to val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 45;
-    val2 = 94;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] == val2[i]);
+        Datum temp = DirectFunctionCall2(int4_fixeddecimal_eq, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = false;
-    Datum temp = DirectFunctionCall2(int4_fixeddecimal_eq, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    if(testResult->result == false)
+        TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -98,20 +133,30 @@ test_int4_fixeddecimal_eq(void)
 TestResult*
 test_int4_fixeddecimal_lt(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is less than val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 100;
-    val2 = 10;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] < val2[i]);
+        Datum temp = DirectFunctionCall2(int4_fixeddecimal_lt, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = false;
-    Datum temp = DirectFunctionCall2(int4_fixeddecimal_lt, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    if(testResult->result == false)
+        TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -119,36 +164,51 @@ test_int4_fixeddecimal_lt(void)
 TestResult*
 test_int4_fixeddecimal_cmp(void)
 {
-    Datum val1;
-    Datum val2;
-    Datum expected;
-    Datum obtained;
-    char expected_str[MAX_TEST_MESSAGE_LENGTH];
-    char obtained_str[MAX_TEST_MESSAGE_LENGTH];
+    /*
+     * This function compares val1 and val2.
+     * val1 > val2 then result will be 1
+     * val1 == val2 then result will be 0
+     * val1 < val2 then result will be -1
+     */ 
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 110;
-    val2 = 100;
+    for (int i = 0; i < numValues; i++) {
+        Datum val1_datum = Int32GetDatum(val1[i]);
+        Datum val2_datum = Int32GetDatum(val2[i]);
 
-    /*
-     * val1 > val2 then result will be 1
-     * val1 == val2 then result will be 0
-     * val1 < val2 then result will be -1
-     */
+        char* testcase = psprintf("%d", i + 1);
+        
+        Datum expected;
+        Datum obtained;
+        char expected_str[MAX_TEST_MESSAGE_LENGTH];
+        char obtained_str[MAX_TEST_MESSAGE_LENGTH];
 
-    expected = 1;
-    obtained = DirectFunctionCall2(int4_fixeddecimal_cmp, val1, val2);   
+        if(val1[i] > val2[i])
+            expected = 1;
+        else if(val1[i] < val2[i])
+            expected = -1;
+        else
+            expected = 0;
 
-    snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%ld", expected);
-    snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%ld", obtained);
+        obtained = DirectFunctionCall2(int4_fixeddecimal_cmp, val1_datum, val2_datum);
+        snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%ld", expected);
+        snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%ld", obtained);
+        
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected_str, obtained_str , testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected_str, obtained_str, testResult);
+    if(testResult->result == false)
+        TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
-
-
 
 
 TestResult*
@@ -177,11 +237,15 @@ test_fixeddecimalum(void)
         MemoryContextSwitchTo(oldcontext);
         errorData = CopyErrorData();
         FlushErrorState();
-        strncpy(testResult->message, errorData->message, MAX_TEST_MESSAGE_LENGTH);
+        snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s, %s", testResult->message, errorData->message);
         testResult->result = true;
         FreeErrorData(errorData);
     }
     PG_END_TRY();
+
+    // If the error doesn't occurr, then the following message gets displayed
+    if(testResult->result == false)
+        strncpy(testResult->message, ", Out of Range error doesn't occur", MAX_TEST_MESSAGE_LENGTH);
 
     return testResult;
 }
@@ -190,20 +254,29 @@ test_fixeddecimalum(void)
 TestResult*
 test_fixeddecimal_int2_ge(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is greater than or equal to val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 365;
-    val2 = 982;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] >= val2[i]);
+        Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = false;
-    Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -211,20 +284,29 @@ test_fixeddecimal_int2_ge(void)
 TestResult*
 test_fixeddecimal_int2_le(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is less than or equal to val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 365;
-    val2 = 982;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] <= val2[i]);
+        Datum temp = DirectFunctionCall2(fixeddecimal_int2_le, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = true;
-    Datum temp = DirectFunctionCall2(fixeddecimal_int2_le, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -232,20 +314,29 @@ test_fixeddecimal_int2_le(void)
 TestResult*
 test_fixeddecimal_int2_gt(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is greater than val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 365;
-    val2 = 982;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] > val2[i]);
+        Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = false;
-    Datum temp = DirectFunctionCall2(fixeddecimal_int2_gt, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -253,20 +344,29 @@ test_fixeddecimal_int2_gt(void)
 TestResult*
 test_fixeddecimal_int2_ne(void)
 {
-    Datum val1;
-    Datum val2;
+    /*
+     * This function checks whether val1 is not equal to val2 or not.
+     */  
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 365;
-    val2 = 982;
+    for (int i = 0; i < numValues; i++) {
+        bool expected = (val1[i] != val2[i]);
+        Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
+        bool obtained = DatumGetBool(temp);  
 
-    bool expected = true;
-    Datum temp = DirectFunctionCall2(fixeddecimal_int2_ne, val1, val2);
-    bool obtained = DatumGetBool(temp);    
+        char* testcase = psprintf("%d", i + 1);
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+    }
 
-    TEST_ASSERT(expected == obtained, expected?"True":"False", obtained?"True":"False", testResult);
+    TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }
 
@@ -274,25 +374,48 @@ test_fixeddecimal_int2_ne(void)
 TestResult*
 test_fixeddecimal_int2_cmp(void)
 {
-    Datum val1;
-    Datum val2;
-    Datum expected;
-    Datum obtained;
-    char expected_str[MAX_TEST_MESSAGE_LENGTH];
-    char obtained_str[MAX_TEST_MESSAGE_LENGTH];
+     /*
+     * This function compares val1 and val2.
+     * val1 > val2 then result will be 1
+     * val1 == val2 then result will be 0
+     * val1 < val2 then result will be -1
+     */ 
+
+    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val2[] = {982, 200, 0, -24, -567, 0};
+
+    int numValues = sizeof(val1) / sizeof(val1[0]);
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    val1 = 100;
-    val2 = 110;
+    for (int i = 0; i < numValues; i++) {
+        Datum val1_datum = Int32GetDatum(val1[i]);
+        Datum val2_datum = Int32GetDatum(val2[i]);
 
-    expected = -1;
-    obtained = DirectFunctionCall2(fixeddecimal_int2_cmp, val1, val2);   
+        char* testcase = psprintf("%d", i + 1);
+        
+        Datum expected;
+        Datum obtained;
+        char expected_str[MAX_TEST_MESSAGE_LENGTH];
+        char obtained_str[MAX_TEST_MESSAGE_LENGTH];
 
-    snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%ld", expected);
-    snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%ld", obtained);
+        if(val1[i] > val2[i])
+            expected = 1;
+        else if(val1[i] < val2[i])
+            expected = -1;
+        else
+            expected = 0;
 
-    TEST_ASSERT(expected == obtained, expected_str, obtained_str, testResult);
+        obtained = DirectFunctionCall2(fixeddecimal_int2_cmp, val1_datum, val2_datum);
+        snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%ld", expected);
+        snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%ld", obtained);
+        
+        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected_str, obtained_str , testResult);
+    }
+
+    if(testResult->result == false)
+        TEST_ASSERT(expected == obtained, testResult);
+
     return testResult;
 }

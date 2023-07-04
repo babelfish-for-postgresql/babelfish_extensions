@@ -19,7 +19,6 @@ typedef struct
     bool enabled;
     char test_func_name[MAX_TEST_NAME_LENGTH];
     char category[MAX_TEST_NAME_LENGTH];
-    char jira[MAX_TEST_NAME_LENGTH];
 } TestInfo;
 
 typedef struct 
@@ -56,9 +55,8 @@ static char* DISABLED = "disabled";
  *          . enabled flag, true to enable
  *          . Human readable test name
  *          . Human readable category, tests can then be run by category, name, or all
- *          . Human readable jira-number, indicating bug fixed if applicable.
  *
- *      . Update for test declarations are needed in apgunit.h
+ *      . Update for test declarations are needed in babelfishpg_unit.h
  *      . New tests can be added in their own file or an existing file if applicable.  If
  *        adding to a new file, update Makefile to reference the new source file.
  */
@@ -66,18 +64,18 @@ static char* DISABLED = "disabled";
 
 TestInfo tests[]=
 {
-    {&test_int4_fixeddecimal_ge, true, "INT4_FIXEDDECIMAL_GE", "Compare", ""},
-    {&test_int4_fixeddecimal_le, true, "INT4_FIXEDDECIMAL_LE", "Compare", ""},
-    {&test_int4_fixeddecimal_ne, true, "INT4_FIXEDDECIMAL_NE", "Equality", ""},
-    {&test_int4_fixeddecimal_eq, true, "INT4_FIXEDDECIMAL_EQ", "Equality", ""},
-    {&test_int4_fixeddecimal_lt, true, "INT4_FIXEDDECIMAL_LT", "Compare", ""},
-    {&test_int4_fixeddecimal_cmp, true, "INT4_FIXEDDECIMAL_CMP", "Compare", ""},
-    {&test_fixeddecimalum, true, "FIXEDDECIMALUM", "OverflowCheck", ""},
-    {&test_fixeddecimal_int2_ge, true, "FIXEDDECIMAL_INT2_GE", "Compare", ""},
-    {&test_fixeddecimal_int2_le, true, "FIXEDDECIMAL_INT2_LE", "Compare", ""},
-    {&test_fixeddecimal_int2_gt, true, "FIXEDDECIMAL_INT2_GT", "Compare", ""},
-    {&test_fixeddecimal_int2_ne, true, "FIXEDDECIMAL_INT2_NE", "Equality", ""},
-    {&test_fixeddecimal_int2_cmp, true, "FIXEDDECIMAL_INT2_CMP", "Compare", ""},
+    {&test_int4_fixeddecimal_ge, true, "GreaterThanOrEqualToCheck_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
+    {&test_int4_fixeddecimal_le, true, "LesserThanOrEqualToCheck_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
+    {&test_int4_fixeddecimal_ne, true, "NotEqualToCheck_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
+    {&test_int4_fixeddecimal_eq, true, "EqualToCheck_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
+    {&test_int4_fixeddecimal_lt, true, "LesserThanCheck_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
+    {&test_int4_fixeddecimal_cmp, true, "Comparison_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
+    {&test_fixeddecimalum, true, "FIXEDDECIMALUM", "babelfish_money_datatype"},
+    {&test_fixeddecimal_int2_ge, true, "GreaterThanOrEqualToCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+    {&test_fixeddecimal_int2_le, true, "LesserThanOrEqualToCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+    {&test_fixeddecimal_int2_gt, true, "GreaterThanCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+    {&test_fixeddecimal_int2_ne, true, "NotEqualToCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+    {&test_fixeddecimal_int2_cmp, true, "Comparison_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
 };
 
 
@@ -176,7 +174,7 @@ calc_tests_for_run(StateInfo *state, int argc, text **argv)
 /*
  * calc_next_test
  *
- * Pass in the position in the test included array are start
+ * Pass in the position in the test included array and start
  * searching forward from position inclusive until end of array
  * or until a test to run is found.  If a test is found return
  * that position, otherwise return the number of tests indicating
@@ -229,11 +227,11 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
     text **arg_ptr;
     int i;
     StateInfo* state;
-    char message[MAX_TEST_MESSAGE_LENGTH];
+    char *message;
     ArrayType *arr;
     Datum *decontructed_arr;
     bool *nulls;
-    
+    size_t message_size = 0;
 
     if (SRF_IS_FIRSTCALL())
     {
@@ -349,12 +347,15 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
          * Writing the content into the log file
          * Content will be test_func_name, result of test, error message if any
          */
+        message_size = strlen(test->test_func_name) + strlen(tr->result ? "PASSED" : "FAILED") + strlen(tr->message) + strlen(tr->testcase_message) + 10;
+        message = palloc(message_size);
+        snprintf(message, message_size, "%s, %s%s%s", test->test_func_name, tr->result ? "PASSED" : "FAILED", tr->message, tr->testcase_message);
+
         file = fopen(filename, "a+");
-        snprintf(message, sizeof(message), "%s, %s, ", test->test_func_name, tr->result ? "PASSED" : "FAILED");
-        strncat(message, tr->message, sizeof(tr->message));
-        fprintf(file, "%s\n", message); 
+        fprintf(file, "%s\n\n\n", message); 
         fclose(file);
 
+        pfree(message);
 
         /*
          * Set the state to run the next test on the next function call

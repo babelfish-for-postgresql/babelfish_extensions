@@ -21,20 +21,37 @@ typedef struct
 {
     bool result;
     char message[MAX_TEST_MESSAGE_LENGTH];
+    char testcase_message[MAX_TEST_MESSAGE_LENGTH];
     uint64 run_time;
 } TestResult;
 
 
-#define TEST_ASSERT(condition, exp, obt, pResult)   \
+#define TEST_ASSERT(condition, pResult)   \
 do {                                \
-    if (!(condition)) {                 \
+    if(pResult->result == false){   \
         snprintf((pResult)->message, \
                 MAX_TEST_MESSAGE_LENGTH, \
-                "Test assertion '%s' failed at %s:%d, Expected: %s  Obtained: %s",  \
-                #condition, __FILE__, __LINE__, exp, obt);      \
+                ", Test assertion '%s' failed at %s:%d",  \
+                #condition, __FILE__, __LINE__);      \
+    }               \
+} while (0)
+
+
+#define TEST_ASSERT_TESTCASE(condition, test_case, exp, obt, pResult)   \
+do {                                \
+    if (!(condition)) {                 \
+        snprintf((pResult)->testcase_message + strlen((pResult)->testcase_message), \
+                MAX_TEST_MESSAGE_LENGTH - strlen((pResult)->testcase_message), \
+                "\nTest Case '%s' failed, Expected: %s  Obtained: %s",  \
+                test_case, exp, obt);      \
         (pResult)->result = false;  \
-        return (pResult);           \
     }                               \
+    else{           \
+        snprintf((pResult)->testcase_message + strlen((pResult)->testcase_message), \
+                MAX_TEST_MESSAGE_LENGTH - strlen((pResult)->testcase_message), \
+                "\nTest Case '%s' passed, Expected: %s  Obtained: %s",  \
+                test_case, exp, obt);      \
+    }               \
 } while (0)
 
 
