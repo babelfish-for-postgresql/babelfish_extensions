@@ -78,6 +78,7 @@ PG_FUNCTION_INFO_V1(float8binary);
 PG_FUNCTION_INFO_V1(binaryfloat4);
 PG_FUNCTION_INFO_V1(binaryfloat8);
 
+
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
@@ -1442,6 +1443,7 @@ PG_FUNCTION_INFO_V1(varbinary_geq);
 PG_FUNCTION_INFO_V1(varbinary_lt);
 PG_FUNCTION_INFO_V1(varbinary_leq);
 PG_FUNCTION_INFO_V1(varbinary_cmp);
+PG_FUNCTION_INFO_V1(varbinaryint4_div);
 
 Datum
 varbinary_eq(PG_FUNCTION_ARGS)
@@ -1504,6 +1506,29 @@ varbinary_leq(PG_FUNCTION_ARGS)
 }
 
 Datum
+varbinaryint4_div(PG_FUNCTION_ARGS)
+{
+       int32      source1 = PG_GETARG_INT32(0);
+       bytea      *source2 = PG_GETARG_BYTEA_PP(1);
+       char       *data = VARDATA_ANY(source2);
+       int32           len;
+       int32           result_len;
+       int32      *resultint = palloc0(sizeof(int32));
+       int32 conv_res = 0;
+       int32 result;
+       len = VARSIZE_ANY_EXHDR(source2);
+       result_len = len > sizeof(int32) ? sizeof(int32) : len;
+       reverse_memcpy((char *) resultint, data, result_len);
+
+       conv_res = (int32) *resultint;
+
+       result = source1 / conv_res;
+       PG_RETURN_INT32(result);
+
+}
+
+
+Datum
 varbinary_cmp(PG_FUNCTION_ARGS)
 {
 	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
@@ -1523,3 +1548,4 @@ varbinary_length(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(limit);
 }
+
