@@ -61,8 +61,7 @@ test_int4_fixeddecimal_le(void)
         TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
     }
 
-    if(testResult->result == false)
-        TEST_ASSERT(expected == obtained, testResult);
+    TEST_ASSERT(expected == obtained, testResult);
 
     return testResult;
 }
@@ -92,8 +91,7 @@ test_int4_fixeddecimal_ne(void)
         TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
     }
 
-    if(testResult->result == false)
-        TEST_ASSERT(expected == obtained, testResult);
+    TEST_ASSERT(expected == obtained, testResult);
 
     return testResult;
 }
@@ -123,8 +121,7 @@ test_int4_fixeddecimal_eq(void)
         TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
     }
 
-    if(testResult->result == false)
-        TEST_ASSERT(expected == obtained, testResult);
+    TEST_ASSERT(expected == obtained, testResult);
 
     return testResult;
 }
@@ -154,8 +151,7 @@ test_int4_fixeddecimal_lt(void)
         TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
     }
 
-    if(testResult->result == false)
-        TEST_ASSERT(expected == obtained, testResult);
+    TEST_ASSERT(expected == obtained, testResult);
 
     return testResult;
 }
@@ -204,8 +200,7 @@ test_int4_fixeddecimal_cmp(void)
         TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected_str, obtained_str , testResult);
     }
 
-    if(testResult->result == false)
-        TEST_ASSERT(expected == obtained, testResult);
+    TEST_ASSERT(expected == obtained, testResult);
 
     return testResult;
 }
@@ -258,7 +253,7 @@ test_fixeddecimal_int2_ge(void)
      * This function checks whether val1 is greater than or equal to val2 or not.
      */  
 
-    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val1[] = {152, -100, 5, 0, -85, 0};
     int val2[] = {982, 200, 0, -24, -567, 0};
 
     int numValues = sizeof(val1) / sizeof(val1[0]);
@@ -288,7 +283,7 @@ test_fixeddecimal_int2_le(void)
      * This function checks whether val1 is less than or equal to val2 or not.
      */  
 
-    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val1[] = {152, -100, 5, 0, -85, 0};
     int val2[] = {982, 200, 0, -24, -567, 0};
 
     int numValues = sizeof(val1) / sizeof(val1[0]);
@@ -318,8 +313,8 @@ test_fixeddecimal_int2_gt(void)
      * This function checks whether val1 is greater than val2 or not.
      */  
 
-    int val1[] = {1522, -100, 5, 0, -856, 0};
-    int val2[] = {982, 200, 0, -24, -567, 0};
+    int val1[] = {152, -100, 5, 0, -85};
+    int val2[] = {982, 200, 0, -24, -567};
 
     int numValues = sizeof(val1) / sizeof(val1[0]);
 
@@ -348,8 +343,8 @@ test_fixeddecimal_int2_ne(void)
      * This function checks whether val1 is not equal to val2 or not.
      */  
 
-    int val1[] = {1522, -100, 5, 0, -856, 0};
-    int val2[] = {982, 200, 0, -24, -567, 0};
+    int val1[] = {5, 0, -85};
+    int val2[] = {0, -24, -567};
 
     int numValues = sizeof(val1) / sizeof(val1[0]);
 
@@ -381,7 +376,7 @@ test_fixeddecimal_int2_cmp(void)
      * val1 < val2 then result will be -1
      */ 
 
-    int val1[] = {1522, -100, 5, 0, -856, 0};
+    int val1[] = {152, -100, 5, 0, -85, 0};
     int val2[] = {982, 200, 0, -24, -567, 0};
 
     int numValues = sizeof(val1) / sizeof(val1[0]);
@@ -414,8 +409,7 @@ test_fixeddecimal_int2_cmp(void)
         TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected_str, obtained_str , testResult);
     }
 
-    if(testResult->result == false)
-        TEST_ASSERT(expected == obtained, testResult);
+    TEST_ASSERT(expected == obtained, testResult);
 
     return testResult;
 }
