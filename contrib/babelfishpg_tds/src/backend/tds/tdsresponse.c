@@ -2637,7 +2637,6 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 							break;
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_NCHAR:
-						case TDS_TYPE_XML:
 						case TDS_TYPE_BINARY:
 
 							/*
@@ -2645,6 +2644,14 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 							 * (CHARBIN_NULL) to indicate NULL
 							 */
 							simpleRowSize += 2;
+							break;
+						case TDS_TYPE_XML:
+							/*
+							 * To send NULL,we have to
+							 * indicate it using 0xffffffffffffffff
+							 * (PLP_NULL)
+							 */
+							simpleRowSize += 8;
 							break;
 						case TDS_TYPE_SQLVARIANT:
 
