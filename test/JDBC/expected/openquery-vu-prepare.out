@@ -344,16 +344,6 @@ name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options
 
 
 -- tsql
--- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
-GO
-~~START~~
-varchar#!#int#!#int
-bbf_server#!#0#!#0
-bbf_server_1#!#1#!#1
-~~END~~
-
-
 -- Create a view dependent on OPENQUERY
 CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
 GO

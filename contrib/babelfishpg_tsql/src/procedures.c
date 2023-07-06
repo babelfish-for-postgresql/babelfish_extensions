@@ -2596,6 +2596,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 	char	   *data_src = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(3));
 	char	   *provstr = PG_ARGISNULL(5) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(5));
 	char	   *catalog = PG_ARGISNULL(6) ? NULL : text_to_cstring(PG_GETARG_TEXT_P(6));
+
 	StringInfoData query;
 
 	bool		provider_warning = false,
