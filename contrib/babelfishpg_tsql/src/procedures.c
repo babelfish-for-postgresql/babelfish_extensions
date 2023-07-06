@@ -2829,14 +2829,26 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following query to drop a linked server login. This will
+	 * We prepare the following queries to drop a linked server login. This will
 	 * be executed using ProcessUtility():
 	 *
-	 * DROP USER MAPPING FOR CURRENT_USER SERVER @SERVERNAME
-	 *
+	 * DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
+	 * DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
+	 * 
+	 * Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
+	 * was not entirely correct because T-SQL linked logins are not user or login specific.
+	 * To address this we now create user mapping for the PG PUBLIC role internally.
+	 * 
+	 * To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
+	 * implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
+	 * and PUBLIC PG roles.
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
+	exec_utility_cmd_helper(query.data);
 
+	resetStringInfo(&query);
+
+	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
 	exec_utility_cmd_helper(query.data);
 
 	if (locallogin)
