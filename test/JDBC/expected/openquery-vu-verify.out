@@ -3516,7 +3516,7 @@ text
 select name, connect_timeout from sys.servers where name = 'bbf_server_2'
 ~~START~~
 varchar#!#int
-bbf_server_2#!#0
+bbf_server_2#!#1
 ~~END~~
 
 

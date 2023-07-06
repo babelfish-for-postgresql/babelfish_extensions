@@ -99,6 +99,7 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 
+/* server options and their default values for babelfish_server_options catalog insert */
 char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
 char	   * srvOptions_optvalue[BBF_SERVERS_DEF_NUM_COLS - 1] = {"0", "0"};
 
@@ -2444,14 +2445,15 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 
 	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
-	if(isInsert && optname == NULL && optvalue == NULL)
+	/* need not check for optname and optvalue when isInsert = true */
+	if(isInsert)
 	{
 		for(int i = 0; i < nargs; i++)
 		{
+			/* check required to allow only timeout server options inside the if block */
 			if((strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0) || (strlen(srvOptions_optname[i]) == 15 && strncmp(srvOptions_optname[i], "connect timeout", 15) == 0))
 			{
-				int32	timeout;
-				timeout = atoi(srvOptions_optvalue[i]);
+				int32	timeout = atoi(srvOptions_optvalue[i]);
 				if(strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0)
 					new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
 				else
@@ -2461,7 +2463,7 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 	}
 	else
 	{
-		if(optname!= NULL && (strlen(optname) == 13 || strlen(optname) == 15) && (strncmp(optname, "query timeout", 13) == 0 || strncmp(optname, "connect timeout", 15) == 0))
+		if (optname && ((strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0 ) || (strlen(optname) == 15 && strncmp(optname, "connect timeout", 15) == 0)))
 		{
 			int32	timeout;
 
@@ -2945,12 +2947,12 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
-	if (optionname && (strlen(optionname) == 13 || strlen(optionname) == 15) && (strncmp(optionname, "query timeout", 13) == 0 || strncmp(optionname, "connect timeout", 15) == 0))
+	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0 ) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0)))
 		update_bbf_server_options(servername, optionname, newoptionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' and 'connection timeout' are currently supported.")));
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.")));
 
 	if(servername)
 		pfree(servername);

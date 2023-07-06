@@ -19,7 +19,7 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_unreachable', @useself = 'FALSE', @rmtuser = 'dummy_usr', @rmtpassword = 'dummy_pwd'
 GO
 
--- Create a non-existing linked server to test connection timeout
+-- Create a non-existing linked server to test connect timeout
 EXEC sp_addlinkedserver  @server = N'bbf_server_2', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc='1.2.3.4', @catalog=N'master'
 GO
 
@@ -199,7 +199,7 @@ GO
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='  1'
 GO
 
-EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='  1'
+EXEC sp_serveroption @server='bbf_server_2', @optname='connect timeout', @optvalue='  1'
 GO
 
 -- psql

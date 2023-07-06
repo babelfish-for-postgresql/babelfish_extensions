@@ -860,7 +860,6 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_SET_QUERY_TIMEOUT(query_timeout);
 		}
 
-
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
 	}
 	PG_CATCH();

@@ -26,11 +26,11 @@ text
 
 
 -- check whether connect_timeout value is getting persisted after the upgrade
-SELECT name, query_timeout FROM sys.servers WHERE name = 'bbf_server_2'
+SELECT name, connect_timeout FROM sys.servers WHERE name = 'bbf_server_2'
 GO
 ~~START~~
 varchar#!#int
-bbf_server_2#!#0
+bbf_server_2#!#1
 ~~END~~
 
 
