@@ -56,7 +56,7 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
-ALTER TABLE sys.babelfish_server_options ADD COLUMN connect_timeout INT;
+ALTER TABLE sys.babelfish_server_options ADD COLUMN IF NOT EXISTS connect_timeout INT;
 
 CREATE OR REPLACE VIEW sys.servers
 AS
