@@ -212,11 +212,6 @@ AS $$
   CREATE TABLE created_table AS SELECT * FROM master_dbo.int8_tbl;
 $$ LANGUAGE SQL;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: function "make_table" already exists with same argument types
-    Server SQLState: 42723)~~
-
 
 SELECT make_table();
 GO
@@ -297,10 +292,7 @@ GO
 -- Test CREATE TABLE AS ... IF NOT EXISTS
 CREATE TABLE ctas_ine_tbl AS SELECT 1;
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "ctas_ine_tbl" already exists
-    Server SQLState: 42P07)~~
+~~ROW COUNT: 1~~
 
 CREATE TABLE ctas_ine_tbl AS SELECT 1 / 0; -- error
 GO
