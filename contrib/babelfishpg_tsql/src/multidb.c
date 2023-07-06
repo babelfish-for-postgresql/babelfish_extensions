@@ -820,6 +820,7 @@ is_select_for_json(SelectStmt *stmt)
 	{
 		ResTarget  *rt = (ResTarget *) n;
 
+
 		if (IsA(rt->val, FuncCall))
 		{
 			FuncCall   *fc = (FuncCall *) rt->val;
