@@ -327,8 +327,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
-		AND ext.dbid = cast(sys.db_id() as oid)
-	ORDER BY "ORDINAL_POSITION";
+		AND ext.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
