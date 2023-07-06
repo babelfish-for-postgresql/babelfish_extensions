@@ -139,6 +139,87 @@ inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
+/*
+ * tsql full-text search configurations for Babelfish
+ */
+
+CREATE TEXT SEARCH DICTIONARY fts_contains_dict (
+    TEMPLATE = simple,
+    STOPWORDS = tsql_contains
+);
+
+COMMENT ON TEXT SEARCH DICTIONARY fts_contains_dict IS 'Babelfish T-SQL full text search CONTAINS dictionary';
+
+CREATE TEXT SEARCH CONFIGURATION fts_contains ( COPY = simple );
+
+COMMENT ON TEXT SEARCH CONFIGURATION fts_contains IS 'Babelfish T-SQL full text search CONTAINS configuration';
+
+ALTER TEXT SEARCH CONFIGURATION fts_contains
+    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart,
+                      word, hword, hword_part
+    WITH fts_contains_dict;
+
+
+
+-- This function performs string rewriting for the full text search CONTAINS predicate
+-- in Babelfish
+
+-- For example, a T-SQL query 
+-- SELECT * FROM t WHERE CONTAINS(txt, '"good old days"')
+-- is rewritten into a Postgres query 
+-- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
+-- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
+-- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
+  RETURNS TEXT AS
+$$
+DECLARE
+  joined_text text;
+  word text;
+BEGIN
+  -- Initialize the joined_text variable
+  joined_text := '';
+
+  -- Strip leading and trailing spaces from the phrase
+  phrase := trim(phrase COLLATE "C") COLLATE "C";
+
+  -- no rewriting is needed if the query is a single word
+  IF position((' ' COLLATE C) IN (phrase COLLATE "C")) = 0 THEN
+    RETURN phrase;
+  END IF;
+
+  -- rewrite phrase queries 
+  -- '"word1 word2 word3"' is rewritten into 'word1<->word2<->word3'
+
+  -- Check if the phrase is surrounded by double quotes
+  IF position(('"' COLLATE "C") IN (phrase COLLATE "C") ) <> 1 OR position(('"' COLLATE "C") IN (reverse(phrase) COLLATE "C")) <> 1 THEN
+    RAISE EXCEPTION 'Phrase must be surrounded by double quotes';
+  END IF;
+
+  -- Strip the double quotes from the phrase
+  phrase := substring(phrase COLLATE "C", 2, length(phrase) - 2) COLLATE "C";
+
+  -- Strip leading and trailing spaces from the phrase
+  phrase := trim(phrase COLLATE "C") COLLATE "C";
+
+  -- Split the phrase into an array of words
+  FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
+    -- Append the word to the joined_text variable
+    joined_text := joined_text || word || '<->';
+  END LOOP;
+
+  -- Remove the trailing "<->" from the joined_text
+  joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
+
+  -- Return the joined_text
+  RETURN joined_text;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+-- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
+
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
