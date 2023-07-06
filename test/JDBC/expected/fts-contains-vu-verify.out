@@ -1,0 +1,350 @@
+
+-- Full syntax of CONTAINS: https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/contains-transact-sql.md
+-- test basic CONTAINS use: ... CONTAINS(col_name, <simple_term>) ...
+-- <simple_term> ::= { word | "phrase" }
+EXEC fts_contains_vu_prepare_p1 'love'
+GO
+~~START~~
+int#!#text
+45#!#Rina : I love that !
+655#!# This is now a convention we are familiar with too , in theatre in particular -- The Phantom of the Opera is also about a disfigured face that needs love 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'other'
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'arts'
+GO
+~~START~~
+int#!#text
+124#!#<h> Reflecting on a quarter-century of growth in Portland 's performing arts scene
+125#!#The highlight of the Portland Center for Performing Arts ' grand-opening in 1987 was a performance by high-wire artists Phillippe Petit and Ann Seward , which reflected the thrilling risk the city had taken with the project 
+130#!#These days , Portland theater , and the city 's arts scene in general , is n't so stripped down 
+137#!# But the size , scope and solidity of the arts in Portland is something that 's grown over the past quarter century 
+138#!#That 1987 and ' 88 marked a pivotal time in Portland arts was clear even then 
+144#!#" Ten or 20 years from now , few will remember all the effort , dreaming , planning and yes , the bickering , mistakes and accusations that marked the creation of the Portland Center for the Performing Arts , " The Oregonian 's Joan Laatz wrote in August , 1987 , when the multi-use New Theater Building ( now named Antoinette Hatfield Hall ) opened 
+152#!# The fear was that higher production costs in the new facilities would make things tougher for most local arts companies , and that the venerable OSF @ @ @ @ @ @ @ @ @ @ 
+169#!#" I think the arts scene was like a young teenager then and has grown up a lot , " says Regional Arts &amp; Culture Council executive director Eloise Damrosch , who moved to Portland in ' 87 
+184#!# The arts -- in tandem with food , beer and wine -- have raised us up 
+192#!# Hampton points to Tom Manley , president of Pacific Northwest College of Art as " probably the best leader of an arts organization the city has 
+199#!#All together , what 's changed and what 's stayed the same add up to an arts scene that , while still facing major challenges , has grown bigger , wider and better integrated into the world around it 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'performing'
+GO
+~~START~~
+int#!#text
+124#!#<h> Reflecting on a quarter-century of growth in Portland 's performing arts scene
+125#!#The highlight of the Portland Center for Performing Arts ' grand-opening in 1987 was a performance by high-wire artists Phillippe Petit and Ann Seward , which reflected the thrilling risk the city had taken with the project 
+144#!#" Ten or 20 years from now , few will remember all the effort , dreaming , planning and yes , the bickering , mistakes and accusations that marked the creation of the Portland Center for the Performing Arts , " The Oregonian 's Joan Laatz wrote in August , 1987 , when the multi-use New Theater Building ( now named Antoinette Hatfield Hall ) opened 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'performance'
+GO
+~~START~~
+int#!#text
+125#!#The highlight of the Portland Center for Performing Arts ' grand-opening in 1987 was a performance by high-wire artists Phillippe Petit and Ann Seward , which reflected the thrilling risk the city had taken with the project 
+140#!# The idea for a set of new performance spaces began taking place around 1976 due to dissatisfaction with Civic Auditorium @ @ @ @ @ @ @ @ @ @ satisfying venue ) 
+168#!# Now , Oregon Ballet Theatre ( the result of a merger of the aforementioned ballet troupes ) survives , White Bird does concert presenting at @ @ @ @ @ @ @ @ @ @ Polaris Dance Theatre each have performance spaces and expanding reputations 
+185#!#The building of the PCPA has n't solved all of the performance-space issues for local companies ( there 's a big , problematic gap between the 900-seat Newmark and the Schnitzer and Keller , which seat close to 3,000 ) 
+630#!# Lydon has said in interviews , and in his autobiography , that this stage persona was partly inspired by Laurence Olivier 's performance of Richard III , in his 1955 film based on the Shakespeare play 
+969#!#Furthermore , Reform said private prisons outperform their public counterparts in four of the performance measures used by the MoJ 
+975#!#It also calls for local pay decision-making to be introduced in prisons , with governors taking on responsibility for deciding staffing arrangements , pay and conditions and performance-related pay 
+983#!#She said : ' ' It is almost impossible to compare the performance and reoffending rates of one establishment with another , partly because prisons hold different categories of offenders and also because prisoners often serve their sentences in a number of different jails 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'quick'
+GO
+~~START~~
+int#!#text
+466#!#Also , putting professional cameras on a Quad , it will need to be a fairly large quad , and the batteries will sort of run out pretty quick 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'grow'
+GO
+~~START~~
+int#!#text
+134#!# Sure , the city 's artsy eccentricities can grow ripe for lampooning , as the TV spoof " Portlandia " has proved 
+151#!#More so than social stature , the goal was for the PCPA to both bring more touring talents to town and give local troupes a comfortable home that would help them grow their audiences , and for PCS to provide a model of quality , stability and professionalism that might lift the community as a whole 
+961#!#The coalition Government denied there had been a ' ' U-turn ' ' on the use of prison competition , while campaigners for prison reform said it was almost @ @ @ @ @ @ @ @ @ @ Tanner , who penned the report The Case for Private Prisons , said : ' ' Twenty years of private prisons have created an effective market which is ready to grow 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'actually'
+GO
+~~START~~
+int#!#text
+32#!#Anne : Marriage equality , which was in the runoff for word of the year , actually won most likely to succeed 
+189#!# " They actually made a case that a great city needs great art , " says BodyVox co-founder Jamey Hampton 
+218#!# As you may remember , we followed a thread for several years over how fast photos are deleted from Facebook 's servers once you delete them from the site ; as of late 2012 , we verified that photos indeed appear to be removed within 30 days of deletion ( our tests showed they were actually removed much faster ) 
+238#!# But if you actually go through with a real deletion , the information should n't be there past 90 days -- and hopefully it will be gone sooner 
+457#!#The name drone actually means a dumb worker ( as in drone bee 
+458#!#People somehow have only associated the word with semi-autonomous killer drones ( which are actually usually manually piloted , which is why they tend to crash all the time 
+465#!#Your Insurance company is unlikely to offer cover , therefore actually having a viable business using such craft @ @ @ @ @ @ @ @ @ @ )
+473#!# But what I discovered after using it for a full day is it 's actually surprisingly great 
+663#!# This was around 1592 -- 75 years before Milton 's attractively tortured Satan , in Paradise Lost , became a model for sexy villains @ @ @ @ @ @ @ @ @ @ found evidence that the real Richard III was not only actually deformed but that his life of battle was truly an ugly one 
+832#!#The long-standing belief is that domesticated dogs are less intelligent than wild animals such as wolves and foxes , yet the central point of The Genius of Dogs is that the opposite is true -- human contact has actually increased the genius of the species 
+1000#!#Last month , scientists from the Hebrew University of Jerusalem reported that washing down red meat with a glass of red can actually prevent the build-up of cholesterol in the body 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'helped'
+GO
+~~START~~
+int#!#text
+187#!# But those two big moves have , over time , proved @ @ @ @ @ @ @ @ @ @ other developments have helped shape the Portland of today 
+262#!#Prosecutors say the arms have helped fuel conflicts and support regimes in Afghanistan , Angola , The Democratic Republic of the Congo , Liberia , Rwanda , Sierra Leone and Sudan 
+682#!#" I want people to understand what these women have been through before they start accusing the doctors who helped them of being murderers , " said Carol 
+910#!# The study investigated whether patients who suffered from clinical depression and had not responded to antidepressant medications could be helped with Botox injections in their frown lines 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'version'
+GO
+~~START~~
+int#!#text
+7#!# ( Indeed , in Yurick 's book , the gang 's mascot , Junior , reads a comic book version of @ @ @ @ @ @ @ @ @ @ , each faction was given a name and a costume theme invoking it , typified by the iconic " Baseball Furies " the protagonist Warriors fight in Riverside Park 
+17#!# It is playable only on the PlayStation 2 and original Xbox ; a version for the PSP was released in 2007
+652#!# The idea , with every new version of the play , is to add to the character 's complexity , to make him more than a mere psycho 
+804#!# All dog owners , in their heart of hearts , are convinced their drooling pet is the canine version of Einstein , only with better grooming 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"come back"'
+GO
+~~START~~
+int#!#text
+6#!#Walter Hill , the director of The Warriors , strove to give a comic-book depiction of the gang 's flight from the Bronx back to their Coney Island turf 
+8#!# After making their way through rival gangs ' turf in Manhattan and then back to Coney Island , the Warriors defeat the gang responsible for Cyrus ' death 
+158#!# What were the largest or most active homegrown companies back in the late ' 80s -- Portland Rep , New Rose , Storefront Portland Civic Theater -- long ago folded 
+174#!#" Back then , there was this grittier , shoestring quality that imbued almost every company , " Mulligan says 
+176#!# But when I look back at that earlier renaissance of the ' 80s , the truth was the talent pool of the city needed to step up 
+290#!# I ca n't wait to get back in the ring with Michael 
+325#!#Judge Linnane , who adjourned the hearing briefly until the terms of settlement were lodged in the court file , put the summary judgment application back for mention on March 6 next 
+362#!#FRENKEL : Saher says that she never thought she would become a refugee , and it scares her to think about what 's happening back in her hometown of Daraa 
+416#!# At Mission Dolores , CyArk worked hard to get behind the very ornately carved reredos , a false wall in back of the altar that was made in Mexico and shipped to the Mission by boat in 1796 
+720#!#The Australopithecus boisei skull was one of several important discoveries Leakey made in her career -- all made despite the fact that she had nearly @ @ @ @ @ @ @ @ @ @ She got thrown out of school very early on and never wanted to go back , and became hugely interested in archaeology , " Richard Leakey , her son , told Archaeology magazine
+889#!# In her book Lots of Candles , Plenty of Cake , Anna Quindlen , the 60-year-old novelist and journalist who famously chronicled thirtysomething life back in the 1980s , wrote that she started using Botox for her frown lines in her mid-50s because she did n't want to look cross when she was n't 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"much of the"'
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"due to"'
+GO
+~~START~~
+int#!#text
+140#!# The idea for a set of new performance spaces began taking place around 1976 due to dissatisfaction with Civic Auditorium @ @ @ @ @ @ @ @ @ @ satisfying venue ) 
+408#!# These sites are at risk , endangered due to everyday exposure to the elements , vandalism , war , urbanization , poorly managed tourism , catastrophic events , and general neglect 
+511#!#A trial was due to be held next month , but Melissa was told last week that the CPS were dropping the case due to " insufficient evidence " 
+562#!# Loans characterized by low down payments @ @ @ @ @ @ @ @ @ @ early accumulations of interest due , or involve balloon or variable future payments , have a higher default rate than more traditional loans 
+705#!# Black guessed that any aborted @ @ @ @ @ @ @ @ @ @ due to the " private choice " of a mother 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"per cent"'
+GO
+~~START~~
+int#!#text
+741#!#38 per cent 
+745#!#76 per cent 
+753#!#20 per cent 
+757#!#48 per cent 
+763#!#78 per cent 3
+764#!#48 per cent respectively 
+912#!# An equal-sized @ @ @ @ @ @ @ @ @ @ Botox , symptoms of depression decreased 47 per cent after six weeks and lasted through the 16-week study period 
+913#!# In the placebo group , there was a nine per cent reduction in symptoms 
+930#!#2 per cent of senior leadership positions , despite comprising 51
+931#!#7 per cent of the population of surveyed areas in greater Montreal 
+933#!#9 per cent , despite visible minorities comprising 22
+934#!#5 per cent of the population 
+936#!#5 per cent of the population , but @ @ @ @ @ @ @ @ @ @ The corporate sector was found to be the least diverse , with women at 15
+937#!#1 per cent and minorities at 2
+938#!#6 per cent 
+939#!# By comparison , the government and education sectors both had over 40 per cent women , with 9
+941#!#4 per cent visible minorities , respectively 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"so-called"'
+GO
+~~START~~
+int#!#text
+561#!#None of these is inherently inappropriate , but they are risky , in much the same way that so-called subprime mortgage lending is risky 
+861#!#The results suggest that adult brains are for more plastic than expected and , aided by so-called neuro-prosthetic devices , can quickly develop new sensory modalities that operate on top of the conventional five senses 
+~~END~~
+
+
+
+EXEC fts_contains_vu_prepare_p1 '"stand up"'
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"every month"'
+GO
+~~START~~
+int#!#text
+495#!#Every month , M
+527#!#Trinity Mirror Merseyside , the Echo 's parent company , is one of the North West 's largest multimedia providers reaching more than 900,000 adults every month 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"as a result"'
+GO
+~~START~~
+int#!#text
+168#!# Now , Oregon Ballet Theatre ( the result of a merger of the aforementioned ballet troupes ) survives , White Bird does concert presenting at @ @ @ @ @ @ @ @ @ @ Polaris Dance Theatre each have performance spaces and expanding reputations 
+681#!#Carol 's fetus was killed by the procedure , but it was virtually identical to those that result in live births 
+690#!#Less severe versions of the condition are survivable , although they result in physical deformities into adulthood 
+974#!#As a result , Reform recommends that all prisons should be subject to competition including the private sector 
+996#!#It usually sets in with the death of tiny ' hair ' cells in the inner ear as a result of ageing 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"in Australia"'
+GO
+~~START~~
+int#!#text
+239#!#<p> NEW YORK -- An associate of a notorious Russian arms dealer was arrested in Australia and charged with conspiring to buy planes so that weapons could be transported to the world 's bloodiest conflicts , a U
+462#!#In Australia , if the aircraft is : Away from residential areas , Below 400 feet above the ground ( yep I know that is fairly low ) Within eyesight of the operator Under 150 kg weight ( but getting clearance from the MAAA for over 50kg is a bit hard )
+468#!#( If the above rules are met , there is no regulation in Australia ( Check out the CASA website , they say it in as few words 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"daily news"'
+GO
+~~START~~
+int#!#text
+479#!#Get daily news by email
+501#!#Get daily news by email
+~~END~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

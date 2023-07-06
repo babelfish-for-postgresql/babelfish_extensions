@@ -22,6 +22,8 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "sys_procedures.sql"
 #include "import_export_compatibility.sql"
 #include "babelfishpg_tsql.sql"
+#include "fts_contains_rewrite.sql"
+#include "fts_config.sql"
 
 /*
  * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason
