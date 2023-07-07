@@ -49,13 +49,6 @@ RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
 LANGUAGE C STABLE PARALLEL SAFE;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 ALTER TABLE sys.babelfish_server_options ADD COLUMN IF NOT EXISTS connect_timeout INT;
 
 CREATE OR REPLACE VIEW sys.servers
@@ -145,3 +138,10 @@ select t.name,t.type, ns.oid as schemaid from
 inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
