@@ -2088,7 +2088,7 @@ GO
 INSERT INTO fts_contains_vu_t VALUES (689, 'After an ultrasound at 21 weeks , Carol ''s fetus was diagnosed with osteogenesis imperfecta , a genetic disorder that results in severe bone fragility ')
 GO
 
-INSERT INTO fts_contains_vu_t VALUES (690, 'Less severe versions of the condition are survivable , although they result in physical deformities into adulthood ')
+INSERT INTO fts_contains_vu_t VALUES (690, 'Less severe condition are survivable , although they result in physical deformities into adulthood ')
 GO
 
 INSERT INTO fts_contains_vu_t VALUES (691, ' Carol ''s fetus , however , had one of the most extreme cases ')
@@ -2673,7 +2673,7 @@ GO
 INSERT INTO fts_contains_vu_t VALUES (884, ' They may never say this , of course , but the sentiment is there ')
 GO
 
-INSERT INTO fts_contains_vu_t VALUES (885, ' That their effort to preserve it often goes awry and they end up looking like plastic versions of themselves ( I ''m looking at you , Nicole Kidman ) is not the point ')
+INSERT INTO fts_contains_vu_t VALUES (885, ' That their effort to preserve it often goes awry and they end up looking like plastic of themselves ( I ''m looking at you , Nicole Kidman ) is not the point ')
 GO
 
 INSERT INTO fts_contains_vu_t VALUES (886, ' It ''s often a function of identity : They are their beauty ')
