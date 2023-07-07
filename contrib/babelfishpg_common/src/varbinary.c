@@ -1443,6 +1443,7 @@ PG_FUNCTION_INFO_V1(varbinary_geq);
 PG_FUNCTION_INFO_V1(varbinary_lt);
 PG_FUNCTION_INFO_V1(varbinary_leq);
 PG_FUNCTION_INFO_V1(varbinary_cmp);
+PG_FUNCTION_INFO_V1(int4varbinary_div);
 PG_FUNCTION_INFO_V1(varbinaryint4_div);
 
 Datum
@@ -1506,7 +1507,7 @@ varbinary_leq(PG_FUNCTION_ARGS)
 }
 
 Datum
-varbinaryint4_div(PG_FUNCTION_ARGS)
+int4varbinary_div(PG_FUNCTION_ARGS)
 {
        int32      source1 = PG_GETARG_INT32(0);
        bytea      *source2 = PG_GETARG_BYTEA_PP(1);
@@ -1521,8 +1522,46 @@ varbinaryint4_div(PG_FUNCTION_ARGS)
        reverse_memcpy((char *) resultint, data, result_len);
 
        conv_res = (int32) *resultint;
+	   if (conv_res == 0)
+		{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+		}
 
        result = source1 / conv_res;
+       PG_RETURN_INT32(result);
+}
+
+Datum
+varbinaryint4_div(PG_FUNCTION_ARGS)
+{
+       int32      source1 = PG_GETARG_INT32(1);
+       bytea      *source2 = PG_GETARG_BYTEA_PP(0);
+       char       *data = VARDATA_ANY(source2);
+       int32           len;
+       int32           result_len;
+       int32      *resultint = palloc0(sizeof(int32));
+       int32 conv_res = 0;
+       int32 result;
+       len = VARSIZE_ANY_EXHDR(source2);
+       result_len = len > sizeof(int32) ? sizeof(int32) : len;
+       reverse_memcpy((char *) resultint, data, result_len);
+
+       conv_res = (int32) *resultint;
+
+	   if (source1 == 0)
+		{
+		ereport(ERROR,
+				(errcode(ERRCODE_DIVISION_BY_ZERO),
+				 errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+		}
+
+       result = conv_res / source1;
        PG_RETURN_INT32(result);
 
 }

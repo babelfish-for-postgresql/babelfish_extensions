@@ -138,14 +138,14 @@ bigint
 select 0x1F / 10;
 go
 ~~START~~
-bigint
+int
 3
 ~~END~~
 
 select 100 / 0x1F;
 go
 ~~START~~
-bigint
+int
 3
 ~~END~~
 

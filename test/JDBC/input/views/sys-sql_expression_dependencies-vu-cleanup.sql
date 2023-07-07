@@ -1,0 +1,9 @@
+USE master
+GO
+
+DROP VIEW sys_sql_expression_dependencies_vu_prepare_view
+GO
+
+DROP PROC sys_sql_expression_dependencies_vu_prepare_proc
+GO
+
