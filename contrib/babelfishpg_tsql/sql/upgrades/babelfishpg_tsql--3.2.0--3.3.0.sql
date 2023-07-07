@@ -144,7 +144,6 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 
-
 -- This function performs string rewriting for the full text search CONTAINS predicate
 -- in Babelfish
 
@@ -203,7 +202,6 @@ $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
 -- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
 
-
 /*
  * tsql full-text search configurations for Babelfish
  */
@@ -225,18 +223,5 @@ ALTER TEXT SEARCH CONFIGURATION fts_contains
     WITH fts_contains_dict;
 
 
-
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-
-
-
-
-
-
-
-
-
-
-
