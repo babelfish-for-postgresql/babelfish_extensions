@@ -3466,7 +3466,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO fts_contains_vu_t VALUES (690, 'Less severe condition are survivable , although they result in physical deformities into adulthood ')
+INSERT INTO fts_contains_vu_t VALUES (690, 'Less severe versions of the condition are survivable , although they result in physical deformities into adulthood ')
 GO
 ~~ROW COUNT: 1~~
 
@@ -4441,7 +4441,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-INSERT INTO fts_contains_vu_t VALUES (885, ' That their effort to preserve it often goes awry and they end up looking like plastic of themselves ( I ''m looking at you , Nicole Kidman ) is not the point ')
+INSERT INTO fts_contains_vu_t VALUES (885, ' That their effort to preserve it often goes awry and they end up looking like plastic versions of themselves ( I ''m looking at you , Nicole Kidman ) is not the point ')
 GO
 ~~ROW COUNT: 1~~
 

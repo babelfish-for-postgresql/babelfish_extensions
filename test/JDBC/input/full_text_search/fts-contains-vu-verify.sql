@@ -29,7 +29,7 @@ GO
 EXEC fts_contains_vu_prepare_p1 'helped'
 GO
 
-EXEC fts_contains_vu_prepare_p1 'edition'
+EXEC fts_contains_vu_prepare_p1 'version'
 GO
 
 EXEC fts_contains_vu_prepare_p1 '"come back"'
