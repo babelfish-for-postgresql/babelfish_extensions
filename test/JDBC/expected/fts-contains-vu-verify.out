@@ -108,14 +108,12 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 'version'
+EXEC fts_contains_vu_prepare_p1 'edition'
 GO
 ~~START~~
 int#!#text
-7#!# ( Indeed , in Yurick 's book , the gang 's mascot , Junior , reads a comic book version of @ @ @ @ @ @ @ @ @ @ , each faction was given a name and a costume theme invoking it , typified by the iconic " Baseball Furies " the protagonist Warriors fight in Riverside Park 
-17#!# It is playable only on the PlayStation 2 and original Xbox ; a version for the PSP was released in 2007
-652#!# The idea , with every new version of the play , is to add to the character 's complexity , to make him more than a mere psycho 
-804#!# All dog owners , in their heart of hearts , are convinced their drooling pet is the canine version of Einstein , only with better grooming 
+19#!#For this week 's edition of " That 's What They Say , " University of Michigan Professor Anne Curzan spoke with us from Boston , where she was attending the American Dialect Society 's annual meeting , whose 200 members voted on their " Word of the Year 
+848#!# All you need to do is be a Winnipeg Free Press print or e-edition subscriber to join the conversation and give your feedback 
 ~~END~~
 
 
@@ -212,7 +210,7 @@ GO
 int#!#text
 168#!# Now , Oregon Ballet Theatre ( the result of a merger of the aforementioned ballet troupes ) survives , White Bird does concert presenting at @ @ @ @ @ @ @ @ @ @ Polaris Dance Theatre each have performance spaces and expanding reputations 
 681#!#Carol 's fetus was killed by the procedure , but it was virtually identical to those that result in live births 
-690#!#Less severe versions of the condition are survivable , although they result in physical deformities into adulthood 
+690#!#Less severe condition are survivable , although they result in physical deformities into adulthood 
 974#!#As a result , Reform recommends that all prisons should be subject to competition including the private sector 
 996#!#It usually sets in with the death of tiny ' hair ' cells in the inner ear as a result of ageing 
 ~~END~~
