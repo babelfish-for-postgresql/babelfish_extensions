@@ -99,6 +99,10 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
 
+/* server options and their default values for babelfish_server_options catalog insert */
+char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
+char	   * srvOptions_optvalue[BBF_SERVERS_DEF_NUM_COLS - 1] = {"0", "0"};
+
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
 {
@@ -2437,84 +2441,123 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 	ScanKeyData		key;
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
+	int		nargs = BBF_SERVERS_DEF_NUM_COLS - 1;
 
-	if (optname != NULL && strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
+	MemSet(new_record_repl, false, sizeof(new_record_repl));
+
+	/* need not check for optname and optvalue when isInsert = true */
+	if(isInsert)
 	{
-		int32		query_timeout;
-
-		/* we throw error when optvalue == NULL or empty */
-		if (optvalue == NULL || strlen(optvalue) == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Invalid option value for query timeout")));
-
-		if (optvalue[0] == '+')
-			optvalue++;
-
-		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Invalid option value for query timeout")));
-		else
-			query_timeout = atoi(optvalue);
-
-		if (query_timeout < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Query timeout value provided is out of range")));
-
-		bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-									 	RowExclusiveLock);
-		bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
-
-		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-		MemSet(new_record_repl, false, sizeof(new_record_repl));
-
-		new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
-		new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(query_timeout);
-
-		if(isInsert)
+		for(int i = 0; i < nargs; i++)
 		{
-			tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
-									new_record, new_record_nulls);
-			CatalogTupleInsert(bbf_servers_def_rel, tuple);
-		}
-		else
-		{
-			/* Search and obtain the tuple based on the server_id */	
-			ScanKeyInit(&key,
-						Anum_bbf_servers_def_servername,
-						BTEqualStrategyNumber, F_TEXTEQ,
-						CStringGetTextDatum(servername));
-			tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-			old_tuple = heap_getnext(tblscan, ForwardScanDirection);
-
-			if (!old_tuple)
+			/* check required to allow only timeout server options inside the if block */
+			if((strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0) || (strlen(srvOptions_optname[i]) == 15 && strncmp(srvOptions_optname[i], "connect timeout", 15) == 0))
 			{
-				table_endscan(tblscan);
-				table_close(bbf_servers_def_rel, RowExclusiveLock);
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_ERROR),
-				 		errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
+				int32	timeout = atoi(srvOptions_optvalue[i]);
+				if(strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0)
+					new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
+				else
+					new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
 			}
-			new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
-			tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
-									new_record, new_record_nulls, new_record_repl);
-			
-			CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
-			table_endscan(tblscan);
 		}
-
-		heap_freetuple(tuple);
-
-		table_close(bbf_servers_def_rel, RowExclusiveLock);
 	}
 	else
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption")));
+		if (optname && ((strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0 ) || (strlen(optname) == 15 && strncmp(optname, "connect timeout", 15) == 0)))
+		{
+			int32	timeout;
+
+			/* we throw error when optvalue == NULL or empty */
+			if (strlen(optvalue) == 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Invalid option value for %s", optname)));
+
+			if (optvalue[0] == '+')
+				optvalue++;
+
+			if (strspn(optvalue, "0123456789") != strlen(optvalue))
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Invalid option value for %s", optname)));
+			else
+				timeout = atoi(optvalue);
+
+			if (timeout < 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("%s value provided is out of range",optname)));
+
+			if(strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
+			{
+				new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
+				new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
+			}
+			else
+			{
+				new_record_repl[Anum_bbf_servers_def_connect_timeout - 1] = true;
+				new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
+			}
+		}
+		else
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("Invalid option provided for sp_serveroption")));
+		}
 	}
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
+	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
+
+	if(isInsert)
+	{
+		tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
+								new_record, new_record_nulls);
+		CatalogTupleInsert(bbf_servers_def_rel, tuple);
+	}
+	else
+	{
+		ScanKeyInit(&key,
+					Anum_bbf_servers_def_servername,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					CStringGetTextDatum(servername));
+		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+
+		if (!old_tuple)
+		{
+			table_endscan(tblscan);
+			table_close(bbf_servers_def_rel, RowExclusiveLock);
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
+		}
+
+		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS; i++)
+		{
+			if(!new_record_repl[i])
+			{
+				bool isNull;
+				new_record[i] = heap_getattr(old_tuple, i+1,
+												RelationGetDescr(bbf_servers_def_rel), &isNull);
+			}
+		}
+
+		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
+									new_record, new_record_nulls, new_record_repl);
+
+		CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
+		table_endscan(tblscan);
+
+	}
+
+	heap_freetuple(tuple);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
+
 }
 
 static void 
@@ -2639,7 +2682,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	exec_utility_cmd_helper(query.data);
 
-	update_bbf_server_options(linked_server, "query timeout", "0", true);
+	update_bbf_server_options(linked_server, NULL, NULL, true);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2905,12 +2948,12 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
-	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
+	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0 ) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0)))
 		update_bbf_server_options(servername, optionname, newoptionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' is currently supported.")));
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.")));
 
 	if(servername)
 		pfree(servername);
