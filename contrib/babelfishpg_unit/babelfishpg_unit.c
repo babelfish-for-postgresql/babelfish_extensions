@@ -370,6 +370,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
     /*
      * All the requested tests have been processed, do final return
      */
+    pfree(state->test_included);
     pfree(state);
     SRF_RETURN_DONE(fctx);
 }
