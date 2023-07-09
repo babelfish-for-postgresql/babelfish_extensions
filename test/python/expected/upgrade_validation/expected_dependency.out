@@ -777,10 +777,12 @@ Operator sys.-(sys.tinyint,sys.smallmoney)
 Operator sys.-(sys.tinyint,sys.tinyint)
 Operator sys./(bigint,sys.fixeddecimal)
 Operator sys./(bigint,sys.smallmoney)
+Operator sys./(integer,sys.bbf_varbinary)
 Operator sys./(integer,sys.fixeddecimal)
 Operator sys./(integer,sys.smallmoney)
 Operator sys./(smallint,sys.fixeddecimal)
 Operator sys./(smallint,sys.smallmoney)
+Operator sys./(sys.bbf_varbinary,integer)
 Operator sys./(sys.fixeddecimal,bigint)
 Operator sys./(sys.fixeddecimal,integer)
 Operator sys./(sys.fixeddecimal,smallint)
@@ -975,6 +977,7 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
+View sys.sql_expression_dependencies
 View sys.stats
 View sys.synonyms
 View sys.syscharsets
