@@ -53,7 +53,7 @@ int
 ~~END~~
 
 ~~START~~
-bigint
+int
 1028
 ~~END~~
 
