@@ -16,9 +16,4 @@ extern void rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *tar
 extern void pre_transform_setop_tree(SelectStmt *stmt, SelectStmt *leftmostSelect);
 extern void post_transform_sort_clause(Query *qry, Query *leftmostQuery);
 
-typedef struct namespace_stack {
-	struct namespace_stack *prev;
-	List *namespace;
-} namespace_stack_t;
-
 #endif							/* TSQL_ANALYZE_H */
