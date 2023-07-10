@@ -3,7 +3,8 @@ CREATE EXTENSION pg_stat_statements WITH SCHEMA sys;
 go
 
 -- psql
-SET sys.pg_stat_statements.track = 'none';
+SET sys.pg_stat_statements.track = 'top';
+SET compute_query_id = 1;
 SELECT sys.pg_stat_statements_reset();
 go
 

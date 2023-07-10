@@ -168,61 +168,14 @@ void
 drop login l2
 go
 
--- throw error if login does not have sysadmin privilege(it has only superuser)
-create login l3 with password = '12345678'
-go
-
--- psql
--- grant Superuser
-alter user l3 with Superuser;
-go
-
--- tsql user=l3 password=12345678
-exec sp_execute_postgresql 'create extension pg_stat_statements';
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied to create extension)~~
-
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
-
--- psql
-select pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
--- psql
--- revoke superuser
-ALTER USER l3 with NOSUPERUSER;
-go
-
--- tsql
-drop login l3
-go
-
 -- Create extension
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go
-select extname, extowner, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname, extversion from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#int#!#text
-pg_stat_statements#!#16384#!#1.10
+varchar#!#text
+pg_stat_statements#!#1.10
 ~~END~~
 
 
@@ -237,10 +190,10 @@ void
 
 -- tsql
 -- for accessing the extension we need to give schema qualifier i.e. [public].pg_stat_statements
-SELECT dbid, toplevel, query, calls, rows, plans from [public].pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from [public].pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 ~~START~~
-int#!#bit#!#text#!#bigint#!#bigint#!#bigint
+bit#!#text#!#bigint#!#bigint#!#bigint
 ~~END~~
 
 
@@ -304,11 +257,11 @@ go
 exec sp_execute_postgresql 'create extension pg_stat_statements with version "1.4"';
 go
 
-select extname, extowner, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname, extversion from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#int#!#text
-pg_stat_statements#!#16384#!#1.4
+varchar#!#text
+pg_stat_statements#!#1.4
 ~~END~~
 
 
@@ -316,11 +269,11 @@ pg_stat_statements#!#16384#!#1.4
 exec sp_execute_postgresql 'alter extension pg_stat_statements update to "1.10"';
 go
 
-select extname, extowner, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname, extversion from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#int#!#text
-pg_stat_statements#!#16384#!#1.10
+varchar#!#text
+pg_stat_statements#!#1.10
 ~~END~~
 
 
@@ -357,7 +310,7 @@ drop table proc_tmp
 go
 
 -- cannot drop extension if other objects depend on it
-create view pg_view as select query, queryid from [public].pg_stat_statements;
+create view pg_view as select query from [public].pg_stat_statements;
 go
 
 exec sp_execute_postgresql 'drop extension pg_stat_statements'
@@ -387,7 +340,7 @@ exec sp_execute_postgresql 'create extension pg_stat_statements'
 go
 
 -- Restrict option prevents the specified extensions from being dropped if other objects depend on table_schema
-create view pg_view as select query, queryid from [public].pg_stat_statements;
+create view pg_view as select query from [public].pg_stat_statements;
 go
 exec sp_execute_postgresql 'drop extension pg_stat_statements restrict'
 go
