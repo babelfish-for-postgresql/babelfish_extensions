@@ -45,7 +45,7 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     make check
     ```
 
-    Alternatively, if you want to build with SSL support, configure the PG engine with `--with-openssl`:
+    Alternatively, if you want to build the engine with SSL support, configure the PG engine with `--with-openssl`:
     ```
     ./configure --prefix=$HOME/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --with-openssl
     ```
