@@ -742,7 +742,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	ListCell	*option;
 	char	*data_src = NULL;
 	char	*database = NULL;
-	int 	query_timeout = 0;
+	int	query_timeout = 0;
+	int	connect_timeout = 0;
 
 	if (!pltsql_enable_linked_servers)
 		ereport(ERROR,
@@ -801,12 +802,15 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 						 ));
 		}
 
+		/* fetch connect timeout from the servername */
+		connect_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_connect_timeout);
+
 		/*
 		 * fetch query timeout from the servername
 		 * Don't fetch when testing connection as query timeout is not required
 		 */
 		if(!isTesting)
-			query_timeout = get_query_timeout_from_server_name(servername);
+			query_timeout = get_timeout_from_server_name(servername, Anum_bbf_servers_def_query_timeout);
 
 		LINKED_SERVER_SET_APP(login);
 		LINKED_SERVER_SET_VERSION(login);
@@ -834,6 +838,11 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 			LINKED_SERVER_DEBUG("LINKED SERVER: Setting database as \"%s\" in login request", database);
 
 			LINKED_SERVER_SET_DBNAME(login, database);
+		}
+
+		if(connect_timeout > 0)
+		{
+			LINKED_SERVER_SET_CONNECT_TIMEOUT(connect_timeout);
 		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
@@ -1331,6 +1340,7 @@ openquery_internal(PG_FUNCTION_ARGS)
 Datum
 sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 {
+#ifdef ENABLE_TDS_LIB
 	char *servername = PG_ARGISNULL(0) ? NULL : lowerstr(text_to_cstring(PG_GETARG_VARCHAR_PP(0)));
 
 	LinkedServerProcess lsproc = NULL;
@@ -1358,7 +1368,9 @@ sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	if(servername)
 		pfree(servername);
-
+#else
+	NO_CLIENT_LIB_ERROR();
+#endif
 	PG_RETURN_VOID();
 
 }
