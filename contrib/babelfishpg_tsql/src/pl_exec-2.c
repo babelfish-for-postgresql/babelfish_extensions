@@ -883,8 +883,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					(argmodes[i] == PROARGMODE_INOUT ||
 					 argmodes[i] == PROARGMODE_OUT))
 				{
-					ListCell   *paramcell;
-					int			j = 0;
+					ListCell   	*paramcell;
+					int		j = 0;
 
 					foreach(paramcell, stmt->params)
 					{
