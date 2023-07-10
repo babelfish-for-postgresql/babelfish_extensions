@@ -3,6 +3,10 @@
 # PROCEDURE WITH NO PARAMS
 create table temp_sp2(a int);
 CREATE PROCEDURE sp_test AS BEGIN insert into temp_sp2 values(1); END;
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "sp_test" already exists with same argument types)~~
+
 storedproc#!#prep#!#sp_test#!#
 ~~ROW COUNT: 1~~
 
@@ -14,6 +18,10 @@ int
 
 drop table temp_sp2;
 drop Procedure sp_test;
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure name "sp_test" is not unique)~~
+
 # PROCEDURE WITH INPUT PARAMETER
 #drop table temp_sp;
 create table temp_sp(a int);
@@ -239,3 +247,94 @@ DROP PROCEDURE sp_test14
 #storedproc#!#prep#!#sp_test19#!#uniqueidentifier|-|a|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c|-|output
 #storedproc#!#prep#!#sp_test19#!#uniqueidentifier|-|a|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c|-|inputoutput
 #DROP PROCEDURE sp_test19
+
+CREATE PROCEDURE sp_test20 (@a INT, @b INT OUTPUT) AS BEGIN Select @a as a, @b as b; SET @b=100; SET @a=1000; END;
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b OUT, @a=@a;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b, @a=@a OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b OUT, @a=@a OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b, @a=@a;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a, @b=@b;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a, @b=@b OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a OUT, @b=@b;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a OUT, @b=@b OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+DROP PROCEDURE sp_test20
