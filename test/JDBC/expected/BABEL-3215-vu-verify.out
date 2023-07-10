@@ -191,6 +191,17 @@ go
 ~~ERROR (Message: invalid reference to FROM-clause entry for table "unionorder1")~~
 
 
+SELECT u.* FROM unionorder1 u
+ORDER BY u.a
+UNION
+SELECT u.* FROM unionorder u
+ORDER BY u.b
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "UNION")~~
+
+
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
 UNION
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
@@ -663,6 +674,16 @@ int#!#varchar
 ~~END~~
 
 
+select val from babel4210_t1
+UNION
+select t1_id from babel4210_t2
+ORDER BY babel4210_t1.id
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+
+
 WITH babel4210_cte (id, val) AS
 (
     select babel4210_t1.id, babel4210_t3.val FROM babel4210_t1
@@ -715,6 +736,16 @@ int#!#varchar
 2#!#Y
 3#!#z
 ~~END~~
+
+
+select top 2 babel4210_t1.id from babel4210_t1
+union
+select top 1 babel4210_t2.t1_id from babel4210_t2
+ORDER BY babel4210_t2.t1_id DESC
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "babel4210_t2")~~
 
 
 drop table babel4210_t1;

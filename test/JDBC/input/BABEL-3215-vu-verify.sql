@@ -91,6 +91,13 @@ SELECT u.*  FROM unionorder1 u
 ORDER BY unionorder1.c1
 go
 
+SELECT u.* FROM unionorder1 u
+ORDER BY u.a
+UNION
+SELECT u.* FROM unionorder u
+ORDER BY u.b
+go
+
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
 UNION
 SELECT u1.c1, u2.c2 FROM unionorder1 u1, unionorder2 u2 where u1.c1 = u2.c2
@@ -370,6 +377,12 @@ GROUP BY babel4210_t2.val
 ORDER BY COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val;
 go
 
+select val from babel4210_t1
+UNION
+select t1_id from babel4210_t2
+ORDER BY babel4210_t1.id
+go
+
 WITH babel4210_cte (id, val) AS
 (
     select babel4210_t1.id, babel4210_t3.val FROM babel4210_t1
@@ -396,6 +409,12 @@ SELECT babel4210_cte.* FROM babel4210_cte
 INTERSECT
 SELECT babel4210_cte.* FROM babel4210_cte
 ORDER BY babel4210_cte.val, babel4210_cte.id;
+GO
+
+select top 2 babel4210_t1.id from babel4210_t1
+union
+select top 1 babel4210_t2.t1_id from babel4210_t2
+ORDER BY babel4210_t2.t1_id DESC
 GO
 
 drop table babel4210_t1;

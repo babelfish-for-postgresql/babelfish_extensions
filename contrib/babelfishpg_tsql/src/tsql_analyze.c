@@ -23,9 +23,6 @@
 
 static RangeVar *find_matching_table(RangeVar *target, Node *tblref);
 
-List *sv_setop_exprs = NIL;
-namespace_stack_t *set_op_ns_stack = NULL;
-
 /*
  * If a table alias is used when specifying the target table, we need to refer to the
  * FROM clause for table reference.
