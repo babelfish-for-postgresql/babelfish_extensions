@@ -21,7 +21,6 @@ text
 ~~END~~
 
 
--- execution
 select a, count(*) from t_babel4261 group by a order by 2; -- should not crash
 GO
 ~~START~~
