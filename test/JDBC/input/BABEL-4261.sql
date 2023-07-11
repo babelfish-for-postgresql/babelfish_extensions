@@ -13,5 +13,3 @@ GO
 DROP TABLE t_babel4261;
 GO
 
-
--- quip doc : https://quip-amazon.com/MQ3PAadoDe2n/Full-text-search-parallel-query-backward-scan-issue
