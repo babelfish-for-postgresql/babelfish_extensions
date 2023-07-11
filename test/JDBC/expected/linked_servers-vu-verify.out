@@ -128,6 +128,14 @@ mssql_server3#!#tds_fdw#!##!#mssql_server2\ABC#!#<NULL>#!#<NULL>#!#master
 ~~END~~
 
 
+--Try to add a linked server login with same server name but different case (should throw an error)
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'MSSQL_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user mapping for "public" already exists for server "mssql_server2")~~
+
+
 -- Try to drop a linked server login that does not exist (should throw error)
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
 GO
@@ -156,7 +164,16 @@ GO
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "MSSQL_server2", @locallogin = NULL
 GO
 
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3", @locallogin = NULL
+-- leading spaces are not ignored (should throw error)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "   mssql_server3", @locallogin = NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "   mssql_server3" does not exist)~~
+
+
+-- trailing spaces are ignored
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3    ", @locallogin = NULL
 GO
 
 -- Call sp_droplinkedsrvlogin from master.dbo schema
