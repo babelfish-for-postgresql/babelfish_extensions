@@ -2826,6 +2826,11 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 
+	remove_trailing_spaces(servername);
+
+	/* Check if servername is valid */
+	get_foreign_server_oid(servername, false);
+
 	initStringInfo(&query);
 
 	/*
