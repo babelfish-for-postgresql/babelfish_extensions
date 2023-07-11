@@ -171,22 +171,24 @@ go
 -- Create extension
 exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
 go
-select extname, extversion from pg_extension where extname = 'pg_stat_statements'
+select extname from pg_extension where extname = 'pg_stat_statements'
 go
 ~~START~~
-varchar#!#text
-pg_stat_statements#!#1.10
+varchar
+pg_stat_statements
 ~~END~~
 
 
 -- psql
-SET pg_stat_statements.track = 'none';
+SET pg_stat_statements.track = 'top';
+SET compute_query_id = 1;
 SELECT pg_stat_statements_reset();
 go
 ~~START~~
 void
 
 ~~END~~
+
 
 -- tsql
 -- for accessing the extension we need to give schema qualifier i.e. [public].pg_stat_statements

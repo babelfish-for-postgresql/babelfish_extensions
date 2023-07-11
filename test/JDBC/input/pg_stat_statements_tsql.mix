@@ -9,7 +9,7 @@ SELECT sys.pg_stat_statements_reset();
 go
 
 -- tsql
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 --
@@ -93,7 +93,7 @@ DROP DATABASE pgss_db
 go
 
 -- tsql
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
@@ -105,7 +105,7 @@ go
 SELECT * FROM information_schema.views WHERE TABLE_NAME = 'india customers';
 go
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
@@ -119,7 +119,7 @@ go
 DROP LOGIN  pgss_l1
 go
 
-SELECT dbid, toplevel, query from pg_stat_statements ORDER BY query COLLATE "C";
+SELECT toplevel, query from pg_stat_statements ORDER BY query COLLATE "C";
 go
 
 -- create insert alter select update delete trigger truncate on test table
@@ -162,7 +162,7 @@ SELECT * FROM pgss_test ORDER BY a;
 SELECT * FROM pgss_test WHERE a IN (1, 2, 3, 4, 5);
 go
 
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
@@ -299,7 +299,7 @@ go
 
 
 -- tsql
-SELECT dbid, toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
 go
 
 -- psql
