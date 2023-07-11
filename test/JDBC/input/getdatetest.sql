@@ -1,4 +1,4 @@
--- NOTE: Each test is expected to tale a lot of time
+-- NOTE: Each test is expected to take a lot of time
 -- We do not need Upgrade tests for these function
 -- We can only test the stability of this function in the framework since the results are dynamic
 
