@@ -19,6 +19,13 @@ GO
 EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_unreachable', @useself = 'FALSE', @rmtuser = 'dummy_usr', @rmtpassword = 'dummy_pwd'
 GO
 
+-- Create a non-existing linked server to test connect timeout
+EXEC sp_addlinkedserver  @server = N'bbf_server_2', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc='1.2.3.4', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'bbf_server_2', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
 -- Test sp_serveroption procedure
 EXEC sp_addlinkedserver  @server = N'bbf_server_1', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
 GO
@@ -35,16 +42,30 @@ GO
 ~~ERROR (Message: The server 'invalid_server' does not exist. Use sp_linkedservers to show available servers.)~~
 
 
+EXEC sp_serveroption @server='invalid_server', @optname='connect timeout', @optvalue='1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server 'invalid_server' does not exist. Use sp_linkedservers to show available servers.)~~
+
+
 -- sp_serveroption with invalid server option. Should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='invalid option', @optvalue='1'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' is currently supported.)~~
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.)~~
 
 
 -- sp_serveroption with server as NULL. Should throw error
 EXEC sp_serveroption @server=NULL, @optname='query timeout', @optvalue='1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: @server parameter cannot be NULL)~~
+
+
+EXEC sp_serveroption @server=NULL, @optname='connect timeout', @optvalue='1'
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -67,12 +88,26 @@ GO
 ~~ERROR (Message: @optvalue parameter cannot be NULL)~~
 
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue=NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: @optvalue parameter cannot be NULL)~~
+
+
 -- sp_serveroption with negative optvalue
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='-5'
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid option value for query timeout)~~
+
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='-55'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for connect timeout)~~
 
 
 -- sp_serveroption with float optvalue. should throw error
@@ -83,12 +118,26 @@ GO
 ~~ERROR (Message: Invalid option value for query timeout)~~
 
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='1.0001'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for connect timeout)~~
+
+
 -- sp_serveroption with optvalue greater than INT_MAX. should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483648'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Query timeout value provided is out of range)~~
+~~ERROR (Message: query timeout value provided is out of range)~~
+
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='2147483648'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: connect timeout value provided is out of range)~~
 
 
 -- sp_serveroption with optvalue containing characters other than 0-9. should throw error
@@ -99,20 +148,33 @@ GO
 ~~ERROR (Message: Invalid option value for query timeout)~~
 
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='0abcsdejc'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for connect timeout)~~
+
+
 -- sp_serveroption with optvalue = INT_MAX
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='2147483647'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='2147483647'
 GO
 
 -- sp_serveroption with optvalue containing leading zeroes
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='0000002'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='00000007'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 ~~START~~
-varchar#!#int
-bbf_server_1#!#2
+varchar#!#int#!#int
+bbf_server_1#!#2#!#7
 ~~END~~
 
 
@@ -120,12 +182,15 @@ bbf_server_1#!#2
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+9'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='+11'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 ~~START~~
-varchar#!#int
-bbf_server_1#!#9
+varchar#!#int#!#int
+bbf_server_1#!#9#!#11
 ~~END~~
 
 
@@ -137,6 +202,13 @@ GO
 ~~ERROR (Message: Invalid option value for query timeout)~~
 
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='++6'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for connect timeout)~~
+
+
 -- sp_serveroption with optvalue empty. should throw error
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue=''
 GO
@@ -145,12 +217,19 @@ GO
 ~~ERROR (Message: Invalid option value for query timeout)~~
 
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue=''
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option value for connect timeout)~~
+
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 ~~START~~
-varchar#!#int
-bbf_server_1#!#9
+varchar#!#int#!#int
+bbf_server_1#!#9#!#11
 ~~END~~
 
 
@@ -158,12 +237,15 @@ bbf_server_1#!#9
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='+'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 ~~START~~
-varchar#!#int
-bbf_server_1#!#0
+varchar#!#int#!#int
+bbf_server_1#!#0#!#0
 ~~END~~
 
 
@@ -171,12 +253,15 @@ bbf_server_1#!#0
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='+0'
 GO
 
--- check the value of query timeout from sys.servers
-select name, query_timeout from sys.servers where name = 'bbf_server_1'
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='+0'
+GO
+
+-- check the value of query timeout and connect timeout from sys.servers
+select name, query_timeout, connect_timeout from sys.servers where name = 'bbf_server_1'
 GO
 ~~START~~
-varchar#!#int
-bbf_server_1#!#0
+varchar#!#int#!#int
+bbf_server_1#!#0#!#0
 ~~END~~
 
 
@@ -184,16 +269,32 @@ bbf_server_1#!#0
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='5'
 GO
 
+EXEC sp_serveroption @server='bbf_server_1', @optname='connect timeout', @optvalue='5'
+GO
+
 -- optname is case insensitive
 EXEC sp_serveroption @server='bbf_server_1', @optname='queRY tiMEoUt', @optvalue='1'
+GO
+
+EXEC sp_serveroption @server='bbf_server_1', @optname='coNNect TiMeouT', @optvalue='1'
 GO
 
 -- ignore trailing spaces in all the arguments
 EXEC sp_serveroption @server='bbf_server_1  ', @optname='query timeout   ', @optvalue='1    '
 GO
 
+EXEC sp_serveroption @server='bbf_server_1  ', @optname='connect timeout   ', @optvalue='1    '
+GO
+
 -- do not ignore leading spaces in @server argument
 EXEC sp_serveroption @server='  bbf_server_1', @optname='query timeout', @optvalue='1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server '  bbf_server_1' does not exist. Use sp_linkedservers to show available servers.)~~
+
+
+EXEC sp_serveroption @server='  bbf_server_1', @optname='connect timeout', @optvalue='1'
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -205,11 +306,21 @@ EXEC sp_serveroption @server='bbf_server_1', @optname='  query timeout', @optval
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' is currently supported.)~~
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.)~~
+
+
+EXEC sp_serveroption @server='bbf_server_2', @optname='  connect timeout', @optvalue='1'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.)~~
 
 
 -- ignore leading spaces in @optvalue argument
 EXEC sp_serveroption @server='bbf_server_1', @optname='query timeout', @optvalue='  1'
+GO
+
+EXEC sp_serveroption @server='bbf_server_2', @optname='connect timeout', @optvalue='  1'
 GO
 
 -- psql
@@ -228,20 +339,11 @@ varchar#!#varchar#!#varchar#!#jsonb
 name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
+name#!#pg_catalog#!#srvname#!#{"Rule": "<servername> in babelfish_server_options must also exist in pg_foreign_server"}
 ~~END~~
 
 
 -- tsql
--- check if the linked servers are dropped above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1'
-GO
-~~START~~
-varchar#!#int
-bbf_server#!#0
-bbf_server_1#!#1
-~~END~~
-
-
 -- Create a view dependent on OPENQUERY
 CREATE VIEW openquery_vu_prepare__openquery_view AS SELECT * FROM OPENQUERY(bbf_server, 'SELECT 1')
 GO

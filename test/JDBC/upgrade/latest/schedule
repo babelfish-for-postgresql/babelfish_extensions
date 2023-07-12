@@ -227,7 +227,7 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 objectpropertyex
 openjson
-openquery_upgrd
+openquery_upgrd_before_15_4
 orderby
 routines_definition
 rowcount
@@ -407,6 +407,7 @@ Test-sp_addrolemember
 Test-sp_babelfish_volatility
 Test-sp_droprole
 Test-sp_droprolemember
+Test-sp_execute_postgresql
 Test-sp_helpdbfixedrole
 Test-sp_helprole-dep
 Test-sp_helprolemember-dep

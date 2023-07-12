@@ -1,0 +1,62 @@
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT 123')
+GO
+~~START~~
+int
+123
+~~END~~
+
+
+-- check whether query timeout value is getting persisted after the upgrade
+SELECT name, query_timeout FROM sys.servers WHERE name = 'bbf_server_1'
+GO
+~~START~~
+varchar#!#int
+bbf_server_1#!#1
+~~END~~
+
+
+-- should throw error as it takes more than 5 seconds to run
+SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
+GO
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: DB #: 20003, DB Msg: server connection timed out, OS #: 0, OS Msg: Success, Level: 6)~~
+
+
+-- check whether connect_timeout value is getting persisted after the upgrade
+SELECT name, connect_timeout FROM sys.servers WHERE name = 'bbf_server_2'
+GO
+~~START~~
+varchar#!#int
+bbf_server_2#!#1
+~~END~~
+
+
+-- should throw connection timeout error in one second as the server does not exist
+SELECT * FROM OPENQUERY(bbf_server_2, 'select 1')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: DB #: 20009, DB Msg: Unable to connect: server is unavailable or does not exist (1.2.3.4), OS #: 110, OS Msg: Connection timed out, Level: 9)~~
+
+
+-- SELECT * FROM openquery_vu_prepare__openquery_view
+GO
+
+EXEC openquery_upgrd_vu_prepare__openquery_proc
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT openquery_upgrd_vu_prepare__openquery_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
