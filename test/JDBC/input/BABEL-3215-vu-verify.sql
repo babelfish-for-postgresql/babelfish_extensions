@@ -1,3 +1,6 @@
+EXEC babel_3215_unionorder_proc
+go
+
 SELECT u.c1 FROM unionorder1 u
 UNION
 SELECT u.c1 FROM unionorder1 u

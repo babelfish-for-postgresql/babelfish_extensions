@@ -174,7 +174,7 @@ static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NUL
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_setop_tree_hook_type prev_pre_transform_setop_tree_hook = NULL;
-static post_transform_sort_clause_hook2_type prev_post_transform_sort_clause_hook = NULL;
+static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -242,8 +242,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_setop_tree_hook = pre_transform_setop_tree_hook;
 	pre_transform_setop_tree_hook = pre_transform_setop_tree;
-	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook2;
-	post_transform_sort_clause_hook2 = post_transform_sort_clause;
+	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
+	post_transform_sort_clause_hook = post_transform_sort_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -370,7 +370,7 @@ UninstallExtendedHooks(void)
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
-	post_transform_sort_clause_hook2 = prev_post_transform_sort_clause_hook;
+	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;

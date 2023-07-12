@@ -1,3 +1,13 @@
+EXEC babel_3215_unionorder_proc
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+3#!#3
+~~END~~
+
+
 SELECT u.c1 FROM unionorder1 u
 UNION
 SELECT u.c1 FROM unionorder1 u
