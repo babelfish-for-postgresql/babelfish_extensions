@@ -1,0 +1,112 @@
+-- tsql
+create table test_tbl_trig_bbf_1(a int);
+create table test_tbl_trig_bbf_2(a int);
+GO
+
+-- psql
+create table master_dbo.psql_tbl_1(a int unique);
+create table master_dbo.psql_tbl_2(a int);
+GO
+
+-- psql
+grant all on master_dbo.psql_tbl_1 to public;
+GO
+
+-- psql
+CREATE OR REPLACE FUNCTION master_dbo.f_trig_pg_1() RETURNS trigger
+AS $$
+BEGIN
+        insert into master_dbo.psql_tbl_1 values (1);
+        RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- psql
+CREATE OR REPLACE FUNCTION master_dbo.f_trig_pg_2() RETURNS trigger
+AS $$
+BEGIN
+        insert into master_dbo.psql_tbl_2 values (1);
+        RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- psql
+CREATE TRIGGER pg_trigger_1 AFTER INSERT OR DELETE OR UPDATE ON master_dbo.test_tbl_trig_bbf_1 
+    FOR EACH ROW EXECUTE FUNCTION master_dbo.f_trig_pg_1();
+GO
+
+-- psql
+CREATE TRIGGER pg_trigger_2 AFTER INSERT OR DELETE OR UPDATE ON master_dbo.test_tbl_trig_bbf_2 
+    FOR EACH ROW EXECUTE FUNCTION master_dbo.f_trig_pg_2();
+GO
+
+-- tsql
+begin tran;
+GO
+
+insert into test_tbl_trig_bbf_1 values (1);
+GO
+
+select @@trancount;
+GO
+
+commit tran;
+GO
+
+select count(*) from test_tbl_trig_bbf_1;
+GO
+
+select count(*) from psql_tbl_1;
+GO
+
+begin tran;
+GO
+
+-- should throw permission denied error
+insert into test_tbl_trig_bbf_2 values (1);
+GO
+
+select @@trancount
+GO
+
+rollback tran;
+GO
+
+select count(*) from test_tbl_trig_bbf_2;
+GO
+
+begin tran;
+GO
+
+-- should throw duplicte entry error
+insert into test_tbl_trig_bbf_1 values (1);
+GO
+
+select @@trancount;
+GO
+
+rollback tran;
+GO
+
+select count(*) from test_tbl_trig_bbf_1;
+GO
+
+select count(*) from psql_tbl_1;
+GO
+
+
+-- psql
+drop function master_dbo.f_trig_pg_1() cascade;
+drop function master_dbo.f_trig_pg_2() cascade;
+GO
+
+drop table master_dbo.psql_tbl_1;
+drop table master_dbo.psql_tbl_2;
+GO
+
+-- tsql
+drop table test_tbl_trig_bbf_1;
+drop table test_tbl_trig_bbf_2;
+GO
