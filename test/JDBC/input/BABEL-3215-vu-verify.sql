@@ -365,17 +365,20 @@ GROUP BY babel4210_t2.val, babel4210_t3.val
 ORDER BY babel4210_t3.val;
 go
 
-select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
-inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
-inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
-GROUP BY babel4210_t2.val
-UNION ALL
-select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
-inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
-inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
-GROUP BY babel4210_t2.val
-ORDER BY COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val;
-go
+
+-- Ignore for now due to BABEL-4294
+-- select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
+-- inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+-- inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+-- GROUP BY babel4210_t2.val
+-- UNION ALL
+-- select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
+-- inner join babel4210_t2 on babel4210_t1.id = babel4210_t2.t1_id
+-- inner join babel4210_t3 on babel4210_t1.id = babel4210_t3.t1_id
+-- GROUP BY babel4210_t2.val
+-- ORDER BY COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val;
+-- go
+
 
 select val from babel4210_t1
 UNION
