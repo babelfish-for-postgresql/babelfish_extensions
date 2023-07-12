@@ -15,6 +15,20 @@ DECLARE
   joined_text text;
   word text;
 BEGIN
+  -- generation term not supported
+  IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
+    RAISE EXCEPTION 'Generation term not supported';
+  END IF;
+
+  -- boolean operators not supported
+  IF position(('&' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('|' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('&!' COLLATE C) IN (phrase COLLATE "C")) <> 0 THEN
+    RAISE EXCEPTION 'Boolean operators not supported';
+  END IF;
+
+  IF position((' AND ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' OR ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' AND NOT ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 THEN
+    RAISE EXCEPTION 'Boolean operators not supported';
+  END IF;
+
   -- Initialize the joined_text variable
   joined_text := '';
 
@@ -22,7 +36,7 @@ BEGIN
   phrase := trim(phrase COLLATE "C") COLLATE "C";
 
   -- no rewriting is needed if the query is a single word
-  IF position((' ' COLLATE C) IN (phrase COLLATE "C")) = 0 THEN
+  IF position((' ' COLLATE C) IN (phrase COLLATE "C")) = 0 AND position(('"' COLLATE C) IN UPPER(phrase COLLATE "C")) = 0 THEN
     RETURN phrase;
   END IF;
 
@@ -42,6 +56,10 @@ BEGIN
 
   -- Split the phrase into an array of words
   FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
+    -- prefix term not supported
+    IF (word COLLATE C) SIMILAR TO ('%\*' COLLATE C)  THEN
+      RAISE EXCEPTION 'Prefix term not supported';
+    END IF;
     -- Append the word to the joined_text variable
     joined_text := joined_text || word || '<->';
   END LOOP;

@@ -238,113 +238,766 @@ int#!#text
 
 
 
+-- REST NOT SUPPORTED YET
+-- test prefix term: ... CONTAINS(col_name, <prefix_term>) ...
+-- <prefix term> ::= { "word*" | "phrase*" } 
+EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Prefix term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 '"pass*"'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Prefix term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 '"daily n*"'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Prefix term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 '"t*"', 20
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Prefix term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 '"independent *"'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Prefix term not supported)~~
 
 
+-- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
+-- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, arts)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, performing)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, quick)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, helped)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "come back")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "stand up")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "move forward")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, play, move)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, play, "plan to")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "play with", "plan to")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
 
+-- test thesaurus generation term: ... CONTAINS(col_name, <thesaurus_generation_term>) ...
+-- <thesaurus_generation_term> ::= FORMSOF ( THESAURUS, <simple_term> [ ,...n ] )
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, arts)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, performing)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, quick)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, helped)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "come back")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "stand up")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "move forward")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, play, move)'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, play, "plan to")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "play with", "plan to")'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Generation term not supported)~~
 
 
 
+-- boolean operators
+-- test boolean operator (<NOT>, <AND NOT>, <OR>) of <contains_search_condition>
+-- <AND> ::= { AND | & }  
+-- <AND NOT> ::= { AND NOT | &! }  
+-- <OR> ::= { OR | | } 
+-- For now only support <simple_term>, <prefix_term>, <generation_term>
+-- test bools of combinations of different kinds of terms
+-- <simple_term> <bool> <simple_term>
+EXEC fts_contains_vu_prepare_p1 'try AND not'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'try & not'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'red AND NOT blue'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'try &! not'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'red OR blue'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'plan | move'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+-- <simple_term> <bool> <prefix_term>
+EXEC fts_contains_vu_prepare_p1 'try AND "n*"'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'try & "n*"'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
 
+EXEC fts_contains_vu_prepare_p1 'red AND NOT "b*"'
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: Boolean operators not supported)~~
 
+
+EXEC fts_contains_vu_prepare_p1 'try &! "n*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'red OR "bl*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'plan | "mon*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+-- <prefix_term> <bool> <simple_term>
+EXEC fts_contains_vu_prepare_p1 '"n*" AND try'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"n*" & try'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"red*" AND NOT blue'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"try*" &! not'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"bl*" OR red'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"mon*" | plan'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+-- <prefix_term> <bool> <prefix_term>
+EXEC fts_contains_vu_prepare_p1 '"n*" AND "red*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"red*" & "n*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"red*" AND NOT "b*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"bl*" &! "r*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"bla*" OR "red*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"red*" | "bla*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+-- <simple_term> <bool> <generation_term>
+EXEC fts_contains_vu_prepare_p1 'name AND FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name & FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name AND NOT FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name &! FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'plan OR FORMSOF(INFLECTIONAL, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'plan | FORMSOF(INFLECTIONAL, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name AND FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name & FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name AND NOT FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'name &! FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'plan OR FORMSOF(THESAURUS, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'plan | FORMSOF(THESAURUS, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+
+-- <generation_term> <bool> <simple_term>
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) & name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) &! name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR plan'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) | plan'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) & name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND NOT name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! name'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) OR plan'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | plan'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+
+-- <prefix_term> <bool> <generation_term>
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" & FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND NOT FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" &! FORMSOF(INFLECTIONAL, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" OR FORMSOF(INFLECTIONAL, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"pla*" | FORMSOF(INFLECTIONAL, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" & FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND NOT FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"nam*" &! FORMSOF(THESAURUS, need)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"pla*" OR FORMSOF(THESAURUS, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"pla*" | FORMSOF(THESAURUS, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Boolean operators not supported)~~
+
+
+
+-- <generation_term> <bool> <prefix_term>
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) & "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) &! "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR "pla*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) | "pla*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) & "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND NOT "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! "nam*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) OR "pla*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | "pla*"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+
+-- <generation_term> <bool> <generation_term>
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND FORMSOF(THESAURUS, name)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAUSUS, need) & FORMSOF(INFLECTIONAL, name)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT FORMSOF(THESAURUS, name)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! FORMSOF(INFLECTIONAL, name)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR FORMSOF(THESAURUS, move)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | FORMSOF(INFLECTIONAL, plan)'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Generation term not supported)~~
 

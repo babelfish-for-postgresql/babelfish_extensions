@@ -64,346 +64,346 @@ EXEC fts_contains_vu_prepare_p1 '"daily news"'
 GO
 
 -- REST NOT SUPPORTED YET
--- COMMENTED OUT
 
--- -- test prefix term: ... CONTAINS(col_name, <prefix_term>) ...
--- -- <prefix term> ::= { "word*" | "phrase*" } 
--- EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
--- GO
+-- test prefix term: ... CONTAINS(col_name, <prefix_term>) ...
+-- <prefix term> ::= { "word*" | "phrase*" } 
+EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"pass*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"pass*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"daily n*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"daily n*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"t*"', 20
--- GO
+EXEC fts_contains_vu_prepare_p1 '"t*"', 20
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"independent *"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"independent *"'
+GO
 
--- -- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
--- -- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'
--- GO
+-- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
+-- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, arts)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, arts)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, performing)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, performing)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, quick)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, quick)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, helped)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, helped)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "come back")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "come back")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "stand up")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "stand up")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "move forward")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "move forward")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, play, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, play, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, play, "plan to")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, play, "plan to")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "play with", "plan to")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, "play with", "plan to")'
+GO
 
 
--- -- test thesaurus generation term: ... CONTAINS(col_name, <thesaurus_generation_term>) ...
--- -- <thesaurus_generation_term> ::= FORMSOF ( THESAURUS, <simple_term> [ ,...n ] )
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
--- GO
+-- test thesaurus generation term: ... CONTAINS(col_name, <thesaurus_generation_term>) ...
+-- <thesaurus_generation_term> ::= FORMSOF ( THESAURUS, <simple_term> [ ,...n ] )
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, arts)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, arts)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, performing)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, performing)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, quick)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, quick)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, helped)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, helped)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "come back")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "come back")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "stand up")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "stand up")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "move forward")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "move forward")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, play, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, play, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, play, "plan to")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, play, "plan to")'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "play with", "plan to")'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, "play with", "plan to")'
+GO
 
--- -- test boolean operator (<NOT>, <AND NOT>, <OR>) of <contains_search_condition>
--- -- <AND> ::= { AND | & }  
--- -- <AND NOT> ::= { AND NOT | &! }  
--- -- <OR> ::= { OR | | } 
--- -- For now only support <simple_term>, <prefix_term>, <generation_term>
--- -- test bools of combinations of different kinds of terms
+-- boolean operators
+-- test boolean operator (<NOT>, <AND NOT>, <OR>) of <contains_search_condition>
+-- <AND> ::= { AND | & }  
+-- <AND NOT> ::= { AND NOT | &! }  
+-- <OR> ::= { OR | | } 
+-- For now only support <simple_term>, <prefix_term>, <generation_term>
+-- test bools of combinations of different kinds of terms
 
--- -- <simple_term> <bool> <simple_term>
--- EXEC fts_contains_vu_prepare_p1 'try AND not'
--- GO
+-- <simple_term> <bool> <simple_term>
+EXEC fts_contains_vu_prepare_p1 'try AND not'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'try & not'
--- GO
+EXEC fts_contains_vu_prepare_p1 'try & not'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'red AND NOT blue'
--- GO
+EXEC fts_contains_vu_prepare_p1 'red AND NOT blue'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'try &! not'
--- GO
+EXEC fts_contains_vu_prepare_p1 'try &! not'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'red OR blue'
--- GO
+EXEC fts_contains_vu_prepare_p1 'red OR blue'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'plan | move'
--- GO
+EXEC fts_contains_vu_prepare_p1 'plan | move'
+GO
 
--- -- <simple_term> <bool> <prefix_term>
--- EXEC fts_contains_vu_prepare_p1 'try AND "n*"'
--- GO
+-- <simple_term> <bool> <prefix_term>
+EXEC fts_contains_vu_prepare_p1 'try AND "n*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'try & "n*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'try & "n*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'red AND NOT "b*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'red AND NOT "b*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'try &! "n*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'try &! "n*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'red OR "bl*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'red OR "bl*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'plan | "mon*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'plan | "mon*"'
+GO
 
--- -- <prefix_term> <bool> <simple_term>
--- EXEC fts_contains_vu_prepare_p1 '"n*" AND try'
--- GO
+-- <prefix_term> <bool> <simple_term>
+EXEC fts_contains_vu_prepare_p1 '"n*" AND try'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"n*" & try'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"n*" & try'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"red*" AND NOT blue'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"red*" AND NOT blue'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"try*" &! not'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"try*" &! not'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"bl*" OR red'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"bl*" OR red'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"mon*" | plan'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"mon*" | plan'
+GO
 
--- -- <prefix_term> <bool> <prefix_term>
--- EXEC fts_contains_vu_prepare_p1 '"n*" AND "red*"'
--- GO
+-- <prefix_term> <bool> <prefix_term>
+EXEC fts_contains_vu_prepare_p1 '"n*" AND "red*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"red*" & "n*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"red*" & "n*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"red*" AND NOT "b*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"red*" AND NOT "b*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"bl*" &! "r*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"bl*" &! "r*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"bla*" OR "red*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"bla*" OR "red*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"red*" | "bla*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"red*" | "bla*"'
+GO
 
--- -- <simple_term> <bool> <generation_term>
--- EXEC fts_contains_vu_prepare_p1 'name AND FORMSOF(INFLECTIONAL, need)'
--- GO
+-- <simple_term> <bool> <generation_term>
+EXEC fts_contains_vu_prepare_p1 'name AND FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name & FORMSOF(INFLECTIONAL, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name & FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name AND NOT FORMSOF(INFLECTIONAL, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name AND NOT FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name &! FORMSOF(INFLECTIONAL, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name &! FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'plan OR FORMSOF(INFLECTIONAL, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'plan OR FORMSOF(INFLECTIONAL, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'plan | FORMSOF(INFLECTIONAL, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'plan | FORMSOF(INFLECTIONAL, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name AND FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name AND FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name & FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name & FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name AND NOT FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name AND NOT FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'name &! FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'name &! FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'plan OR FORMSOF(THESAURUS, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'plan OR FORMSOF(THESAURUS, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'plan | FORMSOF(THESAURUS, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'plan | FORMSOF(THESAURUS, move)'
+GO
 
 
--- -- <generation_term> <bool> <simple_term>
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND name'
--- GO
+-- <generation_term> <bool> <simple_term>
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) & name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) & name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) &! name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) &! name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR plan'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR plan'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) | plan'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) | plan'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) & name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) & name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND NOT name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND NOT name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! name'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! name'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) OR plan'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) OR plan'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | plan'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | plan'
+GO
 
 
--- -- <prefix_term> <bool> <generation_term>
--- EXEC fts_contains_vu_prepare_p1 '"nam*" AND FORMSOF(INFLECTIONAL, need)'
--- GO
+-- <prefix_term> <bool> <generation_term>
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" & FORMSOF(INFLECTIONAL, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" & FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" AND NOT FORMSOF(INFLECTIONAL, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND NOT FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" &! FORMSOF(INFLECTIONAL, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" &! FORMSOF(INFLECTIONAL, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" OR FORMSOF(INFLECTIONAL, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" OR FORMSOF(INFLECTIONAL, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"pla*" | FORMSOF(INFLECTIONAL, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"pla*" | FORMSOF(INFLECTIONAL, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" AND FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" & FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" & FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" AND NOT FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" AND NOT FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"nam*" &! FORMSOF(THESAURUS, need)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"nam*" &! FORMSOF(THESAURUS, need)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"pla*" OR FORMSOF(THESAURUS, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"pla*" OR FORMSOF(THESAURUS, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 '"pla*" | FORMSOF(THESAURUS, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 '"pla*" | FORMSOF(THESAURUS, move)'
+GO
 
 
--- -- <generation_term> <bool> <prefix_term>
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND "nam*"'
--- GO
+-- <generation_term> <bool> <prefix_term>
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) & "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) & "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) &! "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) &! "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR "pla*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR "pla*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) | "pla*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) | "pla*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) & "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) & "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND NOT "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) AND NOT "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! "nam*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! "nam*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) OR "pla*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) OR "pla*"'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | "pla*"'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | "pla*"'
+GO
 
 
--- -- <generation_term> <bool> <generation_term>
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND FORMSOF(THESAURUS, name)'
--- GO
+-- <generation_term> <bool> <generation_term>
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND FORMSOF(THESAURUS, name)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAUSUS, need) & FORMSOF(INFLECTIONAL, name)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAUSUS, need) & FORMSOF(INFLECTIONAL, name)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT FORMSOF(THESAURUS, name)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, need) AND NOT FORMSOF(THESAURUS, name)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! FORMSOF(INFLECTIONAL, name)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, need) &! FORMSOF(INFLECTIONAL, name)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR FORMSOF(THESAURUS, move)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR FORMSOF(THESAURUS, move)'
+GO
 
--- EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | FORMSOF(INFLECTIONAL, plan)'
--- GO
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | FORMSOF(INFLECTIONAL, plan)'
+GO
