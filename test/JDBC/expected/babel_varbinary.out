@@ -164,6 +164,74 @@ go
 ~~ERROR (Message: division by zero)~~
 
 
+--division between varbinary and int4 datatype, vice-versa
+select @@microsoftversion / 0x1000000
+go
+~~START~~
+int
+12
+~~END~~
+
+select 0x1000000 / @@microsoftversion
+go
+~~START~~
+int
+0
+~~END~~
+
+select 0x101 / 0
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 123 / 0x00
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 0 / 0x00
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 0x00 / 0
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 424748364 / 0x101
+go
+~~START~~
+int
+1652717
+~~END~~
+
+select 0x404 / 424748364
+go
+~~START~~
+int
+0
+~~END~~
+
+select -424748364 / 0x101
+go
+~~START~~
+int
+-1652717
+~~END~~
+
+select 0x404 / -424748364
+go
+~~START~~
+int
+0
+~~END~~
+
+
 -- test hex string in procedure
 create procedure test_hex_bitop as
 begin

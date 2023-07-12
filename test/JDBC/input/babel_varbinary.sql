@@ -58,6 +58,28 @@ go
 select 10 / 0x00;
 go
 
+--division between varbinary and int4 datatype, vice-versa
+select @@microsoftversion / 0x1000000
+go
+select 0x1000000 / @@microsoftversion
+go
+select 0x101 / 0
+go
+select 123 / 0x00
+go
+select 0 / 0x00
+go
+select 0x00 / 0
+go
+select 424748364 / 0x101
+go
+select 0x404 / 424748364
+go
+select -424748364 / 0x101
+go
+select 0x404 / -424748364
+go
+
 -- test hex string in procedure
 create procedure test_hex_bitop as
 begin
