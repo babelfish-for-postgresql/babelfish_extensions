@@ -1,5 +1,7 @@
 /*
  * tsql full-text search configurations for Babelfish
+ * Since currently we only support one language - American English, 
+ * this configuration is for American English only
  */
 
 CREATE TEXT SEARCH DICTIONARY fts_contains_dict (
