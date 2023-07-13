@@ -10,7 +10,7 @@ extensions that comprise Babelfish. Note that these extensions depend on
 patches to community PostgreSQL. A repository of those modifications can be
 found [here](https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish).
 
-Build instructions can be found [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_1_X_DEV/contrib/README.md).
+Build instructions can be found [here](contrib/README.md).
  
 More information about Babelfish can be found at [babelfishpg.org](https://babelfishpg.org).
 
