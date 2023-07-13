@@ -693,6 +693,57 @@ is_json_query(List *name)
 }
 
 /*
+* Parse T-SQL CONTAINS predicate. Currently only supports 
+* ... CONTAINS(column_name, '<contains_search_condition>') ...
+* This function transform it into a Postgres AST that stands for
+* to_tsvector('fts_contains', column_name) @@ to_tsquery('fts_contains', babelfish_fts_contains_rewrite('<contains_search_condition>'))
+*/
+static Node *
+TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
+{
+	A_Expr *fts;
+	Node *to_tsvector_call, *to_tsquery_call;
+
+	to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner);
+	to_tsquery_call = makeToTSQueryFuncCall(search_expr);
+	
+	fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
+
+	return (Node *)fts;
+}
+
+/* Transform column_name into to_tsvector('fts_contains', column_name) */
+static Node *
+makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner)
+{
+	Node *col;
+	List *args;
+
+	col = makeColumnRef(colId, NIL, -1, yyscanner);
+
+	args = list_make2(makeStringConst("fts_contains", -1), col);
+
+	return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
+}
+
+/* Tranfrom '<contains_search_condition>' into babelfish_fts_contains_rewrite('<contains_search_condition>' */
+static Node *
+makeToTSQueryFuncCall(Node *search_expr)
+{
+	List		*args;
+	Node		*result_rewrite;
+	List		*args_rewrite;
+
+	args_rewrite = list_make1(search_expr);
+	result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+
+
+	args = list_make2(makeStringConst("fts_contains", -1), result_rewrite);
+	return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);
+}
+
+
+/*
  * helper macro to compare relname in
  * function tsql_update_delete_stmt_with_join
  */
