@@ -449,7 +449,6 @@ Function sys.int4fixeddecimaldiv(integer,sys.smallmoney)
 Function sys.int4int2_avg(bigint[])
 Function sys.int4int2_sum(bigint)
 Function sys.int4rowversion(integer,integer,boolean)
-Function sys.int4varbinary(integer,integer,boolean)
 Function sys.int8_fixeddecimal_cmp(bigint,sys.fixeddecimal)
 Function sys.int8binary(bigint,integer,boolean)
 Function sys.int8bit(bigint)
@@ -782,7 +781,6 @@ Operator sys./(integer,sys.fixeddecimal)
 Operator sys./(integer,sys.smallmoney)
 Operator sys./(smallint,sys.fixeddecimal)
 Operator sys./(smallint,sys.smallmoney)
-Operator sys./(sys.bbf_varbinary,integer)
 Operator sys./(sys.fixeddecimal,bigint)
 Operator sys./(sys.fixeddecimal,integer)
 Operator sys./(sys.fixeddecimal,smallint)
@@ -977,7 +975,6 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
-View sys.sql_expression_dependencies
 View sys.stats
 View sys.synonyms
 View sys.syscharsets

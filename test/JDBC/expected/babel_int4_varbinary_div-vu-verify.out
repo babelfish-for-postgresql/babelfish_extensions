@@ -1,23 +1,23 @@
 USE master
 GO
 
-SELECT * FROM sys_varbinary_int4_vu_prepare_view
+SELECT * FROM sys_int4_varbinary_vu_prepare_view
 GO
 ~~START~~
 int
-1028
+1899
 ~~END~~
 
 
-EXEC sys_varbinary_int4_vu_prepare_proc
+EXEC sys_int4_varbinary_vu_prepare_proc
 GO
 ~~START~~
 int
-32672951
+51
 ~~END~~
 
 
-SELECT sys_varbinary_int4_vu_prepare_func()
+SELECT sys_int4_varbinary_vu_prepare_func()
 GO
 ~~START~~
 int
