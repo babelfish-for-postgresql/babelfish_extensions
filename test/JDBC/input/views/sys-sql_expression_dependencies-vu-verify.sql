@@ -10,3 +10,5 @@ GO
 EXEC sys_sql_expression_dependencies_vu_prepare_proc
 GO
 
+SELECT sys_sql_expression_dependencies_vu_prepare_func()
+GO

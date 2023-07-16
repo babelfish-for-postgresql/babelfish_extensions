@@ -172,7 +172,204 @@ int
 12
 ~~END~~
 
+Select 2147483647 / 0x7FFFFFFF
+go
+~~START~~
+int
+1
+~~END~~
+
+Select 2147483647 / 0x80000000
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 2147483647 / 0x80000001
+go
+~~START~~
+int
+-1
+~~END~~
+
+Select 2147483647 / 0xC0000005
+go
+~~START~~
+int
+-2
+~~END~~
+
+Select -2147483647 / 0xC0000005
+go
+~~START~~
+int
+2
+~~END~~
+
+Select -2147483648 / 0xC0000005
+go
+~~START~~
+int
+2
+~~END~~
+
+SELECT (12345 / CAST(12 AS varbinary(4)))
+go
+~~START~~
+int
+1028
+~~END~~
+
+Select (cast(0x100 as int) / 0x10)
+go
+~~START~~
+int
+16
+~~END~~
+
+Select cast(0x100 as int)/cast(0x10 as varbinary)
+go
+~~START~~
+int
+16
+~~END~~
+
+create table int4var(a varbinary,b int)
+go
+insert into int4var values (0x23 , 2147563)
+go
+~~ROW COUNT: 1~~
+
+insert into int4var values (0xFF ,-2147483647 )
+go
+~~ROW COUNT: 1~~
+
+Select b/a from int4var
+go
+~~START~~
+int
+61358
+-8421504
+~~END~~
+
+Select cast(b as int)/a from int4var
+go
+~~START~~
+int
+61358
+-8421504
+~~END~~
+
+Select (12345+3543647)/(543210 & CAST(12345 AS varbinary(4)))
+go
+~~START~~
+int
+88899
+~~END~~
+
+Select cast(0x4567 as int)/(543210 & CAST(12345 AS varbinary(4)))
+go
+~~START~~
+int
+444
+~~END~~
+
+
 select 0x1000000 / @@microsoftversion
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 0x7FFFFFFF / 2147483647
+go
+~~START~~
+int
+1
+~~END~~
+
+Select 0x80000000 / 2147483647
+go
+~~START~~
+int
+-1
+~~END~~
+
+Select 0x80000001 / 2147483647
+go
+~~START~~
+int
+-1
+~~END~~
+
+Select 0xC0000005 / 2147483647
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 0xC0000005 / -2147483647
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 0xC0000005 / -2147483648
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT (CAST(123456 AS varbinary(4)) / 1234)
+go
+~~START~~
+int
+100
+~~END~~
+
+Select (0x1110 / cast(0x100 as int) )
+go
+~~START~~
+int
+17
+~~END~~
+
+Select cast(0x1234 as varbinary) / cast(0x100 as int)
+go
+~~START~~
+int
+18
+~~END~~
+
+Select a/b from int4var
+go
+~~START~~
+int
+0
+0
+~~END~~
+
+Select a/cast(b as int) from int4var
+go
+~~START~~
+int
+0
+0
+~~END~~
+
+Select (543210565 & CAST(12345 AS varbinary(4)))/(12345+3543647)
+go
+~~START~~
+int
+0
+~~END~~
+
+Select (543210458 & CAST(12345 AS varbinary(4)))/cast(0x4567 as int)
 go
 ~~START~~
 int
@@ -231,6 +428,9 @@ int
 0
 ~~END~~
 
+
+drop table int4var
+go
 
 -- test hex string in procedure
 create procedure test_hex_bitop as
