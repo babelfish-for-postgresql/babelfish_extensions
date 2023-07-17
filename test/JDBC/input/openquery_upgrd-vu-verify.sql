@@ -17,3 +17,19 @@ GO
 
 SELECT openquery_upgrd_vu_prepare__openquery_func()
 GO
+
+-- Call OPENQUERY from a database other than master
+USE tempdb
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Called from tempdb''')
+GO
+
+CREATE DATABASE openquery_db
+USE openquery_db
+GO
+
+SELECT * FROM OPENQUERY(bbf_server, 'SELECT ''Called from openquery_db''')
+GO
+
+USE master
+DROP DATABASE openquery_db
+GO
