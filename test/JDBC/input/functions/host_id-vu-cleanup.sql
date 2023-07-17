@@ -1,0 +1,5 @@
+DROP VIEW host_id_4272_v1
+GO
+
+DROP PROCEDURE host_id_4272_p1
+GO

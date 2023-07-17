@@ -1022,7 +1022,7 @@ select
   , null::bytea as sid
   , CAST(t.host_name AS sys.nchar(128)) as hostname
   , a.application_name as program_name
-  , null::varchar(10) as hostprocess
+  , t.client_pid::varchar(10) as hostprocess
   , a.query as cmd
   , null::varchar(128) as nt_domain
   , null::varchar(128) as nt_username

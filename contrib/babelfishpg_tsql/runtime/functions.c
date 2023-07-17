@@ -88,6 +88,7 @@ PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
+PG_FUNCTION_INFO_V1(host_id);
 PG_FUNCTION_INFO_V1(context_info);
 PG_FUNCTION_INFO_V1(bbf_get_context_info);
 PG_FUNCTION_INFO_V1(bbf_set_context_info);
@@ -112,6 +113,7 @@ void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
+void	   *get_host_id(void);
 extern bool canCommitTransaction(void);
 
 extern int	pltsql_datefirst;
@@ -1847,6 +1849,17 @@ host_name(PG_FUNCTION_ARGS)
 {
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_host_name)
 		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
+	else
+		PG_RETURN_NULL();
+}
+
+Datum
+host_id(PG_FUNCTION_ARGS)
+{
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_client_pid) {
+		char *host_id = psprintf("%d", (*pltsql_protocol_plugin_ptr)->get_client_pid());
+		PG_RETURN_VARCHAR_P(string_to_tsql_varchar(host_id));
+	}
 	else
 		PG_RETURN_NULL();
 }
