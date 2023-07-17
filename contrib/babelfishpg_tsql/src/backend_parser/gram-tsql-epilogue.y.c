@@ -717,7 +717,7 @@ TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
     return (Node *)fts;
 }
 
-/* Transform column_name into to_tsvector('fts_contains', column_name) */
+/* Transform column_name into to_tsvector(pgconfig, column_name) */
 static Node *
 makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
