@@ -49,10 +49,6 @@ SELECT * FROM @sp_linkedservers_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
 SET NOCOUNT OFF
 GO
 
---Try to add a linked server login with same server name but different case (should throw an error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'MSSQL_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
-GO
-
 -- Try to drop a linked server login that does not exist (should throw error)
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
 GO

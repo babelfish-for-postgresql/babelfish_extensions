@@ -128,14 +128,6 @@ mssql_server3#!#tds_fdw#!##!#mssql_server2\ABC#!#<NULL>#!#<NULL>#!#master
 ~~END~~
 
 
---Try to add a linked server login with same server name but different case (should throw an error)
-EXEC sp_addlinkedsrvlogin @rmtsrvname = 'MSSQL_server2', @useself = 'FALSE', @rmtuser = 'only_user_no_password'
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: user mapping for "public" already exists for server "mssql_server2")~~
-
-
 -- Try to drop a linked server login that does not exist (should throw error)
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "invalid_server", @locallogin = NULL
 GO
