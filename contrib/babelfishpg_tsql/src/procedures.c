@@ -22,6 +22,7 @@
 #include "commands/prepare.h"
 #include "common/string.h"
 #include "executor/spi.h"
+#include "foreign/foreign.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "hooks.h"
