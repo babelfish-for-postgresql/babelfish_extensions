@@ -8,7 +8,7 @@ GO
 SELECT * FROM sys_linked_servers_vu_prepare__sys_servers_view
 GO
 
-SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name NOT LIKE 'bbf_server%' AND name NOT LIKE 'server_4229%' ORDER BY linked_srv_name
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name NOT LIKE 'bbf_server%' AND s.name NOT LIKE 'server_4229%' ORDER BY linked_srv_name
 GO
 
 SELECT * FROM sys_linked_servers_vu_prepare__sys_linked_logins_view
