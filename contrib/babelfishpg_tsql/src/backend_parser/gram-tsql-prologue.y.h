@@ -62,8 +62,8 @@ static Node *TsqlJsonModifyMakeFuncCall(Node *expr, Node *path, Node *newValue);
 static bool is_json_query(List *name);
 
 static Node *TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner);
-static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner);
-static Node *makeToTSQueryFuncCall(Node *search_expr);
+static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig);
+static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig);
 
 char	   *construct_unique_index_name(char *index_name, char *relation_name);
 
