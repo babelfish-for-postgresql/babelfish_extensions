@@ -731,7 +731,7 @@ makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
     return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
 }
 
-/* Transfrom '<contains_search_condition>' into babelfish_fts_contains_rewrite('<contains_search_condition>' */
+/* Transfrom '<contains_search_condition>' into to_tsquery(pgconfig, babelfish_fts_contains_rewrite('<contains_search_condition>')) */
 static Node *
 makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
 {
