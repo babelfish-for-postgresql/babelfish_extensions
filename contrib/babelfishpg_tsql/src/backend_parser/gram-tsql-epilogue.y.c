@@ -696,7 +696,8 @@ is_json_query(List *name)
 * Parse T-SQL CONTAINS predicate. Currently only supports 
 * ... CONTAINS(column_name, '<contains_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
-* to_tsvector(babelfish_fts_contains_pgconfig('<contains_search_condition>'), column_name) @@ to_tsquery('fts_contains', babelfish_fts_contains_rewrite('<contains_search_condition>'))
+* to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_contains_rewrite('<contains_search_condition>'))
+* where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
 TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
