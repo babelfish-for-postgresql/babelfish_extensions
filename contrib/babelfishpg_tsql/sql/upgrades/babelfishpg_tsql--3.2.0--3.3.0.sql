@@ -139,6 +139,34 @@ inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
+    AS $$select statement_timestamp()::datetime2;$$
+    LANGUAGE SQL;
+GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+    -- Casting to text as there are not type cast function from timestamptz to datetimeoffset
+    AS $$select cast(cast(statement_timestamp() as text) as sys.datetimeoffset);$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
+    AS $$select (statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', statement_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
