@@ -20,24 +20,6 @@ BEGIN
 END
 GO
 
--- Test sys.babelfish_fts_contains_rewrite
-CREATE PROCEDURE test_fts_contains_rewrite
-    @query_string text
-AS
-BEGIN
-    SELECT (sys.babelfish_fts_contains_rewrite(@query_string));
-END
-GO
-
--- Test sys.babelfish_fts_contains_pgconfig
-CREATE PROCEDURE test_fts_contains_pgconfig
-    @query_string text
-AS
-BEGIN
-    RETURN (sys.babelfish_fts_contains_pgconfig(@query_string));
-END
-GO
-
 -- initialize table: txt column has 1000 sentences from NOW corpus
 INSERT INTO fts_contains_vu_t VALUES (1, '<p> Sol Yurick , the writer whose 1965 novel " The Warriors " was adapted into a film 14 years later -- which then became one of the best adapted works ever in video gaming -- died this weekend ')
 GO
