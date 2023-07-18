@@ -18,8 +18,6 @@
 #include "pl_explain.h"
 #include "session.h"
 
-#define SWAP(a, b) do { typeof(a) temp = a; a = b; b = temp; } while (0)
-
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
 PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
@@ -818,7 +816,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			int			nfields;
 			int			i;
 			int			j;
-			ListCell	*lc;
+			ListCell		*lc;
 
 			if (is_scalar_func)
 			{
@@ -842,11 +840,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				elog(ERROR, "cache lookup failed for function %u",
 					 funcexpr->funcid);
 
-			/*
-			 * Get the argument names and modes, too
-			 */
-			get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
-			get_param_mode(stmt->params, stmt->paramno, &parammodes);
 
 			/*
 			 * Extract function arguments, and expand any named-arg notation
@@ -855,6 +848,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 												 false,
 												 funcexpr->funcresulttype,
 												 func_tuple);
+			
+			/*
+			 * Get the argument names and modes, too
+			 */
+			get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
+			get_param_mode(stmt->params, stmt->paramno, &parammodes);
 
 			ReleaseSysCache(func_tuple);
 
@@ -880,8 +879,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			i = 0;
 			foreach(lc, funcargs)
 			{
-				Node *n = lfirst(lc);
-				bool isFound = false;
+				Node 	*n = lfirst(lc);
+				bool 	isFound = false;
 
 				if (argmodes &&
 					(argmodes[i] == PROARGMODE_INOUT ||
@@ -975,7 +974,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				}
 				i++;
 			}
-			
+
 			row->nfields = nfields;
 
 			stmt->target = (PLtsql_variable *) row;
