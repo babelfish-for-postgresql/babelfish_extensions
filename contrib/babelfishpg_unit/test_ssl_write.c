@@ -1,6 +1,7 @@
 #include "babelfishpg_unit.h"
 #include "../babelfishpg_tds/src/include/tds_secure.h"
 
+#ifdef USE_SSL
 static char *prelogin; 
 
 static ssize_t 
@@ -100,3 +101,5 @@ test_ssl_handshakeWrite_sizeCheck(void)
 
     return testResult;
 }
+
+#endif

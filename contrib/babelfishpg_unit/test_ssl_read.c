@@ -1,7 +1,7 @@
 #include "babelfishpg_unit.h"
 #include "../babelfishpg_tds/src/include/tds_secure.h"
 
-
+#ifdef USE_SSL
 static char *prelogin_request;
 static int ReadPointer = 0;
 
@@ -182,3 +182,5 @@ test_ssl_handshakeRead_pkt_type(void)
     return testResult;
 
 }
+
+#endif
