@@ -329,4 +329,62 @@ int#!#int
 20#!#100
 ~~END~~
 
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a OUT, @b OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
 DROP PROCEDURE sp_test20
+
+CREATE PROCEDURE sp_test21 (@a INT, @b INT OUTPUT, @d INT, @c INT OUTPUT) AS BEGIN Select @a as a, @b as b, @c as c, @d as d; SET @a=100; SET @b=200; SET @c=300; SET @d=400; END;
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @b=@b OUT, @c=@c OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#200#!#300#!#30
+~~END~~
+
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @b=@b, @c=@c, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @c=@c OUT, @b=@b OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#200#!#300#!#30
+~~END~~
+
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @c=@c, @b=@b, @a=@a OUT, @d=@d OUT; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+DROP PROCEDURE sp_test21
