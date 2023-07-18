@@ -25,9 +25,7 @@ CREATE PROCEDURE test_fts_contains_rewrite
     @query_string text
 AS
 BEGIN
-    DECLARE @returnvalue varchar(200);
-    EXEC @returnvalue = sys.babelfish_fts_contains_rewrite @query_string;
-    SELECT @returnvalue;
+    SELECT (sys.babelfish_fts_contains_rewrite(@query_string));
 END
 GO
 
@@ -36,9 +34,7 @@ CREATE PROCEDURE test_fts_contains_pgconfig
     @query_string text
 AS
 BEGIN
-    DECLARE @returnvalue varchar(200);
-    EXEC @returnvalue = sys.babelfish_fts_contains_pgconfig @query_string;
-    SELECT @returnvalue;
+    RETURN (sys.babelfish_fts_contains_pgconfig(@query_string));
 END
 GO
 
