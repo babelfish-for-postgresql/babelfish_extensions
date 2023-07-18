@@ -1,0 +1,4 @@
+comment = 'Unit testing framework for babelfish'
+default_version = '1.0.0'
+relocatable = true
+module_pathname = '$libdir/babelfishpg_unit'
