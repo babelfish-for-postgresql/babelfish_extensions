@@ -110,28 +110,28 @@ static bool prev_insert_bulk_keep_nulls = false;
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
 /* sort the function arguments based on the order of the param names */
-static Node** sort_arg_modes (List *funcargs, List *paramnames, Oid *argtypes, char **argnames, char *argmodes, int num_args);
+// static Node** sort_arg_modes (List *funcargs, List *paramnames, Oid *argtypes, char **argnames, char *argmodes, int num_args);
 
 /* Struct for sorting procedure arguments in the order of the arguments in the procedure call */
-struct func_args {
-	Node		*funcnode;
-	Oid			argtype;
-	char		*argname;
-	char		argmode;
-};
+// struct func_args {
+// 	Node		*funcnode;
+// 	Oid			argtype;
+// 	char		*argname;
+// 	char		argmode;
+// };
 
-/* Used to compare func_args */
-static int
-cmpfuncargs(const void *a, const void *b)
-{
-	return strcmp(((struct func_args *)a)->argname, ((struct func_args *)b)->argname);
-}
-/* Used to compare strings */
-static int 
-cmpargnames(const void *a, const void *b)
-{
-	return strcmp(*(char **)a, *(char **)b);
-}
+// /* Used to compare func_args */
+// static int
+// cmpfuncargs(const void *a, const void *b)
+// {
+// 	return strcmp(((struct func_args *)a)->argname, ((struct func_args *)b)->argname);
+// }
+// /* Used to compare strings */
+// static int 
+// cmpargnames(const void *a, const void *b)
+// {
+// 	return strcmp(*(char **)a, *(char **)b);
+// }
 
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -677,89 +677,89 @@ exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt
 }
 
 /* Function to sort argnames and related arrays based on the order of the arguments in the procedure call. */
-static Node**
-sort_arg_modes (List *funcargs, List *paramnames, Oid *argtypes, char **argnames, char *argmodes, int num_args)
-{
-	struct func_args *function_args;
-	int		i;
-	int		*sort_keys;
-	ListCell	*lc;
-	Node	   **result;
+// static Node**
+// sort_arg_modes (List *funcargs, List *paramnames, Oid *argtypes, char **argnames, char *argmodes, int num_args)
+// {
+// 	struct func_args *function_args;
+// 	int		i;
+// 	int		*sort_keys;
+// 	ListCell	*lc;
+// 	Node	   **result;
 
-	result = (Node **) palloc(num_args * sizeof(Node *));
+// 	result = (Node **) palloc(num_args * sizeof(Node *));
 
-	i = 0;
-	foreach(lc, funcargs)
-	{
-		result[i] = lfirst(lc);
-		i++;
-	}
+// 	i = 0;
+// 	foreach(lc, funcargs)
+// 	{
+// 		result[i] = lfirst(lc);
+// 		i++;
+// 	}
 
-	/* Return result if any of the paramnames is NULL. */
-	foreach(lc, paramnames)
-	{
-		tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
-		if (p->name == NULL) return result;
-	}
+// 	/* Return result if any of the paramnames is NULL. */
+// 	foreach(lc, paramnames)
+// 	{
+// 		tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
+// 		if (p->name == NULL) return result;
+// 	}
 
-	if (num_args <= 0 || funcargs == NULL || paramnames == NULL || argtypes == NULL || argnames == NULL || argmodes == NULL)
-		return result;
+// 	if (num_args <= 0 || funcargs == NULL || paramnames == NULL || argtypes == NULL || argnames == NULL || argmodes == NULL)
+// 		return result;
 
-	function_args = (struct func_args *) palloc(num_args * sizeof(struct func_args));
-	sort_keys = (int *) palloc(sizeof(num_args * sizeof(int)));
+// 	function_args = (struct func_args *) palloc(num_args * sizeof(struct func_args));
+// 	sort_keys = (int *) palloc(sizeof(num_args * sizeof(int)));
 
-	/* Build function_args array for sorting. */
-	i = 0;
-	foreach(lc, funcargs)
-	{
-		function_args[i].funcnode = result[i];
-		function_args[i].argtype = argtypes[i];
-		function_args[i].argname = argnames[i];
-		function_args[i].argmode = argmodes[i];
-		i++;
-	}
+// 	/* Build function_args array for sorting. */
+// 	i = 0;
+// 	foreach(lc, funcargs)
+// 	{
+// 		function_args[i].funcnode = result[i];
+// 		function_args[i].argtype = argtypes[i];
+// 		function_args[i].argname = argnames[i];
+// 		function_args[i].argmode = argmodes[i];
+// 		i++;
+// 	}
 
-	/* Sorting the function_args array to perform binary search on argnames later on. */
-	qsort(function_args, num_args, sizeof(function_args[0]), cmpfuncargs);
+// 	/* Sorting the function_args array to perform binary search on argnames later on. */
+// 	qsort(function_args, num_args, sizeof(function_args[0]), cmpfuncargs);
 
-	/* Update argtypes, argnames, argmodes and the result with the sorted order. */
-	i = 0;
-	for(i = 0; i < num_args; i++)
-	{
-		argtypes[i] = function_args[i].argtype;
-		argnames[i] = function_args[i].argname;
-		argmodes[i] = function_args[i].argmode;
-		result[i] = function_args[i].funcnode;
-	}
+// 	/* Update argtypes, argnames, argmodes and the result with the sorted order. */
+// 	i = 0;
+// 	for(i = 0; i < num_args; i++)
+// 	{
+// 		argtypes[i] = function_args[i].argtype;
+// 		argnames[i] = function_args[i].argname;
+// 		argmodes[i] = function_args[i].argmode;
+// 		result[i] = function_args[i].funcnode;
+// 	}
 
-	/* Perform a binary search on argnames for every parameter name and store the index in sort_keys array. */
-	i = 0;
-	foreach(lc, paramnames)
-	{
-		char **curr_arg;
-		int index = 0;
-		tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
+// 	/* Perform a binary search on argnames for every parameter name and store the index in sort_keys array. */
+// 	i = 0;
+// 	foreach(lc, paramnames)
+// 	{
+// 		char **curr_arg;
+// 		int index = 0;
+// 		tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
 
-		curr_arg = (char **) bsearch(&p->name, argnames, num_args, sizeof(char *), cmpargnames);
-		index = (curr_arg - argnames);
-		sort_keys[i] = index;
-		i++;
-	}
+// 		curr_arg = (char **) bsearch(&p->name, argnames, num_args, sizeof(char *), cmpargnames);
+// 		index = (curr_arg - argnames);
+// 		sort_keys[i] = index;
+// 		i++;
+// 	}
 
-	/* Update the argtypes, argnames, argmodes and the result with the sorted order. */
-	for (i = 0; i < num_args; i++)
-	{
-		if (sort_keys[i] > i)
-		{
-			SWAP(argtypes[i], argtypes[sort_keys[i]]);
-			SWAP(argnames[i], argnames[sort_keys[i]]);
-			SWAP(argmodes[i], argmodes[sort_keys[i]]);
-			SWAP(result[i], result[sort_keys[i]]);
-		}
-	}
+// 	/* Update the argtypes, argnames, argmodes and the result with the sorted order. */
+// 	for (i = 0; i < num_args; i++)
+// 	{
+// 		if (sort_keys[i] > i)
+// 		{
+// 			SWAP(argtypes[i], argtypes[sort_keys[i]]);
+// 			SWAP(argnames[i], argnames[sort_keys[i]]);
+// 			SWAP(argmodes[i], argmodes[sort_keys[i]]);
+// 			SWAP(result[i], result[sort_keys[i]]);
+// 		}
+// 	}
 
-	return result;
-}
+// 	return result;
+// }
 
 /*
  * Execute an EXEC statement (equivalent to CALL)
@@ -925,7 +925,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			PLtsql_row *row;
 			int			nfields;
 			int			i;
-			Node		**funcnodes;
+			// Node		**funcnodes;
+			int			j;
+			ListCell	*lc;
 
 			if (is_scalar_func)
 			{
@@ -963,7 +965,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 												 funcexpr->funcresulttype,
 												 func_tuple);
 
-			funcnodes = sort_arg_modes(funcargs, stmt->params, argtypes, argnames, argmodes, stmt->paramno);
+			// funcnodes = sort_arg_modes(funcargs, stmt->params, argtypes, argnames, argmodes, stmt->paramno);
 
 			ReleaseSysCache(func_tuple);
 
@@ -986,85 +988,172 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * insert into the row Datum.
 			 */
 			nfields = 0;
-			for (i = 0; i < stmt->paramno; i++)
+			i = 0;
+			foreach(lc, funcargs)
+			// for (i = 0; i < stmt->paramno; i++)
 			{
-				Node	   *n = funcnodes[i];
+				// Node	   *n = funcnodes[i];
+				Node *n = lfirst(lc);
 
 				if (argmodes &&
 					(argmodes[i] == PROARGMODE_INOUT ||
 					 argmodes[i] == PROARGMODE_OUT))
 				{
-					if (parammodes &&
-						parammodes[i] != PROARGMODE_INOUT &&
-						parammodes[i] != PROARGMODE_OUT)
+					ListCell *paramcell;
+					j = 0;
+					foreach(paramcell, stmt->params)
 					{
-						/*
-						 * If an INOUT arg is called without OUTPUT, it should
-						 * be treated like an IN param. Put -1 to param id. We
-						 * can skip assigning actual value.
-						 */
-						row->varnos[nfields++] = -1;
-					}
-					else if (IsA(n, Param))
-					{
-						Param	   *param = (Param *) n;
+						tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
+						if (argnames[i] && p->name && strcmp(argnames[i], p->name) != 0)
+						{
+							j++;
+							continue;
+						}
+						if (parammodes &&
+							parammodes[j] != PROARGMODE_INOUT &&
+							parammodes[j] != PROARGMODE_OUT)
+						{
+							/*
+							 * If an INOUT arg is called without OUTPUT, it should
+						 	* be treated like an IN param. Put -1 to param id. We
+						 	* can skip assigning actual value.
+						 	*/
+							row->varnos[nfields++] = -1;
+						}
+						else if (IsA(n, Param))
+						{
+							Param	   *param = (Param *) n;
 
-						/* paramid is offset by 1 (see make_datum_param()) */
-						row->varnos[nfields++] = param->paramid - 1;
-					}
-					else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
-					{
-						/*
-						 * Other than PL/pgsql, T-SQL allows implicit casting
-						 * in INOUT and OUT params.
-						 *
-						 * In PG, if implcit casting is added (i.e.
-						 * int->bigint), it throws an error "corresponding
-						 * argument is not writable" (see the else-clause)
-						 *
-						 * In T-SQL, if arg node is an implicit casting, we
-						 * will strip the casting. Actual casting will be done
-						 * at value assignement with validity check.
-						 */
+							/* paramid is offset by 1 (see make_datum_param()) */
+							row->varnos[nfields++] = param->paramid - 1;
+						}
+						else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
+						{
+							/*
+						 	* Other than PL/pgsql, T-SQL allows implicit casting
+						 	* in INOUT and OUT params.
+						 	*
+						 	* In PG, if implcit casting is added (i.e.
+						 	* int->bigint), it throws an error "corresponding
+						 	* argument is not writable" (see the else-clause)
+						 	*
+						 	* In T-SQL, if arg node is an implicit casting, we
+						 	* will strip the casting. Actual casting will be done
+						 	* at value assignement with validity check.
+						 	*/
 
-						Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
+							Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
 
-						/* paramid is offset by 1 (see make_datum_param()) */
-						row->varnos[nfields++] = param->paramid - 1;
-					}
-					else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
-					{
-						/*
-						 * T-SQL allows to pass constant value as an output
-						 * parameter. Put -1 to param id. We can skip
-						 * assigning actual value.
-						 */
-						row->varnos[nfields++] = -1;
-					}
-					else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
-					{
-						/*
-						 * mixture case of implicit casting + CONST. We can
-						 * skip assigning actual value.
-						 */
-						row->varnos[nfields++] = -1;
-					}
-					else
-					{
-						/* report error using parameter name, if available */
-						if (argnames && argnames[i] && argnames[i][0])
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
-											argnames[i])));
+							/* paramid is offset by 1 (see make_datum_param()) */
+							row->varnos[nfields++] = param->paramid - 1;
+						}
+						else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
+						{
+							/*
+						 	* T-SQL allows to pass constant value as an output
+						 	* parameter. Put -1 to param id. We can skip
+						 	* assigning actual value.
+						 	*/
+							row->varnos[nfields++] = -1;
+						}
+						else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
+						{
+							/*
+						 	* mixture case of implicit casting + CONST. We can
+						 	* skip assigning actual value.
+						 	*/
+							row->varnos[nfields++] = -1;
+						}
 						else
-							ereport(ERROR,
-									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
-											i + 1)));
+						{
+							/* report error using parameter name, if available */
+							if (argnames && argnames[i] && argnames[i][0])
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+									 	errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
+												argnames[i])));
+							else
+								ereport(ERROR,
+										(errcode(ERRCODE_SYNTAX_ERROR),
+									 	errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
+												i + 1)));
+						}
+						j++;
 					}
 				}
+				i++;
 			}
+			// 		if (parammodes &&
+			// 			parammodes[i] != PROARGMODE_INOUT &&
+			// 			parammodes[i] != PROARGMODE_OUT)
+			// 		{
+			// 			/*
+			// 			 * If an INOUT arg is called without OUTPUT, it should
+			// 			 * be treated like an IN param. Put -1 to param id. We
+			// 			 * can skip assigning actual value.
+			// 			 */
+			// 			row->varnos[nfields++] = -1;
+			// 		}
+			// 		else if (IsA(n, Param))
+			// 		{
+			// 			Param	   *param = (Param *) n;
+
+			// 			/* paramid is offset by 1 (see make_datum_param()) */
+			// 			row->varnos[nfields++] = param->paramid - 1;
+			// 		}
+			// 		else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
+			// 		{
+			// 			/*
+			// 			 * Other than PL/pgsql, T-SQL allows implicit casting
+			// 			 * in INOUT and OUT params.
+			// 			 *
+			// 			 * In PG, if implcit casting is added (i.e.
+			// 			 * int->bigint), it throws an error "corresponding
+			// 			 * argument is not writable" (see the else-clause)
+			// 			 *
+			// 			 * In T-SQL, if arg node is an implicit casting, we
+			// 			 * will strip the casting. Actual casting will be done
+			// 			 * at value assignement with validity check.
+			// 			 */
+
+			// 			Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
+
+			// 			/* paramid is offset by 1 (see make_datum_param()) */
+			// 			row->varnos[nfields++] = param->paramid - 1;
+			// 		}
+			// 		else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
+			// 		{
+			// 			/*
+			// 			 * T-SQL allows to pass constant value as an output
+			// 			 * parameter. Put -1 to param id. We can skip
+			// 			 * assigning actual value.
+			// 			 */
+			// 			row->varnos[nfields++] = -1;
+			// 		}
+			// 		else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
+			// 		{
+			// 			/*
+			// 			 * mixture case of implicit casting + CONST. We can
+			// 			 * skip assigning actual value.
+			// 			 */
+			// 			row->varnos[nfields++] = -1;
+			// 		}
+			// 		else
+			// 		{
+			// 			/* report error using parameter name, if available */
+			// 			if (argnames && argnames[i] && argnames[i][0])
+			// 				ereport(ERROR,
+			// 						(errcode(ERRCODE_SYNTAX_ERROR),
+			// 						 errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
+			// 								argnames[i])));
+			// 			else
+			// 				ereport(ERROR,
+			// 						(errcode(ERRCODE_SYNTAX_ERROR),
+			// 						 errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
+			// 								i + 1)));
+			// 		}
+			// 	}
+			// }
 
 			row->nfields = nfields;
 
