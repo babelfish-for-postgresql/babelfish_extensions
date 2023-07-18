@@ -4,8 +4,8 @@ GO
 DROP TABLE fts_contains_vu_t;
 GO
 
-DROP PROCEDURE test_babelfish_fts_contains_rewrite
+DROP VIEW fts_contains_rewrite_v1
 GO
 
-DROP PROCEDURE test_babelfish_fts_contains_pgconfig
+DROP VIEW fts_contains_pgconfig_v1
 GO

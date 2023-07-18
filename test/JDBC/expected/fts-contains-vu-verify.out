@@ -1,14 +1,14 @@
 -- Test sys.babelfish_fts_contains_rewrite
-EXEC test_babelfish_fts_contains_rewrite 'love'
+SELECT * FROM fts_contains_rewrite_v1
 GO
 ~~START~~
 text
-love
+like
 ~~END~~
 
 
 -- Test sys.babelfish_fts_contains_pgconfig
-EXEC test_babelfish_fts_contains_pgconfig 'love'
+SELECT * FROM fts_contains_pgconfig_v1
 GO
 ~~START~~
 text

@@ -20,20 +20,16 @@ BEGIN
 END
 GO
 
-CREATE PROCEDURE test_babelfish_fts_contains_rewrite
-    @query_string text
-AS
-BEGIN
-    SELECT (sys.babelfish_fts_contains_rewrite(@query_string))
-END
+CREATE VIEW fts_contains_rewrite_v1 AS
+(
+    SELECT (sys.babelfish_fts_contains_rewrite('like'))
+)
 GO
 
-CREATE PROCEDURE test_babelfish_fts_contains_pgconfig
-    @query_string text
-AS
-BEGIN
-    SELECT CAST((sys.babelfish_fts_contains_pgconfig(@query_string)) AS text)
-END
+CREATE VIEW fts_contains_pgconfig_v1 AS
+(
+    SELECT CAST((sys.babelfish_fts_contains_pgconfig('like')) AS text)
+)
 GO
 
 -- initialize table: txt column has 1000 sentences from NOW corpus
