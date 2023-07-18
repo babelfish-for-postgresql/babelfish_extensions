@@ -1,5 +1,5 @@
 -- Test sys.babelfish_fts_contains_rewrite
-SELECT (sys.babelfish_fts_contains_rewrite('love'))
+EXEC test_babelfish_fts_contains_rewrite 'love'
 GO
 ~~START~~
 text
@@ -8,11 +8,12 @@ love
 
 
 -- Test sys.babelfish_fts_contains_pgconfig
-SELECT (sys.babelfish_fts_contains_pgconfig('love'))
+EXEC test_babelfish_fts_contains_pgconfig 'love'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data type regconfig is not supported yet)~~
+~~START~~
+text
+fts_contains
+~~END~~
 
 
 

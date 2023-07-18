@@ -1,9 +1,9 @@
 -- Test sys.babelfish_fts_contains_rewrite
-SELECT (sys.babelfish_fts_contains_rewrite('love'))
+EXEC test_babelfish_fts_contains_rewrite 'love'
 GO
 
 -- Test sys.babelfish_fts_contains_pgconfig
-SELECT (sys.babelfish_fts_contains_pgconfig('love'))
+EXEC test_babelfish_fts_contains_pgconfig 'love'
 GO
 
 -- Full syntax of CONTAINS: https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/contains-transact-sql.md
