@@ -38,6 +38,10 @@
 #include "src/include/tds_secure.h"
 #include "src/include/tds_int.h"
 
+static TdsSecureSocketApi tds_secure_raw_read = secure_raw_read;
+static TdsSecureSocketApiConst tds_secure_raw_write = secure_raw_write;
+static bool unit_testing = false;
+
 int			tds_ssl_min_protocol_version;
 int			tds_ssl_max_protocol_version;
 #ifdef USE_SSL
@@ -71,7 +75,7 @@ SslRead(BIO * h, char *buf, int size)
 
 	if (buf != NULL)
 	{
-		res = secure_raw_read(((Port *) BIO_get_data(h)), buf, size);
+		res = tds_secure_raw_read(((Port *) BIO_get_data(h)), buf, size);
 		BIO_clear_retry_flags(h);
 		if (res <= 0)
 		{
@@ -126,7 +130,7 @@ SslHandShakeRead(BIO * h, char *buf, int size)
 		}
 
 		if (unlikely(pkt_data.header.pkt_type != TDS_PRELOGIN))
-			ereport(FATAL,
+			ereport(unit_testing ? ERROR : FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("terminating connection due to unexpected ssl packet header")));
 
@@ -171,7 +175,7 @@ SslWrite(BIO * h, const char *buf, int size)
 {
 	int			res = 0;
 
-	res = secure_raw_write(((Port *) BIO_get_data(h)), buf, size);
+	res = tds_secure_raw_write(((Port *) BIO_get_data(h)), buf, size);
 	BIO_clear_retry_flags(h);
 	if (res <= 0)
 	{
@@ -337,7 +341,7 @@ retry:
 	else
 #endif
 	{
-		n = secure_raw_read(port, ptr, len);
+		n = tds_secure_raw_read(port, ptr, len);
 		waitfor = WL_SOCKET_READABLE;
 	}
 
@@ -422,7 +426,7 @@ retry:
 	else
 #endif
 	{
-		n = secure_raw_write(port, ptr, len);
+		n = tds_secure_raw_write(port, ptr, len);
 		waitfor = WL_SOCKET_WRITEABLE;
 	}
 
@@ -466,3 +470,48 @@ retry:
 
 	return n;
 }
+
+
+ssize_t
+test_ssl_handshake_read(BIO * h, char *buf, int size, TdsSecureSocketApi mock_socket_read, int ReadPointer)
+{
+
+    /*
+     *  Accessing SslHandShakeRead() function directly from our testing functions created in the test_ssl_read.c file is not possible due to its static nature
+     *  This intermediary function serves as a gateway, allowing us to invoke the SslHandShakeRead() function from our testing function
+     */
+
+    int res;
+    tds_secure_raw_read = mock_socket_read;
+    unit_testing = true;
+    pkt_bytes_read = ReadPointer;
+
+    res = SslHandShakeRead(h, buf, size);
+
+    unit_testing = false;
+
+    return res;
+}
+
+
+
+ssize_t
+test_ssl_handshake_write(BIO * h, char *buf, int size, TdsSecureSocketApiConst mock_socket_write)
+{
+
+    /*
+     *  Accessing SslHandShakeWrite() function directly from our testing functions created in the test_ssl_write.c file is not possible due to its static nature
+     *  This intermediary function serves as a gateway, allowing us to invoke the SslHandShakeWrite() function from our testing function
+     */
+
+    int res;
+    tds_secure_raw_write = mock_socket_write;
+    unit_testing = true;
+
+    res = SslHandShakeWrite(h, buf, size);
+
+    unit_testing = false;
+
+    return res;
+}
+

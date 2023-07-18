@@ -38,6 +38,9 @@
 #endif
 #endif
 
+typedef ssize_t (*TdsSecureSocketApi) (Port *port, void *ptr, size_t len);
+typedef ssize_t (*TdsSecureSocketApiConst) (Port *port, const void *ptr, size_t len);
+
 BIO_METHOD *TdsBioSecureSocket(BIO_METHOD * my_bio_methods);
 
 extern int	tds_ssl_min_protocol_version;
@@ -60,3 +63,6 @@ ssize_t
 
 /* function defined in tdssecure.c and called from tdslogin.c */
 void		TdsFreeSslStruct(Port *port);
+
+extern ssize_t test_ssl_handshake_read(BIO * h, char *buf, int size, TdsSecureSocketApi mock_socket_read, int ReadPointer);
+extern ssize_t test_ssl_handshake_write(BIO * h, char *buf, int size, TdsSecureSocketApiConst mock_socket_write);

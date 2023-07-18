@@ -51,7 +51,7 @@ static char* DISABLED = "disabled";
  *  
  *      . Add function declaration
  *      . Add row to tests array that identifies your test containing:
- *          . Pointer to test function (takes no params and returns a TestResult pointer
+ *          . Pointer to test function (takes no params and returns a TestResult pointer)
  *          . enabled flag, true to enable
  *          . Human readable test name
  *          . Human readable category, tests can then be run by category, name, or all
@@ -76,6 +76,13 @@ TestInfo tests[]=
     {&test_fixeddecimal_int2_gt, true, "GreaterThanCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
     {&test_fixeddecimal_int2_ne, true, "NotEqualToCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
     {&test_fixeddecimal_int2_cmp, true, "Comparison_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+
+    {&test_ssl_handshakeRead, true, "Testing_SSL_HANDSHAKE_READ", "babelfishpg_tds_ssl_read"},
+    {&test_ssl_handshakeRead_oversize, true, "TestingOverSize_SSL_HANDSHAKE_READ", "babelfishpg_tds_ssl_read"},
+    {&test_ssl_handshakeRead_pkt_type, true, "TestingPacketType_SSL_HANDSHAKE_READ", "babelfishpg_tds_ssl_read"},
+
+    {&test_ssl_handshakeWrite, true, "Testing_SSL_HANDSHAKE_WRITE", "babelfishpg_tds_ssl_write"},
+    {&test_ssl_handshakeWrite_sizeCheck, true, "TestingSizeCheck_SSL_HANDSHAKE_WRITE", "babelfishpg_tds_ssl_write"},
 };
 
 
