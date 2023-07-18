@@ -840,7 +840,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				elog(ERROR, "cache lookup failed for function %u",
 					 funcexpr->funcid);
 
-
 			/*
 			 * Extract function arguments, and expand any named-arg notation
 			 */
@@ -848,7 +847,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 												 false,
 												 funcexpr->funcresulttype,
 												 func_tuple);
-			
+
 			/*
 			 * Get the argument names and modes, too
 			 */
