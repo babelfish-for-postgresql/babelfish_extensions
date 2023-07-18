@@ -2,8 +2,6 @@ Could not find tests for function assemblyproperty
 Could not find tests for function pltsql_call_handler
 Could not find tests for function pltsql_inline_handler
 Could not find tests for function pltsql_validator
-Could not find tests for function sys.babelfish_fts_contains_pgconfig
-Could not find tests for function sys.babelfish_fts_contains_rewrite
 Could not find tests for function sys.babelfish_runtime_error
 Could not find tests for function sys.babelfish_try_cast_floor_bigint
 Could not find tests for function sys.babelfish_try_cast_floor_int
@@ -97,8 +95,6 @@ Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
 Could not find upgrade tests for function serverproperty
 Could not find upgrade tests for function sessionproperty
-Could not find upgrade tests for function sys.babelfish_fts_contains_pgconfig
-Could not find upgrade tests for function sys.babelfish_fts_contains_rewrite
 Could not find upgrade tests for function sys.babelfish_runtime_error
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_int

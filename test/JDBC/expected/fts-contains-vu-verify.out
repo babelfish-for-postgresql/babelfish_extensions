@@ -1,3 +1,83 @@
+-- Test sys.babelfish_fts_contains_rewrite
+EXEC test_fts_contains_rewrite 'love'
+GO
+~~START~~
+varchar
+love
+~~END~~
+
+
+EXEC test_fts_contains_rewrite 'come back'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Phrase must be surrounded by double quotes)~~
+
+
+EXEC test_fts_contains_rewrite '"come back"'
+GO
+~~START~~
+varchar
+come<->back
+~~END~~
+
+
+EXEC test_fts_contains_rewrite 'much of the'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Phrase must be surrounded by double quotes)~~
+
+
+EXEC test_fts_contains_rewrite '"much of the"'
+GO
+~~START~~
+varchar
+much<->of<->the
+~~END~~
+
+
+-- Test sys.babelfish_fts_contains_pgconfig
+EXEC test_fts_contains_pgconfig 'love'
+GO
+~~START~~
+varchar
+fts_contains
+~~END~~
+
+
+EXEC test_fts_contains_pgconfig 'come back'
+GO
+~~START~~
+varchar
+fts_contains
+~~END~~
+
+
+EXEC test_fts_contains_pgconfig '"come back"'
+GO
+~~START~~
+varchar
+fts_contains
+~~END~~
+
+
+EXEC test_fts_contains_pgconfig 'much of the'
+GO
+~~START~~
+varchar
+fts_contains
+~~END~~
+
+
+EXEC test_fts_contains_pgconfig '"much of the"'
+GO
+~~START~~
+varchar
+fts_contains
+~~END~~
+
+
 
 -- Full syntax of CONTAINS: https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/contains-transact-sql.md
 -- test basic CONTAINS use: ... CONTAINS(col_name, <simple_term>) ...

@@ -1,3 +1,35 @@
+-- Test sys.babelfish_fts_contains_rewrite
+EXEC test_fts_contains_rewrite 'love'
+GO
+
+EXEC test_fts_contains_rewrite 'come back'
+GO
+
+EXEC test_fts_contains_rewrite '"come back"'
+GO
+
+EXEC test_fts_contains_rewrite 'much of the'
+GO
+
+EXEC test_fts_contains_rewrite '"much of the"'
+GO
+
+-- Test sys.babelfish_fts_contains_pgconfig
+EXEC test_fts_contains_pgconfig 'love'
+GO
+
+EXEC test_fts_contains_pgconfig 'come back'
+GO
+
+EXEC test_fts_contains_pgconfig '"come back"'
+GO
+
+EXEC test_fts_contains_pgconfig 'much of the'
+GO
+
+EXEC test_fts_contains_pgconfig '"much of the"'
+GO
+
 -- Full syntax of CONTAINS: https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/contains-transact-sql.md
 
 -- test basic CONTAINS use: ... CONTAINS(col_name, <simple_term>) ...
