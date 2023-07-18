@@ -1004,81 +1004,85 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					foreach(paramcell, stmt->params)
 					{
 						tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
-						if ((p->name == NULL) || (argnames[i] && strcmp(argnames[i], p->name) != 0))
+						if (p->name == NULL)
+						{
+							j = i;
+							break;
+						}
+						if ((argnames[i] && strcmp(argnames[i], p->name) != 0))
 						{
 							j++;
 							continue;
 						}
-						if (parammodes &&
-							parammodes[j] != PROARGMODE_INOUT &&
-							parammodes[j] != PROARGMODE_OUT)
-						{
-							/*
-							 * If an INOUT arg is called without OUTPUT, it should
-						 	* be treated like an IN param. Put -1 to param id. We
-						 	* can skip assigning actual value.
-						 	*/
-							row->varnos[nfields++] = -1;
-						}
-						else if (IsA(n, Param))
-						{
-							Param	   *param = (Param *) n;
+					}
+					if (parammodes &&
+						parammodes[j] != PROARGMODE_INOUT &&
+						parammodes[j] != PROARGMODE_OUT)
+					{
+						/*
+						 * If an INOUT arg is called without OUTPUT, it should
+						 * be treated like an IN param. Put -1 to param id. We
+						 * can skip assigning actual value.
+						 */
+						row->varnos[nfields++] = -1;
+					}
+					else if (IsA(n, Param))
+					{
+						Param	   *param = (Param *) n;
 
-							/* paramid is offset by 1 (see make_datum_param()) */
-							row->varnos[nfields++] = param->paramid - 1;
-						}
-						else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
-						{
-							/*
-						 	* Other than PL/pgsql, T-SQL allows implicit casting
-						 	* in INOUT and OUT params.
-						 	*
-						 	* In PG, if implcit casting is added (i.e.
-						 	* int->bigint), it throws an error "corresponding
-						 	* argument is not writable" (see the else-clause)
-						 	*
-						 	* In T-SQL, if arg node is an implicit casting, we
-						 	* will strip the casting. Actual casting will be done
-						 	* at value assignement with validity check.
-						 	*/
+						/* paramid is offset by 1 (see make_datum_param()) */
+						row->varnos[nfields++] = param->paramid - 1;
+					}
+					else if (get_underlying_node_from_implicit_casting(n, T_Param) != NULL)
+					{
+						/*
+						 * Other than PL/pgsql, T-SQL allows implicit casting
+						 * in INOUT and OUT params.
+						 *
+						 * In PG, if implcit casting is added (i.e.
+						 * int->bigint), it throws an error "corresponding
+						 * argument is not writable" (see the else-clause)
+						 *
+						 * In T-SQL, if arg node is an implicit casting, we
+						 * will strip the casting. Actual casting will be done
+						 * at value assignement with validity check.
+						 */
 
-							Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
+						Param	   *param = (Param *) get_underlying_node_from_implicit_casting(n, T_Param);
 
-							/* paramid is offset by 1 (see make_datum_param()) */
-							row->varnos[nfields++] = param->paramid - 1;
-						}
-						else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
-						{
-							/*
-						 	* T-SQL allows to pass constant value as an output
-						 	* parameter. Put -1 to param id. We can skip
-						 	* assigning actual value.
-						 	*/
-							row->varnos[nfields++] = -1;
-						}
-						else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
-						{
-							/*
-						 	* mixture case of implicit casting + CONST. We can
-						 	* skip assigning actual value.
-						 	*/
-							row->varnos[nfields++] = -1;
-						}
+						/* paramid is offset by 1 (see make_datum_param()) */
+						row->varnos[nfields++] = param->paramid - 1;
+					}
+					else if (argmodes[i] == PROARGMODE_INOUT && IsA(n, Const))
+					{
+						/*
+						 * T-SQL allows to pass constant value as an output
+						 * parameter. Put -1 to param id. We can skip
+						 * assigning actual value.
+						 */
+						row->varnos[nfields++] = -1;
+					}
+					else if (argmodes[i] == PROARGMODE_INOUT && get_underlying_node_from_implicit_casting(n, T_Const) != NULL)
+					{
+						/*
+						 * mixture case of implicit casting + CONST. We can
+						 * skip assigning actual value.
+						 */
+						row->varnos[nfields++] = -1;
+					}
+					else
+					{
+						/* report error using parameter name, if available */
+						if (argnames && argnames[i] && argnames[i][0])
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
+											argnames[i])));
 						else
-						{
-							/* report error using parameter name, if available */
-							if (argnames && argnames[i] && argnames[i][0])
-								ereport(ERROR,
-										(errcode(ERRCODE_SYNTAX_ERROR),
-									 	errmsg("procedure parameter \"%s\" is an output parameter but corresponding argument is not writable",
-												argnames[i])));
-							else
-								ereport(ERROR,
-										(errcode(ERRCODE_SYNTAX_ERROR),
-									 	errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
-												i + 1)));
-						}
-						j++;
+							ereport(ERROR,
+									(errcode(ERRCODE_SYNTAX_ERROR),
+									 errmsg("procedure parameter %d is an output parameter but corresponding argument is not writable",
+											i + 1)));
 					}
 				}
 				i++;
