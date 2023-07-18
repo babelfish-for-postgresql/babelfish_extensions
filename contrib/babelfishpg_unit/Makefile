@@ -5,6 +5,7 @@ OBJS = $(SRCS:.c=.o)       # object files
 
  # source code files
 SRCS    = babelfishpg_unit.c test_money.c \
+		  test_ssl_read.c test_ssl_write.c
 
 # for posgres build
 PG_CONFIG = pg_config
