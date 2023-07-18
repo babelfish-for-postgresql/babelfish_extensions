@@ -1,0 +1,47 @@
+-- tsql
+-- throw error if login does not have sysadmin privilege(it has only superuser)
+create login l3 with password = '12345678'
+go
+
+-- psql
+-- grant Superuser
+alter user l3 with Superuser;
+go
+
+-- tsql user=l3 password=12345678
+exec sp_execute_postgresql 'create extension pg_stat_statements';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied to create extension)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+
+-- psql
+select pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- psql
+-- revoke superuser
+ALTER USER l3 with NOSUPERUSER;
+go
+
+-- tsql
+drop login l3
+go
