@@ -1004,7 +1004,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					foreach(paramcell, stmt->params)
 					{
 						tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
-						if (argnames[i] && p->name && strcmp(argnames[i], p->name) != 0)
+						if ((p->name == NULL) || (argnames[i] && strcmp(argnames[i], p->name) != 0))
 						{
 							j++;
 							continue;
