@@ -1535,10 +1535,12 @@ simple_select:
 					Node *r_func = (Node *) list_nth((List *)$6, 1);
 
 					s->node = makeIntConst(1, -1);
-					s->sortby_dir = 0;       /* SORTBY_DEFAULT */
-					s->sortby_nulls = 0;     /* SORTBY_NULLS_DEFAULT */
+					/* SORTBY_DEFAULT */
+					s->sortby_dir = 0;
+					/* SORTBY_NULLS_DEFAULT */    
+					s->sortby_nulls = 0;     
 					s->useOp = NIL;
-					s->location = -1;        /* no operator */
+					s->location = -1;
 
 					n->targetList = list_make3(rowid, r_col, r_func);
 					n->fromClause = $5;
@@ -1550,7 +1552,7 @@ simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
-tsql_pivot_expr: TSQL_PIVOT '(' func_application TSQL_FOR ColId IN_P '(' target_list ')' ')'
+tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P '(' target_list ')' ')'
 				{						
 					List    *ret;
 					ColumnRef *c = makeNode(ColumnRef);
