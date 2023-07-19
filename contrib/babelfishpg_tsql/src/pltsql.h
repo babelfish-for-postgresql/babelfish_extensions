@@ -1559,13 +1559,14 @@ typedef struct PLtsql_protocol_plugin
 	void		(*stmt_end) (PLtsql_execstate *estate, PLtsql_stmt *stmt);
 	void		(*stmt_exception) (PLtsql_execstate *estate, PLtsql_stmt *stmt,
 								   bool terminate_batch);
-	char	   *(*get_login_domainname) (void);
+	char	       *(*get_login_domainname) (void);
 	void		(*set_guc_stat_var) (const char *guc, bool boolVal, const char *strVal, int intVal);
 	void		(*set_at_at_stat_var) (const char *at_at_var, int intVal, uint64 bigintVal);
 	void		(*set_db_stat_var) (int16 db_id);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
-	char	   *(*get_host_name) (void);
+	char	       *(*get_host_name) (void);
+	uint32_t        (*get_client_pid) (void);
 	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype, int scale);
 	Datum		(*get_datum_from_date_time_struct) (uint64 time, int32 date, int datatype, int optional_attr);
 	Datum		(*get_context_info) (void);

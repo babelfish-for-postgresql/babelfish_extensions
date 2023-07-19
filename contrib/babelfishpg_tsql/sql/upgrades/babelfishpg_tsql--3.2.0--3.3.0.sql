@@ -139,6 +139,91 @@ inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
+create or replace view sys.sysprocesses as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , a.wait_event_type as lastwaittype
+  , null::text as waitresource
+  , coalesce(t.database_id, 0)::oid as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , a.state as status
+  , null::bytea as sid
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
+  , a.application_name as program_name
+  , t.client_pid::varchar(10) as hostprocess
+  , a.query as cmd
+  , null::varchar(128) as nt_domain
+  , null::varchar(128) as nt_username
+  , null::varchar(12) as net_address
+  , null::varchar(12) as net_library
+  , a.usename as loginname
+  , t.context_info::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.host_id()
+RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
+    AS $$select statement_timestamp()::datetime2;$$
+    LANGUAGE SQL;
+GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+    -- Casting to text as there are not type cast function from timestamptz to datetimeoffset
+    AS $$select cast(cast(statement_timestamp() as text) as sys.datetimeoffset);$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
+    AS $$select (statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
+
+
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', statement_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
