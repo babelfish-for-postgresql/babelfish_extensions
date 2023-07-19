@@ -1521,7 +1521,61 @@ simple_select:
 					n->windowClause = $10;
 					$$ = (Node *)n;
 				}
+			| SELECT opt_all_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					A_Const *g_a1 = (A_Const *) makeIntConst(1, -1);
+					A_Const *g_a2 = (A_Const *) makeIntConst(2, -1);
+					SortBy * s = makeNode(SortBy);
+
+					Node *rowid = (Node *) list_nth($3, 0);
+					Node *r_col = (Node *) list_nth((List *)$6, 0);
+					Node *r_func = (Node *) list_nth((List *)$6, 1);
+
+					s->node = makeIntConst(1, -1);
+					s->sortby_dir = 0;       /* SORTBY_DEFAULT */
+					s->sortby_nulls = 0;     /* SORTBY_NULLS_DEFAULT */
+					s->useOp = NIL;
+					s->location = -1;        /* no operator */
+
+					n->targetList = list_make3(rowid, r_col, r_func);
+					n->fromClause = $5;
+					n->groupClause = list_make2(g_a1, g_a2);
+					n->sortClause = list_make1(s);
+
+					$$ = (Node *)n;
+				}	
 			| tsql_values_clause							{ $$ = $1; }
+			;
+
+tsql_pivot_expr: TSQL_PIVOT '(' func_application TSQL_FOR ColId IN_P '(' target_list ')' ')'
+				{						
+					List    *ret;
+					ColumnRef *c = makeNode(ColumnRef);
+					ResTarget *r_col = makeNode(ResTarget);
+					ResTarget *r_func = makeNode(ResTarget);
+
+					/* prepare category column for pivot source sql */
+					c->location = -1;
+					c->fields = list_make1(makeString($5));
+					r_col->name = NULL;
+					r_col->name_location = -1;
+					r_col->indirection = NIL;
+					r_col->val = (Node *) c;
+					r_col->location = -1;
+
+					/* prepare aggregation function for pivot source sql */
+					r_func->name = NULL;
+					r_func->name_location = -1;
+					r_func->indirection = NIL;
+					r_func->val = (Node *) $3;
+					r_func->location = -1;
+
+					ret = list_make3(r_col, r_func, $8);
+					$$ = (Node*) ret; 
+				} 
 			;
 
 table_ref:	relation_expr tsql_table_hint_expr
