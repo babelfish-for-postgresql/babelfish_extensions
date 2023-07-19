@@ -2810,7 +2810,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
 									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-											 errmsg("Current login does not have privileges to alter password")));
+											 errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 								has_password = true;
 							}
