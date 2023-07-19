@@ -1,5 +1,5 @@
 -- Check if the linked server added is reflected in the system view
-SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name NOT LIKE 'bbf_server%' ORDER BY name
+SELECT name, product, provider, data_source, provider_string, catalog, is_linked FROM sys.servers WHERE name NOT LIKE 'bbf_server%' AND name NOT LIKE 'server_4229%' ORDER BY name
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#bit
@@ -35,7 +35,7 @@ mssql_server3#!##!#tds_fdw#!#mssql_server2\ABC#!#<NULL>#!#master#!#1
 ~~END~~
 
 
-SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name NOT LIKE 'bbf_server%' ORDER BY linked_srv_name
+SELECT s.name as linked_srv_name, l.remote_name as username FROM sys.servers as s INNER JOIN sys.linked_logins as l on s.server_id = l.server_id WHERE s.name NOT LIKE 'bbf_server%' AND s.name NOT LIKE 'server_4229%' ORDER BY linked_srv_name
 GO
 ~~START~~
 varchar#!#varchar
@@ -59,7 +59,7 @@ mssql_server3#!#<NULL>
 SET NOCOUNT ON
 DECLARE @sp_helplinkedsrvlogin_var table(a sysname, b sysname NULL, c smallint, d sysname NULL)
 INSERT INTO @sp_helplinkedsrvlogin_var EXEC sp_helplinkedsrvlogin
-SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
+SELECT * FROM @sp_helplinkedsrvlogin_var WHERE a NOT LIKE 'bbf_server%' AND a NOT LIKE 'server_4229%' ORDER BY a
 SET NOCOUNT OFF
 GO
 ~~START~~
@@ -115,7 +115,7 @@ GO
 SET NOCOUNT ON
 DECLARE @sp_linkedservers_var table(a sysname, b nvarchar(128), c nvarchar(128), d nvarchar(4000), e nvarchar(4000), f nvarchar(4000), g sysname NULL)
 INSERT INTO @sp_linkedservers_var EXEC sp_linkedservers
-SELECT * FROM @sp_linkedservers_var WHERE a NOT LIKE 'bbf_server%' ORDER BY a
+SELECT * FROM @sp_linkedservers_var WHERE a NOT LIKE 'bbf_server%' AND a NOT LIKE 'server_4229%' ORDER BY a
 SET NOCOUNT OFF
 GO
 ~~START~~
@@ -156,7 +156,16 @@ GO
 EXEC sp_droplinkedsrvlogin @rmtsrvname = "MSSQL_server2", @locallogin = NULL
 GO
 
-EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3", @locallogin = NULL
+-- leading spaces are not ignored (should throw error)
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "   mssql_server3", @locallogin = NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "   mssql_server3" does not exist)~~
+
+
+-- trailing spaces are ignored
+EXEC sp_droplinkedsrvlogin @rmtsrvname = "mssql_server3    ", @locallogin = NULL
 GO
 
 -- Call sp_droplinkedsrvlogin from master.dbo schema
@@ -220,4 +229,126 @@ GO
 ~~START~~
 varchar#!#varchar
 ~~END~~
+
+
+-- Testing the sp_testlinkedserver stored procedure with NULL servername argument (should throw error)
+EXEC sp_testlinkedserver NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: @servername parameter cannot be NULL)~~
+
+
+-- Testing the sp_testlinkedserver stored procedure with servername argument whose length is more than 128 chars (should throw error)
+EXEC sp_testlinkedserver 'LjW4d3W5DcAMPlqprZ3jhgYfKbU1e8nV20ovRmJH7kbv9iXq4SNlTIQxAloKOze1f2tsnPLRu9BFyUgQYvKLpN3CBNTZP4zIZT4koPloGBYhWvg2c0qD6nM5aChQolTmzq32yGFAgXaj5rdxOXTSNwTIjxGZTVzhr39EhObE3k2DHExzS5Wg6SE1ZFLIjVJWlxibh7Xa8OzU0xQrI1VdmVuPS9vllwTQfNRzxv2etZXJdfVgR2p9bMkprV7SZtcP97bDluDk3hqV0D8Qy0U2LsdAMbHwPb5m6SE2n0seInwq2t4sN'
+GO
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(128))~~
+
+
+-- Testing the connection to a linked server using a server name that does not exist (should throw error)
+IF EXISTS(SELECT * FROM sys.servers WHERE name = 'test_server')
+    EXEC sp_dropserver 'test_server', 'droplogins'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server "test_server" does not exist)~~
+
+
+-- Testing the connection to a existing linked server using the server name with leading spaces (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+EXEC sp_testlinkedserver ' test_server'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server " test_server" does not exist)~~
+
+
+-- Testing the connection to a existing linked server using the server name with mixed spaces (should throw error)
+EXEC sp_testlinkedserver ' test_server '
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: server " test_server" does not exist)~~
+
+
+-- Tesing the connection to a linked server for which user mapping does not exist (should throw error)
+EXEC sp_testlinkedserver 'test_server'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user mapping not found for "master_dbo")~~
+
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server whose data source is incorrect (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhos', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: DB #: 20012, DB Msg: server name not found in configuration files, OS #: 0, OS Msg: Success, Level: 2)~~
+
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server whose catalog name is incorrect (should throw error)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'maste'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TDS client library error: Msg #: 911, Msg state: 1, Msg: database "maste" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
+
+-- Testing the connection to a linked server whose all parameters has been set correctly (should pass)
+EXEC sp_addlinkedserver  @server = N'test_server', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'test_server', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO
+
+EXEC sp_testlinkedserver 'test_server'
+GO
+
+-- Testing the connection to a right linked server with trailing spaces in the servername argument (should pass)
+EXEC sp_testlinkedserver 'test_server  '
+GO
+
+-- Testing the connection to a right linked server with double-quoted(delimiter) servername argument (should pass)
+EXEC sp_testlinkedserver "test_server"
+GO
+
+-- Testing the connection to a right linked server with master.dbo prefix to stored procedure (should pass)
+EXEC master.dbo.sp_testlinkedserver 'test_server'
+GO
+
+-- Testing the connection to a right linked server without the EXEC keyword (should pass)
+sp_testlinkedserver 'test_server'
+GO
+
+EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
+GO
 

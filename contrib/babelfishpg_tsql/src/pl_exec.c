@@ -865,11 +865,11 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 		 * Errors will be re-thrwon.
 		 */
 
-		/* Drop the tables linked to table variables */
-		pltsql_clean_table_variables(&estate, func);
-
 		/* Close/Deallocate LOCAL cursors */
 		pltsql_cleanup_local_cursors(&estate);
+
+		/* Drop the tables linked to table variables */
+		pltsql_clean_table_variables(&estate, func);
 
 		/* Clean up any leftover temporary memory */
 		pltsql_destroy_econtext(&estate);
@@ -889,11 +889,11 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (*pltsql_plugin_ptr && (*pltsql_plugin_ptr)->func_end)
 		((*pltsql_plugin_ptr)->func_end) (&estate, func);
 
-	/* Drop the tables linked to table variables */
-	pltsql_clean_table_variables(&estate, func);
-
 	/* Close/Deallocate LOCAL cursors */
 	pltsql_cleanup_local_cursors(&estate);
+
+	/* Drop the tables linked to table variables */
+	pltsql_clean_table_variables(&estate, func);
 
 	/* Clean up any leftover temporary memory */
 	pltsql_destroy_econtext(&estate);

@@ -968,6 +968,12 @@ get_tds_host_name(void)
 	return MyTdsHostName;
 }
 
+uint32_t
+get_tds_client_pid(void)
+{
+	return MyTdsClientPid;
+}
+
 Datum
 get_tds_context_info(void)
 {

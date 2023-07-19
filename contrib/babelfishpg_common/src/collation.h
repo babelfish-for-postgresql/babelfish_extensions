@@ -159,3 +159,9 @@ extern void
 
 extern TranslateCollation_hook_type prev_TranslateCollation_hook;
 extern PreCreateCollation_hook_type prev_PreCreateCollation_hook;
+
+extern set_like_collation_hook_type prev_set_like_collation_hook;
+extern get_like_collation_hook_type prev_get_like_collation_hook;
+
+extern void bbf_set_like_collation(Oid collation);
+extern Oid bbf_get_like_collation(void);

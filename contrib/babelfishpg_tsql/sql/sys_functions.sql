@@ -551,22 +551,11 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.parsename (
-	object_name VARCHAR
-	,object_piece INT
-	)
-RETURNS VARCHAR AS $$
-/***************************************************************
-EXTENSION PACK function PARSENAME(x)
-***************************************************************/
-SELECT CASE
-		WHEN char_length($1) < char_length(pg_catalog.replace($1, '.', '')) + 4
-			AND $2 BETWEEN 1
-				AND 4
-			THEN reverse(split_part(reverse($1), '.', $2))
-		ELSE NULL
-		END $$ immutable LANGUAGE 'sql';
-        
+CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
+RETURNS sys.SYSNAME
+AS 'babelfishpg_tsql', 'parsename'
+LANGUAGE C IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
                                                            IN p_minute NUMERIC,
                                                            IN p_seconds NUMERIC,
@@ -3453,6 +3442,10 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.host_id()
+RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
@@ -3620,3 +3613,8 @@ IN query text)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'openquery_internal'
 LANGUAGE C VOLATILE;
+
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
+RETURNS date
+AS 'babelfishpg_tsql', 'EOMONTH'
+LANGUAGE C STABLE PARALLEL SAFE;
