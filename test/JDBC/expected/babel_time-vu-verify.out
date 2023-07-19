@@ -1,0 +1,172 @@
+-- psql
+SELECT CAST('2012-02-23' AS TIME)
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid input syntax for type time: "2012-02-23"
+  Position: 13
+    Server SQLState: 22007)~~
+
+
+-- tsql
+SELECT CAST('2012-02-23' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('12 jan 20 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
+SELECT CAST('2012   -   fEb   -     23' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('2015-03-19 01:05:06.   289' AS TIME(0))
+GO
+~~START~~
+time
+01:05:06
+~~END~~
+
+
+SELECT CAST('Jan-2021-01 01:05:06.289' AS TIME)
+GO
+~~START~~
+time
+01:05:06.2890000
+~~END~~
+
+
+-- these particular cases are failing in SQL Server but passing in bbf
+SELECT CAST('121200' AS TIME)
+GO
+~~START~~
+time
+12:12:00.0000000
+~~END~~
+
+
+SELECT CAST('2012-      02-     23     02      :     03  :     00        +       8' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
+SELECT CAST('Jan   2021   01 010506.289' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "Jan   2021   01 010506.289")~~
+
+
+SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
+GO
+~~START~~
+time
+12:12:00.0000000
+~~END~~
+
+
+select CAST(CAST('2020   -    03   -    15' AS date) AS time);
+GO
+-~~START~~
+-datetime
+-2020-03-15 00:00:00.0
+-~~END~~
+
+
+-- Negative cases
+SELECT CAST('Jan-2021-01 121200 1-1' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "Jan-2021-01 121200 1-1")~~
+
+
+SELECT CAST('+02' AS TIME);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "+02")~~
+
+
+SELECT CAST('20121200' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "20121200")~~
+
+
+SELECT CAST('2012jan00' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "2012jan00")~~
+
+
+SELECT CAST('Jan   2021    010506.289' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "Jan   2021    010506.289")~~
+
+
+SELECT CAST('Jan   2021   01 01   05    06    .    289' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type time: "Jan   2021   01 01   05    06    .    289")~~
+
+
+SELECT CAST('Jan-2021-01 121200 ' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: time zone "jan-2021-01" not recognized)~~
+
+
+SELECT * from babel_TIME_vu_prepare_t1
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT babel_TIME_vu_prepare_f1()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+exec babel_TIME_vu_prepare_p1
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM babel_TIME_vu_prepare_v1
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+

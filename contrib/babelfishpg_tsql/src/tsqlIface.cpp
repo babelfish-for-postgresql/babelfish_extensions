@@ -3,6 +3,7 @@
 #include <iostream>
 #include <strstream>
 #include <string>
+#include <regex>
 #include <unordered_map>
 
 #pragma GCC diagnostic ignored "-Wattributes"
@@ -1917,6 +1918,22 @@ public:
 			/* Re-write session_user to sys.session_user(). */
 			if (bctx->bif_no_brackets && bctx->SESSION_USER())
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
+
+			if(bctx->bif_cast_parse() && bctx->bif_cast_parse()->bif && bctx->bif_cast_parse()->bif)
+			{
+				auto temp = bctx->bif_cast_parse();
+				if(temp->data_type() && (pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "TIME", 4) == 0 ||
+										pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "DATE", 4) == 0 ||
+										pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "SMALLDATETIME", 13) == 0))
+				{
+					std::string s(pstrdup(::getFullText(temp->expression()).c_str()));
+					std::regex pattern("\\s*([-/:.])\\s*");
+					std::string result = std::regex_replace(s, pattern, "$1");
+					if ( s!= result)
+						rewritten_query_fragment.emplace(std::make_pair(temp->expression()->start->getStartIndex(), std::make_pair(::getFullText(temp->expression()), result)));
+					s = (pstrdup(::getFullText(temp->expression()).c_str()));
+				}
+			}
 		}
 
 		/* analyze scalar function call */
