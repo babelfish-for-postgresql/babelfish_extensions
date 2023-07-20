@@ -39,3 +39,17 @@ GO
 -- Unicode character strings
 SELECT * FROM forjson_datatypes_vu_v_unicode_strings
 GO
+
+-- NULL datetime and datetimeoffset
+
+SELECT * FROM forjson_datatypes_vu_v_nulldatetime
+GO
+
+SELECT * FROM forjson_datatypes_vu_v_nullsmalldatetime
+GO
+
+SELECT * FROM forjson_datatypes_vu_v_nulldatetime2
+GO
+
+SELECT * FROM forjson_datatypes_vu_v_nulldatetimeoffset
+GO
