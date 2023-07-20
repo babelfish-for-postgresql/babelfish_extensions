@@ -228,11 +228,11 @@ int
 16
 ~~END~~
 
-Select cast(0x100 as int)/cast(0x10 as varbinary)
+Select cast(0x100 as int)/cast(2345 as varbinary)
 go
 ~~START~~
 int
-16
+0
 ~~END~~
 
 create table int4var(a varbinary,b int)
@@ -261,18 +261,65 @@ int
 -8421504
 ~~END~~
 
-Select (12345+3543647)/(543210 & CAST(12345 AS varbinary(4)))
+Select (12345+3543647)/cast((543210 & CAST(12345 AS varbinary(4))) as varbinary)
 go
 ~~START~~
 int
 88899
 ~~END~~
 
-Select cast(0x4567 as int)/(543210 & CAST(12345 AS varbinary(4)))
+Select (sys.isdate('2023-4-5')*34+64)/0x234
+go
+~~START~~
+int
+0
+~~END~~
+
+Select (sys.isdate('2023-4-5')*34+64)/cast(sys.isdate('2023-4-5') as varbinary)
+go
+~~START~~
+int
+98
+~~END~~
+
+Select cast((0x234 & 23) as int) / cast(sys.isdate('2023-4-5') as varbinary)
+go
+~~START~~
+int
+20
+~~END~~
+
+Select cast(0x4567 as int)/cast((543210 & CAST(12345 AS varbinary(4))) as varbinary(4))
 go
 ~~START~~
 int
 444
+~~END~~
+
+select 123 / 0x00
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 0 / 0x00
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 424748364 / 0x101
+go
+~~START~~
+int
+1652717
+~~END~~
+
+select -424748364 / 0x101
+go
+~~START~~
+int
+-1652717
 ~~END~~
 
 
@@ -362,14 +409,42 @@ int
 0
 ~~END~~
 
-Select (543210565 & CAST(12345 AS varbinary(4)))/(12345+3543647)
+Select cast((5432105 & CAST(12345 AS varbinary(4)))as varbinary)/(12345+3543647)
 go
 ~~START~~
 int
 0
 ~~END~~
 
-Select (543210458 & CAST(12345 AS varbinary(4)))/cast(0x4567 as int)
+Select cast((54321 & CAST(12345 AS varbinary(4))) as varbinary)/cast(0x4567 as int)
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 0x23FF/sys.isdate('2023-4-5')
+go
+~~START~~
+int
+9215
+~~END~~
+
+Select 0x233DF/(sys.isdate('2023-4-5')*34+64)
+go
+~~START~~
+int
+1472
+~~END~~
+
+Select cast(sys.isdate('2023-4-5') as varbinary)/(sys.isdate('2023-4-5')*3+6)
+go
+~~START~~
+int
+0
+~~END~~
+
+Select cast(sys.isdate('2023-4-5') as varbinary)/cast((0x234 & 23) as int) 
 go
 ~~START~~
 int
@@ -382,43 +457,17 @@ go
 
 ~~ERROR (Message: division by zero)~~
 
-select 123 / 0x00
-go
-~~ERROR (Code: 8134)~~
-
-~~ERROR (Message: division by zero)~~
-
-select 0 / 0x00
-go
-~~ERROR (Code: 8134)~~
-
-~~ERROR (Message: division by zero)~~
-
 select 0x00 / 0
 go
 ~~ERROR (Code: 8134)~~
 
 ~~ERROR (Message: division by zero)~~
 
-select 424748364 / 0x101
-go
-~~START~~
-int
-1652717
-~~END~~
-
 select 0x404 / 424748364
 go
 ~~START~~
 int
 0
-~~END~~
-
-select -424748364 / 0x101
-go
-~~START~~
-int
--1652717
 ~~END~~
 
 select 0x404 / -424748364

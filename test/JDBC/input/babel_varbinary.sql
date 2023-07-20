@@ -77,7 +77,7 @@ SELECT (12345 / CAST(12 AS varbinary(4)))
 go
 Select (cast(0x100 as int) / 0x10)
 go
-Select cast(0x100 as int)/cast(0x10 as varbinary)
+Select cast(0x100 as int)/cast(2345 as varbinary)
 go
 create table int4var(a varbinary,b int)
 go
@@ -89,9 +89,23 @@ Select b/a from int4var
 go
 Select cast(b as int)/a from int4var
 go
-Select (12345+3543647)/(543210 & CAST(12345 AS varbinary(4)))
+Select (12345+3543647)/cast((543210 & CAST(12345 AS varbinary(4))) as varbinary)
 go
-Select cast(0x4567 as int)/(543210 & CAST(12345 AS varbinary(4)))
+Select (sys.isdate('2023-4-5')*34+64)/0x234
+go
+Select (sys.isdate('2023-4-5')*34+64)/cast(sys.isdate('2023-4-5') as varbinary)
+go
+Select cast((0x234 & 23) as int) / cast(sys.isdate('2023-4-5') as varbinary)
+go
+Select cast(0x4567 as int)/cast((543210 & CAST(12345 AS varbinary(4))) as varbinary(4))
+go
+select 123 / 0x00
+go
+select 0 / 0x00
+go
+select 424748364 / 0x101
+go
+select -424748364 / 0x101
 go
 
 select 0x1000000 / @@microsoftversion
@@ -118,23 +132,23 @@ Select a/b from int4var
 go
 Select a/cast(b as int) from int4var
 go
-Select (543210565 & CAST(12345 AS varbinary(4)))/(12345+3543647)
+Select cast((5432105 & CAST(12345 AS varbinary(4)))as varbinary)/(12345+3543647)
 go
-Select (543210458 & CAST(12345 AS varbinary(4)))/cast(0x4567 as int)
+Select cast((54321 & CAST(12345 AS varbinary(4))) as varbinary)/cast(0x4567 as int)
+go
+Select 0x23FF/sys.isdate('2023-4-5')
+go
+Select 0x233DF/(sys.isdate('2023-4-5')*34+64)
+go
+Select cast(sys.isdate('2023-4-5') as varbinary)/(sys.isdate('2023-4-5')*3+6)
+go
+Select cast(sys.isdate('2023-4-5') as varbinary)/cast((0x234 & 23) as int) 
 go
 select 0x101 / 0
 go
-select 123 / 0x00
-go
-select 0 / 0x00
-go
 select 0x00 / 0
 go
-select 424748364 / 0x101
-go
 select 0x404 / 424748364
-go
-select -424748364 / 0x101
 go
 select 0x404 / -424748364
 go
