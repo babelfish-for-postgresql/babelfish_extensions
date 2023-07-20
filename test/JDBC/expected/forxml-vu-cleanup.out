@@ -4,9 +4,9 @@ drop procedure forxml_vu_p_employee_select;
 go
 drop procedure forxml_vu_p_employee_select2;
 go
-drop view forxml_vu_v1;
+drop view forxml_vu_view1;
 go
-drop view forxml_vu_v2;
+drop view forxml_vu_view2;
 go
 drop view forxml_vu_v_cte1;
 go
@@ -25,4 +25,12 @@ go
 drop table forxml_vu_t_employees;
 go
 drop table forxml_vu_t_employees2;
+go
+drop procedure forxml_vu_p_nullval1
+go
+drop procedure forxml_vu_p_nullval2
+go
+drop procedure forxml_vu_p_nullval3
+go
+drop procedure forxml_vu_p_nullval4
 go
