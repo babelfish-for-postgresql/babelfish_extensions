@@ -8,18 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-# all
-pgr_000_test_setup
-pgr_delete
-pgr_select_distinct_on
-pgr_select_distinct
-pgr_select_having
-pgr_select_implicit
-pgr_select_into
-pgr_select
-pgr_zzz_clean_up
-
-
+all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
@@ -145,12 +134,13 @@ ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-verify
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-cleanup
 
-# These are bash script that should not be executed
+# These are bash scripts that should not be executed
 ignore#!#load_aggtest
 ignore#!#load_emp
 ignore#!#load_onek
 ignore#!#load_person
 ignore#!#load_road
+ignore#!#load_tenk
 ignore#!#load_stud_emp
 ignore#!#load_student
-ignore#!#load_tenk
+
