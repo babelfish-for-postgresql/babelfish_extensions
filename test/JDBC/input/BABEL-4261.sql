@@ -18,21 +18,29 @@ GO
 select set_config('babelfishpg_tsql.explain_summary', 'off', false);
 GO
 
-SET BABELFISH_STATISTICS PROFILE ON
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
 select a, count(*) from t_babel4261 group by a order by 2; -- should not crash
 GO
 
-
 -- set configurations back
-SET BABELFISH_STATISTICS PROFILE OFF
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+select a, count(*) from t_babel4261 group by a order by 2; -- should not crash
 GO
 
 select set_config('babelfishpg_tsql.explain_timing', 'on', false);
 GO
 
 select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false);
 GO
 
 -- Commiting sets parallel_setup_cost, parallel_tuple_cost, min_parallel_table_scan_size back to default
