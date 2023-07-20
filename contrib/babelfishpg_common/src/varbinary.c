@@ -1519,9 +1519,9 @@ int4varbinary_div(PG_FUNCTION_ARGS)
        int32 result;
        len = VARSIZE_ANY_EXHDR(varbinary_divisor);
        result_len = len > sizeof(int32) ? sizeof(int32) : len;
-       reverse_memcpy((char *) resultint, data, result_len);
+       memcpy((char *) resultint + (sizeof(int32)- result_len), data, result_len);
 
-       divisor = (int32) *resultint;
+       divisor = pg_ntoh32((int32) *resultint);
        if (divisor == 0)
        {
 	       ereport(ERROR,
@@ -1546,11 +1546,11 @@ varbinaryint4_div(PG_FUNCTION_ARGS)
        int32      *resultint = palloc0(sizeof(int32));
        int32 dividend = 0;
        int32 result;
+
        len = VARSIZE_ANY_EXHDR(varbinary_dividend);
        result_len = len > sizeof(int32) ? sizeof(int32) : len;
-       reverse_memcpy((char *) resultint, data, result_len);
-
-       dividend = (int32) *resultint;
+       memcpy((char *) resultint + (sizeof(int32)- result_len), data, result_len);
+       dividend = pg_ntoh32((int32) *resultint);
 
        if (divisor == 0)
        {
