@@ -185,7 +185,7 @@ go
 -- test hex string in procedure
 create procedure test_hex_bitop as
 begin
-    select 0x1A2B3C4F ^ 101;
+		select 0x1A2B3C4F ^ 101;
 end;
 go
 
@@ -194,7 +194,7 @@ go
 
 create procedure test_hex_insert as
 begin
-    insert into t1 values(0x1f, cast('1f' as binary(2)));
+		insert into t1 values(0x1f, cast('1f' as binary(2)));
 end;
 go
 
