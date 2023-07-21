@@ -59,6 +59,8 @@ select 10 / 0x00;
 go
 
 --division between varbinary and int4 datatype, vice-versa
+Select 100 / 0x
+go
 select @@microsoftversion / 0x1000000
 go
 Select 2147483647 / 0x7FFFFFFF
@@ -108,6 +110,8 @@ go
 select -424748364 / 0x101
 go
 
+Select 0x/100
+go
 select 0x1000000 / @@microsoftversion
 go
 Select 0x7FFFFFFF / 2147483647
@@ -153,13 +157,35 @@ go
 select 0x404 / -424748364
 go
 
+-- testcases with binary for division operator between varbinary and int4 datatype, vice-versa 
+-- TODO :- Update the following test once the fix for BABEL-  is available
+select cast(cast(NULL as binary) as int)/0x10
+go
+select 0x100/cast(cast(NULL as binary) as int)
+go
+Select cast(cast(2147483648 as binary) as int) / 0x100
+go
+Select 0x100/cast(cast(2147483648 as binary) as int)
+go
+Select 100000000/cast(cast(2147483648 as binary) as varbinary)
+go
+Select cast(cast(2147483648 as binary) as varbinary) /1000000
+go
+Select 100000000/cast(cast(-2147483649 as binary) as varbinary)
+go
+Select cast(cast(-2147483649 as binary) as varbinary) /1000000
+go
+
 drop table int4var
 go
+
+
+
 
 -- test hex string in procedure
 create procedure test_hex_bitop as
 begin
-	select 0x1A2B3C4F ^ 101;
+    select 0x1A2B3C4F ^ 101;
 end;
 go
 
@@ -168,7 +194,7 @@ go
 
 create procedure test_hex_insert as
 begin
-	insert into t1 values(0x1f, cast('1f' as binary(2)));
+    insert into t1 values(0x1f, cast('1f' as binary(2)));
 end;
 go
 

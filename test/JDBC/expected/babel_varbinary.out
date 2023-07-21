@@ -165,6 +165,12 @@ go
 
 
 --division between varbinary and int4 datatype, vice-versa
+Select 100 / 0x
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
 select @@microsoftversion / 0x1000000
 go
 ~~START~~
@@ -323,6 +329,13 @@ int
 ~~END~~
 
 
+Select 0x/100
+go
+~~START~~
+int
+0
+~~END~~
+
 select 0x1000000 / @@microsoftversion
 go
 ~~START~~
@@ -478,8 +491,68 @@ int
 ~~END~~
 
 
+-- testcases with binary for division operator between varbinary and int4 datatype, vice-versa 
+-- TODO :- Update the following test once the fix for BABEL-  is available
+select cast(cast(NULL as binary) as int)/0x10
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+select 0x100/cast(cast(NULL as binary) as int)
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+Select cast(cast(2147483648 as binary) as int) / 0x100
+go
+~~START~~
+int
+-8388608
+~~END~~
+
+Select 0x100/cast(cast(2147483648 as binary) as int)
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 100000000/cast(cast(2147483648 as binary) as varbinary)
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+Select cast(cast(2147483648 as binary) as varbinary) /1000000
+go
+~~START~~
+int
+0
+~~END~~
+
+Select 100000000/cast(cast(-2147483649 as binary) as varbinary)
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+Select cast(cast(-2147483649 as binary) as varbinary) /1000000
+go
+~~START~~
+int
+0
+~~END~~
+
+
 drop table int4var
 go
+
+
+
 
 -- test hex string in procedure
 create procedure test_hex_bitop as
