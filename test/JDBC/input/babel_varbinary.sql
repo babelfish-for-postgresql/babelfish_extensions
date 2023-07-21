@@ -61,6 +61,12 @@ go
 --division between varbinary and int4 datatype, vice-versa
 Select 100 / 0x
 go
+Select 256 / 0x10
+go
+Select 56457 / 0x82B0
+go
+Select 243534536 / 0x45A32D
+go
 select @@microsoftversion / 0x1000000
 go
 Select 2147483647 / 0x7FFFFFFF
@@ -111,6 +117,12 @@ select -424748364 / 0x101
 go
 
 Select 0x/100
+go
+Select 0x10 / 2
+go
+Select 0x82B0 / 3
+go
+Select 0x45A32D / 4
 go
 select 0x1000000 / @@microsoftversion
 go

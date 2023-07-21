@@ -171,6 +171,27 @@ go
 
 ~~ERROR (Message: division by zero)~~
 
+Select 256 / 0x10
+go
+~~START~~
+int
+16
+~~END~~
+
+Select 56457 / 0x82B0
+go
+~~START~~
+int
+1
+~~END~~
+
+Select 243534536 / 0x45A32D
+go
+~~START~~
+int
+53
+~~END~~
+
 select @@microsoftversion / 0x1000000
 go
 ~~START~~
@@ -334,6 +355,27 @@ go
 ~~START~~
 int
 0
+~~END~~
+
+Select 0x10 / 2
+go
+~~START~~
+int
+8
+~~END~~
+
+Select 0x82B0 / 3
+go
+~~START~~
+int
+11152
+~~END~~
+
+Select 0x45A32D / 4
+go
+~~START~~
+int
+1140939
 ~~END~~
 
 select 0x1000000 / @@microsoftversion
