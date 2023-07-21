@@ -158,7 +158,7 @@ select 0x404 / -424748364
 go
 
 -- testcases with binary for division operator between varbinary and int4 datatype, vice-versa 
--- TODO :- Update the following test once the fix for BABEL-  is available
+-- TODO :- Update the following test once the fix for BABEL-4308  is available
 select cast(cast(NULL as binary) as int)/0x10
 go
 select 0x100/cast(cast(NULL as binary) as int)
