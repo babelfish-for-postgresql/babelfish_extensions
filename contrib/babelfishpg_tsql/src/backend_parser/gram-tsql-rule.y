@@ -1525,7 +1525,10 @@ simple_select:
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					SelectStmt *n = makeNode(SelectStmt);
+					SelectStmt *wrapper_sl = makeNode(SelectStmt);
+					SelectStmt *s_sql = makeNode(SelectStmt);
+					SelectStmt *c_sql = makeNode(SelectStmt);
+
 					A_Const *g_a1 = (A_Const *) makeIntConst(1, -1);
 					A_Const *g_a2 = (A_Const *) makeIntConst(2, -1);
 					SortBy * s = makeNode(SortBy);
@@ -1542,22 +1545,33 @@ simple_select:
 					s->useOp = NIL;
 					s->location = -1;
 
-					n->targetList = list_make3(rowid, r_col, r_func);
-					n->fromClause = $5;
-					n->groupClause = list_make2(g_a1, g_a2);
-					n->sortClause = list_make1(s);
+					s_sql->targetList = list_make3(rowid, r_col, r_func);
+					s_sql->fromClause = $5;
+					s_sql->groupClause = list_make2(g_a1, g_a2);
+					s_sql->sortClause = list_make1(s);
 
-					$$ = (Node *)n;
+					c_sql->distinctClause = list_make1(NIL);
+					c_sql->targetList = list_make1(r_col);
+					c_sql->fromClause = $5;
+					c_sql->whereClause = list_nth((List *)$6, 2);
+					
+					wrapper_sl->targetList = $3;
+					wrapper_sl->fromClause = $5;
+					wrapper_sl->larg = s_sql;
+					wrapper_sl->rarg = c_sql;
+					$$ = (Node *)wrapper_sl;
 				}	
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
-tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P '(' target_list ')' ')'
+tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 				{						
+					A_Expr	*where_clause;
 					List    *ret;
-					ColumnRef *c = makeNode(ColumnRef);
-					ResTarget *r_col = makeNode(ResTarget);
-					ResTarget *r_func = makeNode(ResTarget);
+					List	*col_list = NULL;
+					ColumnRef	*c = makeNode(ColumnRef);
+					ResTarget	*r_col = makeNode(ResTarget);
+					ResTarget	*r_func = makeNode(ResTarget);
 
 					/* prepare category column for pivot source sql */
 					c->location = -1;
@@ -1574,8 +1588,21 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P '(' target_list 
 					r_func->indirection = NIL;
 					r_func->val = (Node *) $3;
 					r_func->location = -1;
-
-					ret = list_make3(r_col, r_func, $8);
+					
+					if (IsA((List *)$7, List)){
+						for (int i = 0; i < ((List *)$7)->length; i++){
+							ColumnRef	*tempRef = list_nth((List *)$7, i);
+							String	*s = list_nth(tempRef->fields, 0);
+							Node	*n = makeStringConst(s->sval, -1);
+							if (col_list == NULL){
+								col_list = list_make1(n);
+							}else{
+								col_list = lappend(col_list, n);
+							}
+						}
+					}
+					where_clause = makeSimpleA_Expr(AEXPR_IN, "=",(Node *) c,(Node *) col_list, -1);
+					ret = list_make3(r_col, r_func, (Node *)where_clause);
 					$$ = (Node*) ret; 
 				} 
 			;
