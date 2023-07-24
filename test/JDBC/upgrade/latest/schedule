@@ -133,6 +133,7 @@ babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
+babel_int4_varbinary_div
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
@@ -179,6 +180,7 @@ BABEL-TABLEOPTIONS
 babel_trigger
 babel_try_parse
 BABEL-USER
+babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
@@ -283,6 +285,7 @@ sys-endpoints
 sys-eomonth
 sys-events
 sys-extended_properties
+sys-sql_expression_dependencies
 sys-filegroups
 sys-filetables
 sys-filetable_system_defined_objects
