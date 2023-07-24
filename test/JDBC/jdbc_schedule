@@ -136,3 +136,14 @@ ignore#!#datetimeoffset-timezone-before-15_3-vu-cleanup
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-verify
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-cleanup
+
+# These are bash scripts that should not be executed
+ignore#!#load_aggtest
+ignore#!#load_emp
+ignore#!#load_onek
+ignore#!#load_person
+ignore#!#load_road
+ignore#!#load_tenk
+ignore#!#load_stud_emp
+ignore#!#load_student
+

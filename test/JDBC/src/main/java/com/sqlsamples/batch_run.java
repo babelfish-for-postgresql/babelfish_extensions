@@ -38,6 +38,7 @@ public class batch_run {
         JDBCTransaction jdbcTransaction = new JDBCTransaction();
         JDBCCrossDialect jdbcCrossDialect = null;
         JDBCBulkCopy jdbcBulkCopy = new JDBCBulkCopy();
+        Runtime r = Runtime.getRuntime();                    
 
         if (isCrossDialectFile)
             jdbcCrossDialect = new JDBCCrossDialect(con_bbl);
@@ -52,6 +53,7 @@ public class batch_run {
             FileInputStream fstream;    // stream of input file with the SQL batch queries to be tested
             DataInputStream in;
             BufferedReader br;
+            boolean bashMode = false;
 
             fstream = new FileInputStream(testFilePath);
             // get the object of DataInputStream
@@ -251,7 +253,13 @@ public class batch_run {
                     // Ensure con_bbl is never null
                     if (connection != null) con_bbl = connection;
 
-                } else if (isCrossDialectFile && ( (tsqlDialect = strLine.toLowerCase().startsWith("-- terminate-tsql-conn")) ||
+                } else if (isCrossDialectFile && strLine.toLowerCase().startsWith("-- bash")){
+                    bw.write(strLine);
+                    bw.newLine();
+
+                    bashMode = true;
+
+                }else if (isCrossDialectFile && ( (tsqlDialect = strLine.toLowerCase().startsWith("-- terminate-tsql-conn")) ||
                                                     (psqlDialect = strLine.toLowerCase().startsWith("-- terminate-psql-conn")))) {
 
                     bw.write(strLine);
@@ -274,6 +282,30 @@ public class batch_run {
                     if (isSQLFile) {
                         if (!strLine.equalsIgnoreCase("GO")) {
                             sqlBatch.append(strLine).append(System.lineSeparator());
+                            continue;
+                        } else if (bashMode){
+                            bashMode = false;
+                            bw.write(sqlBatch.toString());
+                            bw.newLine();
+
+                            logger.info("Executing bash: " + sqlBatch.toString());
+                            try{
+                                Process p = r.exec(sqlBatch.toString());
+                                BufferedReader exec_reader =
+                                    new BufferedReader(new InputStreamReader(p.getInputStream()));
+                                String inputLine;
+                                while ((inputLine = exec_reader.readLine()) != null) {
+                                    bw.write(inputLine);
+                                    bw.newLine();
+                                }
+                                exec_reader.close();
+                            }catch (Exception exeception){
+                                bw.write(exeception.getMessage());
+                                bw.newLine();
+                            }
+                            sqlBatch = new StringBuilder();
+                            
+
                             continue;
                         } else {
                             SQL = sqlBatch.toString();

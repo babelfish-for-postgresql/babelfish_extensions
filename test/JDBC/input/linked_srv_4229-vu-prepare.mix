@@ -1,0 +1,13 @@
+-- psql
+SET client_min_messages = 'error';
+CREATE EXTENSION IF NOT EXISTS tds_fdw;
+GO
+
+-- tsql
+-- Add localhost as linked server
+EXEC sp_addlinkedserver  @server = N'server_4229', @srvproduct=N'', @provider=N'SQLNCLI', @datasrc=N'localhost', @catalog=N'master'
+GO
+
+-- Add jdbc_user as linked server login
+EXEC sp_addlinkedsrvlogin @rmtsrvname = 'server_4229', @useself = 'FALSE', @rmtuser = 'jdbc_user', @rmtpassword = '12345678'
+GO

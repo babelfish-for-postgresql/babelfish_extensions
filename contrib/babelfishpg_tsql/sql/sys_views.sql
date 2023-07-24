@@ -1022,7 +1022,7 @@ select
   , null::bytea as sid
   , CAST(t.host_name AS sys.nchar(128)) as hostname
   , a.application_name as program_name
-  , null::varchar(10) as hostprocess
+  , t.client_pid::varchar(10) as hostprocess
   , a.query as cmd
   , null::varchar(128) as nt_domain
   , null::varchar(128) as nt_username
@@ -2982,3 +2982,24 @@ LEFT JOIN pg_foreign_server AS f ON u.srvid = f.oid
 LEFT JOIN pg_foreign_data_wrapper AS w ON f.srvfdw = w.oid
 WHERE w.fdwname = 'tds_fdw';
 GRANT SELECT ON sys.linked_logins TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_expression_dependencies
+AS
+SELECT
+    CAST(0 as INT) AS referencing_id,
+    CAST(0 as INT) AS referencing_minor_id,
+    CAST(0 as sys.TINYINT) AS referencing_class,
+    CAST('' as NVARCHAR(60)) AS referencing_class_desc,
+    CAST(0 as sys.BIT) AS is_schema_bound_reference,
+    CAST(0 as sys.TINYINT) AS referenced_class,
+    CAST('' as NVARCHAR(60)) AS referenced_class_desc,
+    CAST('' as SYSNAME) AS referenced_server_name,
+    CAST('' as SYSNAME) AS referenced_database_name,
+    CAST('' as SYSNAME) AS referenced_schema_name,
+    CAST('' as SYSNAME) AS referenced_entity_name,
+    CAST(0 as INT) AS referenced_id,
+    CAST(0 as INT) AS referenced_minor_id,
+    CAST(0 as sys.BIT) AS is_caller_dependent,
+    CAST(0 as sys.BIT) AS is_ambiguous
+WHERE FALSE;
+GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
