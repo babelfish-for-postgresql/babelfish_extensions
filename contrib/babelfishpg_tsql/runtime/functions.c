@@ -11,6 +11,8 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_attrdef.h"
+#include "catalog/pg_depend.h"
 #include "commands/dbcommands.h"
 #include "commands/extension.h"
 #include "common/md5.h"
@@ -109,6 +111,7 @@ PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
+PG_FUNCTION_INFO_V1(objectproperty_internal);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -116,6 +119,7 @@ void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
 extern bool canCommitTransaction(void);
+extern bool is_ms_shipped(char *object_name, char *type, Oid schema_id);
 
 extern int	pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -2553,4 +2557,579 @@ EOMONTH(PG_FUNCTION_ARGS)
      */
     date = date2j(year, month, 1) - POSTGRES_EPOCH_JDATE - 1;
     PG_RETURN_DATEADT(date);
+}
+
+bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
+{
+	int i = 0;
+	bool is_ms_shipped = false;
+	char *namespace_name;
+	/*
+	 * This array contains information on objects that reside in a schema in one specfic database.
+	 * For example, 'master_dbo' schema can only exist in the 'master' database.
+	 */
+	int num_db_objects = 10;
+	char *shipped_objects_not_in_sys_db[10][3] = {
+		{"xp_qv","master_dbo","P"},
+		{"xp_instance_regread","master_dbo","P"},
+		{"sp_addlinkedserver", "master_dbo", "P"},
+		{"sp_addlinkedsrvlogin", "master_dbo", "P"},
+		{"sp_dropserver", "master_dbo", "P"},
+		{"sp_droplinkedsrvlogin", "master_dbo", "P"},
+		{"sp_testlinkedserver", "master_dbo", "P"},
+		{"fn_syspolicy_is_automation_enabled", "msdb_dbo", "FN"},
+		{"syspolicy_configuration", "msdb_dbo", "V"},
+		{"syspolicy_system_health_state", "msdb_dbo", "V"}
+	};
+
+	/*
+	 * This portion of view retrieves information on objects that reside in a schema in any number of databases.
+     * For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+	 */
+	int num_sch_objects = 1;
+	char *shipped_objects_not_in_sys_schema[1][3] = {
+		{"sysdatabases","dbo","V"}
+	};
+
+	Relation	rel;
+	HeapTuple	tuple;
+	ScanKeyData scanKey;
+	SysScanDesc scan;
+	Datum		datum;
+	TupleDesc	dsc;
+	bool		isnull;
+	char		*tempnspname;
+
+	namespace_name = get_namespace_name(schema_id);
+
+	if (strcmp(namespace_name, "sys") == 0)
+		return true;
+
+	/*
+	 *	(SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
+	 *	Currently, in sys.all_objects view, is_ms_shipped is hardcoded to 0.
+	 */
+
+	for (i = 0; i < num_db_objects; i++)
+	{
+		// check whether the object name and object type is matching.
+		if (strcmp(type, shipped_objects_not_in_sys_db[i][2]) == 0 && 
+			strcmp(object_name, shipped_objects_not_in_sys_db[i][0]) == 0 &&
+			strcmp(namespace_name, shipped_objects_not_in_sys_db[i][1]) == 0)
+				return true;
+	}
+
+	rel = table_open(namespace_ext_oid, AccessShareLock);
+	dsc = RelationGetDescr(rel);
+
+	for (i = 0; i < num_sch_objects; i++)
+	{
+
+		if (strcmp(type, shipped_objects_not_in_sys_schema[i][2]) == 0)
+			continue;
+
+		ScanKeyInit(&scanKey,
+					Anum_namespace_ext_orig_name,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(shipped_objects_not_in_sys_schema[i][1]));
+
+		scan = systable_beginscan(rel, InvalidOid, false,
+							  		NULL, 1, &scanKey);
+
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			datum = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, &isnull);
+			tempnspname = pstrdup(TextDatumGetCString(datum));
+			if (strcmp(namespace_name, tempnspname) == 0)
+			{
+				is_ms_shipped = true;
+				break;
+			}
+		}
+
+		systable_endscan(scan);
+	}
+
+	table_close(rel, AccessShareLock);
+
+	return is_ms_shipped;
+}
+
+Datum
+objectproperty_internal(PG_FUNCTION_ARGS)
+{
+	Oid		object_id;
+	Oid		schema_id = InvalidOid;
+	char		*property;
+	Oid		user_id = GetUserId();
+	int32		result;
+	bool		found = false;
+	HeapTuple	tuple;
+	char		*type = NULL;
+	char		*object_name = NULL;
+
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+	else
+	{
+		object_id = (Oid) PG_GETARG_INT32(0);
+		property = lowerstr(text_to_cstring(PG_GETARG_TEXT_P(1)));
+		remove_trailing_spaces(property);
+	}
+
+	/*
+	 * Search for the object_id in pg_class, pg_proc, pg_attrdef, pg_constraint.
+	 * If the object_id is not found in any of the above catalogs, return NULL.
+	 * Else, get the object name, type of the object and the schema_id in which 
+	 * the object is present.
+	 */
+
+	/* pg_class */
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(object_id));
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
+
+		found = true;
+		object_name = NameStr(pg_class->relname);
+
+		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
+			schema_id = get_rel_namespace(object_id);
+
+		/* 
+		 * Get the type of the object 
+		 */
+		if ((pg_class->relpersistence == 'p' || pg_class->relpersistence == 'u' || pg_class->relpersistence == 't') &&
+				(pg_class->relkind == 'r'))
+		{
+			/* 
+			 * Check whether it is a Table type (TT) object.
+			 * The reltype of the pg_class object should be there in pg_type. The pg_type object found
+			 * should be of composite type (c) and the type of dependency should be DEPENDENCY_INTERNAL (i).
+			 * We scan pg_depend catalog to find the type of the dependency.
+			 */
+			HeapTuple tp;
+			tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(pg_class->reltype));
+			if(HeapTupleIsValid(tp))
+			{
+				Form_pg_type typform = (Form_pg_type) GETSTRUCT(tp);
+
+				if (typform->typtype == 'c')
+				{
+					Relation	depRel;
+					ScanKeyData key[2];
+					SysScanDesc scan;
+					HeapTuple	tup;
+
+					depRel = table_open(DependRelationId, RowExclusiveLock);
+
+					ScanKeyInit(&key[0],
+								Anum_pg_depend_objid,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(typform->typrelid));
+					ScanKeyInit(&key[1],
+								Anum_pg_depend_refobjid,
+								BTEqualStrategyNumber, F_OIDEQ,
+								ObjectIdGetDatum(typform->oid));
+
+					scan = systable_beginscan(depRel, InvalidOid, false,
+							  				NULL, 2, key);
+
+					if (HeapTupleIsValid(tup = systable_getnext(scan)))
+					{
+						Form_pg_depend depform = (Form_pg_depend) GETSTRUCT(tup);
+
+						if (depform->deptype == 'i')
+							type = "TT";
+					}
+
+					systable_endscan(scan);
+
+					table_close(depRel, RowExclusiveLock);
+				}
+			}
+			/*
+			 * If the object is not of Table type (TT), it should be user defined table (U)
+			 */
+			if (type == NULL || strcmp(type, "TT") != 0)
+				type = "U";
+		}
+		else if (pg_class->relkind == 'v')
+			type = "V";
+		else if (pg_class->relkind == 's')
+			type = "SO";
+	}
+	/* pg_proc */
+	if (!found)
+	{
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{
+			found = true;
+			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+			{
+				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
+
+				object_name = NameStr(procform->proname);
+
+				schema_id = tsql_get_proc_nsp_oid(object_id);
+
+				if (procform->prokind == 'p')
+					type = "P";
+				else if (procform->prokind == 'a')
+					type = "AF";
+				else
+				{
+					char	*temp = format_type_extended(procform->prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
+					if (strcmp(temp, "trigger") == 0) 
+						type = "TR";
+					else if (procform->proretset)
+					{
+						HeapTuple tp;
+						tp = SearchSysCache1(TYPEOID, ObjectIdGetDatum(procform->prorettype));
+						if (HeapTupleIsValid(tp))
+						{
+							Form_pg_type typeform = (Form_pg_type) GETSTRUCT(tuple);
+
+							if (typeform->typtype == 'c')
+								type = "TF";
+							else
+								type = "IF";
+						}
+					}
+					else
+						type = "FN";
+				}
+			}
+		}
+	}
+
+	if (!found)
+	{
+		Relation	attrdefrel;
+		ScanKeyData key;
+		SysScanDesc attrscan;
+
+		/* search in pg_attrdef by object_id */
+		attrdefrel = table_open(AttrDefaultRelationId, AccessShareLock);
+		ScanKeyInit(&key,
+					Anum_pg_attrdef_oid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object_id));
+
+		attrscan = systable_beginscan(attrdefrel, AttrDefaultOidIndexId, true,
+									NULL, 1, &key);
+
+		tuple = systable_getnext(attrscan);
+		if (HeapTupleIsValid(tuple))
+		{
+			/*
+			 * scan pg_attribute catalog to find the corresopnding row.
+			 * on a.attrelid = d.adrelid and d.adnum = a.attnum
+			 */
+			Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tuple);
+			Relation	attrRel;
+			ScanKeyData key[2];
+			SysScanDesc scan;
+			HeapTuple	tup;
+			bool		isMissing;
+
+			if (pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT, &isMissing) &&
+				pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT, &isMissing) &&
+				pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE, &isMissing) &&
+				pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES, &isMissing))
+			{
+				attrRel = table_open(AttributeRelationId, RowExclusiveLock);
+
+				ScanKeyInit(&key[0],
+							Anum_pg_attribute_attrelid,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(atdform->adrelid));
+				ScanKeyInit(&key[1],
+							Anum_pg_attribute_attnum,
+							BTEqualStrategyNumber, F_INT2EQ,
+							Int16GetDatum(atdform->adnum));
+
+				scan = systable_beginscan(attrRel, AttributeRelidNumIndexId, true,
+						  				NULL, 2, key);
+
+				if (HeapTupleIsValid(tup = systable_getnext(scan)))
+				{
+					Form_pg_attribute attrform = (Form_pg_attribute) GETSTRUCT(tup);
+
+					if (attrform->atthasdef && !attrform->attgenerated)
+					{
+						found = true;
+						object_name = NameStr(attrform->attname);
+						type = "D";
+						if (pg_class_aclcheck(atdform->adrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
+							schema_id = get_rel_namespace(atdform->adrelid);
+					}
+				}
+
+				systable_endscan(scan);
+
+				table_close(attrRel, RowExclusiveLock);
+			}
+
+		}
+		systable_endscan(attrscan);
+		table_close(attrdefrel, AccessShareLock);
+	}
+
+	if (!found)
+	{
+		/* search in pg_constraint by object_id */
+		tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
+		if (HeapTupleIsValid(tuple))
+		{
+			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
+			found = true;
+			object_name = NameStr(con->conname);
+			schema_id = tsql_get_constraint_nsp_oid(object_id, user_id);
+
+			if (con->contype == 'f')
+				type = "F";
+			else if (con->contype == 'p')
+				type = "PK";
+			else if (con->contype == 'c' && con->conrelid != 0)
+				type = "C";
+		}
+	}
+
+	if(HeapTupleIsValid(tuple))
+		ReleaseSysCache(tuple);
+
+	// return NULL if the object_id is not found
+	if (!found || !OidIsValid(schema_id) || pg_namespace_aclcheck(schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
+		PG_RETURN_NULL();
+
+	
+	// check for each of the property 
+
+	if (strcmp(property, "ownerid") == 0)
+	{
+		// WORKING.
+
+		if (OidIsValid(schema_id))
+		{
+			HeapTuple	tp;
+
+			tp = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(schema_id));
+			if (HeapTupleIsValid(tp))
+			{
+				Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
+				result = ((int32) nsptup->nspowner);
+				ReleaseSysCache(tp);
+			}
+			else
+				PG_RETURN_NULL();
+
+			PG_RETURN_INT32(result);
+		}
+	}
+	else if (strcmp(property, "isdefaultcnst") == 0)
+	{
+		// WORKING.
+
+		result = 0;
+		if (strcmp(type, "D") == 0)
+			result = 1;
+
+		PG_RETURN_INT32(result);
+	}
+	else if (strcmp(property, "execisquotedidenton") == 0 ||
+			strcmp(property, "isschemabound") == 0 ||
+			strcmp(property, "execisansinullson") == 0)
+	{
+		// WORKING.
+		// ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R')
+		result = 1;
+
+		if (strcmp(type, "P") != 0 && strcmp(type, "RF") != 0 &&
+			strcmp(type, "V") != 0 && strcmp(type, "TR") != 0 &&
+			strcmp(type, "FN") != 0 && strcmp(type, "IF") != 0 &&
+			strcmp(type, "TF") != 0 && strcmp(type, "R") != 0)
+			PG_RETURN_NULL();
+
+		if (strcmp(property, "isschemabound") == 0)
+			result = 0;
+
+		PG_RETURN_INT32(result);
+	}
+	else if (strcmp(property, "tablefulltextpopulatestatus") == 0 ||
+			strcmp(property, "tablehasvardecimalstorageformat") == 0)
+	{
+		// WORKING.
+
+		/*
+		 *	IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+         *    	RETURN NULL;
+         *	END IF;
+         *	RETURN 0;
+		 */
+
+		if (strcmp(type,"U") == 0)
+			PG_RETURN_INT32(0);
+		
+		PG_RETURN_NULL();		
+	}
+	else if (strcmp(property, "ismsshipped") == 0)
+	{
+		if (is_ms_shipped(object_name, type, schema_id))
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "isdeterministic") == 0)
+	{
+		// WORKING.
+		result = 0;
+		PG_RETURN_INT32(result);
+	}
+	else if (strcmp(property, "isprocedure") == 0)
+	{
+		// WORKING.
+		/*
+		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
+		 *	object_id should be found in pg_proc and prokind should be 'p'.
+		 */
+		if (strcmp(type, "P") == 0)
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "istable") == 0)
+	{
+		/*
+		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));	
+		 */
+
+		if (strcmp(type, "IT") == 0 || strcmp(type, "TT") == 0 ||
+			strcmp(type, "U") == 0 || strcmp(type, "S") == 0)
+			PG_RETURN_INT32(1);
+		
+		PG_RETURN_INT32(0);		
+	}
+	else if (strcmp(property, "isview") == 0)
+	{
+		// WORKING.
+		/*
+		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
+		 *	object_id should be found in pg_class. relkind should be 'v'.
+		 */
+		if (strcmp(type, "V") == 0)
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "isusertable") == 0)
+	{
+		/*
+		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
+		 */
+		if (strcmp(type, "U") == 0 && is_ms_shipped(object_name, type, schema_id) == 0)
+			PG_RETURN_INT32(1);
+		
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "istablefunction") == 0)
+	{
+		/*
+		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT')
+		 */
+		if (strcmp(type, "IF") == 0 || strcmp(type, "TF") == 0 ||
+			strcmp(type, "FT") == 0)
+			PG_RETURN_INT32(1);
+		
+		PG_RETURN_INT32(0);	
+	}
+	else if (strcmp(property, "isinlinefunction") == 0)
+	{
+		/*
+		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF')
+		 */
+		if (strcmp(type, "IF") == 0)
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+
+	}
+	else if (strcmp(property, "isscalarfunction") == 0)
+	{
+		/*
+		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS')
+		 */
+		if (strcmp(type, "FN") == 0 || strcmp(type, "FS") == 0)
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "isprimarykey") == 0)
+	{
+		/*
+		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK'
+		 */
+		if (strcmp(type, "PK") == 0)
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "isindexed") == 0)
+	{
+		/*
+		 * SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0;
+		 * check whether the object_id exists in pg_index, search by indrelid.
+		 */
+
+		Relation	indRel;
+		ScanKeyData key;
+		SysScanDesc scan;
+		HeapTuple	tup;
+
+		if (strcmp(type, "U") != 0)
+			PG_RETURN_INT32(0);
+
+		indRel = table_open(IndexRelationId, RowExclusiveLock);
+
+		ScanKeyInit(&key,
+					Anum_pg_index_indrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(object_id));
+
+		scan = systable_beginscan(indRel, IndexIndrelidIndexId, true,
+				  				NULL, 1, &key);
+
+		if (HeapTupleIsValid(tup = systable_getnext(scan)))
+		{
+			PG_RETURN_INT32(1);
+		}
+
+		systable_endscan(scan);
+
+		table_close(indRel, RowExclusiveLock);
+	}
+	else if (strcmp(property, "isdefault") == 0)
+	{
+		// WORKING.
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "isrule") == 0)
+	{
+		// WORKING.
+		PG_RETURN_INT32(0);
+	}
+	else if (strcmp(property, "istrigger") == 0)
+	{
+		// RE-VISIT THE SQL IMPLEMENTATION AND CHECK WHY IT IS CURRENTLY RETURNING NULL WITH SQL IMPLEMENTATION
+		/*
+		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
+		 */
+		if (strcmp(type, "TA") == 0 || strcmp(type, "TR") == 0)
+			PG_RETURN_INT32(1);
+
+		PG_RETURN_INT32(0);
+	}
+	
+	PG_RETURN_NULL();
 }
