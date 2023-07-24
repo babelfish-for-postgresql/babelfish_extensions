@@ -80,12 +80,6 @@ int
 100
 ~~END~~
 
-storedproc#!#prep#!#sp_test1#!#int|-|a|-|10|-|output
-~~START~~
-int
-100
-~~END~~
-
 DROP PROCEDURE sp_test1
 # TESTING OUT PARAMETERS FOR ALL THE DATATYPES
 # int

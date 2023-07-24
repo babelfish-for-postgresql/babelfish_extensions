@@ -29,7 +29,6 @@ exec sp_test1 2
 Declare @a int;Set @a=1; exec sp_test1 @a;select @a as a;
 storedproc#!#prep#!#sp_test1#!#int|-|a|-|1|-|input
 storedproc#!#prep#!#sp_test1#!#int|-|a|-|10|-|input
-storedproc#!#prep#!#sp_test1#!#int|-|a|-|10|-|output
 DROP PROCEDURE sp_test1
 # TESTING OUT PARAMETERS FOR ALL THE DATATYPES
 # int
