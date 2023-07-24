@@ -900,6 +900,11 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 						relativeArgIndex++;
 					}
 
+					/*
+					 * If argnames[i] is not found in stmt->params, i th parameter is passed in 
+					 * 'value' format instead of '@name = value'. In this case, argnames[i] should be mapped
+					 * to i th element in stmt->params. 
+					 */
 					if (relativeArgIndex >= stmt->paramno) 
 						relativeArgIndex = i;
 
