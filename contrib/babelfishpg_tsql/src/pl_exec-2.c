@@ -815,7 +815,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			PLtsql_row *row;
 			int			nfields;
 			int			i;
-			int			j;
+			int			relativeArgIndex;
 			ListCell		*lc;
 
 			if (is_scalar_func)
@@ -879,31 +879,34 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			foreach(lc, funcargs)
 			{
 				Node 	*n = lfirst(lc);
-				bool 	isFound = false;
+				// bool 	isFound = false;
 
 				if (argmodes &&
 					(argmodes[i] == PROARGMODE_INOUT ||
 					 argmodes[i] == PROARGMODE_OUT))
 				{
 					ListCell *paramcell;
-					j = 0;
+					relativeArgIndex = 0;
 
+					/*
+					 * The order of arguments in procedure call might be different from the order of 
+					 * arguments in the funcargs. 
+					 * For each argument in funcargs, find corresponding argument in stmt->params.	
+					 */
 					foreach(paramcell, stmt->params)
 					{
 						tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
 						if (argnames[i] && p->name && strcmp(argnames[i], p->name) == 0)
-						{
-							isFound = true;
 							break;
-						}
-						j++;
+						relativeArgIndex++;
 					}
 
-					if (!isFound) j = i;
+					if (relativeArgIndex >= stmt->paramno) 
+						relativeArgIndex = i;
 
 					if (parammodes &&
-						parammodes[j] != PROARGMODE_INOUT &&
-						parammodes[j] != PROARGMODE_OUT)
+						parammodes[relativeArgIndex] != PROARGMODE_INOUT &&
+						parammodes[relativeArgIndex] != PROARGMODE_OUT)
 					{
 						/*
 						 * If an INOUT arg is called without OUTPUT, it should

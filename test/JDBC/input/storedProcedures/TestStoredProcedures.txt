@@ -29,6 +29,7 @@ exec sp_test1 2
 Declare @a int;Set @a=1; exec sp_test1 @a;select @a as a;
 storedproc#!#prep#!#sp_test1#!#int|-|a|-|1|-|input
 storedproc#!#prep#!#sp_test1#!#int|-|a|-|10|-|input
+storedproc#!#prep#!#sp_test1#!#int|-|a|-|10|-|output
 DROP PROCEDURE sp_test1
 # TESTING OUT PARAMETERS FOR ALL THE DATATYPES
 # int
@@ -139,7 +140,7 @@ DROP PROCEDURE sp_test14
 #storedproc#!#prep#!#sp_test19#!#uniqueidentifier|-|a|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c|-|inputoutput
 #DROP PROCEDURE sp_test19
 
-CREATE PROCEDURE sp_test20 (@a INT, @b INT OUTPUT) AS BEGIN Select @a as a, @b as b; SET @b=100; SET @a=1000; END;
+CREATE PROCEDURE sp_test20 (@a INT, @b INT OUTPUT) AS BEGIN SET @b=100; SET @a=1000; Select @a as a, @b as b; END;
 Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b OUT, @a=@a;select @a as a, @b as b;
 Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b, @a=@a OUT;select @a as a, @b as b;
 Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b OUT, @a=@a OUT;select @a as a, @b as b;
@@ -149,11 +150,23 @@ Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a, @b=@b O
 Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a OUT, @b=@b;select @a as a, @b as b;
 Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a OUT, @b=@b OUT;select @a as a, @b as b;
 Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a OUT, @b OUT;select @a as a, @b as b;
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|output#!#int|-|b|-|10|-|input
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|input
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|output#!#int|-|b|-|10|-|output
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|inputoutput#!#int|-|b|-|10|-|inputoutput
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|inputoutput#!#int|-|b|-|10|-|input
 DROP PROCEDURE sp_test20
 
-CREATE PROCEDURE sp_test21 (@a INT, @b INT OUTPUT, @d INT, @c INT OUTPUT) AS BEGIN Select @a as a, @b as b, @c as c, @d as d; SET @a=100; SET @b=200; SET @c=300; SET @d=400; END;
+CREATE PROCEDURE sp_test21 (@a INT, @b INT OUTPUT, @d INT, @c INT OUTPUT) AS BEGIN SET @a=100; SET @b=200; SET @c=300; SET @d=400; Select @a as a, @b as b, @c as c, @d as d; END;
 Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @b=@b OUT, @c=@c OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
 Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @b=@b, @c=@c, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
 Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @c=@c OUT, @b=@b OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
 Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @c=@c, @b=@b, @a=@a OUT, @d=@d OUT; Select @a as a, @b as b, @c as c, @d as d;
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|inputoutput
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|output
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|inputoutput
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|output
 DROP PROCEDURE sp_test21
+
