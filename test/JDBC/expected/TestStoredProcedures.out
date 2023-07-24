@@ -3,10 +3,6 @@
 # PROCEDURE WITH NO PARAMS
 create table temp_sp2(a int);
 CREATE PROCEDURE sp_test AS BEGIN insert into temp_sp2 values(1); END;
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "sp_test" already exists with same argument types)~~
-
 storedproc#!#prep#!#sp_test#!#
 ~~ROW COUNT: 1~~
 
@@ -18,10 +14,6 @@ int
 
 drop table temp_sp2;
 drop Procedure sp_test;
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: procedure name "sp_test" is not unique)~~
-
 # PROCEDURE WITH INPUT PARAMETER
 #drop table temp_sp;
 create table temp_sp(a int);

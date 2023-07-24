@@ -879,7 +879,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			foreach(lc, funcargs)
 			{
 				Node 	*n = lfirst(lc);
-				// bool 	isFound = false;
 
 				if (argmodes &&
 					(argmodes[i] == PROARGMODE_INOUT ||
