@@ -608,7 +608,6 @@ NODES:                                           N O D E S;
 NOEXEC:                                          N O E X E C;
 NOEXPAND:                                        N O E X P A N D;
 NOFORMAT:                                        N O F O R M A T;
-// NO_INFOMSGS:                                     N O UNDERLINE I N F O M S G S;
 NOINIT:                                          N O I N I T;
 NOLOCK:                                          N O L O C K;
 NONCLUSTERED:                                    N O N C L U S T E R E D;

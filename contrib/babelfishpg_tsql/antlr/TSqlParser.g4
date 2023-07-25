@@ -3094,7 +3094,7 @@ shutdown_statement
     ;
 
 dbcc_statement
-    : DBCC dbcc_command ( LR_BRACKET table_name ( (COMMA NORESEED) | (COMMA RESEED (COMMA new_value=(ID | DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
+    : DBCC CHECKIDENT ( LR_BRACKET table_name ( (COMMA NORESEED) | (COMMA RESEED (COMMA new_value=(DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
     | DBCC name=dbcc_command ( LR_BRACKET expression_list RR_BRACKET )? (WITH dbcc_options)? SEMI?
     //These are dbcc commands with strange syntax that doesn't fit the regular dbcc syntax
     | DBCC SHRINKLOG ( LR_BRACKET SIZE  EQUAL   (constant_expression| id | DEFAULT) (KB | MB | GB | TB)? RR_BRACKET )? (WITH dbcc_options)? SEMI?
@@ -3105,7 +3105,6 @@ dbcc_command
     | CHECKDB
     | CHECKFILEGROUP
     | CHECKTABLE
-    | CHECKIDENT
     | CLEANTABLE
     | CLONEDATABASE
     | DBREINDEX
@@ -4307,7 +4306,7 @@ keyword
     | CLEANTABLE
     | CLEANUP
     | CLEANUP_POLICY
-    | CLEAR   
+    | CLEAR
     | CLONEDATABASE 
     | CLUSTER
     | COALESCE
@@ -4668,7 +4667,6 @@ keyword
     | NOEXEC
     | NOEXPAND
     | NOFORMAT
-    // | NO_INFOMSGS
     | NOINIT
     | NONE
     | NON_TRANSACTED_ACCESS

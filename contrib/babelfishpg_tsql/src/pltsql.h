@@ -939,7 +939,7 @@ typedef struct PLtsql_stmt_insert_bulk
 } PLtsql_stmt_insert_bulk;
 
 /*
- * INSERT BULK statement
+ * DBCC statement
  */
 typedef struct PLtsql_stmt_dbcc
 {

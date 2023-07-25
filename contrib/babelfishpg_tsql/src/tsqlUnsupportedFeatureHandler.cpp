@@ -1253,31 +1253,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser:
 		}
 		else
 		{
-			if (ctx->dbcc_command()->CHECKIDENT())
-			{
-				if (!ctx->table_name())
-					throw PGErrorWrapperException(ERROR,
-						ERRCODE_INVALID_PARAMETER_VALUE,
-							"Parameter 1 is incorrect for this DBCC statement",
-							getLineAndPos(ctx->COMMA(1)));
-				else if (ctx->COMMA().size() == 1 && (!ctx->RESEED() && !ctx->NORESEED()))
-					throw PGErrorWrapperException(ERROR,
-						ERRCODE_INVALID_PARAMETER_VALUE,
-							"Parameter 2 is incorrect for this DBCC statement",
-							getLineAndPos(ctx->COMMA(1)));
-				else if (ctx->COMMA().size() == 2 && ctx->ID())
-					throw PGErrorWrapperException(ERROR,
-						ERRCODE_INVALID_PARAMETER_VALUE,
-							"Parameter 3 is incorrect for this DBCC statement",
-							getLineAndPos(ctx->COMMA(1)));
-			}
-			else
-			{
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
-					format_errmsg("DBCC %s is not yet supported in Babelfish",
-						::getFullText(ctx->dbcc_command()).c_str()), 
-							getLineAndPos(ctx->dbcc_command()));
-			}
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+				format_errmsg("DBCC %s is not yet supported in Babelfish",
+					::getFullText(ctx->dbcc_command()).c_str()), 
+						getLineAndPos(ctx->dbcc_command()));
 		}
 	}
 	return visitChildren(ctx);

@@ -833,7 +833,7 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 				{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Showing Estimated Execution Plan for INSERT BULK statment is not yet supported")));
+						 errmsg("Showing Estimated Execution Plan for DBCC statment is not yet supported")));
 				}
 			exec_stmt_dbcc(estate, (PLtsql_stmt_dbcc *) stmt);
 			break;

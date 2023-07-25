@@ -1799,8 +1799,7 @@ public:
 
 	void enterDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
 	{
-		if (ctx->dbcc_command() && ctx->dbcc_command()->CHECKIDENT())
-		// if (ctx->CHECKIDENT())
+		if (ctx->CHECKIDENT())
         	graft(makeDbccCheckidentStatement(ctx), peekContainer());
 
 		clear_rewritten_query_fragment();
@@ -5256,89 +5255,81 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		if (!table_name.empty())
 			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
 
-		switch (ctx->COMMA().size())
+		// switch (ctx->COMMA().size())
+		// {
+		// 	case 0:
+		// 	{
+		// 		// CHECKIDENT (<table_name>)
+		// 		break;
+		// 	}
+		// 	case 1:
+		// 	{
+		// 		if (ctx->RESEED())
+		// 		{
+		// 			// CHECKIDENT (<table_name>, RESEED)
+		// 		}
+		// 		else if (ctx->NORESEED())
+		// 		{
+		// 			// CHECKIDENT (<table_name>, NORESEED)
+		// 			is_reseed = false;
+		// 		}
+		// 		else 
+		// 		{
+		// 			throw PGErrorWrapperException(ERROR,
+		// 				ERRCODE_INVALID_PARAMETER_VALUE,
+		// 					"Parameter 2 is incorrect for this DBCC statement",
+		// 					getLineAndPos(ctx->COMMA(1)));
+		// 		}
+		// 		break;
+		// 	}
+		// 	case 2:
+		// 	{
+		// 		// CHECKIDENT (<table_name>, RESEED, <new_value>)
+		// 		if (ctx->new_value)
+		// 		{
+		// 			stmt->new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
+		// 		}
+		// 		else
+		// 		{
+					
+		// 		}
+		// 		break;
+		// 	}
+		// 	default:
+		// 	{
+		// 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+		// 			"An incorrect number of parameters was given to the" 
+		// 			"DBCC statement", getLineAndPos(ctx));
+		// 		break;
+		// 	}
+		// }
+
+		if (ctx->RESEED())
 		{
-			case 0:
-			{
-				// CHECKIDENT (<table_name>)
-				break;
-			}
-			case 1:
-			{
-				if (ctx->RESEED())
-				{
-					// CHECKIDENT (<table_name>, RESEED)
-				}
-				else if (ctx->NORESEED())
-				{
-					// CHECKIDENT (<table_name>, NORESEED)
-					is_reseed = false;
-				}
-				else 
-				{
-					throw PGErrorWrapperException(ERROR,
-						ERRCODE_INVALID_PARAMETER_VALUE,
-							"Parameter 2 is incorrect for this DBCC statement",
-							getLineAndPos(ctx->COMMA(1)));
-				}
-				break;
-			}
-			case 2:
+			if (ctx->new_value)
 			{
 				// CHECKIDENT (<table_name>, RESEED, <new_value>)
-				if (ctx->new_value)
-				{
-					stmt->new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
-				}
-				else
-				{
-					
-				}
-				break;
+				stmt->new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
 			}
-			default:
+			else
 			{
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-					"An incorrect number of parameters was given to the" 
-					"DBCC statement", getLineAndPos(ctx));
-				break;
+				// CHECKIDENT (<table_name>, RESEED)
 			}
 		}
-
-		// if (ctx->RESEED())
-		// {
-		// 	// CHECKIDENT (<table_name>, RESEED, <new_value>)
-		// 	if (ctx->new_value)
-		// 	{
-		// 		stmt->new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
-		// 	}
-
-		// 	else
-		// 	{
-		// 		// table_name = ::getFullText(ctx->expression_list()->expression()).c_str();
-		// 		// throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "RESEED", getLineAndPos(ctx));
-		// 	}
-		// }
-		// // CHECKIDENT (<table_name>, NORESEED)
-		// else if (ctx->NORESEED())
-		// {
-		// 	is_reseed = false;
-		// 	// throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "NORESEED", getLineAndPos(ctx));
-		// }
-		// // CHECKIDENT (<table_name>)
-		// else
-		// {
-		// 	// throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "only table_name", getLineAndPos(ctx));		
-		// }
+		else if (ctx->NORESEED())
+		{
+			// CHECKIDENT (<table_name>, NORESEED)
+			is_reseed = false;
+		}
+		else
+		{
+			// CHECKIDENT (<table_name>)
+		}
 
 		if(ctx->dbcc_options())
 		{
-			// if(ctx->dbcc_options()->keyword()NO_INFOMSGS())
 			if (pg_strcasecmp(::getFullText(ctx->dbcc_options()).c_str(), "NO_INFOMSGS") == 0){
 				no_infomsgs = true;
-				throw PGErrorWrapperException(ERROR,
-					ERRCODE_FEATURE_NOT_SUPPORTED,
-						"NO_INFOMSGS", getLineAndPos(ctx));
 			}
 			else
 			{
@@ -5349,14 +5340,6 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 			}
 		}
 	}
-	// else
-	// {
-	// 	throw PGErrorWrapperException(ERROR,
-	// 		ERRCODE_INVALID_PARAMETER_VALUE,
-	// 			"Parameter 1 is incorrect for this DBCC statement",
-	// 			getLineAndPos(ctx->dbcc_command()));
-	// 			// getLineAndPos(ctx->CHECKIDENT()));
-	// }
 	stmt->is_reseed = is_reseed;
 	stmt->no_infomsgs = no_infomsgs;
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);

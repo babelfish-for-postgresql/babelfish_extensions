@@ -1,0 +1,59 @@
+DBCC CHECKIDENT(babel_3201_t1);
+GO
+
+DBCC CHECKIDENT(babel_3201_sch1.babel_3201_t2);
+GO
+
+DBCC CHECKIDENT(babel_3201_t1, NORESEED);
+GO
+
+DBCC CHECKIDENT(babel_3201_t1, RESEED);
+GO
+
+DBCC CHECKIDENT(babel_3201_t1, RESEED, 5);
+GO
+
+DBCC CHECKIDENT(babel_3201_t1) WITH NO_INFOMSGS;
+GO
+
+DBCC CHECKIDENT(babel_3201_t1) WITH NO_INFO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NO_INFO' is not a recognized option)~~
+
+
+DBCC CHECKIDENT(5);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '5' at line 1 and character position 16)~~
+
+
+DBCC CHECKIDENT(babel_3201_t1, RESEE);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'RESEE' at line 1 and character position 31)~~
+
+
+DBCC CHECKIDENT(babel_3201_t1, RESEED, abc);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'abc' at line 1 and character position 39)~~
+
+
+DBCC CHECKTABLE(babel_3201_t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: DBCC CHECKTABLE is not yet supported in Babelfish)~~
+
+
+DBCC FAKE_COMMAND(t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect DBCC statement. Check the documentation for the correct DBCC syntax and options.)~~
+
