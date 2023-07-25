@@ -5255,55 +5255,6 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		if (!table_name.empty())
 			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
 
-		// switch (ctx->COMMA().size())
-		// {
-		// 	case 0:
-		// 	{
-		// 		// CHECKIDENT (<table_name>)
-		// 		break;
-		// 	}
-		// 	case 1:
-		// 	{
-		// 		if (ctx->RESEED())
-		// 		{
-		// 			// CHECKIDENT (<table_name>, RESEED)
-		// 		}
-		// 		else if (ctx->NORESEED())
-		// 		{
-		// 			// CHECKIDENT (<table_name>, NORESEED)
-		// 			is_reseed = false;
-		// 		}
-		// 		else 
-		// 		{
-		// 			throw PGErrorWrapperException(ERROR,
-		// 				ERRCODE_INVALID_PARAMETER_VALUE,
-		// 					"Parameter 2 is incorrect for this DBCC statement",
-		// 					getLineAndPos(ctx->COMMA(1)));
-		// 		}
-		// 		break;
-		// 	}
-		// 	case 2:
-		// 	{
-		// 		// CHECKIDENT (<table_name>, RESEED, <new_value>)
-		// 		if (ctx->new_value)
-		// 		{
-		// 			stmt->new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
-		// 		}
-		// 		else
-		// 		{
-					
-		// 		}
-		// 		break;
-		// 	}
-		// 	default:
-		// 	{
-		// 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
-		// 			"An incorrect number of parameters was given to the" 
-		// 			"DBCC statement", getLineAndPos(ctx));
-		// 		break;
-		// 	}
-		// }
-
 		if (ctx->RESEED())
 		{
 			if (ctx->new_value)
