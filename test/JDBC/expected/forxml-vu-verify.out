@@ -16,7 +16,7 @@ ntext
 ~~END~~
 
 
-select * from forxml_vu_v1;
+select * from forxml_vu_view1;
 go
 ~~START~~
 xml
@@ -25,7 +25,7 @@ xml
 
 
 -- Test for xml on view with xml column
-select * from forxml_vu_v1 for xml path;
+select * from forxml_vu_view1 for xml path;
 go
 ~~START~~
 ntext
@@ -33,7 +33,7 @@ ntext
 ~~END~~
 
 
-select * from forxml_vu_v2 for xml path;
+select * from forxml_vu_view2 for xml path;
 go
 ~~START~~
 ntext
@@ -91,5 +91,37 @@ exec forxml_vu_p_strvar 1, NULL;
 go
 ~~START~~
 ntext
+~~END~~
+
+
+exec forxml_vu_p_nullval1
+go
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+exec forxml_vu_p_nullval2
+go
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+exec forxml_vu_p_nullval3
+go
+~~START~~
+ntext
+<row/>
+~~END~~
+
+
+exec forxml_vu_p_nullval4
+go
+~~START~~
+ntext
+<row/>
 ~~END~~
 

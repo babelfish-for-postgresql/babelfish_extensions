@@ -40,6 +40,19 @@ GO
 DROP VIEW forjson_datatypes_vu_v_unicode_strings
 GO
 
+-- NULL datetimes
+DROP VIEW forjson_datatypes_vu_v_nulldatetime;
+go
+
+DROP VIEW forjson_datatypes_vu_v_nullsmalldatetime;
+go
+
+DROP VIEW forjson_datatypes_vu_v_nulldatetime2;
+go
+
+DROP VIEW forjson_datatypes_vu_v_nulldatetimeoffset;
+go
+
 -- DROP TABLE
 DROP TABLE forjson_datatypes_vu_t_exact_numerics
 GO
