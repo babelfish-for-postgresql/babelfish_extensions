@@ -828,6 +828,15 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			}
 			exec_stmt_restore_ctx_partial(estate, (PLtsql_stmt_restore_ctx_partial *) stmt);
 			break;
+		case PLTSQL_STMT_DBCC:
+			if (pltsql_explain_only)
+				{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for INSERT BULK statment is not yet supported")));
+				}
+			exec_stmt_dbcc(estate, (PLtsql_stmt_dbcc *) stmt);
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

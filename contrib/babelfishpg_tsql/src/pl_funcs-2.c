@@ -558,6 +558,11 @@ free_stmt2(PLtsql_stmt *stmt)
 			{
 				break;
 			}
+		case PLTSQL_STMT_DBCC:
+		{
+			/* Nothing to free */
+			break;
+		}
 		default:
 			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
 			break;
@@ -585,6 +590,7 @@ void		dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void		dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
 void		dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
 void		get_grantees_names(List *grantees, StringInfo grantees_names);
+void		dump_stmt_dbcc(PLtsql_stmt_dbcc *stmt_dbcc);
 
 void
 dump_stmt_print(PLtsql_stmt_print *stmt_print)
@@ -718,6 +724,12 @@ dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
 }
 
 void
+dump_stmt_dbcc(PLtsql_stmt_dbcc *stmt_dbcc)
+{
+	printf("DBCC STATEMENT %s\n", stmt_dbcc->table_name);
+}
+
+void
 dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch)
 {
 	printf("TRY BEGIN\n");
@@ -842,6 +854,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_INSERT_BULK:
 			{
 				dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_DBCC:
+			{
+				dump_stmt_dbcc((PLtsql_stmt_dbcc *) stmt);
 				break;
 			}
 		default:

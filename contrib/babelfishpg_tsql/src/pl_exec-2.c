@@ -50,6 +50,7 @@ static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
+static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char *dynstmt);
@@ -228,6 +229,9 @@ exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_es
 			rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
 			break;
 
+		case PLTSQL_STMT_DBCC:
+			rc = exec_stmt_dbcc(estate, (PLtsql_stmt_dbcc *) stmt);
+			break;
 		default:
 			estate->err_stmt = save_estmt;
 			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
@@ -3129,4 +3133,10 @@ int
 get_insert_bulk_kilobytes_per_batch()
 {
 	return insert_bulk_kilobytes_per_batch;
+}
+
+int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
+{
+	// TODO implement
+	return PLTSQL_RC_OK;
 }

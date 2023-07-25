@@ -344,6 +344,8 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
 			return "RESTORE_CONTEXT_FULL";
 		case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
 			return "RESTORE_CONTEXT_PARTIAL";
+		case PLTSQL_STMT_DBCC:
+			return "DBCC";
 		default:
 			return "Add try catch";
 	}

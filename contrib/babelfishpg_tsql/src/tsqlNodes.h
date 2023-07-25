@@ -48,7 +48,8 @@ typedef enum pltsql_stmt_type
 	PLTSQL_STMT_ASSIGN_CURVAR,
 	PLTSQL_STMT_DEALLOCATE,
 	PLTSQL_STMT_INSERT_BULK,
-	PLTSQL_STMT_GRANTDB
+	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_DBCC
 } PLtsql_stmt_type;
 
 typedef struct PLtsql_expr

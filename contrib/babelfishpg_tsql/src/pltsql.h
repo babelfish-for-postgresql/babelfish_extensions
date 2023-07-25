@@ -116,6 +116,12 @@ typedef enum PLtsql_promise_type
 	PLTSQL_PROMISE_TG_TAG
 } PLtsql_promise_type;
 
+
+typedef enum PLtsql_dbcc_type
+{
+	PLTSQL_DBCC_CHECKIDENT
+} PLtsql_dbcc_type;
+
 /*
  * Variants distinguished in PLtsql_type structs
  */
@@ -184,7 +190,8 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_FULL,
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
-	PLTSQL_STMT_GRANTDB
+	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_DBCC
 } PLtsql_stmt_type;
 
 /*
@@ -930,6 +937,24 @@ typedef struct PLtsql_stmt_insert_bulk
 	char	   *rows_per_batch;
 	bool		keep_nulls;
 } PLtsql_stmt_insert_bulk;
+
+/*
+ * INSERT BULK statement
+ */
+typedef struct PLtsql_stmt_dbcc
+{
+	PLtsql_stmt_type cmd_type;
+	// PLtsql_dbcc_type dbcc_cmd_type;
+	int			lineno;
+	char	   *table_name;
+	char	   *schema_name;
+	char	   *db_name;
+
+	/* CHECKIDENT Options. */
+	bool		is_reseed;
+	char	   *new_reseed_value;
+	bool		no_infomsgs;
+} PLtsql_stmt_dbcc;
 
 /*
  * RETURN statement
