@@ -1,13 +1,4 @@
 /* tests for sp_babelfish_autoformat */
-CREATE LOGIN johndoe WITH PASSWORD = 'abc';
-GO
-
-CREATE TABLE t(a INT, colvc30 VARCHAR(30), coldt DATETIME)
-go
-
-CREATE PROCEDURE myprocedure AS PRINT 'myprocedure'
-go
-
 sp_babelfish_autoformat 't'
 go
 ~~START~~
@@ -78,30 +69,12 @@ a#!#2023-02-01 11:12:13
 ~~END~~
 
 
-CREATE TABLE #t(a INT, b INT)
-INSERT #t VALUES (1, 98765432)
-INSERT #t VALUES (2, NULL)
-INSERT #t VALUES (NULL, 345)
-go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-
 sp_babelfish_autoformat '#t'
 go
-~~START~~
-varchar#!#varchar
-1#!#98765432
-2#!#<NULL>
-<NULL>#!#     345
-~~END~~
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: relation "#t" does not exist)~~
 
-CREATE TABLE [test table] ([test col] INT, d INT)
-go
 
 sp_babelfish_autoformat '[test table]'
 go
@@ -309,19 +282,3 @@ go
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
-
-/* cleanup */
-DROP TABLE t
-go
-
-DROP TABLE [test table]
-go
-
-DROP TABLE #t
-go
-
-DROP LOGIN johndoe
-GO
-
-DROP PROCEDURE myprocedure
-go

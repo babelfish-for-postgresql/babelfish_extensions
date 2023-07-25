@@ -1,0 +1,18 @@
+DROP TABLE t
+go
+
+DROP TABLE [test table]
+go
+
+DROP TABLE #t
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "#t" does not exist)~~
+
+
+DROP LOGIN johndoe
+GO
+
+DROP PROCEDURE myprocedure
+go

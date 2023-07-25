@@ -1,0 +1,14 @@
+DROP TABLE t
+go
+
+DROP TABLE [test table]
+go
+
+DROP TABLE #t
+go
+
+DROP LOGIN johndoe
+GO
+
+DROP PROCEDURE myprocedure
+go
