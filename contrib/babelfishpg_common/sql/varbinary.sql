@@ -288,11 +288,12 @@ CREATE OPERATOR sys.<= (
 );
 
 
-CREATE FUNCTION sys.int4varbinarydiv(leftarg int4 , rightarg sys.bbf_varbinary)
+CREATE OR REPLACE FUNCTION sys.int4varbinarydiv(leftarg int4 , rightarg sys.bbf_varbinary)
 RETURNS int4
 AS 'babelfishpg_common', 'int4varbinary_div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+DROP OPERATOR IF EXISTS sys./ (int4,sys.bbf_varbinary);
 
 CREATE OPERATOR sys./ (
     LEFTARG = int4,
@@ -301,11 +302,12 @@ CREATE OPERATOR sys./ (
     COMMUTATOR = /
 );
 
-CREATE FUNCTION sys.varbinaryint4div(leftarg sys.bbf_varbinary , rightarg int4)
+CREATE OR REPLACE FUNCTION sys.varbinaryint4div(leftarg sys.bbf_varbinary , rightarg int4)
 RETURNS int4
 AS 'babelfishpg_common', 'varbinaryint4_div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+DROP OPERATOR IF EXISTS sys./ (sys.bbf_varbinary,int4);
 
 CREATE OPERATOR sys./ (
     LEFTARG = sys.bbf_varbinary,
