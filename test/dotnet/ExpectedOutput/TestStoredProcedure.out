@@ -419,3 +419,166 @@ hello#!#200
 #Q#DROP PROCEDURE testschema.sp_test23
 #Q#DROP PROCEDURE dbo.sp_test23
 #Q#DROP SCHEMA testschema
+#Q#CREATE PROCEDURE sp_test24 (@a INT, @b INT OUTPUT) AS BEGIN SET @b=100; SET @a=1000; Select @a as a, @b as b; END;
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @b=@b OUT, @a=@a;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#100
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @b=@b, @a=@a OUT;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#10
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @b=@b OUT, @a=@a OUT;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#100
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @b=@b, @a=@a;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#10
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @a=@a, @b=@b;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#10
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @a=@a, @b=@b OUT;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#100
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @a=@a OUT, @b=@b;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#10
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @a=@a OUT, @b=@b OUT;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#100
+#Q#Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test24 @a OUT, @b OUT;select @a as a, @b as b;
+#D#int#!#int
+1000#!#100
+20#!#100
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+--OUT PARAMETERS--
+b
+Int32
+100
+
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+--OUT PARAMETERS--
+a
+Int32
+
+
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+--OUT PARAMETERS--
+a
+Int32
+
+
+b
+Int32
+100
+
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+--OUT PARAMETERS--
+a
+Int32
+20
+
+b
+Int32
+100
+
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+--OUT PARAMETERS--
+b
+Int32
+100
+
+#Q#sp_test24
+#D#int#!#int
+1000#!#100
+--OUT PARAMETERS--
+a
+Int32
+20
+
+#Q#DROP PROCEDURE sp_test24
+#Q#CREATE PROCEDURE sp_test25 (@a INT, @b INT OUTPUT, @c INT OUTPUT, @d INT) AS BEGIN SET @a=100; SET @b=200; SET @c=300; SET @d=400; Select @a as a, @b as b, @c as c, @d as d; END;
+#Q#Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test25 @b=@b OUT, @c=@c OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+20#!#200#!#300#!#30
+#Q#Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test25 @b=@b, @c=@c, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+20#!#10#!#5#!#30
+#Q#Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test25 @c=@c OUT, @b=@b OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+20#!#200#!#300#!#30
+#Q#Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test25 @c=@c, @b=@b, @a=@a OUT, @d=@d OUT; Select @a as a, @b as b, @c as c, @d as d;
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+20#!#10#!#5#!#30
+#Q#sp_test25
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+--OUT PARAMETERS--
+b
+Int32
+200
+
+d
+Int32
+10
+
+#Q#sp_test25
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+--OUT PARAMETERS--
+b
+Int32
+200
+
+d
+Int32
+
+
+#Q#sp_test25
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+--OUT PARAMETERS--
+b
+Int32
+200
+
+d
+Int32
+10
+
+#Q#sp_test25
+#D#int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+--OUT PARAMETERS--
+b
+Int32
+200
+
+d
+Int32
+
+
+#Q#DROP PROCEDURE sp_test25

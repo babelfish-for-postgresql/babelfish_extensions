@@ -402,3 +402,4 @@ timefromparts
 triggers_with_transaction
 datetimeoffset-timezone-before-15_3
 BABEL-4046
+getdate
