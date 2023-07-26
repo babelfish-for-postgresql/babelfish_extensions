@@ -179,6 +179,8 @@ extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
 extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
+extern CachedPlanSource	   *bbf_pivot_sql1_cx;
+extern CachedPlanSource	   *bbf_pivot_sql2_cx;
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";

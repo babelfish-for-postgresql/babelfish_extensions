@@ -1894,6 +1894,9 @@ extern int	insert_bulk_rows_per_batch;
 extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 
+extern CachedPlanSource	   *bbf_pivot_sql1_cx;
+extern CachedPlanSource	   *bbf_pivot_sql2_cx;
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/

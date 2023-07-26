@@ -1495,6 +1495,7 @@ simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause tsql_top_clause target_list
@@ -1519,15 +1520,17 @@ simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT opt_all_clause opt_target_list
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					SelectStmt *wrapper_sl = makeNode(SelectStmt);
-					SelectStmt *s_sql = makeNode(SelectStmt);
-					SelectStmt *c_sql = makeNode(SelectStmt);
+					SelectStmt 	*wrapper_sl = makeNode(SelectStmt);
+					SelectStmt 	*s_sql = makeNode(SelectStmt);
+					SelectStmt 	*c_sql = makeNode(SelectStmt);
+					ResTarget	*w_func = makeNode(ResTarget);
 
 					A_Const *g_a1 = (A_Const *) makeIntConst(1, -1);
 					A_Const *g_a2 = (A_Const *) makeIntConst(2, -1);
@@ -1545,20 +1548,26 @@ simple_select:
 					s->useOp = NIL;
 					s->location = -1;
 
+					/* prepare source sql for babelfish_pivot function */
 					s_sql->targetList = list_make3(rowid, r_col, r_func);
 					s_sql->fromClause = $5;
 					s_sql->groupClause = list_make2(g_a1, g_a2);
 					s_sql->sortClause = list_make1(s);
 
+					/* prepare category sql for babelfish_pivot function */
 					c_sql->distinctClause = list_make1(NIL);
 					c_sql->targetList = list_make1(r_col);
 					c_sql->fromClause = $5;
 					c_sql->whereClause = list_nth((List *)$6, 2);
 					
-					wrapper_sl->targetList = $3;
-					wrapper_sl->fromClause = $5;
+					/* prepare wrapper select */
+					w_func->val = (Node *) makeFuncCall(TsqlSystemFuncName2("language"),NIL, COERCE_EXPLICIT_CALL, -1);
+					wrapper_sl->targetList = list_make1(w_func);
 					wrapper_sl->larg = s_sql;
 					wrapper_sl->rarg = c_sql;
+					wrapper_sl->isPivot = true;
+					/* alias_clause has not processed */
+					
 					$$ = (Node *)wrapper_sl;
 				}	
 			| tsql_values_clause							{ $$ = $1; }
@@ -2110,6 +2119,7 @@ tsql_output_simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause opt_top_clause target_list
@@ -2127,6 +2137,7 @@ tsql_output_simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| tsql_values_clause							{ $$ = $1; }
