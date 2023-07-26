@@ -2913,3 +2913,24 @@ SELECT
 FROM sys.indexes AS i
 INNER JOIN pg_catalog.pg_class AS c ON i.object_id = c."oid";
 GRANT SELECT ON sys.partitions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_expression_dependencies
+AS
+SELECT
+    CAST(0 as INT) AS referencing_id,
+    CAST(0 as INT) AS referencing_minor_id,
+    CAST(0 as sys.TINYINT) AS referencing_class,
+    CAST('' as NVARCHAR(60)) AS referencing_class_desc,
+    CAST(0 as sys.BIT) AS is_schema_bound_reference,
+    CAST(0 as sys.TINYINT) AS referenced_class,
+    CAST('' as NVARCHAR(60)) AS referenced_class_desc,
+    CAST('' as SYSNAME) AS referenced_server_name,
+    CAST('' as SYSNAME) AS referenced_database_name,
+    CAST('' as SYSNAME) AS referenced_schema_name,
+    CAST('' as SYSNAME) AS referenced_entity_name,
+    CAST(0 as INT) AS referenced_id,
+    CAST(0 as INT) AS referenced_minor_id,
+    CAST(0 as sys.BIT) AS is_caller_dependent,
+    CAST(0 as sys.BIT) AS is_ambiguous
+WHERE FALSE;
+GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
