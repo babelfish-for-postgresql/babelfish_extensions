@@ -4,12 +4,20 @@ GO
 
 INSERT INTO babel_539OldTable VALUES (10, 'user1') , (20, 'user2');
 GO
+~~ROW COUNT: 2~~
+
 
 SELECT col1 INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
 
 Select col1 FROM babel_539NewTable1; 
 GO
+~~START~~
+int
+10
+20
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -19,9 +27,19 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 INSERT INTO babel_539NewTable1 values (30, 4);
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: INSERT has more expressions than target columns)~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -31,6 +49,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -40,6 +64,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -49,6 +79,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -59,6 +95,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -68,6 +110,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -78,6 +126,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -88,6 +142,12 @@ GO
 
 Select col1, id_num FROM babel_539NewTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
@@ -98,6 +158,12 @@ GO
 
 Select col1, id_num FROM #babel_539NewTempTable1; 
 GO
+~~START~~
+int#!#int
+10#!#1
+20#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS #babel_539NewTempTable1;
 GO
@@ -108,6 +174,12 @@ GO
 
 Select col1, name, id_num FROM #babel_539NewTempTable1; 
 GO
+~~START~~
+int#!#varchar#!#int
+10#!#user1#!#1
+20#!#user2#!#2
+~~END~~
+
 
 DROP TABLE IF EXISTS #babel_539NewTempTable1;
 GO
@@ -123,17 +195,23 @@ GO
 
 SELECT col1, IDENTITY() AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ")")~~
+
+
+
 
 
 -- impact to other similar queries and functions
-
-
 -- normal create table cases
 CREATE TABLE babel_539OldTable2 (col1 int NOT NULL, id_num INT IDENTITY(1, 2));
 GO
 
 INSERT INTO babel_539OldTable2 VALUES (10), (20), (30), (40);
 GO
+~~ROW COUNT: 4~~
+
 
 SELECT col1, id_num INTO babel_539NewTable2 FROM babel_539OldTable2;
 GO
@@ -144,40 +222,62 @@ GO
 DROP TABLE IF EXISTS babel_539NewTable2;
 GO
 
+
+
 -- //FAIL
 -- SELECT col1, id_num, IDENTITY(int, -1, 2) AS id_num INTO babel_539NewTable2 FROM babel_539OldTable2;
 -- [S0001][8108] Line 1: Cannot add identity column, using the SELECT INTO statement, to table 'babel_539NewTable2', which already has column 'id_num' that inherits the identity property.
 -- -- // PASS
 -- SELECT col1, IDENTITY(int, -1, 2) AS id_num INTO babel_539NewTable2 FROM OldTable;
-
-
 -- create table as temp table
 CREATE TABLE #babel_539NewTempTable2 (col1 int, id_num int IDENTITY(-1, 2));
 GO
 
 INSERT INTO #babel_539NewTempTable2(col1) values (10),(20),(30);
 GO
+~~ROW COUNT: 3~~
+
 
 Select col1, id_num FROM #babel_539NewTempTable2; 
 GO
+~~START~~
+int#!#int
+10#!#-1
+20#!#1
+30#!#3
+~~END~~
+
 
 DROP TABLE IF EXISTS #babel_539NewTempTable2;
 GO
 
 select @@identity;
 GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
 
 CREATE TABLE #babel_539NewTempTable2 (col1 int);
 GO
 
 Select col1 FROM #babel_539NewTempTable2; 
 GO
+~~START~~
+int
+~~END~~
+
+
 
 ALTER TABLE #babel_539NewTempTable2 ADD id_num int IDENTITY(-1, 2);
 -- try altering table and check other columns, sequence should drop and any constraints also
-
 Select col1, id_num FROM #babel_539NewTempTable2; 
 GO
+~~START~~
+int#!#int
+~~END~~
+
 
 DROP TABLE IF EXISTS #babel_539NewTempTable2;
 GO
@@ -185,6 +285,10 @@ GO
 -- Two idenity columns in a query
 SELECT col1, IDENTITY(int, 1,1) as id_num, IDENTITY(int, 1,1) as id_num2 INTO #babel_539NewTempTable2 FROM babel_539OldTable;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Attempting to add multiple identity columns to table "#babel_539newtemptable2" using the SELECT INTO statement.)~~
+
 
 -- cleanup
 DROP TABLE IF EXISTS babel_539OldTable;
