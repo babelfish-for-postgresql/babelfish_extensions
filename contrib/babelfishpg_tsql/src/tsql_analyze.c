@@ -23,9 +23,6 @@
 
 static RangeVar *find_matching_table(RangeVar *target, Node *tblref);
 
-List *sv_setop_exprs = NIL;
-namespace_stack_t *set_op_ns_stack = NULL;
-
 /*
  * If a table alias is used when specifying the target table, we need to refer to the
  * FROM clause for table reference.
@@ -305,89 +302,45 @@ rewrite_update_outer_join(Node *stmt, CmdType command, RangeVar *target)
 }
 
 /* 
- * Allocate an empty space to hold a parsing namespace
- * This space will be filled by post_transform_from_clause, to save the
- * leftmost select's namespace for processing UNION statements. This is needed 
- * to resolve table aliases in the top-level of a UNION and other set ops.
+ * Prior to analysis of the setop (i.e. UNION) tree, move the ORDER BY clause
+ * down to the leftmost SELECT statement. This is to account for T-SQL behavior,
+ * where UNION ORDER BY names are resolved according to the leftmost select.
  */
 void
-push_namespace_stack(void)
+pre_transform_setop_tree(SelectStmt *stmt, SelectStmt *leftmostSelect)
 {
-	namespace_stack_t *ns_stack_item;
-
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	ns_stack_item = palloc(sizeof(namespace_stack_t));
-	ns_stack_item->prev = set_op_ns_stack;
-	ns_stack_item->namespace = NIL;
-	set_op_ns_stack = ns_stack_item;
+	leftmostSelect->sortClause = stmt->sortClause;
+	stmt->sortClause = NIL;
 }
 
 /* 
- * After tranforming a from clause, if we've allocated space on the stack in
- * push_namespace_stack, save the namespace here for use in
- * pre_transform_sort_clause.
+ * After the sort clause has been analyzed in the leftmost select, update the 
+ * top-level TLEs to contain a ref to the sortlist and restore the sortClause.
+ * 
+ * We can trust that the ordering of TLEs matches as PG uses the leftmost 
+ * target list as a basis for builiding the top-level target list, it just 
+ * doesn't fill in the ressortgroupref field. 
  */
 void 
-post_transform_from_clause(ParseState *pstate)
+post_transform_sort_clause(Query *qry, Query *leftmostQuery)
 {
-	namespace_stack_t *ns = set_op_ns_stack;
-	if (sql_dialect == SQL_DIALECT_TSQL && ns && ns->namespace == NIL)
-		ns->namespace = pstate->p_namespace;
-}
-
-/* 
- * Prior to handling a UNION or othe SetOp's ORDER BY clause, this hook:
- * 1. Modifies the query's top-level target list, so that we can match columns
- * 		with those in the sort clause
- * 2. Pop from the namespace stack and restore the leftmost select's namespace
- * 		for table alias resolution. The caller is expected to save and restore
- * 		the original top-level parse state
- */
-void
-pre_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
-{
-	namespace_stack_t *old_ns_stack_item = set_op_ns_stack;
-	ListCell *lc, *lc_l;
+	ListCell *lc, *left_tlist;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	sv_setop_exprs = NIL;
-	forboth(lc, qry->targetList, lc_l, leftmostQuery->targetList)
+	forboth(lc, qry->targetList, left_tlist, leftmostQuery->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-		TargetEntry *lefttle = (TargetEntry *) lfirst(lc_l);
+		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
 
 		Assert(!lefttle->resjunk);
-		sv_setop_exprs = lappend(sv_setop_exprs, tle->expr);
-		if (IsA(lefttle->expr, Var))
-			tle->expr = (Expr*) lefttle->expr;
+		tle->ressortgroupref = lefttle->ressortgroupref;
 	}
 
-	pstate->p_namespace = set_op_ns_stack->namespace;
-
-	set_op_ns_stack = set_op_ns_stack->prev;
-	pfree(old_ns_stack_item);
-}
-
-/* 
- * Reset the targetList back to it's original vars
- * This is necessary in some cases, like UNION ALL and when the targetlist
- * includes items from a joined table
- */
-void 
-post_transform_sort_clause(Query *qry)
-{
-	ListCell *lc_q, *lc_sv;
-	if (sql_dialect != SQL_DIALECT_TSQL || sv_setop_exprs == NIL)
-		return;
-	forboth(lc_q, qry->targetList, lc_sv, sv_setop_exprs)
-	{
-		TargetEntry *tle_q = (TargetEntry *) lfirst(lc_q);
-		Expr 		*expr_sv = (Expr *) lfirst(lc_sv);
-		tle_q->expr = expr_sv;
-	}
-	sv_setop_exprs = NIL;
+	qry->sortClause = leftmostQuery->sortClause;
+	leftmostQuery->sortClause = NIL;
 }
