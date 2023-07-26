@@ -244,6 +244,7 @@ static std::string validate_and_stringify_hints();
 static int find_hint_offset(const char * queryTxt);
 
 static bool pltsql_parseonly = false;
+bool has_identity_function = false;
 
 static void
 breakHere()
@@ -1845,6 +1846,15 @@ public:
 				is_cross_db = true;
 		}
 	}
+	void enterFunction_call(TSqlParser::Function_callContext *ctx) override
+	{
+		std::string func_name = ::getFullText(ctx);
+		size_t Lbracket_index = func_name.find('(');
+        func_name = func_name.substr(0, Lbracket_index);
+		if (pg_strcasecmp(func_name.c_str(), "identity") == 0) {
+			has_identity_function = true;
+		}
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// function/procedure call analysis
@@ -1961,8 +1971,18 @@ public:
 	// statement analysis
 	//////////////////////////////////////////////////////////////////////////////
 
+	void enterQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		has_identity_function = false;
+	}
+
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
+		// if select doesnt contains into but it contains identity we should throw error
+		if(has_identity_function && !ctx->INTO()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Incorrect syntax near ')'", getLineAndPos(ctx));
+		}
+		has_identity_function = false;
 		if (statementMutator)
 			process_query_specification(ctx, statementMutator.get());
 	}

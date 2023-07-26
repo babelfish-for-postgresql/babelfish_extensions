@@ -230,6 +230,27 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	return result;
 }
 
+
+Node *
+TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location)
+{
+
+	Node	   *result;
+	List	   *args;
+	int32		typmod;
+	Oid			type_oid;
+	char	   *typename_string;
+	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
+	typename_string = TypeNameToString(typename);
+	//Todo make use of typename to make table datatype
+	// args = list_make3(makeStringConst(typename_string, location), seed, increment);
+	args = list_make3(makeStringConst(typename_string, location), seed, increment);
+	result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
+
+	return result;
+
+}
+
 /* TsqlFunctionParse -- Implements the PARSE and TRY_PARSE functions.
  * Takes in expression, target type, regional culture, try boolean, location.
  *

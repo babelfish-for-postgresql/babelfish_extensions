@@ -87,6 +87,7 @@ PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
+PG_FUNCTION_INFO_V1(identity_into);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(host_id);
 PG_FUNCTION_INFO_V1(context_info);
@@ -1843,6 +1844,22 @@ language(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_VARCHAR_P(get_language());
 }
+
+Datum
+identity_into(PG_FUNCTION_ARGS)
+{
+	int64 result;
+	// no check for table is fine, check ids done in anaylzerer phase
+	if(tsql_select_into_seq_oid != InvalidOid){
+		result = nextval_internal(tsql_select_into_seq_oid, false);
+	}
+	else{
+		result = 0;
+	}
+	return result;
+	//call nextval_internal here , need seq id to pass to it and attrnu, and typeoid
+}
+
 
 Datum
 host_name(PG_FUNCTION_ARGS)

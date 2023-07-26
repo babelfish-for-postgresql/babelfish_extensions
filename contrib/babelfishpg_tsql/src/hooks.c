@@ -138,6 +138,11 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
+void selectInto_function(ParseState *pstate,
+									  PlannedStmt *pstmt,
+									  const char *queryString,
+									  QueryEnvironment *queryEnv,
+									  ParamListInfo params, QueryCompletion *qc);
 
 /*****************************************
  * 			Executor Hooks
@@ -202,6 +207,7 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
+static selectIntoUtility_hook_type prev_SelectIntoUtility_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
@@ -329,6 +335,9 @@ InstallExtendedHooks(void)
 	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
 	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
 
+	prev_SelectIntoUtility_hook = selectIntoUtility_hook;
+	selectIntoUtility_hook = selectInto_function; 
+
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
 
@@ -400,6 +409,7 @@ UninstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
+	selectIntoUtility_hook = prev_SelectIntoUtility_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
 	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
@@ -1421,6 +1431,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			identifier_name = res->name;
 			alias_len = strlen(res->name);
 			colname_start = pstate->p_sourcetext + res->name_location;
+		}
+		else if (res->name == NULL && IsA(res->val, FuncCall) ){
+			FuncCall *fc = (FuncCall *) res->val;
+			if (strcasecmp(strVal(llast(fc->funcname)), "identity_into") == 0){
+				ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'"),
+						parser_errposition(pstate, res->location)));
+			}
 		}
 
 		if (alias_len > 0)

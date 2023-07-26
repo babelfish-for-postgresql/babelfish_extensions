@@ -44,6 +44,7 @@ static Node *TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, boo
 static Node *TsqlFunctionParse(Node *arg, TypeName *typename, Node *culture, bool try, int location);
 
 static Node *TsqlFunctionIIF(Node *bool_expr, Node *arg1, Node *arg2, int location);
+static Node *TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location);
 static Node *TsqlFunctionChoose(Node *int_expr, List *choosable, int location);
 static void tsql_check_param_readonly(const char *paramname, TypeName *typename, bool readonly);
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
