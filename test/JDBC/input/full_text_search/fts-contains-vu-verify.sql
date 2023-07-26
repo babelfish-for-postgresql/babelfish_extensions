@@ -1,3 +1,7 @@
+-- enable CONTAINS
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
 -- Test sys.babelfish_fts_contains_rewrite
 SELECT * FROM fts_contains_rewrite_v1
 GO
@@ -414,4 +418,8 @@ EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, move) OR FORMSOF(THESAURU
 GO
 
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, move) | FORMSOF(INFLECTIONAL, plan)'
+GO
+
+-- disable CONTAINS
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

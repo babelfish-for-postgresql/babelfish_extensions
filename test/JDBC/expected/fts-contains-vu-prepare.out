@@ -1,3 +1,12 @@
+-- enable CONTAINS
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
 -- Create table for full text search CONTAINS predicate
 CREATE TABLE fts_contains_vu_t (id int PRIMARY KEY, txt text)
 GO
@@ -5031,4 +5040,13 @@ GO
 INSERT INTO fts_contains_vu_t VALUES (1000, 'Last month , scientists from the Hebrew University of Jerusalem reported that washing down red meat with a glass of red can actually prevent the build-up of cholesterol in the body ')
 GO
 ~~ROW COUNT: 1~~
+
+
+-- disable CONTAINS
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
 
