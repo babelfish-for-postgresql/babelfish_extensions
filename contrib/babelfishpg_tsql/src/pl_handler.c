@@ -173,7 +173,7 @@ static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
 											 * function */
 static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
 												 * function */
-Oid tsql_select_into_seq_oid = InvalidOid;
+Oid tsql_select_into_seq_oid = InvalidOid; /* Sequence table oid used by select into*/
 
 PG_MODULE_MAGIC;
 
@@ -5052,7 +5052,7 @@ pltsql_remove_current_query_env(void)
 
 
 void
-selectInto_function(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv, 
+pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv, 
 	ParamListInfo params, QueryCompletion *qc){
 
 	Node *parsetree = pstmt->utilityStmt;	

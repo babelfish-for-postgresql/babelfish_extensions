@@ -1849,12 +1849,8 @@ Datum
 identity_into(PG_FUNCTION_ARGS)
 {
 	int64 result;
-	if(tsql_select_into_seq_oid != InvalidOid){
-		result = nextval_internal(tsql_select_into_seq_oid, false);
-	}
-	else{
-		result = 0;
-	}
+	Assert(tsql_select_into_seq_oid != InvalidOid);
+	result = nextval_internal(tsql_select_into_seq_oid, false);
 	return result;
 }
 
