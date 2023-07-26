@@ -1,0 +1,282 @@
+--
+-- SELECT_DISTINCT
+--
+
+--
+-- awk '{print $3;}' onek.data | sort -n | uniq
+--
+
+SELECT DISTINCT two FROM onek ORDER BY 1;
+GO
+
+--
+-- awk '{print $5;}' onek.data | sort -n | uniq
+--
+SELECT DISTINCT ten FROM onek ORDER BY 1;
+GO
+
+--
+-- awk '{print $16;}' onek.data | sort -d | uniq
+--
+SELECT DISTINCT string4 FROM onek ORDER BY 1;
+GO
+
+--
+-- awk '{print $3,$16,$5;}' onek.data | sort -d | uniq |
+-- sort +0n -1 +1d -2 +2n -3
+--
+SELECT DISTINCT two, string4, ten
+   FROM onek
+   ORDER BY two asc, string4 asc, ten asc;
+GO
+
+--
+-- awk '{print $2;}' person.data |
+-- awk '{if(NF!=1){print $2;}else{print;}}' - emp.data |
+-- awk '{if(NF!=1){print $2;}else{print;}}' - student.data |
+-- awk 'BEGIN{FS="      ";}{if(NF!=1){print $5;}else{print;}}' - stud_emp.data |
+-- sort -n -r | uniq
+--
+
+-- SELECT DISTINCT p.age FROM person* p ORDER BY age using desc;
+-- GO
+
+--
+-- Check mentioning same column more than once
+--
+
+select set_config('babelfishpg_tsql.explain_verbose', 'on', false);
+GO
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss;
+GO
+
+SELECT count(*) FROM
+  (SELECT DISTINCT two, four, two FROM tenk1) ss;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+--
+-- Compare results between plans using sorting and plans using hash
+-- aggregation. Force spilling in both cases by setting work_mem low.
+--
+
+select set_config('work_mem', '64kB', false);
+GO
+
+-- Produce results with sorting.
+select set_config('enable_hashagg', 'FALSE', false);
+GO
+
+-- select set_config('jit_above_cost', '0', false);
+-- GO
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+SELECT DISTINCT g%1000 INTO distinct_group_1 FROM generate_series(0,9999) g;
+GO
+
+-- -- SET jit_above_cost TO DEFAULT;
+-- select set_config('jit_above_cost', 'DEFAULT', false);
+-- GO
+
+SELECT DISTINCT cast((g%1000) as varchar(max)) INTO distinct_group_2 FROM generate_series(0,9999) g;
+GO
+
+select set_config('enable_hashagg', 'TRUE', false);
+GO
+
+-- Produce results with hash aggregation.
+
+select set_config('enable_sort', 'FALSE', false);
+GO
+
+-- select set_config('jit_above_cost', '0', false);
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT DISTINCT g%1000 FROM generate_series(0,9999) g;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+SELECT DISTINCT g%1000 INTO distinct_hash_1 FROM generate_series(0,9999) g;
+GO
+
+
+-- select set_config('jit_above_cost', 'DEFAULT', false);
+-- GO
+
+SELECT DISTINCT cast((g%1000) as varchar(max)) INTO distinct_hash_2 FROM generate_series(0,9999) g;
+GO
+
+select set_config('enable_sort', 'TRUE', false);
+GO
+
+-- psql
+SET work_mem TO DEFAULT;
+GO
+
+
+-- tsql
+-- Compare results
+
+(SELECT * FROM distinct_hash_1 EXCEPT SELECT * FROM distinct_group_1)
+  UNION ALL
+(SELECT * FROM distinct_group_1 EXCEPT SELECT * FROM distinct_hash_1);
+GO
+
+(SELECT * FROM distinct_hash_1 EXCEPT SELECT * FROM distinct_group_1)
+  UNION ALL
+(SELECT * FROM distinct_group_1 EXCEPT SELECT * FROM distinct_hash_1);
+GO
+
+DROP TABLE distinct_hash_1;
+GO
+DROP TABLE distinct_hash_2;
+GO
+DROP TABLE distinct_group_1;
+GO
+DROP TABLE distinct_group_2;
+GO
+
+
+-- Test parallel DISTINCT
+select set_config('parallel_tuple_cost', '0', false);
+GO
+select set_config('parallel_setup_cost', '0', false);
+GO
+select set_config('min_parallel_table_scan_size', '0', false);
+GO
+select set_config('max_parallel_workers_per_gather', '2', false);
+GO
+
+
+-- Ensure we get a parallel plan
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+SELECT DISTINCT four FROM tenk1;
+GO
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- Ensure the parallel plan produces the correct results
+SELECT DISTINCT four FROM tenk1;
+GO
+
+
+-- Since Tsql function does not support specify parallel safe mode, we execute the following tests in psql
+-- psql
+-- Ensure the parallel plan produces the correct results
+SELECT DISTINCT four FROM master_dbo.tenk1;
+GO
+
+CREATE OR REPLACE FUNCTION distinct_func(a INT) RETURNS INT AS $$
+  BEGIN
+    RETURN a;
+  END;
+$$ LANGUAGE plpgsql PARALLEL UNSAFE;
+GO
+
+-- Ensure we don't do parallel distinct with a parallel unsafe function
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT distinct_func(1) FROM master_dbo.tenk1;
+GO
+
+-- make the function parallel safe
+CREATE OR REPLACE FUNCTION distinct_func(a INT) RETURNS INT AS $$
+  BEGIN
+    RETURN a;
+  END;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
+GO
+
+-- Ensure we do parallel distinct now that the function is parallel safe
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT distinct_func(1) FROM master_dbo.tenk1;
+GO
+
+RESET max_parallel_workers_per_gather;
+GO
+RESET min_parallel_table_scan_size;
+GO
+RESET parallel_setup_cost;
+GO
+RESET parallel_tuple_cost;
+GO
+
+--
+-- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
+-- very own regression file.
+--
+
+CREATE TEMP TABLE disttable (f1 integer);
+GO
+INSERT INTO DISTTABLE VALUES(1);
+GO
+INSERT INTO DISTTABLE VALUES(2);
+GO
+INSERT INTO DISTTABLE VALUES(3);
+GO
+INSERT INTO DISTTABLE VALUES(NULL);
+GO
+
+-- basic cases
+SELECT f1, f1 IS DISTINCT FROM 2 as "not 2" FROM disttable;
+GO
+SELECT f1, f1 IS DISTINCT FROM NULL as "not null" FROM disttable;
+GO
+SELECT f1, f1 IS DISTINCT FROM f1 as "false" FROM disttable;
+GO
+SELECT f1, f1 IS DISTINCT FROM f1+1 as "not null" FROM disttable;
+GO
+
+-- check that optimizer constant-folds it properly
+SELECT 1 IS DISTINCT FROM 2 as "yes";
+GO
+SELECT 2 IS DISTINCT FROM 2 as "no";
+GO
+SELECT 2 IS DISTINCT FROM null as "yes";
+GO
+SELECT null IS DISTINCT FROM null as "no";
+GO
+
+-- negated form
+SELECT 1 IS NOT DISTINCT FROM 2 as "no";
+GO
+SELECT 2 IS NOT DISTINCT FROM 2 as "yes";
+GO
+SELECT 2 IS NOT DISTINCT FROM null as "no";
+GO
+SELECT null IS NOT DISTINCT FROM null as "yes";
+GO
