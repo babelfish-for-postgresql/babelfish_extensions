@@ -1,32 +1,31 @@
 /* Built in functions */
-CREATE FUNCTION sys.sysdatetime() RETURNS datetime2
-    AS $$select clock_timestamp()::datetime2;$$
+CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
+    AS $$select statement_timestamp()::datetime2;$$
     LANGUAGE SQL;
-GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC; 
+GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
 
-CREATE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
     -- Casting to text as there are not type cast function from timestamptz to datetimeoffset
-    AS $$select cast(cast(clock_timestamp() as text) as sys.datetimeoffset);$$
+    AS $$select cast(cast(statement_timestamp() as text) as sys.datetimeoffset);$$
     LANGUAGE SQL STABLE;
-GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC; 
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
 
 
-CREATE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
-    AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
+    AS $$select (statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
     LANGUAGE SQL STABLE;
-GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC; 
+GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
 
 
-CREATE FUNCTION sys.getdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', clock_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', statement_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
     LANGUAGE SQL STABLE;
-GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC; 
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
 
-
-CREATE FUNCTION sys.getutcdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', clock_timestamp() AT TIME ZONE 'UTC')::sys.datetime;$$
-    LANGUAGE SQL;
-GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC; 
+CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
 
 
 CREATE FUNCTION sys.isnull(text,text) RETURNS text AS $$
