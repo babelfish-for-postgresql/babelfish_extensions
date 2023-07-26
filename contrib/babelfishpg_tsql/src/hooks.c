@@ -138,11 +138,8 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
-void selectInto_function(ParseState *pstate,
-									  PlannedStmt *pstmt,
-									  const char *queryString,
-									  QueryEnvironment *queryEnv,
-									  ParamListInfo params, QueryCompletion *qc);
+void selectInto_function(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
+					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
 
 /*****************************************
  * 			Executor Hooks

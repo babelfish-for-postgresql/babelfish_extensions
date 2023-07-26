@@ -242,11 +242,8 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 	char	   *typename_string;
 	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
 	typename_string = TypeNameToString(typename);
-	//Todo make use of typename to make table datatype
-	// args = list_make3(makeStringConst(typename_string, location), seed, increment);
 	args = list_make3(makeStringConst(typename_string, location), seed, increment);
 	result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
-
 	return result;
 
 }

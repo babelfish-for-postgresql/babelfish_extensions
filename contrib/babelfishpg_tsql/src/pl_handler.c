@@ -5151,17 +5151,6 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 				{
 					Node *fargNode = (Node *) lfirst(arg);
 					Const	   *con = (Const *) fargNode;
-					if(arg_num == 1){
-
-						// extract argument type here and pass collalation and type id accordingly to function
-
-							// here if set that column->identity = true 
-
-						// if (pltsql_identity_datatype_hook)
-						// 	(* pltsql_identity_datatype_hook) (cxt->pstate, column);
-						// if (pltsql_identity_datatype_hook)
-						// 	(* pltsql_identity_datatype_hook) (pstate, column);
-					}
 					if(arg_num == 2){
 							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger(con->constvalue), -1));
 							seed_value = con->constvalue;
@@ -5177,7 +5166,7 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 						}
 					}
 					arg_num++;
-	
+
 				}
 
 				// identity_column = makeVar(tle->resno, InvalidAttrNumber, exprType((Node *) tle->expr), exprTypmod((Node *) tle->expr), exprCollation((Node *) tle->expr), 0);
@@ -5213,9 +5202,7 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 				
 				altseqstmt = makeNode(AlterSeqStmt);
 				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				attnamelist = list_make3(makeString(snamespace),
-										makeString(into->rel->relname),
-										makeString(tle->resname));
+				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname),makeString(tle->resname));
 				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *) attnamelist, -1));
 				altseqstmt->for_identity = true;
 

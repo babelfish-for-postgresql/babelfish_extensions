@@ -1849,7 +1849,6 @@ Datum
 identity_into(PG_FUNCTION_ARGS)
 {
 	int64 result;
-	// no check for table is fine, check ids done in anaylzerer phase
 	if(tsql_select_into_seq_oid != InvalidOid){
 		result = nextval_internal(tsql_select_into_seq_oid, false);
 	}
@@ -1857,7 +1856,6 @@ identity_into(PG_FUNCTION_ARGS)
 		result = 0;
 	}
 	return result;
-	//call nextval_internal here , need seq id to pass to it and attrnu, and typeoid
 }
 
 
