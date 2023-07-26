@@ -1,0 +1,27 @@
+USE master
+GO
+
+SELECT * FROM sys_int4_varbinary_vu_prepare_view
+GO
+~~START~~
+int
+1899
+~~END~~
+
+
+EXEC sys_int4_varbinary_vu_prepare_proc
+GO
+~~START~~
+int
+51
+~~END~~
+
+
+SELECT sys_int4_varbinary_vu_prepare_func()
+GO
+~~START~~
+int
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+

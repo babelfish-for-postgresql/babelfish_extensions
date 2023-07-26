@@ -1,0 +1,31 @@
+USE master
+GO
+
+SELECT * FROM sys.sql_expression_dependencies
+GO
+~~START~~
+int#!#int#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int#!#int#!#bit#!#bit
+~~END~~
+
+
+SELECT * FROM sys_sql_expression_dependencies_vu_prepare_view
+GO
+~~START~~
+int#!#int#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int#!#int#!#bit#!#bit
+~~END~~
+
+
+EXEC sys_sql_expression_dependencies_vu_prepare_proc
+GO
+~~START~~
+int#!#int#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int#!#int#!#bit#!#bit
+~~END~~
+
+
+SELECT sys_sql_expression_dependencies_vu_prepare_func()
+GO
+~~START~~
+int
+0
+~~END~~
+
