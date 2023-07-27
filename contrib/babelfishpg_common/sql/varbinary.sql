@@ -293,8 +293,6 @@ RETURNS int4
 AS 'babelfishpg_common', 'int4varbinary_div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-DROP OPERATOR IF EXISTS sys./ (int4,sys.bbf_varbinary);
-
 CREATE OPERATOR sys./ (
     LEFTARG = int4,
     RIGHTARG = sys.bbf_varbinary,
@@ -306,8 +304,6 @@ CREATE OR REPLACE FUNCTION sys.varbinaryint4div(leftarg sys.bbf_varbinary , righ
 RETURNS int4
 AS 'babelfishpg_common', 'varbinaryint4_div'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
-DROP OPERATOR IF EXISTS sys./ (sys.bbf_varbinary,int4);
 
 CREATE OPERATOR sys./ (
     LEFTARG = sys.bbf_varbinary,
