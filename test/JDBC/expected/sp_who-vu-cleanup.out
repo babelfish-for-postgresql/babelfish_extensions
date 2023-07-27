@@ -7,5 +7,5 @@ go
 DROP LOGIN johndoe
 GO
 
-DROP PROCEDURE myprocedure
+DROP PROCEDURE sp_who_myprocedure
 go

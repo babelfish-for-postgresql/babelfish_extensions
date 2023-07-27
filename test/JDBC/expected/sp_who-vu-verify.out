@@ -80,6 +80,7 @@ go
 
 ~~ROW COUNT: 1~~
 
+
 sp_babelfish_autoformat '#t'
 go
 ~~START~~
