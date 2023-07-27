@@ -650,12 +650,21 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				}
 				else
 				{
-					/* j will never be >= colCount since that is handled by protocol. */
-					if (Nulls[cur_row_in_batch * colCount + j])
-						myslot->tts_isnull[i] = Nulls[cur_row_in_batch * colCount + j];
+					/*
+					 * In case of reordered list of columns, we get the next index(col_index_to_insert)
+					 * from cstate->attnumlist which points to the original column index in the
+					 * TupleTableSlot. On the other hand we also need to maintain the index
+					 * (col_index_to_fetch) which points to the next column's value in the order as received.
+					 * NOTE: j will never be >= colCount since that is handled by protocol.
+					 */
+					int col_index_to_insert = lfirst_int(&cstate->attnumlist->elements[j]) - 1;
+					int col_index_to_fetch  = cur_row_in_batch * colCount + j;
+
+					if (Nulls[col_index_to_fetch])
+						myslot->tts_isnull[col_index_to_insert] = Nulls[col_index_to_fetch];
 					else
 					{
-						myslot->tts_values[i] = Values[cur_row_in_batch * colCount + j];
+						myslot->tts_values[col_index_to_insert] = Values[col_index_to_fetch];
 					}
 					j++;
 					/*
