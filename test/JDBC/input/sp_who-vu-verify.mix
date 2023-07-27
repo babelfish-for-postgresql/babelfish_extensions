@@ -1,57 +1,63 @@
 /* tests for sp_babelfish_autoformat */
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 
 INSERT t VALUES (NULL, NULL, NULL)
 go
 
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 
-DELETE t
+DELETE t_sp_who
 go
 
-INSERT t VALUES (1, 'a', cast('01-Feb-2023 11:12:13' AS DATETIME))
+INSERT t_sp_who VALUES (1, 'a', cast('01-Feb-2023 11:12:13' AS DATETIME))
 go
 
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 
-INSERT t VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' aS DATETIME))
+INSERT t_sp_who VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' AS DATETIME))
 go
 
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 
-sp_babelfish_autoformat 't', @orderby='order by a desc'
+sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc'
 go
 
-sp_babelfish_autoformat 't', @orderby='order by a desc', @hiddencols='a'
+sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc', @hiddencols='a'
+go
+
+CREATE TABLE #t(a INT, b INT)
+INSERT #t VALUES (1, 98765432)
+INSERT #t VALUES (2, NULL)
+INSERT #t VALUES (NULL, 345)
 go
 
 sp_babelfish_autoformat '#t'
 go
 
-sp_babelfish_autoformat '[test table]'
+sp_babelfish_autoformat '[sp_who test table]'
 go
 
-INSERT [test table] VALUES (123, 987)
-INSERT [test table] VALUES (1, 454)
+INSERT [sp_who test table] VALUES (123, 987)
+INSERT [sp_who test table] VALUES (1, 454)
 go
 
-sp_babelfish_autoformat '[test table]', @hiddencols='d'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='d'
 go
 
-sp_babelfish_autoformat '[test table]', @hiddencols='[d]'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[d]'
 go
 
-sp_babelfish_autoformat '[test table]', @hiddencols='[test col]'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[test col]'
 go
 
-sp_babelfish_autoformat '[test table]', @orderby = 'ORDER by [test col]'
+sp_babelfish_autoformat '[sp_who test table]', @orderby = 'ORDER by [test col]'
 go
 
-sp_babelfish_autoformat '[test table]', @hiddencols='[test col]', @orderby = 'ORDER BY d'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[test col]', @orderby = 'ORDER BY d'
 go
 
 /* negative tests */
@@ -64,22 +70,22 @@ go
 sp_babelfish_autoformat 'nosuchtable'
 go
 
-sp_babelfish_autoformat 'myprocedure'
+sp_babelfish_autoformat 'sp_who_myprocedure'
 go
 
-sp_babelfish_autoformat 't', @hiddencols='nosuchcolumn'
+sp_babelfish_autoformat 't_sp_who', @hiddencols='nosuchcolumn'
 go
 
-sp_babelfish_autoformat 't', @orderby='a'
+sp_babelfish_autoformat 't_sp_who', @orderby='a'
 go
 
-sp_babelfish_autoformat 't', @orderby='order by nosuchcolumn'
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn'
 go
 
-sp_babelfish_autoformat 't', @orderby='order by nosuchcolumn', @printrc=0
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=0
 go
 
-sp_babelfish_autoformat 't', @orderby='order by nosuchcolumn', @printrc=1
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=1
 go
 
 

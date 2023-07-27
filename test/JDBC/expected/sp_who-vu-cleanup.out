@@ -1,15 +1,8 @@
-DROP TABLE t
+DROP TABLE t_sp_who
 go
 
-DROP TABLE [test table]
+DROP TABLE [sp_who test table]
 go
-
-DROP TABLE #t
-go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "#t" does not exist)~~
-
 
 DROP LOGIN johndoe
 GO

@@ -1,5 +1,5 @@
 /* tests for sp_babelfish_autoformat */
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
@@ -11,7 +11,7 @@ go
 ~~ROW COUNT: 1~~
 
 
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
@@ -19,17 +19,17 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-DELETE t
+DELETE t_sp_who
 go
 ~~ROW COUNT: 1~~
 
 
-INSERT t VALUES (1, 'a', cast('01-Feb-2023 11:12:13' AS DATETIME))
+INSERT t_sp_who VALUES (1, 'a', cast('01-Feb-2023 11:12:13' AS DATETIME))
 go
 ~~ROW COUNT: 1~~
 
 
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
@@ -37,12 +37,12 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-INSERT t VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' aS DATETIME))
+INSERT t_sp_who VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' aS DATETIME))
 go
 ~~ROW COUNT: 1~~
 
 
-sp_babelfish_autoformat 't'
+sp_babelfish_autoformat 't_sp_who'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
@@ -51,7 +51,7 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-sp_babelfish_autoformat 't', @orderby='order by a desc'
+sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
@@ -60,7 +60,7 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-sp_babelfish_autoformat 't', @orderby='order by a desc', @hiddencols='a'
+sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc', @hiddencols='a'
 go
 ~~START~~
 varchar#!#varchar
@@ -69,6 +69,17 @@ a#!#2023-02-01 11:12:13
 ~~END~~
 
 
+CREATE TABLE #t(a INT, b INT)
+INSERT #t VALUES (1, 98765432)
+INSERT #t VALUES (2, NULL)
+INSERT #t VALUES (NULL, 345)
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 sp_babelfish_autoformat '#t'
 go
 ~~ERROR (Code: 33557097)~~
@@ -76,22 +87,22 @@ go
 ~~ERROR (Message: relation "#t" does not exist)~~
 
 
-sp_babelfish_autoformat '[test table]'
+sp_babelfish_autoformat '[sp_who test table]'
 go
 ~~START~~
 varchar#!#varchar
 ~~END~~
 
 
-INSERT [test table] VALUES (123, 987)
-INSERT [test table] VALUES (1, 454)
+INSERT [sp_who test table] VALUES (123, 987)
+INSERT [sp_who test table] VALUES (1, 454)
 go
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
 
 
-sp_babelfish_autoformat '[test table]', @hiddencols='d'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='d'
 go
 ~~START~~
 varchar
@@ -100,7 +111,7 @@ varchar
 ~~END~~
 
 
-sp_babelfish_autoformat '[test table]', @hiddencols='[d]'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[d]'
 go
 ~~START~~
 varchar
@@ -109,7 +120,7 @@ varchar
 ~~END~~
 
 
-sp_babelfish_autoformat '[test table]', @hiddencols='[test col]'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[test col]'
 go
 ~~START~~
 varchar
@@ -118,7 +129,7 @@ varchar
 ~~END~~
 
 
-sp_babelfish_autoformat '[test table]', @orderby = 'ORDER by [test col]'
+sp_babelfish_autoformat '[sp_who test table]', @orderby = 'ORDER by [test col]'
 go
 ~~START~~
 varchar#!#varchar
@@ -127,7 +138,7 @@ varchar#!#varchar
 ~~END~~
 
 
-sp_babelfish_autoformat '[test table]', @hiddencols='[test col]', @orderby = 'ORDER BY d'
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[test col]', @orderby = 'ORDER BY d'
 go
 ~~START~~
 varchar
@@ -158,14 +169,14 @@ go
 ~~ERROR (Message: Table or view 'nosuchtable' not found)~~
 
 
-sp_babelfish_autoformat 'myprocedure'
+sp_babelfish_autoformat 'sp_who_myprocedure'
 go
 ~~ERROR (Code: 50000)~~
 
-~~ERROR (Message: 'myprocedure' is not a table or view)~~
+~~ERROR (Message: 'sp_who_myprocedure' is not a table or view)~~
 
 
-sp_babelfish_autoformat 't', @hiddencols='nosuchcolumn'
+sp_babelfish_autoformat 't_sp_who', @hiddencols='nosuchcolumn'
 go
 ~~START~~
 varchar#!#varchar#!#varchar
@@ -174,28 +185,28 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-sp_babelfish_autoformat 't', @orderby='a'
+sp_babelfish_autoformat 't_sp_who', @orderby='a'
 go
 ~~ERROR (Code: 50000)~~
 
 ~~ERROR (Message: @orderby parameter must start with 'ORDER BY')~~
 
 
-sp_babelfish_autoformat 't', @orderby='order by nosuchcolumn'
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn'
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: column "nosuchcolumn" does not exist)~~
 
 
-sp_babelfish_autoformat 't', @orderby='order by nosuchcolumn', @printrc=0
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=0
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: column "nosuchcolumn" does not exist)~~
 
 
-sp_babelfish_autoformat 't', @orderby='order by nosuchcolumn', @printrc=1
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=1
 go
 ~~ERROR (Code: 33557097)~~
 

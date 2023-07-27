@@ -1,17 +1,11 @@
 CREATE LOGIN johndoe WITH PASSWORD = 'abc';
 GO
 
-CREATE TABLE t(a INT, colvc30 VARCHAR(30), coldt DATETIME)
+CREATE TABLE t_sp_who(a INT, colvc30 VARCHAR(30), coldt DATETIME)
 go
 
-CREATE PROCEDURE myprocedure AS PRINT 'myprocedure'
+CREATE PROCEDURE sp_who_myprocedure AS PRINT 'myprocedure'
 go
 
-CREATE TABLE #t(a INT, b INT)
-INSERT #t VALUES (1, 98765432)
-INSERT #t VALUES (2, NULL)
-INSERT #t VALUES (NULL, 345)
-go
-
-CREATE TABLE [test table] ([test col] INT, d INT)
+CREATE TABLE [sp_who test table] ([test col] INT, d INT)
 go
