@@ -5134,7 +5134,7 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 				List *seqoptions = NIL;
 				ListCell *arg;
 				
-				char *type= NULL;
+				// char *type= NULL;
 				TypeName *ofTypename;
 				int seed_value;
 				int arg_num;
