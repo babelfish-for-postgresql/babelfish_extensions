@@ -48,6 +48,7 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/scansup.h"
+#include "parser/gramparse.h"
 #include "pgstat.h"				/* for pgstat related activities */
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -5124,19 +5125,20 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 			TargetEntry *tle = (TargetEntry *) lfirst(elements);
 			FuncExpr *funcexpr;
 			// Var *identity_column; 
-			List *identity_column = NIL;
+			// List *identity_column = NIL;
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *) (tle->expr))->funcid), "identity_into") ==0 ){
 				
 				Oid	snamespaceid;
 				char *snamespace;
 				char *sname;
-				int64 seed_value;
-				int arg_num =1;
 				List *seqoptions = NIL;
 				ListCell *arg;
-				ColumnDef  *def;
-				funcexpr = (FuncExpr *)tle->expr;
-
+				
+				char *type= NULL;
+				TypeName *ofTypename;
+				int seed_value;
+				int arg_num;
+			
 				if(seen_identity){
 					ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname )));
@@ -5146,49 +5148,46 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 					ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
 				}
-	
+
+				funcexpr = (FuncExpr *)tle->expr;
+				arg_num = 0;
 				foreach(arg, funcexpr->args)
 				{
 					Node *fargNode = (Node *) lfirst(arg);
-					Const	   *con = (Const *) fargNode;
-					if(arg_num == 2){
-							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger(con->constvalue), -1));
-							seed_value = con->constvalue;
-					}
-					if(arg_num == 3){
-						seqoptions = lappend(seqoptions,  makeDefElem("increment", (Node *)makeInteger(con->constvalue), -1));
-
-						if (con->constvalue > 0){
-							seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
-						}else{
-						
-							seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
-						}
-					}
+					Const *con;
 					arg_num++;
+					switch (arg_num){
+						case 1:
+							// Assert(IsA(fargNode, Const));
+							// con = (Const *) fargNode;
+							// type = DatumGetCString(con->constvalue);
+							// type = "pg_catalog.int4";
+							// type = "int";
+							// ofTypename = typeStringToTypeName(type);
+							ofTypename = typeStringToTypeName(tsql_select_into_typename);
+							seqoptions =  lappend(seqoptions, makeDefElem("as", (Node *) ofTypename, -1));
+							break;
+						case 2:
 
+							con = (Const *) fargNode;
+							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger(con->constvalue), -1));
+							seed_value = (int) con->constvalue;
+							break;
+						case 3:
+							con = (Const *) fargNode;
+							seqoptions = lappend(seqoptions,  makeDefElem("increment", (Node *)makeInteger(con->constvalue), -1));
+							if ((int) con->constvalue > 0){
+								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
+							}else{
+								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
+							}
+							break;
+					}
 				}
 
-				// identity_column = makeVar(tle->resno, InvalidAttrNumber, exprType((Node *) tle->expr), exprTypmod((Node *) tle->expr), exprCollation((Node *) tle->expr), 0);
+				into->identityName = tle->resname;
+				into->identityType = TypeNameToString(ofTypename);
 
-				/*Create a new column, For idenity constraints.*/
-				def = makeNode(ColumnDef);
-				def->colname = pstrdup(tle->resname);
-				// def->typeName = exprType((Node *) tle->expr);
-				def->inhcount = 0;
-				def->is_local = true;
-				def->is_not_null = true;
-				def->is_from_type = false;
-				def->storage = 0;
-				def->raw_default = NULL;
-				def->cooked_default = NULL;
-				def->collClause = NULL;
-				def->collOid = exprCollation((Node *) tle->expr);
-				def->constraints = NIL;
-				def->location = -1;
-				identity_column = lappend(identity_column, def);
-
-				into->identityColumn = identity_column;
 				seen_identity = true;
 			
 				snamespaceid = RangeVarGetCreationNamespace(into->rel);

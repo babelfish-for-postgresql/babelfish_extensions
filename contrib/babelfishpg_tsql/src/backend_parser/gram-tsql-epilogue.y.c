@@ -1,3 +1,5 @@
+char *tsql_select_into_typename=NULL;
+
 void
 pgtsql_parser_init(base_yy_extra_type *yyext)
 {
@@ -239,11 +241,34 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 	List	   *args;
 	int32		typmod;
 	Oid			type_oid;
-	char	   *typename_string;
+	char *typename_string;
+	MemoryContext oldContext;
 	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
 	typename_string = TypeNameToString(typename);
-	args = list_make3(makeStringConst(typename_string, location), seed, increment);
-	result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
+	// args = list_make3(typename_string, seed, increment);
+	
+	// args = list_make3(makeString(typename_string), seed, increment);
+	switch (type_oid)
+		{
+			case INT2OID:
+			case INT4OID:
+			case INT8OID:
+			case NUMERICOID:
+				oldContext = CurrentMemoryContext;
+				MemoryContextSwitchTo(TopMemoryContext);
+				tsql_select_into_typename = strdup(typename_string); //switch to Top MemoryContext
+				MemoryContextSwitchTo(oldContext);
+
+				args = list_make3(makeStringConst(typename_string, location), seed, increment);
+				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("identity column type must be smallint, integer, or bigint")));
+
+		}
+
 	return result;
 
 }
