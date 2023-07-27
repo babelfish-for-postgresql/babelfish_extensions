@@ -6,7 +6,7 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-INSERT t VALUES (NULL, NULL, NULL)
+INSERT t_sp_who VALUES (NULL, NULL, NULL)
 go
 ~~ROW COUNT: 1~~
 
@@ -82,9 +82,12 @@ go
 
 sp_babelfish_autoformat '#t'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "#t" does not exist)~~
+~~START~~
+varchar#!#varchar
+1#!#98765432
+2#!#<NULL>
+<NULL>#!#     345
+~END~~
 
 
 sp_babelfish_autoformat '[sp_who test table]'

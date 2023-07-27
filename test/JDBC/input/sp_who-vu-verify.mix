@@ -2,7 +2,7 @@
 sp_babelfish_autoformat 't_sp_who'
 go
 
-INSERT t VALUES (NULL, NULL, NULL)
+INSERT t_sp_who VALUES (NULL, NULL, NULL)
 go
 
 sp_babelfish_autoformat 't_sp_who'
