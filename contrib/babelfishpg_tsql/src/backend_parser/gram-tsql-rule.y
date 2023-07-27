@@ -1561,7 +1561,7 @@ simple_select:
 					c_sql->whereClause = list_nth((List *)$6, 2);
 					
 					/* prepare wrapper select */
-					w_func->val = (Node *) makeFuncCall(TsqlSystemFuncName2("language"),NIL, COERCE_EXPLICIT_CALL, -1);
+					w_func->val = (Node *) makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
 					wrapper_sl->targetList = list_make1(w_func);
 					wrapper_sl->larg = s_sql;
 					wrapper_sl->rarg = c_sql;

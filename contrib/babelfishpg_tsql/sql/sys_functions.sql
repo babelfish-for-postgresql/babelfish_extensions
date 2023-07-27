@@ -4492,3 +4492,8 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_pivot()
+RETURNS date
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;

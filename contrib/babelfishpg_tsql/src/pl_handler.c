@@ -235,8 +235,8 @@ static validate_set_config_function_hook_type prev_validate_set_config_function_
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool		current_query_is_create_tbl_check_constraint = false;
 
-CachedPlanSource	   *bbf_pivot_sql1_cx;
-CachedPlanSource	   *bbf_pivot_sql2_cx;
+RawStmt	   *bbf_pivot_sql1;
+RawStmt	   *bbf_pivot_sql2;
 
 /* Configurations */
 bool		pltsql_trace_tree = false;
@@ -703,8 +703,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			c_sql->stmt_location = 0;
 			c_sql->stmt_len = 0;
 
-			bbf_pivot_sql1_cx = CreateCachedPlan(s_sql, "sql not exist", CreateCommandTag(s_sql->stmt));
-			bbf_pivot_sql2_cx = CreateCachedPlan(c_sql, "sql not exist", CreateCommandTag(c_sql->stmt));
+			bbf_pivot_sql1 = copyObject(s_sql);
+			bbf_pivot_sql2 = copyObject(c_sql);
 
 			MemoryContextSwitchTo(oldContext);
 			/* 

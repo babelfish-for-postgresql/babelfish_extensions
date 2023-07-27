@@ -16,6 +16,8 @@
 #include "commands/dbcommands.h"
 #include "commands/extension.h"
 #include "common/md5.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
@@ -157,6 +159,7 @@ void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
+int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 static int64 get_identity_next_value(void);
@@ -179,8 +182,8 @@ extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
 extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
-extern CachedPlanSource	   *bbf_pivot_sql1_cx;
-extern CachedPlanSource	   *bbf_pivot_sql2_cx;
+extern RawStmt	   *bbf_pivot_sql1;
+extern RawStmt	   *bbf_pivot_sql2;
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -3437,3 +3440,104 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 	PG_RETURN_NULL();
 }
+
+int 
+SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
+{
+	_SPI_plan	plan;
+	int			ret;
+	List	   *plancache_list;
+	CachedPlanSource *plansource;
+
+	if (parsetree == NULL || tcount < 0)
+		return SPI_ERROR_ARGUMENT;
+	
+
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
+	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
+
+	/*
+	 * Construct plancache entries, but don't do parse analysis yet.
+	 */
+	plancache_list = NIL;
+
+	/* 
+     * src sql can be optained from pstate->p_sourcetext, but
+	 * it is not important here
+	 */
+	plansource = CreateOneShotCachedPlan(parsetree,
+											 "SQL NOT AVAILABLE",
+											 CreateCommandTag(parsetree->stmt));
+
+	plancache_list = lappend(plancache_list, plansource);
+	plan.plancache_list = plancache_list;
+	plan.oneshot = true;
+
+	ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
+	return ret;
+}
+
+PG_FUNCTION_INFO_V1(bbf_pivot);
+Datum
+bbf_pivot(PG_FUNCTION_ARGS)
+{
+	int ret;
+	uint64		proc;
+	SPITupleTable *spi_tuptable;
+	TupleDesc	spi_tupdesc;
+	// HTAB	   *crosstab_hash;
+	// ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+
+	// per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	// oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+
+	/* Generate SPIPlan */
+	if ((ret = SPI_connect()) < 0)
+		/* internal error */
+		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
+	
+	ret = SPI_execute_raw_parsetree(bbf_pivot_sql2, false, 20);
+	proc = SPI_processed;
+
+	/* If no qualifying tuples, fall out early */
+	if (ret != SPI_OK_SELECT || proc == 0)
+	{
+		SPI_finish();
+		// rsinfo->isDone = ExprEndResult;
+		PG_RETURN_NULL();
+	}
+
+	spi_tuptable = SPI_tuptable;
+	spi_tupdesc = spi_tuptable->tupdesc;
+
+	for (int i = 0; i < proc; i++)
+	{
+			char	   *catname;
+			HeapTuple	spi_tuple;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			/* get the category from the current sql result tuple */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			if (catname == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("provided \"categories\" SQL must " \
+								"not return NULL values")));
+
+	}
+
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
+		elog(ERROR, "load_categories_hash: SPI_finish() failed");
+
+	// MemoryContextSwitchTo(oldcontext);	
+	return (Datum) 0;
+}
+
+
