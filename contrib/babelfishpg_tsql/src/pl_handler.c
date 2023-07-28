@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/attnum.h"
+#include "access/relation.h"
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/heap.h"
@@ -71,6 +72,7 @@
 #include "collation.h"
 #include "dbcmds.h"
 #include "err_handler.h"
+#include "extendedproperty.h"
 #include "guc.h"
 #include "hooks.h"
 #include "iterative_exec.h"
@@ -152,6 +154,8 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
+
+static void bbf_ExecDropStmt(DropStmt *stmt);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -2989,7 +2993,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
+				{
+					if (sql_dialect == SQL_DIALECT_TSQL)
+						bbf_ExecDropStmt(drop_stmt);
+
 					break;
+				}
+
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
@@ -3012,6 +3022,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 
+					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
 
 					if (prev_ProcessUtility)
@@ -5045,4 +5056,141 @@ pltsql_remove_current_query_env(void)
 	{
 		destroy_failed_transactions_map();
 	} 
+}
+
+/*
+ * Drop statement of babelfish, currently delete extended property as well.
+ */
+static void
+bbf_ExecDropStmt(DropStmt *stmt)
+{
+	int16			db_id;
+	const char		*type = NULL;
+	char			*schema_name = NULL,
+					*major_name = NULL;
+	ObjectAddress	address;
+	Relation		relation = NULL;
+	Oid				schema_oid;
+	ListCell		*cell;
+
+	db_id = get_cur_db_id();
+
+	if (stmt->removeType == OBJECT_SCHEMA)
+	{
+		foreach(cell, stmt->objects)
+		{
+			schema_name = strVal(lfirst(cell));
+
+			if (get_namespace_oid(schema_name, true) == InvalidOid)
+				return;
+
+			type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SCHEMA];
+			delete_extended_property(db_id, type, schema_name, NULL, NULL);
+		}
+	}
+	else if (stmt->removeType == OBJECT_TABLE ||
+			 stmt->removeType == OBJECT_VIEW ||
+			 stmt->removeType == OBJECT_SEQUENCE)
+	{
+		foreach(cell, stmt->objects)
+		{
+			address = get_object_address(stmt->removeType,
+										 lfirst(cell),
+										 &relation,
+										 AccessShareLock,
+										 true);
+
+			if (!relation)
+				return;
+
+			/* Get major_name */
+			major_name = pstrdup(RelationGetRelationName(relation));
+			relation_close(relation, AccessShareLock);
+
+			/* Get schema_name */
+			schema_oid = get_object_namespace(&address);
+			if (OidIsValid(schema_oid))
+				schema_name = get_namespace_name(schema_oid);
+
+			if (schema_name && major_name)
+			{
+				if (stmt->removeType == OBJECT_TABLE)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+				else if (stmt->removeType == OBJECT_VIEW)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+				else if (stmt->removeType == OBJECT_SEQUENCE)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+			}
+		}
+	}
+	else if (stmt->removeType == OBJECT_PROCEDURE ||
+			 stmt->removeType == OBJECT_FUNCTION ||
+			 stmt->removeType == OBJECT_TYPE)
+	{
+		HeapTuple	tuple;
+
+		foreach(cell, stmt->objects)
+		{
+			address = get_object_address(stmt->removeType,
+										 lfirst(cell),
+										 &relation,
+										 AccessShareLock,
+										 true);
+			Assert(relation == NULL);
+			if (!OidIsValid(address.objectId))
+				return;
+
+			/* Get major_name */
+			relation = table_open(address.classId, AccessShareLock);
+			tuple = get_catalog_object_by_oid(relation,
+											  get_object_attnum_oid(address.classId),
+											  address.objectId);
+			if (!HeapTupleIsValid(tuple))
+			{
+				table_close(relation, AccessShareLock);
+				return;
+			}
+
+			if (stmt->removeType == OBJECT_PROCEDURE ||
+				stmt->removeType == OBJECT_FUNCTION)
+				major_name = pstrdup(NameStr(((Form_pg_proc) GETSTRUCT(tuple))->proname));
+			else if (stmt->removeType == OBJECT_TYPE)
+				major_name = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname));
+
+			table_close(relation, AccessShareLock);
+
+			/* Get schema_name */
+			schema_oid = get_object_namespace(&address);
+			if (OidIsValid(schema_oid))
+				schema_name = get_namespace_name(schema_oid);
+
+			if (schema_name && major_name)
+			{
+				if (stmt->removeType == OBJECT_PROCEDURE)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+				else if (stmt->removeType == OBJECT_FUNCTION)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+				else if (stmt->removeType == OBJECT_TYPE)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+
+				delete_extended_property(db_id, type, schema_name, major_name,
+										 NULL);
+			}
+		}
+	}
 }
