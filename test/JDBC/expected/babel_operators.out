@@ -48,12 +48,12 @@ SELECT (12345 / CAST(12 AS varbinary(4)));
 SELECT (CAST(12345 AS varbinary(4)) / 12);
 GO
 ~~START~~
-int
+bigint
 1028
 ~~END~~
 
 ~~START~~
-int
+bigint
 1028
 ~~END~~
 
