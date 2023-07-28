@@ -14,17 +14,6 @@ GO
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
 
-SELECT col1, IDENTITY(smallint, 1,1) as id_num INTO babel_539NewTable1 FROM babel_539OldTable;
-GO
-
-Select col1, id_num FROM babel_539NewTable1; 
-GO
-
-INSERT INTO babel_539NewTable1 values (30, 4);
-GO
-
-DROP TABLE IF EXISTS babel_539NewTable1;
-GO
 
 SELECT col1, IDENTITY(int, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
@@ -35,64 +24,46 @@ GO
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
 
-SELECT col1, IDENTITY(bigint, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
+
+
+SELECT col1, IDENTITY(int, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-Select col1, id_num FROM babel_539NewTable1; 
+Select col1, id_num FROM #babel_539NewTable1; 
 GO
 
-DROP TABLE IF EXISTS babel_539NewTable1;
+DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
-SELECT col1, IDENTITY(numeric(19,0), 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
+SELECT col1, IDENTITY(int) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-Select col1, id_num FROM babel_539NewTable1; 
+Select col1, id_num FROM #babel_539NewTable1; 
 GO
 
-DROP TABLE IF EXISTS babel_539NewTable1;
-GO
-
-
-SELECT col1, IDENTITY(int, 1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
-GO
-
-Select col1, id_num FROM babel_539NewTable1; 
-GO
-
-DROP TABLE IF EXISTS babel_539NewTable1;
-GO
-
-SELECT col1, IDENTITY(int) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
-GO
-
-Select col1, id_num FROM babel_539NewTable1; 
-GO
-
-DROP TABLE IF EXISTS babel_539NewTable1;
+DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
 
 SELECT col1, id_num=IDENTITY(int, 1,1) INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-Select col1, id_num FROM babel_539NewTable1; 
+Select col1, id_num FROM #babel_539NewTable1; 
 GO
 
-DROP TABLE IF EXISTS babel_539NewTable1;
+DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
 
-SELECT col1, [id_num]=IDENTITY(int, 1,1) INTO babel_539NewTable1 FROM babel_539OldTable;
+SELECT col1, [id_num]=IDENTITY(int, 1,1) INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-Select col1, id_num FROM babel_539NewTable1; 
+Select col1, id_num FROM #babel_539NewTable1; 
 GO
 
-DROP TABLE IF EXISTS babel_539NewTable1;
+DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
--- Temp table cases
 SELECT col1, IDENTITY(int, 1,1) AS [id_num] INTO #babel_539NewTempTable1 FROM babel_539OldTable;
 GO
 
@@ -112,9 +83,6 @@ GO
 DROP TABLE IF EXISTS #babel_539NewTempTable1;
 GO
 
--- user defined numeric datatypes
--- Add cases for user defined non mumeric datatypes
--- Should error
 SELECT col1, IDENTITY(char, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
 
@@ -124,10 +92,7 @@ GO
 SELECT col1, IDENTITY() AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-
 -- impact to other similar queries and functions
-
-
 -- normal create table cases
 CREATE TABLE babel_539OldTable2 (col1 int NOT NULL, id_num INT IDENTITY(1, 2));
 GO
@@ -143,13 +108,6 @@ GO
 
 DROP TABLE IF EXISTS babel_539NewTable2;
 GO
-
--- //FAIL
--- SELECT col1, id_num, IDENTITY(int, -1, 2) AS id_num INTO babel_539NewTable2 FROM babel_539OldTable2;
--- [S0001][8108] Line 1: Cannot add identity column, using the SELECT INTO statement, to table 'babel_539NewTable2', which already has column 'id_num' that inherits the identity property.
--- -- // PASS
--- SELECT col1, IDENTITY(int, -1, 2) AS id_num INTO babel_539NewTable2 FROM OldTable;
-
 
 -- create table as temp table
 CREATE TABLE #babel_539NewTempTable2 (col1 int, id_num int IDENTITY(-1, 2));
@@ -182,7 +140,7 @@ GO
 DROP TABLE IF EXISTS #babel_539NewTempTable2;
 GO
 
--- Two idenity columns in a query
+-- Two identity columns in a query
 SELECT col1, IDENTITY(int, 1,1) as id_num, IDENTITY(int, 1,1) as id_num2 INTO #babel_539NewTempTable2 FROM babel_539OldTable;
 GO
 

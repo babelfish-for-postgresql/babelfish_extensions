@@ -48,7 +48,6 @@
 #include "parser/parse_type.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/scansup.h"
-#include "parser/gramparse.h"
 #include "pgstat.h"				/* for pgstat related activities */
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -141,6 +140,7 @@ Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
+static char *parse_type_argument(int type_oid);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
@@ -4851,6 +4851,143 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 	pltsql_guc_dirty = true;
 }
 
+static char *parse_type_argument(int type_oid){
+	char *type_string = NULL;
+	switch(type_oid){
+		case INT2OID:
+			type_string = "pg_catalog.int2";
+			break;
+		case INT4OID:
+			type_string = "pg_catalog.int4";
+			break;
+		case INT8OID:
+			type_string = "pg_catalog.int8";
+			break;
+		case NUMERICOID:
+			type_string = "pg_catalog.numeric";
+			break;
+		default:
+			type_string = "decimal";
+			break;
+	}
+	return type_string;
+}
+
+static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString){
+	List	   *result;
+	ListCell   *elements;
+	CreateSeqStmt *seqstmt;
+	AlterSeqStmt *altseqstmt;
+	List	   *attnamelist;
+	IntoClause *into;
+	Node *n;
+
+	n = stmt->query;
+	into = stmt->into;
+	result = NIL;
+	seqstmt = NULL;
+	altseqstmt = NULL;
+
+	if (n && n->type == T_Query)
+	{
+		Query *q = (Query *) n;
+		bool seen_identity = false;
+		foreach(elements, q->targetList)
+		{	
+			TargetEntry *tle = (TargetEntry *) lfirst(elements);
+			FuncExpr *funcexpr;
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *) (tle->expr))->funcid), "identity_into") ==0 ){
+				
+				Oid	snamespaceid;
+				char *snamespace;
+				char *sname;
+				List *seqoptions = NIL;
+				ListCell *arg;
+				
+				int type_oid;
+				char *type= NULL;
+				TypeName *ofTypename;
+				int64 seed_value;
+				int arg_num;
+			
+				if(seen_identity){
+					ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname )));
+				}
+
+				if(tle->resname == NULL){
+					ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
+				}
+
+				funcexpr = (FuncExpr *)tle->expr;
+				arg_num = 0;
+				foreach(arg, funcexpr->args)
+				{
+					Node *fargNode = (Node *) lfirst(arg);
+					Const *con;
+					arg_num++;
+					switch (arg_num){
+						case 1:
+							con = (Const *) fargNode;
+							type_oid = (int) con->constvalue;
+							type = parse_type_argument(type_oid);
+							ofTypename = typeStringToTypeName(type);
+							seqoptions =  lappend(seqoptions, makeDefElem("as", (Node *) ofTypename, -1));
+							break;
+						case 2:
+							con = (Const *) fargNode;
+							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger(con->constvalue), -1));
+							seed_value = (int64) con->constvalue;
+							break;
+						case 3:
+							con = (Const *) fargNode;
+							seqoptions = lappend(seqoptions,  makeDefElem("increment", (Node *)makeInteger(con->constvalue), -1));
+							if ((int) con->constvalue > 0){
+								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
+							}else{
+								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
+							}
+							break;
+					}
+				}
+
+				into->identityName = tle->resname;
+				into->identityType = TypeNameToString(ofTypename);
+
+				seen_identity = true;
+			
+				snamespaceid = RangeVarGetCreationNamespace(into->rel);
+				snamespace = get_namespace_name(snamespaceid);
+				sname = ChooseRelationName(into->rel->relname, tle->resname,"seq",snamespaceid, false);
+				seqstmt = makeNode(CreateSeqStmt);
+				seqstmt->for_identity = true;
+				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
+				seqstmt->sequence->relpersistence = into->rel->relpersistence;
+				seqstmt->options = seqoptions;
+				
+				altseqstmt = makeNode(AlterSeqStmt);
+				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
+				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname),makeString(tle->resname));
+				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *) attnamelist, -1));
+				altseqstmt->for_identity = true;
+
+			}
+		}
+	}
+
+	if(seqstmt){
+		result = lappend(result, seqstmt);
+	}
+	result = lappend(result, stmt);
+
+	if(altseqstmt){
+		result = lappend(result, altseqstmt);
+	}
+	
+	return result;	
+}
+
 int
 pltsql_new_guc_nest_level(void)
 {
@@ -5098,125 +5235,4 @@ pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *
 		if (stmts != NIL)
 			CommandCounterIncrement();
 		}
-}
-
-static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString){
-	// ParseState *pstate;
-	List	   *result;
-	ListCell   *elements;
-	CreateSeqStmt *seqstmt;
-	AlterSeqStmt *altseqstmt;
-	List	   *attnamelist;
-	IntoClause *into;
-	Node *n;
-
-	n = stmt->query;
-	into = stmt->into;
-	result = NIL;
-	seqstmt = NULL;
-	altseqstmt = NULL;
-
-	if (n && n->type == T_Query)
-	{
-		Query *q = (Query *) n;
-		bool seen_identity = false;
-		foreach(elements, q->targetList)
-		{	
-			TargetEntry *tle = (TargetEntry *) lfirst(elements);
-			FuncExpr *funcexpr;
-			// Var *identity_column; 
-			// List *identity_column = NIL;
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *) (tle->expr))->funcid), "identity_into") ==0 ){
-				
-				Oid	snamespaceid;
-				char *snamespace;
-				char *sname;
-				List *seqoptions = NIL;
-				ListCell *arg;
-				
-				// char *type= NULL;
-				TypeName *ofTypename;
-				int seed_value;
-				int arg_num;
-			
-				if(seen_identity){
-					ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname )));
-				}
-
-				if(tle->resname == NULL){
-					ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
-				}
-
-				funcexpr = (FuncExpr *)tle->expr;
-				arg_num = 0;
-				foreach(arg, funcexpr->args)
-				{
-					Node *fargNode = (Node *) lfirst(arg);
-					Const *con;
-					arg_num++;
-					switch (arg_num){
-						case 1:
-							// Assert(IsA(fargNode, Const));
-							// con = (Const *) fargNode;
-							// type = DatumGetCString(con->constvalue);
-							// type = "pg_catalog.int4";
-							// type = "int";
-							// ofTypename = typeStringToTypeName(type);
-							ofTypename = typeStringToTypeName(tsql_select_into_typename);
-							seqoptions =  lappend(seqoptions, makeDefElem("as", (Node *) ofTypename, -1));
-							break;
-						case 2:
-
-							con = (Const *) fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger(con->constvalue), -1));
-							seed_value = (int) con->constvalue;
-							break;
-						case 3:
-							con = (Const *) fargNode;
-							seqoptions = lappend(seqoptions,  makeDefElem("increment", (Node *)makeInteger(con->constvalue), -1));
-							if ((int) con->constvalue > 0){
-								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
-							}else{
-								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
-							}
-							break;
-					}
-				}
-
-				into->identityName = tle->resname;
-				into->identityType = TypeNameToString(ofTypename);
-
-				seen_identity = true;
-			
-				snamespaceid = RangeVarGetCreationNamespace(into->rel);
-				snamespace = get_namespace_name(snamespaceid);
-				sname = ChooseRelationName(into->rel->relname, tle->resname,"seq",snamespaceid, false);
-				seqstmt = makeNode(CreateSeqStmt);
-				seqstmt->for_identity = true;
-				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				seqstmt->sequence->relpersistence = into->rel->relpersistence;
-				seqstmt->options = seqoptions;
-				
-				altseqstmt = makeNode(AlterSeqStmt);
-				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname),makeString(tle->resname));
-				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *) attnamelist, -1));
-				altseqstmt->for_identity = true;
-
-			}
-		}
-	}
-
-	if(seqstmt){
-		result = lappend(result, seqstmt);
-	}
-	result = lappend(result, stmt);
-
-	if(altseqstmt){
-		result = lappend(result, altseqstmt);
-	}
-	
-	return result;	
 }

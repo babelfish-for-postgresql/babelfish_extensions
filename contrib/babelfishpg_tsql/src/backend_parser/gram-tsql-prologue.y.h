@@ -9,6 +9,7 @@
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "common/md5.h"
 
 #include "src/backend_parser/gramparse.h"

@@ -1,5 +1,3 @@
-char *tsql_select_into_typename=NULL;
-
 void
 pgtsql_parser_init(base_yy_extra_type *yyext)
 {
@@ -236,30 +234,20 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 Node *
 TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location)
 {
-
-	Node	   *result;
-	List	   *args;
-	int32		typmod;
-	Oid			type_oid;
-	char *typename_string;
-	MemoryContext oldContext;
+	Node *result;
+	List *args;
+	int32 typmod;
+	Oid	type_oid;
+	Oid base_oid;
 	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
-	typename_string = TypeNameToString(typename);
-	// args = list_make3(typename_string, seed, increment);
-	
-	// args = list_make3(makeString(typename_string), seed, increment);
-	switch (type_oid)
+	base_oid =  getBaseType(type_oid);
+	switch (base_oid)
 		{
 			case INT2OID:
 			case INT4OID:
 			case INT8OID:
-			case NUMERICOID:
-				oldContext = CurrentMemoryContext;
-				MemoryContextSwitchTo(TopMemoryContext);
-				tsql_select_into_typename = strdup(typename_string); //switch to Top MemoryContext
-				MemoryContextSwitchTo(oldContext);
-
-				args = list_make3(makeStringConst(typename_string, location), seed, increment);
+			case NUMERICOID:				
+				args = list_make3((Node *)makeIntConst((int)type_oid, -1), seed, increment);
 				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
 				break;
 			default:

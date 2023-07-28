@@ -42,7 +42,7 @@ RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.identity_into(IN typename TEXT, IN seed INT, IN increment INT)
+CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
 RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE VIEW sys.sql_expression_dependencies
