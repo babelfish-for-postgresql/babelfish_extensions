@@ -18,9 +18,16 @@ void
 tsql_for_datetime_format(StringInfo format_output, const char *outputstr)
 {
 	char	   *date;
-	char	   *spaceptr = strstr(outputstr, " ");
+	char	   *spaceptr;
 	int			len;
 
+	/* if we receive a null value, set the output as an empty string */
+	if(outputstr == NULL) {
+		appendStringInfoChar(format_output, '\0');
+		return;
+	}
+
+	spaceptr = strstr(outputstr, " ");
 	len = spaceptr - outputstr;
 	date = palloc(len + 1);
 	strncpy(date, outputstr, len);
@@ -43,8 +50,16 @@ tsql_for_datetimeoffset_format(StringInfo format_output, const char *str)
 			   *endptr,
 			   *time,
 			   *offset;
-	char	   *spaceptr = strstr(str, " ");
+	char	   *spaceptr;
 	int			len;
+
+	/* if we receive a null value, set the output as an empty string */
+	if(str == NULL) {
+		appendStringInfoChar(format_output, '\0');
+		return;
+	}
+
+	spaceptr = strstr(str, " ");
 
 	/* append date part of string */
 	len = spaceptr - str;
