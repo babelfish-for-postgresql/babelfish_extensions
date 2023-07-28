@@ -1,8 +1,4 @@
-
-CREATE TABLE babel_539OldTable(col1 int , name varchar(20));
-GO
-
-INSERT INTO babel_539OldTable VALUES (10, 'user1') , (20, 'user2');
+EXEC babel_539_prepare_proc
 GO
 
 SELECT col1 INTO babel_539NewTable1 FROM babel_539OldTable;
@@ -14,7 +10,6 @@ GO
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
 
-
 SELECT col1, IDENTITY(int, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
 
@@ -23,8 +18,6 @@ GO
 
 DROP TABLE IF EXISTS babel_539NewTable1;
 GO
-
-
 
 SELECT col1, IDENTITY(int, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
@@ -44,7 +37,6 @@ GO
 DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
-
 SELECT col1, id_num=IDENTITY(int, 1,1) INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
 
@@ -53,7 +45,6 @@ GO
 
 DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
-
 
 SELECT col1, [id_num]=IDENTITY(int, 1,1) INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
@@ -72,7 +63,6 @@ GO
 
 DROP TABLE IF EXISTS #babel_539NewTempTable1;
 GO
-
 
 SELECT *, IDENTITY(int) AS [id_num] INTO #babel_539NewTempTable1 FROM babel_539OldTable;
 GO
@@ -142,8 +132,4 @@ GO
 
 -- Two identity columns in a query
 SELECT col1, IDENTITY(int, 1,1) as id_num, IDENTITY(int, 1,1) as id_num2 INTO #babel_539NewTempTable2 FROM babel_539OldTable;
-GO
-
--- cleanup
-DROP TABLE IF EXISTS babel_539OldTable;
 GO

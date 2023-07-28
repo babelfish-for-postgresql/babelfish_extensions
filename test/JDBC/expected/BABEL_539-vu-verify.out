@@ -1,22 +1,18 @@
-
-CREATE TABLE babel_539OldTable(col1 int , name varchar(20));
+EXEC babel_539_prepare_proc
 GO
-
-INSERT INTO babel_539OldTable VALUES (10, 'user1') , (20, 'user2');
-GO
-~~ROW COUNT: 2~~
-
 
 SELECT col1 INTO babel_539NewTable1 FROM babel_539OldTable;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'INTO' at line 1 and character position 11)~~
+
 
 Select col1 FROM babel_539NewTable1; 
 GO
-~~START~~
-int
-10
-20
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_539newtable1" does not exist)~~
 
 
 DROP TABLE IF EXISTS babel_539NewTable1;
@@ -228,6 +224,3 @@ GO
 ~~ERROR (Message: Attempting to add multiple identity columns to table "#babel_539newtemptable2" using the SELECT INTO statement.)~~
 
 
--- cleanup
-DROP TABLE IF EXISTS babel_539OldTable;
-GO
