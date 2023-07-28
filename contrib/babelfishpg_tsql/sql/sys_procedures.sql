@@ -280,7 +280,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_testlinkedserver(IN "@servername" sys.sysname
 AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_testlinkedserver(IN sys.sysname) TO PUBLIC;
 
-
 CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
 AS $$
 DECLARE
