@@ -37,7 +37,7 @@ varchar#!#varchar#!#varchar
 ~~END~~
 
 
-INSERT t_sp_who VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' aS DATETIME))
+INSERT t_sp_who VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' AS DATETIME))
 go
 ~~ROW COUNT: 1~~
 
@@ -88,7 +88,7 @@ varchar#!#varchar
 1#!#98765432
 2#!#<NULL>
 <NULL>#!#     345
-~END~~
+~~END~~
 
 
 sp_babelfish_autoformat '[sp_who test table]'
