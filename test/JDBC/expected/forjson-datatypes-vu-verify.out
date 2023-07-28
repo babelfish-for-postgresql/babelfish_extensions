@@ -99,3 +99,37 @@ nvarchar
 [{"anchar":"abc  ","anvarchar":"abc","antext":"abc"}]
 ~~END~~
 
+
+
+-- NULL datetime and datetimeoffset
+SELECT * FROM forjson_datatypes_vu_v_nulldatetime
+GO
+~~START~~
+nvarchar
+[{}]
+~~END~~
+
+
+SELECT * FROM forjson_datatypes_vu_v_nullsmalldatetime
+GO
+~~START~~
+nvarchar
+[{}]
+~~END~~
+
+
+SELECT * FROM forjson_datatypes_vu_v_nulldatetime2
+GO
+~~START~~
+nvarchar
+[{}]
+~~END~~
+
+
+SELECT * FROM forjson_datatypes_vu_v_nulldatetimeoffset
+GO
+~~START~~
+nvarchar
+[{}]
+~~END~~
+
