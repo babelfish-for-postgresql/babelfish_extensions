@@ -4988,6 +4988,54 @@ static List * transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *query
 	return result;	
 }
 
+void
+pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv, 
+	ParamListInfo params, QueryCompletion *qc){
+
+	Node *parsetree = pstmt->utilityStmt;	
+	ObjectAddress address;
+	ObjectAddress secondaryObject = InvalidObjectAddress;
+	List *stmts;
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *) parsetree, queryString);
+		while (stmts != NIL)
+		{
+			Node *stmt = (Node *) linitial(stmts);
+			stmts = list_delete_first(stmts);
+			if (IsA(stmt, CreateTableAsStmt))
+			{
+				address = ExecCreateTableAs(pstate, (CreateTableAsStmt *) parsetree,params, queryEnv, qc);
+				EventTriggerCollectSimpleCommand(address,secondaryObject,stmt);
+			}
+			else if(IsA(stmt, CreateSeqStmt)) {
+				address = DefineSequence(pstate, (CreateSeqStmt *) stmt);
+				Assert(address.objectId != InvalidOid);
+				tsql_select_into_seq_oid = address.objectId;
+				EventTriggerCollectSimpleCommand(address,secondaryObject,stmt);
+			}
+			else{
+
+				PlannedStmt *wrapper;
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = stmt;
+				wrapper->stmt_location = pstmt->stmt_location;
+				wrapper->stmt_len = pstmt->stmt_len;
+
+				ProcessUtility(wrapper,
+								queryString,
+								false,
+								PROCESS_UTILITY_SUBCOMMAND,
+								params,
+								NULL,
+								None_Receiver,
+								NULL);
+			}
+		if (stmts != NIL)
+			CommandCounterIncrement();
+		}
+}
+
 int
 pltsql_new_guc_nest_level(void)
 {
@@ -5186,53 +5234,4 @@ pltsql_remove_current_query_env(void)
 	{
 		destroy_failed_transactions_map();
 	} 
-}
-
-
-void
-pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv, 
-	ParamListInfo params, QueryCompletion *qc){
-
-	Node *parsetree = pstmt->utilityStmt;	
-	ObjectAddress address;
-	ObjectAddress secondaryObject = InvalidObjectAddress;
-	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *) parsetree, queryString);
-		while (stmts != NIL)
-		{
-			Node *stmt = (Node *) linitial(stmts);
-			stmts = list_delete_first(stmts);
-			if (IsA(stmt, CreateTableAsStmt))
-			{
-				address = ExecCreateTableAs(pstate, (CreateTableAsStmt *) parsetree,params, queryEnv, qc);
-				EventTriggerCollectSimpleCommand(address,secondaryObject,stmt);
-			}
-			else if(IsA(stmt, CreateSeqStmt)) {
-				address = DefineSequence(pstate, (CreateSeqStmt *) stmt);
-				Assert(address.objectId != InvalidOid);
-				tsql_select_into_seq_oid = address.objectId;
-				EventTriggerCollectSimpleCommand(address,secondaryObject,stmt);
-			}
-			else{
-
-				PlannedStmt *wrapper;
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = stmt;
-				wrapper->stmt_location = pstmt->stmt_location;
-				wrapper->stmt_len = pstmt->stmt_len;
-
-				ProcessUtility(wrapper,
-								queryString,
-								false,
-								PROCESS_UTILITY_SUBCOMMAND,
-								params,
-								NULL,
-								None_Receiver,
-								NULL);
-			}
-		if (stmts != NIL)
-			CommandCounterIncrement();
-		}
 }
