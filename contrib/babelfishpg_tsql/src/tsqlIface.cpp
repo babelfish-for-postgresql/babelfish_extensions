@@ -1852,7 +1852,8 @@ public:
 		std::string func_name = ::getFullText(ctx);
 		size_t Lbracket_index = func_name.find('(');
         func_name = func_name.substr(0, Lbracket_index);
-		if (pg_strcasecmp(func_name.c_str(), "identity") == 0) {
+		if (pg_strcasecmp(func_name.c_str(), "identity") == 0 || pg_strcasecmp(func_name.c_str(), "identity_into") == 0
+			|| pg_strcasecmp(func_name.c_str(), "sys.identity_into") == 0) {
 			has_identity_function = true;
 		}
 	}
