@@ -230,6 +230,36 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	return result;
 }
 
+Node *
+TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location)
+{
+	Node *result;
+	List *args;
+	int32 typmod;
+	Oid	type_oid;
+	Oid base_oid;
+	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
+	base_oid =  getBaseType(type_oid);
+	switch (base_oid)
+		{
+			case INT2OID:
+			case INT4OID:
+			case INT8OID:
+			case NUMERICOID:				
+				args = list_make3((Node *)makeIntConst((int)type_oid, -1), seed, increment);
+				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("identity column type must be smallint, integer, or bigint")));
+
+		}
+
+	return result;
+
+}
+
 /* TsqlFunctionParse -- Implements the PARSE and TRY_PARSE functions.
  * Takes in expression, target type, regional culture, try boolean, location.
  *

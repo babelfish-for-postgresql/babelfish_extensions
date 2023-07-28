@@ -87,6 +87,7 @@ PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
+PG_FUNCTION_INFO_V1(identity_into);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(host_id);
 PG_FUNCTION_INFO_V1(context_info);
@@ -1896,6 +1897,15 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 		(*pltsql_protocol_plugin_ptr)->set_context_info(PG_GETARG_BYTEA_P(0));
 
 	PG_RETURN_VOID();
+}
+
+Datum
+identity_into(PG_FUNCTION_ARGS)
+{
+	int64 result;
+	Assert(tsql_select_into_seq_oid != InvalidOid);
+	result = nextval_internal(tsql_select_into_seq_oid, false);
+	return result;
 }
 
 /*
