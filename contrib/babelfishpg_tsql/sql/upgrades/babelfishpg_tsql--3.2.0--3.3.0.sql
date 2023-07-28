@@ -372,6 +372,35 @@ CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
+AS $$
+DECLARE
+  v TIME;
+BEGIN
+  v = CAST(sleep_time as TIME);
+  PERFORM pg_sleep(extract(epoch from clock_timestamp() + v) -
+                extract(epoch from clock_timestamp()));
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME)
+AS $$
+DECLARE
+  t TIME;
+  target_timestamp TIMESTAMPTZ;
+BEGIN
+  t = CAST(sleep_time as TIME);
+  target_timestamp = current_date + t;
+  IF target_timestamp < current_timestamp THEN
+    target_timestamp = target_timestamp + '1 day';
+  END IF;
+  PERFORM pg_sleep(extract(epoch from target_timestamp) -
+                extract(epoch from clock_timestamp()));
+END
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
