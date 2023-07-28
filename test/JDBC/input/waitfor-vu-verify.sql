@@ -124,3 +124,11 @@ SELECT
     END AS CheckResult
 FROM Timecheck5
 GO
+
+EXEC sys.bbf_sleep_for '00:00:02'
+GO
+
+declare @resumetime datetime
+set @resumetime = current_timestamp + '00:00:02'
+EXEC sys.bbf_sleep_until @resumetime
+GO

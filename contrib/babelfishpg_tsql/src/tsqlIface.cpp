@@ -3994,17 +3994,17 @@ makeWaitForStmt(TSqlParser::Waitfor_statementContext *ctx)
     result->paramno = 0;
     result->params = NIL;
 
-	query += "EXEC ";
-	if (ctx->DELAY())
-		query += "bbf_sleep_for(";
-	else
-		query += "bbf_sleep_until(";
+    query += "EXEC ";
+    if (ctx->DELAY())
+        query += "bbf_sleep_for(";
+    else
+        query += "bbf_sleep_until(";
 
-	query += getFullText(ctx->expression());
-	query += ")";
-	result->expr = makeTsqlExpr(query, false);
+    query += getFullText(ctx->expression());
+    query += ")";
+    result->expr = makeTsqlExpr(query, false);
 
-	return result;
+    return result;
 }
 
 void *
