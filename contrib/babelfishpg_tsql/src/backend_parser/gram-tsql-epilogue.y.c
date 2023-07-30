@@ -246,13 +246,14 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 			case INT4OID:
 			case INT8OID:
 			case NUMERICOID:				
-				args = list_make3((Node *)makeIntConst((int)type_oid, -1), seed, increment);
+				args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
 				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
 				break;
 			default:
 				ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("identity column type must be smallint, integer, or bigint")));
+					 errmsg("identity column type must be smallint, integer, bigint, or numeric")));
+				break;
 
 		}
 

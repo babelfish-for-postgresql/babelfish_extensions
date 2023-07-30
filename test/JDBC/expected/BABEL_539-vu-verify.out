@@ -123,7 +123,7 @@ SELECT col1, IDENTITY(char, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_53
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: identity column type must be smallint, integer, or bigint)~~
+~~ERROR (Message: identity column type must be smallint, integer, bigint, or numeric)~~
 
 
 DROP TABLE IF EXISTS babel_539NewTable1;
@@ -208,5 +208,31 @@ GO
 ~~ERROR (Message: Attempting to add multiple identity columns to table "#babel_539newtemptable2" using the SELECT INTO statement.)~~
 
 
-DROP TABLE IF EXISTS #babel_539NewTempTable2;
+--calling internal function directly
+SELECT col1, IDENTITY_INTO(1, 1,1) as id_num INTO #babel_539NewTempTable2 FROM babel_539OldTable;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function IDENTITY_INTO does not exist)~~
+
+
+SELECT sys.IDENTITY(23, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near ')')~~
+
+
+SELECT IDENTITY(int, 21);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near ')')~~
+
+
+SELECT sys.IDENTITY_INTO(23, 1, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function IDENTITY_INTO does not exist)~~
+

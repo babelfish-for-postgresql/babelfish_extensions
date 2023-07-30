@@ -1905,7 +1905,7 @@ identity_into(PG_FUNCTION_ARGS)
 	int64 result;
 	Assert(tsql_select_into_seq_oid != InvalidOid);
 	result = nextval_internal(tsql_select_into_seq_oid, false);
-	return result;
+	PG_RETURN_INT64((int64) result);
 }
 
 /*

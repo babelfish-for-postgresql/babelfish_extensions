@@ -131,5 +131,15 @@ GO
 SELECT col1, IDENTITY(int, 1,1) as id_num, IDENTITY(int, 1,1) as id_num2 INTO #babel_539NewTempTable2 FROM babel_539OldTable;
 GO
 
-DROP TABLE IF EXISTS #babel_539NewTempTable2;
+--calling internal function directly
+SELECT col1, IDENTITY_INTO(1, 1,1) as id_num INTO #babel_539NewTempTable2 FROM babel_539OldTable;
+GO
+
+SELECT sys.IDENTITY(23, 1);
+GO
+
+SELECT IDENTITY(int, 21);
+GO
+
+SELECT sys.IDENTITY_INTO(23, 1, 1);
 GO

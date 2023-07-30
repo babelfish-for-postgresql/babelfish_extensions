@@ -1847,17 +1847,6 @@ public:
 		}
 	}
 
-	void enterFunction_call(TSqlParser::Function_callContext *ctx) override
-	{
-		std::string func_name = ::getFullText(ctx);
-		size_t Lbracket_index = func_name.find('(');
-        func_name = func_name.substr(0, Lbracket_index);
-		if (pg_strcasecmp(func_name.c_str(), "identity") == 0 || pg_strcasecmp(func_name.c_str(), "identity_into") == 0
-			|| pg_strcasecmp(func_name.c_str(), "sys.identity_into") == 0) {
-			has_identity_function = true;
-		}
-	}
-
 	//////////////////////////////////////////////////////////////////////////////
 	// function/procedure call analysis
 	//////////////////////////////////////////////////////////////////////////////
@@ -1965,6 +1954,21 @@ public:
                                       }
                               }
 
+			}
+
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
+				{
+					has_identity_function = true;
+				}
+			
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into") == 0)
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
+						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
 			}
 		}
 	}
