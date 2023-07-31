@@ -1414,6 +1414,9 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 
 			reset_exec_error_data(estate);
 
+			/* Set the current Statement Start time at satement level and not at batch. */
+			SetCurrentStatementStartTimestamp();
+
 			/*
 			 * Let the protocol plugin know that we are about to execute this
 			 * statement
