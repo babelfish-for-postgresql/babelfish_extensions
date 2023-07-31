@@ -90,6 +90,12 @@ Oid			bbf_domain_mapping_oid = InvalidOid;
 Oid			bbf_domain_mapping_idx_oid = InvalidOid;
 
 /*****************************************
+ *			EXTENDED_PROPERTIES
+ *****************************************/
+Oid			bbf_extended_properties_oid = InvalidOid;
+Oid			bbf_extended_properties_idx_oid = InvalidOid;
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
@@ -508,7 +514,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	TupleDesc	dsc;
 	bool		isnull;
 
-	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
+	if (get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
 		return NULL;
 
 	rel = table_open(namespace_ext_oid, AccessShareLock);
@@ -1451,6 +1457,30 @@ get_bbf_domain_mapping_idx_oid()
 													   get_namespace_oid("sys", false));
 
 	return bbf_domain_mapping_idx_oid;
+}
+
+/*****************************************
+ *			EXTENDED_PROPERTIES
+ *****************************************/
+
+Oid
+get_bbf_extended_properties_oid()
+{
+	if (!OidIsValid(bbf_extended_properties_oid))
+		bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME,
+														get_namespace_oid("sys", false));
+
+	return bbf_extended_properties_oid;
+}
+
+Oid
+get_bbf_extended_properties_idx_oid()
+{
+	if (!OidIsValid(bbf_extended_properties_idx_oid))
+		bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME,
+															get_namespace_oid("sys", false));
+
+	return bbf_extended_properties_idx_oid;
 }
 
 /*****************************************

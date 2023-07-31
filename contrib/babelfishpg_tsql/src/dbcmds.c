@@ -40,6 +40,7 @@
 #include "guc.h"
 #include "rolecmds.h"
 #include "pltsql.h"
+#include "extendedproperty.h"
 
 static bool have_createdb_privilege(void);
 static List *gen_createdb_subcmds(const char *schema,
@@ -717,6 +718,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */
 		drop_related_bbf_users(db_users_list);
+		/* delete extended property */
+		delete_extended_property(dbid, NULL, NULL, NULL, NULL);
 
 		/* Release the session-level exclusive lock */
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, true);

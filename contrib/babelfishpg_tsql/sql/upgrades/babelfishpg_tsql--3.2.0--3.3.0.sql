@@ -42,6 +42,10 @@ RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sql_expression_dependencies
 AS
 SELECT
@@ -160,6 +164,133 @@ inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
+-- It is assumed that there is no data stored in the sys.extended_properties table.
+ALTER TABLE sys.extended_properties RENAME TO extended_properties_deprecated_in_3_3_0;
+CREATE TABLE sys.babelfish_extended_properties (
+  dbid smallint NOT NULL,
+  schema_name name NOT NULL,
+  major_name name NOT NULL,
+  minor_name name NOT NULL,
+  type sys.varchar(50) NOT NULL,
+  name sys.sysname NOT NULL,
+  orig_name sys.sysname NOT NULL,
+  value sys.sql_variant,
+  PRIMARY KEY (dbid, type, schema_name, major_name, minor_name, name)
+);
+GRANT SELECT on sys.babelfish_extended_properties TO PUBLIC;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_extended_properties', '');
+
+CREATE OR REPLACE VIEW sys.extended_properties
+AS
+SELECT
+	CAST((CASE
+		WHEN ep.type = 'DATABASE' THEN 0
+		WHEN ep.type = 'SCHEMA' THEN 3
+		WHEN ep.type IN ('TABLE', 'TABLE COLUMN', 'VIEW', 'SEQUENCE', 'PROCEDURE', 'FUNCTION') THEN 1
+		WHEN ep.type = 'TYPE' THEN 6
+		END) AS sys.tinyint) AS class,
+	CAST((CASE
+		WHEN ep.type = 'DATABASE' THEN 'DATABASE'
+		WHEN ep.type = 'SCHEMA' THEN 'SCHEMA'
+		WHEN ep.type IN ('TABLE', 'TABLE COLUMN', 'VIEW', 'SEQUENCE', 'PROCEDURE', 'FUNCTION') THEN 'OBJECT_OR_COLUMN'
+		WHEN ep.type = 'TYPE' THEN 'TYPE'
+	END) AS sys.nvarchar(60)) AS class_desc,
+	CAST((CASE
+		WHEN ep.type = 'DATABASE' THEN 0
+		WHEN ep.type = 'SCHEMA' THEN n.oid
+		WHEN ep.type IN ('TABLE', 'TABLE COLUMN', 'VIEW', 'SEQUENCE') THEN c.oid
+		WHEN ep.type IN ('PROCEDURE', 'FUNCTION') THEN p.oid
+		WHEN ep.type = 'TYPE' THEN t.oid
+	END) AS int) AS major_id,
+	CAST((CASE
+		WHEN ep.type = 'DATABASE' THEN 0
+		WHEN ep.type = 'SCHEMA' THEN 0
+		WHEN ep.type IN ('TABLE', 'VIEW', 'SEQUENCE', 'PROCEDURE', 'FUNCTION', 'TYPE') THEN 0
+		WHEN ep.type = 'TABLE COLUMN' THEN a.attnum
+	END) AS int) AS minor_id,
+	ep.orig_name AS name, ep.value AS value
+	FROM sys.babelfish_extended_properties ep
+		LEFT JOIN pg_catalog.pg_namespace n ON n.nspname = ep.schema_name
+		LEFT JOIN pg_catalog.pg_class c ON c.relname = ep.major_name AND c.relnamespace = n.oid
+		LEFT JOIN pg_catalog.pg_proc p ON p.proname = ep.major_name AND p.pronamespace = n.oid
+		LEFT JOIN pg_catalog.pg_type t ON t.typname = ep.major_name AND t.typnamespace = n.oid
+		LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid AND a.attname = ep.minor_name
+	WHERE ep.dbid = sys.db_id() AND
+	(CASE
+		WHEN ep.type = 'DATABASE' THEN true
+		WHEN ep.type = 'SCHEMA' THEN has_schema_privilege(n.oid, 'USAGE, CREATE')
+		WHEN ep.type IN ('TABLE', 'VIEW', 'SEQUENCE') THEN (has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'))
+		WHEN ep.type IN ('TABLE COLUMN') THEN (has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER') OR has_column_privilege(a.attrelid, a.attname, 'SELECT, INSERT, UPDATE, REFERENCES'))
+		WHEN ep.type IN ('PROCEDURE', 'FUNCTION') THEN has_function_privilege(p.oid, 'EXECUTE')
+		WHEN ep.type = 'TYPE' THEN has_type_privilege(t.oid, 'USAGE')
+	END)
+	ORDER BY class, class_desc, major_id, minor_id, ep.orig_name;
+GRANT SELECT ON sys.extended_properties TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('table', 'sys', 'extended_properties_deprecated_in_3_3_0');
+
+ALTER FUNCTION sys.fn_listextendedproperty RENAME TO fn_listextendedproperty_deprecated_in_3_3_0;
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty
+(
+    IN "@name" sys.sysname DEFAULT NULL,
+    IN "@level0type" VARCHAR(128) DEFAULT NULL,
+    IN "@level0name" sys.sysname DEFAULT NULL,
+    IN "@level1type" VARCHAR(128) DEFAULT NULL,
+    IN "@level1name" sys.sysname DEFAULT NULL,
+    IN "@level2type" VARCHAR(128) DEFAULT NULL,
+    IN "@level2name" sys.sysname DEFAULT NULL,
+    OUT objtype sys.sysname,
+    OUT objname sys.sysname,
+    OUT name sys.sysname,
+    OUT value sys.sql_variant
+)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'fn_listextendedproperty_deprecated_in_3_3_0');
+
+CREATE OR REPLACE PROCEDURE sys.sp_addextendedproperty
+(
+  "@name" sys.sysname,
+  "@value" sys.sql_variant = NULL,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_addextendedproperty TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_updateextendedproperty
+(
+  "@name" sys.sysname,
+  "@value" sys.sql_variant = NULL,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_updateextendedproperty TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_dropextendedproperty
+(
+  "@name" sys.sysname,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_dropextendedproperty TO PUBLIC;
+
 create or replace view sys.sysprocesses as
 select
   a.pid as spid
@@ -244,6 +375,35 @@ CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
     AS $$select date_trunc('millisecond', statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime;$$
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
+AS $$
+DECLARE
+  v TIME;
+BEGIN
+  v = CAST(sleep_time as TIME);
+  PERFORM pg_sleep(extract(epoch from clock_timestamp() + v) -
+                extract(epoch from clock_timestamp()));
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME)
+AS $$
+DECLARE
+  t TIME;
+  target_timestamp TIMESTAMPTZ;
+BEGIN
+  t = CAST(sleep_time as TIME);
+  target_timestamp = current_date + t;
+  IF target_timestamp < current_timestamp THEN
+    target_timestamp = target_timestamp + '1 day';
+  END IF;
+  PERFORM pg_sleep(extract(epoch from target_timestamp) -
+                extract(epoch from clock_timestamp()));
+END
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -49,6 +49,7 @@
 #include "rolecmds.h"
 
 #include "catalog.h"
+#include "extendedproperty.h"
 #include "multidb.h"
 #include "pltsql.h"
 #include "session.h"
@@ -89,6 +90,10 @@ static List *gen_sp_rename_subcmds(const char *objname, const char *newname, con
 static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 static void remove_delimited_identifer(char *str);
+static void rename_extended_property(ObjectType objtype,
+									 const char *var_schema_name,
+									 const char *var_major_name,
+									 const char *old_name, const char *new_name);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -3453,6 +3458,9 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
+
+		rename_extended_property(objtype_code, schema_name, curr_relname,
+								 obj_name, new_name);
 	}
 	PG_CATCH();
 	{
@@ -3466,6 +3474,119 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
+}
+
+/*
+ * Rename record in extended property as well when calling sp_rename.
+ */
+static void
+rename_extended_property(ObjectType objtype, const char *var_schema_name,
+						 const char *var_major_name,
+						 const char *old_name, const char *new_name)
+{
+	int			db_id = get_cur_db_id();
+	char		*db_name = get_cur_db_name();
+	const char	*type;
+
+	if (objtype == OBJECT_TABLE ||
+		objtype == OBJECT_VIEW ||
+		objtype == OBJECT_SEQUENCE ||
+		objtype == OBJECT_PROCEDURE ||
+		objtype == OBJECT_FUNCTION ||
+		objtype == OBJECT_TYPE)
+	{
+		/*
+		 * Use old_name as major_name in this routine.
+		 * (refer to gen_sp_rename_subcmds)
+		 */
+		if (var_schema_name && old_name)
+		{
+			char *schema_name = get_physical_schema_name(db_name,
+														 lowerstr(var_schema_name));
+			char *major_name = lowerstr(old_name);
+			char *new_major_name = lowerstr(new_name);
+
+			/* schema_name doesn't need to truncate again. */
+			truncate_tsql_identifier(major_name);
+			truncate_tsql_identifier(new_major_name);
+
+			if (objtype == OBJECT_TABLE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_VIEW)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_SEQUENCE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_PROCEDURE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_FUNCTION)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_TYPE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+		}
+	}
+	else if (objtype == OBJECT_COLUMN)
+	{
+		if (var_schema_name && var_major_name && old_name)
+		{
+			char *schema_name = get_physical_schema_name(db_name,
+														 lowerstr(var_schema_name));
+			char *major_name = lowerstr(var_major_name);
+			char *minor_name = lowerstr(old_name);
+			char *new_minor_name = lowerstr(new_name);
+
+			/* schema_name doesn't need to truncate again. */
+			truncate_tsql_identifier(major_name);
+			truncate_tsql_identifier(minor_name);
+			truncate_tsql_identifier(new_minor_name);
+
+			type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+			update_extended_property(db_id, type, schema_name,
+									 major_name, minor_name,
+									 Anum_bbf_extended_properties_minor_name,
+									 new_minor_name);
+		}
+	}
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;

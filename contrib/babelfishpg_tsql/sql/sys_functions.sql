@@ -2069,61 +2069,6 @@ CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
 LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
--- BABEL-1783: (partial) support for sys.fn_listextendedproperty
-create table if not exists sys.extended_properties (
-class sys.tinyint,
-class_desc sys.nvarchar(60),
-major_id int,
-minor_id int,
-name sys.sysname,
-value sys.sql_variant
-);
-GRANT SELECT ON sys.extended_properties TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
-property_name varchar(128),
-level0_object_type varchar(128),
-level0_object_name varchar(128),
-level1_object_type varchar(128),
-level1_object_name varchar(128),
-level2_object_type varchar(128),
-level2_object_name varchar(128)
-)
-returns table (
-objtype	sys.sysname,
-objname	sys.sysname,
-name	sys.sysname,
-value	sys.sql_variant
-) 
-as $$
-begin
--- currently only support COLUMN property
-IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
-    ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
-	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
-	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
-	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
-		RETURN query 
-		select CAST('COLUMN' AS sys.sysname) as objtype,
-		       CAST(t3.column_name AS sys.sysname) as objname,
-		       t1.name as name,
-		       t1.value as value
-		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
-		where t1.major_id = t2.oid and 
-			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
-		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
-			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
-	END IF;
-END IF;
-RETURN;
-end;
-$$
-LANGUAGE plpgsql
-STABLE;
-GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
-	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
-) TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_tsql', 'tsql_exp'
@@ -3446,6 +3391,10 @@ CREATE OR REPLACE FUNCTION sys.host_id()
 RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
@@ -3618,3 +3567,21 @@ CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
 LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty
+(
+    IN "@name" sys.sysname DEFAULT NULL,
+    IN "@level0type" VARCHAR(128) DEFAULT NULL,
+    IN "@level0name" sys.sysname DEFAULT NULL,
+    IN "@level1type" VARCHAR(128) DEFAULT NULL,
+    IN "@level1name" sys.sysname DEFAULT NULL,
+    IN "@level2type" VARCHAR(128) DEFAULT NULL,
+    IN "@level2name" sys.sysname DEFAULT NULL,
+    OUT objtype sys.sysname,
+    OUT objname sys.sysname,
+    OUT name sys.sysname,
+    OUT value sys.sql_variant
+)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;

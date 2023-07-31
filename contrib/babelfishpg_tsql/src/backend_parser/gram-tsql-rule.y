@@ -1884,6 +1884,18 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) TsqlJsonModifyMakeFuncCall($3, $5, $7);
 				}
+			| IDENTITY_P '(' Typename ',' a_expr ',' a_expr ')'
+				{
+					$$ = TsqlFunctionIdentityInto($3, $5, $7, @1);	 
+				}
+			| IDENTITY_P '(' Typename ',' a_expr ')'
+				{ 
+					$$ = TsqlFunctionIdentityInto($3, $5, (Node *)makeIntConst(1, -1), @1);
+				}
+			| IDENTITY_P '(' Typename ')'
+				{
+					$$ = TsqlFunctionIdentityInto($3, (Node *)makeIntConst(1, -1), (Node *)makeIntConst(1, -1), @1);
+				}
 			| TSQL_CONTAINS '(' ColId ',' tsql_contains_search_condition ')'
 				{
 					$$ = TsqlExpressionContains($3, $5, yyscanner);

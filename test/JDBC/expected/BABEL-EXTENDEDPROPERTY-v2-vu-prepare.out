@@ -1,0 +1,88 @@
+-- tsql
+CREATE LOGIN owner WITH PASSWORD = '12345678'
+GO
+
+ALTER ROLE sysadmin ADD MEMBER owner
+GO
+
+CREATE DATABASE babel_extended_properties_db
+GO
+
+USE babel_extended_properties_db
+GO
+
+CREATE LOGIN normal_user WITH PASSWORD = '12345678'
+GO
+
+CREATE USER normal_user FOR LOGIN normal_user
+GO
+
+CREATE PROCEDURE babel_sp_addextendedproperty
+    @name sys.sysname,
+    @value sys.sql_variant = NULL,
+    @level0type VARCHAR(128) = NULL,
+    @level0name sys.sysname = NULL,
+    @level1type VARCHAR(128) = NULL,
+    @level1name sys.sysname = NULL,
+    @level2type VARCHAR(128) = NULL,
+    @level2name sys.sysname = NULL
+AS
+BEGIN
+    EXEC sp_addextendedproperty @name, @value, @level0type, @level0name, @level1type, @level1name, @level2type, @level2name
+END
+GO
+
+CREATE PROCEDURE babel_sp_updateextendedproperty
+    @name sys.sysname,
+    @value sys.sql_variant = NULL,
+    @level0type VARCHAR(128) = NULL,
+    @level0name sys.sysname = NULL,
+    @level1type VARCHAR(128) = NULL,
+    @level1name sys.sysname = NULL,
+    @level2type VARCHAR(128) = NULL,
+    @level2name sys.sysname = NULL
+AS
+BEGIN
+    EXEC sp_updateextendedproperty @name, @value, @level0type, @level0name, @level1type, @level1name, @level2type, @level2name
+END
+GO
+
+CREATE PROCEDURE babel_sp_dropextendedproperty
+    @name sys.sysname,
+    @level0type VARCHAR(128) = NULL,
+    @level0name sys.sysname = NULL,
+    @level1type VARCHAR(128) = NULL,
+    @level1name sys.sysname = NULL,
+    @level2type VARCHAR(128) = NULL,
+    @level2name sys.sysname = NULL
+AS
+BEGIN
+    EXEC sp_dropextendedproperty @name, @level0type, @level0name, @level1type, @level1name, @level2type, @level2name
+END
+GO
+
+CREATE PROCEDURE babel_fn_listextendedproperty
+    @name sys.sysname,
+    @level0type VARCHAR(128),
+    @level0name sys.sysname,
+    @level1type VARCHAR(128),
+    @level1name sys.sysname,
+    @level2type VARCHAR(128),
+    @level2name sys.sysname
+AS
+BEGIN
+    SELECT * FROM fn_listextendedproperty(@name, @level0type, @level0name, @level1type, @level1name, @level2type, @level2name) ORDER BY objtype, objname, name, value
+END
+GO
+
+CREATE VIEW babel_extended_properties_view AS
+SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties
+GO
+
+CREATE PROCEDURE babel_extended_properties_proc AS
+SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties
+GO
+
+CREATE PROCEDURE babel_babelfish_extended_properties_proc AS
+SELECT IIF(bep.dbid = db_id(), 1, 0) AS dbid, (CASE WHEN bne.orig_name IS NOT NULL THEN CAST(bne.orig_name AS varchar(max)) ELSE CAST(bep.schema_name AS varchar(max)) END) as schema_name, bep.major_name, bep.minor_name, bep.type, bep.name, bep.orig_name, bep.value FROM sys.babelfish_extended_properties bep LEFT JOIN sys.babelfish_namespace_ext bne ON bep.schema_name = bne.nspname ORDER BY bep.dbid, bep.type, bne.orig_name, bep.major_name, bep.minor_name, bep.name
+GO
