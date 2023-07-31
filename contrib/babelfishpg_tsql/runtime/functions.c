@@ -2602,7 +2602,7 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 
 	namespace_name = get_namespace_name(schema_id);
 
-	if (strcmp(namespace_name, "sys") == 0)
+	if (pg_strcasecmp(namespace_name, "sys") == 0)
 		return true;
 
 	/*
@@ -2613,9 +2613,9 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 	for (i = 0; i < num_db_objects; i++)
 	{
 		// check whether the object name and object type is matching.
-		if (strcmp(type, shipped_objects_not_in_sys_db[i][2]) == 0 && 
-			strcmp(object_name, shipped_objects_not_in_sys_db[i][0]) == 0 &&
-			strcmp(namespace_name, shipped_objects_not_in_sys_db[i][1]) == 0)
+		if (pg_strcasecmp(type, shipped_objects_not_in_sys_db[i][2]) == 0 && 
+			pg_strcasecmp(object_name, shipped_objects_not_in_sys_db[i][0]) == 0 &&
+			pg_strcasecmp(namespace_name, shipped_objects_not_in_sys_db[i][1]) == 0)
 				return true;
 	}
 
@@ -2625,7 +2625,7 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 	for (i = 0; i < num_sch_objects; i++)
 	{
 
-		if (strcmp(type, shipped_objects_not_in_sys_schema[i][2]) == 0)
+		if (pg_strcasecmp(type, shipped_objects_not_in_sys_schema[i][2]) == 0)
 			continue;
 
 		ScanKeyInit(&scanKey,
@@ -2640,7 +2640,7 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 		{
 			datum = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, &isnull);
 			tempnspname = pstrdup(TextDatumGetCString(datum));
-			if (strcmp(namespace_name, tempnspname) == 0)
+			if (pg_strcasecmp(namespace_name, tempnspname) == 0)
 			{
 				is_ms_shipped = true;
 				break;
@@ -2751,7 +2751,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			/*
 			 * If the object is not of Table type (TT), it should be user defined table (U)
 			 */
-			if (type == NULL || strcmp(type, "TT") != 0)
+			if (type == NULL || pg_strcasecmp(type, "TT") != 0)
 				type = "U";
 		}
 		else if (pg_class->relkind == 'v')
@@ -2780,8 +2780,12 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					type = "AF";
 				else
 				{
+					/*
+					 * Check whether the object is SQL DML trigger(TR), SQL table-valued-function (TF),
+					 * SQL inline table-valued function (IF), SQL scalar function (FN).
+					 */
 					char	*temp = format_type_extended(procform->prorettype, -1, FORMAT_TYPE_ALLOW_INVALID);
-					if (strcmp(temp, "trigger") == 0) 
+					if (pg_strcasecmp(temp, "trigger") == 0) 
 						type = "TR";
 					else if (procform->proretset)
 					{
@@ -2803,14 +2807,13 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			}
 		}
 	}
-
+	/* pg_attrdef */
 	if (!found)
 	{
 		Relation	attrdefrel;
 		ScanKeyData key;
 		SysScanDesc attrscan;
 
-		/* search in pg_attrdef by object_id */
 		attrdefrel = table_open(AttrDefaultRelationId, AccessShareLock);
 		ScanKeyInit(&key,
 					Anum_pg_attrdef_oid,
@@ -2897,9 +2900,6 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if(HeapTupleIsValid(tuple))
-		ReleaseSysCache(tuple);
-
 	// return NULL if the object_id is not found
 	if (!found || !OidIsValid(schema_id) || pg_namespace_aclcheck(schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
 		PG_RETURN_NULL();
@@ -2907,7 +2907,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	
 	// check for each of the property 
 
-	if (strcmp(property, "ownerid") == 0)
+	if (pg_strcasecmp(property, "ownerid") == 0)
 	{
 		// WORKING.
 
@@ -2928,154 +2928,154 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			PG_RETURN_INT32(result);
 		}
 	}
-	else if (strcmp(property, "isdefaultcnst") == 0)
+	else if (pg_strcasecmp(property, "isdefaultcnst") == 0)
 	{
 		// WORKING.
 
 		result = 0;
-		if (strcmp(type, "D") == 0)
+		if (pg_strcasecmp(type, "D") == 0)
 			result = 1;
 
 		PG_RETURN_INT32(result);
 	}
-	else if (strcmp(property, "execisquotedidenton") == 0 ||
-			strcmp(property, "isschemabound") == 0 ||
-			strcmp(property, "execisansinullson") == 0)
+	else if (pg_strcasecmp(property, "execisquotedidenton") == 0 ||
+			pg_strcasecmp(property, "isschemabound") == 0 ||
+			pg_strcasecmp(property, "execisansinullson") == 0)
 	{
 		// WORKING.
 		// ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R')
 		result = 1;
 
-		if (strcmp(type, "P") != 0 && strcmp(type, "RF") != 0 &&
-			strcmp(type, "V") != 0 && strcmp(type, "TR") != 0 &&
-			strcmp(type, "FN") != 0 && strcmp(type, "IF") != 0 &&
-			strcmp(type, "TF") != 0 && strcmp(type, "R") != 0)
+		if (pg_strcasecmp(type, "P") != 0 && pg_strcasecmp(type, "RF") != 0 &&
+			pg_strcasecmp(type, "V") != 0 && pg_strcasecmp(type, "TR") != 0 &&
+			pg_strcasecmp(type, "FN") != 0 && pg_strcasecmp(type, "IF") != 0 &&
+			pg_strcasecmp(type, "TF") != 0 && pg_strcasecmp(type, "R") != 0)
 			PG_RETURN_NULL();
 
-		if (strcmp(property, "isschemabound") == 0)
+		if (pg_strcasecmp(property, "isschemabound") == 0)
 			result = 0;
 
 		PG_RETURN_INT32(result);
 	}
-	else if (strcmp(property, "tablefulltextpopulatestatus") == 0 ||
-			strcmp(property, "tablehasvardecimalstorageformat") == 0)
+	else if (pg_strcasecmp(property, "tablefulltextpopulatestatus") == 0 ||
+			pg_strcasecmp(property, "tablehasvardecimalstorageformat") == 0)
 	{
 		// WORKING.
 
 		/*
 		 *	IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
-         *    	RETURN NULL;
-         *	END IF;
-         *	RETURN 0;
-		 */
+         	 *    	RETURN NULL;
+         	 *	END IF;
+         	 *	RETURN 0;
+		*/
 
-		if (strcmp(type,"U") == 0)
+		if (pg_strcasecmp(type,"U") == 0)
 			PG_RETURN_INT32(0);
 		
 		PG_RETURN_NULL();		
 	}
-	else if (strcmp(property, "ismsshipped") == 0)
+	else if (pg_strcasecmp(property, "ismsshipped") == 0)
 	{
 		if (is_ms_shipped(object_name, type, schema_id))
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "isdeterministic") == 0)
+	else if (pg_strcasecmp(property, "isdeterministic") == 0)
 	{
 		// WORKING.
 		result = 0;
 		PG_RETURN_INT32(result);
 	}
-	else if (strcmp(property, "isprocedure") == 0)
+	else if (pg_strcasecmp(property, "isprocedure") == 0)
 	{
 		// WORKING.
 		/*
 		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
 		 *	object_id should be found in pg_proc and prokind should be 'p'.
 		 */
-		if (strcmp(type, "P") == 0)
+		if (pg_strcasecmp(type, "P") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "istable") == 0)
+	else if (pg_strcasecmp(property, "istable") == 0)
 	{
 		/*
 		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));	
 		 */
 
-		if (strcmp(type, "IT") == 0 || strcmp(type, "TT") == 0 ||
-			strcmp(type, "U") == 0 || strcmp(type, "S") == 0)
+		if (pg_strcasecmp(type, "IT") == 0 || pg_strcasecmp(type, "TT") == 0 ||
+			pg_strcasecmp(type, "U") == 0 || pg_strcasecmp(type, "S") == 0)
 			PG_RETURN_INT32(1);
 		
 		PG_RETURN_INT32(0);		
 	}
-	else if (strcmp(property, "isview") == 0)
+	else if (pg_strcasecmp(property, "isview") == 0)
 	{
 		// WORKING.
 		/*
 		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
 		 *	object_id should be found in pg_class. relkind should be 'v'.
 		 */
-		if (strcmp(type, "V") == 0)
+		if (pg_strcasecmp(type, "V") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "isusertable") == 0)
+	else if (pg_strcasecmp(property, "isusertable") == 0)
 	{
 		/*
 		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
 		 */
-		if (strcmp(type, "U") == 0 && is_ms_shipped(object_name, type, schema_id) == 0)
+		if (pg_strcasecmp(type, "U") == 0 && is_ms_shipped(object_name, type, schema_id) == 0)
 			PG_RETURN_INT32(1);
 		
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "istablefunction") == 0)
+	else if (pg_strcasecmp(property, "istablefunction") == 0)
 	{
 		/*
 		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT')
 		 */
-		if (strcmp(type, "IF") == 0 || strcmp(type, "TF") == 0 ||
-			strcmp(type, "FT") == 0)
+		if (pg_strcasecmp(type, "IF") == 0 || pg_strcasecmp(type, "TF") == 0 ||
+			pg_strcasecmp(type, "FT") == 0)
 			PG_RETURN_INT32(1);
 		
 		PG_RETURN_INT32(0);	
 	}
-	else if (strcmp(property, "isinlinefunction") == 0)
+	else if (pg_strcasecmp(property, "isinlinefunction") == 0)
 	{
 		/*
 		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF')
 		 */
-		if (strcmp(type, "IF") == 0)
+		if (pg_strcasecmp(type, "IF") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 
 	}
-	else if (strcmp(property, "isscalarfunction") == 0)
+	else if (pg_strcasecmp(property, "isscalarfunction") == 0)
 	{
 		/*
 		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS')
 		 */
-		if (strcmp(type, "FN") == 0 || strcmp(type, "FS") == 0)
+		if (pg_strcasecmp(type, "FN") == 0 || pg_strcasecmp(type, "FS") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "isprimarykey") == 0)
+	else if (pg_strcasecmp(property, "isprimarykey") == 0)
 	{
 		/*
 		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK'
 		 */
-		if (strcmp(type, "PK") == 0)
+		if (pg_strcasecmp(type, "PK") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "isindexed") == 0)
+	else if (pg_strcasecmp(property, "isindexed") == 0)
 	{
 		/*
 		 * SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0;
@@ -3087,7 +3087,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		SysScanDesc scan;
 		HeapTuple	tup;
 
-		if (strcmp(type, "U") != 0)
+		if (pg_strcasecmp(type, "U") != 0)
 			PG_RETURN_INT32(0);
 
 		indRel = table_open(IndexRelationId, RowExclusiveLock);
@@ -3106,26 +3106,27 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		}
 
 		systable_endscan(scan);
-
 		table_close(indRel, RowExclusiveLock);
+
+		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "isdefault") == 0)
+	else if (pg_strcasecmp(property, "isdefault") == 0)
 	{
 		// WORKING.
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "isrule") == 0)
+	else if (pg_strcasecmp(property, "isrule") == 0)
 	{
 		// WORKING.
 		PG_RETURN_INT32(0);
 	}
-	else if (strcmp(property, "istrigger") == 0)
+	else if (pg_strcasecmp(property, "istrigger") == 0)
 	{
 		// RE-VISIT THE SQL IMPLEMENTATION AND CHECK WHY IT IS CURRENTLY RETURNING NULL WITH SQL IMPLEMENTATION
 		/*
 		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
 		 */
-		if (strcmp(type, "TA") == 0 || strcmp(type, "TR") == 0)
+		if (pg_strcasecmp(type, "TA") == 0 || pg_strcasecmp(type, "TR") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
