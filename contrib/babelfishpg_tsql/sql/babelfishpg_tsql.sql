@@ -3230,6 +3230,9 @@ LANGUAGE pltsql STABLE;
 -- catalogs, so we have to use some trickery to make things work.
 -- Not all datatypes are handled as well as might be possible, but it is sufficient for 
 -- the current purposes.
+-- Note that this proc may increase the response time for the first execution of sp_who, but 
+-- we're looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
+-- is very unlikely to be part of performance-critical workload.
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
 	IN "@tab"        VARCHAR(257) DEFAULT NULL,
 	IN "@orderby"    VARCHAR(1000) DEFAULT '',
