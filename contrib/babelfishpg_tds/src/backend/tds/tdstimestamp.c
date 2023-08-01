@@ -208,8 +208,7 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 	fsec_t		fsec;
 	int			msec = 0,
 				unit = 0,
-				round_val = 0;
-
+				extra_ticks = 0;
 	/*
 	 * 1 tick = 1/300 sec = 3.3333333 ms babelfish uses tick count to
 	 * accommodate millisecound count in 4 bytes
@@ -241,37 +240,33 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 		{
 			case 0:
 			case 1:
-				round_val = 0;
+				extra_ticks = 0;
 				break;
 			case 2:
 			case 3:
 			case 4:
-				round_val = 3;
-
-				/*
-				 * slightly different from default tick value at 7th decimal
-				 * place
-				 */
-				tick = 3.3333332;
+				extra_ticks = 1;
 				break;
 			case 5:
 			case 6:
 			case 7:
 			case 8:
-				round_val = 7;
+				extra_ticks = 2;
 				break;
 			case 9:
-				round_val = 10;
+				extra_ticks = 3;
 				break;
 			default:
 				break;
 		}
-		msec = msec - unit + round_val;
+		msec = msec - unit;
 	}
 	milliCount = ((tm->tm_hour * 60 + tm->tm_min) * 60 +
 				  tm->tm_sec) * 1000 + msec;
 
-	*numTicks = (int) (milliCount / tick);
+
+	*numTicks = (int) (milliCount / tick) + extra_ticks;
+
 }
 
 /*
