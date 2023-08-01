@@ -78,6 +78,7 @@ PG_FUNCTION_INFO_V1(float8binary);
 PG_FUNCTION_INFO_V1(binaryfloat4);
 PG_FUNCTION_INFO_V1(binaryfloat8);
 
+
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
@@ -1442,6 +1443,8 @@ PG_FUNCTION_INFO_V1(varbinary_geq);
 PG_FUNCTION_INFO_V1(varbinary_lt);
 PG_FUNCTION_INFO_V1(varbinary_leq);
 PG_FUNCTION_INFO_V1(varbinary_cmp);
+PG_FUNCTION_INFO_V1(int4varbinary_div);
+PG_FUNCTION_INFO_V1(varbinaryint4_div);
 
 Datum
 varbinary_eq(PG_FUNCTION_ARGS)
@@ -1504,6 +1507,67 @@ varbinary_leq(PG_FUNCTION_ARGS)
 }
 
 Datum
+int4varbinary_div(PG_FUNCTION_ARGS)
+{
+       int32      dividend = PG_GETARG_INT32(0);
+       bytea      *varbinary_divisor = PG_GETARG_BYTEA_PP(1);
+       char       *data = VARDATA_ANY(varbinary_divisor);
+       int32      len;
+       int32      result_len;
+       int32      *resultint = palloc0(sizeof(int32));
+       int32 divisor = 0;
+       int32 result;
+       len = VARSIZE_ANY_EXHDR(varbinary_divisor);
+       result_len = len > sizeof(int32) ? sizeof(int32) : len;
+       memcpy((char *) resultint + (sizeof(int32)- result_len), data, result_len);
+
+       divisor = pg_ntoh32((int32) *resultint);
+       if (divisor == 0)
+       {
+	       ereport(ERROR,
+			(errcode(ERRCODE_DIVISION_BY_ZERO),
+			errmsg("division by zero")));
+	       /* ensure compiler realizes we mustn't reach the division (gcc bug) */
+	       PG_RETURN_NULL();
+       }
+
+       result = dividend / divisor;
+       PG_RETURN_INT32(result);
+}
+
+Datum
+varbinaryint4_div(PG_FUNCTION_ARGS)
+{
+       bytea      *varbinary_dividend = PG_GETARG_BYTEA_PP(0);
+	   int32      divisor = PG_GETARG_INT32(1);
+       char       *data = VARDATA_ANY(varbinary_dividend);
+       int32      len;
+       int32      result_len;
+       int32      *resultint = palloc0(sizeof(int32));
+       int32 dividend = 0;
+       int32 result;
+
+       len = VARSIZE_ANY_EXHDR(varbinary_dividend);
+       result_len = len > sizeof(int32) ? sizeof(int32) : len;
+       memcpy((char *) resultint + (sizeof(int32)- result_len), data, result_len);
+       dividend = pg_ntoh32((int32) *resultint);
+
+       if (divisor == 0)
+       {
+		ereport(ERROR,
+			(errcode(ERRCODE_DIVISION_BY_ZERO),
+			errmsg("division by zero")));
+		/* ensure compiler realizes we mustn't reach the division (gcc bug) */
+		PG_RETURN_NULL();
+       }
+
+       result = dividend / divisor;
+       PG_RETURN_INT32(result);
+
+}
+
+
+Datum
 varbinary_cmp(PG_FUNCTION_ARGS)
 {
 	bytea	   *source1 = PG_GETARG_BYTEA_PP(0);
@@ -1523,3 +1587,4 @@ varbinary_length(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(limit);
 }
+

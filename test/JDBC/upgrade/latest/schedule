@@ -404,3 +404,6 @@ binary-index
 BABEL-4078
 BABEL-3215
 orderby
+babel_int4_varbinary_div
+babel_varbinary_int4_div
+sys-sql_expression_dependencies
