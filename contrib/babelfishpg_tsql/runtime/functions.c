@@ -2561,15 +2561,15 @@ EOMONTH(PG_FUNCTION_ARGS)
 
 bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 {
-	int i = 0;
-	bool is_ms_shipped = false;
-	char *namespace_name;
+	int	i = 0;
+	bool	is_ms_shipped = false;
+	char	*namespace_name;
 	/*
-	 * This array contains information on objects that reside in a schema in one specfic database.
+	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-	int num_db_objects = 10;
-	char *shipped_objects_not_in_sys_db[10][3] = {
+	int	num_db_objects = 10;
+	char	*shipped_objects_not_in_sys_db[10][3] = {
 		{"xp_qv","master_dbo","P"},
 		{"xp_instance_regread","master_dbo","P"},
 		{"sp_addlinkedserver", "master_dbo", "P"},
@@ -2583,18 +2583,18 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 	};
 
 	/*
-	 * This portion of view retrieves information on objects that reside in a schema in any number of databases.
-     * For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+	 * This array contains information of objects that reside in a schema in any number of databases.
+     	 * For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
 	 */
-	int num_sch_objects = 1;
-	char *shipped_objects_not_in_sys_schema[1][3] = {
+	int	num_all_db_objects = 1;
+	char	*shipped_objects_not_in_sys_all_db[1][3] = {
 		{"sysdatabases","dbo","V"}
 	};
 
 	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
+	ScanKeyData 	scanKey;
+	SysScanDesc 	scan;
 	Datum		datum;
 	TupleDesc	dsc;
 	bool		isnull;
@@ -2606,13 +2606,10 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 		return true;
 
 	/*
-	 *	(SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
-	 *	Currently, in sys.all_objects view, is_ms_shipped is hardcoded to 0.
+	 * Check whether the object is present in shipped_objects_not_in_sys_db.
 	 */
-
 	for (i = 0; i < num_db_objects; i++)
 	{
-		// check whether the object name and object type is matching.
 		if (pg_strcasecmp(type, shipped_objects_not_in_sys_db[i][2]) == 0 && 
 			pg_strcasecmp(object_name, shipped_objects_not_in_sys_db[i][0]) == 0 &&
 			pg_strcasecmp(namespace_name, shipped_objects_not_in_sys_db[i][1]) == 0)
@@ -2622,16 +2619,23 @@ bool is_ms_shipped(char *object_name, char *type, Oid schema_id)
 	rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(rel);
 
-	for (i = 0; i < num_sch_objects; i++)
+	/*
+	 * Check whether the object is present in shipped_objects_not_in_sys_all_db.
+	 * 
+	 * As the objects in shipped_objects_not_in_sys_all_db can be present in any number of databases, 
+	 * We scan the pg_namespace catalog to find the occurences in all the databases and find whether 
+	 * any entry matches the object that we are looking for.
+	 */
+	for (i = 0; i < num_all_db_objects; i++)
 	{
 
-		if (pg_strcasecmp(type, shipped_objects_not_in_sys_schema[i][2]) == 0)
+		if (pg_strcasecmp(type, shipped_objects_not_in_sys_all_db[i][2]) == 0)
 			continue;
 
 		ScanKeyInit(&scanKey,
 					Anum_namespace_ext_orig_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(shipped_objects_not_in_sys_schema[i][1]));
+					CStringGetDatum(shipped_objects_not_in_sys_all_db[i][1]));
 
 		scan = systable_beginscan(rel, InvalidOid, false,
 							  		NULL, 1, &scanKey);
@@ -2662,11 +2666,12 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	Oid		schema_id = InvalidOid;
 	char		*property;
 	Oid		user_id = GetUserId();
-	int32		result;
 	bool		found = false;
 	HeapTuple	tuple;
 	char		*type = NULL;
 	char		*object_name = NULL;
+	const char	*schema_origname = NULL;
+	const char	*nspname = NULL;
 
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
 		PG_RETURN_NULL();
@@ -2827,8 +2832,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		if (HeapTupleIsValid(tuple))
 		{
 			/*
-			 * scan pg_attribute catalog to find the corresopnding row.
-			 * on a.attrelid = d.adrelid and d.adnum = a.attnum
+			 * scan pg_attribute catalog to find the corresponding row.
+			 * This pg_attribute pbject will be helpful to check whether the object is DEFAULT (D)
+			 * and to find the schema_id.
 			 */
 			Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tuple);
 			Relation	attrRel;
@@ -2879,10 +2885,9 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		systable_endscan(attrscan);
 		table_close(attrdefrel, AccessShareLock);
 	}
-
+	/* pg_constraint */
 	if (!found)
 	{
-		/* search in pg_constraint by object_id */
 		tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
 		if (HeapTupleIsValid(tuple))
 		{
@@ -2900,20 +2905,38 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		}
 	}
 
-	// return NULL if the object_id is not found
+	/*
+	 * If the object_id is not found or user does not have enough privileges on the object and schema,
+	 * Return NULL.
+	 */
 	if (!found || !OidIsValid(schema_id) || pg_namespace_aclcheck(schema_id, user_id, ACL_USAGE) != ACLCHECK_OK)
 		PG_RETURN_NULL();
 
-	
-	// check for each of the property 
+	/*
+	 * schema_id found should be in sys.schemas view except 'sys'.
+	 */
+	nspname = get_namespace_name(schema_id);
+	schema_origname = get_logical_schema_name(nspname, true);
 
+	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) && 
+		(!schema_origname || !nspname ||
+		pg_strcasecmp(schema_origname, "information_schema") == 0 ||
+		pg_strcasecmp(schema_origname, "pg_catalog") == 0 ||
+		pg_strcasecmp(schema_origname, "pg_toast") == 0 ||
+		pg_strcasecmp(schema_origname, "public") == 0))
+		PG_RETURN_NULL();
+
+	/* OwnerId */
 	if (pg_strcasecmp(property, "ownerid") == 0)
 	{
-		// WORKING.
-
+		/*
+		 * Search for schema_id in pg_namespace catalog. Return nspowner from 
+		 * the found pg_namespace object.
+		 */
 		if (OidIsValid(schema_id))
 		{
 			HeapTuple	tp;
+			int32		result;
 
 			tp = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(schema_id));
 			if (HeapTupleIsValid(tp))
@@ -2928,24 +2951,19 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			PG_RETURN_INT32(result);
 		}
 	}
+	/* IsDefaultCnst */
 	else if (pg_strcasecmp(property, "isdefaultcnst") == 0)
 	{
-		// WORKING.
-
-		result = 0;
 		if (pg_strcasecmp(type, "D") == 0)
-			result = 1;
+			PG_RETURN_INT32(1);
 
-		PG_RETURN_INT32(result);
+		PG_RETURN_INT32(0);
 	}
+	/* ExecIsQuotedIdentOn, IsSchemaBound, ExecIsAnsiNullsOn */
 	else if (pg_strcasecmp(property, "execisquotedidenton") == 0 ||
 			pg_strcasecmp(property, "isschemabound") == 0 ||
 			pg_strcasecmp(property, "execisansinullson") == 0)
 	{
-		// WORKING.
-		// ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R')
-		result = 1;
-
 		if (pg_strcasecmp(type, "P") != 0 && pg_strcasecmp(type, "RF") != 0 &&
 			pg_strcasecmp(type, "V") != 0 && pg_strcasecmp(type, "TR") != 0 &&
 			pg_strcasecmp(type, "FN") != 0 && pg_strcasecmp(type, "IF") != 0 &&
@@ -2953,27 +2971,20 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			PG_RETURN_NULL();
 
 		if (pg_strcasecmp(property, "isschemabound") == 0)
-			result = 0;
+			PG_RETURN_INT32(0);
 
-		PG_RETURN_INT32(result);
+		PG_RETURN_INT32(1);
 	}
+	/* TableFullTextPopulateStatus, TableHasVarDecimalStorageFormat */
 	else if (pg_strcasecmp(property, "tablefulltextpopulatestatus") == 0 ||
 			pg_strcasecmp(property, "tablehasvardecimalstorageformat") == 0)
 	{
-		// WORKING.
-
-		/*
-		 *	IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
-         	 *    	RETURN NULL;
-         	 *	END IF;
-         	 *	RETURN 0;
-		*/
-
 		if (pg_strcasecmp(type,"U") == 0)
 			PG_RETURN_INT32(0);
 		
 		PG_RETURN_NULL();		
 	}
+	/* IsMSShipped*/
 	else if (pg_strcasecmp(property, "ismsshipped") == 0)
 	{
 		if (is_ms_shipped(object_name, type, schema_id))
@@ -2981,110 +2992,86 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 		PG_RETURN_INT32(0);
 	}
+	/* IsDeterministic */
 	else if (pg_strcasecmp(property, "isdeterministic") == 0)
-	{
-		// WORKING.
-		result = 0;
-		PG_RETURN_INT32(result);
-	}
+		PG_RETURN_INT32(0);
+	/* IsProcedure */
 	else if (pg_strcasecmp(property, "isprocedure") == 0)
 	{
-		// WORKING.
-		/*
-		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
-		 *	object_id should be found in pg_proc and prokind should be 'p'.
-		 */
 		if (pg_strcasecmp(type, "P") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
+	/* IsTable */
 	else if (pg_strcasecmp(property, "istable") == 0)
 	{
-		/*
-		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));	
-		 */
-
 		if (pg_strcasecmp(type, "IT") == 0 || pg_strcasecmp(type, "TT") == 0 ||
 			pg_strcasecmp(type, "U") == 0 || pg_strcasecmp(type, "S") == 0)
 			PG_RETURN_INT32(1);
 		
 		PG_RETURN_INT32(0);		
 	}
+	/* IsView */
 	else if (pg_strcasecmp(property, "isview") == 0)
 	{
-		// WORKING.
-		/*
-		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
-		 *	object_id should be found in pg_class. relkind should be 'v'.
-		 */
 		if (pg_strcasecmp(type, "V") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
+	/* IsUserView */
 	else if (pg_strcasecmp(property, "isusertable") == 0)
 	{
-		/*
-		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
-		 */
 		if (pg_strcasecmp(type, "U") == 0 && is_ms_shipped(object_name, type, schema_id) == 0)
 			PG_RETURN_INT32(1);
 		
 		PG_RETURN_INT32(0);
 	}
+	/* IsTableFunction */
 	else if (pg_strcasecmp(property, "istablefunction") == 0)
 	{
-		/*
-		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT')
-		 */
 		if (pg_strcasecmp(type, "IF") == 0 || pg_strcasecmp(type, "TF") == 0 ||
 			pg_strcasecmp(type, "FT") == 0)
 			PG_RETURN_INT32(1);
 		
 		PG_RETURN_INT32(0);	
 	}
+	/* IsInlineFunction */
 	else if (pg_strcasecmp(property, "isinlinefunction") == 0)
 	{
-		/*
-		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF')
-		 */
 		if (pg_strcasecmp(type, "IF") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 
 	}
+	/* IsScalarFunction */
 	else if (pg_strcasecmp(property, "isscalarfunction") == 0)
 	{
-		/*
-		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS')
-		 */
 		if (pg_strcasecmp(type, "FN") == 0 || pg_strcasecmp(type, "FS") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
+	/* IsPrimaryKey */
 	else if (pg_strcasecmp(property, "isprimarykey") == 0)
 	{
-		/*
-		 * SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK'
-		 */
 		if (pg_strcasecmp(type, "PK") == 0)
 			PG_RETURN_INT32(1);
 
 		PG_RETURN_INT32(0);
 	}
+	/* IsIndexed */
 	else if (pg_strcasecmp(property, "isindexed") == 0)
 	{
 		/*
-		 * SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0;
-		 * check whether the object_id exists in pg_index, search by indrelid.
+		 * Search for object_id in pg_index catalog by indrelid column.
+		 * The object is indexed if the entry exists in pg_index.
 		 */
-
 		Relation	indRel;
-		ScanKeyData key;
-		SysScanDesc scan;
+		ScanKeyData 	key;
+		SysScanDesc 	scan;
 		HeapTuple	tup;
 
 		if (pg_strcasecmp(type, "U") != 0)
@@ -3093,39 +3080,30 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		indRel = table_open(IndexRelationId, RowExclusiveLock);
 
 		ScanKeyInit(&key,
-					Anum_pg_index_indrelid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(object_id));
+				Anum_pg_index_indrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object_id));
 
 		scan = systable_beginscan(indRel, IndexIndrelidIndexId, true,
-				  				NULL, 1, &key);
+				  		NULL, 1, &key);
 
 		if (HeapTupleIsValid(tup = systable_getnext(scan)))
-		{
 			PG_RETURN_INT32(1);
-		}
 
 		systable_endscan(scan);
 		table_close(indRel, RowExclusiveLock);
 
 		PG_RETURN_INT32(0);
 	}
+	/* IsDefault */
 	else if (pg_strcasecmp(property, "isdefault") == 0)
-	{
-		// WORKING.
 		PG_RETURN_INT32(0);
-	}
+	/* IsRule */
 	else if (pg_strcasecmp(property, "isrule") == 0)
-	{
-		// WORKING.
 		PG_RETURN_INT32(0);
-	}
+	/* IsTrigger */
 	else if (pg_strcasecmp(property, "istrigger") == 0)
 	{
-		// RE-VISIT THE SQL IMPLEMENTATION AND CHECK WHY IT IS CURRENTLY RETURNING NULL WITH SQL IMPLEMENTATION
-		/*
-		 *	(SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
-		 */
 		if (pg_strcasecmp(type, "TA") == 0 || pg_strcasecmp(type, "TR") == 0)
 			PG_RETURN_INT32(1);
 
