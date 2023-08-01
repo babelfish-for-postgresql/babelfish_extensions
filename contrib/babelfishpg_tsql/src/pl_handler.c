@@ -143,6 +143,7 @@ Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
 static char *get_oid_type_string(int type_oid);
+static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
@@ -5070,6 +5071,39 @@ static char *get_oid_type_string(int type_oid){
 	return type_string;
 }
 
+static int64 get_identity_into_args(Node *node){
+
+	int64 val;
+	Const *con;
+	FuncExpr *fxpr;
+	ListCell * lc;
+	
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			con = (Const *)node;
+			val = con->constvalue;
+			break;
+		case T_FuncExpr:
+			fxpr = (FuncExpr *)node;
+			foreach(lc, fxpr->args)
+			{
+				Node *n = (Node *)lfirst(lc);
+				if (IsA(n, Const))
+				{
+					con = (Const *)n;
+					val = (int64) DatumGetInt64(con->constvalue);
+					break;
+				}
+			}
+			break;
+		default:
+			elog(ERROR, "unrecognized node type: %d",(int) nodeTag(node));
+			break;
+	}
+	return val;
+}
+
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
 {
 	List *result;
@@ -5094,7 +5128,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into") == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strncmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
 			{
 				FuncExpr *funcexpr;
 				Oid snamespaceid;
@@ -5102,11 +5136,11 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				char *sname;
 				List *seqoptions = NIL;
 				ListCell *arg;
-
 				int type_oid;
 				char *type = NULL;
 				TypeName *ofTypename;
 				int64 seed_value;
+				int64 increment_value; 
 				int arg_num;
 
 				if (seen_identity)
@@ -5125,33 +5159,30 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				arg_num = 0;
 				foreach (arg, funcexpr->args)
 				{
-					Node *fargNode = (Node *)lfirst(arg);
-					Const *con;
+					Node *farg_node = (Node *)lfirst(arg);
 					arg_num++;
 					switch (arg_num)
 					{
 						case 1:
-							con = (Const *)fargNode;
-							type_oid = (int)con->constvalue;
+							type_oid = get_identity_into_args(farg_node);
 							type = get_oid_type_string(type_oid);
 							ofTypename = typeStringToTypeName(type);
 							seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)ofTypename, -1));
 							break;
 						case 2:
-							con = (Const *)fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger((int64)con->constvalue), -1));
-							seed_value = (int64)con->constvalue;
+							seed_value = get_identity_into_args(farg_node);
+							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *) makeFloat(psprintf(INT64_FORMAT, seed_value)), -1));
 							break;
 						case 3:
-							con = (Const *)fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeInteger((int64)con->constvalue), -1));
-							if ((int)con->constvalue > 0)
+							increment_value = get_identity_into_args(farg_node);
+							seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeFloat(psprintf(INT64_FORMAT, increment_value)), -1));
+							if (increment_value > 0)
 							{
-								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
+								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *) makeFloat(psprintf(INT64_FORMAT, seed_value)), -1));
 							}
 							else
 							{
-								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
+								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *) makeFloat(psprintf(INT64_FORMAT, seed_value)), -1));
 							}
 							break;
 					}

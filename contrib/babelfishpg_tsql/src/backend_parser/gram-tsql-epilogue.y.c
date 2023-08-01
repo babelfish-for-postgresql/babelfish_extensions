@@ -243,16 +243,22 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 	switch (base_oid)
 		{
 			case INT2OID:
-			case INT4OID:
-			case INT8OID:
-			case NUMERICOID:				
 				args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
-				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
+				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into_smallint"), args, COERCE_EXPLICIT_CALL, location);
+				break;
+			case INT4OID:
+				args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
+				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into_int"), args, COERCE_EXPLICIT_CALL, location);
+				break;
+			case INT8OID:
+			case NUMERICOID:	
+				args = list_make3((Node *)makeIntConst((int)INT8OID, location), seed, increment); /* Used bigint internally for decimal and numeric as well*/
+				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into_bigint"), args, COERCE_EXPLICIT_CALL, location);
 				break;
 			default:
 				ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("identity column type must be smallint, integer, bigint, or numeric")));
+					 errmsg("identity column type must be of data type int, bigint, smallint, or decimal or numeric")));
 				break;
 
 		}
