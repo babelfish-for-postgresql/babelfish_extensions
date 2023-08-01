@@ -1974,7 +1974,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
-		return;					/* Don't execute anything */
+	{
+		if (qc && parsetree) {
+			/*
+			* Some utility statements return a row count, even though the
+			* tuples are not returned to the caller.
+			*/
+			Assert(qc->commandTag == CMDTAG_UNKNOWN);
+			if (IsA(parsetree, CreateTableAsStmt))
+				SetQueryCompletion(qc, CMDTAG_SELECT, 0);
+			else if (IsA(parsetree, CopyStmt))
+				SetQueryCompletion(qc, CMDTAG_COPY, 0);
+		}
+
+		return;                                 /* Don't execute anything */
+	}
 
 	/*
 	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
@@ -2182,7 +2196,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
-								
+
 								/*
 								 * Check whether the domain name contains invalid characters or not.
 								 */
@@ -2589,7 +2603,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
-							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
@@ -2723,9 +2737,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-						else 
+						else
 							drop_login = true;
-						
+
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -2853,8 +2867,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							other = true;
 
 						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
-							ereport(ERROR, 
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 						}
 
@@ -4312,7 +4326,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	bool 		is_itvf;
 	char		*prosrc = NULL;
 	bool		is_mstvf = false;
-	
+
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 	int			saved_dialect = sql_dialect;
 
@@ -4460,9 +4474,9 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				func = pltsql_compile(fake_fcinfo, true);
 
 			if(func && func->table_varnos)
-			{	
+			{
 				is_mstvf = func->is_mstvf;
-				/* 
+				/*
 				 * if a function has tvp declared or as argument in the function
 				 * or it is a TVF has_table_var will be true
 				 */
@@ -4477,10 +4491,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		}
 
 		ReleaseSysCache(tuple);
-		
-		/* 
-		 * If the function has TVP in its arguments or function body 
-		 * it should be declared as VOLATILE by default 
+
+		/*
+		 * If the function has TVP in its arguments or function body
+		 * it should be declared as VOLATILE by default
 		 * TVF are VOLATILE by default so we donot need to update tuple for it
 		 */
 		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
@@ -5033,7 +5047,7 @@ static char *get_oid_type_string(int type_oid){
 		type_string = "decimal";
 		return type_string;
 	}
-	
+
 	switch(type_oid)
 	{
 		case INT2OID:
@@ -5049,9 +5063,9 @@ static char *get_oid_type_string(int type_oid){
 			type_string = "pg_catalog.numeric";
 			break;
 		default:
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				errmsg("Identity column type must be smallint, integer, bigint, or numeric")));
-			break;	
+			break;
 	}
 	return type_string;
 }
@@ -5079,7 +5093,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
-			
+
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into") == 0)
 			{
 				FuncExpr *funcexpr;
@@ -5254,7 +5268,7 @@ pltsql_remove_current_query_env(void)
 		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
 	{
 		destroy_failed_transactions_map();
-	} 
+	}
 }
 
 /*
