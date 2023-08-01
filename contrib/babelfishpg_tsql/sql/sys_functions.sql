@@ -551,22 +551,11 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.parsename (
-	object_name VARCHAR
-	,object_piece INT
-	)
-RETURNS VARCHAR AS $$
-/***************************************************************
-EXTENSION PACK function PARSENAME(x)
-***************************************************************/
-SELECT CASE
-		WHEN char_length($1) < char_length(pg_catalog.replace($1, '.', '')) + 4
-			AND $2 BETWEEN 1
-				AND 4
-			THEN reverse(split_part(reverse($1), '.', $2))
-		ELSE NULL
-		END $$ immutable LANGUAGE 'sql';
-        
+CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
+RETURNS sys.SYSNAME
+AS 'babelfishpg_tsql', 'parsename'
+LANGUAGE C IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
                                                            IN p_minute NUMERIC,
                                                            IN p_seconds NUMERIC,
@@ -2080,61 +2069,6 @@ CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
 LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
--- BABEL-1783: (partial) support for sys.fn_listextendedproperty
-create table if not exists sys.extended_properties (
-class sys.tinyint,
-class_desc sys.nvarchar(60),
-major_id int,
-minor_id int,
-name sys.sysname,
-value sys.sql_variant
-);
-GRANT SELECT ON sys.extended_properties TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
-property_name varchar(128),
-level0_object_type varchar(128),
-level0_object_name varchar(128),
-level1_object_type varchar(128),
-level1_object_name varchar(128),
-level2_object_type varchar(128),
-level2_object_name varchar(128)
-)
-returns table (
-objtype	sys.sysname,
-objname	sys.sysname,
-name	sys.sysname,
-value	sys.sql_variant
-) 
-as $$
-begin
--- currently only support COLUMN property
-IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
-    ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
-	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
-	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
-	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
-		RETURN query 
-		select CAST('COLUMN' AS sys.sysname) as objtype,
-		       CAST(t3.column_name AS sys.sysname) as objname,
-		       t1.name as name,
-		       t1.value as value
-		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
-		where t1.major_id = t2.oid and 
-			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
-		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
-			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
-	END IF;
-END IF;
-RETURN;
-end;
-$$
-LANGUAGE plpgsql
-STABLE;
-GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
-	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
-) TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_tsql', 'tsql_exp'
@@ -3412,101 +3346,6 @@ END;
 $$
 LANGUAGE plpgsql STABLE;
 
-CREATE OR REPLACE FUNCTION typeproperty(
-    typename sys.VARCHAR,
-    property sys.VARCHAR
-    )
-RETURNS INT
-AS $$
-DECLARE
-    var_sc int;
-    schemaid int;
-    schema_name VARCHAR;
-    type_name VARCHAR;
-    sys_id int;
-    testt VARCHAR;
-BEGIN
-
-    property := TRIM(LOWER(COALESCE(property,'')));
-
-    IF typename LIKE '%.%'  THEN
-    schema_name :=  lower(split_part(typename COLLATE "C", '.', 1));
-    type_name :=  lower(split_part(typename COLLATE "C",'.', 2));
-    ELSE
-    schema_name := 'dbo';
-    type_name := typename;
-    END IF;
-
-
-    IF NOT EXISTS (SELECT ao.name FROM sys.types ao WHERE ao.name = type_name COLLATE sys.database_default)
-    THEN
-        RETURN NULL;
-    END IF;
-
-    IF NOT EXISTS (SELECT ao.name FROM sys.schemas ao WHERE ao.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
-    THEN
-        RETURN NULL ;
-    END IF;
-
-    IF NOT EXISTS (SELECT ty.is_user_defined FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
-    schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
-    ELSE
-    schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
-    END IF;
-
-
-    if (SELECT schema_id(schema_name)) <> schemaid THEN
-    RETURN NULL;
-    END IF;
-
-    IF property = 'allowsnull'
-    THEN
-        RETURN (
-            SELECT CAST( t1.is_nullable AS INT)
-            FROM sys.types t1
-            WHERE t1.name = type_name COLLATE sys.database_default AND t1.schema_id = schemaid );
-
-    ELSEIF property = 'precision'
-    THEN
-        RETURN (SELECT CAST(dc.precision AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
-
-    ELSEIF property = 'scale'
-    THEN
-        sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
-        type_name := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
-        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
-            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
-        THEN
-            RETURN(SELECT CAST(dc.scale AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default);
-        ELSE
-            RETURN NULL;
-        END IF;
-    ELSEIF property = 'ownerid'
-    THEN
-        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
-        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
-        ELSE
-        RETURN 10;
-        END IF;
-
-    ELSEIF property = 'usesansitrim'
-    THEN
-        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
-            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
-        THEN
-            RETURN NULL;
-        ELSE
-            RETURN 1;
-        END IF;
-
-    END IF;
-
-    RETURN NULL;
-END;
-$$
-LANGUAGE plpgsql STABLE;
-
-
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
     property SYS.VARCHAR
@@ -3547,6 +3386,14 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.host_id()
+RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
@@ -3715,3 +3562,26 @@ IN query text)
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'openquery_internal'
 LANGUAGE C VOLATILE;
+
+CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
+RETURNS date
+AS 'babelfishpg_tsql', 'EOMONTH'
+LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty
+(
+    IN "@name" sys.sysname DEFAULT NULL,
+    IN "@level0type" VARCHAR(128) DEFAULT NULL,
+    IN "@level0name" sys.sysname DEFAULT NULL,
+    IN "@level1type" VARCHAR(128) DEFAULT NULL,
+    IN "@level1name" sys.sysname DEFAULT NULL,
+    IN "@level2type" VARCHAR(128) DEFAULT NULL,
+    IN "@level2name" sys.sysname DEFAULT NULL,
+    OUT objtype sys.sysname,
+    OUT objname sys.sysname,
+    OUT name sys.sysname,
+    OUT value sys.sql_variant
+)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;

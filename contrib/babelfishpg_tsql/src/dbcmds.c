@@ -40,6 +40,7 @@
 #include "guc.h"
 #include "rolecmds.h"
 #include "pltsql.h"
+#include "extendedproperty.h"
 
 static bool have_createdb_privilege(void);
 static List *gen_createdb_subcmds(const char *schema,
@@ -717,6 +718,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */
 		drop_related_bbf_users(db_users_list);
+		/* delete extended property */
+		delete_extended_property(dbid, NULL, NULL, NULL, NULL);
 
 		/* Release the session-level exclusive lock */
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, true);
@@ -762,6 +765,7 @@ create_builtin_dbs(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);
@@ -798,6 +802,7 @@ create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);

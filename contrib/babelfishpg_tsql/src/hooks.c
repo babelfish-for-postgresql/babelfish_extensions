@@ -133,6 +133,14 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
+static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
+									  PlannedStmt *pstmt,
+									  const char *queryString,
+									  ProcessUtilityContext context,
+									  ParamListInfo params, QueryCompletion *qc);
+static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
+extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
+					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
 
 /*****************************************
  * 			Executor Hooks
@@ -168,10 +176,8 @@ static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
-static push_namespace_stack_hook_type prev_push_namespace_stack_hook = NULL;
-static pre_transform_sort_clause_hook_type prev_pre_transform_sort_clause_hook = NULL;
+static pre_transform_setop_tree_hook_type prev_pre_transform_setop_tree_hook = NULL;
 static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
-static post_transform_from_clause_hook_type  prev_post_transform_from_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -198,11 +204,15 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
+static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
+static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
+static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -235,14 +245,10 @@ InstallExtendedHooks(void)
 	prev_post_transform_insert_row_hook = post_transform_insert_row_hook;
 	post_transform_insert_row_hook = check_insert_row;
 
-	prev_push_namespace_stack_hook = push_namespace_stack_hook;
-	push_namespace_stack_hook = push_namespace_stack;
-	prev_pre_transform_sort_clause_hook = pre_transform_sort_clause_hook;
-	pre_transform_sort_clause_hook = pre_transform_sort_clause;
+	prev_pre_transform_setop_tree_hook = pre_transform_setop_tree_hook;
+	pre_transform_setop_tree_hook = pre_transform_setop_tree;
 	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
 	post_transform_sort_clause_hook = post_transform_sort_clause;
-	prev_post_transform_from_clause_hook = post_transform_from_clause_hook;
-	post_transform_from_clause_hook = post_transform_from_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -325,6 +331,15 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
+	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
+	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
+
+	prev_bbfSelectIntoUtility_hook = bbfSelectIntoUtility_hook;
+	bbfSelectIntoUtility_hook = pltsql_bbfSelectIntoUtility; 
+
+	prev_bbfSelectIntoAddIdentity_hook = bbfSelectIntoAddIdentity_hook;
+	bbfSelectIntoAddIdentity_hook = pltsql_bbfSelectIntoAddIdentity; 
+
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
 
@@ -345,6 +360,9 @@ InstallExtendedHooks(void)
 
 	PrevIsToastClassHook = IsToastClassHook;
 	IsToastClassHook = IsPltsqlToastClassHook;
+
+	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
+	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 }
 
 void
@@ -362,10 +380,8 @@ UninstallExtendedHooks(void)
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
-	push_namespace_stack_hook = prev_push_namespace_stack_hook;
-	pre_transform_sort_clause_hook = prev_pre_transform_sort_clause_hook;
+	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
 	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
-	post_transform_from_clause_hook = prev_post_transform_from_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
@@ -394,6 +410,9 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
+	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
+	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
 	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
@@ -401,11 +420,60 @@ UninstallExtendedHooks(void)
 	table_variable_satisfies_vacuum_horizon_hook = prev_table_variable_satisfies_vacuum_horizon;
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
+	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 }
 
 /*****************************************
  * 			Hook Functions
  *****************************************/
+static bool
+pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
+						  ParamListInfo params, QueryCompletion *qc)
+{	
+	Node	   *parsetree = pstmt->utilityStmt;
+
+	switch (nodeTag(parsetree))
+	{
+		case T_CreateFunctionStmt:
+	 	{
+			return pltsql_createFunction(pstate, pstmt, queryString, context, params);
+			break;
+		}
+		case T_CreatedbStmt:
+		{
+			if (sql_dialect == SQL_DIALECT_TSQL)
+			{
+				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
+				return true;
+			}
+			break;
+		}
+		case T_DropdbStmt:
+		{
+			if (sql_dialect == SQL_DIALECT_TSQL)
+			{
+				DropdbStmt *stmt = (DropdbStmt *) parsetree;
+				drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
+				return true;
+			}
+			break;
+		}
+		case T_TransactionStmt:
+		{
+			if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
+			{
+				PLTsqlProcessTransaction(parsetree, params, qc);
+				return true;
+			}
+			break;
+		}
+		default:
+			return false;
+			break;
+	}
+	return false;
+}									  
+								
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
@@ -1366,6 +1434,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			identifier_name = res->name;
 			alias_len = strlen(res->name);
 			colname_start = pstate->p_sourcetext + res->name_location;
+		}
+		else if (res->name == NULL && IsA(res->val, FuncCall) ){
+			FuncCall *fc = (FuncCall *) res->val;
+			if (strcasecmp(strVal(llast(fc->funcname)), "identity_into") == 0){
+				ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'"),
+						parser_errposition(pstate, res->location)));
+			}
 		}
 
 		if (alias_len > 0)
@@ -3734,4 +3810,21 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-
+static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
+{
+	ListCell   *elements;
+	foreach(elements, tableElts)
+	{
+		Node *element = lfirst(elements);
+		if (nodeTag(element) == T_ColumnDef)
+		{
+			ColumnDef *column = (ColumnDef *) element;
+			if(strcasecmp(column->colname, into->identityName) ==0){
+				column->identity = ATTRIBUTE_IDENTITY_ALWAYS;
+				column->is_not_null = true;
+				column->typeName = typeStringToTypeName(into->identityType);
+				break;
+			}
+		}
+	}	
+}

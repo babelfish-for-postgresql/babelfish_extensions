@@ -45,6 +45,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     make check
     ```
 
+    Alternatively, if you want to build the engine with SSL support, configure the PG engine with `--with-openssl`:
+    ```
+    ./configure --prefix=$HOME/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu --with-openssl
+    ```
+
       Also build and install the extensions because uuid-ossp.so is a runtime dependency for babelfish:
       ```
       cd contrib && make && sudo make install
@@ -183,7 +188,27 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
     ```
 
-4. Connect via psql using the command `~/postgres/bin/psql -U your_user_name`. Create the extension and set up essential parameters. Please be aware you need to choose either 'single-db' or 'multi-db' mode during this provisioning step and you CAN NOT change it later. Refer to our documentation page for more information on 'single-db' vs 'multi-db' mode.
+4. Additionally, if you want to configure the babelfish server with SSL enabled:
+- Create private key and certificate as mentioned [here](https://www.postgresql.org/docs/current/ssl-tcp.html#SSL-CERTIFICATE-CREATION).
+
+- Modify `~/postgres/data/postgresql.conf` by uncommenting and adjusting the following 3 properties as mentioned [here](https://www.postgresql.org/docs/current/ssl-tcp.html#SSL-SERVER-FILES):
+    ```
+    ssl = on
+    ssl_cert_file = 'server.crt'
+    ssl_key_file = 'server.key'
+    ```
+
+- Modify `~/postgres/data/pg_hba.conf` to allow SSL connections from allowed IP addresses, replacing 10.x.y.z with your IP address. E.g.
+    ```
+    hostssl    all             all     10.x.y.z/32            trust
+    ```
+
+- Now run this to apply the changes:
+    ```
+    ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
+    ```
+
+5. Connect via psql using the command `~/postgres/bin/psql -U your_user_name`. Create the extension and set up essential parameters. Please be aware you need to choose either 'single-db' or 'multi-db' mode during this provisioning step and you CAN NOT change it later. Refer to our documentation page for more information on 'single-db' vs 'multi-db' mode.
     ```
     CREATE USER babelfish_user WITH CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;
     DROP DATABASE IF EXISTS babelfish_db;
@@ -202,10 +227,26 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
           sudo ~/postgres/bin/psql -d postgres -U your_user_name
           ```
 
-5. Try connecting to Babelfish via SQLCMD
+6. Try connecting to Babelfish via SQLCMD
       ```
       sqlcmd -S localhost -U babelfish_user -P 12345678
       ```
+    Alternatively, use the -N and -C flags to request encryption and trust the server certificate respectively:
+      ```
+      sqlcmd -N -C -S localhost -U babelfish_user -P 12345678
+      ```
+7. You can query the pg_stat_ssl view to see if the connection is encrypted using SSL:
+    ```
+    1> select * from pg_stat_ssl where pid = @@spid
+    2> go
+    pid ssl version cipher bits client_dn client_serial issuer_dn 
+    ----------- --- ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ----------- ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- ---------------------------------------- ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+     8426 1 TLSv1.2 ECDHE-RSA-AES256-GCM-SHA384 256 NULL NULL NULL 
+
+
+    (1 rows affected)
+    ```
+
 # How to run the JDBC regression tests?
 1. Install Maven: https://maven.apache.org/install.html
 2. cd to test/JDBC
@@ -223,7 +264,7 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
 
 # How to build the babelfishpg_tsql extension with linked servers enabled
 
-1. To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md).
+1. To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md). The linked servers feature is supported using the FreeTDS library which is licensed under the GNU LGPL license. See [COPYING_LIB.txt](https://github.com/FreeTDS/freetds/blob/master/COPYING_LIB.txt) for details.
 2. Build the babelfishpg_tsql extension as follows:
     ```
     PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
@@ -235,3 +276,11 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
     babelfish_db=> CREATE EXTENSION tds_fdw;
     CREATE EXTENSION
     ```
+
+
+# How to build the Babelfish server with Kerberos authentication enabled
+
+Please note that Kerberos authentication feature is available on Babelfish server with version 3.1.0 or higher. 
+
+1. To build the Babelfish server with Kerberos authentication enabled, you will need to install `build-essential` and `libkrb5-dev` packages. 
+2. Build the Babelfish server according to the instructions mentioned [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_3_X_DEV/contrib/README.md#build-the-postgres-engine) and use --with-gssapi flag to configure Babelfish in order to enable the GSSAPI APIs.

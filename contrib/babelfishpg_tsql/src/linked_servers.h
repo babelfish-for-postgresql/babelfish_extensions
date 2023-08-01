@@ -102,6 +102,7 @@ typedef DBPROCESS * LinkedServerProcess;
 #define LINKED_SERVER_SET_VERSION(login)		DBSETLVERSION(login, DBVERSION_74)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)		DBSETLDBNAME(login, dbname)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	dbsettime(timeout)
+#define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout) dbsetlogintime(timeout)
 
 #define LS_NTBSTRINGBING	NTBSTRINGBIND
 #define	LS_INTBIND		INTBIND
@@ -141,6 +142,7 @@ typedef int *LinkedServerProcess;
 #define LINKED_SERVER_SET_VERSION(login)                ((void)0)
 #define LINKED_SERVER_SET_DBNAME(login, dbname)         ((void)0)
 #define LINKED_SERVER_SET_QUERY_TIMEOUT(timeout) 	((void)0)
+#define LINKED_SERVER_SET_CONNECT_TIMEOUT(timeout)	((void)0)
 
 #define LS_NTBSTRINGBING	0
 #define	LS_INTBIND		0

@@ -202,6 +202,10 @@ CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolename" sys.SYSNAME, IN
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_execute_postgresql(IN "@postgresStmt" sys.nvarchar)
+AS 'babelfishpg_tsql', 'sp_execute_postgresql' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_execute_postgresql(IN sys.nvarchar) TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_addlinkedserver( IN "@server" sys.sysname,
                                                     IN "@srvproduct" sys.nvarchar(128) DEFAULT NULL,
                                                     IN "@provider" sys.nvarchar(128) DEFAULT 'SQLNCLI',
@@ -271,3 +275,77 @@ GRANT EXECUTE on PROCEDURE sys.sp_babelfish_volatility(IN sys.varchar, IN sys.va
 
 CREATE OR REPLACE PROCEDURE sys.bbf_set_context_info(IN context_info sys.VARBINARY(128))
 AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.sp_testlinkedserver(IN "@servername" sys.sysname)
+AS 'babelfishpg_tsql', 'sp_testlinkedserver_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_testlinkedserver(IN sys.sysname) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
+AS $$
+DECLARE
+  v TIME;
+BEGIN
+  v = CAST(sleep_time as TIME);
+  PERFORM pg_sleep(extract(epoch from clock_timestamp() + v) -
+                extract(epoch from clock_timestamp()));
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME)
+AS $$
+DECLARE
+  t TIME;
+  target_timestamp TIMESTAMPTZ;
+BEGIN
+  t = CAST(sleep_time as TIME);
+  target_timestamp = current_date + t;
+  IF target_timestamp < current_timestamp THEN
+    target_timestamp = target_timestamp + '1 day';
+  END IF;
+  PERFORM pg_sleep(extract(epoch from target_timestamp) -
+                extract(epoch from clock_timestamp()));
+END
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addextendedproperty
+(
+  "@name" sys.sysname,
+  "@value" sys.sql_variant = NULL,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_addextendedproperty TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_updateextendedproperty
+(
+  "@name" sys.sysname,
+  "@value" sys.sql_variant = NULL,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_updateextendedproperty TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_dropextendedproperty
+(
+  "@name" sys.sysname,
+  "@level0type" VARCHAR(128) = NULL,
+  "@level0name" sys.sysname = NULL,
+  "@level1type" VARCHAR(128) = NULL,
+  "@level1name" sys.sysname = NULL,
+  "@level2type" VARCHAR(128) = NULL,
+  "@level2name" sys.sysname = NULL
+)
+AS 'babelfishpg_tsql' LANGUAGE C;
+GRANT EXECUTE ON PROCEDURE sys.sp_dropextendedproperty TO PUBLIC;

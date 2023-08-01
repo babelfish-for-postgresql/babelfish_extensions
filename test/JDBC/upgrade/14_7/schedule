@@ -107,6 +107,7 @@ BABEL-4078-before-14_8-or-15_3
 BABEL-4098
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -295,6 +296,7 @@ sys-nestlevel-dep
 sys-numbered_procedures
 sys-objects
 sys-original_login
+sys-parsename
 sys-partitions
 sys-partitions-dep
 sys-plan_guides
@@ -402,3 +404,5 @@ TestXML
 timefromparts
 triggers_with_transaction
 datetimeoffset-timezone-before-15_3
+BABEL-4046
+getdate

@@ -1,4 +1,4 @@
--- sla 90000
+-- sla 200000
 # Here we run all the datatype related prepare scripts
 
 # bigint
@@ -253,6 +253,13 @@ select name, query_timeout from sys.servers where name = 'bbf_server_1'
 
 # execute a query which takes more time than the timeout set
 SELECT * FROM OPENQUERY(bbf_server_1, 'select CAST(pg_sleep(5) AS text)')
+
+# Test connect timeout behaviour in OPENQUERY
+# check the value of connect timeout from sys.servers
+select name, connect_timeout from sys.servers where name = 'bbf_server_2'
+
+# Make openquery against a non-existing server
+SELECT * FROM OPENQUERY(bbf_server_2, 'select 1')
 
 # Test procedure dependent on OPENQUERY
 EXEC openquery_vu_prepare__openquery_proc

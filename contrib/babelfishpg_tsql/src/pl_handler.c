@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/attnum.h"
+#include "access/relation.h"
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/heap.h"
@@ -26,6 +27,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
@@ -71,6 +73,7 @@
 #include "collation.h"
 #include "dbcmds.h"
 #include "err_handler.h"
+#include "extendedproperty.h"
 #include "guc.h"
 #include "hooks.h"
 #include "iterative_exec.h"
@@ -138,6 +141,8 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
+static char *get_oid_type_string(int type_oid);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
@@ -152,6 +157,8 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
+
+static void bbf_ExecDropStmt(DropStmt *stmt);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -171,6 +178,7 @@ static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
 											 * function */
 static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
 												 * function */
+Oid tsql_select_into_seq_oid = InvalidOid; /* Sequence table oid used by select into*/
 
 PG_MODULE_MAGIC;
 
@@ -1883,95 +1891,6 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 }
 
 /*
- * Transaction processing using tsql semantics
- */
-static void
-PLTsqlProcessTransaction(Node *parsetree,
-						 ParamListInfo params,
-						 QueryCompletion *qc)
-{
-	char	   *txnName = NULL;
-	TransactionStmt *stmt = (TransactionStmt *) parsetree;
-
-	if (params != NULL && params->numParams > 0 && !params->params[0].isnull)
-	{
-		Oid			typOutput;
-		bool		typIsVarlena;
-		FmgrInfo	finfo;
-
-		Assert(params->numParams == 1);
-		getTypeOutputInfo(params->params[0].ptype, &typOutput, &typIsVarlena);
-		fmgr_info(typOutput, &finfo);
-		txnName = OutputFunctionCall(&finfo, params->params[0].value);
-	}
-	else
-		txnName = stmt->savepoint_name;
-
-	if (txnName != NULL && strlen(txnName) > TSQL_TXN_NAME_LIMIT / 2)
-		ereport(ERROR,
-				(errcode(ERRCODE_NAME_TOO_LONG),
-				 errmsg("Transaction name length %zu above limit %u",
-						strlen(txnName), TSQL_TXN_NAME_LIMIT / 2)));
-
-	if (AbortCurTransaction)
-	{
-		if (stmt->kind == TRANS_STMT_BEGIN ||
-			stmt->kind == TRANS_STMT_COMMIT ||
-			stmt->kind == TRANS_STMT_SAVEPOINT)
-			ereport(ERROR,
-					(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-					 errmsg("The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.")));
-	}
-
-	switch (stmt->kind)
-	{
-		case TRANS_STMT_BEGIN:
-			{
-				PLTsqlStartTransaction(txnName);
-			}
-			break;
-
-		case TRANS_STMT_COMMIT:
-			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec &&
-					NestedTranCount <= 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the COMMIT statement within an INSERT-EXEC statement unless BEGIN TRANSACTION is used first.")));
-
-				PLTsqlCommitTransaction(qc, stmt->chain);
-			}
-			break;
-
-		case TRANS_STMT_ROLLBACK:
-			{
-				if (exec_state_call_stack &&
-					exec_state_call_stack->estate &&
-					exec_state_call_stack->estate->insert_exec)
-					ereport(ERROR,
-							(errcode(ERRCODE_TRANSACTION_ROLLBACK),
-							 errmsg("Cannot use the ROLLBACK statement within an INSERT-EXEC statement.")));
-
-				PLTsqlRollbackTransaction(txnName, qc, stmt->chain);
-			}
-			break;
-
-		case TRANS_STMT_SAVEPOINT:
-			RequireTransactionBlock(true, "SAVEPOINT");
-			DefineSavepoint(txnName);
-			break;
-
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_TRANSACTION_INITIATION),
-					 errmsg("Unsupported transaction command : %d", stmt->kind)));
-			break;
-	}
-}
-
-/*
  * It returns TRUE when we should not execute the utility statement,
  * e.g., CREATE FUNCTION, in EXPLAIN ONLY MODE.
  * If it returns FALSE, it means we can execute the utility statement.
@@ -2141,180 +2060,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 	switch (nodeTag(parsetree))
 	{
-		case T_CreateFunctionStmt:
-			{
-				CreateFunctionStmt *stmt = (CreateFunctionStmt *) parsetree;
-				bool		isCompleteQuery = (context != PROCESS_UTILITY_SUBCOMMAND);
-				bool		needCleanup;
-				ListCell   *option,
-						   *location_cell = NULL;
-				Node	   *tbltypStmt = NULL;
-				Node	   *trigStmt = NULL;
-				ObjectAddress tbltyp;
-				ObjectAddress address;
-				int			origname_location = -1;
-
-				/*
-				 * All event trigger calls are done only when isCompleteQuery
-				 * is true
-				 */
-				needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
-
-				/*
-				 * PG_TRY block is to ensure we call
-				 * EventTriggerEndCompleteQuery
-				 */
-				PG_TRY();
-				{
-					if (isCompleteQuery)
-						EventTriggerDDLCommandStart(parsetree);
-
-					foreach(option, stmt->options)
-					{
-						DefElem    *defel = (DefElem *) lfirst(option);
-
-						if (strcmp(defel->defname, "tbltypStmt") == 0)
-						{
-							/*
-							 * tbltypStmt is an implicit option in tsql
-							 * dialect, we use this mechanism to create tsql
-							 * style multi-statement table-valued function and
-							 * its return (table) type in one statement.
-							 */
-							tbltypStmt = defel->arg;
-						}
-						else if (strcmp(defel->defname, "trigStmt") == 0)
-						{
-							/*
-							 * trigStmt is an implicit option in tsql dialect,
-							 * we use this mechanism to create tsql style
-							 * function and trigger in one statement.
-							 */
-							trigStmt = defel->arg;
-						}
-						else if (strcmp(defel->defname, "location") == 0)
-						{
-							/*
-							 * location is an implicit option in tsql dialect,
-							 * we use this mechanism to store location of
-							 * function name so that we can extract original
-							 * input function name from queryString.
-							 */
-							origname_location = intVal((Node *) defel->arg);
-							location_cell = option;
-							pfree(defel);
-						}
-					}
-
-					/*
-					 * delete location cell if it exists as it is for internal
-					 * use only
-					 */
-					if (location_cell)
-						stmt->options = list_delete_cell(stmt->options, location_cell);
-
-					/*
-					 * For tbltypStmt, we need to first process the CreateStmt
-					 * to create the type that will be used as the function's
-					 * return type. Then, after the function is created, add a
-					 * dependency between the type and the function.
-					 */
-					if (tbltypStmt)
-					{
-						/* Handle tbltypStmt, which is a CreateStmt */
-						PlannedStmt *wrapper;
-
-						wrapper = makeNode(PlannedStmt);
-						wrapper->commandType = CMD_UTILITY;
-						wrapper->canSetTag = false;
-						wrapper->utilityStmt = tbltypStmt;
-						wrapper->stmt_location = pstmt->stmt_location;
-						wrapper->stmt_len = pstmt->stmt_len;
-
-						ProcessUtility(wrapper,
-									   queryString,
-									   readOnlyTree,
-									   PROCESS_UTILITY_SUBCOMMAND,
-									   params,
-									   NULL,
-									   None_Receiver,
-									   NULL);
-
-						/* Need CCI between commands */
-						CommandCounterIncrement();
-					}
-
-					address = CreateFunction(pstate, stmt);
-
-					/*
-					 * Store function/procedure related metadata in babelfish
-					 * catalog
-					 */
-					pltsql_store_func_default_positions(address, stmt->parameters, queryString, origname_location);
-
-					if (tbltypStmt || restore_tsql_tabletype)
-					{
-						/*
-						 * Add internal dependency between the table type and
-						 * the function.
-						 */
-						tbltyp.classId = TypeRelationId;
-						tbltyp.objectId = typenameTypeId(pstate,
-														 stmt->returnType);
-						tbltyp.objectSubId = 0;
-						recordDependencyOn(&tbltyp, &address, DEPENDENCY_INTERNAL);
-					}
-
-					/*
-					 * For trigStmt, we need to process the CreateTrigStmt
-					 * after the function is created, and record bidirectional
-					 * dependency so that Drop Trigger CASCADE will drop the
-					 * implicit trigger function. Create trigger takes care of
-					 * dependency addition.
-					 */
-					if (trigStmt)
-					{
-						(void) CreateTrigger((CreateTrigStmt *) trigStmt,
-											 pstate->p_sourcetext, InvalidOid, InvalidOid,
-											 InvalidOid, InvalidOid, address.objectId,
-											 InvalidOid, NULL, false, false);
-					}
-
-					/*
-					 * Remember the object so that ddl_command_end event
-					 * triggers have access to it.
-					 */
-					EventTriggerCollectSimpleCommand(address, InvalidObjectAddress,
-													 parsetree);
-
-					if (isCompleteQuery)
-					{
-						EventTriggerSQLDrop(parsetree);
-						EventTriggerDDLCommandEnd(parsetree);
-					}
-
-				}
-				PG_CATCH();
-				{
-					if (needCleanup)
-						EventTriggerEndCompleteQuery();
-					PG_RE_THROW();
-				}
-				PG_END_TRY();
-
-				if (needCleanup)
-					EventTriggerEndCompleteQuery();
-				return;
-			}
-		case T_TransactionStmt:
-			{
-				if (NestedTranCount > 0 || (sql_dialect == SQL_DIALECT_TSQL && !IsTransactionBlockActive()))
-				{
-					PLTsqlProcessTransaction(parsetree, params, qc);
-					return;
-				}
-				break;
-			}
 		case T_TruncateStmt:
 			{
 				if (sql_dialect == SQL_DIALECT_TSQL)
@@ -2810,7 +2555,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								if (get_role_oid(stmt->role->rolename, true) != GetSessionUserId() && !is_member_of_role(GetSessionUserId(), datdba))
 									ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-											 errmsg("Current login does not have privileges to alter password")));
+											 errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 								has_password = true;
 							}
@@ -3252,7 +2997,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
+				{
+					if (sql_dialect == SQL_DIALECT_TSQL)
+						bbf_ExecDropStmt(drop_stmt);
+
 					break;
+				}
+
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
@@ -3275,6 +3026,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 
+					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
 
 					if (prev_ProcessUtility)
@@ -3297,22 +3049,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					return;
 				}
 			}
-		case T_CreatedbStmt:
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
-				return;
-			}
-			break;
-		case T_DropdbStmt:
-			if (sql_dialect == SQL_DIALECT_TSQL)
-			{
-				DropdbStmt *stmt = (DropdbStmt *) parsetree;
-
-				drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
-				return;
-			}
-			break;
 		case T_GrantRoleStmt:
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
@@ -5290,6 +5026,201 @@ pltsql_revert_guc(int nest_level)
 
 }
 
+static char *get_oid_type_string(int type_oid){
+	char *type_string = NULL;
+	if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype) (type_oid))
+	{
+		type_string = "decimal";
+		return type_string;
+	}
+	
+	switch(type_oid)
+	{
+		case INT2OID:
+			type_string = "pg_catalog.int2";
+			break;
+		case INT4OID:
+			type_string = "pg_catalog.int4";
+			break;
+		case INT8OID:
+			type_string = "pg_catalog.int8";
+			break;
+		case NUMERICOID:
+			type_string = "pg_catalog.numeric";
+			break;
+		default:
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
+				errmsg("Identity column type must be smallint, integer, bigint, or numeric")));
+			break;	
+	}
+	return type_string;
+}
+
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
+{
+	List *result;
+	ListCell *elements;
+	CreateSeqStmt *seqstmt;
+	AlterSeqStmt *altseqstmt;
+	List *attnamelist;
+	IntoClause *into;
+	Node *n;
+
+	n = stmt->query;
+	into = stmt->into;
+	result = NIL;
+	seqstmt = NULL;
+	altseqstmt = NULL;
+
+	if (n && n->type == T_Query)
+	{
+		Query *q = (Query *)n;
+		bool seen_identity = false;
+		foreach (elements, q->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *)lfirst(elements);
+			
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into") == 0)
+			{
+				FuncExpr *funcexpr;
+				Oid snamespaceid;
+				char *snamespace;
+				char *sname;
+				List *seqoptions = NIL;
+				ListCell *arg;
+
+				int type_oid;
+				char *type = NULL;
+				TypeName *ofTypename;
+				int64 seed_value;
+				int arg_num;
+
+				if (seen_identity)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+				}
+
+				if (tle->resname == NULL)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
+				}
+
+				funcexpr = (FuncExpr *)tle->expr;
+				arg_num = 0;
+				foreach (arg, funcexpr->args)
+				{
+					Node *fargNode = (Node *)lfirst(arg);
+					Const *con;
+					arg_num++;
+					switch (arg_num)
+					{
+						case 1:
+							con = (Const *)fargNode;
+							type_oid = (int)con->constvalue;
+							type = get_oid_type_string(type_oid);
+							ofTypename = typeStringToTypeName(type);
+							seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)ofTypename, -1));
+							break;
+						case 2:
+							con = (Const *)fargNode;
+							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger((int64)con->constvalue), -1));
+							seed_value = (int64)con->constvalue;
+							break;
+						case 3:
+							con = (Const *)fargNode;
+							seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeInteger((int64)con->constvalue), -1));
+							if ((int)con->constvalue > 0)
+							{
+								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
+							}
+							else
+							{
+								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
+							}
+							break;
+					}
+				}
+
+				into->identityName = tle->resname;
+				into->identityType = TypeNameToString(ofTypename);
+
+				seen_identity = true;
+
+				snamespaceid = RangeVarGetCreationNamespace(into->rel);
+				snamespace = get_namespace_name(snamespaceid);
+				sname = ChooseRelationName(into->rel->relname, tle->resname, "seq", snamespaceid, false);
+				seqstmt = makeNode(CreateSeqStmt);
+				seqstmt->for_identity = true;
+				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
+				seqstmt->sequence->relpersistence = into->rel->relpersistence;
+				seqstmt->options = seqoptions;
+
+				altseqstmt = makeNode(AlterSeqStmt);
+				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
+				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname), makeString(tle->resname));
+				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *)attnamelist, -1));
+				altseqstmt->for_identity = true;
+			}
+		}
+	}
+
+	if (seqstmt)
+	{
+			result = lappend(result, seqstmt);
+	}
+	result = lappend(result, stmt);
+	if (altseqstmt)
+	{
+			result = lappend(result, altseqstmt);
+	}
+
+	return result;
+}
+
+void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
+								 ParamListInfo params, QueryCompletion *qc)
+{
+
+	Node *parsetree = pstmt->utilityStmt;
+	ObjectAddress address;
+	ObjectAddress secondaryObject = InvalidObjectAddress;
+	List *stmts;
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, queryString);
+	while (stmts != NIL)
+	{
+		Node *stmt = (Node *)linitial(stmts);
+		stmts = list_delete_first(stmts);
+		if (IsA(stmt, CreateTableAsStmt))
+		{
+			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
+			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
+		}
+		else if (IsA(stmt, CreateSeqStmt))
+		{
+			address = DefineSequence(pstate, (CreateSeqStmt *)stmt);
+			Assert(address.objectId != InvalidOid);
+			tsql_select_into_seq_oid = address.objectId;
+			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
+		}
+		else
+		{
+			PlannedStmt *wrapper;
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = pstmt->stmt_location;
+			wrapper->stmt_len = pstmt->stmt_len;
+
+			ProcessUtility(wrapper, queryString, false, PROCESS_UTILITY_SUBCOMMAND, params, NULL, None_Receiver, NULL);
+		}
+		if (stmts != NIL)
+			CommandCounterIncrement();
+	}
+}
+
 void
 set_current_query_is_create_tbl_check_constraint(Node *expr)
 {
@@ -5324,4 +5255,141 @@ pltsql_remove_current_query_env(void)
 	{
 		destroy_failed_transactions_map();
 	} 
+}
+
+/*
+ * Drop statement of babelfish, currently delete extended property as well.
+ */
+static void
+bbf_ExecDropStmt(DropStmt *stmt)
+{
+	int16			db_id;
+	const char		*type = NULL;
+	char			*schema_name = NULL,
+					*major_name = NULL;
+	ObjectAddress	address;
+	Relation		relation = NULL;
+	Oid				schema_oid;
+	ListCell		*cell;
+
+	db_id = get_cur_db_id();
+
+	if (stmt->removeType == OBJECT_SCHEMA)
+	{
+		foreach(cell, stmt->objects)
+		{
+			schema_name = strVal(lfirst(cell));
+
+			if (get_namespace_oid(schema_name, true) == InvalidOid)
+				return;
+
+			type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SCHEMA];
+			delete_extended_property(db_id, type, schema_name, NULL, NULL);
+		}
+	}
+	else if (stmt->removeType == OBJECT_TABLE ||
+			 stmt->removeType == OBJECT_VIEW ||
+			 stmt->removeType == OBJECT_SEQUENCE)
+	{
+		foreach(cell, stmt->objects)
+		{
+			address = get_object_address(stmt->removeType,
+										 lfirst(cell),
+										 &relation,
+										 AccessShareLock,
+										 true);
+
+			if (!relation)
+				return;
+
+			/* Get major_name */
+			major_name = pstrdup(RelationGetRelationName(relation));
+			relation_close(relation, AccessShareLock);
+
+			/* Get schema_name */
+			schema_oid = get_object_namespace(&address);
+			if (OidIsValid(schema_oid))
+				schema_name = get_namespace_name(schema_oid);
+
+			if (schema_name && major_name)
+			{
+				if (stmt->removeType == OBJECT_TABLE)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+				else if (stmt->removeType == OBJECT_VIEW)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+				else if (stmt->removeType == OBJECT_SEQUENCE)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+			}
+		}
+	}
+	else if (stmt->removeType == OBJECT_PROCEDURE ||
+			 stmt->removeType == OBJECT_FUNCTION ||
+			 stmt->removeType == OBJECT_TYPE)
+	{
+		HeapTuple	tuple;
+
+		foreach(cell, stmt->objects)
+		{
+			address = get_object_address(stmt->removeType,
+										 lfirst(cell),
+										 &relation,
+										 AccessShareLock,
+										 true);
+			Assert(relation == NULL);
+			if (!OidIsValid(address.objectId))
+				return;
+
+			/* Get major_name */
+			relation = table_open(address.classId, AccessShareLock);
+			tuple = get_catalog_object_by_oid(relation,
+											  get_object_attnum_oid(address.classId),
+											  address.objectId);
+			if (!HeapTupleIsValid(tuple))
+			{
+				table_close(relation, AccessShareLock);
+				return;
+			}
+
+			if (stmt->removeType == OBJECT_PROCEDURE ||
+				stmt->removeType == OBJECT_FUNCTION)
+				major_name = pstrdup(NameStr(((Form_pg_proc) GETSTRUCT(tuple))->proname));
+			else if (stmt->removeType == OBJECT_TYPE)
+				major_name = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname));
+
+			table_close(relation, AccessShareLock);
+
+			/* Get schema_name */
+			schema_oid = get_object_namespace(&address);
+			if (OidIsValid(schema_oid))
+				schema_name = get_namespace_name(schema_oid);
+
+			if (schema_name && major_name)
+			{
+				if (stmt->removeType == OBJECT_PROCEDURE)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+				else if (stmt->removeType == OBJECT_FUNCTION)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+				else if (stmt->removeType == OBJECT_TYPE)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+
+				delete_extended_property(db_id, type, schema_name, major_name,
+										 NULL);
+			}
+		}
+	}
 }

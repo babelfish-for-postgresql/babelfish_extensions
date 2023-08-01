@@ -22,6 +22,7 @@
 #include "commands/prepare.h"
 #include "common/string.h"
 #include "executor/spi.h"
+#include "foreign/foreign.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "hooks.h"
@@ -45,8 +46,10 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
+#include "rolecmds.h"
 
 #include "catalog.h"
+#include "extendedproperty.h"
 #include "multidb.h"
 #include "pltsql.h"
 #include "session.h"
@@ -72,6 +75,7 @@ PG_FUNCTION_INFO_V1(sp_dropserver_internal);
 PG_FUNCTION_INFO_V1(sp_serveroption_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
+PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -86,6 +90,10 @@ static List *gen_sp_rename_subcmds(const char *objname, const char *newname, con
 static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 static void remove_delimited_identifer(char *str);
+static void rename_extended_property(ObjectType objtype,
+									 const char *var_schema_name,
+									 const char *var_major_name,
+									 const char *old_name, const char *new_name);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -96,6 +104,10 @@ char	   *sp_describe_first_result_set_view_name = NULL;
 
 bool		sp_describe_first_result_set_inprogress = false;
 char	   *orig_proc_funcname = NULL;
+
+/* server options and their default values for babelfish_server_options catalog insert */
+char	   * srvOptions_optname[BBF_SERVERS_DEF_NUM_COLS - 1] = {"query timeout", "connect timeout"};
+char	   * srvOptions_optvalue[BBF_SERVERS_DEF_NUM_COLS - 1] = {"0", "0"};
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -1589,6 +1601,221 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 }
 
 Datum
+sp_execute_postgresql(PG_FUNCTION_ARGS)
+{
+	List	   *parsetree_list;
+	char	   *postgresStmt;
+	Node	   *stmt;
+	Node	   *parsetree;
+	size_t		len;
+	PlannedStmt *wrapper;
+	const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "fuzzystrmatch"};
+	int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	Oid			current_user_id = GetUserId();
+	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
+	const char *new_path = "public, \"$user\", sys, pg_catalog";
+	
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+						GUC_CONTEXT_CONFIG,
+						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		
+		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+
+		if (postgresStmt == NULL)
+				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+								errmsg("statement cannot be NULL")));
+
+		/* Remove trailing whitespaces */
+		len = strlen(postgresStmt);
+		while (isspace(postgresStmt[len - 1]))
+			postgresStmt[--len] = 0;
+
+		/* check if input statement is empty after removing trailing spaces */
+		if (len == 0)
+			ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							errmsg("statement cannot be NULL")));
+
+		parsetree_list = raw_parser(postgresStmt, RAW_PARSE_DEFAULT);
+
+		if (list_length(parsetree_list) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
+
+		stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
+			
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = len;
+
+		parsetree = wrapper->utilityStmt;
+
+		switch (nodeTag(parsetree))
+		{
+			case T_CreateExtensionStmt:
+			{
+				CreateExtensionStmt *crstmt = (CreateExtensionStmt *) parsetree;
+				DefElem    *d_schema = NULL;
+				ListCell   *lc;
+				char	   *schemaName = NULL;
+				bool ext_found = false;
+
+				for(int i = 0; i < allowed_extns_size; i++)
+				{
+					if(!(strcmp(crstmt->extname, allowed_extns[i])))
+					{
+						ext_found = true;
+						break;
+					}
+				}
+
+				if(!ext_found)
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 		errmsg("'%s' extension creation is not supported", crstmt->extname)));
+				}
+
+				if (!superuser_arg(GetSessionUserId()) || !role_is_sa(GetSessionUserId()))
+				{
+					ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+	 					errmsg("permission denied to create extension")));
+				}
+
+				SetCurrentRoleId(GetSessionUserId(), false);
+				SetConfigOption("search_path",
+								new_path,
+								PGC_SUSET,
+								PGC_S_DATABASE_USER);
+
+				foreach(lc, crstmt->options)
+				{            
+					DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
+					if (strcmp(defel->defname, "schema") == 0) 
+					{
+						d_schema = defel;
+						schemaName = defGetString(d_schema);
+					}
+					if (strcmp(defel->defname, "cascade") == 0)
+					{
+						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("'cascade' is not yet supported in Babelfish")));
+					}
+				}
+
+				if(schemaName != NULL && !(is_shared_schema(schemaName)))
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("extension creation in '%s' is not supported from TSQL", schemaName)));
+				}
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							postgresStmt,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+				break;
+			}
+			case T_DropStmt:
+			{
+				DropStmt *drstmt = (DropStmt *) parsetree;
+				if (drstmt->removeType != OBJECT_EXTENSION)
+				{
+					ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("only create/alter/drop extension statements are currently supported in Babelfish")));
+				}
+				SetCurrentRoleId(GetSessionUserId(), false);
+
+				if(drstmt->behavior == DROP_CASCADE)
+				{
+					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								errmsg("'cascade' is not yet supported in Babelfish")));
+				}
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							postgresStmt,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+				break;
+			}
+			case T_AlterExtensionStmt:
+			{
+				SetCurrentRoleId(GetSessionUserId(), false);
+				/* do this step */
+				ProcessUtility(wrapper,
+							postgresStmt,
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+				break;
+			} 
+			case T_AlterObjectSchemaStmt:
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("alter extension schema is not currently supported in Babelfish")));
+				break;
+			}
+			case  T_AlterExtensionContentsStmt:
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("alter extension to Add/Drop object in extension is not currently supported in Babelfish")));
+				break;
+			}
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("only create/alter/drop extension statements are currently supported in Babelfish")));
+				break;
+		}
+	}
+	PG_FINALLY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+						  GUC_CONTEXT_CONFIG,
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		SetConfigOption("search_path",
+					saved_path,
+					PGC_SUSET,
+					PGC_S_DATABASE_USER);
+		SetCurrentRoleId(current_user_id, false);
+
+	}
+	PG_END_TRY();	
+	PG_RETURN_VOID();
+}
+
+Datum
 sp_addrole(PG_FUNCTION_ARGS)
 {
 	char	   *rolname,
@@ -2220,84 +2447,123 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 	ScanKeyData		key;
 	HeapTuple		tuple, old_tuple;
 	TableScanDesc	tblscan;
+	int		nargs = BBF_SERVERS_DEF_NUM_COLS - 1;
 
-	if (optname != NULL && strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
+	MemSet(new_record_repl, false, sizeof(new_record_repl));
+
+	/* need not check for optname and optvalue when isInsert = true */
+	if(isInsert)
 	{
-		int32		query_timeout;
-
-		/* we throw error when optvalue == NULL or empty */
-		if (optvalue == NULL || strlen(optvalue) == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Invalid option value for query timeout")));
-
-		if (optvalue[0] == '+')
-			optvalue++;
-
-		if (optvalue == NULL || strspn(optvalue, "0123456789") != strlen(optvalue))
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Invalid option value for query timeout")));
-		else
-			query_timeout = atoi(optvalue);
-
-		if (query_timeout < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_FDW_ERROR),
-					 errmsg("Query timeout value provided is out of range")));
-
-		bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
-									 	RowExclusiveLock);
-		bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
-
-		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-		MemSet(new_record_repl, false, sizeof(new_record_repl));
-
-		new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
-		new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(query_timeout);
-
-		if(isInsert)
+		for(int i = 0; i < nargs; i++)
 		{
-			tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
-									new_record, new_record_nulls);
-			CatalogTupleInsert(bbf_servers_def_rel, tuple);
-		}
-		else
-		{
-			/* Search and obtain the tuple based on the server_id */	
-			ScanKeyInit(&key,
-						Anum_bbf_servers_def_servername,
-						BTEqualStrategyNumber, F_TEXTEQ,
-						CStringGetTextDatum(servername));
-			tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
-			old_tuple = heap_getnext(tblscan, ForwardScanDirection);
-
-			if (!old_tuple)
+			/* check required to allow only timeout server options inside the if block */
+			if((strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0) || (strlen(srvOptions_optname[i]) == 15 && strncmp(srvOptions_optname[i], "connect timeout", 15) == 0))
 			{
-				table_endscan(tblscan);
-				table_close(bbf_servers_def_rel, RowExclusiveLock);
-				ereport(ERROR,
-						(errcode(ERRCODE_FDW_ERROR),
-				 		errmsg("server \"%s\" does not exist", servername)));
+				int32	timeout = atoi(srvOptions_optvalue[i]);
+				if(strlen(srvOptions_optname[i]) == 13 && strncmp(srvOptions_optname[i], "query timeout", 13) == 0)
+					new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
+				else
+					new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
 			}
-			new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
-			tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
-									new_record, new_record_nulls, new_record_repl);
-			
-			CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
-			table_endscan(tblscan);
 		}
-
-		heap_freetuple(tuple);
-
-		table_close(bbf_servers_def_rel, RowExclusiveLock);
 	}
 	else
 	{
-		ereport(ERROR,
-			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption")));
+		if (optname && ((strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0 ) || (strlen(optname) == 15 && strncmp(optname, "connect timeout", 15) == 0)))
+		{
+			int32	timeout;
+
+			/* we throw error when optvalue == NULL or empty */
+			if (strlen(optvalue) == 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Invalid option value for %s", optname)));
+
+			if (optvalue[0] == '+')
+				optvalue++;
+
+			if (strspn(optvalue, "0123456789") != strlen(optvalue))
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("Invalid option value for %s", optname)));
+			else
+				timeout = atoi(optvalue);
+
+			if (timeout < 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("%s value provided is out of range",optname)));
+
+			if(strlen(optname) == 13 && strncmp(optname, "query timeout", 13) == 0)
+			{
+				new_record_repl[Anum_bbf_servers_def_query_timeout - 1] = true;
+				new_record[Anum_bbf_servers_def_query_timeout - 1] = Int32GetDatum(timeout);
+			}
+			else
+			{
+				new_record_repl[Anum_bbf_servers_def_connect_timeout - 1] = true;
+				new_record[Anum_bbf_servers_def_connect_timeout - 1] = Int32GetDatum(timeout);
+			}
+		}
+		else
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_ERROR),
+				 errmsg("Invalid option provided for sp_serveroption")));
+		}
 	}
+
+	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),RowExclusiveLock);
+	bbf_servers_def_rel_dsc = RelationGetDescr(bbf_servers_def_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	new_record[Anum_bbf_servers_def_servername - 1] = CStringGetTextDatum(servername);
+
+	if(isInsert)
+	{
+		tuple = heap_form_tuple(bbf_servers_def_rel_dsc,
+								new_record, new_record_nulls);
+		CatalogTupleInsert(bbf_servers_def_rel, tuple);
+	}
+	else
+	{
+		ScanKeyInit(&key,
+					Anum_bbf_servers_def_servername,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					CStringGetTextDatum(servername));
+		tblscan = table_beginscan_catalog(bbf_servers_def_rel, 1, &key);
+		old_tuple = heap_getnext(tblscan, ForwardScanDirection);
+
+		if (!old_tuple)
+		{
+			table_endscan(tblscan);
+			table_close(bbf_servers_def_rel, RowExclusiveLock);
+			ereport(ERROR,
+					(errcode(ERRCODE_FDW_ERROR),
+					errmsg("The server '%s' does not exist. Use sp_linkedservers to show available servers.", servername)));
+		}
+
+		for(int i = 1; i < BBF_SERVERS_DEF_NUM_COLS; i++)
+		{
+			if(!new_record_repl[i])
+			{
+				bool isNull;
+				new_record[i] = heap_getattr(old_tuple, i+1,
+												RelationGetDescr(bbf_servers_def_rel), &isNull);
+			}
+		}
+
+		tuple = heap_modify_tuple(old_tuple, bbf_servers_def_rel_dsc,
+									new_record, new_record_nulls, new_record_repl);
+
+		CatalogTupleUpdate(bbf_servers_def_rel, &tuple->t_self, tuple);
+		table_endscan(tblscan);
+
+	}
+
+	heap_freetuple(tuple);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
+
 }
 
 static void 
@@ -2422,7 +2688,7 @@ sp_addlinkedserver_internal(PG_FUNCTION_ARGS)
 
 	exec_utility_cmd_helper(query.data);
 
-	update_bbf_server_options(linked_server, "query timeout", "0", true);
+	update_bbf_server_options(linked_server, NULL, NULL, true);
 
 	/* We throw warnings only if foreign server object creation succeeds */
 	if (provider_warning)
@@ -2492,12 +2758,12 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * We prepare the following query to create a user mapping. This will be
 	 * executed using ProcessUtility():
 	 *
-	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS
+	 * CREATE USER MAPPING FOR PUBLIC SERVER <servername> OPTIONS
 	 * (username '<remote server user name>', password '<remote server user
 	 * password>')
 	 *
 	 */
-	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
+	appendStringInfo(&query, "CREATE USER MAPPING FOR PUBLIC SERVER \"%s\" ", servername);
 
 	/*
 	 * Add the relevant options
@@ -2566,17 +2832,34 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 
+	remove_trailing_spaces(servername);
+
+	/* Check if servername is valid */
+	get_foreign_server_oid(servername, false);
+
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following query to drop a linked server login. This will
+	 * We prepare the following queries to drop a linked server login. This will
 	 * be executed using ProcessUtility():
 	 *
-	 * DROP USER MAPPING FOR CURRENT_USER SERVER @SERVERNAME
-	 *
+	 * DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
+	 * DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
+	 * 
+	 * Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
+	 * was not entirely correct because T-SQL linked logins are not user or login specific.
+	 * To address this we now create user mapping for the PG PUBLIC role internally.
+	 * 
+	 * To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
+	 * implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
+	 * and PUBLIC PG roles.
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
+	exec_utility_cmd_helper(query.data);
 
+	resetStringInfo(&query);
+
+	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
 	exec_utility_cmd_helper(query.data);
 
 	if (locallogin)
@@ -2688,12 +2971,12 @@ sp_serveroption_internal(PG_FUNCTION_ARGS)
 	while (*newoptionvalue != '\0' && isspace((unsigned char) *newoptionvalue))
 		newoptionvalue++;
 
-	if (optionname && strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0)
+	if (optionname && ((strlen(optionname) == 13 && strncmp(optionname, "query timeout", 13) == 0 ) || (strlen(optionname) == 15 && strncmp(optionname, "connect timeout", 15) == 0)))
 		update_bbf_server_options(servername, optionname, newoptionvalue, false);
 	else
 		ereport(ERROR,
 			(errcode(ERRCODE_FDW_ERROR),
-				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' option is supported")));
+				errmsg("Invalid option provided for sp_serveroption. Only 'query timeout' and 'connect timeout' are currently supported.")));
 
 	if(servername)
 		pfree(servername);
@@ -3175,6 +3458,9 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
+
+		rename_extended_property(objtype_code, schema_name, curr_relname,
+								 obj_name, new_name);
 	}
 	PG_CATCH();
 	{
@@ -3188,6 +3474,119 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
+}
+
+/*
+ * Rename record in extended property as well when calling sp_rename.
+ */
+static void
+rename_extended_property(ObjectType objtype, const char *var_schema_name,
+						 const char *var_major_name,
+						 const char *old_name, const char *new_name)
+{
+	int			db_id = get_cur_db_id();
+	char		*db_name = get_cur_db_name();
+	const char	*type;
+
+	if (objtype == OBJECT_TABLE ||
+		objtype == OBJECT_VIEW ||
+		objtype == OBJECT_SEQUENCE ||
+		objtype == OBJECT_PROCEDURE ||
+		objtype == OBJECT_FUNCTION ||
+		objtype == OBJECT_TYPE)
+	{
+		/*
+		 * Use old_name as major_name in this routine.
+		 * (refer to gen_sp_rename_subcmds)
+		 */
+		if (var_schema_name && old_name)
+		{
+			char *schema_name = get_physical_schema_name(db_name,
+														 lowerstr(var_schema_name));
+			char *major_name = lowerstr(old_name);
+			char *new_major_name = lowerstr(new_name);
+
+			/* schema_name doesn't need to truncate again. */
+			truncate_tsql_identifier(major_name);
+			truncate_tsql_identifier(new_major_name);
+
+			if (objtype == OBJECT_TABLE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_VIEW)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_SEQUENCE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_PROCEDURE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_FUNCTION)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_TYPE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+		}
+	}
+	else if (objtype == OBJECT_COLUMN)
+	{
+		if (var_schema_name && var_major_name && old_name)
+		{
+			char *schema_name = get_physical_schema_name(db_name,
+														 lowerstr(var_schema_name));
+			char *major_name = lowerstr(var_major_name);
+			char *minor_name = lowerstr(old_name);
+			char *new_minor_name = lowerstr(new_name);
+
+			/* schema_name doesn't need to truncate again. */
+			truncate_tsql_identifier(major_name);
+			truncate_tsql_identifier(minor_name);
+			truncate_tsql_identifier(new_minor_name);
+
+			type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+			update_extended_property(db_id, type, schema_name,
+									 major_name, minor_name,
+									 Anum_bbf_extended_properties_minor_name,
+									 new_minor_name);
+		}
+	}
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;

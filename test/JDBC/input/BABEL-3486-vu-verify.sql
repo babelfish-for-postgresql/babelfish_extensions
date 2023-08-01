@@ -1,3 +1,4 @@
+-- sla 50000
 SELECT * FROM BABEL_3486_vu_prepare_v13
 GO
 DROP VIEW BABEL_3486_vu_prepare_v13

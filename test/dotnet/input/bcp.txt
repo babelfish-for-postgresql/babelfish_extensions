@@ -458,3 +458,15 @@ select a from sourceTable
 select a from destinationTable 
 drop table sourceTable
 drop table destinationTable
+
+# reordering of column list with large value
+Create table sourceTable(a int, b text, c int) 
+Create table destinationTable(a int, b text, c int) 
+insert into sourceTable values (1, 'hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello hellohello', 2)
+insert into sourceTable values (NULL, NULL, NULL)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+select * from destinationTable
+drop table sourceTable
+drop table destinationTable

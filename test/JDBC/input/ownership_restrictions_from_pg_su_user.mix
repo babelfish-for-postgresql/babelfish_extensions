@@ -71,6 +71,54 @@ ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH NOCREATEDB CONNECTIO
 GO
 
 -- psql
+-- Dropping login from psql port should fail for superuser
+DROP ROLE ownership_restrictions_from_pg_login1;
+GO
+
+-- Create a non babelfish role that is a member of master_guest
+-- and enable dropping
+CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role2;
+GO
+
+SET enable_drop_babelfish_role = true;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role2;
+GO
+
+SET enable_drop_babelfish_role = false;
+GO
+
+CREATE ROLE ownership_restrictions_from_pg_role3;
+GO
+
+GRANT master_guest TO ownership_restrictions_from_pg_role3;
+GRANT tempdb_guest TO ownership_restrictions_from_pg_role3;
+GRANT msdb_guest TO ownership_restrictions_from_pg_role3;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role3;
+GO
+
+SET enable_drop_babelfish_role = true;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role3;
+GO
+
+SET enable_drop_babelfish_role = false;
+GO
+
+-- Test a regular role
+CREATE ROLE ownership_restrictions_from_pg_role4;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role4;
+GO
+
 SET enable_drop_babelfish_role = true;
 go
 DROP USER ownership_restrictions_from_pg_test_su_user;

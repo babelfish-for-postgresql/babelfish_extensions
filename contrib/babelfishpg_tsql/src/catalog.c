@@ -90,6 +90,12 @@ Oid			bbf_domain_mapping_oid = InvalidOid;
 Oid			bbf_domain_mapping_idx_oid = InvalidOid;
 
 /*****************************************
+ *			EXTENDED_PROPERTIES
+ *****************************************/
+Oid			bbf_extended_properties_oid = InvalidOid;
+Oid			bbf_extended_properties_idx_oid = InvalidOid;
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
@@ -238,6 +244,21 @@ bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
 		return get_ENR(currentQueryEnv, relname);
 
 	return IsToastNamespace(pg_class_tup->relnamespace);
+}
+
+void pltsql_drop_relation_refcnt_hook(Relation relation)
+{
+	int expected_refcnt = 0;
+	if (sql_dialect != SQL_DIALECT_TSQL ||
+		!RelationIsBBFTableVariable(relation))
+		return;
+
+	expected_refcnt = relation->rd_isnailed ? 2 : 1;
+
+	while (relation->rd_refcnt > expected_refcnt)
+	{
+		RelationDecrementReferenceCount(relation);
+	}
 }
 
 /*****************************************
@@ -493,7 +514,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	TupleDesc	dsc;
 	bool		isnull;
 
-	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
+	if (get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
 		return NULL;
 
 	rel = table_open(namespace_ext_oid, AccessShareLock);
@@ -1212,7 +1233,7 @@ get_bbf_servers_def_oid()
 	return bbf_servers_def_oid;
 }
 
-Oid 
+Oid
 get_bbf_servers_def_idx_oid()
 {
 	if (!OidIsValid(bbf_servers_def_idx_oid))
@@ -1222,14 +1243,14 @@ get_bbf_servers_def_idx_oid()
 	return bbf_servers_def_idx_oid;
 }
 
-int 
-get_query_timeout_from_server_name(char *servername)
+int
+get_timeout_from_server_name(char *servername, int attnum)
 {
 	Relation	bbf_servers_def_rel;
 	HeapTuple	tuple;
 	ScanKeyData	key;
 	TableScanDesc	scan;
-	int		query_timeout = 0;
+	int		timeout = 0;
 
 	bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(),
 										 RowExclusiveLock);
@@ -1245,15 +1266,15 @@ get_query_timeout_from_server_name(char *servername)
 	if (HeapTupleIsValid(tuple))
 	{
 		bool	isNull;
-		query_timeout = DatumGetInt32(heap_getattr(tuple, Anum_bbf_servers_def_query_timeout,
+		timeout = DatumGetInt32(heap_getattr(tuple, attnum,
 														 RelationGetDescr(bbf_servers_def_rel), &isNull));
 		if (isNull)
-			query_timeout = 0;
+			timeout = 0;
 	}
 
 	table_endscan(scan);
 	table_close(bbf_servers_def_rel, RowExclusiveLock);
-	return query_timeout;
+	return timeout;
 }
 
 void
@@ -1436,6 +1457,30 @@ get_bbf_domain_mapping_idx_oid()
 													   get_namespace_oid("sys", false));
 
 	return bbf_domain_mapping_idx_oid;
+}
+
+/*****************************************
+ *			EXTENDED_PROPERTIES
+ *****************************************/
+
+Oid
+get_bbf_extended_properties_oid()
+{
+	if (!OidIsValid(bbf_extended_properties_oid))
+		bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME,
+														get_namespace_oid("sys", false));
+
+	return bbf_extended_properties_oid;
+}
+
+Oid
+get_bbf_extended_properties_idx_oid()
+{
+	if (!OidIsValid(bbf_extended_properties_idx_oid))
+		bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME,
+															get_namespace_oid("sys", false));
+
+	return bbf_extended_properties_idx_oid;
 }
 
 /*****************************************

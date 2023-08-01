@@ -61,6 +61,7 @@ BABEL-404
 BABEL-4078-before-14_8-or-15_3
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-741
@@ -143,6 +144,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
+sys-parsename
 sys-procedures
 sys-schema-name
 sys-schemas
@@ -212,3 +214,5 @@ test_windows_login_before_15_2
 TestXML
 timefromparts
 triggers_with_transaction
+BABEL-4046
+getdate
