@@ -1702,7 +1702,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid			tsqlSeqTypOid;
 	TypeName   *type_def;
 	List	   *type_names;
-	List	   *new_type_names;
+	List	   *new_type_names = NULL;
 	AclResult	aclresult;
 	Oid			base_type;
 	int			list_len;
@@ -5105,8 +5105,8 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 
 				int type_oid;
 				char *type = NULL;
-				TypeName *ofTypename;
-				int64 seed_value;
+				TypeName *ofTypename = NULL;
+				int64 seed_value = 0;
 				int arg_num;
 
 				if (seen_identity)
