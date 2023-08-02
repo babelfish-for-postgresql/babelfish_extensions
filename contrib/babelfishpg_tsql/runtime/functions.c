@@ -87,7 +87,9 @@ PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
-PG_FUNCTION_INFO_V1(identity_into);
+PG_FUNCTION_INFO_V1(identity_into_smallint);
+PG_FUNCTION_INFO_V1(identity_into_int);
+PG_FUNCTION_INFO_V1(identity_into_bigint);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(host_id);
 PG_FUNCTION_INFO_V1(context_info);
@@ -116,6 +118,7 @@ void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
 extern bool canCommitTransaction(void);
+static int64 get_identity_next_value(void);
 
 extern int	pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -1900,13 +1903,34 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-Datum
-identity_into(PG_FUNCTION_ARGS)
+/**
+ * Common function to get next value of sequence for Identity function in Select Into
+ */
+static int64 
+get_identity_next_value(void)
 {
 	int64 result;
 	Assert(tsql_select_into_seq_oid != InvalidOid);
 	result = nextval_internal(tsql_select_into_seq_oid, false);
-	PG_RETURN_INT64((int64) result);
+	return result;
+}
+
+Datum 
+identity_into_smallint(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT16((int16)get_identity_next_value());
+}
+
+Datum
+identity_into_int(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32((int32)get_identity_next_value());
+}
+
+Datum 
+identity_into_bigint(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64((int64)get_identity_next_value());
 }
 
 /*

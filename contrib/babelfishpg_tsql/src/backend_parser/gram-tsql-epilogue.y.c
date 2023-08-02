@@ -236,29 +236,32 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 	Node *result;
 	List *args;
 	int32 typmod;
-	Oid	type_oid;
+	Oid type_oid;
 	Oid base_oid;
 	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
-	base_oid =  getBaseType(type_oid);
+	base_oid = getBaseType(type_oid);
 	switch (base_oid)
-		{
-			case INT2OID:
-			case INT4OID:
-			case INT8OID:
-			case NUMERICOID:				
-				args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
-				result = (Node *) makeFuncCall(TsqlSystemFuncName("identity_into"), args, COERCE_EXPLICIT_CALL, location);
-				break;
-			default:
-				ereport(ERROR,
+	{
+		case INT2OID:
+			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
+			result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_smallint"), args, COERCE_EXPLICIT_CALL, location);
+			break;
+		case INT4OID:
+			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
+			result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_int"), args, COERCE_EXPLICIT_CALL, location);
+			break;
+		case INT8OID:
+		case NUMERICOID:
+			args = list_make3((Node *)makeIntConst((int)INT8OID, location), seed, increment); /* Used bigint internally for decimal and numeric as well*/
+			result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_bigint"), args, COERCE_EXPLICIT_CALL, location);
+			break;
+		default:
+			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("identity column type must be smallint, integer, bigint, or numeric")));
-				break;
-
-		}
-
+					errmsg("identity column type must be of data type int, bigint, smallint, or decimal or numeric")));
+			break;
+	}
 	return result;
-
 }
 
 /* TsqlFunctionParse -- Implements the PARSE and TRY_PARSE functions.
