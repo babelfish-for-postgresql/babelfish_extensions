@@ -120,7 +120,19 @@ GO
 DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
+SELECT IDENTITY(int, -10, 1+1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+SELECT IDENTITY(int, 1, 1-2) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
+GO
+
 SELECT col1, IDENTITY(char, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+SELECT col1, IDENTITY(int, 1,1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
 -- impact to other similar queries and functions

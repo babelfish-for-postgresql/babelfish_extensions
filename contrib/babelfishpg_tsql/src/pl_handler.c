@@ -5091,19 +5091,19 @@ static int64 get_identity_into_args(Node *node)
 		case T_FuncExpr:
 			fxpr = (FuncExpr *)node;
 			if ((fxpr->args)->length != 1)
-				elog(ERROR, "Incorrect syntax near 'identity'");
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
 			n = (Node *)list_nth(fxpr->args, 0);
 			val = get_identity_into_args(n);
 			break;
 		case T_OpExpr:
 			opxpr = (OpExpr *)node;
 			if ((opxpr->args)->length != 1)
-				elog(ERROR, "Incorrect syntax near 'identity'");
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
 			n = (Node *)list_nth(opxpr->args, 0);
 			val = get_identity_into_args(n);
 			break;
 		default:
-			elog(ERROR, "Incorrect syntax near 'identity'");
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
 			break;
 		}
 	return val;
@@ -5150,13 +5150,11 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				int argnum;
 
 				if (seen_identity)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-								errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
 
 				funcexpr = (FuncExpr *)tle->expr;
 				argnum = 0;
@@ -5179,7 +5177,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 					case 3:
 						incrementvalue = get_identity_into_args(farg_node);
 						seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeFloat(psprintf(INT64_FORMAT, incrementvalue)), -1));
-						if (increment_value > 0)
+						if (incrementvalue > 0)
 						{
 							seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
 						}
