@@ -1,2 +1,5 @@
 EXEC sp_describe_first_result_set_vu_prepare_procedure;
 GO
+
+EXEC sp_describe_first_result_set_vu_prepare_procedure2;
+GO
