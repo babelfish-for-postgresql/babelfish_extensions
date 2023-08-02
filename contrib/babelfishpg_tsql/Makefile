@@ -73,6 +73,7 @@ OBJS += src/tsql_for/forxml_old.o
 OBJS += src/tsql_analyze.o
 OBJS += src/linked_servers.o
 OBJS += src/table_variable_mvcc.o
+OBJS += src/extendedproperty.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
@@ -133,8 +134,11 @@ GE91		 = $(call test, $(MAJORVER), -ge, 91)
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
+SHAREDIR 	 = $(shell $(PG_CONFIG) --sharedir)
+
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
+	cp tsql_contains.stop $(SHAREDIR)/tsearch_data/tsql_contains.stop
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in

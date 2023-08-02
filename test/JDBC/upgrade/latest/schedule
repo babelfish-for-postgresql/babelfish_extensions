@@ -115,6 +115,7 @@ BABEL-4078
 BABEL-4098
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -133,6 +134,7 @@ babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-v2
 babel_int4_varbinary_div
 babelfish_authid_login_ext
 babelfish_authid_user_ext
@@ -206,6 +208,7 @@ format
 forxml
 forxml-subquery
 fulltextserviceproperty
+fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -441,3 +444,4 @@ datetimeoffset-timezone
 BABEL-4046
 host_id
 linked_srv_4229
+waitfor
