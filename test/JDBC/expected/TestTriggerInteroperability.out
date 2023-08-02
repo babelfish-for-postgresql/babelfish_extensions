@@ -146,18 +146,262 @@ int
 ~~END~~
 
 
+-- psql
+truncate table master_dbo.psql_tbl_1;
+truncate table master_dbo.psql_tbl_2;
+GO
+
+-- tsql
+create table test_tbl_trig_bbf_3(a int);
+GO
+
+CREATE TRIGGER tsql_trigger_3 ON test_tbl_trig_bbf_3 AFTER INSERT AS
+INSERT INTO test_tbl_trig_bbf_1 VALUES(4);
+GO
+
+-- tsql
+-- begin tsql insert -> tsql trigger -> pg trigger (without error)
+begin tran
+GO
+
+insert into test_tbl_trig_bbf_3 values (1);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select @@trancount
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+commit tran
+GO
+
+select count(*) from test_tbl_trig_bbf_3;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from test_tbl_trig_bbf_1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+select count(*) from psql_tbl_1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- begin tsql insert -> tsql trigger -> pg trigger (error)
+begin tran
+GO
+
+insert into test_tbl_trig_bbf_3 values (1);
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "psql_tbl_1_a_key")~~
+
+
+select @@trancount
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+rollback tran
+GO
+
+select count(*) from test_tbl_trig_bbf_3;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from test_tbl_trig_bbf_1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+select count(*) from psql_tbl_1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- psql
+truncate table master_dbo.psql_tbl_1;
+truncate table master_dbo.psql_tbl_2;
+GO
+
+-- tsql
+create table test_tbl_trig_bbf_4(a int);
+GO
+
+-- psql
+CREATE OR REPLACE FUNCTION master_dbo.f_trig_pg_4() RETURNS trigger
+AS $$
+BEGIN
+        insert into master_dbo.test_tbl_trig_bbf_3 values (1);
+        RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+CREATE TRIGGER pg_trigger_4 AFTER INSERT OR DELETE OR UPDATE ON master_dbo.test_tbl_trig_bbf_4 
+    FOR EACH ROW EXECUTE FUNCTION master_dbo.f_trig_pg_4();
+GO
+
+
+-- tsql
+-- begin TSQL insert -> PG trigger -> TSQL trigger -> PG trigger (without error)
+begin tran
+go
+
+insert into test_tbl_trig_bbf_4 values (1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.)~~
+
+
+select @@trancount
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+commit tran
+GO
+
+select count(*) from test_tbl_trig_bbf_4;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from test_tbl_trig_bbf_3;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from test_tbl_trig_bbf_1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+select count(*) from psql_tbl_1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- begin TSQL insert -> PG trigger -> TSQL trigger -> PG trigger (error)
+begin tran
+go
+
+insert into test_tbl_trig_bbf_4 values (1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.)~~
+
+
+select @@trancount
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+rollback tran
+GO
+
+select count(*) from test_tbl_trig_bbf_4;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from test_tbl_trig_bbf_3;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from test_tbl_trig_bbf_1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+select count(*) from psql_tbl_1;
+GO
+~~START~~
+int
+0
+~~END~~
+
 
 -- psql
 drop function master_dbo.f_trig_pg_1() cascade;
 drop function master_dbo.f_trig_pg_2() cascade;
+drop function master_dbo.f_trig_pg_4() cascade;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: drop cascades to trigger pg_trigger_1 on table master_dbo.test_tbl_trig_bbf_1  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_2 on table master_dbo.test_tbl_trig_bbf_2  Server SQLState: 00000)~~
+~~WARNING (Message: drop cascades to trigger pg_trigger_1 on table master_dbo.test_tbl_trig_bbf_1  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_2 on table master_dbo.test_tbl_trig_bbf_2  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_4 on table master_dbo.test_tbl_trig_bbf_4  Server SQLState: 00000)~~
 
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: drop cascades to trigger pg_trigger_1 on table master_dbo.test_tbl_trig_bbf_1  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_2 on table master_dbo.test_tbl_trig_bbf_2  Server SQLState: 00000)~~
+~~WARNING (Message: drop cascades to trigger pg_trigger_1 on table master_dbo.test_tbl_trig_bbf_1  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_2 on table master_dbo.test_tbl_trig_bbf_2  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_4 on table master_dbo.test_tbl_trig_bbf_4  Server SQLState: 00000)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: drop cascades to trigger pg_trigger_1 on table master_dbo.test_tbl_trig_bbf_1  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_2 on table master_dbo.test_tbl_trig_bbf_2  Server SQLState: 00000)~~~~WARNING (Message: drop cascades to trigger pg_trigger_4 on table master_dbo.test_tbl_trig_bbf_4  Server SQLState: 00000)~~
 
 
 drop table master_dbo.psql_tbl_1;
@@ -167,4 +411,6 @@ GO
 -- tsql
 drop table test_tbl_trig_bbf_1;
 drop table test_tbl_trig_bbf_2;
+drop table test_tbl_trig_bbf_3;
+drop table test_tbl_trig_bbf_4;
 GO
