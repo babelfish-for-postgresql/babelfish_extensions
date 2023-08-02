@@ -802,11 +802,11 @@ BEGIN
         (p_month NOT BETWEEN 1 AND 12) OR
         (p_day NOT BETWEEN 1 AND 31) OR
         (p_hour NOT BETWEEN 0 AND 23) OR
-        (p_minute NOT BETWEEN 0 AND 59))
+        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
     THEN
         RAISE invalid_datetime_format;
     END IF;
-    p_seconds := 00;
+    p_seconds := 0;
     v_ressmalldatetime := make_timestamp(p_year,
                                     p_month,
                                     p_day,
