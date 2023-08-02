@@ -516,7 +516,7 @@ schema_name(PG_FUNCTION_ARGS)
 Datum
 schema_id(PG_FUNCTION_ARGS)
 {
-	char	   *name;
+	char	   *name = NULL;
 	char	   *input_name;
 	char	   *physical_name;
 	int			id;
@@ -573,7 +573,8 @@ schema_id(PG_FUNCTION_ARGS)
 
 	id = get_namespace_oid(physical_name, true);
 
-	pfree(name);
+	if (!name)
+		pfree(name);
 	pfree(physical_name);
 
 	if (!OidIsValid(id))
