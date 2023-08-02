@@ -169,3 +169,14 @@ storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output#!#i
 storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|output
 DROP PROCEDURE sp_test21
 
+CREATE PROCEDURE sp_test22 (@MixedCaseArg_1 INT, @MixedCaseArg_2 INT OUTPUT) AS BEGIN SET @MixedCaseArg_2=100; SET @MixedCaseArg_1=1000; Select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2; END;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2 OUT, @MixedCaseArg_1=@MixedCaseArg_1;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2, @MixedCaseArg_1=@MixedCaseArg_1 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2 OUT, @MixedCaseArg_1=@MixedCaseArg_1 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2, @MixedCaseArg_1=@MixedCaseArg_1;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1, @MixedCaseArg_2=@MixedCaseArg_2;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1, @MixedCaseArg_2=@MixedCaseArg_2 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1 OUT, @MixedCaseArg_2=@MixedCaseArg_2;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1 OUT, @MixedCaseArg_2=@MixedCaseArg_2 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1 OUT, @MixedCaseArg_2 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+DROP PROCEDURE sp_test22
