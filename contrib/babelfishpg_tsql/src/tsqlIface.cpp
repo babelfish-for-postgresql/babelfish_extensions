@@ -179,7 +179,7 @@ static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing
  *
  * The difficulty of query string modification is that, upper-level general grammar (i.e. dml_clause, ddl_clause, ...)
  * actaully creates PLtsql_stmt but logic of query modification is available in low-level fine-grained grammar (i.e. full_object_name, select_list, ...)
- * We can't modify the query string in enter/exit function of low-evel grammar because it may append query string in middle of query
+ * We can't modify the query string in enter/exit function of low-level grammar because it may append query string in middle of query
  * so it may lead to inconsistency between query string and token index information obtained from ANTLR parser.
  * (i.e. if we rewrite "SELECT 'a'=1 from T" to "SELECT 1 as 'a' FROM T", T appears poisition 22 after rewriting but ANTLR token still keeps position 19)
  *
@@ -947,6 +947,7 @@ public:
 
 	void exitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
 	{
+	
 		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
 		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
@@ -955,6 +956,17 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
+		
+		
+		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+		{
+			TSqlParser::IdContext *idctx = ctx->id()[0];
+			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+			{
+				rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), ""))); 
+				rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "")));			
+			}
+		}
 
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
@@ -2150,7 +2162,7 @@ public:
 	//  ignore those as well.
 	
 	if (proc->keyword() || proc->colon_colon())
-	    return;
+		return;
 	
 	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
@@ -2165,7 +2177,7 @@ public:
 		stream.setText(ctx->start->getStartIndex(), " chr");
 	}
     }	
-
+         
     void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
     {
 	// We are looking at a function name; it may be a function call, or a
@@ -2175,6 +2187,22 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
+
+	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+	{
+		TSqlParser::IdContext *idctx = ctx->id()[0];
+		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+		{
+			// Replace id()[0] and colon_colon with blank spaces of the same length
+            std::string idText = idctx->id()[0]->getText();
+            std::string colonText = idctx->colon_colon()->getText();
+            std::string blankSpaces(idText.size() + colonText.size(), ' ');
+            
+            stream.setText(idctx->id()[0]->start->getStartIndex(), blankSpaces.c_str());
+            //stream.setText(idctx->colon_colon()->getStartIndex(), blankSpaces);
+		}
+
+	}
 
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
@@ -2186,7 +2214,7 @@ public:
 	// See the commment in enterFunc_proc_name_schema() for an explanation of this code
 	
 	if (proc->keyword() || proc->colon_colon())
-	    return;
+		return;
 	
 	// FIXME: handle the schema here too
 	std::string procNameStr = getIDName(proc->DOUBLE_QUOTE_ID(), proc->SQUARE_BRACKET_ID(), proc->ID());
@@ -2579,8 +2607,8 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		antlr4::tree::ParseTreeWalker secondPass;
 		secondPass.walk(builder.get(), tree);
 
-		if (pltsql_dump_antlr_query_graph)
-			toDotRecursive(tree, parser.getRuleNames(), sourceText);
+		//if (pltsql_dump_antlr_query_graph)
+		toDotRecursive(tree, parser.getRuleNames(), sourceText);
 
 		if (pltsql_parseonly)
 			pltsql_parse_result = makeEmptyBlockStmt(0);
@@ -3429,6 +3457,33 @@ makeExecSql(ParserRuleContext *ctx)
 PLtsql_expr *
 makeTsqlExpr(const std::string &fragment, bool addSelect)
 {
+	std::string spatial_funcs[] = {"STAsText","STAsBinary","STDistance","long","lat"};
+	for(int i = 0; i < 5; i++){
+		if(fragment.find(spatial_funcs[i]) != std::string::npos){
+
+			size_t atPos = fragment.find("@"); 
+			size_t dotPos = fragment.find("."); 
+
+			std::string var_name = fragment.substr(atPos, dotPos - atPos -1);
+
+			std::string new_fragment = spatial_funcs[i] + "(" + var_name + ")"; 
+
+			PLtsql_expr *result = (PLtsql_expr *) palloc0(sizeof(*result));
+
+			if (addSelect)
+				result->query = pstrdup((std::string("SELECT ") + new_fragment).c_str());
+			else
+				result->query = pstrdup(new_fragment.c_str());
+			
+			result->plan     = NULL;
+			result->paramnos = NULL;
+			result->rwparam  = -1;
+			result->ns	     = pltsql_ns_top();
+
+			return result;
+		}
+	}
+
     PLtsql_expr *result = (PLtsql_expr *) palloc0(sizeof(*result));
 
 	if (addSelect)

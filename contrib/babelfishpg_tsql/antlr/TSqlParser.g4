@@ -3397,6 +3397,7 @@ expression
     | DEFAULT                                                                   #default_expr
     | case_expression                                                           #case_expr
     | hierarchyid_coloncolon_methods                                            #hierarchyid_coloncolon
+    | spatial_coloncolon_methods                                                #spatial_coloncolon
     | over_clause                                                               #over_clause_expr
     | odbc_literal                                                              #odbc_literal_expr
     | DOLLAR_ACTION                                                             #dollar_action_expr
@@ -3806,6 +3807,10 @@ spatial_methods  // we could expand the entire list here, but it is very long
     : method=id (LR_BRACKET expression_list? RR_BRACKET)?
     | NULL_P // no bracket
     ;
+
+spatial_coloncolon_methods
+    : data_type colon_colon function_call
+    ; 
         
 hierarchyid_methods
     : method=( GETANCESTOR | GETDESCENDANT | GETLEVEL | ISDESCENDANTOF | READ | GETREPARENTEDVALUE | TOSTRING ) LR_BRACKET expression_list? RR_BRACKET
@@ -5093,7 +5098,7 @@ id
     | SQUARE_BRACKET_ID
     | keyword
     | DOLLAR_IDENTITY                                                           
-    | DOLLAR_ROWGUID														 
+    | DOLLAR_ROWGUID
     | id colon_colon id
     ;
 
