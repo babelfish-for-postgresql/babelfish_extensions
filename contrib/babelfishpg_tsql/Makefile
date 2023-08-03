@@ -134,8 +134,11 @@ GE91		 = $(call test, $(MAJORVER), -ge, 91)
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
+SHAREDIR 	 = $(shell $(PG_CONFIG) --sharedir)
+
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
+	cp tsql_contains.stop $(SHAREDIR)/tsearch_data/tsql_contains.stop
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
