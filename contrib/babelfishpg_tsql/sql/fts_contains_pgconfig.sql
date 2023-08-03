@@ -10,8 +10,11 @@ DECLARE
   joined_text text;
   word text;
 BEGIN
-  -- Prefix term
-  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) THEN
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
     RETURN 'simple'::regconfig;
   END IF;
   -- Simple term

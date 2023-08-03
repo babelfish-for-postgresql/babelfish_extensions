@@ -11,9 +11,12 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
   RETURNS TEXT AS
 $$
 DECLARE
+  orig_phrase text;
   joined_text text;
   word text;
 BEGIN
+  orig_phrase = phrase;
+
   -- generation term not supported
   IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
     RAISE EXCEPTION 'Generation term not supported';
@@ -62,9 +65,12 @@ BEGIN
   -- Remove the trailing "<->" from the joined_text
   joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
 
-  -- If the last word has the form 'lastword*', then this is a prefix term (the last word cannot be '*')
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
   -- We need to rewrite the last word into 'lastword:*'
-  IF ((joined_text COLLATE "C") SIMILAR TO ('%\*' COLLATE C)) AND (NOT (joined_text COLLATE "C") SIMILAR TO ('%<->\*' COLLATE C)) AND (NOT (joined_text COLLATE "C") SIMILAR TO ('\*' COLLATE C)) THEN
+  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
     joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
   END IF;
 

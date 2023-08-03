@@ -264,8 +264,58 @@ int#!#text
 ~~END~~
 
 
+EXEC fts_contains_vu_prepare_p1 '" daily"'
+GO
+~~START~~
+int#!#text
+89#!# Eighty croissants are made daily for the pastry shop , which is small but well-lit by a storefront of large windows 
+383#!#Researchers say the results suggest that being lonely can cause people to experience daily life as more stressful , which may cause chronic stress and in turn disrupt the immune system 
+479#!#Get daily news by email
+492#!#Our newspapers include the flagship Manchester Evening News - Britain 's largest circulating regional daily with up to 130,485 copies - as well as 20 local weekly titles across Greater Manchester , Cheshire and Lancashire 
+501#!#Get daily news by email
+529#!#The Liverpool Echo reaches 1 in 3 people in the area with a daily readership of more than 256,000* people
+536#!# He is a former editor of The Daily Post ( Wales and England ) and editor-in-chief of the company 's Welsh operations 
+602#!# If so , the RCAF will be required to monitor Canada 's Arctic on a daily basis 
+942#!#Wendy Cukier , founder and director of the Diversity Institute at Ryerson University and a lead researcher on the project , highlighted the significance of the sector-based approach to this research in an email to The Daily 
+943#!#In a phone interview with The Daily , Suzanne Gagnon , another researcher on the project and a professor of organizational behaviour at Desautels , warned that sector averages should not necessarily be taken at face value , and that there is often a wide range of representation within sectors 
+~~END~~
 
--- REST NOT SUPPORTED YET
+
+EXEC fts_contains_vu_prepare_p1 '"daily "'
+GO
+~~START~~
+int#!#text
+89#!# Eighty croissants are made daily for the pastry shop , which is small but well-lit by a storefront of large windows 
+383#!#Researchers say the results suggest that being lonely can cause people to experience daily life as more stressful , which may cause chronic stress and in turn disrupt the immune system 
+479#!#Get daily news by email
+492#!#Our newspapers include the flagship Manchester Evening News - Britain 's largest circulating regional daily with up to 130,485 copies - as well as 20 local weekly titles across Greater Manchester , Cheshire and Lancashire 
+501#!#Get daily news by email
+529#!#The Liverpool Echo reaches 1 in 3 people in the area with a daily readership of more than 256,000* people
+536#!# He is a former editor of The Daily Post ( Wales and England ) and editor-in-chief of the company 's Welsh operations 
+602#!# If so , the RCAF will be required to monitor Canada 's Arctic on a daily basis 
+942#!#Wendy Cukier , founder and director of the Diversity Institute at Ryerson University and a lead researcher on the project , highlighted the significance of the sector-based approach to this research in an email to The Daily 
+943#!#In a phone interview with The Daily , Suzanne Gagnon , another researcher on the project and a professor of organizational behaviour at Desautels , warned that sector averages should not necessarily be taken at face value , and that there is often a wide range of representation within sectors 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 ' "daily news"'
+GO
+~~START~~
+int#!#text
+479#!#Get daily news by email
+501#!#Get daily news by email
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"daily news" '
+GO
+~~START~~
+int#!#text
+479#!#Get daily news by email
+501#!#Get daily news by email
+~~END~~
+
+
 -- test prefix term: ... CONTAINS(col_name, <prefix_term>) ...
 -- <prefix term> ::= { "word*" | "phrase*" } 
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
@@ -342,6 +392,95 @@ int#!#text
 ~~END~~
 
 
+-- test corner case of spurious prefix terms (not prefix terms, but simple terms)
+-- not surrounded by double quotes
+EXEC fts_contains_vu_prepare_p1 'pass*'
+GO
+~~START~~
+int#!#text
+211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
+706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 ' pass*'
+GO
+~~START~~
+int#!#text
+211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
+706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'pass* '
+GO
+~~START~~
+int#!#text
+211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
+706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
+~~END~~
+
+
+-- star is not in the last word
+EXEC fts_contains_vu_prepare_p1 '"t* independent"'
+GO
+~~START~~
+int#!#text
+157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
+435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
+506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
+955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 ' "t* independent" '
+GO
+~~START~~
+int#!#text
+157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
+435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
+506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
+955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '" t* independent "'
+GO
+~~START~~
+int#!#text
+157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
+435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
+506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
+955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
+~~END~~
+
+
+-- last word only contains star
+EXEC fts_contains_vu_prepare_p1 '"*"'
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 ' "*" '
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 ' "independent *" '
+GO
+~~START~~
+int#!#text
+157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
+435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
+506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
+955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
+~~END~~
+
+
 EXEC fts_contains_vu_prepare_p1 '"independent *"'
 GO
 ~~START~~
@@ -353,6 +492,8 @@ int#!#text
 ~~END~~
 
 
+
+-- REST NOT SUPPORTED YET
 -- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
 -- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'
