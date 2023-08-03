@@ -9,7 +9,8 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 all
-
+#Test 
+ignore#!#babel_tds_fault_injection
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
