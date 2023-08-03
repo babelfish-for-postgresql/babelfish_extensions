@@ -1,0 +1,131 @@
+SELECT CAST(123456.25 AS real) AS value_as_real, CAST(CAST(123456.25 AS real) AS decimal(30,2)) AS value_casted_to_decimal_30_2;
+GO
+~~START~~
+real#!#numeric
+123456.25#!#123456.25
+~~END~~
+
+
+select cast(cast(123457.145637867 as real) as numeric (30, 20));
+GO
+~~START~~
+numeric
+123457.14843750000000000000
+~~END~~
+
+
+select cast((cast(123456.00 as real)) as numeric(30,2));
+GO
+~~START~~
+numeric
+123456.00
+~~END~~
+
+
+INSERT INTO babel_3066_vu_prepare_t1 VALUES (122.34562), (735412.97354), (-467822.56378), (-456.24516), (1234.465), ('inf'), ('-inf'), ('nan');
+GO
+~~ROW COUNT: 8~~
+
+INSERT INTO babel_3066_vu_prepare_t1 VALUES (123456789123456789123456789123456789.123456789);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT CAST(col1 as numeric(30,2)) as value_casted_to_decimal_30_2 from babel_3066_vu_prepare_t1;
+GO
+~~START~~
+numeric
+122.35
+735413.00
+-467822.56
+-456.25
+1234.46
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+SELECT CAST(col1 as numeric(30,20)) as value_casted_to_decimal_30_20 from babel_3066_vu_prepare_t1;
+GO
+~~START~~
+numeric
+122.34561920166015625000
+735413.00000000000000000000
+-467822.56250000000000000000
+-456.24514770507812500000
+1234.46496582031250000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+SELECT CAST(col1 as numeric(30,4)) as value_casted_to_decimal_30_4 from babel_3066_vu_prepare_t1;
+GO
+~~START~~
+numeric
+122.3456
+735413.0000
+-467822.5625
+-456.2451
+1234.4650
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+SELECT CAST(col1 as numeric(38,38)) as value_casted_to_decimal_38_38 from babel_3066_vu_prepare_t1;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+INSERT INTO babel_3066_vu_prepare_t2 values (CAST(1234.156 as real)), (CAST(-3256.55 as real)), (CAST(1234.6513 as real)), (CAST(1324567.45267781 as real)), (CAST(12.2 as real)), (CAST(122.34562 as real)), (CAST(735412.97354 as real));
+GO
+~~ROW COUNT: 7~~
+
+
+INSERT INTO babel_3066_vu_prepare_t2 values (123456789123456789123456789123456789.123456789);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT col1 from babel_3066_vu_prepare_t2;
+GO
+~~START~~
+numeric
+1234.156
+-3256.550
+1234.651
+1324567.500
+12.200
+122.346
+735413.000
+~~END~~
+
+
+select CAST(CAST(col1 AS real) AS decimal(30,2)) from babel_3066_vu_prepare_t2;
+GO
+~~START~~
+numeric
+1234.16
+-3256.55
+1234.65
+1324567.50
+12.20
+122.35
+735413.00
+~~END~~
+
+
+SELECT babel_3066_vu_prepare_t1.col1, babel_3066_vu_prepare_t2.col1 
+FROM babel_3066_vu_prepare_t1 JOIN babel_3066_vu_prepare_t2
+ON cast (babel_3066_vu_prepare_t1.col1 as real) = CAST(CAST(babel_3066_vu_prepare_t2.col1 AS real) AS decimal(30,2));
+GO
+~~START~~
+real#!#numeric
+735413.0#!#735413.000
+~~END~~
+
+
