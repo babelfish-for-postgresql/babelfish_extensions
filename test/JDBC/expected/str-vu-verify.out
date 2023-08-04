@@ -29,7 +29,7 @@ SELECT * FROM str_vu_prepare_v5
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.5#!#123.5#!#123.5#!#123.5
+123.0#!#123.5#!#123.4#!#123.0#!#123.0#!#123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.5#!#123.5#!#123.5#!#123.5
 ~~END~~
 
 
@@ -197,7 +197,7 @@ EXEC str_vu_prepare_p5
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-123.0#!#123.5#!#123.5#!#123.0#!#123.0#!#123.0#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5
+123.0#!#123.5#!#123.4#!#123.0#!#123.0#!#123.0#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5#!#123.5
 ~~END~~
 
 
