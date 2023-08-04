@@ -5068,7 +5068,7 @@ static char *get_oid_type_string(int type_oid){
 			break;
 		default:
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("identity column type must be smallint, integer, bigint, or numeric")));
+				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
 			break;
 	}
 	return type_string;
@@ -5162,7 +5162,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				{
 					Node *farg_node = (Node *)lfirst(arg);
 					argnum++;
-					switch (arg_num)
+					switch (argnum)
 					{
 					case 1:
 						typeoid = get_identity_into_args(farg_node);

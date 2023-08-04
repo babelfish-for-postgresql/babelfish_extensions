@@ -229,7 +229,7 @@ SELECT col1, IDENTITY(char, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_53
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: identity column type must be of data type int, bigint, smallint, or decimal or numeric)~~
+~~ERROR (Message: Parameter or variable '' has an invalid data type.)~~
 
 
 SELECT col1, IDENTITY(int, 1,1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;

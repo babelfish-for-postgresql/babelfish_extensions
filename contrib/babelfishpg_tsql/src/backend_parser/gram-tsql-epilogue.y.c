@@ -258,7 +258,7 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("identity column type must be of data type int, bigint, smallint, or decimal or numeric")));
+					errmsg("Parameter or variable '' has an invalid data type.")));
 			break;
 	}
 	return result;
