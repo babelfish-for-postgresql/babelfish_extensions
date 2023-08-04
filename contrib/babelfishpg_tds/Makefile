@@ -9,7 +9,7 @@ tds_backend = $(tds_top_dir)/src/backend
 tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
-PG_CFLAGS += -Werror
+PG_CFLAGS += -Werror -O2
 PG_CFLAGS += -fstack-protector-strong
 PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
 
