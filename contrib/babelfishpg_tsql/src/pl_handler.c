@@ -32,6 +32,7 @@
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
+#include "commands/trigger.h"
 #include "commands/user.h"
 #include "common/md5.h"
 #include "common/string.h"
@@ -3727,6 +3728,8 @@ _PG_init(void)
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
+	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+
 	inited = true;
 }
 
@@ -5105,8 +5108,8 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 
 				int type_oid;
 				char *type = NULL;
-				TypeName *ofTypename;
-				int64 seed_value;
+				TypeName *ofTypename = NULL;
+				int64 seed_value = 0;
 				int arg_num;
 
 				if (seen_identity)

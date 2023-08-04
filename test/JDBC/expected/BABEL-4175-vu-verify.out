@@ -1,0 +1,98 @@
+SELECT * FROM Purchasing;
+GO
+~~START~~
+int#!#int#!#int
+1#!#52#!#158
+2#!#44#!#146
+3#!#25#!#142
+4#!#66#!#460
+5#!#37#!#154
+6#!#53#!#564
+7#!#36#!#156
+~~END~~
+
+
+-- Verify DELETE TOP without parens
+-- This should fail
+DELETE TOP 2 FROM Purchasing;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '2' at line 3 and character position 11)~~
+
+
+DELETE TOP (2) FROM Purchasing;
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM Purchasing;
+GO
+~~START~~
+int#!#int#!#int
+3#!#25#!#142
+4#!#66#!#460
+5#!#37#!#154
+6#!#53#!#564
+7#!#36#!#156
+~~END~~
+
+
+-- Verify UPDATE TOP without parens
+-- This should fail
+UPDATE TOP 2 Purchasing SET VendorID = 0;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '2' at line 3 and character position 11)~~
+
+
+UPDATE TOP (2) Purchasing SET VendorID = 0;
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM Purchasing;
+GO
+~~START~~
+int#!#int#!#int
+5#!#37#!#154
+6#!#53#!#564
+7#!#36#!#156
+3#!#25#!#0
+4#!#66#!#0
+~~END~~
+
+
+SELECT * FROM insertTest
+GO
+~~START~~
+int
+~~END~~
+
+
+
+-- Verify INSERT TOP without parens
+-- This should fail
+INSERT TOP 3 INTO insertTest(VendorID) SELECT VendorID FROM Purchasing
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '3' at line 3 and character position 11)~~
+
+
+INSERT TOP (3) INTO insertTest(VendorID) SELECT VendorID FROM Purchasing
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT * FROM insertTest
+GO
+~~START~~
+int
+154
+564
+156
+~~END~~
+
+
