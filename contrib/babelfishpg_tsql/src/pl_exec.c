@@ -1043,6 +1043,14 @@ pltsql_exec_trigger(PLtsql_function *func,
 			   *rec_old;
 	HeapTuple	rettup;
 
+	/* Check if this trigger is called as part of any of postgres' function, procedure or trigger. */
+	if (!pltsql_support_tsql_transactions())
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.")));
+	}
+
 	/*
 	 * Setup the execution state
 	 */
