@@ -36,16 +36,23 @@ public class HandleException {
                         errorMsg += "\n  ";
                     }
                     bw.write("~~ERROR (Message: "+ errorMsg + "  Server SQLState: " + e.getSQLState() + ")~~");
-                } else if (e instanceof SQLServerException && "08S01".equals(e.getSQLState())){
-                    // Handling this particular exception where server might have crashed.
-                    System.out.println("Remote server might have crashed.");
-                    System.out.println("Error: " + e.getErrorCode());
-                    System.out.println("SQL State: " + e.getSQLState());
-                    System.out.println("Error message: "+ e.getMessage());
-                    bw.close();
-                    System.exit(0);
                 }
-                else {
+                else if(e instanceof SQLServerException) {
+                    // Handling this particular exception where server might have crashed.
+                    if ("08S01".equals(e.getSQLState())){
+                        System.out.println("Remote server might have crashed.");
+                        System.out.println("Error: " + e.getErrorCode());
+                        System.out.println("SQL State: " + e.getSQLState());
+                        System.out.println("Error message: "+ e.getMessage());
+
+                        bw.write("Remote server might have crashed.\n");
+                        bw.write("Error: " + e.getErrorCode() + "\n");
+                        bw.write("SQL State: " + e.getSQLState() + "\n");
+                        bw.write("Error message: "+ e.getMessage() + "\n");
+
+                        bw.close();
+                        System.exit(0);
+                    }
                     String errorMsg = e.getMessage();
                     //Do not print ClientConnectionId as part of error message
                     int index = errorMsg.indexOf("ClientConnectionId");
