@@ -241,6 +241,7 @@ schema_resolution_proc
 schema_resolution_trigger
 sp_describe_first_result_set
 sp_tablecollations
+smalldatetimefromparts-dep
 str
 sys-all_columns
 sys-all_columns-dep
