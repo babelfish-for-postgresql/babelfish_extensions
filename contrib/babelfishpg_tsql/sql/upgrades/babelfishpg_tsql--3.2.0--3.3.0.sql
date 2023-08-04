@@ -444,13 +444,17 @@ ALTER TEXT SEARCH CONFIGURATION fts_contains
 -- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
 -- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
 -- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+-- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
   RETURNS TEXT AS
 $$
 DECLARE
+  orig_phrase text;
   joined_text text;
   word text;
 BEGIN
+  orig_phrase = phrase;
+
   -- generation term not supported
   IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
     RAISE EXCEPTION 'Generation term not supported';
@@ -492,16 +496,21 @@ BEGIN
 
   -- Split the phrase into an array of words
   FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
-    -- prefix term not supported
-    IF (word COLLATE C) SIMILAR TO ('%\*' COLLATE C)  THEN
-      RAISE EXCEPTION 'Prefix term not supported';
-    END IF;
     -- Append the word to the joined_text variable
     joined_text := joined_text || word || '<->';
   END LOOP;
 
   -- Remove the trailing "<->" from the joined_text
   joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
+
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  -- We need to rewrite the last word into 'lastword:*'
+  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
+  END IF;
 
   -- Return the joined_text
   RETURN joined_text;
@@ -511,7 +520,10 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
 
 -- Given the query string, determine the Postgres full text configuration to use
--- Currently we only support simple terms, so the function simply returns 'fts_contains'
+-- Currently we only support simple terms and prefix terms
+-- For simple terms, we use the 'fts_contains' configuration
+-- For prefix terms, we use the 'simple' configuration
+-- They are the configurations that provide closest matching according to our experiments
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
   RETURNS regconfig AS
 $$
@@ -519,6 +531,14 @@ DECLARE
   joined_text text;
   word text;
 BEGIN
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    RETURN 'simple'::regconfig;
+  END IF;
+  -- Simple term
   RETURN 'fts_contains'::regconfig;
 END;
 $$
