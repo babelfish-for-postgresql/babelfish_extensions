@@ -3756,16 +3756,10 @@ remove_delimited_identifer(char *str)
 Datum
 sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 {
-	int			rc;
-	MemoryContext savedPortalCxt;
-
 	/* SPI call input */
-	StringInfoData buf;
+	StringInfoData	buf;
 
-	SPIPlanPtr	plan;
-	Portal		portal;
-	DestReceiver *receiver;
-	const char* provider_name = "tds_fdw";
+	const char*	provider_name = "tds_fdw";
 
 	if(!role_is_sa(GetSessionUserId()))
 		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -3788,36 +3782,51 @@ sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
 						") subquery;"
 			, str_toupper(provider_name, strlen(provider_name), C_COLLATION_OID), provider_name);
 
-	savedPortalCxt = PortalContext;
+	PG_TRY();
+	{
+		MemoryContext	savedPortalCxt;
+		SPIPlanPtr	plan;
+		Portal		portal;
+		DestReceiver	*receiver;
 
-	if (PortalContext == NULL)
-		PortalContext = MessageContext;
+		int		rc;
 
-	if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
-	PortalContext = savedPortalCxt;
+		savedPortalCxt = PortalContext;
 
-	if ((plan = SPI_prepare(buf.data, 0, NULL)) == NULL)
-		elog(ERROR, "SPI_prepare(\"%s\") failed", buf.data);
+		if (PortalContext == NULL)
+			PortalContext = MessageContext;
 
-	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
-		elog(ERROR, "SPI_cursor_open(\"%s\") failed", buf.data);
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+		PortalContext = savedPortalCxt;
 
-	pfree(buf.data);
+		if ((plan = SPI_prepare(buf.data, 0, NULL)) == NULL)
+			elog(ERROR, "SPI_prepare(\"%s\") failed", buf.data);
 
-	receiver = CreateDestReceiver(DestRemote);
-	SetRemoteDestReceiverParams(receiver, portal);
+		if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
+			elog(ERROR, "SPI_cursor_open(\"%s\") failed", buf.data);
 
-	/* fetch the result and return the result-set */
-	PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+		pfree(buf.data);
 
-	receiver->rDestroy(receiver);
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
 
-	SPI_cursor_close(portal);
+		/* fetch the result and return the result-set */
+		PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
 
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+		receiver->rDestroy(receiver);
+
+		SPI_cursor_close(portal);
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	}
+	PG_CATCH();
+	{
+		SPI_finish();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	PG_RETURN_VOID();
-
 }
