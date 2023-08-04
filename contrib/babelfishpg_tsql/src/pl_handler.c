@@ -144,6 +144,7 @@ Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
 static char *get_oid_type_string(int type_oid);
+static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
@@ -5067,10 +5068,45 @@ static char *get_oid_type_string(int type_oid){
 			break;
 		default:
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Identity column type must be smallint, integer, bigint, or numeric")));
+				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
 			break;
 	}
 	return type_string;
+}
+
+static int64 get_identity_into_args(Node *node)
+{
+	int64 val = 0;
+	Const *con = NULL;
+	FuncExpr *fxpr = NULL;
+	OpExpr *opxpr = NULL;
+	Node *n = NULL;
+
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			con = (Const *)node;
+			val = (int64)DatumGetInt64(con->constvalue);
+			break;
+		case T_FuncExpr:
+			fxpr = (FuncExpr *)node;
+			if ((fxpr->args)->length != 1)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			n = (Node *)list_nth(fxpr->args, 0);
+			val = get_identity_into_args(n);
+			break;
+		case T_OpExpr:
+			opxpr = (OpExpr *)node;
+			if ((opxpr->args)->length != 1)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			n = (Node *)list_nth(opxpr->args, 0);
+			val = get_identity_into_args(n);
+			break;
+		default:
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			break;
+		}
+	return val;
 }
 
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
@@ -5097,7 +5133,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into") == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
 			{
 				FuncExpr *funcexpr;
 				Oid snamespaceid;
@@ -5105,64 +5141,56 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				char *sname;
 				List *seqoptions = NIL;
 				ListCell *arg;
-
-				int type_oid;
+				int typeoid = 0;
 				char *type = NULL;
-				TypeName *ofTypename = NULL;
-				int64 seed_value = 0;
-				int arg_num;
+
+				TypeName *typename = NULL;
+				int64 seedvalue = 0;
+				int64 incrementvalue = 0;
+				int argnum;
 
 				if (seen_identity)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
-				}
+					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
-				}
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
 
 				funcexpr = (FuncExpr *)tle->expr;
-				arg_num = 0;
+				argnum = 0;
 				foreach (arg, funcexpr->args)
 				{
-					Node *fargNode = (Node *)lfirst(arg);
-					Const *con;
-					arg_num++;
-					switch (arg_num)
+					Node *farg_node = (Node *)lfirst(arg);
+					argnum++;
+					switch (argnum)
 					{
-						case 1:
-							con = (Const *)fargNode;
-							type_oid = (int)con->constvalue;
-							type = get_oid_type_string(type_oid);
-							ofTypename = typeStringToTypeName(type);
-							seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)ofTypename, -1));
-							break;
-						case 2:
-							con = (Const *)fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger((int64)con->constvalue), -1));
-							seed_value = (int64)con->constvalue;
-							break;
-						case 3:
-							con = (Const *)fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeInteger((int64)con->constvalue), -1));
-							if ((int)con->constvalue > 0)
-							{
-								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
-							}
-							else
-							{
-								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
-							}
-							break;
+					case 1:
+						typeoid = get_identity_into_args(farg_node);
+						type = get_oid_type_string(typeoid);
+						typename = typeStringToTypeName(type);
+						seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						break;
+					case 2:
+						seedvalue = get_identity_into_args(farg_node);
+						seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						break;
+					case 3:
+						incrementvalue = get_identity_into_args(farg_node);
+						seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeFloat(psprintf(INT64_FORMAT, incrementvalue)), -1));
+						if (incrementvalue > 0)
+						{
+							seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						}
+						else
+						{
+							seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						}
+						break;
 					}
 				}
 
 				into->identityName = tle->resname;
-				into->identityType = TypeNameToString(ofTypename);
-
+				into->identityType = TypeNameToString(typename);
 				seen_identity = true;
 
 				snamespaceid = RangeVarGetCreationNamespace(into->rel);
@@ -5184,14 +5212,10 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 	}
 
 	if (seqstmt)
-	{
-			result = lappend(result, seqstmt);
-	}
+		result = lappend(result, seqstmt);
 	result = lappend(result, stmt);
 	if (altseqstmt)
-	{
-			result = lappend(result, altseqstmt);
-	}
+		result = lappend(result, altseqstmt);
 
 	return result;
 }

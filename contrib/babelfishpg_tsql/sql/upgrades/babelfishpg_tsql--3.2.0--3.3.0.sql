@@ -42,9 +42,17 @@ RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
 RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
+RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
+RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sql_expression_dependencies
 AS
