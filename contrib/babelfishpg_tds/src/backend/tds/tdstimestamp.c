@@ -234,7 +234,8 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 
 		/*
 		 * millisecond value rounded to increments of .000, .003, or .007
-		 * seconds
+		 * seconds. We add the number of extra ticks to final value based 
+		 * on the unit digit milliseconds.
 		 */
 		switch (unit)
 		{
@@ -263,7 +264,6 @@ TdsTimeDifferenceDatetime(Datum value, uint32 *numDays,
 	}
 	milliCount = ((tm->tm_hour * 60 + tm->tm_min) * 60 +
 				  tm->tm_sec) * 1000 + msec;
-
 
 	*numTicks = (int) (milliCount / tick) + extra_ticks;
 
