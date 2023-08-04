@@ -1,8 +1,15 @@
+-- used to test when user does not have permission on the object
+CREATE LOGIN objectproperty_login_1 WITH PASSWORD = '12345678'
+go
+
 -- Global setup for tests
 CREATE DATABASE db1
 GO
 USE db1
 GO
+
+create user objectproperty_login_1
+go
 
 
 -- =============== OwnerId ===============
@@ -129,7 +136,46 @@ int
 ~~END~~
 
 
+USE master;
+go
+
+-- tsql user=objectproperty_login_1 password=12345678
+USE db1
+GO
+
+select user_name()
+go
+~~START~~
+nvarchar
+objectproperty_login_1
+~~END~~
+
+
+-- user does not have permission on the object (should return NO rows as object_id returns NULL)
+SELECT OBJECTPROPERTY(ct.object_id, 'isdefaultcnst') 
+from sys.default_constraints ct
+where parent_object_id = OBJECT_ID('isdefaultcnst_table')
+GO
+~~START~~
+int
+~~END~~
+
+
+-- user does not have permission on the object (should return NO rows as object_id returns NULL)
+SELECT OBJECTPROPERTY(ct.object_id, 'isdefaultcnst') 
+from sys.default_constraints ct
+where parent_object_id = OBJECT_ID('isdefaultcnst_table2')
+GO
+~~START~~
+int
+~~END~~
+
+
+-- tsql
 -- Cleanup
+USE db1
+GO
+
 DROP TABLE isdefaultcnst_table
 GO
 
@@ -192,6 +238,40 @@ int
 ~~END~~
 
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_proc_off'), 'ExecIsQuotedIdentOn') 
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_proc_on'), 'ExecIsQuotedIdentOn')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_table'), 'ExecIsQuotedIdentOn')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 -- Cleanup
 DROP PROC execisquotedident_proc_on
 GO
@@ -232,6 +312,31 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('is_ms_shipped_table'), 'IsMSShipped')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does have permission on the object and the object is ms shipped (should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.sp_tables'), 'IsMSShipped')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE is_ms_shipped_table
@@ -274,6 +379,32 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('tablefulltextpopulatestatus_table'), 'TableFullTextPopulateStatus')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('tablefulltextpopulatestatus_proc'), 'TableFullTextPopulateStatus')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE tablefulltextpopulatestatus_table
@@ -319,6 +450,32 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('TableHasVarDecimalStorageFormat_table'), 'TableHasVarDecimalStorageFormat')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('TableHasVarDecimalStorageFormat_proc'), 'TableHasVarDecimalStorageFormat')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE TableHasVarDecimalStorageFormat_table
@@ -384,6 +541,41 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_function_false'), 'IsSchemaBound')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_function_true'), 'IsSchemaBound')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_table'), 'IsSchemaBound')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE IsSchemaBound_table
@@ -464,6 +656,31 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_off_proc'), 'ExecIsAnsiNullsOn')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_on_proc'), 'ExecIsAnsiNullsOn')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP PROC ansi_nulls_off_proc
 GO
@@ -533,6 +750,41 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_function_yes'), 'IsDeterministic')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_function_yes'), 'IsDeterministic')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_table'), 'IsDeterministic')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 
 -- Cleanup
 DROP FUNCTION IsDeterministic_function_no
@@ -580,6 +832,32 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsProcedure_proc'), 'IsProcedure')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsProcedure_table'), 'IsProcedure')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP PROC IsProcedure_proc
 GO
@@ -622,6 +900,32 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTable_table'), 'IsTable')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTable_proc'), 'IsTable')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE IsTable_table
@@ -666,6 +970,32 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsView_view'), 'IsView')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsView_table'), 'IsView')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP VIEW IsView_view
 GO
@@ -707,6 +1037,32 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsUserTable_table'), 'IsUserTable')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsUserTable_view'), 'IsUserTable')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE IsUserTable_table
@@ -785,6 +1141,41 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_tablefunction'), 'IsTableFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_inlinetablefunction'), 'IsTableFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_function'), 'IsTableFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP FUNCTION IsTableFunction_tablefunction
 GO
@@ -839,6 +1230,32 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsInlineFunction_tablefunction'), 'IsInlineFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsInlineFunction_function'), 'IsInlineFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP FUNCTION IsInlineFunction_tablefunction
 GO
@@ -886,6 +1303,32 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsScalarFunction_function'), 'IsScalarFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsScalarFunction_table'), 'IsScalarFunction')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP FUNCTION IsScalarFunction_function
 GO
@@ -924,6 +1367,32 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY((SELECT TOP(1) object_id FROM sys.all_objects where name like 'pk_isprimarykey%' ), 'IsPrimaryKey')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsPrimaryKey_table'), 'IsPrimaryKey')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE IsPrimaryKey_table
@@ -964,6 +1433,32 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsIndexed_table'), 'IsIndexed')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsIndexed_nonindexed_table'), 'IsIndexed')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP TABLE IsIndexed_nonindexed_table
 GO
@@ -996,6 +1491,23 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDefault_table'), 'IsDefault')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP TABLE IsDefault_table
 GO
@@ -1024,6 +1536,23 @@ int
 <NULL>
 ~~END~~
 
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsRule_table'), 'IsRule')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
 
 -- Cleanup
 DROP TABLE IsRule_table
@@ -1069,12 +1598,64 @@ int
 ~~END~~
 
 
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_table', 'TR'), 'IsTrigger')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql
+use db1
+go
+
 -- Cleanup
 DROP TABLE IsTrigger_table
 GO
 
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'objectproperty_login_1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
 -- Global cleanup for tests
 USE master
 GO
+
 DROP DATABASE db1
 GO
+
+drop login objectproperty_login_1
+go
