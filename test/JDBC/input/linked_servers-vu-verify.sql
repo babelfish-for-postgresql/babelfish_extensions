@@ -197,3 +197,14 @@ GO
 EXEC sp_dropserver @server = 'test_server', @droplogins = 'droplogins'
 GO
 
+-- Testing the stored procedure sp_enum_oledb_providers as a sysadmin user and with tds_fdw extension
+EXEC sp_enum_oledb_providers
+GO
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.dbo prefix
+EXEC master.dbo.sp_enum_oledb_providers
+GO
+
+-- Testing the stored procedure sp_enum_oledb_providers with master.sys prefix
+EXEC master.sys.sp_enum_oledb_providers
+GO

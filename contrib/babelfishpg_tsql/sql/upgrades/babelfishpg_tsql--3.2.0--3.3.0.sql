@@ -139,6 +139,16 @@ LANGUAGE C;
 
 ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
 
+CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
+
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
 -- For example, 'master_dbo' schema can only exist in the 'master' database.
@@ -153,6 +163,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('sp_dropserver', 'master_dbo', 'P'),
     ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
     ('sp_testlinkedserver', 'master_dbo', 'P'),
+    ('sp_enum_oledb_providers','master_dbo','P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
