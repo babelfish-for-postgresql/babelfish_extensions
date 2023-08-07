@@ -364,18 +364,18 @@ SELECT 1 WHERE CAST('1' AS CHAR(10)) IN (
 GO
 
 -- TEXT
-SELECT CAST('foo' AS TEXT) UNION SELECT CAST('bar' as CHAR(10)) UNION SELECT NULL;
+SELECT CAST('foo' AS TEXT) UNION SELECT CAST('bar' as CHAR(10)) UNION SELECT NULL ORDER BY 1;
 GO
 
 -- BINARY 
-select cast(17 as binary(1)) UNION select cast(10 as binary(2));
+select cast(17 as binary(1)) UNION select cast(10 as binary(2)) ORDER BY 1;
 GO
 
 -- Incorrect length
-select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2));
+select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) ORDER BY 1;
 GO
 
-select cast(17 as varbinary(MAX)) UNION select cast(10 as varbinary(2));
+select cast(17 as varbinary(MAX)) UNION select cast(10 as varbinary(2)) ORDER BY 1;
 GO
 
 -- select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union select cast(N'a' as NCHAR(10));  
