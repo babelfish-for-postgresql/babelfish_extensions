@@ -1373,15 +1373,6 @@ use db1
 go
 
 -- user does not have permission on the object (should return NULL)
-SELECT OBJECTPROPERTY((SELECT TOP(1) object_id FROM sys.all_objects where name like 'pk_isprimarykey%' ), 'IsPrimaryKey')
-GO
-~~START~~
-int
-<NULL>
-~~END~~
-
-
--- user does not have permission on the object (should return NULL)
 SELECT OBJECTPROPERTY(OBJECT_ID('IsPrimaryKey_table'), 'IsPrimaryKey')
 GO
 ~~START~~
