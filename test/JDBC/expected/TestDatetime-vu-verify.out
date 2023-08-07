@@ -276,3 +276,22 @@ datetime
 <NULL>
 ~~END~~
 
+
+select convert(datetime, '1900-01-01 02:18:53.003')
+~~START~~
+datetime
+1900-01-01 02:18:53.003
+~~END~~
+
+select convert(datetime, '1900-01-02 00:00:00.003')
+~~START~~
+datetime
+1900-01-02 00:00:00.003
+~~END~~
+
+select convert(datetime, '1900-01-02 01:00:00.003')
+~~START~~
+datetime
+1900-01-02 01:00:00.003
+~~END~~
+
