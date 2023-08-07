@@ -22,6 +22,7 @@
 #include "commands/prepare.h"
 #include "common/string.h"
 #include "executor/spi.h"
+#include "foreign/foreign.h"
 #include "fmgr.h"
 #include "funcapi.h"
 #include "hooks.h"
@@ -34,6 +35,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/fmgroids.h"
+#include "utils/formatting.h"
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "parser/parser.h"
@@ -45,13 +47,14 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "tsearch/ts_locale.h"
-#include "rolecmds.h"
 
 #include "catalog.h"
+#include "extendedproperty.h"
 #include "multidb.h"
 #include "pltsql.h"
 #include "session.h"
 #include "pltsql.h"
+#include "rolecmds.h"
 
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
@@ -74,6 +77,7 @@ PG_FUNCTION_INFO_V1(sp_serveroption_internal);
 PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_execute_postgresql);
+PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -88,6 +92,10 @@ static List *gen_sp_rename_subcmds(const char *objname, const char *newname, con
 static void update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert);
 static void clean_up_bbf_server_option(char *servername);
 static void remove_delimited_identifer(char *str);
+static void rename_extended_property(ObjectType objtype,
+									 const char *var_schema_name,
+									 const char *var_major_name,
+									 const char *old_name, const char *new_name);
 
 List	   *handle_bool_expr_rec(BoolExpr *expr, List *list);
 List	   *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums);
@@ -442,7 +450,11 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 
 			/* Skip if NULL query was passed. */
 			if (pltsql_parse_result->body)
-				parsedbatch = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt->query;
+			{
+				PLtsql_expr *sqlstmt = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt;
+				if (sqlstmt)
+					parsedbatch = sqlstmt->query;
+			}
 		}
 
 		/*
@@ -1609,13 +1621,13 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	Oid			current_user_id = GetUserId();
 	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
 	const char *new_path = "public, \"$user\", sys, pg_catalog";
-	
+
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		
+
 		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		if (postgresStmt == NULL)
@@ -1640,7 +1652,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					errmsg("expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
 
 		stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
-			
+
 		/* need to make a wrapper PlannedStmt */
 		wrapper = makeNode(PlannedStmt);
 		wrapper->commandType = CMD_UTILITY;
@@ -1690,9 +1702,9 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 								PGC_S_DATABASE_USER);
 
 				foreach(lc, crstmt->options)
-				{            
-					DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
-					if (strcmp(defel->defname, "schema") == 0) 
+				{
+					DefElem    *defel = (DefElem *) lfirst(lc);
+					if (strcmp(defel->defname, "schema") == 0)
 					{
 						d_schema = defel;
 						schemaName = defGetString(d_schema);
@@ -1771,7 +1783,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				/* make sure later steps can see the object created here */
 				CommandCounterIncrement();
 				break;
-			} 
+			}
 			case T_AlterObjectSchemaStmt:
 			{
 				ereport(ERROR,
@@ -1805,7 +1817,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		SetCurrentRoleId(current_user_id, false);
 
 	}
-	PG_END_TRY();	
+	PG_END_TRY();
 	PG_RETURN_VOID();
 }
 
@@ -2430,7 +2442,7 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-static void 
+static void
 update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert)
 {
 	Relation	bbf_servers_def_rel;
@@ -2560,7 +2572,7 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 
 }
 
-static void 
+static void
 clean_up_bbf_server_option(char *servername)
 {
 	Relation		bbf_servers_def_rel;
@@ -2752,12 +2764,12 @@ sp_addlinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 * We prepare the following query to create a user mapping. This will be
 	 * executed using ProcessUtility():
 	 *
-	 * CREATE USER MAPPING FOR CURRENT_USER SERVER <servername> OPTIONS
+	 * CREATE USER MAPPING FOR PUBLIC SERVER <servername> OPTIONS
 	 * (username '<remote server user name>', password '<remote server user
 	 * password>')
 	 *
 	 */
-	appendStringInfo(&query, "CREATE USER MAPPING FOR CURRENT_USER SERVER \"%s\" ", servername);
+	appendStringInfo(&query, "CREATE USER MAPPING FOR PUBLIC SERVER \"%s\" ", servername);
 
 	/*
 	 * Add the relevant options
@@ -2826,17 +2838,34 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Only @locallogin = NULL is supported. Configuring remote server access specific to local login is not yet supported")));
 
+	remove_trailing_spaces(servername);
+
+	/* Check if servername is valid */
+	get_foreign_server_oid(servername, false);
+
 	initStringInfo(&query);
 
 	/*
-	 * We prepare the following query to drop a linked server login. This will
+	 * We prepare the following queries to drop a linked server login. This will
 	 * be executed using ProcessUtility():
 	 *
-	 * DROP USER MAPPING FOR CURRENT_USER SERVER @SERVERNAME
+	 * DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
+	 * DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
 	 *
+	 * Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
+	 * was not entirely correct because T-SQL linked logins are not user or login specific.
+	 * To address this we now create user mapping for the PG PUBLIC role internally.
+	 *
+	 * To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
+	 * implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
+	 * and PUBLIC PG roles.
 	 */
-	appendStringInfo(&query, "DROP USER MAPPING FOR CURRENT_USER SERVER \"%s\"", servername);
+	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER \"%s\"", servername);
+	exec_utility_cmd_helper(query.data);
 
+	resetStringInfo(&query);
+
+	appendStringInfo(&query, "DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER \"%s\"", servername);
 	exec_utility_cmd_helper(query.data);
 
 	if (locallogin)
@@ -3435,6 +3464,9 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
+
+		rename_extended_property(objtype_code, schema_name, curr_relname,
+								 obj_name, new_name);
 	}
 	PG_CATCH();
 	{
@@ -3448,6 +3480,119 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 					  GUC_CONTEXT_CONFIG,
 					  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 	PG_RETURN_VOID();
+}
+
+/*
+ * Rename record in extended property as well when calling sp_rename.
+ */
+static void
+rename_extended_property(ObjectType objtype, const char *var_schema_name,
+						 const char *var_major_name,
+						 const char *old_name, const char *new_name)
+{
+	int			db_id = get_cur_db_id();
+	char		*db_name = get_cur_db_name();
+	const char	*type;
+
+	if (objtype == OBJECT_TABLE ||
+		objtype == OBJECT_VIEW ||
+		objtype == OBJECT_SEQUENCE ||
+		objtype == OBJECT_PROCEDURE ||
+		objtype == OBJECT_FUNCTION ||
+		objtype == OBJECT_TYPE)
+	{
+		/*
+		 * Use old_name as major_name in this routine.
+		 * (refer to gen_sp_rename_subcmds)
+		 */
+		if (var_schema_name && old_name)
+		{
+			char *schema_name = get_physical_schema_name(db_name,
+														 lowerstr(var_schema_name));
+			char *major_name = lowerstr(old_name);
+			char *new_major_name = lowerstr(new_name);
+
+			/* schema_name doesn't need to truncate again. */
+			truncate_tsql_identifier(major_name);
+			truncate_tsql_identifier(new_major_name);
+
+			if (objtype == OBJECT_TABLE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_VIEW)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_SEQUENCE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_PROCEDURE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_FUNCTION)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+			else if (objtype == OBJECT_TYPE)
+			{
+				type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+				update_extended_property(db_id, type, schema_name,
+										 major_name, NULL,
+										 Anum_bbf_extended_properties_major_name,
+										 new_major_name);
+			}
+		}
+	}
+	else if (objtype == OBJECT_COLUMN)
+	{
+		if (var_schema_name && var_major_name && old_name)
+		{
+			char *schema_name = get_physical_schema_name(db_name,
+														 lowerstr(var_schema_name));
+			char *major_name = lowerstr(var_major_name);
+			char *minor_name = lowerstr(old_name);
+			char *new_minor_name = lowerstr(new_name);
+
+			/* schema_name doesn't need to truncate again. */
+			truncate_tsql_identifier(major_name);
+			truncate_tsql_identifier(minor_name);
+			truncate_tsql_identifier(new_minor_name);
+
+			type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+			update_extended_property(db_id, type, schema_name,
+									 major_name, minor_name,
+									 Anum_bbf_extended_properties_minor_name,
+									 new_minor_name);
+		}
+	}
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_NAME;
@@ -3591,7 +3736,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	return res;
 }
 
-static void 
+static void
 remove_delimited_identifer(char *str)
 {
 	size_t len = strlen(str);
@@ -3606,4 +3751,82 @@ remove_delimited_identifer(char *str)
 	len = strlen(str);
 	while (isspace(str[len - 1]))
 		str[--len] = 0;
+}
+
+Datum
+sp_enum_oledb_providers_internal(PG_FUNCTION_ARGS)
+{
+	/* SPI call input */
+	StringInfoData	buf;
+
+	const char*	provider_name = "tds_fdw";
+
+	if(!role_is_sa(GetSessionUserId()))
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Only members of the sysadmin role can execute this stored procedure.")));
+
+	if(GetForeignDataWrapperByName(provider_name, true) == NULL){
+		PG_RETURN_VOID();
+	}
+	
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "SELECT "
+							"CAST('%s' AS sys.nvarchar(255)) AS \"Provider Name\", "
+							"CAST('{' || uuid_in(md5(subquery.provider_desc::text)::cstring) || '}' AS sys.nvarchar(255)) AS \"Parse Name\", "
+							"CAST(subquery.provider_desc AS sys.nvarchar(255)) AS \"Provider Description\" "
+						"FROM ("
+							"SELECT "
+							"extversion, 'A PostgreSQL foreign data wrapper to connect to TDS databases ' || extversion AS provider_desc "
+							"FROM pg_catalog.pg_extension "
+							"WHERE extname = '%s'"
+						") subquery;"
+			, str_toupper(provider_name, strlen(provider_name), C_COLLATION_OID), provider_name);
+
+	PG_TRY();
+	{
+		MemoryContext	savedPortalCxt;
+		SPIPlanPtr	plan;
+		Portal		portal;
+		DestReceiver	*receiver;
+
+		int		rc;
+
+		savedPortalCxt = PortalContext;
+
+		if (PortalContext == NULL)
+			PortalContext = MessageContext;
+
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+		PortalContext = savedPortalCxt;
+
+		if ((plan = SPI_prepare(buf.data, 0, NULL)) == NULL)
+			elog(ERROR, "SPI_prepare(\"%s\") failed", buf.data);
+
+		if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, true)) == NULL)
+			elog(ERROR, "SPI_cursor_open(\"%s\") failed", buf.data);
+
+		pfree(buf.data);
+
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
+
+		/* fetch the result and return the result-set */
+		PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
+
+		receiver->rDestroy(receiver);
+
+		SPI_cursor_close(portal);
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	}
+	PG_CATCH();
+	{
+		SPI_finish();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	PG_RETURN_VOID();
 }

@@ -3,6 +3,8 @@ on: [push, pull_request]
 
 jobs:
   run-babelfish-jdbc-tests:
+    env:
+      INSTALL_DIR: psql
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -43,6 +45,8 @@ jobs:
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
         run: |
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
           mvn test
 

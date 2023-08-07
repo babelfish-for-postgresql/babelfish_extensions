@@ -244,6 +244,7 @@ static std::string validate_and_stringify_hints();
 static int find_hint_offset(const char * queryTxt);
 
 static bool pltsql_parseonly = false;
+bool has_identity_function = false;
 
 static void
 breakHere()
@@ -1954,6 +1955,21 @@ public:
                               }
 
 			}
+
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
+				{
+					has_identity_function = true;
+				}
+				
+				if (pg_strncasecmp(proc_name.c_str(), "identity_into", strlen("identity_into")) == 0)
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
+						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
+			}
 		}
 	}
 
@@ -1961,8 +1977,18 @@ public:
 	// statement analysis
 	//////////////////////////////////////////////////////////////////////////////
 
+	void enterQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		has_identity_function = false;
+	}
+
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
+		// if select doesnt contains into but it contains identity we should throw error
+		if(has_identity_function && !ctx->INTO()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Incorrect syntax near ')'", getLineAndPos(ctx));
+		}
+		has_identity_function = false;
 		if (statementMutator)
 			process_query_specification(ctx, statementMutator.get());
 	}
@@ -3984,7 +4010,27 @@ makeTryCatchStmt(TSqlParser::Try_catch_statementContext *ctx)
 void *
 makeWaitForStmt(TSqlParser::Waitfor_statementContext *ctx)
 {
-	return nullptr;
+    PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
+	std::string query;
+
+    result->cmd_type = PLTSQL_STMT_EXEC;
+    result->lineno = getLineNo(ctx);;
+    result->is_call = true;
+    result->return_code_dno = -1;
+    result->paramno = 0;
+    result->params = NIL;
+
+    query += "EXEC ";
+    if (ctx->DELAY())
+        query += "bbf_sleep_for(";
+    else
+        query += "bbf_sleep_until(";
+
+    query += getFullText(ctx->expression());
+    query += ")";
+    result->expr = makeTsqlExpr(query, false);
+
+    return result;
 }
 
 void *
