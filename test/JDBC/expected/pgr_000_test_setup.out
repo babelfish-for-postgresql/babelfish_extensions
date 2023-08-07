@@ -1,0 +1,439 @@
+
+
+
+
+
+
+-- tsql
+-- \getenv libdir PG_LIBDIR
+-- GO
+-- \getenv dlsuffix PG_DLSUFFIX
+-- GO
+-- \set regresslib :libdir '/regress' :dlsuffix
+-- GO
+CREATE TABLE CHAR_TBL(f1 char(4));
+GO
+
+INSERT INTO CHAR_TBL (f1) VALUES
+  ('a'),
+  ('ab'),
+  ('abcd'),
+  ('abcd    ');
+GO
+~~ROW COUNT: 4~~
+
+
+-- psql     
+VACUUM master_dbo.CHAR_TBL;
+GO
+
+-- tsql
+CREATE TABLE FLOAT8_TBL(f1 float);
+GO
+
+INSERT INTO FLOAT8_TBL(f1) VALUES
+  ('0.0'),
+  ('-34.84'),
+  ('-1004.30'),
+  ('-1.2345678901234e+200'),
+  ('-1.2345678901234e-200');
+GO
+~~ROW COUNT: 5~~
+
+
+-- psql     
+VACUUM master_dbo.FLOAT8_TBL;
+GO
+
+-- tsql
+CREATE TABLE INT2_TBL(f1 int2);
+GO
+
+INSERT INTO INT2_TBL(f1) VALUES
+  ('0   '),
+  ('  1234 '),
+  ('    -1234'),
+  ('32767'),  -- largest and smallest values
+  ('-32767');
+GO
+~~ROW COUNT: 5~~
+
+
+-- psql
+VACUUM master_dbo.INT2_TBL;
+GO
+
+-- tsql
+CREATE TABLE INT4_TBL(f1 int);
+GO
+
+INSERT INTO INT4_TBL(f1) VALUES
+  ('   0  '),
+  ('123456     '),
+  ('    -123456'),
+  ('2147483647'),  -- largest and smallest values
+  ('-2147483647');
+GO
+~~ROW COUNT: 5~~
+
+
+-- psql
+VACUUM master_dbo.INT4_TBL;
+GO
+
+-- tsql
+CREATE TABLE INT8_TBL(q1 bigint, q2 bigint);
+GO
+
+INSERT INTO INT8_TBL VALUES
+  ('  123   ','  456'),
+  ('123   ','4567890123456789'),
+  ('4567890123456789','123'),
+  ('+4567890123456789','4567890123456789'),
+  ('+4567890123456789','-4567890123456789');
+GO
+~~ROW COUNT: 5~~
+
+
+-- psql     
+VACUUM master_dbo.INT8_TBL;
+GO
+
+-- tsql
+CREATE TABLE POINT_TBL(f1 point);
+GO
+
+INSERT INTO POINT_TBL(f1) VALUES
+  ('(0.0,0.0)'),
+  ('(-10.0,0.0)'),
+  ('(-3.0,4.0)'),
+  ('(5.1, 34.5)'),
+  ('(-5.0,-12.0)'),
+  ('(1e-300,-1e-300)'),  -- To underflow
+  ('(1e+300,Inf)'),  -- To overflow
+  ('(Inf,1e+300)'),  -- Transposed
+  (' ( Nan , NaN ) '),
+  ('10.0,10.0');
+GO
+~~ROW COUNT: 10~~
+
+
+-- We intentionally don't vacuum point_tbl here; geometry depends on that
+CREATE TABLE TEXT_TBL (f1 varchar(max));
+GO
+
+INSERT INTO TEXT_TBL VALUES
+  ('doh!'),
+  ('hi de ho neighbor');
+GO
+~~ROW COUNT: 2~~
+
+
+-- psql     
+VACUUM master_dbo.TEXT_TBL;
+GO
+
+-- tsql
+CREATE TABLE VARCHAR_TBL(f1 varchar(4));
+GO
+
+
+INSERT INTO VARCHAR_TBL (f1) VALUES
+  ('a'),
+  ('ab'),
+  ('abcd'),
+  ('abcd    ');
+GO
+~~ROW COUNT: 4~~
+
+
+-- psql     
+VACUUM master_dbo.VARCHAR_TBL;
+GO
+
+-- tsql
+CREATE TABLE onek (
+	unique1		int,
+	unique2		int,
+	two			int,
+	four		int,
+	ten			int,
+	twenty		int,
+	hundred		int,
+	thousand	int,
+	twothousand	int,
+	fivethous	int,
+	tenthous	int,
+	odd			int,
+	even		int,
+	stringu1	name,
+	stringu2	name,
+	string4		name
+);
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_onek.sh
+
+-----copy onek table from /data/onek.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/onek.data'
+COPY master_dbo.onek FROM :'filename';
+COPY 1000
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.onek;
+GO
+
+-- tsql
+CREATE TABLE onek2 (
+	unique1		int,
+	unique2		int,
+	two			int,
+	four		int,
+	ten			int,
+	twenty		int,
+	hundred		int,
+	thousand	int,
+	twothousand	int,
+	fivethous	int,
+	tenthous	int,
+	odd			int,
+	even		int,
+	stringu1	name,
+	stringu2	name,
+	string4		name
+);
+GO
+
+insert into onek2 select * from onek;
+GO
+~~ROW COUNT: 1000~~
+
+
+-- psql     
+VACUUM ANALYZE master_dbo.onek2;
+GO
+
+-- tsql
+CREATE TABLE tenk1 (
+	unique1		int,
+	unique2		int,
+	two			int,
+	four		int,
+	ten			int,
+	twenty		int,
+	hundred		int,
+	thousand	int,
+	twothousand	int,
+	fivethous	int,
+	tenthous	int,
+	odd			int,
+	even		int,
+	stringu1	name,
+	stringu2	name,
+	string4		name
+);
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_tenk.sh
+
+-----copy tenk1 table from /data/tenk.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/tenk.data'
+COPY master_dbo.tenk1 FROM :'filename';
+COPY 10000
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.tenk1;
+GO
+
+-- tsql
+CREATE TABLE tenk2 (
+	unique1		int,
+	unique2		int,
+	two			int,
+	four		int,
+	ten			int,
+	twenty		int,
+	hundred		int,
+	thousand	int,
+	twothousand	int,
+	fivethous	int,
+	tenthous	int,
+	odd			int,
+	even		int,
+	stringu1	name,
+	stringu2	name,
+	string4		name
+);
+GO
+
+insert into tenk2 select * from tenk1;
+GO
+~~ROW COUNT: 10000~~
+
+
+-- psql     
+VACUUM ANALYZE master_dbo.tenk2;
+GO
+
+-- tsql
+CREATE TABLE person (
+	name 		varchar(max),
+	age			int,
+	location 	point
+);
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_person.sh
+
+-----copy person table from /data/person.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/person.data'
+COPY master_dbo.person FROM :'filename';
+COPY 50
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.person;
+GO
+
+-- tsql
+CREATE TABLE emp (
+    name 		varchar(max),
+	age			int,
+	location 	point,
+	salary 		int,
+	manager 	name
+) 
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_emp.sh
+
+-----copy emp table from /data/emp.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/emp.data'
+COPY master_dbo.emp FROM :'filename';
+COPY 3
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.emp;
+GO
+
+-- tsql
+CREATE TABLE student (
+    name 		varchar(max),
+	age			int,
+	location 	point,
+	gpa 		float
+);
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_student.sh
+
+-----copy student table from /data/student.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/student.data'
+COPY master_dbo.student FROM :'filename';
+COPY 2
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.student;
+GO
+
+-- tsql
+
+CREATE TABLE stud_emp (
+    name 		varchar(max),
+	age			int,
+	location 	point,
+	salary 		int,
+	manager 	name,
+	gpa 		float,
+	[percent] 	int
+) ;
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_stud_emp.sh
+
+-----copy stud_emp table from /data/stud_emp.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/stud_emp.data'
+COPY master_dbo.stud_emp FROM :'filename';
+COPY 3
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.stud_emp;
+GO
+
+-- tsql
+CREATE TABLE aggtest (
+	a 			int,
+	b			float
+);
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_aggtest.sh
+
+-----copy aggtest table from /data/agg.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/agg.data'
+COPY master_dbo.aggtest FROM :'filename';
+COPY 4
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.aggtest;
+GO
+
+-- tsql
+CREATE TABLE road (
+	name		varchar(max),
+	thepath 	path
+);
+GO
+
+-- bash   
+/bin/bash input/pg_regress/load_road.sh
+
+-----copy road table from /data/streets.data-----
+\getenv pg_src PG_SRC
+\set filename :pg_src '/src/test/regress/data/streets.data'
+COPY master_dbo.road FROM :'filename';
+COPY 5124
+----- done -----
+
+-- psql
+VACUUM ANALYZE master_dbo.road;
+GO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

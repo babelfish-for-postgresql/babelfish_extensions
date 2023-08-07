@@ -142,3 +142,31 @@ SELECT
     FOR JSON PATH
 ) as c1;
 GO
+
+CREATE VIEW forjson_datatypes_vu_v_nulldatetime AS
+SELECT
+(
+    select cast(null as datetime) for JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_datatypes_vu_v_nullsmalldatetime AS
+SELECT
+(
+    select cast(null as smalldatetime) for JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_datatypes_vu_v_nulldatetime2 AS
+SELECT
+(
+    select cast(null as datetime2) for JSON PATH
+) as c1;
+GO
+
+CREATE VIEW forjson_datatypes_vu_v_nulldatetimeoffset AS
+SELECT
+(
+    select cast(null as datetimeoffset) for JSON PATH
+) as c1;
+GO

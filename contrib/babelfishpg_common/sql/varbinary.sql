@@ -287,6 +287,35 @@ CREATE OPERATOR sys.<= (
     COMMUTATOR = >=
 );
 
+
+CREATE OR REPLACE FUNCTION sys.int4varbinarydiv(leftarg int4 , rightarg sys.bbf_varbinary)
+RETURNS int4
+AS 'babelfishpg_common', 'int4varbinary_div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+
+CREATE OPERATOR sys./ (
+    LEFTARG = int4,
+    RIGHTARG = sys.bbf_varbinary,
+    FUNCTION = int4varbinarydiv,
+    COMMUTATOR = /
+);
+
+CREATE OR REPLACE FUNCTION sys.varbinaryint4div(leftarg sys.bbf_varbinary , rightarg int4)
+RETURNS int4
+AS 'babelfishpg_common', 'varbinaryint4_div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+
+CREATE OPERATOR sys./ (
+    LEFTARG = sys.bbf_varbinary,
+    RIGHTARG = int4,
+    FUNCTION = varbinaryint4div,
+    COMMUTATOR = /
+);
+
+
+
 CREATE FUNCTION sys.bbf_varbinary_cmp(sys.bbf_varbinary, sys.bbf_varbinary)
 RETURNS int
 AS 'babelfishpg_common', 'varbinary_cmp'

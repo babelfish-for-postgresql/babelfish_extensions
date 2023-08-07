@@ -33,6 +33,7 @@ babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_db_seq
 babelfish_domain_mapping
+babelfish_extended_properties
 babelfish_function_ext
 babelfish_namespace_ext
 babelfish_server_options

@@ -373,3 +373,101 @@ drop table babel_2844_t1;
 go
 drop table babel_2844_t2;
 go
+
+-- BABEL-3677: SELECT INTO
+CREATE TABLE t1 (a INT PRIMARY KEY, b INT);
+GO
+
+SET BABELFISH_SHOWPLAN_ALL ON;
+GO
+
+-- should not crash
+SELECT * INTO t3 FROM t1 WHERE t1.b = 1;
+GO
+~~START~~
+text
+Query Text: SELECT * INTO t3 FROM t1 WHERE t1.b = 1
+~~END~~
+
+
+-- should fail with t3 does not exist because previous query was not executed
+INSERT INTO t3 VALUES (1, 1), (2, 1), (3, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t3" does not exist)~~
+
+
+-- DMLs should also not be executed
+INSERT INTO t1 VALUES (1, 1), (2, 1), (3, 1);
+GO
+~~START~~
+text
+Query Text: INSERT INTO t1 VALUES (1, 1), (2, 1), (3, 1);
+Insert on t1  (cost=0.00..0.04 rows=0 width=0)
+  ->  Values Scan on "*VALUES*"  (cost=0.00..0.04 rows=3 width=8)
+~~END~~
+
+
+DELETE FROM t1 WHERE a = 3;
+GO
+~~START~~
+text
+Query Text: DELETE FROM t1 WHERE a = 3;
+Delete on t1  (cost=0.15..8.17 rows=0 width=0)
+  ->  Index Scan using t1_pkey on t1  (cost=0.15..8.17 rows=1 width=6)
+        Index Cond: (a = 3)
+~~END~~
+
+
+UPDATE t1 SET a = 2 WHERE a = 1;
+GO
+~~START~~
+text
+Query Text: UPDATE t1 SET a = 2 WHERE a = 1;
+Update on t1  (cost=0.15..8.17 rows=0 width=0)
+  ->  Index Scan using t1_pkey on t1  (cost=0.15..8.17 rows=1 width=10)
+        Index Cond: (a = 1)
+~~END~~
+
+
+-- also create function just for the sake of testing it
+CREATE FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]  ()
+RETURNS NVARCHAR(MAX) AS
+BEGIN
+    DECLARE @TSQL NVARCHAR(MAX)
+    RETURN @TSQL
+END
+GO
+~~START~~
+text
+Query Text: CREATE FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]  ()
+RETURNS NVARCHAR(MAX) AS
+BEGIN
+    DECLARE @TSQL NVARCHAR(MAX)
+    RETURN @TSQL
+END
+~~END~~
+
+
+-- function should not be created but should not crash
+SELECT dbo.WOSQL_BuildRevenueDetailOLUQuery()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function master_dbo.wosql_buildrevenuedetailoluquery() does not exist)~~
+
+
+SET BABELFISH_SHOWPLAN_ALL OFF;
+GO
+
+-- should be empty
+SELECT * FROM t1;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+DROP TABLE t1;
+GO

@@ -9,6 +9,7 @@
 #include "parser/parse_type.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "common/md5.h"
 
 #include "src/backend_parser/gramparse.h"
@@ -44,6 +45,7 @@ static Node *TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, boo
 static Node *TsqlFunctionParse(Node *arg, TypeName *typename, Node *culture, bool try, int location);
 
 static Node *TsqlFunctionIIF(Node *bool_expr, Node *arg1, Node *arg2, int location);
+static Node *TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location);
 static Node *TsqlFunctionChoose(Node *int_expr, List *choosable, int location);
 static void tsql_check_param_readonly(const char *paramname, TypeName *typename, bool readonly);
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
@@ -60,6 +62,10 @@ static bool isNVarCharType(char *typenameStr);
 
 static Node *TsqlJsonModifyMakeFuncCall(Node *expr, Node *path, Node *newValue);
 static bool is_json_query(List *name);
+
+static Node *TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner);
+static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig);
+static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig);
 
 char	   *construct_unique_index_name(char *index_name, char *relation_name);
 
