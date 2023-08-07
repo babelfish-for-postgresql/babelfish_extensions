@@ -2918,10 +2918,10 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			SysScanDesc scan;
 			HeapTuple	tup;
 
-			if (pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT, NULL) &&
-				pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT, NULL) &&
-				pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE, NULL) &&
-				pg_attribute_aclcheck_ext(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES, NULL))
+			if (pg_attribute_aclmask(atdform->adrelid, atdform->adnum, user_id, ACL_SELECT, ACLMASK_ANY) == ACLCHECK_OK &&
+				pg_attribute_aclmask(atdform->adrelid, atdform->adnum, user_id, ACL_INSERT, ACLMASK_ANY) == ACLCHECK_OK &&
+				pg_attribute_aclmask(atdform->adrelid, atdform->adnum, user_id, ACL_UPDATE, ACLMASK_ANY) == ACLCHECK_OK &&
+				pg_attribute_aclmask(atdform->adrelid, atdform->adnum, user_id, ACL_REFERENCES, ACLMASK_ANY) == ACLCHECK_OK)
 			{
 				attrRel = table_open(AttributeRelationId, RowExclusiveLock);
 
