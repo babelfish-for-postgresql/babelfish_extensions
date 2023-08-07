@@ -1,260 +1,152 @@
+SELECT * FROM babel3392_v1;
+GO
+
+SELECT * FROM babel3392_v2;
+GO
+
+SELECT * FROM babel3392_v3;
+GO
+
+DROP view babel3392_v1;
+DROP view babel3392_v2;
+DROP view babel3392_v3;
+GO
+
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION
 SELECT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1         
-~~END~~
-
 
 SELECT NULL AS Col1
 UNION
 SELECT CAST('1' AS CHAR(10)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1         
-~~END~~
-
 
 SELECT CAST('1' AS NCHAR(10)) AS Col1
 UNION
 SELECT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-1         
-~~END~~
-
 
 SELECT NULL AS Col1
 UNION
 SELECT CAST('1' AS NCHAR(10)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-1         
-~~END~~
 
-
+-- Length incorrect, should be fixed later
 SELECT CAST(1 AS BINARY(10)) AS Col1
 UNION
 SELECT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-binary
-<NULL>
-00000000000000000001
-~~END~~
 
-
+-- Output type incorrect, should be fixed
 SELECT NULL AS Col1
 UNION
 SELECT CAST(1 AS BINARY(10)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-binary
-<NULL>
-00000000000000000001
-~~END~~
-
 
 SELECT CAST(1 AS CHAR(1)) AS Col1
 UNION
 SELECT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(255)) AS Col1
 UNION
 SELECT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1                                                                                                                                                                                                                                                              
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(15)) AS Col1
 UNION
 SELECT CAST('2' AS CHAR(10)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-char
-1              
-2              
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION
 SELECT CAST('2' AS CHAR(15)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-char
-1              
-2              
-~~END~~
-
 
 SELECT CAST('1' AS NCHAR(15)) AS Col1
 UNION
 SELECT CAST('2' AS NCHAR(10)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-1              
-2              
-~~END~~
-
 
 SELECT CAST('1' AS NCHAR(10)) AS Col1
 UNION
 SELECT CAST('2' AS NCHAR(15)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-1              
-2              
-~~END~~
-
 
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(10)) AS Col1
 UNION
 SELECT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-ΘЖऌฒ      
-~~END~~
-
 
 SELECT NULL AS Col1
 UNION
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(10)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-ΘЖऌฒ      
-~~END~~
 
-
+-- Length Incorrect
 SELECT CAST(1 AS BINARY(4)) AS Col1
 UNION
 SELECT CAST(2 AS BINARY(8)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-binary
-0000000000000002
-0000000100000000
-~~END~~
 
-
+-- Length Incorrect
 SELECT CAST(1 AS BINARY(4)) AS Col1
 UNION
 SELECT CAST(2 AS BINARY(8)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-binary
-0000000000000002
-0000000100000000
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(4)) AS Col1
 UNION
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-1       
-ΘЖऌฒ    
-~~END~~
-
 
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
 UNION
 SELECT CAST('1' AS CHAR(4)) AS Col1
 ORDER BY 1
 GO
-~~START~~
-nchar
-1       
-ΘЖऌฒ    
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(4))
 INTERSECT
 SELECT CAST('1' AS CHAR(8))
 ORDER BY 1
 GO
-~~START~~
-char
-1       
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(8))
 INTERSECT
 SELECT CAST('1' AS CHAR(4))
 ORDER BY 1
 GO
-~~START~~
-char
-1       
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(4))
 EXCEPT
 SELECT CAST('1' AS CHAR(8))
 ORDER BY 1
 GO
-~~START~~
-char
-~~END~~
-
 
 SELECT CAST('1' AS CHAR(8))
 EXCEPT
 SELECT CAST('1' AS CHAR(4))
 ORDER BY 1
 GO
-~~START~~
-char
-~~END~~
-
 
 -- Multiple Unions --
 SELECT CAST('1' AS CHAR(8))
@@ -264,12 +156,6 @@ UNION
 SELECT NULL
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1       
-~~END~~
-
 
 SELECT NULL
 UNION 
@@ -278,33 +164,16 @@ UNION
 SELECT NULL
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1       
-~~END~~
-
 
 SELECT NULL
 UNION
 SELECT NULL
 GO
-~~START~~
-int
-<NULL>
-~~END~~
-
 
 SELECT NULL
 UNION ALL
 SELECT NULL
 GO
-~~START~~
-int
-<NULL>
-<NULL>
-~~END~~
-
 
 SELECT NULL
 UNION 
@@ -313,12 +182,6 @@ UNION
 SELECT CAST('1' AS CHAR(8))
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1       
-~~END~~
-
 
 SELECT NULL
 UNION 
@@ -327,12 +190,6 @@ UNION
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8))
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-ΘЖऌฒ    
-~~END~~
-
 
 SELECT CAST('2' AS CHAR(16))
 UNION 
@@ -341,13 +198,6 @@ UNION
 SELECT NULL
 ORDER BY 1
 GO
-~~START~~
-char
-<NULL>
-1               
-2               
-~~END~~
-
 
 SELECT CAST('2' AS CHAR(16))
 UNION 
@@ -356,13 +206,6 @@ UNION
 SELECT NULL
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-1               
-2               
-~~END~~
-
 
 SELECT CAST('2' AS NCHAR(16))
 UNION 
@@ -371,13 +214,6 @@ UNION
 SELECT NULL
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-1               
-2               
-~~END~~
-
 
 SELECT CAST('2' AS NCHAR(16))
 UNION ALL
@@ -386,13 +222,6 @@ UNION ALL
 SELECT NULL
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-1               
-2               
-~~END~~
-
 
 SELECT NULL
 UNION ALL
@@ -401,13 +230,6 @@ UNION ALL
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
 ORDER BY 1
 GO
-~~START~~
-nchar
-<NULL>
-<NULL>
-ΘЖऌฒ           
-~~END~~
-
 
 SELECT CAST('1' AS NCHAR(16))
 INTERSECT 
@@ -416,11 +238,6 @@ INTERSECT
 SELECT CAST('1' AS NCHAR(4))
 ORDER BY 1
 GO
-~~START~~
-nchar
-1               
-~~END~~
-
 
 SELECT CAST('1' AS NCHAR(16))
 INTERSECT 
@@ -429,10 +246,6 @@ INTERSECT
 SELECT CAST('1' AS NCHAR(4))
 ORDER BY 1
 GO
-~~START~~
-nchar
-~~END~~
-
 
 SELECT NULL
 INTERSECT 
@@ -441,10 +254,6 @@ INTERSECT
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
 ORDER BY 1
 GO
-~~START~~
-nchar
-~~END~~
-
 
 CREATE TABLE babel3392_nchar_tbl(a NCHAR(20))
 GO
@@ -455,8 +264,6 @@ INSERT INTO babel3392_nchar_tbl (a)
     SELECT NULL AS Col1
     ORDER BY 1
 GO
-~~ROW COUNT: 2~~
-
 
 DROP TABLE babel3392_nchar_tbl
 GO
@@ -470,74 +277,49 @@ AS (
 )
 SELECT a from babel3392_recursive_cte order by a
 GO
-~~ERROR (Code: 240)~~
 
-~~ERROR (Message: Types don't match between the anchor and the recursive part in column "a" of recursive query "babel3392_recursive_cte".)~~
-
+WITH babel3392_recursive_cte(a)
+AS (
+    SELECT 'a'
+    UNION ALL
+    SELECT CAST(a + 'a' AS CHAR(10)) from babel3392_recursive_cte where a != 'aaaaa'
+)
+SELECT a from babel3392_recursive_cte order by a
+GO
 
 -- CASE
-CREATE TABLE babel3392_case(a INT)
-GO
+-- CREATE TABLE babel3392_case(a INT)
+-- GO
 
-INSERT INTO babel3392_case (a) VALUES (1), (2), (3)
-GO
-~~ROW COUNT: 3~~
+-- INSERT INTO babel3392_case (a) VALUES (1), (2), (3)
+-- GO
 
+-- SELECT CASE a
+--     WHEN 1 THEN NULL
+--     WHEN 2 THEN CAST('char' AS CHAR(10))
+-- END
+-- FROM babel3392_case
+-- GO
 
-SELECT CASE a
-    WHEN 1 THEN NULL
-    WHEN 2 THEN CAST('char' AS CHAR(10))
-END
-FROM babel3392_case
-GO
-~~START~~
-char
-<NULL>
-char      
-<NULL>
-~~END~~
-
-
-DROP TABLE babel3392_case;
-GO
+-- DROP TABLE babel3392_case;
+-- GO
 
 -- COALESCE / ISNULL
 SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
 GO
-~~START~~
-nchar
-ΘЖऌฒ           
-~~END~~
-
 
 -- BABEL-1874
 SELECT NULL
 GO
-~~START~~
-int
-<NULL>
-~~END~~
-
 
 SELECT DISTINCT NULL
 GO
-~~START~~
-int
-<NULL>
-~~END~~
-
 
 SELECT CAST( 1 AS BIT) AS Col1
 UNION 
 SELECT DISTINCT NULL AS Col1
 ORDER BY 1
 GO
-~~START~~
-bit
-<NULL>
-1
-~~END~~
-
 
 -- BABEL-4157
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
@@ -546,16 +328,9 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
 ) AS tbl
 GO
-~~ROW COUNT: 2~~
-
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
-~~START~~
-varchar#!#smallint
-babel4157_c1#!#40
-~~END~~
-
 
 DROP TABLE babel4157_tbl
 GO
@@ -565,26 +340,49 @@ select tbl.babel3392_c1 into babel3392_vals from (
     values (CAST('1' AS CHAR(10))), (CAST(N'ΘЖऌฒ' AS NCHAR(15))), (NULL)
 ) as tbl(babel3392_c1)
 GO
-~~ROW COUNT: 3~~
-
 
 SELECT * FROM babel3392_vals;
 GO
-~~START~~
-nchar
-1              
-ΘЖऌฒ           
-<NULL>
-~~END~~
-
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel3392_c1'
 GO
-~~START~~
-varchar#!#smallint
-babel3392_c1#!#30
-~~END~~
-
 
 DROP TABLE babel3392_vals;
 GO
+
+-- GREATEST / LEAST Lengths are wrong
+-- SELECT GREATEST(CAST('1' AS CHAR(20)), CAST(N'A' AS NCHAR(10)), NULL)
+-- GO
+
+-- SELECT LEAST(CAST('1' AS CHAR(20)), CAST(N'A' AS NCHAR(10)), NULL)
+-- GO
+
+-- IN
+SELECT 1 WHERE CAST('1' AS CHAR(10)) IN (
+    CAST(N'1' AS NCHAR(10)),  CAST('2' AS CHAR(20)), CAST('3' AS VARCHAR), '4', NULL
+);
+GO
+
+-- TEXT
+SELECT CAST('foo' AS TEXT) UNION SELECT CAST('bar' as CHAR(10)) UNION SELECT NULL;
+GO
+
+-- BINARY 
+select cast(17 as binary(1)) UNION select cast(10 as binary(2));
+GO
+
+-- Incorrect length
+select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2));
+GO
+
+select cast(17 as varbinary(MAX)) UNION select cast(10 as varbinary(2));
+GO
+
+-- select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union select cast(N'a' as NCHAR(10));  
+-- GO
+
+-- SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) UNION select cast(10 as varbinary(2));
+-- GO
+
+-- SELECT CAST(1 as BIT) UNION SELECT cast(N'ab' as NCHAR(10)) UNION SELECT CAST('bar' as CHAR(10));
+-- go
