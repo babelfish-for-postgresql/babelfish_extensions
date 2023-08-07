@@ -448,7 +448,11 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 
 			/* Skip if NULL query was passed. */
 			if (pltsql_parse_result->body)
-				parsedbatch = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt->query;
+			{
+				PLtsql_expr *sqlstmt = ((PLtsql_stmt_execsql *) lsecond(pltsql_parse_result->body))->sqlstmt;
+				if (sqlstmt)
+					parsedbatch = sqlstmt->query;
+			}
 		}
 
 		/*
@@ -1615,13 +1619,13 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	Oid			current_user_id = GetUserId();
 	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
 	const char *new_path = "public, \"$user\", sys, pg_catalog";
-	
+
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-		
+
 		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
 		if (postgresStmt == NULL)
@@ -1646,7 +1650,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 					errmsg("expected 1 statement but got %d statements after parsing", list_length(parsetree_list))));
 
 		stmt = ((RawStmt *) linitial(parsetree_list))->stmt;
-			
+
 		/* need to make a wrapper PlannedStmt */
 		wrapper = makeNode(PlannedStmt);
 		wrapper->commandType = CMD_UTILITY;
@@ -1696,9 +1700,9 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 								PGC_S_DATABASE_USER);
 
 				foreach(lc, crstmt->options)
-				{            
-					DefElem    *defel = (DefElem *) lfirst(lc);                                                                                                                                                                               
-					if (strcmp(defel->defname, "schema") == 0) 
+				{
+					DefElem    *defel = (DefElem *) lfirst(lc);
+					if (strcmp(defel->defname, "schema") == 0)
 					{
 						d_schema = defel;
 						schemaName = defGetString(d_schema);
@@ -1777,7 +1781,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				/* make sure later steps can see the object created here */
 				CommandCounterIncrement();
 				break;
-			} 
+			}
 			case T_AlterObjectSchemaStmt:
 			{
 				ereport(ERROR,
@@ -1811,7 +1815,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 		SetCurrentRoleId(current_user_id, false);
 
 	}
-	PG_END_TRY();	
+	PG_END_TRY();
 	PG_RETURN_VOID();
 }
 
@@ -2436,7 +2440,7 @@ gen_sp_droprolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-static void 
+static void
 update_bbf_server_options(char *servername, char *optname, char *optvalue, bool isInsert)
 {
 	Relation	bbf_servers_def_rel;
@@ -2566,7 +2570,7 @@ update_bbf_server_options(char *servername, char *optname, char *optvalue, bool 
 
 }
 
-static void 
+static void
 clean_up_bbf_server_option(char *servername)
 {
 	Relation		bbf_servers_def_rel;
@@ -2845,11 +2849,11 @@ sp_droplinkedsrvlogin_internal(PG_FUNCTION_ARGS)
 	 *
 	 * DROP USER MAPPING IF EXISTS FOR CURRENT_USER SERVER @SERVERNAME
 	 * DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER @SERVERNAME
-	 * 
+	 *
 	 * Linked logins were first implemented as PG USER MAPPINGs for the CURRENT_USER which
 	 * was not entirely correct because T-SQL linked logins are not user or login specific.
 	 * To address this we now create user mapping for the PG PUBLIC role internally.
-	 * 
+	 *
 	 * To ensure sp_droplinkedsrvlogin works in accordance with both the older and newer
 	 * implementation of linked logins, we try to drop USER MAPPINGs for both the CURRENT_USER
 	 * and PUBLIC PG roles.
@@ -3730,7 +3734,7 @@ gen_sp_rename_subcmds(const char *objname, const char *newname, const char *sche
 	return res;
 }
 
-static void 
+static void
 remove_delimited_identifer(char *str)
 {
 	size_t len = strlen(str);

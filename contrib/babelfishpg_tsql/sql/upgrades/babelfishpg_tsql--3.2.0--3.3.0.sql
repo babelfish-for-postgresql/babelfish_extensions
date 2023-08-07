@@ -42,9 +42,17 @@ RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
 RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
+RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
+RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sql_expression_dependencies
 AS
@@ -436,13 +444,17 @@ ALTER TEXT SEARCH CONFIGURATION fts_contains
 -- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
 -- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
 -- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+-- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
   RETURNS TEXT AS
 $$
 DECLARE
+  orig_phrase text;
   joined_text text;
   word text;
 BEGIN
+  orig_phrase = phrase;
+
   -- generation term not supported
   IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
     RAISE EXCEPTION 'Generation term not supported';
@@ -484,16 +496,21 @@ BEGIN
 
   -- Split the phrase into an array of words
   FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
-    -- prefix term not supported
-    IF (word COLLATE C) SIMILAR TO ('%\*' COLLATE C)  THEN
-      RAISE EXCEPTION 'Prefix term not supported';
-    END IF;
     -- Append the word to the joined_text variable
     joined_text := joined_text || word || '<->';
   END LOOP;
 
   -- Remove the trailing "<->" from the joined_text
   joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
+
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  -- We need to rewrite the last word into 'lastword:*'
+  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
+  END IF;
 
   -- Return the joined_text
   RETURN joined_text;
@@ -503,7 +520,10 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
 
 -- Given the query string, determine the Postgres full text configuration to use
--- Currently we only support simple terms, so the function simply returns 'fts_contains'
+-- Currently we only support simple terms and prefix terms
+-- For simple terms, we use the 'fts_contains' configuration
+-- For prefix terms, we use the 'simple' configuration
+-- They are the configurations that provide closest matching according to our experiments
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
   RETURNS regconfig AS
 $$
@@ -511,10 +531,65 @@ DECLARE
   joined_text text;
   word text;
 BEGIN
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    RETURN 'simple'::regconfig;
+  END IF;
+  -- Simple term
   RETURN 'fts_contains'::regconfig;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+
+CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER
+                                                               )
+RETURNS sys.smalldatetime
+AS
+$BODY$
+DECLARE
+    v_ressmalldatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    p_seconds INTEGER;
+BEGIN
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check if arguments are out of range
+    IF ((p_year NOT BETWEEN 1900 AND 2079) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    p_seconds := 0;
+    v_ressmalldatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    p_seconds);
+
+    v_string := v_ressmalldatetime::pg_catalog.text;
+    RETURN CAST(v_string AS sys.SMALLDATETIME);
+EXCEPTION   
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type smalldatetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

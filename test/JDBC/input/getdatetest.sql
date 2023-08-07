@@ -1,3 +1,5 @@
+-- sla 50000
+
 -- NOTE: Each test is expected to take a lot of time
 -- We do not need Upgrade tests for these function
 -- We can only test the stability of this function in the framework since the results are dynamic
@@ -60,4 +62,252 @@ WITH
 SELECT count(min_getdate)
 FROM Tally
 WHERE min_getdate = sys.getutcdate()
+go
+
+-- Testing for consistency withing a batch and within a transaction as well
+
+-- getdate
+declare @a datetime
+declare @b datetime
+set @a = getdate()
+exec pg_sleep 1
+set @b = getdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Create procedure proc_1 as declare @a datetime;declare @b datetime;set @a = getdate();exec pg_sleep 1;set @b = getdate(); if @a = @b SELECT 'FAILURE'  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = getdate()
+exec proc_1;
+set @b = getdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Begin transaction 
+go
+
+declare @a datetime
+declare @b datetime
+set @a = getdate()
+exec pg_sleep 1
+set @b = getdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = getdate()
+exec proc_1;
+set @b = getdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Rollback
+go
+
+Drop procedure proc_1;
+go
+
+-- getutcdate
+
+declare @a datetime
+declare @b datetime
+set @a = getutcdate()
+exec pg_sleep 1
+set @b = getutcdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Create procedure proc_1 as declare @a datetime;declare @b datetime;set @a = getutcdate();exec pg_sleep 1;set @b = getutcdate(); if @a = @b SELECT 'FAILURE'  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = getutcdate()
+exec proc_1;
+set @b = getutcdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Begin transaction 
+go
+
+declare @a datetime
+declare @b datetime
+set @a = getutcdate()
+exec pg_sleep 1
+set @b = getutcdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = getutcdate()
+exec proc_1;
+set @b = getutcdate()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Rollback
+go
+
+Drop procedure proc_1;
+go
+
+-- sysutcdatetime
+declare @a datetime
+declare @b datetime
+set @a = sysutcdatetime()
+exec pg_sleep 1
+set @b = sysutcdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Create procedure proc_1 as declare @a datetime;declare @b datetime;set @a = sysutcdatetime();exec pg_sleep 1;set @b = sysutcdatetime(); if @a = @b SELECT 'FAILURE'  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysutcdatetime()
+exec proc_1;
+set @b = sysutcdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Begin transaction 
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysutcdatetime()
+exec pg_sleep 1
+set @b = sysutcdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysutcdatetime()
+exec proc_1;
+set @b = sysutcdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Rollback
+go
+
+Drop procedure proc_1;
+go
+
+-- sysdatetime
+declare @a datetime
+declare @b datetime
+set @a = sysdatetime()
+exec pg_sleep 1
+set @b = sysdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Create procedure proc_1 as declare @a datetime;declare @b datetime;set @a = sysdatetime();exec pg_sleep 1;set @b = sysdatetime(); if @a = @b SELECT 'FAILURE'  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysdatetime()
+exec proc_1;
+set @b = sysdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Begin transaction 
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysdatetime()
+exec pg_sleep 1
+set @b = sysdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysdatetime()
+exec proc_1;
+set @b = sysdatetime()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Rollback
+go
+
+Drop procedure proc_1;
+go
+
+-- sysdatetimeoffset
+declare @a datetime
+declare @b datetime
+set @a = sysdatetimeoffset()
+exec pg_sleep 1
+set @b = sysdatetimeoffset()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Create procedure proc_1 as declare @a datetime;declare @b datetime;set @a = sysdatetimeoffset();exec pg_sleep 1;set @b = sysdatetimeoffset(); if @a = @b SELECT 'FAILURE'  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysdatetimeoffset()
+exec proc_1;
+set @b = sysdatetimeoffset()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Begin transaction 
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysdatetimeoffset()
+exec pg_sleep 1
+set @b = sysdatetimeoffset()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+declare @a datetime
+declare @b datetime
+set @a = sysdatetimeoffset()
+exec proc_1;
+set @b = sysdatetimeoffset()
+if @a = @b SELECT 'FAILURE'
+  ELSE SELECT 'PASS'
+go
+
+Rollback
+go
+
+Drop procedure proc_1;
 go
