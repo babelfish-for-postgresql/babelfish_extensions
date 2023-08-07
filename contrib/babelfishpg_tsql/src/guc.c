@@ -8,6 +8,8 @@
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "pl_explain.h"
+#include "miscadmin.h"
+#include "access/parallel.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"
@@ -369,6 +371,30 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 
 static void assign_enable_pg_hint (bool newval, void *extra)
 {
+	/*
+     * Parallel workers send data to the leader, not the client. They always
+     * send data using pg_hint_plan.enable_hint_plan.
+     */
+    if (IsParallelWorker())
+    {
+        /*
+         * During parallel worker startup, we want to accept the leader's
+         * hint_plan setting so that anyone who looks at the value in
+         * the worker sees the same value that they would see in the leader.
+         */
+        if (InitializingParallelWorker)
+            return;
+
+        /*
+         * A change other than during startup, for example due to a SET clause
+         * attached to a function definition, should be rejected, as there is
+         * nothing we can do inside the worker to make it take effect.
+         */
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+                 errmsg("cannot change enable_hint_plan during a parallel operation")));
+    }
+
 	if (newval)
 	{
 		/* Will throw an error if pg_hint_plan is not installed */
