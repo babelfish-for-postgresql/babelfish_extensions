@@ -1092,7 +1092,7 @@ type_has_len(Oid type)
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 	return utilptr->is_tsql_bpchar_datatype(type) ||
 			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_binary_datatype(type) ||
+			// utilptr->is_tsql_binary_datatype(type) ||
 			utilptr->is_tsql_varchar_datatype(type) ||
 			utilptr->is_tsql_nvarchar_datatype(type);
 }
@@ -1114,6 +1114,8 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
+	if (!expr_is_null(result_expr) && !type_has_len(result_type))
+		return InvalidOid;
 
 	Assert(exprs != NIL);
 	for_each_cell(lc, exprs, lc)
@@ -1123,17 +1125,15 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 		if (expr_is_null(expr))
 			continue;
-		else if(type_has_len(type))
-		{
-			if (tsql_has_higher_precedence(type, result_type) || expr_is_null(result_expr))
-			{
-				result_expr = expr;
-				result_type = type;
-			}
-		}
-		else
+		else if (!type_has_len(type))
 			return InvalidOid;
+		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null(result_expr))
+		{
+			result_expr = expr;
+			result_type = type;
+		}
 	}
+
 	if (which_expr)
 		*which_expr = result_expr;
 	return result_type == UNKNOWNOID ? InvalidOid : result_type;
@@ -1142,20 +1142,14 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
-	// Decls
 	int32		max_typmods;
 	ListCell	*lc;
 
-	// Check if T-SQL
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return -1;
 
-	// Check if these are coearce-able
-	if (common_type == InvalidOid)
-		return -1;
-
-	// Check what type of typmod conversion we need need to do
-	if (!type_has_len(common_type))
+	/* Don't do anything if they don't share a common_type or */
+	if (common_type == InvalidOid || !type_has_len(common_type))
 		return -1;
 
 	// If resulting type is a length, need to be max of length types

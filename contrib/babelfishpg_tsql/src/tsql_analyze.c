@@ -325,7 +325,8 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	List 		*setOpTreeStack = list_make1(qry->setOperations);
 	List		*setOpNodes = NIL;
 	List 		*collist_list = NIL;
-	// List		*colTypes = ((SetOperationStmt*) qry->setOperations)->colTypes;
+	List		*topColTypes = NIL;
+	List		*topColTypmods = NIL;
 	ListCell	*collistl, *setopsl, *toptlistl;
 	Oid common_type;
 	int32 common_typmod;
@@ -338,10 +339,9 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		if (IsA(setOp, SetOperationStmt))
 		{
 			SetOperationStmt *op = (SetOperationStmt *) setOp;
-			// TODO Do we need the same check as in prepunion::903?
 			setOpNodes = lappend(setOpNodes, op);
-			setOpTreeStack = lcons(op->rarg, setOpTreeStack);
-			setOpTreeStack = lcons(op->larg, setOpTreeStack);
+			setOpTreeStack = lappend(setOpTreeStack, op->rarg);
+			setOpTreeStack = lappend(setOpTreeStack, op->larg);
 		} else if (IsA(setOp, RangeTblRef))
 		{
 			RangeTblEntry *rte = rt_fetch(((RangeTblRef*)setOp)->rtindex, pstate->p_rtable);
@@ -367,10 +367,6 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		}
 	}
 
-	// Call select common type (may have to strip coercions?) in case we need to strip out premature null conversions
-	// Call select common typmod
-	// Coerce all
-
 	forboth(collistl, collist_list,
 			toptlistl, qry->targetList)
 	{
@@ -389,14 +385,19 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 
 		common_type = select_common_type(pstate, col_exprs, NULL, NULL);
 		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
+		topColTypes = lappend_oid(topColTypes, common_type);
+		topColTypmods = lappend_int(topColTypmods, common_typmod);
 
 		foreach(lc, col_tles)
 		{
 			TargetEntry *tle = (TargetEntry*) lfirst(lc);
 			Node		*expr = (Node*) tle->expr;
-			tle->expr = (Expr*) coerce_to_target_type(pstate, expr, exprType(expr), 
+			Expr		*coerced_expr;
+			coerced_expr = (Expr*) coerce_to_target_type(pstate, expr, exprType(expr), 
 									common_type, common_typmod, COERCION_IMPLICIT, 
 									COERCE_IMPLICIT_CAST, -1);
+			if(coerced_expr)	/* Only coerce to target if implicit cast exists*/
+				tle->expr = coerced_expr;
 		}
 		Assert(IsA(top_expr, Var));
 		top_tle->expr = (Expr*) makeVar(top_expr->varno,
@@ -412,13 +413,8 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	foreach(setopsl, setOpNodes)
 	{
 		SetOperationStmt *sostmt = (SetOperationStmt*) lfirst(setopsl);
-		ListCell *coltypl, *coltypmodl;
-
-		forboth(coltypl, sostmt->colTypes, coltypmodl, sostmt->colTypmods)
-		{
-			lfirst_oid(coltypl) = common_type;
-			lfirst_int(coltypmodl) = common_typmod;
-		}
+		sostmt->colTypes = topColTypes;
+		sostmt->colTypmods = topColTypmods;
 	}
 
 	list_free(collist_list);
