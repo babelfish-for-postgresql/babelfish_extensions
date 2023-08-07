@@ -1697,7 +1697,7 @@ merge_not_matched
 // https://msdn.microsoft.com/en-us/library/ms189835.aspx
 delete_statement
     : with_expression?
-      DELETE (TOP LR_BRACKET expression RR_BRACKET PERCENT? | TOP DECIMAL)?
+      DELETE (TOP LR_BRACKET expression RR_BRACKET PERCENT?)?
       FROM? delete_statement_from
       with_table_hints?
       output_clause?
@@ -3738,7 +3738,7 @@ freetext_function
 
 freetext_predicate
     : CONTAINS LR_BRACKET (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  | PROPERTY LR_BRACKET full_column_name COMMA expression RR_BRACKET ) COMMA expression RR_BRACKET
-    | FREETEXT LR_BRACKET table_name COMMA (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  ) COMMA expression  (COMMA LANGUAGE expression)? RR_BRACKET
+    | FREETEXT LR_BRACKET (full_column_name | LR_BRACKET full_column_name (COMMA full_column_name)* RR_BRACKET | (table_name DOT)? STAR  ) COMMA expression  (COMMA LANGUAGE expression)? RR_BRACKET
     ;
 
 // these are functions with a different call syntax than regular functions;

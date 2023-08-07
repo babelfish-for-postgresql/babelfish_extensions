@@ -457,7 +457,7 @@ sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc)
 			/* object in schema */
 			else
 			{
-				Oid reloid;
+				Oid reloid = InvalidOid;
 
 				if (strcmp(level1type, "table") != 0 &&
 					strcmp(level1type, "view") != 0 &&
@@ -964,7 +964,7 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 	char		*schema_name, *major_name, *minor_name, *type;
 	char		*original_major_name = NULL, *original_minor_name = NULL;
 	Oid			cur_user_id;
-	Oid			schema_id, reloid, procoid, typeoid;
+	Oid			schema_id, reloid = InvalidOid, procoid, typeoid;
 	HeapTuple	heaptuple;
 	int16		attnum;
 	Datum		datum;

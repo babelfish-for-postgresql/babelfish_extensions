@@ -123,6 +123,7 @@ int
 11708
 11709
 11717
+15003
 16901
 16902
 16903
@@ -301,6 +302,7 @@ int
 3701
 2733
 213
+15003
 ~~END~~
 
 
@@ -464,6 +466,7 @@ int
 3701
 2733
 213
+15003
 ~~END~~
 
 
@@ -471,6 +474,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-156
+157
 ~~END~~
 

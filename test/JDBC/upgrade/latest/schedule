@@ -208,6 +208,7 @@ format
 forxml
 forxml-subquery
 fulltextserviceproperty
+fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -240,6 +241,7 @@ schema_resolution_proc
 schema_resolution_trigger
 sp_describe_first_result_set
 sp_tablecollations
+smalldatetimefromparts-dep
 str
 sys-all_columns
 sys-all_columns-dep
@@ -444,3 +446,4 @@ BABEL-4046
 host_id
 linked_srv_4229
 waitfor
+BABEL-4175

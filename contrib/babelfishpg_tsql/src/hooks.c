@@ -1437,7 +1437,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		}
 		else if (res->name == NULL && IsA(res->val, FuncCall) ){
 			FuncCall *fc = (FuncCall *) res->val;
-			if (strcasecmp(strVal(llast(fc->funcname)), "identity_into") == 0){
+			if (strncasecmp(strVal(llast(fc->funcname)), "identity_into", strlen("identity_into")) == 0)
+			{
+				// throw error if Select Into-identity function is called without a column name
 				ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'"),
 						parser_errposition(pstate, res->location)));

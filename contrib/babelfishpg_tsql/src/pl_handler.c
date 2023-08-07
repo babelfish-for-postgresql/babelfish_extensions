@@ -32,6 +32,7 @@
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
+#include "commands/trigger.h"
 #include "commands/user.h"
 #include "common/md5.h"
 #include "common/string.h"
@@ -143,6 +144,7 @@ Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
 static char *get_oid_type_string(int type_oid);
+static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
@@ -1702,7 +1704,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid			tsqlSeqTypOid;
 	TypeName   *type_def;
 	List	   *type_names;
-	List	   *new_type_names;
+	List	   *new_type_names = NULL;
 	AclResult	aclresult;
 	Oid			base_type;
 	int			list_len;
@@ -1974,7 +1976,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
-		return;					/* Don't execute anything */
+	{
+		if (qc && parsetree) {
+			/*
+			* Some utility statements return a row count, even though the
+			* tuples are not returned to the caller.
+			*/
+			Assert(qc->commandTag == CMDTAG_UNKNOWN);
+			if (IsA(parsetree, CreateTableAsStmt))
+				SetQueryCompletion(qc, CMDTAG_SELECT, 0);
+			else if (IsA(parsetree, CopyStmt))
+				SetQueryCompletion(qc, CMDTAG_COPY, 0);
+		}
+
+		return;                                 /* Don't execute anything */
+	}
 
 	/*
 	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
@@ -2182,7 +2198,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
-								
+
 								/*
 								 * Check whether the domain name contains invalid characters or not.
 								 */
@@ -2589,7 +2605,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
-							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
@@ -2723,9 +2739,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-						else 
+						else
 							drop_login = true;
-						
+
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -2853,8 +2869,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							other = true;
 
 						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
-							ereport(ERROR, 
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 						}
 
@@ -3713,6 +3729,8 @@ _PG_init(void)
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
+	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+
 	inited = true;
 }
 
@@ -4312,7 +4330,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	bool 		is_itvf;
 	char		*prosrc = NULL;
 	bool		is_mstvf = false;
-	
+
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 	int			saved_dialect = sql_dialect;
 
@@ -4460,9 +4478,9 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				func = pltsql_compile(fake_fcinfo, true);
 
 			if(func && func->table_varnos)
-			{	
+			{
 				is_mstvf = func->is_mstvf;
-				/* 
+				/*
 				 * if a function has tvp declared or as argument in the function
 				 * or it is a TVF has_table_var will be true
 				 */
@@ -4477,10 +4495,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		}
 
 		ReleaseSysCache(tuple);
-		
-		/* 
-		 * If the function has TVP in its arguments or function body 
-		 * it should be declared as VOLATILE by default 
+
+		/*
+		 * If the function has TVP in its arguments or function body
+		 * it should be declared as VOLATILE by default
 		 * TVF are VOLATILE by default so we donot need to update tuple for it
 		 */
 		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
@@ -5033,7 +5051,7 @@ static char *get_oid_type_string(int type_oid){
 		type_string = "decimal";
 		return type_string;
 	}
-	
+
 	switch(type_oid)
 	{
 		case INT2OID:
@@ -5049,11 +5067,46 @@ static char *get_oid_type_string(int type_oid){
 			type_string = "pg_catalog.numeric";
 			break;
 		default:
-			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), 
-				errmsg("Identity column type must be smallint, integer, bigint, or numeric")));
-			break;	
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
+			break;
 	}
 	return type_string;
+}
+
+static int64 get_identity_into_args(Node *node)
+{
+	int64 val = 0;
+	Const *con = NULL;
+	FuncExpr *fxpr = NULL;
+	OpExpr *opxpr = NULL;
+	Node *n = NULL;
+
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			con = (Const *)node;
+			val = (int64)DatumGetInt64(con->constvalue);
+			break;
+		case T_FuncExpr:
+			fxpr = (FuncExpr *)node;
+			if ((fxpr->args)->length != 1)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			n = (Node *)list_nth(fxpr->args, 0);
+			val = get_identity_into_args(n);
+			break;
+		case T_OpExpr:
+			opxpr = (OpExpr *)node;
+			if ((opxpr->args)->length != 1)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			n = (Node *)list_nth(opxpr->args, 0);
+			val = get_identity_into_args(n);
+			break;
+		default:
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			break;
+		}
+	return val;
 }
 
 static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
@@ -5079,8 +5132,8 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
-			
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into") == 0)
+
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
 			{
 				FuncExpr *funcexpr;
 				Oid snamespaceid;
@@ -5088,64 +5141,56 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				char *sname;
 				List *seqoptions = NIL;
 				ListCell *arg;
-
-				int type_oid;
+				int typeoid = 0;
 				char *type = NULL;
-				TypeName *ofTypename;
-				int64 seed_value;
-				int arg_num;
+
+				TypeName *typename = NULL;
+				int64 seedvalue = 0;
+				int64 incrementvalue = 0;
+				int argnum;
 
 				if (seen_identity)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
-				}
+					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
-				}
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
 
 				funcexpr = (FuncExpr *)tle->expr;
-				arg_num = 0;
+				argnum = 0;
 				foreach (arg, funcexpr->args)
 				{
-					Node *fargNode = (Node *)lfirst(arg);
-					Const *con;
-					arg_num++;
-					switch (arg_num)
+					Node *farg_node = (Node *)lfirst(arg);
+					argnum++;
+					switch (argnum)
 					{
-						case 1:
-							con = (Const *)fargNode;
-							type_oid = (int)con->constvalue;
-							type = get_oid_type_string(type_oid);
-							ofTypename = typeStringToTypeName(type);
-							seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)ofTypename, -1));
-							break;
-						case 2:
-							con = (Const *)fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeInteger((int64)con->constvalue), -1));
-							seed_value = (int64)con->constvalue;
-							break;
-						case 3:
-							con = (Const *)fargNode;
-							seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeInteger((int64)con->constvalue), -1));
-							if ((int)con->constvalue > 0)
-							{
-								seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeInteger(seed_value), -1));
-							}
-							else
-							{
-								seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeInteger(seed_value), -1));
-							}
-							break;
+					case 1:
+						typeoid = get_identity_into_args(farg_node);
+						type = get_oid_type_string(typeoid);
+						typename = typeStringToTypeName(type);
+						seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						break;
+					case 2:
+						seedvalue = get_identity_into_args(farg_node);
+						seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						break;
+					case 3:
+						incrementvalue = get_identity_into_args(farg_node);
+						seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeFloat(psprintf(INT64_FORMAT, incrementvalue)), -1));
+						if (incrementvalue > 0)
+						{
+							seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						}
+						else
+						{
+							seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						}
+						break;
 					}
 				}
 
 				into->identityName = tle->resname;
-				into->identityType = TypeNameToString(ofTypename);
-
+				into->identityType = TypeNameToString(typename);
 				seen_identity = true;
 
 				snamespaceid = RangeVarGetCreationNamespace(into->rel);
@@ -5167,14 +5212,10 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 	}
 
 	if (seqstmt)
-	{
-			result = lappend(result, seqstmt);
-	}
+		result = lappend(result, seqstmt);
 	result = lappend(result, stmt);
 	if (altseqstmt)
-	{
-			result = lappend(result, altseqstmt);
-	}
+		result = lappend(result, altseqstmt);
 
 	return result;
 }
@@ -5254,7 +5295,7 @@ pltsql_remove_current_query_env(void)
 		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
 	{
 		destroy_failed_transactions_map();
-	} 
+	}
 }
 
 /*
