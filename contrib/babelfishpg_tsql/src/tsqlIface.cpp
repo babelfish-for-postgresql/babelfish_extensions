@@ -1931,7 +1931,6 @@ public:
 					std::string result = std::regex_replace(s, pattern, "$1");
 					if ( s!= result)
 						rewritten_query_fragment.emplace(std::make_pair(temp->expression()->start->getStartIndex(), std::make_pair(::getFullText(temp->expression()), result)));
-					s = (pstrdup(::getFullText(temp->expression()).c_str()));
 				}
 			}
 		}

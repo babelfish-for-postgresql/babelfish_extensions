@@ -1,50 +1,217 @@
 -- psql
+-- behaviour of casting to time in psql
 SELECT CAST('2012-02-23' AS TIME)
 GO
 
 -- tsql
+-- when month is given in nymeric format either date has ['-', '/']
 SELECT CAST('2012-02-23' AS TIME)
 GO
 
+SELECT CAST('2012   -    02   -    23' AS TIME)
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      ' AS TIME)
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      3' AS TIME)
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      3       :' AS TIME)
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8' AS TIME)
+GO
+
+SELECT CAST('2012   /    02   /   23     2    :      3       :       8' AS TIME)
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876' AS TIME)
+GO
+
+SELECT CAST('2012   /    02   /    23     2    :      3       :       8    .          876' AS TIME)
+GO
+
+-- when month is given text format either date has ['-', '/']
+SELECT CAST('2012-02-23' AS TIME)
+GO
+
+SELECT CAST('2012   -   FeB   -    23' AS TIME)
+GO
+
+SELECT CAST('2012   -   FeBruAry   -    23' AS TIME)
+GO
+
+SELECT CAST('2012   -    feb   -    23     2    :      ' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8' AS TIME)
+GO
+
+SELECT CAST('2012   /    FeB   /    23     2    :      3       :       8' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876' AS TIME)
+GO
+
+SELECT CAST('2012   /    FeB   /    23     2    :      3       :       8    .          876' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeBruary   -    23     2    :      3' AS TIME)
+GO
+
+-- casting to particular round off, valid in range of [0-7]
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(0))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(1))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(2))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(3))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(4))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(5))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(6))
+GO
+
+SELECT CAST('2015-03-19 01:05:06.289' AS TIME(7))
+GO
+
+-- These particular cases are failing in bbf but passing in sql Server
 SELECT CAST('12 jan 20 2:3' AS TIME)
 GO
 
-SELECT CAST('2012   -   fEb   -     23' AS TIME)
+
+-- These particular cases are failing in SQL Server but passing in bbf
+-- case where if we mention input has milli seconds(".") and no digit after that and valid offset("+-") and for valid range
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .' AS TIME)
 GO
 
-SELECT CAST('2015-03-19 01:05:06.   289' AS TIME(0))
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .' AS TIME(0))
 GO
 
-SELECT CAST('Jan-2021-01 01:05:06.289' AS TIME)
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876    +   8' AS TIME)
 GO
 
--- these particular cases are failing in SQL Server but passing in bbf
-SELECT CAST('121200' AS TIME)
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876    -   8' AS TIME)
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876    +   8' AS TIME(0))
+GO
+
+SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876    -   8' AS TIME(0))
 GO
 
 SELECT CAST('2012-      02-     23     02      :     03  :     00        +       8' AS TIME)
 GO
 
-SELECT CAST('Jan   2021   01 010506.289' AS TIME)
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .' AS TIME(0))
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876   + 8' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876   - 8' AS TIME)
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876   + 8' AS TIME(0))
+GO
+
+SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876   - 8' AS TIME(0))
+GO
+
+-- case for different types of date format(mm-dd-yyyy, mm-yyyy-dd)
+SELECT CAST('Jan-01-2001' AS TIME)
+GO
+
+SELECT CAST('Jan-01-2001 01:05:06.289' AS TIME)
+GO
+
+SELECT CAST('Jan-2021-01' AS TIME)
+GO
+
+SELECT CAST('Jan-2021-01 01:05:06.289' AS TIME)
+GO
+
+-- if only offset is mentioned
+SELECT CAST('+02' AS TIME);
 GO
 
 SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
 GO
 
-select CAST(CAST('2020   -    03   -    15' AS date) AS time);
+-- if input is given in hhmmss
+SELECT CAST('121200' AS TIME)
+GO
+
+SELECT CAST('001200' AS TIME)
+GO
+
+SELECT CAST('0012:00' AS TIME)
 GO
 
 -- Negative cases
+-- wrong dates has been passed as an input
+SELECT CAST('Jan-0000-01' AS TIME)
+GO
+
+SELECT CAST('Jan-2021-34' AS TIME)
+GO
+
+SELECT CAST('Month-2021-01' AS TIME)
+GO
+
+-- casting to time from date shouldn't be allowed
+select CAST(CAST('2020-03-15' AS date) AS time);
+GO
+
+-- out of range should throw error
+SELECT CAST('2015-03-19 01:05:06.   289' AS TIME(8))
+GO
+
+-- case for different types of date format(dd-yyyy-mm, yyyy-dd-mm, mm-yyyy-dd)
+SELECT CAST('3-2021-jan 01:05:06.289' AS TIME)
+GO
+
+SELECT CAST('2003-30-jan 01:05:06.289' AS TIME)
+GO
+
 SELECT CAST('Jan-2021-01 121200 1-1' AS TIME)
 GO
 
-SELECT CAST('+02' AS TIME);
+-- case where the yyyy is not able to figure out from given input which contains yy
+SELECT CAST('3-01-jan 01:05:06.289' AS TIME)
+GO
+
+-- if given hh:mmmm
+SELECT CAST('00:1200' AS TIME)
+GO
+
+--if given yyyymmdd as input
+SELECT CAST('2012jan00' AS TIME)
 GO
 
 SELECT CAST('20121200' AS TIME)
 GO
 
-SELECT CAST('2012jan00' AS TIME)
+SELECT CAST('Jan   2021   01 010506.289' AS TIME)
 GO
 
 SELECT CAST('Jan   2021    010506.289' AS TIME)
@@ -53,6 +220,27 @@ GO
 SELECT CAST('Jan   2021   01 01   05    06    .    289' AS TIME)
 GO
 
+-- if only offset is mentioned
+SELECT CAST('+02' AS TIME);
+GO
+
+-- if invalid dates has been given then conversion shouldn't succeed
+SELECT CAST('0000-00-00' AS TIME)
+GO
+
+SELECT CAST('0-0-0' AS TIME)
+GO
+
+SELECT CAST('00-00-0000' AS TIME)
+GO
+
+SELECT CAST('00-0-0' AS TIME)
+GO
+
+SELECT CAST('0-0-00' AS TIME)
+GO
+
+-- need to check
 SELECT CAST('Jan-2021-01 121200 ' AS TIME)
 GO
 

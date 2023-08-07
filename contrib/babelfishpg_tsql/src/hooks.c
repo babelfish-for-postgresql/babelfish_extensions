@@ -44,6 +44,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -138,6 +139,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
+static void pltsql_parse_time_error(int dterr, const char *str, const char *datatype);
 
 /*****************************************
  * 			Executor Hooks
@@ -208,6 +210,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+static time_hook_type prev_time_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -352,6 +355,9 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	prev_time_hook = time_hook;
+	time_hook = pltsql_parse_time_error;
 }
 
 void
@@ -408,6 +414,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	time_hook = prev_time_hook;
 }
 
 /*****************************************
@@ -2615,6 +2622,21 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 		total_digit_count += (dscale % numeric_base);
 
 	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
+}
+
+/*
+ * Throw a common error message while casting to time datatype
+ */
+void pltsql_parse_time_error(int dterr, const char *str, const char *datatype)
+{
+	switch (dterr)
+	{
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("Conversion failed when converting date and/or time from character string.")));
+			break;
+	}
 }
 
 /*

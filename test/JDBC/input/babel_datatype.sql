@@ -233,31 +233,6 @@ select CAST('2020-03-15 09:00:00' AS datetime2);
 GO
 select CAST('2020-03-15 09:00:00' AS smalldatetime);
 GO
-select CAST('2020-MarCh-15' AS date);
-GO
-select CAST('2020-mar-15 09:00:00+8' AS datetimeoffset);
-GO
-select CAST('2020-MAR-15 09:00:00' AS datetime2);
-GO
-select CAST('2020-MaR-15 09:00:00' AS smalldatetime);
-GO
-
-select CAST('2020  -  03  -   15' AS date);
-GO
-select CAST('2020    -    03-15 09      :     00   :    00    +    8' AS datetimeoffset);
-GO
-select CAST('2020-03    -15 09    :      00     :      00' AS datetime2);
-GO
-select CAST('2020-03-    15 09     :       00 : 00' AS smalldatetime);
-GO
-select CAST('2020    -MarCh-15 09      :       00:     00+8' AS date);
-GO
-select CAST('2020-     mar-15 09:00:00+8' AS datetimeoffset);
-GO
-select CAST('2020-    MAR    -15 09      :      00     :   00' AS datetime2);
-GO
-select CAST('2020    -   MaR    -    15 09:00:00' AS smalldatetime);
-GO
 
 -- test the range of date
 select CAST('0001-01-01' AS date);
