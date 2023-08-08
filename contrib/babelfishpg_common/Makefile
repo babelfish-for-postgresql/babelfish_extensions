@@ -80,6 +80,13 @@ ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
 endif
 
+#preprocessor check for postgis file
+LIB = $$libdir/postgis-3.so 
+
+ifneq($(wildcard $(LIB)),)
+PG_CPPFLAGS = -DPOSTGIS_INCLUDED
+endif
+
 $(EXTENSION).control: $(EXTENSION).control.in
 	cat $< \
 		| sed -e 's|@EXTVERSION@|$(EXTVERSION)|g' \

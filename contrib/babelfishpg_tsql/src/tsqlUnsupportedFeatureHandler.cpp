@@ -211,7 +211,9 @@ protected:
 		antlrcpp::Any visitXml_exist_call(TSqlParser::Xml_exist_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
+		#ifndef POSTGIS_INCLUDED
 		antlrcpp::Any visitSpatial_methods(TSqlParser::Spatial_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SPATIAL_METHOD, "spatial methods", getLineAndPos(ctx)); return visitChildren(ctx); }
+		#endif
 
 		// built-in functions
 		antlrcpp::Any visitBif_cast_parse(TSqlParser::Bif_cast_parseContext *ctx) override;
@@ -1438,10 +1440,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 			}
 			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
 				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", getLineAndPos(ctx));
+			#ifndef POSTGIS_INCLUDED
 			else if (pg_strcasecmp("geography", name.c_str()) == 0)
 				handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", getLineAndPos(ctx));
 			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
 				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", getLineAndPos(ctx));
+			#endif
 		}
 	}
 	if (ctx->NATIONAL())
