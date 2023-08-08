@@ -1627,7 +1627,7 @@ use master
 go
 ~~START~~
 int
-<NULL>
+1
 ~~END~~
 
 

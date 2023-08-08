@@ -3008,8 +3008,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	nspname = get_namespace_name(schema_id);
 
 	if (!(nspname && pg_strcasecmp(nspname, "sys") == 0) && 
-		(!nspname || pg_strcasecmp(nspname, "information_schema_tsql") == 0 ||
-		pg_strcasecmp(nspname, "pg_catalog") == 0 ||
+		(!nspname || pg_strcasecmp(nspname, "pg_catalog") == 0 ||
 		pg_strcasecmp(nspname, "pg_toast") == 0 ||
 		pg_strcasecmp(nspname, "public") == 0))
 	{
