@@ -3261,6 +3261,9 @@ BEGIN
 	
 	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
 	-- their existence other than by trying to select from them
+	-- Function sys.babelfish_get_enr_list() could be used to determine if a #tmp table
+	-- exists but the columns and datatypes can still not be retrieved, so it would be of 
+	-- little use here. 
 	-- NB: not handling uncommon but valid syntax '<schemaname>.#tmp' for #tmp tables
 	IF SUBSTRING(@tab,1,1) <> '#'
 	BEGIN
