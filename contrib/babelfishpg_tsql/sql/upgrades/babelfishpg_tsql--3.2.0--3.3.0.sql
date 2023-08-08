@@ -597,6 +597,173 @@ EXCEPTION
         RAISE USING MESSAGE := 'Cannot construct data type smalldatetime, some of the arguments have values which are not valid.',
                     DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
                     HINT := 'Check each input argument belongs to the valid range and try again.';
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond INTEGER;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string datetimeoffset;
+BEGIN
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END; 
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    if v_hr > 14 or v_hr < -14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    tzfm := sign_flag*((v_hr*60)+v_mi);
+
+    p_year := sys.datepart('year',input_expr);
+    p_month := sys.datepart('month',input_expr);
+    p_day := sys.datepart('day',input_expr);
+    p_hour := sys.datepart('hour',input_expr::TIMESTAMP);
+    p_minute := sys.datepart('minute',input_expr);
+    p_seconds := sys.datepart('second',input_expr);
+    p_nanosecond := sys.datepart('nanosecond',input_expr);
+    p_tzoffset := -1*sys.datepart('tzoffset',input_expr);
+
+    
+
+    f_tzoffset := p_tzoffset + tzfm;
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
+    
+    BEGIN
+    RETURN cast(v_string AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond INTEGER;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string datetimeoffset;
+    v_sign PG_CATALOG.TEXT;
+BEGIN
+    
+    IF pg_typeof(tz_offset) <> 'integer'::regtype THEN
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END; 
+
+    if tz_offset > 840 or tz_offset < -840 THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := tz_offset/60;
+    v_mi := tz_offset%60;
+
+    p_year := sys.datepart('year',input_expr);
+    p_month := sys.datepart('month',input_expr);
+    p_day := sys.datepart('day',input_expr);
+    p_hour := sys.datepart('hour',input_expr::TIMESTAMP);
+    p_minute := sys.datepart('minute',input_expr);
+    p_seconds := sys.datepart('second',input_expr);
+    p_nanosecond := sys.datepart('nanosecond',input_expr);
+    p_tzoffset := -1*sys.datepart('tzoffset',input_expr);
+
+    v_sign := (
+        SELECT CASE
+            WHEN (tz_offset) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+
+    
+
+    f_tzoffset := p_tzoffset + tz_offset;
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
+    
+    BEGIN
+    RETURN cast(v_string AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    
 END;
 $BODY$
 LANGUAGE plpgsql
