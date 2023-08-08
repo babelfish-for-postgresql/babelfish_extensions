@@ -4,7 +4,7 @@ go
 DROP TABLE [sp_who test table]
 go
 
-DROP LOGIN johndoe
+DROP LOGIN sp_who_login
 GO
 
 DROP PROCEDURE sp_who_myprocedure

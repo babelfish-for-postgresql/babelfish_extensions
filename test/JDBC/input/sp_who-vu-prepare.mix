@@ -1,4 +1,4 @@
-CREATE LOGIN johndoe WITH PASSWORD = 'abc';
+CREATE LOGIN sp_who_login WITH PASSWORD = 'abc';
 GO
 
 CREATE TABLE t_sp_who(a INT, colvc30 VARCHAR(30), coldt DATETIME)

@@ -106,26 +106,26 @@ go
 sp_who '0'
 go
 
-sp_who 'johndoe'
+sp_who 'sp_who_login'
 go
 
-sp_who 'johndoe', NULL
+sp_who 'sp_who_login', NULL
 go
 
-sp_who 'johndoe', ''
+sp_who 'sp_who_login', ''
 go
 
-sp_who 'johndoe', 'postgres'
+sp_who 'sp_who_login', 'postgres'
 go
 
 sp_who 'nosuchlogin'
 go
 
-sp_who @option=NULL, @loginame='johndoe'
+sp_who @option=NULL, @loginame='sp_who_login'
 go
 
-sp_who @option='', @loginame='johndoe'
+sp_who @option='', @loginame='sp_who_login'
 go
 
-sp_who @option='postgres', @loginame='johndoe'
+sp_who @option='postgres', @loginame='sp_who_login'
 go

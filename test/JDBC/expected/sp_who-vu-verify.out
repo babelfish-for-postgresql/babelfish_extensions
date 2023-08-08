@@ -242,28 +242,28 @@ varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#
 ~~END~~
 
 
-sp_who 'johndoe'
+sp_who 'sp_who_login'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
-sp_who 'johndoe', NULL
+sp_who 'sp_who_login', NULL
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
-sp_who 'johndoe', ''
+sp_who 'sp_who_login', ''
 go
 ~~ERROR (Code: 50000)~~
 
 ~~ERROR (Message: Parameter @option can only be 'postgres')~~
 
 
-sp_who 'johndoe', 'postgres'
+sp_who 'sp_who_login', 'postgres'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
@@ -277,21 +277,21 @@ go
 ~~ERROR (Message: 'nosuchlogin' is not a valid login or you do not have permission.)~~
 
 
-sp_who @option=NULL, @loginame='johndoe'
+sp_who @option=NULL, @loginame='sp_who_login'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
-sp_who @option='', @loginame='johndoe'
+sp_who @option='', @loginame='sp_who_login'
 go
 ~~ERROR (Code: 50000)~~
 
 ~~ERROR (Message: Parameter @option can only be 'postgres')~~
 
 
-sp_who @option='postgres', @loginame='johndoe'
+sp_who @option='postgres', @loginame='sp_who_login'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
