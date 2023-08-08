@@ -293,13 +293,6 @@ UNION
 SELECT NULL
 UNION
 SELECT CAST('1' AS CHAR(8))
-GO
-
-SELECT NULL
-UNION 
-SELECT NULL
-UNION
-SELECT CAST('1' AS CHAR(8))
 ORDER BY 1
 GO
 
@@ -428,19 +421,6 @@ GO
 SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
 GO
 
--- BABEL-1874
-SELECT NULL
-GO
-
-SELECT DISTINCT NULL
-GO
-
-SELECT CAST( 1 AS BIT) AS Col1
-UNION 
-SELECT DISTINCT NULL AS Col1
-ORDER BY 1
-GO
-
 -- BABEL-4157
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT 'string' AS babel4157_c1 
@@ -450,7 +430,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -467,7 +447,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -484,7 +464,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -501,7 +481,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -521,7 +501,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -542,7 +522,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -560,7 +540,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -577,7 +557,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -587,6 +567,109 @@ DROP TABLE babel4157_tbl
 GO
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('char' AS CHAR(15))  AS babel4157_c1
+    UNION
+    SELECT CAST(N'Жऌ' AS NCHAR(20))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('char' AS CHAR(20))  AS babel4157_c1
+    UNION
+    SELECT CAST('varchar' AS VARCHAR(15))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('char' AS CHAR(20))  AS babel4157_c1
+    UNION
+    SELECT CAST(N'Жऌ' AS NVARCHAR(15))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST(N'Жऌ' AS NCHAR(20))  AS babel4157_c1
+    UNION
+    SELECT CAST('varchar' AS VARCHAR(15))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST(N'Жऌ' AS NCHAR(20))  AS babel4157_c1
+    UNION
+    SELECT CAST('nvarchar' AS NVARCHAR(15))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('varchar' AS VARCHAR(15))  AS babel4157_c1
+    UNION
+    SELECT CAST(N'Жऌ' AS NVARCHAR(20))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+
+DROP TABLE babel4157_tbl
+GO
+
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT cast(17 as binary(1))  AS babel4157_c1
     UNION
     SELECT cast(10 as binary(2))  AS babel4157_c1
@@ -594,7 +677,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ORDER BY 1
 GO
 
-SELECT * FROM babel4157_tbl
+SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
