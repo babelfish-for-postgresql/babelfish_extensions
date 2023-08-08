@@ -17,5 +17,5 @@ AS
 GO
 
 -- babel-4275
-create table sp_describe_first_result_set_vu_prepare_t1 (col_a text, col_b bool, col_c varchar(10), col_d nchar(11), col_e char(1), col_f int, col_g tinyint, col_h bigint, col_i text)
+create table sp_describe_first_result_set_vu_prepare_t1 (col_a text, col_b bool, col_c int, col_d bigint, col_e text)
 GO
