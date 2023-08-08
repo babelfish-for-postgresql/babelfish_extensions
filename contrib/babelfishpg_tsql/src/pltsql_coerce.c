@@ -1087,12 +1087,11 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 }
 
 static bool
-type_has_len(Oid type)
+is_tsql_char_type_with_len(Oid type)
 {
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 	return utilptr->is_tsql_bpchar_datatype(type) ||
 			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_binary_datatype(type) ||
 			utilptr->is_tsql_varchar_datatype(type) ||
 			utilptr->is_tsql_nvarchar_datatype(type);
 }
@@ -1115,7 +1114,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
-	if (!expr_is_null_or_unknown(result_expr) && !type_has_len(result_type))
+	if ((!expr_is_null_or_unknown(result_expr) && !is_tsql_char_type_with_len(result_type)) )
 		return InvalidOid;
 
 	Assert(exprs != NIL);
@@ -1126,7 +1125,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 		if (expr_is_null_or_unknown(expr))
 			continue;
-		else if (!type_has_len(type))
+		else if (!is_tsql_char_type_with_len(type))
 			return InvalidOid;
 		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null_or_unknown(result_expr))
 		{
@@ -1150,10 +1149,11 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		return -1;
 
 	/* Don't do anything if they don't share a common_type or */
-	if (common_type == InvalidOid || !type_has_len(common_type))
+	if (!is_tsql_char_type_with_len(common_type) &&
+		!common_utility_plugin_ptr->is_tsql_binary_datatype(common_type))
 		return -1;
 
-	// If resulting type is a length, need to be max of length types
+	/* If resulting type is a length, need to be max of length types */
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
@@ -1164,7 +1164,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	}
 
 	return max_typmods;
-	// Consider other typmod cases, dates, etc.
 }
 
 Datum

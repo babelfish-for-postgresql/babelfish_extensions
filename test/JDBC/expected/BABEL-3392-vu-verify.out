@@ -25,6 +25,47 @@ char
 ~~END~~
 
 
+SELECT babel3392_v1.* , babel3392_v2.*, babel3392_v3.* FROM babel3392_v1, babel3392_v2, babel3392_v3
+UNION ALL
+SELECT babel3392_v2.* , babel3392_v3.*, babel3392_v1.* FROM babel3392_v1, babel3392_v2, babel3392_v3
+ORDER BY 1, 2, 3
+GO
+~~START~~
+nchar#!#nchar#!#char
+<NULL>#!#1       #!#<NULL>
+<NULL>#!#1       #!#1         
+<NULL>#!#ΘЖऌฒ    #!#<NULL>
+<NULL>#!#ΘЖऌฒ    #!#1         
+1         #!#<NULL>#!#<NULL>
+1         #!#<NULL>#!#1         
+1         #!#1       #!#<NULL>
+1         #!#1       #!#<NULL>
+1         #!#1       #!#1         
+1         #!#1       #!#1         
+1         #!#ΘЖऌฒ    #!#<NULL>
+1         #!#ΘЖऌฒ    #!#1         
+ΘЖऌฒ      #!#<NULL>#!#<NULL>
+ΘЖऌฒ      #!#<NULL>#!#1         
+ΘЖऌฒ      #!#1       #!#<NULL>
+ΘЖऌฒ      #!#1       #!#1         
+~~END~~
+
+
+SELECT NULL, NULL
+UNION ALL
+SELECT * FROM (SELECT babel3392_v1.* , babel3392_v2.* FROM babel3392_v1, babel3392_v2) t1
+ORDER BY 1, 2
+GO
+~~START~~
+char#!#nchar
+<NULL>#!#<NULL>
+<NULL>#!#1       
+<NULL>#!#ΘЖऌฒ    
+1         #!#1       
+1         #!#ΘЖऌฒ    
+~~END~~
+
+
 DROP view babel3392_v1;
 DROP view babel3392_v2;
 DROP view babel3392_v3;
@@ -78,7 +119,6 @@ nchar
 ~~END~~
 
 
--- Length incorrect, should be fixed later
 SELECT CAST(1 AS BINARY(10)) AS Col1
 UNION
 SELECT NULL AS Col1
@@ -87,7 +127,7 @@ GO
 ~~START~~
 binary
 <NULL>
-00
+00000000000000000001
 ~~END~~
 
 
@@ -101,6 +141,210 @@ GO
 text
 <NULL>
 0x00000000000000000001
+~~END~~
+
+
+SELECT CAST(1 AS VARCHAR(10)) AS Col1
+UNION
+SELECT NULL AS Col1
+ORDER BY 1
+GO
+~~START~~
+varchar
+<NULL>
+1
+~~END~~
+
+
+SELECT NULL AS Col1
+UNION
+SELECT CAST(1 AS VARCHAR(10)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+varchar
+<NULL>
+1
+~~END~~
+
+
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10)) AS Col1
+UNION
+SELECT NULL AS Col1
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+<NULL>
+ΘЖऌฒ
+~~END~~
+
+
+SELECT NULL AS Col1
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+<NULL>
+ΘЖऌฒ
+~~END~~
+
+
+SELECT CAST(1 AS VARCHAR(10)) AS Col1
+UNION
+SELECT CAST('2' AS CHAR(15))
+ORDER BY 1
+GO
+~~START~~
+varchar
+1
+2              
+~~END~~
+
+
+SELECT CAST('2' AS CHAR(15))
+UNION
+SELECT CAST(1 AS VARCHAR(10)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+varchar
+1
+2              
+~~END~~
+
+
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10)) AS Col1
+UNION
+SELECT CAST('2' AS CHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+2              
+ΘЖऌฒ
+~~END~~
+
+
+SELECT CAST('2' AS CHAR(15))
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+2              
+ΘЖऌฒ
+~~END~~
+
+
+SELECT CAST(1 AS VARCHAR(10)) AS Col1
+UNION
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nchar
+1              
+Жऌ             
+~~END~~
+
+
+SELECT CAST('2' AS CHAR(15))
+UNION
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nchar
+2              
+Жऌ             
+~~END~~
+
+
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10)) AS Col1
+UNION
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+ΘЖऌฒ
+Жऌ             
+~~END~~
+
+
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+ΘЖऌฒ
+Жऌ             
+~~END~~
+
+
+SELECT NULL
+UNION
+SELECT CAST(1 AS VARCHAR(10)) AS Col1
+UNION
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nchar
+<NULL>
+1              
+Жऌ             
+~~END~~
+
+
+SELECT CAST('2' AS CHAR(15))
+UNION
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+UNION
+SELECT NULL
+ORDER BY 1
+GO
+~~START~~
+nchar
+<NULL>
+2              
+Жऌ             
+~~END~~
+
+
+SELECT NULL
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10))
+UNION
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+<NULL>
+ΘЖऌฒ
+Жऌ             
+~~END~~
+
+
+SELECT CAST(N'Жऌ' AS NCHAR(15))
+UNION
+SELECT NULL
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(10))
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+<NULL>
+ΘЖऌฒ
+Жऌ             
 ~~END~~
 
 
@@ -200,7 +444,6 @@ nchar
 ~~END~~
 
 
--- Length Incorrect
 SELECT CAST(1 AS BINARY(4)) AS Col1
 UNION
 SELECT CAST(2 AS BINARY(8)) AS Col1
@@ -208,12 +451,11 @@ ORDER BY 1
 GO
 ~~START~~
 binary
-00
-00
+0000000000000002
+0000000100000000
 ~~END~~
 
 
--- Length Incorrect
 SELECT CAST(1 AS BINARY(4)) AS Col1
 UNION
 SELECT CAST(2 AS BINARY(8)) AS Col1
@@ -221,8 +463,8 @@ ORDER BY 1
 GO
 ~~START~~
 binary
-00
-00
+0000000000000002
+0000000100000000
 ~~END~~
 
 
@@ -339,6 +581,19 @@ GO
 int
 <NULL>
 <NULL>
+~~END~~
+
+
+SELECT NULL
+UNION 
+SELECT NULL
+UNION
+SELECT CAST('1' AS CHAR(8))
+GO
+~~START~~
+char
+<NULL>
+1       
 ~~END~~
 
 
@@ -585,7 +840,17 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     UNION
     SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
 ) AS tbl
+ORDER BY 1
 GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+varchar
+string
+varchar
+~~END~~
+
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
@@ -597,6 +862,325 @@ babel4157_c1#!#40
 
 DROP TABLE babel4157_tbl
 GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
+    UNION
+    SELECT 'string' AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+varchar
+string
+varchar
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#40
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
+    UNION
+    SELECT 'string' AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+nvarchar
+string
+ΘЖऌฒ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#80
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1
+    UNION
+    SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+nvarchar
+string
+ΘЖऌฒ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#80
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+CREATE TABLE babel4157_tbl2 (c1 varchar(40) not null);
+go
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1
+    UNION
+    SELECT c1 from babel4157_tbl2
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+varchar
+string
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#40
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+DROP TABLE babel4157_tbl2
+GO
+
+CREATE TABLE babel4157_tbl2 (c1 nvarchar(40) not null);
+go
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT N'ΘЖऌฒ' AS babel4157_c1
+    UNION
+    SELECT c1 from babel4157_tbl2
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+nvarchar
+ΘЖऌฒ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#80
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+DROP TABLE babel4157_tbl2
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1
+    UNION
+    SELECT CAST(N'ΘЖऌฒ' AS NCHAR(40)) AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+nchar
+string                                  
+ΘЖऌฒ                                    
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#80
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1 
+    UNION
+    SELECT CAST('char' AS CHAR(40)) AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+char
+char                                    
+string                                  
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#40
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT cast(17 as binary(1))  AS babel4157_c1
+    UNION
+    SELECT cast(10 as binary(2))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl
+GO
+~~START~~
+binary
+000A
+1100
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#2
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT 'string' AS babel4157_c1 
+UNION
+SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
+ORDER BY 1
+GO
+~~START~~
+varchar
+string
+varchar
+~~END~~
+
+
+SELECT 'string' AS babel4157_c1
+UNION
+SELECT CAST('char' AS CHAR(15)) AS babel4157_c1
+ORDER BY 1
+GO
+~~START~~
+char
+char           
+string         
+~~END~~
+
+
+SELECT 'string' AS babel4157_c1
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) AS babel4157_c1
+ORDER BY 1
+GO
+~~START~~
+nchar
+string         
+ΘЖऌฒ           
+~~END~~
+
+
+SELECT 'string' AS babel4157_c1
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
+ORDER BY 1
+GO
+~~START~~
+nvarchar
+string
+ΘЖऌฒ
+~~END~~
+
+
+SELECT 'char'
+ORDER BY 1
+GO
+~~START~~
+text
+char
+~~END~~
+
+
+SELECT 'char'
+GO
+~~START~~
+varchar
+char
+~~END~~
+
+
+SELECT 'foo'
+UNION
+SELECT 'bar'
+ORDER BY 1
+GO
+~~START~~
+text
+bar
+foo
+~~END~~
+
+
+SELECT 'foo'
+UNION
+SELECT CAST('bar' AS VARCHAR(20))
+ORDER BY 1
+GO
+~~START~~
+varchar
+bar
+foo
+~~END~~
+
 
 -- VALUES
 select tbl.babel3392_c1 into babel3392_vals from (
@@ -647,20 +1231,34 @@ int
 SELECT CAST('foo' AS TEXT) UNION SELECT CAST('bar' as CHAR(10)) UNION SELECT NULL ORDER BY 1;
 GO
 ~~START~~
-text
+char
 <NULL>
 bar       
-foo
+foo       
 ~~END~~
 
 
 -- BINARY 
-select cast(17 as binary(1)) UNION select cast(10 as binary(2)) ORDER BY 1;
+select cast(17 as binary(1)) 
+UNION
+select cast(10 as binary(2))
 GO
 ~~START~~
 binary
-00
-11
+000A
+1100
+~~END~~
+
+
+select NULL
+UNION
+select cast(10 as binary(2))
+ORDER BY 1
+GO
+~~START~~
+text
+<NULL>
+0x000a
 ~~END~~
 
 
@@ -683,5 +1281,69 @@ varbinary
 ~~END~~
 
 
+select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union select cast(N'a' as NCHAR(10));  
+GO
+~~ERROR (Code: 33557097)~~
 
+~~ERROR (Message: UNION could not convert type "nchar" to bbf_varbinary)~~
+
+
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) UNION select cast(10 as varbinary(2));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type varbinary to bpchar)~~
+
+
+SELECT CAST(1 as BIT) UNION SELECT cast(N'ab' as NCHAR(10)) UNION SELECT CAST('bar' as CHAR(10));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type "nchar" to "bit")~~
+
+
+SELECT 'foo'
+UNION
+SELECT cast(17 as varbinary(2))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+
+
+SELECT 'foo'
+UNION
+SELECT cast(17 as varbinary(2))
+ORDER BY 1
+GO
+~~START~~
+text
+0x0011
+foo
+~~END~~
+
+
+SELECT cast(17 as varbinary(2))
+UNION
+SELECT 'foo'
+ORDER BY 1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+
+
+SELECT 'foo'
+UNION
+SELECT 'bar'
+UNION
+SELECT cast(17 as varbinary(2))
+ORDER BY 1
+GO
+~~START~~
+text
+0x0011
+bar
+foo
+~~END~~
 
