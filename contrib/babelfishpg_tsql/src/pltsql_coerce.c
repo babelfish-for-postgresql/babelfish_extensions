@@ -1092,16 +1092,17 @@ type_has_len(Oid type)
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 	return utilptr->is_tsql_bpchar_datatype(type) ||
 			utilptr->is_tsql_nchar_datatype(type) ||
-			// utilptr->is_tsql_binary_datatype(type) ||
+			utilptr->is_tsql_binary_datatype(type) ||
 			utilptr->is_tsql_varchar_datatype(type) ||
 			utilptr->is_tsql_nvarchar_datatype(type);
 }
 
 static bool
-expr_is_null(Node *expr)
+expr_is_null_or_unknown(Node *expr)
 {
 	Oid type = exprType(expr);
-	return type == UNKNOWNOID || (IsA(expr, Const) && ((Const *) expr)->constisnull);
+	return type == UNKNOWNOID || (
+		IsA(expr, Const) && (type == TEXTOID || ((Const*)expr)->constisnull));
 }
 
 static Oid
@@ -1114,7 +1115,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
-	if (!expr_is_null(result_expr) && !type_has_len(result_type))
+	if (!expr_is_null_or_unknown(result_expr) && !type_has_len(result_type))
 		return InvalidOid;
 
 	Assert(exprs != NIL);
@@ -1123,11 +1124,11 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 		Node	*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
 
-		if (expr_is_null(expr))
+		if (expr_is_null_or_unknown(expr))
 			continue;
 		else if (!type_has_len(type))
 			return InvalidOid;
-		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null(result_expr))
+		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null_or_unknown(result_expr))
 		{
 			result_expr = expr;
 			result_type = type;
