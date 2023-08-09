@@ -16,6 +16,7 @@
 #include "nodes/primnodes.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -327,9 +328,11 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	List 		*collist_list = NIL;
 	List		*topColTypes = NIL;
 	List		*topColTypmods = NIL;
+	List		*topColCols = NIL;
 	ListCell	*collistl, *setopsl, *toptlistl;
-	Oid common_type;
-	int32 common_typmod;
+	Oid 		common_type;
+	int32 		common_typmod;
+	Oid			common_collation;
 
 	while (setOpTreeStack)
 	{
@@ -387,7 +390,8 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
-
+		list_free(col_exprs);
+		col_exprs = NIL;
 		foreach(lc, col_tles)
 		{
 			TargetEntry *tle = (TargetEntry*) lfirst(lc);
@@ -398,13 +402,18 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 									COERCE_IMPLICIT_CAST, -1);
 			if(coerced_expr)	/* Only coerce to target if implicit cast exists*/
 				tle->expr = coerced_expr;
+			col_exprs = lappend(col_exprs, (Node*)tle->expr);
 		}
+
+		common_collation = select_common_collation(pstate, col_exprs, false);
+		topColCols = lappend_oid(topColCols, common_collation);
+
 		Assert(IsA(top_expr, Var));
 		top_tle->expr = (Expr*) makeVar(top_expr->varno,
 									top_expr->varattno,
 									common_type,
 									common_typmod,
-									top_expr->varcollid,
+									common_collation,
 									0);
 		list_free(col_exprs);
 		list_free(col_tles);
@@ -415,6 +424,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		SetOperationStmt *sostmt = (SetOperationStmt*) lfirst(setopsl);
 		sostmt->colTypes = topColTypes;
 		sostmt->colTypmods = topColTypmods;
+		sostmt->colCollations = topColCols;
 	}
 
 	list_free(collist_list);
