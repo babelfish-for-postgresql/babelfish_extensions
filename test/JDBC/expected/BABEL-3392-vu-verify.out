@@ -850,6 +850,34 @@ DROP TABLE babel4157_tbl
 GO
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1 
+    UNION
+    SELECT CAST('varchar' AS VARCHAR(MAX)) AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+varchar
+string
+varchar
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
     UNION
     SELECT 'string' AS babel4157_c1
@@ -899,6 +927,34 @@ GO
 ~~START~~
 varchar#!#smallint
 babel4157_c1#!#80
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(MAX)) AS babel4157_c1
+    UNION
+    SELECT 'string' AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+nvarchar
+string
+ΘЖऌฒ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -936,6 +992,7 @@ DROP TABLE babel4157_tbl
 DROP TABLE babel4157_tbl2
 GO
 
+-- Currently gives wrong typmod, need to support nvarchar literals
 CREATE TABLE babel4157_tbl2 (c1 nvarchar(40) not null);
 go
 
@@ -959,7 +1016,132 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#80
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+DROP TABLE babel4157_tbl2
+GO
+
+CREATE TABLE babel4157_tbl2 (c1 varchar(max) not null);
+go
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT 'string' AS babel4157_c1
+    UNION
+    SELECT c1 from babel4157_tbl2
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+varchar
+string
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+DROP TABLE babel4157_tbl2
+GO
+
+CREATE TABLE babel4157_tbl2 (c1 varchar(max) not null);
+go
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('string' AS VARCHAR(40)) AS babel4157_c1
+    UNION
+    SELECT c1 from babel4157_tbl2
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+varchar
+string
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+DROP TABLE babel4157_tbl2
+GO
+
+-- Currently gives wrong typmod, need to support nvarchar literals
+CREATE TABLE babel4157_tbl2 (c1 nvarchar(max) not null);
+go
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT N'ΘЖऌฒ' AS babel4157_c1
+    UNION
+    SELECT c1 from babel4157_tbl2
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+nvarchar
+ΘЖऌฒ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+DROP TABLE babel4157_tbl2
+GO
+
+CREATE TABLE babel4157_tbl2 (c1 nvarchar(max) not null);
+go
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
+    UNION
+    SELECT c1 from babel4157_tbl2
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+nvarchar
+ΘЖऌฒ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -1108,6 +1290,63 @@ DROP TABLE babel4157_tbl
 GO
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('char' AS CHAR(20))  AS babel4157_c1
+    UNION
+    SELECT CAST(N'Жऌ' AS NVARCHAR(MAX))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+nvarchar
+char                
+Жऌ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+-- Currently gives wrong typmod, need to support nvarchar literals
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT CAST('char' AS CHAR(20))  AS babel4157_c1
+    UNION
+    SELECT N'Жऌ' AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+nvarchar
+char                
+Жऌ
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST(N'Жऌ' AS NCHAR(20))  AS babel4157_c1
     UNION
     SELECT CAST('varchar' AS VARCHAR(15))  AS babel4157_c1
@@ -1220,6 +1459,90 @@ babel4157_c1#!#2
 DROP TABLE babel4157_tbl
 GO
 
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT cast(11 as varbinary(1))  AS babel4157_c1
+    UNION
+    SELECT cast(10 as varbinary(2))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+varbinary
+000A
+0B
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT cast(11 as varbinary(1))  AS babel4157_c1
+    UNION
+    SELECT cast(10 as varbinary(max))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+varbinary
+0000000A
+0B
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#-1
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT cast(17 as binary(1))  AS babel4157_c1
+    UNION
+    SELECT cast(10 as varbinary(3))  AS babel4157_c1
+) AS tbl
+ORDER BY 1
+GO
+
+SELECT * FROM babel4157_tbl ORDER BY 1
+GO
+~~START~~
+varbinary
+00000A
+11
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#<NULL>
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
 SELECT 'string' AS babel4157_c1 
 UNION
 SELECT CAST('varchar' AS VARCHAR(40)) AS babel4157_c1
@@ -1229,6 +1552,18 @@ GO
 varchar
 string
 varchar
+~~END~~
+
+
+SELECT CAST('long string test' AS VARCHAR(MAX)) AS babel4157_c1 
+UNION
+SELECT CAST('foo' AS VARCHAR(4)) AS babel4157_c1
+ORDER BY 1
+GO
+~~START~~
+varchar
+foo
+long string test
 ~~END~~
 
 
@@ -1412,21 +1747,21 @@ select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union sele
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION could not convert type "nchar" to bbf_varbinary)~~
+~~ERROR (Message: UNION/INTERSECT/EXCEPT could not convert type "nchar" to bbf_varbinary)~~
 
 
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) UNION select cast(10 as varbinary(2));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION could not convert type varbinary to bpchar)~~
+~~ERROR (Message: UNION/INTERSECT/EXCEPT could not convert type varbinary to bpchar)~~
 
 
 SELECT CAST(1 as BIT) UNION SELECT cast(N'ab' as NCHAR(10)) UNION SELECT CAST('bar' as CHAR(10));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION could not convert type "nchar" to "bit")~~
+~~ERROR (Message: UNION/INTERSECT/EXCEPT could not convert type "nchar" to "bit")~~
 
 
 SELECT 'foo'

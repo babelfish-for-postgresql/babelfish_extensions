@@ -1074,6 +1074,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		else
 		{
 			newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
+			// newcon->consttypmod = strlen(value) + VARHDRSZ;
 		}
 	}
 
@@ -1102,6 +1103,27 @@ expr_is_null_or_unknown(Node *expr)
 	Oid type = exprType(expr);
 	return type == UNKNOWNOID || (
 		IsA(expr, Const) && (type == TEXTOID || ((Const*)expr)->constisnull));
+}
+
+static bool
+expr_is_varchar_max(Node *expr)
+{
+	common_utility_plugin *utilptr = common_utility_plugin_ptr;
+
+	if (exprTypmod(expr) != -1 )
+		return false;
+	
+	if (utilptr->is_tsql_varchar_datatype(exprType(expr)))
+		return true;
+
+	if (utilptr->is_tsql_nvarchar_datatype(exprType(expr)))
+	{
+		if (IsA(expr, CoerceToDomain) && ((CoerceToDomain*)expr)->coercionformat == COERCE_IMPLICIT_CAST)
+			return false;
+		return true;
+	}
+
+	return false;
 }
 
 static Oid
@@ -1144,19 +1166,22 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
 	int32		max_typmods;
 	ListCell	*lc;
+	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return -1;
 
-	/* Don't do anything if they don't share a common_type or */
 	if (!is_tsql_char_type_with_len(common_type) &&
-		!common_utility_plugin_ptr->is_tsql_binary_datatype(common_type))
+			 !utilptr->is_tsql_binary_datatype(common_type) &&
+			 !utilptr->is_tsql_sys_binary_datatype(common_type))
 		return -1;
 
 	/* If resulting type is a length, need to be max of length types */
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
+		if(expr_is_varchar_max(expr))
+			return -1;
 		if (lc == list_head(exprs))
 			max_typmods = exprTypmod(expr);
 		else
