@@ -9,7 +9,7 @@ SELECT * FROM switchoffset_dep_vu_prepare_v2
 GO
 ~~START~~
 datetimeoffset
-2000-04-22 05:45:00.0000000 +05:45
+2000-04-22 12:00:00.0000000 +12:00
 ~~END~~
 
 
@@ -23,9 +23,10 @@ datetimeoffset
 
 EXEC switchoffset_dep_vu_prepare_p2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+~~START~~
+datetimeoffset
+2000-04-22 18:23:51.0000000 +02:00
+~~END~~
 
 
 SELECT switchoffset_dep_vu_prepare_f1()
@@ -41,6 +42,6 @@ SELECT switchoffset_dep_vu_prepare_f2()
 GO
 ~~START~~
 datetimeoffset
-2000-04-23 04:23:50.7668900 +12:00
+2000-04-22 18:23:50.7668900 +02:00
 ~~END~~
 
