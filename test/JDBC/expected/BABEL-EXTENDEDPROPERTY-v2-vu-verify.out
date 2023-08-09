@@ -1,8 +1,4 @@
--- psql
-
 -- tsql user=owner password=12345678
--- GRANT CREATE ON DATABASE jdbc_testdb TO babel_extended_properties_db_guest
--- GO
 USE babel_extended_properties_db
 GO
 
@@ -3359,4 +3355,3 @@ tinyint#!#nvarchar#!#int#!#int#!#varchar#!#sql_variant
 ~~END~~
 
 
--- psql
