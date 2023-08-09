@@ -1,0 +1,46 @@
+SELECT * FROM switchoffset_dep_vu_prepare_v1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT * FROM switchoffset_dep_vu_prepare_v2
+GO
+~~START~~
+datetimeoffset
+2000-04-22 05:45:00.0000000 +05:45
+~~END~~
+
+
+EXEC switchoffset_dep_vu_prepare_p1
+GO
+~~START~~
+datetimeoffset
+2023-08-08 03:06:45.0000000 -13:00
+~~END~~
+
+
+EXEC switchoffset_dep_vu_prepare_p2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+SELECT switchoffset_dep_vu_prepare_f1()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT switchoffset_dep_vu_prepare_f2()
+GO
+~~START~~
+datetimeoffset
+2000-04-23 04:23:50.7668900 +12:00
+~~END~~
+

@@ -1,0 +1,110 @@
+Select switchoffset('2001-04-22 ', -120)
+GO
+~~START~~
+datetimeoffset
+2001-04-21 22:00:00.0000000 -02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 ', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 02:00:00.0000000 +02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 19:34:56.0000000 +02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 19:34:56.3450000 +02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 0)
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', -0)
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 0x12)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('2001-04-22 ', '+12:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 12:00:00.0000000 +12:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 ', '-12:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-21 12:00:00.0000000 -12:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56', '-12:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 05:34:56.0000000 -12:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-11:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 06:34:56.3450000 -11:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '+00:00')
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-00:00')
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 10:34:56.345', '-11:00')
+go
+~~START~~
+datetimeoffset
+2001-04-21 23:34:56.3450000 -11:00
+~~END~~
+
