@@ -18,6 +18,14 @@ ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
 endif
 
+# preprocessor check for postgis file
+# LIB = $$libdir/postgis-3.so 
+
+# ifneq($(wildcard $($libdir/postgis-3)),)
+# PG_CPPFLAGS = -DPOSTGIS_INCLUDED
+# CFLAGS = -DPOSTGIS_INCLUDED
+# endif
+
 DATA_built = \
     $(EXTENSION).control \
     sql/$(EXTENSION)--$(EXTVERSION).sql
@@ -78,13 +86,6 @@ include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
-endif
-
-#preprocessor check for postgis file
-LIB = $$libdir/postgis-3.so 
-
-ifneq($(wildcard $(LIB)),)
-PG_CPPFLAGS = -DPOSTGIS_INCLUDED
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in

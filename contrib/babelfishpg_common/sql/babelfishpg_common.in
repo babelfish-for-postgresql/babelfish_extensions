@@ -29,11 +29,8 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "string_operators.sql"
 #include "coerce.sql"
 #include "rowversion.sql"
-#ifdef POSTGIS_INCLUDED
-#include "geometry.sql"
-#include "geography.sql"
-#endif
-
+//#include "geometry.sql"
+//#include "geography.sql"
 
 #include "utils.sql"
 

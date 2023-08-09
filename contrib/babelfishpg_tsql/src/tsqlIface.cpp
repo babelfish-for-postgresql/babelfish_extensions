@@ -956,7 +956,8 @@ public:
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 		
-		#ifndef POSTGIS_INCLUDED
+		//#ifndef POSTGIS_INCLUDED
+		/*
 		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
 		{
 			TSqlParser::IdContext *idctx = ctx->id()[0];
@@ -966,7 +967,8 @@ public:
 				rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "")));			
 			}
 		}
-		#endif
+		*/
+		//#endif
 
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
@@ -2188,7 +2190,8 @@ public:
 
 	TSqlParser::IdContext *proc = ctx->procedure;
 
-	#ifndef POSTGIS_INCLUDED
+	//#ifndef POSTGIS_INCLUDED
+	/*
 	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
 	{
 		TSqlParser::IdContext *idctx = ctx->id()[0];
@@ -2202,7 +2205,8 @@ public:
             stream.setText(idctx->id()[0]->start->getStartIndex(), blankSpaces.c_str());
 		}
 	}
-	#endif
+	*/
+	//#endif
 
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
