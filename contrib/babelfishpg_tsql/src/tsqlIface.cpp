@@ -5259,22 +5259,12 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		{
 			if (ctx->new_value)
 			{
-				// CHECKIDENT (<table_name>, RESEED, <new_value>)
 				stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
-			}
-			else
-			{
-				// CHECKIDENT (<table_name>, RESEED)
 			}
 		}
 		else if (ctx->NORESEED())
 		{
-			// CHECKIDENT (<table_name>, NORESEED)
 			stmt->dbcc_stmt_data.dbcc_checkident.is_reseed = false;
-		}
-		else
-		{
-			// CHECKIDENT (<table_name>)
 		}
 
 		if(ctx->dbcc_options())
