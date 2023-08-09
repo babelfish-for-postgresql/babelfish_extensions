@@ -6,6 +6,12 @@ GO
 SELECT * FROM fts_contains_rewrite_v1
 GO
 
+SELECT * FROM fts_contains_rewrite_v2
+GO
+
+SELECT * FROM fts_contains_rewrite_v3
+GO
+
 -- Test sys.babelfish_fts_contains_pgconfig
 SELECT * FROM fts_contains_pgconfig_v1
 GO
@@ -140,6 +146,9 @@ GO
 -- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
 -- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, run)'
 GO
 
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, arts)'
