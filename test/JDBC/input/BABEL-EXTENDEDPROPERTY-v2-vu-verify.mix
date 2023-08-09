@@ -1,7 +1,3 @@
--- psql
-GRANT CREATE ON DATABASE jdbc_testdb TO babel_extended_properties_db_guest
-GO
-
 -- tsql user=owner password=12345678
 USE babel_extended_properties_db
 GO
@@ -903,6 +899,3 @@ GO
 SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties
 GO
 
--- psql
-REVOKE CREATE ON DATABASE jdbc_testdb FROM babel_extended_properties_db_guest
-GO
