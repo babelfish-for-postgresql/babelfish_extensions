@@ -726,7 +726,7 @@ dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
 void
 dump_stmt_dbcc(PLtsql_stmt_dbcc *stmt_dbcc)
 {
-	printf("DBCC STATEMENT %s\n", stmt_dbcc->table_name);
+	printf("DBCC STATEMENT\n");
 }
 
 void

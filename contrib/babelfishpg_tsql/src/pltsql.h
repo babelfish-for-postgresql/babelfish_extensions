@@ -117,10 +117,10 @@ typedef enum PLtsql_promise_type
 } PLtsql_promise_type;
 
 
-typedef enum PLtsql_dbcc_type
+typedef enum PLtsql_dbcc_stmt_type
 {
 	PLTSQL_DBCC_CHECKIDENT
-} PLtsql_dbcc_type;
+} PLtsql_dbcc_stmt_type;
 
 /*
  * Variants distinguished in PLtsql_type structs
@@ -939,21 +939,31 @@ typedef struct PLtsql_stmt_insert_bulk
 } PLtsql_stmt_insert_bulk;
 
 /*
+ * DBCC statement type
+ */
+typedef union PLtsql_dbcc_stmt_data
+{
+	struct dbcc_checkident
+	{
+		char	   *db_name;
+		char	   *schema_name;
+		char	   *table_name;
+		bool		is_reseed;
+		char	   *new_reseed_value;
+		bool		no_infomsgs;
+	} dbcc_checkident;
+
+} PLtsql_dbcc_stmt_data;
+
+/*
  * DBCC statement
  */
 typedef struct PLtsql_stmt_dbcc
 {
 	PLtsql_stmt_type cmd_type;
-	// PLtsql_dbcc_type dbcc_cmd_type;
 	int			lineno;
-	char	   *table_name;
-	char	   *schema_name;
-	char	   *db_name;
-
-	/* CHECKIDENT Options. */
-	bool		is_reseed;
-	char	   *new_reseed_value;
-	bool		no_infomsgs;
+	PLtsql_dbcc_stmt_type dbcc_stmt_type;
+	PLtsql_dbcc_stmt_data dbcc_stmt_data;
 } PLtsql_stmt_dbcc;
 
 /*

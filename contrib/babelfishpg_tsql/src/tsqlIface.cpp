@@ -1803,9 +1803,9 @@ public:
         	graft(makeDbccCheckidentStatement(ctx), peekContainer());
 
 		clear_rewritten_query_fragment();
-		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
-		Assert(stmt);
-		statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
+		// PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
+		// Assert(stmt);
+		// statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
 	}
 
 	void exitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
@@ -5238,7 +5238,7 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 	bool no_infomsgs = false;
 
 	stmt->cmd_type = PLTSQL_STMT_DBCC;
-	// stmt->dbcc_cmd_type = PLTSQL_DBCC_CHECKIDENT;
+	stmt->dbcc_stmt_type = PLTSQL_DBCC_CHECKIDENT;
 	if (ctx->table_name())
 	{
 		if (ctx->table_name()->database)
@@ -5249,18 +5249,18 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		table_name = stripQuoteFromId(ctx->table_name()->table);
 
 		if (!db_name.empty())
-			stmt->table_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+			stmt->dbcc_stmt_data.dbcc_checkident.db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
 		if (!schema_name.empty())
-			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+			stmt->dbcc_stmt_data.dbcc_checkident.schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 		if (!table_name.empty())
-			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+			stmt->dbcc_stmt_data.dbcc_checkident.table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
 
 		if (ctx->RESEED())
 		{
 			if (ctx->new_value)
 			{
 				// CHECKIDENT (<table_name>, RESEED, <new_value>)
-				stmt->new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
+				stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
 			}
 			else
 			{
@@ -5270,7 +5270,7 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		else if (ctx->NORESEED())
 		{
 			// CHECKIDENT (<table_name>, NORESEED)
-			is_reseed = false;
+			stmt->dbcc_stmt_data.dbcc_checkident.is_reseed = false;
 		}
 		else
 		{
@@ -5291,8 +5291,8 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 			}
 		}
 	}
-	stmt->is_reseed = is_reseed;
-	stmt->no_infomsgs = no_infomsgs;
+	stmt->dbcc_stmt_data.dbcc_checkident.is_reseed = is_reseed;
+	stmt->dbcc_stmt_data.dbcc_checkident.no_infomsgs = no_infomsgs;
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 	return (PLtsql_stmt *) stmt;
 }

@@ -89,7 +89,7 @@ extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 int			execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 Oid			get_role_oid(const char *rolename, bool missing_ok);
 bool		is_member_of_role(Oid member, Oid role);
-
+void		exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt);
 extern PLtsql_function *find_cached_batch(int handle);
 
 extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_exec *stmt, bool keepplan);
@@ -2959,6 +2959,202 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 	return PLTSQL_RC_OK;
 }
 
+int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
+{
+	switch (stmt->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			exec_stmt_dbcc_checkident(stmt);
+			break;
+	}
+	return PLTSQL_RC_OK;
+}
+
+void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
+{
+	struct dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	TableScanDesc scan;
+	HeapTuple tuple;
+	char	*db_name = NULL;
+	char	*schema_name = NULL;
+	char	*nsp_name = NULL;
+	const char	*user;
+	const char	*guest_role_name;
+	int64	max_identity_value = 0;
+	int64	cur_identity_value = 0;
+	int		attnum;
+	int64	reseed_value = 0;
+	Oid		nsp_oid;
+	Oid 	table_oid;
+	Oid		seqid;
+	bool	is_null;
+	bool	has_identity = false;
+	bool	is_empty = false;
+
+	if (dbcc_stmt.db_name)
+		db_name = pstrdup(dbcc_stmt.db_name);
+	else
+		db_name = get_cur_db_name();
+
+	if (!DbidIsValid(get_db_id(db_name)))
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_DATABASE),
+			errmsg("database \"%s\" does not exist", db_name)));
+		pfree(db_name);
+	}
+
+	user = get_user_for_database(db_name);
+	guest_role_name = get_guest_role_name(db_name);
+
+	if(dbcc_stmt.new_reseed_value)
+		reseed_value = pg_strtoint64(dbcc_stmt.new_reseed_value);
+
+	ereport(WARNING, (errmsg("reseed_value: %ld", reseed_value)));	// to remove
+
+	if (dbcc_stmt.schema_name)
+	{
+		schema_name = pstrdup(dbcc_stmt.schema_name);
+		nsp_name = get_physical_schema_name(db_name, schema_name);
+	}
+	else
+	{
+		if (!user)
+		{
+			ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user does not exist")));
+		}
+		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+		{
+			nsp_name = pstrdup(get_guest_schema_name(db_name));
+		}
+		else
+		{
+			schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+			nsp_name = get_physical_schema_name(db_name, schema_name);
+		}
+	}
+
+	pfree(db_name);
+
+	nsp_oid = get_namespace_oid(nsp_name, false);
+	if(!OidIsValid(nsp_oid))
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_SCHEMA),
+			errmsg("schema \"%s\" does not exist", schema_name)));
+	}
+	pfree(schema_name);
+
+	table_oid = get_relname_relid(dbcc_stmt.table_name, nsp_oid);
+	if(!OidIsValid(table_oid))
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_TABLE),
+			errmsg("relation \"%s\" does not exist", dbcc_stmt.table_name)));
+	}
+
+	/* Permission check */
+	if (pg_class_aclcheck(table_oid, GetUserId(), ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)
+	{
+		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLE, dbcc_stmt.table_name);
+	}
+
+	rel = RelationIdGetRelation(table_oid);
+	tupdesc = RelationGetDescr(rel);
+
+	/* Find Identity column in table and associated sequence */
+	for (attnum = 0; attnum < tupdesc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+
+		if (attr->attidentity)
+		{
+			has_identity = true;
+			seqid = getIdentitySequence(table_oid, attnum + 1, false);
+			break;
+		}
+	}
+
+	if (!has_identity)
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_COLUMN),
+			errmsg("'%s.%s' does not contain an identity column.",
+				nsp_name, dbcc_stmt.table_name)));	
+	
+	pfree(nsp_name);
+	scan = table_beginscan_catalog(rel, 0, NULL);
+	tuple = heap_getnext(scan, BackwardScanDirection);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		max_identity_value = DatumGetInt64(heap_getattr(tuple, attnum+1,
+								tupdesc, &is_null));
+	}
+	else
+		is_empty = true;
+
+	RelationClose(rel);
+	table_endscan(scan);
+
+	if (!is_empty)
+		cur_identity_value = DirectFunctionCall1(pg_sequence_last_value,
+						ObjectIdGetDatum(seqid));
+
+	if (dbcc_stmt.is_reseed)
+	{
+		if (dbcc_stmt.new_reseed_value)
+		{
+			if (is_empty)
+				DirectFunctionCall3(setval3_oid,
+					ObjectIdGetDatum(seqid),
+					CStringGetDatum(dbcc_stmt.new_reseed_value),
+					BoolGetDatum(false));
+			else
+				DirectFunctionCall2(setval_oid,
+					ObjectIdGetDatum(seqid),
+					CStringGetDatum(dbcc_stmt.new_reseed_value));
+		}
+		else
+		{
+			if (cur_identity_value < max_identity_value)
+			{
+				DirectFunctionCall2(setval_oid,
+					ObjectIdGetDatum(seqid),
+					Int64GetDatum(cur_identity_value));
+			}
+		}
+	}
+
+	if (!dbcc_stmt.no_infomsgs)
+	{
+		// print output
+		if (!dbcc_stmt.is_reseed || 
+			(dbcc_stmt.is_reseed && 
+				dbcc_stmt.new_reseed_value == NULL))
+		{
+			ereport(WARNING,
+				(errmsg("Checking identity information: current identity value "
+					"'%ld', current column value '%ld'.\n"
+					"DBCC execution completed. If DBCC printed error messages, "
+					"contact your system administrator."
+					, cur_identity_value, max_identity_value)));
+		}
+		else
+		{
+			ereport(WARNING,
+				(errmsg("Checking identity information: current identity value "
+					"'%ld'.\n DBCC execution completed. If DBCC printed error "
+					"messages, contact your system administrator."
+					, cur_identity_value)));
+		}
+	}
+}
+
+
 uint64
 execute_bulk_load_insert(int ncol, int nrow,
 						 Datum *Values, bool *Nulls)
@@ -3133,10 +3329,4 @@ int
 get_insert_bulk_kilobytes_per_batch()
 {
 	return insert_bulk_kilobytes_per_batch;
-}
-
-int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
-{
-	// TODO implement
-	return PLTSQL_RC_OK;
 }
