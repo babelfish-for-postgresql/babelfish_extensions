@@ -9,7 +9,7 @@ SELECT * FROM todatetimeoffset_dep_vu_prepare_v2
 GO
 ~~START~~
 datetimeoffset
-2000-04-22 16:23:51.7668900 +05:45
+2000-04-22 16:23:51.7668900 +13:00
 ~~END~~
 
 
@@ -23,9 +23,10 @@ datetimeoffset
 
 EXEC todatetimeoffset_dep_vu_prepare_p2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+~~START~~
+datetimeoffset
+2000-04-22 16:23:51.7668900 -03:54
+~~END~~
 
 
 SELECT todatetimeoffset_dep_vu_prepare_f1()

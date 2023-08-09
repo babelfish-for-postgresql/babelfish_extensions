@@ -1,19 +1,19 @@
 CREATE VIEW todatetimeoffset_dep_vu_prepare_v1 as (Select todatetimeoffset('2000-04-22 16:2a:51.766890',340));
 GO
 
-CREATE VIEW todatetimeoffset_dep_vu_prepare_v2 as (Select todatetimeoffset('2000-04-22 16:23:51.766890',345));
+CREATE VIEW todatetimeoffset_dep_vu_prepare_v2 as (Select todatetimeoffset('2000-04-22 16:23:51.766890','+13:00'));
 GO
 
 CREATE PROCEDURE  todatetimeoffset_dep_vu_prepare_p1 as (SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45' as datetime2), '-13:00'));
 GO
 
-CREATE PROCEDURE  todatetimeoffset_dep_vu_prepare_p2 as (Select todatetimeoffset('2000-04-22 16:23:51.766890','+12:0e'));
+CREATE PROCEDURE  todatetimeoffset_dep_vu_prepare_p2 as (Select todatetimeoffset('2000-04-22 16:23:51.766890',-234));
 GO
 
 CREATE FUNCTION todatetimeoffset_dep_vu_prepare_f1()
 RETURNS DATETIMEOFFSET AS
 BEGIN
-RETURN (Select todatetimeoffset('2000-0a-22 16:23:51.766890','+12:00'));
+RETURN (Select todatetimeoffset('2000-0a-22 16:23:51.766890',-340));
 END
 GO
 
