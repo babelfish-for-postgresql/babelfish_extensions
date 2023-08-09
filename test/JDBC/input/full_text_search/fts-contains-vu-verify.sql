@@ -2,7 +2,7 @@
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
--- Test sys.babelfish_fts_contains_rewrite
+-- Test sys.babelfish_fts_contains_rewrite, sys.babelfish_fts_contains_phrase_helper, sys.babelfish_fts_contains_generation_term_helper
 SELECT * FROM fts_contains_rewrite_v1
 GO
 
@@ -10,6 +10,9 @@ SELECT * FROM fts_contains_rewrite_v2
 GO
 
 SELECT * FROM fts_contains_rewrite_v3
+GO
+
+SELECT * FROM fts_contains_rewrite_v4
 GO
 
 -- Test sys.babelfish_fts_contains_pgconfig

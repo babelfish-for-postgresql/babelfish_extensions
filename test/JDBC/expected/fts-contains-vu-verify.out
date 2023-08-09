@@ -7,7 +7,7 @@ ignore
 ~~END~~
 
 
--- Test sys.babelfish_fts_contains_rewrite
+-- Test sys.babelfish_fts_contains_rewrite, sys.babelfish_fts_contains_phrase_helper, sys.babelfish_fts_contains_generation_term_helper
 SELECT * FROM fts_contains_rewrite_v1
 GO
 ~~START~~
@@ -29,6 +29,14 @@ GO
 ~~START~~
 text
 (play) | (move)
+~~END~~
+
+
+SELECT * FROM fts_contains_rewrite_v4
+GO
+~~START~~
+text
+(word1) | (word2<->word3)
 ~~END~~
 
 
