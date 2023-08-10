@@ -81,3 +81,41 @@ GO
 
 SELECT TODATETIMEOFFSET(cast('2023-08-08' as datetime2), 4556)
 GO
+
+Select todatetimeoffset('0001-01-00 00:00:00.00', '-10:00')
+GO
+
+Select todatetimeoffset('0001-01-01 00:00:00.00', '+13:00')
+GO
+
+Select todatetimeoffset('9999-12-31 23:59:59.59', '+12:00')
+GO
+
+Select todatetimeoffset('9999-12-31 23:59:59.59', '+12:00')
+GO
+
+Select todatetimeoffset('10000-12-31 23:59:59.59', '+12:00')
+GO
+
+Select todatetimeoffset('9934-11-30 22:52:59.59', '+14:01')
+GO
+
+Select todatetimeoffset('9934-11-30 22:52:59.59', '-14:01')
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2), '+12:00')
+GO
+
+DECLARE @test_date datetime;
+SET @test_date = '2022-12-11';
+Select todatetimeoffset(@test_date,'+12:00');
+GO
+
+DECLARE @test_date datetime2;
+SET @test_date = '2345-12-31 23:59:59.59';
+Select todatetimeoffset(@test_date,-120);
+GO
+
+Select todatetimeoffset(DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ), 300)
+GO
+

@@ -202,3 +202,91 @@ GO
 
 ~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
 
+
+Select todatetimeoffset('0001-01-00 00:00:00.00', '-10:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('0001-01-01 00:00:00.00', '+13:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('9999-12-31 23:59:59.59', '+12:00')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.5900000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('9999-12-31 23:59:59.59', '+12:00')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.5900000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('10000-12-31 23:59:59.59', '+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('9934-11-30 22:52:59.59', '+14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset('9934-11-30 22:52:59.59', '-14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2), '+12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.9980000 +12:00
+~~END~~
+
+
+DECLARE @test_date datetime;
+SET @test_date = '2022-12-11';
+Select todatetimeoffset(@test_date,'+12:00');
+GO
+~~START~~
+datetimeoffset
+2022-12-11 00:00:00.0000000 +12:00
+~~END~~
+
+
+DECLARE @test_date datetime2;
+SET @test_date = '2345-12-31 23:59:59.59';
+Select todatetimeoffset(@test_date,-120);
+GO
+~~START~~
+datetimeoffset
+2345-12-31 23:59:59.5900000 -02:00
+~~END~~
+
+
+Select todatetimeoffset(DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ), 300)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:23:44.0000050 +05:00
+~~END~~
+
+

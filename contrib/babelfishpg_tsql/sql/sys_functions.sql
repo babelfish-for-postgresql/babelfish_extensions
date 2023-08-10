@@ -391,11 +391,12 @@ BEGIN
             RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END;
 
-    v_hr := v_hr * sign_flag;
     
-    if v_hr > 14 or v_hr < -14 or (v_hr = 14 and v_mi > 0) or (v_hr = -14 and v_mi > 0) THEN
+    if v_hr > 14 or v_hr < -14 or (v_hr = 14 and v_mi > 0) THEN
        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END IF; 
+
+    v_hr := v_hr * sign_flag;
 
     v_string := CONCAT(input_expr,tz_offset);
 
