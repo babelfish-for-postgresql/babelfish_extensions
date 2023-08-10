@@ -936,6 +936,14 @@ END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
 
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
                                                                IN p_day INTEGER,
