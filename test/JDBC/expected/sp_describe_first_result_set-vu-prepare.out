@@ -15,3 +15,7 @@ CREATE PROCEDURE sp_describe_first_result_set_vu_prepare_procedure2
 AS
     EXEC sp_describe_first_result_set N'PRINT 1';
 GO
+
+-- babel-4275
+create table sp_describe_first_result_set_vu_prepare_t1 (col_a text, col_b bool, col_c int, col_d bigint, col_e text)
+GO
