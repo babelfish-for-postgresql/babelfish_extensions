@@ -4244,16 +4244,16 @@ tsql_IsolationLevelStr:
 				}
 			| REPEATABLE READ
 				{
-					if(pltsql_enable_snapshot_isolation_for_reapeatable_read == false){
-						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
+					if(pltsql_enable_snapshot_isolation_for_reapeatable_read == true){
+						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
+						$$ = "repeatable read";	
+					}
+					else{
+						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							errmsg("REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read to on to enable snapshot isolation instead"),
 							parser_errposition(@1)));
-					}
-					else{
-						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SNAPSHOT);
-						$$ = "repeatable read";
 					}
 
 				}
@@ -4264,11 +4264,17 @@ tsql_IsolationLevelStr:
 				}
 			| SERIALIZABLE
 				{
-					TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
-					ereport(ERROR,
+					if(pltsql_enable_snapshot_isolation_for_reapeatable_read == true){
+						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
+						$$ = "repeatable read";
+					}
+					else{
+						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
+						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("SERIALIZABLE isolation level is not supported"),
+							errmsg("SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read to on to enable snapshot isolation instead"),
 							parser_errposition(@1)));
+					}
 				}
 		;
 
