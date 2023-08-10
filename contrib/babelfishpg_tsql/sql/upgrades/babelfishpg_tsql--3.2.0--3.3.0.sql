@@ -602,7 +602,13 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-ALTER FUNCTION sys.power (IN arg1 INT, IN arg2 NUMERIC) STRICT;
+ALTER FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC) STRICT;
+
+ALTER FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC) STRICT;
+
+ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
+
+ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
