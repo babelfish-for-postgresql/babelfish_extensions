@@ -1,0 +1,40 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/CMakeFiles/utf8cpp"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/CMakeFiles/utf8cpp.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/CMakeFiles/utf8cpp-complete.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-build.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-configure.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-download.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-install.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-mkdir.rule"
+		},
+		{
+			"file" : "/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-patch.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"utf8cpp"
+		],
+		"name" : "utf8cpp"
+	}
+}

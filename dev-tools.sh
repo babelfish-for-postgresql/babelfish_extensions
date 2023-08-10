@@ -188,7 +188,7 @@ init_pg() {
     make install
     cd contrib && make && sudo make install
     cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
-    init_pghint $1 $2
+    # init_pghint $1 $2
 }
 
 pg_dump() {
@@ -492,5 +492,11 @@ elif [ "$1" == "build_coverage" ]; then
     exit 0
 elif [ "$1" == "sum_coverage" ]; then
     sum_coverage $TARGET_WS
+    exit 0
+elif [ "$1" == "pgchanges" ]; then
+    init_pg $TARGET_WS $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
+    init_db $TARGET_WS
+    $TARGET_WS/babelfish_extensions/test/JDBC/init.sh
     exit 0
 fi

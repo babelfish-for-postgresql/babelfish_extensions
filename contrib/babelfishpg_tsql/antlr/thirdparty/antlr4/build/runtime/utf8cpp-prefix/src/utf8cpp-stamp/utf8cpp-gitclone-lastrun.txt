@@ -1,0 +1,3 @@
+repository='https://github.com/nemtrif/utfcpp'
+module=''
+tag='origin'

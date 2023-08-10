@@ -1,0 +1,10 @@
+# Target labels
+ utf8cpp
+# Source files and their labels
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/CMakeFiles/utf8cpp-build
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/CMakeFiles/utf8cpp-build.rule
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-build.rule
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-configure.rule
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-patch.rule
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-download.rule
+/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/utf8cpp-prefix/src/utf8cpp-stamp/utf8cpp-mkdir.rule

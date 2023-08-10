@@ -1,9 +1,9 @@
 # SET THIS CONNECTION STRING TO GENERATE THE EXPECTED OUTPUT FILE
-fileGenerator_URL = 
-fileGenerator_port = 
-fileGenerator_databaseName = 
-fileGenerator_user = 
-fileGenerator_password = 
+fileGenerator_URL = 127.0.0.1
+fileGenerator_port = 1433
+fileGenerator_databaseName = master
+fileGenerator_user = jdbc_user
+fileGenerator_password = 12345678
 
 # PATH TO INPUT TEST FILES FOLDER
 inputFilesPath = ./input
@@ -62,3 +62,5 @@ createObjectSearch = function,procedure,view,table
 # SPECIFY PATTERNS TO SEARCH IN FRAMEWORK
 # CAN BE GIVEN SEPARATED WITH A COMMA AND NO SPACES
 searchPatterns = ^drop
+
+compareWithFile = true

@@ -1,0 +1,1 @@
+cmd='/local/vikasprj/cmake-3.20.6-linux-x86_64/bin/cmake;-DCMAKE_INSTALL_PREFIX=/home/vikasprj/workplace/vikashos/babelfish_extensions/contrib/babelfishpg_tsql/antlr/thirdparty/antlr4/build/runtime/thirdparty/utfcpp/install;-DUTF8_TESTS=off;-DUTF8_SAMPLES=off;-GUnix Makefiles;<SOURCE_DIR><SOURCE_SUBDIR>'
