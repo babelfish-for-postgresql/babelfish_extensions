@@ -104,11 +104,11 @@ end;
 go
 
 -- Test for xml in create view
-create view forxml_vu_v1 (col1) as select * from forxml_vu_t1 for xml raw, type;
+create view forxml_vu_view1 (col1) as select * from forxml_vu_t1 for xml raw, type;
 go
 
 -- Test for xml on pure relational view
-create view forxml_vu_v2 (col1, col2) as select * from forxml_vu_t1;
+create view forxml_vu_view2 (col1, col2) as select * from forxml_vu_t1;
 go
 
 -- Test for xml and union all
@@ -184,4 +184,21 @@ go
 -- test string variable can be binded with for xml query
 create procedure forxml_vu_p_strvar @pid int, @str varchar(10) as
 select * from forxml_vu_t1 where id = @pid and a = @str for xml raw;
+go
+
+-- test null value handling in datetime, smalldatetime, datetime2, and datetimeoffset
+create procedure forxml_vu_p_nullval1 as
+select cast(null as datetime) for xml path;
+go
+
+create procedure forxml_vu_p_nullval2 as
+select cast(null as smalldatetime) for xml path;
+go
+
+create procedure forxml_vu_p_nullval3 as
+select cast(null as datetime2) for xml path;
+go
+
+create procedure forxml_vu_p_nullval4 as
+select cast(null as datetimeoffset) for xml path;
 go

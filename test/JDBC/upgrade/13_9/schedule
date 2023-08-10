@@ -84,6 +84,7 @@ BABEL-405
 BABEL-4078-before-14_8-or-15_3
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-741
@@ -316,3 +317,4 @@ TestXML
 timefromparts
 triggers_with_transaction
 BABEL-4046
+getdate

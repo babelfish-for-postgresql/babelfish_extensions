@@ -115,6 +115,7 @@ BABEL-4078
 BABEL-4098
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -133,6 +134,8 @@ babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-v2
+babel_int4_varbinary_div
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
@@ -179,6 +182,7 @@ BABEL-TABLEOPTIONS
 babel_trigger
 babel_try_parse
 BABEL-USER
+babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
@@ -204,6 +208,7 @@ format
 forxml
 forxml-subquery
 fulltextserviceproperty
+fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -236,6 +241,7 @@ schema_resolution_proc
 schema_resolution_trigger
 sp_describe_first_result_set
 sp_tablecollations
+smalldatetimefromparts-dep
 str
 sys-all_columns
 sys-all_columns-dep
@@ -283,6 +289,7 @@ sys-endpoints
 sys-eomonth
 sys-events
 sys-extended_properties
+sys-sql_expression_dependencies
 sys-filegroups
 sys-filetables
 sys-filetable_system_defined_objects
@@ -439,3 +446,6 @@ datetimeoffset-timezone
 BABEL-4046
 host_id
 linked_srv_4229
+waitfor
+BABEL-4175
+sp_who

@@ -138,6 +138,9 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
+static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
+extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
+					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
 
 /*****************************************
  * 			Executor Hooks
@@ -202,6 +205,8 @@ static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tu
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
+static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
+static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
@@ -329,6 +334,12 @@ InstallExtendedHooks(void)
 	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
 	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
 
+	prev_bbfSelectIntoUtility_hook = bbfSelectIntoUtility_hook;
+	bbfSelectIntoUtility_hook = pltsql_bbfSelectIntoUtility; 
+
+	prev_bbfSelectIntoAddIdentity_hook = bbfSelectIntoAddIdentity_hook;
+	bbfSelectIntoAddIdentity_hook = pltsql_bbfSelectIntoAddIdentity; 
+
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
 
@@ -400,6 +411,8 @@ UninstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
+	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
+	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
 	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
@@ -1421,6 +1434,16 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			identifier_name = res->name;
 			alias_len = strlen(res->name);
 			colname_start = pstate->p_sourcetext + res->name_location;
+		}
+		else if (res->name == NULL && IsA(res->val, FuncCall) ){
+			FuncCall *fc = (FuncCall *) res->val;
+			if (strncasecmp(strVal(llast(fc->funcname)), "identity_into", strlen("identity_into")) == 0)
+			{
+				// throw error if Select Into-identity function is called without a column name
+				ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'"),
+						parser_errposition(pstate, res->location)));
+			}
 		}
 
 		if (alias_len > 0)
@@ -3789,4 +3812,21 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-
+static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
+{
+	ListCell   *elements;
+	foreach(elements, tableElts)
+	{
+		Node *element = lfirst(elements);
+		if (nodeTag(element) == T_ColumnDef)
+		{
+			ColumnDef *column = (ColumnDef *) element;
+			if(strcasecmp(column->colname, into->identityName) ==0){
+				column->identity = ATTRIBUTE_IDENTITY_ALWAYS;
+				column->is_not_null = true;
+				column->typeName = typeStringToTypeName(into->identityType);
+				break;
+			}
+		}
+	}	
+}

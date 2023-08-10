@@ -29,6 +29,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "parser/parse_collate.h"
+#include "parser/scansup.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
@@ -39,6 +40,7 @@
 #include "../src/session.h"
 
 #include "catalog.h"
+#include "extendedproperty.h"
 #include "hooks.h"
 
 const char *ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
@@ -202,7 +204,9 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 	Relation	depRel;
 	ScanKeyData key[3];
 	SysScanDesc scan;
-	HeapTuple	depTup;
+	HeapTuple	depTup, tuple;
+	char		*schema_name = NULL,
+				*minor_name = NULL;
 
 	/* Call previous hook if exists */
 	if (prev_InvokePreDropColumnHook)
@@ -273,6 +277,25 @@ pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum)
 	systable_endscan(scan);
 
 	table_close(depRel, RowExclusiveLock);
+
+	/* Delete extended property as well */
+
+	/* Get minor_name */
+	tuple = SearchSysCacheAttNum(RelationGetRelid(rel), attnum);
+	if (!HeapTupleIsValid(tuple))
+		return;
+	minor_name = pstrdup(NameStr(((Form_pg_attribute) GETSTRUCT(tuple))->attname));
+	ReleaseSysCache(tuple);
+
+	/* Get schema_name */
+	schema_name = get_namespace_name(RelationGetNamespace(rel));
+
+	if (schema_name && minor_name)
+	{
+		const char *type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+		delete_extended_property(get_cur_db_id(), type, schema_name,
+								 RelationGetRelationName(rel), minor_name);
+	}
 }
 
 static bool
