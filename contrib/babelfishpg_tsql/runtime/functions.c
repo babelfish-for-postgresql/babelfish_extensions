@@ -2064,19 +2064,12 @@ smallint_radians(PG_FUNCTION_ARGS)
 Datum
 bigint_power(PG_FUNCTION_ARGS)
 {
-	int64		arg1;
-	Numeric		arg2;
+	int64		arg1 = PG_GETARG_INT64(0);
+	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int64 result;
 	Numeric		arg1_numeric,
 				result_numeric;
-	
-	/* when num or power is NULL, return NULL */
 
-	if (PG_ARGISNULL(0) | PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
-	arg1 = PG_GETARG_INT64(0);
-	arg2 = PG_GETARG_NUMERIC(1);
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
 
@@ -2088,19 +2081,12 @@ bigint_power(PG_FUNCTION_ARGS)
 Datum
 int_power(PG_FUNCTION_ARGS)
 {
-	int32		arg1;
-	Numeric		arg2;
+	int32		arg1 = PG_GETARG_INT32(0);
+	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
 				result_numeric;
-	
-	/* when num or power is NULL, return NULL */
 
-	if (PG_ARGISNULL(0) | PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
-	arg1 = PG_GETARG_INT32(0);
-	arg2 = PG_GETARG_NUMERIC(1);
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
 
@@ -2112,19 +2098,12 @@ int_power(PG_FUNCTION_ARGS)
 Datum
 smallint_power(PG_FUNCTION_ARGS)
 {
-	int16		arg1;
-	Numeric		arg2;
+	int16		arg1 = PG_GETARG_INT16(0);
+	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
 				result_numeric;
-	
-	/* when num or power is NULL, return NULL */
-
-	if (PG_ARGISNULL(0) | PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-
-	arg1 = PG_GETARG_INT16(0);
-	arg2 = PG_GETARG_NUMERIC(1);
+				
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
 
