@@ -697,7 +697,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
     "@browse_information_mode" sys.tinyint = 0)
 AS $$
 BEGIN
-	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode);
+	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode) order by column_ordinal;
 END;
 $$
 LANGUAGE 'pltsql';

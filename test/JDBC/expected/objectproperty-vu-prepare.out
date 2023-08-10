@@ -1,3 +1,10 @@
+-- Used to test when user does not have permission on the object
+CREATE LOGIN objectproperty_login_1 WITH PASSWORD = '12345678'
+go
+
+create user objectproperty_login_1
+go
+
 -- =============== OwnerId ===============
 -- Setup
 CREATE SCHEMA objectproperty_vu_prepare_ownerid_schema
