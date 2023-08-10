@@ -1074,8 +1074,6 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		else
 		{
 			newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
-			if (common_utility_plugin_ptr->is_tsql_varchar_datatype(targetTypeId))
-				newcon->consttypmod = strlen(value) + VARHDRSZ;
 		}
 	}
 
@@ -1089,12 +1087,18 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 }
 
 static bool
-is_tsql_char_type_with_len(Oid type)
+is_tsql_char_type(Oid type)
 {
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_varchar_datatype(type) ||
+			utilptr->is_tsql_nchar_datatype(type);
+}
+
+static bool
+is_tsql_varchar_type(Oid type)
+{
+	common_utility_plugin *utilptr = common_utility_plugin_ptr;
+	return utilptr->is_tsql_varchar_datatype(type) ||
 			utilptr->is_tsql_nvarchar_datatype(type);
 }
 
@@ -1104,27 +1108,6 @@ expr_is_null_or_unknown(Node *expr)
 	Oid type = exprType(expr);
 	return type == UNKNOWNOID || (
 		IsA(expr, Const) && (type == TEXTOID || ((Const*)expr)->constisnull));
-}
-
-static bool
-expr_is_varchar_max(Node *expr)
-{
-	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-
-	if (exprTypmod(expr) != -1 )
-		return false;
-	
-	if (utilptr->is_tsql_varchar_datatype(exprType(expr)))
-		return true;
-
-	if (utilptr->is_tsql_nvarchar_datatype(exprType(expr)))
-	{
-		if (IsA(expr, CoerceToDomain) && ((CoerceToDomain*)expr)->coercionformat == COERCE_IMPLICIT_CAST)
-			return false;
-		return true;
-	}
-
-	return false;
 }
 
 static Oid
@@ -1137,7 +1120,8 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
-	if ((!expr_is_null_or_unknown(result_expr) && !is_tsql_char_type_with_len(result_type)) )
+	if ((!expr_is_null_or_unknown(result_expr) && 
+			!is_tsql_char_type(result_type)) && !is_tsql_varchar_type(result_type))
 		return InvalidOid;
 
 	Assert(exprs != NIL);
@@ -1148,7 +1132,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 		if (expr_is_null_or_unknown(expr))
 			continue;
-		else if (!is_tsql_char_type_with_len(type))
+		else if (!is_tsql_char_type(type) && !is_tsql_varchar_type(type))
 			return InvalidOid;
 		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null_or_unknown(result_expr))
 		{
@@ -1172,7 +1156,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return -1;
 
-	if (!is_tsql_char_type_with_len(common_type) &&
+	if (!is_tsql_char_type(common_type) &&
 			 !utilptr->is_tsql_binary_datatype(common_type) &&
 			 !utilptr->is_tsql_sys_binary_datatype(common_type))
 		return -1;
@@ -1181,8 +1165,6 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
-		if(expr_is_varchar_max(expr))
-			return -1;
 		if (lc == list_head(exprs))
 			max_typmods = exprTypmod(expr);
 		else
