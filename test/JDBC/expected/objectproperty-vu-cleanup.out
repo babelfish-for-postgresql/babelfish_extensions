@@ -1,3 +1,29 @@
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'objectproperty_login_1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop user objectproperty_login_1
+go
+
+drop login objectproperty_login_1
+go
 -- =============== OwnerId ===============
 -- Cleanup
 DROP TABLE objectproperty_vu_prepare_ownerid_schema.objectproperty_vu_prepare_ownerid_table
