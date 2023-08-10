@@ -1117,6 +1117,9 @@ expr_is_null_or_unknown(Node *expr)
  * When we must merge types together (i.e. UNION), if all types are
  * null, literals, or [n][var]char types, then return the correct
  * output type based on TSQL's precedence rules
+ * 
+ * If InvalidOid is returned, engine will handle finding a common type
+ * as usual
  */
 static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
@@ -1158,6 +1161,8 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
  * When we must merge types together (i.e. UNION), if the target type
  * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
  * equal to that of the largest expression
+ * 
+ * If -1 is returned, engine will handle finding a common typmod as usual
  */
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
