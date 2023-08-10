@@ -2638,7 +2638,8 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	 */
 	if (arg && IsA(arg, Const) &&
 		((Const *) arg)->consttype == resulttype &&
-		((Const *) arg)->consttypmod == -1)
+		(((Const *) arg)->consttypmod == -1 || 
+		common_utility_plugin_ptr->is_tsql_varchar_datatype(resulttype)))
 	{
 		/* Show the constant without normal ::typename decoration */
 		get_const_expr((Const *) arg, context, -1);
