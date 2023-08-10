@@ -192,6 +192,18 @@ left join pg_catalog.pg_locks         blocking_locks
  where a.datname = current_database(); /* current physical database will always be babelfish database */
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.server_role_members AS
+SELECT
+CAST(Authmbr.roleid AS INT) AS role_principal_id,
+CAST(Authmbr.member AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN sys.server_principals AS p1 ON p1.principal_id = Authmbr.roleid
+INNER JOIN sys.server_principals AS p2 ON p2.principal_id = Authmbr.member
+WHERE p1.type_desc='SERVER_ROLE'
+AND p1.is_fixed_role=1;
+
+GRANT SELECT ON sys.server_role_members TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.host_id()
 RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;

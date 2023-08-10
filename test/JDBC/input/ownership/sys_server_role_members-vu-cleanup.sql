@@ -1,0 +1,11 @@
+DROP LOGIN sys_server_role_members_vu_prepare_login1;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_login2;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_login3;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_login4;
+GO

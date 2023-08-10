@@ -460,6 +460,19 @@ AND Ext2.orig_username != 'db_owner';
 
 GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
+--SERVER_ROLE_MEMBER
+CREATE OR REPLACE VIEW sys.server_role_members AS
+SELECT
+CAST(Authmbr.roleid AS INT) AS role_principal_id,
+CAST(Authmbr.member AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN sys.server_principals AS p1 ON p1.principal_id = Authmbr.roleid
+INNER JOIN sys.server_principals AS p2 ON p2.principal_id = Authmbr.member
+WHERE p1.type_desc='SERVER_ROLE'
+AND p1.is_fixed_role=1;
+
+GRANT SELECT ON sys.server_role_members TO PUBLIC;
+
 -- internal table function for sp_helpdb with no arguments
 CREATE OR REPLACE FUNCTION sys.babelfish_helpdb()
 RETURNS table (
