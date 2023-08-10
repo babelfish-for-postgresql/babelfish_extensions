@@ -1,0 +1,18 @@
+-- tsql
+-- Executing sp_enum_oledb_providers without tds_fdw extension (should not return anything)
+EXEC sp_enum_oledb_providers
+GO
+
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login linked_server_login with password = 'password'
+GO
+
+-- tsql    user=linked_server_login    password=password
+-- Executing sp_enum_oledb_providers stored procedure without system admin privilege (should throw error)
+EXEC sp_enum_oledb_providers
+GO
+
+-- terminate-tsql-conn  user=linked_server_login    password=password
+-- tsql
+DROP LOGIN linked_server_login
+GO

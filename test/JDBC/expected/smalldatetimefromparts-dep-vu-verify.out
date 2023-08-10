@@ -1,0 +1,48 @@
+SELECT * FROM smalldatetimefromparts_vu_prepare_v1
+GO
+~~START~~
+smalldatetime
+2011-08-15 14:30:00.0
+~~END~~
+
+
+SELECT * FROM smalldatetimefromparts_vu_prepare_v2
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+EXEC smalldatetimefromparts_vu_prepare_p1
+GO
+~~START~~
+smalldatetime
+2011-08-15 14:30:00.0
+~~END~~
+
+ 
+EXEC smalldatetimefromparts_vu_prepare_p2
+GO
+~~START~~
+smalldatetime
+2076-08-15 22:30:00.0
+~~END~~
+
+
+SELECT smalldatetimefromparts_vu_prepare_f1()
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+ 
+SELECT smalldatetimefromparts_vu_prepare_f2()
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+

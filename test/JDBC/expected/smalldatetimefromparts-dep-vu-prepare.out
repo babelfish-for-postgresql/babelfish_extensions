@@ -1,0 +1,25 @@
+CREATE VIEW smalldatetimefromparts_vu_prepare_v1 as (SELECT SMALLDATETIMEFROMPARTS(2011, 8, 15, 14, 30));
+GO
+
+CREATE VIEW smalldatetimefromparts_vu_prepare_v2 as (SELECT SMALLDATETIMEFROMPARTS(2011, 8, 15, NULL, 30));
+GO
+
+CREATE PROCEDURE  smalldatetimefromparts_vu_prepare_p1 as (SELECT SMALLDATETIMEFROMPARTS(2011, 8, 15, 14, 30));
+GO
+ 
+CREATE PROCEDURE  smalldatetimefromparts_vu_prepare_p2 as (SELECT SMALLDATETIMEFROMPARTS(2076, 8, 15, 22, 30));
+GO
+
+CREATE FUNCTION smalldatetimefromparts_vu_prepare_f1()
+RETURNS SMALLDATETIME AS
+BEGIN
+RETURN (SELECT SMALLDATETIMEFROMPARTS(2079, 8, 15, 14, 30));
+END
+GO
+ 
+CREATE FUNCTION smalldatetimefromparts_vu_prepare_f2()
+RETURNS SMALLDATETIME as
+begin
+RETURN (SELECT SMALLDATETIMEFROMPARTS(1899, 8, 15, NULL, 30));
+END
+GO

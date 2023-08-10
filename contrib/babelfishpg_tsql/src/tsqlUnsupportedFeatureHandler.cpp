@@ -1554,7 +1554,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_unbindefault",
 	"sp_unbindrule",
 	"sp_validname",
-	"sp_who",
 
 	/* Security */
 	"sp_add_trusted_assembly",

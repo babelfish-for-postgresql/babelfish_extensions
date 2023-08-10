@@ -779,6 +779,53 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER
+                                                               )
+RETURNS sys.smalldatetime
+AS
+$BODY$
+DECLARE
+    v_ressmalldatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    p_seconds INTEGER;
+BEGIN
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check if arguments are out of range
+    IF ((p_year NOT BETWEEN 1900 AND 2079) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    p_seconds := 0;
+    v_ressmalldatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    p_seconds);
+
+    v_string := v_ressmalldatetime::pg_catalog.text;
+    RETURN CAST(v_string AS sys.SMALLDATETIME);
+EXCEPTION   
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type smalldatetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
 RETURNS TEXT AS
@@ -3385,9 +3432,17 @@ CREATE OR REPLACE FUNCTION sys.host_id()
 RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
 RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
+RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
+RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;

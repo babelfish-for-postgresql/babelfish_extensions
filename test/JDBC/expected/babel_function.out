@@ -1542,7 +1542,7 @@ select dateadd(millisecond, 123, '20060830');
 GO
 ~~START~~
 datetime
-2006-08-30 00:00:00.12
+2006-08-30 00:00:00.123
 ~~END~~
 
 -- test different types of date/time arguments

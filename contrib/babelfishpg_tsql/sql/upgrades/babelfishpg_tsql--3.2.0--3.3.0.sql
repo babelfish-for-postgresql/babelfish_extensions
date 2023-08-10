@@ -42,9 +42,17 @@ RETURNS sys.SYSNAME
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.identity_into(IN typename INT, IN seed INT, IN increment INT)
+CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
 RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into(INT, INT, INT) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
+RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
+RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sql_expression_dependencies
 AS
@@ -131,6 +139,16 @@ LANGUAGE C;
 
 ALTER PROCEDURE master_dbo.sp_testlinkedserver OWNER TO sysadmin;
 
+CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE master_dbo.sp_enum_oledb_providers()
+AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal'
+LANGUAGE C;
+
+ALTER PROCEDURE master_dbo.sp_enum_oledb_providers OWNER TO sysadmin;
+
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
 -- For example, 'master_dbo' schema can only exist in the 'master' database.
@@ -145,6 +163,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('sp_dropserver', 'master_dbo', 'P'),
     ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
     ('sp_testlinkedserver', 'master_dbo', 'P'),
+    ('sp_enum_oledb_providers','master_dbo','P'),
     ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
@@ -405,6 +424,375 @@ END
 $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
 
+-- sp_babelfish_autoformat is a helper procedure which formats the contents of a table (or view)
+-- as narrowly as possible given its actual column contents.
+-- This proc is currently only used by sp_who but could be applied more generically.
+-- A complication is that the metadata from #tmp tables cannot be found in the babelfish
+-- catalogs, so we have to use some trickery to make things work.
+-- Not all datatypes are handled as well as might be possible, but it is sufficient for 
+-- the current purposes.
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
+	IN "@tab"        VARCHAR(257) DEFAULT NULL,
+	IN "@orderby"    VARCHAR(1000) DEFAULT '',
+	IN "@printrc"    sys.bit DEFAULT 1,
+	IN "@hiddencols" VARCHAR(1000) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @rc INT
+	DECLARE @id INT
+	DECLARE @objtype VARCHAR(2)	
+	DECLARE @msg VARCHAR(200)	
+	
+	IF @tab IS NULL
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END
+	
+	IF TRIM(@tab) = ''
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END	
+	
+	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
+	-- their existence other than by trying to select from them
+	-- NB: not handling uncommon but valid syntax '<schemaname>.#tmp' for #tmp tables
+	IF SUBSTRING(@tab,1,1) <> '#'
+	BEGIN
+		SET @id = OBJECT_ID(@tab)
+		IF @id IS NULL
+		BEGIN
+			IF SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			BEGIN
+				SET @id = OBJECT_ID('SYS.' + SUBSTRING(@tab,5))
+			END
+			IF @id IS NULL
+			BEGIN		
+				SET @msg = 'Table or view '''+@tab+''' not found'
+				RAISERROR(@msg, 16, 1)
+				RETURN		
+			END
+		END
+	END
+	
+	SELECT @objtype = type FROM sys.sysobjects WHERE id = @id
+	IF @objtype NOT IN  ('U', 'S', 'V')
+	BEGIN
+		SET @msg = ''''+@tab+''' is not a table or view'
+		RAISERROR(@msg, 16, 1)
+		RETURN		
+	END
+	
+	-- check for 'ORDER BY', if specified
+	SET @orderby = TRIM(@orderby)
+	IF @orderby <> ''
+	BEGIN
+		IF UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		BEGIN
+			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
+			RETURN
+		END
+	END
+	
+	-- columns to hide in final client output
+	-- assuming delimited column names do not contain spaces or commas inside the name
+	WHILE (CHARINDEX(' ,', @hiddencols) > 0) or (CHARINDEX(', ', @hiddencols) > 0)
+	BEGIN
+		SET @hiddencols = UPPER(REPLACE(@hiddencols, ' ,', ','))
+		SET @hiddencols = UPPER(REPLACE(@hiddencols, ', ', ','))
+	END
+	IF LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+
+	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
+	-- access the metadata in case a #tmp table is passed as argument
+	-- But when we copy the #tmp table into another table, we do get all the attributes and metadata
+	DECLARE @tmptab VARCHAR(63) = 'sp_babelfish_autoformat' + REPLACE(NEWID(), '-', '')
+	DECLARE @tmptab2 VARCHAR(63) = 'sp_babelfish_autoformat' + REPLACE(NEWID(), '-', '')
+	DECLARE @cmd VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
+	EXECUTE(@cmd)
+
+	-- Get the columns
+	SELECT 
+	   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
+	INTO #sp_bbf_autoformat
+	FROM sys.syscolumns c left join sys.systypes t 
+	ON c.xusertype = t.xusertype		
+	WHERE c.id = object_id(@tmptab)
+	ORDER BY c.colid
+
+	-- Get max length for each column based on the data
+	DECLARE @colname VARCHAR(63), @basetype VARCHAR(63), @maxlen int
+	DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
+	OPEN c
+	WHILE 1=1
+	BEGIN
+		FETCH c INTO @colname, @basetype, @maxlen
+		IF @@fetch_status <> 0 BREAK
+		SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(LEN(CAST([' + @colname + '] AS VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+		EXECUTE(@cmd)
+	END
+	CLOSE c
+	DEALLOCATE c
+
+	-- Generate the final SELECT
+	DECLARE @selectlist VARCHAR(8000) = ''
+	DECLARE @collist VARCHAR(8000) = ''
+	DECLARE @fmtstart VARCHAR(30) = ''
+	DECLARE @fmtend VARCHAR(30) = ''
+	OPEN c
+	WHILE 1=1
+	BEGIN
+		FETCH c INTO @colname, @basetype, @maxlen
+		IF @@fetch_status <> 0 BREAK
+		IF LEN(@colname) > @maxlen SET @maxlen = LEN(@colname)
+		IF @maxlen <= 0 SET @maxlen = 1
+		
+		IF (CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+		BEGIN
+			SET @selectlist += ' [' + @colname + '],'			
+		END
+		ELSE 
+		BEGIN
+			SET @fmtstart = ''
+			SET @fmtend = ''
+			IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+			BEGIN
+				SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS VARCHAR)+')+'
+				SET @fmtend = ','+CAST(@maxlen AS VARCHAR)+') AS VARCHAR(' + CAST(@maxlen AS VARCHAR) + '))'
+			END
+
+			SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS VARCHAR(' + CAST(@maxlen AS VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
+			SET @collist += '['+@colname + '],'
+		END
+	END
+	CLOSE c
+	DEALLOCATE c
+
+	-- Remove redundant commas
+	SET @collist = SUBSTRING(@collist, 1, LEN(@collist)-1)
+	SET @selectlist = SUBSTRING(@selectlist, 1, LEN(@selectlist)-1)	
+	SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
+	EXECUTE(@selectlist)
+	EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
+	
+	-- PRINT rowcount
+	SET @rc = @@rowcount
+	IF @printrc = 1
+	BEGIN
+		PRINT '   '
+		SET @cmd = '(' + CAST(@rc AS VARCHAR) + ' rows affected)'
+		PRINT @cmd
+	END
+	
+	-- Cleanup
+	EXECUTE('DROP TABLE ' + @tmptab)
+	EXECUTE('DROP TABLE ' + @tmptab2)
+	RETURN
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN VARCHAR(257), IN VARCHAR(1000), sys.bit, VARCHAR(1000)) TO PUBLIC;
+
+
+-- sp_who presents the contents of sysprocesses in a human-readable format.
+-- With 'postgres' as argument or with optional second argument as 'postgres',
+-- active PG connections will also be reported; by default only TDS connections are reported.
+-- Since sp_who calls sp_babelfish_autoformat, this may lead to increased execution time, 
+-- especially for the first execution. This is deliberate since we are prioritizing ease 
+-- of use by making the output easy to read..
+CREATE OR REPLACE PROCEDURE sys.sp_who(
+	IN "@loginame" sys.sysname DEFAULT NULL,
+	IN "@option"   VARCHAR(30) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @msg VARCHAR(200)
+	DECLARE @show_pg BIT = 0
+	DECLARE @hide_col VARCHAR(50) 
+	
+	IF @option IS NOT NULL
+	BEGIN
+		IF LOWER(TRIM(@option)) <> 'postgres' 
+		BEGIN
+			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
+			RETURN			
+		END
+	END
+	
+	-- Get the executing statement for each spid and extract the main stmt type
+	-- This is for informational purposes only
+	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = REPLACE(query,  chr(9), ' ')
+	UPDATE #sp_who_tmp SET query = REPLACE(query,  chr(10), ' ')
+	UPDATE #sp_who_tmp SET query = REPLACE(query,  chr(13), ' ')
+	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE CHARINDEX('  ',query)>0) > 0 
+	BEGIN
+		UPDATE #sp_who_tmp SET query = REPLACE(query, '  ', ' ')
+	END
+
+	-- Determine type of stmt to report by sp_who: very basic only
+	-- NB: not handling presence of comments in the query string
+	UPDATE #sp_who_tmp 
+	SET query = 
+	    CASE 
+			WHEN PATINDEX('%[^a-zA-Z0-9_]UPDATE[^a-zA-Z0-9_]%', query) > 0 THEN 'UPDATE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DELETE[^a-zA-Z0-9_]%', query) > 0 THEN 'DELETE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]INSERT[^a-zA-Z0-9_]%', query) > 0 THEN 'INSERT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]SELECT[^a-zA-Z0-9_]%', query) > 0 THEN 'SELECT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN SUBSTRING(query,1,CHARINDEX('CREATE ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN SUBSTRING(query,1,CHARINDEX('ALTER ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN SUBSTRING(query,1,CHARINDEX('DROP ', query))
+			ELSE SUBSTRING(query, 1, CHARINDEX(' ', query))
+		END
+
+	UPDATE #sp_who_tmp 
+	SET query = SUBSTRING(query,1, 8-1 + CHARINDEX(' ', SUBSTRING(query,8,99)))
+	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %' 
+
+	-- The executing spid is always shown as doing a SELECT
+	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
+	UPDATE #sp_who_tmp SET query = TRIM(query)
+
+	-- Get all connections
+	SELECT 
+		spid, 
+		MAX(blocked) AS blocked, 
+		0 AS ecid, 
+		CAST('' AS VARCHAR(100)) AS status,
+		CAST('' AS VARCHAR(100)) AS loginname,
+		CAST('' AS VARCHAR(100)) AS hostname,
+		0 AS dbid,
+		CAST('' AS VARCHAR(100)) AS cmd,
+		0 AS request_id,
+		CAST('TDS' AS VARCHAR(20)) AS connection
+	INTO #sp_who_proc
+	FROM sys.sysprocesses
+		GROUP BY spid, status
+		
+	-- Add attributes to each connection
+	UPDATE #sp_who_proc
+	SET ecid = sp.ecid,
+		status = sp.status,
+		loginname = sp.loginname,
+		hostname = sp.hostname,
+		dbid = sp.dbid,
+		request_id = sp.request_id
+	FROM sys.sysprocesses sp
+		WHERE #sp_who_proc.spid = sp.spid				
+
+	-- identify PG connections
+	UPDATE #sp_who_proc
+	SET connection = 'PostgreSQL'
+	WHERE dbid = 0
+
+	-- Keep or delete PG connections
+	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
+	begin    
+		-- Show PG connections; these have dbid = 0
+		-- This is a Babelfish-specific enhancement, since PG connections may also be active in the Babelfish DB
+		-- and it may be useful to see these displayed
+		SET @show_pg = 1
+		
+		-- blank out the loginame parameter for the tests below
+		IF LOWER(@loginame) = 'postgres' SET @loginame = NULL
+	END
+	
+	-- By default, do not show the column indicating the connection type since SQL Server does not have this column
+	SET @hide_col = 'connection' 
+	
+	IF (@show_pg = 1) 
+	BEGIN
+		SET @hide_col = ''
+	END
+	ELSE 
+	BEGIN
+		-- Delete PG connections
+		DELETE #sp_who_proc
+		WHERE dbid = 0
+	END
+			
+	-- Apply filter if specified
+	IF (@loginame IS NOT NULL)
+	BEGIN
+		IF (TRIM(@loginame) = '')
+		BEGIN
+			-- Raise error
+			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+			RAISERROR(@msg, 16, 1)
+			RETURN
+		END
+		
+		IF (ISNUMERIC(@loginame) = 1)
+		BEGIN
+			-- Remove all connections except the specified one
+			DELETE #sp_who_proc
+			WHERE spid <> CAST(@loginame AS INT)
+		END
+		ELSE 
+		BEGIN	
+			IF (LOWER(@loginame) = 'active')
+			BEGIN
+				-- Remove all 'idle' connections 
+				DELETE #sp_who_proc
+				WHERE status = 'idle'
+			END
+			ELSE 
+			BEGIN
+				-- Verify the specified login name exists
+				IF (SUSER_ID(@loginame) IS NULL)
+				BEGIN
+					SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+					RAISERROR(@msg, 16, 1)
+					RETURN					
+				END
+				ELSE 
+				BEGIN
+					-- Keep only connections for the specified login
+					DELETE #sp_who_proc
+					WHERE SUSER_ID(loginname) <> SUSER_ID(@loginame)
+				END
+			END
+		END
+	END			
+			
+	-- Create final result set; use DISTINCT since there are usually duplicate rows from the PG catalogs
+	SELECT distinct 
+		p.spid AS spid, 
+		p.ecid AS ecid, 
+		CAST(LEFT(p.status,20) AS VARCHAR(20)) AS status,
+		CAST(LEFT(p.loginname,40) AS VARCHAR(40)) AS loginame,
+		CAST(LEFT(p.hostname,60) AS VARCHAR(60)) AS hostname,
+		p.blocked AS blk, 
+		CAST(LEFT(db_name(p.dbid),40) AS VARCHAR(40)) AS dbname,
+		CAST(LEFT(#sp_who_tmp.query,30)as VARCHAR(30)) AS cmd,
+		p.request_id AS request_id,
+		connection
+	INTO #sp_who_tmp2
+	FROM #sp_who_proc p, #sp_who_tmp
+		WHERE p.spid = #sp_who_tmp.pid
+		ORDER BY spid		
+	
+	-- Patch up remaining cases
+	UPDATE #sp_who_tmp2
+	SET cmd = 'AWAITING COMMAND'
+	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	
+	UPDATE #sp_who_tmp2
+	SET cmd = 'UNKNOWN'
+	WHERE TRIM(cmd) = ''	
+	
+	-- Format the result set as narrow as possible for readability
+	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
+	RETURN
+END	
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN VARCHAR(30)) TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
@@ -436,13 +824,17 @@ ALTER TEXT SEARCH CONFIGURATION fts_contains
 -- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
 -- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
 -- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+-- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
   RETURNS TEXT AS
 $$
 DECLARE
+  orig_phrase text;
   joined_text text;
   word text;
 BEGIN
+  orig_phrase = phrase;
+
   -- generation term not supported
   IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
     RAISE EXCEPTION 'Generation term not supported';
@@ -484,16 +876,21 @@ BEGIN
 
   -- Split the phrase into an array of words
   FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
-    -- prefix term not supported
-    IF (word COLLATE C) SIMILAR TO ('%\*' COLLATE C)  THEN
-      RAISE EXCEPTION 'Prefix term not supported';
-    END IF;
     -- Append the word to the joined_text variable
     joined_text := joined_text || word || '<->';
   END LOOP;
 
   -- Remove the trailing "<->" from the joined_text
   joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
+
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  -- We need to rewrite the last word into 'lastword:*'
+  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
+  END IF;
 
   -- Return the joined_text
   RETURN joined_text;
@@ -503,7 +900,10 @@ LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
 -- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
 
 -- Given the query string, determine the Postgres full text configuration to use
--- Currently we only support simple terms, so the function simply returns 'fts_contains'
+-- Currently we only support simple terms and prefix terms
+-- For simple terms, we use the 'fts_contains' configuration
+-- For prefix terms, we use the 'simple' configuration
+-- They are the configurations that provide closest matching according to our experiments
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
   RETURNS regconfig AS
 $$
@@ -511,10 +911,65 @@ DECLARE
   joined_text text;
   word text;
 BEGIN
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    RETURN 'simple'::regconfig;
+  END IF;
+  -- Simple term
   RETURN 'fts_contains'::regconfig;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+
+CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER
+                                                               )
+RETURNS sys.smalldatetime
+AS
+$BODY$
+DECLARE
+    v_ressmalldatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    p_seconds INTEGER;
+BEGIN
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check if arguments are out of range
+    IF ((p_year NOT BETWEEN 1900 AND 2079) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    p_seconds := 0;
+    v_ressmalldatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    p_seconds);
+
+    v_string := v_ressmalldatetime::pg_catalog.text;
+    RETURN CAST(v_string AS sys.SMALLDATETIME);
+EXCEPTION   
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type smalldatetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 
 ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
