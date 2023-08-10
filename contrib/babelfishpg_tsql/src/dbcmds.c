@@ -696,6 +696,7 @@ Datum create_builtin_dbs(PG_FUNCTION_ARGS)
 							GUC_CONTEXT_CONFIG,
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);
@@ -731,6 +732,7 @@ Datum create_msdb_if_not_exists(PG_FUNCTION_ARGS)
 				  			GUC_CONTEXT_CONFIG,
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 	PG_RETURN_INT32(0);
