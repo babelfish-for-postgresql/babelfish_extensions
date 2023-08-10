@@ -2988,10 +2988,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	int64	reseed_value = 0;
 	Oid		nsp_oid;
 	Oid 	table_oid;
-	Oid		seqid;
+	Oid		seqid = InvalidOid;
 	bool	is_null;
-	bool	has_identity = false;
-	bool	is_empty = false;
+	volatile bool cur_value_is_null = true;
 
 	if (dbcc_stmt.db_name)
 		db_name = pstrdup(dbcc_stmt.db_name);
@@ -3021,6 +3020,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	}
 	else
 	{
+		/* 
+		 * If schema_name is not provided, find default schema for current user
+		 * and get physical schema name
+		 */
 		if (!user)
 		{
 			ereport(ERROR,
@@ -3073,19 +3076,24 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 		if (attr->attidentity)
 		{
-			has_identity = true;
 			seqid = getIdentitySequence(table_oid, attnum + 1, false);
 			break;
 		}
 	}
 
-	if (!has_identity)
+	if (!OidIsValid(seqid))
 		ereport(ERROR,
 		(errcode(ERRCODE_UNDEFINED_COLUMN),
 			errmsg("'%s.%s' does not contain an identity column.",
 				nsp_name, dbcc_stmt.table_name)));	
-	
+
 	pfree(nsp_name);
+
+	/*
+	 * We need to find out the last value of the identity column in the table
+	 * and last value of the identity sequence to compare and decide on the
+	 * action that needs to be taken.
+	 */
 	scan = table_beginscan_catalog(rel, 0, NULL);
 	tuple = heap_getnext(scan, BackwardScanDirection);
 
@@ -3094,47 +3102,62 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		max_identity_value = DatumGetInt64(heap_getattr(tuple, attnum+1,
 								tupdesc, &is_null));
 	}
-	else
-		is_empty = true;
 
 	RelationClose(rel);
 	table_endscan(scan);
 
-	if (!is_empty)
+	PG_TRY();
+	{
 		cur_identity_value = DirectFunctionCall1(pg_sequence_last_value,
 						ObjectIdGetDatum(seqid));
+		cur_value_is_null = false;
 
-	if (dbcc_stmt.is_reseed)
-	{
-		if (dbcc_stmt.new_reseed_value)
+		if (dbcc_stmt.is_reseed)
 		{
-			if (is_empty)
-				DirectFunctionCall3(setval3_oid,
-					ObjectIdGetDatum(seqid),
-					CStringGetDatum(dbcc_stmt.new_reseed_value),
-					BoolGetDatum(false));
-			else
-				DirectFunctionCall2(setval_oid,
-					ObjectIdGetDatum(seqid),
-					CStringGetDatum(dbcc_stmt.new_reseed_value));
-		}
-		else
-		{
-			if (cur_identity_value < max_identity_value)
+			if (dbcc_stmt.new_reseed_value)
 			{
 				DirectFunctionCall2(setval_oid,
 					ObjectIdGetDatum(seqid),
-					Int64GetDatum(cur_identity_value));
+					Int64GetDatum(reseed_value));
+			}
+			else
+			{
+			
+			/*
+			 * RESEED option only resets the identity column value if the 
+			 * current identity value for a table is less than the maximum 
+			 * identity value stored in the identity column.
+			 */
+				if (cur_identity_value < max_identity_value)
+				{
+					DirectFunctionCall2(setval_oid,
+						ObjectIdGetDatum(seqid),
+						Int64GetDatum(max_identity_value));
+				}
 			}
 		}
 	}
+	PG_CATCH();
+	{
+		/* 
+		 * If cur_value_is_null is true, then the function pg_sequence_last_value
+		 * has returned a NULL value, which means either no rows have been 
+		 * inserted into the table yet, or TRUNCATE TABLE command has been used
+		 * to delete all rows. In this case, after DBCC CHECKIDENT the next
+		 * row inserted will have new_reseed_value as the identity value.
+		 */
+		if(cur_value_is_null)
+			DirectFunctionCall3(setval3_oid,
+				ObjectIdGetDatum(seqid),
+				Int64GetDatum(reseed_value),
+				BoolGetDatum(false));
+	}
+	PG_END_TRY();
 
+	/* Do not print output if NO_INFOMSGS is provided */
 	if (!dbcc_stmt.no_infomsgs)
 	{
-		// print output
-		if (!dbcc_stmt.is_reseed || 
-			(dbcc_stmt.is_reseed && 
-				dbcc_stmt.new_reseed_value == NULL))
+		if (!dbcc_stmt.new_reseed_value)
 		{
 			ereport(WARNING,
 				(errmsg("Checking identity information: current identity value "
