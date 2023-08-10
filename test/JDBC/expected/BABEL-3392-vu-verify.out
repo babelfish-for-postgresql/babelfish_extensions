@@ -1747,21 +1747,21 @@ select cast(17 as varbinary(1)) UNION select cast(10 as varbinary(2)) union sele
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION/INTERSECT/EXCEPT could not convert type "nchar" to bbf_varbinary)~~
+~~ERROR (Message: UNION could not convert type "nchar" to bbf_varbinary)~~
 
 
 SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15)) UNION select cast(10 as varbinary(2));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION/INTERSECT/EXCEPT could not convert type varbinary to bpchar)~~
+~~ERROR (Message: UNION could not convert type varbinary to bpchar)~~
 
 
 SELECT CAST(1 as BIT) UNION SELECT cast(N'ab' as NCHAR(10)) UNION SELECT CAST('bar' as CHAR(10));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: UNION/INTERSECT/EXCEPT could not convert type "nchar" to "bit")~~
+~~ERROR (Message: UNION could not convert type "nchar" to "bit")~~
 
 
 SELECT 'foo'

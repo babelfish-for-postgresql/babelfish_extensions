@@ -1074,7 +1074,8 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		else
 		{
 			newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
-			// newcon->consttypmod = strlen(value) + VARHDRSZ;
+			if (common_utility_plugin_ptr->is_tsql_varchar_datatype(targetTypeId))
+				newcon->consttypmod = strlen(value) + VARHDRSZ;
 		}
 	}
 
