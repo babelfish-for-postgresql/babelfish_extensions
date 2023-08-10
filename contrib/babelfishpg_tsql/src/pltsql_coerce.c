@@ -1102,14 +1102,22 @@ is_tsql_varchar_type(Oid type)
 			utilptr->is_tsql_nvarchar_datatype(type);
 }
 
+/* 
+ * Checks if the expression represents NULL or a string literal
+ */
 static bool
 expr_is_null_or_unknown(Node *expr)
 {
 	Oid type = exprType(expr);
-	return type == UNKNOWNOID || (
-		IsA(expr, Const) && (type == TEXTOID || ((Const*)expr)->constisnull));
+	return IsA(expr, Const) && (
+		type == UNKNOWNOID || type == TEXTOID || ((Const*)expr)->constisnull);
 }
 
+/* 
+ * When we must merge types together (i.e. UNION), if all types are
+ * null, literals, or [n][var]char types, then return the correct
+ * output type based on TSQL's precedence rules
+ */
 static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
@@ -1146,6 +1154,11 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	return result_type == UNKNOWNOID ? InvalidOid : result_type;
 }
 
+/* 
+ * When we must merge types together (i.e. UNION), if the target type
+ * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
+ * equal to that of the largest expression
+ */
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {

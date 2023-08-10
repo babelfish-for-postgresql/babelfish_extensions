@@ -319,6 +319,17 @@ pre_transform_setop_tree(SelectStmt *stmt, SelectStmt *leftmostSelect)
 	stmt->sortClause = NIL;
 }
 
+/* 
+ * fix_setop_typmods will backtrack through the SetOperationTree to
+ * fix the types of char, nchar, varchar, and nvarchar
+ *
+ * We do this after the tree has already been transformed so we may 
+ * compare all expressions in the same column at once. PG only compares
+ * two at a time, leading to issues for example if both expressions are NULL.
+ * 
+ * Then, we update the original expressions as well as the top-level target list's
+ * expressions with the correct type and typmod. 
+ */
 static void
 fix_setop_typmods(ParseState *pstate, Query *qry)
 {
@@ -330,6 +341,10 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	ListCell	*collistl, *setopsl, *toptlistl;
 	Oid common_type;
 	int32 common_typmod;
+
+	/* 	Iterate through the SetOpTree. For each column, save each expression
+	 * in that column to a list. For select a, b, c union select x, y, x,
+	 * give [a, x], [b, y], [c, z] 	*/
 
 	while (setOpTreeStack)
 	{
@@ -367,6 +382,9 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		}
 	}
 
+	/* 	For each of the column lists built above, determine the resulting
+	 * common_type and typmod. Update both the expressions and the toplevel
+	 * targetlist with the correct types. */
 	forboth(collistl, collist_list,
 			toptlistl, qry->targetList)
 	{
