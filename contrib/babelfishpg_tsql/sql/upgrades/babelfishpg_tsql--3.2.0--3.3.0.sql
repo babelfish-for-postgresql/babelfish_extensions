@@ -77,6 +77,18 @@ GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_3_0');
 
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
+	"@tsql" sys.nvarchar(8000),
+    "@params" sys.nvarchar(8000) = NULL, 
+    "@browse_information_mode" sys.tinyint = 0)
+AS $$
+BEGIN
+	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode) order by column_ordinal;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
@@ -1038,6 +1050,14 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
