@@ -1,0 +1,45 @@
+
+-- We should be able to use replace function in computed column.
+CREATE TABLE babel_4333_t1(a varchar(50) NULL, b as replace(a, '1', '2'));
+GO
+
+INSERT INTO babel_4333_t1 VALUES('13131');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_4333_t1
+GO
+~~START~~
+varchar#!#text
+13131#!#23232
+~~END~~
+
+
+UPDATE babel_4333_t1 SET a = '14141' WHERE a = '13131';
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_4333_t1
+GO
+~~START~~
+varchar#!#text
+14141#!#24242
+~~END~~
+
+
+ALTER TABLE babel_4333_t1 ADD c AS replace(a, '1','5');
+GO
+
+SELECT * FROM babel_4333_t1
+GO
+~~START~~
+varchar#!#text#!#text
+14141#!#24242#!#54545
+~~END~~
+
+
+DROP TABLE babel_4333_t1;
+GO
+
