@@ -264,7 +264,7 @@ sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc)
 	char 		*schema_name, *major_name, *minor_name, *var_object_name;
 	Oid			schema_id, owner_id;
 	Oid			db_owner, cur_user_id;
-	bool		is_dbo;
+	bool		is_dbo = false;
 	Relation	rel;
 	HeapTuple	tuple;
 	int			nkeys = 0;
