@@ -25,8 +25,8 @@ BEGIN
 
   -- Generation term, thesaurus (Examples: 'FORMSOF(THESAURUS, love)', 'FORMSOF(THESAURUS, "move forward")', 'FORMSOF(THESAURUS, play, "plan to")')
   -- By default, SQL Server thesaurus search does not use any thesaurus files so behavior is identical to simple terms
-  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(INFLECTIONAL,%\)[ ]*' COLLATE C) THEN
-    RETURN 'simple'::regconfig;
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(THESAURUS,%\)[ ]*' COLLATE C) THEN
+    RETURN 'fts_contains_simple'::regconfig;
   END IF;
 
   -- Simple term
