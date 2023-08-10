@@ -814,7 +814,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#40
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -842,7 +842,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#40
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -898,7 +898,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#80
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -926,7 +926,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#80
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -984,7 +984,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#40
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -1254,7 +1254,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#20
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -1282,7 +1282,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#40
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -1395,7 +1395,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#40
+babel4157_c1#!#-1
 ~~END~~
 
 
@@ -1423,7 +1423,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#40
+babel4157_c1#!#-1
 ~~END~~
 
 
