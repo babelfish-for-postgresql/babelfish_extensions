@@ -112,7 +112,7 @@ ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_col
 ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_char_check]
 ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_nchar_check] CHECK  (((CAST((c_nchar) AS nchar(7)) <> (CAST(('sflkjasdlkfjf') AS nchar(7)) COLLATE latin1_general_ci_as))))
 ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_nchar_check]
-ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_varchar_check] CHECK  (((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE latin1_general_ci_as))))
+ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_collate_c_varchar_check] CHECK  (((c_varchar <> (CAST(('sflkjasdlkfjf') AS varchar(12)) COLLATE latin1_general_ci_as))))
 ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_varchar_check]
 GO
 

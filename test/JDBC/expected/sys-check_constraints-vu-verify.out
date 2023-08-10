@@ -11,7 +11,7 @@ GO
 ~~START~~
 nvarchar
 ((column_a = 0))
-((column_b <> 'wrong'))
+((column_b <> CAST('wrong' AS varchar(5))))
 ((column_c < CAST('2020-10-20 09:00:00' AS datetime2(6))))
 ~~END~~
 
