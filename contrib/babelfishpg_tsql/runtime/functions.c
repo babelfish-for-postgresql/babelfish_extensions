@@ -2129,7 +2129,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	 */
 	for (i = 0; i < num_all_db_objects; i++)
 	{
-		char		*tempnspname;
+		char		*tempnspname = NULL;
 		bool		isNull;
 
 		if (is_ms_shipped)
