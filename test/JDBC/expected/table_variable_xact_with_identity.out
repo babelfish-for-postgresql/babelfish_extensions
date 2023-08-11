@@ -1,18 +1,13 @@
-SET TRANSACTION ISOLATION LEVEL SNAPSHOT
-
 
 -------------------------------------------------------------------------------
 -- High-Level Description:
--- Test basic commit and rollback scenarios with BBF Table Variable.
--- Test BABEL-579, BABEL-3968 scenarios
--- Test Table Variable with Primary Key, Constraint, toast table
--- The results were compared against MS SQL server
+-- Table Variable Transaction Semantics with Identity columns
 -------------------------------------------------------------------------------
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID
 GO
 ~~START~~
 smallint
-5
+2
 ~~END~~
 
 
@@ -30,15 +25,36 @@ CREATE VIEW enr_view AS
 GO
 
 -------------------------------------------------------------------------------
--- Test BABEL-579 Use Case 1: Explicit ROLLBACK
+-- Test 0: BABEL-4267 Table Variables with Identity Columns
+-- Cleanup code when query error should not crash
+-------------------------------------------------------------------------------
+CREATE TABLE numbers (number INT NOT NULL)
+GO
+
+DECLARE @FirstString nVarchar(255)
+DECLARE @PseudoMatrix TABLE(location int identity primary key, c2 int)
+SELECT number, SUBSTRING(@FirstString,number,1) AS ch
+    FROM numbers WHERE number <= LEN(@FirstString) union all Select 0, Char(0)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null character not permitted)~~
+
+
+DROP TABLE numbers
+GO
+
+-------------------------------------------------------------------------------
+-- Test 1. Table Variable with Identity Column
+-- Explicit ROLLBACK
 -- Repeat with COMMIT
 -------------------------------------------------------------------------------
-CREATE TYPE tableType AS TABLE(i INT, j INT);
+CREATE TYPE tableType AS TABLE(i INT IDENTITY, j INT);
 GO
 
 DECLARE @tv1 tableType;
 BEGIN TRANSACTION
-    INSERT @tv1 VALUES (1,2), (2,1);
+    INSERT @tv1 VALUES (1), (2);
 ROLLBACK
     SELECT * FROM @tv1
 SELECT * FROM enr_view
@@ -47,12 +63,13 @@ GO
 
 ~~START~~
 int#!#int
-1#!#2
-2#!#1
+1#!#1
+2#!#2
 ~~END~~
 
 ~~START~~
 text
+@tv1_0_i_seq
 @tv1_0
 ~~END~~
 
@@ -61,7 +78,7 @@ CREATE PROCEDURE rcv_tv3 AS
 BEGIN
     DECLARE @tv tableType;
     BEGIN TRAN;
-        INSERT INTO @tv values (1,2);
+        INSERT INTO @tv values (1);
     ROLLBACK;
     SELECT * FROM @tv;
 END
@@ -73,7 +90,7 @@ GO
 
 ~~START~~
 int#!#int
-1#!#2
+1#!#1
 ~~END~~
 
 
@@ -82,7 +99,7 @@ GO
 
 DECLARE @tv1 tableType;
 BEGIN TRANSACTION
-    INSERT @tv1 VALUES (1,2), (2,1);
+    INSERT @tv1 VALUES (1), (2);
 COMMIT TRANSACTION
     SELECT * FROM @tv1
 SELECT * FROM enr_view
@@ -91,12 +108,13 @@ GO
 
 ~~START~~
 int#!#int
-1#!#2
-2#!#1
+1#!#1
+2#!#2
 ~~END~~
 
 ~~START~~
 text
+@tv1_0_i_seq
 @tv1_0
 ~~END~~
 
@@ -105,7 +123,7 @@ CREATE PROCEDURE rcv_tv3 AS
 BEGIN
     DECLARE @tv tableType;
     BEGIN TRAN;
-        INSERT INTO @tv values (1,2);
+        INSERT INTO @tv values (1);
     COMMIT;
     SELECT * FROM @tv;
 END
@@ -118,9 +136,9 @@ DROP TYPE tableType
 GO
 
 -------------------------------------------------------------------------------
--- Test BABEL-579 Use Case 3: Error scenario leads to Implicit ROLLBACK
+-- Test 2: Error scenario leads to Implicit ROLLBACK
 -------------------------------------------------------------------------------
-CREATE TYPE empDates AS TABLE (start_date DATE, end_date DATE);
+CREATE TYPE empDates AS TABLE (start_date DATE, end_date DATE, c3 INT IDENTITY);
 GO
 
 DECLARE @empJobHist empDates;
@@ -141,9 +159,9 @@ DROP TYPE empDates
 GO
 
 -------------------------------------------------------------------------------
--- Test BABEL-3968
+-- Test 3: Error inside function where Table Variable has Identity
 -------------------------------------------------------------------------------
-CREATE TYPE tabvar_type_function_error AS TABLE(a int)
+CREATE TYPE tabvar_type_function_error AS TABLE(a int IDENTITY, b int)
 GO
 
 CREATE PROCEDURE tabvar_select(@tvp tabvar_type_function_error READONLY) AS
@@ -182,12 +200,13 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-int
-2
+int#!#int
+1#!#2
 ~~END~~
 
 ~~START~~
 text
+@tvp2_0_a_seq
 @tvp2_0
 ~~END~~
 
@@ -201,10 +220,10 @@ GO
 DROP TYPE tabvar_type_function_error
 GO
 -------------------------------------------------------------------------------
--- Test 1: Simple INSERT INTO Table Variable with ROLLBACK
---          Repeat with COMMIT
+-- Test 4: Simple INSERT INTO Table Variable with Identity
+--         Test with ROLLBACK and Repeat with COMMIT
 -------------------------------------------------------------------------------
-DECLARE @tv2 TABLE(c1 INT, c2 INT);
+DECLARE @tv2 TABLE(c1 INT, c2 INT, c3 INT PRIMARY KEY);
 INSERT INTO @tv2 VALUES(1, 2);
 BEGIN TRANSACTION
     INSERT INTO @tv2 VALUES(2, 3);
@@ -213,27 +232,9 @@ BEGIN TRANSACTION
 ROLLBACK
 SELECT * FROM @tv2                              -- should still see 2 rows
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#int
-1#!#2
-2#!#3
-~~END~~
-
-~~START~~
-int#!#int
-1#!#2
-2#!#3
-~~END~~
-
-~~START~~
-int#!#int
-1#!#2
-2#!#3
-~~END~~
+~~ERROR (Message: Number of given values does not match target table definition)~~
 
 
 DECLARE @tv2 TABLE(c1 INT, c2 INT);
@@ -269,10 +270,10 @@ int#!#int
 
 
 -------------------------------------------------------------------------------
--- Test 2: DECLARE Table Variable inside a transaction then ROLLBACK
+-- Test 5: DECLARE Table Variable inside a transaction then ROLLBACK
 -------------------------------------------------------------------------------
 BEGIN TRANSACTION
-    DECLARE @tv4 TABLE(c1 INT, c2 INT)
+    DECLARE @tv4 TABLE(c1 INT, c2 INT, c3 INT IDENTITY)
     INSERT INTO @tv4 VALUES(1, 2)
 ROLLBACK
 SELECT * FROM @tv4                              -- tv4 accessible and should see 1 row
@@ -280,13 +281,13 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-int#!#int
-1#!#2
+int#!#int#!#int
+1#!#2#!#1
 ~~END~~
 
 
 BEGIN TRANSACTION
-    DECLARE @tv4 TABLE(c1 INT, c2 INT)
+    DECLARE @tv4 TABLE(c1 INT, c2 INT, c3 INT IDENTITY)
     INSERT INTO @tv4 VALUES(1, 2)
 COMMIT
 SELECT * FROM @tv4                              -- tv4 accessible and should see 1 row
@@ -294,15 +295,15 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-int#!#int
-1#!#2
+int#!#int#!#int
+1#!#2#!#1
 ~~END~~
 
 
 -------------------------------------------------------------------------------
--- Test 3: INSERT with COMMIT
+-- Test 6: DECLARE Table Variable OUTside a transaction then, do DML then ROLLBACK
 -------------------------------------------------------------------------------
-DECLARE @tv3 TABLE(c1 INT, c2 INT);
+DECLARE @tv3 TABLE(c1 INT, c2 INT, c3 INT IDENTITY);
 INSERT INTO @tv3 VALUES(1, 2)
 BEGIN TRANSACTION
     INSERT INTO @tv3 VALUES(2, 3)
@@ -314,56 +315,12 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-int#!#int
-1#!#2
-2#!#3
+int#!#int#!#int
+1#!#2#!#1
+2#!#3#!#2
 ~~END~~
 
 
--------------------------------------------------------------------------------
--- Test 4: INSERT and UPDATE with ROLLBACK. Repeat with COMMIT
--------------------------------------------------------------------------------
-DECLARE @tv5 TABLE(c1 INT, c2 INT)
-INSERT INTO @tv5 VALUES(1, 2)
-BEGIN TRANSACTION
-    UPDATE @tv5 SET c1 = 10 WHERE c1 = 1
-    UPDATE @tv5 SET c1 = 100 WHERE c1 = 10
-ROLLBACK
-SELECT * FROM @tv5                              -- should see (100, 2)
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#int
-100#!#2
-~~END~~
-
-
-DECLARE @tv5 TABLE(c1 INT, c2 INT)
-INSERT INTO @tv5 VALUES(1, 2)
-BEGIN TRANSACTION
-    UPDATE @tv5 SET c1 = 10 WHERE c1 = 1
-    UPDATE @tv5 SET c1 = 100 WHERE c1 = 10
-COMMIT
-SELECT * FROM @tv5                              -- should see (100, 2)
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#int
-100#!#2
-~~END~~
-
-
--- Also test with Identity columns
 DECLARE @tv5 TABLE(c1 INT IDENTITY, c2 INT)
 INSERT INTO @tv5 VALUES(1)
 BEGIN TRANSACTION
@@ -372,7 +329,7 @@ BEGIN TRANSACTION
 ROLLBACK
 SELECT * FROM @tv5                              -- should see (1, 100)
 INSERT INTO @tv5 VALUES(2)
-SELECT * FROM @tv5                              -- should see (2, 2)
+SELECT * FROM @tv5                              -- should see (1, 100), (2, 2)
 GO
 ~~ROW COUNT: 1~~
 
@@ -394,11 +351,12 @@ int#!#int
 ~~END~~
 
 
+
 -------------------------------------------------------------------------------
--- Test 5: Data with multiple versions
+-- Test 7: Data with multiple versions
 -------------------------------------------------------------------------------
 BEGIN TRANSACTION
-    DECLARE @tv1 TABLE(c1 INT, c2 INT);
+    DECLARE @tv1 TABLE(c1 INT, c2 INT, c3 INT IDENTITY);
     INSERT INTO @tv1 VALUES (1, 2);
     UPDATE @tv1 SET c1 = 10 WHERE c1 = 1;
     UPDATE @tv1 SET c1 = 100 WHERE c1 = 10;
@@ -431,7 +389,7 @@ int
 
 -- Repeat with commit then rollback
 BEGIN TRANSACTION
-    DECLARE @tv1 TABLE(c1 INT, c2 INT);
+    DECLARE @tv1 TABLE(c1 INT, c2 INT, c3 INT IDENTITY);
     INSERT INTO @tv1 VALUES (1, 2);
     UPDATE @tv1 SET c1 = 10 WHERE c1 = 1;
     UPDATE @tv1 SET c1 = 100 WHERE c1 = 10;
@@ -462,116 +420,87 @@ int
 
 
 -------------------------------------------------------------------------------
--- Test 6: Table Variable with Primary Key
+-- Test 8: Table Variable with Identity And Primary Key
 -- should not show rows inserted by failed transaction
 -------------------------------------------------------------------------------
 CREATE TYPE tv_table_primary_key AS
-TABLE(c1 INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'Whoops!')
+TABLE(c1 INT PRIMARY KEY, b INT IDENTITY, c CHAR(15) DEFAULT 'Whoops!')
 GO
 
-DECLARE @tv1 tv_table_primary_key;
-INSERT INTO @tv1 VALUES(1, 1, 'First')
-INSERT INTO @tv1 VALUES(1, 1, 'Second')         -- Heap insert succeeds, index insert fails.
-SELECT * FROM @tv1                              -- Should only show one record
+BEGIN TRY
+    DECLARE @tv1 tv_table_primary_key;
+    INSERT INTO @tv1 VALUES(1, 'First')
+    INSERT INTO @tv1 VALUES(2, 'Second')
+    UPDATE @tv1 SET c1=1 WHERE c1=2                 -- Heap insert succeeds, index insert fails.
+END TRY
+BEGIN CATCH
+    BEGIN TRANSACTION
+    SELECT * FROM @tv1                              -- should not have any duplicates
+    INSERT INTO @tv1 VALUES(3, 'Three')             -- Index, Identity should be valid
+    ROLLBACK
+END CATCH;
+SELECT * FROM @tv1                                  -- should be able to see all 3 rows
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_pkey")~~
+~~ROW COUNT: 1~~
 
 ~~START~~
 int#!#int#!#char
 1#!#1#!#First          
+2#!#2#!#Second         
 ~~END~~
 
-
--------------------------------------------------------------------------------
--- Test 7: Primary Key metadata should be accessible after rollback
--------------------------------------------------------------------------------
-BEGIN TRANSACTION
-    DECLARE @tv1 tv_table_primary_key;
-    INSERT INTO @tv1 VALUES(1, 1, 'First')
-    INSERT INTO @tv1 VALUES(1, 1, 'Second')     -- Heap insert succeeds, index insert fails.
-ROLLBACK
-INSERT INTO @tv1 VALUES(1, 1, 'Second')         -- index still valid. should fail with duplicate key
-SELECT * FROM @tv1                              -- Should only show one record
-GO
 ~~ROW COUNT: 1~~
-
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_pkey")~~
 
 ~~START~~
 int#!#int#!#char
 1#!#1#!#First          
+2#!#2#!#Second         
+3#!#3#!#Three          
 ~~END~~
 
 
 DROP TYPE tv_table_primary_key
 GO
 -------------------------------------------------------------------------------
--- Test 8: Similar as above but with Unique Key constraint instead of Primary Key
+-- Test 9: Similar as above but with Unique Key constraint instead of Primary Key
 -------------------------------------------------------------------------------
 CREATE TYPE tv_table_constraint AS
-TABLE(a VARCHAR(15) UNIQUE NOT NULL, b INT, c CHAR(15) DEFAULT 'Whoops!')
+TABLE(c1 VARCHAR(15) UNIQUE NOT NULL, b INT IDENTITY, c CHAR(15) DEFAULT 'Whoops!')
 GO
 
-DECLARE @tv1 tv_table_constraint;
-INSERT INTO @tv1 VALUES(1, 1, 'First')
-INSERT INTO @tv1 VALUES(2, 2, 'Second')
-UPDATE @tv1 SET a = 1 WHERE a = 2               -- Duplicate Key
-SELECT * FROM @tv1                              -- Should show the two original records
-SELECT * FROM enr_view
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ERROR (Code: 2627)~~
-
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_a_key")~~
-
-~~START~~
-varchar#!#int#!#char
-1#!#1#!#First          
-2#!#2#!#Second         
-~~END~~
-
-~~START~~
-text
-@tv1_0
-@pg_toast_#oid_masked#
-@pg_toast_#oid_masked#_index
-@tv1_0_a_key
-~~END~~
-
-
--------------------------------------------------------------------------------
--- Test 9: Unique Key constraint metadata should be accessible after rollback
--------------------------------------------------------------------------------
-BEGIN TRANSACTION
+BEGIN TRY
     DECLARE @tv1 tv_table_constraint;
-    INSERT INTO @tv1 VALUES(1, 1, 'First')
-    INSERT INTO @tv1 VALUES(2, 2, 'Second')
-    UPDATE @tv1 SET a = 1 WHERE a = 2           -- Duplicate Key
-ROLLBACK
-UPDATE @tv1 SET a = 1 WHERE a = 2               -- Duplicate Key
-SELECT * FROM @tv1                              -- Should show the two original records
+    INSERT INTO @tv1 VALUES(1, 'First')
+    INSERT INTO @tv1 VALUES(2, 'Second')
+    UPDATE @tv1 SET c1=1 WHERE c1=2                 -- Heap insert succeeds, index insert fails.
+END TRY
+BEGIN CATCH
+    BEGIN TRANSACTION
+    SELECT * FROM @tv1                              -- should not have any duplicates
+    INSERT INTO @tv1 VALUES(3, 'Three')             -- Index, Identity should be valid
+    ROLLBACK
+END CATCH;
+SELECT * FROM @tv1                                  -- should be able to see all 3 rows
 GO
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 2627)~~
+~~START~~
+varchar#!#int#!#char
+1#!#1#!#First          
+2#!#2#!#Second         
+~~END~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "@tv1_0_a_key")~~
+~~ROW COUNT: 1~~
 
 ~~START~~
 varchar#!#int#!#char
 1#!#1#!#First          
 2#!#2#!#Second         
+3#!#3#!#Three          
 ~~END~~
 
 
@@ -579,12 +508,12 @@ DROP TYPE tv_table_constraint
 GO
 
 -------------------------------------------------------------------------------
--- Test 10: Table Variable with toast table
+-- Test 10: Table Variable with toast table and Identity Column
 -- Toast metadata and data should be accessible and valid after ROLLBACK
 -- Repeat for COMMITT
 -------------------------------------------------------------------------------
 BEGIN TRANSACTION
-    DECLARE @tv_toast TABLE(i INT, v VARCHAR(MAX));
+    DECLARE @tv_toast TABLE(i INT, v VARCHAR(MAX), c3 INT IDENTITY);
     INSERT INTO @tv_toast VALUES (1, REPLICATE('this is the first record. ', 10000));
 ROLLBACK
     INSERT INTO @tv_toast VALUES (2, REPLICATE('this is the second record. ', 10000)); -- toast relation should be accessible
@@ -605,7 +534,7 @@ int#!#varchar
 
 
 BEGIN TRANSACTION
-    DECLARE @tv_toast TABLE(i INT, v VARCHAR(MAX));
+    DECLARE @tv_toast TABLE(i INT, v VARCHAR(MAX), c3 INT IDENTITY);
     INSERT INTO @tv_toast VALUES (1, REPLICATE('this is the first record. ', 10000));
 COMMIT
     INSERT INTO @tv_toast VALUES (2, REPLICATE('this is the second record. ', 10000)); -- toast relation should be accessible
@@ -626,59 +555,6 @@ int#!#varchar
 
 
 
--------------------------------------------------------------------------------
--- Test 11: Table Variable should be safe from Halloween Problem
--------------------------------------------------------------------------------
-BEGIN TRANSACTION
-    DECLARE @tv_toast TABLE(a INT, b CHAR(256), c VARCHAR(MAX));
-    INSERT INTO @tv_toast SELECT GENERATE_SERIES(1, 32, 1), 'Hello', REPLICATE('this is the first record. ', 10000);
-ROLLBACK
-    -- should update 10 records only
-    UPDATE @tv_toast SET c = 'updated: this is the first record' WHERE a <= 10
-    -- explicitly not include ORDER BY to confirm sequence scan order
-    SELECT a, SUBSTRING(c, 1, 32) FROM @tv_toast
-GO
-~~ROW COUNT: 32~~
-
-~~ROW COUNT: 10~~
-
-~~START~~
-int#!#varchar
-11#!#this is the first record. this i
-12#!#this is the first record. this i
-13#!#this is the first record. this i
-14#!#this is the first record. this i
-15#!#this is the first record. this i
-16#!#this is the first record. this i
-17#!#this is the first record. this i
-18#!#this is the first record. this i
-19#!#this is the first record. this i
-20#!#this is the first record. this i
-21#!#this is the first record. this i
-22#!#this is the first record. this i
-23#!#this is the first record. this i
-24#!#this is the first record. this i
-25#!#this is the first record. this i
-26#!#this is the first record. this i
-27#!#this is the first record. this i
-28#!#this is the first record. this i
-29#!#this is the first record. this i
-30#!#this is the first record. this i
-31#!#this is the first record. this i
-32#!#this is the first record. this i
-1#!#updated: this is the first recor
-2#!#updated: this is the first recor
-3#!#updated: this is the first recor
-4#!#updated: this is the first recor
-5#!#updated: this is the first recor
-6#!#updated: this is the first recor
-7#!#updated: this is the first recor
-8#!#updated: this is the first recor
-9#!#updated: this is the first recor
-10#!#updated: this is the first recor
-~~END~~
-
-
 
 
 
@@ -690,7 +566,7 @@ int#!#varchar
 CREATE TABLE TestTable (ID INT, TEXTVal VARCHAR(100))
 INSERT TestTable (ID, TEXTVal) VALUES (1,'FirstVal'), (2, 'SecondVal')
 BEGIN TRANSACTION
-DECLARE @TmpTable TABLE (ID_New INT, TEXTVal_New VARCHAR(100),ID_Old INT, TEXTVal_Old VARCHAR(100))
+DECLARE @TmpTable TABLE (c1 INT IDENTITY, ID_New INT, TEXTVal_New VARCHAR(100), ID_Old INT, TEXTVal_Old VARCHAR(100))
 UPDATE TestTable SET TEXTVal = 'NewValue'
 OUTPUT Inserted.ID, Inserted.TEXTVal, Deleted.ID, Deleted.TEXTVal INTO @TmpTable
 WHERE ID IN (1,2)
@@ -700,15 +576,18 @@ ROLLBACK
 -- Table Variable should keep values after rollback
 SELECT * FROM @TmpTable
 SELECT * FROM TestTable
+-- should be able to do DML
+INSERT @TmpTable VALUES (3,'ThirdVal', 3, 'ThirdVal')
+SELECT * FROM @TmpTable
 GO
 ~~ROW COUNT: 2~~
 
 ~~ROW COUNT: 2~~
 
 ~~START~~
-int#!#varchar#!#int#!#varchar
-1#!#NewValue#!#1#!#FirstVal
-2#!#NewValue#!#2#!#SecondVal
+int#!#int#!#varchar#!#int#!#varchar
+1#!#1#!#NewValue#!#1#!#FirstVal
+2#!#2#!#NewValue#!#2#!#SecondVal
 ~~END~~
 
 ~~START~~
@@ -718,9 +597,9 @@ int#!#varchar
 ~~END~~
 
 ~~START~~
-int#!#varchar#!#int#!#varchar
-1#!#NewValue#!#1#!#FirstVal
-2#!#NewValue#!#2#!#SecondVal
+int#!#int#!#varchar#!#int#!#varchar
+1#!#1#!#NewValue#!#1#!#FirstVal
+2#!#2#!#NewValue#!#2#!#SecondVal
 ~~END~~
 
 ~~START~~
@@ -729,77 +608,17 @@ int#!#varchar
 2#!#SecondVal
 ~~END~~
 
-
-DROP TABLE TestTable
-GO
-
-
-
-
-
-
-
-
-
--------------------------------------------------------------------------------
--- Test 13: Table Variable used with CURSOR
--------------------------------------------------------------------------------
-DECLARE @source TABLE(c1 INT, c2 INT)
-INSERT INTO @source VALUES(1, 2), (2,3), (4,5), (6,7), (8,9)
-DECLARE @target INT
-DECLARE cur CURSOR
-FOR SELECT c1 FROM @source
-FOR UPDATE OF c1
-OPEN cur
-FETCH NEXT FROM cur INTO @target
-WHILE @@FETCH_STATUS = 0 BEGIN
-    UPDATE @source set c1 = c1 * 10 WHERE c1 = @target
-    FETCH NEXT FROM cur INTO @target -- next item
-End
--- housekeeping
-CLOSE cur
-DEALLOCATE cur
-SELECT * FROM @source
-GO
-~~ROW COUNT: 5~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 ~~ROW COUNT: 1~~
 
 ~~START~~
-int#!#int
-10#!#2
-20#!#3
-40#!#5
-60#!#7
-80#!#9
+int#!#int#!#varchar#!#int#!#varchar
+1#!#1#!#NewValue#!#1#!#FirstVal
+2#!#2#!#NewValue#!#2#!#SecondVal
+3#!#3#!#ThirdVal#!#3#!#ThirdVal
 ~~END~~
 
 
--------------------------------------------------------------------------------
--- Test 14: BABEL-4267 Table Variables with Identity Columns
--------------------------------------------------------------------------------
-CREATE TABLE numbers (number INT NOT NULL)
-GO
-
-DECLARE @FirstString nVarchar(255)
-DECLARE @PseudoMatrix TABLE(location int identity primary key, c2 int)
-SELECT number, SUBSTRING(@FirstString,number,1) AS ch
-    FROM numbers WHERE number <= LEN(@FirstString) union all Select 0, Char(0)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: null character not permitted)~~
-
-
-DROP TABLE numbers
+DROP TABLE TestTable
 GO
 
 -------------------------------------------------------------------------------
