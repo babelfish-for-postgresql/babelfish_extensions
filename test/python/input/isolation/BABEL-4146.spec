@@ -12,6 +12,7 @@ setup
   );
 
   INSERT INTO parent VALUES (1, 'foo');
+  INSERT INTO child VALUES (3,1);
 }
 
 teardown
@@ -20,17 +21,23 @@ teardown
 }
 
 session s1
-setup		{  select set_config('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+setup     {  select set_config('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
   set transaction isolation level repeatable read; BEGIN TRAN; SET lock_timeout '500'; }
-step s1t { Select current_setting('transaction_isolation'); }
-step s1s { Select * from child; }
-step s1i	{ INSERT INTO child VALUES (1, 1); }
-step s1c	{ COMMIT; }
+step s1t  { Select current_setting('transaction_isolation'); }
+step s1s  { Select * from child; }
+step s1i  { INSERT INTO child VALUES (1, 1); }
+step s1u  { UPDATE parent SET aux = 'bar'; }
+step s1d  { DELETE FROM child WHERE child_key = 3; }
+step s1r  { ROLLBACK; }
+step s1c  { COMMIT; }
 
 session s2
-setup		{ BEGIN TRAN; SET lock_timeout '10000'; }
+setup	    { BEGIN TRAN; SET lock_timeout '10000'; }
 step s2i	{ INSERT INTO child VALUES (2, 1); }
+step s2u	{ UPDATE parent SET aux = 'baz'; }
+step s2d  { DELETE FROM child WHERE child_key = 3; }
 step s2c	{ COMMIT; }
+step s2r  { ROLLBACK; }
 
 permutation s1i s1c s2i s2c
 permutation s1i s2i s1c s2c
@@ -47,3 +54,15 @@ permutation s2i s1i s2c s1c
 permutation s2i s1i s2c s1c
 permutation s2i s2c s1i s1c
 permutation s1t s1i s2i s2c s1s s1c
+permutation s1u s2u s1c s2c 
+permutation s1u s2u s2c s1c
+permutation s2u s1u s2r s1c
+permutation s1u s2u s1r s2c
+permutation s2u s1u s1c s2c
+permutation s2u s1u s2c s1c
+permutation s2u s2c s1u s1c
+permutation s2d s1d s2c s1c
+permutation s1d s2d s2c s1c
+permutation s1d s2d s1c s2c
+permutation s2d s1d s1c s2c
+permutation s2d s1d s2r s1c
