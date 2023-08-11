@@ -1,5 +1,10 @@
 -- psql
-GRANT CREATE ON DATABASE jdbc_testdb TO babel_extended_properties_db_guest
+do
+$$ declare dbname text;
+begin
+    select setting from pg_settings where name like 'babelfishpg_tsql.database_name' into dbname;
+    EXECUTE 'GRANT CREATE ON DATABASE ' || quote_ident(dbname) || ' TO babel_extended_properties_db_guest';
+end $$;
 GO
 
 -- tsql user=owner password=12345678
@@ -3360,5 +3365,10 @@ tinyint#!#nvarchar#!#int#!#int#!#varchar#!#sql_variant
 
 
 -- psql
-REVOKE CREATE ON DATABASE jdbc_testdb FROM babel_extended_properties_db_guest
+do
+$$ declare dbname text;
+begin
+    select setting from pg_settings where name like 'babelfishpg_tsql.database_name' into dbname;
+    EXECUTE 'REVOKE CREATE ON DATABASE ' || quote_ident(dbname) || ' FROM babel_extended_properties_db_guest';
+end $$;
 GO
