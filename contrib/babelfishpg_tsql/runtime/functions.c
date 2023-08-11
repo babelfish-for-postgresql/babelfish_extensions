@@ -2699,7 +2699,8 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	 */
 	for (i = 0; i < num_all_db_objects; i++)
 	{
-		char		*tempnspname;
+		char		*tempnspname = NULL;
+		bool		isNull = false;
 
 		if (is_ms_shipped)
 			break;
@@ -2716,7 +2717,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
-			datum = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, NULL);
+			datum = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, &isNull);
 			tempnspname = TextDatumGetCString(datum);
 			if (pg_strcasecmp(namespace_name, tempnspname) == 0)
 			{
