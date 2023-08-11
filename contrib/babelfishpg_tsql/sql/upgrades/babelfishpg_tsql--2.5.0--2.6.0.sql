@@ -91,5 +91,13 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
