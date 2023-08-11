@@ -96,3 +96,43 @@ GO
 Select switchoffset('10000-12-31 23:59:59.59', 120)
 GO
 
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 120)
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), '+12:00')
+GO
+
+DECLARE @test_date datetime;
+SET @test_date = '2022-12-11';
+Select switchoffset(@test_date,'+12:00');
+GO
+
+DECLARE @test_date datetime2;
+SET @test_date = '2345-12-31 23:59:59.59';
+Select switchoffset(@test_date,-120);
+GO
+
+Select switchoffset(DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ), 300)
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), '+12:00')
+Go
+
+Select switchoffset('0',120)
+GO
+
+Select switchoffset('0',0x23)
+Go
+
+DROP TABLE IF EXISTS tem
+GO
+Create table tem(a datetimeoffset)
+insert into tem (a) values(switchoffset('2000-04-22 12:23:51.766890',120))
+Select * from tem
+GO
+
+Select switchoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);
+GO
+
+Select switchoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
+GO
