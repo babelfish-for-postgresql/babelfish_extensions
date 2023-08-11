@@ -79,6 +79,18 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
+	"@tsql" sys.nvarchar(8000),
+    "@params" sys.nvarchar(8000) = NULL, 
+    "@browse_information_mode" sys.tinyint = 0)
+AS $$
+BEGIN
+	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode) order by column_ordinal;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
     property SYS.VARCHAR

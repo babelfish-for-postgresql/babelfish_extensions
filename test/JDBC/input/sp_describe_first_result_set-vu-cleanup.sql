@@ -1,3 +1,4 @@
 DROP TABLE test_table1;
+DROP TABLE sp_describe_first_result_set_vu_prepare_t1;
 DROP PROCEDURE sp_describe_first_result_set_vu_prepare_procedure;
 GO
