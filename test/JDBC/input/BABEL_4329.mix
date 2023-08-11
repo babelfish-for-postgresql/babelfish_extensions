@@ -1,0 +1,27 @@
+-- psql
+create table "#babel-4329"(a int)
+go
+
+-- psql
+insert into "#babel-4329" values (1)
+go
+
+-- psql
+create unique index babel_4329_idx on "#babel-4329"(a)
+go
+
+-- psql
+select * from "#babel-4329"
+go
+
+-- psql
+truncate table "#babel-4329"
+go
+
+-- psql
+alter table "#babel-4329" rename to "#babel-4329-new"
+go
+
+-- psql
+drop table "#babel-4329-new"
+go
