@@ -9,3 +9,6 @@ GO
 
 DROP LOGIN sys_server_role_members_vu_prepare_login4;
 GO
+
+DROP VIEW sys_server_role_members_vu_prepare_view;
+GO

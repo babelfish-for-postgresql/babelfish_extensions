@@ -983,4 +983,3 @@ View sys.syscharsets
 View sys.syslanguages
 View sys.xml_indexes
 View sys.xml_schema_collections
-View sys.server_role_members
