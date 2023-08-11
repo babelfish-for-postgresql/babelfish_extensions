@@ -2623,7 +2623,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 {
 	int	i = 0;
 	bool	is_ms_shipped = false;
-	char	*namespace_name;
+	char	*namespace_name = NULL;
 	/*
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
