@@ -3270,7 +3270,7 @@ begin
    end if;
 end
 $body$
-LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
