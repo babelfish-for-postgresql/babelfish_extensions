@@ -143,7 +143,6 @@ Could not find upgrade tests for function sys.openjson_with
 Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.parsename
 Could not find upgrade tests for function sys.pgerror
-Could not find upgrade tests for function sys.replace
 Could not find upgrade tests for function sys.role_id
 Could not find upgrade tests for function sys.servername
 Could not find upgrade tests for function sys.servicename
