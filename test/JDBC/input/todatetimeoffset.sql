@@ -119,3 +119,24 @@ GO
 Select todatetimeoffset(DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ), 300)
 GO
 
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), '+12:00')
+Go
+
+Select todatetimeoffset('0',120)
+GO
+
+Select todatetimeoffset('0',0x23)
+Go
+
+DROP TABLE IF EXISTS tem
+GO
+Create table tem(a datetimeoffset)
+insert into tem (a) values(todatetimeoffset('2000-04-22 12:23:51.766890',120))
+Select * from tem
+GO
+
+Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);
+GO
+
+Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
+GO

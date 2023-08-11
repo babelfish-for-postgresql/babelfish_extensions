@@ -290,3 +290,54 @@ datetimeoffset
 ~~END~~
 
 
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), '+12:00')
+Go
+~~START~~
+datetimeoffset
+1900-05-06 13:59:30.0000000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('0',120)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('0',0x23)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+DROP TABLE IF EXISTS tem
+GO
+Create table tem(a datetimeoffset)
+insert into tem (a) values(todatetimeoffset('2000-04-22 12:23:51.766890',120))
+Select * from tem
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset
+2000-04-22 12:23:51.7668900 +02:00
+~~END~~
+
+
+Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);
+GO
+~~START~~
+datetimeoffset
+2031-05-27 21:59:29.9980000 -08:00
+~~END~~
+
+
+Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
+GO
+~~START~~
+datetimeoffset
+2029-04-15 21:59:29.9980000 -08:00
+~~END~~
+
