@@ -9,14 +9,11 @@
 #include "postgres.h"
 
 #include "catalog/namespace.h"
-#include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
 #include "parser/parse_clause.h"
-#include "parser/parse_coerce.h"
-#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
@@ -320,125 +317,6 @@ pre_transform_setop_tree(SelectStmt *stmt, SelectStmt *leftmostSelect)
 }
 
 /* 
- * fix_setop_typmods will backtrack through the SetOperationTree to
- * fix the types of char, nchar, varchar, and nvarchar
- *
- * We do this after the tree has already been transformed so we may 
- * compare all expressions in the same column at once. PG only compares
- * two at a time, leading to issues for example if both expressions are NULL.
- * 
- * Then, we update the original expressions as well as the top-level target list's
- * expressions with the correct type and typmod. 
- */
-static void
-fix_setop_typmods(ParseState *pstate, Query *qry)
-{
-	List 		*setOpTreeStack = list_make1(qry->setOperations);
-	List		*setOpNodes = NIL;
-	List 		*collist_list = NIL;
-	List		*topColTypes = NIL;
-	List		*topColTypmods = NIL;
-	ListCell	*collistl, *setopsl, *toptlistl;
-	Oid common_type;
-	int32 common_typmod;
-
-	/* 	Iterate through the SetOpTree. For each column, save each expression
-	 * in that column to a list. For select a, b, c union select x, y, x,
-	 * give [a, x], [b, y], [c, z] 	*/
-
-	while (setOpTreeStack)
-	{
-		Node *setOp = llast(setOpTreeStack);
-		setOpTreeStack = list_delete_last(setOpTreeStack);
-
-		if (IsA(setOp, SetOperationStmt))
-		{
-			SetOperationStmt *op = (SetOperationStmt *) setOp;
-			setOpNodes = lappend(setOpNodes, op);
-			setOpTreeStack = lappend(setOpTreeStack, op->rarg);
-			setOpTreeStack = lappend(setOpTreeStack, op->larg);
-		} else if (IsA(setOp, RangeTblRef))
-		{
-			RangeTblEntry *rte = rt_fetch(((RangeTblRef*)setOp)->rtindex, pstate->p_rtable);
-			List *targetList = rte->subquery->targetList;
-			ListCell *tlistl, *collistl;
-
-			if(collist_list == NIL)
-			{
-				foreach(tlistl, targetList)
-				{
-					TargetEntry *tle = (TargetEntry*) lfirst(tlistl);
-					collist_list = lappend(collist_list, list_make1(tle));
-				}
-			} else
-			{
-				forboth(tlistl, targetList, collistl, collist_list)
-				{
-					List 		*collist = (List*) lfirst(collistl);
-					TargetEntry *tle = (TargetEntry*) lfirst(tlistl);
-					collist = lappend(collist, tle);
-				}
-			}
-		}
-	}
-
-	/* 	For each of the column lists built above, determine the resulting
-	 * common_type and typmod. Update both the expressions and the toplevel
-	 * targetlist with the correct types. */
-	forboth(collistl, collist_list,
-			toptlistl, qry->targetList)
-	{
-		List *col_tles = lfirst(collistl);
-		List *col_exprs = NIL;
-		ListCell *lc;
-		TargetEntry *top_tle = (TargetEntry*) lfirst(toptlistl);
-		Var *top_expr = (Var*) top_tle->expr;
-
-
-		foreach(lc, col_tles)
-		{
-			TargetEntry *tle = (TargetEntry*) lfirst(lc);
-			col_exprs = lappend(col_exprs, (Node*)tle->expr);
-		}
-
-		common_type = select_common_type(pstate, col_exprs, NULL, NULL);
-		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
-		topColTypes = lappend_oid(topColTypes, common_type);
-		topColTypmods = lappend_int(topColTypmods, common_typmod);
-
-		foreach(lc, col_tles)
-		{
-			TargetEntry *tle = (TargetEntry*) lfirst(lc);
-			Node		*expr = (Node*) tle->expr;
-			Expr		*coerced_expr;
-			coerced_expr = (Expr*) coerce_to_target_type(pstate, expr, exprType(expr), 
-									common_type, common_typmod, COERCION_IMPLICIT, 
-									COERCE_IMPLICIT_CAST, -1);
-			if(coerced_expr)	/* Only coerce to target if implicit cast exists*/
-				tle->expr = coerced_expr;
-		}
-		Assert(IsA(top_expr, Var));
-		top_tle->expr = (Expr*) makeVar(top_expr->varno,
-									top_expr->varattno,
-									common_type,
-									common_typmod,
-									top_expr->varcollid,
-									0);
-		list_free(col_exprs);
-		list_free(col_tles);
-	}
-
-	foreach(setopsl, setOpNodes)
-	{
-		SetOperationStmt *sostmt = (SetOperationStmt*) lfirst(setopsl);
-		sostmt->colTypes = topColTypes;
-		sostmt->colTypmods = topColTypmods;
-	}
-
-	list_free(collist_list);
-}
-
-/* 
  * After the sort clause has been analyzed in the leftmost select, update the 
  * top-level TLEs to contain a ref to the sortlist and restore the sortClause.
  * 
@@ -447,14 +325,12 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
  * doesn't fill in the ressortgroupref field. 
  */
 void 
-post_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
+post_transform_sort_clause(Query *qry, Query *leftmostQuery)
 {
 	ListCell *lc, *left_tlist;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-
-	fix_setop_typmods(pstate, qry);
 
 	forboth(lc, qry->targetList, left_tlist, leftmostQuery->targetList)
 	{
