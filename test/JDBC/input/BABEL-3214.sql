@@ -40,3 +40,35 @@ SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
 GO
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
