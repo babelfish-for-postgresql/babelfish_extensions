@@ -1005,7 +1005,7 @@ DECLARE
     p_hour INTEGER;
     p_minute INTEGER;
     p_seconds INTEGER;
-    p_nanosecond INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
     p_tzoffset INTEGER;
     f_tzoffset INTEGER;
     v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
@@ -1058,8 +1058,10 @@ BEGIN
     p_hour := sys.datepart('hour',input_expr::TIMESTAMP);
     p_minute := sys.datepart('minute',input_expr);
     p_seconds := sys.datepart('second',input_expr);
-    p_nanosecond := sys.datepart('nanosecond',input_expr);
     p_tzoffset := -1*sys.datepart('tzoffset',input_expr);
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
 
 
 
@@ -1093,7 +1095,7 @@ DECLARE
     p_hour INTEGER;
     p_minute INTEGER;
     p_seconds INTEGER;
-    p_nanosecond INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
     p_tzoffset INTEGER;
     f_tzoffset INTEGER;
     v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
@@ -1133,7 +1135,6 @@ BEGIN
     p_hour := sys.datepart('hour',input_expr::TIMESTAMP);
     p_minute := sys.datepart('minute',input_expr);
     p_seconds := sys.datepart('second',input_expr);
-    p_nanosecond := sys.datepart('nanosecond',input_expr);
     p_tzoffset := -1*sys.datepart('tzoffset',input_expr);
 
     v_sign := (
@@ -1144,7 +1145,8 @@ BEGIN
         END
     );
 
-
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
 
     f_tzoffset := p_tzoffset + tz_offset;
     v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
