@@ -2597,7 +2597,6 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 							break;
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_NCHAR:
-						case TDS_TYPE_XML:
 						case TDS_TYPE_BINARY:
 
 							/*
@@ -2605,6 +2604,14 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 							 * (CHARBIN_NULL) to indicate NULL
 							 */
 							simpleRowSize += 2;
+							break;
+						case TDS_TYPE_XML:
+							/*
+							 * To send NULL,we have to
+							 * indicate it using 0xffffffffffffffff
+							 * (PLP_NULL)
+							 */
+							simpleRowSize += 8;
 							break;
 						case TDS_TYPE_SQLVARIANT:
 
@@ -2627,7 +2634,7 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 			}
 		}
 
-		if (nullMapSize < simpleRowSize)
+		if (nullMapSize <= simpleRowSize)
 		{
 			rowToken = TDS_TOKEN_NBCROW;
 		}
@@ -2710,7 +2717,6 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 						break;
 					case TDS_TYPE_CHAR:
 					case TDS_TYPE_NCHAR:
-					case TDS_TYPE_XML:
 					case TDS_TYPE_BINARY:
 
 						/*
@@ -2718,6 +2724,14 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 						 * we need to send 0xffff (CHARBIN_NULL)
 						 */
 						TdsPutInt16LE(0xffff);
+						break;
+					case TDS_TYPE_XML:
+
+						/*
+						 * In case of TDS version lower than or equal to 7.3A,
+						 * we need to send 0xffffffffffffffff (PLP_NULL)
+						 */
+						TdsPutUInt64LE(0xffffffffffffffff);
 						break;
 					case TDS_TYPE_SQLVARIANT:
 
