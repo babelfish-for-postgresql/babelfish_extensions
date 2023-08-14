@@ -1958,7 +1958,7 @@ AexprConst:
 					/* This is to support N'str' in various locations */
 					TypeName *t = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("nvarchar")));
 					t->location = @1;
-					t->typmods = list_make1(makeIntConst(TSQLMaxTypmod, -1));
+					t->typmods = list_make1(makeIntConst(strlen($2), -1));
 					$$ = makeStringConstCast($2, @2, t);
 				}
 		;
