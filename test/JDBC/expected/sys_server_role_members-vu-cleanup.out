@@ -12,3 +12,9 @@ GO
 
 DROP VIEW sys_server_role_members_vu_prepare_view;
 GO
+
+DROP FUNCTION sys_server_role_members_vu_prepare_func;
+GO
+
+DROP PROCEDURE sys_server_role_members_vu_prepare_proc;
+GO

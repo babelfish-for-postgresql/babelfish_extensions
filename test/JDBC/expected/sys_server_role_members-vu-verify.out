@@ -47,7 +47,15 @@ GO
 ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login4;
 GO
 
-SELECT * from sys_server_role_members_vu_prepare_view;
+EXEC sys_server_role_members_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+~~END~~
+
+
+SELECT * FROM sys_server_role_members_vu_prepare_func();
 GO
 ~~START~~
 varchar#!#varchar

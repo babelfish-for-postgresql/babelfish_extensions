@@ -474,8 +474,7 @@ CAST(Authmbr.member AS INT) AS member_principal_id
 FROM pg_catalog.pg_auth_members AS Authmbr
 INNER JOIN sys.server_principals AS p1 ON p1.principal_id = Authmbr.roleid
 INNER JOIN sys.server_principals AS p2 ON p2.principal_id = Authmbr.member
-WHERE p1.type_desc='SERVER_ROLE'
-AND p1.is_fixed_role=1;
+WHERE p1.type_desc='SERVER_ROLE';
 
 GRANT SELECT ON sys.server_role_members TO PUBLIC;
 
