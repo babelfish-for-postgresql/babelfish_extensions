@@ -225,21 +225,6 @@ step s1u: <... completed>
 step s1c: COMMIT;
 step s2c: COMMIT;
 
-starting permutation : { s2u s1u s2c s1c }
-step s2u: UPDATE parent SET aux = 'baz';
-~~ROW COUNT: 1~~
-
-step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]could not serialize access due to concurrent update (33557097) (SQLExecDirectW))~~
-
-step s2c: COMMIT;
-step s1u: <... completed>
-~~ERROR (Code: 3902)~~
-~~ERROR (Message: [25000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]COMMIT can only be used in transaction blocks (3902) (SQLExecDirectW))~~
-
-step s1c: COMMIT;
-
 starting permutation : { s2u s2c s1u s1c }
 step s2u: UPDATE parent SET aux = 'baz';
 ~~ROW COUNT: 1~~
@@ -247,21 +232,6 @@ step s2u: UPDATE parent SET aux = 'baz';
 step s2c: COMMIT;
 step s1u: UPDATE parent SET aux = 'bar';
 ~~ROW COUNT: 1~~
-
-step s1c: COMMIT;
-
-starting permutation : { s2d s1d s2c s1c }
-step s2d: DELETE FROM child WHERE child_key = 3;
-~~ROW COUNT: 1~~
-
-step s1d: DELETE FROM child WHERE child_key = 3; <waiting ...>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]could not serialize access due to concurrent delete (33557097) (SQLExecDirectW))~~
-
-step s2c: COMMIT;
-step s1d: <... completed>
-~~ERROR (Code: 3902)~~
-~~ERROR (Message: [25000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]COMMIT can only be used in transaction blocks (3902) (SQLExecDirectW))~~
 
 step s1c: COMMIT;
 

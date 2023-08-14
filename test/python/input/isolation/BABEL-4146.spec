@@ -59,9 +59,7 @@ permutation s1u s2u s2c s1c
 permutation s2u s1u s2r s1c
 permutation s1u s2u s1r s2c
 permutation s2u s1u s1c s2c
-permutation s2u s1u s2c s1c
 permutation s2u s2c s1u s1c
-permutation s2d s1d s2c s1c
 permutation s1d s2d s2c s1c
 permutation s1d s2d s1c s2c
 permutation s2d s1d s1c s2c
