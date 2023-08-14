@@ -1923,7 +1923,7 @@ public:
 			if(bctx->bif_cast_parse() && bctx->bif_cast_parse()->bif && bctx->bif_cast_parse()->bif)
 			{
 				auto temp = bctx->bif_cast_parse();
-				if(temp->data_type() && (pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "TIME", 4) == 0)
+				if(temp->data_type() && pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "TIME", 4) == 0)
 				{
 					std::string s(pstrdup(::getFullText(temp->expression()).c_str()));
 					/* Remove spaces between time and date in format of dd/mm/yyyy */

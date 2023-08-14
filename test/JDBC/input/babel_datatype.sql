@@ -233,7 +233,6 @@ select CAST('2020-03-15 09:00:00' AS datetime2);
 GO
 select CAST('2020-03-15 09:00:00' AS smalldatetime);
 GO
-
 -- test the range of date
 select CAST('0001-01-01' AS date);
 GO
@@ -625,11 +624,6 @@ GO
 SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 GO
 
-DROP TABLE s1.test1;
-go
-
-DROP SCHEMA s1;
-GO
 
 -- test tinyint data type
 select CAST(100 AS tinyint);

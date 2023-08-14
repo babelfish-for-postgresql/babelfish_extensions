@@ -648,7 +648,6 @@ smalldatetime
 2020-03-15 09:00:00.0
 ~~END~~
 
-
 -- test the range of date
 select CAST('0001-01-01' AS date);
 GO
@@ -1551,11 +1550,6 @@ postgres
 ~~END~~
 
 
-DROP TABLE s1.test1;
-go
-
-DROP SCHEMA s1;
-GO
 
 -- test tinyint data type
 select CAST(100 AS tinyint);
