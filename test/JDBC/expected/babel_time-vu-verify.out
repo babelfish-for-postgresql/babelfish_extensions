@@ -4,7 +4,7 @@ SELECT CAST('2012-02-23' AS TIME)
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: invalid input syntax for type time: "2012-02-23"
+~~ERROR (Message: ERROR: Conversion failed when converting date and/or time from character string.
   Position: 53
     Server SQLState: 22007)~~
 
@@ -237,13 +237,28 @@ time
 ~~END~~
 
 
--- These particular cases are failing in bbf but passing in sql Server
 SELECT CAST('12 jan 20 2:3' AS TIME)
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+time
+02:03:00.0000000
+~~END~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
+SELECT CAST('jan  12 20 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
+SELECT CAST('jan 2012 12 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
 
 
 -- These particular cases are failing in SQL Server but passing in bbf
@@ -385,22 +400,6 @@ time
 ~~END~~
 
 
--- if only offset is mentioned
-SELECT CAST('+02' AS TIME);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
-GO
-~~START~~
-time
-12:12:00.0000000
-~~END~~
-
-
 -- if input is given in hhmmss
 SELECT CAST('121200' AS TIME)
 GO
@@ -427,6 +426,14 @@ time
 
 
 -- Negative cases
+-- if only offset is mentioned
+SELECT CAST('+02' AS TIME);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
 -- wrong dates has been passed as an input
 SELECT CAST('Jan-0000-01' AS TIME)
 GO
@@ -522,7 +529,7 @@ SELECT CAST('Jan   2021   01 010506.289' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: time zone "jan-2021-01" not recognized)~~
 
 
 SELECT CAST('Jan   2021    010506.289' AS TIME)
@@ -536,7 +543,7 @@ SELECT CAST('Jan   2021   01 01   05    06    .    289' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~ERROR (Message: time zone "jan-2021-01" not recognized)~~
 
 
 -- if only offset is mentioned
@@ -585,6 +592,13 @@ GO
 
 -- need to check
 SELECT CAST('Jan-2021-01 121200 ' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: time zone "jan-2021-01" not recognized)~~
+
+
+SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
 

@@ -1923,13 +1923,15 @@ public:
 			if(bctx->bif_cast_parse() && bctx->bif_cast_parse()->bif && bctx->bif_cast_parse()->bif)
 			{
 				auto temp = bctx->bif_cast_parse();
-				if(temp->data_type() && (pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "TIME", 4) == 0 ||
-										pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "DATE", 4) == 0 ||
-										pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "SMALLDATETIME", 13) == 0))
+				if(temp->data_type() && (pg_strncasecmp(::getFullText(temp->data_type()).c_str(), "TIME", 4) == 0)
 				{
 					std::string s(pstrdup(::getFullText(temp->expression()).c_str()));
-					std::regex pattern("\\s*([-/:.])\\s*");
+					/* Remove spaces between time and date in format of dd/mm/yyyy */
+					std::regex pattern("\\s*([/:.])\\s*");
 					std::string result = std::regex_replace(s, pattern, "$1");
+					/* Remove spaces in between date  in format of dd   /   mm   /   yyyy */
+					pattern = ("\\s*(\\d{2,4}|\\w+)\\s*([-/])\\s*(\\d{1,2}|\\w+)\\s*([-/])\\s*(\\d{1,4}|\\w+)\\s*");
+					result = std::regex_replace(result, pattern, "$1$2$3$4$5 ");
 					if ( s!= result)
 						rewritten_query_fragment.emplace(std::make_pair(temp->expression()->start->getStartIndex(), std::make_pair(::getFullText(temp->expression()), result)));
 				}

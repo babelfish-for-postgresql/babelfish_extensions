@@ -91,10 +91,14 @@ GO
 SELECT CAST('2015-03-19 01:05:06.289' AS TIME(7))
 GO
 
--- These particular cases are failing in bbf but passing in sql Server
 SELECT CAST('12 jan 20 2:3' AS TIME)
 GO
 
+SELECT CAST('jan  12 20 2:3' AS TIME)
+GO
+
+SELECT CAST('jan 2012 12 2:3' AS TIME)
+GO
 
 -- These particular cases are failing in SQL Server but passing in bbf
 -- case where if we mention input has milli seconds(".") and no digit after that and valid offset("+-") and for valid range
@@ -150,10 +154,6 @@ GO
 SELECT CAST('Jan-2021-01 01:05:06.289' AS TIME)
 GO
 
--- if only offset is mentioned
-SELECT CAST('+02' AS TIME);
-GO
-
 SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
 GO
 
@@ -168,6 +168,10 @@ SELECT CAST('0012:00' AS TIME)
 GO
 
 -- Negative cases
+-- if only offset is mentioned
+SELECT CAST('+02' AS TIME);
+GO
+
 -- wrong dates has been passed as an input
 SELECT CAST('Jan-0000-01' AS TIME)
 GO
@@ -242,6 +246,9 @@ GO
 
 -- need to check
 SELECT CAST('Jan-2021-01 121200 ' AS TIME)
+GO
+
+SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
 GO
 
 SELECT * from babel_TIME_vu_prepare_t1

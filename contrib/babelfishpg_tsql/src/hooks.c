@@ -140,6 +140,8 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
 static void pltsql_parse_time_error(int dterr, const char *str, const char *datatype);
+static void pltsql_modify_fields(int *nf, char **field, int *ftype);
+bool containsInMonthFormat(int *ftype);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
@@ -216,6 +218,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static time_hook_type prev_time_hook = NULL;
+static modify_field_hook_type prev_modify_field_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -369,6 +372,9 @@ InstallExtendedHooks(void)
 
 	prev_time_hook = time_hook;
 	time_hook = pltsql_parse_time_error;
+
+	prev_modify_field_hook = modify_field_hook;
+	modify_field_hook = pltsql_modify_fields;
 }
 
 void
@@ -428,6 +434,7 @@ UninstallExtendedHooks(void)
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 	time_hook = prev_time_hook;
+	modify_field_hook = prev_modify_field_hook;
 }
 
 /*****************************************
@@ -2660,6 +2667,51 @@ void pltsql_parse_time_error(int dterr, const char *str, const char *datatype)
 					 errmsg("Conversion failed when converting date and/or time from character string.")));
 			break;
 	}
+}
+
+/*
+ * Modify the given input of type 'dd mon yyyy' to 'dd-mon-yyyy'
+ */
+void pltsql_modify_fields(int *nf, char **field, int *ftype)
+{
+	// field[0] = field[0] + field[1] + field[2]
+	if(containsInMonthFormat(ftype))
+	{
+		StringInfoData buf;
+		initStringInfo(&buf);
+		appendStringInfoString(&buf, field[0]);
+		for(int i=1;i<3;i++)
+		{
+			appendStringInfoString(&buf, "-");
+			appendStringInfoString(&buf, field[i]);
+
+		}
+		field[0]=buf.data;
+		ftype[0] = 2;
+		*nf = *nf - 2;
+		for(int i = 1; i < *nf; i++)
+		{
+			field[i] = field[i+2];
+			ftype[i] = ftype[i+2];
+		}
+
+	}
+}
+
+bool containsInMonthFormat(int *ftype){
+	int count0 = 0, count1 = 0;
+	for(int i=0;i<3;i++)
+	{
+		if(ftype[i] == 0)
+			count0++;
+		else if(ftype[i] == 1)
+			count1++;
+		else
+			return false;
+	}
+	if(count0 ==2 && count1 ==1)
+		return true;
+	return false;
 }
 
 /*
