@@ -134,12 +134,8 @@ GE91		 = $(call test, $(MAJORVER), -ge, 91)
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
-SHAREDIR 	 = $(shell $(PG_CONFIG) --sharedir)
-
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
-	cp tsql_contains.stop $(SHAREDIR)/tsearch_data/tsql_contains.stop
-	cp irregular_verbs.syn $(SHAREDIR)/tsearch_data/irregular_verbs.syn
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
