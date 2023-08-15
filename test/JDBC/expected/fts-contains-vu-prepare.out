@@ -35,6 +35,24 @@ CREATE VIEW fts_contains_rewrite_v1 AS
 )
 GO
 
+CREATE VIEW fts_contains_rewrite_v2 AS
+(
+    SELECT (sys.babelfish_fts_contains_phrase_helper('"word1 word2 word3"'))
+)
+GO
+
+CREATE VIEW fts_contains_rewrite_v3 AS
+(
+    SELECT (sys.babelfish_fts_contains_rewrite('FORMSOF(INFLECTIONAL, play, move)'))
+)
+GO
+
+CREATE VIEW fts_contains_rewrite_v4 AS
+(
+    SELECT (sys.babelfish_fts_contains_generation_term_helper('FORMSOF(INFLECTIONAL, word1, "word2 word3")'))
+)
+GO
+
 CREATE VIEW fts_contains_pgconfig_v1 AS
 (
     SELECT CAST((sys.babelfish_fts_contains_pgconfig('like')) AS text)
