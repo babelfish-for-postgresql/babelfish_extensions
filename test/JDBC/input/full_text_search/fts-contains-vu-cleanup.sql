@@ -11,15 +11,6 @@ GO
 DROP VIEW fts_contains_rewrite_v1
 GO
 
-DROP VIEW fts_contains_rewrite_v2
-GO
-
-DROP VIEW fts_contains_rewrite_v3
-GO
-
-DROP VIEW fts_contains_rewrite_v4
-GO
-
 DROP VIEW fts_contains_pgconfig_v1
 GO
 
