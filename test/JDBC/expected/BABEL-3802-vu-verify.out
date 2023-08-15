@@ -36,32 +36,32 @@ int
 EXECUTE BABEL_3802_vu_prepare_t_p1
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
--9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909497#!#<NULL>#!#<NULL>
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+-9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p2
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909497#!#<NULL>#!#<NULL>
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p3
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--32768#!#32767#!#<NULL>#!#8969#!#22266#!#55320#!#<NULL>#!#<NULL>#!#1000000
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-32768#!#32767#!#<NULL>#!#8969#!#22266#!#55320#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p4
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-0#!#255#!#<NULL>#!#100#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+0#!#255#!#<NULL>#!#100#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
 ~~END~~
 
 
@@ -97,31 +97,31 @@ int
 SELECT * FROM BABEL_3802_vu_prepare_t_v1
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
--9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909497#!#<NULL>#!#<NULL>
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+-9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
 ~~END~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v2
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909497#!#<NULL>#!#<NULL>
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
 ~~END~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v3
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--32768#!#32767#!#<NULL>#!#899#!#22266#!#3490#!#<NULL>#!#<NULL>#!#1000000
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-32768#!#32767#!#<NULL>#!#899#!#22266#!#3489#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
 ~~END~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v4
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-0#!#255#!#<NULL>#!#89#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+0#!#255#!#<NULL>#!#89#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
 ~~END~~
 

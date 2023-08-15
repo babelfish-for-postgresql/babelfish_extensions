@@ -35,7 +35,9 @@ CREATE PROCEDURE BABEL_3802_vu_prepare_t_p1 AS (
         power(CAST(896932 AS BIGINT),1.1),
         power(CAST(896932 AS BIGINT),1.2),
         power(CAST(NULL AS BIGINT),NULL),
-        power(CAST(896932 AS BIGINT),NULL)
+        power(CAST(896932 AS BIGINT),NULL),
+        power(CAST(2 AS BIGINT), -1),
+        power(CAST(0 AS BIGINT),0)
     );
 GO
 
@@ -48,7 +50,9 @@ CREATE PROCEDURE BABEL_3802_vu_prepare_t_p2 AS (
         power(CAST(896932 AS INT),1.1),
         power(CAST(896932 AS INT),1.2),
         power(CAST(NULL as INT),NULL),
-        power(CAST(8963 as INT),NULL)
+        power(CAST(8963 as INT),NULL),
+        power(CAST(2 AS INT), -1),
+        power(CAST(0 AS INT),0)
     );
 GO
 
@@ -62,7 +66,9 @@ CREATE PROCEDURE BABEL_3802_vu_prepare_t_p3 AS (
         power(CAST(8962 AS SMALLINT),1.2),
         power(CAST(NULL AS SMALLINT),NULL),
         power(CAST(8962 AS SMALLINT),NULL),
-        power(CAST(100 AS SMALLINT),3)
+        power(CAST(100 AS SMALLINT),3),
+        power(CAST(2 AS SMALLINT), -1),
+        power(CAST(0 AS SMALLINT),0)
     );
 GO
 
@@ -76,7 +82,9 @@ CREATE PROCEDURE BABEL_3802_vu_prepare_t_p4 AS (
         power(CAST(100 AS TINYINT),1.2),
         power(CAST(NULL AS TINYINT),NULL),
         power(CAST(100 AS TINYINT),NULL),
-        power(CAST(100 AS TINYINT),3)
+        power(CAST(100 AS TINYINT),3),
+        power(CAST(2 AS TINYINT), -1),
+        power(CAST(0 AS TINYINT),0)
     );
 GO
 
@@ -105,7 +113,9 @@ CREATE VIEW BABEL_3802_vu_prepare_t_v1 AS (
         power(CAST(896932 AS BIGINT),1.1) AS res5,
         power(CAST(896932 AS BIGINT),1.2) AS res6,
         power(CAST(NULL AS BIGINT),NULL) AS res7,
-        power(CAST(896932 AS BIGINT),NULL) AS res8
+        power(CAST(896932 AS BIGINT),NULL) AS res8,
+        power(CAST(2 AS BIGINT), -1) AS res9,
+        power(CAST(0 AS BIGINT),0) AS res10
     );
 GO
 
@@ -118,7 +128,9 @@ CREATE VIEW BABEL_3802_vu_prepare_t_v2 AS (
         power(CAST(896932 AS INT),1.1) AS res5,
         power(CAST(896932 AS INT),1.2) AS res6,
         power(CAST(NULL as INT),NULL) AS res7,
-        power(CAST(8963 as INT),NULL) AS res8
+        power(CAST(8963 as INT),NULL) AS res8,
+        power(CAST(2 AS INT), -1) AS res9,
+        power(CAST(0 AS INT),0) AS res10
     );
 GO
 
@@ -132,7 +144,9 @@ CREATE VIEW BABEL_3802_vu_prepare_t_v3 AS (
         power(CAST(896 AS SMALLINT),1.2) AS res6,
         power(CAST(NULL AS SMALLINT),NULL) AS res7,
         power(CAST(8962 AS SMALLINT),NULL) AS res8,
-        power(CAST(100 AS SMALLINT),3) AS res9
+        power(CAST(100 AS SMALLINT),3) AS res9,
+        power(CAST(2 AS SMALLINT), -1) AS res10,
+        power(CAST(0 AS SMALLINT),0) AS res11
     );
 GO
 
@@ -146,6 +160,8 @@ CREATE VIEW BABEL_3802_vu_prepare_t_v4 AS (
         power(CAST(100 AS TINYINT),1.2) AS res6,
         power(CAST(NULL AS TINYINT),NULL) AS res7,
         power(CAST(100 AS TINYINT),NULL) AS res8,
-        power(CAST(100 AS TINYINT),3) AS res9
+        power(CAST(100 AS TINYINT),3) AS res9,
+        power(CAST(2 AS TINYINT), -1) AS res10,
+        power(CAST(0 AS TINYINT),0) AS res11
     );
 GO
