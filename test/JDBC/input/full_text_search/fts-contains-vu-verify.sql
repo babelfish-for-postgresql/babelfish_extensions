@@ -2,8 +2,17 @@
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
--- Test sys.babelfish_fts_contains_rewrite
+-- Test sys.babelfish_fts_contains_rewrite, sys.babelfish_fts_contains_phrase_helper, sys.babelfish_fts_contains_generation_term_helper
 SELECT * FROM fts_contains_rewrite_v1
+GO
+
+SELECT * FROM fts_contains_rewrite_v2
+GO
+
+SELECT * FROM fts_contains_rewrite_v3
+GO
+
+SELECT * FROM fts_contains_rewrite_v4
 GO
 
 -- Test sys.babelfish_fts_contains_pgconfig
@@ -140,6 +149,9 @@ GO
 -- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
 -- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, run)'
 GO
 
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, arts)'
