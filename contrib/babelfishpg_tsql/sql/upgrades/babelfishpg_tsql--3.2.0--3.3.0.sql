@@ -811,22 +811,62 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- tsql full-text search configurations for Babelfish
 -- Since currently we only support one language - American English, 
--- this configuration is for American English only
-CREATE TEXT SEARCH DICTIONARY fts_contains_dict (
+-- the configurations are for American English only
+
+-- create a configuration fts_contains_simple for simple terms search
+CREATE TEXT SEARCH DICTIONARY fts_contains_simple_dict (
     TEMPLATE = simple,
     STOPWORDS = tsql_contains
 );
 
-COMMENT ON TEXT SEARCH DICTIONARY fts_contains_dict IS 'Babelfish T-SQL full text search CONTAINS dictionary (currently we only support American English)';
+COMMENT ON TEXT SEARCH DICTIONARY fts_contains_simple_dict IS 'Babelfish T-SQL full text search CONTAINS dictionary (currently we only support American English)';
 
-CREATE TEXT SEARCH CONFIGURATION fts_contains ( COPY = simple );
+CREATE TEXT SEARCH CONFIGURATION fts_contains_simple ( COPY = simple );
 
-COMMENT ON TEXT SEARCH CONFIGURATION fts_contains IS 'Babelfish T-SQL full text search CONTAINS configuration (currently we only support American English)';
+COMMENT ON TEXT SEARCH CONFIGURATION fts_contains_simple IS 'Babelfish T-SQL full text search CONTAINS configuration (currently we only support American English)';
 
-ALTER TEXT SEARCH CONFIGURATION fts_contains
+ALTER TEXT SEARCH CONFIGURATION fts_contains_simple
     ALTER MAPPING FOR asciiword, asciihword, hword_asciipart,
                       word, hword, hword_part
-    WITH fts_contains_dict;
+    WITH fts_contains_simple_dict;
+
+
+
+-- Create a configuration english_inflectional_babel for inflectional search
+-- first english_inflectional_babel is created as a copy of the build-in Postgres english configuration
+CREATE TEXT SEARCH DICTIONARY english_stem_babel
+	(TEMPLATE = snowball, Language = english , StopWords=tsql_contains);
+
+COMMENT ON TEXT SEARCH DICTIONARY english_stem_babel IS 'snowball stemmer for english_inflectional_babel language';
+
+CREATE TEXT SEARCH CONFIGURATION english_inflectional_babel
+	(PARSER = default);
+
+COMMENT ON TEXT SEARCH CONFIGURATION english_inflectional_babel IS 'configuration for english_inflectional_babel language';
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
+	FOR email, url, url_path, host, file, version,
+	    sfloat, float, int, uint,
+	    numword, hword_numpart, numhword
+	WITH simple;
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
+    FOR asciiword, hword_asciipart, asciihword
+	WITH english_stem_babel;
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
+    FOR word, hword_part, hword
+	WITH english_stem_babel;
+
+-- then we add irregular verbs as synonym files to english_inflectional_babel for inflectional search
+CREATE TEXT SEARCH DICTIONARY irregular_verbs (
+    TEMPLATE = synonym,
+    SYNONYMS = irregular_verbs
+);
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel
+    ALTER MAPPING FOR asciiword
+    WITH irregular_verbs, english_stem_babel;
 
 -- This function performs string rewriting for the full text search CONTAINS predicate
 -- in Babelfish
@@ -845,22 +885,56 @@ DECLARE
   joined_text text;
   word text;
 BEGIN
-  orig_phrase = phrase;
-
-  -- generation term not supported
-  IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
-    RAISE EXCEPTION 'Generation term not supported';
-  END IF;
+  orig_phrase := phrase;
 
   -- boolean operators not supported
   IF position(('&' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('|' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('&!' COLLATE C) IN (phrase COLLATE "C")) <> 0 THEN
     RAISE EXCEPTION 'Boolean operators not supported';
   END IF;
-
+  
   IF position((' AND ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' OR ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' AND NOT ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 THEN
     RAISE EXCEPTION 'Boolean operators not supported';
   END IF;
 
+  -- Generation term, inflectional
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(INFLECTIONAL,%\)[ ]*' COLLATE C) THEN
+    RETURN sys.babelfish_fts_contains_generation_term_helper(phrase);
+  END IF;
+
+  -- Generation term, thesaurus
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(THESAURUS,%\)[ ]*' COLLATE C) THEN
+    RETURN sys.babelfish_fts_contains_generation_term_helper(phrase);
+  END IF;
+
+  -- Simple term
+  joined_text := sys.babelfish_fts_contains_phrase_helper(phrase);
+
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  -- We need to rewrite the last word into 'lastword:*'
+  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
+  END IF;
+
+  -- Return the joined_text
+  RETURN joined_text;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+-- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
+
+
+-- Helper function that takes in a word or phrase and returns the same word/phrase in Postgres format
+-- Example: 'word' is rewritten into 'word'; '"word1 word2 word3"' is rewritten into 'word1<->word2<->word3'
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_phrase_helper(IN phrase text)
+  RETURNS TEXT AS
+$$
+DECLARE
+  joined_text text;
+  word text;
+BEGIN
   -- Initialize the joined_text variable
   joined_text := '';
 
@@ -895,25 +969,54 @@ BEGIN
   -- Remove the trailing "<->" from the joined_text
   joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
 
-  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
-  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
-  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
-  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
-  -- We need to rewrite the last word into 'lastword:*'
-  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
-    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
-  END IF;
-
-  -- Return the joined_text
   RETURN joined_text;
+
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
--- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
+
+-- Helper function that takes in a generation term rewrites it into Postgres format
+-- Example: 
+-- 'FORMFSOF(INFLECTIONAL, word)' is rewritten into 'word'; 
+-- 'FORMFSOF(INFLECTIONAL, "word1 word2")' is rewritten into 'word1<->word2';
+-- 'FORMFSOF(INFLECTIONAL, word1, word2)' is rewritten into 'word1 | word2';
+-- 'FORMFSOF(INFLECTIONAL, word1, "word2 word3")' is rewritten into 'word1 | (word2<->word3)';
+-- Rewriting logic for THESAURUS is the same as for INFLECTIONAL
+-- Precondition: phrase matches '[ ]*FORMSOF(INFLECTIONAL,%)[ ]%' or '[ ]*FORMSOF(THESAURUS,%)[ ]%'
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_generation_term_helper(IN phrase text)
+  RETURNS TEXT AS
+$$
+DECLARE
+  joined_text text;
+  subterm text;
+BEGIN
+  -- Initialize the joined_text variable
+  joined_text := '';
+
+  -- Strip leading and trailing spaces from the phrase
+  phrase := trim(phrase COLLATE "C") COLLATE "C";
+
+  -- Strip FORMSOF, INFLECTIONAL/THESAURUS, and parenthesis
+  phrase := substring(phrase COLLATE "C", position((',' COLLATE C) IN (phrase COLLATE "C")) + 1, length(phrase) - position((',' COLLATE C) IN (phrase COLLATE "C")) - 1) COLLATE "C";
+
+  -- Split the phrase into an array of words
+  FOREACH subterm IN ARRAY regexp_split_to_array(phrase COLLATE "C", ',' COLLATE "C") COLLATE "C" LOOP
+    -- Append the word to the joined_text variable
+    joined_text := joined_text || '(' || sys.babelfish_fts_contains_phrase_helper(subterm) || ')' || ' | ';
+  END LOOP;
+
+  -- Remove the trailing " | " from the joined_text
+  joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
+
+  RETURN joined_text;
+
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
 
 -- Given the query string, determine the Postgres full text configuration to use
 -- Currently we only support simple terms and prefix terms
--- For simple terms, we use the 'fts_contains' configuration
+-- For simple terms, we use the 'fts_contains_simple' configuration
 -- For prefix terms, we use the 'simple' configuration
 -- They are the configurations that provide closest matching according to our experiments
 CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
@@ -930,8 +1033,20 @@ BEGIN
   IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
     RETURN 'simple'::regconfig;
   END IF;
+
+  -- Generation term, inflectional (Examples: 'FORMSOF(INFLECTIONAL, love)', 'FORMSOF(INFLECTIONAL, "move forward")', 'FORMSOF(INFLECTIONAL, play, "plan to")')
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(INFLECTIONAL,%\)[ ]*' COLLATE C) THEN
+    RETURN 'english_inflectional_babel'::regconfig;
+  END IF;
+
+  -- Generation term, thesaurus (Examples: 'FORMSOF(THESAURUS, love)', 'FORMSOF(THESAURUS, "move forward")', 'FORMSOF(THESAURUS, play, "plan to")')
+  -- By default, SQL Server thesaurus search does not use any thesaurus files so behavior is identical to simple terms
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(THESAURUS,%\)[ ]*' COLLATE C) THEN
+    RETURN 'fts_contains_simple'::regconfig;
+  END IF;
+
   -- Simple term
-  RETURN 'fts_contains'::regconfig;
+  RETURN 'fts_contains_simple'::regconfig;
 END;
 $$
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
