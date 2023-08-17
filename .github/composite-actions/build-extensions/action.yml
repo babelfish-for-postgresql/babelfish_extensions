@@ -39,5 +39,5 @@ runs:
         PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
         PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
         cd ../babelfishpg_unit
-        make -j 4 && make install
+        make clean && make && make install
       shell: bash
