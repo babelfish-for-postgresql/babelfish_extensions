@@ -444,7 +444,7 @@ GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC
 -- Not all datatypes are handled as well as might be possible, but it is sufficient for 
 -- the current purposes.
 -- Note that this proc may increase the response time for the first execution of sp_who, but 
--- we're looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
+-- we are looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
 -- is very unlikely to be part of performance-critical workload.
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
 	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
@@ -653,6 +653,9 @@ BEGIN
 		END
 	END
 	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
 	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
@@ -690,7 +693,7 @@ BEGIN
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
 	UPDATE #sp_who_tmp SET query = TRIM(query)
 
-	-- Get all connections
+	-- Get all current connections
 	SELECT 
 		spid, 
 		MAX(blocked) AS blocked, 
@@ -701,10 +704,11 @@ BEGIN
 		0 AS dbid,
 		CAST('' AS sys.VARCHAR(100)) AS cmd,
 		0 AS request_id,
-		CAST('TDS' AS sys.VARCHAR(20)) AS connection
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
 	INTO #sp_who_proc
-	FROM sys.sysprocesses
-		GROUP BY spid, status
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status, hostprocess		
 		
 	-- Add attributes to each connection
 	UPDATE #sp_who_proc
@@ -714,13 +718,14 @@ BEGIN
 		hostname = sp.hostname,
 		dbid = sp.dbid,
 		request_id = sp.request_id
-	FROM sys.sysprocesses sp
+	FROM #sp_who_sysprocesses sp
 		WHERE #sp_who_proc.spid = sp.spid				
 
-	-- identify PG connections
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
 	UPDATE #sp_who_proc
 	SET connection = 'PostgreSQL'
-	WHERE dbid = 0
+	WHERE hostprocess IS NULL 
 
 	-- Keep or delete PG connections
 	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
@@ -819,6 +824,7 @@ BEGIN
 	WHERE TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
 	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
 	RETURN
 END	
