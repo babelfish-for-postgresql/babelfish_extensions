@@ -3477,7 +3477,10 @@ BEGIN
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
 	UPDATE #sp_who_tmp SET query = TRIM(query)
 
-	-- Get all connections
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
+	-- Get all current connections
 	SELECT 
 		spid, 
 		MAX(blocked) AS blocked, 
@@ -3490,8 +3493,8 @@ BEGIN
 		0 AS request_id,
 		CAST('TDS' AS sys.VARCHAR(20)) AS connection
 	INTO #sp_who_proc
-	FROM sys.sysprocesses
-		GROUP BY spid, status
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status		
 		
 	-- Add attributes to each connection
 	UPDATE #sp_who_proc
@@ -3501,13 +3504,14 @@ BEGIN
 		hostname = sp.hostname,
 		dbid = sp.dbid,
 		request_id = sp.request_id
-	FROM sys.sysprocesses sp
+	FROM #sp_who_sysprocesses sp
 		WHERE #sp_who_proc.spid = sp.spid				
 
-	-- identify PG connections
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
 	UPDATE #sp_who_proc
 	SET connection = 'PostgreSQL'
-	WHERE dbid = 0
+	WHERE hostprocess IS NULL 
 
 	-- Keep or delete PG connections
 	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
