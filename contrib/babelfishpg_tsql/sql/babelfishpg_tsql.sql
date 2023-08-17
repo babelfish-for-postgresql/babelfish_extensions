@@ -3231,7 +3231,7 @@ LANGUAGE pltsql STABLE;
 -- Not all datatypes are handled as well as might be possible, but it is sufficient for 
 -- the current purposes.
 -- Note that this proc may increase the response time for the first execution of sp_who, but 
--- we're looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
+-- we are looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
 -- is very unlikely to be part of performance-critical workload.
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
 	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
@@ -3440,6 +3440,9 @@ BEGIN
 		END
 	END
 	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
 	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
@@ -3477,9 +3480,6 @@ BEGIN
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
 	UPDATE #sp_who_tmp SET query = TRIM(query)
 
-	-- Take a copy of sysprocesses so that we reference it only once
-	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
-
 	-- Get all current connections
 	SELECT 
 		spid, 
@@ -3491,10 +3491,11 @@ BEGIN
 		0 AS dbid,
 		CAST('' AS sys.VARCHAR(100)) AS cmd,
 		0 AS request_id,
-		CAST('TDS' AS sys.VARCHAR(20)) AS connection
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
 	INTO #sp_who_proc
 	FROM #sp_who_sysprocesses
-		GROUP BY spid, status		
+		GROUP BY spid, status, hostprocess
 		
 	-- Add attributes to each connection
 	UPDATE #sp_who_proc
@@ -3610,6 +3611,7 @@ BEGIN
 	WHERE TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
 	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
 	RETURN
 END	
