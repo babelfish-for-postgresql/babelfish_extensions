@@ -140,7 +140,7 @@ step s1i: INSERT INTO child VALUES (1, 1);
 step s1c: COMMIT;
 
 starting permutation : { s1t s1i s2i s2c s1s s1c }
-step s1t: Select current_setting('transaction_isolation');
+step s1t: SELECT current_setting('transaction_isolation');
 ~~START~~
 str
 repeatable read
@@ -153,7 +153,7 @@ step s2i: INSERT INTO child VALUES (2, 1);
 ~~ROW COUNT: 1~~
 
 step s2c: COMMIT;
-step s1s: Select * from child;
+step s1s: SELECT * from child;
 ~~START~~
 int#!#int
 3#!#1

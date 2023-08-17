@@ -4266,7 +4266,7 @@ tsql_IsolationLevelStr:
 				{
 					if(pltsql_enable_snapshot_isolation_for_reapeatable_read == true){
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
-						$$ = "repeatable read";
+						$$ = "serializable";
 					}
 					else{
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);

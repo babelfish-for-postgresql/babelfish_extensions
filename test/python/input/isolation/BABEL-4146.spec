@@ -21,10 +21,10 @@ teardown
 }
 
 session s1
-setup     {  select set_config('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
+setup     { SELECT set_config('babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read','on',false);
   set transaction isolation level repeatable read; BEGIN TRAN; SET lock_timeout '500'; }
-step s1t  { Select current_setting('transaction_isolation'); }
-step s1s  { Select * from child; }
+step s1t  { SELECT current_setting('transaction_isolation'); }
+step s1s  { SELECT * from child; }
 step s1i  { INSERT INTO child VALUES (1, 1); }
 step s1u  { UPDATE parent SET aux = 'bar'; }
 step s1d  { DELETE FROM child WHERE child_key = 3; }

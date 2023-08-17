@@ -176,12 +176,12 @@ SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = 
 GO
 ~~START~~
 varchar
-repeatable read
+serializable
 ~~END~~
 
 ~~START~~
 smallint
-5
+4
 ~~END~~
 
 
