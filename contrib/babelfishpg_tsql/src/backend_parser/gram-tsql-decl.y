@@ -93,8 +93,6 @@
 %type <target> tsql_output_target_el
 %type <node> tsql_alter_server_role
 
-%type <node> tsql_contains_search_condition
-
 %token <keyword> TSQL_ATAT TSQL_ALLOW_SNAPSHOT_ISOLATION
 	TSQL_CALLER TSQL_CHOOSE TSQL_CLUSTERED TSQL_COLUMNSTORE TSQL_CONVERT
 	TSQL_DATENAME TSQL_DATEPART TSQL_DATEDIFF TSQL_DATEDIFF_BIG TSQL_DATEADD TSQL_DEFAULT_SCHEMA TSQL_ISNULL
@@ -117,7 +115,6 @@
 	TSQL_UNLOCK TSQL_VALUES
 	TSQL_NVARCHAR
 	TSQL_CROSS TSQL_OUTER TSQL_APPLY
-	TSQL_CONTAINS TSQL_FREETEXT
 
 /*
  * WITH_paren is added to support table hints syntax WITH (<table_hint> [[,]...n]),
