@@ -189,6 +189,7 @@ bitwise_not-operator
 case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
+col_length
 collation_tests
 collation_tests_arabic
 collation_tests_greek
