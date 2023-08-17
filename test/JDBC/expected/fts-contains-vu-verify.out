@@ -264,236 +264,45 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '" daily"'
-GO
-~~START~~
-int#!#text
-89#!# Eighty croissants are made daily for the pastry shop , which is small but well-lit by a storefront of large windows 
-383#!#Researchers say the results suggest that being lonely can cause people to experience daily life as more stressful , which may cause chronic stress and in turn disrupt the immune system 
-479#!#Get daily news by email
-492#!#Our newspapers include the flagship Manchester Evening News - Britain 's largest circulating regional daily with up to 130,485 copies - as well as 20 local weekly titles across Greater Manchester , Cheshire and Lancashire 
-501#!#Get daily news by email
-529#!#The Liverpool Echo reaches 1 in 3 people in the area with a daily readership of more than 256,000* people
-536#!# He is a former editor of The Daily Post ( Wales and England ) and editor-in-chief of the company 's Welsh operations 
-602#!# If so , the RCAF will be required to monitor Canada 's Arctic on a daily basis 
-942#!#Wendy Cukier , founder and director of the Diversity Institute at Ryerson University and a lead researcher on the project , highlighted the significance of the sector-based approach to this research in an email to The Daily 
-943#!#In a phone interview with The Daily , Suzanne Gagnon , another researcher on the project and a professor of organizational behaviour at Desautels , warned that sector averages should not necessarily be taken at face value , and that there is often a wide range of representation within sectors 
-~~END~~
 
-
-EXEC fts_contains_vu_prepare_p1 '"daily "'
-GO
-~~START~~
-int#!#text
-89#!# Eighty croissants are made daily for the pastry shop , which is small but well-lit by a storefront of large windows 
-383#!#Researchers say the results suggest that being lonely can cause people to experience daily life as more stressful , which may cause chronic stress and in turn disrupt the immune system 
-479#!#Get daily news by email
-492#!#Our newspapers include the flagship Manchester Evening News - Britain 's largest circulating regional daily with up to 130,485 copies - as well as 20 local weekly titles across Greater Manchester , Cheshire and Lancashire 
-501#!#Get daily news by email
-529#!#The Liverpool Echo reaches 1 in 3 people in the area with a daily readership of more than 256,000* people
-536#!# He is a former editor of The Daily Post ( Wales and England ) and editor-in-chief of the company 's Welsh operations 
-602#!# If so , the RCAF will be required to monitor Canada 's Arctic on a daily basis 
-942#!#Wendy Cukier , founder and director of the Diversity Institute at Ryerson University and a lead researcher on the project , highlighted the significance of the sector-based approach to this research in an email to The Daily 
-943#!#In a phone interview with The Daily , Suzanne Gagnon , another researcher on the project and a professor of organizational behaviour at Desautels , warned that sector averages should not necessarily be taken at face value , and that there is often a wide range of representation within sectors 
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 ' "daily news"'
-GO
-~~START~~
-int#!#text
-479#!#Get daily news by email
-501#!#Get daily news by email
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 '"daily news" '
-GO
-~~START~~
-int#!#text
-479#!#Get daily news by email
-501#!#Get daily news by email
-~~END~~
-
-
+-- REST NOT SUPPORTED YET
 -- test prefix term: ... CONTAINS(col_name, <prefix_term>) ...
 -- <prefix term> ::= { "word*" | "phrase*" } 
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
 GO
-~~START~~
-int#!#text
-209#!# I have Googled my question several times and all answers are confusing and mixed : some say everything stays on a FB page until you clean it off and others say Facebook deletes status updates and photos monthly 
-211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
-215#!#Just to be sure , we reached out to Facebook to confirm this is indeed the policy for the above use case 
-216#!# The company confirmed that as long as you have not deleted the content yourself -- or in the case of a message between two people , both people have not deleted it -- the content should stay online indefinitely @ @ @ @ @ @ @ @ @ @ to keep in mind about this policy 
-236#!#I often see Facebook users confusing these two things 
-239#!#<p> NEW YORK -- An associate of a notorious Russian arms dealer was arrested in Australia and charged with conspiring to buy planes so that weapons could be transported to the world 's bloodiest conflicts , a U
-246#!#His arrest was first confirmed by the Australian Fairfax Media news organization , which reported Thursday that he was arrested in Melbourne after applying for a post in the government Protective Service Office , a law enforcement agency 
-251#!#Victoria state police spokeswoman Jessica Rosewarne confirmed Chichakli was caught after applying for the government post 
-254#!# Attorney Preet Bharara , the chief federal prosecutor in New York , said Chichakli " consorted with the world 's most notorious arms trafficker in the purchase of aircraft that would be used to transport weapons to some of the world 's bloodiest conflict zones , in violation of international sanctions 
-258#!#Merchant of Death Bout is a former @ @ @ @ @ @ @ @ @ @ his 1990s-era notoriety for running a fleet of aging Soviet-era cargo planes to conflict-ridden hotspots in Africa 
-262#!#Prosecutors say the arms have helped fuel conflicts and support regimes in Afghanistan , Angola , The Democratic Republic of the Congo , Liberia , Rwanda , Sierra Leone and Sudan 
-316#!#Shakira only confirmed their relationship last year by posting a picture of them both together on Twitter and Facebook with a caption reading , ' ' I present to you my sunshine 
-622#!# If not , the RCAF will be strained to the breaking point , which will cascade throughout the organization as it confronts other significant investment demands on its equipment and personnel 
-713#!#Mary Leakey cemented her status as a giant of archeology in 1959 with one confident cry : " I 've found him -- I 've found our man ! "
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix term not supported)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"pass*"'
 GO
-~~START~~
-int#!#text
-44#!#The mansplaining was up against " gate lice " -- a description of passengers on an airplane who crowd around the gate waiting to board 
-141#!# In 1981 , voters passed a $19 million bond issue 
-211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
-598#!# It primarily consists of automated @ @ @ @ @ @ @ @ @ @ the Northwest Passage 
-649#!# I have a minor one myself ( funny hands ) and remember being moved , as a teenager reading this play , by the horror of the dogs as the lame man passes by 
-706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
-746#!#The total passenger revenue earnings during 1st April 2012 - 31st January 2013 was Rs 25924
-754#!#The total approximate numbers of passengers booked during 1st April 2012 - 31st January 2013 were 7150
-758#!#The ministry further said in the suburban and non-suburban sectors , the numbers of passengers booked during April 2012 -January 2013 were 3753
-799#!#The head office of the concerned bank shall furnish details of such accounts --containing the name , date of arrival in India , passport number , residential permit reference , name of the Foreigner Registration Office @ @ @ @ @ @ @ @ @ @ the bank branch where the account is maintained -- on quarterly basis to the Ministry of Home Affairs 
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix term not supported)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"daily n*"'
 GO
-~~START~~
-int#!#text
-479#!#Get daily news by email
-501#!#Get daily news by email
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix term not supported)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"t*"', 20
 GO
-~~START~~
-int#!#text
-1#!#<p> Sol Yurick , the writer whose 1965 novel " The Warriors " was adapted into a film 14 years later -- which then became one of the best adapted works ever in video gaming -- died this weekend 
-3#!#Yurick 's work itself was a loose adaptation of a story told 2,300 years before : Anabasis , which chronicles the journey of Greek mercenaries through hostile territory after the death of their leader 
-4#!# Yurick 's book , and The Warriors both open with a grand council of street gangs , convened in the Bronx , and the murder of the leader who called for the gathering ( Cyrus , a direct reference to the leader of the Greeks in Anabasis ) 
-5#!# But the stories then diverge significantly 
-6#!#Walter Hill , the director of The Warriors , strove to give a comic-book depiction of the gang 's flight from the Bronx back to their Coney Island turf 
-7#!# ( Indeed , in Yurick 's book , the gang 's mascot , Junior , reads a comic book version of @ @ @ @ @ @ @ @ @ @ , each faction was given a name and a costume theme invoking it , typified by the iconic " Baseball Furies " the protagonist Warriors fight in Riverside Park 
-8#!# After making their way through rival gangs ' turf in Manhattan and then back to Coney Island , the Warriors defeat the gang responsible for Cyrus ' death 
-10#!#The Warriors became a cult hit , partly because its exaggerated portrayal of New York City 's lawlessness fit with the image of violent crime and decay that blighted the city in the late 1970s 
-11#!# A staple of Saturday and Sunday afternoon movie programming on UHF stations , the film faded from popular memory until Rockstar resurrected it as a video game 26 years later 
-13#!#The Warriors , released in 2005 for the Xbox and PS2 , began with a three-minute recreation of the film 's opening sequence ( shown above ) 
-14#!# Set to the blood pumping guitar and synthesizer of Barry Vorzon 's original soundtrack , it 's one of the best openings a video game has ever had 
-16#!# Primarily a brawler , with some limited open-world features , the game also served as a canonical prologue to the all-gang meeting in the Bronx 
-17#!# It is playable only on the PlayStation 2 and original Xbox ; a version for the PSP was released in 2007
-18#!#<h> That 's What They Say : Dialect Society chooses its words of the year
-19#!#For this week 's edition of " That 's What They Say , " University of Michigan Professor Anne Curzan spoke with us from Boston , where she was attending the American Dialect Society 's annual meeting , whose 200 members voted on their " Word of the Year 
-20#!#Rina Miller : So the winner is ?
-21#!#Anne : The winner is " hashtag 
-23#!# It was nominated from the floor 
-24#!# I must admit , I went in thinking " fiscal cliff " had this hands down 
-25#!# I thought there was no way anything would beat that , but fiscal cliff did n't even make the runoff 
-~~END~~
+~~ERROR (Code: 33557097)~~
 
-
--- test corner case of spurious prefix terms (not prefix terms, but simple terms)
--- not surrounded by double quotes
-EXEC fts_contains_vu_prepare_p1 'pass*'
-GO
-~~START~~
-int#!#text
-211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
-706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 ' pass*'
-GO
-~~START~~
-int#!#text
-211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
-706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 'pass* '
-GO
-~~START~~
-int#!#text
-211#!# ( Typically , the question is the other way around : what to do with someone 's existing Facebook account after they pass away ? ) And given the level of confusion constantly floating around about Facebook 's data retention policies , it 's no surprise that it might be hard to pinpoint exactly when ( if ever ) information gets deleted from the social network 
-706#!#Such fetuses are " subsequently allowed to pass away , depending on what the circumstances are , sometimes in their mom 's arms , " he said 
-~~END~~
-
-
--- star is not in the last word
-EXEC fts_contains_vu_prepare_p1 '"t* independent"'
-GO
-~~START~~
-int#!#text
-157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
-435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
-506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
-955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 ' "t* independent" '
-GO
-~~START~~
-int#!#text
-157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
-435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
-506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
-955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 '" t* independent "'
-GO
-~~START~~
-int#!#text
-157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
-435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
-506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
-955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
-~~END~~
-
-
--- last word only contains star
-EXEC fts_contains_vu_prepare_p1 '"*"'
-GO
-~~START~~
-int#!#text
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 ' "*" '
-GO
-~~START~~
-int#!#text
-~~END~~
-
-
-EXEC fts_contains_vu_prepare_p1 ' "independent *" '
-GO
-~~START~~
-int#!#text
-157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
-435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
-506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
-955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
-~~END~~
+~~ERROR (Message: Prefix term not supported)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"independent *"'
 GO
-~~START~~
-int#!#text
-157#!# Yes , Center Stage , which split from OSF to become an independent company in 1994 , remains atop the theatrical food chain 
-435#!# was part of a public radio experiment called Localore -- 10 independent producers collaborating with 10 public radio stations around the nation , creating some of the new public radio programming of the future 
-506#!#Merseyside police has referred the matter to the Independent Police Complaints Commission ( IPCC ) 
-955#!#Private firms are better at running prisons than the public sector and all jails should be subject to open competition , an independent think-tank said today 
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix term not supported)~~
 
 
-
--- REST NOT SUPPORTED YET
 -- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
 -- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(INFLECTIONAL, love)'

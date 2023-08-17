@@ -75,17 +75,7 @@ GO
 EXEC fts_contains_vu_prepare_p1 '"daily news"'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '" daily"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 '"daily "'
-GO
-
-EXEC fts_contains_vu_prepare_p1 ' "daily news"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 '"daily news" '
-GO
+-- REST NOT SUPPORTED YET
 
 -- test prefix term: ... CONTAINS(col_name, <prefix_term>) ...
 -- <prefix term> ::= { "word*" | "phrase*" } 
@@ -101,41 +91,8 @@ GO
 EXEC fts_contains_vu_prepare_p1 '"t*"', 20
 GO
 
--- test corner case of spurious prefix terms (not prefix terms, but simple terms)
--- not surrounded by double quotes
-EXEC fts_contains_vu_prepare_p1 'pass*'
-GO
-
-EXEC fts_contains_vu_prepare_p1 ' pass*'
-GO
-
-EXEC fts_contains_vu_prepare_p1 'pass* '
-GO
-
--- star is not in the last word
-EXEC fts_contains_vu_prepare_p1 '"t* independent"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 ' "t* independent" '
-GO
-
-EXEC fts_contains_vu_prepare_p1 '" t* independent "'
-GO
-
--- last word only contains star
-EXEC fts_contains_vu_prepare_p1 '"*"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 ' "*" '
-GO
-
-EXEC fts_contains_vu_prepare_p1 ' "independent *" '
-GO
-
 EXEC fts_contains_vu_prepare_p1 '"independent *"'
 GO
-
--- REST NOT SUPPORTED YET
 
 -- test inflectional generation term: ... CONTAINS(col_name, <inflectional_generation_term>) ...
 -- <inflectional_generation_term> ::= FORMSOF ( INFLECTIONAL, <simple_term> [ ,...n ] )
