@@ -72,7 +72,53 @@ GO
 ~~ERROR (Message: bigint out of range)~~
 
 
+EXECUTE BABEL_3802_vu_prepare_t_p8
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p9
+GO
+~~START~~
+bigint
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p10
+GO
+~~START~~
+bigint
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
 EXECUTE BABEL_3802_vu_prepare_t_p6
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p11
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p12
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p13
 GO
 ~~ERROR (Code: 8115)~~
 
@@ -84,6 +130,54 @@ GO
 ~~ERROR (Code: 8115)~~
 
 ~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p14
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p15
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p16
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p17
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p18
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p19
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v8
@@ -124,4 +218,119 @@ GO
 int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
 0#!#255#!#<NULL>#!#89#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
 ~~END~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v5
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v6
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v7
+GO
+~~START~~
+bigint
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v9
+GO
+~~START~~
+bigint
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: bigint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v10
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v11
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v12
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v13
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v14
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v15
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v16
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v17
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v18
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v19
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v20
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
