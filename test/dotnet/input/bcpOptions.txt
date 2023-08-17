@@ -275,12 +275,17 @@ Insert into sourceTable values (1, NULL);
 Insert into sourceTable values (NULL, 1);
 Insert into sourceTable values (NULL, NULL);
 Insert into sourceTable(a) values (2);
+Insert into sourceTable(b) values (2);
+Insert into sourceTable(a) values (3);
+Insert into sourceTable values (4, NULL);
 bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable1
 bcp#!#in#!#bcp_source#!#destinationTable2
 Select * from sourceTable
 Select * from destinationTable1
 Select * from destinationTable2
+select count(*) from destinationTable1 where b is NULL
+select count(*) from destinationTable2 where b is NULL
 drop table sourceTable
 drop table destinationTable1
 drop table destinationTable2
@@ -293,12 +298,17 @@ Insert into sourceTable values (1, NULL);
 Insert into sourceTable values (NULL, 1);
 Insert into sourceTable values (NULL, NULL);
 Insert into sourceTable(a) values (2);
+Insert into sourceTable(b) values (2);
+Insert into sourceTable(a) values (3);
+Insert into sourceTable values (4, NULL);
 bcp -k#!#out#!#bcp_source#!#sourceTable
 bcp -k#!#in#!#bcp_source#!#destinationTable1
 bcp#!#in#!#bcp_source#!#destinationTable2
 Select * from sourceTable
 Select * from destinationTable1
 Select * from destinationTable2
+select count(*) from destinationTable1 where b is NULL
+select count(*) from destinationTable2 where b is NULL
 drop table sourceTable
 drop table destinationTable1
 drop table destinationTable2
