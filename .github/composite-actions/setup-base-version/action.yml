@@ -78,7 +78,6 @@ runs:
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "set allow_system_table_mods = on;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_unit";"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER USER jdbc_user CREATEDB;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"

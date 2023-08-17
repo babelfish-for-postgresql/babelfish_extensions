@@ -10,8 +10,7 @@ SUBDIRS = \
 		babelfishpg_common \
 		babelfishpg_money \
 		babelfishpg_tds \
-		babelfishpg_tsql \
-		babelfishpg_unit
+		babelfishpg_tsql
 
 all: $(SUBDIRS)
 $(SUBDIRS):
