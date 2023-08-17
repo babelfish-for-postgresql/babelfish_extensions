@@ -1,0 +1,62 @@
+name: Unit Tests
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-unit-tests:
+    env:
+      INSTALL_DIR: psql
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+
+      - name: Build tds_fdw Extension
+        id: build-tds_fdw-extension
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/build-tds_fdw-extension
+
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Run Unit Tests
+        id: unit
+        if: always() && steps.install-extensions.outcome == 'success'
+        timeout-minutes: 60
+        run: |
+          sudo ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/unit_tests.sql
+
+      - name: Upload Log
+        if: always() && steps.unit.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: postgres-log
+          path: ~/psql/data/logfile
+      
+      - name: Upload Output Diff
+        if: always() && steps.unit.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-diff.diff
+          path: contrib/babelfishpg_unit/log_files/*.log
