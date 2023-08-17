@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "babelfishpg_unit";
+
 CREATE OR REPLACE FUNCTION check_all_unit_tests_passed()
 RETURNS VOID AS $$
 DECLARE
