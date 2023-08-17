@@ -13,7 +13,7 @@ BEGIN
   -- Get the number of tests passed
   SELECT COUNT(*) INTO passed_tests
   FROM babelfishpg_unit_run_tests()
-  WHERE status = 'passed';
+  WHERE status = 'pass';
 
   -- Throw an error if not all tests passed
   IF total_tests <> passed_tests THEN

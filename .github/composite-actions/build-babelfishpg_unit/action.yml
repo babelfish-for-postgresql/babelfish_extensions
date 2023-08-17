@@ -1,4 +1,4 @@
-name: 'Build Extensions'
+name: 'Build babelfishpg_unit'
 inputs:
   install_dir:
     description: 'Engine install directory'
@@ -21,21 +21,12 @@ runs:
     - if: always() && (inputs.extension_branch == 'latest')
       uses: actions/checkout@v2
 
-    - name: Build Extensions
+    - name: Build babelfishpg_unit
       run: |
         export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
         export cmake=$(which cmake)
-        export CC='ccache gcc'
-        export CMAKE_C_COMPILER_LAUNCHER=ccache
-        export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
-        cd contrib/babelfishpg_money
-        make -j 4 && make install
-        cd ../babelfishpg_common
-        make -j 4 && make install
-        cd ../babelfishpg_tds
-        make -j 4 && make install
-        cd ../babelfishpg_tsql
-        PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
-        PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
+        export PATH=~/${{ inputs.install_dir }}/postgres/bin:$PATH
+        cd ../babelfishpg_unit
+        make clean && make && make install
       shell: bash
