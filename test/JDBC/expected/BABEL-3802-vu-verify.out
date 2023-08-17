@@ -36,32 +36,32 @@ int
 EXECUTE BABEL_3802_vu_prepare_t_p1
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
--9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+-9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1#!#0#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8969
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p2
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1#!#0#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8969
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p3
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--32768#!#32767#!#<NULL>#!#8969#!#22266#!#55320#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-32768#!#32767#!#<NULL>#!#8969#!#22266#!#55320#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1#!#0#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8969
 ~~END~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p4
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-0#!#255#!#<NULL>#!#100#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+0#!#255#!#<NULL>#!#100#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1#!#0#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -97,35 +97,28 @@ bigint
 ~~ERROR (Message: bigint out of range)~~
 
 
-EXECUTE BABEL_3802_vu_prepare_t_p6
-GO
-~~ERROR (Code: 8115)~~
-
-~~ERROR (Message: integer out of range)~~
-
-
 EXECUTE BABEL_3802_vu_prepare_t_p11
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p12
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p13
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: zero raised to a negative power is undefined)~~
 
 
-EXECUTE BABEL_3802_vu_prepare_t_p7
+EXECUTE BABEL_3802_vu_prepare_t_p6
 GO
 ~~ERROR (Code: 8115)~~
 
@@ -134,9 +127,9 @@ GO
 
 EXECUTE BABEL_3802_vu_prepare_t_p14
 GO
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 8115)~~
 
-~~ERROR (Message: smallint out of range)~~
+~~ERROR (Message: integer out of range)~~
 
 
 EXECUTE BABEL_3802_vu_prepare_t_p15
@@ -148,12 +141,82 @@ GO
 
 EXECUTE BABEL_3802_vu_prepare_t_p16
 GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p17
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p18
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p19
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p7
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p20
+GO
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: smallint out of range)~~
 
 
-EXECUTE BABEL_3802_vu_prepare_t_p17
+EXECUTE BABEL_3802_vu_prepare_t_p21
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p22
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p23
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p24
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p25
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p26
 GO
 ~~START~~
 int
@@ -162,7 +225,7 @@ int
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
-EXECUTE BABEL_3802_vu_prepare_t_p18
+EXECUTE BABEL_3802_vu_prepare_t_p27
 GO
 ~~START~~
 int
@@ -171,13 +234,22 @@ int
 ~~ERROR (Message: integer out of range)~~
 
 
-EXECUTE BABEL_3802_vu_prepare_t_p19
+EXECUTE BABEL_3802_vu_prepare_t_p28
 GO
 ~~START~~
 int
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+EXECUTE BABEL_3802_vu_prepare_t_p29
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v8
@@ -191,32 +263,32 @@ int
 SELECT * FROM BABEL_3802_vu_prepare_t_v1
 GO
 ~~START~~
-bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
--9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
+bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
+-9223372036854775808#!#9223372036854#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1#!#0#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8969
 ~~END~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v2
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-2147483648#!#2147483647#!#<NULL>#!#8969#!#3532120#!#13909496#!#<NULL>#!#<NULL>#!#0#!#1#!#0#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8969
 ~~END~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v3
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
--32768#!#32767#!#<NULL>#!#899#!#22266#!#3489#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+-32768#!#32767#!#<NULL>#!#899#!#22266#!#3489#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1#!#0#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8969
 ~~END~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v4
 GO
 ~~START~~
-int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-0#!#255#!#<NULL>#!#89#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+0#!#255#!#<NULL>#!#89#!#158#!#251#!#<NULL>#!#<NULL>#!#1000000#!#0#!#1#!#0#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -254,23 +326,23 @@ bigint
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v10
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v11
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v12
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: zero raised to a negative power is undefined)~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v13
@@ -289,9 +361,9 @@ GO
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v15
 GO
-~~ERROR (Code: 220)~~
+~~ERROR (Code: 8115)~~
 
-~~ERROR (Message: smallint out of range)~~
+~~ERROR (Message: integer out of range)~~
 
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v16
@@ -303,12 +375,75 @@ GO
 
 SELECT * FROM BABEL_3802_vu_prepare_t_v17
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v18
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v19
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v20
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v21
+GO
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: smallint out of range)~~
 
 
-SELECT * FROM BABEL_3802_vu_prepare_t_v18
+SELECT * FROM BABEL_3802_vu_prepare_t_v22
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v23
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v24
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v25
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: a negative number raised to a non-integer power yields a complex result)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v26
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v27
 GO
 ~~START~~
 int
@@ -317,7 +452,7 @@ int
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
-SELECT * FROM BABEL_3802_vu_prepare_t_v19
+SELECT * FROM BABEL_3802_vu_prepare_t_v28
 GO
 ~~START~~
 int
@@ -326,11 +461,20 @@ int
 ~~ERROR (Message: integer out of range)~~
 
 
-SELECT * FROM BABEL_3802_vu_prepare_t_v20
+SELECT * FROM BABEL_3802_vu_prepare_t_v29
 GO
 ~~START~~
 int
 ~~ERROR (Code: 220)~~
 
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT * FROM BABEL_3802_vu_prepare_t_v30
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: zero raised to a negative power is undefined)~~
 

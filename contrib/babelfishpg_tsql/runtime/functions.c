@@ -2103,13 +2103,13 @@ bigint_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int64 result;
 	Numeric		arg1_numeric,
-				result_floor,
+				result_trunc,
 				result_numeric;
 
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-	result_floor = DatumGetNumeric(DirectFunctionCall1(numeric_floor, NumericGetDatum(result_numeric)));
-	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_floor)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT64(result);
 }
@@ -2121,13 +2121,13 @@ int_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
-				result_floor,
+				result_trunc,
 				result_numeric;
 
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-	result_floor = DatumGetNumeric(DirectFunctionCall1(numeric_floor, NumericGetDatum(result_numeric)));
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_floor)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT32(result);
 }
@@ -2140,12 +2140,12 @@ smallint_power(PG_FUNCTION_ARGS)
 	int32 result;
 	Numeric		arg1_numeric,
 				result_numeric,
-				result_floor;
+				result_trunc;
 				
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-	result_floor = DatumGetNumeric(DirectFunctionCall1(numeric_floor, NumericGetDatum(result_numeric)));
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_floor)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT32(result);
 }
