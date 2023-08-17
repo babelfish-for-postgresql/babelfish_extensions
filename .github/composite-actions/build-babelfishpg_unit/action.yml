@@ -27,6 +27,6 @@ runs:
         export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
         export cmake=$(which cmake)
         export PATH=~/${{ inputs.install_dir }}/postgres/bin:$PATH
-        cd ../babelfishpg_unit
+        cd contrib/babelfishpg_unit
         make clean && make && make install
       shell: bash
