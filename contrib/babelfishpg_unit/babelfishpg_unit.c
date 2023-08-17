@@ -1,4 +1,19 @@
 #include "babelfishpg_unit.h"
+#include "postgres.h"
+#include "fmgr.h"
+#include "utils/builtins.h"
+#include "utils/elog.h"
+#include <utils/array.h>
+#include "access/htup_details.h"
+#include "access/clog.h"
+#include "catalog/pg_type.h"
+#include "funcapi.h"
+#include "access/rmgr.h"
+#include "access/xlog_internal.h"
+#include "storage/backendid.h"
+#include "storage/smgr.h"
+
+#include "utils/memutils.h"
 
 Datum babelfishpg_unit_run_tests(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(babelfishpg_unit_run_tests);

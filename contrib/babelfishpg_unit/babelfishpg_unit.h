@@ -1,18 +1,4 @@
 #include "postgres.h"
-#include "fmgr.h"
-#include "utils/builtins.h"
-#include "utils/elog.h"
-#include <utils/array.h>
-#include "access/htup_details.h"
-#include "access/clog.h"
-#include "catalog/pg_type.h"
-#include "funcapi.h"
-#include "access/rmgr.h"
-#include "access/xlog_internal.h"
-#include "storage/backendid.h"
-#include "storage/smgr.h"
-
-#include "utils/memutils.h"
 
 #define MAX_TEST_NAME_LENGTH (256)
 #define MAX_TEST_MESSAGE_LENGTH (2048)
