@@ -50,7 +50,7 @@ jobs:
         if: always() && steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/unit_tests.sql
+          sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql
 
       - name: Upload Log
         if: always() && steps.unit.outcome == 'failure'
