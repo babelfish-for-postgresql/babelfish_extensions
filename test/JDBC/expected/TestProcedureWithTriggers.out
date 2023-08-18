@@ -88,6 +88,60 @@ int#!#varchar
 
 EXEC psql_interop_proc2
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.)~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second');"
+PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 0A000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#varchar
+5#!#first
+5#!#third
+6#!#second
+~~END~~
+
+
+CALL psql_interop_proc2();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second')"
+PL/pgSQL function psql_interop_proc2() line 3 at SQL statement
+    Server SQLState: 0A000)~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC tsql_interop_proc
+GO
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
@@ -104,6 +158,8 @@ GO
 
 ~~ROW COUNT: 1~~
 
+~~ROW COUNT: 1~~
+
 ~~ROW COUNT: 5~~
 
 ~~ROW COUNT: 3~~
@@ -112,72 +168,6 @@ GO
 
 ~~ROW COUNT: 2~~
 
-SELECT * from triggerTab2 ORDER BY c1;
-GO
-~~START~~
-int
-2
-~~END~~
-
-
--- psql     currentSchema=master_dbo,public
-CALL tsql_interop_proc();
-GO
-SELECT * from triggerTab1 ORDER BY c1;
-GO
-~~START~~
-int4#!#varchar
-5#!#third
-6#!#second
-9#!#third
-10#!#second
-13#!#first
-13#!#third
-14#!#second
-~~END~~
-
-
-CALL psql_interop_proc2();
-GO
-SELECT * from triggerTab2 ORDER BY c1;
-GO
-~~START~~
-int4
-2
-~~END~~
-
-
--- tsql
-BEGIN TRANSACTION
-GO
-EXEC tsql_interop_proc
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 10~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 11~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
-
 ~~ROW COUNT: 1~~
 
 SELECT * from triggerTab1 ORDER BY c1;
@@ -186,15 +176,9 @@ GO
 int#!#varchar
 5#!#third
 6#!#second
+9#!#first
 9#!#third
 10#!#second
-13#!#third
-14#!#second
-17#!#third
-18#!#second
-21#!#first
-21#!#third
-22#!#second
 ~~END~~
 
 COMMIT
@@ -205,24 +189,19 @@ BEGIN TRANSACTION
 GO
 CALL tsql_interop_proc();
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second');"
+PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 0A000)~~
+
 SELECT * from triggerTab1 ORDER BY c1;
 GO
-~~START~~
-int4#!#varchar
-5#!#third
-6#!#second
-9#!#third
-10#!#second
-13#!#third
-14#!#second
-17#!#third
-18#!#second
-21#!#third
-22#!#second
-25#!#first
-25#!#third
-26#!#second
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: current transaction is aborted, commands ignored until end of transaction block
+    Server SQLState: 25P02)~~
 
 ROLLBACK
 GO
@@ -232,29 +211,9 @@ BEGIN TRANSACTION
 GO
 EXEC psql_interop_proc2
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 12~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 13~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
+~~ERROR (Message: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.)~~
 
 SELECT * from triggerTab2 ORDER BY c1;
 GO
@@ -265,18 +224,29 @@ int
 
 ROLLBACK
 GO
+~~ERROR (Code: 3903)~~
+
+~~ERROR (Message: ROLLBACK can only be used in transaction blocks)~~
+
 
 -- psql     currentSchema=master_dbo,public
 BEGIN TRANSACTION
 GO
 CALL psql_interop_proc2();
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second')"
+PL/pgSQL function psql_interop_proc2() line 3 at SQL statement
+    Server SQLState: 0A000)~~
+
 SELECT * from triggerTab2 ORDER BY c1;
 GO
-~~START~~
-int4
-2
-~~END~~
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: current transaction is aborted, commands ignored until end of transaction block
+    Server SQLState: 25P02)~~
 
 COMMIT
 GO
@@ -288,53 +258,33 @@ SAVE TRANSACTION sp1;
 GO
 EXEC psql_interop_proc2
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 14~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 15~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
+~~ERROR (Message: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.)~~
 
 ROLLBACK TRANSACTION sp1;
 GO
+~~ERROR (Code: 3903)~~
+
+~~ERROR (Message: ROLLBACK TO SAVEPOINT can only be used in transaction blocks)~~
+
 SELECT * from triggerTab1 ORDER BY c1;
 GO
 ~~START~~
 int#!#varchar
 5#!#third
 6#!#second
+9#!#first
 9#!#third
 10#!#second
-13#!#third
-14#!#second
-17#!#third
-18#!#second
-21#!#third
-22#!#second
-25#!#first
-25#!#third
-26#!#second
 ~~END~~
 
 COMMIT
 GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
 
 -- tsql
 BEGIN TRANSACTION
@@ -347,7 +297,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 14~~
+~~ROW COUNT: 6~~
 
 ~~ROW COUNT: 3~~
 
@@ -361,7 +311,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 15~~
+~~ROW COUNT: 7~~
 
 ~~ROW COUNT: 3~~
 
@@ -390,6 +340,13 @@ SAVEPOINT sp1;
 GO
 CALL tsql_interop_proc();
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second');"
+PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 0A000)~~
+
 ROLLBACK TO sp1;
 GO
 SELECT * from triggerTab2 ORDER BY c1;
@@ -420,7 +377,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 14~~
+~~ROW COUNT: 6~~
 
 ~~ROW COUNT: 3~~
 
@@ -437,17 +394,9 @@ int#!#varchar
 4#!#second
 7#!#third
 8#!#second
+11#!#first
 11#!#third
 12#!#second
-15#!#third
-16#!#second
-19#!#third
-20#!#second
-23#!#third
-24#!#second
-27#!#first
-27#!#third
-28#!#second
 ~~END~~
 
 
@@ -487,7 +436,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 15~~
+~~ROW COUNT: 7~~
 
 ~~ROW COUNT: 3~~
 
@@ -501,7 +450,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 15~~
+~~ROW COUNT: 7~~
 
 ~~ROW COUNT: 3~~
 
@@ -519,17 +468,9 @@ int#!#varchar
 6#!#second
 9#!#third
 10#!#second
+13#!#first
 13#!#third
 14#!#second
-17#!#third
-18#!#second
-21#!#third
-22#!#second
-25#!#third
-26#!#second
-29#!#first
-29#!#third
-30#!#second
 ~~END~~
 
 
@@ -571,7 +512,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 16~~
+~~ROW COUNT: 8~~
 
 ~~ROW COUNT: 3~~
 
@@ -585,7 +526,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 17~~
+~~ROW COUNT: 9~~
 
 ~~ROW COUNT: 3~~
 
@@ -604,17 +545,9 @@ int#!#varchar
 8#!#second
 11#!#third
 12#!#second
+15#!#first
 15#!#third
 16#!#second
-19#!#third
-20#!#second
-23#!#third
-24#!#second
-27#!#third
-28#!#second
-31#!#first
-31#!#third
-32#!#second
 ~~END~~
 
 
@@ -693,13 +626,18 @@ GO
 -- psql     currentSchema=master_dbo,public
 CALL psql_interop_proc2();
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second')"
+PL/pgSQL function psql_interop_proc2() line 3 at SQL statement
+    Server SQLState: 0A000)~~
+
 SELECT * FROM triggerTab1 ORDER BY c1;
 GO
 ~~START~~
 int4#!#"sys"."varchar"
-5#!#first
-5#!#third
-6#!#second
+1#!#first
 ~~END~~
 
 
@@ -708,39 +646,23 @@ BEGIN TRANSACTION
 GO
 EXEC psql_interop_proc2;
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 4~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 5~~
-
-~~ROW COUNT: 3~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 2~~
+~~ERROR (Message: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.)~~
 
 SELECT * FROM triggerTab2 ORDER BY c1;
 GO
 ~~START~~
 int
-2
+1
 ~~END~~
 
 COMMIT
 GO
+~~ERROR (Code: 3902)~~
+
+~~ERROR (Message: COMMIT can only be used in transaction blocks)~~
+
 
 -- tsql
 DROP TRIGGER txnTrig1;
@@ -785,10 +707,10 @@ int#!#varchar
 
 ~~START~~
 int
-2
+1
 ~~END~~
 
-~~ROW COUNT: 6~~
+~~ROW COUNT: 2~~
 
 ~~ROW COUNT: 1~~
 
@@ -842,7 +764,7 @@ GO
 
 ~~START~~
 int
-4
+3
 2
 ~~END~~
 
@@ -858,7 +780,7 @@ GO
 int
 2
 4
-6
+5
 ~~END~~
 
 
@@ -867,10 +789,10 @@ CALL tsql_interop_proc();
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: invalid transaction command
-  Where: PL/tsql function txntrig1() line 1 at SQL statement
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(2, 'second');"
 PL/tsql function tsql_interop_proc() line 1 at SQL statement
-    Server SQLState: 2D000)~~
+    Server SQLState: 0A000)~~
 
 SELECT * from triggerTab2 ORDER BY c1;
 GO
@@ -878,7 +800,7 @@ GO
 int4
 2
 4
-6
+5
 ~~END~~
 
 
@@ -915,7 +837,7 @@ int#!#varchar
 
 ~~START~~
 int
-6
+5
 4
 2
 ~~END~~
@@ -935,7 +857,7 @@ int
 2
 4
 6
-8
+7
 ~~END~~
 
 
@@ -944,10 +866,10 @@ CALL tsql_interop_proc();
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: invalid transaction command
-  Where: PL/tsql function txntrig1() line 1 at SQL statement
+~~ERROR (Message: ERROR: T-SQL trigger can not be executed from PostgreSQL function, procedure or trigger.
+  Where: SQL statement "INSERT INTO triggerTab1 VALUES(3, 'third');"
 PL/tsql function tsql_interop_proc() line 1 at SQL statement
-    Server SQLState: 2D000)~~
+    Server SQLState: 0A000)~~
 
 SELECT * from triggerTab1 ORDER BY c1;
 GO
@@ -989,7 +911,7 @@ int#!#varchar
 
 ~~START~~
 int
-8
+7
 6
 4
 2
@@ -1010,7 +932,7 @@ int
 2
 4
 6
-8
+7
 ~~END~~
 
 
@@ -1058,7 +980,7 @@ GO
 
 ~~START~~
 int
-8
+7
 6
 4
 2
@@ -1081,7 +1003,7 @@ int
 4
 6
 8
-10
+9
 ~~END~~
 
 
@@ -1134,7 +1056,7 @@ int#!#varchar
 
 ~~START~~
 int
-10
+9
 8
 6
 4
@@ -1160,7 +1082,7 @@ int
 4
 6
 8
-10
+9
 ~~END~~
 
 
@@ -1213,7 +1135,7 @@ int#!#varchar
 
 ~~START~~
 int
-10
+9
 8
 6
 4
@@ -1241,7 +1163,7 @@ int
 6
 8
 10
-12
+11
 ~~END~~
 
 
@@ -1319,7 +1241,7 @@ datetime
 
 ~~START~~
 int
-14
+13
 12
 10
 8
@@ -1333,7 +1255,7 @@ int
 
 ~~START~~
 int
-12
+11
 10
 8
 6
@@ -1373,7 +1295,7 @@ int
 6
 8
 10
-12
+11
 ~~END~~
 
 DROP TRIGGER txnTrig1;

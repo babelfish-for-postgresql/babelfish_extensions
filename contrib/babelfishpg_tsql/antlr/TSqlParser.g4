@@ -1697,7 +1697,7 @@ merge_not_matched
 // https://msdn.microsoft.com/en-us/library/ms189835.aspx
 delete_statement
     : with_expression?
-      DELETE (TOP LR_BRACKET expression RR_BRACKET PERCENT? | TOP DECIMAL)?
+      DELETE (TOP LR_BRACKET expression RR_BRACKET PERCENT?)?
       FROM? delete_statement_from
       with_table_hints?
       output_clause?

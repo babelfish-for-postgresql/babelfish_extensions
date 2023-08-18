@@ -131,9 +131,6 @@ protected:
 		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override;
 
-		// CFL
-		antlrcpp::Any visitWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WAIT_FOR, "WAITFOR", getLineAndPos(ctx)); return visitChildren(ctx); }
-
 		// Another
 		antlrcpp::Any visitSet_statement(TSqlParser::Set_statementContext *ctx) override;
 		antlrcpp::Any visitCursor_statement(TSqlParser::Cursor_statementContext *ctx) override;
@@ -1487,7 +1484,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_add_data_file_recover_suspect_db",
 	"sp_add_log_file_recover_suspect_db",
 	"sp_addextendedproc",
-	"sp_addextendedproperty",
 	"sp_addmessage",
 	"sp_addtype",
 	"sp_addumpdevice",
@@ -1523,7 +1519,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_detach_db",
 	"sp_dropdevice",
 	"sp_dropextendedproc",
-	"sp_dropextendedproperty",
 	"sp_dropmessage",
 	"sp_droptype",
 	"sp_getbindtoken",
@@ -1557,9 +1552,7 @@ const char *unsupported_sp_procedures[] = {
 	"sp_tableoption",
 	"sp_unbindefault",
 	"sp_unbindrule",
-	"sp_updateextendedproperty",
 	"sp_validname",
-	"sp_who",
 
 	/* Security */
 	"sp_add_trusted_assembly",

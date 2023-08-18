@@ -263,6 +263,33 @@ go
 exec sp_execute_postgresql 'drop extension pg_stat_statements';
 go
 
+-- try extension creation after switching database context
+create database sp_exec_psql_db1;
+go
+
+use sp_exec_psql_db1;
+go
+
+exec sp_execute_postgresql 'create extension pg_stat_statements;';
+go
+
+select nsp.nspname from pg_extension ext join pg_namespace nsp on ext.extnamespace=nsp.oid where ext.extname = 'pg_stat_statements';
+go
+~~START~~
+varchar
+public
+~~END~~
+
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements;';
+go
+
+use master;
+go
+
+drop database sp_exec_psql_db1;
+go
+
 -- cascade not supported yet, it will throw error
 exec sp_execute_postgresql 'create extension pg_stat_statements with cascade';
 go

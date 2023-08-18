@@ -1,0 +1,41 @@
+-- tsql
+-- Executing sp_enum_oledb_providers without tds_fdw extension (should not return anything)
+EXEC sp_enum_oledb_providers
+GO
+
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login linked_server_login with password = 'password'
+GO
+
+-- tsql    user=linked_server_login    password=password
+-- Executing sp_enum_oledb_providers stored procedure without system admin privilege (should throw error)
+EXEC sp_enum_oledb_providers
+GO
+~~ERROR (Code: 15003)~~
+
+~~ERROR (Message: Only members of the sysadmin role can execute this stored procedure.)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'linked_server_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN linked_server_login
+GO

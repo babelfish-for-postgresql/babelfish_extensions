@@ -1781,6 +1781,7 @@ extern int	fetch_status_var;
 extern int	pltsql_proc_return_code;
 
 extern char *pltsql_version;
+extern Oid tsql_select_into_seq_oid;
 
 typedef struct PLtsqlErrorData
 {

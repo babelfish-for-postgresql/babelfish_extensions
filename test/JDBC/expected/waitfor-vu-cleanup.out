@@ -1,0 +1,23 @@
+DROP TABLE Timecheck
+GO
+
+DROP TABLE Timecheck1
+GO
+
+DROP TABLE Timecheck2
+GO
+
+DROP TABLE Timecheck3
+GO
+
+DROP TABLE Timecheck4
+GO
+
+DROP TABLE Timecheck5
+GO
+
+DROP PROCEDURE TimeDelay
+GO
+
+DROP PROCEDURE Wait2seconds
+GO

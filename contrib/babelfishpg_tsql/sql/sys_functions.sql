@@ -779,6 +779,53 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER
+                                                               )
+RETURNS sys.smalldatetime
+AS
+$BODY$
+DECLARE
+    v_ressmalldatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    p_seconds INTEGER;
+BEGIN
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check if arguments are out of range
+    IF ((p_year NOT BETWEEN 1900 AND 2079) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    p_seconds := 0;
+    v_ressmalldatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    p_seconds);
+
+    v_string := v_ressmalldatetime::pg_catalog.text;
+    RETURN CAST(v_string AS sys.SMALLDATETIME);
+EXCEPTION   
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type smalldatetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
 RETURNS TEXT AS
@@ -1740,12 +1787,6 @@ $BODY$
 STRICT
 LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
-$BODY$
-SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
-$BODY$
-LANGUAGE SQL STABLE PARALLEL SAFE;
-
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)
 (
@@ -2068,61 +2109,6 @@ LANGUAGE C PARALLEL SAFE IMMUTABLE;
 CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
 LANGUAGE C PARALLEL SAFE IMMUTABLE;
-
--- BABEL-1783: (partial) support for sys.fn_listextendedproperty
-create table if not exists sys.extended_properties (
-class sys.tinyint,
-class_desc sys.nvarchar(60),
-major_id int,
-minor_id int,
-name sys.sysname,
-value sys.sql_variant
-);
-GRANT SELECT ON sys.extended_properties TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
-property_name varchar(128),
-level0_object_type varchar(128),
-level0_object_name varchar(128),
-level1_object_type varchar(128),
-level1_object_name varchar(128),
-level2_object_type varchar(128),
-level2_object_name varchar(128)
-)
-returns table (
-objtype	sys.sysname,
-objname	sys.sysname,
-name	sys.sysname,
-value	sys.sql_variant
-) 
-as $$
-begin
--- currently only support COLUMN property
-IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
-    ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
-	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
-	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
-	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
-		RETURN query 
-		select CAST('COLUMN' AS sys.sysname) as objtype,
-		       CAST(t3.column_name AS sys.sysname) as objname,
-		       t1.name as name,
-		       t1.value as value
-		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
-		where t1.major_id = t2.oid and 
-			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
-		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
-			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
-	END IF;
-END IF;
-RETURN;
-end;
-$$
-LANGUAGE plpgsql
-STABLE;
-GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
-	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
-) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
@@ -3284,122 +3270,15 @@ begin
    end if;
 end
 $body$
-LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
     property SYS.VARCHAR
     )
-RETURNS INT
-AS $$
-BEGIN
-
-    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
-    THEN
-        RETURN NULL;
-    END IF;
-
-    property := RTRIM(LOWER(COALESCE(property, '')));
-
-    IF property = 'ownerid' -- OwnerId
-    THEN
-        RETURN (
-                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
-                FROM sys.all_objects t1
-                INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
-                WHERE t1.object_id = id);
-
-    ELSEIF property = 'isdefaultcnst' -- IsDefaultCnst
-    THEN
-        RETURN (SELECT count(distinct dc.object_id) FROM sys.default_constraints dc WHERE dc.object_id = id);
-
-    ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
-    THEN
-        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
-
-    ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
-    THEN
-        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
-            RETURN NULL;
-        END IF;
-        RETURN 0;
-
-    ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
-    THEN
-        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
-            RETURN NULL;
-        END IF;
-        RETURN 0;
-
-    ELSEIF property = 'ismsshipped' -- IsMSShipped
-    THEN
-        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
-
-    ELSEIF property = 'isschemabound' -- IsSchemaBound
-    THEN
-        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
-
-    ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
-    THEN
-        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
-
-    ELSEIF property = 'isdeterministic' -- IsDeterministic
-    THEN
-        RETURN 0;
-    
-    ELSEIF property = 'isprocedure' -- IsProcedure
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
-
-    ELSEIF property = 'istable' -- IsTable
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));
-
-    ELSEIF property = 'isview' -- IsView
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
-    
-    ELSEIF property = 'isusertable' -- IsUserTable
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
-    
-    ELSEIF property = 'istablefunction' -- IsTableFunction
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
-    
-    ELSEIF property = 'isinlinefunction' -- IsInlineFunction
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
-    
-    ELSEIF property = 'isscalarfunction' -- IsScalarFunction
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
-
-    ELSEIF property = 'isprimarykey' -- IsPrimaryKey
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
-    
-    ELSEIF property = 'isindexed' -- IsIndexed
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
-
-    ELSEIF property = 'isdefault' -- IsDefault
-    THEN
-        RETURN 0;
-
-    ELSEIF property = 'isrule' -- IsRule
-    THEN
-        RETURN 0;
-    
-    ELSEIF property = 'istrigger' -- IsTrigger
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
-    END IF;
-
-    RETURN NULL;
-END;
-$$
-LANGUAGE plpgsql STABLE;
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
@@ -3445,6 +3324,18 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL S
 CREATE OR REPLACE FUNCTION sys.host_id()
 RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
+RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
+RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
+RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
@@ -3618,3 +3509,21 @@ CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
 LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty
+(
+    IN "@name" sys.sysname DEFAULT NULL,
+    IN "@level0type" VARCHAR(128) DEFAULT NULL,
+    IN "@level0name" sys.sysname DEFAULT NULL,
+    IN "@level1type" VARCHAR(128) DEFAULT NULL,
+    IN "@level1name" sys.sysname DEFAULT NULL,
+    IN "@level2type" VARCHAR(128) DEFAULT NULL,
+    IN "@level2name" sys.sysname DEFAULT NULL,
+    OUT objtype sys.sysname,
+    OUT objname sys.sysname,
+    OUT name sys.sysname,
+    OUT value sys.sql_variant
+)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;

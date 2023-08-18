@@ -166,6 +166,7 @@ pltsql_compile(FunctionCallInfo fcinfo, bool forValidator)
 	PLtsql_func_hashkey hashkey;
 	bool		function_valid = false;
 	bool		hashkey_valid = false;
+	bool		function_in_use = false;
 
 	/*
 	 * Lookup the pg_proc tuple by Oid; we'll need it in any case
@@ -204,7 +205,12 @@ recheck:
 			/*
 			 * Nope, so remove it from hashtable and try to drop associated
 			 * storage (if not done already).
+			 * Check whether function is in use or not before deleting it, if
+			 * function is not in use - its memory context will be freed.
+			 * PLtsql_function struct itself could have been allocated in the same
+			 * context, so we avoid accessing struct fields after the delete call.
 			 */
+			function_in_use = function->use_count != 0;
 			delete_function(function);
 
 			/*
@@ -221,7 +227,7 @@ recheck:
 			 * a replacement has already been made, so go back and recheck the
 			 * hashtable.
 			 */
-			if (function->use_count != 0)
+			if (function_in_use)
 			{
 				function = NULL;
 				if (!hashkey_valid)
