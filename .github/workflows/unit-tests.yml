@@ -50,7 +50,13 @@ jobs:
         if: always() && steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
+          ulimit -c unlimited 
           sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -c "create extension babelfishpg_unit; select * from babelfishpg_unit_run_tests();"
+          sudo chmod -R +rwx /var/crash/*
+      - uses: actions/upload-artifact@master # capture all crashes as build artifacts
+        with:
+          name: crashes
+          path: /var/crash
 
       - name: Upload Log
         if: always() && steps.unit.outcome == 'failure'
