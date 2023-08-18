@@ -312,30 +312,30 @@ DROP TYPE typb
 GO
 
 -------------------------------------------------------------------------------
--- Cursor not explicitly closed 
+-- Cursor not explicitly closed
 -------------------------------------------------------------------------------
 
-DECLARE @STATION_INTS_TABLE TABLE (STATION_INT INT)     
-DECLARE @v INT 
+DECLARE @STATION_INTS_TABLE TABLE (STATION_INT INT)
+DECLARE @v INT
 
-DECLARE CUR_NETWORK CURSOR LOCAL FOR SELECT STATION_INT FROM @STATION_INTS_TABLE    
-OPEN CUR_NETWORK             
-FETCH NEXT  FROM CUR_NETWORK INTO @v      
+DECLARE CUR_NETWORK CURSOR LOCAL FOR SELECT STATION_INT FROM @STATION_INTS_TABLE
+OPEN CUR_NETWORK
+FETCH NEXT  FROM CUR_NETWORK INTO @v
 GO
 
 select 123
 GO
 
-CREATE FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]  () 
-RETURNS NVARCHAR(MAX) AS 
+CREATE FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]  ()
+RETURNS NVARCHAR(MAX) AS
 BEGIN
-    DECLARE @TSQL NVARCHAR(MAX) 
-    DECLARE @STATION_INTS_TABLE TABLE (STATION_INT INT)     
+    DECLARE @TSQL NVARCHAR(MAX)
+    DECLARE @STATION_INTS_TABLE TABLE (STATION_INT INT)
     DECLARE @STATION_INT INT     SET @TSQL = ''
-    DECLARE CUR_NETWORK CURSOR LOCAL FOR 
-        SELECT STATION_INT FROM @STATION_INTS_TABLE    OPEN CUR_NETWORK                
+    DECLARE CUR_NETWORK CURSOR LOCAL FOR
+        SELECT STATION_INT FROM @STATION_INTS_TABLE    OPEN CUR_NETWORK
     FETCH NEXT FROM CUR_NETWORK INTO @STATION_INT
-    
+
     RETURN @TSQL
 END
 GO
@@ -368,7 +368,7 @@ GO
 SELECT dbo.WOSQL_BuildRevenueDetailOLUQuery()
 GO
 
-DROP FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery] 
+DROP FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]
 GO
 
 CREATE FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]  ()
@@ -397,3 +397,34 @@ GO
 DROP FUNCTION [dbo].[WOSQL_BuildRevenueDetailOLUQuery]
 GO
 
+-------------------------------------------------------------------------------
+-- BABEL-4267: Error should not cause crash
+-------------------------------------------------------------------------------
+
+CREATE PROCEDURE usp_PopulateDiscount
+AS
+    DECLARE @Lookup TABLE (StartDate DATETIME NOT NULL)
+    INSERT INTO @Lookup SELECT GETDATE()
+    BEGIN TRANSACTION
+    DELETE trgt FROM Discount trgt           -- Discount does not exist
+    COMMIT
+go
+
+EXECUTE usp_PopulateDiscount
+go
+
+CREATE PROCEDURE test
+AS
+BEGIN TRY
+    DECLARE @tv1 TABLE(c1 INT PRIMARY KEY, b INT IDENTITY, c CHAR(15) DEFAULT 'Whoops!')
+    SELECT 1/0
+END TRY
+BEGIN CATCH
+    BEGIN TRANSACTION
+    INSERT INTO @tv1 VALUES(1, 3, 'Three')          -- invalid syntax, should do a clean shutdown
+    COMMIT
+END CATCH;
+GO
+
+exec test
+go

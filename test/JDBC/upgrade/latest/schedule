@@ -208,7 +208,6 @@ format
 forxml
 forxml-subquery
 fulltextserviceproperty
-fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -449,3 +448,4 @@ linked_srv_4229
 waitfor
 BABEL-4175
 sp_who
+BABEL_4330

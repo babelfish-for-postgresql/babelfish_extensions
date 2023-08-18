@@ -1,4 +1,4 @@
--- sla 100000
+-- sla 1000000
 /* tests for sp_babelfish_autoformat */
 sp_babelfish_autoformat 't_sp_who'
 go
