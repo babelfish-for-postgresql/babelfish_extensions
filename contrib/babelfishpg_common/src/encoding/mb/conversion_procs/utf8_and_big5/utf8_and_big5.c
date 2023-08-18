@@ -7,7 +7,7 @@
 #include "src/encoding/encoding.h"
 
 /* ----------
- * utf8_to_big5:
+ * tsql_utf8_to_big5:
  *		src_encoding,	-- source encoding id
  *		dest_encoding,	-- destination encoding id
  *		src,			-- source string (null terminated C string)
@@ -17,7 +17,7 @@
  * ----------
  */
 int
-utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlUtfToLocal(src, len, dest,
 						  &big5_from_unicode_tree,
@@ -27,7 +27,7 @@ utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsi
 }
 
 int
-big5_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_big5_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlLocalToUtf(src, len, dest,
 						  &big5_to_unicode_tree,

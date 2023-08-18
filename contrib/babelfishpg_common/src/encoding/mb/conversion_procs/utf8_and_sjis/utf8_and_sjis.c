@@ -7,7 +7,7 @@
 #include "src/encoding/encoding.h"
 
 /* ----------
- * utf8_to_sjis:
+ * tsql_utf8_to_sjis:
  *		src_encoding,	-- source encoding id
  *		dest_encoding,	-- destination encoding id
  *		src,			-- source string (null terminated C string)
@@ -17,7 +17,7 @@
  * ----------
  */
 int
-utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlUtfToLocal(src, len, dest,
 						  &sjis_from_unicode_tree,
@@ -27,7 +27,7 @@ utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsi
 }
 
 int
-sjis_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_sjis_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlLocalToUtf(src, len, dest,
 						  &sjis_to_unicode_tree,
