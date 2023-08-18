@@ -48,7 +48,7 @@ static const pg_conv_map maps[] = {
 };
 
 /* ----------
- * utf8_to_win:
+ * tsql_utf8_to_win:
  *		src_encoding,	-- source encoding id
  *		dest_encoding,	-- destination encoding id
  *		src,			-- source string (null terminated C string)
@@ -58,7 +58,7 @@ static const pg_conv_map maps[] = {
  * ----------
  */
 int
-utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	int			i;
 
@@ -83,7 +83,7 @@ utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsig
 }
 
 int
-win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	int			i;
 
