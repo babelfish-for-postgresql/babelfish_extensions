@@ -107,7 +107,7 @@ int
 
 set transaction isolation level repeatable read;
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read to on to enable snapshot isolation instead (33557097) (SQLExecDirectW))~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_and_serialization to on to enable snapshot isolation instead (33557097) (SQLExecDirectW))~~
 
 #show transaction_isolation;
 #show default_transaction_isolation;
@@ -372,7 +372,7 @@ int
 # begin transaction name -> save transaction name -> rollback tran name, Rollback whole transaction
 set transaction isolation level serializable;
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read to on to enable snapshot isolation instead (33557097) (SQLExecDirectW))~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_and_serialization to on to enable snapshot isolation instead (33557097) (SQLExecDirectW))~~
 
 #show transaction_isolation;
 #show default_transaction_isolation;

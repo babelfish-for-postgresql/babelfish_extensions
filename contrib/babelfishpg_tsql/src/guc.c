@@ -67,7 +67,7 @@ char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
-bool		pltsql_enable_snapshot_isolation_for_reapeatable_read = false;
+bool		pltsql_enable_repeatable_read_and_serialization = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -1175,10 +1175,10 @@ define_custom_variables(void)
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
-	DefineCustomBoolVariable("babelfishpg_tsql.enable_snapshot_isolation_for_reapeatable_read",
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_repeatable_read_and_serialization",
 							 gettext_noop("Enables isolation snapshot when asked for isolation level reapeatable read"),
 							 NULL,
-							 &pltsql_enable_snapshot_isolation_for_reapeatable_read,
+							 &pltsql_enable_repeatable_read_and_serialization,
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE ,
