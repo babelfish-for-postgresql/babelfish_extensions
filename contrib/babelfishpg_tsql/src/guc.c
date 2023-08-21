@@ -1176,7 +1176,7 @@ define_custom_variables(void)
 							 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_repeatable_read_and_serialization",
-							 gettext_noop("Enables isolation snapshot when asked for isolation level reapeatable read"),
+							 gettext_noop("Enables setting isolation level reapeatable read and serializable"),
 							 NULL,
 							 &pltsql_enable_repeatable_read_and_serialization,
 							 false,
