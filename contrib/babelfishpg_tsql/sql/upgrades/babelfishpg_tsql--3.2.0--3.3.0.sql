@@ -918,6 +918,19 @@ DECLARE
     sign_flag INTEGER;
     v_string datetimeoffset;
 BEGIN
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END; 
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+
     IF tz_offset LIKE '+__:__' THEN
         str_hr := SUBSTRING(tz_offset,2,2);
         str_mi := SUBSTRING(tz_offset,5,2);
@@ -930,12 +943,7 @@ BEGIN
         RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END IF;
 
-    BEGIN
-    input_expr:= cast(input_expr AS datetimeoffset);
-    exception
-        WHEN others THEN
-            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
-    END; 
+    
 
     BEGIN
     v_hr := str_hr::INTEGER;
@@ -1008,11 +1016,23 @@ DECLARE
     sign_flag INTEGER;
     v_string datetimeoffset;
     v_sign PG_CATALOG.TEXT;
+    tz_offset_smallint smallint;
 BEGIN
 
-    IF pg_typeof(tz_offset) <> 'integer'::regtype THEN
+    IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype,'varbinary'::regtype ) THEN
         RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END IF;
+
+    BEGIN
+    IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+        tz_offset := FLOOR(tz_offset);
+    END IF;
+    tz_offset_smallint := cast(tz_offset AS smallint);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+    END; 
 
     BEGIN
     input_expr:= cast(input_expr AS datetimeoffset);
@@ -1021,12 +1041,15 @@ BEGIN
             RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
     END; 
 
-    if tz_offset > 840 or tz_offset < -840 THEN
+
+    if tz_offset_smallint > 840 or tz_offset_smallint < -840 THEN
        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END IF; 
 
-    v_hr := tz_offset/60;
-    v_mi := tz_offset%60;
+    v_hr := tz_offset_smallint/60;
+    v_mi := tz_offset_smallint%60;
+    
+    RAISE LOG 'raise log     - time: %', tz_offset_smallint ;
 
     p_year := sys.datepart('year',input_expr);
     p_month := sys.datepart('month',input_expr);
@@ -1038,7 +1061,7 @@ BEGIN
 
     v_sign := (
         SELECT CASE
-            WHEN (tz_offset) >= 0
+            WHEN (tz_offset_smallint) >= 0
                 THEN '+'    
             ELSE '-'
         END
@@ -1047,7 +1070,7 @@ BEGIN
     p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
     p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
 
-    f_tzoffset := p_tzoffset + tz_offset;
+    f_tzoffset := p_tzoffset + tz_offset_smallint;
     v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
     v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
 

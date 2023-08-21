@@ -136,3 +136,49 @@ GO
 
 Select switchoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
 GO
+
+Select switchoffset('NULL','NULL')
+GO
+
+Select switchoffset('NULL',NULL)
+GO
+
+Select switchoffset(NULL,NULL)
+GO
+
+Select switchoffset(NULL,'NULL')
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), 0x23)
+GO
+
+DECLARE @test_offset text;
+SET @test_offset = '-13:00';
+Select switchoffset('2345-12-31 23:59:59.59',@test_offset);
+GO
+
+DECLARE @test_offset1 float ;
+SET @test_offset1 = 23.567;
+Select switchoffset('2345-12-31 23:59:59.59',@test_offset1);
+GO
+
+DECLARE @test_offset1 decimal ;
+SET @test_offset1 = 23.567;
+Select switchoffset('2345-12-31 23:59:59.59',@test_offset1);
+GO
+
+Select switchoffset(CAST('1900-05-0x12 13:59:29.998 -8:00' AS datetime2(2)), 235.67)
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), 23647585)
+GO
+
+Select switchoffset('2345-12-31 23:59:59.59',23.567);
+GO
+
+Select switchoffset('2345-12-31 23:59:59.59',23.467);
+GO
+
+Select switchoffset('2345-12-31 23:59:59.59',cast(123 as bit));
+GO
+
