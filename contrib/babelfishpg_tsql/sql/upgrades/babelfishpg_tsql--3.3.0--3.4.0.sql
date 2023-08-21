@@ -32,6 +32,11 @@ $$
 LANGUAGE plpgsql;
 
 -- Please add your SQLs here
+/*
+ * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
+ * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
+ * final behaviour.
+ */
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
