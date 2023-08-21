@@ -1,0 +1,56 @@
+DROP VIEW DATE_BUCKET_vu_prepare_v1;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v2;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v3;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v4;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v5;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v6;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v7;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v8;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v9;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v10;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v11;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v12;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v13;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v14;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v15;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v16;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v17;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v18;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v19;
+GO

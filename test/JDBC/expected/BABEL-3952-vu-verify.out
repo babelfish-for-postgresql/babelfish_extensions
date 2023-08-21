@@ -1,0 +1,144 @@
+SELECT * FROM DATE_BUCKET_vu_prepare_v1
+GO
+~~START~~
+date#!#date#!#date#!#date#!#date
+2000-01-01#!#2000-01-01#!#2000-01-01#!#2000-01-01#!#1999-12-20
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v2
+GO
+~~START~~
+date#!#date#!#date#!#date#!#date
+1999-09-12#!#1999-09-12#!#1999-11-12#!#2000-01-01#!#1999-12-28
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v3
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#1999-12-20 00:00:00.0#!#2000-01-01 22:00:00.0#!#2000-01-01 23:30:00.0#!#2000-01-01 23:30:04.0#!#2000-01-01 23:30:05.523
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v4
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+1998-09-12 23:45:10.433#!#1999-09-12 23:45:10.433#!#1999-11-12 23:45:10.433#!#1999-12-30 23:45:10.433#!#1999-12-20 23:45:10.433#!#2000-01-01 21:45:10.433#!#2000-01-01 23:29:10.433#!#2000-01-01 23:30:04.433#!#2000-01-01 23:30:05.523
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v5
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+2000-01-01 00:00:00.0000000#!#2000-01-01 00:00:00.0000000#!#2000-01-01 00:00:00.0000000#!#2000-01-01 00:00:00.0000000#!#1999-12-20 00:00:00.0000000#!#2000-01-01 22:00:00.0000000#!#2000-01-01 23:30:00.0000000#!#2000-01-01 23:30:04.0000000#!#2000-01-01 23:30:05.5220000
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v6
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+1999-08-15 22:35:05.4224560#!#1999-08-15 22:35:05.4224560#!#1999-12-15 22:35:05.4224560#!#2000-01-01 22:35:05.4224560#!#1999-12-26 22:35:05.4224560#!#2000-01-01 22:35:05.4224560#!#2000-01-01 23:29:05.4224560#!#2000-01-01 23:30:05.4224560#!#2000-01-01 23:30:05.5224560
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v7
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+2000-01-01 00:00:00.0000000 +00:00#!#2000-01-01 00:00:00.0000000 +00:00#!#2000-01-01 00:00:00.0000000 +00:00#!#2000-01-01 00:00:00.0000000 +00:00#!#1999-12-20 00:00:00.0000000 +00:00#!#2000-01-01 12:00:00.0000000 +00:00#!#2000-01-01 12:24:00.0000000 +00:00#!#2000-01-01 12:25:32.0000000 +00:00#!#2000-01-01 12:25:32.0000000 +00:00
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v8
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+1998-03-22 13:20:31.0000000 +00:00#!#1999-09-22 13:20:31.0000000 +00:00#!#1999-11-22 13:20:31.0000000 +00:00#!#1999-12-31 13:20:31.0000000 +00:00#!#1999-12-27 13:20:31.0000000 +00:00#!#2000-01-01 11:20:31.0000000 +00:00#!#2000-01-01 12:24:31.0000000 +00:00#!#2000-01-01 12:25:31.0000000 +00:00#!#2000-01-01 12:25:32.0000000 +00:00
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v9
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#1999-12-20 00:00:00.0#!#2000-01-01 22:00:00.0#!#2000-01-01 23:58:00.0#!#2000-01-01 23:59:00.0#!#2000-01-01 23:59:00.0
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v10
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+1999-02-11 21:56:00.0#!#1999-08-11 21:56:00.0#!#1999-12-11 21:56:00.0#!#2000-01-01 21:56:00.0#!#1999-12-30 21:56:00.0#!#2000-01-01 23:56:00.0#!#2000-01-01 23:58:00.0#!#2000-01-01 23:59:00.0#!#2000-01-01 23:59:00.0
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v11
+GO
+~~START~~
+time#!#time#!#time#!#time
+22:00:00.0000000#!#23:58:00.0000000#!#23:58:58.0000000#!#23:58:59.0000000
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v12
+GO
+~~START~~
+time#!#time#!#time#!#time
+22:23:56.8463630#!#23:57:56.8463630#!#23:58:58.8463630#!#23:58:59.5463630
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v13
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function date_bucket for data type time.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v14
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart hour is not supported by date function date_bucket for data type date.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v15
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date_bucket function for the datatype.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v16
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid bucket width value passed to date_bucket function. Only positive values are allowed for number argument.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v17
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v18
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "date_bucket_vu_prepare_v18" does not exist)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v19
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "date_bucket_vu_prepare_v19" does not exist)~~
+

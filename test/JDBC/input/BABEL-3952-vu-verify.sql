@@ -1,0 +1,56 @@
+SELECT * FROM DATE_BUCKET_vu_prepare_v1
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v2
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v3
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v4
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v5
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v6
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v7
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v8
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v9
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v10
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v11
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v12
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v13
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v14
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v15
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v16
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v17
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v18
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v19
+GO
