@@ -40,6 +40,9 @@
 '15.3':
   engine_branch: BABEL_3_2_STABLE__PG_15_3
   extension_branch: BABEL_3_2_STABLE
+'15.4':
+  engine_branch: BABEL_3_3_STABLE__PG_15_4
+  extension_branch: BABEL_3_3_STABLE
 'source.latest':
   engine_branch: latest
   extension_branch: latest
