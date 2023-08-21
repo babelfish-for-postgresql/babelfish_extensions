@@ -32,3 +32,4 @@ runs:
         cd ~/work/babelfish_extensions/babelfish_extensions/
         sudo ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
         sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
+      shell: bash
