@@ -53,7 +53,7 @@ jobs:
           ulimit -c unlimited 
           sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -c "create extension babelfishpg_unit; select * from babelfishpg_unit_run_tests();"
           sudo chmod -R +rwx /cores/*
-      - uses: actions/upload-artifact@master # capture all crashes as build artifacts
+        uses: actions/upload-artifact@v2
         with:
           name: crashes
           path: /cores
