@@ -42,8 +42,6 @@ extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
-extern select_common_type_hook_type select_common_type_hook;
-extern select_common_typmod_hook_type select_common_typmod_hook;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
@@ -1086,112 +1084,6 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 	return NULL;
 }
 
-static bool
-is_tsql_char_type(Oid type)
-{
-	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type);
-}
-
-static bool
-is_tsql_varchar_type(Oid type)
-{
-	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type);
-}
-
-/* 
- * Checks if the expression represents NULL or a string literal
- */
-static bool
-expr_is_null_or_unknown(Node *expr)
-{
-	Oid type = exprType(expr);
-	return IsA(expr, Const) && (
-		type == UNKNOWNOID || type == TEXTOID || ((Const*)expr)->constisnull);
-}
-
-/* 
- * When we must merge types together (i.e. UNION), if all types are
- * null, literals, or [n][var]char types, then return the correct
- * output type based on TSQL's precedence rules
- * 
- * If InvalidOid is returned, engine will handle finding a common type
- * as usual
- */
-static Oid
-tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
-				  				Node **which_expr)
-{
-	Node		*result_expr = (Node*) linitial(exprs);
-	Oid			result_type = exprType(result_expr);
-	ListCell	*lc = list_second_cell(exprs);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return InvalidOid;
-	if ((!expr_is_null_or_unknown(result_expr) && 
-			!is_tsql_char_type(result_type)) && !is_tsql_varchar_type(result_type))
-		return InvalidOid;
-
-	Assert(exprs != NIL);
-	for_each_cell(lc, exprs, lc)
-	{
-		Node	*expr = (Node *) lfirst(lc);
-		Oid		type = exprType(expr);
-
-		if (expr_is_null_or_unknown(expr))
-			continue;
-		else if (!is_tsql_char_type(type) && !is_tsql_varchar_type(type))
-			return InvalidOid;
-		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null_or_unknown(result_expr))
-		{
-			result_expr = expr;
-			result_type = type;
-		}
-	}
-
-	if (which_expr)
-		*which_expr = result_expr;
-	return result_type == UNKNOWNOID ? InvalidOid : result_type;
-}
-
-/* 
- * When we must merge types together (i.e. UNION), if the target type
- * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
- * equal to that of the largest expression
- * 
- * If -1 is returned, engine will handle finding a common typmod as usual
- */
-static int32
-tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
-{
-	int32		max_typmods;
-	ListCell	*lc;
-	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return -1;
-
-	if (!is_tsql_char_type(common_type) &&
-			 !utilptr->is_tsql_binary_datatype(common_type) &&
-			 !utilptr->is_tsql_sys_binary_datatype(common_type))
-		return -1;
-
-	/* If resulting type is a length, need to be max of length types */
-	foreach(lc, exprs)
-	{
-		Node *expr = (Node*) lfirst(lc);
-		if (lc == list_head(exprs))
-			max_typmods = exprTypmod(expr);
-		else
-			max_typmods = Max(max_typmods, exprTypmod(expr));
-	}
-
-	return max_typmods;
-}
-
 Datum
 init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 {
@@ -1208,8 +1100,6 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
-	select_common_type_hook = tsql_select_common_type_hook;
-	select_common_typmod_hook = tsql_select_common_typmod_hook;
 
 	if (!OidIsValid(sys_nspoid))
 		PG_RETURN_INT32(0);

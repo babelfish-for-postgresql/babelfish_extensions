@@ -22,7 +22,7 @@ GO
 SELECT col1, IDENTITY(int, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-SELECT id_num, col1 FROM babel_539NewTable1 ORDER BY id_num;
+SELECT id_num, col1 FROM #babel_539NewTable1 ORDER BY id_num;
 GO
 
 DROP TABLE IF EXISTS #babel_539NewTable1;

@@ -82,7 +82,6 @@ BABEL-3360
 BABEL-3369
 BABEL-3370
 BABEL-3380
-BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
@@ -209,7 +208,6 @@ format
 forxml
 forxml-subquery
 fulltextserviceproperty
-fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
