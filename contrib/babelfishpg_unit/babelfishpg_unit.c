@@ -206,7 +206,7 @@ calc_next_test(StateInfo *state, int position)
 /*
  * Some global declarations for creating a logfile after each test run
  */
-char filename[200];
+char filename[200] = "";
 FILE *file;
 struct tm *timenow;
 time_t current;
