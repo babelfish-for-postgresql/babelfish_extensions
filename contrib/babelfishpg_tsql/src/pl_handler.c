@@ -135,6 +135,7 @@ extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *
 static void check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column);
 static bool is_identity_constraint(ColumnDef *column);
 static bool has_unique_nullable_constraint(ColumnDef *column);
+static bool has_nullable_constraint(ColumnDef *column);
 static bool is_nullable_constraint(Constraint *cst, Oid rel_oid);
 static bool is_nullable_index(IndexStmt *stmt);
 extern PLtsql_function *find_cached_batch(int handle);
@@ -876,8 +877,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 								{
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											 errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-													"or add a NOT NULL constraint")));
+											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+												"or add a NOT NULL constraint")));
 								}
 								if (is_rowversion_column(pstate, (ColumnDef *) element))
 								{
@@ -893,15 +894,45 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 									def->constraints = lappend(def->constraints, get_rowversion_default_constraint(def->typeName));
 								}
 								break;
-							case T_Constraint:
+							case T_Constraint: 
+							{
+								Constraint *c = (Constraint *) element;
+								ListCell   *lc;
+								
+								c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
+								
+								if (escape_hatch_unique_constraint != EH_IGNORE &&
+									c->contype == CONSTR_UNIQUE)
 								{
-									Constraint *c = (Constraint *) element;
+									foreach(lc, (List *) c->keys)
+									{
+										char	*colname = strVal(lfirst(lc));
+										int		 colname_len = strlen(colname);
 
-									c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
+										foreach(elements, stmt->tableElts)
+										{
+											Node	*element = lfirst(elements);
+											if (nodeTag(element) == T_ColumnDef)
+											{
+												ColumnDef* def = (ColumnDef *) element;
 
-									if (rowversion_column_name)
-										validate_rowversion_table_constraint(c, rowversion_column_name);
+												if (strlen(def->colname) == colname_len && 
+													strncmp(def->colname, colname, colname_len) == 0 && 
+													has_nullable_constraint(def))
+												{
+													ereport(ERROR,
+														(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+														errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+															"or add a NOT NULL constraint")));
+												}
+											}	
+										}
+									}		
 								}
+								
+								if (rowversion_column_name)
+									validate_rowversion_table_constraint(c, rowversion_column_name);
+							}
 								break;
 							default:
 								break;
@@ -940,7 +971,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 						/* Check for identity attribute */
 						if (attr->attidentity)
 							seen_identity = true;
-
+						
 						/* Check for rowversion attribute */
 						if ((*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (attr->atttypid))
 						{
@@ -968,6 +999,14 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
 								}
+								if (escape_hatch_unique_constraint != EH_IGNORE &&
+									has_unique_nullable_constraint(castNode(ColumnDef, cmd->def)))
+								{
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+												"or add a NOT NULL constraint")));
+								}
 								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 								{
 									ColumnDef  *def = castNode(ColumnDef, cmd->def);
@@ -982,100 +1021,100 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 									def->constraints = lappend(def->constraints, get_rowversion_default_constraint(def->typeName));
 								}
 								break;
-							case AT_AddConstraint:
+							case AT_AddConstraint: 
+							{
+								Constraint *c = castNode(Constraint, cmd->def);
+
+								c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
+
+								if (escape_hatch_unique_constraint != EH_IGNORE &&
+									c->contype == CONSTR_UNIQUE &&
+									is_nullable_constraint(c, relid))
 								{
-									Constraint *c = castNode(Constraint, cmd->def);
-
-									c->conname = construct_unique_index_name(c->conname, atstmt->relation->relname);
-
-									if (escape_hatch_unique_constraint != EH_IGNORE &&
-										c->contype == CONSTR_UNIQUE &&
-										is_nullable_constraint(c, relid))
-									{
-										ereport(ERROR,
-												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-														"or add a NOT NULL constraint")));
-									}
-
-									if (rowversion_column_name)
-										validate_rowversion_table_constraint(c, rowversion_column_name);
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+												"or add a NOT NULL constraint")));
 								}
+
+								if (rowversion_column_name)
+									validate_rowversion_table_constraint(c, rowversion_column_name);
+							}
 								break;
 							case AT_AlterColumnType:
-								{
-									int			colnamelen = strlen(cmd->name);
+							{
+								int			colnamelen = strlen(cmd->name);
 
-									/*
-									 * Check if rowversion column type is
-									 * being changed.
-									 */
-									if (rowversion_column_name != NULL &&
-										strlen(rowversion_column_name) == colnamelen)
-									{
+								/*
+								 * Check if rowversion column type is
+								 * being changed.
+								 */
+								if (rowversion_column_name != NULL &&
+									strlen(rowversion_column_name) == colnamelen)
+								{
 										bool		found = false;
 
-										if (pltsql_case_insensitive_identifiers)
-										{
-											char	   *colname = downcase_identifier(cmd->name, colnamelen, false, false);
-											char	   *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+									if (pltsql_case_insensitive_identifiers)
+									{
+										char	   *colname = downcase_identifier(cmd->name, colnamelen, false, false);
+										char	   *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
 
-											if (strncmp(dc_rv_name, colname, colnamelen) == 0)
-												found = true;
-										}
-										else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
-										{
+										if (strncmp(dc_rv_name, colname, colnamelen) == 0)
 											found = true;
-										}
-
-										if (found)
-											ereport(ERROR,
-													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-													 errmsg("Cannot alter column \"%s\" because it is timestamp.", cmd->name)));
+									}
+									else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+									{
+											found = true;
 									}
 
-									/*
+									if (found)
+										ereport(ERROR,
+												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												 errmsg("Cannot alter column \"%s\" because it is timestamp.", cmd->name)));
+								}
+
+								/*
 									 * Check if a column type is being changed
 									 * to rowversion.
 									 */
-									if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
-										ereport(ERROR,
-												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Cannot alter column \"%s\" to be data type timestamp.", cmd->name)));
-								}
+								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											 errmsg("Cannot alter column \"%s\" to be data type timestamp.", cmd->name)));
+							}
 								break;
 							case AT_ColumnDefault:
+							{
+								int			colnamelen = strlen(cmd->name);
+
+								/*
+								 * Disallow defaults on a rowversion
+								 * column.
+								 */
+								if (rowversion_column_name != NULL &&
+									strlen(rowversion_column_name) == colnamelen)
 								{
-									int			colnamelen = strlen(cmd->name);
+									bool		found = false;
 
-									/*
-									 * Disallow defaults on a rowversion
-									 * column.
-									 */
-									if (rowversion_column_name != NULL &&
-										strlen(rowversion_column_name) == colnamelen)
+									if (pltsql_case_insensitive_identifiers)
 									{
-										bool		found = false;
+										char	   *colname = downcase_identifier(cmd->name, colnamelen, false, false);
+										char	   *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
 
-										if (pltsql_case_insensitive_identifiers)
-										{
-											char	   *colname = downcase_identifier(cmd->name, colnamelen, false, false);
-											char	   *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
-
-											if (strncmp(dc_rv_name, colname, colnamelen) == 0)
-												found = true;
-										}
-										else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
-										{
+										if (strncmp(dc_rv_name, colname, colnamelen) == 0)
 											found = true;
-										}
-
-										if (found)
-											ereport(ERROR,
-													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-													 errmsg("Defaults cannot be created on columns of data type timestamp.")));
 									}
+									else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+									{
+											found = true;
+									}
+
+									if (found)
+										ereport(ERROR,
+												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												 errmsg("Defaults cannot be created on columns of data type timestamp.")));
 								}
+							}
 								break;
 							case AT_DropConstraint:
 								cmd->name = construct_unique_index_name(cmd->name, atstmt->relation->relname);
@@ -1087,61 +1126,61 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				}
 				break;
 			case T_IndexStmt:
+			{
+				IndexStmt  *stmt = (IndexStmt *) parsetree;
+
+				stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
+
+				if (escape_hatch_unique_constraint != EH_IGNORE &&
+					stmt->unique &&
+					is_nullable_index(stmt))
 				{
-					IndexStmt  *stmt = (IndexStmt *) parsetree;
-
-					stmt->idxname = construct_unique_index_name(stmt->idxname, stmt->relation->relname);
-
-					if (escape_hatch_unique_constraint != EH_IGNORE &&
-						stmt->unique &&
-						is_nullable_index(stmt))
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Nullable UNIQUE index is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
-										"or add a NOT NULL constraint")));
-					}
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Nullable UNIQUE index is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+								"or add a NOT NULL constraint")));
 				}
+			}
 				break;
 			case T_CreateTableAsStmt:
+			{
+				CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
+				Node	   *n = stmt->query;
+
+				if (n && n->type == T_Query)
 				{
-					CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
-					Node	   *n = stmt->query;
+					Query	   *q = (Query *) n;
 
-					if (n && n->type == T_Query)
+					if (q->commandType == CMD_SELECT)
 					{
-						Query	   *q = (Query *) n;
+						ListCell   *t;
+						bool		seen_rowversion = false;
 
-						if (q->commandType == CMD_SELECT)
+						/*
+						 * Varify if SELECT INTO ... statement not
+						 * inserting multiple rowversion columns.
+						 */
+						foreach(t, q->targetList)
 						{
-							ListCell   *t;
-							bool		seen_rowversion = false;
+							TargetEntry *tle = (TargetEntry *) lfirst(t);
+							Oid			typeid = InvalidOid;
 
-							/*
-							 * Varify if SELECT INTO ... statement not
-							 * inserting multiple rowversion columns.
-							 */
-							foreach(t, q->targetList)
+							if (!tle->resjunk)
+								typeid = exprType((Node *) tle->expr);
+
+							if (OidIsValid(typeid) && (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typeid))
 							{
-								TargetEntry *tle = (TargetEntry *) lfirst(t);
-								Oid			typeid = InvalidOid;
-
-								if (!tle->resjunk)
-									typeid = exprType((Node *) tle->expr);
-
-								if (OidIsValid(typeid) && (*common_utility_plugin_ptr->is_tsql_rowversion_or_timestamp_datatype) (typeid))
-								{
-									if (seen_rowversion)
-										ereport(ERROR,
-												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-												 errmsg("Only one timestamp column is allowed in a table.")));
-									seen_rowversion = true;
-								}
+								if (seen_rowversion)
+									ereport(ERROR,
+											(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+											errmsg("Only one timestamp column is allowed in a table.")));
+								seen_rowversion = true;
 							}
-
 						}
+
 					}
 				}
+			}
 				break;
 			default:
 				break;
@@ -1520,10 +1559,33 @@ has_unique_nullable_constraint(ColumnDef *column)
 }
 
 static bool
+has_nullable_constraint(ColumnDef *column)
+{
+	ListCell   *clist;
+	bool		is_notnull = false;
+
+	foreach(clist, column->constraints)
+	{
+		Constraint *constraint = lfirst_node(Constraint, clist);
+
+		switch (constraint->contype)
+		{
+			case CONSTR_NOTNULL:
+				is_notnull = true;
+				break;
+			default:
+				break;
+		}
+	}
+
+	return !is_notnull;
+}
+
+static bool
 is_nullable_constraint(Constraint *cst, Oid rel_oid)
 {
 	ListCell   *lc;
-	bool		is_notnull = false;
+	bool		is_null = false;
 
 	/* Loop through the constraint keys */
 	foreach(lc, cst->keys)
@@ -1544,15 +1606,15 @@ is_nullable_constraint(Constraint *cst, Oid rel_oid)
 
 		attnum = get_attnum(rel_oid, col_name);
 
-		if (get_attnotnull(rel_oid, attnum))
+		if (!get_attnotnull(rel_oid, attnum))
 		{
-			/* found a NOT NULL attr, break and return */
-			is_notnull = true;
+			/* found a NULL attr, break and return */
+			is_null = true;
 			break;
 		}
 	}
 
-	return !is_notnull;
+	return is_null;
 }
 
 /*
@@ -1589,7 +1651,7 @@ static bool
 is_nullable_index(IndexStmt *stmt)
 {
 	ListCell   *lc;
-	bool		is_notnull = false;
+	bool		is_null = false;
 	Oid			rel_oid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 	/* Loop through the index columns */
@@ -1599,14 +1661,14 @@ is_nullable_index(IndexStmt *stmt)
 		const char *col_name = elem->name;
 		AttrNumber	attnum = get_attnum(rel_oid, col_name);
 
-		if (get_attnotnull(rel_oid, attnum))
+		if (!get_attnotnull(rel_oid, attnum))
 		{
-			is_notnull = true;
+			is_null = true;
 			break;
 		}
 	}
 
-	return !is_notnull;
+	return is_null;
 }
 
 static void
