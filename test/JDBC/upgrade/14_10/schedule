@@ -86,7 +86,6 @@ sys-trigger_nestlevel
 schema_resolution_proc
 BABEL-404
 BABEL-493
-BABEL_539
 BABEL-621
 BABEL-775
 BABEL-1206
@@ -243,6 +242,7 @@ sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
+BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -385,6 +385,7 @@ isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 bbf_view_def
+Test-sp_babelfish_volatility
 BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
@@ -403,6 +404,8 @@ binary-index
 BABEL-4078
 BABEL-3215
 orderby
-BABEL-4046
-getdate
+babel_int4_varbinary_div
+babel_varbinary_int4_div
+sys-sql_expression_dependencies
+smalldatetimefromparts-dep
 BABEL_4330

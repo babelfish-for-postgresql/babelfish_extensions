@@ -7,7 +7,7 @@
 #include "src/encoding/encoding.h"
 
 /* ----------
- * utf8_to_gbk:
+ * tsql_utf8_to_gbk:
  *		src_encoding,	-- source encoding id
  *		dest_encoding,	-- destination encoding id
  *		src,			-- source string (null terminated C string)
@@ -17,7 +17,7 @@
  * ----------
  */
 int
-utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlUtfToLocal(src, len, dest,
 						  &gbk_from_unicode_tree,
@@ -27,7 +27,7 @@ utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsig
 }
 
 int
-gbk_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+tsql_gbk_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlLocalToUtf(src, len, dest,
 						  &gbk_to_unicode_tree,
