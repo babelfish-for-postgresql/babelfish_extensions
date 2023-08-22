@@ -851,7 +851,7 @@ DECLARE
     v_hr INTEGER;
     v_mi INTEGER;
     sign_flag INTEGER;
-    v_string datetimeoffset;
+    v_string pg_catalog.text;
 BEGIN
 
     BEGIN
@@ -888,7 +888,7 @@ BEGIN
             RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END;
 
-    if v_hr > 14 or v_hr < -14 or (v_hr = 14 and v_mi > 0) THEN
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END IF; 
 
@@ -914,7 +914,7 @@ BEGIN
     v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
 
     BEGIN
-    RETURN cast(v_string AS datetimeoffset);
+    RETURN cast(v_string AS sys.datetimeoffset);
     exception
         WHEN others THEN
             RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
@@ -949,7 +949,7 @@ DECLARE
     v_hr INTEGER;
     v_mi INTEGER;
     sign_flag INTEGER;
-    v_string datetimeoffset;
+    v_string pg_catalog.text;
     v_sign PG_CATALOG.TEXT;
     tz_offset_smallint smallint;
 BEGIN
@@ -1014,7 +1014,7 @@ BEGIN
     v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
 
     BEGIN
-    RETURN cast(v_string AS datetimeoffset);
+    RETURN cast(v_string AS sys.datetimeoffset);
     exception
         WHEN others THEN
             RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
