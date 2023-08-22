@@ -127,3 +127,22 @@ step s1d: <... completed>
 ~~ROW COUNT: 1~~
 
 step s1c: COMMIT;
+
+starting permutation : { s1s s2i s2c s1s s1c }
+step s1s: SELECT * from child;
+~~START~~
+int#!#int
+3#!#1
+~~END~~
+
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s2c: COMMIT;
+step s1s: SELECT * from child;
+~~START~~
+int#!#int
+3#!#1
+~~END~~
+
+step s1c: COMMIT;
