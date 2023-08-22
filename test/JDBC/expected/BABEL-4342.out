@@ -1,0 +1,58 @@
+-- psql
+CREATE PROCEDURE sys.babel_4342_proc1() 
+LANGUAGE 'pltsql' AS $$
+BEGIN 
+DECLARE @objtype sys.VARCHAR(2)
+SELECT @objtype = type COLLATE DATABASE_DEFAULT FROM sys.sysobjects WHERE id = 1 
+END 
+$$;
+GO
+
+CREATE OR REPLACE PROCEDURE sys.babel_4342_proc2()
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+DECLARE @objtype sys.VARCHAR(2)
+SELECT @objtype = type FROM sys.sysobjects WHERE id = 1
+END
+$$;
+GO
+
+CREATE OR REPLACE PROCEDURE sys.babel_4342_proc3()
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+DECLARE @objtype VARCHAR(2)
+SELECT @objtype = type FROM sys.sysobjects WHERE id = 1
+END
+$$;
+GO
+
+CALL sys.babel_4342_proc1();
+GO
+
+CALL sys.babel_4342_proc2();
+GO
+
+CALL sys.babel_4342_proc3();
+GO
+
+-- tsql
+EXEC sys.babel_4342_proc1;
+GO
+
+EXEC sys.babel_4342_proc2;
+GO
+
+EXEC sys.babel_4342_proc3;
+GO
+
+-- psql 
+DROP PROCEDURE sys.babel_4342_proc1;
+GO
+
+DROP PROCEDURE sys.babel_4342_proc2;
+GO
+
+DROP PROCEDURE sys.babel_4342_proc3;
+GO
