@@ -4,13 +4,13 @@ SELECT CAST('2012-02-23' AS TIME)
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Conversion failed when converting date and/or time from character string.
+~~ERROR (Message: ERROR: invalid input syntax for type time: "2012-02-23"
   Position: 53
     Server SQLState: 22007)~~
 
 
 -- tsql
--- when month is given in nymeric format either date has ['-', '/']
+-- when month is given in numeric format and date can have ['-', '/']
 SELECT CAST('2012-02-23' AS TIME)
 GO
 ~~START~~
@@ -19,7 +19,7 @@ time
 ~~END~~
 
 
-SELECT CAST('2012   -    02   -    23' AS TIME)
+SELECT CAST('     2012   -    02   -    23        ' AS TIME)
 GO
 ~~START~~
 time
@@ -83,7 +83,7 @@ time
 ~~END~~
 
 
--- when month is given text format either date has ['-', '/']
+-- when month is given text format and date can have ['-', '/', ' ']
 SELECT CAST('2012-02-23' AS TIME)
 GO
 ~~START~~
@@ -172,6 +172,38 @@ time
 ~~END~~
 
 
+SELECT CAST('12 jan 20 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
+SELECT CAST('12 decemBer 20 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
+SELECT CAST('jan  12 20 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
+SELECT CAST('jan 2012 12 2:3' AS TIME)
+GO
+~~START~~
+time
+02:03:00.0000000
+~~END~~
+
+
 -- casting to particular round off, valid in range of [0-7]
 SELECT CAST('2015-03-19 01:05:06.289' AS TIME(0))
 GO
@@ -237,32 +269,65 @@ time
 ~~END~~
 
 
-SELECT CAST('12 jan 20 2:3' AS TIME)
+-- multiple casting
+SELECT CAST(CAST('2000-11-23' AS DATETIME) AS TIME)
 GO
 ~~START~~
 time
-02:03:00.0000000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('jan  12 20 2:3' AS TIME)
-GO
+select CAST(CAST('00:00:00.000' AS time) AS datetime)
+go
 ~~START~~
-time
-02:03:00.0000000
+datetime
+1900-01-01 00:00:00.0
 ~~END~~
 
 
-SELECT CAST('jan 2012 12 2:3' AS TIME)
-GO
+select CAST(CAST('2000-11-23' AS time) AS datetime)
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+select CAST(CAST('23:59:59.123456' AS time) AS datetime)
+go
+~~START~~
+datetime
+1900-01-01 23:59:59.123
+~~END~~
+
+
+select CAST(CAST('1900-05-06 23:59:29.998' AS datetime) AS time)
+go
 ~~START~~
 time
-02:03:00.0000000
+23:59:29.9980000
+~~END~~
+
+
+select CAST(CAST('2050-05-06 00:00:00' AS datetime) AS time)
+go
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+select CAST(CAST('2050-05-06 23:59:29.998' AS datetime) AS time)
+go
+~~START~~
+time
+23:59:29.9980000
 ~~END~~
 
 
 -- These particular cases are failing in SQL Server but passing in bbf
--- case where if we mention input has milli seconds(".") and no digit after that and valid offset("+-") and for valid range
+-- case where if we mention input has no milli seconds mentioned after (".")
+-- and cases when valid offset("+-") and for valid range
 SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .' AS TIME)
 GO
 ~~START~~
@@ -400,6 +465,15 @@ time
 ~~END~~
 
 
+-- case where input is of format 'mm yyyy dd hhmmss.ss'
+SELECT CAST('Jan   2021   01 010506.289' AS TIME)
+GO
+~~START~~
+time
+01:05:06.2890000
+~~END~~
+
+
 -- if input is given in hhmmss
 SELECT CAST('121200' AS TIME)
 GO
@@ -434,7 +508,7 @@ GO
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
--- wrong dates has been passed as an input
+-- Invalid dates has been passed as an input
 SELECT CAST('Jan-0000-01' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
@@ -464,34 +538,12 @@ GO
 ~~ERROR (Message: cannot cast type date to time without time zone)~~
 
 
--- out of range should throw error
+-- out of range for time datatype should throw error
 SELECT CAST('2015-03-19 01:05:06.   289' AS TIME(8))
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Specified scale 8 is invalid. 'time' datatype must have scale between 0 and 7)~~
-
-
--- case for different types of date format(dd-yyyy-mm, yyyy-dd-mm, mm-yyyy-dd)
-SELECT CAST('3-2021-jan 01:05:06.289' AS TIME)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CAST('2003-30-jan 01:05:06.289' AS TIME)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CAST('Jan-2021-01 121200 1-1' AS TIME)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- case where the yyyy is not able to figure out from given input which contains yy
@@ -511,25 +563,18 @@ GO
 
 
 --if given yyyymmdd as input
-SELECT CAST('2012jan00' AS TIME)
+SELECT CAST('2012jan01' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CAST('20121200' AS TIME)
+SELECT CAST('20121201' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CAST('Jan   2021   01 010506.289' AS TIME)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: time zone "jan-2021-01" not recognized)~~
 
 
 SELECT CAST('Jan   2021    010506.289' AS TIME)
@@ -543,7 +588,7 @@ SELECT CAST('Jan   2021   01 01   05    06    .    289' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: time zone "jan-2021-01" not recognized)~~
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- if only offset is mentioned

@@ -45,6 +45,7 @@
 #include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
+#include "utils/datetime.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -140,8 +141,8 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
 static void pltsql_parse_time_error(int dterr, const char *str, const char *datatype);
-static void pltsql_modify_fields(int *nf, char **field, int *ftype);
-bool containsInMonthFormat(int *ftype);
+static bool pltsql_handle_textMonth_case(int type, bool *haveTextMonth, int fmask, int *tmask, struct pg_tm *tm, int val);
+static int pltsql_date_decoder(int nf, char **field, int fmask, int tmask, bool is2digits, struct pg_tm *tm, bool bc, bool isjulian);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
@@ -217,8 +218,9 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static time_hook_type prev_time_hook = NULL;
-static modify_field_hook_type prev_modify_field_hook = NULL;
+static time_datatype_parse_error_hook_type prev_time_datatype_parse_error_hook = NULL;
+static date_decoder_hook_type prev_date_decoder_hook = NULL;
+static handle_textMonth_case_hook_type prev_handle_textMonth_case_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -370,11 +372,14 @@ InstallExtendedHooks(void)
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
-	prev_time_hook = time_hook;
-	time_hook = pltsql_parse_time_error;
+	prev_time_datatype_parse_error_hook = time_datatype_parse_error_hook;
+	time_datatype_parse_error_hook = pltsql_parse_time_error;
 
-	prev_modify_field_hook = modify_field_hook;
-	modify_field_hook = pltsql_modify_fields;
+	prev_date_decoder_hook = date_decoder_hook;
+	date_decoder_hook = pltsql_date_decoder;
+
+	prev_handle_textMonth_case_hook = handle_textMonth_case_hook;
+	handle_textMonth_case_hook = pltsql_handle_textMonth_case;
 }
 
 void
@@ -433,8 +438,9 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
-	time_hook = prev_time_hook;
-	modify_field_hook = prev_modify_field_hook;
+	time_datatype_parse_error_hook = prev_time_datatype_parse_error_hook;
+	date_decoder_hook = prev_date_decoder_hook;
+	handle_textMonth_case_hook = prev_handle_textMonth_case_hook;
 }
 
 /*****************************************
@@ -2655,63 +2661,73 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 }
 
 /*
+ * Handle the case where month is given in text format
+ */
+bool pltsql_handle_textMonth_case(int type, bool *haveTextMonth, int fmask, int *tmask, struct pg_tm *tm, int val)
+{
+	if(sql_dialect == SQL_DIALECT_TSQL && type == MONTH)
+	{
+		/*
+		 * already have a (numeric) month? then see if we can
+		 * substitute...
+		 */
+		if ((fmask & DTK_M(MONTH)) && !*haveTextMonth &&
+			!(fmask & DTK_M(DAY)) && tm->tm_mon >= 1 &&
+			tm->tm_mon <= 31)
+		{
+			tm->tm_mday = tm->tm_mon;
+			*tmask = DTK_M(DAY);
+		}
+		*haveTextMonth = true;
+		tm->tm_mon = val;
+		return true;
+	}
+	return false;
+}
+/*
  * Throw a common error message while casting to time datatype
  */
 void pltsql_parse_time_error(int dterr, const char *str, const char *datatype)
 {
-	switch (dterr)
-	{
-		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("Conversion failed when converting date and/or time from character string.")));
-			break;
-	}
+	if(sql_dialect == SQL_DIALECT_TSQL)
+		switch (dterr)
+		{
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+						errmsg("Conversion failed when converting date and/or time from character string.")));
+				break;
+		}
 }
 
 /*
- * Modify the given input of type 'dd mon yyyy' to 'dd-mon-yyyy'
+ * If the input contains only date field then validate the input.
+ * If contains more fields(date, time, offset) then do nothing and continue with the next step.
  */
-void pltsql_modify_fields(int *nf, char **field, int *ftype)
+int pltsql_date_decoder(int nf, char **field, int fmask, int tmask, bool is2digits, struct pg_tm *tm, bool bc, bool isjulian)
 {
-	// field[0] = field[0] + field[1] + field[2]
-	if(containsInMonthFormat(ftype))
+	if (sql_dialect == SQL_DIALECT_TSQL && nf == 1)
 	{
-		StringInfoData buf;
-		initStringInfo(&buf);
-		appendStringInfoString(&buf, field[0]);
-		for(int i=1;i<3;i++)
-		{
-			appendStringInfoString(&buf, "-");
-			appendStringInfoString(&buf, field[i]);
+		/* do final checking/adjustment of Y/M/D fields */
+		int dterr = DecodeDateWrapper(field[0], fmask,
+							&tmask, &is2digits, tm);
+		if (dterr)
+			return dterr;
 
-		}
-		field[0]=buf.data;
-		ftype[0] = 2;
-		*nf = *nf - 2;
-		for(int i = 1; i < *nf; i++)
-		{
-			field[i] = field[i+2];
-			ftype[i] = ftype[i+2];
-		}
+		if (tmask & fmask)
+			return DTERR_BAD_FORMAT;
+		fmask |= tmask;
 
+		/* do final checking/adjustment of Y/M/D fields */
+		dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);
+		if (dterr)
+			return dterr;
+
+		/* No error then just return 0 */
+		return 0;
 	}
-}
-
-bool containsInMonthFormat(int *ftype){
-	int count0 = 0, count1 = 0;
-	for(int i=0;i<3;i++)
-	{
-		if(ftype[i] == 0)
-			count0++;
-		else if(ftype[i] == 1)
-			count1++;
-		else
-			return false;
-	}
-	if(count0 ==2 && count1 ==1)
-		return true;
-	return false;
+	/* returning -6 as the given input is not of format 'yyyy-mm-dd' */
+	return -6;
 }
 
 /*

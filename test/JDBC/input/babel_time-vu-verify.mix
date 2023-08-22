@@ -4,11 +4,11 @@ SELECT CAST('2012-02-23' AS TIME)
 GO
 
 -- tsql
--- when month is given in nymeric format either date has ['-', '/']
+-- when month is given in numeric format and date can have ['-', '/']
 SELECT CAST('2012-02-23' AS TIME)
 GO
 
-SELECT CAST('2012   -    02   -    23' AS TIME)
+SELECT CAST('     2012   -    02   -    23        ' AS TIME)
 GO
 
 SELECT CAST('2012   -    02   -    23     2    :      ' AS TIME)
@@ -32,7 +32,7 @@ GO
 SELECT CAST('2012   /    02   /    23     2    :      3       :       8    .          876' AS TIME)
 GO
 
--- when month is given text format either date has ['-', '/']
+-- when month is given text format and date can have ['-', '/', ' ']
 SELECT CAST('2012-02-23' AS TIME)
 GO
 
@@ -66,6 +66,18 @@ GO
 SELECT CAST('2012   -    FeBruary   -    23     2    :      3' AS TIME)
 GO
 
+SELECT CAST('12 jan 20 2:3' AS TIME)
+GO
+
+SELECT CAST('12 decemBer 20 2:3' AS TIME)
+GO
+
+SELECT CAST('jan  12 20 2:3' AS TIME)
+GO
+
+SELECT CAST('jan 2012 12 2:3' AS TIME)
+GO
+
 -- casting to particular round off, valid in range of [0-7]
 SELECT CAST('2015-03-19 01:05:06.289' AS TIME(0))
 GO
@@ -91,17 +103,30 @@ GO
 SELECT CAST('2015-03-19 01:05:06.289' AS TIME(7))
 GO
 
-SELECT CAST('12 jan 20 2:3' AS TIME)
+-- multiple casting
+SELECT CAST(CAST('2000-11-23' AS DATETIME) AS TIME)
 GO
 
-SELECT CAST('jan  12 20 2:3' AS TIME)
-GO
+select CAST(CAST('00:00:00.000' AS time) AS datetime)
+go
 
-SELECT CAST('jan 2012 12 2:3' AS TIME)
-GO
+select CAST(CAST('2000-11-23' AS time) AS datetime)
+go
+select CAST(CAST('23:59:59.123456' AS time) AS datetime)
+go
+
+select CAST(CAST('1900-05-06 23:59:29.998' AS datetime) AS time)
+go
+
+select CAST(CAST('2050-05-06 00:00:00' AS datetime) AS time)
+go
+
+select CAST(CAST('2050-05-06 23:59:29.998' AS datetime) AS time)
+go
 
 -- These particular cases are failing in SQL Server but passing in bbf
--- case where if we mention input has milli seconds(".") and no digit after that and valid offset("+-") and for valid range
+-- case where if we mention input has no milli seconds mentioned after (".")
+-- and cases when valid offset("+-") and for valid range
 SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .' AS TIME)
 GO
 
@@ -154,6 +179,10 @@ GO
 SELECT CAST('Jan-2021-01 01:05:06.289' AS TIME)
 GO
 
+-- case where input is of format 'mm yyyy dd hhmmss.ss'
+SELECT CAST('Jan   2021   01 010506.289' AS TIME)
+GO
+
 -- if input is given in hhmmss
 SELECT CAST('121200' AS TIME)
 GO
@@ -169,7 +198,7 @@ GO
 SELECT CAST('+02' AS TIME);
 GO
 
--- wrong dates has been passed as an input
+-- Invalid dates has been passed as an input
 SELECT CAST('Jan-0000-01' AS TIME)
 GO
 
@@ -183,18 +212,8 @@ GO
 select CAST(CAST('2020-03-15' AS date) AS time);
 GO
 
--- out of range should throw error
+-- out of range for time datatype should throw error
 SELECT CAST('2015-03-19 01:05:06.   289' AS TIME(8))
-GO
-
--- case for different types of date format(dd-yyyy-mm, yyyy-dd-mm, mm-yyyy-dd)
-SELECT CAST('3-2021-jan 01:05:06.289' AS TIME)
-GO
-
-SELECT CAST('2003-30-jan 01:05:06.289' AS TIME)
-GO
-
-SELECT CAST('Jan-2021-01 121200 1-1' AS TIME)
 GO
 
 -- case where the yyyy is not able to figure out from given input which contains yy
@@ -206,13 +225,10 @@ SELECT CAST('00:1200' AS TIME)
 GO
 
 --if given yyyymmdd as input
-SELECT CAST('2012jan00' AS TIME)
+SELECT CAST('2012jan01' AS TIME)
 GO
 
-SELECT CAST('20121200' AS TIME)
-GO
-
-SELECT CAST('Jan   2021   01 010506.289' AS TIME)
+SELECT CAST('20121201' AS TIME)
 GO
 
 SELECT CAST('Jan   2021    010506.289' AS TIME)
