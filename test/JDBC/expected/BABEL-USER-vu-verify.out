@@ -203,6 +203,39 @@ babel_user_vu_prepare_test3#!#babel_user_vu_prepare_sch
 ~~END~~
 
 
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test5;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+master_babel_user_vu_prepare_aacb2aa14e22b38c44e8614f1eae6949f8#!#babel_user_vu_prepare_test4#!#babel_user_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#master#!#dbo
+master_babel_user_vu_prepare_test1_new#!#babel_user_vu_prepare_test1#!#babel_user_vu_prepare_test1_new#!#master#!#dbo
+master_babel_user_vu_prepare_test2#!#babel_user_vu_prepare_test2#!#babel_user_vu_prepare_test2#!#master#!#dbo
+master_babel_user_vu_prepare_test3#!#babel_user_vu_prepare_test5#!#babel_user_vu_prepare_test3#!#master#!#babel_user_vu_prepare_sch
+~~END~~
+
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+~~START~~
+varchar#!#varchar
+babel_user_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#dbo
+babel_user_vu_prepare_test1_new#!#dbo
+babel_user_vu_prepare_test2#!#dbo
+babel_user_vu_prepare_test3#!#babel_user_vu_prepare_sch
+~~END~~
+
+
+-- should fail
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Existing user already maps to login 'babel_user_vu_prepare_test1' in current database.)~~
+
+
 SELECT rolname FROM pg_roles WHERE rolname LIKE '%babel_user_vu_prepare%' ORDER BY rolname;
 GO
 ~~START~~
@@ -211,6 +244,7 @@ babel_user_vu_prepare_test1
 babel_user_vu_prepare_test2
 babel_user_vu_prepare_test3
 babel_user_vu_prepare_test4
+babel_user_vu_prepare_test5
 master_babel_user_vu_prepare_aacb2aa14e22b38c44e8614f1eae6949f8
 master_babel_user_vu_prepare_test1_new
 master_babel_user_vu_prepare_test2

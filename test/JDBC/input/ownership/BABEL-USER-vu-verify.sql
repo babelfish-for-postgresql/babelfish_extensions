@@ -82,6 +82,19 @@ GO
 EXEC babel_user_vu_prepare_db_principal_proc
 GO
 
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test5;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- should fail
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test1;
+GO
+
 SELECT rolname FROM pg_roles WHERE rolname LIKE '%babel_user_vu_prepare%' ORDER BY rolname;
 GO
 
