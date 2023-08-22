@@ -211,3 +211,16 @@ GO
 
 Select switchoffset(NULL,1233456777888);
 GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 840)
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 841)
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -841)
+GO
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -840)
+GO
+

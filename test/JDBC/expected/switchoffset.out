@@ -518,3 +518,34 @@ GO
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type smallint.)~~
 
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 840)
+GO
+~~START~~
+datetimeoffset
+1900-05-07 03:59:29.0500000 +14:00
+~~END~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -840)
+GO
+~~START~~
+datetimeoffset
+1900-05-05 23:59:29.0500000 -14:00
+~~END~~
+
+
