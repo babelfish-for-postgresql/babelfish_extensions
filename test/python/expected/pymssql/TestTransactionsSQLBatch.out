@@ -129,7 +129,7 @@ int
 
 set transaction isolation level repeatable read;
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: 'REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_and_serialization to onDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+~~ERROR (Message: 'REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_isolation_level to onDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
 
 #show transaction_isolation;
 #show default_transaction_isolation;
@@ -430,7 +430,7 @@ int
 # begin transaction name -> save transaction name -> rollback tran name, Rollback whole transaction
 set transaction isolation level serializable;
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: 'SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_and_serialization to onDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+~~ERROR (Message: 'SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_serializable_isolation_level to onDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
 
 #show transaction_isolation;
 #show default_transaction_isolation;

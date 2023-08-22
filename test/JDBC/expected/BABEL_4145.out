@@ -1,64 +1,205 @@
 -- psql
-ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_and_serialization" = "on";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_isolation_level" = "off";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_serializable_isolation_level" = "off";
 GO
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_and_serialization');
+SELECT set_config('babelfishpg_tsql.enable_repeatable_read_isolation_level','on',false)
+SELECT set_config('babelfishpg_tsql.enable_serializable_isolation_level','on',false)
 GO
 ~~START~~
 text
 on
 ~~END~~
 
-SELECT set_config('babelfishpg_tsql.enable_repeatable_read_and_serialization','off',false)
-GO
 ~~START~~
 text
-off
+on
 ~~END~~
 
-SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_and_serialization');
+SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_isolation_level');
+SELECT current_setting('babelfishpg_tsql.enable_serializable_isolation_level');
 GO
 ~~START~~
 text
-off
+on
+~~END~~
+
+~~START~~
+text
+on
 ~~END~~
 
 -- terminate-tsql-conn
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_and_serialization');
+SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_isolation_level');
+SELECT current_setting('babelfishpg_tsql.enable_serializable_isolation_level');
 GO
 ~~START~~
 text
-on
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_isolation_level to on)~~
+
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+read committed
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_serializable_isolation_level to on)~~
+
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+read committed
 ~~END~~
 
 -- terminate-tsql-conn
 
 -- psql
-ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_and_serialization" = "off";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_isolation_level" = "on";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_serializable_isolation_level" = "off";
 GO
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_and_serialization');
+SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_isolation_level');
+SELECT current_setting('babelfishpg_tsql.enable_serializable_isolation_level');
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+repeatable read
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_serializable_isolation_level to on)~~
+
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+repeatable read
+~~END~~
+
+-- terminate-tsql-conn
+
+-- psql
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_isolation_level" = "off";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_serializable_isolation_level" = "on";
+GO
+
+-- tsql
+SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_isolation_level');
+SELECT current_setting('babelfishpg_tsql.enable_serializable_isolation_level');
 GO
 ~~START~~
 text
 off
 ~~END~~
 
-SELECT set_config('babelfishpg_tsql.enable_repeatable_read_and_serialization','on',false)
+~~START~~
+text
+on
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_isolation_level to on)~~
+
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+read committed
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+serializable
+~~END~~
+
+-- terminate-tsql-conn
+
+-- psql
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_isolation_level" = "on";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_serializable_isolation_level" = "on";
+GO
+
+-- tsql
+SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_isolation_level');
+SELECT current_setting('babelfishpg_tsql.enable_serializable_isolation_level');
 GO
 ~~START~~
 text
 on
 ~~END~~
 
-SELECT current_setting('babelfishpg_tsql.enable_repeatable_read_and_serialization');
-GO
 ~~START~~
 text
 on
 ~~END~~
 
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+repeatable read
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+serializable
+~~END~~
+
+-- terminate-tsql-conn
+
+-- psql
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_repeatable_read_isolation_level" = "off";
+ALTER DATABASE "jdbc_testdb" SET "babelfishpg_tsql.enable_serializable_isolation_level" = "off";
+GO
