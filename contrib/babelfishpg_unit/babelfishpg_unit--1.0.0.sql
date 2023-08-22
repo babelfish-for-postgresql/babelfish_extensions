@@ -1,5 +1,5 @@
 --complain if script is sourced in psql, rather than via CREATE EXTENSION
-\echo Use "CREATE EXTENSION babelfishpg_unit" to load this file. \quit
+\echo Use "CREATE EXTENSION IF NOT EXISTS babelfishpg_unit" to load this file. \quit
 
 
 -- Invoke all tests
