@@ -351,7 +351,6 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
         message = palloc(message_size);
         snprintf(message, message_size, "%s, %s%s%s", test->test_func_name, tr->result ? "PASSED" : "FAILED", tr->message, tr->testcase_message);
 
-        file = fopen(filename, "a+");
         if (file != NULL)
         {
             fprintf(file, "%s\n\n\n", message); 
@@ -359,7 +358,10 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
         }
         else
         {
-            printf("Could not open file");
+            ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\" for writing: %m",
+						filename)));
         }
         
 
