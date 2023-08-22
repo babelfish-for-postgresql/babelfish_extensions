@@ -4,11 +4,12 @@ Datum babelfishpg_unit_run_tests(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(babelfishpg_unit_run_tests);
 
 
-#define NCOLS (4)
+#define NCOLS (5)
 
 #define TEST_NAME_COLUMN 0
 #define STATUS_NAME_COLUMN (TEST_NAME_COLUMN + 1)
-#define RUNTIME_NAME_COLUMN (STATUS_NAME_COLUMN + 1)
+#define MESSAGE_NAME_COLUMN (STATUS_NAME_COLUMN + 1)
+#define RUNTIME_NAME_COLUMN (MESSAGE_NAME_COLUMN + 1)
 #define ENABLED_NAME_COLUMN (RUNTIME_NAME_COLUMN + 1)
 
 #define TEXT_HEADER_SIZE (28)
@@ -113,9 +114,13 @@ run_test(TestInfo *test)
 void
 setNull(StateInfo *state, bool message)
 {
-    int i;
-    for(i=0; i<NCOLS; i++)
-        state->nulls[i] = false;
+	int i;
+
+	for (i=0; i<NCOLS; i++) 
+		state->nulls[i] = false;
+
+	if (message) 
+		state->nulls[MESSAGE_NAME_COLUMN] = true;
 }
 
 
@@ -203,14 +208,6 @@ calc_next_test(StateInfo *state, int position)
 }
 
 
-/*
- * Some global declarations for creating a logfile after each test run
- */
-char filename[200] = "";
-FILE *file;
-struct tm *timenow;
-time_t current;
-
 Datum
 babelfishpg_unit_run_tests(PG_FUNCTION_ARGS) 
 {
@@ -227,11 +224,9 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
     text **arg_ptr;
     int i;
     StateInfo* state;
-    char *message;
     ArrayType *arr;
     Datum *decontructed_arr;
     bool *nulls;
-    size_t message_size = 0;
 
     if (SRF_IS_FIRSTCALL())
     {
@@ -274,26 +269,20 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
             pfree(args);
 
         /*
-         * Create the tuple returned to the caller.  Set up the
-         * table with the specified columns below.  This only
-         * needs to be setup on the first call.
-         */
-        tupledesc = CreateTemplateTupleDesc(NCOLS);
-        TupleDescInitEntry(tupledesc, (AttrNumber) TEST_NAME_COLUMN+1, "TEST_NAME", TEXTOID, -1, 0);
-        TupleDescInitEntry(tupledesc, (AttrNumber) STATUS_NAME_COLUMN+1, "STATUS", TEXTOID, -1, 0);
-        TupleDescInitEntry(tupledesc, (AttrNumber) RUNTIME_NAME_COLUMN+1, "RUNTIME", INT8OID, -1, 0);
-        TupleDescInitEntry(tupledesc, (AttrNumber) ENABLED_NAME_COLUMN+1, "ENABLED", TEXTOID, -1, 0);
+		 * Create the tuple returned to the caller.  Set up the
+		 * table with the specified columns below.  This only
+		 * needs to be setup on the first call.
+		 */
+		tupledesc = CreateTemplateTupleDesc(NCOLS);
+		TupleDescInitEntry(tupledesc, (AttrNumber) TEST_NAME_COLUMN+1, "TEST_NAME", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) STATUS_NAME_COLUMN+1, "STATUS", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) MESSAGE_NAME_COLUMN+1, "MESSAGE", TEXTOID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) RUNTIME_NAME_COLUMN+1, "RUNTIME", INT8OID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) ENABLED_NAME_COLUMN+1, "ENABLED", TEXTOID, -1, 0);
 
         state->tupledesc = BlessTupleDesc(tupledesc);
         fctx->user_fctx = state;
         MemoryContextSwitchTo(mctx);
-
-        /*
-         * Creating a log file with current date and time in logfile folder present within this extension
-         */ 
-        current = time(NULL);
-        timenow = gmtime(&current);
-        strftime(filename, sizeof(filename), "../../babelfish_extensions/contrib/babelfishpg_unit/log_files/UNIT_%Y%m%d_%H%M%S.log", timenow);
     }
 
     /*
@@ -332,42 +321,16 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
             setNull(state, true);
 
         /*
-         * Set the information for a row of data indicating test failure or pass
-         */
-        values[TEST_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->test_func_name));
-        values[STATUS_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->enabled ? 
-                (tr->result ? PASS : FAIL) : NOT_RUN));
-        values[RUNTIME_NAME_COLUMN] = PointerGetDatum(tr->run_time);
-        values[ENABLED_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->enabled ? ENABLED : DISABLED));
-        tuple = heap_form_tuple(state->tupledesc, values, state->nulls);
-        result = HeapTupleGetDatum(tuple);
-
-
-        /*
-         * Writing the content into the log file
-         * Content will be test_func_name, result of test, error message if any
-         */
-        message_size = strlen(test->test_func_name) + strlen(tr->result ? "PASSED" : "FAILED") + strlen(tr->message) + strlen(tr->testcase_message) + 10;
-        message = palloc(message_size);
-        snprintf(message, message_size, "%s, %s%s%s", test->test_func_name, tr->result ? "PASSED" : "FAILED", tr->message, tr->testcase_message);
-
-        file = fopen(filename, "a+");
-
-        if (file != NULL)
-        {
-            fprintf(file, "%s\n\n\n", message); 
-            fclose(file);
-        }
-        else
-        {
-            ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\" for writing: %m",
-						filename)));
-        }
-
-
-        pfree(message);
+		 * Set the information for a row of data indicating test failure or pass
+		 */
+		values[TEST_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->test_func_name));
+		values[STATUS_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->enabled ? 
+				(tr->result ? PASS : FAIL) : NOT_RUN));
+		values[MESSAGE_NAME_COLUMN] = PointerGetDatum(cstring_to_text(tr->message));
+		values[RUNTIME_NAME_COLUMN] = PointerGetDatum(tr->run_time);
+		values[ENABLED_NAME_COLUMN] = PointerGetDatum(cstring_to_text(test->enabled ? ENABLED : DISABLED));
+		tuple = heap_form_tuple(state->tupledesc, values, state->nulls);
+		result = HeapTupleGetDatum(tuple);
 
         /*
          * Set the state to run the next test on the next function call

@@ -31,26 +31,16 @@ do {                                \
     if(pResult->result == false){   \
         snprintf((pResult)->message, \
                 MAX_TEST_MESSAGE_LENGTH, \
-                ", Test assertion '%s' failed at %s:%d",  \
+                "Test assertion '%s' failed at %s:%d",  \
                 #condition, __FILE__, __LINE__);      \
     }               \
 } while (0)
 
 
-#define TEST_ASSERT_TESTCASE(condition, test_case, exp, obt, pResult)   \
+#define TEST_ASSERT_TESTCASE(condition, pResult)   \
 do {                                \
     if (!(condition)) {                 \
-        snprintf((pResult)->testcase_message + strlen((pResult)->testcase_message), \
-                MAX_TEST_MESSAGE_LENGTH - strlen((pResult)->testcase_message), \
-                "\nTest Case '%s' failed, Expected: %s  Obtained: %s",  \
-                test_case, exp, obt);      \
         (pResult)->result = false;  \
-    }                               \
-    else{           \
-        snprintf((pResult)->testcase_message + strlen((pResult)->testcase_message), \
-                MAX_TEST_MESSAGE_LENGTH - strlen((pResult)->testcase_message), \
-                "\nTest Case '%s' passed, Expected: %s  Obtained: %s",  \
-                test_case, exp, obt);      \
     }               \
 } while (0)
 

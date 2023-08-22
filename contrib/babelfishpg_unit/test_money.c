@@ -27,8 +27,7 @@ test_int4_fixeddecimal_ge(void)
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -57,8 +56,7 @@ test_int4_fixeddecimal_le(void)
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_le, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -87,8 +85,7 @@ test_int4_fixeddecimal_ne(void)
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_ne, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -117,8 +114,7 @@ test_int4_fixeddecimal_eq(void)
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_eq, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -147,8 +143,7 @@ test_int4_fixeddecimal_lt(void)
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_lt, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -179,8 +174,6 @@ test_int4_fixeddecimal_cmp(void)
         Datum val1_datum = Int32GetDatum(val1[i]);
         Datum val2_datum = Int32GetDatum(val2[i]);
 
-        char* testcase = psprintf("%d", i + 1);
-        
         Datum expected;
         Datum obtained;
         char expected_str[MAX_TEST_MESSAGE_LENGTH];
@@ -197,7 +190,7 @@ test_int4_fixeddecimal_cmp(void)
         snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%ld", expected);
         snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%ld", obtained);
         
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected_str, obtained_str , testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -232,7 +225,7 @@ test_fixeddecimalum(void)
         MemoryContextSwitchTo(oldcontext);
         errorData = CopyErrorData();
         FlushErrorState();
-        snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s, %s", testResult->message, errorData->message);
+        snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s", errorData->message);
         testResult->result = true;
         FreeErrorData(errorData);
     }
@@ -266,8 +259,7 @@ test_fixeddecimal_int2_ge(void)
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -296,8 +288,7 @@ test_fixeddecimal_int2_le(void)
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_le, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -326,8 +317,7 @@ test_fixeddecimal_int2_gt(void)
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -356,8 +346,7 @@ test_fixeddecimal_int2_ne(void)
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
-        char* testcase = psprintf("%d", i + 1);
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected ? "True" : "False", obtained ? "True" : "False", testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
@@ -388,8 +377,6 @@ test_fixeddecimal_int2_cmp(void)
         Datum val1_datum = Int32GetDatum(val1[i]);
         Datum val2_datum = Int32GetDatum(val2[i]);
 
-        char* testcase = psprintf("%d", i + 1);
-        
         Datum expected;
         Datum obtained;
         char expected_str[MAX_TEST_MESSAGE_LENGTH];
@@ -406,7 +393,7 @@ test_fixeddecimal_int2_cmp(void)
         snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%ld", expected);
         snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%ld", obtained);
         
-        TEST_ASSERT_TESTCASE(expected == obtained, testcase, expected_str, obtained_str , testResult);
+        TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     }
 
     TEST_ASSERT(expected == obtained, testResult);
