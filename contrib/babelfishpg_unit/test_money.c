@@ -23,7 +23,7 @@ test_int4_fixeddecimal_ge(void)
     testResult->result = true;
 
     for (int i = 0; i < numValues; i++) {
-        bool expected = (val1[i] >= val2[i]);
+        bool expected = (val1[i] <= val2[i]);
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 

@@ -206,7 +206,7 @@ calc_next_test(StateInfo *state, int position)
 /*
  * Some global declarations for creating a logfile after each test run
  */
-char filename[200];
+char filename[200] = "";
 FILE *file;
 struct tm *timenow;
 time_t current;
@@ -352,8 +352,20 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
         snprintf(message, message_size, "%s, %s%s%s", test->test_func_name, tr->result ? "PASSED" : "FAILED", tr->message, tr->testcase_message);
 
         file = fopen(filename, "a+");
-        fprintf(file, "%s\n\n\n", message); 
-        fclose(file);
+
+        if (file != NULL)
+        {
+            fprintf(file, "%s\n\n\n", message); 
+            fclose(file);
+        }
+        else
+        {
+            ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\" for writing: %m",
+						filename)));
+        }
+
 
         pfree(message);
 
