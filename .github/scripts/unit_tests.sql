@@ -19,6 +19,13 @@ BEGIN
   IF total_tests <> passed_tests THEN
     RAISE EXCEPTION 'Not all tests passed. Total tests: %, Passed tests: %', total_tests, passed_tests;
   END IF;
+
+  -- Explicitly exit with a non-zero code if all tests didn't pass
+  IF total_tests <> passed_tests THEN
+    RAISE NOTICE 'Not all tests passed. Exiting with status 1.';
+    GET STACKED DIAGNOSTICS _MESSAGE = MESSAGE_TEXT;
+    RAISE EXCEPTION USING ERRCODE = '1', MESSAGE = _MESSAGE;
+  END IF;
 END;
 $$ LANGUAGE plpgsql;
 

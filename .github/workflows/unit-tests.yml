@@ -50,8 +50,12 @@ jobs:
         if: always() && steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
+          set +e
           sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql
-          if [ $? -ne 0 ]; then
+          exit_code=$?
+          set -e
+
+          if [ $exit_code -ne 0 ]; then
             echo "Not all tests passed"
             exit 1
           fi
