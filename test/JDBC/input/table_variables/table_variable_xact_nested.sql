@@ -17,7 +17,7 @@ CREATE VIEW enr_view AS
 GO
 
 -------------------------------------------------------------------------------
--- Test 1: Multiple Savepoints
+-- Test 1.A: Multiple Savepoints
 -------------------------------------------------------------------------------
 
 CREATE FUNCTION table_var_func1(@i INT)
@@ -66,10 +66,59 @@ DROP FUNCTION table_var_func1
 GO
 
 -------------------------------------------------------------------------------
+-- Test 1.B: Multiple Savepoints with Identity Columns
+-------------------------------------------------------------------------------
+
+CREATE FUNCTION table_var_func1(@i INT)
+RETURNS INT
+AS
+BEGIN DECLARE @a AS TABLE(a INT, b INT);
+INSERT INTO @a VALUES(1, 2);
+RETURN 1;
+END;
+GO
+
+BEGIN TRANSACTION T1
+
+	SAVE TRANSACTION T2
+
+		DECLARE @table2 TABLE (c1 INT IDENTITY PRIMARY KEY, c2 INT, c3 INT, savepoint_name CHAR(16))
+		INSERT INTO @table2 VALUES(2, 3, 'savepoint_t2')
+		INSERT INTO @table2 VALUES(2, 3, 'savepoint_t2')
+
+		SAVE TRANSACTION T3
+			DECLARE @tv3 TABLE(savepoint_name CHAR(16))
+			INSERT INTO @tv3 VALUES('savepoint_t3')
+
+			SELECT dbo.table_var_func1(1);
+
+			UPDATE @table2 SET c2 = 20 WHERE c1 = 10
+		ROLLBACK TRANSACTION T3
+	ROLLBACK TRANSACTION T2
+
+	DECLARE @tv1 TABLE(c1 INT, c2 INT, savepoint_name CHAR(16))
+	INSERT INTO @tv1 VALUES(1, 2, 'savepoint_t1')
+	SELECT * FROM @table2;                                    -- show two rows, only c1 is different
+	INSERT INTO @table2 VALUES(2, 3, 'savepoint_t2')          -- sequence should still be valid
+	SELECT * FROM @tv1;
+
+ROLLBACK TRANSACTION T1
+
+SELECT * FROM @tv1;                                           -- one row inserted even after rollback
+SELECT * FROM @table2;                                        -- should show 3 rows
+SELECT * FROM @tv3;                                           -- one row inserted after rollback
+
+SELECT * FROM enr_view
+GO
+
+DROP FUNCTION table_var_func1
+GO
+
+-------------------------------------------------------------------------------
 -- Test 2: Table Variables inside TRY-CATCH block
 -------------------------------------------------------------------------------
 BEGIN TRY
-    DECLARE @tv TABLE(c1 INT PRIMARY KEY, c2 INT)
+    DECLARE @tv TABLE(c1 INT PRIMARY KEY, c2 INT, c3 INT IDENTITY)
     INSERT INTO @tv VALUES(1, 10), (2, 20), (3, 30)
     UPDATE @tv SET c1 = 1 WHERE c1 = 3 -- duplicate key
     SELECT * FROM @tv
@@ -80,7 +129,7 @@ BEGIN CATCH
     ROLLBACK
 END CATCH;
 
--- Table and index should still be accessible here
+-- Table, index and sequence should still be accessible here
 INSERT INTO @tv VALUES(1, 10), (2, 20), (3, 30)
 UPDATE @tv SET c1 = 1 WHERE c1 = 3 -- duplicate key
 SELECT * FROM @tv                  -- 3 records
@@ -88,7 +137,7 @@ SELECT * FROM enr_view
 GO
 
 -------------------------------------------------------------------------------
--- Test 3: Function P1 has TV and calls Function P2 with TV
+-- Test 3.A: Function P1 has TV and calls Function P2 with TV
 --         A Transaction modifies the TV returned by P1
 -------------------------------------------------------------------------------
 
@@ -119,6 +168,52 @@ BEGIN TRANSACTION
 ROLLBACK TRANSACTION
 
 INSERT INTO @tvf VALUES(1, 'Duplicate Key')  -- Table Variable and its Primary Key should still be valid
+SELECT * FROM @tvf
+
+SELECT * FROM enr_view
+GO
+
+SELECT * FROM @tvf                           -- Table Variable not valid anymore
+GO
+
+DROP FUNCTION table_variable_outer_func
+GO
+
+DROP FUNCTION table_variable_inner_func
+GO
+
+-------------------------------------------------------------------------------
+-- Test 3.B: Function P1 has TV and calls Function P2 with TV
+--         A Transaction modifies the TV returned by P1
+-------------------------------------------------------------------------------
+
+CREATE FUNCTION table_variable_inner_func (@number INTEGER)
+RETURNS @result TABLE (c1 INT PRIMARY KEY, c2 CHAR(128), c3 INT IDENTITY) AS
+BEGIN
+    WITH nums_cte(num1, num2) AS (select 1, 'table_variable_inner_func')
+    INSERT @result SELECT num1, num2 FROM nums_cte
+    RETURN
+END;
+GO
+
+CREATE FUNCTION table_variable_outer_func()
+RETURNS @result TABLE (c1 int PRIMARY KEY, c2 CHAR(128), c3 INT) AS
+BEGIN
+    INSERT INTO @result SELECT * FROM table_variable_inner_func(1)
+    RETURN;
+END
+GO
+
+BEGIN TRANSACTION
+    SAVE TRANSACTION Savepoint1
+        DECLARE @tvf TABLE(c1 INT PRIMARY KEY, c2 CHAR(128), c3 INT, c4 INT IDENTITY);
+        INSERT INTO @tvf SELECT * FROM table_variable_outer_func();
+    ROLLBACK TRANSACTION Savepoint1
+
+    INSERT INTO @tvf VALUES(2, 'Inserted by Txn', 1)
+ROLLBACK TRANSACTION
+
+INSERT INTO @tvf VALUES(1, 'Duplicate Key', 2)  -- Table Variable and its Primary Key should still be valid
 SELECT * FROM @tvf
 
 SELECT * FROM enr_view
