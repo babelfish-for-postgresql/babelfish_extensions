@@ -5259,7 +5259,11 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		{
 			if (ctx->new_value)
 			{
-				stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
+				if(ctx->MINUS())
+
+					stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText().insert(0,"-")).c_str());
+				else
+					stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
 			}
 		}
 		else if (ctx->NORESEED())

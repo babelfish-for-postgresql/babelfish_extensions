@@ -18,6 +18,8 @@
 #include "pl_explain.h"
 #include "session.h"
 
+#include <math.h>
+
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
 PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
@@ -2959,6 +2961,7 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 	return PLTSQL_RC_OK;
 }
 
+
 int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 {
 	switch (stmt->dbcc_stmt_type)
@@ -2966,31 +2969,51 @@ int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 		case PLTSQL_DBCC_CHECKIDENT:
 			exec_stmt_dbcc_checkident(stmt);
 			break;
+		default:
+			Assert(0);
 	}
 	return PLTSQL_RC_OK;
 }
+
 
 void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 {
 	struct dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
 	Relation	rel;
 	TupleDesc	tupdesc;
-	TableScanDesc scan;
-	HeapTuple tuple;
 	char	*db_name = NULL;
 	char	*schema_name = NULL;
 	char	*nsp_name = NULL;
+	char	*table_name;
+	char	*query;
+	char	*attname;
 	const char	*user;
 	const char	*guest_role_name;
 	int64	max_identity_value = 0;
 	int64	cur_identity_value = 0;
+	char	*max_identity_value_str = NULL;
+	char	*token;
 	int		attnum;
+	int		rc;
 	int64	reseed_value = 0;
 	Oid		nsp_oid;
 	Oid 	table_oid;
 	Oid		seqid = InvalidOid;
-	bool	is_null;
+	Oid		userid = GetUserId();
 	volatile bool cur_value_is_null = true;
+	bool	login_is_db_owner;
+
+	if(dbcc_stmt.new_reseed_value)
+	{
+		/* If float value is passed as reseed_value, only decimal part is considered.*/
+		token = strtok(dbcc_stmt.new_reseed_value, ".");
+		reseed_value = pg_strtoint64(token);
+		if(reseed_value >= 0)
+			reseed_value = floor(reseed_value);
+		else
+			reseed_value = -floor(-reseed_value);
+		pfree(token);
+	}
 
 	if (dbcc_stmt.db_name)
 		db_name = pstrdup(dbcc_stmt.db_name);
@@ -3005,13 +3028,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		pfree(db_name);
 	}
 
+	login_is_db_owner = 0 == strncmp(GetUserNameFromId(userid, false),
+										get_owner_of_db(db_name), NAMEDATALEN);
 	user = get_user_for_database(db_name);
 	guest_role_name = get_guest_role_name(db_name);
-
-	if(dbcc_stmt.new_reseed_value)
-		reseed_value = pg_strtoint64(dbcc_stmt.new_reseed_value);
-
-	ereport(WARNING, (errmsg("reseed_value: %ld", reseed_value)));	// to remove
 
 	if (dbcc_stmt.schema_name)
 	{
@@ -3050,21 +3070,21 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		(errcode(ERRCODE_UNDEFINED_SCHEMA),
 			errmsg("schema \"%s\" does not exist", schema_name)));
 	}
-	pfree(schema_name);
 
-	table_oid = get_relname_relid(dbcc_stmt.table_name, nsp_oid);
+	table_name = pstrdup(dbcc_stmt.table_name);
+	table_oid = get_relname_relid(table_name, nsp_oid);
 	if(!OidIsValid(table_oid))
 	{
 		ereport(ERROR,
 		(errcode(ERRCODE_UNDEFINED_TABLE),
-			errmsg("relation \"%s\" does not exist", dbcc_stmt.table_name)));
+			errmsg("relation \"%s\" does not exist", table_name)));
 	}
 
 	/* Permission check */
-	if (pg_class_aclcheck(table_oid, GetUserId(), ACL_SELECT | ACL_USAGE) != ACLCHECK_OK)
-	{
-		aclcheck_error(ACLCHECK_NO_PRIV, OBJECT_TABLE, dbcc_stmt.table_name);
-	}
+	if (!pg_namespace_ownercheck(nsp_oid, userid) ||
+			!(has_privs_of_role(userid, get_role_oid("sysadmin", false)) ||
+				!login_is_db_owner))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
 
 	rel = RelationIdGetRelation(table_oid);
 	tupdesc = RelationGetDescr(rel);
@@ -3076,35 +3096,19 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 		if (attr->attidentity)
 		{
+			attname = NameStr(attr->attname);
 			seqid = getIdentitySequence(table_oid, attnum + 1, false);
 			break;
 		}
 	}
 
+	RelationClose(rel);
+
 	if (!OidIsValid(seqid))
 		ereport(ERROR,
 		(errcode(ERRCODE_UNDEFINED_COLUMN),
 			errmsg("'%s.%s' does not contain an identity column.",
-				nsp_name, dbcc_stmt.table_name)));	
-
-	pfree(nsp_name);
-
-	/*
-	 * We need to find out the last value of the identity column in the table
-	 * and last value of the identity sequence to compare and decide on the
-	 * action that needs to be taken.
-	 */
-	scan = table_beginscan_catalog(rel, 0, NULL);
-	tuple = heap_getnext(scan, BackwardScanDirection);
-
-	if (HeapTupleIsValid(tuple))
-	{
-		max_identity_value = DatumGetInt64(heap_getattr(tuple, attnum+1,
-								tupdesc, &is_null));
-	}
-
-	RelationClose(rel);
-	table_endscan(scan);
+				nsp_name, table_name)));
 
 	PG_TRY();
 	{
@@ -3112,28 +3116,59 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 						ObjectIdGetDatum(seqid));
 		cur_value_is_null = false;
 
-		if (dbcc_stmt.is_reseed)
+		if (dbcc_stmt.new_reseed_value)
 		{
-			if (dbcc_stmt.new_reseed_value)
+			/* 
+			 * Print informational messages if NO_INFOMSGS is not passed as a
+			 * DBCC command option.
+			 */
+			if (!dbcc_stmt.no_infomsgs)
+				ereport(WARNING,
+					(errmsg("Checking identity information: current"
+					" identity value '%ld'.\n", cur_identity_value)));
+
+			DirectFunctionCall2(setval_oid,
+				ObjectIdGetDatum(seqid),
+				Int64GetDatum(reseed_value));
+		}
+		else
+		{
+			SPI_connect();
+			query = psprintf("SELECT MAX(%s) FROM %s.%s", attname,
+							schema_name, table_name);
+			rc = SPI_execute(query, true, 0);
+
+			if (rc != SPI_OK_SELECT)
+				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+			max_identity_value_str = SPI_getvalue(SPI_tuptable->vals[0],
+									SPI_tuptable->tupdesc, 1);
+
+			if(max_identity_value_str)
+				max_identity_value = pg_strtoint64(max_identity_value_str);
+
+			if (!dbcc_stmt.no_infomsgs)
+				ereport(WARNING,
+					(errmsg("Checking identity information: current"
+					" identity value '%ld', current column value "
+					"'%s'.\n", cur_identity_value,
+					max_identity_value_str ?
+					max_identity_value_str : "NULL")));
+
+			pfree(query);
+			SPI_freetuptable(SPI_tuptable);
+
+			/*
+			* RESEED option only resets the identity column value if the 
+			* current identity value for a table is less than the maximum 
+			* identity value stored in the identity column.
+			*/
+			if (dbcc_stmt.is_reseed && max_identity_value_str &&
+				cur_identity_value < max_identity_value)
 			{
 				DirectFunctionCall2(setval_oid,
 					ObjectIdGetDatum(seqid),
-					Int64GetDatum(reseed_value));
-			}
-			else
-			{
-			
-			/*
-			 * RESEED option only resets the identity column value if the 
-			 * current identity value for a table is less than the maximum 
-			 * identity value stored in the identity column.
-			 */
-				if (cur_identity_value < max_identity_value)
-				{
-					DirectFunctionCall2(setval_oid,
-						ObjectIdGetDatum(seqid),
-						Int64GetDatum(max_identity_value));
-				}
+					Int64GetDatum(max_identity_value));
 			}
 		}
 	}
@@ -3146,34 +3181,42 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		 * to delete all rows. In this case, after DBCC CHECKIDENT the next
 		 * row inserted will have new_reseed_value as the identity value.
 		 */
-		if(cur_value_is_null)
-			DirectFunctionCall3(setval3_oid,
-				ObjectIdGetDatum(seqid),
-				Int64GetDatum(reseed_value),
-				BoolGetDatum(false));
+		if (cur_value_is_null)
+		{
+			if (dbcc_stmt.new_reseed_value)
+			{
+				ereport(WARNING,
+					(errmsg("Checking identity information: current"
+					" identity value 'NULL'.\n")));
+
+				DirectFunctionCall3(setval3_oid,
+					ObjectIdGetDatum(seqid),
+					Int64GetDatum(reseed_value),
+					BoolGetDatum(false));
+			}
+			else
+			{
+				ereport(WARNING,
+					(errmsg("Checking identity information: current"
+					" identity value 'NULL', current column value 'NULL'.\n")));
+			}
+		}
+		else
+			PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	/* Do not print output if NO_INFOMSGS is provided */
+	if (max_identity_value_str)
+		pfree(max_identity_value_str);
+	pfree(schema_name);
+	pfree(table_name);
+	pfree(nsp_name);
+
 	if (!dbcc_stmt.no_infomsgs)
 	{
-		if (!dbcc_stmt.new_reseed_value)
-		{
-			ereport(WARNING,
-				(errmsg("Checking identity information: current identity value "
-					"'%ld', current column value '%ld'.\n"
-					"DBCC execution completed. If DBCC printed error messages, "
-					"contact your system administrator."
-					, cur_identity_value, max_identity_value)));
-		}
-		else
-		{
-			ereport(WARNING,
-				(errmsg("Checking identity information: current identity value "
-					"'%ld'.\n DBCC execution completed. If DBCC printed error "
-					"messages, contact your system administrator."
-					, cur_identity_value)));
-		}
+		ereport(WARNING,
+			(errmsg( "DBCC execution completed. If DBCC printed error messages,"
+				" contact your system administrator.")));
 	}
 }
 

@@ -726,7 +726,17 @@ dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
 void
 dump_stmt_dbcc(PLtsql_stmt_dbcc *stmt_dbcc)
 {
-	printf("DBCC STATEMENT\n");
+	printf("DBCC ");
+	switch (stmt_dbcc->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			printf("CHECKIDENT");
+			break;
+		default:
+			elog(ERROR, "unrecognized dbcc statement type: %d", stmt_dbcc->dbcc_stmt_type);
+			break;
+	}
+	printf(" STATEMENT\n");
 }
 
 void
