@@ -22,4 +22,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+SELECT * FROM babelfishpg_unit_run_tests();
+
 SELECT * FROM check_all_unit_tests_passed();
