@@ -999,11 +999,13 @@ drop_all_logins(PG_FUNCTION_ARGS)
 static void
 verify_login_for_bbf_authid_user_ext(RoleSpec *login)
 {
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple_user_ext;
-	ScanKeyData key[2];
-	TableScanDesc scan;
-	const char *cur_db_owner;
+	Relation    	bbf_authid_user_ext_rel;
+	HeapTuple   	tuple_user_ext;
+	ScanKeyData 	key[2];
+	TableScanDesc	scan;
+	const char  	*cur_db_owner;
+	NameData    	*login_name;
+	char        	*login_name_str = NULL;
 
 	if (login == NULL || !is_login_name(login->rolename))
 		ereport(ERROR,
@@ -1027,8 +1029,9 @@ verify_login_for_bbf_authid_user_ext(RoleSpec *login)
 				CStringGetTextDatum(get_cur_db_name()));
 
 	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	pfree(login_name);
+
 	if (tuple_user_ext != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
@@ -1037,6 +1040,7 @@ verify_login_for_bbf_authid_user_ext(RoleSpec *login)
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
+	login_name_str = login->rolename;
 	cur_db_owner = get_owner_of_db((const char *) get_cur_db_name());
 	if (strcmp(login_name_str, cur_db_owner) == 0)
 		ereport(ERROR,
@@ -1129,7 +1133,6 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	char	   *default_schema = NULL;
 	char	   *original_user_name = NULL;
 	RoleSpec   *login = NULL;
-	NameData   *login_name;
 	char	   *login_name_str = NULL;
 
 	/* Extract options from the statement node tree */
