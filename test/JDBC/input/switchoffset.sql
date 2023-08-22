@@ -182,3 +182,32 @@ GO
 Select switchoffset('2345-12-31 23:59:59.59',cast(123 as bit));
 GO
 
+Select switchoffset('2345-12-31 23:59:59.59',NULL);
+GO
+
+Select switchoffset('2345-12-31 23:59:59.59','NULL');
+Go
+
+Select switchoffset(NULL,'+12:00');
+GO
+
+Select switchoffset('NULL','+12:00');
+GO
+
+Select switchoffset('NULL',234);
+GO
+
+Select switchoffset(NULL,234);
+GO
+
+Select switchoffset(NULL,'+12:000');
+GO
+
+Select switchoffset('NULL','+12:000');
+GO
+
+Select switchoffset('NULL',1233456777888);
+GO
+
+Select switchoffset(NULL,1233456777888);
+GO

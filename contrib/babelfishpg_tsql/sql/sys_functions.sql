@@ -960,6 +960,13 @@ BEGIN
     END IF;
 
     BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    BEGIN
     IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
         tz_offset := FLOOR(tz_offset);
     END IF;
@@ -967,15 +974,11 @@ BEGIN
     exception
         WHEN others THEN
             RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
-    END; 
+    END;  
 
-    BEGIN
-    input_expr:= cast(input_expr AS datetimeoffset);
-    exception
-        WHEN others THEN
-            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
-    END; 
-
+    IF input_expr IS NULL THEN 
+    RETURN NULL;
+    END IF;
 
     if tz_offset_smallint > 840 or tz_offset_smallint < -840 THEN
        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
@@ -984,7 +987,6 @@ BEGIN
     v_hr := tz_offset_smallint/60;
     v_mi := tz_offset_smallint%60;
     
-    RAISE LOG 'raise log     - time: %', tz_offset_smallint ;
 
     p_year := sys.datepart('year',input_expr);
     p_month := sys.datepart('month',input_expr);

@@ -445,3 +445,76 @@ datetimeoffset
 ~~END~~
 
 
+Select switchoffset('2345-12-31 23:59:59.59',NULL);
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset('2345-12-31 23:59:59.59','NULL');
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset(NULL,'+12:00');
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset('NULL','+12:00');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('NULL',234);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset(NULL,234);
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset(NULL,'+12:000');
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset('NULL','+12:000');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('NULL',1233456777888);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset(NULL,1233456777888);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type smallint.)~~
+
