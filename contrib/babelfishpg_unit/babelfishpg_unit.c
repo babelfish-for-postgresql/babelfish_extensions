@@ -358,10 +358,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
         }
         else
         {
-            ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\" for writing: %m",
-						filename)));
+            printf("Could not open file");
         }
         
 
