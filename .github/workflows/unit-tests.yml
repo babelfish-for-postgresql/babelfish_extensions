@@ -50,7 +50,7 @@ jobs:
         if: always() && steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
-          sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql
+          echo | sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql
           sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -c "SELECT status from babelfishpg_unit_run_tests()" -o ~/psql/output.txt;
           sub='fail'
           while read line
