@@ -2999,7 +2999,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	Oid		nsp_oid;
 	Oid 	table_oid;
 	Oid		seqid = InvalidOid;
-	Oid		userid = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
 
@@ -3028,7 +3027,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		pfree(db_name);
 	}
 
-	login_is_db_owner = 0 == strncmp(GetUserNameFromId(userid, false),
+	login_is_db_owner = 0 == strncmp(GetUserNameFromId(GetSessionUserId(), false),
 										get_owner_of_db(db_name), NAMEDATALEN);
 	user = get_user_for_database(db_name);
 	guest_role_name = get_guest_role_name(db_name);
@@ -3071,6 +3070,12 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			errmsg("schema \"%s\" does not exist", schema_name)));
 	}
 
+	/* Permission check */
+	if (!(pg_namespace_ownercheck(nsp_oid, GetUserId()) ||
+			has_privs_of_role(GetUserId(), get_role_oid("sysadmin", false)) ||
+				login_is_db_owner))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
+
 	table_name = pstrdup(dbcc_stmt.table_name);
 	table_oid = get_relname_relid(table_name, nsp_oid);
 	if(!OidIsValid(table_oid))
@@ -3079,12 +3084,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		(errcode(ERRCODE_UNDEFINED_TABLE),
 			errmsg("relation \"%s\" does not exist", table_name)));
 	}
-
-	/* Permission check */
-	if (!pg_namespace_ownercheck(nsp_oid, userid) ||
-			!(has_privs_of_role(userid, get_role_oid("sysadmin", false)) ||
-				!login_is_db_owner))
-		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
 
 	rel = RelationIdGetRelation(table_oid);
 	tupdesc = RelationGetDescr(rel);

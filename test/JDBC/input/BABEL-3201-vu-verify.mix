@@ -171,23 +171,13 @@ DBCC CHECKIDENT(babel_3201_t_numeric, RESEED, 9223372036854775808);
 GO
 
 -- When new_reseed_value is a float value, only value before the decimal is used
-DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, -15.65);
+DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 15.65);
 GO
 
 INSERT INTO babel_3201_t_decimal VALUES (8);
 GO
 
 SELECT * FROM babel_3201_t_decimal;
-GO
-
--- CREATE LOGIN babel_3201_log1 WITH PASSWORD='123456789';
--- GO
-
--- CREATE USER babel_3201_user1 FOR LOGIN babel_3201_log1;
--- GO
-
--- tsql user=babel_3201_log1 password=123456789
-DBCC CHECKIDENT(babel_3201_t_decimal, RESEED);
 GO
 
 begin tran;
@@ -215,4 +205,16 @@ ROLLBACK;
 GO
 
 SELECT * FROM babel_3201_t_decimal;
+GO
+
+EXEC babel_3201_proc1;
+GO
+
+INSERT INTO babel_3201_t_tinyint VALUES (10);
+GO
+
+SELECT * FROM babel_3201_t_tinyint;
+GO
+
+EXEC babel_3201_proc2;
 GO

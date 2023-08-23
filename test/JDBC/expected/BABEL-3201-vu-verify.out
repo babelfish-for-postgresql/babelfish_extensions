@@ -309,12 +309,8 @@ GO
 
 
 -- When new_reseed_value is a float value, only value before the decimal is used
-DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, -15.65);
+DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 15.65);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: setval: value -15 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
-
 
 INSERT INTO babel_3201_t_decimal VALUES (8);
 GO
@@ -328,19 +324,9 @@ bigint#!#int
 7#!#5
 10#!#6
 13#!#7
-16#!#8
+18#!#8
 ~~END~~
 
-
-
-
--- CREATE LOGIN babel_3201_log1 WITH PASSWORD='123456789';
--- GO
--- CREATE USER babel_3201_user1 FOR LOGIN babel_3201_log1;
--- GO
--- tsql user=babel_3201_log1 password=123456789
-DBCC CHECKIDENT(babel_3201_t_decimal, RESEED);
-GO
 
 begin tran;
 DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 10);
@@ -357,7 +343,7 @@ bigint#!#int
 7#!#5
 10#!#6
 13#!#7
-16#!#8
+18#!#8
 13#!#9
 ~~END~~
 
@@ -379,7 +365,7 @@ bigint#!#int
 7#!#5
 10#!#6
 13#!#7
-16#!#8
+18#!#8
 13#!#9
 ~~END~~
 
@@ -399,7 +385,33 @@ bigint#!#int
 7#!#5
 10#!#6
 13#!#7
-16#!#8
+18#!#8
 13#!#9
 ~~END~~
+
+
+EXEC babel_3201_proc1;
+GO
+
+INSERT INTO babel_3201_t_tinyint VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_3201_t_tinyint;
+GO
+~~START~~
+smallint#!#int
+5#!#5
+6#!#6
+7#!#7
+31#!#10
+~~END~~
+
+
+EXEC babel_3201_proc2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 257 is out of bounds for sequence "babel_3201_t_tinyint_a_seq" (5..255))~~
 
