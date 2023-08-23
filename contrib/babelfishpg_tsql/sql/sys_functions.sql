@@ -454,9 +454,12 @@ BEGIN
         END IF;
 
         BEGIN
-        tz_offset_smallint := cast(tz_offset as smallint);
+        IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+            tz_offset := FLOOR(tz_offset);
+        END IF;
+        tz_offset_smallint := cast(tz_offset AS smallint);
         exception
-        WHEN others THEN
+            WHEN others THEN
                 RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
         END;
 

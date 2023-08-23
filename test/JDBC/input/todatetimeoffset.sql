@@ -140,3 +140,90 @@ GO
 
 Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
 GO
+
+Select todatetimeoffset('2345-12-31 23:59:59.59',NULL);
+GO
+
+Select todatetimeoffset('2345-12-31 23:59:59.59','NULL');
+Go
+
+Select todatetimeoffset(NULL,'+12:00');
+GO
+
+Select todatetimeoffset('NULL','+12:00');
+GO
+
+Select todatetimeoffset('NULL',234);
+GO
+
+Select todatetimeoffset(NULL,234);
+GO
+
+Select todatetimeoffset(NULL,'+12:000');
+GO
+
+Select todatetimeoffset('NULL','+12:000');
+GO
+
+Select todatetimeoffset('NULL',1233456777888);
+GO
+
+Select todatetimeoffset(NULL,1233456777888);
+GO
+
+Select todatetimeoffset('NULL','NULL')
+GO
+
+Select todatetimeoffset('NULL',NULL)
+GO
+
+Select todatetimeoffset(NULL,NULL)
+GO
+
+Select todatetimeoffset(NULL,'NULL')
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 840)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 841)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -841)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -840)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 0x23)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 234.49)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 234.50)
+GO
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 234.56)
+GO
+
+Select todatetimeoffset('2001-04-22 ', 120)
+GO
+
+Select todatetimeoffset('2001-04-22 ', '+12:30')
+GO
+
+Select todatetimeoffset('2001-04-22 17:34:56', -120)
+GO
+
+Select todatetimeoffset('2001-04-22 17:34:56', '-13:34')
+GO
+
+Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 0x23)
+GO
+
+Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), '-09:46')
+GO
+
+Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 123/2*1.0)
+GO
