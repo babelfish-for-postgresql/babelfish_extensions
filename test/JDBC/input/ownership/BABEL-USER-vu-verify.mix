@@ -85,8 +85,8 @@ EXEC babel_user_vu_prepare_db_principal_proc
 GO
 
 -- test ALTER USER...WITH LOGIN
--- login login name (63 character length name)
-ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_login_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+-- login login name (65 character length name)
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_long_login_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
 GO
 
 ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test5;

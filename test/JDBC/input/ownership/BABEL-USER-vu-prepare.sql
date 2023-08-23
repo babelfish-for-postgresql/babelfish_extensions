@@ -13,7 +13,7 @@ GO
 CREATE LOGIN babel_user_vu_prepare_test5 WITH PASSWORD = 'abc';
 GO
 
-CREATE LOGIN babel_login_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA WITH PASSWORD = 'abc';
+CREATE LOGIN babel_user_vu_prepare_long_login_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA WITH PASSWORD = 'abc';
 GO
 
 CREATE PROC babel_user_vu_prepare_user_ext_proc AS

@@ -206,8 +206,8 @@ babel_user_vu_prepare_test3#!#babel_user_vu_prepare_sch
 
 
 -- test ALTER USER...WITH LOGIN
--- login login name (63 character length name)
-ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_login_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+-- login login name (65 character length name)
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_long_login_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
 GO
 
 ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test5;
@@ -274,6 +274,7 @@ SELECT rolname FROM pg_roles WHERE rolname LIKE '%babel_user_vu_prepare%' ORDER 
 GO
 ~~START~~
 varchar
+babel_user_vu_prepare_long_logief3e68adff43cde8ecb1392da470244f
 babel_user_vu_prepare_test1
 babel_user_vu_prepare_test2
 babel_user_vu_prepare_test3
