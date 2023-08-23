@@ -12,11 +12,11 @@ DROP TABLE IF EXISTS babel_539NewTable1;
 GO
 
 --calling internal function directly
-SELECT col1, IDENTITY_INTO(1, 1,1) as id_num INTO babel_539NewTempTable2 FROM babel_539OldTable;
+SELECT col1, IDENTITY_INTO_INT(23, 1,1) as id_num INTO babel_539NewTempTable2 FROM babel_539OldTable;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function IDENTITY_INTO does not exist)~~
+~~ERROR (Message: function IDENTITY_INTO_INT does not exist)~~
 
 
 SELECT sys.IDENTITY(23, 1);
@@ -33,13 +33,6 @@ GO
 ~~ERROR (Message: The IDENTITY function can only be used when the SELECT statement has an INTO clause.)~~
 
 
-SELECT sys.IDENTITY_INTO(23, 1, 1);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function IDENTITY_INTO does not exist)~~
-
-
 SELECT sys.identity_into_int(23, 1, 1);
 GO
 ~~ERROR (Code: 33557097)~~
@@ -54,18 +47,18 @@ GO
 ~~ERROR (Message: function IDENTITY_INTO_SMALLINT does not exist)~~
 
 
-SELECT sys.IDENTITY_INTO_BIGINT(20, 1, 1);
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function IDENTITY_INTO_BIGINT does not exist)~~
-
-
 SELECT sys.IDENTITY_INTO_INT(23, 1, 1);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: function IDENTITY_INTO_INT does not exist)~~
+
+
+SELECT sys.IDENTITY_INTO_BIGINT(20, 1, 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function IDENTITY_INTO_BIGINT does not exist)~~
 
 
 SELECT col1, IDENTITY(int,1,1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
