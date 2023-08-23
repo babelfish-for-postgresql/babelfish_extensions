@@ -1,0 +1,69 @@
+UPDATE babel_2144_vu_prepare_t1 SET c1 = 23 OUTPUT INSERTED.c2, 22 INTO babel_2144_vu_prepare_v1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The target 'babel_2144_vu_prepare_v1' of the OUTPUT INTO clause cannot be a view or common table expression.)~~
+
+UPDATE babel_2144_vu_prepare_t2 SET c1 = 0 OUTPUT INSERTED.c2, 22 INTO babel_2144_vu_prepare_v1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The target 'babel_2144_vu_prepare_v1' of the OUTPUT INTO clause cannot be a view or common table expression.)~~
+
+UPDATE babel_2144_vu_prepare_t2 SET c1 = 23 OUTPUT INSERTED.c2, 22 INTO babel_2144_vu_prepare_t2;
+go
+~~ROW COUNT: 2~~
+
+UPDATE babel_2144_vu_prepare_t2 SET c1 = 0 OUTPUT INSERTED.c1, 33 INTO babel_2144_vu_prepare_t2;
+go
+~~ROW COUNT: 4~~
+
+UPDATE babel_2144_vu_prepare_t1 SET c1 = 1 OUTPUT INSERTED.c2, 11 INTO babel_2144_vu_prepare_t1;
+go
+~~ROW COUNT: 2~~
+
+UPDATE babel_2144_vu_prepare_t1 SET c1 = 2 OUTPUT INSERTED.c1, 1 INTO babel_2144_vu_prepare_t2;
+go
+~~ROW COUNT: 4~~
+
+select * from babel_2144_vu_prepare_t1;
+go
+~~START~~
+int#!#int
+2#!#15
+2#!#11
+2#!#0
+2#!#11
+~~END~~
+
+select * from babel_2144_vu_prepare_t2;
+go
+~~START~~
+int#!#int
+0#!#16
+0#!#33
+0#!#22
+0#!#33
+0#!#0
+0#!#33
+0#!#22
+0#!#33
+2#!#1
+2#!#1
+2#!#1
+2#!#1
+~~END~~
+
+select * from babel_2144_vu_prepare_v1;
+go
+~~START~~
+int#!#int
+0#!#16
+0#!#33
+0#!#22
+0#!#33
+0#!#33
+0#!#22
+0#!#33
+~~END~~
+
