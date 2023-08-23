@@ -1986,7 +1986,7 @@ public:
 	{
 		// if select doesnt contains into but it contains identity we should throw error
 		if(has_identity_function && !ctx->INTO()){
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Incorrect syntax near ')'", getLineAndPos(ctx));
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "The IDENTITY function can only be used when the SELECT statement has an INTO clause.", getLineAndPos(ctx));
 		}
 		has_identity_function = false;
 		if (statementMutator)
