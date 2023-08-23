@@ -21,3 +21,6 @@ GO
 
 DROP LOGIN babel_user_vu_prepare_test5
 GO
+
+DROP LOGIN babel_login_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+GO

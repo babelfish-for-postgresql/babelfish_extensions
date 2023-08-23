@@ -13,6 +13,9 @@ GO
 CREATE LOGIN babel_user_vu_prepare_test5 WITH PASSWORD = 'abc';
 GO
 
+CREATE LOGIN babel_login_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA WITH PASSWORD = 'abc';
+GO
+
 CREATE PROC babel_user_vu_prepare_user_ext_proc AS
 BEGIN
 SELECT rolname, login_name, orig_username, database_name, default_schema_name
