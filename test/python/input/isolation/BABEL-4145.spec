@@ -29,10 +29,10 @@ setup	  { SELECT set_config('babelfishpg_tsql.enable_serializable_isolation_leve
     set transaction isolation level serializable; BEGIN TRAN; SET lock_timeout '500'; }
 step s2s  { SELECT * from child ORDER BY child_value ASC; }
 step s2i  { INSERT INTO child VALUES (4, 20); }
-step s2u1 { UPDATE child SET child_value = 11 WHERE child_key in (SELECT TOP 1 child_key FROM child ORDER BY child_value DESC) }
+step s2u1 { UPDATE child SET child_value = 20 WHERE child_key in (SELECT TOP 1 child_key FROM child ORDER BY child_value DESC) }
 step s2u2 { UPDATE child SET child_value = 5 where child_value >= 6 }
 step s2c  { COMMIT; }
 
-permutation s1s s1u1 s2u2 s2c s1c
+permutation s1s s1u1 s2u1 s1c s2c s1s
 permutation s1i s2i s1s s2s s2c s1c
 permutation s1u1 s2u2 s1s s1c s2c

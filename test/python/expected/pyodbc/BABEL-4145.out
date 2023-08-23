@@ -1,5 +1,5 @@
 
-starting permutation : { s1s s1u1 s2u2 s2c s1c }
+starting permutation : { s1s s1u1 s2u1 s1c s2c s1s }
 step s1s: SELECT * from child ORDER BY child_value ASC;
 ~~START~~
 int#!#int
@@ -10,14 +10,21 @@ int#!#int
 step s1u1: UPDATE child SET child_value = 12 where child_key = 1;
 ~~ROW COUNT: 1~~
 
-step s2u2: UPDATE child SET child_value = 5 where child_value >= 6
+step s2u1: UPDATE child SET child_value = 20 WHERE child_key in (SELECT TOP 1 child_key FROM child ORDER BY child_value DESC)
 ~~ROW COUNT: 1~~
 
-step s2c: COMMIT;
+step s1c: COMMIT;
 ~~ERROR (Code: 33557097)~~
 ~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]could not serialize access due to read/write dependencies among transactions (33557097) (SQLExecDirectW))~~
 
-step s1c: COMMIT;
+step s2c: COMMIT;
+step s1s: SELECT * from child ORDER BY child_value ASC;
+~~START~~
+int#!#int
+2#!#10
+1#!#12
+~~END~~
+
 
 starting permutation : { s1i s2i s1s s2s s2c s1c }
 step s1i: INSERT INTO child VALUES (3, 15);
