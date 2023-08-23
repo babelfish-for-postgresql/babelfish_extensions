@@ -208,7 +208,6 @@ CREATE TABLE sys.babelfish_extended_properties (
   value sys.sql_variant,
   PRIMARY KEY (dbid, type, schema_name, major_name, minor_name, name)
 );
-GRANT SELECT on sys.babelfish_extended_properties TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_extended_properties', '');
 
 CREATE OR REPLACE VIEW sys.extended_properties
