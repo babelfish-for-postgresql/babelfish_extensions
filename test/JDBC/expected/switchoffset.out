@@ -549,3 +549,66 @@ datetimeoffset
 ~~END~~
 
 
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 0x23)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 02:35:00.5000000 +00:35
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 435.678999)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 09:15:00.5000000 +07:15
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 43)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 02:43:00.5000000 +00:43
+~~END~~
+
+
+Select switchoffset('1900-05-06 13:59:29.998 -8:00', '-12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-06 09:59:29.9980000 -12:00
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 -00:00', '+12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-07 00:59:29.9980000 +12:00
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 -02:00', 234)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 18:53:29.9980000 +03:54
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 +10:00', -456)
+GO
+~~START~~
+datetimeoffset
+1900-05-05 19:23:29.9980000 -07:36
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 -00:00', 0x12)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:17:29.9980000 +00:18
+~~END~~
+

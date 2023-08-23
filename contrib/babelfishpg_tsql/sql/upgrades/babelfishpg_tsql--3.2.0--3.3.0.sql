@@ -959,13 +959,13 @@ BEGIN
 
     tzfm := sign_flag*((v_hr*60)+v_mi);
 
-    p_year := sys.datepart('year',input_expr);
-    p_month := sys.datepart('month',input_expr);
-    p_day := sys.datepart('day',input_expr);
-    p_hour := sys.datepart('hour',input_expr::TIMESTAMP);
-    p_minute := sys.datepart('minute',input_expr);
-    p_seconds := sys.datepart('second',input_expr);
-    p_tzoffset := -1*sys.datepart('tzoffset',input_expr);
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
 
     p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
     p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
@@ -1053,13 +1053,13 @@ BEGIN
     v_mi := tz_offset_smallint%60;
     
 
-    p_year := sys.datepart('year',input_expr);
-    p_month := sys.datepart('month',input_expr);
-    p_day := sys.datepart('day',input_expr);
-    p_hour := sys.datepart('hour',input_expr::TIMESTAMP);
-    p_minute := sys.datepart('minute',input_expr);
-    p_seconds := sys.datepart('second',input_expr);
-    p_tzoffset := -1*sys.datepart('tzoffset',input_expr);
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
 
     v_sign := (
         SELECT CASE

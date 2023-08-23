@@ -224,3 +224,26 @@ GO
 Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -840)
 GO
 
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 0x23)
+GO
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 435.678999)
+GO
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 43)
+GO
+
+Select switchoffset('1900-05-06 13:59:29.998 -8:00', '-12:00')
+GO
+
+Select switchoffset('1900-05-06 12:59:29.998 -00:00', '+12:00')
+GO
+
+Select switchoffset('1900-05-06 12:59:29.998 -02:00', 234)
+GO
+
+Select switchoffset('1900-05-06 12:59:29.998 +10:00', -456)
+GO
+
+Select switchoffset('1900-05-06 12:59:29.998 -00:00', 0x12)
+GO
