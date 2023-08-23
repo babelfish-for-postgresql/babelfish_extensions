@@ -921,16 +921,27 @@ tsql_func_select_candidate(int nargs,
 	return NULL;
 }
 
+static bool
+is_tsql_char_type_with_len(Oid type)
+{
+	common_utility_plugin *utilptr = common_utility_plugin_ptr;
+	return utilptr->is_tsql_bpchar_datatype(type) ||
+			utilptr->is_tsql_nchar_datatype(type) ||
+			utilptr->is_tsql_varchar_datatype(type) ||
+			utilptr->is_tsql_nvarchar_datatype(type);
+}
+
 static Node *
 tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
-								int32 targetTypeMod, int32 baseTypeMod,
-								Const *newcon, char *value,
+								int32 targetTypeMod, int32 *baseTypeMod,
+								Const *newcon, Const *oldcon,
 								CoercionContext ccontext, CoercionForm cformat,
 								int location)
 {
 	Oid			baseTypeId = newcon->consttype;
 	Type		baseType = typeidType(baseTypeId);
 	int32		inputTypeMod = newcon->consttypmod;
+	char		*value = DatumGetCString(oldcon->constvalue);
 
 	if (newcon->constisnull)
 	{
@@ -1045,7 +1056,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 							/* If target is a domain, apply constraints. */
 							if (baseTypeId != targetTypeId)
 								result = coerce_to_domain(result,
-														  baseTypeId, baseTypeMod,
+														  baseTypeId, *baseTypeMod,
 														  targetTypeId,
 														  ccontext, cformat, location,
 														  false);
@@ -1074,8 +1085,11 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		else
 		{
 			newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
-			// if (common_utility_plugin_ptr->is_tsql_varchar_datatype(targetTypeId))
-			// 	newcon->consttypmod = strlen(value) + VARHDRSZ;
+			if (is_tsql_char_type_with_len(targetTypeId))
+			{
+				newcon->consttypmod = oldcon->consttypmod;
+				*baseTypeMod = oldcon->consttypmod;
+			}
 		}
 	}
 
@@ -1089,21 +1103,28 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 }
 
 static bool
-is_tsql_char_type_with_len(Oid type)
+expr_is_null(Node *expr)
 {
-	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-	return utilptr->is_tsql_bpchar_datatype(type) ||
-			utilptr->is_tsql_nchar_datatype(type) ||
-			utilptr->is_tsql_varchar_datatype(type) ||
-			utilptr->is_tsql_nvarchar_datatype(type);
+	return IsA(expr, Const) && ((Const*)expr)->constisnull 
+				&& exprType(expr) == UNKNOWNOID;
 }
 
 static bool
-expr_is_null_or_unknown(Node *expr)
+is_tsql_str_const(Node *expr)
 {
 	Oid type = exprType(expr);
-	return type == UNKNOWNOID || (
-		IsA(expr, Const) && (type == TEXTOID || ((Const*)expr)->constisnull));
+	Const *constexpr;
+
+	if (expr_is_null(expr))
+		return false;
+
+	if (type != UNKNOWNOID || !IsA(expr, Const))
+		return false;
+
+	constexpr = (Const*) expr;
+	constexpr->consttypmod = 
+			strlen(DatumGetCString(constexpr->constvalue)) + VARHDRSZ;
+	return true;
 }
 
 static bool
@@ -1132,25 +1153,31 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 				  				Node **which_expr)
 {
 	Node		*result_expr = (Node*) linitial(exprs);
-	Oid			result_type = exprType(result_expr);
-	ListCell	*lc = list_second_cell(exprs);
+	Oid			result_type = InvalidOid;
+	ListCell	*lc;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
-	if ((!expr_is_null_or_unknown(result_expr) && !is_tsql_char_type_with_len(result_type)) )
+
+	/* Limit changes to Set Operations for now. We may want to expand to other callers in the future */
+	if (context && strcmp(context, "UNION") != 0 && strcmp(context, "INTERSECT") != 0 
+		&& strcmp(context, "INTERSECT") != 0 && strcmp(context, "VALUES") != 0)
 		return InvalidOid;
 
 	Assert(exprs != NIL);
-	for_each_cell(lc, exprs, lc)
+	foreach(lc, exprs)
 	{
 		Node	*expr = (Node *) lfirst(lc);
 		Oid		type = exprType(expr);
 
-		if (expr_is_null_or_unknown(expr))
+		if (expr_is_null(expr))
 			continue;
+		else if (is_tsql_str_const(expr))
+			type = common_utility_plugin_ptr->lookup_tsql_datatype_oid("varchar");
 		else if (!is_tsql_char_type_with_len(type))
 			return InvalidOid;
-		else if (tsql_has_higher_precedence(type, result_type) || expr_is_null_or_unknown(result_expr))
+		
+		if (tsql_has_higher_precedence(type, result_type) || result_type == InvalidOid)
 		{
 			result_expr = expr;
 			result_type = type;
@@ -1159,7 +1186,7 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 	if (which_expr)
 		*which_expr = result_expr;
-	return result_type == UNKNOWNOID ? InvalidOid : result_type;
+	return result_type;
 }
 
 static int32

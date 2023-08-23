@@ -16,6 +16,7 @@
 #include "nodes/primnodes.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_collate.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
@@ -316,7 +317,6 @@ pre_transform_setop_tree(SelectStmt *stmt, SelectStmt *leftmostSelect)
 		return;
 
 	leftmostSelect->sortClause = stmt->sortClause;
-	stmt->sortClause = NIL;
 }
 
 static void
@@ -327,9 +327,10 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	List 		*collist_list = NIL;
 	List		*topColTypes = NIL;
 	List		*topColTypmods = NIL;
+	List		*topColCollations = NIL;
 	ListCell	*collistl, *setopsl, *toptlistl;
-	Oid common_type;
-	int32 common_typmod;
+	Oid 		common_type, common_collation;
+	int32 		common_typmod;
 
 	while (setOpTreeStack)
 	{
@@ -383,10 +384,13 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 			col_exprs = lappend(col_exprs, (Node*)tle->expr);
 		}
 
-		common_type = select_common_type(pstate, col_exprs, NULL, NULL);
+		common_type = select_common_type(pstate, col_exprs, "UNION", NULL);
 		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
+		
+		list_free(col_exprs);
+		col_exprs = NIL;
 
 		foreach(lc, col_tles)
 		{
@@ -398,13 +402,18 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 									COERCE_IMPLICIT_CAST, -1);
 			if(coerced_expr)	/* Only coerce to target if implicit cast exists*/
 				tle->expr = coerced_expr;
+			col_exprs = lappend(col_exprs, (Node*)tle->expr);
 		}
+
+		common_collation = select_common_collation(pstate, col_exprs, false); // TODO ok for UNION ALL?
+		topColCollations = lappend_oid(topColCollations, common_collation);
+
 		Assert(IsA(top_expr, Var));
 		top_tle->expr = (Expr*) makeVar(top_expr->varno,
 									top_expr->varattno,
 									common_type,
 									common_typmod,
-									top_expr->varcollid,
+									common_collation,
 									0);
 		list_free(col_exprs);
 		list_free(col_tles);
@@ -415,6 +424,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		SetOperationStmt *sostmt = (SetOperationStmt*) lfirst(setopsl);
 		sostmt->colTypes = topColTypes;
 		sostmt->colTypmods = topColTypmods;
+		sostmt->colCollations = topColCollations;
 	}
 
 	list_free(collist_list);
@@ -429,8 +439,9 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
  * doesn't fill in the ressortgroupref field. 
  */
 void 
-post_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
+pre_transform_sort_clause(ParseState *pstate, Query *qry, List **sortClause, Query *leftmostQuery)
 {
+	List *order_expr_replacements = NIL;
 	ListCell *lc, *left_tlist;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
@@ -438,15 +449,33 @@ post_transform_sort_clause(ParseState *pstate, Query *qry, Query *leftmostQuery)
 
 	fix_setop_typmods(pstate, qry);
 
-	forboth(lc, qry->targetList, left_tlist, leftmostQuery->targetList)
+	foreach(lc, leftmostQuery->sortClause)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(lc);
-		TargetEntry *lefttle = (TargetEntry *) lfirst(left_tlist);
+		SortGroupClause *sortcl = (SortGroupClause*) lfirst(lc);
 
-		Assert(!lefttle->resjunk);
-		tle->ressortgroupref = lefttle->ressortgroupref;
+		/* Find the index of the corresponding TLE */
+		foreach(left_tlist, leftmostQuery->targetList)
+		{
+			TargetEntry *tle = (TargetEntry*) lfirst(left_tlist);
+			A_Const		*n;
+			if (tle->ressortgroupref != sortcl->tleSortGroupRef)
+				continue;
+			
+			n = makeNode(A_Const);
+			n->val.ival.type = T_Integer;
+			n->val.ival.ival = foreach_current_index(left_tlist) + 1;
+			n->location = -1;
+			order_expr_replacements = lappend(order_expr_replacements, n);
+		}
 	}
 
-	qry->sortClause = leftmostQuery->sortClause;
+	forboth(lc, *sortClause, left_tlist, order_expr_replacements)
+	{
+		SortBy *sortby = lfirst(lc);
+		A_Const *con = lfirst(left_tlist);
+
+		sortby->node = (Node*) con;
+	}
+
 	leftmostQuery->sortClause = NIL;
 }
