@@ -404,7 +404,7 @@ BEGIN
     END;
 
     
-    if v_hr > 14 or v_hr < -14 or (v_hr = 14 and v_mi > 0) THEN
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
     END IF; 
 
