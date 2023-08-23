@@ -13,7 +13,7 @@ int#!#int
 select * from babel_2805_vu_v2
 go
 ~~START~~
-int#!#text#!#nvarchar
+int#!#varchar#!#nvarchar
 1#!#col1#!#name
 2#!#col2#!#42
 ~~END~~

@@ -1,10 +1,10 @@
-SELECT * FROM babel3392_v1;
+SELECT * FROM babel3392_v1 ORDER BY 1;
 GO
 
-SELECT * FROM babel3392_v2;
+SELECT * FROM babel3392_v2 ORDER BY 1;
 GO
 
-SELECT * FROM babel3392_v3;
+SELECT * FROM babel3392_v3 ORDER BY 1;
 GO
 
 SELECT babel3392_v1.* , babel3392_v2.*, babel3392_v3.* FROM babel3392_v1, babel3392_v2, babel3392_v3
@@ -54,7 +54,6 @@ SELECT NULL AS Col1
 ORDER BY 1
 GO
 
--- Output type incorrect, should be fixed
 SELECT NULL AS Col1
 UNION
 SELECT CAST(1 AS BINARY(10)) AS Col1
@@ -931,13 +930,37 @@ GO
 
 SELECT 'foo'
 UNION
-SELECT 'bar'
+SELECT 'longer string'
 ORDER BY 1
 GO
 
 SELECT 'foo'
 UNION
 SELECT CAST('bar' AS VARCHAR(20))
+ORDER BY 1
+GO
+
+SELECT 'longer string'
+UNION
+SELECT CAST('foo' as CHAR(3))
+ORDER BY 1
+GO
+
+SELECT CAST('foo' as CHAR(3))
+UNION
+SELECT 'longer string'
+ORDER BY 1
+GO
+
+SELECT 'longer string'
+UNION
+SELECT CAST('ऌฒ' as NCHAR(2))
+ORDER BY 1
+GO
+
+SELECT CAST('ऌฒ' as NCHAR(2))
+UNION
+SELECT 'longer string'
 ORDER BY 1
 GO
 

@@ -3,7 +3,6 @@ AS
     SELECT NULL AS Col1
     UNION
     SELECT CAST('1' AS CHAR(10)) AS Col1
-    ORDER BY 1
 ;
 GO
 
@@ -12,7 +11,6 @@ AS
     SELECT CAST('1' AS CHAR(4)) AS Col1
     UNION
     SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
-    ORDER BY 1
 ;
 GO
 
@@ -23,6 +21,5 @@ AS
     SELECT NULL
     UNION
     SELECT CAST('1' AS CHAR(8))
-    ORDER BY 1
 ;
 GO

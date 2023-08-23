@@ -1,4 +1,4 @@
-SELECT * FROM babel3392_v1;
+SELECT * FROM babel3392_v1 ORDER BY 1;
 GO
 ~~START~~
 char
@@ -7,7 +7,7 @@ char
 ~~END~~
 
 
-SELECT * FROM babel3392_v2;
+SELECT * FROM babel3392_v2 ORDER BY 1;
 GO
 ~~START~~
 nchar
@@ -16,7 +16,7 @@ nchar
 ~~END~~
 
 
-SELECT * FROM babel3392_v3;
+SELECT * FROM babel3392_v3 ORDER BY 1;
 GO
 ~~START~~
 char
@@ -131,16 +131,15 @@ binary
 ~~END~~
 
 
--- Output type incorrect, should be fixed
 SELECT NULL AS Col1
 UNION
 SELECT CAST(1 AS BINARY(10)) AS Col1
 ORDER BY 1
 GO
 ~~START~~
-text
+binary
 <NULL>
-0x00000000000000000001
+00000000000000000001
 ~~END~~
 
 
@@ -763,7 +762,7 @@ SELECT a from babel3392_recursive_cte order by a
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: recursive query "babel3392_recursive_cte" column 1 has type text in non-recursive term but type bpchar(10) overall)~~
+~~ERROR (Message: recursive query "babel3392_recursive_cte" column 1 has type text in non-recursive term but type "varchar"(10) overall)~~
 
 
 
@@ -787,8 +786,8 @@ GO
 SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
 GO
 ~~START~~
-nchar
-ΘЖऌฒ           
+char
+????           
 ~~END~~
 
 
@@ -1016,7 +1015,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#-1
+babel4157_c1#!#80
 ~~END~~
 
 
@@ -1188,9 +1187,9 @@ GO
 SELECT * FROM babel4157_tbl ORDER BY 1
 GO
 ~~START~~
-char
+varchar
 char                                    
-string                                  
+string
 ~~END~~
 
 
@@ -1339,7 +1338,7 @@ SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
 GO
 ~~START~~
 varchar#!#smallint
-babel4157_c1#!#-1
+babel4157_c1#!#40
 ~~END~~
 
 
@@ -1573,9 +1572,9 @@ SELECT CAST('char' AS CHAR(15)) AS babel4157_c1
 ORDER BY 1
 GO
 ~~START~~
-char
+varchar
 char           
-string         
+string
 ~~END~~
 
 
@@ -1622,13 +1621,13 @@ char
 
 SELECT 'foo'
 UNION
-SELECT 'bar'
+SELECT 'longer string'
 ORDER BY 1
 GO
 ~~START~~
-text
-bar
+varchar
 foo
+longer string
 ~~END~~
 
 
@@ -1641,6 +1640,54 @@ GO
 varchar
 bar
 foo
+~~END~~
+
+
+SELECT 'longer string'
+UNION
+SELECT CAST('foo' as CHAR(3))
+ORDER BY 1
+GO
+~~START~~
+varchar
+foo
+longer string
+~~END~~
+
+
+SELECT CAST('foo' as CHAR(3))
+UNION
+SELECT 'longer string'
+ORDER BY 1
+GO
+~~START~~
+varchar
+foo
+longer string
+~~END~~
+
+
+SELECT 'longer string'
+UNION
+SELECT CAST('ऌฒ' as NCHAR(2))
+ORDER BY 1
+GO
+~~START~~
+nchar
+longer string
+ऌฒ           
+~~END~~
+
+
+SELECT CAST('ऌฒ' as NCHAR(2))
+UNION
+SELECT 'longer string'
+ORDER BY 1
+GO
+~~START~~
+nchar
+longer string
+ऌฒ           
 ~~END~~
 
 
@@ -1693,10 +1740,10 @@ int
 SELECT CAST('foo' AS TEXT) UNION SELECT CAST('bar' as CHAR(10)) UNION SELECT NULL ORDER BY 1;
 GO
 ~~START~~
-char
+text
 <NULL>
 bar       
-foo       
+foo
 ~~END~~
 
 
@@ -1718,9 +1765,9 @@ select cast(10 as binary(2))
 ORDER BY 1
 GO
 ~~START~~
-text
+binary
 <NULL>
-0x000a
+000A
 ~~END~~
 
 
@@ -1778,11 +1825,9 @@ UNION
 SELECT cast(17 as varbinary(2))
 ORDER BY 1
 GO
-~~START~~
-text
-0x0011
-foo
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
 
 
 SELECT cast(17 as varbinary(2))
@@ -1802,10 +1847,7 @@ UNION
 SELECT cast(17 as varbinary(2))
 ORDER BY 1
 GO
-~~START~~
-text
-0x0011
-bar
-foo
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: UNION could not convert type varbinary to "varchar")~~
 
