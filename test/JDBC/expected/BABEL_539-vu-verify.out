@@ -2,7 +2,7 @@ EXEC babel_539_prepare_proc
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'identity')~~
+~~ERROR (Message: IDENTITY() function in SELECT INTO is not supported.)~~
 
 
 DROP TABLE IF EXISTS babel_539NewTable_proc;
@@ -23,14 +23,14 @@ SELECT sys.IDENTITY(23, 1);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Incorrect syntax near ')')~~
+~~ERROR (Message: The IDENTITY function can only be used when the SELECT statement has an INTO clause.)~~
 
 
 SELECT IDENTITY(int, 21);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Incorrect syntax near ')')~~
+~~ERROR (Message: The IDENTITY function can only be used when the SELECT statement has an INTO clause.)~~
 
 
 SELECT sys.IDENTITY_INTO(23, 1, 1);
@@ -72,19 +72,19 @@ SELECT col1, IDENTITY(int,1,1) AS id_num INTO #babel_539NewTable1 FROM babel_539
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'identity')~~
+~~ERROR (Message: IDENTITY() function in SELECT INTO is not supported.)~~
 
 
 SELECT col1, IDENTITY(int, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'identity')~~
+~~ERROR (Message: IDENTITY() function in SELECT INTO is not supported.)~~
 
 
 SELECT col1, IDENTITY(int) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'identity')~~
+~~ERROR (Message: IDENTITY() function in SELECT INTO is not supported.)~~
 
