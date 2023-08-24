@@ -66,6 +66,8 @@ stmt_walker(PLtsql_stmt *stmt, WalkerFunc walker, void *context)
 		case PLTSQL_STMT_GOTO:
 		case PLTSQL_STMT_PRINT:
 			break;
+		case PLTSQL_STMT_KILL:
+			break;
 		case PLTSQL_STMT_INIT:
 			{
 				PLtsql_stmt_init *stmt_init = (PLtsql_stmt_init *) stmt;
@@ -179,6 +181,7 @@ general_walker_func(PLtsql_stmt *stmt, void *context)
 					/* TSQL-only statement types follow */
 						DISPATCH(GOTO, goto)
 						DISPATCH(PRINT, print)
+						DISPATCH(KILL, kill)
 						DISPATCH(INIT, init)
 						DISPATCH(QUERY_SET, query_set)
 						DISPATCH(TRY_CATCH, try_catch)
