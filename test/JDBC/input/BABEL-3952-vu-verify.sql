@@ -54,3 +54,37 @@ GO
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v19
 GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v20
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v21
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v22
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v23
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v24
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v25
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v26
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v27
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v28
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v29
+GO
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v30
+GO
+ 

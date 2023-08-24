@@ -54,3 +54,37 @@ GO
 
 DROP VIEW DATE_BUCKET_vu_prepare_v19;
 GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v20;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v21;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v22;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v23;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v24;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v25;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v26;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v27;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v28;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v29;
+GO
+ 
+DROP VIEW DATE_BUCKET_vu_prepare_v30;
+GO
+ 

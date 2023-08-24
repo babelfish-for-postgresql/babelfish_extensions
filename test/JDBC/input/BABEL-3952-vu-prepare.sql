@@ -1,5 +1,96 @@
--- test with date input 
+-- Test with null datepart
+-- Should Throw Error - 'syntax error at or near "null"'
+-- VIEW DATE_BUCKET_vu_prepare_v1 DATE_BUCKET_vu_prepare_v2 should not get created.
 CREATE VIEW DATE_BUCKET_vu_prepare_v1 AS (
+    select 
+        date_bucket(null, 2, cast('2020-01-01' as date)) as db
+    );
+GO
+CREATE VIEW DATE_BUCKET_vu_prepare_v2 AS (
+    select 
+        date_bucket(null, null, cast('2020-01-01' as date)) as db
+    );
+GO
+
+-- Test with invalid number argument
+-- Should Throw Error - 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.'
+CREATE VIEW DATE_BUCKET_vu_prepare_v3 AS (
+    select 
+        date_bucket(year, -2, cast('2020-01-01' as date)) as db
+    );
+GO
+
+-- Test with invalid number argument
+-- Should Throw Error - 'Argument data type NULL is invalid for argument 3 of Date_Bucket function.'
+CREATE VIEW DATE_BUCKET_vu_prepare_v4 AS (
+    select 
+        date_bucket(year, -2, null) as db1
+    );
+GO
+
+-- Test with null value for number argument
+-- Should Throw Error - 'Argument data type NULL is invalid for argument 2 of Date_Bucket function.'
+CREATE VIEW DATE_BUCKET_vu_prepare_v5 AS (
+    select 
+        date_bucket(year, null, cast('2020-01-01' as date)) as db1
+    );
+GO
+CREATE VIEW DATE_BUCKET_vu_prepare_v6 AS (
+    select 
+        date_bucket(year, null, '2020-01-01') as db2
+    );
+GO
+
+-- Test with null or invalid datatype for date argument
+-- Should Throw Error - 'Argument data type NULL is invalid for argument 3 of Date_Bucket function.'
+CREATE VIEW DATE_BUCKET_vu_prepare_v7 AS (
+    select 
+        date_bucket(year, 1, null) as db1
+    );
+GO
+-- Should throw Error - Argument data type text is invalid for argument 3 of Date_Bucket function.
+CREATE VIEW DATE_BUCKET_vu_prepare_v8 AS (
+    select 
+        date_bucket(year, 1, '2020-01-01') as db1
+    );
+GO
+
+-- test with time input with datepart IN (year, quarter, month, week, day)
+-- Raise ERROR - The datepart 'year' is not supported by date function date_bucket for data type time.
+CREATE VIEW DATE_BUCKET_vu_prepare_v9 AS (
+    SELECT 
+        DATE_BUCKET(year, 2, CAST('23:58:59' AS TIME)) AS YEARS_BUCKET
+    );
+GO
+
+-- test with date input with datepart IN (hour, minute, second, millisecond)
+-- Raise ERROR - The datepart 'hour' is not supported by date function date_bucket for data type date.'
+CREATE VIEW DATE_BUCKET_vu_prepare_v10 AS (
+    SELECT 
+        DATE_BUCKET(hour, 2, CAST('2000-01-01' AS DATE)) AS HOURS_BUCKET
+    );
+GO
+
+-- test with un-supported datepart. 
+-- RAISE ERROR - nanosecond is not a recognized Date_Bucket option.
+CREATE VIEW DATE_BUCKET_vu_prepare_v11 AS (
+    SELECT 
+        DATE_BUCKET(nanosecond, 2, CAST('2000-01-01 12:32:12.123' AS DATETIME2)) AS nanosecond_BUCKET
+    );
+GO
+
+
+-- test with number argument exceed range of positive int. 
+-- RAISE ERROR - Integer out of range
+CREATE VIEW DATE_BUCKET_vu_prepare_v12 AS (
+    SELECT 
+        DATE_BUCKET(DAY, 2147483648, CAST('2020-04-30 00:00:00' as datetime2)) AS DAYS_BUCKET
+    );
+GO
+
+-- TEST WITH DATE TYPE INPUT
+-- 1. without optional argument 'origin'
+CREATE VIEW DATE_BUCKET_vu_prepare_v13 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01' AS DATE)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01' AS DATE)) AS QUARTER_BUCKET,
@@ -8,8 +99,8 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v1 AS (
         DATE_BUCKET(week, 2, CAST('2000-01-01' AS DATE)) AS WEEKS_BUCKET
     );
 GO
-
-CREATE VIEW DATE_BUCKET_vu_prepare_v2 AS (
+-- 2. with optional argument 'origin' < 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v14 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01' AS DATE), CAST('1905-09-12' AS DATE)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01' AS DATE), CAST('1905-09-12' AS DATE)) AS QUARTER_BUCKET,
@@ -18,10 +109,20 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v2 AS (
         DATE_BUCKET(week, 2, CAST('2000-01-01' AS DATE), CAST('1905-09-12' AS DATE)) AS WEEKS_BUCKET
     );
 GO
+-- 3. with optional argument 'origin' > 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v15 AS (
+    SELECT 
+        DATE_BUCKET(year, 2, CAST('2000-01-01' AS DATE), CAST('2010-09-21' AS DATE)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('2000-01-01' AS DATE), CAST('2010-09-21' AS DATE)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('2000-01-01' AS DATE), CAST('2010-09-21' AS DATE)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('2000-01-01' AS DATE), CAST('2010-09-21' AS DATE)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('2000-01-01' AS DATE), CAST('2010-09-21' AS DATE)) AS WEEKS_BUCKET
+    );
+GO
 
-
--- test with datetime input
-CREATE VIEW DATE_BUCKET_vu_prepare_v3 AS (
+-- TEST WITH DATETIME INPUT
+-- 1. without optional argument 'origin'
+CREATE VIEW DATE_BUCKET_vu_prepare_v16 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS QUARTER_BUCKET,
@@ -34,8 +135,8 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v3 AS (
         DATE_BUCKET(millisecond, 2, CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS MILLISECONDS_BUCKET
     );
 GO
-
-CREATE VIEW DATE_BUCKET_vu_prepare_v4 AS (
+-- 2. with optional argument 'origin' < 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v17 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01 23:30:05.523' AS DATETIME), CAST('1910-09-12 23:45:10.432' AS DATETIME)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01 23:30:05.523' AS DATETIME), CAST('1910-09-12 23:45:10.432' AS DATETIME)) AS QUARTER_BUCKET,
@@ -48,9 +149,24 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v4 AS (
         DATE_BUCKET(millisecond, 2, CAST('2000-01-01 23:30:05.523' AS DATETIME), CAST('1910-09-12 23:45:10.432' AS DATETIME)) AS MILLISECONDS_BUCKET
     );
 GO
+-- 3. with optional argument 'origin' > 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v18 AS (
+    SELECT 
+        DATE_BUCKET(year, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS WEEKS_BUCKET,
+        DATE_BUCKET(hour, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('1910-09-12 23:45:10.432' AS DATETIME), CAST('2000-01-01 23:30:05.523' AS DATETIME)) AS MILLISECONDS_BUCKET
+    );
+GO
 
--- test with datetime2 input
-CREATE VIEW DATE_BUCKET_vu_prepare_v5 AS (
+-- TEST WITH datetime2 input
+-- 1. without optional argument 'origin'
+CREATE VIEW DATE_BUCKET_vu_prepare_v19 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS QUARTER_BUCKET,
@@ -63,8 +179,8 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v5 AS (
         DATE_BUCKET(millisecond, 2, CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS MILLISECONDS_BUCKET
     );
 GO
-
-CREATE VIEW DATE_BUCKET_vu_prepare_v6 AS (
+-- 2. with optional argument 'origin' < 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v20 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01 23:30:05.523456' AS DATETIME2), CAST('1915-08-15 22:35:05.422456' AS DATETIME2)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01 23:30:05.523456' AS DATETIME2), CAST('1915-08-15 22:35:05.422456' AS DATETIME2)) AS QUARTER_BUCKET,
@@ -77,39 +193,69 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v6 AS (
         DATE_BUCKET(millisecond, 2, CAST('2000-01-01 23:30:05.523456' AS DATETIME2), CAST('1915-08-15 22:35:05.422456' AS DATETIME2)) AS MILLISECONDS_BUCKET
     );
 GO
-
-
--- test with datetimeoffset input
-CREATE VIEW DATE_BUCKET_vu_prepare_v7 AS (
+--  3. with optional argument 'origin' > 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v21 AS (
     SELECT 
-        DATE_BUCKET(year, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS YEARS_BUCKET,
-        DATE_BUCKET(quarter, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS QUARTER_BUCKET,
-        DATE_BUCKET(month, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS MONTHS_BUCKET,
-        DATE_BUCKET(day, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS DAYS_BUCKET,
-        DATE_BUCKET(week, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS WEEKS_BUCKET,
-        DATE_BUCKET(hour, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS HOURS_BUCKET,
-        DATE_BUCKET(minute, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS MINUTES_BUCKET,
-        DATE_BUCKET(second, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS SECONDS_BUCKET,
-        DATE_BUCKET(millisecond, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET)) AS MILLISECONDS_BUCKET
+        DATE_BUCKET(year, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS WEEKS_BUCKET,
+        DATE_BUCKET(hour, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS MILLISECONDS_BUCKET
     );
 GO
 
-CREATE VIEW DATE_BUCKET_vu_prepare_v8 AS (
+
+-- TEST WITH datetimeoffset input
+-- 1. without optional argument 'origin'
+CREATE VIEW DATE_BUCKET_vu_prepare_v22 AS (
     SELECT 
-        DATE_BUCKET(year, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS YEARS_BUCKET,
-        DATE_BUCKET(quarter, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS QUARTER_BUCKET,
-        DATE_BUCKET(month, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS MONTHS_BUCKET,
-        DATE_BUCKET(day, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS DAYS_BUCKET,
-        DATE_BUCKET(week, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS WEEKS_BUCKET,
-        DATE_BUCKET(hour, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS HOURS_BUCKET,
-        DATE_BUCKET(minute, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS MINUTES_BUCKET,
-        DATE_BUCKET(second, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS SECONDS_BUCKET,
-        DATE_BUCKET(millisecond, 2, CAST('2000-01-01 12:25:32 +00:0' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +00:0' AS DATETIMEOFFSET)) AS MILLISECONDS_BUCKET
+        DATE_BUCKET(year, 2, CAST('2000-01-01 12:25:32 +02:00' AS DATETIMEOFFSET)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('2000-01-01 12:25:32 +09:20' AS DATETIMEOFFSET)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('2000-01-01 12:25:32 +13:10' AS DATETIMEOFFSET)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('2000-01-01 12:25:32 +10:23' AS DATETIMEOFFSET)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('2000-01-01 12:25:32 -10:32' AS DATETIMEOFFSET)) AS WEEKS_BUCKET,
+        DATE_BUCKET(hour, 2, CAST('2000-01-01 12:25:32 +12:08' AS DATETIMEOFFSET)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('2000-01-01 12:25:32 -08:10' AS DATETIMEOFFSET)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('2000-01-01 12:25:32 +00:00' AS DATETIMEOFFSET)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('2000-01-01 12:25:32 +11:00' AS DATETIMEOFFSET)) AS MILLISECONDS_BUCKET
+    );
+GO
+-- 2. with optional argument 'origin' < 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v23 AS (
+    SELECT 
+        DATE_BUCKET(year, 2, CAST('2000-01-01 12:25:32 +02:12' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +02:12' AS DATETIMEOFFSET)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('2000-01-01 12:25:32 +01:11' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +01:10' AS DATETIMEOFFSET)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('2000-01-01 12:25:32 +04:10' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +03:15' AS DATETIMEOFFSET)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('2000-01-01 12:25:32 -03:00' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +12:02' AS DATETIMEOFFSET)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('2000-01-01 12:25:32 -05:02' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 -02:24' AS DATETIMEOFFSET)) AS WEEKS_BUCKET,
+        DATE_BUCKET(hour, 2, CAST('2000-01-01 12:25:32 -01:05' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +03:29' AS DATETIMEOFFSET)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('2000-01-01 12:25:32 +00:09' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 -06:45' AS DATETIMEOFFSET)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('2000-01-01 12:25:32 +10:17' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +05:10' AS DATETIMEOFFSET)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('2000-01-01 12:25:32 +07:20' AS DATETIMEOFFSET), CAST('1920-03-22 13:20:31 +12:32' AS DATETIMEOFFSET)) AS MILLISECONDS_BUCKET
+    );
+GO
+-- 3. with optional argument 'origin' > 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v24 AS (
+    SELECT 
+        DATE_BUCKET(year, 2, CAST('1920-03-22 13:20:31 +02:12' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 -01:05' AS DATETIMEOFFSET)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('1920-03-22 13:20:31 +01:10' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 -03:00' AS DATETIMEOFFSET)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('1920-03-22 13:20:31 +03:15'  AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 -05:02' AS DATETIMEOFFSET)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('1920-03-22 13:20:31 +12:02' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +10:17' AS DATETIMEOFFSET)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('1920-03-22 13:20:31 -02:24' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +01:11' AS DATETIMEOFFSET)) AS WEEKS_BUCKET,
+        DATE_BUCKET(hour, 2, CAST('1920-03-22 13:20:31 +03:29' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 -05:02' AS DATETIMEOFFSET)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('1920-03-22 13:20:31 -06:45' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +04:10'  AS DATETIMEOFFSET)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('1920-03-22 13:20:31 +05:10' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +12:08' AS DATETIMEOFFSET)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('1920-03-22 13:20:31 +12:32' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +07:20' AS DATETIMEOFFSET)) AS MILLISECONDS_BUCKET
     );
 GO
 
---test with smalldatetime input
-CREATE VIEW DATE_BUCKET_vu_prepare_v9 AS (
+-- TEST WITH smalldatetime input
+-- 1. without optional argument 'origin'
+CREATE VIEW DATE_BUCKET_vu_prepare_v25 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS QUARTER_BUCKET,
@@ -122,8 +268,8 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v9 AS (
         DATE_BUCKET(millisecond, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS MILLISECONDS_BUCKET
     );
 GO
-
-CREATE VIEW DATE_BUCKET_vu_prepare_v10 AS (
+-- 2. with optional argument 'origin' < 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v26 AS (
     SELECT 
         DATE_BUCKET(year, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME), CAST('1909-02-11 21:55:56' AS SMALLDATETIME)) AS YEARS_BUCKET,
         DATE_BUCKET(quarter, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME), CAST('1909-02-11 21:55:56' AS SMALLDATETIME)) AS QUARTER_BUCKET,
@@ -136,13 +282,28 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v10 AS (
         DATE_BUCKET(millisecond, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME), CAST('1909-02-11 21:55:56' AS SMALLDATETIME)) AS MILLISECONDS_BUCKET
     );
 GO
+-- 3. with optional argument 'origin' > 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v27 AS (
+    SELECT 
+        DATE_BUCKET(year, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS YEARS_BUCKET,
+        DATE_BUCKET(quarter, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS QUARTER_BUCKET,
+        DATE_BUCKET(month, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS MONTHS_BUCKET,
+        DATE_BUCKET(day, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS DAYS_BUCKET,
+        DATE_BUCKET(week, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS WEEKS_BUCKET,
+        DATE_BUCKET(hour, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('1911-02-11 21:55:56' AS SMALLDATETIME), CAST('2000-01-01 23:58:59' AS SMALLDATETIME)) AS MILLISECONDS_BUCKET
+    );
+GO
 
 
 -- test with time input
 -- postgresql support time datatype till 6 digits after decimal point. 
 -- select DATE_BUCKET(hour, 2, CAST('23:58:59.5464469' AS TIME), CAST('12:23:56.8463639' AS TIME)) AS HOURS_BUCKET output of this query will differ from SQL server at the last digit
 -- SQL server output - 22:23:56.8463639 and babelfish output of T-sql endpoint = 22:23:56.8463640
-CREATE VIEW DATE_BUCKET_vu_prepare_v11 AS (
+-- 1. Without optiona argument 'origin'
+CREATE VIEW DATE_BUCKET_vu_prepare_v28 AS (
     SELECT 
         DATE_BUCKET(hour, 2, CAST('23:58:59' AS TIME)) AS HOURS_BUCKET,
         DATE_BUCKET(minute, 2, CAST('23:58:59' AS TIME)) AS MINUTES_BUCKET,
@@ -150,8 +311,8 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v11 AS (
         DATE_BUCKET(millisecond, 2, CAST('23:58:59' AS TIME)) AS MILLISECONDS_BUCKET
     );
 GO
-
-CREATE VIEW DATE_BUCKET_vu_prepare_v12 AS (
+-- 2. With optional argument 'origin' < 'date'
+CREATE VIEW DATE_BUCKET_vu_prepare_v29 AS (
     SELECT 
         DATE_BUCKET(hour, 2, CAST('23:58:59.546446' AS TIME), CAST('12:23:56.846363' AS TIME)) AS HOURS_BUCKET,
         DATE_BUCKET(minute, 2, CAST('23:58:59.546446' AS TIME), CAST('12:23:56.846363' AS TIME)) AS MINUTES_BUCKET,
@@ -159,70 +320,15 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v12 AS (
         DATE_BUCKET(millisecond, 2, CAST('23:58:59.546446' AS TIME), CAST('12:23:56.846363' AS TIME)) AS MILLISECONDS_BUCKET
     );
 GO
-
--- test with time input with datepart IN (year, quarter, month, week, day)
--- Raise ERROR - The datepart year is not supported by date function date_bucket for data type time.
-CREATE VIEW DATE_BUCKET_vu_prepare_v13 AS (
+-- 3. With optional argument 'origin' > 'date'
+-- DATE_BUCKET(millisecond, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS MILLISECONDS_BUCKET
+-- Output of above query in sql server is '12:23:56.8464460'  which is greater than date value '12:23:56.846363' - this behaviour should not happen. (ambiguous behavior) 
+-- Babelfish output is  12:23:56.8444460
+CREATE VIEW DATE_BUCKET_vu_prepare_v30 AS (
     SELECT 
-        DATE_BUCKET(year, 2, CAST('23:58:59' AS TIME)) AS YEARS_BUCKET,
-        DATE_BUCKET(quarter, 2, CAST('23:58:59' AS TIME)) AS QUARTER_BUCKET,
-        DATE_BUCKET(month, 2, CAST('23:58:59' AS TIME)) AS MONTHS_BUCKET,
-        DATE_BUCKET(day, 2, CAST('23:58:59' AS TIME)) AS DAYS_BUCKET,
-        DATE_BUCKET(week, 2, CAST('23:58:59' AS TIME)) AS WEEKS_BUCKET
+        DATE_BUCKET(hour, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS MILLISECONDS_BUCKET
     );
 GO
-
--- test with date input with datepart IN (hour, minute, second, millisecond)
--- Raise ERROR - The datepart hour is not supported by date function date_bucket for data type date.'
-CREATE VIEW DATE_BUCKET_vu_prepare_v14 AS (
-    SELECT 
-        DATE_BUCKET(hour, 2, CAST('2000-01-01' AS DATE)) AS HOURS_BUCKET,
-        DATE_BUCKET(minute, 2, CAST('2000-01-01' AS DATE)) AS MINUTES_BUCKET,
-        DATE_BUCKET(second, 2, CAST('2000-01-01' AS DATE)) AS SECONDS_BUCKET,
-        DATE_BUCKET(millisecond, 2, CAST('2000-01-01' AS DATE)) AS MILLISECONDS_BUCKET
-    );
-GO
-
--- test with un-supported datepart. 
--- RAISE ERROR - the datepart nanosecond is not supported by date_bucket function for the datatype.
-CREATE VIEW DATE_BUCKET_vu_prepare_v15 AS (
-    SELECT 
-        DATE_BUCKET(nanosecond, 2, CAST('2000-01-01 12:32:12.123' AS DATETIME2)) AS nanosecond_BUCKET,
-        DATE_BUCKET(microsecond, 2, CAST('2000-01-01 12:32:12.123' AS DATETIME2)) AS microsecond_BUCKET
-    );
-GO
-
--- test with negative number argument. 
--- RAISE ERROR - Invalid bucket width value passed to date_bucket function. Only positive values are allowed for number argument.
-CREATE VIEW DATE_BUCKET_vu_prepare_v16 AS (
-    SELECT 
-        DATE_BUCKET(hour, -2, CAST('2000-01-01' AS DATE)) AS HOURS_BUCKET,
-        DATE_BUCKET(minute, -2, CAST('2000-01-01' AS DATE)) AS MINUTES_BUCKET
-    );
-GO
-
--- test with number argument exceed range of positive int. 
--- RAISE ERROR - Integer out of range
-CREATE VIEW DATE_BUCKET_vu_prepare_v17 AS (
-    SELECT 
-        DATE_BUCKET(DAY, 2147483648, CAST('2020-04-30 00:00:00' as datetime2)) AS DAYS_BUCKET
-    );
-GO
-
-
--- test with TEXT type date datatype
--- RAISE ERROR - could not determine polymorphic type because input has type unknown
-CREATE VIEW DATE_BUCKET_vu_prepare_v18  AS (
-    SELECT 
-        DATE_BUCKET(DAY, 2, '2020-04-30') AS DAYS_BUCKET
-    );
-GO
-
-
--- test with @date and @origin date different datatype
-CREATE VIEW DATE_BUCKET_vu_prepare_v19 AS (
-    SELECT DATE_BUCKET(year, 2, CAST ('2020-04-30' as datetime), CAST('1979-09-02 12:12:12' as datetime2)) AS YEARS_BUCKET
-    );
-GO
-
-
