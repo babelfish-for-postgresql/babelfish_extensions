@@ -111,7 +111,6 @@ PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
-PG_FUNCTION_INFO_V1(test_isnull);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -2579,13 +2578,4 @@ EOMONTH(PG_FUNCTION_ARGS)
      */
     date = date2j(year, month, 1) - POSTGRES_EPOCH_JDATE - 1;
     PG_RETURN_DATEADT(date);
-}
-
-Datum
-test_isnull(PG_FUNCTION_ARGS)
-{
-	if (PG_ARGISNULL(0))
-		return PG_GETARG_DATUM(1);
-	else
-		return PG_GETARG_DATUM(0);
 }
