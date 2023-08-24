@@ -1558,6 +1558,10 @@ has_unique_nullable_constraint(ColumnDef *column)
 	return is_unique & !is_notnull;
 }
 
+/* has_nullable_constraint
+ *		Given a Column definition
+ *		return true if column does not have any NOT NULL constraint else false
+ */
 static bool
 has_nullable_constraint(ColumnDef *column)
 {
@@ -1581,6 +1585,10 @@ has_nullable_constraint(ColumnDef *column)
 	return !is_notnull;
 }
 
+/* is_nullable_constraint
+ *		Given a Constraint
+ *		return true if atleast one of the attribute in the constraint is nullable else false
+ */
 static bool
 is_nullable_constraint(Constraint *cst, Oid rel_oid)
 {
@@ -1647,6 +1655,10 @@ get_attnotnull(Oid relid, AttrNumber attnum)
 	return false;
 }
 
+/* is_nullable_index
+ *		Given an Index Statement
+ *		return true if atleast one of the attribute in the index is nullable else false
+ */
 static bool
 is_nullable_index(IndexStmt *stmt)
 {
