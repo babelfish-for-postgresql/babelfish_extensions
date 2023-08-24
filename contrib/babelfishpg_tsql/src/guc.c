@@ -1182,7 +1182,7 @@ define_custom_variables(void)
 							 &pltsql_enable_repeatable_read_isolation_level,
 							 false,
 							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE ,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_serializable_isolation_level",
@@ -1191,7 +1191,7 @@ define_custom_variables(void)
 							 &pltsql_enable_serializable_isolation_level,
 							 false,
 							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE ,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 }
 

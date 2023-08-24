@@ -4244,7 +4244,8 @@ tsql_IsolationLevelStr:
 				}
 			| REPEATABLE READ
 				{
-					if(pltsql_enable_repeatable_read_isolation_level){
+					if(pltsql_enable_repeatable_read_isolation_level)
+					{
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						$$ = "repeatable read";	
 					}
@@ -4264,7 +4265,8 @@ tsql_IsolationLevelStr:
 				}
 			| SERIALIZABLE
 				{
-					if(pltsql_enable_serializable_isolation_level){
+					if(pltsql_enable_serializable_isolation_level)
+					{
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
 						$$ = "serializable";
 					}
