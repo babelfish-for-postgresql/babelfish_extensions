@@ -349,4 +349,3 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
     pfree(state);
     SRF_RETURN_DONE(fctx);
 }
-

@@ -22,8 +22,9 @@ test_int4_fixeddecimal_ge(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
-        bool expected = (val1[i] >= val2[i]);
+    for (int i = 0; i < numValues; i++) 
+    {
+        bool expected = (val1[i] <= val2[i]);
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
 
@@ -51,7 +52,8 @@ test_int4_fixeddecimal_le(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] <= val2[i]);
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_le, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -80,7 +82,8 @@ test_int4_fixeddecimal_ne(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] != val2[i]);
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_ne, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -109,7 +112,8 @@ test_int4_fixeddecimal_eq(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] == val2[i]);
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_eq, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -138,7 +142,8 @@ test_int4_fixeddecimal_lt(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] < val2[i]);
         Datum temp = DirectFunctionCall2(int4_fixeddecimal_lt, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -170,7 +175,8 @@ test_int4_fixeddecimal_cmp(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         Datum val1_datum = Int32GetDatum(val1[i]);
         Datum val2_datum = Int32GetDatum(val2[i]);
 
@@ -254,7 +260,8 @@ test_fixeddecimal_int2_ge(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] >= val2[i]);
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -283,7 +290,8 @@ test_fixeddecimal_int2_le(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] <= val2[i]);
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_le, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -312,7 +320,8 @@ test_fixeddecimal_int2_gt(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] > val2[i]);
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -341,7 +350,8 @@ test_fixeddecimal_int2_ne(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         bool expected = (val1[i] != val2[i]);
         Datum temp = DirectFunctionCall2(fixeddecimal_int2_ge, Int32GetDatum(val1[i]), Int32GetDatum(val2[i]));
         bool obtained = DatumGetBool(temp);  
@@ -358,7 +368,7 @@ test_fixeddecimal_int2_ne(void)
 TestResult*
 test_fixeddecimal_int2_cmp(void)
 {
-     /*
+    /*
      * This function compares val1 and val2.
      * val1 > val2 then result will be 1
      * val1 == val2 then result will be 0
@@ -373,7 +383,8 @@ test_fixeddecimal_int2_cmp(void)
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    for (int i = 0; i < numValues; i++) {
+    for (int i = 0; i < numValues; i++) 
+    {
         Datum val1_datum = Int32GetDatum(val1[i]);
         Datum val2_datum = Int32GetDatum(val2[i]);
 
