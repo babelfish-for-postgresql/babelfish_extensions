@@ -45,7 +45,7 @@ jobs:
         if: always() && steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
-          echo | sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql -o ~/psql/output.out
+          sudo ~/psql/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql > >(tee ~/psql/output.out) 
           count=$(awk -F '|' '$2 ~ /fail/'  ~/psql/output.out  | wc -l)
           if [ "$count" -gt 0 ]; then
             echo "Tests failed: $count"
