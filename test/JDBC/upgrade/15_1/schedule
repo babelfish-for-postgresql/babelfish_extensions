@@ -189,6 +189,7 @@ ISC-Columns
 ISC-Table_Constraints
 ISC-Tables
 is_srvrolemember
+key_column_usage
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
 msdb-dbo-syspolicy_system_health_state
