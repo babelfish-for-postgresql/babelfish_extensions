@@ -3528,6 +3528,26 @@ RETURNS SETOF RECORD
 AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;
 
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+    BEGIN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
+
+
 -- Another defination of date_bucket() to match error messages for unknown date datatype as ANYELEMNT does not support unknown datatype.
 CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
 AS 
