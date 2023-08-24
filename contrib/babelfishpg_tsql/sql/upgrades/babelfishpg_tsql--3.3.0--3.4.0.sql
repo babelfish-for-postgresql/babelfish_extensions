@@ -38,7 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
--- 3531 "sql/sys_functions.sql"
+-- 3551 "sql/sys_functions.sql"
 -- Another defination of date_bucket() to match error messages for unknown date datatype as ANYELEMNT does not support unknown datatype.
 CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
 AS 
