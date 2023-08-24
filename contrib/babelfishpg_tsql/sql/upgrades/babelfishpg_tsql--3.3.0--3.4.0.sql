@@ -38,6 +38,60 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
+	SELECT 
+		CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+	    CAST(sys.schema_name() AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+	    CAST(ss.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+	    CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+	    CAST(sys.schema_name() AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    	CAST(ss.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST((ss.x).n AS int) AS "ORDINAL_POSITION"
+
+ 	FROM 
+ 		pg_attribute a, (
+ 		SELECT 
+			r.oid AS roid,
+            r.relname,
+            r.relowner,
+			nc.nspname AS nc_nspname,
+            nc.oid AS nc_schemaoid,
+            nr.nspname AS nr_nspname,
+			nr.oid AS nr_schematableoid,
+            c.oid AS coid,
+            c.conname,
+            c.contype,
+            c.conindid,
+            c.confkey,
+            c.confrelid,
+            information_schema._pg_expandarray(c.conkey) AS x
+
+        FROM 
+ 			pg_namespace nr,
+         	pg_class r,
+            pg_namespace nc,
+            pg_constraint c,
+            sys.pg_namespace_ext t
+
+        WHERE 
+ 			nr.oid = r.relnamespace 
+           	AND r.oid = c.conrelid 
+           	AND nc.oid = c.connamespace 
+           	AND nr.nspname = t.nspname
+           	AND (c.contype = ANY (ARRAY['p'::"char", 'u'::"char", 'f'::"char"])) 
+           	AND (r.relkind = ANY (ARRAY['r'::"char", 'p'::"char"])) 
+           	AND NOT pg_is_other_temp_schema(nr.oid)
+ 		) ss
+		
+ 	WHERE 
+ 		ss.roid = a.attrelid 
+   		AND a.attnum = (ss.x).x 
+   		AND NOT a.attisdropped 
+   		AND (pg_has_role(ss.relowner, 'USAGE'::text) OR has_column_privilege(ss.roid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text));
+
+GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
