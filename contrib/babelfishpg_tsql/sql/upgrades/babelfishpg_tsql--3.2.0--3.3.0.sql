@@ -77,6 +77,18 @@ GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_3_0');
 
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
+	"@tsql" sys.nvarchar(8000),
+    "@params" sys.nvarchar(8000) = NULL, 
+    "@browse_information_mode" sys.tinyint = 0)
+AS $$
+BEGIN
+	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode) order by column_ordinal;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
@@ -427,23 +439,26 @@ GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC
 -- sp_babelfish_autoformat is a helper procedure which formats the contents of a table (or view)
 -- as narrowly as possible given its actual column contents.
 -- This proc is currently only used by sp_who but could be applied more generically.
--- A complication is that the metadata from #tmp tables cannot be found in the babelfish
+-- A complication is that the metadata for #tmp tables cannot be found in the babelfish
 -- catalogs, so we have to use some trickery to make things work.
 -- Not all datatypes are handled as well as might be possible, but it is sufficient for 
 -- the current purposes.
+-- Note that this proc may increase the response time for the first execution of sp_who, but 
+-- we are looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
+-- is very unlikely to be part of performance-critical workload.
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
-	IN "@tab"        VARCHAR(257) DEFAULT NULL,
-	IN "@orderby"    VARCHAR(1000) DEFAULT '',
+	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
+	IN "@orderby"    sys.VARCHAR(1000) DEFAULT '',
 	IN "@printrc"    sys.bit DEFAULT 1,
-	IN "@hiddencols" VARCHAR(1000) DEFAULT NULL)
+	IN "@hiddencols" sys.VARCHAR(1000) DEFAULT NULL)
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
 	SET NOCOUNT ON
 	DECLARE @rc INT
 	DECLARE @id INT
-	DECLARE @objtype VARCHAR(2)	
-	DECLARE @msg VARCHAR(200)	
+	DECLARE @objtype sys.VARCHAR(2)	
+	DECLARE @msg sys.VARCHAR(200)	
 	
 	IF @tab IS NULL
 	BEGIN
@@ -459,15 +474,18 @@ BEGIN
 	
 	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
 	-- their existence other than by trying to select from them
-	-- NB: not handling uncommon but valid syntax '<schemaname>.#tmp' for #tmp tables
-	IF SUBSTRING(@tab,1,1) <> '#'
+	-- Function sys.babelfish_get_enr_list() could be used to determine if a #tmp table
+	-- exists but the columns and datatypes can still not be retrieved, it would be of 
+	-- little use here. 
+	-- NB: not handling uncommon but valid T-SQL syntax '<schemaname>.#tmp' for #tmp tables
+	IF sys.SUBSTRING(@tab,1,1) <> '#'
 	BEGIN
-		SET @id = OBJECT_ID(@tab)
+		SET @id = sys.OBJECT_ID(@tab)
 		IF @id IS NULL
 		BEGIN
-			IF SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			IF sys.SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
 			BEGIN
-				SET @id = OBJECT_ID('SYS.' + SUBSTRING(@tab,5))
+				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
 			END
 			IF @id IS NULL
 			BEGIN		
@@ -478,8 +496,8 @@ BEGIN
 		END
 	END
 	
-	SELECT @objtype = type FROM sys.sysobjects WHERE id = @id
-	IF @objtype NOT IN  ('U', 'S', 'V')
+	SELECT @objtype = type COLLATE DATABASE_DEFAULT FROM sys.sysobjects WHERE id = @id 
+	IF @objtype NOT IN ('U', 'S', 'V') 
 	BEGIN
 		SET @msg = ''''+@tab+''' is not a table or view'
 		RAISERROR(@msg, 16, 1)
@@ -499,119 +517,132 @@ BEGIN
 	
 	-- columns to hide in final client output
 	-- assuming delimited column names do not contain spaces or commas inside the name
-	WHILE (CHARINDEX(' ,', @hiddencols) > 0) or (CHARINDEX(', ', @hiddencols) > 0)
+	-- remove any spaces around the commas:
+	WHILE (sys.CHARINDEX(' ,', @hiddencols) > 0) or (sys.CHARINDEX(', ', @hiddencols) > 0)
 	BEGIN
-		SET @hiddencols = UPPER(REPLACE(@hiddencols, ' ,', ','))
-		SET @hiddencols = UPPER(REPLACE(@hiddencols, ', ', ','))
+		SET @hiddencols = sys.REPLACE(@hiddencols, ' ,', ',')
+		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
 	END
-	IF LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+	SET @hiddencols = UPPER(@hiddencols)	
 
 	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
 	-- access the metadata in case a #tmp table is passed as argument
-	-- But when we copy the #tmp table into another table, we do get all the attributes and metadata
-	DECLARE @tmptab VARCHAR(63) = 'sp_babelfish_autoformat' + REPLACE(NEWID(), '-', '')
-	DECLARE @tmptab2 VARCHAR(63) = 'sp_babelfish_autoformat' + REPLACE(NEWID(), '-', '')
-	DECLARE @cmd VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
-	EXECUTE(@cmd)
-
-	-- Get the columns
-	SELECT 
-	   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
-	INTO #sp_bbf_autoformat
-	FROM sys.syscolumns c left join sys.systypes t 
-	ON c.xusertype = t.xusertype		
-	WHERE c.id = object_id(@tmptab)
-	ORDER BY c.colid
-
-	-- Get max length for each column based on the data
-	DECLARE @colname VARCHAR(63), @basetype VARCHAR(63), @maxlen int
-	DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
-	OPEN c
-	WHILE 1=1
-	BEGIN
-		FETCH c INTO @colname, @basetype, @maxlen
-		IF @@fetch_status <> 0 BREAK
-		SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(LEN(CAST([' + @colname + '] AS VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+	-- But when we copy the #tmp table into another table, we get all the attributes and metadata
+	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(NEWID(), '-', '')
+	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(NEWID(), '-', '')
+	DECLARE @cmd sys.VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
+	
+	BEGIN TRY
+		-- create the first work table
 		EXECUTE(@cmd)
-	END
-	CLOSE c
-	DEALLOCATE c
 
-	-- Generate the final SELECT
-	DECLARE @selectlist VARCHAR(8000) = ''
-	DECLARE @collist VARCHAR(8000) = ''
-	DECLARE @fmtstart VARCHAR(30) = ''
-	DECLARE @fmtend VARCHAR(30) = ''
-	OPEN c
-	WHILE 1=1
-	BEGIN
-		FETCH c INTO @colname, @basetype, @maxlen
-		IF @@fetch_status <> 0 BREAK
-		IF LEN(@colname) > @maxlen SET @maxlen = LEN(@colname)
-		IF @maxlen <= 0 SET @maxlen = 1
-		
-		IF (CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+		-- Get the columns
+		SELECT 
+		   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
+		INTO #sp_bbf_autoformat
+		FROM sys.syscolumns c left join sys.systypes t 
+		ON c.xusertype = t.xusertype		
+		WHERE c.id = sys.OBJECT_ID(@tmptab)
+		ORDER BY c.colid
+
+		-- Get max length for each column based on the data
+		DECLARE @colname sys.VARCHAR(63), @basetype sys.VARCHAR(63), @maxlen int
+		DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
+		OPEN c
+		WHILE 1=1
 		BEGIN
-			SET @selectlist += ' [' + @colname + '],'			
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(sys.LEN(CAST([' + @colname + '] AS sys.VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+			EXECUTE(@cmd)
 		END
-		ELSE 
+		CLOSE c
+		DEALLOCATE c
+
+		-- Generate the final SELECT
+		DECLARE @selectlist sys.VARCHAR(8000) = ''
+		DECLARE @collist sys.VARCHAR(8000) = ''
+		DECLARE @fmtstart sys.VARCHAR(30) = ''
+		DECLARE @fmtend sys.VARCHAR(30) = ''
+		OPEN c
+		WHILE 1=1
 		BEGIN
-			SET @fmtstart = ''
-			SET @fmtend = ''
-			IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
+			IF @maxlen <= 0 SET @maxlen = 1
+			
+			IF (sys.CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
 			BEGIN
-				SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS VARCHAR)+')+'
-				SET @fmtend = ','+CAST(@maxlen AS VARCHAR)+') AS VARCHAR(' + CAST(@maxlen AS VARCHAR) + '))'
+				SET @selectlist += ' [' + @colname + '],'			
 			END
+			ELSE 
+			BEGIN
+				SET @fmtstart = ''
+				SET @fmtend = ''
+				IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+				BEGIN
+					SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS sys.VARCHAR)+')+'
+					SET @fmtend = ','+CAST(@maxlen AS sys.VARCHAR)+') AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'
+				END
 
-			SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS VARCHAR(' + CAST(@maxlen AS VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
-			SET @collist += '['+@colname + '],'
+				SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
+				SET @collist += '['+@colname + '],'
+			END
 		END
-	END
-	CLOSE c
-	DEALLOCATE c
+		CLOSE c
+		DEALLOCATE c
 
-	-- Remove redundant commas
-	SET @collist = SUBSTRING(@collist, 1, LEN(@collist)-1)
-	SET @selectlist = SUBSTRING(@selectlist, 1, LEN(@selectlist)-1)	
-	SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
-	EXECUTE(@selectlist)
-	EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
-	
-	-- PRINT rowcount
-	SET @rc = @@rowcount
-	IF @printrc = 1
-	BEGIN
-		PRINT '   '
-		SET @cmd = '(' + CAST(@rc AS VARCHAR) + ' rows affected)'
-		PRINT @cmd
-	END
-	
-	-- Cleanup
-	EXECUTE('DROP TABLE ' + @tmptab)
-	EXECUTE('DROP TABLE ' + @tmptab2)
+		-- Remove redundant commas
+		SET @collist = sys.SUBSTRING(@collist, 1, sys.LEN(@collist)-1)
+		SET @selectlist = sys.SUBSTRING(@selectlist, 1, sys.LEN(@selectlist)-1)	
+		SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
+		
+		-- create the second work table
+		EXECUTE(@selectlist)
+		
+		-- perform the final SELECT to generate the result set for the client
+		EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
+			
+		-- PRINT rowcount if desired
+		SET @rc = @@rowcount
+		IF @printrc = 1
+		BEGIN
+			PRINT '   '
+			SET @cmd = '(' + CAST(@rc AS sys.VARCHAR) + ' rows affected)'
+			PRINT @cmd
+		END
+		
+		-- Cleanup: these work tables are permanent tables after all
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)	
+	END TRY	
+	BEGIN CATCH
+		-- Cleanup in case of an unexpected error
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)		
+	END CATCH
+
 	RETURN
 END
 $$;
-GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN VARCHAR(257), IN VARCHAR(1000), sys.bit, VARCHAR(1000)) TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN sys.VARCHAR(257), IN sys.VARCHAR(1000), sys.bit, sys.VARCHAR(1000)) TO PUBLIC;
 
 
 -- sp_who presents the contents of sysprocesses in a human-readable format.
 -- With 'postgres' as argument or with optional second argument as 'postgres',
 -- active PG connections will also be reported; by default only TDS connections are reported.
--- Since sp_who calls sp_babelfish_autoformat, this may lead to increased execution time, 
--- especially for the first execution. This is deliberate since we are prioritizing ease 
--- of use by making the output easy to read..
 CREATE OR REPLACE PROCEDURE sys.sp_who(
 	IN "@loginame" sys.sysname DEFAULT NULL,
-	IN "@option"   VARCHAR(30) DEFAULT NULL)
+	IN "@option"   sys.VARCHAR(30) DEFAULT NULL)
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
 	SET NOCOUNT ON
-	DECLARE @msg VARCHAR(200)
+	DECLARE @msg sys.VARCHAR(200)
 	DECLARE @show_pg BIT = 0
-	DECLARE @hide_col VARCHAR(50) 
+	DECLARE @hide_col sys.VARCHAR(50) 
 	
 	IF @option IS NOT NULL
 	BEGIN
@@ -622,17 +653,20 @@ BEGIN
 		END
 	END
 	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
 	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
 	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
-	UPDATE #sp_who_tmp SET query = REPLACE(query,  chr(9), ' ')
-	UPDATE #sp_who_tmp SET query = REPLACE(query,  chr(10), ' ')
-	UPDATE #sp_who_tmp SET query = REPLACE(query,  chr(13), ' ')
-	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE CHARINDEX('  ',query)>0) > 0 
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
+	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE sys.CHARINDEX('  ',query)>0) > 0 
 	BEGIN
-		UPDATE #sp_who_tmp SET query = REPLACE(query, '  ', ' ')
+		UPDATE #sp_who_tmp SET query = sys.REPLACE(query, '  ', ' ')
 	END
 
 	-- Determine type of stmt to report by sp_who: very basic only
@@ -644,35 +678,37 @@ BEGIN
 			WHEN PATINDEX('%[^a-zA-Z0-9_]DELETE[^a-zA-Z0-9_]%', query) > 0 THEN 'DELETE'
 			WHEN PATINDEX('%[^a-zA-Z0-9_]INSERT[^a-zA-Z0-9_]%', query) > 0 THEN 'INSERT'
 			WHEN PATINDEX('%[^a-zA-Z0-9_]SELECT[^a-zA-Z0-9_]%', query) > 0 THEN 'SELECT'
-			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN SUBSTRING(query,1,CHARINDEX('CREATE ', query))
-			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN SUBSTRING(query,1,CHARINDEX('ALTER ', query))
-			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN SUBSTRING(query,1,CHARINDEX('DROP ', query))
-			ELSE SUBSTRING(query, 1, CHARINDEX(' ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]WAITFOR[^a-zA-Z0-9_]%', query) > 0 THEN 'WAITFOR'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('CREATE ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('ALTER ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('DROP ', query))
+			ELSE sys.SUBSTRING(query, 1, sys.CHARINDEX(' ', query))
 		END
 
 	UPDATE #sp_who_tmp 
-	SET query = SUBSTRING(query,1, 8-1 + CHARINDEX(' ', SUBSTRING(query,8,99)))
-	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %' 
+	SET query = sys.SUBSTRING(query,1, 8-1 + sys.CHARINDEX(' ', sys.SUBSTRING(query,8,99)))
+	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %'	
 
 	-- The executing spid is always shown as doing a SELECT
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
 	UPDATE #sp_who_tmp SET query = TRIM(query)
 
-	-- Get all connections
+	-- Get all current connections
 	SELECT 
 		spid, 
 		MAX(blocked) AS blocked, 
 		0 AS ecid, 
-		CAST('' AS VARCHAR(100)) AS status,
-		CAST('' AS VARCHAR(100)) AS loginname,
-		CAST('' AS VARCHAR(100)) AS hostname,
+		CAST('' AS sys.VARCHAR(100)) AS status,
+		CAST('' AS sys.VARCHAR(100)) AS loginname,
+		CAST('' AS sys.VARCHAR(100)) AS hostname,
 		0 AS dbid,
-		CAST('' AS VARCHAR(100)) AS cmd,
+		CAST('' AS sys.VARCHAR(100)) AS cmd,
 		0 AS request_id,
-		CAST('TDS' AS VARCHAR(20)) AS connection
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
 	INTO #sp_who_proc
-	FROM sys.sysprocesses
-		GROUP BY spid, status
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status, hostprocess		
 		
 	-- Add attributes to each connection
 	UPDATE #sp_who_proc
@@ -682,13 +718,14 @@ BEGIN
 		hostname = sp.hostname,
 		dbid = sp.dbid,
 		request_id = sp.request_id
-	FROM sys.sysprocesses sp
+	FROM #sp_who_sysprocesses sp
 		WHERE #sp_who_proc.spid = sp.spid				
 
-	-- identify PG connections
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
 	UPDATE #sp_who_proc
 	SET connection = 'PostgreSQL'
-	WHERE dbid = 0
+	WHERE hostprocess IS NULL 
 
 	-- Keep or delete PG connections
 	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
@@ -727,7 +764,7 @@ BEGIN
 			RETURN
 		END
 		
-		IF (ISNUMERIC(@loginame) = 1)
+		IF (sys.ISNUMERIC(@loginame) = 1)
 		BEGIN
 			-- Remove all connections except the specified one
 			DELETE #sp_who_proc
@@ -744,7 +781,7 @@ BEGIN
 			ELSE 
 			BEGIN
 				-- Verify the specified login name exists
-				IF (SUSER_ID(@loginame) IS NULL)
+				IF (sys.SUSER_ID(@loginame) IS NULL)
 				BEGIN
 					SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
 					RAISERROR(@msg, 16, 1)
@@ -754,7 +791,7 @@ BEGIN
 				BEGIN
 					-- Keep only connections for the specified login
 					DELETE #sp_who_proc
-					WHERE SUSER_ID(loginname) <> SUSER_ID(@loginame)
+					WHERE sys.SUSER_ID(loginname) <> sys.SUSER_ID(@loginame)
 				END
 			END
 		END
@@ -764,12 +801,12 @@ BEGIN
 	SELECT distinct 
 		p.spid AS spid, 
 		p.ecid AS ecid, 
-		CAST(LEFT(p.status,20) AS VARCHAR(20)) AS status,
-		CAST(LEFT(p.loginname,40) AS VARCHAR(40)) AS loginame,
-		CAST(LEFT(p.hostname,60) AS VARCHAR(60)) AS hostname,
+		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
 		p.blocked AS blk, 
-		CAST(LEFT(db_name(p.dbid),40) AS VARCHAR(40)) AS dbname,
-		CAST(LEFT(#sp_who_tmp.query,30)as VARCHAR(30)) AS cmd,
+		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
 		p.request_id AS request_id,
 		connection
 	INTO #sp_who_tmp2
@@ -787,142 +824,24 @@ BEGIN
 	WHERE TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
 	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
 	RETURN
 END	
 $$;
-GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN VARCHAR(30)) TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
--- tsql full-text search configurations for Babelfish
--- Since currently we only support one language - American English, 
--- this configuration is for American English only
-CREATE TEXT SEARCH DICTIONARY fts_contains_dict (
-    TEMPLATE = simple,
-    STOPWORDS = tsql_contains
-);
-
-COMMENT ON TEXT SEARCH DICTIONARY fts_contains_dict IS 'Babelfish T-SQL full text search CONTAINS dictionary (currently we only support American English)';
-
-CREATE TEXT SEARCH CONFIGURATION fts_contains ( COPY = simple );
-
-COMMENT ON TEXT SEARCH CONFIGURATION fts_contains IS 'Babelfish T-SQL full text search CONTAINS configuration (currently we only support American English)';
-
-ALTER TEXT SEARCH CONFIGURATION fts_contains
-    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart,
-                      word, hword, hword_part
-    WITH fts_contains_dict;
-
--- This function performs string rewriting for the full text search CONTAINS predicate
--- in Babelfish
--- For example, a T-SQL query 
--- SELECT * FROM t WHERE CONTAINS(txt, '"good old days"')
--- is rewritten into a Postgres query 
--- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
--- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
--- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
--- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
-CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
-  RETURNS TEXT AS
-$$
-DECLARE
-  orig_phrase text;
-  joined_text text;
-  word text;
-BEGIN
-  orig_phrase = phrase;
-
-  -- generation term not supported
-  IF (phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF[ ]*\(%\)%' COLLATE C) THEN
-    RAISE EXCEPTION 'Generation term not supported';
-  END IF;
-
-  -- boolean operators not supported
-  IF position(('&' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('|' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('&!' COLLATE C) IN (phrase COLLATE "C")) <> 0 THEN
-    RAISE EXCEPTION 'Boolean operators not supported';
-  END IF;
-
-  IF position((' AND ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' OR ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' AND NOT ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 THEN
-    RAISE EXCEPTION 'Boolean operators not supported';
-  END IF;
-
-  -- Initialize the joined_text variable
-  joined_text := '';
-
-  -- Strip leading and trailing spaces from the phrase
-  phrase := trim(phrase COLLATE "C") COLLATE "C";
-
-  -- no rewriting is needed if the query is a single word
-  IF position((' ' COLLATE C) IN (phrase COLLATE "C")) = 0 AND position(('"' COLLATE C) IN UPPER(phrase COLLATE "C")) = 0 THEN
-    RETURN phrase;
-  END IF;
-
-  -- rewrite phrase queries 
-  -- '"word1 word2 word3"' is rewritten into 'word1<->word2<->word3'
-
-  -- Check if the phrase is surrounded by double quotes
-  IF position(('"' COLLATE "C") IN (phrase COLLATE "C") ) <> 1 OR position(('"' COLLATE "C") IN (reverse(phrase) COLLATE "C")) <> 1 THEN
-    RAISE EXCEPTION 'Phrase must be surrounded by double quotes';
-  END IF;
-
-  -- Strip the double quotes from the phrase
-  phrase := substring(phrase COLLATE "C", 2, length(phrase) - 2) COLLATE "C";
-
-  -- Strip leading and trailing spaces from the phrase
-  phrase := trim(phrase COLLATE "C") COLLATE "C";
-
-  -- Split the phrase into an array of words
-  FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
-    -- Append the word to the joined_text variable
-    joined_text := joined_text || word || '<->';
-  END LOOP;
-
-  -- Remove the trailing "<->" from the joined_text
-  joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
-
-  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
-  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
-  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
-  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
-  -- We need to rewrite the last word into 'lastword:*'
-  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
-    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
-  END IF;
-
-  -- Return the joined_text
-  RETURN joined_text;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
--- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
-
--- Given the query string, determine the Postgres full text configuration to use
--- Currently we only support simple terms and prefix terms
--- For simple terms, we use the 'fts_contains' configuration
--- For prefix terms, we use the 'simple' configuration
--- They are the configurations that provide closest matching according to our experiments
-CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
-  RETURNS regconfig AS
-$$
-DECLARE
-  joined_text text;
-  word text;
-BEGIN
-  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
-  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
-  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
-  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
-  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
-    RETURN 'simple'::regconfig;
-  END IF;
-  -- Simple term
-  RETURN 'fts_contains'::regconfig;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
@@ -947,7 +866,7 @@ BEGIN
         (p_month NOT BETWEEN 1 AND 12) OR
         (p_day NOT BETWEEN 1 AND 31) OR
         (p_hour NOT BETWEEN 0 AND 23) OR
-        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+        (p_minute NOT BETWEEN 0 AND 59) OR (p_year = 2079 AND p_month > 6) OR (p_year = 2079 AND p_month = 6 AND p_day > 6))
     THEN
         RAISE invalid_datetime_format;
     END IF;
@@ -970,6 +889,8 @@ END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
+
+ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

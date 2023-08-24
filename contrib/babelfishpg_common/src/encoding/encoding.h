@@ -20,14 +20,14 @@ extern int	TsqlLocalToUtf(const unsigned char *iso, int len,
 						   int encoding);
 
 /* Functions in src/encoding/mb/conversion_procs */
-extern int	utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	utf8_to_uhc(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_utf8_to_uhc(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
 
-extern int	win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	big5_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len);
-extern int	gbk_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	uhc_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern int	sjis_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_big5_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len);
+extern int	tsql_gbk_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_uhc_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
+extern int	tsql_sjis_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
