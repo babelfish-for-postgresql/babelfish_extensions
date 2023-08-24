@@ -933,15 +933,14 @@ is_tsql_char_type_with_len(Oid type)
 
 static Node *
 tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
-								int32 targetTypeMod, int32 *baseTypeMod,
-								Const *newcon, Const *oldcon,
+								int32 targetTypeMod, int32 baseTypeMod,
+								Const *newcon, char *value,
 								CoercionContext ccontext, CoercionForm cformat,
 								int location)
 {
 	Oid			baseTypeId = newcon->consttype;
 	Type		baseType = typeidType(baseTypeId);
 	int32		inputTypeMod = newcon->consttypmod;
-	char		*value = DatumGetCString(oldcon->constvalue);
 
 	if (newcon->constisnull)
 	{
@@ -1056,7 +1055,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 							/* If target is a domain, apply constraints. */
 							if (baseTypeId != targetTypeId)
 								result = coerce_to_domain(result,
-														  baseTypeId, *baseTypeMod,
+														  baseTypeId, baseTypeMod,
 														  targetTypeId,
 														  ccontext, cformat, location,
 														  false);
@@ -1085,11 +1084,6 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		else
 		{
 			newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
-			if (is_tsql_char_type_with_len(targetTypeId))
-			{
-				newcon->consttypmod = oldcon->consttypmod;
-				*baseTypeMod = oldcon->consttypmod;
-			}
 		}
 	}
 
@@ -1112,19 +1106,7 @@ expr_is_null(Node *expr)
 static bool
 is_tsql_str_const(Node *expr)
 {
-	Oid type = exprType(expr);
-	Const *constexpr;
-
-	if (expr_is_null(expr))
-		return false;
-
-	if (type != UNKNOWNOID || !IsA(expr, Const))
-		return false;
-
-	constexpr = (Const*) expr;
-	constexpr->consttypmod = 
-			strlen(DatumGetCString(constexpr->constvalue)) + VARHDRSZ;
-	return true;
+	return exprType(expr) == UNKNOWNOID && IsA(expr, Const) && !((Const*)expr)->constisnull;
 }
 
 static bool
@@ -1208,12 +1190,18 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 	foreach(lc, exprs)
 	{
 		Node *expr = (Node*) lfirst(lc);
-		if(expr_is_varchar_max(expr))
+		int32 typmod = exprTypmod(expr);
+
+		if (is_tsql_str_const(expr))
+			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
+
+		if (expr_is_varchar_max(expr))
 			return -1;
+
 		if (lc == list_head(exprs))
-			max_typmods = exprTypmod(expr);
+			max_typmods = typmod;
 		else
-			max_typmods = Max(max_typmods, exprTypmod(expr));
+			max_typmods = Max(max_typmods, typmod);
 	}
 
 	return max_typmods;

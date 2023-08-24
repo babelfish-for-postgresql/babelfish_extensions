@@ -460,6 +460,12 @@ pre_transform_sort_clause(ParseState *pstate, Query *qry, List **sortClause, Que
 			A_Const		*n;
 			if (tle->ressortgroupref != sortcl->tleSortGroupRef)
 				continue;
+
+			if (tle->resjunk)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator."),
+						parser_errposition(pstate, exprLocation((Node*)tle->expr))));
 			
 			n = makeNode(A_Const);
 			n->val.ival.type = T_Integer;
