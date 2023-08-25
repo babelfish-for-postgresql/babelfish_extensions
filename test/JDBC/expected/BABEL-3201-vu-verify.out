@@ -415,3 +415,34 @@ GO
 
 ~~ERROR (Message: setval: value 257 is out of bounds for sequence "babel_3201_t_tinyint_a_seq" (5..255))~~
 
+
+-- tsql user=babel_3201_log1 password=12345678
+-- Permission Check
+USE babel_3201_db1;
+GO
+
+-- should throw error
+DBCC CHECKIDENT(master.dbo.babel_3201_t_tinyint, RESEED, 10)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of schema master_dbo)~~
+
+
+-- tsql
+USE master;
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3201_log1;
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+USE babel_3201_db1;
+GO
+
+DBCC CHECKIDENT(master.dbo.babel_3201_t_tinyint, RESEED, 10)
+GO
+
+-- tsql
+USE master;
+GO

@@ -31,6 +31,9 @@ GO
 DROP PROCEDURE babel_3201_proc2;
 GO
 
+DROP LOGIN babel_3201_log1;
+GO
+
 DROP SCHEMA babel_3201_sch1;
 GO
 

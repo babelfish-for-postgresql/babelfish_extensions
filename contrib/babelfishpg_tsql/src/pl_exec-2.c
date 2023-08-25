@@ -10,6 +10,7 @@
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
+#include "storage/lmgr.h"
 #include "pltsql_bulkcopy.h"
 #include "table_variable_mvcc.h"
 
@@ -2992,6 +2993,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	int64	max_identity_value = 0;
 	int64	cur_identity_value = 0;
 	char	*max_identity_value_str = NULL;
+    char	*login = GetUserNameFromId(GetSessionUserId(), false);
 	char	*token;
 	int		attnum;
 	int		rc;
@@ -2999,9 +3001,12 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	Oid		nsp_oid;
 	Oid 	table_oid;
 	Oid		seqid = InvalidOid;
+	Oid		current_user_id = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
 
+
+    bool    is_cross_db = false;
 	if(dbcc_stmt.new_reseed_value)
 	{
 		/* If float value is passed as reseed_value, only decimal part is considered.*/
@@ -3014,10 +3019,13 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		pfree(token);
 	}
 
-	if (dbcc_stmt.db_name)
-		db_name = pstrdup(dbcc_stmt.db_name);
-	else
-		db_name = get_cur_db_name();
+    db_name = get_cur_db_name();
+    if (dbcc_stmt.db_name)
+    {
+        if (pg_strcasecmp(db_name, dbcc_stmt.db_name) != 0)
+            is_cross_db = true;
+        db_name = pstrdup(dbcc_stmt.db_name);
+    }
 
 	if (!DbidIsValid(get_db_id(db_name)))
 	{
@@ -3031,6 +3039,19 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 										get_owner_of_db(db_name), NAMEDATALEN);
 	user = get_user_for_database(db_name);
 	guest_role_name = get_guest_role_name(db_name);
+
+    if(is_cross_db)
+    {
+        if (user)
+            SetCurrentRoleId(GetSessionUserId(), false);
+        else
+            ereport(ERROR,
+                    (errcode(ERRCODE_UNDEFINED_DATABASE),
+                     errmsg("The server principal \"%s\" is not able to access "
+                            "the database \"%s\" under the current security context",
+                            login, dbcc_stmt.db_name)));
+    }
+    pfree(login);
 
 	if (dbcc_stmt.schema_name)
 	{
@@ -3072,7 +3093,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	/* Permission check */
 	if (!(pg_namespace_ownercheck(nsp_oid, GetUserId()) ||
-			has_privs_of_role(GetUserId(), get_role_oid("sysadmin", false)) ||
+			has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) ||
 				login_is_db_owner))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
 
@@ -3111,6 +3132,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	PG_TRY();
 	{
+		/* Lock table to ensure concurrency. eaaaa*/
+		LockRelationOid( table_oid, RowExclusiveLock);
+
 		cur_identity_value = DirectFunctionCall1(pg_sequence_last_value,
 						ObjectIdGetDatum(seqid));
 		cur_value_is_null = false;
@@ -3170,6 +3194,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 					Int64GetDatum(max_identity_value));
 			}
 		}
+		if (is_cross_db)
+            SetCurrentRoleId(current_user_id, false);
+		UnlockRelationOid(table_oid, RowExclusiveLock);
 	}
 	PG_CATCH();
 	{
@@ -3202,6 +3229,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		}
 		else
 			PG_RE_THROW();
+	    if (is_cross_db)
+            SetCurrentRoleId(current_user_id, false);
+
+		UnlockRelationOid(table_oid, RowExclusiveLock);
 	}
 	PG_END_TRY();
 
