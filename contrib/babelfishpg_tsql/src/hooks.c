@@ -215,6 +215,27 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
+
+/* To cache oid of sys.varchar */
+static Oid sys_varcharoid = InvalidOid;
+
+static Oid get_sys_varcharoid()
+{
+	Oid sys_oid;
+	if (OidIsValid(sys_varcharoid))
+	{
+		return sys_varcharoid;
+	}
+	sys_oid = get_namespace_oid("sys", false);
+	sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(sys_oid));
+	if (!OidIsValid(sys_varcharoid))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Oid corresponding to sys.varchar datatype could not be found.")));
+	}
+	return sys_varcharoid;
+}
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -3845,20 +3866,33 @@ static Oid
 select_common_type_for_isnull(ParseState *pstate, List *exprs)
 {
 	Node	   *pexpr;
+	Oid		   ptype;
 
 	Assert(exprs != NIL);
 	pexpr = (Node *) linitial(exprs);
+	ptype = exprType(pexpr);
 
 	/* Check if first arg (check_expression) is NULL literal */
-	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull)
+	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
 	{
 		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
+		Oid ntype = exprType(pexpr);
 		/* Check if second arg (replace_expression) is NULL literal */
-		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull)
+		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
 		{
 			return INT4OID;
 		}
-		return exprType(nexpr);
+		/* If second argument is non-null string literal */
+		if (ntype == UNKNOWNOID)
+		{
+			return get_sys_varcharoid();
+		}
+		return ntype;
 	}
-	return exprType(pexpr);
+	/* If first argument is non-null string literal */
+	if (ptype == UNKNOWNOID)
+	{
+		return get_sys_varcharoid();
+	}
+	return ptype;
 }
