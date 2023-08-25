@@ -431,12 +431,6 @@ free_stmt2(PLtsql_stmt *stmt)
 				break;
 			}
 
-		case PLTSQL_STMT_KILL:
-			{
-				/* Nothing to free */
-				break;
-			}
-
 		case PLTSQL_STMT_INIT:
 			{
 				PLtsql_stmt_init *init = (PLtsql_stmt_init *) stmt;
@@ -577,7 +571,6 @@ free_stmt2(PLtsql_stmt *stmt)
 void		dump_stmt2(PLtsql_stmt *stmt);
 
 void		dump_stmt_print(PLtsql_stmt_print *stmt_print);
-void		dump_stmt_kill(PLtsql_stmt_kill *stmt_kill);
 void		dump_stmt_init(PLtsql_stmt_init *stmt_init);
 void		dump_stmt_push_result(PLtsql_stmt_push_result *stmt_push_result);
 void		dump_stmt_exec(PLtsql_stmt_exec *stmt_exec);
@@ -605,12 +598,6 @@ dump_stmt_print(PLtsql_stmt_print *stmt_print)
 		printf(" ,");
 	}
 	printf("\n");
-}
-
-void
-dump_stmt_kill(PLtsql_stmt_kill *stmt_kill)
-{
-	printf("KILL %s\n", stmt_kill->spid);
 }
 
 void
@@ -780,11 +767,6 @@ dump_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_PRINT:
 			{
 				dump_stmt_print((PLtsql_stmt_print *) stmt);
-				break;
-			}
-		case PLTSQL_STMT_KILL:
-			{
-				dump_stmt_kill((PLtsql_stmt_kill *) stmt);
 				break;
 			}
 		case PLTSQL_STMT_INIT:

@@ -14,17 +14,6 @@ typedef struct
 } PLtsql_stmt_print;
 
 /*
- * KILL statement
- */
-typedef struct
-{
-	PLtsql_stmt_type cmd_type;
-	int	    lineno;
-	char	   *label;
-	char       *spid;
-} PLtsql_stmt_kill;
-
-/*
  * init statement
  */
 typedef struct

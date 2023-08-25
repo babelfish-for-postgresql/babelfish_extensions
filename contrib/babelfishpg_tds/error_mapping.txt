@@ -52,7 +52,6 @@ P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conve
 25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_628	16 "SAVEPOINT"
 25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_3903	16 "ROLLBACK TO SAVEPOINT"
 25001 ERRCODE_ACTIVE_SQL_TRANSACTION	"%s cannot run inside a transaction block"	SQL_ERROR_574	16
-25001 ERRCODE_ACTIVE_SQL_TRANSACTION	"%s command cannot be used inside user transactions."	SQL_ERROR_6615	16
 42809 ERRCODE_WRONG_OBJECT_TYPE "\"%s\" is not a table or materialized view" SQL_ERROR_10610 16
 42809 ERRCODE_WRONG_OBJECT_TYPE "cannot create index on relation \"%s\"" SQL_ERROR_10610 16
 42809 ERRCODE_WRONG_OBJECT_TYPE "%s parameter should be of %s type"     SQL_ERROR_16902 16
