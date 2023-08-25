@@ -3876,7 +3876,7 @@ select_common_type_for_isnull(ParseState *pstate, List *exprs)
 	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
 	{
 		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
-		Oid ntype = exprType(pexpr);
+		Oid ntype = exprType(nexpr);
 		/* Check if second arg (replace_expression) is NULL literal */
 		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
 		{
