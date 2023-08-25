@@ -22,8 +22,8 @@ GO
 CREATE TABLE key_column_usage_vu_prepare_tbl5 (arg9 int, arg10 int, arg11 int, foreign key(arg10,arg11) references key_column_usage_vu_prepare_tbl3(arg5,arg6));
 GO
 
-CREATE VIEW key_column_usage_vu_prepare_v1 AS (SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY table_name, ordinal_position);
+CREATE VIEW key_column_usage_vu_prepare_v1 AS (SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY constraint_name, column_name);
 GO
 
-CREATE PROCEDURE key_column_usage_vu_prepare_p1 AS (SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY table_name, ordinal_position);
+CREATE PROCEDURE key_column_usage_vu_prepare_p1 AS (SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY constraint_name, column_name);
 GO
