@@ -208,7 +208,6 @@ CREATE TABLE sys.babelfish_extended_properties (
   value sys.sql_variant,
   PRIMARY KEY (dbid, type, schema_name, major_name, minor_name, name)
 );
-GRANT SELECT on sys.babelfish_extended_properties TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_extended_properties', '');
 
 CREATE OR REPLACE VIEW sys.extended_properties
@@ -444,7 +443,7 @@ GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC
 -- Not all datatypes are handled as well as might be possible, but it is sufficient for 
 -- the current purposes.
 -- Note that this proc may increase the response time for the first execution of sp_who, but 
--- we're looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
+-- we are looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
 -- is very unlikely to be part of performance-critical workload.
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
 	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
@@ -653,6 +652,9 @@ BEGIN
 		END
 	END
 	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
 	-- Get the executing statement for each spid and extract the main stmt type
 	-- This is for informational purposes only
 	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
@@ -690,7 +692,7 @@ BEGIN
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
 	UPDATE #sp_who_tmp SET query = TRIM(query)
 
-	-- Get all connections
+	-- Get all current connections
 	SELECT 
 		spid, 
 		MAX(blocked) AS blocked, 
@@ -701,10 +703,11 @@ BEGIN
 		0 AS dbid,
 		CAST('' AS sys.VARCHAR(100)) AS cmd,
 		0 AS request_id,
-		CAST('TDS' AS sys.VARCHAR(20)) AS connection
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
 	INTO #sp_who_proc
-	FROM sys.sysprocesses
-		GROUP BY spid, status
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status, hostprocess		
 		
 	-- Add attributes to each connection
 	UPDATE #sp_who_proc
@@ -714,13 +717,14 @@ BEGIN
 		hostname = sp.hostname,
 		dbid = sp.dbid,
 		request_id = sp.request_id
-	FROM sys.sysprocesses sp
+	FROM #sp_who_sysprocesses sp
 		WHERE #sp_who_proc.spid = sp.spid				
 
-	-- identify PG connections
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
 	UPDATE #sp_who_proc
 	SET connection = 'PostgreSQL'
-	WHERE dbid = 0
+	WHERE hostprocess IS NULL 
 
 	-- Keep or delete PG connections
 	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
@@ -819,6 +823,7 @@ BEGIN
 	WHERE TRIM(cmd) = ''	
 	
 	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
 	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
 	RETURN
 END	
@@ -828,248 +833,6 @@ GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUB
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- tsql full-text search configurations for Babelfish
--- Since currently we only support one language - American English, 
--- the configurations are for American English only
-
--- create a configuration fts_contains_simple for simple terms search
-CREATE TEXT SEARCH DICTIONARY fts_contains_simple_dict (
-    TEMPLATE = simple,
-    STOPWORDS = tsql_contains
-);
-
-COMMENT ON TEXT SEARCH DICTIONARY fts_contains_simple_dict IS 'Babelfish T-SQL full text search CONTAINS dictionary (currently we only support American English)';
-
-CREATE TEXT SEARCH CONFIGURATION fts_contains_simple ( COPY = simple );
-
-COMMENT ON TEXT SEARCH CONFIGURATION fts_contains_simple IS 'Babelfish T-SQL full text search CONTAINS configuration (currently we only support American English)';
-
-ALTER TEXT SEARCH CONFIGURATION fts_contains_simple
-    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart,
-                      word, hword, hword_part
-    WITH fts_contains_simple_dict;
-
-
-
--- Create a configuration english_inflectional_babel for inflectional search
--- first english_inflectional_babel is created as a copy of the build-in Postgres english configuration
-CREATE TEXT SEARCH DICTIONARY english_stem_babel
-	(TEMPLATE = snowball, Language = english , StopWords=tsql_contains);
-
-COMMENT ON TEXT SEARCH DICTIONARY english_stem_babel IS 'snowball stemmer for english_inflectional_babel language';
-
-CREATE TEXT SEARCH CONFIGURATION english_inflectional_babel
-	(PARSER = default);
-
-COMMENT ON TEXT SEARCH CONFIGURATION english_inflectional_babel IS 'configuration for english_inflectional_babel language';
-
-ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
-	FOR email, url, url_path, host, file, version,
-	    sfloat, float, int, uint,
-	    numword, hword_numpart, numhword
-	WITH simple;
-
-ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
-    FOR asciiword, hword_asciipart, asciihword
-	WITH english_stem_babel;
-
-ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
-    FOR word, hword_part, hword
-	WITH english_stem_babel;
-
--- then we add irregular verbs as synonym files to english_inflectional_babel for inflectional search
-CREATE TEXT SEARCH DICTIONARY irregular_verbs (
-    TEMPLATE = synonym,
-    SYNONYMS = irregular_verbs
-);
-
-ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel
-    ALTER MAPPING FOR asciiword
-    WITH irregular_verbs, english_stem_babel;
-
--- This function performs string rewriting for the full text search CONTAINS predicate
--- in Babelfish
--- For example, a T-SQL query 
--- SELECT * FROM t WHERE CONTAINS(txt, '"good old days"')
--- is rewritten into a Postgres query 
--- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
--- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
--- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
--- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
-CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_rewrite(IN phrase text)
-  RETURNS TEXT AS
-$$
-DECLARE
-  orig_phrase text;
-  joined_text text;
-  word text;
-BEGIN
-  orig_phrase := phrase;
-
-  -- boolean operators not supported
-  IF position(('&' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('|' COLLATE C) IN (phrase COLLATE "C")) <> 0 OR position(('&!' COLLATE C) IN (phrase COLLATE "C")) <> 0 THEN
-    RAISE EXCEPTION 'Boolean operators not supported';
-  END IF;
-  
-  IF position((' AND ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' OR ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 OR position((' AND NOT ' COLLATE C) IN UPPER(phrase COLLATE "C")) <> 0 THEN
-    RAISE EXCEPTION 'Boolean operators not supported';
-  END IF;
-
-  -- Generation term, inflectional
-  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(INFLECTIONAL,%\)[ ]*' COLLATE C) THEN
-    RETURN sys.babelfish_fts_contains_generation_term_helper(phrase);
-  END IF;
-
-  -- Generation term, thesaurus
-  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(THESAURUS,%\)[ ]*' COLLATE C) THEN
-    RETURN sys.babelfish_fts_contains_generation_term_helper(phrase);
-  END IF;
-
-  -- Simple term
-  joined_text := sys.babelfish_fts_contains_phrase_helper(phrase);
-
-  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
-  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
-  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
-  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
-  -- We need to rewrite the last word into 'lastword:*'
-  IF (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (orig_phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
-    joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 1) || ':*';
-  END IF;
-
-  -- Return the joined_text
-  RETURN joined_text;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
--- Removing IMMUTABLE PARALLEL SAFE will disallow parallel mode for full text search
-
-
--- Helper function that takes in a word or phrase and returns the same word/phrase in Postgres format
--- Example: 'word' is rewritten into 'word'; '"word1 word2 word3"' is rewritten into 'word1<->word2<->word3'
-CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_phrase_helper(IN phrase text)
-  RETURNS TEXT AS
-$$
-DECLARE
-  joined_text text;
-  word text;
-BEGIN
-  -- Initialize the joined_text variable
-  joined_text := '';
-
-  -- Strip leading and trailing spaces from the phrase
-  phrase := trim(phrase COLLATE "C") COLLATE "C";
-
-  -- no rewriting is needed if the query is a single word
-  IF position((' ' COLLATE C) IN (phrase COLLATE "C")) = 0 AND position(('"' COLLATE C) IN UPPER(phrase COLLATE "C")) = 0 THEN
-    RETURN phrase;
-  END IF;
-
-  -- rewrite phrase queries 
-  -- '"word1 word2 word3"' is rewritten into 'word1<->word2<->word3'
-
-  -- Check if the phrase is surrounded by double quotes
-  IF position(('"' COLLATE "C") IN (phrase COLLATE "C") ) <> 1 OR position(('"' COLLATE "C") IN (reverse(phrase) COLLATE "C")) <> 1 THEN
-    RAISE EXCEPTION 'Phrase must be surrounded by double quotes';
-  END IF;
-
-  -- Strip the double quotes from the phrase
-  phrase := substring(phrase COLLATE "C", 2, length(phrase) - 2) COLLATE "C";
-
-  -- Strip leading and trailing spaces from the phrase
-  phrase := trim(phrase COLLATE "C") COLLATE "C";
-
-  -- Split the phrase into an array of words
-  FOREACH word IN ARRAY regexp_split_to_array(phrase COLLATE "C", '\s+' COLLATE "C") COLLATE "C" LOOP
-    -- Append the word to the joined_text variable
-    joined_text := joined_text || word || '<->';
-  END LOOP;
-
-  -- Remove the trailing "<->" from the joined_text
-  joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
-
-  RETURN joined_text;
-
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
-
--- Helper function that takes in a generation term rewrites it into Postgres format
--- Example: 
--- 'FORMFSOF(INFLECTIONAL, word)' is rewritten into 'word'; 
--- 'FORMFSOF(INFLECTIONAL, "word1 word2")' is rewritten into 'word1<->word2';
--- 'FORMFSOF(INFLECTIONAL, word1, word2)' is rewritten into 'word1 | word2';
--- 'FORMFSOF(INFLECTIONAL, word1, "word2 word3")' is rewritten into 'word1 | (word2<->word3)';
--- Rewriting logic for THESAURUS is the same as for INFLECTIONAL
--- Precondition: phrase matches '[ ]*FORMSOF(INFLECTIONAL,%)[ ]%' or '[ ]*FORMSOF(THESAURUS,%)[ ]%'
-CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_generation_term_helper(IN phrase text)
-  RETURNS TEXT AS
-$$
-DECLARE
-  joined_text text;
-  subterm text;
-BEGIN
-  -- Initialize the joined_text variable
-  joined_text := '';
-
-  -- Strip leading and trailing spaces from the phrase
-  phrase := trim(phrase COLLATE "C") COLLATE "C";
-
-  -- Strip FORMSOF, INFLECTIONAL/THESAURUS, and parenthesis
-  phrase := substring(phrase COLLATE "C", position((',' COLLATE C) IN (phrase COLLATE "C")) + 1, length(phrase) - position((',' COLLATE C) IN (phrase COLLATE "C")) - 1) COLLATE "C";
-
-  -- Split the phrase into an array of words
-  FOREACH subterm IN ARRAY regexp_split_to_array(phrase COLLATE "C", ',' COLLATE "C") COLLATE "C" LOOP
-    -- Append the word to the joined_text variable
-    joined_text := joined_text || '(' || sys.babelfish_fts_contains_phrase_helper(subterm) || ')' || ' | ';
-  END LOOP;
-
-  -- Remove the trailing " | " from the joined_text
-  joined_text := substring(joined_text COLLATE "C", 1, length(joined_text) - 3) COLLATE "C";
-
-  RETURN joined_text;
-
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
-
--- Given the query string, determine the Postgres full text configuration to use
--- Currently we only support simple terms and prefix terms
--- For simple terms, we use the 'fts_contains_simple' configuration
--- For prefix terms, we use the 'simple' configuration
--- They are the configurations that provide closest matching according to our experiments
-CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
-  RETURNS regconfig AS
-$$
-DECLARE
-  joined_text text;
-  word text;
-BEGIN
-  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
-  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
-  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
-  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
-  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
-    RETURN 'simple'::regconfig;
-  END IF;
-
-  -- Generation term, inflectional (Examples: 'FORMSOF(INFLECTIONAL, love)', 'FORMSOF(INFLECTIONAL, "move forward")', 'FORMSOF(INFLECTIONAL, play, "plan to")')
-  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(INFLECTIONAL,%\)[ ]*' COLLATE C) THEN
-    RETURN 'english_inflectional_babel'::regconfig;
-  END IF;
-
-  -- Generation term, thesaurus (Examples: 'FORMSOF(THESAURUS, love)', 'FORMSOF(THESAURUS, "move forward")', 'FORMSOF(THESAURUS, play, "plan to")')
-  -- By default, SQL Server thesaurus search does not use any thesaurus files so behavior is identical to simple terms
-  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(THESAURUS,%\)[ ]*' COLLATE C) THEN
-    RETURN 'fts_contains_simple'::regconfig;
-  END IF;
-
-  -- Simple term
-  RETURN 'fts_contains_simple'::regconfig;
-END;
-$$
-LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
@@ -1102,7 +865,7 @@ BEGIN
         (p_month NOT BETWEEN 1 AND 12) OR
         (p_day NOT BETWEEN 1 AND 31) OR
         (p_hour NOT BETWEEN 0 AND 23) OR
-        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+        (p_minute NOT BETWEEN 0 AND 59) OR (p_year = 2079 AND p_month > 6) OR (p_year = 2079 AND p_month = 6 AND p_day > 6))
     THEN
         RAISE invalid_datetime_format;
     END IF;
@@ -1131,97 +894,21 @@ ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacemen
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
--- Matches and returns column length of the corresponding column of the given table
-CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
-RETURNS SMALLINT AS $BODY$
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
     DECLARE
-        col_name TEXT;
-        object_id oid;
-        column_id INT;
-        column_length INT;
-        column_data_type TEXT;
-        column_precision INT;
+        column_name TEXT;
     BEGIN
-        -- Get the object ID for the provided object_name
-        object_id = sys.OBJECT_ID(object_name);
-        IF object_id IS NULL THEN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
             RETURN NULL;
-        END IF;
-
-        -- Truncate and normalize the column name
-        col_name = sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
-
-        -- Get the column ID for the provided column_name
-        SELECT attnum INTO column_id FROM pg_attribute 
-        WHERE attrelid = object_id AND lower(attname) = col_name 
-        COLLATE sys.database_default;
-
-        IF column_id IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        -- Retrieve the data type, precision, scale, and column length in characters
-        SELECT a.atttypid::regtype, 
-               CASE 
-                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) >> 16) & 65535
-                   ELSE NULL
-               END,
-               CASE
-                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) & 65535)
-                   ELSE a.atttypmod
-               END
-        INTO column_data_type, column_precision, column_length
-        FROM pg_attribute a
-        WHERE a.attrelid = object_id AND a.attnum = column_id;
-
-        -- Remove delimiters
-        column_data_type := sys.babelfish_remove_delimiter_pair(column_data_type);
-
-        IF column_data_type IS NOT NULL THEN
-            column_length := CASE
-                -- Columns declared with max specifier case
-                WHEN column_length = -1 AND column_data_type IN ('varchar', 'nvarchar', 'varbinary')
-                THEN -1
-                WHEN column_data_type = 'xml'
-                THEN -1
-                WHEN column_data_type IN ('tinyint', 'bit') 
-                THEN 1
-                WHEN column_data_type = 'smallint'
-                THEN 2
-                WHEN column_data_type = 'date'
-                THEN 3
-                WHEN column_data_type IN ('int', 'integer', 'real', 'smalldatetime', 'smallmoney') 
-                THEN 4
-                WHEN column_data_type IN ('time', 'time without time zone')
-                THEN 5
-                WHEN column_data_type IN ('double precision', 'bigint', 'datetime', 'datetime2', 'money') 
-                THEN 8
-                WHEN column_data_type = 'datetimeoffset'
-                THEN 10
-                WHEN column_data_type IN ('uniqueidentifier', 'text', 'image', 'ntext')
-                THEN 16
-                WHEN column_data_type = 'sysname'
-                THEN 256
-                WHEN column_data_type = 'sql_variant'
-                THEN 8016
-                WHEN column_data_type IN ('bpchar', 'char', 'varchar', 'binary', 'varbinary') 
-                THEN column_length
-                WHEN column_data_type IN ('nchar', 'nvarchar') 
-                THEN column_length * 2
-                WHEN column_data_type IN ('numeric', 'decimal')
-                THEN 
-                    CASE
-                        WHEN column_precision IS NULL 
-                        THEN NULL
-                        ELSE ((column_precision + 8) / 9 * 4 + 1)
-                    END
-                ELSE NULL
-            END;
-        END IF;
-
-        RETURN column_length::SMALLINT;
-    END;
-$BODY$
-LANGUAGE plpgsql
-IMMUTABLE
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
 STRICT;

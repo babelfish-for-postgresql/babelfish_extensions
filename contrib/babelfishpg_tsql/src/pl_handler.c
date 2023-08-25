@@ -2517,8 +2517,31 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 								if (strcmp(defel->defname, "default_schema") == 0)
 									user_options = lappend(user_options, defel);
-								if (strcmp(defel->defname, "rename") == 0)
+								else if (strcmp(defel->defname, "rename") == 0)
 									user_options = lappend(user_options, defel);
+								else if (strcmp(defel->defname, "rolemembers") == 0)
+								{
+									RoleSpec   *login = (RoleSpec *) linitial((List *) defel->arg);
+
+									if (strchr(login->rolename, '\\') != NULL)
+									{
+										/*
+										 * If login->rolename contains '\'
+										 * then treat it as windows login.
+										 */
+										char	   *upn_login = convertToUPN(login->rolename);
+
+										if (upn_login != login->rolename)
+										{
+											pfree(login->rolename);
+											login->rolename = upn_login;
+										}
+										if (!pltsql_allow_windows_login)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Windows login is not supported in babelfish")));
+									}
+								}
 							}
 
 							foreach(option, user_options)
@@ -2644,13 +2667,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *db_name;
 						const char *dbo_name;
+						char	   *db_name;
+						char	   *user_name;
+						char	   *cur_user;
 						Oid			dbo_id;
 
 						db_name = get_cur_db_name();
 						dbo_name = get_dbo_role_name(db_name);
 						dbo_id = get_role_oid(dbo_name, false);
+						user_name = stmt->role->rolename;
+						cur_user = GetUserNameFromId(GetUserId(), false);
 
 						/*
 						 * Check if the current user has privileges.
@@ -2658,11 +2685,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						foreach(option, user_options)
 						{
 							DefElem    *defel = (DefElem *) lfirst(option);
-							char	   *user_name;
-							char	   *cur_user;
 
-							user_name = stmt->role->rolename;
-							cur_user = GetUserNameFromId(GetUserId(), false);
 							if (strcmp(defel->defname, "default_schema") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
@@ -2671,13 +2694,27 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change schema")));
 							}
-							if (strcmp(defel->defname, "rename") == 0)
+							else if (strcmp(defel->defname, "rename") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
 									strcmp(cur_user, user_name) != 0)
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change user name")));
+							}
+						}
+
+						foreach(option, stmt->options)
+						{
+							DefElem    *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "rolemembers") == 0)
+							{
+								if (strcmp(cur_user, dbo_name) != 0 &&
+									strcmp(cur_user, user_name) != 0)
+									ereport(ERROR,
+											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											 errmsg("Current user does not have privileges to change login")));
 							}
 						}
 
@@ -2708,6 +2745,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						SetCurrentRoleId(prev_current_user, false);
 						set_session_properties(db_name);
+						pfree(cur_user);
+						pfree(db_name);
 
 						return;
 					}
