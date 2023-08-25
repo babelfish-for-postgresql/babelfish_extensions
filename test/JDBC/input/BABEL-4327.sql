@@ -21,6 +21,15 @@ INSERT INTO [dbo].[test_babel_4327_table]([my_varchar_data])VALUES ('HELLO');
 INSERT INTO [dbo].[test_babel_4327_table]([my_varchar_data])VALUES (NULL);
 GO
 
+select
+  ISNULL(NULL, NULL),
+  ISNULL(NULL, 'Unassigned'),
+  ISNULL([my_varchar_data], 'Unassigned'),
+  ISNULL('Unassigned', 1),
+  ISNULL ('', 5)
+from [dbo].[test_babel_4327_table];
+GO
+
 select * from [dbo].[test_babel_4327_table] where ISNULL([my_varchar_data], [id]) = 'HELLO';
 GO
 

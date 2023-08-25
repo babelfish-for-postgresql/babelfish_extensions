@@ -32,6 +32,22 @@ GO
 ~~ROW COUNT: 1~~
 
 
+select
+  ISNULL(NULL, NULL),
+  ISNULL(NULL, 'Unassigned'),
+  ISNULL([my_varchar_data], 'Unassigned'),
+  ISNULL('Unassigned', 1),
+  ISNULL ('', 5)
+from [dbo].[test_babel_4327_table];
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#Unassigned#!#1#!#Unassigned#!#
+<NULL>#!#Unassigned#!#HELLO#!#Unassigned#!#
+<NULL>#!#Unassigned#!#Unassigned#!#Unassigned#!#
+~~END~~
+
+
 select * from [dbo].[test_babel_4327_table] where ISNULL([my_varchar_data], [id]) = 'HELLO';
 GO
 ~~START~~
