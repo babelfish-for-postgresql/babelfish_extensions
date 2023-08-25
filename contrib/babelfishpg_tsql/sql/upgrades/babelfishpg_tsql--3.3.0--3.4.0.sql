@@ -42,9 +42,6 @@ LANGUAGE plpgsql;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 -- Matches and returns column length of the corresponding column of the given table
 CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
 RETURNS SMALLINT AS $BODY$
@@ -139,3 +136,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE
 STRICT;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
