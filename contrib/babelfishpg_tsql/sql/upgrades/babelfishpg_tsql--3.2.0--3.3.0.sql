@@ -406,25 +406,50 @@ CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time sql_variant)
 AS $$
 DECLARE
   v TIME;
+  d DATETIME;
 BEGIN
-  v = CAST(sleep_time as TIME);
+  IF NOT (SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'varchar' 
+          OR SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'char'
+          OR SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'datetime') 
+      OR sleep_time IS NULL THEN
+    RAISE EXCEPTION 'Incorrect syntax near %', sleep_time;
+  ELSIF SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'varchar' THEN
+    d = CAST(sleep_time as DATETIME);
+    v = CAST(d as TIME);
+  ELSE
+    v = CAST(sleep_time as TIME);
+  END IF;
+
   PERFORM pg_sleep(extract(epoch from clock_timestamp() + v) -
                 extract(epoch from clock_timestamp()));
 END;
 $$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME) TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time sql_variant) TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME)
+CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time sql_variant)
 AS $$
 DECLARE
   t TIME;
+  d DATETIME;
   target_timestamp TIMESTAMPTZ;
 BEGIN
-  t = CAST(sleep_time as TIME);
+  IF NOT (SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'varchar' 
+          OR SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'char'
+          OR SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'datetime'
+          ) 
+      OR sleep_time IS NULL THEN
+    RAISE EXCEPTION 'Incorrect syntax near %', sleep_time;
+  ELSIF SQL_VARIANT_PROPERTY(sleep_time, 'BaseType') = 'varchar' THEN
+    d = CAST(sleep_time as DATETIME);
+    t = CAST(d as TIME);
+  ELSE
+    t = CAST(sleep_time as TIME);
+  END IF;
+
   target_timestamp = current_date + t;
   IF target_timestamp < current_timestamp THEN
     target_timestamp = target_timestamp + '1 day';
@@ -433,7 +458,7 @@ BEGIN
                 extract(epoch from clock_timestamp()));
 END
 $$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time sql_variant) TO PUBLIC;
 
 -- sp_babelfish_autoformat is a helper procedure which formats the contents of a table (or view)
 -- as narrowly as possible given its actual column contents.

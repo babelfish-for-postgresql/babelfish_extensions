@@ -2,10 +2,38 @@
 INSERT INTO Timecheck (NAME) values('a')
 GO
 
-WAITFOR DELAY '00:00:02'
+INSERT INTO Timecheck (NAME) values('b')
 GO
 
-INSERT INTO Timecheck (NAME) values('b')
+WAITFOR DELAY '00:00:01'
+GO
+
+-- Expect Fail with incorrect syntax 
+WAITFOR DELAY NULL
+GO
+
+WAITFOR DELAY 0
+GO
+
+WAITFOR DELAY 1
+GO
+
+WAITFOR DELAY 1000000
+GO
+
+DECLARE @f float = 1.234
+WAITFOR DELAY @f
+GO
+
+-- Expect fail but passed here, BABEL-4356
+WAITFOR DELAY '0::'
+GO
+
+WAITFOR DELAY '0:'
+GO
+
+-- Expect fail
+WAITFOR DELAY '19921:00:00'
 GO
 
 -- Expect WAITFOR DELAY: Passed
