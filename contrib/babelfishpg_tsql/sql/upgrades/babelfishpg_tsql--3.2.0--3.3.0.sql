@@ -889,15 +889,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
-ALTER FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC) STRICT;
-
-ALTER FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC) STRICT;
-
-ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
-
-ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
-
 ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
 
