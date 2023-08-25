@@ -44,3 +44,22 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+    BEGIN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
