@@ -140,7 +140,7 @@ protected:
 		antlrcpp::Any visitCreate_contract(TSqlParser::Create_contractContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONTRACT, "CREATE CONTRACT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitAlter_queue(TSqlParser::Alter_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ALTER_QUEUE, "ALTER QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override;
 		antlrcpp::Any visitCreate_message_type(TSqlParser::Create_message_typeContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_MESSAGE, "CREATE MESSAGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitSecurity_statement(TSqlParser::Security_statementContext *ctx) override;
 		antlrcpp::Any visitSetuser_statement(TSqlParser::Setuser_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SET_USER, "SET USER", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -263,6 +263,25 @@ void TsqlUnsupportedFeatureHandlerImpl::handle(PgTsqlInstrMetricType tm_type, co
 		else
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'%s\' is not currently supported in Babelfish", featureName), line_and_pos);
 	}
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitKill_statement(TSqlParser::Kill_statementContext *ctx)
+{
+	if (ctx->kill_query_notification())
+		handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with QUERY NOTIFICATION", getLineAndPos(ctx->KILL()));
+	else if (ctx->kill_stats_job())
+		handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with STATS JOB", getLineAndPos(ctx->KILL()));
+	else if (ctx->kill_process())
+	{
+		if (ctx->kill_process()->STATUSONLY())
+			handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with STATUSONLY", getLineAndPos(ctx->KILL()));		
+		else if (ctx->kill_process()->UOW())
+			handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with UOW", getLineAndPos(ctx->KILL()));
+		else if (ctx->kill_process()->char_string())
+			handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with a session ID string", getLineAndPos(ctx->KILL()));			
+	}
+		
+	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx)

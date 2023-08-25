@@ -68,6 +68,7 @@ typedef bool (*Stmt_rollback_act) ACTION_SIGNITURE(rollback);
  /* TSQL-only statement types follow */
 typedef bool (*Stmt_goto_act) ACTION_SIGNITURE(goto);
 typedef bool (*Stmt_print_act) ACTION_SIGNITURE(print);
+typedef bool (*Stmt_kill_act) ACTION_SIGNITURE(kill);
 typedef bool (*Stmt_init_act) ACTION_SIGNITURE(init);
 typedef bool (*Stmt_query_set_act) ACTION_SIGNITURE(query_set);
 typedef bool (*Stmt_try_catch_act) ACTION_SIGNITURE(try_catch);
@@ -117,6 +118,7 @@ typedef struct Walker_context
 	/* TSQL-only statement types follow */
 	Stmt_goto_act goto_act;
 	Stmt_print_act print_act;
+	Stmt_kill_act kill_act;
 	Stmt_init_act init_act;
 	Stmt_query_set_act query_set_act;
 	Stmt_try_catch_act try_catch_act;
