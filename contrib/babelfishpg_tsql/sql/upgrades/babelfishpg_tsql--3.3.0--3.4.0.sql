@@ -40,11 +40,11 @@ LANGUAGE plpgsql;
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
-		CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-		CAST(sys.schema_name() AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+		CAST(ss.nc_dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(ss.nc_schema_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
 		CAST(ss.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
-		CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-		CAST(sys.schema_name() AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		CAST(ss.nr_dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(ss.nr_schema_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		CAST(ss.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
 		CAST((ss.x).n AS int) AS "ORDINAL_POSITION"
@@ -55,10 +55,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 			r.oid AS roid,
 			r.relname,
 			r.relowner,
-			nc.nspname AS nc_nspname,
-			nc.oid AS nc_schemaoid,
-			nr.nspname AS nr_nspname,
-			nr.oid AS nr_schematableoid,
+			nc.dbname AS nc_dbname,
+			nr.dbname AS nr_dbname,
+			extc.orig_name AS nc_schema_name,
+			extr.orig_name AS nr_schema_name,
 			c.oid AS coid,
 			c.conname,
 			c.contype,
@@ -67,9 +67,9 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 			c.confrelid,
 			information_schema._pg_expandarray(c.conkey) AS x
 		FROM
-			pg_namespace nr,
+			sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+			sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
 			pg_class r,
-			pg_namespace nc,
 			pg_constraint c,
 			sys.pg_namespace_ext t
 		WHERE
@@ -77,12 +77,13 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 			AND r.oid = c.conrelid
 			AND nc.oid = c.connamespace
 			AND nr.nspname = t.nspname
+			AND t.dbname = nc.dbname
 			AND (c.contype = ANY (ARRAY['p'::"char", 'u'::"char", 'f'::"char"]))
 			AND (r.relkind = ANY (ARRAY['r'::"char", 'p'::"char"]))
 			AND NOT pg_is_other_temp_schema(nr.oid)
 		) ss
-		
-	WHERE 
+	
+	WHERE
 		ss.roid = a.attrelid
 		AND a.attnum = (ss.x).x
 		AND NOT a.attisdropped

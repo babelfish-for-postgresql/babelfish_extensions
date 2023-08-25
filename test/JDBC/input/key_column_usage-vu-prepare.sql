@@ -4,35 +4,26 @@ GO
 USE key_column_usage_vu_prepare_db;
 GO
 
-CREATE TABLE key_column_usage_vu_prepare_tbl1(
-    arg1 INT NOT NULL,
-    arg2 NVARCHAR(20) NOT NULL,
-    CONSTRAINT arg3 PRIMARY KEY CLUSTERED (
-        arg1 ASC,
-        arg2 ASC
-    ) WITH (
-        PAD_INDEX = OFF,
-        STATISTICS_NORECOMPUTE = OFF,
-        IGNORE_DUP_KEY = OFF,
-        ALLOW_ROW_LOCKS = ON,
-        OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF
-    ) ON [PRIMARY]
-) ON [PRIMARY];
+CREATE TABLE key_column_usage_vu_prepare_tbl1(arg1 int, arg2 int, primary key(arg1));
 GO
 
-CREATE TABLE key_column_usage_vu_prepare_tbl2 (
-    arg1 NVARCHAR(20) NOT NULL,
-    arg2 NCHAR(50) NOT NULL,
-    arg3 INT NOT NULL,
-    CONSTRAINT arg4 PRIMARY KEY CLUSTERED (
-        arg1 ASC
-    ) WITH (
-        PAD_INDEX = OFF,
-        STATISTICS_NORECOMPUTE = OFF,
-        IGNORE_DUP_KEY = OFF,
-        ALLOW_ROW_LOCKS = ON,
-        ALLOW_PAGE_LOCKS = ON,
-        OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF
-    ) ON [PRIMARY]
-) ON [PRIMARY];
+CREATE TABLE key_column_usage_vu_prepare_tbl2(arg3 int, arg4 int, primary key(arg3), foreign key(arg4) references key_column_usage_vu_prepare_tbl1(arg1));
+GO
+
+CREATE SCHEMA key_column_usage_vu_prepare_sc1;
+GO
+
+CREATE TABLE key_column_usage_vu_prepare_tbl3 (arg5 int, arg6 int, primary key (arg5,arg6));
+GO
+
+CREATE TABLE key_column_usage_vu_prepare_sc1.key_column_usage_vu_prepare_tbl4 (arg7 int, arg8 int, primary key (arg7) , foreign key (arg7) references key_column_usage_vu_prepare_tbl2(arg3));
+GO
+
+CREATE TABLE key_column_usage_vu_prepare_tbl5 (arg9 int, arg10 int, arg11 int, foreign key(arg10,arg11) references key_column_usage_vu_prepare_tbl3(arg5,arg6));
+GO
+
+CREATE VIEW key_column_usage_vu_prepare_v1 AS (SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY table_name, ordinal_position);
+GO
+
+CREATE PROCEDURE key_column_usage_vu_prepare_p1 AS (SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY table_name, ordinal_position);
 GO
