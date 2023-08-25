@@ -1003,12 +1003,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::Ddl_statementContext *ctx)
 {
-	if (ctx->alter_user())
-	{
-		auto alter_user = ctx->alter_user();
-		if (alter_user->loginame)
-			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER USER WITH LOGIN",  getLineAndPos(ctx));
-	}
 	if (ctx->create_user())
 	{
 		auto create_user = ctx->create_user();

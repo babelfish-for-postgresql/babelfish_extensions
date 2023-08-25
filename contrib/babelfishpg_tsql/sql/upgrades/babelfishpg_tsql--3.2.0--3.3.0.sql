@@ -208,7 +208,6 @@ CREATE TABLE sys.babelfish_extended_properties (
   value sys.sql_variant,
   PRIMARY KEY (dbid, type, schema_name, major_name, minor_name, name)
 );
-GRANT SELECT on sys.babelfish_extended_properties TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_extended_properties', '');
 
 CREATE OR REPLACE VIEW sys.extended_properties
@@ -866,7 +865,7 @@ BEGIN
         (p_month NOT BETWEEN 1 AND 12) OR
         (p_day NOT BETWEEN 1 AND 31) OR
         (p_hour NOT BETWEEN 0 AND 23) OR
-        (p_minute NOT BETWEEN 0 AND 59)) OR (p_year = 2079 AND (p_month > 6 or p_day > 6))
+        (p_minute NOT BETWEEN 0 AND 59) OR (p_year = 2079 AND p_month > 6) OR (p_year = 2079 AND p_month = 6 AND p_day > 6))
     THEN
         RAISE invalid_datetime_format;
     END IF;
@@ -904,3 +903,22 @@ ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacemen
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+    BEGIN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
