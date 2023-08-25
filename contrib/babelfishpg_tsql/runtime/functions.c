@@ -2636,7 +2636,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
 		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW
 	};
-	char	*shipped_objects_not_in_sys_db[10][2] = {
+	char	*shipped_objects_not_in_sys_db[11][2] = {
 		{"xp_qv","master_dbo"},
 		{"xp_instance_regread","master_dbo"},
 		{"sp_addlinkedserver", "master_dbo"},
@@ -2646,7 +2646,8 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 		{"sp_testlinkedserver", "master_dbo"},
 		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
 		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"}
+		{"syspolicy_system_health_state", "msdb_dbo"},
+		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*
