@@ -3622,6 +3622,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE
 STRICT;
+
 -- Matches and returns column name of the corresponding table
 CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
 RETURNS sys.SYSNAME AS $$
