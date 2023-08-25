@@ -224,6 +224,7 @@ ISC-Tables
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
+key_column_usage
 linked_servers
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
