@@ -272,7 +272,6 @@ cfl_statement
     | waitfor_statement
     | while_statement
     | print_statement
-    | kill_statement
     | raiseerror_statement
     ;
 
@@ -372,6 +371,7 @@ another_statement
     | execute_statement
     | cursor_statement
     | conversation_statement
+    | kill_statement
     | create_message_type
     | security_statement
     | set_statement

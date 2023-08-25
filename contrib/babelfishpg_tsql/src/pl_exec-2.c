@@ -10,7 +10,6 @@
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
-#include "storage/procarray.h"
 #include "pltsql_bulkcopy.h"
 #include "table_variable_mvcc.h"
 
@@ -34,7 +33,6 @@ PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 static int	exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_estmt);
 static int	exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt);
-static int	exec_stmt_kill(PLtsql_execstate *estate, PLtsql_stmt_kill *stmt);
 static int	exec_stmt_query_set(PLtsql_execstate *estate, PLtsql_stmt_query_set *stmt);
 static int	exec_stmt_try_catch(PLtsql_execstate *estate, PLtsql_stmt_try_catch *stmt);
 static int	exec_stmt_push_result(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt);
@@ -177,10 +175,6 @@ exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_es
 			rc = exec_stmt_print(estate, (PLtsql_stmt_print *) stmt);
 			break;
 
-		case PLTSQL_STMT_KILL:
-			rc = exec_stmt_kill(estate, (PLtsql_stmt_kill *) stmt);
-			break;
-
 		case PLTSQL_STMT_INIT:
 
 			/*
@@ -240,132 +234,6 @@ exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_es
 	}
 
 	return rc;
-}
-
-static int
-exec_stmt_kill(PLtsql_execstate *estate, PLtsql_stmt_kill *stmt)
-{
-	PGPROC	*proc;    	
-	Oid	  sysadmin_oid = get_role_oid("sysadmin", false);  // should really use BABELFISH_SYSADMIN in tds_int.h
-	int	  spid = -1;
-	char *strtol_endptr;
-
-	if (pltsql_explain_only)
-	{
-		StringInfoData query;
-
-		initStringInfo(&query);
-		appendStringInfo(&query, "KILL ");
-		appendStringInfoString(&query, stmt->spid);
-		append_explain_info(NULL, query.data);
-		return PLTSQL_RC_OK;
-	}
-  
-	// Do not allow to run KILL inside a transaction
-	if (IsTransactionBlockActive())
-	{
-
-    		ereport(ERROR,
-      			(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-        		errmsg("%s command cannot be used inside user transactions.", "KILL")));
-	}
-
-	// Require that the user has 'sysadmin' role
-	if (!has_privs_of_role(GetSessionUserId(), sysadmin_oid)) {	       
-	     ereport(ERROR,
-	          (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-	           errmsg("User does not have permission to use the KILL statement")));
-	}
-		        
-	// Convert SPID string to int
-	// Although the T-SQL grammar only accepts a numeric value, and it must always be present, play it safe
-	Assert(stmt->spid != NULL);     
-	Assert(strlen(stmt->spid) > 0);
-    
-	spid = (int) strtol(stmt->spid, &strtol_endptr, 10);
-	if ((spid == 0) && (*strtol_endptr != '\0'))
-        {
-            ereport(ERROR,
-               (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("Session ID %s is not valid", stmt->spid)));            
-        }
-       	// SPID value must be positive; the T-SQL grammar allows only a non-negative nuber to be specified
-	// Yet, play it safe and test for it
-       	// A variable or expression is not allowed and caught in the parser
-       	// All other variants of T-SQL KILL are not supported, this is caught in the parser
-        if (spid <= 0)
-        {
-            ereport(ERROR,
-               (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("Session ID %d is not valid", spid)));
-        }
-
-       	// SPID value must be positive
-        if (spid <= 0)
-        {
-            ereport(ERROR,
-       		(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("Session ID %d is not valid", spid)));
-        }
-
-	// Verify it is an actually existing process; otherwise we might just be killing any process on the host
-        proc = BackendPidGetProc(spid);
-        if (proc == NULL)
-        {
-            ereport(ERROR,
-                    errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                    errmsg("Process ID %d is not an active process ID", spid));
-        }
-
-	// Do not kill ourselves 
-        if (spid == MyProcPid)
-        {
-            ereport(ERROR,
-               (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-                errmsg("Cannot use KILL to kill your own process.")));
-        }		
-
-	// Verify this is a TDS connection, not a PG connection: we should not kill PG connections from T-SQL.
-	// This can be verified by checking the session to be present in sys.dm_exec_sessions or 
-	// sys.dm_exec_connections, which contains T-SQL connections only
-	// (unlike sys.syprocesses which also contains PG connections since this view is also 
-	//  based on pg_locks and pg_stat_activity)
-	{
-		char *tmpqry =
-		"SELECT DISTINCT 1 FROM sys.dm_exec_sessions WHERE session_id = %d " ;
-		
-		char *query = psprintf(tmpqry, spid);
-		
-		int	rc = SPI_execute(query, true, 1);
-
-		if (rc != SPI_OK_SELECT)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("SPI_execute failed: %s", SPI_result_code_string(rc))));
-		
-		// 1 rows found: TDS connection	 		
-		// 0 row found: PG connection
-		if (SPI_processed == 0)
-			ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("Process ID %d is not an active process ID for a TDS connection", spid)));
-
-		SPI_freetuptable(SPI_tuptable);		
-	}
-
-	// All validations passed, send the signal to the backend process
-	// This is basically the same as what pg_terminate_backend() does
-	if (kill(spid, SIGTERM))
-	{
-		ereport(WARNING,
-			(errmsg("Could not send signal to process %d: %m", spid)));
-	}
-	
-	// Send no further message to the client, irrespective of the result
-
-	exec_set_rowcount(0);
-
-	return PLTSQL_RC_OK;
 }
 
 static int
