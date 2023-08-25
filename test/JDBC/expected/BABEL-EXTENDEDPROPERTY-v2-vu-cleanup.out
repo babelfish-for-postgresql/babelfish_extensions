@@ -26,7 +26,7 @@ tinyint#!#nvarchar#!#int#!#int#!#varchar#!#sql_variant
 
 SELECT dbid, schema_name, major_name, minor_name, type, name, orig_name, value FROM sys.babelfish_extended_properties ORDER BY dbid, type, schema_name, major_name, minor_name, name
 GO
-~~START~~
-smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#sql_variant
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babelfish_extended_properties)~~
 
