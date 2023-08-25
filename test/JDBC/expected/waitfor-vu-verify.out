@@ -4,12 +4,64 @@ GO
 ~~ROW COUNT: 1~~
 
 
-WAITFOR DELAY '00:00:02'
-GO
-
 INSERT INTO Timecheck (NAME) values('b')
 GO
 ~~ROW COUNT: 1~~
+
+
+WAITFOR DELAY '00:00:01'
+GO
+
+-- Expect Fail with incorrect syntax 
+WAITFOR DELAY NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near <NULL>)~~
+
+
+WAITFOR DELAY 0
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near 0)~~
+
+
+WAITFOR DELAY 1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near 1)~~
+
+
+WAITFOR DELAY 1000000
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near 1000000)~~
+
+
+DECLARE @f float = 1.234
+WAITFOR DELAY @f
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near 1.234)~~
+
+
+-- Expect fail but passed here, BABEL-4356
+WAITFOR DELAY '0::'
+GO
+
+WAITFOR DELAY '0:'
+GO
+
+-- Expect fail
+WAITFOR DELAY '19921:00:00'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "19921:00:00")~~
 
 
 -- Expect WAITFOR DELAY: Passed
