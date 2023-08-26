@@ -63,10 +63,6 @@ create proc kill_proc
 as
 kill 1
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "kill_proc" already exists with same argument types)~~
-
 execute kill_proc
 go
 ~~ERROR (Code: 33557097)~~
