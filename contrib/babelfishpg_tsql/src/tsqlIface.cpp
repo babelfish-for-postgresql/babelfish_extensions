@@ -1986,7 +1986,7 @@ public:
 	{
 		// if select doesnt contains into but it contains identity we should throw error
 		if(has_identity_function && !ctx->INTO()){
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "The IDENTITY function can only be used when the SELECT statement has an INTO clause.", getLineAndPos(ctx));
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Incorrect syntax near ')'", getLineAndPos(ctx));
 		}
 		has_identity_function = false;
 		if (statementMutator)
@@ -4036,6 +4036,25 @@ makePrintStmt(TSqlParser::Print_statementContext *ctx)
 }
 
 void *
+makeKillStmt(TSqlParser::Kill_statementContext *ctx)
+{
+	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_KILL;
+
+	// Only supporting numeric argument for the spid,
+	// other flavours of KILL are intercepted in the parser
+
+	std::string spidStr;
+	if (ctx->kill_process()) {
+		spidStr = ::getFullText(ctx->kill_process());
+		result->spid = psprintf("%s", &spidStr[0]);
+	}
+
+	return result;
+}
+
+void *
 makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 {
 	PLtsql_stmt_raiserror *result = (PLtsql_stmt_raiserror *) palloc0(sizeof(*result));
@@ -4256,6 +4275,8 @@ makeCfl(TSqlParser::Cfl_statementContext *ctx, tsqlBuilder &builder)
 		result = makePrintStmt(ctx->print_statement());
 	else if (ctx->raiseerror_statement())
 		result = makeRaiseErrorStmt(ctx->raiseerror_statement());
+	else if (ctx->kill_statement())
+		result = makeKillStmt(ctx->kill_statement());
 
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) result);
 	
