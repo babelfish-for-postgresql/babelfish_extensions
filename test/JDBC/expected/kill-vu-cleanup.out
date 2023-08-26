@@ -5,4 +5,9 @@ go
 drop table tab_kill_spid
 go
 
+drop procedure kill_proc
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure name "kill_proc" is not unique)~~
 

@@ -58,6 +58,34 @@ int
  */
 go
 
+-- KILL in a procedure: allowed
+create proc kill_proc
+as
+kill 1
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "kill_proc" already exists with same argument types)~~
+
+execute kill_proc
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Process ID 1 is not an active process ID)~~
+
+
+-- KILL not allowed in a SQL function: not allowed
+create function kill_func() returns int
+as
+begin
+kill 1
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid use of a side-effecting operator 'KILL' within a function.)~~
+
+
 -- cannot use KILL inside a transaction
 BEGIN TRAN
 go

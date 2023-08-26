@@ -792,6 +792,12 @@ public:
 		}
 	}
 
+	void enterKill_statement(TSqlParser::Kill_statementContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'KILL' within a function.", 0, 0);
+		}
+	}
+
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
 	{

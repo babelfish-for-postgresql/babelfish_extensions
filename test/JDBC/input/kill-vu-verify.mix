@@ -42,6 +42,22 @@ go
  */
 go
 
+-- KILL in a procedure: allowed
+create proc kill_proc
+as
+kill 1
+go
+execute kill_proc
+go
+
+-- KILL not allowed in a SQL function: not allowed
+create function kill_func() returns int
+as
+begin
+kill 1
+end
+go
+
 -- cannot use KILL inside a transaction
 BEGIN TRAN
 go

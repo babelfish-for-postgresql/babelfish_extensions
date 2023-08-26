@@ -5,4 +5,5 @@ go
 drop table tab_kill_spid
 go
 
-
+drop procedure kill_proc
+go
