@@ -25,7 +25,7 @@ GO
 Select todatetimeoffset('2000-04-22 16:23:5d.766890','+12:00')
 GO
 
-Select todatetimeoffset('2000-04-22 16:23:51.7668c0','+12:00')
+Select todatetimeoffset('2000-04-22 16:23:51.7668c0','+12:00') -- Wrong output , Need to fix BABEL-4328
 GO
 
 Select todatetimeoffset('2000-05-22 16:23:51.766890','+1d:00')
@@ -61,7 +61,7 @@ GO
 Select todatetimeoffset('2000-04-22 16:23:5d.766890',841)
 GO
 
-Select todatetimeoffset('2000-04-22 16:23:51.7668c0',-342)
+Select todatetimeoffset('2000-04-22 16:23:51.7668c0',-342) -- Wrong output , Need to fix BABEL-4328
 GO
 
 Select todatetimeoffset('2000-05-22 16:23:51.766890',234)
@@ -133,6 +133,7 @@ GO
 Create table tem(a datetimeoffset)
 insert into tem (a) values(todatetimeoffset('2000-04-22 12:23:51.766890',120))
 Select * from tem
+Select todatetimeoffset(a,234) from tem
 GO
 
 Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);

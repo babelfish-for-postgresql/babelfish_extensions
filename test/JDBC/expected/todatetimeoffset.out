@@ -62,7 +62,7 @@ GO
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-Select todatetimeoffset('2000-04-22 16:23:51.7668c0','+12:00')
+Select todatetimeoffset('2000-04-22 16:23:51.7668c0','+12:00') -- Wrong output , Need to fix BABEL-4328
 GO
 ~~START~~
 datetimeoffset
@@ -151,7 +151,7 @@ GO
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-Select todatetimeoffset('2000-04-22 16:23:51.7668c0',-342)
+Select todatetimeoffset('2000-04-22 16:23:51.7668c0',-342) -- Wrong output , Need to fix BABEL-4328
 GO
 ~~START~~
 datetimeoffset
@@ -319,12 +319,18 @@ GO
 Create table tem(a datetimeoffset)
 insert into tem (a) values(todatetimeoffset('2000-04-22 12:23:51.766890',120))
 Select * from tem
+Select todatetimeoffset(a,234) from tem
 GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
 datetimeoffset
 2000-04-22 12:23:51.7668900 +02:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2000-04-22 12:23:51.7668900 +03:54
 ~~END~~
 
 
