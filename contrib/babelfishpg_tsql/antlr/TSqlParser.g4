@@ -273,7 +273,6 @@ cfl_statement
     | while_statement
     | print_statement
     | raiseerror_statement
-    | kill_statement
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/begin-end-transact-sql
@@ -372,6 +371,7 @@ another_statement
     | execute_statement
     | cursor_statement
     | conversation_statement
+    | kill_statement
     | create_message_type
     | security_statement
     | set_statement
