@@ -860,7 +860,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
 ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
 
