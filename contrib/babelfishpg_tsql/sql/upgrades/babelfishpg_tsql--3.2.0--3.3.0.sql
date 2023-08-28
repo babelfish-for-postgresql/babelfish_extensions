@@ -406,35 +406,6 @@ CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
-AS $$
-DECLARE
-  v TIME;
-BEGIN
-  v = CAST(sleep_time as TIME);
-  PERFORM pg_sleep(extract(epoch from clock_timestamp() + v) -
-                extract(epoch from clock_timestamp()));
-END;
-$$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME) TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME)
-AS $$
-DECLARE
-  t TIME;
-  target_timestamp TIMESTAMPTZ;
-BEGIN
-  t = CAST(sleep_time as TIME);
-  target_timestamp = current_date + t;
-  IF target_timestamp < current_timestamp THEN
-    target_timestamp = target_timestamp + '1 day';
-  END IF;
-  PERFORM pg_sleep(extract(epoch from target_timestamp) -
-                extract(epoch from clock_timestamp()));
-END
-$$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
-
 -- sp_babelfish_autoformat is a helper procedure which formats the contents of a table (or view)
 -- as narrowly as possible given its actual column contents.
 -- This proc is currently only used by sp_who but could be applied more generically.
@@ -891,24 +862,6 @@ IMMUTABLE;
 
 ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
--- Matches and returns column name of the corresponding table
-CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
-RETURNS sys.SYSNAME AS $$
-    DECLARE
-        column_name TEXT;
-    BEGIN
-        SELECT attname INTO STRICT column_name 
-        FROM pg_attribute 
-        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
-        
-        RETURN column_name::sys.SYSNAME;
-    EXCEPTION
-        WHEN OTHERS THEN
-            RETURN NULL;
-    END; 
-$$
-LANGUAGE plpgsql IMMUTABLE
-STRICT;
