@@ -6,7 +6,7 @@ select name from sys.types where system_type_id =
 	(
 	  select object_id from sys.tables where name = 'test_isnull_table'
 	)
-);
+) and is_user_defined = 0;
 GO
 
 select * from [dbo].[test_isnull_table]
@@ -40,7 +40,7 @@ select name from sys.types where system_type_id =
 	(
 	  select object_id from sys.views where name = 'test_isnull_view3'
 	)
-);
+) and is_user_defined = 0;
 GO
 
 select name from sys.types where system_type_id = 
@@ -50,7 +50,7 @@ select name from sys.types where system_type_id =
 	(
 	  select object_id from sys.views where name = 'test_isnull_view4'
 	)
-);
+) and is_user_defined = 0;
 GO
 
 select name from sys.types where system_type_id = 
@@ -60,7 +60,7 @@ select name from sys.types where system_type_id =
 	(
 	  select object_id from sys.views where name = 'test_isnull_view5'
 	)
-);
+) and is_user_defined = 0;
 GO
 
 select name from sys.types where system_type_id = 
@@ -70,7 +70,7 @@ select name from sys.types where system_type_id =
 	(
 	  select object_id from sys.views where name = 'test_isnull_view6'
 	)
-);
+) and is_user_defined = 0;
 GO
 
 select name from sys.types where system_type_id = 
@@ -80,7 +80,7 @@ select name from sys.types where system_type_id =
 	(
 	  select object_id from sys.views where name = 'test_isnull_view7'
 	)
-);
+) and is_user_defined = 0;
 GO
 
 select [dbo].[test_isnull_func1]();
