@@ -1,0 +1,183 @@
+-- Test to check ESCAPE null case (ESCAPE null means no ESCAPE char used)
+select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select 1 where 'cbc' LIKE '[c-a]bc' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select 1 where 'abc' LIKE '[0-a]bc' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select 1 where 'abc' LIKE '[abc]bc' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select 1 where 'abc' LIKE '[a-c]bc' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select 1 where 'bbc' LIKE '[a-c]bc' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select a, b from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE babel_4271_vu_prepare_t1.b ESCAPE '';
+go
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT a, '' from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE '' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT a, 'abc' from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE '' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT '', '' from babel_4271_vu_prepare_t1 where '' LIKE babel_4271_vu_prepare_t1.b ESCAPE '';
+go
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT 'xy', b from babel_4271_vu_prepare_t1 where 'cbc' LIKE babel_4271_vu_prepare_t1.a ESCAPE '';
+go
+~~START~~
+varchar#!#varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+SELECT a, b from babel_4271_vu_prepare_t1 where '' LIKE '' ESCAPE '';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+-- Test to check ESCAPE null case (ESCAPE null means no ESCAPE char used)
+select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE null;
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 'cbc' LIKE '[c-a]bc' ESCAPE null;
+go
+~~START~~
+int
+~~END~~
+
+select 1 where 'abc' LIKE '[0-a]bc' ESCAPE null;
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 'abc' LIKE '[abc]bc' ESCAPE null;
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 'abc' LIKE '[a-c]bc' ESCAPE null;
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 'bbc' LIKE '[a-c]bc' ESCAPE null;
+go
+~~START~~
+int
+1
+~~END~~
+
+select a, b from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE babel_4271_vu_prepare_t1.b ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+cbc#!#[a-c]bc
+abc#!#abc
+#!#
+~~END~~
+
+SELECT a, 'abc' from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE 'abc' ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+abc#!#abc
+abc#!#abc
+~~END~~
+
+SELECT a, '' from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE babel_4271_vu_prepare_t1.b ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+cbc#!#
+abc#!#
+#!#
+~~END~~
+
+SELECT a, '' from babel_4271_vu_prepare_t1 where babel_4271_vu_prepare_t1.a LIKE '' ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+#!#
+~~END~~
+
+SELECT 'xy', b from babel_4271_vu_prepare_t1 where 'cbc' LIKE babel_4271_vu_prepare_t1.a ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+xy#!#[c-a]bc
+xy#!#[a-c]bc
+xy#!#def
+~~END~~
+
+SELECT '', '' from babel_4271_vu_prepare_t1 where '' LIKE babel_4271_vu_prepare_t1.b ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+#!#
+~~END~~
+
+SELECT a, b from babel_4271_vu_prepare_t1 where '' LIKE '' ESCAPE null;
+go
+~~START~~
+varchar#!#varchar
+cbc#!#[c-a]bc
+cbc#!#[a-c]bc
+abc#!#abc
+cbc#!#def
+ abc#!#abc
+abc#!#def
+#!#
+~~END~~
+

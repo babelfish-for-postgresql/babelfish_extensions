@@ -263,12 +263,9 @@ go
 ~~ERROR (Message: Parameter @option can only be 'postgres')~~
 
 
-sp_who 'sp_who_login', 'postgres'
+-- commenting out this test due to unexpected PG connections showing up
+--sp_who 'sp_who_login', 'postgres'
 go
-~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-~~END~~
-
 
 sp_who 'nosuchlogin'
 go
@@ -291,9 +288,6 @@ go
 ~~ERROR (Message: Parameter @option can only be 'postgres')~~
 
 
-sp_who @option='postgres', @loginame='sp_who_login'
+-- commenting out this test due to unexpected PG connections showing up
+--sp_who @option='postgres', @loginame='sp_who_login'
 go
-~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-~~END~~
-

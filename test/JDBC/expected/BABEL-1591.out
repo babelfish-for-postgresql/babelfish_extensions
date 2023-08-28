@@ -68,14 +68,14 @@ CREATE FUNCTION fwaitfordelay(@p int) RETURNS int AS BEGIN WAITFOR DELAY '00:00:
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid use of a side-effecting operator 'WAITFOR' within a function.)~~
+~~ERROR (Message: 'WAITFOR' is not currently supported in Babelfish)~~
 
 
 CREATE FUNCTION fwaitfortime(@p int) RETURNS int AS BEGIN WAITFOR TIME '00:00:20' RETURN 0 END
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Invalid use of a side-effecting operator 'WAITFOR' within a function.)~~
+~~ERROR (Message: 'WAITFOR' is not currently supported in Babelfish)~~
 
 
 CREATE FUNCTION fprinttest (@p int) RETURNS int AS BEGIN PRINT 'hello there' RETURN 0 END
