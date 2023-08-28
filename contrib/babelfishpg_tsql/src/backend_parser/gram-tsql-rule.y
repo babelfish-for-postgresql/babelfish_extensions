@@ -417,6 +417,17 @@ tsql_alter_user_options:
 									 (Node *)makeString($3),
 									 @1);
 				}
+			| TSQL_LOGIN '=' RoleId
+				{
+					RoleSpec	*login = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					List		*rolelist;
+
+					login->rolename = pstrdup($3);
+					rolelist = list_make1(login);
+					$$ = makeDefElem("rolemembers",
+									 (Node *)rolelist,
+									 @1);
+				}
 		;
 
 tsql_AlterLoginStmt:
@@ -1895,17 +1906,6 @@ func_expr_common_subexpr:
 			| IDENTITY_P '(' Typename ')'
 				{
 					$$ = TsqlFunctionIdentityInto($3, (Node *)makeIntConst(1, -1), (Node *)makeIntConst(1, -1), @1);
-				}
-			| TSQL_CONTAINS '(' ColId ',' tsql_contains_search_condition ')'
-				{
-					$$ = TsqlExpressionContains($3, $5, yyscanner);
-				}
-		;
-
-tsql_contains_search_condition:
-			a_expr
-				{
-					$$ = $1;
 				}
 		;
 
@@ -4394,10 +4394,6 @@ reserved_keyword:
 			| TSQL_TRY_CONVERT
 			| TSQL_TRY_PARSE
 			| TSQL_EXEC
-		;
-
-bare_label_keyword:
-			  TSQL_CONTAINS
 		;
 
 privilege:
