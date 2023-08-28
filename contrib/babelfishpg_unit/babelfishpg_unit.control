@@ -1,0 +1,4 @@
+comment = 'Unit testing framework for babelfish'
+default_version = '1.0.0'
+module_pathname = '$libdir/babelfishpg_unit'
+schema = 'babelfishpg_unit'

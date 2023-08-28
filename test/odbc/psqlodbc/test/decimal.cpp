@@ -382,7 +382,7 @@ TEST_F(PSQL_DataTypes_Decimal, Table_Unique_Constraints) {
   const string COL2_NAME = COL_NAMES[PK_INDEX];
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, COL_TYPES[PK_INDEX]}
+    {COL2_NAME, COL_TYPES[PK_INDEX] + " NOT NULL"}
   };
 
   const string TABLE_NAME = PG_TABLE_NAME.substr(PG_TABLE_NAME.find('.') + 1, PG_TABLE_NAME.length());  
