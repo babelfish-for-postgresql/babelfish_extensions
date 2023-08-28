@@ -571,3 +571,35 @@ datetimeoffset
 2011-08-15 14:30:00.5000000 +01:01
 ~~END~~
 
+
+Select todatetimeoffset('0001-01-01 00:00:01.00 +00:00',-743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 00:00:01.0000000 -12:23
+~~END~~
+
+
+Select todatetimeoffset('0001-01-01 00:00:00.00 +00:00',-743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 00:00:00.0000000 -12:23
+~~END~~
+
+
+Select todatetimeoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:12:00.1230000 +12:23
+~~END~~
+
+
+Select todatetimeoffset('10000-12-31 23:12:00.123 +00:00',743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+

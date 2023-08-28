@@ -228,3 +228,16 @@ GO
 
 Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 123/2*1.0)
 GO
+
+Select todatetimeoffset('0001-01-01 00:00:01.00 +00:00',-743)
+GO
+
+Select todatetimeoffset('0001-01-01 00:00:00.00 +00:00',-743)
+GO
+
+Select todatetimeoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+
+Select todatetimeoffset('10000-12-31 23:12:00.123 +00:00',743)
+GO
+
