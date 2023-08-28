@@ -2827,6 +2827,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					table_close(depRel, RowExclusiveLock);
 				}
+				ReleaseSysCache(tp);
 			}
 			/*
 			 * If the object is not of Table type (TT), it should be user defined table (U)
@@ -2838,6 +2839,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			type = OBJECT_TYPE_VIEW;
 		else if (pg_class->relkind == 's')
 			type = OBJECT_TYPE_SEQUENCE_OBJECT;
+
+		ReleaseSysCache(tuple);
 	}
 	/* pg_proc */
 	if (!schema_id)
@@ -2884,6 +2887,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 								type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
 							else
 								type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
+
+							ReleaseSysCache(tp);
 						}
 					}
 					else
@@ -2892,6 +2897,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					pfree(temp);
 				}
 			}
+			ReleaseSysCache(tuple);
 		}
 	}
 	/* pg_attrdef */
@@ -2990,6 +2996,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
 				type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			
+			ReleaseSysCache(tuple);
 		}
 	}
 
