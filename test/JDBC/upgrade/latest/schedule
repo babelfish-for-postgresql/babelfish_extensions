@@ -147,6 +147,7 @@ babelfish_sysdatabases
 babel_function_string
 BABEL_GRANT_CONNECT
 babel_isnumeric
+BABEL_COL_NAME
 BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
@@ -444,8 +445,7 @@ datetimeoffset-timezone
 BABEL-4046
 host_id
 linked_srv_4229
-waitfor
 BABEL-4175
 sp_who
 BABEL_4330
-Tets_ISNULL
+Test_ISNULL

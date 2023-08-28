@@ -208,7 +208,6 @@ CREATE TABLE sys.babelfish_extended_properties (
   value sys.sql_variant,
   PRIMARY KEY (dbid, type, schema_name, major_name, minor_name, name)
 );
-GRANT SELECT on sys.babelfish_extended_properties TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_extended_properties', '');
 
 CREATE OR REPLACE VIEW sys.extended_properties
@@ -406,35 +405,6 @@ CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
     AS $$select date_trunc('millisecond', statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime;$$
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME)
-AS $$
-DECLARE
-  v TIME;
-BEGIN
-  v = CAST(sleep_time as TIME);
-  PERFORM pg_sleep(extract(epoch from clock_timestamp() + v) -
-                extract(epoch from clock_timestamp()));
-END;
-$$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_for(IN sleep_time DATETIME) TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME)
-AS $$
-DECLARE
-  t TIME;
-  target_timestamp TIMESTAMPTZ;
-BEGIN
-  t = CAST(sleep_time as TIME);
-  target_timestamp = current_date + t;
-  IF target_timestamp < current_timestamp THEN
-    target_timestamp = target_timestamp + '1 day';
-  END IF;
-  PERFORM pg_sleep(extract(epoch from target_timestamp) -
-                extract(epoch from clock_timestamp()));
-END
-$$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.bbf_sleep_until(IN sleep_time DATETIME) TO PUBLIC;
 
 -- sp_babelfish_autoformat is a helper procedure which formats the contents of a table (or view)
 -- as narrowly as possible given its actual column contents.
