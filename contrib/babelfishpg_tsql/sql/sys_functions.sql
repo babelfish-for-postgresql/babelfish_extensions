@@ -852,7 +852,20 @@ DECLARE
     v_mi INTEGER;
     sign_flag INTEGER;
     v_string pg_catalog.text;
+    isoverflow pg_catalog.text;
 BEGIN
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
 
     BEGIN
     input_expr:= cast(input_expr AS datetimeoffset);
@@ -907,10 +920,19 @@ BEGIN
 
 
     f_tzoffset := p_tzoffset + tzfm;
+
     v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
     v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
 
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
     v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+    
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
 
     BEGIN
     RETURN cast(v_string AS sys.datetimeoffset);
@@ -951,11 +973,24 @@ DECLARE
     v_string pg_catalog.text;
     v_sign PG_CATALOG.TEXT;
     tz_offset_smallint smallint;
+    isoverflow pg_catalog.text;
 BEGIN
 
     IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
     'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype,'varbinary'::regtype ) THEN
         RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
     END IF;
 
     BEGIN
@@ -1010,7 +1045,16 @@ BEGIN
     v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
     v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
 
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
     v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
+
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+    
 
     BEGIN
     RETURN cast(v_string AS sys.datetimeoffset);

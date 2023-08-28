@@ -81,6 +81,8 @@ GO
 Select switchoffset(convert(smalldatetime,'2001-04-22'),'-13:00')
 GO
 
+--
+
 Select switchoffset('0001-01-00 00:00:00.00', '-10:00')
 GO
 
@@ -129,6 +131,8 @@ GO
 Create table tem(a datetimeoffset)
 insert into tem (a) values(switchoffset('2000-04-22 12:23:51.766890',120))
 Select * from tem
+Select switchoffset(a,'+14:00') from tem;
+DROP TABLE IF EXISTS tem
 GO
 
 Select switchoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);
@@ -246,4 +250,82 @@ Select switchoffset('1900-05-06 12:59:29.998 +10:00', -456)
 GO
 
 Select switchoffset('1900-05-06 12:59:29.998 -00:00', 0x12)
+GO
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(1, 1, 1, 4, 30, 00, 500, 12, 30, 3), '+00:43')
+GO
+
+Select switchoffset('1-1-1 00:00:00.000 +12:00' , '+12:00')
+GO
+
+Select switchoffset('0001-1-1 00:00:00.000 +12:00' , '+12:00')
+GO
+
+Select switchoffset('0001-01-01 00:00:00.000 +12:00' , '+12:00')
+GO
+
+Select switchoffset('0002-01-01 00:00:00.000 +12:00' , '+12:43')
+GO
+
+Select switchoffset('10000-01-01 00:00:00.000 +12:00' , '+12:00')
+GO
+
+Select switchoffset('10000-01-01 00:00:00.123 +2:00','+12:00')
+GO
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00','+12:00')
+GO
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00','+12:00')
+GO
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00','+12:00')
+GO
+
+Select switchoffset('0001-01-01 00:00:00.00 +00:00','+12:00')
+GO
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00','+12:00')
+GO
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(1, 1, 1, 4, 30, 00, 500, 12, 30, 3), 743)
+GO
+
+Select switchoffset('1-1-1 00:00:00.000 +12:00' , 743)
+GO
+
+Select switchoffset('0001-1-1 00:00:00.000 +12:00' , 743)
+GO
+
+Select switchoffset('0001-01-01 00:00:00.000 +12:00' , 743)
+GO
+
+Select switchoffset('0002-01-01 00:00:00.000 +12:00' , 743)
+GO
+
+Select switchoffset('10000-01-01 00:00:00.000 +12:00' , 743)
+GO
+
+Select switchoffset('10000-01-01 00:00:00.123 +2:00', 743)
+GO
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00',743)
+GO
+
+Select switchoffset('0001-01-01 00:00:00.00 +00:00',743)
+GO
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00',743)
+GO
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00',-743)
+GO
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00','-12:00')
 GO
