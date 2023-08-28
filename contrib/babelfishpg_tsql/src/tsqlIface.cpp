@@ -4010,27 +4010,7 @@ makeTryCatchStmt(TSqlParser::Try_catch_statementContext *ctx)
 void *
 makeWaitForStmt(TSqlParser::Waitfor_statementContext *ctx)
 {
-    PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
-	std::string query;
-
-    result->cmd_type = PLTSQL_STMT_EXEC;
-    result->lineno = getLineNo(ctx);;
-    result->is_call = true;
-    result->return_code_dno = -1;
-    result->paramno = 0;
-    result->params = NIL;
-
-    query += "EXEC ";
-    if (ctx->DELAY())
-        query += "bbf_sleep_for(";
-    else
-        query += "bbf_sleep_until(";
-
-    query += getFullText(ctx->expression());
-    query += ")";
-    result->expr = makeTsqlExpr(query, false);
-
-    return result;
+	return nullptr;
 }
 
 void *

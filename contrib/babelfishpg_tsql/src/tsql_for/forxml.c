@@ -225,6 +225,7 @@ tsql_row_to_xml_raw(StringInfo state, Datum record, const char *element_name, bo
 		}
 	}
 	appendStringInfoString(state, "/>");
+	ReleaseTupleDesc(tupdesc);
 }
 
 /*
@@ -301,6 +302,7 @@ tsql_row_to_xml_path(StringInfo state, Datum record, const char *element_name, b
 	}
 	else if (element_name[0] != '\0')
 		appendStringInfo(state, "</%s>", element_name);
+	ReleaseTupleDesc(tupdesc);
 }
 
 static void
