@@ -124,7 +124,6 @@ babel_datetime
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
 babel_int4_varbinary_div
-babelfish_authid_user_ext
 babelfish_cast_floor
 babelfish_inconsistent_metadata
 babelfish_integrity_checker
