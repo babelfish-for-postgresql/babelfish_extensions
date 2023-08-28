@@ -523,6 +523,20 @@ go
 ~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
+CREATE FUNCTION babel4169_error_on_func_create ()
+RETURNS TABLE
+AS
+RETURN
+    select sum(a), b from dbo.babel4169_t1 group by b, c
+    union
+    select sum(a), b from dbo.babel4169_t2 group by b, c
+    order by c
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
+
+
 drop table dbo.babel4169_t1;
 drop table dbo.babel4169_t2;
 go
