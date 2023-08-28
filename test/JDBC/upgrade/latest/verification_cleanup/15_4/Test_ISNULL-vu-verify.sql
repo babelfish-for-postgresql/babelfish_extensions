@@ -8,20 +8,9 @@ select name from sys.types where system_type_id =
 	)
 ) and is_user_defined = 0;
 GO
-~~START~~
-text
-varchar
-~~END~~
-
 
 select * from [dbo].[test_isnull_table]
 GO
-~~START~~
-bigint#!#varchar#!#varchar
-1#!#1#!#1
-2#!#<NULL>#!#2
-~~END~~
-
 
 select
   ISNULL(NULL, NULL),
@@ -31,78 +20,27 @@ select
   ISNULL ('', 5)
 from [dbo].[test_isnull_table];
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar#!#varchar
-<NULL>#!#Unassigned#!#1#!#Unassigned#!#
-<NULL>#!#Unassigned#!#Unassigned#!#Unassigned#!#
-~~END~~
-
 
 select * from [dbo].[test_isnull_view];
 GO
-~~START~~
-varchar
-1
-2
-~~END~~
-
 
 select * from [dbo].[test_isnull_view1];
 GO
-~~START~~
-bigint#!#varchar#!#varchar
-1#!#1#!#1
-~~END~~
-
 
 select * from [dbo].[test_isnull_view2];
 GO
-~~START~~
-bigint#!#varchar#!#varchar
-1#!#1#!#1
-~~END~~
-
 
 select * from [dbo].[test_isnull_view3];
 GO
-~~START~~
-int
-<NULL>
-~~END~~
-
 
 select * from [dbo].[test_isnull_view4];
 GO
-~~START~~
-varchar
-Unassigned
-~~END~~
-
 
 select * from [dbo].[test_isnull_view5];
 GO
-~~START~~
-varchar
-1
-Unassigned
-~~END~~
-
-
-select * from [dbo].[test_isnull_view6];
-GO
-~~START~~
-varchar
-Unassigned
-~~END~~
-
 
 select * from [dbo].[test_isnull_view7];
 GO
-~~START~~
-varchar
-
-~~END~~
-
 
 select name from sys.types where system_type_id = 
 (
@@ -113,11 +51,6 @@ select name from sys.types where system_type_id =
 	)
 ) and is_user_defined = 0;
 GO
-~~START~~
-text
-int
-~~END~~
-
 
 select name from sys.types where system_type_id = 
 (
@@ -128,11 +61,6 @@ select name from sys.types where system_type_id =
 	)
 ) and is_user_defined = 0;
 GO
-~~START~~
-text
-varchar
-~~END~~
-
 
 select name from sys.types where system_type_id = 
 (
@@ -143,26 +71,6 @@ select name from sys.types where system_type_id =
 	)
 ) and is_user_defined = 0;
 GO
-~~START~~
-text
-varchar
-~~END~~
-
-
-select name from sys.types where system_type_id = 
-(
-  select system_type_id from sys.columns where 
-	object_id = 
-	(
-	  select object_id from sys.views where name = 'test_isnull_view6'
-	)
-) and is_user_defined = 0;
-GO
-~~START~~
-text
-varchar
-~~END~~
-
 
 select name from sys.types where system_type_id = 
 (
@@ -173,32 +81,12 @@ select name from sys.types where system_type_id =
 	)
 ) and is_user_defined = 0;
 GO
-~~START~~
-text
-varchar
-~~END~~
-
 
 select [dbo].[test_isnull_func1]();
 GO
-~~START~~
-bigint
-1
-~~END~~
-
 
 select [dbo].[test_isnull_func2]('1', 1);
 GO
-~~START~~
-bigint
-1
-~~END~~
-
 
 exec [dbo].[test_isnull_proc1];
 GO
-~~START~~
-int#!#varchar#!#varchar#!#varchar#!#varchar
-<NULL>#!#Unassigned#!#1#!#Unassigned#!#
-~~END~~
-

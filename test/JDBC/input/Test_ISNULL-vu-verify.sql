@@ -33,6 +33,18 @@ GO
 select * from [dbo].[test_isnull_view3];
 GO
 
+select * from [dbo].[test_isnull_view4];
+GO
+
+select * from [dbo].[test_isnull_view5];
+GO
+
+select * from [dbo].[test_isnull_view6];
+GO
+
+select * from [dbo].[test_isnull_view7];
+GO
+
 select name from sys.types where system_type_id = 
 (
   select system_type_id from sys.columns where 
