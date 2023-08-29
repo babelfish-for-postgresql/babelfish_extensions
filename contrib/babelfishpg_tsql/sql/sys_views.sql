@@ -1960,7 +1960,7 @@ GRANT SELECT ON sys.endpoints TO PUBLIC;
 create or replace view sys.index_columns
 as
 select i.indrelid::integer as object_id
-  , CAST(CASE WHEN i.indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY c.oid) END AS INTEGER) AS index_id
+  , imap.index_id
   , a.attrelid::integer as index_column_id
   , col.attnum::integer as column_id
   , a.attnum::sys.tinyint as key_ordinal
@@ -1972,6 +1972,7 @@ inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid
 inner join pg_catalog.pg_attribute col on col.attname = a.attname and col.attrelid = i.indrelid
 inner join pg_class c on i.indrelid = c.oid
 inner join sys.schemas sch on sch.schema_id = c.relnamespace
+inner join (select indexrelid, CAST(CASE WHEN indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY indrelid) END AS INTEGER) AS index_id from pg_index) as imap on imap.indexrelid = i.indexrelid
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
