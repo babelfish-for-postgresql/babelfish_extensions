@@ -47,7 +47,7 @@ jobs:
           cd ..
           export TDS_FDW_VERSION="2.0.3"
           sudo apt-get install wget
-          wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
+          wget --secure-protocol=TLSv1_3 https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
           tar -xvzf v${TDS_FDW_VERSION}.tar.gz
           cd tds_fdw-${TDS_FDW_VERSION}/
           make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
