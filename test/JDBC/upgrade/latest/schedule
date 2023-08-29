@@ -243,6 +243,7 @@ sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
 str
+switchoffset-dep
 sys-all_columns
 sys-all_columns-dep
 sys_all_objects
