@@ -1,0 +1,27 @@
+name: 'Build babelfishpg_unit'
+inputs:
+  install_dir:
+    description: 'Engine install directory'
+    required: no
+    default: postgres
+  extension_branch: 
+    description: 'Extension Branch name which needs to checkout first'
+    required: no
+    default: 'latest'
+
+runs:
+  using: "composite"
+  steps:
+    - if: always() && (inputs.extension_branch == 'latest')
+      uses: actions/checkout@v2
+
+    - name: Build babelfishpg_unit
+      run: |
+        export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+        export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+        export cmake=$(which cmake)
+        export PATH=~/${{ inputs.install_dir }}/bin:$PATH
+        cd contrib/babelfishpg_unit
+        make clean && make && make install
+      shell: bash
+      

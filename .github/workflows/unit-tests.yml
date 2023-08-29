@@ -1,0 +1,61 @@
+name: Unit Tests
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-unit-tests:
+    env:
+      INSTALL_DIR: psql
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Build babelfishpg_unit
+        id: build-babelfishpg_unit
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/build-babelfishpg_unit
+
+      - name: Run Unit Tests
+        id: unit
+        if: always() && steps.build-babelfishpg_unit.outcome == 'success'
+        timeout-minutes: 60
+        run: |
+          sudo ~/postgres/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/unit_tests.sql > >(tee ~/postgres/output.out) 
+          count=$(awk -F '|' '$2 ~ /fail/'  ~/postgres/output.out  | wc -l)
+          if [ "$count" -gt 0 ]; then
+            echo "Tests failed: $count"
+            exit 1
+          fi
+          rm -rf ~/postgres/output.out
+
+      - name: Upload Log
+        if: always() && steps.unit.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: postgres-log
+          path: ~/psql/data/logfile
