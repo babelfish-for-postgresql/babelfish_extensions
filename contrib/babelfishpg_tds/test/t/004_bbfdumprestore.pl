@@ -38,10 +38,10 @@ my $oldnode =
 $oldnode->init;
 $oldnode->append_conf(
 	'postgresql.conf', qq{
-log_connections = on
-listen_addresses='127.0.0.1'
-shared_preload_libraries = 'babelfishpg_tds'
-lc_messages = 'C'
+	log_connections = on
+	listen_addresses='127.0.0.1'
+	shared_preload_libraries = 'babelfishpg_tds'
+	lc_messages = 'C'
 });
 $oldnode->start;
 # Initialize Babelfish in old node
@@ -54,10 +54,10 @@ my $newnode = PostgreSQL::Test::Cluster->new('new_node');
 $newnode->init;
 $newnode->append_conf(
 	'postgresql.conf', qq{
-log_connections = on
-listen_addresses='127.0.0.1'
-shared_preload_libraries = 'babelfishpg_tds'
-lc_messages = 'C'
+	log_connections = on
+	listen_addresses='127.0.0.1'
+	shared_preload_libraries = 'babelfishpg_tds'
+	lc_messages = 'C'
 });
 $newnode->start;
 # Initialize Babelfish in new node
@@ -70,14 +70,14 @@ $newnode->stop;
 $oldnode->start;
 my @dumpall_command = (
 	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
-    '--port', $oldnode->port, '--globals-only', '--quote-all-identifiers',
-    '--verbose', '--no-role-passwords', '--file', $dump1_file);
+	'--port', $oldnode->port, '--globals-only', '--quote-all-identifiers',
+	'--verbose', '--no-role-passwords', '--file', $dump1_file);
 $newnode->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
 my @dump_command = (
 	'pg_dump', '--username', 'test_master', '--quote-all-identifiers',
-    '--port', $oldnode->port, '--verbose', '--dbname', 'testdb',
-    '--file', $dump2_file);
+	'--port', $oldnode->port, '--verbose', '--dbname', 'testdb',
+	'--file', $dump2_file);
 $newnode->command_ok(\@dump_command, 'Dump Babelfish database.');
 $oldnode->stop;
 
@@ -91,10 +91,10 @@ $newnode->command_fails_like(
 		'psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
-        '-p',         $newnode->port,
+		'-p',         $newnode->port,
 		'-f',         $dump1_file,
 	],
-    qr/Backup and restore across different Postgres versions is not yet supported./,
+	qr/Backup and restore across different Postgres versions is not yet supported./,
 	'Restore of global objects failed since source and target versions do not match.');
 
 # Similarly, restore of dump file should also cause a failure.
@@ -103,10 +103,10 @@ $newnode->command_fails_like(
 		'psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
-        '-p',         $newnode->port,
+		'-p',         $newnode->port,
 		'-f',         $dump2_file,
 	],
-    qr/Backup and restore across different Postgres versions is not yet supported./,
+	qr/Backup and restore across different Postgres versions is not yet supported./,
 	'Restore of Babelfish database failed since source and target versions do not match.');
 $newnode->stop;
 
@@ -119,10 +119,10 @@ my $newnode2 = PostgreSQL::Test::Cluster->new('new_node2');
 $newnode2->init;
 $newnode2->append_conf(
 	'postgresql.conf', qq{
-log_connections = on
-listen_addresses='127.0.0.1'
-shared_preload_libraries = 'babelfishpg_tds'
-lc_messages = 'C'
+	log_connections = on
+	listen_addresses='127.0.0.1'
+	shared_preload_libraries = 'babelfishpg_tds'
+	lc_messages = 'C'
 });
 $newnode2->start;
 # Initialize Babelfish in new node
@@ -133,14 +133,14 @@ $tsql_newnode2->init_tsql('test_master', 'testdb', 'multi-db');
 # need to use dump utilities from the new node here.
 @dumpall_command = (
 	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
-    '--port', $newnode2->port, '--globals-only', '--quote-all-identifiers',
-    '--verbose', '--no-role-passwords', '--file', $dump3_file);
+	'--port', $newnode2->port, '--globals-only', '--quote-all-identifiers',
+	'--verbose', '--no-role-passwords', '--file', $dump3_file);
 $newnode2->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
 @dump_command = (
 	'pg_dump', '--username', 'test_master', '--quote-all-identifiers',
-    '--port', $newnode2->port, '--verbose', '--dbname', 'testdb',
-    '--file', $dump4_file);
+	'--port', $newnode2->port, '--verbose', '--dbname', 'testdb',
+	'--file', $dump4_file);
 $newnode2->command_ok(\@dump_command, 'Dump Babelfish database.');
 $newnode2->stop;
 
@@ -154,10 +154,10 @@ $newnode->command_fails_like(
 		'psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
-        '-p',         $newnode->port,
+		'-p',         $newnode->port,
 		'-f',         $dump3_file,
 	],
-    qr/Backup and restore across different migration modes is not yet supported./,
+	qr/Backup and restore across different migration modes is not yet supported./,
 	'Restore of global objects failed since source and target migration modes do not match.');
 
 # Similarly, restore of dump file should also cause a failure.
@@ -166,10 +166,10 @@ $newnode->command_fails_like(
 		'psql',
 		'-d',         'testdb',
 		'-U',         'test_master',
-        '-p',         $newnode->port,
+		'-p',         $newnode->port,
 		'-f',         $dump4_file,
 	],
-    qr/Backup and restore across different migration modes is not yet supported./,
+	qr/Backup and restore across different migration modes is not yet supported./,
 	'Restore of Babelfish database failed since source and target migration modes do not match.');
 $newnode->stop;
 done_testing();

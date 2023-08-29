@@ -35,13 +35,13 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           sudo -E apt-get install krb5-admin-server krb5-kdc krb5-user libkrb5-dev -y -qq
         shell: bash
-      
+
       - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_OLD}}
         id: build-modified-postgres-old
         if: always() && steps.install-kerberos-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
-          engine_branch: ${{env.ENGINE_VER_FROM}}
+          engine_branch: ${{env.ENGINE_BRANCH_OLD}}
           install_dir: ${{env.OLD_INSTALL_DIR}}
 
       - name: Compile ANTLR
@@ -63,7 +63,7 @@ jobs:
 
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
-        if: always() && steps.install-extensions-old.outcome == 'success'
+        if: always() && steps.build-extensions-old.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           tap_tests: 'yes'
@@ -86,7 +86,7 @@ jobs:
         run: |
           export PG_CONFIG=~/${{env.NEW_INSTALL_DIR}}/bin/pg_config
           export PATH=/opt/mssql-tools/bin:$PATH
-          export oldinstall=${{env.OLD_INSTALL_DIR}}
+          export oldinstall=$HOME/${{env.OLD_INSTALL_DIR}}
 
           cd contrib/babelfishpg_tds
           make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/002_tdskerberos.pl t/003_bbfextnotloaded.pl t/004_bbfdumprestore.pl"
