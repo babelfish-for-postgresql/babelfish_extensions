@@ -38,7 +38,6 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
-
 CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset TEXT)
 RETURNS sys.datetimeoffset
 AS
@@ -196,7 +195,6 @@ ALTER FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC) STRICT;
 ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
 
 ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
-
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
