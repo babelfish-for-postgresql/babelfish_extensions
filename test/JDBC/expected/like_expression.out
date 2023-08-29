@@ -1339,10 +1339,9 @@ int
  
 select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE ''  -- should raise error , BABEL-4271
 go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
 
 select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
 go

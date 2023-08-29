@@ -261,6 +261,11 @@ TEST_F(PSQL_DataTypes_Text, Table_Unique_Constraint) {
   const string SCHEMA_NAME = PG_TABLE_NAME.substr(0, PG_TABLE_NAME.find('.'));
   const string BBF_SCHEMA_NAME = SCHEMA_NAME.substr(SCHEMA_NAME.find('_') + 1, SCHEMA_NAME.length());
 
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, " int PRIMARY KEY"},
+    {COL2_NAME, DATATYPE + " NOT NULL"}
+  };
+
   const vector<string> UNIQUE_COLUMNS = {
     COL2_NAME
   };

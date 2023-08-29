@@ -2103,12 +2103,13 @@ bigint_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int64 result;
 	Numeric		arg1_numeric,
+				result_trunc,
 				result_numeric;
 
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-
-	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT64(result);
 }
@@ -2120,12 +2121,13 @@ int_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
+				result_trunc,
 				result_numeric;
 
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_numeric)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT32(result);
 }
@@ -2137,13 +2139,13 @@ smallint_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
-				result_numeric;
-
+				result_numeric,
+				result_trunc;
+				
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric, arg1));
-	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), Int16GetDatum(arg2)));
-
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
-
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_trunc)));
 	PG_RETURN_INT32(result);
 }
 
@@ -2827,6 +2829,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					table_close(depRel, RowExclusiveLock);
 				}
+				ReleaseSysCache(tp);
 			}
 			/*
 			 * If the object is not of Table type (TT), it should be user defined table (U)
@@ -2838,6 +2841,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			type = OBJECT_TYPE_VIEW;
 		else if (pg_class->relkind == 's')
 			type = OBJECT_TYPE_SEQUENCE_OBJECT;
+
+		ReleaseSysCache(tuple);
 	}
 	/* pg_proc */
 	if (!schema_id)
@@ -2884,6 +2889,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 								type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
 							else
 								type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
+
+							ReleaseSysCache(tp);
 						}
 					}
 					else
@@ -2892,6 +2899,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					pfree(temp);
 				}
 			}
+			ReleaseSysCache(tuple);
 		}
 	}
 	/* pg_attrdef */
@@ -2990,6 +2998,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
 				type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			
+			ReleaseSysCache(tuple);
 		}
 	}
 
