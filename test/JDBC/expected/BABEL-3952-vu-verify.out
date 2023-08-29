@@ -23,35 +23,35 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v4
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type NULL is invalid for argument 3 of Date_Bucket function.)~~
+~~ERROR (Message: Argument data type NULL is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v5
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type NULL is invalid for argument 2 of Date_Bucket function.)~~
+~~ERROR (Message: Argument data type NULL is invalid for argument 2 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v6
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type NULL is invalid for argument 2 of Date_Bucket function.)~~
+~~ERROR (Message: Argument data type NULL is invalid for argument 2 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v7
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type NULL is invalid for argument 3 of Date_Bucket function.)~~
+~~ERROR (Message: Argument data type NULL is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v8
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type text is invalid for argument 3 of Date_Bucket function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v9
@@ -72,7 +72,7 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v11
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: nanosecond is not a recognized Date_Bucket option.)~~
+~~ERROR (Message: nanosecond is not a recognized date_bucket option.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v12
@@ -153,6 +153,14 @@ datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime
 1916-01-01 23:30:05.5234560#!#1916-07-01 23:30:05.5234560#!#1916-07-01 23:30:05.5234560#!#1916-08-13 23:30:05.5234560#!#1916-08-05 23:30:05.5234560#!#1916-08-15 21:30:05.5234560#!#1916-08-15 22:34:05.5234560#!#1916-08-15 22:35:03.5234560#!#1916-08-15 22:35:05.4214560
 ~~END~~
 
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v21_trunc
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+2019-08-02 02:12:30.4467000#!#2020-07-02 02:12:30.4467000#!#2020-02-02 02:12:30.4467000#!#2020-06-30 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4447000
+~~END~~
+
  
 SELECT * FROM DATE_BUCKET_vu_prepare_v22
 GO
@@ -177,7 +185,15 @@ datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffs
 1920-01-01 15:42:32.0000000 +02:12#!#1920-01-01 16:35:32.0000000 +01:10#!#1920-03-01 20:42:32.0000000 +03:15#!#1920-03-21 14:10:32.0000000 +12:02#!#1920-03-13 08:50:32.0000000 -02:24#!#1920-03-22 12:56:32.0000000 +03:29#!#1920-03-22 13:18:32.0000000 -06:45#!#1920-03-22 13:20:30.0000000 +05:10#!#1920-03-22 13:20:31.0000000 +12:32
 ~~END~~
 
- 
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v24_trunc
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+2019-08-02 02:12:30.4467000 +00:00#!#2020-07-02 02:12:30.4467000 +00:00#!#2020-02-02 02:12:30.4467000 +00:00#!#2020-06-30 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4447000 +00:00
+~~END~~
+
+
 SELECT * FROM DATE_BUCKET_vu_prepare_v25
 GO
 ~~START~~
@@ -222,6 +238,14 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v30
 GO
 ~~START~~
 time#!#time#!#time#!#time
-11:58:59.5464460#!#12:22:59.5464460#!#12:23:55.5464460#!#12:23:56.8444460
+11:58:59.5464460#!#12:22:59.5464460#!#12:23:55.5464460#!#12:23:56.8464460
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v31
+GO
+~~START~~
+time#!#time#!#time#!#time
+23:23:56.8463630#!#01:23:56.8463630#!#01:23:50.8463630#!#01:23:50.8463630
 ~~END~~
 

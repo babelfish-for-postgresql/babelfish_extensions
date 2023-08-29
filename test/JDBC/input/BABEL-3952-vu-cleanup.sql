@@ -60,6 +60,9 @@ GO
  
 DROP VIEW DATE_BUCKET_vu_prepare_v21;
 GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v21_trunc;
+GO
  
 DROP VIEW DATE_BUCKET_vu_prepare_v22;
 GO
@@ -68,6 +71,9 @@ DROP VIEW DATE_BUCKET_vu_prepare_v23;
 GO
  
 DROP VIEW DATE_BUCKET_vu_prepare_v24;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v24_trunc;
 GO
  
 DROP VIEW DATE_BUCKET_vu_prepare_v25;
@@ -86,5 +92,8 @@ DROP VIEW DATE_BUCKET_vu_prepare_v29;
 GO
  
 DROP VIEW DATE_BUCKET_vu_prepare_v30;
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_v31;
 GO
  

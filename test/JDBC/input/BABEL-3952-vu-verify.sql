@@ -60,6 +60,9 @@ GO
  
 SELECT * FROM DATE_BUCKET_vu_prepare_v21
 GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v21_trunc
+GO
  
 SELECT * FROM DATE_BUCKET_vu_prepare_v22
 GO
@@ -69,7 +72,10 @@ GO
  
 SELECT * FROM DATE_BUCKET_vu_prepare_v24
 GO
- 
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v24_trunc
+GO
+
 SELECT * FROM DATE_BUCKET_vu_prepare_v25
 GO
  
@@ -87,4 +93,6 @@ GO
  
 SELECT * FROM DATE_BUCKET_vu_prepare_v30
 GO
- 
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v31
+GO

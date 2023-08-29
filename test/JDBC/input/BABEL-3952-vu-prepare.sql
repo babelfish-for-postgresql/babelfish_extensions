@@ -208,6 +208,22 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v21 AS (
     );
 GO
 
+--  3. when millisecond trunc is required. 
+CREATE VIEW DATE_BUCKET_vu_prepare_v21_trunc AS (
+    SELECT 
+        date_bucket(year, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS YEARS_BUCKET,
+        date_bucket(month, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2020-07-02 02:12:30.4467' as datetime2)) AS month_BUCKET,
+        date_bucket(quarter, 1, cast('2020-05-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS quarter_bucket,
+        date_bucket(week, 1, cast('2020-06-30 02:12:30.4463' as datetime2), cast('2019-07-02 02:12:30.4467' as datetime2)) AS week_BUCKET,
+        date_bucket(day, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS day_BUCKET,
+        date_bucket(hour, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS hour_BUCKET,
+        date_bucket(minute, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS minute_BUCKET,
+        date_bucket(second, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS second_BUCKET,
+        date_bucket(millisecond, 1, cast('2020-08-02 02:12:30.4463' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS millisecond_BUCKET1,
+        date_bucket(millisecond, 1, cast('2020-08-02 02:12:30.4443' as datetime2), cast('2019-08-02 02:12:30.4467' as datetime2)) AS millisecond_BUCKET2
+    );
+GO
+
 
 -- TEST WITH datetimeoffset input
 -- 1. without optional argument 'origin'
@@ -250,6 +266,23 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v24 AS (
         DATE_BUCKET(minute, 2, CAST('1920-03-22 13:20:31 -06:45' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +04:10'  AS DATETIMEOFFSET)) AS MINUTES_BUCKET,
         DATE_BUCKET(second, 2, CAST('1920-03-22 13:20:31 +05:10' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +12:08' AS DATETIMEOFFSET)) AS SECONDS_BUCKET,
         DATE_BUCKET(millisecond, 2, CAST('1920-03-22 13:20:31 +12:32' AS DATETIMEOFFSET), CAST('2000-01-01 12:25:32 +07:20' AS DATETIMEOFFSET)) AS MILLISECONDS_BUCKET
+    );
+GO
+
+
+--  4. when millisecond trunc is required. 
+CREATE VIEW DATE_BUCKET_vu_prepare_v24_trunc AS (
+    SELECT 
+        date_bucket(year, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS YEARS_BUCKET,
+        date_bucket(month, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2020-07-02 02:12:30.4467 +00:00' as datetimeoffset)) AS month_BUCKET,
+        date_bucket(quarter, 1, cast('2020-05-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS quarter_bucket,
+        date_bucket(week, 1, cast('2020-06-30 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-07-02 02:12:30.4467 +00:00' as datetimeoffset)) AS week_BUCKET,
+        date_bucket(day, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS day_BUCKET,
+        date_bucket(hour, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS hour_BUCKET,
+        date_bucket(minute, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS minute_BUCKET,
+        date_bucket(second, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS second_BUCKET,
+        date_bucket(millisecond, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS millisecond_BUCKET1,
+        date_bucket(millisecond, 1, cast('2020-08-02 02:12:30.4443 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS millisecond_BUCKET2
     );
 GO
 
@@ -321,14 +354,21 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v29 AS (
     );
 GO
 -- 3. With optional argument 'origin' > 'date'
--- DATE_BUCKET(millisecond, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS MILLISECONDS_BUCKET
--- Output of above query in sql server is '12:23:56.8464460'  which is greater than date value '12:23:56.846363' - this behaviour should not happen. (ambiguous behavior) 
--- Babelfish output is  12:23:56.8444460
 CREATE VIEW DATE_BUCKET_vu_prepare_v30 AS (
     SELECT 
         DATE_BUCKET(hour, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS HOURS_BUCKET,
         DATE_BUCKET(minute, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS MINUTES_BUCKET,
         DATE_BUCKET(second, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS SECONDS_BUCKET,
         DATE_BUCKET(millisecond, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS MILLISECONDS_BUCKET
+    );
+GO
+
+-- 4. Test when trunc is required
+CREATE VIEW DATE_BUCKET_vu_prepare_v31 AS (
+    SELECT 
+        DATE_BUCKET(hour, 11, CAST('23:23:56.846362' AS TIME), CAST('12:23:56.846363' AS TIME)) AS HOURS_BUCKET,
+        DATE_BUCKET(minute, 11, CAST('01:23:56.846362' AS TIME), CAST('01:12:56.846363' AS TIME)) AS MINUTES_BUCKET,
+        DATE_BUCKET(second, 10, CAST('01:23:50.846362' AS TIME), CAST('01:23:40.846363' AS TIME)) AS SECONDS_BUCKET,
+        DATE_BUCKET(millisecond, 10,CAST('01:23:50.846362' AS TIME), CAST('01:23:40.846363' AS TIME)) AS MILLISECONDS_BUCKET
     );
 GO
