@@ -319,6 +319,17 @@ pre_transform_setop_tree(SelectStmt *stmt, SelectStmt *leftmostSelect)
 	leftmostSelect->sortClause = stmt->sortClause;
 }
 
+/* 
+ * fix_setop_typmods will backtrack through the SetOperationTree to
+ * fix the types of char, nchar, varchar, and nvarchar
+ *
+ * We do this after the tree has already been transformed so we may 
+ * compare all expressions in the same column at once. PG only compares
+ * two at a time, leading to issues for example if both expressions are NULL.
+ * 
+ * Then, we update the original expressions as well as the top-level target list's
+ * expressions with the correct type and typmod. 
+ */
 static void
 fix_setop_typmods(ParseState *pstate, Query *qry)
 {
@@ -332,6 +343,9 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 	Oid 		common_type, common_collation;
 	int32 		common_typmod;
 
+	/* Iterate through the SetOpTree. For each column, save each expression
+	 * in that column to a list. That is, for select a, b, c union select x, y, x,
+	 * give [a, x], [b, y], [c, z] 	*/
 	while (setOpTreeStack)
 	{
 		Node *setOp = llast(setOpTreeStack);
@@ -368,6 +382,9 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 		}
 	}
 
+	/* For each of the column lists built above, determine the resulting
+	 * common_type and typmod. Update both the expressions and the toplevel
+	 * targetlist with the correct types. */
 	forboth(collistl, collist_list,
 			toptlistl, qry->targetList)
 	{
@@ -405,7 +422,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 			col_exprs = lappend(col_exprs, (Node*)tle->expr);
 		}
 
-		common_collation = select_common_collation(pstate, col_exprs, false); // TODO ok for UNION ALL?
+		common_collation = select_common_collation(pstate, col_exprs, false);
 		topColCollations = lappend_oid(topColCollations, common_collation);
 
 		Assert(IsA(top_expr, Var));
@@ -431,56 +448,54 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 }
 
 /* 
- * After the sort clause has been analyzed in the leftmost select, update the 
- * top-level TLEs to contain a ref to the sortlist and restore the sortClause.
+ * This hook is called for set operations after the tree has been analyzed
+ * and before any ORDER BYs are handled
  * 
- * We can trust that the ordering of TLEs matches as PG uses the leftmost 
- * target list as a basis for builiding the top-level target list, it just 
- * doesn't fill in the ressortgroupref field. 
+ * First, all target lists are re-processed to reflect the 
+ * correct types and typmods
+ * 
+ * To support sort clauses with table names and aliases, we moved the sortclause
+ * into the leftmost select in pre_transform_setop_tree. Now, rebuild
+ * the sort clause using column index numbers. This will ensure the correct
+ * sort operators are used if the column's type has changed.
  */
 void 
-pre_transform_sort_clause(ParseState *pstate, Query *qry, List **sortClause, Query *leftmostQuery)
+pre_transform_setop_sort_clause(ParseState *pstate, Query *qry, List *sortClause, Query *leftmostQuery)
 {
-	List *order_expr_replacements = NIL;
-	ListCell *lc, *left_tlist;
+	ListCell *leftsort_lc, *topsort_lc, *leftlist_lc;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
 	fix_setop_typmods(pstate, qry);
 
-	foreach(lc, leftmostQuery->sortClause)
+	forboth(leftsort_lc, leftmostQuery->sortClause, topsort_lc, sortClause)
 	{
-		SortGroupClause *sortcl = (SortGroupClause*) lfirst(lc);
+		SortGroupClause *left_sortcl = (SortGroupClause*) lfirst(leftsort_lc);
+		SortBy			*top_sortby = (SortBy*) lfirst(topsort_lc);
+		A_Const			*n = makeNode(A_Const);
 
 		/* Find the index of the corresponding TLE */
-		foreach(left_tlist, leftmostQuery->targetList)
+		foreach(leftlist_lc, leftmostQuery->targetList)
 		{
-			TargetEntry *tle = (TargetEntry*) lfirst(left_tlist);
-			A_Const		*n;
-			if (tle->ressortgroupref != sortcl->tleSortGroupRef)
+			TargetEntry *tle = (TargetEntry*) lfirst(leftlist_lc);
+			
+			if (tle->ressortgroupref != left_sortcl->tleSortGroupRef)
 				continue;
 
+			/* Throw an error if the entry was not explicitly included in the select list */
 			if (tle->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						errmsg("ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator."),
 						parser_errposition(pstate, exprLocation((Node*)tle->expr))));
 			
-			n = makeNode(A_Const);
 			n->val.ival.type = T_Integer;
-			n->val.ival.ival = foreach_current_index(left_tlist) + 1;
+			n->val.ival.ival = foreach_current_index(leftlist_lc) + 1;
 			n->location = -1;
-			order_expr_replacements = lappend(order_expr_replacements, n);
+			break;
 		}
-	}
-
-	forboth(lc, *sortClause, left_tlist, order_expr_replacements)
-	{
-		SortBy *sortby = lfirst(lc);
-		A_Const *con = lfirst(left_tlist);
-
-		sortby->node = (Node*) con;
+		top_sortby->node = (Node*) n;
 	}
 
 	leftmostQuery->sortClause = NIL;

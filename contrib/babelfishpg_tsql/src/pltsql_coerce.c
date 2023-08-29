@@ -1113,23 +1113,19 @@ static bool
 expr_is_varchar_max(Node *expr)
 {
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
-
-	if (exprTypmod(expr) != -1 )
-		return false;
-	
-	if (utilptr->is_tsql_varchar_datatype(exprType(expr)))
-		return true;
-
-	if (utilptr->is_tsql_nvarchar_datatype(exprType(expr)))
-	{
-		if (IsA(expr, CoerceToDomain) && ((CoerceToDomain*)expr)->coercionformat == COERCE_IMPLICIT_CAST)
-			return false;
-		return true;
-	}
-
-	return false;
+	return exprTypmod(expr) == -1 && (
+		utilptr->is_tsql_varchar_datatype(exprType(expr)) ||
+		utilptr->is_tsql_nvarchar_datatype(exprType(expr)) );
 }
 
+/* 
+ * When we must merge types together (i.e. UNION), if all types are
+ * null, literals, or [n][var]char types, then return the correct
+ * output type based on TSQL's precedence rules
+ * 
+ * If InvalidOid is returned, pg's select_common_type will attempt to
+ * find a common type instead.
+ */
 static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
@@ -1141,12 +1137,12 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
 
-	/* Limit changes to Set Operations for now. We may want to expand to other callers in the future */
+	/* Limit changes for Set Operations and Values only for now
+	 * We may want to expand to other callers in the future */
 	if (context && strcmp(context, "UNION") != 0 && strcmp(context, "INTERSECT") != 0 
 		&& strcmp(context, "INTERSECT") != 0 && strcmp(context, "VALUES") != 0)
 		return InvalidOid;
 
-	Assert(exprs != NIL);
 	foreach(lc, exprs)
 	{
 		Node	*expr = (Node *) lfirst(lc);
@@ -1171,6 +1167,13 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	return result_type;
 }
 
+/* 
+ * When we must merge types together (i.e. UNION), if the target type
+ * is CHAR, NCHAR, or BINARY, make the typmod (representing the length)
+ * equal to that of the largest expression
+ * 
+ * If -1 is returned, engine will handle finding a common typmod as usual
+ */
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
