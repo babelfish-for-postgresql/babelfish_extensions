@@ -758,7 +758,12 @@ BEGIN
     );
     v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
                                                           abs(p_minute_offset)::SMALLINT::text);
-    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE invalid_datetime_format;
+    END;
 EXCEPTION
     WHEN most_specific_type_mismatch THEN
         RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
