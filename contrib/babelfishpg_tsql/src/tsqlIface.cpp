@@ -1459,6 +1459,159 @@ public:
 		popContainer(ctx);
 	}
 
+	void exitAlter_table(TSqlParser::Alter_tableContext *ctx) override
+	{
+		if (ctx->TRIGGER() && ctx->id().size() > 0)	/* condition to filter alter table statements which contains TRIGGER keyword and multiple trigger names */
+		{
+			/*
+			 * When we come across a alter table query which enable/disable trigger with multiple trigger name, 
+			 * we will replace it with list of alter table statements, a statement for each trigger.
+			 * As Postgres only support enabling/disabling of only one trigger using alter table syntax, so a call like:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a, trigger_b
+			 *	GO
+			 * 
+			 * will be re-written as:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a; ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_b;
+			 */
+
+			std::vector<TSqlParser::IdContext *> list_id = ctx->id();
+			TSqlParser::Table_nameContext *table_name = ctx->tabname;
+
+			std::string str = std::string("");
+			std::string action_type;
+			if (ctx->ENABLE() != nullptr)
+			{
+				action_type = std::string(" ENABLE");
+			}
+			else
+			{
+				action_type = std::string(" DISABLE");
+			}
+
+			for (TSqlParser::IdContext *id : list_id) {
+				str += std::string("ALTER TABLE ") + ::getFullText(table_name) + action_type + std::string(" TRIGGER ") + ::getFullText(id) + "; ";
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
+		}
+	}
+
+	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+
+		/*
+		 * Postgres support enabling trigger by the following syntax:
+		 * 	ALTER TABLE <table_name> ENABLE TRIGGER { <trigger_name> (, <trigger_name>)* | ALL} 
+		 * so to support sql syntax:
+		 * 	ENABLE TRIGGER { [ schema_name . ] trigger_name [ ,...n ] | ALL } ON { table_name } [ ; ]
+		 * in babelfish, following mapping is done:
+		 * 
+		 * 	ENABLE TRIGGER ALL ON { table_name } [ ; ]
+		 * is re-written to:
+		 * 	ALTER TABLE <table_name> ENABLE TRIGGER ALL
+		 * 
+		 * 	ENABLE TRIGGER [ schema_name . ] trigger_name  ON { table_name } [ ; ]
+		 * is re-written to:
+		 * 	ALTER TABLE <table_name> ENABLE TRIGGER [ schema_name . ] trigger_name
+		 * 
+		 * 	ENABLE TRIGGER { [ schema_name_a . ] trigger_name_a, [ schema_name_b . ] trigger_name_b, ... }  ON { table_name } [ ; ]
+		 * is re-written to:
+		 * 	ALTER TABLE <table_name> ENABLE TRIGGER [ schema_name_a . ] trigger_name_a;
+		 * 	ALTER TABLE <table_name> ENABLE TRIGGER [ schema_name_b . ] trigger_name_b;
+		 * 	...
+		 */
+
+		TSqlParser::IdContext *object_name = ctx->object_name;
+		std::string query = ::getFullText(ctx);
+		std::vector<TSqlParser::Schema_trigger_nameContext *> list_schema_trigger_name = ctx->schema_trigger_name();
+
+		std::string rewritten_query;
+		if (ctx->ALL().size() > 0)	/* for syntax: ENABLE TRIGGER ALL ON <table_name> */
+		{
+			rewritten_query = std::string("ALTER TABLE ") + ::getFullText(object_name) + std::string(" ENABLE TRIGGER ALL");
+		}
+		else
+		{
+			if(list_schema_trigger_name.size() > 1)	 /* more than one trigger are specified in query */
+			{
+				rewritten_query = std::string("");
+				for (TSqlParser::Schema_trigger_nameContext *schema_trigger_name : list_schema_trigger_name)
+				{
+					rewritten_query += std::string("ALTER TABLE ") + ::getFullText(object_name) + std::string(" ENABLE TRIGGER ") + ::getFullText(schema_trigger_name) + ::string(";");
+				}
+			}
+			else
+			{
+				rewritten_query = std::string("ALTER TABLE ") + ::getFullText(object_name) + std::string(" ENABLE TRIGGER ") + ::getFullText(list_schema_trigger_name[0]->trigger_name);
+			}
+		}
+
+		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_query)));
+	}
+
+	void exitDisable_trigger(TSqlParser::Disable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+
+		/*
+		 * Postgres support disabling trigger by the following syntax:
+		 * 	ALTER TABLE <table_name> DISABLE TRIGGER { <trigger_name> (, <trigger_name>)* | ALL} 
+		 * so to support sql syntax:
+		 * 	DISABLE TRIGGER { [ schema_name . ] trigger_name [ ,...n ] | ALL } ON { table_name } [ ; ]
+		 * in babelfish, following mapping is done:
+		 * 
+		 * 	DISABLE TRIGGER ALL ON { table_name } [ ; ]
+		 * is re-written to:
+		 * 	ALTER TABLE <table_name> DISABLE TRIGGER ALL
+		 * 
+		 * 	DISABLE TRIGGER [ schema_name . ] trigger_name  ON { table_name } [ ; ]
+		 * is re-written to:
+		 * 	ALTER TABLE <table_name> DISABLE TRIGGER [ schema_name . ] trigger_name
+		 * 
+		 * 	DISABLE TRIGGER { [ schema_name_a . ] trigger_name_a, [ schema_name_b . ] trigger_name_b, ... }  ON { table_name } [ ; ]
+		 * is re-written to:
+		 * 	ALTER TABLE <table_name> DISABLE TRIGGER [ schema_name_a . ] trigger_name_a;
+		 * 	ALTER TABLE <table_name> DISABLE TRIGGER [ schema_name_b . ] trigger_name_b;
+		 * 	...
+		 */
+
+		TSqlParser::IdContext *object_name = ctx->object_name;
+		std::string query = ::getFullText(ctx);
+		std::vector<TSqlParser::Schema_trigger_nameContext *> list_schema_trigger_name = ctx->schema_trigger_name();
+
+		std::string rewritten_query;
+		if (ctx->ALL().size() > 0)	/* for syntax: DISABLE TRIGGER ALL ON <table_name> */
+		{
+			rewritten_query = std::string("ALTER TABLE ") + ::getFullText(object_name) + std::string(" DISABLE TRIGGER ALL");
+		}
+		else 
+		{
+			if(list_schema_trigger_name.size() > 1)	 /* more than one trigger are specified in query */
+			{
+				rewritten_query = std::string("");
+				for (TSqlParser::Schema_trigger_nameContext *schema_trigger_name : list_schema_trigger_name)
+				{
+					rewritten_query += std::string("ALTER TABLE ") + ::getFullText(object_name) + std::string(" DISABLE TRIGGER ") + ::getFullText(schema_trigger_name) + ::string(";");
+				}
+			}
+			else
+			{
+				rewritten_query = std::string("ALTER TABLE ") + ::getFullText(object_name) + std::string(" DISABLE TRIGGER ") + ::getFullText(list_schema_trigger_name[0]->trigger_name);
+			}
+		}
+
+		rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_query)));
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Non-container statement management
 	//////////////////////////////////////////////////////////////////////////////

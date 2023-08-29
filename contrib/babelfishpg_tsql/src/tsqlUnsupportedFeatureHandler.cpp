@@ -1061,6 +1061,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->drop_user()
 	 || ctx->drop_view()
 	 || ctx->truncate_table()
+	 || ctx->enable_trigger()
+	 || ctx->disable_trigger()
 	 )
 	{
 		// supported DDL or DDL which need special handling
