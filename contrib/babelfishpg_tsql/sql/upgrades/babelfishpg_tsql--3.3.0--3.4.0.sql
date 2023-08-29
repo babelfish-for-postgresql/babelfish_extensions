@@ -38,269 +38,277 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
--- 3551 "sql/sys_functions.sql"
--- Another defination of date_bucket() to match error messages for unknown date datatype as ANYELEMNT does not support unknown datatype.
-CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
-AS 
-$body$
-DECLARE
-BEGIN
-    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond') THEN
-            RAISE EXCEPTION '% is not a recognized Date_Bucket option.', datepart;
-    END IF;
-    IF (number IS NULL) THEN
-        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of Date_Bucket function.';
-    END IF;
-    IF date IS NULL THEN
-        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of Date_Bucket function.';
-    ELSE
-        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of Date_Bucket function.', pg_typeof(date);
-    END IF;
-END;
-$body$
-LANGUAGE plpgsql IMMUTABLE;
+ALTER FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC) STRICT;
 
-CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin ANYELEMENT default NULL) RETURNS ANYELEMENT 
-AS 
-$body$
-DECLARE
-    required_bucket INT;
-    years_diff INT;
-    months_diff INT;
-    hours_diff INT;
-    minutes_diff INT;
-    seconds_diff INT;
-    milliseconds_diff INT;
-    timezone INT;
-    result_time time;
-    result_date timestamp;
-    offset_string PG_CATALOG.text;
-    date_difference_interval INTERVAL;
-BEGIN
-    BEGIN
-        /*
-        * Check for supported datepart by date_bucket function
-        */
-        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond') THEN
-            RAISE EXCEPTION '% is not a recognized Date_Bucket option.', datepart;
-        END IF;
+ALTER FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC) STRICT;
 
-        /*
-        * Check for NULL or negative value of number argument
-        */
-        IF (number IS NULL) THEN
-            RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of Date_Bucket function.';
-        END IF;
-        IF (number <= 0 ) THEN
-            RAISE EXCEPTION 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.';
-        END IF;
+ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
 
-        /*
-        * Raise exception if any unsupported datatype for date is provided. 
-        * For example throw exception if INT datatype is provided in date. 
-        */
-        IF pg_typeof(date) NOT IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
-            RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of Date_Bucket function.', pg_typeof(date);
-        END IF;
-
-        /*
-        * Raise Exception if any unsupported datepart for date is provided. 
-        * Date does not support hour, minute, second, millisecond datepart
-        * Time does not support year, month, quarter, day, week datepart
-        */
-        IF pg_typeof(date) = 'date'::regtype AND
-            datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type date.', datepart;
-        END IF;
-        IF pg_typeof(date) = 'time'::regtype AND
-            datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type time.', datepart;
-        END IF;
-
-        /*
-        * If optional argument origin's value is not provided by user then set it's default value of valid datatype.
-        */
-        IF origin IS NULL THEN
-                IF pg_typeof(date) = 'sys.datetime'::regtype THEN
-                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime);
-                ELSIF pg_typeof(date) = 'sys.datetime2'::regtype THEN
-                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime2);
-                ELSIF pg_typeof(date) = 'sys.datetimeoffset'::regtype THEN
-                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetimeoffset);
-                ELSIF pg_typeof(date) = 'sys.smalldatetime'::regtype THEN
-                    origin := CAST('1900-01-01 00:00:00.000' AS sys.smalldatetime);
-                ELSEIF pg_typeof(date) = 'date'::regtype THEN
-                    origin := CAST('1900-01-01 00:00:00.000' AS pg_catalog.date);
-                ELSEIF pg_typeof(date) = 'time'::regtype THEN
-                    origin := CAST('00:00:00.000' AS pg_catalog.time);
-                END IF;
-        ELSE
-                IF (pg_typeof(origin) != pg_typeof(date)) THEN
-                    RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of Date_Bucket function.', pg_typeof(origin);
-                END IF;
-        END IF;
-    END;
-    -- Here date_bucket calculation for time datatype
-    IF pg_typeof(date) = 'time'::regtype THEN
-    -- Find interval between date and origin and extract hour, minute, second, millisecond from the interval
-        date_difference_interval := date - origin;
-        hours_diff := EXTRACT('hour' from date_difference_interval)::INT;
-        minutes_diff := EXTRACT('minute' from date_difference_interval)::INT;
-        seconds_diff := FLOOR(EXTRACT('second' from date_difference_interval))::INT;
-        milliseconds_diff := FLOOR(EXTRACT('millisecond' from date_difference_interval))::INT;
-        CASE datepart
-        WHEN 'hour' THEN
-            /*
-            * The difference between date and origin in hours is hours_diff. 
-            * Here we find the number of buckets between date and origin. 
-            * Add the required buckets in origin to reach at date.
-            * Check if the calculated result (result_time) is not exceeding date (this might happen when user provide input where date < origin)
-            * Take example 'date_bucket(hour, 2, '01:00:00', '08:00:00')'
-            * Interval = '-7 hours 0 minutes'
-            * required_bucket = -7/2 = -3
-            * result_time = '08:00:00' + '-6 hours' => '02:00:00'
-            * As in the above example result_time > date, so we go back by 1 bucket. '02:00:00' - '2 hours'  => '00:00:00'
-            */
-            required_bucket := hours_diff / number;
-            result_time := origin + (concat(required_bucket * number, ' ', 'hours')::interval);
-            IF result_time > date THEN
-                return result_time - (concat(number, ' ', 'hours')::interval);
-            END IF;
-            return result_time;
-
-        WHEN 'minute' THEN
-            /*
-            * Calculate the difference between date and origin in minutes. 
-            * The rest step are similar as of case where datepart is 'hour'
-            */
-            required_bucket := (hours_diff * 60 + minutes_diff) / number;
-            result_time := origin + (concat(required_bucket * number, ' ', 'minutes')::interval);
-            IF result_time > date THEN
-                return result_time - (concat(number, ' ', 'minutes')::interval);
-            END IF;
-            return result_time;
-
-        WHEN 'second' THEN
-            /*
-            * Calculate the difference between date and origin in seconds. 
-            * The rest step are similar as of case where datepart is 'hour'
-            */
-            required_bucket := ((hours_diff * 60 + minutes_diff) * 60 + seconds_diff) / number;
-            result_time := origin + (concat(required_bucket * number, ' ', 'seconds')::interval);
-            IF result_time > date THEN
-                return result_time - (concat(number, ' ', 'seconds')::interval);
-            END IF;
-            return result_time;
-
-        WHEN 'millisecond' THEN
-            /*
-            * Calculate the difference between date and origin in milliseconds. 
-            * The rest step are similar as of case where datepart is 'hour'
-            */
-            required_bucket := (((hours_diff * 60 + minutes_diff) * 60) * 1000 + milliseconds_diff) / number;
-            result_time := origin + (concat(required_bucket * number, ' ', 'milliseconds')::interval);
-            IF result_time > date THEN
-                return result_time - (concat(number, ' ', 'milliseconds')::interval);
-            END IF;
-            return result_time;
-        END CASE;
-
-    -- For other date datatype (date, datetime, datetime2, smalldatetime, datetimeoffset) date_bucket calculation goes here
-    -- Only for datepart year, quarter, month as rest of the datepart are supported by date_bin() function below.
-    ELSIF (datepart IN ('year', 'quarter', 'month')) THEN
-        date_difference_interval := AGE(date :: timestamp, origin :: timestamp );
-        years_diff := EXTRACT('Year' from date_difference_interval ) :: INT;
-        months_diff := EXTRACT('Month' from date_difference_interval ) :: INT;
-        CASE datepart
-        WHEN 'year' THEN
-            /*
-            * The difference between date and origin in years is years_diff. 
-            * Here we find the number of buckets between date and origin. 
-            * Now we add the required buckets in origin to reach at date.
-            * Check if the calculated result (result_time) is not exceeding date (this might happen when user provide input where date < origin)
-            * Take example 'date_bucket(year, 2, '2010-01-01', '2019-01-01')'
-            * Interval = '-9 years 0 months'
-            * required_bucket = -9/2 = -4
-            * result_time = '2019-01-01' + '-8 hours' => '2011-01-01'
-            * As in the above example result_time > date, so we go back by 1 bucket. '2011-01-01' - '2 Years'  => '2009-01-01'
-            */
-            required_bucket := years_diff / number;
-            result_date := origin::timestamp + (concat(required_bucket * number, ' ', 'years')::interval);
-            IF result_date > date THEN
-                result_date = result_date - (concat(number, ' ', 'years')::interval);
-            END IF;
-
-        WHEN 'month' THEN
-            /*
-            * Calculate the difference between date and origin in months. 
-            * The rest step are similar as of case where datepart is 'year'
-            */
-            required_bucket := (12 * years_diff + months_diff) / number;
-            result_date := origin::timestamp + (concat(required_bucket * number, ' ', 'months')::interval);
-            IF result_date > date THEN
-                result_date = result_date - (concat(number, ' ', 'months')::interval);
-            END IF;
-
-        WHEN 'quarter' THEN
-            /*
-            * Calculate the difference between date and origin in quarters. 
-            * The rest step are similar as of case where datepart is 'year'
-            */
-            years_diff := (12 * years_diff + months_diff) / 3;
-            required_bucket := years_diff / number;
-            result_date := origin::timestamp + (concat(required_bucket * number * 3, ' ', 'months')::interval);
-            IF result_date > date THEN
-                result_date = result_date - (concat(number*3, ' ', 'months')::interval);
-            END IF;
-        END CASE;
-        /*
-        * All the above operations are performed by converting every date datatype into TIMESTAMPS. 
-        * datetimeoffset is also typecasted into TIMESTAMPS. Ex. '2023-02-23 09:19:21.23'::sys.datetimeoffset::timestamp => '2023-02-23 09:19:21.23'
-        * As the output of date_bucket() for datetimeoffset will always be in the same zone as of date argument. 
-        * Here, converting TIMESTAMP into datetimeoffset with the same timezone as of date argument.   
-        */
-        IF pg_typeof(date) = 'sys.datetimeoffset'::regtype THEN
-            timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
-            offset_string = right(date::PG_CATALOG.TEXT, 6);
-            result_date = result_date + make_interval(mins => timezone);
-            return concat(result_date, ' ', offset_string)::sys.datetimeoffset;
-        ELSE
-            return result_date;
-	    END IF;
-    
-    -- DATE_BIN() function support datepart week, day, hour, minute, second, millisecond
-    -- Date_Bucket calculation goes here for every datatype except time. 
-    ELSIF (datepart IN ('week', 'day', 'hour', 'minute', 'second', 'millisecond')) THEN
-        date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
-        /*
-        * To pass in DATE_BIN() typecasts any date datatype to timestamp
-        * Handling datetimeoffset datatype separately. 
-        */
-        result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
-        -- Filtering for cases like 4th query of DATE_BUCKET_vu_prepare_v15. 
-        IF (result_date + (concat(number, ' ', datepart)::INTERVAL) <= date::TIMESTAMP) THEN
-            result_date = result_date + concat(number, ' ', datepart)::INTERVAL;
-        END IF;
-        IF pg_typeof(date) = 'sys.datetimeoffset'::regtype THEN
-            timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
-            offset_string = right(date::PG_CATALOG.TEXT, 6);
-            result_date = result_date + make_interval(mins => timezone);
-            return concat(result_date, ' ', offset_string)::sys.datetimeoffset;
-	    ELSE
-            RETURN result_date;
-        END IF;
-
-    ELSE
-        RAISE EXCEPTION '% is not a recognized Date_Bucket option.', datepart;
-    END IF;
-END;
-$body$
-LANGUAGE plpgsql IMMUTABLE;
-
+ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+    BEGIN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string pg_catalog.text;
+    isoverflow pg_catalog.text;
+BEGIN
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END; 
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    tzfm := sign_flag*((v_hr*60)+v_mi);
+
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
+
+
+    f_tzoffset := p_tzoffset + tzfm;
+
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+    
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string pg_catalog.text;
+    v_sign PG_CATALOG.TEXT;
+    tz_offset_smallint smallint;
+    isoverflow pg_catalog.text;
+BEGIN
+
+    IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype,'varbinary'::regtype ) THEN
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    BEGIN
+    IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+        tz_offset := FLOOR(tz_offset);
+    END IF;
+    tz_offset_smallint := cast(tz_offset AS smallint);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+    END;  
+
+    IF input_expr IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+    if tz_offset_smallint > 840 or tz_offset_smallint < -840 THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := tz_offset_smallint/60;
+    v_mi := tz_offset_smallint%60;
+    
+
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
+
+    v_sign := (
+        SELECT CASE
+            WHEN (tz_offset_smallint) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
+
+    f_tzoffset := p_tzoffset + tz_offset_smallint;
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
+
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+    
+
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
