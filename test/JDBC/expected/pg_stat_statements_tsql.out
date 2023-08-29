@@ -287,7 +287,7 @@ go
 -- enable/disable trigger 
 ALTER TABLE pgss_test ENABLE TRIGGER pgss_trigger1
 go
-ALTER TABLE pgss_test DISABLE  TRIGGER pgss_trigger1
+ALTER TABLE pgss_test DISABLE TRIGGER pgss_trigger1
 go
 
 
@@ -309,7 +309,7 @@ SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid
 go
 ~~START~~
 bit#!#text#!#bigint#!#bigint#!#bigint
-1#!#ALTER TABLE pgss_test DISABLE  TRIGGER pgss_trigger1#!#1#!#0#!#0
+1#!#ALTER TABLE pgss_test DISABLE TRIGGER pgss_trigger1#!#1#!#0#!#0
 1#!#ALTER TABLE pgss_test ENABLE TRIGGER pgss_trigger1#!#1#!#0#!#0
 1#!#ALTER TABLE pgss_test add c varchar(22)#!#1#!#0#!#0
 1#!#CREATE ROLE pgss_test_role#!#1#!#0#!#0

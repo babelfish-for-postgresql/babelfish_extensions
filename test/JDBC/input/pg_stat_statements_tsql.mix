@@ -158,7 +158,7 @@ go
 -- enable/disable trigger 
 ALTER TABLE pgss_test ENABLE TRIGGER pgss_trigger1
 go
-ALTER TABLE pgss_test DISABLE  TRIGGER pgss_trigger1
+ALTER TABLE pgss_test DISABLE TRIGGER pgss_trigger1
 go
 
 -- SELECT without constants
