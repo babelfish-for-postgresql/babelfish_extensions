@@ -36,6 +36,7 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+<<<<<<< HEAD
 sys-assembly_types
 sys-database_mirroring
 sys-databases
@@ -152,6 +153,10 @@ insteadof_nested_trigger_inside_proc
 insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
+=======
+timefromparts
+todatetimeoffset-dep
+>>>>>>> 422993b68 (Support todatetimeoffset function (#1697))
 triggers_with_transaction
 Test-sp_addrole
 Test-sp_addrolemember
