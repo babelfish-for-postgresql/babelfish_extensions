@@ -353,6 +353,157 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+    str_hr TEXT;
+    str_mi TEXT;
+    precision_str TEXT;
+    sign_flag INTEGER;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    v_precision INTEGER;
+    input_expr_datetime2 datetime2;
+BEGIN
+
+    BEGIN
+    input_expr_datetime2 := cast(input_expr as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;   
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi ::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := v_hr * sign_flag;
+
+    v_string := CONCAT(input_expr_datetime2::pg_catalog.text , tz_offset);
+
+    BEGIN
+    RETURN cast(v_string as sys.datetimeoffset);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+    hr INTEGER;
+    mi INTEGER;
+    tz_sign INTEGER;
+    tz_offset_smallint INTEGER;
+    input_expr_datetime2 datetime2;
+BEGIN
+
+        BEGIN
+        input_expr_datetime2:= cast(input_expr as sys.datetime2);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+        END;
+
+
+        IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
+            'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype ,'varbinary'::regtype) THEN
+            RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+        END IF;
+
+        BEGIN
+        IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+            tz_offset := FLOOR(tz_offset);
+        END IF;
+        tz_offset_smallint := cast(tz_offset AS smallint);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+        END;
+
+        IF input_expr IS NULL THEN 
+            RETURN NULL;
+        END IF;
+    
+        IF tz_offset_smallint < 0 THEN
+            tz_sign := 1;
+        ELSE 
+            tz_sign := 0;
+        END IF;
+
+        IF tz_offset_smallint > 840 or tz_offset_smallint < -840  THEN
+            RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+        END IF;
+
+        hr := tz_offset_smallint / 60;
+        mi := tz_offset_smallint % 60;
+
+        v_sign := (
+        SELECT CASE
+            WHEN (tz_sign) = 1
+                THEN '-'
+            WHEN (tz_sign) = 0
+                THEN '+'    
+        END
+    );
+
+    
+        v_string := CONCAT(input_expr_datetime2::pg_catalog.text,v_sign,abs(hr)::SMALLINT::text,':',
+                                                          abs(mi)::SMALLINT::text);
+
+        BEGIN
+        RETURN cast(v_string as sys.datetimeoffset);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+        END;
+    
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_month TEXT,
                                                                 IN p_day TEXT,
