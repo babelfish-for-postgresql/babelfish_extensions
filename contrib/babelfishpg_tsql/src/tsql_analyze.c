@@ -359,9 +359,16 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 			setOpTreeStack = lappend(setOpTreeStack, op->larg);
 		} else if (IsA(setOp, RangeTblRef))
 		{
-			RangeTblEntry *rte = rt_fetch(((RangeTblRef*)setOp)->rtindex, pstate->p_rtable);
-			List *targetList = rte->subquery->targetList;
+			RangeTblRef *rtref = (RangeTblRef*)setOp;
+			RangeTblEntry *rte;
+			List *targetList;
 			ListCell *tlistl, *collistl;
+
+			if (rtref->rtindex <= 0 || rtref->rtindex > list_length(pstate->p_rtable))
+				elog(ERROR, "invalid RangeTblRef %d", rtref->rtindex);
+
+			rte = rt_fetch(rtref->rtindex, pstate->p_rtable);
+			targetList = rte->subquery->targetList;
 
 			if(collist_list == NIL)
 			{
@@ -370,7 +377,8 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 					TargetEntry *tle = (TargetEntry*) lfirst(tlistl);
 					collist_list = lappend(collist_list, list_make1(tle));
 				}
-			} else
+			}
+			else
 			{
 				forboth(tlistl, targetList, collistl, collist_list)
 				{
