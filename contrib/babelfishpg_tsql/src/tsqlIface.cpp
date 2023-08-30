@@ -5058,13 +5058,14 @@ makeKillStatement(TSqlParser::Kill_statementContext *ctx)
 	result->cmd_type = PLTSQL_STMT_KILL;
 	result->lineno = getLineNo(ctx);
 
-	// Only supporting numeric argument for the spid,
-	// other flavours of KILL are intercepted in the parser
-
-	std::string spidStr;
+	/* 
+	 * Only supporting numeric argument for the spid,
+	 * other flavours of KILL are intercepted in the parser.
+	 */
 	if (ctx->kill_process()) {
-		spidStr = ::getFullText(ctx->kill_process());
-		result->spid = pstrdup(spidStr.c_str());
+		char *strtol_endptr;
+		std::string spidStr = ::getFullText(ctx->kill_process());
+		result->spid = (int) strtol(spidStr.c_str(), &strtol_endptr, 10);
 	}
 
 	return (PLtsql_stmt *) result;

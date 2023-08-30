@@ -21,7 +21,7 @@ typedef struct
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char	   *label;
-	char       *spid;
+	int	    spid;
 } PLtsql_stmt_kill;
 
 /*

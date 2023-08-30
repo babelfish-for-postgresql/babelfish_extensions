@@ -119,6 +119,13 @@ go
 ~~ERROR (Message: syntax error near '-' at line 1 and character position 5)~~
 
 
+KILL 999999999999999999999999999999999999999999999
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Session ID -1 is not valid)~~
+
+
 KILL 123 WITH STATUSONLY
 go
 ~~ERROR (Code: 33557097)~~

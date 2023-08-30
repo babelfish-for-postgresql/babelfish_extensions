@@ -611,7 +611,7 @@ dump_stmt_print(PLtsql_stmt_print *stmt_print)
 void
 dump_stmt_kill(PLtsql_stmt_kill *stmt_kill)
 {
-	printf("KILL %s\n", stmt_kill->spid);
+	printf("KILL %d\n", stmt_kill->spid);
 }
 
 void
