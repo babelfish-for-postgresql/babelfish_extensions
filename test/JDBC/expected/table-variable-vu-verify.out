@@ -263,3 +263,13 @@ bit
 1
 ~~END~~
 
+
+-- BABEL-4337 - check nested TV for null; should not crash but throw an error
+SELECT * FROM tv_nested_func2(NULL)
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: table variable underlying typename is NULL. refname: @t)~~
+
