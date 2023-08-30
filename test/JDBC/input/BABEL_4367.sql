@@ -1,31 +1,31 @@
-CREATE TABLE table_name_1 (
+CREATE TABLE BABEL_4367_1 (
     id INT
 )
 GO
 
-DROP TABLE table_name_1, table_name_2
+DROP TABLE BABEL_4367_1, BABEL_4367_2
 GO
 
-DROP TABLE table_name_1
-SELECT name FROM sys.tables
+DROP TABLE BABEL_4367_1
+SELECT name FROM sys.tables WHERE name in ('BABEL_4367_1', 'BABEL_4367_2')
 GO
 
-CREATE TABLE table_name_1 (
+CREATE TABLE BABEL_4367_1 (
     id INT
 )
 GO
 
-DROP TABLE IF EXISTS table_name_1, table_name_2
+DROP TABLE IF EXISTS BABEL_4367_1, BABEL_4367_2
 GO
-SELECT name FROM sys.tables
+SELECT name FROM sys.tables WHERE name in ('BABEL_4367_1', 'BABEL_4367_2')
 GO
 
-CREATE TABLE table_name_1 (
+CREATE TABLE BABEL_4367_1 (
     id INT
 )
 GO
 
-DROP TABLE IF EXISTS table_name_2, table_name_1
+DROP TABLE IF EXISTS BABEL_4367_2, BABEL_4367_1
 GO
-SELECT name FROM sys.tables
+SELECT name FROM sys.tables WHERE name in ('BABEL_4367_1', 'BABEL_4367_2')
 GO

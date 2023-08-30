@@ -1,45 +1,45 @@
-CREATE TABLE table_name_1 (
+CREATE TABLE BABEL_4367_1 (
     id INT
 )
 GO
 
-DROP TABLE table_name_1, table_name_2
+DROP TABLE BABEL_4367_1, BABEL_4367_2
 GO
 ~~ERROR (Code: 3701)~~
 
-~~ERROR (Message: table "table_name_2" does not exist)~~
+~~ERROR (Message: table "babel_4367_2" does not exist)~~
 
 
-DROP TABLE table_name_1
-SELECT name FROM sys.tables
+DROP TABLE BABEL_4367_1
+SELECT name FROM sys.tables WHERE name in ('BABEL_4367_1', 'BABEL_4367_2')
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
-CREATE TABLE table_name_1 (
+CREATE TABLE BABEL_4367_1 (
     id INT
 )
 GO
 
-DROP TABLE IF EXISTS table_name_1, table_name_2
+DROP TABLE IF EXISTS BABEL_4367_1, BABEL_4367_2
 GO
-SELECT name FROM sys.tables
+SELECT name FROM sys.tables WHERE name in ('BABEL_4367_1', 'BABEL_4367_2')
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
-CREATE TABLE table_name_1 (
+CREATE TABLE BABEL_4367_1 (
     id INT
 )
 GO
 
-DROP TABLE IF EXISTS table_name_2, table_name_1
+DROP TABLE IF EXISTS BABEL_4367_2, BABEL_4367_1
 GO
-SELECT name FROM sys.tables
+SELECT name FROM sys.tables WHERE name in ('BABEL_4367_1', 'BABEL_4367_2')
 GO
 ~~START~~
 varchar
