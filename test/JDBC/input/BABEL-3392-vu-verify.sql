@@ -248,6 +248,12 @@ SELECT CAST('1' AS CHAR(4))
 ORDER BY 1
 GO
 
+SELECT CAST('1' AS CHAR(8))
+INTERSECT
+SELECT CAST(N'1' AS NCHAR(4))
+ORDER BY 1
+GO
+
 SELECT CAST('1' AS CHAR(4))
 EXCEPT
 SELECT CAST('1' AS CHAR(8))
@@ -257,6 +263,12 @@ GO
 SELECT CAST('1' AS CHAR(8))
 EXCEPT
 SELECT CAST('1' AS CHAR(4))
+ORDER BY 1
+GO
+
+SELECT CAST('1' AS NCHAR(8))
+EXCEPT
+SELECT CAST('2' AS CHAR(4))
 ORDER BY 1
 GO
 
@@ -544,7 +556,6 @@ DROP TABLE babel4157_tbl
 DROP TABLE babel4157_tbl2
 GO
 
--- Currently gives wrong typmod, need to support nvarchar literals
 CREATE TABLE babel4157_tbl2 (c1 nvarchar(40) not null);
 go
 
@@ -608,7 +619,6 @@ DROP TABLE babel4157_tbl
 DROP TABLE babel4157_tbl2
 GO
 
--- Currently gives wrong typmod, need to support nvarchar literals
 CREATE TABLE babel4157_tbl2 (c1 nvarchar(max) not null);
 go
 
@@ -1000,6 +1010,7 @@ GO
 select cast(17 as binary(1)) 
 UNION
 select cast(10 as binary(2))
+ORDER BY 1
 GO
 
 select NULL
@@ -1047,4 +1058,35 @@ SELECT 'bar'
 UNION
 SELECT cast(17 as varbinary(2))
 ORDER BY 1
+GO
+
+-- BABEL-1874
+SELECT DISTINCT CAST( 1 AS BIT) AS Col1
+UNION
+SELECT DISTINCT NULL
+GO
+
+SELECT DISTINCT NULL
+UNION
+SELECT CAST( 1 AS BIT) AS Col1
+GO
+
+SELECT DISTINCT 'longer string'
+UNION
+SELECT CAST('bar' as VARCHAR(3))
+GO
+
+CREATE TABLE babel1874 (a CHAR(3), b NVARCHAR(MAX), c BIT)
+GO
+
+INSERT INTO babel1874 VALUES ('foo', N'ΘЖऌฒ', 1)
+GO
+
+SELECT N'longer string' as c1, CAST('1' AS VARCHAR(10)) as c2, c as c3 FROM babel1874
+UNION
+SELECT a, COUNT(b), NULL as c3 FROM babel1874 GROUP BY a, c3
+ORDER BY c3, c2, c1
+GO
+
+DROP TABLE babel1874
 GO

@@ -1110,12 +1110,14 @@ is_tsql_str_const(Node *expr)
 }
 
 static bool
-expr_is_varchar_max(Node *expr)
+expr_is_var_max(Node *expr)
 {
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 	return exprTypmod(expr) == -1 && (
 		utilptr->is_tsql_varchar_datatype(exprType(expr)) ||
-		utilptr->is_tsql_nvarchar_datatype(exprType(expr)) );
+		utilptr->is_tsql_nvarchar_datatype(exprType(expr)) ||
+		utilptr->is_tsql_varbinary_datatype(exprType(expr)) ||
+		utilptr->is_tsql_sys_varbinary_datatype(exprType(expr)));
 }
 
 /* 
@@ -1140,9 +1142,13 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	/* Limit changes for Set Operations and Values only for now
 	 * We may want to expand to other callers in the future */
 	if (context && strcmp(context, "UNION") != 0 && strcmp(context, "INTERSECT") != 0 
-		&& strcmp(context, "INTERSECT") != 0 && strcmp(context, "VALUES") != 0)
+		&& strcmp(context, "EXCEPT") != 0 && strcmp(context, "VALUES") != 0 &&
+		strcmp(context, "UNION/INTERSECT/EXCEPT"))
 		return InvalidOid;
 
+	/* Find a common type based on precedence. NULLs are ignored, and make 
+	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
+	 * or NVARCHAR is present, let engine handle finding the type. */
 	foreach(lc, exprs)
 	{
 		Node	*expr = (Node *) lfirst(lc);
@@ -1186,7 +1192,9 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 
 	if (!is_tsql_char_type_with_len(common_type) &&
 			 !utilptr->is_tsql_binary_datatype(common_type) &&
-			 !utilptr->is_tsql_sys_binary_datatype(common_type))
+			 !utilptr->is_tsql_sys_binary_datatype(common_type) &&
+			 !utilptr->is_tsql_varbinary_datatype(common_type) &&
+			 !utilptr->is_tsql_sys_varbinary_datatype(common_type))
 		return -1;
 
 	/* If resulting type is a length, need to be max of length types */
@@ -1198,7 +1206,7 @@ tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 		if (is_tsql_str_const(expr))
 			typmod = strlen(DatumGetCString( ((Const*)expr)->constvalue )) + VARHDRSZ;
 
-		if (expr_is_varchar_max(expr))
+		if (expr_is_var_max(expr))
 			return -1;
 
 		if (lc == list_head(exprs))

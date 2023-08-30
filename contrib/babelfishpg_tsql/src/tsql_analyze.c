@@ -401,7 +401,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 			col_exprs = lappend(col_exprs, (Node*)tle->expr);
 		}
 
-		common_type = select_common_type(pstate, col_exprs, "UNION", NULL);
+		common_type = select_common_type(pstate, col_exprs, "UNION/INTERSECT/EXCEPT", NULL);
 		common_typmod = select_common_typmod(pstate, col_exprs, common_type);
 		topColTypes = lappend_oid(topColTypes, common_type);
 		topColTypmods = lappend_int(topColTypmods, common_typmod);
