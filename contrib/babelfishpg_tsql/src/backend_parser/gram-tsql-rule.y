@@ -438,6 +438,17 @@ tsql_alter_user_options:
 									 (Node *)makeString($3),
 									 @1);
 				}
+			| TSQL_LOGIN '=' RoleId
+				{
+					RoleSpec	*login = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					List		*rolelist;
+
+					login->rolename = pstrdup($3);
+					rolelist = list_make1(login);
+					$$ = makeDefElem("rolemembers",
+									 (Node *)rolelist,
+									 @1);
+				}
 		;
 
 tsql_AlterLoginStmt:

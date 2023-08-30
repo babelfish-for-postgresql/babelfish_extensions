@@ -25,10 +25,76 @@ GO
 DROP PROCEDURE BABEL_3802_vu_prepare_t_p5
 GO
 
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p8
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p9
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p10
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p11
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p12
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p13
+GO
+
 DROP PROCEDURE BABEL_3802_vu_prepare_t_p6
 GO
 
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p14
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p15
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p16
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p17
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p18
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p19
+GO
+
 DROP PROCEDURE BABEL_3802_vu_prepare_t_p7
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p20
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p21
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p22
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p23
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p24
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p25
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p26
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p27
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p28
+GO
+
+DROP PROCEDURE BABEL_3802_vu_prepare_t_p29
 GO
 
 DROP VIEW BABEL_3802_vu_prepare_t_v8
@@ -44,4 +110,79 @@ DROP VIEW BABEL_3802_vu_prepare_t_v3
 GO
 
 DROP VIEW BABEL_3802_vu_prepare_t_v4
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v5
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v6
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v7
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v9
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v10
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v11
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v12
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v13
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v14
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v15
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v16
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v17
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v18
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v19
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v20
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v21
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v22
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v23
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v24
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v25
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v26
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v27
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v28
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v29
+GO
+
+DROP VIEW BABEL_3802_vu_prepare_t_v30
 GO

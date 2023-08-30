@@ -147,6 +147,7 @@ babelfish_sysdatabases
 babel_function_string
 BABEL_GRANT_CONNECT
 babel_isnumeric
+BABEL_COL_NAME
 BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
@@ -242,6 +243,7 @@ sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
 str
+switchoffset-dep
 sys-all_columns
 sys-all_columns-dep
 sys_all_objects
@@ -439,12 +441,12 @@ test_windows_login
 test_windows_sp_helpuser
 TestXML
 timefromparts
+todatetimeoffset-dep
 triggers_with_transaction
 datetimeoffset-timezone
 BABEL-4046
 host_id
 linked_srv_4229
-waitfor
 BABEL-4175
 sp_who
 BABEL_4330

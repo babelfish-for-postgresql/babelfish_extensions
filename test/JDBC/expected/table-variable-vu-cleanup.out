@@ -59,3 +59,13 @@ drop schema table_variable_vu_schema
 go
 drop function table_variable_vu_func2
 go
+
+-- BABEL-4337 - nested tv
+DROP FUNCTION tv_nested_func2
+GO
+
+DROP FUNCTION tv_nested_func1
+GO
+
+DROP TYPE tv_nested_type
+GO

@@ -628,18 +628,18 @@ TEST_F(PSQL_DataTypes_Char, Table_Unique_Constraint) {
 
   const vector<pair<string, string>> TABLE_COLUMNS_1 = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE_1}
+    {COL2_NAME, DATATYPE_1 + " NOT NULL"}
   };
 
   const vector<pair<string, string>> TABLE_COLUMNS_20 = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE_20}
+    {COL2_NAME, DATATYPE_20 + " NOT NULL"}
   };
 
   // Maximum allowed for PG connection is 2704
   const vector<pair<string, string>> TABLE_COLUMNS_2704 = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE + "(2704)"}
+    {COL2_NAME, DATATYPE + "(2704) NOT NULL"}
   };
 
   const vector<string> INSERTED_VALUES_1 = {

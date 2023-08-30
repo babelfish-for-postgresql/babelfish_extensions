@@ -131,6 +131,9 @@ protected:
 		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override;
 
+		// CFL
+		antlrcpp::Any visitWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WAIT_FOR, "WAITFOR", getLineAndPos(ctx)); return visitChildren(ctx); }
+
 		// Another
 		antlrcpp::Any visitSet_statement(TSqlParser::Set_statementContext *ctx) override;
 		antlrcpp::Any visitCursor_statement(TSqlParser::Cursor_statementContext *ctx) override;
@@ -1003,12 +1006,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::Ddl_statementContext *ctx)
 {
-	if (ctx->alter_user())
-	{
-		auto alter_user = ctx->alter_user();
-		if (alter_user->loginame)
-			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER USER WITH LOGIN",  getLineAndPos(ctx));
-	}
 	if (ctx->create_user())
 	{
 		auto create_user = ctx->create_user();
