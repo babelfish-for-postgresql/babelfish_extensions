@@ -112,6 +112,18 @@ GO
 EXEC babel_role_vu_prepare_role_members
 GO
 
+USE babel_role_vu_prepare_DB1
+GO
+
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+
+CREATE ROLE babel_role_vu_prepare_role2
+GO
+
+USE babel_role_vu_prepare_db
+GO
+
 -- Role renaming
 ALTER ROLE babel_role_vu_prepare_role1 WITH NAME = babel_role_vu_prepare_role1_new
 GO
@@ -175,6 +187,15 @@ DROP USER babel_role_vu_prepare_user3
 GO
 
 DROP ROLE babel_role_vu_prepare_role1_new
+GO
+
+DROP ROLE babel_role_vu_prepare_role2
+GO
+
+USE babel_role_vu_prepare_DB1
+GO
+
+DROP ROLE babel_role_vu_prepare_role1
 GO
 
 DROP ROLE babel_role_vu_prepare_role2

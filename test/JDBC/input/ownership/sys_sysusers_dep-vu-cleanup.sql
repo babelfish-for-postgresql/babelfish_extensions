@@ -16,6 +16,15 @@ GO
 DROP USER sysusers_dep_vu_prepare_user2
 GO
 
+USE sysusersDB1
+GO
+
+DROP VIEW sysusers_dep_vu_prepare_view
+GO
+
+DROP USER sysusers_dep_vu_prepare_user1
+GO
+
 DROP LOGIN sysusers_dep_vu_prepare_login1
 GO
 
@@ -26,4 +35,7 @@ USE master
 GO
 
 DROP DATABASE sysusersdb
+GO
+
+DROP DATABASE sysusersDB1
 GO

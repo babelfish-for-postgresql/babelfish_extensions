@@ -31,6 +31,14 @@ FROM sys.babelfish_authid_user_ext
 ORDER BY rolname;
 GO
 
+CREATE DATABASE DB2;
+GO
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+
 SELECT name, default_schema_name
 FROM sys.database_principals
 ORDER BY default_schema_name DESC, name;
@@ -214,4 +222,7 @@ DROP LOGIN test4;
 GO
 
 DROP DATABASE db1;
+GO
+
+DROP DATABASE DB2;
 GO

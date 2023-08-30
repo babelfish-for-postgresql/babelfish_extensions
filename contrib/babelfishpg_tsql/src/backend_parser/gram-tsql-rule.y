@@ -268,6 +268,27 @@ tsql_CreateRoleStmt:
 				}
 			;
 
+tsql_CreatedbStmt:
+			CREATE DATABASE name opt_with createdb_opt_list
+				{
+					CreatedbStmt  *n = makeNode(CreatedbStmt);
+					n->dbname = $3;
+
+					/* If there are specified options, this is PSQL syntax */
+					if ($5 != NIL)
+						n->options = $5;
+					/* Otherwise, this is TSQL syntax, do query mapping */
+					else
+					{
+						n->options = lappend(n->options,
+											 makeDefElem("name_location",
+														 (Node *)makeInteger(@3),
+														 @3));
+					}
+					$$ = (Node *)n;
+				}
+			;
+
 tsql_CreateUserStmt:
 			CREATE USER RoleId tsql_create_user_login tsql_create_user_options
 				{
@@ -2258,7 +2279,7 @@ tsql_stmt :
 			| CreateEventTrigStmt
 			| tsql_CreateRoleStmt
 			| tsql_CreateUserStmt
-			| CreatedbStmt
+			| tsql_CreatedbStmt
 			| DeallocateStmt
 			| DeclareCursorStmt
 			| DefineStmt

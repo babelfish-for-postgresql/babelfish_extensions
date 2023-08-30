@@ -443,7 +443,47 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
+					CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
+					List	   *db_options = NIL;
+					ListCell   *option;
+
+					/* Check if creating login or role. Expect islogin first */
+					if (stmt->options != NIL)
+					{
+						DefElem    *headel = (DefElem *) linitial(stmt->options);
+
+						/*
+						 * If islogin set the options list to after the head.
+						 * Save the list of login specific options.
+						 */
+							char	   *orig_dbname = NULL;
+
+							/* Filter login options from default role options */
+							if (strcmp(headel->defname, "name_location") == 0)
+								{
+									int			location = headel->location;
+
+									orig_dbname = extract_identifier(queryString + location);
+									db_options = lappend(db_options, headel);
+								}
+								if (orig_dbname)
+								{
+									db_options = lappend(db_options,
+														makeDefElem("original_database_name",
+																	(Node *) makeString(orig_dbname),
+																	-1));
+									}
+								pfree(headel);
+								pfree(stmt->dbname);
+								stmt->dbname = convertToUPN(orig_dbname);
+
+								foreach(option, stmt->options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+					}
+				create_bbf_db(pstate, stmt);
 				return true;
 			}
 			break;

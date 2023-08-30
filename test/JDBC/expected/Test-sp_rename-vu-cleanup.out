@@ -67,3 +67,24 @@ GO
 
 DROP SCHEMA sp_rename_vu_schema1;
 GO
+
+use sp_rename_vu_DB1;
+go
+
+DROP TABLE sp_rename_vu_table2;
+GO
+
+DROP TABLE sp_rename_vu_table1;
+GO
+
+DROP TABLE sp_rename_vu_schema1.sp_rename_vu_table2_new;
+GO
+
+DROP SCHEMA sp_rename_vu_schema1;
+GO
+
+use master;
+go
+
+drop database sp_rename_vu_DB1;
+go

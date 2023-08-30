@@ -41,3 +41,20 @@ RETURN
     WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
     ORDER BY name offset 0 rows
 GO
+
+CREATE DATABASE sysusersDB1
+GO
+
+USE sysusersDB1
+GO
+
+CREATE USER sysusers_dep_vu_prepare_user1 FOR LOGIN sysusers_dep_vu_prepare_login1
+GO
+
+CREATE VIEW sysusers_dep_vu_prepare_view
+AS
+SELECT name, hasdbaccess, islogin, isntname, issqluser, issqlrole
+FROM sys.sysusers
+WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
+ORDER BY name offset 0 rows
+GO

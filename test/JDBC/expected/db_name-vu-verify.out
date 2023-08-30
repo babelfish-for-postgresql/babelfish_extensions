@@ -1,0 +1,92 @@
+--switch to database irrespective of case
+USE DB_NAME_VU_PREPARE_TEST1;
+GO
+
+--returning original_case_dbname
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+DB_NAME_VU_PREPARE_test1
+~~END~~
+
+
+--showing newly added column returning original_case_dbname
+SELECT orig_name FROM sys.babelfish_sysdatabases;
+GO
+~~START~~
+text
+master
+tempdb
+msdb
+DB_NAME_VU_PREPARE_test1
+DB_NAME_VU_PREPARE_Test4
+DB_NAME_VU_PREPARE_tEst3
+DB_NAME_VU_PREPARE_TesT2
+~~END~~
+
+
+USE db_name_vu_prepare_test2;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+DB_NAME_VU_PREPARE_TesT2
+~~END~~
+
+
+--showing name column storing lowercase dbname and newly added column with original_case_dbname
+SELECT name, orig_name FROM sys.babelfish_sysdatabases;
+GO
+~~START~~
+text#!#text
+master#!#master
+tempdb#!#tempdb
+msdb#!#msdb
+db_name_vu_prepare_test1#!#DB_NAME_VU_PREPARE_test1
+db_name_vu_prepare_test4#!#DB_NAME_VU_PREPARE_Test4
+db_name_vu_prepare_test3#!#DB_NAME_VU_PREPARE_tEst3
+db_name_vu_prepare_test2#!#DB_NAME_VU_PREPARE_TesT2
+~~END~~
+
+
+--testing these objects behaviour
+SELECT PROCEDURE_QUALIFIER FROM sys.sp_stored_procedures_view where PROCEDURE_NAME LIKE 'sp_special_columns_length_helper%';
+GO
+~~START~~
+varchar
+db_name_vu_prepare_test2
+~~END~~
+
+
+SELECT PROCEDURE_QUALIFIER FROM sys.sp_sproc_columns_view where COLUMN_NAME LIKE 'money';
+GO
+~~START~~
+varchar
+db_name_vu_prepare_test2
+~~END~~
+
+
+SELECT * from information_schema_tsql.schemata;
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
+db_name_vu_prepare_test2#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+db_name_vu_prepare_test2#!#guest#!#guest#!#<NULL>#!#<NULL>#!#<NULL>
+db_name_vu_prepare_test2#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+db_name_vu_prepare_test2#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+USE master;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+

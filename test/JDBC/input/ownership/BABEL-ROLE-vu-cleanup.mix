@@ -11,6 +11,11 @@ GO
 DROP PROC babel_role_vu_prepare_role_members
 GO
 
+USE babel_role_vu_prepare_DB1
+GO
+
+DROP PROC babel_role_vu_prepare_role_members
+GO
 
 USE master
 GO
@@ -38,4 +43,7 @@ DROP PROC babel_role_vu_prepare_db_principal_master
 GO
 
 DROP DATABASE babel_role_vu_prepare_db
+GO
+
+DROP DATABASE babel_role_vu_prepare_DB1
 GO

@@ -111,3 +111,9 @@ FROM sysusersdb.dbo.sysusers
 WHERE name LIKE '%sysusers_dep_vu_prepare_%' OR name = 'dbo' or name = 'guest'
 ORDER BY name
 GO
+
+use sysusersDB1
+GO
+
+SELECT * FROM sysusers_dep_vu_prepare_view
+GO

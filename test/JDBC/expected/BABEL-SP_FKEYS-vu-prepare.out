@@ -16,6 +16,14 @@ create table babel_sp_fkeys_vu_prepare_MyTable6(cOlUmN_c int, CoLuMn_d int, fore
 go
 create table [babel_sp_fkeys_vu_prepare_MyTable7] ([MyColumn_a] int, [MyColumn_b] int, foreign key([MyColumn_a], [MyColumn_b]) references babel_sp_fkeys_vu_prepare_MyTable5(cOlUmN_a, CoLuMn_b))
 go
+create database babel_sp_fkeys_vu_prepare_DB2;
+go
+use babel_sp_fkeys_vu_prepare_DB2;
+go
+create table babel_sp_fkeys_vu_prepare_t3(a int, b int, c int, primary key(c, b))
+go
+create table babel_sp_fkeys_vu_prepare_t4(d int, e int, foreign key(d, e) references babel_sp_fkeys_vu_prepare_t3(c, b))
+go
 
 use master
 go

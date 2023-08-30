@@ -756,17 +756,17 @@ GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC;
  * SCHEMATA view
  */
 CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
-	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
-	CAST(CASE WHEN np.nspname LIKE CONCAT(sys.db_name(),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
+	SELECT CAST(LOWER(sys.db_name()) AS sys.sysname) AS "CATALOG_NAME",
+	CAST(CASE WHEN np.nspname LIKE CONCAT(LOWER(sys.db_name()),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(LOWER(sys.db_name())) - 1)
 	     ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
 	-- For system-defined schemas, schema-owner name will be same as schema_name
 	-- For user-defined schemas having default owner, schema-owner will be dbo
 	-- For user-defined schemas with explicit owners, rolname contains dbname followed
 	-- by owner name, so need to extract the owner name from rolname always.
 	CAST(CASE WHEN sys.bbf_is_shared_schema(np.nspname) = TRUE THEN np.nspname
-		  WHEN r.rolname LIKE CONCAT(sys.db_name(),'%') THEN
-			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) = 'db_owner' THEN 'dbo'
-			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(sys.db_name()) - 1) END ELSE 'dbo' END
+		  WHEN r.rolname LIKE CONCAT(LOWER(sys.db_name()),'%') THEN
+			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(LOWER(sys.db_name())) - 1) = 'db_owner' THEN 'dbo'
+			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(LOWER(sys.db_name())) - 1) END ELSE 'dbo' END
 			AS sys.nvarchar(128)) AS "SCHEMA_OWNER",
 	CAST(null AS sys.varchar(6)) AS "DEFAULT_CHARACTER_SET_CATALOG",
 	CAST(null AS sys.varchar(3)) AS "DEFAULT_CHARACTER_SET_SCHEMA",
