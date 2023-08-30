@@ -1,0 +1,25 @@
+CREATE VIEW switchoffset_dep_vu_prepare_v1 as (Select switchoffset('2000-04-22 16:2a:51.766890',340));
+GO
+
+CREATE VIEW switchoffset_dep_vu_prepare_v2 as (Select switchoffset('2000-04-22 ','+12:00'));
+GO
+
+CREATE PROCEDURE  switchoffset_dep_vu_prepare_p1 as (SELECT switchoffset(cast('2023-08-08 16:06:45' as datetime2), '-13:00'));
+GO
+
+CREATE PROCEDURE  switchoffset_dep_vu_prepare_p2 as (Select switchoffset('2000-04-22 16:23:51',120));
+GO
+
+CREATE FUNCTION switchoffset_dep_vu_prepare_f1()
+RETURNS DATETIMEOFFSET AS
+BEGIN
+RETURN (Select switchoffset('2000-0a-22 ','+12:00'));
+END
+GO
+
+CREATE FUNCTION switchoffset_dep_vu_prepare_f2()
+RETURNS DATETIMEOFFSET as
+begin
+RETURN (Select switchoffset('2000-04-22 16:23:50.76689',120));
+END
+GO

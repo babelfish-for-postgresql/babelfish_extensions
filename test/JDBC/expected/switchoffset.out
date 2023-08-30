@@ -1,0 +1,815 @@
+Select switchoffset('2001-04-22 ', -120)
+GO
+~~START~~
+datetimeoffset
+2001-04-21 22:00:00.0000000 -02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 ', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 02:00:00.0000000 +02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 19:34:56.0000000 +02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 19:34:56.3450000 +02:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 0)
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', -0)
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('200a-0b-22 17:34:56.345', 1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 0x12)
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:52:56.3450000 +00:18
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', 'abcd')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('2001-04-22 ', '+12:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 12:00:00.0000000 +12:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 ', '-12:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-21 12:00:00.0000000 -12:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56', '-12:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 05:34:56.0000000 -12:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-11:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 06:34:56.3450000 -11:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '+00:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-00:00')
+go
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.3450000 +00:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 10:34:56.345', '-11:00')
+go
+~~START~~
+datetimeoffset
+2001-04-21 23:34:56.3450000 -11:00
+~~END~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-101:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-011:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('200a-0b-22 17:34:56.345', '-011:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '+14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '-1a:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset('2001-04-22 17:34:56.345', '14:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+
+-- Currently these inputs are giving wrong output due to casting issues .(BABEL-4321) 
+Select switchoffset(convert(datetime,'2001-04-22'),'-13:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-21 11:00:00.0000000 -13:00
+~~END~~
+
+
+Select switchoffset(convert(date,'2001-04-22'),'-13:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-21 11:00:00.0000000 -13:00
+~~END~~
+
+
+Select switchoffset(convert(datetime2,'2001-04-22'),'-13:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-21 11:00:00.0000000 -13:00
+~~END~~
+
+
+Select switchoffset(convert(smalldatetime,'2001-04-22'),'-13:00')
+GO
+~~START~~
+datetimeoffset
+2001-04-21 11:00:00.0000000 -13:00
+~~END~~
+
+
+
+--
+Select switchoffset('0001-01-00 00:00:00.00', '-10:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('0001-01-01 00:00:00.00', '+13:00')
+GO
+~~START~~
+datetimeoffset
+0001-01-01 13:00:00.0000000 +13:00
+~~END~~
+
+
+Select switchoffset('9999-12-31 11:59:59.59', '+12:00')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.5900000 +12:00
+~~END~~
+
+
+Select switchoffset('9999-12-31 24:59:59.59', 130)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('10000-12-31 23:59:59.59', 120)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 120)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 15:59:29.0500000 +02:00
+~~END~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), '+12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-07 01:59:29.0500000 +12:00
+~~END~~
+
+
+DECLARE @test_date datetime;
+SET @test_date = '2022-12-11';
+Select switchoffset(@test_date,'+12:00');
+GO
+~~START~~
+datetimeoffset
+2022-12-11 12:00:00.0000000 +12:00
+~~END~~
+
+
+DECLARE @test_date datetime2;
+SET @test_date = '2345-12-31 23:59:59.59';
+Select switchoffset(@test_date,-120);
+GO
+~~START~~
+datetimeoffset
+2345-12-31 21:59:59.5900000 -02:00
+~~END~~
+
+
+Select switchoffset(DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ), 300)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 19:23:44.0000050 +05:00
+~~END~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), '+12:00')
+Go
+~~START~~
+datetimeoffset
+1900-05-07 01:59:30.0000000 +12:00
+~~END~~
+
+
+Select switchoffset('0',120)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('0',0x23)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DROP TABLE IF EXISTS tem
+GO
+Create table tem(a datetimeoffset)
+insert into tem (a) values(switchoffset('2000-04-22 12:23:51.766890',120))
+Select * from tem
+Select switchoffset(a,'+14:00') from tem;
+DROP TABLE IF EXISTS tem
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset
+2000-04-22 14:23:51.7668900 +02:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2000-04-23 02:23:51.7668900 +14:00
+~~END~~
+
+
+Select switchoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);
+GO
+~~START~~
+datetimeoffset
+2031-05-27 13:59:29.9980000 -08:00
+~~END~~
+
+
+Select switchoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
+GO
+~~START~~
+datetimeoffset
+2029-04-15 13:59:29.9980000 -08:00
+~~END~~
+
+
+Select switchoffset('NULL','NULL')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('NULL',NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset(NULL,NULL)
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset(NULL,'NULL')
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), 0x23)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 14:34:30.0000000 +00:35
+~~END~~
+
+
+DECLARE @test_offset text;
+SET @test_offset = '-13:00';
+Select switchoffset('2345-12-31 23:59:59.59',@test_offset);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+
+DECLARE @test_offset1 float ;
+SET @test_offset1 = 23.567;
+Select switchoffset('2345-12-31 23:59:59.59',@test_offset1);
+GO
+~~START~~
+datetimeoffset
+2346-01-01 00:22:59.5900000 +00:23
+~~END~~
+
+
+DECLARE @test_offset1 decimal ;
+SET @test_offset1 = 23.567;
+Select switchoffset('2345-12-31 23:59:59.59',@test_offset1);
+GO
+~~START~~
+datetimeoffset
+2346-01-01 00:23:59.5900000 +00:24
+~~END~~
+
+
+Select switchoffset(CAST('1900-05-0x12 13:59:29.998 -8:00' AS datetime2(2)), 235.67)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type datetime2: "1900-05-0x12 13:59:29.998 -8:00")~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), 23647585)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type smallint.)~~
+
+
+Select switchoffset('2345-12-31 23:59:59.59',23.567);
+GO
+~~START~~
+datetimeoffset
+2346-01-01 00:22:59.5900000 +00:23
+~~END~~
+
+
+Select switchoffset('2345-12-31 23:59:59.59',23.467);
+GO
+~~START~~
+datetimeoffset
+2346-01-01 00:22:59.5900000 +00:23
+~~END~~
+
+
+Select switchoffset('2345-12-31 23:59:59.59',cast(123 as bit));
+GO
+~~START~~
+datetimeoffset
+2346-01-01 00:00:59.5900000 +00:01
+~~END~~
+
+
+Select switchoffset('2345-12-31 23:59:59.59',NULL);
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset('2345-12-31 23:59:59.59','NULL');
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset(NULL,'+12:00');
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset('NULL','+12:00');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('NULL',234);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset(NULL,234);
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset(NULL,'+12:000');
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select switchoffset('NULL','+12:000');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('NULL',1233456777888);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset(NULL,1233456777888);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type smallint.)~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 840)
+GO
+~~START~~
+datetimeoffset
+1900-05-07 03:59:29.0500000 +14:00
+~~END~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select switchoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -840)
+GO
+~~START~~
+datetimeoffset
+1900-05-05 23:59:29.0500000 -14:00
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 0x23)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 02:35:00.5000000 +00:35
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 435.678999)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 09:15:00.5000000 +07:15
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 43)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 02:43:00.5000000 +00:43
+~~END~~
+
+
+Select switchoffset('1900-05-06 13:59:29.998 -8:00', '-12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-06 09:59:29.9980000 -12:00
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 -00:00', '+12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-07 00:59:29.9980000 +12:00
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 -02:00', 234)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 18:53:29.9980000 +03:54
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 +10:00', -456)
+GO
+~~START~~
+datetimeoffset
+1900-05-05 19:23:29.9980000 -07:36
+~~END~~
+
+
+Select switchoffset('1900-05-06 12:59:29.998 -00:00', 0x12)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:17:29.9980000 +00:18
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(1, 1, 1, 4, 30, 00, 500, 12, 30, 3), '+00:43')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.)~~
+
+
+Select switchoffset('1-1-1 00:00:00.000 +12:00' , '+12:00')
+GO
+~~START~~
+datetimeoffset
+2001-01-01 00:00:00.0000000 +12:00
+~~END~~
+
+
+Select switchoffset('0001-1-1 00:00:00.000 +12:00' , '+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('0001-01-01 00:00:00.000 +12:00' , '+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('0002-01-01 00:00:00.000 +12:00' , '+12:43')
+GO
+~~START~~
+datetimeoffset
+0002-01-01 00:43:00.0000000 +12:43
+~~END~~
+
+
+Select switchoffset('10000-01-01 00:00:00.000 +12:00' , '+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('10000-01-01 00:00:00.123 +2:00','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.)~~
+
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.)~~
+
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00','+12:00')
+GO
+~~START~~
+datetimeoffset
+0001-01-01 12:00:01.0000000 +12:00
+~~END~~
+
+
+Select switchoffset('0001-01-01 00:00:00.00 +00:00','+12:00')
+GO
+~~START~~
+datetimeoffset
+0001-01-01 12:00:00.0000000 +12:00
+~~END~~
+
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00','+12:00')
+GO
+~~START~~
+datetimeoffset
+0001-01-01 12:00:01.0000000 +12:00
+~~END~~
+
+
+Select switchoffset(DATETIMEOFFSETFROMPARTS(1, 1, 1, 4, 30, 00, 500, 12, 30, 3), 743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.)~~
+
+
+Select switchoffset('1-1-1 00:00:00.000 +12:00' , 743)
+GO
+~~START~~
+datetimeoffset
+2001-01-01 00:23:00.0000000 +12:23
+~~END~~
+
+
+Select switchoffset('0001-1-1 00:00:00.000 +12:00' , 743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('0001-01-01 00:00:00.000 +12:00' , 743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('0002-01-01 00:00:00.000 +12:00' , 743)
+GO
+~~START~~
+datetimeoffset
+0002-01-01 00:23:00.0000000 +12:23
+~~END~~
+
+
+Select switchoffset('10000-01-01 00:00:00.000 +12:00' , 743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('10000-01-01 00:00:00.123 +2:00', 743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.)~~
+
+
+Select switchoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.)~~
+
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00',743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 12:23:01.0000000 +12:23
+~~END~~
+
+
+Select switchoffset('0001-01-01 00:00:00.00 +00:00',743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 12:23:00.0000000 +12:23
+~~END~~
+
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00',743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 12:23:01.0000000 +12:23
+~~END~~
+
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00',-743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.)~~
+
+
+Select switchoffset('0001-01-01 00:00:01.00 +00:00','-12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.)~~
+
