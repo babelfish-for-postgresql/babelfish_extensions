@@ -243,6 +243,7 @@ sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
 str
+switchoffset-dep
 sys-all_columns
 sys-all_columns-dep
 sys_all_objects
@@ -440,6 +441,7 @@ test_windows_login
 test_windows_sp_helpuser
 TestXML
 timefromparts
+todatetimeoffset-dep
 triggers_with_transaction
 datetimeoffset-timezone
 BABEL-4046
