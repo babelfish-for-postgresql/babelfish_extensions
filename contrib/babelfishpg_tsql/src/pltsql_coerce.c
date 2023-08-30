@@ -719,11 +719,13 @@ is_vectorized_binary_operator(FuncCandidateList candidate)
 }
 
 static bool
-tsql_has_func_args_higher_precedence(int n, Oid *inputtypes, FuncCandidateList candidate1, FuncCandidateList candidate2)
+tsql_has_func_args_higher_precedence(int n, Oid *inputtypes, FuncCandidateList candidate1, FuncCandidateList candidate2, bool candidates_are_opers)
 {
 	int			i;
 	Oid		   *argtypes1 = candidate1->args;
 	Oid		   *argtypes2 = candidate2->args;
+	bool		can1_is_sametype = true;
+	bool		can2_is_sametype = true;
 
 	/*
 	 * There is no public documentation how T-SQL chooses the best candidate.
@@ -741,6 +743,19 @@ tsql_has_func_args_higher_precedence(int n, Oid *inputtypes, FuncCandidateList c
 
 	if (is_vectorized_binary_operator(candidate1) && !is_vectorized_binary_operator(candidate2))
 		return true;
+
+	/* Prioritize candidates with same-typed arguments for operators only*/
+	if (candidates_are_opers)
+	{
+		for (i = 1; i < n; ++i)
+		{
+			can1_is_sametype &= argtypes1[i-1] == argtypes1[i];
+			can2_is_sametype &= argtypes2[i-1] == argtypes2[i];
+		}
+
+		if (can2_is_sametype != can1_is_sametype)
+			return can1_is_sametype;
+	}
 
 	for (i = 0; i < n; ++i)
 	{
@@ -840,6 +855,7 @@ tsql_func_select_candidate(int nargs,
 	FuncCandidateList current_candidate;
 	FuncCandidateList another_candidate;
 	int			i;
+	bool			  candidates_are_opers = false;
 
 	if (unknowns_resolved)
 	{
@@ -887,6 +903,7 @@ tsql_func_select_candidate(int nargs,
 	}
 
 	new_candidates = run_tsql_best_match_heuristics(nargs, input_typeids, candidates);
+	candidates_are_opers = SearchSysCacheExists1(OPEROID, new_candidates->oid);
 
 	for (current_candidate = new_candidates;
 		 current_candidate != NULL;
@@ -898,7 +915,7 @@ tsql_func_select_candidate(int nargs,
 			 another_candidate != NULL;
 			 another_candidate = another_candidate->next)
 		{
-			if (!tsql_has_func_args_higher_precedence(nargs, input_typeids, current_candidate, another_candidate))
+			if (!tsql_has_func_args_higher_precedence(nargs, input_typeids, current_candidate, another_candidate, candidates_are_opers))
 			{
 				has_highest_precedence = false;
 				break;
