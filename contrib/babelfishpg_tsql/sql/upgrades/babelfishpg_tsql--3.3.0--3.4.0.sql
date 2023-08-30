@@ -205,13 +205,10 @@ BEGIN
     END;
 
 
-
 END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
-
-
 
 
 CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset anyelement)
@@ -292,7 +289,6 @@ END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
-
 
 ALTER FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC) STRICT;
 
