@@ -323,13 +323,13 @@ exec_stmt_kill(PLtsql_execstate *estate, PLtsql_stmt_kill *stmt)
 	// (unlike sys.syprocesses which also contains PG connections since this view is also 
 	//  based on pg_locks and pg_stat_activity)
 	{
-		char *tmpqry =
-			"SELECT DISTINCT 1 FROM sys.dm_exec_sessions WHERE session_id = %d " ;
-	
-		char *query = psprintf(tmpqry, spid);
+		char *query = psprintf("SELECT DISTINCT 1 FROM sys.dm_exec_sessions WHERE session_id = %d ", spid);
 	
 		int rc = SPI_execute(query, true, 1);
 	
+		// we're only interested in the #rows found: 0 or non-zero
+		SPI_freetuptable(SPI_tuptable);		
+
 		if (rc != SPI_OK_SELECT)
 			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -343,20 +343,20 @@ exec_stmt_kill(PLtsql_execstate *estate, PLtsql_stmt_kill *stmt)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					errmsg("Process ID %d is not an active process ID for a TDS connection", spid)));
 		}
-
-		SPI_freetuptable(SPI_tuptable);		
 	}
 
 	// All validations passed, send the signal to the backend process
 	// This is basically the same as what pg_terminate_backend() does
 	if (kill(spid, SIGTERM))
 	{
+		// kill is a best-effort attempt, so proceed rather than abort in case
+		// // it does not work out
 		ereport(WARNING,
 			(errmsg("Could not send signal to process %d: %m", spid)));
 	}
 
 	// Send no further message to the client, irrespective of the result
-
+	// KILL resets the rowcount
 	exec_set_rowcount(0);
 
 	return PLTSQL_RC_OK;

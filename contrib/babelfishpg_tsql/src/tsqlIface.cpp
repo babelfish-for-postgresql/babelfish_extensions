@@ -5064,7 +5064,7 @@ makeKillStatement(TSqlParser::Kill_statementContext *ctx)
 	std::string spidStr;
 	if (ctx->kill_process()) {
 		spidStr = ::getFullText(ctx->kill_process());
-		result->spid = psprintf("%s", &spidStr[0]);
+		result->spid = pstrdup(spidStr.c_str());
 	}
 
 	return (PLtsql_stmt *) result;
