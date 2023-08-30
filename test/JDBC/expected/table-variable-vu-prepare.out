@@ -239,3 +239,11 @@ BEGIN
     RETURN
 END
 go
+
+-- BABEL-4337 - nested TV, null check in tblname
+CREATE TYPE tv_nested_type AS TABLE (a INT)
+GO
+CREATE FUNCTION tv_nested_func1 (@t tv_nested_type readonly) RETURNS @a TABLE (y INT) AS BEGIN; INSERT INTO @a SELECT x FROM @t; RETURN; END;
+GO
+CREATE FUNCTION tv_nested_func2 (@t tv_nested_type readonly) RETURNS @a TABLE (x INT) AS BEGIN; INSERT INTO @a SELECT y FROM tv_nested_func1(@t); RETURN; END;
+GO

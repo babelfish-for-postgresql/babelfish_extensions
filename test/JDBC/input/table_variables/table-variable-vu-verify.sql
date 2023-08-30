@@ -98,3 +98,7 @@ go
 select * from table_variable_vu_func2()
 select typbyval from pg_catalog.pg_type where typname like '@sometable_table_variable_vu_func2%';
 go
+
+-- BABEL-4337 - check nested TV for null; should not crash but throw an error
+SELECT * FROM tv_nested_func2(NULL)
+go
