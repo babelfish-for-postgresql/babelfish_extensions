@@ -280,18 +280,7 @@ exec_stmt_kill(PLtsql_execstate *estate, PLtsql_stmt_kill *stmt)
 	}
 
 	/*
-	 * Convert SPID string to int.
-	 * Although the T-SQL grammar only accepts a numeric value, and it must always be present, play it safe.
-	 */
-
-	if (spid == 0) 
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				errmsg("Session ID %d is not valid", spid)));            
-	}
-	/*
-	 * SPID value must be positive; the T-SQL grammar allows only a non-negative nuber to be specified.
+	 * SPID value must be a positive number; the T-SQL grammar allows only a non-negative number to be specified.
 	 * Yet, play it safe and test for it.
 	 * A variable or expression is not allowed and caught in the parser.
 	 * All other variants of T-SQL KILL are not supported, this is caught in the parser.
