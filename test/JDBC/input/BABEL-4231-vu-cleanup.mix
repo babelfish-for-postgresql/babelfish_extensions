@@ -149,9 +149,3 @@ GO
 
 DROP VIEW view_babel_4231_39;
 GO
-
-DROP VIEW view_babel_4231_40;
-GO
-
-DROP VIEW view_babel_4231_41;
-GO

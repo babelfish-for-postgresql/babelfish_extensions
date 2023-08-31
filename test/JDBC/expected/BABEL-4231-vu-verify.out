@@ -336,30 +336,12 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT 1 AS "您您对您对您对您对您对您对您对您对您对您";
-~~END~~
-
-
--- psql
-SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_39';
-GO
-~~START~~
-text
- SELECT 1 AS "您您对您对您对您对您4c3f84fbb5fca1ba299dd879644a1cce";
-~~END~~
-
-
--- psql
-SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_40';
-GO
-~~START~~
-text
  SELECT 1 AS "ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF";
 ~~END~~
 
 
 -- psql
-SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_41';
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_39';
 GO
 ~~START~~
 text

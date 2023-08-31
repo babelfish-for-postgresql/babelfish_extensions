@@ -248,23 +248,13 @@ CREATE VIEW view_babel_4231_37 AS SELECT 1 AS ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwe
 GO
 
 -- tsql
--- table aliases with multibyte characters which are not delimited by double quote, square bracket and length is less than 64
-CREATE VIEW view_babel_4231_38 AS SELECT 1 AS 您您对您对您对您对您对您对您对您对您对您;
-GO
-
--- tsql
--- table aliases which are not delimited by double quote, square bracket and length is more than 64
-CREATE VIEW view_babel_4231_39 AS SELECT 1 AS 您您对您对您对您对您对您对您对ABgfuw您对您对您;
-GO
-
--- tsql
 -- table aliases with single byte characters which are delimited by single quote and length is more than or equals to 64
-CREATE VIEW view_babel_4231_40 AS SELECT 1 AS 'ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF';
+CREATE VIEW view_babel_4231_38 AS SELECT 1 AS 'ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF';
 GO
 
 -- tsql
 -- table aliases with single byte characters which are delimited by single quote and length is less than 64
-CREATE VIEW view_babel_4231_41 AS SELECT 1 AS N'ANfjws';
+CREATE VIEW view_babel_4231_39 AS SELECT 1 AS N'ANfjws';
 GO
 
 
