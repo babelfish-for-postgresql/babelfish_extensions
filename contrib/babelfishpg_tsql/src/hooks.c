@@ -1473,70 +1473,64 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		}
 
 		if (alias_len > 0)
-		{
-			char	   *alias = palloc0(alias_len + 1);
-			bool		dq = *colname_start == '"';
-			bool		sqb = *colname_start == '[';
-			bool		sq = *colname_start == '\'';
-			int			a = 0;
-			const char *colname_end;
-			bool		closing_quote_reached = false;
+        {
+            char       *alias = palloc0(alias_len + 1);
+            bool        dq = *colname_start == '"';
+            bool        sqb = *colname_start == '[';
+            bool        sq = *colname_start == '\'';
+            bool        identifier_truncated;
+            const char *colname_end;
 
-			if (dq || sqb || sq)
-			{
-				colname_start++;
-			}
+            if (dq || sqb)
+            {
+                memcpy(alias, identifier_name, alias_len);
+            }
+            else
+            {
+                if(sq)
+                {
+                    colname_start++;
+                }
+                /*
+                * After truncation, maximum truncated length of alias can be 60
+                * If length is less than 60, it means alias is not truncated
+                */
+                if(alias_len < 60){
+                    memcpy(alias, colname_start, alias_len);
+                }
+                else
+                {
+                    /*
+                    * To check whether last 32 bytes are equal to identifier_name or not.
+                    * If they are not equal, this means identifier_name is truncated
+                    */
 
-			if (dq || sq)
-			{
-
-				for (colname_end = colname_start; a < alias_len; colname_end++)
-				{
-					if (dq && *colname_end == '"')
-					{
-						if ((*(++colname_end) != '"'))
-						{
-							closing_quote_reached = true;
-							break;	/* end of dbl-quoted identifier */
-						}
-					}
-					else if (sq && *colname_end == '\'')
-					{
-						if ((*(++colname_end) != '\''))
-						{
-							closing_quote_reached = true;
-							break;	/* end of single-quoted identifier */
-						}
-					}
-
-					alias[a++] = *colname_end;
-				}
-
-				/* Assert(a == alias_len); */
-			}
-			else
-			{
-				colname_end = colname_start + alias_len;
-				memcpy(alias, colname_start, alias_len);
-			}
-
-			/*
-			 * If the end of the string is a uniquifier, then copy the
-			 * uniquifier into the last 32 characters of the alias
-			 */
-			if (alias_len == NAMEDATALEN - 1 &&
-				(((sq || dq) && !closing_quote_reached) ||
-				 is_identifier_char(*colname_end)))
-
-			{
-				memcpy(alias + (NAMEDATALEN - 1) - 32,
-					   identifier_name + (NAMEDATALEN - 1) - 32,
-					   32);
-				alias[NAMEDATALEN] = '\0';
-			}
-
-			res->name = alias;
-		}
+                    for(int x = alias_len - 32; x < alias_len; x++){
+                        colname_end = colname_start + x;
+                        if((*colname_end == identifier_name[x] || *colname_end == toupper(identifier_name[x])))
+                        {
+                            identifier_truncated = false;
+                        }
+                        else
+                        {
+                            identifier_truncated = true;
+                            memcpy(alias, colname_start, (alias_len - 32) );
+                            memcpy(alias + (alias_len + 1 - 1) - 32,
+                            identifier_name + (alias_len + 1 - 1) - 32, 
+                            32);
+                            alias[alias_len+1] = '\0';
+                            break;
+                        }   
+                    }
+                    /* Idenfier is not truncated */
+                    if(!(identifier_truncated)){
+                        memcpy(alias, colname_start, alias_len);
+                    }
+                }
+            }
+            res->name = alias;
+        }
+		
 	}
 	/* Update table set qualified column name, resolve qualifiers here */
 	else if (exprKind == EXPR_KIND_UPDATE_SOURCE && res->indirection)
