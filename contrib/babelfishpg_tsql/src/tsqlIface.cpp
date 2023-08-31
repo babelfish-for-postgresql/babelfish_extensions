@@ -792,6 +792,12 @@ public:
 		}
 	}
 
+	void enterKill_statement(TSqlParser::Kill_statementContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'KILL' within a function.", 0, 0);
+		}
+	}
+
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
 	{
@@ -5045,6 +5051,27 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 }
 
 PLtsql_stmt *
+makeKillStatement(TSqlParser::Kill_statementContext *ctx)
+{
+	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_KILL;
+	result->lineno = getLineNo(ctx);
+
+	/* 
+	 * Only supporting numeric argument for the spid,
+	 * other flavours of KILL are intercepted in the parser.
+	 */
+	if (ctx->kill_process()) {
+		char *strtol_endptr;
+		std::string spidStr = ::getFullText(ctx->kill_process());
+		result->spid = (int) strtol(spidStr.c_str(), &strtol_endptr, 10);
+	}
+
+	return (PLtsql_stmt *) result;
+}
+
+PLtsql_stmt *
 makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 {
 	if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
@@ -5156,6 +5183,8 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 		result.push_back(makeTransactionStatement(ctx->transaction_statement())); /* relaying transaction statement to main parser */
 	else if (ctx->use_statement())
 		result.push_back(makeUseStatement(ctx->use_statement()));
+	else if (ctx->kill_statement())
+		result.push_back(makeKillStatement(ctx->kill_statement()));
 
 	// FIXME: handle remaining statement types
 

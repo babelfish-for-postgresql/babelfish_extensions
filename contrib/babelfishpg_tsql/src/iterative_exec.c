@@ -828,6 +828,9 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			}
 			exec_stmt_restore_ctx_partial(estate, (PLtsql_stmt_restore_ctx_partial *) stmt);
 			break;
+		case PLTSQL_STMT_KILL:
+			exec_stmt_kill(estate, (PLtsql_stmt_kill *) stmt);
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

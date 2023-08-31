@@ -286,6 +286,7 @@ stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_ROLLBACK:
 			/* TSQL-only statement types follow */
 		case PLTSQL_STMT_PRINT:
+		case PLTSQL_STMT_KILL:
 		case PLTSQL_STMT_QUERY_SET:
 		case PLTSQL_STMT_PUSH_RESULT:
 		case PLTSQL_STMT_EXEC:
