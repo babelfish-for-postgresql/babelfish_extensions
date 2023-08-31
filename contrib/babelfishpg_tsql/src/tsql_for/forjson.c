@@ -136,8 +136,6 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(state);
 }
 
-
-
 static void
 tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 {
@@ -311,6 +309,7 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 			// Extract the colummn value in the correct format
 			value = palloc(sizeof(JsonbValue));
 			jsonb_get_value(colval, isnull, value, datatype_oid);
+			value = &value->val.array.elems[0];
 		}
 
 		// Determine if the value should be inserted as a nested json object
@@ -432,25 +431,18 @@ tsql_query_to_json_ffunc(PG_FUNCTION_ARGS)
 	jsonOut = JsonbValueToJsonb(res);
 	JsonbToCString(resStr, &jsonOut->root, 0);
 
-	// for some reason JsonbValue does not include the terminating square bracket (at the end)
-	// have to manually remove/insert array brackets
-	if (state->root_name)	{
-		// If a root_name is given without_array_Wrappers is always false
-		resStr->data[resStr->len - 1] = ']';
-		appendStringInfoChar(resStr, '}');
-	}
-	else if (state->without_array_wrapper)	{
-		// Remove brackets 
-		memmove(resStr->data, resStr->data + 1, resStr->len - 1);
-		resStr->len -= 1;
-		resStr->data[resStr->len] = '\0';
-	}
-	else	{
-		// if without array wrappers is false and no root name
-		if (resStr->len > 0 && resStr->data[resStr->len - 1] != ']') {
-			appendStringInfoChar(resStr, ']');
+	// if without array wrappers is true, remove the array wrappers
+	if (state->without_array_wrapper)	{
+		if (resStr->data[0] == '[')	{
+			resStr->data++;
+			resStr->len--;
+		}
+		if (resStr->data[resStr->len - 1] == ']')	{
+			resStr->data[resStr->len - 1] = '\0';
+			resStr->len--;
 		}
 	}
+	
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(resStr->data, resStr->len));
 }
 
