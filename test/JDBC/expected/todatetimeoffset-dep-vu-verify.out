@@ -1,0 +1,48 @@
+SELECT * FROM todatetimeoffset_dep_vu_prepare_v1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT * FROM todatetimeoffset_dep_vu_prepare_v2
+GO
+~~START~~
+datetimeoffset
+2000-04-22 16:23:51.7668900 +13:00
+~~END~~
+
+
+EXEC todatetimeoffset_dep_vu_prepare_p1
+GO
+~~START~~
+datetimeoffset
+2023-08-08 16:06:45.0000000 -13:00
+~~END~~
+
+
+EXEC todatetimeoffset_dep_vu_prepare_p2
+GO
+~~START~~
+datetimeoffset
+2000-04-22 16:23:51.7668900 -03:54
+~~END~~
+
+
+SELECT todatetimeoffset_dep_vu_prepare_f1()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT todatetimeoffset_dep_vu_prepare_f2()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
