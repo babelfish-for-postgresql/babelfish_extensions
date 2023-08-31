@@ -12,3 +12,4 @@ insert into babel_2144_vu_prepare_t2 values (0,0);
 go
 CREATE VIEW babel_2144_vu_prepare_v1 AS SELECT * FROM babel_2144_vu_prepare_t2 WHERE c2 > 10;
 go
+
