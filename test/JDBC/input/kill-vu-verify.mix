@@ -43,27 +43,19 @@ go
 go
 
 -- KILL in a procedure: allowed
-create proc kill_proc
+CREATE PROC kill_proc_1
 as
-kill 1
+KILL 1
 go
-execute kill_proc
+EXECUTE kill_proc_1
 go
 
 -- KILL not allowed in a SQL function: not allowed
-create function kill_func() returns int
-as
-begin
-kill 1
-end
-go
-
--- cannot use KILL inside a transaction
-BEGIN TRAN
-go
+CREATE FUNCTION kill_func() RETURNS INT
+AS
+BEGIN
 KILL 1
-go
-ROLLBACK
+END
 go
 
 -- try to kill current TDS session 
@@ -103,3 +95,133 @@ go
 KILL QUERY NOTIFICATION SUBSCRIPTION 123
 go
 
+-- error semantics tests:
+
+-- basic: cannot use KILL inside a transaction
+BEGIN TRAN
+go
+KILL 1
+go
+ROLLBACK
+go
+
+CREATE TABLE tab_kill_test(a INT)
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+ROLLBACK
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+
+-- batch is not aborted when KILL in transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+ROLLBACK
+go
+
+-- respects XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+
+-- KILL in procedure, XACT_ABORT=OFF
+CREATE PROCEDURE kill_proc_2
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_2
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+ROLLBACK
+go
+ 
+-- KILL in procedure, XACT_ABORT=ON
+CREATE PROCEDURE kill_proc_3
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_3
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
