@@ -1,0 +1,9 @@
+-- tsql
+drop login victim_user_tds
+go
+
+drop table tab_kill_spid
+go
+
+drop procedure kill_proc
+go

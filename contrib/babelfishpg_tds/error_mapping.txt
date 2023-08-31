@@ -52,6 +52,7 @@ P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conve
 25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_628	16 "SAVEPOINT"
 25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_3903	16 "ROLLBACK TO SAVEPOINT"
 25001 ERRCODE_ACTIVE_SQL_TRANSACTION	"%s cannot run inside a transaction block"	SQL_ERROR_574	16
+25001 ERRCODE_ACTIVE_SQL_TRANSACTION	"%s command cannot be used inside user transactions."	SQL_ERROR_6615	16
 42809 ERRCODE_WRONG_OBJECT_TYPE "\"%s\" is not a table or materialized view" SQL_ERROR_10610 16
 42809 ERRCODE_WRONG_OBJECT_TYPE "cannot create index on relation \"%s\"" SQL_ERROR_10610 16
 42809 ERRCODE_WRONG_OBJECT_TYPE "%s parameter should be of %s type"     SQL_ERROR_16902 16
@@ -178,3 +179,4 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Column name or number of supplied values does not match table definition."	SQL_ERROR_213	16
 42501 ERRCODE_INSUFFICIENT_PRIVILEGE	"Only members of the sysadmin role can execute this stored procedure."	SQL_ERROR_15003	16
 42809 ERRCODE_WRONG_OBJECT_TYPE		"The target \"%s\" of the OUTPUT INTO clause cannot be a view or common table expression."	SQL_ERROR_330	16
+
