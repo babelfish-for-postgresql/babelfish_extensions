@@ -59,11 +59,11 @@ int
 go
 
 -- KILL in a procedure: allowed
-create proc kill_proc
+CREATE PROC kill_proc_1
 as
-kill 1
+KILL 1
 go
-execute kill_proc
+EXECUTE kill_proc_1
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -71,28 +71,16 @@ go
 
 
 -- KILL not allowed in a SQL function: not allowed
-create function kill_func() returns int
-as
-begin
-kill 1
-end
+CREATE FUNCTION kill_func() RETURNS INT
+AS
+BEGIN
+KILL 1
+END
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid use of a side-effecting operator 'KILL' within a function.)~~
 
-
--- cannot use KILL inside a transaction
-BEGIN TRAN
-go
-KILL 1
-go
-~~ERROR (Code: 6615)~~
-
-~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
-
-ROLLBACK
-go
 
 -- try to kill current TDS session 
 declare @sql varchar(100)
@@ -174,4 +162,279 @@ go
 
 ~~ERROR (Message: 'KILL with QUERY NOTIFICATION' is not currently supported in Babelfish)~~
 
+
+
+-- error semantics tests:
+-- basic: cannot use KILL inside a transaction
+BEGIN TRAN
+go
+KILL 1
+go
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+ROLLBACK
+go
+
+CREATE TABLE tab_kill_test(a INT)
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~~~WARNING (Message: after kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+ROLLBACK
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+~~END~~
+
+
+-- batch is not aborted when KILL in transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~~~WARNING (Message: after kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+ROLLBACK
+go
+
+-- respects XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+~~ROW COUNT: 1~~
+
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: before kill  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+~~END~~
+
+
+-- KILL in procedure, XACT_ABORT=OFF
+CREATE PROCEDURE kill_proc_2
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_2
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+1
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+ROLLBACK
+go
+ 
+-- KILL in procedure, XACT_ABORT=ON
+CREATE PROCEDURE kill_proc_3
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_3
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 6615)~~
+
+~~ERROR (Message: KILL command cannot be used inside user transactions.)~~
+
+SELECT @@TRANCOUNT
+go
+~~START~~
+int
+0
+~~END~~
+
+SELECT * FROM tab_kill_test
+go
+~~START~~
+int
+~~END~~
 
