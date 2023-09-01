@@ -34,6 +34,9 @@ GO
 SELECT * FROM DATE_BUCKET_vu_prepare_v12
 GO
 
+SELECT * FROM DATE_BUCKET_vu_prepare_v12_origin_IS_NULL
+GO
+
 SELECT * FROM DATE_BUCKET_vu_prepare_v13
 GO
 

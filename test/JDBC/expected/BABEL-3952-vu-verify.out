@@ -23,7 +23,7 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v4
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
+~~ERROR (Message: Argument data type varchar is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v5
@@ -65,7 +65,7 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v10
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
+~~ERROR (Message: Argument data type varchar is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v11
@@ -79,7 +79,15 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v12
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type text is invalid for argument 4 of date_bucket function.)~~
+~~ERROR (Message: Argument data type varchar is invalid for argument 4 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v12_origin_IS_NULL
+GO
+~~START~~
+date
+2023-01-01
+~~END~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v13

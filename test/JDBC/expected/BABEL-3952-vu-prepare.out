@@ -28,7 +28,7 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v3 AS (
         date_bucket(year, 0, cast('2020-01-01' as date)) as db2
     );
 GO
--- Should throw - Argument data type text is invalid for argument 3 of date_bucket function.
+-- Should throw - Argument data type varchar is invalid for argument 3 of date_bucket function.
 CREATE VIEW DATE_BUCKET_vu_prepare_v4 AS (
     select 
         date_bucket(year, -2, '2020-01-01') as db1, 
@@ -71,7 +71,7 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v9 AS (
         date_bucket(year, 1, null, null) as db4
     );
 GO
--- Should throw Error - Argument data type text is invalid for argument 3 of date_bucket function.
+-- Should throw Error - Argument data type varchar is invalid for argument 3 of date_bucket function.
 CREATE VIEW DATE_BUCKET_vu_prepare_v10 AS (
     select 
         date_bucket(year, 2, '2020-01-01') as db1,
@@ -80,7 +80,7 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v10 AS (
 		date_bucket(year, 2, '2020-01-01', 3242) as db4
     );
 GO
--- Should throw Error - Argument data type int is invalid for argument 3 of Date_Bucket function.
+-- Should throw Error - Argument data type varchar is invalid for argument 3 of Date_Bucket function.
 CREATE VIEW DATE_BUCKET_vu_prepare_v11 AS (
     select 
         date_bucket(year, 2, 432) as db1,
@@ -91,11 +91,18 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v11 AS (
 GO
 
 -- Test with invalid origin date
--- Should throw - Argument data type text is invalid for argument 4 of Date_Bucket function
+-- Should throw - Argument data type integer is invalid for argument 4 of Date_Bucket function
 CREATE VIEW DATE_BUCKET_vu_prepare_v12 AS (
     select 
-        date_bucket(year,2, cast('2020-01-01' as date), '2020-01-01') as db2,
-		date_bucket(year, 2, cast('2020-01-01' as date), 534) as db3
+        date_bucket(year, 2, cast('2020-01-01' as date), '2020-01-01') as db2,
+		date_bucket(year, 2, cast('2020-01-01' as date), 534) as db3,
+        date_bucket(year, 2, cast('2020-09-12' as date), cast('2005-09-12' as datetime)) as db4
+    );
+GO
+-- Should return valid date_bucket - 2023-01-01
+CREATE VIEW DATE_BUCKET_vu_prepare_v12_origin_IS_NULL AS (
+    SELECT 
+        date_bucket(year, 3, CAST('2023-03-24' as date), null) as db1
     );
 GO
 

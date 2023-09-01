@@ -34,6 +34,9 @@ GO
 DROP VIEW DATE_BUCKET_vu_prepare_v12
 GO
 
+DROP VIEW DATE_BUCKET_vu_prepare_v12_origin_IS_NULL
+GO
+
 DROP VIEW DATE_BUCKET_vu_prepare_v13
 GO
 
