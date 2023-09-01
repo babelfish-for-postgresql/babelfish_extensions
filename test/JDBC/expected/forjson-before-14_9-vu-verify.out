@@ -126,7 +126,7 @@ EXECUTE forjson_vu_p_params1 @id = 2
 GO
 ~~START~~
 nvarchar
-[{"State":"Bengaluru"}]
+[{"State": "Bengaluru"}]
 ~~END~~
 
 
@@ -134,7 +134,7 @@ EXECUTE forjson_vu_p_params2 @id = 3
 GO
 ~~START~~
 nvarchar
-[{"nam\"@e":"Tom","State\"@":"Kolkata"}]
+[{"nam\"@e": "Tom", "State\"@": "Kolkata"}]
 ~~END~~
 
 
