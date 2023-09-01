@@ -480,6 +480,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-158
+159
 ~~END~~
 
