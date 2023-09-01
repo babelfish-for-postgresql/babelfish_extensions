@@ -1,9 +1,19 @@
 -- tsql
-drop login victim_user_tds
+DROP LOGIN victim_user_tds
 go
 
-drop table tab_kill_spid
+DROP TABLE tab_kill_spid
 go
 
-drop procedure kill_proc
+DROP PROCEDURE kill_proc_1
 go
+
+DROP PROCEDURE kill_proc_2
+go
+
+DROP PROCEDURE kill_proc_3
+go
+
+DROP TABLE tab_kill_test
+go
+
