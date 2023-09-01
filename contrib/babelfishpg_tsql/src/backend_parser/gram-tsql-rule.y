@@ -275,16 +275,15 @@ tsql_CreatedbStmt:
 					n->dbname = $3;
 
 					/* If there are specified options, this is PSQL syntax */
-					if ($5 != NIL)
+					if ($5 != NIL){
 						n->options = $5;
+					}
 					/* Otherwise, this is TSQL syntax, do query mapping */
-					else
-					{
-						n->options = lappend(n->options,
+					n->options = lappend(n->options,
 											 makeDefElem("name_location",
 														 (Node *)makeInteger(@3),
 														 @3));
-					}
+					
 					$$ = (Node *)n;
 				}
 			;

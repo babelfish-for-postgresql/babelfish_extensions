@@ -450,39 +450,33 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 					/* Check if creating login or role. Expect islogin first */
 					if (stmt->options != NIL)
 					{
-						DefElem    *headel = (DefElem *) linitial(stmt->options);
+						char	   *orig_dbname = NULL;
 
-						/*
-						 * If islogin set the options list to after the head.
-						 * Save the list of login specific options.
-						 */
-							char	   *orig_dbname = NULL;
+						foreach(option, stmt->options)
+						{
+							DefElem    *defel = (DefElem *) lfirst(option);
 
 							/* Filter login options from default role options */
-							if (strcmp(headel->defname, "name_location") == 0)
+							if (strcmp(defel->defname, "name_location") == 0)
 								{
-									int			location = headel->location;
+									int			location = defel->location;
 
 									orig_dbname = extract_identifier(queryString + location);
-									db_options = lappend(db_options, headel);
+									stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
 								}
-								if (orig_dbname)
-								{
-									db_options = lappend(db_options,
+						}
+						if (orig_dbname)
+						{
+							db_options = lappend(db_options,
 														makeDefElem("original_database_name",
 																	(Node *) makeString(orig_dbname),
 																	-1));
-									}
-								pfree(headel);
-								pfree(stmt->dbname);
-								stmt->dbname = convertToUPN(orig_dbname);
-
-								foreach(option, stmt->options)
-							{
-								stmt->options = list_delete_ptr(stmt->options,
-																lfirst(option));
-							}
-					}
+																	}
+						pfree(stmt->dbname);
+						stmt->dbname = convertToUPN(orig_dbname);
+		
+						}
 				create_bbf_db(pstate, stmt);
 				return true;
 			}
