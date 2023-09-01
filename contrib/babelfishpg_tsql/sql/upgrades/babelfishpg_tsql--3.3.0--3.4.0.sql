@@ -562,8 +562,8 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
-CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date TEXT, IN origin TEXT default NULL) RETURNS TEXT 
+-- internal helper function for date_bucket().
+CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date boolean, IN origin boolean) RETURNS TEXT 
 AS 
 $body$
 DECLARE
@@ -574,8 +574,25 @@ BEGIN
         RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
     ELSIF date IS NULL THEN
         RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of date_bucket function.';
+    ELSIF date IS true AND origin IS false THEN
+            RAISE EXCEPTION 'Argument data type varchar is invalid for argument 4 of date_bucket function.';
     ELSE
-        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', pg_typeof(date);
+        RAISE EXCEPTION 'Argument data type varchar is invalid for argument 3 of date_bucket function.';
+    END IF;
+END;
+$body$ 
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date TEXT, IN origin TEXT default NULL) RETURNS TEXT 
+AS 
+$body$
+DECLARE
+BEGIN
+    IF date IS NULL THEN
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false);
+    ELSE
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, false);
     END IF;
 END;
 $body$ 
@@ -587,16 +604,16 @@ AS
 $body$
 DECLARE
 BEGIN
-    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond') THEN
-        RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
-    ELSIF number IS NULL THEN
-        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
-    ELSIF date IS NULL OR origin IS NULL THEN
-        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of date_bucket function.';
+    IF date IS NULL THEN
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false);
     ELSIF pg_typeof(date) IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
-            RAISE EXCEPTION 'Argument data type % is invalid for argument 4 of date_bucket function.', pg_typeof(origin);
+            IF origin IS NULL THEN
+                RETURN sys.date_bucket(datepart, number, date);
+            ELSE
+                RETURN sys.date_bucket_internal_helper(datepart, number, true, false);
+            END IF;
     ELSE
-        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', pg_typeof(date);
+        RETURN sys.date_bucket_input_validation_helper(datepart, number, false, false);
     END IF;
 END;
 $body$ 
