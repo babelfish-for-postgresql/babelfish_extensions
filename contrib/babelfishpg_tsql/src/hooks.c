@@ -2344,7 +2344,7 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	if(relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW)
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("The target '%s' of the OUTPUT INTO clause cannot be a view or common table expression.", stmt->relation->relname)));
 	}
 

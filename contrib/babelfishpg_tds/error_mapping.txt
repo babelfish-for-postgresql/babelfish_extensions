@@ -178,5 +178,5 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 42P13 ERRCODE_INVALID_FUNCTION_DEFINITION   "PL/tsql functions cannot return type %s"   SQL_ERROR_2733 16
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Column name or number of supplied values does not match table definition."	SQL_ERROR_213	16
 42501 ERRCODE_INSUFFICIENT_PRIVILEGE	"Only members of the sysadmin role can execute this stored procedure."	SQL_ERROR_15003	16
-0A000 ERRCODE_FEATURE_NOT_SUPPORTED	 "The target \"%s\" of the OUTPUT INTO clause cannot be a view or common table expression."	SQL_ERROR_330	16
+42809 ERRCODE_WRONG_OBJECT_TYPE	 "The target \"%s\" of the OUTPUT INTO clause cannot be a view or common table expression."	SQL_ERROR_330	16
 
