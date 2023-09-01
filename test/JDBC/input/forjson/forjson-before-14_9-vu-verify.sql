@@ -1,55 +1,63 @@
--- DIFFERENT CASES TO CHECK DATATYPES
--- Exact Numerics
-SELECT * FROM forjson_datatypes_vu_v_numerics
+-- Display Table Contents
+SELECT * FROM forjson_vu_t_people
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_bit
+SELECT * FROM forjson_vu_t_countries
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_money
+SELECT * FROM forjson_vu_t_values
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_smallmoney
+-- FOR JSON PATH clause without nested support
+SELECT * FROM forjson_vu_v_people
 GO
 
--- Approximate numerics
-SELECT * FROM forjson_datatypes_vu_v_approx_numerics
+SELECT * FROM forjson_vu_v_countries
 GO
 
--- Date and time
-SELECT * FROM forjson_datatypes_vu_v_time_date
+-- Multiple tables without nested support
+SELECT * FROM forjson_vu_v_join
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_smalldatetime
+-- ROOT directive without specifying value
+SELECT * FROM forjson_vu_v_root
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_datetime
+-- ROOT directive with specifying ROOT value
+SELECT * FROM forjson_vu_v_root_value
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_datetime2
+-- ROOT directive with specifying ROOT value with empty string
+SELECT * FROM forjson_vu_v_empty_root
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_datetimeoffset
+-- WITHOUT_ARRAY_WRAPPERS directive
+SELECT * FROM forjson_vu_v_without_array_wrapper
 GO
 
--- Character strings
-SELECT * FROM forjson_datatypes_vu_v_strings
+-- INCLUDE_NULL_VALUES directive
+SELECT * FROM forjson_vu_v_include_null_values
 GO
 
--- Unicode character strings
-SELECT * FROM forjson_datatypes_vu_v_unicode_strings
+-- Multiple Directives
+SELECT * FROM forjson_vu_v_root_include_null_values
 GO
 
--- NULL datetime and datetimeoffset
-
-SELECT * FROM forjson_datatypes_vu_v_nulldatetime
+SELECT * FROM forjson_vu_v_without_array_wrapper_include_null_values
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_nullsmalldatetime
+
+-- Test case with parameters
+EXECUTE forjson_vu_p_params1 @id = 2
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_nulldatetime2
+EXECUTE forjson_vu_p_params2 @id = 3
 GO
 
-SELECT * FROM forjson_datatypes_vu_v_nulldatetimeoffset
+-- All null values test
+SELECT * FROM forjson_vu_v_nulls
+GO
+
+-- Test for all parser rules
+SELECT * FROM forjson_vu_v_order_by
 GO
