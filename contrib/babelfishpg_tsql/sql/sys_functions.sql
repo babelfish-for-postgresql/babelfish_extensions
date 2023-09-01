@@ -3996,7 +3996,7 @@ BEGIN
                 RETURN sys.date_bucket_internal_helper(datepart, number, true, false);
             END IF;
     ELSE
-        RETURN sys.date_bucket_input_validation_helper(datepart, number, false, false);
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, false);
     END IF;
 END;
 $body$ 
