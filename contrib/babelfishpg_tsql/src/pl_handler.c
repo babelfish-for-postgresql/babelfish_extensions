@@ -5508,7 +5508,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 true);
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
-				return;
+				continue;
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
