@@ -190,6 +190,12 @@ varbinaryin(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(result);
 	}
 
+	if (sql_dialect == SQL_DIALECT_PG && 
+		(len >= 4 && inputText[0] == '\\')) /* COPY command from DMS, use base byteain() directly */
+	{
+		PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
+	}
+
 	tp = inputText;
 
 	result = (bytea *) palloc(len + VARHDRSZ);
