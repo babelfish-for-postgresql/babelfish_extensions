@@ -189,9 +189,9 @@ datediff_big
 datediff_internal_date
 datepart
 datetime2fromparts
-forjson
-forjson-datatypes
-forjson-subquery
+forjson-before-14_9
+forjson-datatypes-before-14_9
+forjson-subquery-before-14_9
 format
 forxml
 forxml-subquery
