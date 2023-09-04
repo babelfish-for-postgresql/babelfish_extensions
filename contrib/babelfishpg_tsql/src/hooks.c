@@ -216,26 +216,6 @@ static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_sat
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
 
-/* To cache oid of sys.varchar */
-static Oid sys_varcharoid = InvalidOid;
-
-static Oid get_sys_varcharoid()
-{
-	Oid sys_oid;
-	if (OidIsValid(sys_varcharoid))
-	{
-		return sys_varcharoid;
-	}
-	sys_oid = get_namespace_oid("sys", false);
-	sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(sys_oid));
-	if (!OidIsValid(sys_varcharoid))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Oid corresponding to sys.varchar datatype could not be found.")));
-	}
-	return sys_varcharoid;
-}
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -1299,9 +1279,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			Oid			sys_nspoid = get_namespace_oid("sys", false);
-			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_varchartypoid = get_sys_varcharoid();
 
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
 											 restype, sys_varchartypoid, -1,

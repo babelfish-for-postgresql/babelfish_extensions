@@ -1711,8 +1711,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	int			i;
-	Oid			nspoid = get_namespace_oid("sys", false);
-	Oid			sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(nspoid));
+	Oid			sys_varcharoid = get_sys_varcharoid();
 	Oid			colloid = tsql_get_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
