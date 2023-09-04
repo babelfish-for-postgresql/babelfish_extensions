@@ -462,17 +462,15 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 									int			location = defel->location;
 
 									orig_dbname = extract_identifier(queryString + location);
-									stmt->options = list_delete_ptr(stmt->options,
-																lfirst(option));
+									db_options = lappend(db_options, defel);
 								}
 						}
-						if (orig_dbname)
-						{
-							db_options = lappend(db_options,
-														makeDefElem("original_database_name",
-																	(Node *) makeString(orig_dbname),
-																	-1));
-																	}
+						foreach(option, db_options)
+							{
+								stmt->options = list_delete_ptr(stmt->options,
+																lfirst(option));
+							}
+						
 						pfree(stmt->dbname);
 						stmt->dbname = convertToUPN(orig_dbname);
 		
