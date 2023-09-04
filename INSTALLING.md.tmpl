@@ -323,7 +323,7 @@ babelfish_db=> CREATE EXTENSION tds_fdw;
 CREATE EXTENSION
 ```
 
-### How to build and install the babelfishpg_unit extension and run unit tests
+### How to build and install the babelfishpg_unit extension and run unit tests (Optional)
 
 Build the babelfishpg_unit module. Use the command:
 
@@ -333,7 +333,7 @@ make -j ${JOBS}
 sudo make PG_CONFIG=${PG_CONFIG} install
 ```
 
-After babelfishpg_unit is build successfully, connect through psql endpoint and install the extension:
+After babelfishpg_unit is built successfully, connect through psql endpoint and install the extension:
 
 ```
 ${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "CREATE EXTENSION IF NOT EXISTS "babelfishpg_unit";"
