@@ -140,6 +140,11 @@ SET @SQLString = N'SELECT N''hello world'';';
 EXEC .sys.sp_executesql @SQLString;
 go
 
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC ..sp_executesql @SQLString;
+go
+
 /* Exceptions */
 /* 1. Wrong order of named/unnamed params */
 DECLARE @SQLString NVARCHAR(100);
