@@ -21,7 +21,7 @@ To maintain a well-organized structure, the directory layout will be as follows:
 
 ## How to add unit tests for babelfish?
 
-- To add a new test to the existing framework, within the framework's directory, create a new .c file and name it according to the test we want to add (e.g., test_1.c). This file will contain the code for our new test. By organising the tests into separate files, it helps maintain a modular and structured approach. Each file can focus on a specific test or group of related tests, making it easier to manage and maintain the overall framework.
+- To add a new test to the existing framework, within the framework's directory, create a new .c file and name it according to the test we want to add (e.g., test_1.c). Add the function in the file which is to be tested.
     - Declare the function you want to test as extern in babelfishpg_unit.h. Eg:
         ```
         extern TestResult* test_int4_fixeddecimal_ge(void)
@@ -33,7 +33,7 @@ To maintain a well-organized structure, the directory layout will be as follows:
             {&test_int4_fixeddecimal_ge, true, "GreaterThanOrEqualToCheck_INT4_FIXEDDECIMAL", "babelfish_money_datatype"},
         };
         ```
-    - It is important to note that the TestInfo struct is a data structure used to store metadata information about a test function within a testing framework. So, the return type of all functions which are to be tested must be TestInfo*.
+    - Return type of all functions which are to be tested must be TestInfo*.
     - Every function should have some expected and obtained output. One should use TEST_ASSERT_TESTCASE(expected == obtained, testResult) first and then TEST_ASSERT(expected == obtained, testResult) to obtain the status of a test. In the TEST_ASSERT_TESTCASE marco, we only set the result field of TestResult struct to true/false based on result. In TEST_ASSERT, we decide whether all the tests have passed or not. Eg:
         ```
         TestResult* test_int4_fixeddecimal_ge(void)
