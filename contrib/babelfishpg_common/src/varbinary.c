@@ -34,6 +34,11 @@
 
 #include "instr.h"
 
+/* We need to create a minimal stub of PLtsql_protocol_plugin so
+ * that we can reference pltsql_protocol_plugin_ptr to check whether
+ * we are coming from the TDS or PG client. This is required to support
+ * COPY inputs coming from DMS.
+ */
 typedef struct PLtsql_protocol_plugin
 {
 	/* True if Protocol being used by client is TDS. */
