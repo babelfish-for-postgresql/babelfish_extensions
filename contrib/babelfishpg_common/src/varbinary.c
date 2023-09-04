@@ -34,6 +34,14 @@
 
 #include "instr.h"
 
+typedef struct PLtsql_protocol_plugin
+{
+	/* True if Protocol being used by client is TDS. */
+	bool		is_tds_client;
+} PLtsql_protocol_plugin;
+PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
+
+
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
 PG_FUNCTION_INFO_V1(varbinaryrecv);
@@ -190,7 +198,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(result);
 	}
 
-	if (sql_dialect == SQL_DIALECT_PG && 
+	if ((!(*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->is_tds_client)) && 
 		(len >= 4 && inputText[0] == '\\')) /* COPY command from DMS, use base byteain() directly */
 	{
 		PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
