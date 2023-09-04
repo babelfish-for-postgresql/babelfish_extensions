@@ -1328,7 +1328,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 
             if (dq || sqb)
             {
-                memcpy(alias, identifier_name, alias_len);
+                return;
             }
             else
             {
@@ -1337,21 +1337,29 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
                     colname_start++;
                 }
                 /*
-                * After truncation, maximum truncated length of alias can be 60
-                * If length is less than 60, it means alias is not truncated
-                */
+                 * After truncation, maximum truncated length of alias can be 60
+                 * If length is less than 60, it means alias is not truncated
+                 */
                 if(alias_len < 60){
                     memcpy(alias, colname_start, alias_len);
                 }
                 else
                 {
                     /*
-                    * To check whether last 32 bytes are equal to identifier_name or not.
-                    * If they are not equal, this means identifier_name is truncated
-                    */
+                     * To handle identifier when length is between 60 to 63, 
+                     * it is needed to check whether last 32 bytes are equal to identifier_name or not.
+                     * If they are not equal, this means identifier_name is truncated.
+                     */
 
                     for(int x = alias_len - 32; x < alias_len; x++){
                         colname_end = colname_start + x;
+
+						/*
+                         * Check if colname_end is in upper case then does uppercase of identifier_name 
+                         * matches to colname_end or not in case of ascii values. 
+                         * If colname_end is in lowercase, then simply check colname_end is equals to 
+                         * identifier_name or not.
+                         */ 
                         if((*colname_end == identifier_name[x] || *colname_end == toupper(identifier_name[x])))
                         {
                             identifier_truncated = false;
@@ -1359,9 +1367,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
                         else
                         {
                             identifier_truncated = true;
-                            memcpy(alias, colname_start, (alias_len - 32) );
-                            memcpy(alias + (alias_len + 1 - 1) - 32,
-                            identifier_name + (alias_len + 1 - 1) - 32, 
+							/* First 32 characters of colname_start are assigned to alias */
+                            memcpy(alias, colname_start, (alias_len - 32));
+							/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated */
+                            memcpy(alias + (alias_len) - 32,
+                            identifier_name + (alias_len) - 32, 
                             32);
                             alias[alias_len+1] = '\0';
                             break;
