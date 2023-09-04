@@ -12,8 +12,11 @@ EXTVERSION = $(PGTSQL_MAJOR_VERSION).$(PGTSQL_MINOR_VERSION).$(PGTSQL_MICRO_VERS
 #	babel_upgrade test target should at the top of the src/test/regress/babel_schedule
 # 	src/test/regress/sql/babel_upgrade.sql should be modified to include the PREV_EXTVERSION to test the upgrade path
 # 	contrib/babelfishpg_tsql/sql/upgrades/$(EXTENSION)--$(PREV_EXTVERSION).sql should be present to test the upgrade path
+PG_CONFIG_Dir := pg_config
+pglib_dir := $(shell $(PG_CONFIG_Dir) --pkglibdir)
+
 PREV_EXTVERSION = 1.0.0
-MODULEPATH = $$libdir/$(EXTENSION)-$(PGTSQL_MAJOR_VERSION)
+MODULEPATH := $(pglib_dir)/$(EXTENSION)-$(PGTSQL_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
 # $(OBJS) should contain the name of each .o file that
@@ -90,6 +93,13 @@ PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g -Werror
 PG_CFLAGS += -fstack-protector-strong
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
+
+#preprocessor check for postgis file
+POSTGIS_LIB := $(pglib_dir)/postgis-3.so
+
+ifneq ("$(wildcard $(POSTGIS_LIB))","")
+PG_CPPFLAGS += -DPOSTGIS_INCLUDED
+endif
 
 SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto
 

@@ -963,6 +963,18 @@ public:
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 
+		#ifdef POSTGIS_INCLUDED
+		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+		{
+			TSqlParser::IdContext *idctx = ctx->id()[0];
+			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+			{
+				rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), ""))); 
+				rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "")));			
+			}
+		}
+		#endif
+
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
 
@@ -2207,6 +2219,47 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
+
+	#ifdef POSTGIS_INCLUDED
+	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+	{
+		TSqlParser::IdContext *idctx = ctx->id()[0];
+		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+		{
+            std::string idText = idctx->id()[0]->getText();
+			
+			// Preprocessing to call geography functions to store coordinates in reverse order for geography types. 
+			if(idText == "geography"){
+				std::string func_name = idctx->id()[1]->getText();
+				transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
+				std::string searchString = "stgeomfromtext";
+				std::string searchString1 = "stpointfromtext";
+				std::string replaceString = " stgeogfromtext";
+
+				size_t pos = 0;
+				while ((pos = func_name.find(searchString, pos)) != std::string::npos) {
+					func_name.replace(pos, searchString.length(), replaceString.substr(1));
+					pos += replaceString.length();
+				}
+
+				pos = 0;
+
+				while ((pos = func_name.find(searchString1, pos)) != std::string::npos) {
+					func_name.replace(pos, searchString1.length(), replaceString);
+					pos += replaceString.length();
+				}
+				stream.setText(idctx->id()[1]->start->getStartIndex(), func_name.c_str());
+
+			}
+
+			// Replace id()[0] and colon_colon with blank spaces of the same length
+            std::string colonText = idctx->colon_colon()->getText();
+            std::string blankSpaces(idText.size() + colonText.size(), ' ');
+
+            stream.setText(idctx->id()[0]->start->getStartIndex(), blankSpaces.c_str());
+		}
+	}
+	#endif
 
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())

@@ -59,6 +59,30 @@ runs:
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
       shell: bash
 
+    - name: Build PostGIS Extension
+      run: |
+        cd ..
+        sudo apt-get install wget
+        wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
+        tar -xvzf postgis-3.3.3dev.tar.gz
+        sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+        sudo yum install gdal gdal-devel
+        sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-3.7.2-1.el8.x86_64.rpm
+        sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-devel-3.7.2-1.el8.x86_64.rpm
+        wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
+        tar -xvzf proj-4.9.1.tar.gz
+        cd proj-4.9.1
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build .
+        sudo cmake --build . --target install
+        cd ../../postgis-3.3.3dev
+        ./configure --without-protobuf --without-raster --with-pg-config=~/psql/bin/pg_config
+        make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
+        sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+      shell: bash
+
     # Not used composite action install-extension here since, in the previous step it has 
     # checked out a branch/tag which may not have the updated install-extension composite action
     - name: Install extensions

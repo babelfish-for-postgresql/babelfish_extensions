@@ -131,6 +131,14 @@ Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
 /* Local structures for the Function Cache by TDS Type ID */
+typedef struct
+{
+    uint32_t size; /* For PgSQL use only, use VAR* macros to manipulate. */
+    uint8_t srid[3]; /* 24 bits of SRID */
+    uint8_t gflags; /* HasZ, HasM, HasBBox, IsGeodetic */
+    uint8_t data[1]; /* See gserialized.txt */
+} GSERIALIZED;
+
 typedef struct FunctionCacheByTdsIdKey
 {
 	int32_t		tdstypeid;
@@ -210,6 +218,10 @@ getSendFunc(int funcId)
 			return TdsSendTypeSqlvariant;
 		case TDS_SEND_DATETIMEOFFSET:
 			return TdsSendTypeDatetimeoffset;
+		case TDS_SEND_GEOMETRY:
+			return TdsSendTypeGeometry; 
+		case TDS_SEND_GEOGRAPHY: 
+			return TdsSendTypeGeography; 
 			/* TODO: should Assert here once all types are implemented */
 		default:
 			return NULL;
@@ -285,6 +297,10 @@ getRecvFunc(int funcId)
 			return TdsRecvTypeSqlvariant;
 		case TDS_RECV_DATETIMEOFFSET:
 			return TdsRecvTypeDatetimeoffset;
+		case TDS_RECV_GEOMETRY:
+			return TdsRecvTypeGeometry; 
+		case TDS_RECV_GEOGRAPHY: 
+			return TdsRecvTypeGeography;
 			/* TODO: should Assert here once all types are implemented */
 		default:
 			return NULL;
@@ -1963,6 +1979,49 @@ TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 	return result;
 }
 
+/* -------------------------------
+ * TdsRecvTypeGeometry - converts external binary format to
+ * Geometry data type
+ * --------------------------------
+ */
+Datum
+TdsRecvTypeGeometry(const char *message, const ParameterToken token)
+{
+	Datum result = 0; 
+
+	//Decode binary and convert if needed 
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+
+	//Return in Datum val
+
+	ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("tdstypeio.c: TdsRecvTypeGeometry")));    
+
+	pfree(buf); 
+	return result; 
+}
+
+/* -------------------------------
+ * TdsRecvTypeGeography - converts external binary format to
+ * Geography data type 
+ * --------------------------------
+ */ 
+Datum
+TdsRecvTypeGeography(const char *message, const ParameterToken token)
+{
+	Datum result = 0; 
+
+	//Decode binary and convert if needed 
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+
+	//Return in Datum val
+
+
+	pfree(buf); 
+	return result; 
+}
+
 static inline uint128
 StringToInteger(char *str)
 {
@@ -2333,6 +2392,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 						case TDS_TYPE_SQLVARIANT:
 							values[i] = TdsTypeSqlVariantToDatum(temp);
 							break;
+						case TDS_TYPE_SPATIAL: 
+							elog(ERROR,"TdsTypeSqlSpatialToDatum() here"); 
+							break; 
 					}
 				/* Build a string for bind parameters. */
 				if (colMetaData[currentColumn].columnTdsType != TDS_TYPE_NVARCHAR || row->isNull[currentColumn] == 'n')
@@ -4049,6 +4111,126 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 		TdsPutDate(numDays) == 0)
 		rc = TdsPutUInt16LE(timezone);
 
+	return rc;
+}
+
+int
+TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc = EOF,
+				npoints,
+				len,			/* number of bytes used to store the string. */
+				actualLen;		/* Number of bytes that would be needed to
+								 * store given string in given encoding. */
+	char	   *destBuf, *buf, *itr;
+	
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	GSERIALIZED *gser;          // Used to Store the bytes in the Format which is stored in PostGIS
+	
+	gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);
+	npoints = *((int *)gser->data);
+	/*
+	 * Row chunck length expected by the driver is:
+	 * 16 * (No. of Points) + 6
+	 * 16 -> 2 8-Byte float coordinates (TODO: Need to change when Z and M flags are defined for N-dimension Points)
+	 * 6 -> 4 Byte SRID + 2 Byte (01 0C)
+	*/
+	len = npoints*16 + 6;      
+	buf = (char *) palloc0(len);
+
+	//SRID is stored in reverse order
+	buf[0] = (char) gser->srid[2];
+	buf[1] = (char) gser->srid[1];
+	buf[2] = (char) gser->srid[0];
+	itr = buf + 3;
+
+	//Driver Expects 4Byte SRID, so we Provide '0' as last Byte
+	*itr = 0;
+	itr++;
+  
+    //Driver Expects 01 0C as 2 constant Bytes
+	/* TODO: Will need to verify for Different Geometry Data Types */
+	*itr = 1;
+	itr++;
+	*itr = 12;
+	itr++;
+	
+	//Data part of the Row has length 16 * (No. of Points)
+	/*
+	 * First 8 Bytes of gser->data are fixed in PostGIS:
+	 * 4 Bytes -> Represents the Type
+	 * 4 Bytes -> Represents the npoints
+	*/ 
+	memcpy(itr, (char *) gser->data + 8, len - 6);  
+	
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
+	
+	TDSInstrumentation(INSTR_TDS_DATATYPE_GEOMETRY);
+
+	rc = TdsSendPlpDataHelper(destBuf, actualLen);
+
+	pfree(destBuf);
+	return rc;
+}
+
+int
+TdsSendTypeGeography(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc = EOF,
+				npoints,
+				len,			/* number of bytes used to store the string. */
+				actualLen;		/* Number of bytes that would be needed to
+								 * store given string in given encoding. */
+	char	   *destBuf;
+	char	   *buf, *itr;
+	
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+	GSERIALIZED *gser;			 // Used to Store the bytes in the Format which is stored in PostGIS
+	
+	gser = (GSERIALIZED *)PG_DETOAST_DATUM(value);
+	npoints = *((int *)gser->data);
+	/*
+	 * Row chunck length expected by the driver is:
+	 * 16 * (No. of Points) + 6
+	 * 16 -> 2 8-Byte float coordinates (TODO: Need to change when Z and M flags are defined for N-dimension Points)
+	 * 6 -> 4 Byte SRID + 2 Byte (01 0C)
+	*/
+	len = npoints*16 + 6;
+	
+	buf = (char *) palloc0(len);
+	
+	//SRID is stored in reverse order
+	buf[0] = (char) gser->srid[2];
+	buf[1] = (char) gser->srid[1];
+	buf[2] = (char) gser->srid[0];
+	itr = buf + 3;
+
+	//Driver Expects 4Byte SRID, so we Provide '0' as last Byte
+	/* TODO: Will need to verify for Different Geometry Data Types */
+	*itr = 0;
+	itr++;
+  
+    //Driver Expects 01 0C as 2 constant Bytes
+	*itr = 1;
+	itr++;
+	*itr = 12;
+	itr++;
+	
+	//Data part of the Row has length 16 * (No. of Points)
+	/*
+	 * First 8 Bytes of gser->data are fixed in PostGIS:
+	 * 4 Bytes -> Represents the Type
+	 * 4 Bytes -> Represents the npoints
+	*/ 
+	memcpy(itr, (char *) gser->data + 8, len - 6);
+
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
+	
+	TDSInstrumentation(INSTR_TDS_DATATYPE_GEOGRAPHY);
+
+	rc = TdsSendPlpDataHelper(destBuf, actualLen);
+
+	pfree(destBuf);
 	return rc;
 }
 

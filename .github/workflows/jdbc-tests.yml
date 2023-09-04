@@ -35,6 +35,11 @@ jobs:
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-tds_fdw-extension
 
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+
       - name: Install Extensions
         id: install-extensions
         if: always() && steps.build-extensions.outcome == 'success'

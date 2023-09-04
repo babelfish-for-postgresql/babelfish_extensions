@@ -44,6 +44,13 @@ runs:
       with:
         install_dir: ${{ inputs.pg_new_dir }}
 
+    - name: Build PostGIS Extension
+      id: build-postgis-extension
+      if: always() && steps.build-extensions-new.outcome == 'success'
+      uses: ./.github/composite-actions/build-postgis-extension
+      with:
+        install_dir: ${{ inputs.pg_new_dir }}
+
     - name: Setup new data directory
       id: setup-new-datadir
       if: always() && steps.build-tds_fdw-extension.outcome == 'success'
