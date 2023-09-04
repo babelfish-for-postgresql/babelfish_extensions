@@ -1,3 +1,4 @@
+-- tsql
 USE sysusersdb
 GO
 
@@ -38,4 +39,9 @@ DROP DATABASE sysusersdb
 GO
 
 DROP DATABASE sysusersDB1
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
 GO

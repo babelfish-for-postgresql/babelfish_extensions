@@ -871,7 +871,7 @@ BEGIN
         RAISE most_specific_type_mismatch;
 
     -- Check if arguments are out of range
-    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+    ELSIF ((p_year NOT BETWEEN 0001 AND 9999) OR
         (p_month NOT BETWEEN 1 AND 12) OR
         (p_day NOT BETWEEN 1 AND 31) OR
         (p_hour NOT BETWEEN 0 AND 23) OR
@@ -909,7 +909,12 @@ BEGIN
     );
     v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
                                                           abs(p_minute_offset)::SMALLINT::text);
-    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE invalid_datetime_format;
+    END;
 EXCEPTION
     WHEN most_specific_type_mismatch THEN
         RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',

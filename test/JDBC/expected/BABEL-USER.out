@@ -1,3 +1,14 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
 CREATE LOGIN test1 WITH PASSWORD = 'abc';
 GO
 
@@ -413,3 +424,13 @@ GO
 
 DROP DATABASE DB2;
 GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+

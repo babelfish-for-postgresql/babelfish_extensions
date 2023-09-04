@@ -1,3 +1,4 @@
+-- tsql
 --switch to database irrespective of case
 USE DB_NAME_VU_PREPARE_TEST1;
 GO

@@ -1,3 +1,13 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql
 CREATE DATABASE BABEL_ROLE_MEMBER_vu_prepare_db
 go
@@ -9,7 +19,7 @@ SELECT DB_NAME()
 GO
 ~~START~~
 nvarchar
-babel_role_member_vu_prepare_db
+BABEL_ROLE_MEMBER_vu_prepare_db
 ~~END~~
 
 

@@ -1,3 +1,8 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
 -- tsql
 CREATE PROC babel_role_vu_prepare_user_ext_master AS
 BEGIN 

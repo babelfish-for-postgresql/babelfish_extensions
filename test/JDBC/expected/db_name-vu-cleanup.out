@@ -1,3 +1,4 @@
+-- tsql
 USE master;
 GO
 
@@ -13,3 +14,13 @@ GO
 
 DROP DATABASE DB_NAME_VU_PREPARE_test1;
 GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
