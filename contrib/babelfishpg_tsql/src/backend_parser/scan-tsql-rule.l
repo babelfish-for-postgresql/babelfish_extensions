@@ -217,6 +217,7 @@
 							case TSQL_DATEDIFF_BIG:
 							case TSQL_DATENAME:
 							case TSQL_DATEPART:
+							case TSQL_DATETRUNC:
 							case TSQL_D:
 							case TSQL_DAYOFYEAR:
 							case TSQL_DD:

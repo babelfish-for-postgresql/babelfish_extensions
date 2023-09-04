@@ -3944,3 +3944,106 @@ RETURNS sys.SYSNAME AS $$
 $$
 LANGUAGE plpgsql IMMUTABLE
 STRICT;
+
+
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
+$body$
+DECLARE
+    days_offset INT;
+    v_day INT;
+    result_date timestamp;
+    input_expr_timestamp timestamp;
+    date_arg_datatype regtype;
+    offset_string TEXT;
+    datefirst_value INT;
+BEGIN
+    BEGIN
+        date_arg_datatype := pg_typeof(date);
+        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+        ELSIF date_arg_datatype NOT IN ('date'::regtype, 'time'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type ''%'' is invalid for argument 2 of datetrunc function.', date_arg_datatype;
+        ELSIF datepart IN ('nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''%''.',datepart, date_arg_datatype;
+        ELSIF datepart IN ('dow') THEN
+            RAISE EXCEPTION 'The datepart ''weekday'' is not supported by date function datetrunc for data type ''%''.', date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'datetime'::regtype AND datepart IN ('microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''datetime''.', datepart;
+        ELSIF date_arg_datatype = 'smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''smalldatetime''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype THEN
+            IF datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'tsql_week') THEN
+                RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''time''.', datepart;
+            END IF;
+            -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
+            -- sufficient for provided datepart (millisecond, microsecond) value
+        ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
+            -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype
+            --  is sufficient for provided datepart (millisecond, microsecond) value;  
+        END IF;
+    END;
+
+    BEGIN
+        IF date_arg_datatype = 'time'::regtype THEN
+            RETURN date_trunc(datepart, date);
+        ELSE
+            input_expr_timestamp = date::timestamp;
+            -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                offset_string = RIGHT(date::TEXT, 6);
+                input_expr_timestamp := LEFT(date::TEXT, -6)::timestamp;
+            END IF;
+            CASE
+                WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN
+                    result_date := date_trunc(datepart, input_expr_timestamp);
+                WHEN datepart IN ('doy', 'day') THEN
+                    result_date := date_trunc('day', input_expr_timestamp);
+                WHEN datepart IN ('tsql_week') THEN
+                -- sql server datepart 'iso_week' is similar to postgres 'week' datepart
+                -- handle sql server datepart 'week' here based on the value of set variable 'DATEFIRST'
+                    v_day := EXTRACT(dow from input_expr_timestamp)::INT;
+                    datefirst_value := current_setting('babelfishpg_tsql.datefirst')::INT;
+                    IF v_day = 0 THEN
+                        v_day := 7;
+                    END IF;
+                    result_date := date_trunc('day', input_expr_timestamp);
+                    days_offset := (7 + v_day - datefirst_value)%7;
+                    result_date := result_date - make_interval(days => days_offset);
+            END CASE;
+            -- concat offset_string to result_date in case of datetimeoffset before converting it to datetimeoffset datatype.
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+            ELSE
+                RETURN result_date;
+            END IF;
+        END IF;
+    END;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
+
+-- another definition of datetrunc as anyelement can not handle unknown type.
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date TEXT) RETURNS SYS.DATETIME2 AS
+$body$
+DECLARE
+    input_expr_datetime2 sys.datetime2;
+BEGIN
+    BEGIN
+    input_expr_datetime2 := cast(date as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+    ELSIF input_expr_datetime2 IS NULL THEN
+        RETURN NULL;
+    ELSE
+        -- input string literal is valid, call the datetrunc function with datetime2 datatype. 
+        RETURN sys.DATETRUNC(datepart, input_expr_datetime2);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql STABLE;

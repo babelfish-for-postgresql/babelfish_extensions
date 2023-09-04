@@ -88,6 +88,7 @@ const char *pg_reserved_keywords_to_be_delimited[] = {
 	"datediff_big",
 	"datename",
 	"datepart",
+	"datetrunc",
 	"iif",
 	"out",
 	"output",
