@@ -4746,12 +4746,12 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		if ((pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0) || (pg_strncasecmp(name.c_str(), "sys.sp_", 6) == 0))
 			name.erase(name.begin() + 0, name.begin() + 4);
 
-		if (is_sp_proc(name))
-			return makeSpStatement(name, func_proc_args, lineno, return_code_dno);
-
 		auto *localID = body->return_status ? body->LOCAL_ID()[0] : nullptr;
 		if (localID)
 			return_code_dno = getVarno(localID);
+
+		if (is_sp_proc(name))
+			return makeSpStatement(name, func_proc_args, lineno, return_code_dno);
 
 		PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
 		result->cmd_type = PLTSQL_STMT_EXEC;
