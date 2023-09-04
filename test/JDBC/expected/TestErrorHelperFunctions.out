@@ -75,6 +75,7 @@ P0001#!#%s#!#is not supported for conversions from#!#9809
 25P01#!#%s can only be used in transaction blocks#!#SAVEPOINT#!#628
 25P01#!#%s can only be used in transaction blocks#!#ROLLBACK TO SAVEPOINT#!#3903
 25001#!#%s cannot run inside a transaction block#!##!#574
+25001#!#%s command cannot be used inside user transactions.#!##!#6615
 42809#!#"%s" is not a table or materialized view#!##!#10610
 42809#!#cannot create index on relation "%s"#!##!#10610
 42809#!#%s parameter should be of %s type#!##!#16902

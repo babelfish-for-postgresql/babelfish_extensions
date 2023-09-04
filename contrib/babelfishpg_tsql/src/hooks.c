@@ -1591,13 +1591,28 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		/* Get relid either by s.t or t */
 		if (schemaname && relname)
 		{
-			relid = RangeVarGetRelid(makeRangeVar(schemaname, relname, res->location),
+			/* Get physical schema name from logical schema name */
+			char *physical_schema_name = get_physical_schema_name(get_cur_db_name(), schemaname);
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
 									 NoLock,
 									 true);
+			pfree(physical_schema_name);
 		}
 		else if (relname)
 		{
-			relid = RelnameGetRelid(relname);
+			/* 
+			 * In case of schema name is not specified, To get the relid of table
+			 * we will search for the table in schema of target relation.
+			 */
+			
+			/* Get physical schema name of target relation */
+			char *physical_schema_name = get_namespace_name(RelationGetNamespace(pstate->p_target_relation));
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
+									 NoLock,
+									 true);
+			pfree(physical_schema_name);
 		}
 		targetRelid = RelationGetRelid(pstate->p_target_relation);
 		/* If relid matches or alias matches, try to resolve the qualifiers */
