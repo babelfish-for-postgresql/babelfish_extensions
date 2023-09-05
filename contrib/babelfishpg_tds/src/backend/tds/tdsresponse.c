@@ -2883,8 +2883,6 @@ TdsSendDone(int token, int status, int curcmd, uint64_t nprocessed)
 
 	/* should be initialized already */
 	Assert(pltsql_plugin_handler_ptr);
-	if (pltsql_plugin_handler_ptr->pltsql_nocount_addr)
-		gucNocount = *(pltsql_plugin_handler_ptr->pltsql_nocount_addr);
 
 	if (TdsRequestCtrl)
 		TdsRequestCtrl->isEmptyResponse = false;
