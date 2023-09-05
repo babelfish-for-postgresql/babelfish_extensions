@@ -1362,7 +1362,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
                     /*
                      * For aliases whose length is between 60 to 63, the case of multibyte and single byte
                      * characters are handled separately.
-                     * It is needed to check whether last 32 bytes are equal to identifier_name or not.
+                     * It is needed to check whether last 32 bytes are equal to identifier_name or not,
+					 * because last 32 bytes would be MD5 hash in case of truncated identifier and 
+					 * we can leverage the fact that MD5 hash would be different from original identifier.
                      * If they are not equal, this means identifier_name is truncated.
                      */
                     for(int x = alias_len - 32; x < alias_len; x++){
@@ -1376,6 +1378,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
                          */ 
                         if (*colname_end >= 'A' && *colname_end <= 'Z')
                         {
+							/* If original letter is in upper case then check it with upper case letter of identifier_name.*/
                             if (!(*colname_end == identifier_name[x] + 'A' - 'a'))
                             {
                                 identifier_truncated = true;
@@ -1392,6 +1395,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
                         }
                         else
                         {
+							/* Original letter is already in lower case or it could be fractional byte of multibyte char. 
+							 * So it should match with original byte in either case.
+							 */
                             if(!(*colname_end == identifier_name[x]))
                             {
                                 identifier_truncated = true;
