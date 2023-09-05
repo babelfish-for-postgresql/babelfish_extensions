@@ -94,7 +94,7 @@ $newnode->command_fails_like(
 		'-p',         $newnode->port,
 		'-f',         $dump1_file,
 	],
-	qr/Backup and restore across different Postgres versions is not yet supported./,
+	qr/Dump and restore across different Postgres versions is not yet supported./,
 	'Restore of global objects failed since source and target versions do not match.');
 
 # Similarly, restore of dump file should also cause a failure.
@@ -106,7 +106,7 @@ $newnode->command_fails_like(
 		'-p',         $newnode->port,
 		'-f',         $dump2_file,
 	],
-	qr/Backup and restore across different Postgres versions is not yet supported./,
+	qr/Dump and restore across different Postgres versions is not yet supported./,
 	'Restore of Babelfish database failed since source and target versions do not match.');
 $newnode->stop;
 
@@ -157,7 +157,7 @@ $newnode->command_fails_like(
 		'-p',         $newnode->port,
 		'-f',         $dump3_file,
 	],
-	qr/Backup and restore across different migration modes is not yet supported./,
+	qr/Dump and restore across different migration modes is not yet supported./,
 	'Restore of global objects failed since source and target migration modes do not match.');
 
 # Similarly, restore of dump file should also cause a failure.
@@ -169,7 +169,7 @@ $newnode->command_fails_like(
 		'-p',         $newnode->port,
 		'-f',         $dump4_file,
 	],
-	qr/Backup and restore across different migration modes is not yet supported./,
+	qr/Dump and restore across different migration modes is not yet supported./,
 	'Restore of Babelfish database failed since source and target migration modes do not match.');
 $newnode->stop;
 done_testing();
