@@ -1,0 +1,185 @@
+SELECT * FROM BABEL_4217_vu_prepare_t1;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t2;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t3;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t4;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t4 add id INT PRIMARY KEY IDENTITY(1,1) NOT NULL;
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t4;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t5;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t5 add id INT PRIMARY KEY NOT NULL IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t5;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t6;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t6 add id INT NOT NULL PRIMARY KEY IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t6;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t7;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t8;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t9;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t10;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t10 add id INT UNIQUE IDENTITY(1,1) NOT NULL;
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t10;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t11;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t11 add id INT UNIQUE NOT NULL IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t11;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t12;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t12 add id INT NOT NULL UNIQUE IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t12;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
