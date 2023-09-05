@@ -22,8 +22,7 @@ sub new {
 		_node => $node,
 		_tsql_port => 1433,
 		_tsql_master_role => '',
-		_tsql_master_db => '',
-		_tsql_migration_mode => '',
+		_tsql_master_db => ''
 	};
 
 	bless $self, $class;
@@ -50,7 +49,7 @@ sub tsql_master_db {
 }
 
 sub init_tsql {
-	my ($self, $role, $testdb, $migration_mode) = @_;
+	my ($self, $role, $testdb) = @_;
 	my $node = $self->{_node};
 
 	if (!defined($role) or ($role eq ""))
@@ -63,14 +62,8 @@ sub init_tsql {
 		die "cannot initialize babelfish, master database is empty";
 	}
 
-	if (!defined($migration_mode) or ($migration_mode eq ""))
-	{
-		$migration_mode = "single-db";
-	}
-
 	$self->{_tsql_master_role} = $role;
 	$self->{_tsql_master_db} = $testdb;
-	$self->{_tsql_migration_mode} = $migration_mode;
 
 	$node->safe_psql('postgres', qq{CREATE USER $role WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT});
 	$node->safe_psql('postgres', qq{CREATE DATABASE $testdb OWNER $role});
@@ -78,7 +71,6 @@ sub init_tsql {
 	$node->safe_psql($testdb, qq{GRANT ALL ON SCHEMA sys to $role});
 	$node->safe_psql($testdb, qq{ALTER USER $role CREATEDB});
 	$node->safe_psql($testdb, qq{ALTER SYSTEM SET babelfishpg_tsql.database_name = '$testdb'});
-	$node->safe_psql($testdb, qq{ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '$migration_mode'});
 	$node->safe_psql($testdb, qq{SELECT pg_reload_conf()});
 	$node->safe_psql($testdb, qq{CALL sys.initialize_babelfish('$role')});
 }
