@@ -864,7 +864,7 @@ ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacemen
 
 SET allow_system_table_mods = on;
 
-ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT NOT NULL COLLATE "C";
+ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT COLLATE "C";
 
 UPDATE sys.babelfish_sysdatabases SET orig_name = name WHERE orig_name IS NULL;
 
