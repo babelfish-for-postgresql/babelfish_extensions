@@ -19,6 +19,14 @@ CREATE TABLE forjson_nesting_vu_t_orders (
     [orderdate] Date
 );
 GO
+CREATE TABLE forjson_nesting_vu_t_null_users (
+    [Id] int,
+    [firstname] varchar(50),
+    [lastname] varchar(50),
+    [email] varchar(50),
+    [phone] varchar(25)
+);
+GO
 
 INSERT INTO forjson_nesting_vu_t_users
 VALUES 
@@ -45,6 +53,16 @@ VALUES
     (3, 2, 3, 3, '2023-06-26');
 GO
 ~~ROW COUNT: 3~~
+
+
+INSERT INTO forjson_nesting_vu_t_null_users
+VALUES
+    (1, 'John', 'Doe', 'johndoe@gmail.com', '123-456-7890'),
+    (2, 'Jane', 'Smith', 'janesmith@yahoo.com', NULL),
+    (3, NULL, NULL, 'mikejohnson@myspace.com', '098-765-4321'),
+    (4, 'Sergio', 'Giavanni', NULL, NULL);
+GO
+~~ROW COUNT: 4~~
 
 
 -- FOR JSON PATH CLAUSE with nested json support for existing objects
@@ -132,3 +150,27 @@ SELECT (
 )
 GO
 
+-- Queries that check NULL nested json object insert
+CREATE VIEW forjson_nesting_vu_v_no_null AS
+SELECT (
+    SELECT id,
+            firstname AS "user.name.first",
+            lastname AS "user.name.last",
+            email AS "contact.email",
+            phone AS "contact.phone"
+    FROM forjson_nesting_vu_t_null_users
+    FOR JSON PATH
+)
+GO
+
+CREATE VIEW forjson_nesting_vu_v_with_null AS
+SELECT (
+    SELECT id,
+            firstname AS "user.name.first",
+            lastname AS "user.name.last",
+            email AS "contact.email",
+            phone AS "contact.phone"
+    FROM forjson_nesting_vu_t_null_users
+    FOR JSON PATH, INCLUDE_NULL_VALUES
+)
+GO

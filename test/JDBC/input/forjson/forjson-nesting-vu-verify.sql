@@ -34,4 +34,10 @@ GO
 SELECT * FROM forjson_nesting_vu_v_error
 GO
 
+-- Queries that check NULL nested json object insert
+SELECT * FROM forjson_nesting_vu_v_no_null
+GO
+
+SELECT * FROM forjson_nesting_vu_v_with_null
+GO
 

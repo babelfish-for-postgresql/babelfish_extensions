@@ -24,6 +24,13 @@ GO
 DROP VIEW forjson_nesting_vu_v_error
 GO
 
+-- Queries that check NULL nested json object insert
+DROP VIEW forjson_nesting_vu_v_no_null
+GO
+
+DROP VIEW forjson_nesting_vu_v_with_null
+GO
+
 -- DROP Tables
 DROP TABLE forjson_nesting_vu_t_users
 GO
@@ -32,4 +39,7 @@ DROP TABLE forjson_nesting_vu_t_products
 GO
 
 DROP TABLE forjson_nesting_vu_t_orders
+GO
+
+DROP TABLE forjson_nesting_vu_t_null_users
 GO

@@ -91,4 +91,20 @@ nvarchar
 ~~ERROR (Message: Property user.name.last cannot be generated in JSON output due to a conflict with another column name or alias. Use different names and aliases for each column in SELECT list.)~~
 
 
+-- Queries that check NULL nested json object insert
+SELECT * FROM forjson_nesting_vu_v_no_null
+GO
+~~START~~
+nvarchar
+[{"id": 1, "user": {"name": {"first": "John", "last": "Doe"}}, "contact": {"email": "johndoe@gmail.com", "phone": "123-456-7890"}}, {"id": 2, "user": {"name": {"first": "Jane", "last": "Smith"}}, "contact": {"email": "janesmith@yahoo.com"}}, {"id": 3, "contact": {"email": "mikejohnson@myspace.com", "phone": "098-765-4321"}}, {"id": 4, "user": {"name": {"first": "Sergio", "last": "Giavanni"}}}]
+~~END~~
+
+
+SELECT * FROM forjson_nesting_vu_v_with_null
+GO
+~~START~~
+nvarchar
+[{"id": 1, "user": {"name": {"first": "John", "last": "Doe"}}, "contact": {"email": "johndoe@gmail.com", "phone": "123-456-7890"}}, {"id": 2, "user": {"name": {"first": "Jane", "last": "Smith"}}, "contact": {"email": "janesmith@yahoo.com", "phone": null}}, {"id": 3, "user": {"name": {"first": null, "last": null}}, "contact": {"email": "mikejohnson@myspace.com", "phone": "098-765-4321"}}, {"id": 4, "user": {"name": {"first": "Sergio", "last": "Giavanni"}}, "contact": {"email": null, "phone": null}}]
+~~END~~
+
 

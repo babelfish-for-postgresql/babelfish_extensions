@@ -1,4 +1,10 @@
-// forjson.c
+/*-------------------------------------------------------------------------
+ *
+ * forjson.c
+ *   For JSON clause support for Babel
+ *
+ *-------------------------------------------------------------------------
+ */
 #include "postgres.h"
 
 #include "executor/spi.h"
@@ -21,6 +27,8 @@
 #define TABLE_SIZE 100
 
 // For holding information regarding the state of the FOR JSON call
+// Necessary to pass information regarding root_name & without_array-wrappers
+// to ffunc. 
 typedef struct {
 	bool without_array_wrapper;
 	char *root_name;
@@ -35,19 +43,14 @@ typedef struct {
 	int idx;
 } JsonbEntry;
 
-// Main row to JSON function
 static void tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values);
 
-// Function to determine how many nested json objects a column requires
 static char** determine_parts(const char* str, int *num);
 
-// Function to build a key to use to search in the Hashtable
 static char* build_key(char **parts, int currentIdx);
 
-// Function to create the nested json output for a col if required
 static JsonbValue* create_json(char *part, JsonbValue* val, int *idx);
 
-// Function to append into existing JsonbValue
 static void insert_existing_json(JsonbValue *exists, JsonbValue* parent, JsonbValue *val, int idx, char *key);
 
 PG_FUNCTION_INFO_V1(tsql_query_to_json_sfunc);
@@ -55,14 +58,14 @@ PG_FUNCTION_INFO_V1(tsql_query_to_json_sfunc);
 Datum
 tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 {
-    forjson_state *state;
-	JsonbValue  *jsonbArray;
+	forjson_state 	*state;
+	JsonbValue  	*jsonbArray;
 	
 	Datum		record;
-	int			mode;
+	int		mode;
 	bool		include_null_values;
 	bool		without_array_wrapper;
-	char	   *root_name;
+	char	   	*root_name;
 
 	MemoryContext agg_context;
 	MemoryContext old_context;
@@ -136,6 +139,9 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(state);
 }
 
+// Main row to json function. 
+// Creates a Jsonb row object, processes the row, determines if it should be inserted as a nested json object
+// inserts json object to row and then into the main jsonbArray.
 static void
 tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 {
@@ -349,35 +355,35 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 
 				pfree(hashKey);
 			}
-		}
-		// Already inserted into existing json object
-		if (found)	
-			continue;
-		
-		// JsonbValue was created in loop and needs to be inserted to the row jsonbValue
-		if (num > 1) {
+
+			// Already inserted into existing json object (nested)
+			if (found)
+				continue;
+
+			// JsonbValue was created in loop, insert and update structure.
+			jsonbRow->val.object.pairs[jsonbRow->val.object.nPairs] = nestedVal->val.object.pairs[0];
 			jsonbRow->val.object.nPairs++;
-			jsonbRow->val.object.pairs[jsonbRow->val.object.nPairs - 1] = nestedVal->val.object.pairs[0];
-			continue;
 		}
 
-		// Increment nPairs in the row if it isnt inserted into an already existing json object.
-		jsonbRow->val.object.nPairs++;		
-		colname = parts[0];
+		else	{
+			// Increment nPairs in the row if it isnt inserted into an already existing json object.
+			jsonbRow->val.object.nPairs++;		
+			colname = parts[0];
 
-		// Allocate memory for key and create it
-		key = palloc(sizeof(JsonbValue));
-		key->type = jbvString;
-		key->val.string.len = strlen(colname);
-		key->val.string.val = pstrdup(colname);
+			// Allocate memory for key and create it
+			key = palloc(sizeof(JsonbValue));
+			key->type = jbvString;
+			key->val.string.len = strlen(colname);
+			key->val.string.val = pstrdup(colname);
 
-		// Create JsonbPair
-		jsonbPair = palloc(sizeof(JsonbPair));
-		jsonbPair->key = *key;
-		jsonbPair->value = *nestedVal;
-	
-		// Assign it to the JsonbValue Row
-		jsonbRow->val.object.pairs[jsonbRow->val.object.nPairs - 1] = *jsonbPair;
+			// Create JsonbPair
+			jsonbPair = palloc(sizeof(JsonbPair));
+			jsonbPair->key = *key;
+			jsonbPair->value = *nestedVal;
+
+			// Assign it to the JsonbValue Row
+			jsonbRow->val.object.pairs[jsonbRow->val.object.nPairs - 1] = *jsonbPair;
+		}
 	}
 
 	// Add the jsonb row to the jsonbArray
@@ -446,6 +452,8 @@ tsql_query_to_json_ffunc(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(resStr->data, resStr->len));
 }
 
+// Function to determine how many nested json objects a column requires
+// Splits a string into an array of strings by the "."
 static char**
 determine_parts(const char* str, int* num)
 {
@@ -477,6 +485,9 @@ determine_parts(const char* str, int* num)
 
 }
 
+// Function to build a key to use to search in the Hashtable
+// Uses the parts** created from determine_parts to build a string
+// that is used as a key/path.
 static char* 
 build_key(char **parts, int currentIdx)
 {
@@ -494,6 +505,8 @@ build_key(char **parts, int currentIdx)
 	return str->data;
 }
 
+// Function to create the nested json output for a col if required
+// Used when created nested json objects
 static JsonbValue*
 create_json(char *part, JsonbValue* val, int *idx)
 {
@@ -526,6 +539,8 @@ create_json(char *part, JsonbValue* val, int *idx)
 
 }
 
+// Function to append into existing JsonbValue
+// Used when the path to insert a json object is already found in the HashTable.
 static void
 insert_existing_json(JsonbValue *current, JsonbValue* parent, JsonbValue *nestedVal, int idx, char *key)
 {
