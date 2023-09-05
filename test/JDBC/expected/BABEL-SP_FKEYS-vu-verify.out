@@ -189,8 +189,8 @@ EXEC SP_FKEYS @FKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t4'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
-babel_sp_fkeys_vu_prepare_db2#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_db2#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
-babel_sp_fkeys_vu_prepare_db2#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_db2#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+babel_sp_fkeys_vu_prepare_DB2#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#c#!#babel_sp_fkeys_vu_prepare_DB2#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#d#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
+babel_sp_fkeys_vu_prepare_DB2#!#dbo#!#babel_sp_fkeys_vu_prepare_t3#!#b#!#babel_sp_fkeys_vu_prepare_DB2#!#dbo#!#babel_sp_fkeys_vu_prepare_t4#!#e#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_t4_d_e_fkey#!#babel_sp_fkeys_vu_prepare_t3_pkey#!#7
 ~~END~~
 
 
