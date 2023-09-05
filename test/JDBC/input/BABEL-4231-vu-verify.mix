@@ -153,3 +153,7 @@ GO
 -- psql
 SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_39';
 GO
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_40';
+GO

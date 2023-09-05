@@ -348,3 +348,12 @@ text
  SELECT 1 AS "ANfjws";
 ~~END~~
 
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_40';
+GO
+~~START~~
+text
+ SELECT "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de".a,<newline>    "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de".b<newline>   FROM master_dbo.table18_babel_4231 "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de";
+~~END~~
+
