@@ -34,10 +34,12 @@
 
 #include "instr.h"
 
+// #include "../../contrib/babelfishpg_tsql/src/pltsql.h"
+// #include "../../contrib/babelfishpg_tsql/src/pltsql-2.h"
+
 /* We need to create a minimal stub of PLtsql_protocol_plugin so
  * that we can reference pltsql_protocol_plugin_ptr to check whether
- * we are coming from the TDS or PG client. This is required to support
- * COPY inputs coming from DMS.
+ * we are coming from the TDS or PG client.
  */
 typedef struct PLtsql_protocol_plugin
 {
@@ -204,8 +206,9 @@ varbinaryin(PG_FUNCTION_ARGS)
 	}
 
 	if ((!(*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->is_tds_client)) && 
-		(len >= 4 && inputText[0] == '\\')) /* COPY command from DMS, use base byteain() directly */
+		(len >= 4 && inputText[0] == '\\')) /* basic sanity check for an octal string */
 	{
+		/* Inserting from PG endpoint, use base byteain() directly */
 		PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
 	}
 
