@@ -3946,24 +3946,46 @@ LANGUAGE plpgsql IMMUTABLE
 STRICT;
 
 -- internal helper function for date_bucket().
-CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date boolean, IN origin boolean) RETURNS TEXT 
+CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
 AS 
 $body$
 DECLARE
+    date_arg_datatype regtype;
 BEGIN
-    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond') THEN
-        RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
+    date_arg_datatype := pg_typeof(date);
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'doy', 'day', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
+
+    -- Check for NULL value of number argument
     ELSIF number IS NULL THEN
         RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
-    ELSIF date IS NULL THEN
+
+    ELSIF check_date IS NULL THEN
         RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of date_bucket function.';
-    ELSIF date IS true AND origin IS false THEN
+
+    ELSIF check_date IS false THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+    
+    ELSIF check_date IS true THEN
+        IF date_arg_datatype NOT IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+        ELSIF datepart IN ('doy', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type %.', datepart, date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type date.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype AND datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type time.', datepart;
+        ELSIF origin IS false THEN
             RAISE EXCEPTION 'Argument data type varchar is invalid for argument 4 of date_bucket function.';
+        ELSIF number <= 0 THEN
+            RAISE EXCEPTION 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.';
+        END IF;
+        RETURN true;
     ELSE
         RAISE EXCEPTION 'Argument data type varchar is invalid for argument 3 of date_bucket function.';
     END IF;
 END;
-$body$ 
+$body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
@@ -3973,12 +3995,15 @@ $body$
 DECLARE
 BEGIN
     IF date IS NULL THEN
-        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false);
+        -- check_date is NULL when date is NULL
+        -- check_date is false when we are sure that date can not be a valid datatype.
+        -- check_date is true when date might be valid datatype so check is required. 
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false, 'NULL'::text);
     ELSE
-        RETURN sys.date_bucket_internal_helper(datepart, number, false, false);
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, NULL, date);
     END IF;
 END;
-$body$ 
+$body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Another definition of date_bucket() with arg date of type ANYELEMENT and origin of type TEXT.
@@ -3988,18 +4013,18 @@ $body$
 DECLARE
 BEGIN
     IF date IS NULL THEN
-        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false);
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, NULL, 'NULL'::text);
     ELSIF pg_typeof(date) IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
             IF origin IS NULL THEN
                 RETURN sys.date_bucket(datepart, number, date);
             ELSE
-                RETURN sys.date_bucket_internal_helper(datepart, number, true, false);
+                RETURN sys.date_bucket_internal_helper(datepart, number, true, false, date);
             END IF;
     ELSE
-        RETURN sys.date_bucket_internal_helper(datepart, number, false, false);
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, NULL, date);
     END IF;
 END;
-$body$ 
+$body$
 LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin ANYELEMENT default NULL) RETURNS ANYELEMENT 
@@ -4020,34 +4045,14 @@ DECLARE
     date_difference_interval INTERVAL;
     millisec_trunc_diff_interval INTERVAL;
     date_arg_datatype regtype;
+    is_valid boolean;
 BEGIN
     BEGIN
         date_arg_datatype := pg_typeof(date);
-        -- Check for supported datepart by date_bucket function
-        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second', 'millisecond') THEN
-            RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
-
-        -- Check for NULL or negative value of number argument
-        ELSIF number IS NULL THEN
-            RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
-        ELSIF number <= 0 THEN
-            RAISE EXCEPTION 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.';
-
-        -- Raise exception if any unsupported datatype for date is provided. 
-        -- For example throw exception if INT datatype is provided in date. 
-        ELSIF date_arg_datatype NOT IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
-            RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
-
-        -- Raise exception if any unsupported datepart for given date datatype is provided. 
-        -- Date does not support hour, minute, second, millisecond datepart
-        -- Time does not support year, month, quarter, day, week datepart
-        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type date.', datepart;
-        ELSIF date_arg_datatype = 'time'::regtype AND datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type time.', datepart;
+        is_valid := sys.date_bucket_internal_helper(datepart, number, true, true, date);
 
         -- If optional argument origin's value is not provided by user then set it's default value of valid datatype.
-        ELSIF origin IS NULL THEN
+        IF origin IS NULL THEN
                 IF date_arg_datatype = 'sys.datetime'::regtype THEN
                     origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime);
                 ELSIF date_arg_datatype = 'sys.datetime2'::regtype THEN
@@ -4061,14 +4066,10 @@ BEGIN
                 ELSIF date_arg_datatype = 'time'::regtype THEN
                     origin := CAST('00:00:00.000' AS pg_catalog.time);
                 END IF;
-        ELSE
-                IF pg_typeof(origin) != date_arg_datatype THEN
-                    RAISE EXCEPTION 'Argument data type % is invalid for argument 4 of date_bucket function.', pg_typeof(origin);
-                END IF;
         END IF;
     END;
 
-    /* support of date_bucket() for different-different date datatype start here */
+    /* support of date_bucket() for different kinds of date datatype starts here */
     -- support of date_bucket() when date is of 'time' datatype
     IF date_arg_datatype = 'time'::regtype THEN
         -- Find interval between date and origin and extract hour, minute, second, millisecond from the interval
@@ -4079,7 +4080,7 @@ BEGIN
         milliseconds_diff := FLOOR(EXTRACT('millisecond' from date_difference_interval))::INT;
         CASE datepart
         WHEN 'hour' THEN
-            -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in whcih our date falls.
+            -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
             -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. (Ex. 'date_bucket(hour, 2, '01:00:00', '08:00:00')') 
             -- For comparision we are trunceting the result_time to milliseconds
             required_bucket := hours_diff/number;

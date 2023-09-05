@@ -1,7 +1,9 @@
-SELECT * FROM DATE_BUCKET_vu_prepare_v1
+-- Test with null datepart
+-- Should Throw Error - 'syntax error at or near "null"' (error from parser side)
+select date_bucket(null, 2, cast('2020-01-01' as date)) as db
 GO
 
-SELECT * FROM DATE_BUCKET_vu_prepare_v2
+select date_bucket(null, null, cast('2020-01-01' as date)) as db2
 GO
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v3
@@ -55,7 +57,8 @@ GO
 SELECT * FROM DATE_BUCKET_vu_prepare_v18
 GO
 
-SELECT * FROM DATE_BUCKET_vu_prepare_v19
+-- Should Throw - data out of range for datetimeoffset
+select date_bucket(day, 1, cast('0001-01-01 00:00:00 +14:00' as datetimeoffset), cast('9999-12-31 23:59:59.999999 +14:00' as datetimeoffset)) as db1
 GO
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v20
@@ -71,6 +74,9 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v23
 GO
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v24
+GO
+
+SELECT * FROM DATE_BUCKET_vu_prepare_invalid_datepart
 GO
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v25

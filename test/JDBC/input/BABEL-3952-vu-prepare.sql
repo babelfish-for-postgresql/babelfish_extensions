@@ -1,17 +1,3 @@
--- Test with null datepart
--- Should Throw Error - 'syntax error at or near "null"' (error from parser side)
--- VIEW DATE_BUCKET_vu_prepare_v1 DATE_BUCKET_vu_prepare_v2 should not get created.
-CREATE VIEW DATE_BUCKET_vu_prepare_v1 AS (
-    select 
-        date_bucket(null, 2, cast('2020-01-01' as date)) as db
-    );
-GO
-CREATE VIEW DATE_BUCKET_vu_prepare_v2 AS (
-    select 
-        date_bucket(null, null, cast('2020-01-01' as date)) as db
-    );
-GO
-
 -- Test with invalid number argument
 -- Should Throw Error - 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.'
 CREATE VIEW DATE_BUCKET_vu_prepare_v3 AS (
@@ -20,7 +6,7 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v3 AS (
         date_bucket(year, 0, cast('2020-01-01' as date)) as db2
     );
 GO
--- Should throw - Argument data type varchar is invalid for argument 3 of date_bucket function.
+-- Should throw - Argument data type text is invalid for argument 3 of date_bucket function.
 CREATE VIEW DATE_BUCKET_vu_prepare_v4 AS (
     select 
         date_bucket(year, -2, '2020-01-01') as db1, 
@@ -132,13 +118,7 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v18 As (
         date_bucket(day, 1, cast('9999-12-31 23:59:59.9999999 +14:00' as datetimeoffset), cast('0001-01-01 00:00:00 -14:00' as datetimeoffset)) as db1
     );
 GO
--- BBF:- data out of range for datetimeoffset.
--- SQL:- An error occurred while executing batch. Error message is: Ticks must be between DateTime.MinValue.Ticks and DateTime.MaxValue.Ticks.
-CREATE VIEW DATE_BUCKET_vu_prepare_v19 As (
-    select 
-        date_bucket(day, 1, cast('0001-01-01 00:00:00 +14:00' as datetimeoffset), cast('9999-12-31 23:59:59.999999 +14:00' as datetimeoffset)) as db1
-    );
-GO
+
 CREATE VIEW DATE_BUCKET_vu_prepare_v20 As (
     select 
         date_bucket(day, 1, cast('2079-06-06' as smalldatetime), cast('1900-01-01' as smalldatetime)) as db1,
@@ -169,10 +149,15 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v23 AS (
 GO
 
 -- test with un-supported datepart. 
--- RAISE ERROR - nanosecond is not a recognized date_bucket option.
+-- RAISE ERROR - The datepart nanosecond is not supported by date function date_bucket for data type datetime2.
 CREATE VIEW DATE_BUCKET_vu_prepare_v24 AS (
     SELECT 
         DATE_BUCKET(nanosecond, 2, CAST('2000-01-01 12:32:12.123' AS DATETIME2)) AS nanosecond_BUCKET
+    );
+GO
+CREATE VIEW DATE_BUCKET_vu_prepare_invalid_datepart AS (
+    SELECT 
+        DATE_BUCKET(dayofmonth, 2, CAST('2000-01-01 12:32:12.123' AS DATETIME2)) AS nanosecond_BUCKET
     );
 GO
 

@@ -1,15 +1,17 @@
-SELECT * FROM DATE_BUCKET_vu_prepare_v1
+-- Test with null datepart
+-- Should Throw Error - 'syntax error at or near "null"' (error from parser side)
+select date_bucket(null, 2, cast('2020-01-01' as date)) as db
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "date_bucket_vu_prepare_v1" does not exist)~~
+~~ERROR (Message: syntax error at or near "null")~~
 
 
-SELECT * FROM DATE_BUCKET_vu_prepare_v2
+select date_bucket(null, null, cast('2020-01-01' as date)) as db2
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "date_bucket_vu_prepare_v2" does not exist)~~
+~~ERROR (Message: syntax error at or near "null")~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v3
@@ -23,7 +25,7 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v4
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type varchar is invalid for argument 3 of date_bucket function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v5
@@ -65,7 +67,7 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v10
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type varchar is invalid for argument 3 of date_bucket function.)~~
+~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v11
@@ -136,11 +138,12 @@ datetimeoffset
 ~~END~~
 
 
-SELECT * FROM DATE_BUCKET_vu_prepare_v19
+-- Should Throw - data out of range for datetimeoffset
+select date_bucket(day, 1, cast('0001-01-01 00:00:00 +14:00' as datetimeoffset), cast('9999-12-31 23:59:59.999999 +14:00' as datetimeoffset)) as db1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "date_bucket_vu_prepare_v19" does not exist)~~
+~~ERROR (Message: data out of range for datetimeoffset)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v20
@@ -177,7 +180,14 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v24
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: nanosecond is not a recognized date_bucket option.)~~
+~~ERROR (Message: The datepart nanosecond is not supported by date function date_bucket for data type datetime2.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_invalid_datepart
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: dayofmonth is not a recognized date_bucket option.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v25

@@ -1,9 +1,3 @@
-DROP VIEW DATE_BUCKET_vu_prepare_v1
-GO
-
-DROP VIEW DATE_BUCKET_vu_prepare_v2
-GO
-
 DROP VIEW DATE_BUCKET_vu_prepare_v3
 GO
 
@@ -55,9 +49,6 @@ GO
 DROP VIEW DATE_BUCKET_vu_prepare_v18
 GO
 
-DROP VIEW DATE_BUCKET_vu_prepare_v19
-GO
-
 DROP VIEW DATE_BUCKET_vu_prepare_v20
 GO
 
@@ -71,6 +62,9 @@ DROP VIEW DATE_BUCKET_vu_prepare_v23
 GO
 
 DROP VIEW DATE_BUCKET_vu_prepare_v24
+GO
+
+DROP VIEW DATE_BUCKET_vu_prepare_invalid_datepart
 GO
 
 DROP VIEW DATE_BUCKET_vu_prepare_v25
