@@ -1352,17 +1352,17 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					colname_start++;
 				}
 				/*
-				 * After truncation, maximum truncated length of alias can be 60
-				 * If length is less than 60, it means alias is not truncated.
+				 * After truncation, minimum truncated length of alias can be 61
+				 * If length is less than 61, it means alias is not truncated.
 				 */
-				if(alias_len < 60)
+				if(alias_len < 61)
 				{
 					memcpy(alias, colname_start, alias_len);
 				}
 				else
 				{
 					/*
-					 * For aliases whose length is between 60 to 63, the case of multibyte and single byte
+					 * For aliases whose length is between 61 to 63, the case of multibyte and single byte
 					 * characters are handled separately.
 					 * It is needed to check whether last 32 bytes are equal to identifier_name or not,
 					 * because last 32 bytes would be MD5 hash in case of truncated identifier and 
