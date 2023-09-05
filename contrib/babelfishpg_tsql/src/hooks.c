@@ -127,6 +127,18 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
+<<<<<<< HEAD
+=======
+static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
+									  PlannedStmt *pstmt,
+									  const char *queryString,
+									  ProcessUtilityContext context,
+									  ParamListInfo params, QueryCompletion *qc);
+static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
+extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
+					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
+static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
+>>>>>>> a011dec44 (Fixed handling of input arguments for ISNULL() (#1709))
 
 /*****************************************
  * 			Executor Hooks
@@ -192,6 +204,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+
 
 /*****************************************
  * 			Install / Uninstall
@@ -323,6 +336,8 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
@@ -1155,9 +1170,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			Oid			sys_nspoid = get_namespace_oid("sys", false);
-			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_varchartypoid = get_sys_varcharoid();
 
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
 											 restype, sys_varchartypoid, -1,
@@ -3595,4 +3608,45 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 		/* Tsql NULLS FIRST is default for ASC; other way for DESC */
 		sortcl->nulls_first = !reverse;
 	}
+}
+
+/*
+ * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
+ * function.
+ * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
+ * replacement_value. If replacement_value is also NULL then return INT.
+ */
+static Oid
+select_common_type_for_isnull(ParseState *pstate, List *exprs)
+{
+	Node	   *pexpr;
+	Oid		   ptype;
+
+	Assert(exprs != NIL);
+	pexpr = (Node *) linitial(exprs);
+	ptype = exprType(pexpr);
+
+	/* Check if first arg (check_expression) is NULL literal */
+	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+	{
+		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
+		Oid ntype = exprType(nexpr);
+		/* Check if second arg (replace_expression) is NULL literal */
+		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
+		{
+			return INT4OID;
+		}
+		/* If second argument is non-null string literal */
+		if (ntype == UNKNOWNOID)
+		{
+			return get_sys_varcharoid();
+		}
+		return ntype;
+	}
+	/* If first argument is non-null string literal */
+	if (ptype == UNKNOWNOID)
+	{
+		return get_sys_varcharoid();
+	}
+	return ptype;
 }

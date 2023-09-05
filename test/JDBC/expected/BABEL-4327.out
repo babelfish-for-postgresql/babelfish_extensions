@@ -1,0 +1,84 @@
+CREATE TABLE [dbo].[test_babel_4327_table](
+       [id] [bigint] IDENTITY(1,1) NOT NULL,
+       [my_varchar_data] [varchar](20) NULL,
+       [my_computed_column] AS isnull([my_varchar_data],[id]));
+GO
+
+-- should be sys.varchar
+select name from sys.types where system_type_id = 
+(
+  select system_type_id from sys.columns where 
+    name = 'my_computed_column' and 
+	object_id = 
+	(
+	  select object_id from sys.tables where name = 'test_babel_4327_table'
+	)
+);
+GO
+~~START~~
+text
+varchar
+~~END~~
+
+
+INSERT INTO [dbo].[test_babel_4327_table]([my_varchar_data])VALUES ('1');
+INSERT INTO [dbo].[test_babel_4327_table]([my_varchar_data])VALUES ('HELLO');
+INSERT INTO [dbo].[test_babel_4327_table]([my_varchar_data])VALUES (NULL);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select
+  ISNULL(NULL, NULL),
+  ISNULL(NULL, 'Unassigned'),
+  ISNULL([my_varchar_data], 'Unassigned'),
+  ISNULL('Unassigned', 1),
+  ISNULL ('', 5)
+from [dbo].[test_babel_4327_table];
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar#!#varchar
+<NULL>#!#Unassigned#!#1#!#Unassigned#!#
+<NULL>#!#Unassigned#!#HELLO#!#Unassigned#!#
+<NULL>#!#Unassigned#!#Unassigned#!#Unassigned#!#
+~~END~~
+
+
+select * from [dbo].[test_babel_4327_table] where ISNULL([my_varchar_data], [id]) = 'HELLO';
+GO
+~~START~~
+bigint#!#varchar#!#varchar
+2#!#HELLO#!#HELLO
+~~END~~
+
+
+select * from [dbo].[test_babel_4327_table] where [my_computed_column] = 'HELLO';
+GO
+~~START~~
+bigint#!#varchar#!#varchar
+2#!#HELLO#!#HELLO
+~~END~~
+
+
+select * from [dbo].[test_babel_4327_table] where ISNULL([my_varchar_data], [id]) = 'HeLLO';
+GO
+~~START~~
+bigint#!#varchar#!#varchar
+2#!#HELLO#!#HELLO
+~~END~~
+
+
+select * from [dbo].[test_babel_4327_table] where [my_computed_column] = 'HeLLO';
+GO
+~~START~~
+bigint#!#varchar#!#varchar
+2#!#HELLO#!#HELLO
+~~END~~
+
+
+DROP TABLE [dbo].[test_babel_4327_table];
+GO

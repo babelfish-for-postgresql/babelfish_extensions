@@ -845,8 +845,7 @@ tsql_func_select_candidate(int nargs,
 	if (unknowns_resolved)
 	{
 		Oid		   *new_input_typeids = palloc(nargs * sizeof(Oid));
-		Oid			nspoid = get_namespace_oid("sys", false);
-		Oid			sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(nspoid));
+		Oid			sys_varcharoid = get_sys_varcharoid();
 
 		/*
 		 * For unknown literals, try the following orders: varchar -> text ->
