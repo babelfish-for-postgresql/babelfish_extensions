@@ -862,11 +862,15 @@ IMMUTABLE;
 
 ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
-ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT NOT NULL COLLATE "C";;
+SET allow_system_table_mods = on;
+
+ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT NOT NULL COLLATE "C";
 
 UPDATE sys.babelfish_sysdatabases SET orig_name = name WHERE orig_name IS NULL;
 
 ALTER TABLE sys.babelfish_sysdatabases ALTER COLUMN orig_name SET NOT NULL;
+
+RESET allow_system_table_mods;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
