@@ -201,6 +201,13 @@ go
 -- psql
 
 -- PG test cases
+
+-- call T-SQL proc from PG, T-SQL semantics still apply
+-- should print 'abc':
+-- NOTE: test is disabled as it crashes the JDBC test framework with message 'Received resultset tuples, but no field structure for them'
+--call master_dbo.unqStr_proc_2();
+--go
+
 -- PG procedure/function calls should not be affected by the T-SQL fix 
 -- for unquoted strings in BABEL-334
 CREATE OR REPLACE PROCEDURE unqStr_pgproc_1(par1 varchar(20))
