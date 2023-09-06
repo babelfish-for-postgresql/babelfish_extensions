@@ -92,14 +92,6 @@ Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool obj
 static Node *transform_like_in_add_constraint(Node *node);
 
 /*****************************************
- * 			Protocol Hooks
- *****************************************/
-
-IsTdsClientHookType PrevIsTdsClientHook = NULL;
-
-static bool bbf_is_tds_client(void);
-
-/*****************************************
  * 			Analyzer Hooks
  *****************************************/
 static int	pltsql_set_target_table_alternative(ParseState *pstate, Node *stmt, CmdType command);
@@ -231,10 +223,6 @@ InstallExtendedHooks(void)
 	if (IsExtendedCatalogHook)
 		PrevIsExtendedCatalogHook = IsExtendedCatalogHook;
 	IsExtendedCatalogHook = &IsPLtsqlExtendedCatalog;
-
-	if (IsTdsClientHook)
-		PrevIsTdsClientHook = IsTdsClientHook;
-	IsTdsClientHook = &bbf_is_tds_client;
 
 	prev_object_access_hook = object_access_hook;
 	object_access_hook = bbf_object_access_hook;
@@ -382,8 +370,6 @@ UninstallExtendedHooks(void)
 {
 	IsExtendedCatalogHook = PrevIsExtendedCatalogHook;
 
-	IsTdsClientHook = PrevIsTdsClientHook;
-
 	object_access_hook = prev_object_access_hook;
 
 	core_yylex_hook = prev_core_yylex_hook;
@@ -487,12 +473,6 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	}
 	return false;
 }									  
-
-static bool
-bbf_is_tds_client(void)
-{
-	return IS_TDS_CLIENT();
-}
 								
 
 static void

@@ -9,8 +9,6 @@ extern IsExtendedCatalogHookType PrevIsExtendedCatalogHook;
 extern IsToastRelationHookType PrevIsToastRelationHook;
 extern IsToastClassHookType PrevIsToastClassHook;
 
-extern IsTdsClientHookType PrevIsTdsClientHook;
-
 extern void InstallExtendedHooks(void);
 extern void UninstallExtendedHooks(void);
 
