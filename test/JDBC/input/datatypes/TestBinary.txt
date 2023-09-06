@@ -26,3 +26,4 @@ prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789
 SELECT * FROM BINARY_dt;
 DROP TABLE BINARY_dt;
 
+

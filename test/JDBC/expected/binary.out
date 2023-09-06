@@ -5,12 +5,14 @@ go
 -- psql     currentSchema=master_dbo,public
 insert into test_binary values ('\000\063');
 go
+~~ROW COUNT: 1~~
+
 
 select * from test_binary;
 go
 ~~START~~
-binary
-0033
+"sys"."bbf_binary"
+0x0033
 ~~END~~
 
 
