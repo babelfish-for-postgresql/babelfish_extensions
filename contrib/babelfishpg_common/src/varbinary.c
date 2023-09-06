@@ -36,16 +36,6 @@
 
 #define IS_OCTAL_STRING(x) (strlen(x) >= 4 && x[0] == '\\')
 
-/* We need to create a minimal stub of PLtsql_protocol_plugin so
- * that we can fill it out as a rendezvous variable
- */
-typedef struct PLtsql_protocol_plugin
-{
-	/* True if Protocol being used by client is TDS. */
-	bool		is_tds_client;
-} PLtsql_protocol_plugin;
-PLtsql_protocol_plugin **protocol_ptr;
-
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
 PG_FUNCTION_INFO_V1(varbinaryrecv);
@@ -181,6 +171,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 	bytea	   *result;
 	int32		typmod = PG_GETARG_INT32(2);
 	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+	const char *logical_babelfish_db_name = GetConfigOption("psql_logical_babelfish_db_name", true, false);
 
 	len = strlen(inputText);
 
@@ -202,11 +193,8 @@ varbinaryin(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(result);
 	}
 
-	protocol_ptr = (PLtsql_protocol_plugin **) find_rendezvous_variable("PLtsql_protocol_plugin");
-	if ((!(*protocol_ptr && (*protocol_ptr)->is_tds_client)) && 
-		IS_OCTAL_STRING(inputText)) /* basic sanity check for an octal string */
+	if (logical_babelfish_db_name)
 	{
-		/* Inserting from PG endpoint, use base byteain() directly */
 		PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
 	}
 
