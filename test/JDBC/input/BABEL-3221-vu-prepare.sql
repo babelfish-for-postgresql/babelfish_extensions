@@ -1,9 +1,3 @@
-CREATE DATABASE db_babel_3221;
-go
-
-USE db_babel_3221;
-go
-
 CREATE TABLE babel_3221_table_1 (id INT, unique_id varchar(200), amount money);
 INSERT INTO babel_3221_table_1(id, unique_id, amount) VALUES(1, '0E984725-C51C-4BF4-9960-E1C80E27ABA0', $2);
 go
