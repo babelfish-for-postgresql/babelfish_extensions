@@ -926,7 +926,7 @@ EXCEPTION
                     HINT := 'Check each input argument belongs to the valid range and try again.';
 
     WHEN numeric_value_out_of_range THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', p_fractions),
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
                     DETAIL := format('Source value is out of %s data type range.', v_err_message),
                     HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);

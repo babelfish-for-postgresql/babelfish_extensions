@@ -2332,7 +2332,7 @@ public:
             std::string expr2 = ::getFullText(fexp2);
 			if((int)rewritten_query_fragment.size() == 0)
 			{
-				std::string attimezone_expr = "sys.timezone(" + expr1 + "," + expr2 + ")";
+				std::string attimezone_expr = "sys.timezone(" + expr2 + "," + expr1 + ")";
 				rewritten_query_fragment.emplace(std::make_pair(fexp1->start->getStartIndex(), std::make_pair(::getFullText(fexp1), "")));
 				rewritten_query_fragment.emplace(std::make_pair(ctx->AT_KEYWORD()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->AT_KEYWORD()), "")));
 				rewritten_query_fragment.emplace(std::make_pair(ctx->TIME()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIME()), "")));
@@ -2343,7 +2343,7 @@ public:
 			{
 				std::string prev_str = rewritten_query_fragment.rbegin()->second.second;
 				rewritten_query_fragment.rbegin()->second.second = "";
-				std::string attimezone_expr = "sys.timezone(" + prev_str + "," + expr2 + ")";
+				std::string attimezone_expr = "sys.timezone(" + expr2 + "," + prev_str + ")";
 				rewritten_query_fragment.emplace(std::make_pair(fexp1->start->getStartIndex(), std::make_pair(::getFullText(fexp1), "")));
             	rewritten_query_fragment.emplace(std::make_pair(ctx->AT_KEYWORD()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->AT_KEYWORD()), "")));
             	rewritten_query_fragment.emplace(std::make_pair(ctx->TIME()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIME()), "")));
