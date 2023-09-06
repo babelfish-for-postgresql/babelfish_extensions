@@ -35,18 +35,9 @@ bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
 												 * sys.varchar / sys.nvarchar */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
-<<<<<<< HEAD
-=======
-bool
-pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
-                          ParamListInfo params);
-
-extern bool restore_tsql_tabletype;
-
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
 
->>>>>>> a011dec44 (Fixed handling of input arguments for ISNULL() (#1709))
 /*
  * Following the rule for locktag fields of advisory locks:
  *	field1: MyDatabaseId ... ensures locks are local to each database

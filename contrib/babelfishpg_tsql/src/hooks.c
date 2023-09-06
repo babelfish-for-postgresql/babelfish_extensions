@@ -127,18 +127,7 @@ static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
-<<<<<<< HEAD
-=======
-static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
-									  PlannedStmt *pstmt,
-									  const char *queryString,
-									  ProcessUtilityContext context,
-									  ParamListInfo params, QueryCompletion *qc);
-static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
-extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
-					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
 static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
->>>>>>> a011dec44 (Fixed handling of input arguments for ISNULL() (#1709))
 
 /*****************************************
  * 			Executor Hooks
