@@ -18,3 +18,7 @@ go
 
 select * from test_binary;
 go
+
+--tsql
+drop table test_binary
+go

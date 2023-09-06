@@ -1,9 +1,9 @@
 --tsql
-create table test_binary (data binary(10))
+create table test_binary (binary_data binary(10), varbinary_data varbinary(10), image_data image)
 go
 
 -- psql     currentSchema=master_dbo,public
-insert into test_binary values ('\000\063');
+insert into test_binary values ('\000\063', '\000\063', '\000\063');
 go
 ~~ROW COUNT: 1~~
 
@@ -11,7 +11,30 @@ go
 select * from test_binary;
 go
 ~~START~~
-"sys"."bbf_binary"
-0x0033
+"sys"."bbf_binary"#!#"sys"."bbf_varbinary"#!#"sys"."bbf_varbinary"
+0x5c3030305c303633#!#0x5c3030305c303633#!#0x5c3030305c303633
 ~~END~~
+
+
+-- set the GUC to master
+set psql_logical_babelfish_db_name = 'master';
+go
+
+insert into test_binary values ('\000\063', '\000\063', '\000\063');
+go
+~~ROW COUNT: 1~~
+
+
+select * from test_binary;
+go
+~~START~~
+"sys"."bbf_binary"#!#"sys"."bbf_varbinary"#!#"sys"."bbf_varbinary"
+0x5c3030305c303633#!#0x5c3030305c303633#!#0x5c3030305c303633
+0x0033#!#0x0033#!#0x0033
+~~END~~
+
+
+--tsql
+drop table test_binary
+go
 
