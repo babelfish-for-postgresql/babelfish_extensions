@@ -77,6 +77,13 @@ GO
 ~~ERROR (Message: Argument data type integer is invalid for argument 3 of date_bucket function.)~~
 
 
+SELECT * FROM DATE_BUCKET_vu_prepare_v11_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type integer is invalid for argument 3 of date_bucket function.)~~
+
+
 SELECT * FROM DATE_BUCKET_vu_prepare_v12
 GO
 ~~ERROR (Code: 33557097)~~
@@ -166,14 +173,14 @@ SELECT * FROM DATE_BUCKET_vu_prepare_v22
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart year is not supported by date function date_bucket for data type time.)~~
+~~ERROR (Message: The datepart year is not supported by date function date_bucket for data type 'time'.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v23
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart hour is not supported by date function date_bucket for data type date.)~~
+~~ERROR (Message: The datepart hour is not supported by date function date_bucket for data type 'date'.)~~
 
 
 SELECT * FROM DATE_BUCKET_vu_prepare_v24

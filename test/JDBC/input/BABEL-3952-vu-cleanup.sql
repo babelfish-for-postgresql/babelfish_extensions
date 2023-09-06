@@ -25,6 +25,9 @@ GO
 DROP VIEW DATE_BUCKET_vu_prepare_v11
 GO
 
+DROP VIEW DATE_BUCKET_vu_prepare_v11_2
+GO
+
 DROP VIEW DATE_BUCKET_vu_prepare_v12
 GO
 

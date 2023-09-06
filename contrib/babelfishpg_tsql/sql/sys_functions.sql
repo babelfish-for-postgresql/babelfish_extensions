@@ -3972,9 +3972,9 @@ BEGIN
         ELSIF datepart IN ('doy', 'microsecond', 'nanosecond') THEN
             RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type %.', datepart, date_arg_datatype;
         ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type date.', datepart;
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''date''.', datepart;
         ELSIF date_arg_datatype = 'time'::regtype AND datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type time.', datepart;
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''time''.', datepart;
         ELSIF origin IS false THEN
             RAISE EXCEPTION 'Argument data type varchar is invalid for argument 4 of date_bucket function.';
         ELSIF number <= 0 THEN
@@ -3989,7 +3989,7 @@ $body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
-CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date TEXT, IN origin TEXT default NULL) RETURNS TEXT 
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
 AS 
 $body$
 DECLARE
@@ -4007,7 +4007,7 @@ $body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Another definition of date_bucket() with arg date of type ANYELEMENT and origin of type TEXT.
-CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin TEXT) RETURNS ANYELEMENT 
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin PG_CATALOG.TEXT) RETURNS ANYELEMENT 
 AS 
 $body$
 DECLARE

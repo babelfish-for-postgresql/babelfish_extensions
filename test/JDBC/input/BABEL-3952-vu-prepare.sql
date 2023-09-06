@@ -68,6 +68,12 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v11 AS (
     );
 GO
 
+CREATE VIEW DATE_BUCKET_vu_prepare_v11_2 AS (
+    select 
+        date_bucket(dayofyear, 2, 6473) as db
+    );
+GO
+
 -- Test with invalid origin date
 -- Should throw - Argument data type integer is invalid for argument 4 of Date_Bucket function
 CREATE VIEW DATE_BUCKET_vu_prepare_v12 AS (
