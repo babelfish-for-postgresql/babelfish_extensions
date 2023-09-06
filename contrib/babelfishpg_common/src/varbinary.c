@@ -14,6 +14,7 @@
 #include <limits.h>
 
 #include "access/hash.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
@@ -33,21 +34,6 @@
 #include "utils/varlena.h"
 
 #include "instr.h"
-
-// #include "../../contrib/babelfishpg_tsql/src/pltsql.h"
-// #include "../../contrib/babelfishpg_tsql/src/pltsql-2.h"
-
-/* We need to create a minimal stub of PLtsql_protocol_plugin so
- * that we can reference pltsql_protocol_plugin_ptr to check whether
- * we are coming from the TDS or PG client.
- */
-typedef struct PLtsql_protocol_plugin
-{
-	/* True if Protocol being used by client is TDS. */
-	bool		is_tds_client;
-} PLtsql_protocol_plugin;
-PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
-
 
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
@@ -205,7 +191,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(result);
 	}
 
-	if ((!(*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->is_tds_client)) && 
+	if (!(IsTdsClientHook && (*IsTdsClientHook)()) && 
 		(len >= 4 && inputText[0] == '\\')) /* basic sanity check for an octal string */
 	{
 		/* Inserting from PG endpoint, use base byteain() directly */

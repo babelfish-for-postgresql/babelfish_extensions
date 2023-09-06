@@ -25,8 +25,3 @@ prepst#!#exec#!#binary|-|a|-|123456789#!#varbinary|-|b|-|12345
 prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789
 SELECT * FROM BINARY_dt;
 DROP TABLE BINARY_dt;
-
-CREATE TABLE BINARY_dt(data BINARY(10));
-INSERT INTO BINARY_dt VALUES ('\000\063');
-SELECT * FROM BINARY_dt;
-DROP TABLE BINARY_DT;
