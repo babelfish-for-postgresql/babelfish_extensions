@@ -193,7 +193,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(result);
 	}
 
-	if (logical_babelfish_db_name)
+	if (logical_babelfish_db_name && IS_OCTAL_STRING(inputText)) /* special case trying to insert raw octal data */
 	{
 		PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
 	}

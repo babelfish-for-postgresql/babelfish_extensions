@@ -37,4 +37,3 @@ go
 --tsql
 drop table test_binary
 go
-
