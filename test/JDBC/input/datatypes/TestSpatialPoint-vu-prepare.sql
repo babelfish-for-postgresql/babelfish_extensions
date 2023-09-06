@@ -21,12 +21,6 @@ INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)') )
 GO
 
--- Negative Test for STGeomFromText when SRID is null
--- BabelFish returns Null NBCROW, but it should throw ' 'geometry::STGeomFromText' failed because parameter 2 is not allowed to be null. The statement has been terminated.'
--- INSERT INTO SPATIALPOINTGEOM_dt (location)
--- VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', null ) )
--- GO
-
 -- Negative Test for STGeomFromText when SRID >= 10^6
 -- SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOM_dt (location)
@@ -53,6 +47,11 @@ GO
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText(null, 4326) )
 GO
+
+-- -- Negative Test for STGeomFromText when Incorrect cast is provided
+-- INSERT INTO SPATIALPOINTGEOM_dt (location)
+-- VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+-- GO
 
 -- Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
 INSERT INTO SPATIALPOINTGEOM_dt (location)
@@ -90,10 +89,14 @@ INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)') )
 GO
 
--- Negative Test for STGeomFromText when SRID is null
--- BabelFish returns Null NBCROW, but it should throw ' 'geometry::STGeomFromText' failed because parameter 2 is not allowed to be null. The statement has been terminated.'
+-- Negative Test for STGeomFromText when cast is not provided
+INSERT INTO SPATIALPOINTGEOG_dt (location)
+VALUES ( STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+GO
+
+-- -- Negative Test for STGeomFromText when incorrect cast is provided
 -- INSERT INTO SPATIALPOINTGEOG_dt (location)
--- VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', null ) )
+-- VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 -- GO
 
 -- Negative Test for STGeomFromText when SRID >= 10^6

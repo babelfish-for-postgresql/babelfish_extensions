@@ -969,8 +969,16 @@ public:
 			TSqlParser::IdContext *idctx = ctx->id()[0];
 			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
 			{
-				rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), ""))); 
-				rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "")));			
+				std::string idText = ::getFullText(idctx->id()[0]);
+				transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
+				size_t start = idText.find_first_not_of(" \n\r\t\f\v");
+				idText = (start == std::string::npos) ? "" : idText.substr(start);
+				size_t end = idText.find_last_not_of(" \n\r\t\f\v");
+				idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
+				if(idText == "geography" || idText == "geometry"){
+					rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), idText))); 
+					rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "__")));		
+				}
 			}
 		}
 		#endif
@@ -2226,37 +2234,19 @@ public:
 		TSqlParser::IdContext *idctx = ctx->id()[0];
 		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
 		{
-            std::string idText = idctx->id()[0]->getText();
-			
-			// Preprocessing to call geography functions to store coordinates in reverse order for geography types. 
-			if(idText == "geography"){
-				std::string func_name = idctx->id()[1]->getText();
-				transform(func_name.begin(), func_name.end(), func_name.begin(), ::tolower);
-				std::string searchString = "stgeomfromtext";
-				std::string searchString1 = "stpointfromtext";
-				std::string replaceString = " stgeogfromtext";
+			std::string idText = idctx->id()[0]->getText();
+			transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
+			size_t start = idText.find_first_not_of(" \n\r\t\f\v");
+    		idText = (start == std::string::npos) ? "" : idText.substr(start);
+			size_t end = idText.find_last_not_of(" \n\r\t\f\v");
+    		idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
+			if(idText == "geography" || idText == "geometry"){
+				// Replace colon_colon with underscores of the same length
+				std::string colonText = idctx->colon_colon()->getText();
+				std::string underScores(colonText.size(), '_');
 
-				size_t pos = 0;
-				while ((pos = func_name.find(searchString, pos)) != std::string::npos) {
-					func_name.replace(pos, searchString.length(), replaceString.substr(1));
-					pos += replaceString.length();
-				}
-
-				pos = 0;
-
-				while ((pos = func_name.find(searchString1, pos)) != std::string::npos) {
-					func_name.replace(pos, searchString1.length(), replaceString);
-					pos += replaceString.length();
-				}
-				stream.setText(idctx->id()[1]->start->getStartIndex(), func_name.c_str());
-
+				stream.setText(idctx->colon_colon()->start->getStartIndex(), underScores.c_str());
 			}
-
-			// Replace id()[0] and colon_colon with blank spaces of the same length
-            std::string colonText = idctx->colon_colon()->getText();
-            std::string blankSpaces(idText.size() + colonText.size(), ' ');
-
-            stream.setText(idctx->id()[0]->start->getStartIndex(), blankSpaces.c_str());
 		}
 	}
 	#endif

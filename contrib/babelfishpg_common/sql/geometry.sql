@@ -73,7 +73,7 @@ CREATE OR REPLACE FUNCTION cust_stgeomfromtext(text, integer)
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.stgeomfromtext(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -121,12 +121,12 @@ CREATE CAST (bytea AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(bytea) AS IMPLICI
 CREATE CAST (sys.GEOMETRY AS bytea) WITH FUNCTION sys.bytea(sys.GEOMETRY) AS IMPLICIT;
 
 -- Availability: 3.2.0 current supported in APG
-CREATE OR REPLACE FUNCTION cust_Point(float8, float8, srid integer)
+CREATE OR REPLACE FUNCTION cust_GeomPoint(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3', 'ST_Point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
 
-CREATE OR REPLACE FUNCTION sys.Point(float8, float8, srid integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE
@@ -135,7 +135,7 @@ CREATE OR REPLACE FUNCTION sys.Point(float8, float8, srid integer)
 		srid := $3;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT cust_Point($1, $2, $3));
+			RETURN (SELECT cust_GeomPoint($1, $2, $3));
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
@@ -147,7 +147,7 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_asBinary'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.STPointFromText(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE

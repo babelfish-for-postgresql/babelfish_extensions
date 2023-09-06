@@ -73,16 +73,16 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.GEOMETRY)
 	AS '$libdir/postgis-3','geography_from_geometry'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.GEOMETRY AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.GEOMETRY) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.GEOMETRY) AS ASSIGNMENT;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.GEOGRAPHY)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','geometry_from_geography'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.GEOGRAPHY AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.GEOGRAPHY) ;
+CREATE CAST (sys.GEOGRAPHY AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.GEOGRAPHY) AS ASSIGNMENT;
 
-CREATE OR REPLACE FUNCTION sys.STFlipCoordinates(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
 	RETURNS sys.GEOGRAPHY
 	AS '$libdir/postgis-3', 'ST_FlipCoordinates'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -92,7 +92,7 @@ CREATE OR REPLACE FUNCTION cust_stgeogfromtext(text, integer)
 	AS '$libdir/postgis-3','geography_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.stgeogfromtext(text, integer)
+CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE
@@ -101,7 +101,7 @@ CREATE OR REPLACE FUNCTION sys.stgeogfromtext(text, integer)
 		srid := $2;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT sys.STFlipCoordinates(cust_stgeogfromtext($1, $2)));
+			RETURN (SELECT sys.Geography__STFlipCoordinates(cust_stgeogfromtext($1, $2)));
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
@@ -118,7 +118,7 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT cust_STAsText(STFlipCoordinates($1)));
+		RETURN (SELECT cust_STAsText(Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -126,6 +126,62 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_asBinary'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION cust_GeogPoint(float8, float8, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS '$libdir/postgis-3', 'ST_Point'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
+
+
+CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		srid integer;
+		lat float8;
+	BEGIN
+		srid := $3;
+		lat := $1;
+		IF srid >= 0 AND srid <= 999999 AND lat >= -90.0 AND lat <= 90.0 THEN
+			-- Call the underlying function after preprocessing
+			RETURN (SELECT cust_GeogPoint($1, $2, $3));
+		ELSEIF lat < -90.0 OR lat > 90.0 THEN
+			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
+		ELSE
+			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION cust_STAsBinary(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS '$libdir/postgis-3','LWGEOM_asBinary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS $$
+	BEGIN
+		-- Call the underlying function after preprocessing
+		RETURN (SELECT cust_STAsBinary(sys.Geography__STFlipCoordinates($1)));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		srid integer;
+	BEGIN
+		srid := $2;
+		IF srid >= 0 AND srid <= 999999 THEN
+			-- Call the underlying function after preprocessing
+			RETURN (SELECT sys.Geography__STFlipCoordinates(cust_stgeogfromtext($1, $2)));
+		ELSE
+			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Minimum distance
 CREATE OR REPLACE FUNCTION cust_STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
@@ -138,7 +194,7 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT cust_STDistance(sys.STFlipCoordinates($1), sys.STFlipCoordinates($2)));
+		RETURN (SELECT cust_STDistance(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -154,6 +210,6 @@ CREATE OR REPLACE FUNCTION sys.lat(sys.GEOGRAPHY)
 
 CREATE OR REPLACE FUNCTION sys.ST_Transform(sys.GEOGRAPHY)
 	RETURNS float8
-	AS '$libdir/postgis-3','LWGEOM_y_point'
+	AS '$libdir/postgis-3','LWGEOM_x_point'
 	LANGUAGE 'c' IMMUTABLE STRICT;
     
