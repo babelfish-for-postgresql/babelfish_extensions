@@ -35,6 +35,9 @@ bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
 												 * sys.varchar / sys.nvarchar */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
+/* To cache oid of sys.varchar */
+static Oid sys_varcharoid = InvalidOid;
+
 /*
  * Following the rule for locktag fields of advisory locks:
  *	field1: MyDatabaseId ... ensures locks are local to each database
@@ -1322,4 +1325,22 @@ tsql_get_trigger_rel_oid(Oid object_id)
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
 	return tgrelid;
+}
+
+Oid get_sys_varcharoid(void)
+{
+	Oid sys_oid;
+	if (OidIsValid(sys_varcharoid))
+	{
+		return sys_varcharoid;
+	}
+	sys_oid = get_namespace_oid("sys", false);
+	sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(sys_oid));
+	if (!OidIsValid(sys_varcharoid))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Oid corresponding to sys.varchar datatype could not be found.")));
+	}
+	return sys_varcharoid;
 }
