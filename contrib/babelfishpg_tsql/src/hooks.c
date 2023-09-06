@@ -471,10 +471,8 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 																lfirst(option));
 							}
 						
-						if(orig_dbname){
-							pfree(stmt->dbname);
-							stmt->dbname = convertToUPN(orig_dbname);
-						}
+						pfree(stmt->dbname);
+						stmt->dbname = convertToUPN(orig_dbname);
 		
 						}
 				create_bbf_db(pstate, stmt);
