@@ -4,7 +4,10 @@ on: [push, pull_request]
 jobs:
   run-babelfish-tap-tests:
     env:
-      INSTALL_DIR: psql
+      OLD_INSTALL_DIR: psql_source
+      NEW_INSTALL_DIR: psql_target
+      ENGINE_BRANCH_OLD: BABEL_2_6_STABLE__PG_14_9
+      EXTENSION_BRANCH_OLD: BABEL_2_6_STABLE
 
     runs-on: ubuntu-20.04
     steps:
@@ -33,37 +36,64 @@ jobs:
           sudo -E apt-get install krb5-admin-server krb5-kdc krb5-user libkrb5-dev -y -qq
         shell: bash
 
-      - name: Build Modified Postgres
-        id: build-modified-postgres
+      - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_OLD}}
+        id: build-modified-postgres-old
         if: always() && steps.install-kerberos-dependencies.outcome == 'success'
-        with:
-          tap_tests: 'yes'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          engine_branch: ${{env.ENGINE_BRANCH_OLD}}
+          install_dir: ${{env.OLD_INSTALL_DIR}}
 
       - name: Compile ANTLR
         id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success'
+        if: always() && steps.build-modified-postgres-old.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
+        with:
+          install_dir: ${{env.OLD_INSTALL_DIR}}
 
-      - name: Build Extensions
-        id: build-extensions
+      - name: Build Extensions using ${{env.EXTENSION_BRANCH_OLD}}
+        id: build-extensions-old
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
+        with:
+          install_dir: ${{env.OLD_INSTALL_DIR}}
+          extension_branch: ${{env.EXTENSION_BRANCH_OLD}}
+
+      - uses: actions/checkout@v2
+
+      - name: Build Modified Postgres using latest version
+        id: build-modified-postgres-new
+        if: always() && steps.build-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          tap_tests: 'yes'
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      - name: Copy ANTLR
+        run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
+
+      - name: Build Extensions using latest version
+        id: build-extensions-new
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Run TAP Tests
         id: tap
-        if: always() && steps.build-extensions.outcome == 'success'
+        if: always() && steps.build-extensions-new.outcome == 'success'
         timeout-minutes: 5
         run: |
-          export PG_CONFIG=~/${{env.INSTALL_DIR}}/bin/pg_config
+          export PG_CONFIG=~/${{env.NEW_INSTALL_DIR}}/bin/pg_config
           export PATH=/opt/mssql-tools/bin:$PATH
+          export oldinstall=$HOME/${{env.OLD_INSTALL_DIR}}
 
           cd contrib/babelfishpg_tds
-          make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/002_tdskerberos.pl t/003_bbfextnotloaded.pl"
+          make installcheck PROVE_TESTS="t/001_tdspasswd.pl t/002_tdskerberos.pl t/003_bbfextnotloaded.pl t/004_bbfdumprestore.pl"
 
       - name: Upload Logs
         if: always() && steps.tap.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: tap_tests_logs
-          path: contrib/babelfishpg_tds/test/tmp_check/log
+          path: contrib/babelfishpg_tds/test/tmp_check
