@@ -984,7 +984,7 @@ IMMUTABLE;
 
 
 
-CREATE OR REPLACE FUNCTION sys.timezone(IN input_expr PG_CATALOG.TEXT , IN tzzone PG_CATALOG.TEXT)
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset
 AS
 $BODY$
@@ -1003,7 +1003,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.timezone(IN input_expr anyelement , IN tzzone PG_CATALOG.TEXT)
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT , IN input_expr anyelement)
 RETURNS sys.datetimeoffset
 AS
 $BODY$
@@ -1019,6 +1019,7 @@ BEGIN
     RETURN NULL;
     END IF;
     RAISE LOG 'tmz(any,text)';
+    
     IF NOT EXISTS (Select utc_offset from pg_timezone_names where name = (Select pgtzname from babelfish_timezone_mapping where stdname = tzzone)) THEN
         RAISE USING MESSAGE := format('Argument data type or the parameter %s provided to AT TIME ZONE clause is invalid.', tzzone);
     END IF;
