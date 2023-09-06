@@ -1,14 +1,14 @@
 --tsql
-create table test_binary (binary_data binary(10), varbinary_data varbinary(10), image_data image)
+create table test_binary_t1 (binary_data binary(10), varbinary_data varbinary(10), image_data image)
 go
 
 -- psql     currentSchema=master_dbo,public
-insert into test_binary values ('\000\063', '\000\063', '\000\063');
+insert into test_binary_t1 values ('\000\063', '\000\063', '\000\063');
 go
 ~~ROW COUNT: 1~~
 
 
-select * from test_binary;
+select * from test_binary_t1;
 go
 ~~START~~
 "sys"."bbf_binary"#!#"sys"."bbf_varbinary"#!#"sys"."bbf_varbinary"
@@ -20,12 +20,12 @@ go
 set psql_logical_babelfish_db_name = 'master';
 go
 
-insert into test_binary values ('\000\063', '\000\063', '\000\063');
+insert into test_binary_t1 values ('\000\063', '\000\063', '\000\063');
 go
 ~~ROW COUNT: 1~~
 
 
-select * from test_binary;
+select * from test_binary_t1;
 go
 ~~START~~
 "sys"."bbf_binary"#!#"sys"."bbf_varbinary"#!#"sys"."bbf_varbinary"
@@ -35,5 +35,5 @@ go
 
 
 --tsql
-drop table test_binary
+drop table test_binary_t1
 go
