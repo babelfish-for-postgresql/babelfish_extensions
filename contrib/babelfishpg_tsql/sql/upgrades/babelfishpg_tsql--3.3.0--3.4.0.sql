@@ -562,7 +562,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.timezone(IN input_expr PG_CATALOG.TEXT , IN tzzone PG_CATALOG.TEXT)
+CREATE OR REPLACE FUNCTION sys.timezone( IN tzzone PG_CATALOG.TEXT , IN input_expr PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset
 AS
 $BODY$
@@ -581,7 +581,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.timezone(IN input_expr anyelement , IN tzzone PG_CATALOG.TEXT)
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT , IN input_expr anyelement)
 RETURNS sys.datetimeoffset
 AS
 $BODY$

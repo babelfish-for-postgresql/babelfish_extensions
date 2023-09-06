@@ -942,6 +942,7 @@ View information_schema_tsql.routines
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
+View sys.babelfish_timezone_mapping
 View sys.change_tracking_databases
 View sys.change_tracking_tables
 View sys.data_spaces
