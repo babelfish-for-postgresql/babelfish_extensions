@@ -874,5 +874,3 @@ RESET allow_system_table_mods;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
