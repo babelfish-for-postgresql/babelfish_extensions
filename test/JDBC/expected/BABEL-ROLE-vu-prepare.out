@@ -1,3 +1,13 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql
 CREATE PROC babel_role_vu_prepare_user_ext_master AS
 BEGIN 
@@ -26,10 +36,10 @@ GO
 CREATE LOGIN babel_role_vu_prepare_login3 WITH PASSWORD = 'abc'
 GO
 
-CREATE DATABASE babel_role_vu_prepare_DB
+CREATE DATABASE babel_role_vu_prepare_db
 GO
 
-USE babel_role_vu_prepare_DB
+USE babel_role_vu_prepare_db
 GO
 
 CREATE PROC babel_role_vu_prepare_user_ext AS
@@ -48,6 +58,26 @@ BEGIN
 	WHERE name LIKE 'babel_role_vu_prepare%'
 	ORDER BY name
 END
+GO
+
+CREATE PROC babel_role_vu_prepare_role_members AS
+BEGIN
+	SELECT dp1.name AS RoleName, dp1.type AS RoleType,
+		   dp2.name AS MemberName, dp2.type AS MemberType
+	FROM sys.database_role_members AS drm
+	INNER JOIN sys.database_principals AS dp1
+	ON drm.role_principal_id = dp1.principal_id
+	INNER JOIN sys.database_principals AS dp2
+	ON drm.member_principal_id = dp2.principal_id
+	WHERE dp1.name LIKE 'babel_role_vu_prepare%'
+	ORDER BY dp1.name, dp2.name
+END
+GO
+
+CREATE DATABASE babel_role_vu_prepare_DB1
+GO
+
+USE babel_role_vu_prepare_DB1
 GO
 
 CREATE PROC babel_role_vu_prepare_role_members AS

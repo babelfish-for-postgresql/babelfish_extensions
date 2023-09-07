@@ -71,6 +71,12 @@ go
 exec sp_fkeys @fktable_name = [babel_sp_fkeys_vu_prepare_MYTABLE7]
 go
 
+use babel_sp_fkeys_vu_prepare_DB2
+go
+
+EXEC SP_FKEYS @FKTABLE_NAME = 'babel_sp_fkeys_vu_prepare_t4'
+go
+
 use master
 go
 

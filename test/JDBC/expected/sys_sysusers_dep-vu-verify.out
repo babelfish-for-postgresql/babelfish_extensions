@@ -216,3 +216,16 @@ GO
 
 ~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
 
+
+use sysusersDB1
+GO
+
+SELECT * FROM sysusers_dep_vu_prepare_view
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#int
+dbo#!#1#!#1#!#0#!#1#!#0
+guest#!#0#!#1#!#0#!#1#!#0
+sysusers_dep_vu_prepare_user1#!#1#!#1#!#0#!#1#!#0
+~~END~~
+

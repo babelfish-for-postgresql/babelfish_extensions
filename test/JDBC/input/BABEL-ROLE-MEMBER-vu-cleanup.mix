@@ -28,3 +28,8 @@ USE master
 GO
 DROP DATABASE BABEL_ROLE_MEMBER_vu_prepare_db
 GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
