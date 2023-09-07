@@ -149,3 +149,61 @@ VALUES ('John'),
        ('Jane'), 
        ('Jim');
 GO
+
+-- Used PRIMARY KEY, placed NOT NULL before Identity Column & added a check constraint before identity column
+CREATE TABLE BABEL_4217_vu_prepare_t13 (
+    ID INT PRIMARY KEY NOT NULL CHECK(ID < 5) IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+INSERT INTO BABEL_4217_vu_prepare_t13 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane'), 
+       ('Jim');
+GO
+
+-- Used PRIMARY KEY, placed NOT NULL before Identity Column & added default constraint before identity column (it should give error)
+CREATE TABLE BABEL_4217_vu_prepare_t14 (
+    ID INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+-- Used PRIMARY KEY & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql), placed not null before identity column and added "check" constraint before identity column
+CREATE TABLE BABEL_4217_vu_prepare_t15 (
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+INSERT INTO BABEL_4217_vu_prepare_t15 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane'), 
+       ('Jim');
+GO
+
+-- Used PRIMARY KEY & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql), placed not null before identity column and added "default" constraint before identity column
+CREATE TABLE BABEL_4217_vu_prepare_t16 (
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+INSERT INTO BABEL_4217_vu_prepare_t16 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane'), 
+       ('Jim');
+GO
+
+-- Used PRIMARY KEY, placed NOT NULL before Identity Column & added a check constraint before identity column
+CREATE TABLE BABEL_4217_vu_prepare_t17 (
+    ID INT PRIMARY KEY NOT NULL CHECK(ID > 2) IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+-- It should give error (check constraint violation)
+INSERT INTO BABEL_4217_vu_prepare_t17 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane'), 
+       ('Jim');
+GO

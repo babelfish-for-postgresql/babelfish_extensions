@@ -57,3 +57,21 @@ ALTER TABLE BABEL_4217_vu_prepare_t12 add id INT NOT NULL UNIQUE IDENTITY(1,1);
 GO
 SELECT * FROM BABEL_4217_vu_prepare_t12;
 GO
+
+SELECT * FROM BABEL_4217_vu_prepare_t13;
+GO
+
+SELECT * FROM BABEL_4217_vu_prepare_t15;
+GO
+
+ALTER TABLE BABEL_4217_vu_prepare_t15 add id INT PRIMARY KEY NOT NULL CHECK(id < 5) IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t15;
+GO
+
+SELECT * FROM BABEL_4217_vu_prepare_t16;
+GO
+
+-- It should give error (default and idenity cannot be assigned to same column)
+ALTER TABLE BABEL_4217_vu_prepare_t16 add id INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1);
+GO

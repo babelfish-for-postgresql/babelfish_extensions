@@ -183,3 +183,53 @@ Jane#!#2
 Jim#!#3
 ~~END~~
 
+
+SELECT * FROM BABEL_4217_vu_prepare_t13;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+3#!#Jim
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t15;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+
+ALTER TABLE BABEL_4217_vu_prepare_t15 add id INT PRIMARY KEY NOT NULL CHECK(id < 5) IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t15;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+Jim#!#3
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t16;
+GO
+~~START~~
+varchar
+John
+Jane
+Jim
+~~END~~
+
+
+-- It should give error (default and idenity cannot be assigned to same column)
+ALTER TABLE BABEL_4217_vu_prepare_t16 add id INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: both default and identity specified for column "id" of table "babel_4217_vu_prepare_t16")~~
+
