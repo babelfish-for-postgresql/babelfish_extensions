@@ -51,6 +51,10 @@ CREATE TABLE sys_col_length_test_schema.test_table(
 );
 GO
 
+INSERT INTO sys_col_length_test_schema.test_table (col_char, col_varchar, col_varbinary)
+VALUES ('ABCDEF', 'Hello, World!', 0x0123456789ABCDEF)
+GO
+
 CREATE VIEW col_length_prepare_v1 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'ID'));
 GO
 

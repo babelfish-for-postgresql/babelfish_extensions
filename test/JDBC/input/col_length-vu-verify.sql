@@ -135,3 +135,42 @@ GO
 
 SELECT * FROM sys.COL_LENGTH('sys_column_length_test_table', 'col_numeric');
 GO
+
+-- case sensitive check
+SELECT * FROM sys.COL_LENGTH('sys_column_length_test_TABLE', 'COL_NUMERIC');
+GO
+
+SELECT * FROM sys.COL_LENGTH('', '');
+GO
+
+-- arguments with CAST
+SELECT * FROM sys.COL_LENGTH('sys_column_length_test_TABLE', CAST('col_numeric' as VARCHAR(20)));
+GO
+
+SELECT * FROM sys.COL_LENGTH('sys_column_length_test_table', (SELECT CAST('123' as text)));
+GO
+
+SELECT * FROM sys.COL_LENGTH((SELECT CAST('abc#$' as VARCHAR(10))), 'col_numeric');
+GO
+
+-- Using COL_LENGTH() in queries on tables, returning columns with even length
+WITH ColumnLengths AS (
+    SELECT COLUMN_NAME,
+           sys.COL_LENGTH(TABLE_NAME, COLUMN_NAME) AS ColumnLength
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'sys_column_length_test_table'
+)
+SELECT COLUMN_NAME, ColumnLength
+FROM ColumnLengths
+WHERE ColumnLength % 2 = 0;
+GO
+
+-- Using COL_LENGTH() in expressions
+SELECT 
+    CASE 
+        WHEN sys.COL_LENGTH('sys_column_length_test_table', 'col_sql_variant') > 8015
+        THEN 'SQL Variant Column'
+        ELSE 'Other Column' 
+    END AS ColumnStatus;
+GO
+

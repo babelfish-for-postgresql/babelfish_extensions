@@ -359,3 +359,97 @@ smallint
 5
 ~~END~~
 
+
+-- case sensitive check
+SELECT * FROM sys.COL_LENGTH('sys_column_length_test_TABLE', 'COL_NUMERIC');
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('', '');
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+
+-- arguments with CAST
+SELECT * FROM sys.COL_LENGTH('sys_column_length_test_TABLE', CAST('col_numeric' as VARCHAR(20)));
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('sys_column_length_test_table', (SELECT CAST('123' as text)));
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH((SELECT CAST('abc#$' as VARCHAR(10))), 'col_numeric');
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+
+-- Using COL_LENGTH() in queries on tables, returning columns with even length
+WITH ColumnLengths AS (
+    SELECT COLUMN_NAME,
+           sys.COL_LENGTH(TABLE_NAME, COLUMN_NAME) AS ColumnLength
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_NAME = 'sys_column_length_test_table'
+)
+SELECT COLUMN_NAME, ColumnLength
+FROM ColumnLengths
+WHERE ColumnLength % 2 = 0;
+GO
+~~START~~
+nvarchar#!#smallint
+id#!#4
+col_char#!#10
+col_varchar#!#20
+col_nchar#!#16
+col_nvarchar#!#32
+col_text#!#16
+col_image#!#16
+col_ntext#!#16
+col_sysname#!#256
+col_sql_variant#!#8016
+col_bigint#!#8
+col_smallint#!#2
+col_smallmoney#!#4
+col_money#!#8
+col_smalldatetime#!#4
+col_real#!#4
+col_float#!#8
+col_datetime#!#8
+col_datetime2#!#8
+col_datetimeoffset#!#10
+col_uniqueidentifier#!#16
+~~END~~
+
+
+-- Using COL_LENGTH() in expressions
+SELECT 
+    CASE 
+        WHEN sys.COL_LENGTH('sys_column_length_test_table', 'col_sql_variant') > 8015
+        THEN 'SQL Variant Column'
+        ELSE 'Other Column' 
+    END AS ColumnStatus;
+GO
+~~START~~
+text
+SQL Variant Column
+~~END~~
+
+
