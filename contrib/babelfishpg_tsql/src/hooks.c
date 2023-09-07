@@ -146,6 +146,7 @@ static int pltsql_date_decoder(int nf, char **field, int fmask, int tmask, bool 
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
+static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 
 /*****************************************
  * 			Executor Hooks
@@ -221,6 +222,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static time_datatype_parse_error_hook_type prev_time_datatype_parse_error_hook = NULL;
 static date_decoder_hook_type prev_date_decoder_hook = NULL;
 static handle_textMonth_case_hook_type prev_handle_textMonth_case_hook = NULL;
+
 
 /*****************************************
  * 			Install / Uninstall
@@ -380,6 +382,8 @@ InstallExtendedHooks(void)
 
 	prev_handle_textMonth_case_hook = handle_textMonth_case_hook;
 	handle_textMonth_case_hook = pltsql_handle_textMonth_case;
+
+	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
@@ -1295,9 +1299,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			Oid			sys_nspoid = get_namespace_oid("sys", false);
-			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_varchartypoid = get_sys_varcharoid();
 
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
 											 restype, sys_varchartypoid, -1,
@@ -1587,13 +1589,28 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		/* Get relid either by s.t or t */
 		if (schemaname && relname)
 		{
-			relid = RangeVarGetRelid(makeRangeVar(schemaname, relname, res->location),
+			/* Get physical schema name from logical schema name */
+			char *physical_schema_name = get_physical_schema_name(get_cur_db_name(), schemaname);
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
 									 NoLock,
 									 true);
+			pfree(physical_schema_name);
 		}
 		else if (relname)
 		{
-			relid = RelnameGetRelid(relname);
+			/* 
+			 * In case of schema name is not specified, To get the relid of table
+			 * we will search for the table in schema of target relation.
+			 */
+			
+			/* Get physical schema name of target relation */
+			char *physical_schema_name = get_namespace_name(RelationGetNamespace(pstate->p_target_relation));
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
+									 NoLock,
+									 true);
+			pfree(physical_schema_name);
 		}
 		targetRelid = RelationGetRelid(pstate->p_target_relation);
 		/* If relid matches or alias matches, try to resolve the qualifiers */
@@ -2344,6 +2361,14 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	HeapTuple	tuple;
 	List	   *insert_col_list = NIL,
 			   *temp_col_list;
+	char		relkind = get_rel_relkind(relid);
+
+	if(relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The target '%s' of the OUTPUT INTO clause cannot be a view or common table expression.", stmt->relation->relname)));
+	}
 
 	if (!output_into_insert_transformation)
 		return;
@@ -3919,4 +3944,46 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 			}
 		}
 	}	
+}
+
+
+/*
+ * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
+ * function.
+ * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
+ * replacement_value. If replacement_value is also NULL then return INT.
+ */
+static Oid
+select_common_type_for_isnull(ParseState *pstate, List *exprs)
+{
+	Node	   *pexpr;
+	Oid		   ptype;
+
+	Assert(exprs != NIL);
+	pexpr = (Node *) linitial(exprs);
+	ptype = exprType(pexpr);
+
+	/* Check if first arg (check_expression) is NULL literal */
+	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+	{
+		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
+		Oid ntype = exprType(nexpr);
+		/* Check if second arg (replace_expression) is NULL literal */
+		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
+		{
+			return INT4OID;
+		}
+		/* If second argument is non-null string literal */
+		if (ntype == UNKNOWNOID)
+		{
+			return get_sys_varcharoid();
+		}
+		return ntype;
+	}
+	/* If first argument is non-null string literal */
+	if (ptype == UNKNOWNOID)
+	{
+		return get_sys_varcharoid();
+	}
+	return ptype;
 }

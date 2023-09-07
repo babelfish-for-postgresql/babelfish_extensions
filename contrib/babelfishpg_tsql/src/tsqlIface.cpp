@@ -793,6 +793,12 @@ public:
 		}
 	}
 
+	void enterKill_statement(TSqlParser::Kill_statementContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'KILL' within a function.", 0, 0);
+		}
+	}
+
 	/* Column Name */
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
 	{
@@ -2018,7 +2024,7 @@ public:
 	{
 		// if select doesnt contains into but it contains identity we should throw error
 		if(has_identity_function && !ctx->INTO()){
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Incorrect syntax near ')'", getLineAndPos(ctx));
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "The IDENTITY function can only be used when the SELECT statement has an INTO clause.", getLineAndPos(ctx));
 		}
 		has_identity_function = false;
 		if (statementMutator)
@@ -4042,27 +4048,7 @@ makeTryCatchStmt(TSqlParser::Try_catch_statementContext *ctx)
 void *
 makeWaitForStmt(TSqlParser::Waitfor_statementContext *ctx)
 {
-    PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
-	std::string query;
-
-    result->cmd_type = PLTSQL_STMT_EXEC;
-    result->lineno = getLineNo(ctx);;
-    result->is_call = true;
-    result->return_code_dno = -1;
-    result->paramno = 0;
-    result->params = NIL;
-
-    query += "EXEC ";
-    if (ctx->DELAY())
-        query += "bbf_sleep_for(";
-    else
-        query += "bbf_sleep_until(";
-
-    query += getFullText(ctx->expression());
-    query += ")";
-    result->expr = makeTsqlExpr(query, false);
-
-    return result;
+	return nullptr;
 }
 
 void *
@@ -4778,12 +4764,26 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		int lineno = getLineNo(ctx);
 		int return_code_dno = -1;
 
+		std::string rewritten_name = "";
+		if (body->func_proc_name_server_database_schema())
+		{
+			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
+			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(body->func_proc_name_server_database_schema(), getDatabase, getSchema);
+		}
+
+		std::string name = (!rewritten_name.empty() ? rewritten_name : func_proc_name);
+		// Rewrite proc name to sp_* if the schema is "dbo" or "sys" and proc name starts with "sp_"
+		if ((pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0) || (pg_strncasecmp(name.c_str(), "sys.sp_", 6) == 0))
+			name.erase(name.begin() + 0, name.begin() + 4);
+
 		auto *localID = body->return_status ? body->LOCAL_ID()[0] : nullptr;
 		if (localID)
 			return_code_dno = getVarno(localID);
 
-		if (is_sp_proc(func_proc_name))
-			return makeSpStatement(func_proc_name, func_proc_args, lineno, return_code_dno);
+		if (is_sp_proc(name))
+			return makeSpStatement(name, func_proc_args, lineno, return_code_dno);
 
 		PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
 		result->cmd_type = PLTSQL_STMT_EXEC;
@@ -4821,20 +4821,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 			}
 		}
 
-		std::string rewritten_name = "";
-		if (body->func_proc_name_server_database_schema())
-		{
-			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
-			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
-			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
-			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(body->func_proc_name_server_database_schema(), getDatabase, getSchema);
-		}
-
 		std::stringstream ss;
-		std::string name = (!rewritten_name.empty() ? rewritten_name : func_proc_name);
-		// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
-		if (pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0)
-			name.erase(name.begin() + 0, name.begin() + 4);
 		ss << "EXEC " << name;
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
@@ -5097,6 +5084,27 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 }
 
 PLtsql_stmt *
+makeKillStatement(TSqlParser::Kill_statementContext *ctx)
+{
+	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_KILL;
+	result->lineno = getLineNo(ctx);
+
+	/* 
+	 * Only supporting numeric argument for the spid,
+	 * other flavours of KILL are intercepted in the parser.
+	 */
+	if (ctx->kill_process()) {
+		char *strtol_endptr;
+		std::string spidStr = ::getFullText(ctx->kill_process());
+		result->spid = (int) strtol(spidStr.c_str(), &strtol_endptr, 10);
+	}
+
+	return (PLtsql_stmt *) result;
+}
+
+PLtsql_stmt *
 makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 {
 	if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
@@ -5208,6 +5216,8 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 		result.push_back(makeTransactionStatement(ctx->transaction_statement())); /* relaying transaction statement to main parser */
 	else if (ctx->use_statement())
 		result.push_back(makeUseStatement(ctx->use_statement()));
+	else if (ctx->kill_statement())
+		result.push_back(makeKillStatement(ctx->kill_statement()));
 
 	// FIXME: handle remaining statement types
 
@@ -5225,6 +5235,11 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	bool is_cross_db = false;
 	std::string db_name;
 	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+
+	// Rewrite proc name to sp_* if the schema is "dbo" or "sys" and proc name starts with "sp_"
+	if ((pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0) || (pg_strncasecmp(func_proc_name.c_str(), "sys.sp_", 6) == 0))
+		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
+
 	if (ctx->func_proc_name_server_database_schema()->database)
 	{
 		db_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database);
@@ -5275,9 +5290,6 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	}
 
 	std::stringstream ss;
-	// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
-	if (pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0)
-		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
 	ss << "EXEC " << func_proc_name;
 	if (func_proc_args)
 		ss << " " << ::getFullText(func_proc_args);

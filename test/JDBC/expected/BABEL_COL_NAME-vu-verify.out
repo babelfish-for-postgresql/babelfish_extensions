@@ -1,0 +1,137 @@
+USE babel_3172_test_db;
+GO
+
+SELECT * FROM col_name_prepare_v1;
+GO
+~~START~~
+varchar
+id
+~~END~~
+
+
+SELECT * FROM col_name_prepare_v2;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT * FROM col_name_prepare_v3;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT * FROM col_name_prepare_v4;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+EXEC col_name_prepare_p1;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+EXEC col_name_prepare_p2;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+EXEC col_name_prepare_p3;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+EXEC col_name_prepare_p4;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT col_name_prepare_f1();
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "invalid test expression")~~
+
+
+SELECT col_name_prepare_f2();
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "invalid test expression")~~
+
+
+SELECT * FROM COL_NAME(NULL, NULL);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+
+DECLARE @table_id INT = (SELECT OBJECT_ID('sys_col_name_test_schema.test_table'));
+SELECT * FROM COL_NAME(@table_id, 1);
+GO
+~~START~~
+varchar
+firstname
+~~END~~
+
+
+SELECT * FROM COL_NAME('0x1A', 3);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "0x1A")~~
+
+
+SELECT * FROM COL_NAME(7, 'column_name');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "column_name")~~
+
+
+SELECT * FROM COL_NAME('0x2F', 'another_column');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "0x2F")~~
+
+
+SELECT * FROM COL_NAME('0xAB', '0x8C');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "0xAB")~~
+
+
+SELECT * FROM COL_NAME('sample_table', 'some_column');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "sample_table")~~
+

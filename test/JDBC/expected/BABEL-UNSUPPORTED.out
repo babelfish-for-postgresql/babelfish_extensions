@@ -2369,14 +2369,6 @@ GO
 ~~ERROR (Message: 'ALTER AUTHORIZATION ON' is not currently supported in Babelfish)~~
 
 
--- kill (BABEL-2159)
-KILL 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'KILL' is not currently supported in Babelfish)~~
-
-
 -- alter view (BABEL-2017)
 CREATE TABLE t_babel_2017(a int, b int);
 GO
