@@ -117,11 +117,22 @@ GO
 ~~ROW COUNT: 1~~
 
 
--- Positive Test for STGeomFromText with SRID 0
+-- Negative Test for STGeomFromText for Geography with SRID 0
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Inavalid SRID)~~
+
+
+-- Negative Test for STGeomFromText for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location)
+VALUES ( geography::STGeomFromText('Point(47.65100 -122.34900)', 4326) )
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
 
 
 -- Negative Test for STGeomFromText when SRID is not provided
@@ -148,23 +159,21 @@ GO
 -- VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 -- GO
 -- Negative Test for STGeomFromText when SRID >= 10^6
--- SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SRID value should be between 0 and 999999)~~
+~~ERROR (Message: Inavalid SRID)~~
 
 
 -- Negative Test for STGeomFromText with SRID < 0
--- SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SRID value should be between 0 and 999999)~~
+~~ERROR (Message: Inavalid SRID)~~
 
 
 -- Negative Test for STGeomFromText when a coordinate is missing
@@ -204,11 +213,29 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- Negative Test for STPointFromText for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location)
+VALUES ( geography::STPointFromText('Point(47.65100 122.34900)', 4326) )
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
+
+
 -- Positive Test for Point with SRID 4326
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::Point(47.65100, -22.34900, 4326) )
 GO
 ~~ROW COUNT: 1~~
+
+
+-- Negative Test for Point for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location)
+VALUES ( geography::Point(147.65100, -22.34900, 4326) )
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
 
 
 CREATE TABLE SPATIALPOINT_dt (GeomColumn geometry, GeogColumn geography)

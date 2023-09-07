@@ -108,14 +108,14 @@ jobs:
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.build-extensions-new.outcome == 'success'
+        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Setup new data directory
         id: setup-new-datadir
-        if: always() && steps.build-tds_fdw-extension.outcome && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         run: |
           cd ~
           ~/${{env.NEW_INSTALL_DIR}}/bin/initdb -D ~/${{env.NEW_INSTALL_DIR}}/data
