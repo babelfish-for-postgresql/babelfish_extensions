@@ -19,6 +19,17 @@ go
 select * from test_binary_t1;
 go
 
+-- test for invalid inputs
+
+-- non-octal
+insert into test_binary_t1 values ('txt', 'txt', 'txt');
+
+-- not valid length
+insert into test_binary_t1 values ('\000\02', '\000\02', '\000\02');
+
+-- not valid digits
+insert into test_binary_t1 values ('\000\009', '\000\099', '\000\009');
+
 --tsql
 drop table test_binary_t1
 go

@@ -34,8 +34,6 @@
 
 #include "instr.h"
 
-#define IS_OCTAL_STRING(x) (strlen(x) >= 4 && x[0] == '\\' && strlen(x) % 4 == 0)
-
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
 PG_FUNCTION_INFO_V1(varbinaryrecv);
@@ -158,6 +156,27 @@ babelfish_hex_decode_allow_odd_digits(const char *src, unsigned len, char *dst)
 	return p - dst;
 }
 
+static bool 
+IsValidOctalString(const char *str)
+{
+	if (!str || ((strlen(str) % 4) != 0))
+		return false;
+	for (int i = 0; str[i] != '\0'; i++)
+	{
+		if ((i % 4) == 0) // every 4 characters starting with first should be '\'
+		{
+			if (str[i] != '\\')
+				return false;
+		}
+		else // all other characters must be between 0 and 7
+		{
+			if (str[i] < '0' || str[i] > '7')
+				return false;
+		}
+	}
+	return true;
+}
+
 /*
  *		varbinaryin	- input function of varbinary
  */
@@ -193,9 +212,18 @@ varbinaryin(PG_FUNCTION_ARGS)
 		PG_RETURN_BYTEA_P(result);
 	}
 
-	if (logical_babelfish_db_name && IS_OCTAL_STRING(inputText)) /* special case trying to insert raw octal data */
+	if (logical_babelfish_db_name) /* special case of DMS trying to insert raw octal data */
 	{
-		PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
+		if (IsValidOctalString(inputText))
+		{
+			PG_RETURN_BYTEA_P(DirectFunctionCall1(byteain, (Datum) inputText));
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+					 errmsg("DMS mode is on - invalid string '%s' cannot be coerced to BINARY, VARBINARY, or IMAGE type. Only valid octal strings of format '\\XXX' are permitted.", inputText)));
+		}
 	}
 
 	tp = inputText;
