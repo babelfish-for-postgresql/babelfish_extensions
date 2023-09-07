@@ -34,7 +34,7 @@
 
 #include "instr.h"
 
-#define IS_OCTAL_STRING(x) (strlen(x) >= 4 && x[0] == '\\')
+#define IS_OCTAL_STRING(x) (strlen(x) >= 4 && x[0] == '\\' && strlen(x) % 4 == 0)
 
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
