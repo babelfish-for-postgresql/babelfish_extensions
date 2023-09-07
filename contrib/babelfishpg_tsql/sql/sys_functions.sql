@@ -4033,6 +4033,7 @@ $body$
 DECLARE
     required_bucket INT;
     years_diff INT;
+    quarters_diff INT;
     months_diff INT;
     hours_diff INT;
     minutes_diff INT;
@@ -4079,40 +4080,41 @@ BEGIN
         seconds_diff := FLOOR(EXTRACT('second' from date_difference_interval))::INT;
         milliseconds_diff := FLOOR(EXTRACT('millisecond' from date_difference_interval))::INT;
         CASE datepart
-        WHEN 'hour' THEN
-            -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
-            -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. (Ex. 'date_bucket(hour, 2, '01:00:00', '08:00:00')') 
-            -- For comparision we are trunceting the result_time to milliseconds
-            required_bucket := hours_diff/number;
-            result_time := origin + concat(required_bucket * number, ' hours')::interval;
-            IF date_trunc('millisecond', result_time) > date THEN
-                RETURN result_time - concat(number, ' hours')::interval;
-            END IF;
-            RETURN result_time;
+            WHEN 'hour' THEN
+                -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                -- For Ex. 'date_bucket(hour, 2, '01:00:00', '08:00:00')' hence check if the result_time is greater then date
+                -- For comparision we are trunceting the result_time to milliseconds
+                required_bucket := hours_diff/number;
+                result_time := origin + make_interval(hours => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(hours => number);
+                END IF;
+                RETURN result_time;
 
-        WHEN 'minute' THEN
-            required_bucket := (hours_diff * 60 + minutes_diff)/number;
-            result_time := origin + concat(required_bucket * number, ' minutes')::interval;
-            IF date_trunc('millisecond', result_time) > date THEN
-                RETURN result_time - concat(number, ' minutes')::interval;
-            END IF;
-            RETURN result_time;
+            WHEN 'minute' THEN
+                required_bucket := (hours_diff * 60 + minutes_diff)/number;
+                result_time := origin + make_interval(mins => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(mins => number);
+                END IF;
+                RETURN result_time;
 
-        WHEN 'second' THEN
-            required_bucket := ((hours_diff * 60 + minutes_diff) * 60 + seconds_diff)/number;
-            result_time := origin + concat(required_bucket * number, ' ', 'seconds')::interval;
-            IF date_trunc('millisecond', result_time) > date THEN
-                RETURN result_time - concat(number, ' ', 'seconds')::interval;
-            END IF;
-            RETURN result_time;
+            WHEN 'second' THEN
+                required_bucket := ((hours_diff * 60 + minutes_diff) * 60 + seconds_diff)/number;
+                result_time := origin + make_interval(secs => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => number);
+                END IF;
+                RETURN result_time;
 
-        WHEN 'millisecond' THEN
-            required_bucket := (((hours_diff * 60 + minutes_diff) * 60) * 1000 + milliseconds_diff)/number;
-            result_time := origin + concat(required_bucket * number,' milliseconds')::interval;
-            IF date_trunc('millisecond', result_time) > date THEN
-                RETURN result_time - concat(number, ' milliseconds')::interval;
-            END IF;
-            RETURN result_time;
+            WHEN 'millisecond' THEN
+                required_bucket := (((hours_diff * 60 + minutes_diff) * 60) * 1000 + milliseconds_diff)/number;
+                result_time := origin + make_interval(secs => ((required_bucket * number)::numeric) * 0.001);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => (number::numeric) * 0.001);
+                END IF;
+                RETURN result_time;
         END CASE;
 
     -- support of date_bucket() when date is of {'datetime2', 'datetimeoffset'} datatype
@@ -4124,29 +4126,31 @@ BEGIN
             years_diff := EXTRACT('Year' from date_difference_interval)::INT;
             months_diff := EXTRACT('Month' from date_difference_interval)::INT;
             CASE datepart
-            WHEN 'year' THEN
-                -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in whcih our date falls.
-                -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. (Ex. date_bucket(year, 2, '2010-01-01', '2019-01-01')) 
-                required_bucket := years_diff/number;
-                result_date := origin::timestamp + concat(required_bucket * number, ' years')::interval;
-                IF result_date > date::timestamp THEN
-                    result_date = result_date - concat(number, ' years')::interval;
-                END IF;
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Ex. date_bucket(year, 2, '2010-01-01', '2019-01-01')) hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
 
-            WHEN 'month' THEN
-                required_bucket := (12 * years_diff + months_diff)/number;
-                result_date := origin::timestamp + concat(required_bucket * number, ' months')::interval;
-                IF result_date > date::timestamp THEN
-                    result_date = result_date - concat(number, ' months')::interval;
-                END IF;
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
 
-            WHEN 'quarter' THEN
-                years_diff := (12 * years_diff + months_diff)/3;
-                required_bucket := years_diff/number;
-                result_date := origin::timestamp + concat(required_bucket * number * 3, ' months')::interval;
-                IF result_date > date::timestamp THEN
-                    result_date = result_date - concat(number*3, ' months')::interval;
-                END IF;
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number*3);
+                    END IF;
             END CASE;  
         
         -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function. 
@@ -4157,16 +4161,18 @@ BEGIN
             millisec_trunc_diff_interval := (origin::timestamp - date_trunc('millisecond', origin::timestamp))::interval;
             result_date = date_bin(date_difference_interval, date::timestamp, date_trunc('millisecond', origin::timestamp)) + millisec_trunc_diff_interval;
 
-            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. (Ex. query #4 of DATE_BUCKET_vu_prepare_v15) 
-            IF result_date + concat(number, ' ', datepart)::INTERVAL <= date::timestamp THEN
-                result_date = result_date + concat(number, ' ', datepart)::INTERVAL;
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result.
+            -- Example. query #4 of test VIEW DATE_BUCKET_vu_prepare_v29
+            IF result_date + date_difference_interval <= date::timestamp THEN
+                result_date = result_date + date_difference_interval;
             END IF;
         END IF;
 
         -- All the above operations are performed by converting every date datatype into TIMESTAMPS. 
-        -- datetimeoffset is also typecasted into TIMESTAMPS. Ex. '2023-02-23 09:19:21.23 +10:12'::sys.datetimeoffset::timestamp => '2023-02-22 23:07:21.23'
-        -- As the output of date_bucket() for datetimeoffset datatype will always be in the same time-zone as of provided date argument. 
-        -- Here, converting TIMESTAMP into datetimeoffset with the same timezone as of date argument.
+        -- datetimeoffset is typecasted into TIMESTAMPS that changes the value. 
+        -- Ex. '2023-02-23 09:19:21.23 +10:12'::sys.datetimeoffset::timestamp => '2023-02-22 23:07:21.23'
+        -- The output of date_bucket() for datetimeoffset datatype will always be in the same time-zone as of provided date argument. 
+        -- Here, converting TIMESTAMP into datetimeoffset datatype with the same timezone as of date argument.
         IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
             timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
             offset_string = right(date::PG_CATALOG.TEXT, 6);
@@ -4189,29 +4195,31 @@ BEGIN
             years_diff := EXTRACT('Year' from date_difference_interval)::INT;
             months_diff := EXTRACT('Month' from date_difference_interval)::INT;
             CASE datepart
-            WHEN 'year' THEN
-                -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in whcih our date falls.
-                -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. (Ex. date_bucket(year, 2, '2010-01-01', '2019-01-01')) 
-                required_bucket := years_diff/number;
-                result_date := origin::timestamp + concat(required_bucket * number, ' years')::interval;
-                IF result_date > date::timestamp THEN
-                    result_date = result_date - concat(number, ' years')::interval;
-                END IF;
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Example. date_bucket(year, 2, '2010-01-01', '2019-01-01') hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
 
-            WHEN 'month' THEN
-                required_bucket := (12 * years_diff + months_diff)/number;
-                result_date := origin::timestamp + concat(required_bucket * number, ' months')::interval;
-                IF result_date > date::timestamp THEN
-                    result_date = result_date - concat(number, ' months')::interval;
-                END IF;
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
 
-            WHEN 'quarter' THEN
-                years_diff := (12 * years_diff + months_diff)/3;
-                required_bucket := years_diff/number;
-                result_date := origin::timestamp + concat(required_bucket * number * 3, ' months')::interval;
-                IF result_date > date::timestamp THEN
-                    result_date = result_date - concat(number * 3, ' months')::interval;
-                END IF;
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number * 3);
+                    END IF;
             END CASE;
             RETURN result_date;
         
@@ -4221,9 +4229,10 @@ BEGIN
             -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
             date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
             result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
-            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. (Ex. query #4 of DATE_BUCKET_vu_prepare_v15) 
-            IF result_date + concat(number, ' ', datepart)::INTERVAL <= date::TIMESTAMP THEN
-                result_date = result_date + concat(number, ' ', datepart)::INTERVAL;
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. 
+            -- For Example. query #4 of test VIEW DATE_BUCKET_vu_prepare_v29.
+            IF result_date + date_difference_interval <= date::TIMESTAMP THEN
+                result_date = result_date + date_difference_interval;
             END IF;
             RETURN result_date;
         END IF;
