@@ -42,8 +42,8 @@ extern Oid	sysdatabaese_idx_name_oid;
 #define SYSDATABASES_NUM_COLS 9
 #define Anum_sysdatabaese_oid 1
 #define Anum_sysdatabaese_name 6
-#define Anum_sysdatabaese_name_original 7
-#define Anum_sysdatabaese_crdate 8
+#define Anum_sysdatabaese_name_original 9
+#define Anum_sysdatabaese_crdate 7
 
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
@@ -54,9 +54,9 @@ typedef struct FormData_sysdatabases
 	NameData	owner;
 	NameData	default_collation;
 	text		name;
-	text		original_name;
 	TimestampTz crdate;
 	text		properties;
+	text		original_name;
 } FormData_sysdatabases;
 
 typedef FormData_sysdatabases *Form_sysdatabases;

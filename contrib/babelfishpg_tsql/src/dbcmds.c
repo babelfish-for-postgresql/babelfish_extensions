@@ -491,9 +491,9 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	new_record[3] = CStringGetDatum(owner);
 	new_record[4] = NameGetDatum(&default_collation);
 	new_record[5] = CStringGetTextDatum(downcase_identifier(dbname, strlen(dbname), false, false));
-	new_record[6] = CStringGetTextDatum(dbname);
-	new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(0));
-	new_record[8] = CStringGetTextDatum("{}");
+	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
+	new_record[7] = CStringGetTextDatum("{}");
+	new_record[8] = CStringGetTextDatum(dbname);
 
 	tuple = heap_form_tuple(RelationGetDescr(sysdatabase_rel),
 							new_record, new_record_nulls);
