@@ -1275,7 +1275,7 @@ find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK)
 
 static void
 pre_transform_target_entry(ResTarget *res, ParseState *pstate,
-						ParseExprKind exprKind)
+							ParseExprKind exprKind)
 {
 	if (prev_pre_transform_target_entry_hook)
 		(*prev_pre_transform_target_entry_hook) (res, pstate, exprKind);
@@ -1321,7 +1321,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		/*
 		 * Case 1 : Handle both singlebyte and multibyte aliases when delimited by 
 		 * square bracket(sqb) and double quoutes(dq).
-		 * For instance, queries like : SELECT 1 AS '您对“数据一览“中的车型，颜色，内饰，选装, ';
+		 * For instance, queries like : SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选选装";
 		 * Case 2 : Preserve the case of aliases with ascii characters when there is no sqb and dq.
 		 * For instance, queries like: SELECT 1 AS ABCD;
 		 * Case 3 : Handle both singlebyte and multibyte aliases whose length is
