@@ -81,7 +81,7 @@ SELECT DB_NAME()
 GO
 ~~START~~
 nvarchar
-babel_role_vu_prepare_db
+babel_role_vu_prepare_DB
 ~~END~~
 
 
@@ -218,15 +218,6 @@ babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_user3#!#S
 ~~END~~
 
 
-USE babel_role_vu_prepare_DB1
-GO
-
-CREATE ROLE babel_role_vu_prepare_role1
-GO
-
-CREATE ROLE babel_role_vu_prepare_role2
-GO
-
 USE babel_role_vu_prepare_db
 GO
 
@@ -238,8 +229,6 @@ EXEC babel_role_vu_prepare_user_ext
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
-babel_role_vu_prepare_db1_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#babel_role_vu_prepare_db1
-babel_role_vu_prepare_db1_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db1
 babel_role_vu_prepare_db_babel_role_vu_prepare_role1_new#!#R#!#babel_role_vu_prepare_role1_new#!#babel_role_vu_prepare_db
 babel_role_vu_prepare_db_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db
 babel_role_vu_prepare_db_babel_role_vu_prepare_user2#!#S#!#babel_role_vu_prepare_user2#!#babel_role_vu_prepare_db
@@ -325,8 +314,6 @@ EXEC babel_role_vu_prepare_user_ext
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
-babel_role_vu_prepare_db1_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#babel_role_vu_prepare_db1
-babel_role_vu_prepare_db1_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db1
 babel_role_vu_prepare_db_babel_role_vu_prepare_role1_new#!#R#!#babel_role_vu_prepare_role1_new#!#babel_role_vu_prepare_db
 babel_role_vu_prepare_db_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db
 babel_role_vu_prepare_db_babel_role_vu_prepare_user2#!#S#!#babel_role_vu_prepare_user2#!#babel_role_vu_prepare_db
@@ -366,15 +353,6 @@ DROP USER babel_role_vu_prepare_user3
 GO
 
 DROP ROLE babel_role_vu_prepare_role1_new
-GO
-
-DROP ROLE babel_role_vu_prepare_role2
-GO
-
-USE babel_role_vu_prepare_DB1
-GO
-
-DROP ROLE babel_role_vu_prepare_role1
 GO
 
 DROP ROLE babel_role_vu_prepare_role2

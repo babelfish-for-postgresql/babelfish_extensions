@@ -11,12 +11,6 @@ GO
 DROP PROC babel_role_vu_prepare_role_members
 GO
 
-USE babel_role_vu_prepare_DB1
-GO
-
-DROP PROC babel_role_vu_prepare_role_members
-GO
-
 USE master
 GO
 
@@ -52,16 +46,3 @@ GO
 
 DROP DATABASE babel_role_vu_prepare_db
 GO
-
-DROP DATABASE babel_role_vu_prepare_DB1
-GO
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
