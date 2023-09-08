@@ -1,9 +1,3 @@
-CREATE DATABASE db_babel_3166;
-go
-
-USE db_babel_3166;
-go
-
 -- function
 CREATE FUNCTION babel_3166_func(@a numeric, @b varchar, @c varchar(max), @d varchar(8), @e binary(6))
 RETURNS varbinary(8) AS BEGIN RETURN @e END;

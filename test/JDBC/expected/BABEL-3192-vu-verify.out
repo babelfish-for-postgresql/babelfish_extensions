@@ -1,6 +1,3 @@
-USE db_babel_3192;
-go
-
 -- T-SQL table-type
 DECLARE @tablevar babel_3192_type;
 INSERT INTO @tablevar(a,b) VALUES(1,1);
@@ -70,10 +67,4 @@ DROP PROCEDURE babel_3192_proc;
 go
 
 DROP TYPE babel_3192_type;
-go
-
-USE master;
-go
-
-DROP DATABASE db_babel_3192;
 go

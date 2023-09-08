@@ -44,6 +44,9 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 
 extern bool restore_tsql_tabletype;
 
+/* To cache oid of sys.varchar */
+static Oid sys_varcharoid = InvalidOid;
+
 /*
  * Following the rule for locktag fields of advisory locks:
  *	field1: MyDatabaseId ... ensures locks are local to each database
@@ -1662,4 +1665,22 @@ exec_utility_cmd_helper(char *query_str)
 
 	/* make sure later steps can see the object created here */
 	CommandCounterIncrement();
+}
+
+Oid get_sys_varcharoid(void)
+{
+	Oid sys_oid;
+	if (OidIsValid(sys_varcharoid))
+	{
+		return sys_varcharoid;
+	}
+	sys_oid = get_namespace_oid("sys", false);
+	sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(sys_oid));
+	if (!OidIsValid(sys_varcharoid))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Oid corresponding to sys.varchar datatype could not be found.")));
+	}
+	return sys_varcharoid;
 }

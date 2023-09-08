@@ -441,6 +441,7 @@ test_windows_login
 test_windows_sp_helpuser
 TestXML
 timefromparts
+todatetimeoffset-dep
 triggers_with_transaction
 datetimeoffset-timezone
 BABEL-4046
@@ -449,3 +450,5 @@ linked_srv_4229
 BABEL-4175
 sp_who
 BABEL_4330
+kill
+Test_ISNULL
