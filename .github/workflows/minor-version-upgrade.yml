@@ -72,8 +72,8 @@ jobs:
           sudo cmake --build . --target install
           cd ../../postgis-3.3.3dev
           ./configure --without-protobuf --without-raster --with-pg-config=~/psql/bin/pg_config
-          make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
-          sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+          make
+          sudo make install
         shell: bash
 
       - name: Install extensions
