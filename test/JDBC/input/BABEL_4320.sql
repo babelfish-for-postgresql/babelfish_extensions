@@ -65,5 +65,31 @@ SELECT CASE
 END;
 GO
 
+-- table identifier truncation
+CREATE TABLE ncHdbdnjcnkejnjkcnreunjaknsaowlmfkrngvurtkanajhruddhbcmiuqwpalkdmfhcnbxndwue (a int)
+go
+
+IF (NOT EXISTS(select * from ncHdbdnjcnkejnjkcnreunjaknsaowlmfkrngvurtkanajhruddhbcmiuqwpalkdmfhcnbxndwue))
+BEGIN
+    SELECT 'Expected result'
+END
+GO
+
+-- table and column name truncation
+CREATE TABLE jakldnhjcDhdeuqpdkancjdtueqjanckdalejnxutuwmxdjajcneiqmalnfenirlenlaplqirncsrju (ncHdbdnjcnkejnjkcnreunjaknsaowlmfkrngvurtkanajhruddhbcmiuqwpalkdmfhcnbxndwue int)
+GO
+
+IF (NOT EXISTS(select ncHdbdnjcnkejnjkcnreunjaknsaowlmfkrngvurtkanajhruddhbcmiuqwpalkdmfhcnbxndwue from jakldnhjcDhdeuqpdkancjdtueqjanckdalejnxutuwmxdjajcneiqmalnfenirlenlaplqirncsrju))
+BEGIN
+    SELECT 'Expected result'
+END
+GO
+
+DROP TABLE jakldnhjcDhdeuqpdkancjdtueqjanckdalejnxutuwmxdjajcneiqmalnfenirlenlaplqirncsrju;
+GO
+
+DROP TABLE ncHdbdnjcnkejnjkcnreunjaknsaowlmfkrngvurtkanajhruddhbcmiuqwpalkdmfhcnbxndwue;
+GO
+
 DROP TABLE [dbo].[My_Table_4320];
 GO
