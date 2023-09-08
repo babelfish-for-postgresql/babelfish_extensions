@@ -58,7 +58,7 @@ jobs:
         id: build-postgis-extension
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         run: |
-          cd ..
+          cd ../..
           sudo apt-get install wget
           wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
           tar -xvzf postgis-3.3.3dev.tar.gz

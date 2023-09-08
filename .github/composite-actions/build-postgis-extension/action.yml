@@ -11,7 +11,7 @@ runs:
   steps:
     - name: Build PostGIS Extension
       run: |
-        cd ..
+        cd ../..
           sudo apt-get install wget
           wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
           tar -xvzf postgis-3.3.3dev.tar.gz
@@ -24,7 +24,7 @@ runs:
           cmake --build .
           sudo cmake --build . --target install
           cd ../../postgis-3.3.3dev
-          ./configure --without-protobuf --without-raster --with-pg-config=~/psql/bin/pg_config
-          make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
-          sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+          ./configure --without-protobuf --without-raster --with-pg-config=~/${{ inputs.install_dir }}/bin/pg_config
+          make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+          sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
       shell: bash
