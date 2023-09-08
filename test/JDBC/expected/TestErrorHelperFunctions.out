@@ -201,6 +201,7 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 42P13#!#PL/tsql functions cannot return type %s#!##!#2733
 0A000#!#Column name or number of supplied values does not match table definition.#!##!#213
 42501#!#Only members of the sysadmin role can execute this stored procedure.#!##!#15003
+42809#!#The target "%s" of the OUTPUT INTO clause cannot be a view or common table expression.#!##!#330
 ~~END~~
 
 

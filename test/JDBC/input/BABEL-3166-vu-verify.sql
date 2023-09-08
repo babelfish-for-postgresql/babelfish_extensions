@@ -1,6 +1,3 @@
-USE db_babel_3166;
-go
-
 -- Look at function's probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
 go
@@ -18,10 +15,4 @@ EXEC babel_3166_proc 1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe;
 go
 
 DROP PROCEDURE babel_3166_proc;
-go
-
-USE master;
-go
-
-DROP DATABASE db_babel_3166;
 go

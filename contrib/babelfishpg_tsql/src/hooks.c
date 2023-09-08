@@ -2341,6 +2341,14 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	HeapTuple	tuple;
 	List	   *insert_col_list = NIL,
 			   *temp_col_list;
+	char		relkind = get_rel_relkind(relid);
+
+	if(relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The target '%s' of the OUTPUT INTO clause cannot be a view or common table expression.", stmt->relation->relname)));
+	}
 
 	if (!output_into_insert_transformation)
 		return;
