@@ -12,7 +12,7 @@ runs:
         sudo apt-get install -y gdal-bin
         sudo apt-get install -y libgdal-dev
         sudo apt-get install -y libgeos-dev
-        sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common postgresql-server-dev-15
+        sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python3-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison mssql-tools unixodbc-dev libsybdb5 freetds-dev freetds-common
         sudo apt install -y ccache
         sudo /usr/sbin/update-ccache-symlinks
         echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc
