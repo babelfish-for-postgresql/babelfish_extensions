@@ -475,6 +475,72 @@ tsql_AlterLoginStmt:
 				}
 		;
 
+tsql_enable_disable_trigger:
+			tsql_enable_disable TRIGGER tsql_trigger_list ON relation_expr
+				{
+					AlterTableCmd *n1;
+					AlterTableStmt *n3 = makeNode(AlterTableStmt);
+					ListCell *lc;
+
+					foreach(lc, $3)
+					{
+						List *lst = lfirst_node(List, lc);
+						n1 = makeNode(AlterTableCmd);
+
+						if ($1)
+						{
+							n1->subtype = AT_EnableTrig;
+						}
+						else
+						{
+							n1->subtype = AT_DisableTrig;
+						}
+						
+						if (list_length(lst) > 1)
+						{
+							n1->name = strcat(((String *)list_nth(lst,0))->sval, ".");
+							n1->name = strcat(n1->name, ((String *)list_nth(lst,1))->sval);
+						}
+						else
+						{
+							n1->name = ((String *)list_nth(lst,0))->sval;
+						}
+						n3->cmds = list_concat(n3->cmds, list_make1((Node *) n1));
+					}
+
+					n3->relation = $5;
+					
+					n3->objtype = OBJECT_TRIGGER;
+					n3->missing_ok = false;
+					$$ = (Node *)n3;
+				}
+			| tsql_enable_disable TRIGGER ALL ON relation_expr
+				{
+					AlterTableCmd *n1 = makeNode(AlterTableCmd);
+					AlterTableStmt *n2 = makeNode(AlterTableStmt);
+
+					if ($1)
+					{
+						n1->subtype = AT_EnableTrigAll;
+					}
+					else
+					{
+						n1->subtype = AT_DisableTrigAll;
+					}
+
+					n2->relation = $5;
+					n2->cmds = list_make1((Node *) n1);
+					n2->objtype = OBJECT_TRIGGER;
+					n2->missing_ok = false;
+					$$ = (Node *)n2;
+				}
+		;
+
+tsql_trigger_list:
+			tsql_triggername								{ $$ = list_make1($1); }
+			| tsql_trigger_list ',' tsql_triggername				{ $$ = lappend($1, $3); }
+		;
+
 tsql_enable_disable:
 			ENABLE_P
 				{
@@ -2289,6 +2355,7 @@ tsql_stmt :
 			| DropUserMappingStmt
 			| tsql_DropRoleStmt
 			| DropdbStmt
+			| tsql_enable_disable_trigger
 			| tsql_ExecStmt
 			| ExplainStmt
 			| FetchStmt

@@ -590,6 +590,53 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 	}
 
+	if (parseTree->stmt->type == T_AlterTableStmt)
+	{
+		AlterTableStmt *atstmt = (AlterTableStmt *) parseTree->stmt;
+		ListCell *lc;
+		char *trig_schema;
+		const char *rel_schema;
+
+		foreach(lc, atstmt->cmds)
+		{
+			AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
+			if (cmd->subtype == AT_EnableTrig || cmd->subtype == AT_DisableTrig)
+			{
+				if (strchr(cmd->name, '.') != NULL)
+				{
+					trig_schema = strtok(cmd->name, ".");
+					cmd->name = strtok(NULL, ".");
+				}
+				else
+				{
+					trig_schema = NULL;
+				}
+				
+				if (atstmt->relation->schemaname != NULL)
+				{
+					rel_schema = get_logical_schema_name(atstmt->relation->schemaname, true);
+
+					if (rel_schema == NULL)
+					{
+						rel_schema = atstmt->relation->schemaname;
+					}
+				}
+				else
+				{
+					rel_schema = "dbo";
+				}
+
+				if (trig_schema != NULL && strcasecmp(trig_schema, rel_schema) != 0)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("Trigger %s.%s on table %s.%s does not exists or table %s.%s does not exists",
+									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
+				}
+			}
+		}
+	}
+
 	if (enable_schema_mapping())
 		rewrite_object_refs(parseTree->stmt);
 
@@ -2150,6 +2197,80 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 	switch (nodeTag(parsetree))
 	{
+		case T_AlterTableStmt:
+			{
+				AlterTableStmt *atstmt = (AlterTableStmt *) parsetree;
+				ListCell *lc;
+
+				if (sql_dialect == SQL_DIALECT_TSQL)
+				{
+					foreach(lc, atstmt->cmds)
+					{
+						AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
+						if (cmd->subtype == AT_EnableTrig || cmd->subtype == AT_DisableTrig)
+						{
+							if (atstmt->relation->schemaname != NULL)
+							{
+								/*
+								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> ) 
+								* is mapped to syntax2 ( ALTER TABLE <table> { ENABLE | DISABLE } TRIGGER <trigger> ),
+								* objtype of atstmt for syntax1 is temporarily set to OBJECT_TRIGGER to identify whether the
+								* query was originally of syntax1 or syntax2, here astmt->objtype is reset back to OBJECT_TABLE
+								*/
+								if (atstmt->objtype != OBJECT_TRIGGER)
+								{
+									/*
+									* ALTER TABLE syntax to enable disable trigger supports cross-db reference
+									* hence changed Current Role to Session User to get required privilege
+									*/
+									Oid prev_current_user;
+									prev_current_user = GetUserId();
+
+									/* Set current role to login user id for cross db permission */
+									SetCurrentRoleId(GetSessionUserId(), false);
+
+									PG_TRY();
+									{
+										if (prev_ProcessUtility)
+											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+																params, queryEnv, dest,
+																qc);
+										else
+											standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+																	params, queryEnv, dest,
+																	qc);
+									}
+									PG_CATCH();
+									{
+										SetCurrentRoleId(prev_current_user, false);
+										PG_RE_THROW();
+									}
+									PG_END_TRY();
+
+									SetCurrentRoleId(prev_current_user, false);
+
+									return;
+								}
+								else
+								{
+									int16 dbid = get_cur_db_id();
+									int16 stmt_dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, true);
+
+									if (dbid != stmt_dbid)	/* Check to identify cross-db referencing */
+									{
+										ereport(ERROR,
+												(errcode(ERRCODE_INTERNAL_ERROR),
+												errmsg("Cannot %s trigger on '%s.%s.%s' as the target is not in the current database."
+													, cmd->subtype == AT_EnableTrig ? "enable" : "disable", get_db_name(stmt_dbid), get_logical_schema_name(atstmt->relation->schemaname, true), atstmt->relation->relname)));
+									}
+								}
+							}
+							atstmt->objtype = OBJECT_TABLE;
+						}
+					}
+				}
+				break;
+			}
 		case T_TruncateStmt:
 			{
 				if (sql_dialect == SQL_DIALECT_TSQL)
