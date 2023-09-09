@@ -1101,6 +1101,7 @@ HeapTuple
 search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
 {
 
+	Relation 	bbf_view_def_idx_rel;
 	ScanKeyData scanKey[3];
 	SysScanDesc scan;
 	HeapTuple	scantup,
@@ -1109,30 +1110,34 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
 		return NULL;
 
+	bbf_view_def_idx_rel = index_open(get_bbf_view_def_idx_oid(), AccessShareLock);
 
 	/* Search and drop the definition */
-	ScanKeyInit(&scanKey[0],
-				Anum_bbf_view_def_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
+	ScanKeyEntryInitialize(&scanKey[0], 0, Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, InvalidOid,
+				bbf_view_def_idx_rel->rd_indcollation[0], F_INT2EQ,
 				Int16GetDatum(dbid));
 
-	ScanKeyInit(&scanKey[1],
-				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
+	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				bbf_view_def_idx_rel->rd_indcollation[1], F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
-	ScanKeyInit(&scanKey[2],
-				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
+	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, InvalidOid,
+				bbf_view_def_idx_rel->rd_indcollation[2], F_TEXTEQ,
 				CStringGetTextDatum(view_name));
+	
 
 	scan = systable_beginscan(bbf_view_def_rel,
 							  get_bbf_view_def_idx_oid(),
 							  true, NULL, 3, scanKey);
 
+
 	scantup = systable_getnext(scan);
 	oldtup = heap_copytuple(scantup);
 	systable_endscan(scan);
+	index_close(bbf_view_def_idx_rel, AccessShareLock);
 	return oldtup;
 }
 
