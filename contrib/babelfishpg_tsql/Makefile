@@ -12,8 +12,8 @@ EXTVERSION = $(PGTSQL_MAJOR_VERSION).$(PGTSQL_MINOR_VERSION).$(PGTSQL_MICRO_VERS
 #	babel_upgrade test target should at the top of the src/test/regress/babel_schedule
 # 	src/test/regress/sql/babel_upgrade.sql should be modified to include the PREV_EXTVERSION to test the upgrade path
 # 	contrib/babelfishpg_tsql/sql/upgrades/$(EXTENSION)--$(PREV_EXTVERSION).sql should be present to test the upgrade path
-PG_CONFIG_Dir := pg_config
-pglib_dir := $(shell $(PG_CONFIG_Dir) --pkglibdir)
+PG_CONFIG_Dir := PG_CONFIG
+pglib_dir := $(shell $(PG_CONFIG_Dir) --libdir)
 
 PREV_EXTVERSION = 1.0.0
 MODULEPATH := $(pglib_dir)/$(EXTENSION)-$(PGTSQL_MAJOR_VERSION)
