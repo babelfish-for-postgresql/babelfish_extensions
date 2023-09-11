@@ -12,10 +12,8 @@ EXTVERSION = $(PGTSQL_MAJOR_VERSION).$(PGTSQL_MINOR_VERSION).$(PGTSQL_MICRO_VERS
 #	babel_upgrade test target should at the top of the src/test/regress/babel_schedule
 # 	src/test/regress/sql/babel_upgrade.sql should be modified to include the PREV_EXTVERSION to test the upgrade path
 # 	contrib/babelfishpg_tsql/sql/upgrades/$(EXTENSION)--$(PREV_EXTVERSION).sql should be present to test the upgrade path
-PG_CONFIG_Dir := pg_config
-pglib_dir := $(shell $(PG_CONFIG_Dir) --pkglibdir)
-pglib_di := $(shell $(PG_CONFIG_Dir) --libdir)
-LIB = $$libdir
+# PG_CONFIG_Dir := pg_config
+pglib_dir := $(shell $(PG_CONFIG) --pkglibdir)
 
 PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(PGTSQL_MAJOR_VERSION)
@@ -99,8 +97,6 @@ PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
 #preprocessor check for postgis file
 POSTGIS_LIB := $(pglib_dir)
 $(info MY_VARIABLE is: $(POSTGIS_LIB))
-$(info MY_VARIABLE1 is: $(pglib_di))
-$(info MY_VARIABLE2 is: $(LIB))
 file_to_check := postgis-3.so
 
 #check for file in the directory
