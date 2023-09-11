@@ -64,6 +64,7 @@ go
 
 -- like pattern from a function (babelfish bug, tsql have output while bbf doesn't)
 select * from t where a like BABEL_4270_abc();
+go
 
 -- like pattern from a non-varchar pattern
 select * from t where a like 0
