@@ -4,7 +4,8 @@
 #include "catalog/catalog.h"
 #include "parser/analyze.h"
 #include "tcop/cmdtag.h"
-// #include "utils/pg_locale.h"
+#include "utils/pg_locale.h"
+// #include "pgstat.h"
 
 extern IsExtendedCatalogHookType PrevIsExtendedCatalogHook;
 extern IsToastRelationHookType PrevIsToastRelationHook;
