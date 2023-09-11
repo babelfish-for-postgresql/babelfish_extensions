@@ -1109,6 +1109,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
 		return NULL;
 
+
 	/* Search and drop the definition */
 	ScanKeyInit(&scanKey[0],
 				Anum_bbf_view_def_dbid,
@@ -1124,12 +1125,10 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 				BTEqualStrategyNumber, InvalidOid,
 				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(view_name));
-	
 
 	scan = systable_beginscan(bbf_view_def_rel,
 							  get_bbf_view_def_idx_oid(),
 							  true, NULL, 3, scanKey);
-
 
 	scantup = systable_getnext(scan);
 	oldtup = heap_copytuple(scantup);
@@ -2635,7 +2634,6 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 
 	/* open the catalog table */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
-	
 	/* get the description of the table */
 	bbf_view_def_dsc = RelationGetDescr(bbf_view_def_rel);
 
