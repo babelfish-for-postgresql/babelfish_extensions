@@ -256,6 +256,10 @@ babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_user3#!#S
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN babel_role_vu_prepare_login2 WITH PASSWORD = 'abc'
+GO
+
 -- tsql		user=babel_role_vu_prepare_login2		password=abc
 -- DB user is disallowed to add/drop itself to/from a role
 USE babel_role_vu_prepare_db
