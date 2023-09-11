@@ -2781,27 +2781,15 @@ GO
 
 CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geography;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
 
 CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geometry;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
 
 
 -- With escape_hatch_rowversion to ignore
@@ -2831,27 +2819,15 @@ GO
 
 CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geography;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
 
 CREATE TABLE test_unsupported_geometry(a GEOMETRY);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP TABLE test_unsupported_geometry;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
 
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
@@ -2878,9 +2854,6 @@ CREATE TYPE [FolderGeography] AS TABLE(
 	[FolderGeography_Y] GEOGRAPHY NULL
 );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 
 CREATE TYPE [FolderGeometry] AS TABLE( 
@@ -2888,9 +2861,6 @@ CREATE TYPE [FolderGeometry] AS TABLE(
 	[FolderGeometry_Geometry] Geometry NULL
 );
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 -- Create Function: Should throw detailed error messages
@@ -2914,9 +2884,6 @@ IF (@Y > 15069) BEGIN SET @Y=15069; END
 RETURN GEOGRAPHY::Point(@X,@Y,4326);
 END
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 
 CREATE FUNCTION [func_geometry]() RETURNS GEOMETRY AS
@@ -2924,9 +2891,6 @@ BEGIN
 RETURN NULL;
 END
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 -- Variable Declaration: Should throw detailed error messages
@@ -2950,15 +2914,9 @@ GO
 
 DECLARE @var_geography GEOGRAPHY;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DECLARE @var_geometry GEOMETRY;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 -- Create Procedure: Should throw detailed error messages
@@ -2976,25 +2934,13 @@ GO
 
 CREATE PROCEDURE proc_geography (@var_geography2 GEOGRAPHY) AS BEGIN PRINT CAST(@var_geography2 AS VARCHAR(10)) END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
 
 DROP PROCEDURE proc_geography;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a procedure named "proc_geography")~~
 
 CREATE PROCEDURE proc_geometry (@var_geometry2 GEOMETRY) AS BEGIN PRINT CAST(@var_geometry2 AS VARCHAR(10)) END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 DROP PROCEDURE proc_geometry;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: could not find a procedure named "proc_geometry")~~
 

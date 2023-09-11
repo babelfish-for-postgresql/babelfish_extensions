@@ -44,10 +44,17 @@ jobs:
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_BRANCH_FROM}}
+
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
       
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: build-extensions-old
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         run: |
           export PG_CONFIG=~/${{env.OLD_INSTALL_DIR}}/bin/pg_config
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
@@ -91,17 +98,10 @@ jobs:
 
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
-
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
-        with:
-          install_dir: ${{env.NEW_INSTALL_DIR}}
       
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}

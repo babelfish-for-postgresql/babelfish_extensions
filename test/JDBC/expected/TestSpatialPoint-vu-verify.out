@@ -134,7 +134,7 @@ SELECT STDistance(@point1, @point2);
 Go
 ~~START~~
 float
-134.18640087010084
+134.1864008701007
 ~~END~~
 
 
