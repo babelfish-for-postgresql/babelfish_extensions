@@ -53,6 +53,7 @@
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
+#include "pgstat.h"
 #include "executor/nodeFunctionscan.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
@@ -672,6 +673,92 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 		cur = cur->next;
 	}
 	return false;
+}
+
+/*
+ * Wrapper function that calls the initilization function.
+ * Calls the pre function call hook on the procname 
+ * before invoking the initilization function. Performing a 
+ * system cache search in case fcinfo isnull for getting the procname
+ */
+
+static char *
+replace_with_underscore(const char *s)
+{
+	int			i,
+				n = strlen(s);
+	char	   *s_copy = palloc(n + 1);
+
+	s_copy[0] = '\0';
+	strncat(s_copy, s, n);
+
+	for (i = 0; i < n; i++)
+	{
+		if (s_copy[i] == '.')
+			s_copy[i] = '_';
+	}
+
+	return s_copy;
+}
+
+void
+pre_wrapper_pgstat_init_function_usage(const char *funcName)
+{
+	if ((pltsql_instr_plugin_ptr &&
+		 (*pltsql_instr_plugin_ptr) &&
+		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
+	{
+		char	   *prefix = "instr_tsql_";
+		char	   *funcname_edited = replace_with_underscore(funcName);
+		StringInfoData metricName;
+
+		initStringInfo(&metricName);
+
+		appendStringInfoString(&metricName, prefix);
+		appendStringInfoString(&metricName, funcname_edited);
+
+		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
+		{
+			/* check with "unsupported" in prefix */
+			prefix = "instr_unsupported_tsql_";
+
+			resetStringInfo(&metricName);
+			appendStringInfoString(&metricName, prefix);
+			appendStringInfoString(&metricName, funcname_edited);
+			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
+		}
+
+		if (funcname_edited != NULL)
+			pfree(funcname_edited);
+		if (metricName.data != NULL)
+			pfree(metricName.data);
+	}
+}
+
+void
+pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
+						   PgStat_FunctionCallUsage *fcusageptr, char *procname)
+{
+
+	if (IsTransactionState())
+	{
+		if(!(fcinfo->isnull))
+		{
+			pre_wrapper_pgstat_init_function_usage((procname));
+		}
+		else
+		{
+			HeapTuple proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+			if (HeapTupleIsValid(proctup))
+			{
+				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+			}
+
+			ReleaseSysCache(proctup);
+		}
+	}
+
 }
 
 static Node *
