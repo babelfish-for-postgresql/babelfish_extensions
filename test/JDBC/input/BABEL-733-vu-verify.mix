@@ -66,6 +66,10 @@ GO
 SELECT OBJECT_SCHEMA_NAME(NULL);
 GO
 
+-- reset the login password
+ALTER LOGIN babel_733_log1 WITH PASSWORD = '123456789';
+GO
+
 -- test user permissions
 -- tsql user=babel_733_log1 password=123456789
 SELECT current_user;

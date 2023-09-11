@@ -1,6 +1,3 @@
-USE db_babel_3221;
-go
-
 SELECT * FROM babel_3221_view;
 go
 
@@ -17,10 +14,4 @@ DROP TABLE babel_3221_table_1;
 go
 
 DROP TABLE babel_3221_table_2;
-go
-
-USE master;
-go
-
-DROP DATABASE db_babel_3221;
 go

@@ -1,0 +1,286 @@
+USE BABEL_3117_prepare_db1
+GO
+
+SELECT count(*) FROM BABEL_3117_prepare_db1_employeeData;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TRIGGER BABEL_3117_prepare_trigger1
+GO
+
+USE BABEL_3117_prepare_db2
+GO
+SELECT count(*) FROM BABEL_3117_prepare_db2_employeeData;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+-- Test with database has the same schema name, same table name and same trigger name
+USE BABEL_3117_prepare_db3
+GO
+
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schema.BABEL_3117_t1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_3117_schema.babel_3117_prepare_trigger2" does not exist)~~
+
+
+
+USE BABEL_3117_prepare_db4
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schema.BABEL_3117_t1;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'babel_3117_prepare_db4'.  Server SQLState: S0001)~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_3117_schema.babel_3117_prepare_trigger2" does not exist)~~
+
+
+DROP TABLE BABEL_3117_schema.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schema
+GO
+
+USE BABEL_3117_prepare_db3
+GO
+
+DROP TABLE BABEL_3117_schema.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schema
+GO
+
+-- Test with database has different schema name, same table name and same trigger name
+USE BABEL_3117_prepare_db5
+GO
+
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schemaA.BABEL_3117_t1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+DROP TRIGGER BABEL_3117_schemaA.BABEL_3117_prepare_trigger3
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schemaA.BABEL_3117_prepare_trigger3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_3117_schemaa.babel_3117_prepare_trigger3" does not exist)~~
+
+
+-- Should return error since don't have permission
+DROP TRIGGER BABEL_3117_schemaB.BABEL_3117_prepare_trigger3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_3117_schemab.babel_3117_prepare_trigger3" does not exist)~~
+
+
+
+USE BABEL_3117_prepare_db6
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schemaB.BABEL_3117_t1;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Changed database context to 'babel_3117_prepare_db6'.  Server SQLState: S0001)~~
+
+~~START~~
+int
+0
+~~END~~
+
+
+DROP TRIGGER BABEL_3117_schemaB.BABEL_3117_prepare_trigger3
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schemaB.BABEL_3117_prepare_trigger3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_3117_schemab.babel_3117_prepare_trigger3" does not exist)~~
+
+
+-- Should return error since don't have permission
+DROP TRIGGER BABEL_3117_schemaA.BABEL_3117_prepare_trigger3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_3117_schemaa.babel_3117_prepare_trigger3" does not exist)~~
+
+
+DROP TABLE BABEL_3117_schemaB.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schemaB
+GO
+
+USE BABEL_3117_prepare_db5
+GO
+
+DROP TABLE BABEL_3117_schemaA.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schemaA
+GO
+
+USE master
+GO
+
+-- reset the login password
+ALTER LOGIN BABEL_3117_login WITH PASSWORD = '123'
+GO
+
+-- tsql      user=BABEL_3117_login      password=123
+-- Test if user default schema is not dbo schema
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+BABEL_3117_user
+~~END~~
+
+
+SELECT schema_name();
+GO
+~~START~~
+varchar
+BABEL_3117_schemaC
+~~END~~
+
+
+CREATE TABLE BABEL_3117_master_t1( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger4 on BABEL_3117_master_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_master_t1 VALUES (1,1),(2,2),(3,3);
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 3~~
+
+
+-- should return 0
+SELECT count(*) FROM BABEL_3117_master_t1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- should return error
+DROP TRIGGER trig
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: trigger "trig" does not exist)~~
+
+
+DROP TRIGGER BABEL_3117_prepare_trigger4
+GO
+
+INSERT INTO BABEL_3117_master_t1 VALUES (1,1),(2,2),(3,3);
+GO
+~~ROW COUNT: 3~~
+
+
+-- should return 3
+SELECT count(*) FROM BABEL_3117_master_t1;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+DROP TABLE BABEL_3117_master_t1
+GO
+
+-- psql
+REVOKE ALL ON SCHEMA master_BABEL_3117_schemaC FROM master_BABEL_3117_user;
+GO
+-- tsql
+DROP user BABEL_3117_user
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3117_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN BABEL_3117_login;
+GO
+
+-- tsql
+USE master
+go
+DROP DATABASE BABEL_3117_prepare_db1
+DROP DATABASE BABEL_3117_prepare_db2
+DROP DATABASE BABEL_3117_prepare_db3
+DROP DATABASE BABEL_3117_prepare_db4
+DROP DATABASE BABEL_3117_prepare_db5
+DROP DATABASE BABEL_3117_prepare_db6
+GO
