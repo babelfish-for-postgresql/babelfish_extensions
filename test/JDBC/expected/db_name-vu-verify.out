@@ -24,6 +24,7 @@ DB_NAME_VU_PREPARE_test1
 DB_NAME_VU_PREPARE_Test4
 DB_NAME_VU_PREPARE_tEst3
 DB_NAME_VU_PREPARE_TesT2
+sp_rename_vu_DB1
 ~~END~~
 
 
@@ -50,6 +51,7 @@ db_name_vu_prepare_test1#!#DB_NAME_VU_PREPARE_test1
 db_name_vu_prepare_test4#!#DB_NAME_VU_PREPARE_Test4
 db_name_vu_prepare_test3#!#DB_NAME_VU_PREPARE_tEst3
 db_name_vu_prepare_test2#!#DB_NAME_VU_PREPARE_TesT2
+sp_rename_vu_db1#!#sp_rename_vu_DB1
 ~~END~~
 
 
@@ -78,6 +80,40 @@ db_name_vu_prepare_test2#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 db_name_vu_prepare_test2#!#guest#!#guest#!#<NULL>#!#<NULL>#!#<NULL>
 db_name_vu_prepare_test2#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
 db_name_vu_prepare_test2#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+use sp_rename_vu_DB1;
+go
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
+ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+sp_rename_vu_DB1#!#dbo#!#sp_rename_vu_table1#!#BASE TABLE
+sp_rename_vu_DB1#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
+sp_rename_vu_DB1#!#sp_rename_vu_schema1#!#sp_rename_vu_table2#!#BASE TABLE
+~~END~~
+
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2', 'sp_rename_vu_table2_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+
+DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out3 nvarchar(776);
+DECLARE @sp_rename_helperfunc_out4 nvarchar(776);
+EXEC sys.babelfish_sp_rename_word_parse 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1_new', 'COLUMN', @sp_rename_helperfunc_out1 OUT, @sp_rename_helperfunc_out2 OUT, @sp_rename_helperfunc_out3 OUT, @sp_rename_helperfunc_out4 OUT;
+SELECT @sp_rename_helperfunc_out1, @sp_rename_helperfunc_out2, @sp_rename_helperfunc_out3, @sp_rename_helperfunc_out4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+sp_rename_vu_s1_t2_col1_new#!#sp_rename_vu_table2_new#!#sp_rename_vu_schema1#!#<NULL>
 ~~END~~
 
 

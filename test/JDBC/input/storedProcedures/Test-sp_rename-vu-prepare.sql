@@ -99,24 +99,3 @@ GO
 
 CREATE TYPE sp_rename_vu_schema1.sp_rename_vu_alias1 FROM VARCHAR(11) NOT NULL;
 GO
-
-CREATE DATABASE sp_rename_vu_DB1;
-go
-
-use sp_rename_vu_DB1;
-go
-
-CREATE TABLE sp_rename_vu_table1(sp_rename_vu_t1_col1 int, sp_rename_vu_t1_col2 int);
-GO
-
-CREATE TABLE sp_rename_vu_table2(sp_rename_vu_t2_col1 int, sp_rename_vu_t2_col2 int);
-GO
-
-CREATE SCHEMA sp_rename_vu_schema1;
-GO
-
-CREATE TABLE sp_rename_vu_schema1.sp_rename_vu_table2(sp_rename_vu_s1_t2_col1 int, sp_rename_vu_s1_t2_col2 int);
-GO
-
-use master;
-go

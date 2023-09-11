@@ -403,28 +403,3 @@ GO
 -- Statistics
 EXEC sp_rename 'sp_rename_vu_stat1', 'sp_rename_vu_stat2', 'STATISTICS';
 GO
-
-use sp_rename_vu_DB1;
-go
-
-SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%sp_rename_vu%' 
-ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
-GO
-
-EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2', 'sp_rename_vu_table2_new', 'OBJECT';
-GO
-
-EXEC sp_rename 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1', 'sp_rename_vu_s1_t2_col1_new', 'COLUMN';
-GO
-
-DECLARE @sp_rename_helperfunc_out1 nvarchar(776);
-DECLARE @sp_rename_helperfunc_out2 nvarchar(776);
-DECLARE @sp_rename_helperfunc_out3 nvarchar(776);
-DECLARE @sp_rename_helperfunc_out4 nvarchar(776);
-
-EXEC sys.babelfish_sp_rename_word_parse 'sp_rename_vu_schema1.sp_rename_vu_table2_new.sp_rename_vu_s1_t2_col1_new', 'COLUMN', @sp_rename_helperfunc_out1 OUT, @sp_rename_helperfunc_out2 OUT, @sp_rename_helperfunc_out3 OUT, @sp_rename_helperfunc_out4 OUT;
-SELECT @sp_rename_helperfunc_out1, @sp_rename_helperfunc_out2, @sp_rename_helperfunc_out3, @sp_rename_helperfunc_out4;
-GO
-
-use master;
-go

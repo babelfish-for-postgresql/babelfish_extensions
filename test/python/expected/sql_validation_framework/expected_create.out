@@ -81,9 +81,7 @@ Could not find tests for view sys.sp_columns_100_view
 Could not find tests for view sys.sp_fkeys_view
 Could not find tests for view sys.sp_pkeys_view
 Could not find tests for view sys.sp_special_columns_view
-Could not find tests for view sys.sp_sproc_columns_view
 Could not find tests for view sys.sp_statistics_view
-Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for function assemblyproperty
@@ -191,8 +189,6 @@ Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
-Could not find upgrade tests for procedure xp_instance_regread
-Could not find upgrade tests for procedure xp_qv
 Could not find upgrade tests for table sys.babelfish_configurations
 Could not find upgrade tests for table sys.babelfish_helpcollation
 Could not find upgrade tests for table sys.babelfish_syslanguages
@@ -209,8 +205,6 @@ Could not find upgrade tests for view sys.sp_columns_100_view
 Could not find upgrade tests for view sys.sp_fkeys_view
 Could not find upgrade tests for view sys.sp_pkeys_view
 Could not find upgrade tests for view sys.sp_special_columns_view
-Could not find upgrade tests for view sys.sp_sproc_columns_view
 Could not find upgrade tests for view sys.sp_statistics_view
-Could not find upgrade tests for view sys.sp_stored_procedures_view
 Could not find upgrade tests for view sys.sp_table_privileges_view
 Could not find upgrade tests for view sys.spt_columns_view_managed

@@ -864,5 +864,3 @@ ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacemen
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
