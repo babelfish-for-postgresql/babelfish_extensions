@@ -1334,7 +1334,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			bool		dq = *colname_start == '"';
 			bool		sqb = *colname_start == '[';
 			bool		sq = *colname_start == '\'';
-			bool		identifier_truncated;
+			bool		identifier_truncated = false;
 			const char *colname_end;
 			bool		enc_is_single_byte;
 			enc_is_single_byte = pg_database_encoding_max_length() == 1;
