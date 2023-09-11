@@ -752,61 +752,29 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
 
 GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC; 
 
-/**
-KEY COLUMN USAGE
-**/
-
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
-		CAST(ss.nc_dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-		CAST(ss.nc_schema_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-		CAST(ss.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
-		CAST(ss.nr_dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-		CAST(ss.nr_schema_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-		CAST(ss.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+		CAST(nr.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
-		CAST((ss.x).n AS int) AS "ORDINAL_POSITION"
-	
+		CAST(ord AS int) AS "ORDINAL_POSITION"	
 	FROM
-		pg_attribute a, (
-		SELECT
-			r.oid AS roid,
-			r.relname,
-			r.relowner,
-			nc.dbname AS nc_dbname,
-			nr.dbname AS nr_dbname,
-			extc.orig_name AS nc_schema_name,
-			extr.orig_name AS nr_schema_name,
-			c.oid AS coid,
-			c.conname,
-			c.contype,
-			c.conindid,
-			c.confkey,
-			c.confrelid,
-			information_schema._pg_expandarray(c.conkey) AS x
-		FROM
-			sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
-			sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
-			pg_class r,
-			pg_constraint c,
-			sys.pg_namespace_ext t
-		WHERE
-			nr.oid = r.relnamespace
-			AND r.oid = c.conrelid
-			AND nc.oid = c.connamespace
-			AND nr.nspname = t.nspname
-			AND t.dbname = nc.dbname
-			AND (c.contype = ANY (ARRAY['p'::"char", 'u'::"char", 'f'::"char"]))
-			AND (r.relkind = ANY (ARRAY['r'::"char", 'p'::"char"]))
-			AND NOT pg_is_other_temp_schema(nr.oid)
-		) ss
-	
+		pg_constraint c 
+		JOIN sys.pg_namespace_ext nc ON (nc.oid = c.connamespace)
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f')
+		JOIN sys.pg_namespace_ext nr ON r.relnamespace = nr.oid AND r.relkind in ('r','p')
+		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
 	WHERE
-		ss.roid = a.attrelid
-		AND a.attnum = (ss.x).x
-		AND NOT a.attisdropped
-		AND (pg_has_role(ss.relowner, 'USAGE'::text) OR has_column_privilege(ss.roid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text));
-
+		pg_has_role(r.relowner, 'USAGE'::text) 
+  		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
+		AND NOT pg_is_other_temp_schema(nr.oid)
+	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
 /*
