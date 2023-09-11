@@ -4,6 +4,7 @@
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
+#include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
@@ -53,7 +54,6 @@
 #include "utils/numeric.h"
 #include <math.h>
 #include "executor/nodeFunctionscan.h"
-#include "pgstat.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -213,7 +213,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-
+pg_locale_t *collation_cache_entry_hook(Oid collid, pg_locale_t *locale);
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -473,7 +473,27 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	}
 	return false;
 }									  
-								
+
+Oid *prev_cache_collid = NULL;
+pg_locale_t *prev_locale = NULL;
+
+pg_locale_t *
+collation_cache_entry_hook(Oid collid, pg_locale_t *locale)
+{
+	if(!locale)
+	{
+		if(prev_locale && prev_cache_collid && (Oid)(*prev_cache_collid)==(Oid)(collid))
+		{
+			return prev_locale;
+		}
+	}
+	else
+	{
+		*prev_cache_collid = collid;
+		prev_locale = locale;
+	}
+	return prev_locale;
+}			
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
@@ -652,92 +672,6 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 		cur = cur->next;
 	}
 	return false;
-}
-
-/*
- * Wrapper function that calls the initilization function.
- * Calls the pre function call hook on the procname 
- * before invoking the initilization function. Performing a 
- * system cache search in case fcinfo isnull for getting the procname
- */
-
-static char *
-replace_with_underscore(const char *s)
-{
-	int			i,
-				n = strlen(s);
-	char	   *s_copy = palloc(n + 1);
-
-	s_copy[0] = '\0';
-	strncat(s_copy, s, n);
-
-	for (i = 0; i < n; i++)
-	{
-		if (s_copy[i] == '.')
-			s_copy[i] = '_';
-	}
-
-	return s_copy;
-}
-
-void
-pre_wrapper_pgstat_init_function_usage(const char *funcName)
-{
-	if ((pltsql_instr_plugin_ptr &&
-		 (*pltsql_instr_plugin_ptr) &&
-		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
-	{
-		char	   *prefix = "instr_tsql_";
-		char	   *funcname_edited = replace_with_underscore(funcName);
-		StringInfoData metricName;
-
-		initStringInfo(&metricName);
-
-		appendStringInfoString(&metricName, prefix);
-		appendStringInfoString(&metricName, funcname_edited);
-
-		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
-		{
-			/* check with "unsupported" in prefix */
-			prefix = "instr_unsupported_tsql_";
-
-			resetStringInfo(&metricName);
-			appendStringInfoString(&metricName, prefix);
-			appendStringInfoString(&metricName, funcname_edited);
-			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
-		}
-
-		if (funcname_edited != NULL)
-			pfree(funcname_edited);
-		if (metricName.data != NULL)
-			pfree(metricName.data);
-	}
-}
-
-void
-pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
-						   PgStat_FunctionCallUsage *fcusageptr, char *procname)
-{
-	
-	if (IsTransactionState())
-	{
-		if(!(fcinfo->isnull))
-		{
-			pre_wrapper_pgstat_init_function_usage((procname));
-		}
-		else
-		{
-			HeapTuple proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
-			if (HeapTupleIsValid(proctup))
-			{
-				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
-				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
-			}
-
-			ReleaseSysCache(proctup);
-		}
-	}
-
 }
 
 static Node *
@@ -1653,13 +1587,28 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		/* Get relid either by s.t or t */
 		if (schemaname && relname)
 		{
-			relid = RangeVarGetRelid(makeRangeVar(schemaname, relname, res->location),
+			/* Get physical schema name from logical schema name */
+			char *physical_schema_name = get_physical_schema_name(get_cur_db_name(), schemaname);
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
 									 NoLock,
 									 true);
+			pfree(physical_schema_name);
 		}
 		else if (relname)
 		{
-			relid = RelnameGetRelid(relname);
+			/* 
+			 * In case of schema name is not specified, To get the relid of table
+			 * we will search for the table in schema of target relation.
+			 */
+			
+			/* Get physical schema name of target relation */
+			char *physical_schema_name = get_namespace_name(RelationGetNamespace(pstate->p_target_relation));
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
+									 NoLock,
+									 true);
+			pfree(physical_schema_name);
 		}
 		targetRelid = RelationGetRelid(pstate->p_target_relation);
 		/* If relid matches or alias matches, try to resolve the qualifiers */
