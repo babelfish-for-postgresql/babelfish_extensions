@@ -2049,6 +2049,7 @@ public:
 		PLtsql_expr_query_mutator mutator(expr, ctx);
 		add_rewritten_query_fragment_to_mutator(&mutator);
 		mutator.run();
+		clear_rewritten_query_fragment();
 
 		/* Now we can prepend SELECT to rewritten search_condition */
 		expr->query = strdup((std::string("SELECT ") + std::string(expr->query)).c_str());
