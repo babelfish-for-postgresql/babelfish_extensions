@@ -1903,8 +1903,7 @@ static char *
 get_fully_qualified_domain_name(char *netbios_domain)
 {
 	/* TODO: Add test cases for this mapping */
-	Relation	bbf_domain_mapping_rel,
-				bbf_domain_mapping_idx_rel;
+	Relation	bbf_domain_mapping_rel;
 	TupleDesc	dsc;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
@@ -1912,7 +1911,6 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	char	   *fq_domain_name;
 
 	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowShareLock);
-	bbf_domain_mapping_idx_rel = index_open(get_bbf_domain_mapping_idx_oid(), AccessShareLock);
 
 	dsc = RelationGetDescr(bbf_domain_mapping_rel);
 
@@ -1921,7 +1919,7 @@ get_fully_qualified_domain_name(char *netbios_domain)
 						   Anum_bbf_domain_mapping_netbios_domain_name,
 						   BTEqualStrategyNumber,
 						   InvalidOid,
-						   bbf_domain_mapping_idx_rel->rd_indcollation[0],
+						   tsql_get_server_collation_oid_internal(false),
 						   F_TEXTEQ,
 						   CStringGetTextDatum(netbios_domain));
 
@@ -1964,7 +1962,6 @@ get_fully_qualified_domain_name(char *netbios_domain)
 	}
 
 	systable_endscan(scan);
-	index_close(bbf_domain_mapping_idx_rel, AccessShareLock);
 	table_close(bbf_domain_mapping_rel, RowShareLock);
 
 	return fq_domain_name;
@@ -2161,8 +2158,7 @@ PG_FUNCTION_INFO_V1(babelfish_remove_domain_mapping_entry_internal);
 Datum
 babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 {
-	Relation	bbf_domain_mapping_rel,
-				bbf_domain_mapping_idx_rel;
+	Relation	bbf_domain_mapping_rel;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 	HeapTuple	tuple;
@@ -2185,12 +2181,10 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
 
-	bbf_domain_mapping_idx_rel = index_open(get_bbf_domain_mapping_idx_oid(), AccessShareLock);
-
 	ScanKeyEntryInitialize(&scanKey, 0,
 						   Anum_bbf_domain_mapping_netbios_domain_name,
 						   BTEqualStrategyNumber, InvalidOid,
-						   bbf_domain_mapping_idx_rel->rd_indcollation[0],
+						   tsql_get_server_collation_oid_internal(false),
 						   F_TEXTEQ, PG_GETARG_DATUM(0));
 
 	scan = systable_beginscan(bbf_domain_mapping_rel,
@@ -2214,7 +2208,6 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	}
 
 	systable_endscan(scan);
-	index_close(bbf_domain_mapping_idx_rel, AccessShareLock);
 	table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 	return (Datum) 0;
 }

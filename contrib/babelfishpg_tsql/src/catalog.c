@@ -1101,7 +1101,6 @@ HeapTuple
 search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
 {
 
-	Relation 	bbf_view_def_idx_rel;
 	ScanKeyData scanKey[3];
 	SysScanDesc scan;
 	HeapTuple	scantup,
@@ -1110,22 +1109,20 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	if (!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
 		return NULL;
 
-	bbf_view_def_idx_rel = index_open(get_bbf_view_def_idx_oid(), AccessShareLock);
-
 	/* Search and drop the definition */
-	ScanKeyEntryInitialize(&scanKey[0], 0, Anum_bbf_view_def_dbid,
-				BTEqualStrategyNumber, InvalidOid,
-				bbf_view_def_idx_rel->rd_indcollation[0], F_INT2EQ,
+	ScanKeyInit(&scanKey[0], 
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 
 	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				bbf_view_def_idx_rel->rd_indcollation[1], F_TEXTEQ,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
 	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				bbf_view_def_idx_rel->rd_indcollation[2], F_TEXTEQ,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(view_name));
 	
 
@@ -1137,7 +1134,6 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	scantup = systable_getnext(scan);
 	oldtup = heap_copytuple(scantup);
 	systable_endscan(scan);
-	index_close(bbf_view_def_idx_rel, AccessShareLock);
 	return oldtup;
 }
 
@@ -2625,8 +2621,7 @@ static void
 rename_view_update_bbf_catalog(RenameStmt *stmt)
 {
 	/* update the 'object_name' in 'babelfish_view_def' */
-	Relation	bbf_view_def_rel,
-			 	bbf_view_def_idx_rel;
+	Relation	bbf_view_def_rel;
 	TupleDesc	bbf_view_def_dsc;
 	ScanKeyData key[3];
 	HeapTuple	usertuple;
@@ -2640,28 +2635,25 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 
 	/* open the catalog table */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
-
-	/* open the catalog index for fetching collations for keys */
-	bbf_view_def_idx_rel = index_open(get_bbf_view_def_idx_oid(), AccessShareLock);
 	
 	/* get the description of the table */
 	bbf_view_def_dsc = RelationGetDescr(bbf_view_def_rel);
 
 	/* search for the row for update => build the key */
 	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, true);
-	ScanKeyEntryInitialize(&key[0], 0, Anum_bbf_view_def_dbid,
-				BTEqualStrategyNumber, InvalidOid,
-				bbf_view_def_idx_rel->rd_indcollation[0],
-				F_INT2EQ, Int16GetDatum(dbid));
+	ScanKeyInit(&key[0], 
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
 	logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
 	ScanKeyEntryInitialize(&key[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
-				bbf_view_def_idx_rel->rd_indcollation[1], 
+				tsql_get_server_collation_oid_internal(false), 
 				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
-				bbf_view_def_idx_rel->rd_indcollation[2],
+				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ, CStringGetTextDatum(stmt->relation->relname));
 
 	/* scan */
@@ -2694,7 +2686,6 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 	heap_freetuple(new_tuple);
 
 	table_endscan(tblscan);
-	index_close(bbf_view_def_idx_rel, AccessShareLock);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
 
