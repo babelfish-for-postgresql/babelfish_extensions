@@ -1110,7 +1110,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 		return NULL;
 
 	/* Search and drop the definition */
-	ScanKeyInit(&scanKey[0], 
+	ScanKeyInit(&scanKey[0],
 				Anum_bbf_view_def_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
@@ -2641,7 +2641,7 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 
 	/* search for the row for update => build the key */
 	dbid = get_dbid_from_physical_schema_name(stmt->relation->schemaname, true);
-	ScanKeyInit(&key[0], 
+	ScanKeyInit(&key[0],
 				Anum_bbf_view_def_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
