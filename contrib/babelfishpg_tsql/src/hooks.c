@@ -1275,7 +1275,7 @@ find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK)
 
 static void
 pre_transform_target_entry(ResTarget *res, ParseState *pstate,
-							ParseExprKind exprKind)
+						   ParseExprKind exprKind)
 {
 	if (prev_pre_transform_target_entry_hook)
 		(*prev_pre_transform_target_entry_hook) (res, pstate, exprKind);
@@ -1330,13 +1330,13 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		 */
 		if (alias_len > 0)
 		{
-			char       *alias = palloc0(alias_len + 1);
-			bool        dq = *colname_start == '"';
-			bool        sqb = *colname_start == '[';
-			bool        sq = *colname_start == '\'';
-			bool        identifier_truncated;
+			char	   *alias = palloc0(alias_len + 1);
+			bool		dq = *colname_start == '"';
+			bool		sqb = *colname_start == '[';
+			bool		sq = *colname_start == '\'';
+			bool		identifier_truncated;
 			const char *colname_end;
-			bool        enc_is_single_byte;
+			bool		enc_is_single_byte;
 			enc_is_single_byte = pg_database_encoding_max_length() == 1;
 
 
