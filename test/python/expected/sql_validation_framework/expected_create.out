@@ -200,6 +200,8 @@ Could not find upgrade tests for table sys.service_settings
 Could not find upgrade tests for table sys.spt_datatype_info_table
 Could not find upgrade tests for table sys.versions
 Could not find upgrade tests for type sys.bpchar
+Could not find upgrade tests for type sys.geography
+Could not find upgrade tests for type sys.geometry
 Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view sys.all_sql_modules_internal
 Could not find upgrade tests for view sys.pg_namespace_ext

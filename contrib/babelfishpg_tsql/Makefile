@@ -96,7 +96,7 @@ PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
 
 #preprocessor check for postgis file
 POSTGIS_LIB := $(pglib_dir)
-file_to_check := libpq.pc
+file_to_check := postgis-3.so
 
 #check for file in the directory
 file_exists := $(wildcard $(POSTGIS_LIB)/$(file_to_check))
