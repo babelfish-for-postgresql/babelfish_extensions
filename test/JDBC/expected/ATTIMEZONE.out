@@ -119,3 +119,44 @@ GO
 ~~ERROR (Message: Argument data type or the parameter dgycgwycgqd provided to AT TIME ZONE clause is invalid.)~~
 
 
+DECLARE @lvDate DATETIME, @lvDateUTC DATETIME
+SET @lvDate = '2021-01-01'
+SET @lvDateUTC = @lvDate AT TIME ZONE  'US Eastern Standard Time' AT TIME ZONE 'UTC'
+SELECT @lvDate, @lvDateUTC
+GO
+~~START~~
+datetime#!#datetime
+2021-01-01 00:00:00.0#!#2021-01-01 05:00:00.0
+~~END~~
+
+
+Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') aT TiMe ZoNE 'Eastern Standard Time'
+GO
+~~START~~
+datetimeoffset
+2002-01-01 02:01:00.0000000 -05:00
+~~END~~
+
+
+Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') aT   TiMe   ZoNE 'Eastern Standard Time'
+GO
+~~START~~
+datetimeoffset
+2002-01-01 02:01:00.0000000 -05:00
+~~END~~
+
+
+DROP TABLE IF EXISTS test
+Create table test( a datetime)
+insert into test(a) values(cast('1999-02-16' as datetime))
+GO
+~~ROW COUNT: 1~~
+
+DECLARE @testzone nvarchar(128) = 'Central European Standard Time';
+Select a AT TIME ZONE @testzone from test
+GO
+~~START~~
+datetimeoffset
+1999-02-16 00:00:00.0000000 +01:00
+~~END~~
+
