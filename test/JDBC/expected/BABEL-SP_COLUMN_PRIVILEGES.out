@@ -203,33 +203,65 @@ db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
--- Delimiter table tests: NOTE: These produces errors due to BABEL-2883
+-- Delimiter table tests
 exec sp_column_privileges @table_name = [mytable4]
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable4" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_column_privileges @table_name = [MYTABLE4]
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable4" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_column_privileges @table_name = [mytable5]
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_column_privileges @table_name = [MYTABLE5]
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 -- tests wildcard patterns

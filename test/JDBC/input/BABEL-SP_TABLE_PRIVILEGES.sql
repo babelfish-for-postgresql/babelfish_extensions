@@ -63,7 +63,7 @@ go
 exec sp_table_privileges @TABLE_NAME = 'MYTABLE6'
 go
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_table_privileges @TABLE_NAME = [mytable5]
 go
 

@@ -52,7 +52,7 @@ go
 
 exec sp_fkeys @fktable_name = 'babel_sp_fkeys_vu_prepare_MYTABLE7'
 go
--- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_fkeys @pktable_name = [babel_sp_fkeys_vu_prepare_mytable5]
 go
 
