@@ -24,10 +24,15 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
+
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
       
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension
@@ -35,14 +40,9 @@ jobs:
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-tds_fdw-extension
 
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
-
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
       - name: Run JDBC Tests

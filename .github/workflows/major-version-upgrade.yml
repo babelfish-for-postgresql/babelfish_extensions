@@ -92,9 +92,16 @@ jobs:
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
 
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+      
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
@@ -106,16 +113,9 @@ jobs:
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
-        with:
-          install_dir: ${{env.NEW_INSTALL_DIR}}
-
       - name: Setup new data directory
         id: setup-new-datadir
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
         run: |
           cd ~
           ~/${{env.NEW_INSTALL_DIR}}/bin/initdb -D ~/${{env.NEW_INSTALL_DIR}}/data

@@ -77,9 +77,14 @@ jobs:
         with:
           install_dir: 'psql'
 
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.compile-antlr.outcome == 'success') }}
+        uses: ./.github/composite-actions/build-postgis-extension
+
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: 'psql'
@@ -95,11 +100,6 @@ jobs:
         id: build-tds_fdw-extension
         if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-extensions.outcome == 'success') }}
         uses: ./.github/composite-actions/build-tds_fdw-extension
-
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-extensions.outcome == 'success') }}
-        uses: ./.github/composite-actions/build-postgis-extension
 
       - name: Run JDBC Tests
         id: jdbc

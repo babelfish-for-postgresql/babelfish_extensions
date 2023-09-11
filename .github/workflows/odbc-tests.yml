@@ -22,20 +22,20 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
-      
-      - name: Build Extensions
-        id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
-        uses: ./.github/composite-actions/build-extensions
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.build-extensions.outcome == 'success'
+        if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.build-postgis-extension.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
       
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
       - name: Install SQL Server ODBC Driver
