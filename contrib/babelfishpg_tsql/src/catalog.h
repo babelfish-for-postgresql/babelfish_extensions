@@ -129,6 +129,7 @@ extern Oid	get_authid_login_ext_idx_oid(void);
  *****************************************/
 #define BBF_AUTHID_USER_EXT_TABLE_NAME "babelfish_authid_user_ext"
 #define BBF_AUTHID_USER_EXT_IDX_NAME "babelfish_authid_user_ext_pkey"
+#define BBF_AUTHID_USER_EXT_LOGIN_DB_IDX_NAME "babelfish_authid_user_ext_login_db_idx"
 #define Anum_bbf_authid_user_ext_rolname				1
 #define Anum_bbf_authid_user_ext_login_name				2
 #define Anum_bbf_authid_user_ext_orig_username			11
@@ -137,6 +138,7 @@ extern Oid	get_authid_login_ext_idx_oid(void);
 #define Anum_bbf_authid_user_ext_user_can_connect		16
 extern Oid	bbf_authid_user_ext_oid;
 extern Oid	bbf_authid_user_ext_idx_oid;
+extern Oid	bbf_authid_user_ext_login_db_idx_oid;
 
 extern bool is_user(Oid role_oid);
 extern bool is_role(Oid role_oid);
