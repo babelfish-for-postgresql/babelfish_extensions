@@ -1,0 +1,7 @@
+-- tsql
+create table unqStr_tab(abc varchar(20))
+insert into unqStr_tab values('this is column abc')
+go
+~~ROW COUNT: 1~~
+
+

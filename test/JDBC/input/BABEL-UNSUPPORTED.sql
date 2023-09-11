@@ -1320,10 +1320,6 @@ GO
 ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 
--- kill (BABEL-2159)
-KILL 1;
-GO
-
 -- alter view (BABEL-2017)
 CREATE TABLE t_babel_2017(a int, b int);
 GO

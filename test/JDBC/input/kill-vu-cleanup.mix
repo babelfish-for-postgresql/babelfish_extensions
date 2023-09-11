@@ -1,0 +1,19 @@
+-- tsql
+DROP LOGIN victim_user_tds
+go
+
+DROP TABLE tab_kill_spid
+go
+
+DROP PROCEDURE kill_proc_1
+go
+
+DROP PROCEDURE kill_proc_2
+go
+
+DROP PROCEDURE kill_proc_3
+go
+
+DROP TABLE tab_kill_test
+go
+

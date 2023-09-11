@@ -1,8 +1,13 @@
 
--- tsql user=sys_dm_exec_sessions_vu_prepare_login_1887 password=password_1887
+-- tsql
 -- Some columns have not been queried from the view because either they are not implemented
 -- yet as part of the sys.dm_exec_sessions view (adding tests for them here is a TODO)
 -- or their value changes backend to backend
+-- reset the login password
+alter login sys_dm_exec_sessions_vu_prepare_login_1887 with password = 'password_1887'
+go
+
+-- tsql user=sys_dm_exec_sessions_vu_prepare_login_1887 password=password_1887
 -- if we query the view not as sysadmin, we will only see info of this session only 
 select language, client_version, client_interface_name, program_name, date_format, date_first from sys.dm_exec_sessions order by login_name
 GO

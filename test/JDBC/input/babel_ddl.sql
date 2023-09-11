@@ -12,9 +12,9 @@ create table t2 ( a int, b int, primary key nonclustered (a));
 GO
 create table t3 ( a int, b int, primary key clustered (a));
 GO
-create table t4 ( a int, b int, unique nonclustered (a));
+create table t4 ( a int not null, b int, unique nonclustered (a));
 GO
-create table t5 ( a int, b int, unique clustered (a));
+create table t5 ( a int not null, b int, unique clustered (a));
 GO
 
 create table t6 ( a int primary key nonclustered, b int);
@@ -65,9 +65,9 @@ create table t17(a int, primary key clustered (a) on [PRIMARY]);
 GO
 create table t18(a int, primary key clustered (a) on [PRIMARY]);
 GO
-create table t19(a int, unique clustered (a) on [PRIMARY]);
+create table t19(a int not null, unique clustered (a) on [PRIMARY]);
 GO
-create table t20(a int, unique clustered (a) on [PRIMARY]);
+create table t20(a int not null, unique clustered (a) on [PRIMARY]);
 GO
 
 -- ALTER TABLE ... ADD [CONSTRAINT ...] DEFAULT ... FOR ...
