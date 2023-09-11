@@ -146,7 +146,6 @@ babel_try_parse
 BABEL-USER
 bbf_view_def-before-14_5
 binary-index
-case_insensitive_collation
 collation_tests
 collation_tests_arabic
 collation_tests_greek

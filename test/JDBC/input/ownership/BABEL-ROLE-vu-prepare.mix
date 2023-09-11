@@ -26,10 +26,10 @@ GO
 CREATE LOGIN babel_role_vu_prepare_login3 WITH PASSWORD = 'abc'
 GO
 
-CREATE DATABASE babel_role_vu_prepare_DB
+CREATE DATABASE babel_role_vu_prepare_db
 GO
 
-USE babel_role_vu_prepare_DB
+USE babel_role_vu_prepare_db
 GO
 
 CREATE PROC babel_role_vu_prepare_user_ext AS

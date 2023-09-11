@@ -1,0 +1,49 @@
+-- tsql
+use db_name_change_vu_DB1;
+go
+
+DROP TABLE db_name_change_vu_table2;
+GO
+
+DROP TABLE db_name_change_vu_table1;
+GO
+
+DROP TABLE db_name_change_vu_schema1.db_name_change_vu_table2_new;
+GO
+
+DROP SCHEMA db_name_change_vu_schema1;
+GO
+
+use DB_NAME_CHANGE_TEST_vu_db1;
+GO
+
+DROP PROC db_name_change_test_user_ext
+GO
+
+DROP PROC db_name_change_test_db_principal
+GO
+
+DROP PROC db_name_change_test_role_members
+GO
+
+drop table db_name_change_test_t1
+go
+
+USE master;
+GO
+
+--dropping databases
+DROP DATABASE DB_NAME_CHANGE_TEST_vu_db1;
+GO
+
+DROP DATABASE DB_NAME_CHANGE_TEST_vu_db2;
+GO
+
+DROP DATABASE DB_NAME_CHANGE_TEST_vu_db3;
+GO
+
+DROP DATABASE DB_NAME_CHANGE_TEST_vu_db4;
+GO
+
+drop database DB_NAME_CHANGE_vu_db1;
+GO

@@ -1,4 +1,4 @@
--- tsql
+--tsql
 USE babel_role_vu_prepare_db
 GO
 
@@ -10,6 +10,7 @@ GO
 
 DROP PROC babel_role_vu_prepare_role_members
 GO
+
 
 USE master
 GO

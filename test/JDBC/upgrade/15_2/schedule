@@ -174,7 +174,6 @@ BABEL-USER
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 collation_tests

@@ -1,4 +1,3 @@
--- tsql
 use babel_sp_fkeys_vu_prepare_db1
 go
 drop table babel_sp_fkeys_vu_prepare_t2
@@ -14,8 +13,6 @@ go
 drop table babel_sp_fkeys_vu_prepare_MyTable5
 go
 drop table babel_sp_fkeys_vu_prepare_t3
-go
-
 go
 use master
 go

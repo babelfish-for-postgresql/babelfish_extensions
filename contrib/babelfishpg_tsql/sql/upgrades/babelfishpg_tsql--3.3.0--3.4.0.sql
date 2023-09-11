@@ -668,164 +668,6 @@ WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR prona
 
 GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
-    "@sp_name" sys.nvarchar(390) = '',
-    "@sp_owner" sys.nvarchar(384) = '',
-    "@sp_qualifier" sys.sysname = '',
-    "@fusepattern" sys.bit = '1'
-)
-AS $$
-BEGIN
-	IF (@sp_qualifier != '') AND LOWER(sys.db_name()) != LOWER(@sp_qualifier)
-	BEGIN
-		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
-	END
-	
-	-- If @sp_name or @sp_owner = '%', it gets converted to NULL or '' regardless of @fusepattern 
-	IF @sp_name = '%'
-	BEGIN
-		SELECT @sp_name = ''
-	END
-	
-	IF @sp_owner = '%'
-	BEGIN
-		SELECT @sp_owner = ''
-	END
-	
-	-- Changes fusepattern to 0 if no wildcards are used. NOTE: Need to add [] wildcard pattern when it is implemented. Wait for BABEL-2452
-	IF @fusepattern = 1
-	BEGIN
-		IF (CHARINDEX('%', @sp_name) != 0 AND CHARINDEX('_', @sp_name) != 0 AND CHARINDEX('%', @sp_owner) != 0 AND CHARINDEX('_', @sp_owner) != 0 )
-		BEGIN
-			SELECT @fusepattern = 0;
-		END
-	END
-	
-	-- Condition for when sp_name argument is not given or is null, or is just a wildcard (same order)
-	IF COALESCE(@sp_name, '') = ''
-	BEGIN
-		IF @fusepattern=1 
-		BEGIN
-			SELECT 
-			PROCEDURE_QUALIFIER,
-			PROCEDURE_OWNER,
-			PROCEDURE_NAME,
-			NUM_INPUT_PARAMS,
-			NUM_OUTPUT_PARAMS,
-			NUM_RESULT_SETS,
-			REMARKS,
-			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
-			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-		END
-		ELSE
-		BEGIN
-			SELECT 
-			PROCEDURE_QUALIFIER,
-			PROCEDURE_OWNER,
-			PROCEDURE_NAME,
-			NUM_INPUT_PARAMS,
-			NUM_OUTPUT_PARAMS,
-			NUM_RESULT_SETS,
-			REMARKS,
-			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
-			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-		END
-	END
-	-- When @sp_name is not null
-	ELSE
-	BEGIN
-		-- When sp_owner is null and fusepattern = 0
-		IF (@fusepattern = 0 AND  COALESCE(@sp_owner,'') = '') 
-		BEGIN
-			IF EXISTS ( -- Search in the sys schema 
-					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
-						AND (LOWER(procedure_owner) = 'sys'))
-			BEGIN
-				SELECT PROCEDURE_QUALIFIER,
-				PROCEDURE_OWNER,
-				PROCEDURE_NAME,
-				NUM_INPUT_PARAMS,
-				NUM_OUTPUT_PARAMS,
-				NUM_RESULT_SETS,
-				REMARKS,
-				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = 'sys')
-				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-			END
-			ELSE IF EXISTS ( 
-				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
-					)
-			BEGIN
-				SELECT PROCEDURE_QUALIFIER,
-				PROCEDURE_OWNER,
-				PROCEDURE_NAME,
-				NUM_INPUT_PARAMS,
-				NUM_OUTPUT_PARAMS,
-				NUM_RESULT_SETS,
-				REMARKS,
-				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
-				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-			END
-			ELSE -- Search in the dbo schema (if nothing exists it should just return nothing). 
-			BEGIN
-				SELECT PROCEDURE_QUALIFIER,
-				PROCEDURE_OWNER,
-				PROCEDURE_NAME,
-				NUM_INPUT_PARAMS,
-				NUM_OUTPUT_PARAMS,
-				NUM_RESULT_SETS,
-				REMARKS,
-				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
-					AND (LOWER(procedure_owner) = 'dbo')
-				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-			END
-			
-		END
-		ELSE IF (@fusepattern = 0 AND  COALESCE(@sp_owner,'') != '')
-		BEGIN
-			SELECT 
-			PROCEDURE_QUALIFIER,
-			PROCEDURE_OWNER,
-			PROCEDURE_NAME,
-			NUM_INPUT_PARAMS,
-			NUM_OUTPUT_PARAMS,
-			NUM_RESULT_SETS,
-			REMARKS,
-			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
-				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
-			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-		END
-		ELSE -- fusepattern = 1
-		BEGIN
-			SELECT 
-			PROCEDURE_QUALIFIER,
-			PROCEDURE_OWNER,
-			PROCEDURE_NAME,
-			NUM_INPUT_PARAMS,
-			NUM_OUTPUT_PARAMS,
-			NUM_RESULT_SETS,
-			REMARKS,
-			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
-				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
-			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
-		END
-	END	
-END; 
-$$
-LANGUAGE 'pltsql';
-GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
-
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
 BEGIN
@@ -1290,87 +1132,6 @@ LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return t
 LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
-	"@procedure_name" sys.nvarchar(390) = '%',
-	"@procedure_owner" sys.nvarchar(384) = NULL,
-	"@procedure_qualifier" sys.sysname = NULL,
-	"@column_name" sys.nvarchar(384) = NULL,
-	"@odbcver" int = 2,
-	"@fusepattern" sys.bit = '1'
-)	
-AS $$
-	SELECT @procedure_name = LOWER(COALESCE(@procedure_name, ''))
-	SELECT @procedure_owner = LOWER(COALESCE(@procedure_owner, ''))
-	SELECT @procedure_qualifier = LOWER(COALESCE(@procedure_qualifier, ''))
-	SELECT @column_name = LOWER(COALESCE(@column_name, ''))
-BEGIN 
-	IF (@procedure_qualifier != '' AND (SELECT LOWER(sys.db_name())) != @procedure_qualifier)
-		BEGIN
-			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
- 	   	END
-	IF @fusepattern = '1'
-		BEGIN
-			SELECT PROCEDURE_QUALIFIER,
-					PROCEDURE_OWNER,
-					PROCEDURE_NAME,
-					COLUMN_NAME,
-					COLUMN_TYPE,
-					DATA_TYPE,
-					TYPE_NAME,
-					PRECISION,
-					LENGTH,
-					SCALE,
-					RADIX,
-					NULLABLE,
-					REMARKS,
-					COLUMN_DEF,
-					SQL_DATA_TYPE,
-					SQL_DATETIME_SUB,
-					CHAR_OCTET_LENGTH,
-					ORDINAL_POSITION,
-					IS_NULLABLE,
-					SS_DATA_TYPE
-			FROM sys.sp_sproc_columns_view
-			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
-				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
-				AND (@column_name = '' OR column_name LIKE @column_name)
-				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
-			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
-		END
-	ELSE
-		BEGIN
-			SELECT PROCEDURE_QUALIFIER,
-					PROCEDURE_OWNER,
-					PROCEDURE_NAME,
-					COLUMN_NAME,
-					COLUMN_TYPE,
-					DATA_TYPE,
-					TYPE_NAME,
-					PRECISION,
-					LENGTH,
-					SCALE,
-					RADIX,
-					NULLABLE,
-					REMARKS,
-					COLUMN_DEF,
-					SQL_DATA_TYPE,
-					SQL_DATETIME_SUB,
-					CHAR_OCTET_LENGTH,
-					ORDINAL_POSITION,
-					IS_NULLABLE,
-					SS_DATA_TYPE
-			FROM sys.sp_sproc_columns_view
-			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name)
-				AND (@procedure_owner = '' OR procedure_owner = @procedure_owner)
-				AND (@column_name = '' OR column_name = @column_name)
-				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
-			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
-		END
-END; 
-$$
-LANGUAGE 'pltsql';
-GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
-
 CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_word_parse(
 	IN "@input" sys.nvarchar(776),
 	IN "@objtype" sys.varchar(13),
@@ -1483,6 +1244,204 @@ CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 	ORDER BY nc.nspname, np.nspname;
 
 GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_who(
+	IN "@loginame" sys.sysname DEFAULT NULL,
+	IN "@option"   sys.VARCHAR(30) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @msg sys.VARCHAR(200)
+	DECLARE @show_pg BIT = 0
+	DECLARE @hide_col sys.VARCHAR(50) 
+	
+	IF @option IS NOT NULL
+	BEGIN
+		IF LOWER(TRIM(@option)) <> 'postgres' 
+		BEGIN
+			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
+			RETURN			
+		END
+	END
+	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
+	-- Get the executing statement for each spid and extract the main stmt type
+	-- This is for informational purposes only
+	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
+	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE sys.CHARINDEX('  ',query)>0) > 0 
+	BEGIN
+		UPDATE #sp_who_tmp SET query = sys.REPLACE(query, '  ', ' ')
+	END
+
+	-- Determine type of stmt to report by sp_who: very basic only
+	-- NB: not handling presence of comments in the query string
+	UPDATE #sp_who_tmp 
+	SET query = 
+	    CASE 
+			WHEN PATINDEX('%[^a-zA-Z0-9_]UPDATE[^a-zA-Z0-9_]%', query) > 0 THEN 'UPDATE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DELETE[^a-zA-Z0-9_]%', query) > 0 THEN 'DELETE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]INSERT[^a-zA-Z0-9_]%', query) > 0 THEN 'INSERT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]SELECT[^a-zA-Z0-9_]%', query) > 0 THEN 'SELECT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]WAITFOR[^a-zA-Z0-9_]%', query) > 0 THEN 'WAITFOR'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('CREATE ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('ALTER ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('DROP ', query))
+			ELSE sys.SUBSTRING(query, 1, sys.CHARINDEX(' ', query))
+		END
+
+	UPDATE #sp_who_tmp 
+	SET query = sys.SUBSTRING(query,1, 8-1 + sys.CHARINDEX(' ', sys.SUBSTRING(query,8,99)))
+	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %'	
+
+	-- The executing spid is always shown as doing a SELECT
+	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
+	UPDATE #sp_who_tmp SET query = TRIM(query)
+
+	-- Get all current connections
+	SELECT 
+		spid, 
+		MAX(blocked) AS blocked, 
+		0 AS ecid, 
+		CAST('' AS sys.VARCHAR(100)) AS status,
+		CAST('' AS sys.VARCHAR(100)) AS loginname,
+		CAST('' AS sys.VARCHAR(100)) AS hostname,
+		0 AS dbid,
+		CAST('' AS sys.VARCHAR(100)) AS cmd,
+		0 AS request_id,
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
+	INTO #sp_who_proc
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status, hostprocess
+		
+	-- Add attributes to each connection
+	UPDATE #sp_who_proc
+	SET ecid = sp.ecid,
+		status = sp.status,
+		loginname = sp.loginname,
+		hostname = sp.hostname,
+		dbid = sp.dbid,
+		request_id = sp.request_id
+	FROM #sp_who_sysprocesses sp
+		WHERE #sp_who_proc.spid = sp.spid				
+
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
+	UPDATE #sp_who_proc
+	SET connection = 'PostgreSQL'
+	WHERE hostprocess IS NULL 
+
+	-- Keep or delete PG connections
+	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
+	begin    
+		-- Show PG connections; these have dbid = 0
+		-- This is a Babelfish-specific enhancement, since PG connections may also be active in the Babelfish DB
+		-- and it may be useful to see these displayed
+		SET @show_pg = 1
+		
+		-- blank out the loginame parameter for the tests below
+		IF LOWER(@loginame) = 'postgres' SET @loginame = NULL
+	END
+	
+	-- By default, do not show the column indicating the connection type since SQL Server does not have this column
+	SET @hide_col = 'connection' 
+	
+	IF (@show_pg = 1) 
+	BEGIN
+		SET @hide_col = ''
+	END
+	ELSE 
+	BEGIN
+		-- Delete PG connections
+		DELETE #sp_who_proc
+		WHERE dbid = 0
+	END
+			
+	-- Apply filter if specified
+	IF (@loginame IS NOT NULL)
+	BEGIN
+		IF (TRIM(@loginame) = '')
+		BEGIN
+			-- Raise error
+			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+			RAISERROR(@msg, 16, 1)
+			RETURN
+		END
+		
+		IF (sys.ISNUMERIC(@loginame) = 1)
+		BEGIN
+			-- Remove all connections except the specified one
+			DELETE #sp_who_proc
+			WHERE spid <> CAST(@loginame AS INT)
+		END
+		ELSE 
+		BEGIN	
+			IF (LOWER(@loginame) = 'active')
+			BEGIN
+				-- Remove all 'idle' connections 
+				DELETE #sp_who_proc
+				WHERE status = 'idle'
+			END
+			ELSE 
+			BEGIN
+				-- Verify the specified login name exists
+				IF (sys.SUSER_ID(@loginame) IS NULL)
+				BEGIN
+					SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+					RAISERROR(@msg, 16, 1)
+					RETURN					
+				END
+				ELSE 
+				BEGIN
+					-- Keep only connections for the specified login
+					DELETE #sp_who_proc
+					WHERE sys.SUSER_ID(loginname) <> sys.SUSER_ID(@loginame)
+				END
+			END
+		END
+	END			
+			
+	-- Create final result set; use DISTINCT since there are usually duplicate rows from the PG catalogs
+	SELECT distinct 
+		p.spid AS spid, 
+		p.ecid AS ecid, 
+		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
+		p.blocked AS blk, 
+		CAST(LEFT(LOWER(db_name(p.dbid)),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
+		p.request_id AS request_id,
+		connection
+	INTO #sp_who_tmp2
+	FROM #sp_who_proc p, #sp_who_tmp
+		WHERE p.spid = #sp_who_tmp.pid
+		ORDER BY spid		
+	
+	-- Patch up remaining cases
+	UPDATE #sp_who_tmp2
+	SET cmd = 'AWAITING COMMAND'
+	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	
+	UPDATE #sp_who_tmp2
+	SET cmd = 'UNKNOWN'
+	WHERE TRIM(cmd) = ''	
+	
+	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
+	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
+	RETURN
+END	
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

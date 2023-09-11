@@ -3592,7 +3592,7 @@ BEGIN
 		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
 		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
 		p.blocked AS blk, 
-		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(LEFT(LOWER(db_name(p.dbid)),40) AS sys.VARCHAR(40)) AS dbname,
 		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
 		p.request_id AS request_id,
 		connection

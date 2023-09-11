@@ -1,7 +1,6 @@
--- tsql
-create database babel_sp_fkeys_vu_prepare_DB1
+create database babel_sp_fkeys_vu_prepare_db1
 go
-use babel_sp_fkeys_vu_prepare_DB1
+use babel_sp_fkeys_vu_prepare_db1
 go
 create table babel_sp_fkeys_vu_prepare_t1(a int, primary key(a))
 go

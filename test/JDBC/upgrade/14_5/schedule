@@ -143,7 +143,6 @@ BABEL-USER
 bbf_view_def-before-14_7-or-15_2
 binary-index
 bitwise_not-operator
-case_insensitive_collation
 cast_numeric_types_to_datetime
 collation_tests
 collation_tests_arabic
