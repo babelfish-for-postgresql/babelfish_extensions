@@ -40,7 +40,7 @@ go
 exec sp_tables @TABLE_NAME = 'MYTABLE2'
 go
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_tables @TABLE_NAME = [mytable1]
 go
 

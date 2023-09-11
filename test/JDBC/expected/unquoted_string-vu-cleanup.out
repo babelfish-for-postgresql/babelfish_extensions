@@ -1,0 +1,23 @@
+-- tsql 
+drop procedure unqStr_proc_1
+go
+drop procedure unqStr_proc_2
+go
+drop procedure unqStr_proc_3
+go
+drop procedure unqStr_proc_4
+go
+drop function unqStr_func_1
+go
+drop function unqStr_func_2
+go
+drop function unqStr_func_3
+go
+drop table unqStr_tab
+go
+
+-- psql
+drop procedure unqStr_pgproc_1;
+go
+drop function unqStr_pgfunc_1;
+go

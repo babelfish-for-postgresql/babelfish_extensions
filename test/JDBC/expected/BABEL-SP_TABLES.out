@@ -68,33 +68,37 @@ db1#!#dbo#!#mytable2#!#TABLE#!#<NULL>
 ~~END~~
 
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_tables @TABLE_NAME = [mytable1]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable1" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable1#!#TABLE#!#<NULL>
+~~END~~
 
 
 exec sp_tables @TABLE_NAME = [MYTABLE1]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable1" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable1#!#TABLE#!#<NULL>
+~~END~~
 
 
 exec sp_tables @TABLE_NAME = [mytable2]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable2" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable2#!#TABLE#!#<NULL>
+~~END~~
 
 
 exec sp_tables @TABLE_NAME = [MYTABLE2]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable2" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable2#!#TABLE#!#<NULL>
+~~END~~
 
 
 -- should only get table within current database

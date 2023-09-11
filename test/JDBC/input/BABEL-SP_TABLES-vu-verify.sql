@@ -22,7 +22,7 @@ go
 exec sp_tables @TABLE_NAME = 'babel_sp_tables_vu_prepare_MYTABLE2'
 go
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_tables @TABLE_NAME = [babel_sp_tables_vu_prepare_mytable1]
 go
 
