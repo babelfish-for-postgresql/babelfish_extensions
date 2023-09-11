@@ -2657,7 +2657,7 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 	ScanKeyEntryInitialize(&key[1], 0, Anum_bbf_view_def_schema_name,
 				BTEqualStrategyNumber, InvalidOid,
 				bbf_view_def_idx_rel->rd_indcollation[1], 
-				F_TEXTEQ,CStringGetTextDatum(logical_schema_name));
+				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
 	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_view_def_object_name,
 				BTEqualStrategyNumber, InvalidOid,
