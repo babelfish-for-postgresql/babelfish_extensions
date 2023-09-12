@@ -257,5 +257,12 @@ GO
 CREATE VIEW view_babel_4231_39 AS SELECT 1 AS N'ANfjws';
 GO
 
+-- tsql
+-- table aliases with chinese characters whose length is more than or equals to 64
+CREATE TABLE table18_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_40 AS SELECT 您您对您对您对您对您对您对您对您对您对您您您.* FROM table18_babel_4231 AS 您您对您对您对您对您对您对您对您对您对您您您;
+GO
+
 
 
