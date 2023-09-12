@@ -1557,7 +1557,7 @@ LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
 
 GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 
-CREATE VIEW sys.pg_namespace_ext AS
+CREATE OR REPLACE VIEW sys.pg_namespace_ext AS
 SELECT BASE.* , DB.orig_name as dbname FROM
 pg_catalog.pg_namespace AS base
 LEFT OUTER JOIN sys.babelfish_namespace_ext AS EXT on BASE.nspname = EXT.nspname
