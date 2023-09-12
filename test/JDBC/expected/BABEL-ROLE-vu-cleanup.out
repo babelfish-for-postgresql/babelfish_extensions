@@ -1,4 +1,4 @@
---tsql
+-- tsql
 USE babel_role_vu_prepare_db
 GO
 
