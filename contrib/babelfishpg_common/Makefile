@@ -12,13 +12,16 @@ PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
-PG_CONFIG_Dir := pg_config
-pglib_dir := $(shell $(PG_CONFIG_Dir) --pkglibdir)
+pglib_dir := $(shell $(PG_CONFIG) --pkglibdir)
 
 #preprocessor check for postgis file
-POSTGIS_LIB := $(pglib_dir)/postgis-3.so
+POSTGIS_LIB := $(pglib_dir)
+file_to_check := postgis-3.so
 
-ifneq ("$(wildcard $(POSTGIS_LIB))","")
+#check for file in the directory
+file_exists := $(wildcard $(POSTGIS_LIB)/$(file_to_check))
+
+ifneq ("$(strip $(file_exists))","")
 export POSTGIS_INCLUDED=1
 endif
 

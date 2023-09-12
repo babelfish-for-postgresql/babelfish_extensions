@@ -51,9 +51,33 @@ jobs:
         with:
           install_dir: ${{env.OLD_INSTALL_DIR}}
 
+      - name: Build PostGIS Extension using ${{env.EXTENSION_BRANCH_OLD}}
+        id: build-postgis-extension-old
+        if: always() && steps.compile-antlr.outcome == 'success'
+        run: |
+          cd ..
+          sudo apt-get install wget
+          wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
+          tar -xvzf postgis-3.3.3dev.tar.gz
+          wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
+          tar -xvzf proj-4.9.1.tar.gz
+          cd proj-4.9.1
+          if [ ! -d "build" ]; then
+            mkdir build
+          fi
+          cd build
+          cmake ..
+          cmake --build .
+          sudo cmake --build . --target install
+          cd ../../postgis-3.3.3dev
+          ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/psql_source/bin/pg_config
+          make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config
+          sudo make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config install
+        shell: bash
+
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_OLD}}
         id: build-extensions-old
-        if: always() && steps.compile-antlr.outcome == 'success'
+        if: always() && steps.build-postgis-extension-old.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.OLD_INSTALL_DIR}}
@@ -72,9 +96,16 @@ jobs:
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
 
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}

@@ -971,8 +971,6 @@ Type sys."int"
 Type sys."real"
 Type sys.bbf_varbinary
 Type sys.cursor
-Type sys.geography
-Type sys.geometry
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
 View information_schema_tsql.constraint_column_usage

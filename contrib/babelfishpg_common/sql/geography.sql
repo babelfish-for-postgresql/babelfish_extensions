@@ -87,7 +87,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3', 'ST_FlipCoordinates'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION cust_stgeogfromtext(text, integer)
+CREATE OR REPLACE FUNCTION sys.cust_stgeogfromtext(text, integer)
 	RETURNS sys.GEOGRAPHY
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -123,10 +123,10 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		lat float8;
 	BEGIN     
 		srid := $2;
-		lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(cust_stgeogfromtext($1, $2))));
+		lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.cust_stgeogfromtext($1, $2))));
 		IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT sys.Geography__STFlipCoordinates(cust_stgeogfromtext($1, $2)));
+			RETURN (SELECT sys.Geography__STFlipCoordinates(sys.cust_stgeogfromtext($1, $2)));
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 		ELSE
@@ -135,7 +135,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION cust_STAsText(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.cust_STAsText(sys.GEOGRAPHY)
 	RETURNS TEXT
 	AS '$libdir/postgis-3','LWGEOM_asText'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
@@ -145,7 +145,7 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT cust_STAsText(Geography__STFlipCoordinates($1)));
+		RETURN (SELECT sys.cust_STAsText(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -154,7 +154,7 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3','LWGEOM_asBinary'
 	LANGUAGE 'c' IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION cust_GeogPoint(float8, float8, srid integer)
+CREATE OR REPLACE FUNCTION sys.cust_GeogPoint(float8, float8, srid integer)
 	RETURNS sys.GEOGRAPHY
 	AS '$libdir/postgis-3', 'ST_Point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
@@ -194,7 +194,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 		lat := $1;
 		IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT cust_GeogPoint($1, $2, $3));
+			RETURN (SELECT sys.cust_GeogPoint($1, $2, $3));
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 		ELSE
@@ -203,7 +203,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION cust_STAsBinary(sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.cust_STAsBinary(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_asBinary'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -213,7 +213,7 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT cust_STAsBinary(sys.Geography__STFlipCoordinates($1)));
+		RETURN (SELECT sys.cust_STAsBinary(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -248,10 +248,10 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		lat float8;
 	BEGIN
 		srid := $2;
-		lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(cust_stgeogfromtext($1, $2))));
+		lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.cust_stgeogfromtext($1, $2))));
 		IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT sys.Geography__STFlipCoordinates(cust_stgeogfromtext($1, $2)));
+			RETURN (SELECT sys.Geography__STFlipCoordinates(sys.cust_stgeogfromtext($1, $2)));
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 		ELSE
@@ -261,7 +261,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Minimum distance
-CREATE OR REPLACE FUNCTION cust_STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
+CREATE OR REPLACE FUNCTION sys.cust_STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
 	RETURNS float8
 	AS '$libdir/postgis-3', 'LWGEOM_distance_ellipsoid'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -271,7 +271,7 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT cust_STDistance(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
+		RETURN (SELECT sys.cust_STDistance(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 

@@ -68,7 +68,7 @@ CREATE OR REPLACE FUNCTION sys.point(sys.GEOMETRY)
 CREATE CAST (sys.GEOMETRY AS point) WITH FUNCTION sys.point(sys.GEOMETRY);
 CREATE CAST (point AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(point);
 
-CREATE OR REPLACE FUNCTION cust_stgeomfromtext(text, integer)
+CREATE OR REPLACE FUNCTION sys.cust_stgeomfromtext(text, integer)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -82,7 +82,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 		srid := $2;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT cust_stgeomfromtext($1, $2));
+			RETURN (SELECT sys.cust_stgeomfromtext($1, $2));
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
@@ -121,7 +121,7 @@ CREATE CAST (bytea AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(bytea) AS IMPLICI
 CREATE CAST (sys.GEOMETRY AS bytea) WITH FUNCTION sys.bytea(sys.GEOMETRY) AS IMPLICIT;
 
 -- Availability: 3.2.0 current supported in APG
-CREATE OR REPLACE FUNCTION cust_GeomPoint(float8, float8, srid integer)
+CREATE OR REPLACE FUNCTION sys.cust_GeomPoint(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3', 'ST_Point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
@@ -135,7 +135,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 		srid := $3;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT cust_GeomPoint($1, $2, $3));
+			RETURN (SELECT sys.cust_GeomPoint($1, $2, $3));
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
@@ -156,7 +156,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 		srid := $2;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
-			RETURN (SELECT cust_stgeomfromtext($1, $2));
+			RETURN (SELECT sys.cust_stgeomfromtext($1, $2));
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
