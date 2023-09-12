@@ -494,7 +494,7 @@ collation_cache_entry_hook(Oid collid, pg_locale_t *locale)
 		*prev_cache_collid = collid;
 		prev_locale = locale;
 	}
-	return prev_locale;
+	return NULL;
 }			
 
 static void
