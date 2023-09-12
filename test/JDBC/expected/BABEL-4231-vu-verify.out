@@ -39,7 +39,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选�";
+ SELECT 1 AS "您对“数据一览“中的f14d4ea72c5ab09dd327efc75f66d708";
 ~~END~~
 
 
@@ -48,7 +48,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选�";
+ SELECT 1 AS "您对“数据一览“中的f14d4ea72c5ab09dd327efc75f66d708";
 ~~END~~
 
 
@@ -75,7 +75,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT 1 AS " ぁ あ ぃ い ぅ う ぇ え ぉ せ ぜ す じ し ざ ";
+ SELECT 1 AS " ぁ あ ぃ い ぅ う ぇ 837c554dda804e3ffe7d700d76c55bc0";
 ~~END~~
 
 
@@ -93,7 +93,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT 1 AS "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ ㅋ ㅌ ㅍ ㅎㅏ ㅑ ";
+ SELECT 1 AS "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6";
 ~~END~~
 
 
@@ -120,7 +120,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT 1 AS "ج	د	ه	و	ز	ح	ط	ي	ك	ل	م	ن	س	ع	ف	ص	ق	ر	ش	ت	ث";
+ SELECT 1 AS "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8";
 ~~END~~
 
 
