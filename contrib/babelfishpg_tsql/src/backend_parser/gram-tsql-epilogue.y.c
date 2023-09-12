@@ -782,15 +782,15 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		if (n_d)
 		{
 			n_d->usingClause = from_clause;
-			n_d->whereClause = tsql_update_delete_stmt_with_top(top_clause,
-																relation, where_clause, yyscanner);
+			n_d->whereClause = where_clause;
+			n_d->limitCount = top_clause;
 			return (Node *) n_d;
 		}
 		else
 		{
 			n_u->fromClause = from_clause;
-			n_u->whereClause = tsql_update_delete_stmt_with_top(top_clause,
-																relation, where_clause, yyscanner);
+			n_u->whereClause = where_clause;
+			n_u->limitCount = top_clause;
 			return (Node *) n_u;
 		}
 	}
@@ -837,64 +837,6 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		n_u->whereClause = (Node *) link;
 		return (Node *) n_u;
 	}
-}
-
-/*
- * Similar to JOIN, we rewrite TOP clause into a subquery, while attaching the
- * TOP as a LIMIT in the subquery, for UPDATE/DELETE.
- *
- * original query:
- * UPDATE/DELETE <top_clause> <table>
- *
- * rewritten query:
- * UPDATE/DELETE <table> WHERE ctid IN (SELECT ctid FROM <table> <limit_count>)
- */
-static Node *
-tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar *relation, Node
-								 *where_clause, core_yyscan_t yyscanner)
-{
-	SubLink    *link;
-	List	   *indirect;
-	SelectStmt *selectstmt;
-	ResTarget  *resTarget;
-
-	if (top_clause == NULL)
-		return where_clause;
-
-	/* construct select statment->target */
-	resTarget = makeNode(ResTarget);
-	resTarget->name = NULL;
-	resTarget->indirection = NIL;
-	indirect = list_make1((Node *) makeString("ctid"));
-	if (relation->alias)
-	{
-		resTarget->val = makeColumnRef(relation->alias->aliasname,
-									   indirect, -1, yyscanner);
-	}
-	else
-	{
-		resTarget->val = makeColumnRef(relation->relname,
-									   indirect, -1, yyscanner);
-	}
-
-	/* construct select statement */
-	selectstmt = makeNode(SelectStmt);
-	selectstmt->targetList = list_make1(resTarget);
-	selectstmt->fromClause = list_make1(relation);
-	selectstmt->whereClause = where_clause;
-	selectstmt->limitCount = top_clause;
-
-	/* construct where_clause(subLink) */
-	link = makeNode(SubLink);
-	link->subselect = (Node *) selectstmt;
-	link->subLinkType = ANY_SUBLINK;
-	link->subLinkId = 0;
-	link->testexpr = (Node *) makeColumnRef(pstrdup("ctid"),
-											NIL, -1, yyscanner);;
-	link->operName = NIL;		/* show it's IN not = ANY */
-	link->location = -1;
-
-	return (Node *) link;
 }
 
 /*
@@ -1145,8 +1087,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	else
 	{
 		d->usingClause = from_clause;
-		d->whereClause = tsql_update_delete_stmt_with_top(opt_top_clause,
-														  relation_expr_opt_alias, where_or_current_clause, yyscanner);
+		d->whereClause = where_or_current_clause;
+		d->limitCount = opt_top_clause;
 		if (from_clause != NULL && (IsA(linitial(from_clause), RangeSubselect) || IsA(linitial(from_clause), RangeVar)))
 			output_update_transformation = true;
 	}

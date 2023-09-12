@@ -67,8 +67,6 @@ char	   *construct_unique_index_name(char *index_name, char *relation_name);
 
 static Node *tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause, Node *top_clause, RangeVar *relation,
 											   core_yyscan_t yyscanner);
-static Node *tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar
-											  *relation, Node *where_clause, core_yyscan_t yyscanner);
 static void tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause);
 static Node *tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *opt_top_clause, RangeVar *insert_target,
 														List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns,
