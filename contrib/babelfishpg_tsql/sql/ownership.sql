@@ -16,12 +16,12 @@ GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
 -- BABELFISH_SCHEMA
 CREATE TABLE sys.babelfish_schema (
-	db_name NAME NOT NULL,
-	schema_name NAME NOT NULL,
+  db_name NAME NOT NULL,
+  schema_name NAME NOT NULL,
   object_name NAME NOT NULL,
   permission NAME NOT NULL,
   grantee NAME NOT NULL,
-	PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
+  PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
 );
 GRANT SELECT ON sys.babelfish_schema TO PUBLIC;
 

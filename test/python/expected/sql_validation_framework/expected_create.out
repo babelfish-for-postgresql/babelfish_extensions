@@ -67,6 +67,7 @@ Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
 Could not find tests for procedure sys.printarg
 Could not find tests for table sys.babelfish_helpcollation
+Could not find tests for table sys.babelfish_schema
 Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
 Could not find tests for table sys.spt_datatype_info_table
@@ -191,6 +192,7 @@ Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for table sys.babelfish_configurations
 Could not find upgrade tests for table sys.babelfish_helpcollation
+Could not find upgrade tests for table sys.babelfish_schema
 Could not find upgrade tests for table sys.babelfish_syslanguages
 Could not find upgrade tests for table sys.service_settings
 Could not find upgrade tests for table sys.spt_datatype_info_table
