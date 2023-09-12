@@ -1326,7 +1326,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		 * For instance, queries like: SELECT 1 AS ABCD;
 		 * Case 3 : Handle both singlebyte and multibyte aliases whose length is
 		 * more than or equals to 63 when not delimited by sqb and dq.
-		 * For instance, queries like : SELECT 1 AS 您对您对您对您对您对您对您对您对您对您对您对您对您对;
+		 * For example, queries like : SELECT 1 AS 您对您对您对您对您对您对您对您对您对您对您对您对您对;
 		 */
 		if (alias_len > 0)
 		{
