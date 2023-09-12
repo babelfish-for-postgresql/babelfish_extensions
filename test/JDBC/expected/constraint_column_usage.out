@@ -52,7 +52,7 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 ~~END~~
 
 
-create table constraint_column_usage_tbl6 (arg12 int, arg13 int, UNIQUE(arg13));
+create table constraint_column_usage_tbl6 (arg12 int, arg13 int not null, UNIQUE(arg13));
 go
 
 SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;

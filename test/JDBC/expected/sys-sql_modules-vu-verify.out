@@ -156,6 +156,10 @@ nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 USE master
 GO
 
+-- reset the login password
+ALTER LOGIN sys_sql_modules_vu_prepare_user WITH PASSWORD='test'
+GO
+
 -- tsql user=sys_sql_modules_vu_prepare_user password=test
 
 USE sys_sql_modules_vu_prepare_db

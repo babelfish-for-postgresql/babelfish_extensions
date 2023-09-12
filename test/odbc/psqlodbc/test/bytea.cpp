@@ -259,7 +259,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Composite_Keys) {
 TEST_F(PSQL_DataTypes_ByteA, Table_Unique_Constraint) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
-    {COL2_NAME, DATATYPE_NAME}
+    {COL2_NAME, DATATYPE_NAME + " NOT NULL"}
   };
 
   const string TABLE_NAME = PG_TABLE_NAME.substr(PG_TABLE_NAME.find('.') + 1, PG_TABLE_NAME.length());  

@@ -142,6 +142,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
+static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 
 /*****************************************
  * 			Executor Hooks
@@ -153,6 +154,12 @@ static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
+
+static void declare_parameter_unquoted_string(Node *paramDft, ObjectType objtype);
+static void declare_parameter_unquoted_string_reset(Node *paramDft);
+
+static Node* call_argument_unquoted_string(Node *arg);
+static void call_argument_unquoted_string_reset(Node *colref_arg);
 
 /*****************************************
  * 			Replication Hooks
@@ -205,6 +212,10 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static declare_parameter_unquoted_string_hook_type prev_declare_parameter_unquoted_string_hook = NULL;
+static declare_parameter_unquoted_string_reset_hook_type prev_declare_parameter_unquoted_string_reset_hook = NULL;
+static call_argument_unquoted_string_hook_type prev_call_argument_unquoted_string_hook = NULL;
+static call_argument_unquoted_string_reset_hook_type prev_call_argument_unquoted_string_reset_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
 static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
@@ -333,6 +344,16 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
+	prev_declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string_hook;
+	declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string;
+	prev_declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset_hook;
+	declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset;
+
+	prev_call_argument_unquoted_string_hook = call_argument_unquoted_string_hook;
+	call_argument_unquoted_string_hook = call_argument_unquoted_string;
+	prev_call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset_hook;
+	call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset;
+
 	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
 	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
 
@@ -365,6 +386,8 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
@@ -412,6 +435,10 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	declare_parameter_unquoted_string_hook = prev_declare_parameter_unquoted_string_hook;
+	declare_parameter_unquoted_string_reset_hook = prev_declare_parameter_unquoted_string_reset_hook;
+	call_argument_unquoted_string_hook = prev_call_argument_unquoted_string_hook;
+	call_argument_unquoted_string_reset_hook = prev_call_argument_unquoted_string_reset_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
 	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
@@ -1383,9 +1410,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			Oid			sys_nspoid = get_namespace_oid("sys", false);
-			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_varchartypoid = get_sys_varcharoid();
 
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
 											 restype, sys_varchartypoid, -1,
@@ -2447,6 +2472,14 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	HeapTuple	tuple;
 	List	   *insert_col_list = NIL,
 			   *temp_col_list;
+	char		relkind = get_rel_relkind(relid);
+
+	if(relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The target '%s' of the OUTPUT INTO clause cannot be a view or common table expression.", stmt->relation->relname)));
+	}
 
 	if (!output_into_insert_transformation)
 		return;
@@ -3953,3 +3986,160 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 		}
 	}	
 }
+
+
+/*
+ * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
+ * function.
+ * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
+ * replacement_value. If replacement_value is also NULL then return INT.
+ */
+static Oid
+select_common_type_for_isnull(ParseState *pstate, List *exprs)
+{
+	Node	   *pexpr;
+	Oid		   ptype;
+
+	Assert(exprs != NIL);
+	pexpr = (Node *) linitial(exprs);
+	ptype = exprType(pexpr);
+
+	/* Check if first arg (check_expression) is NULL literal */
+	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+	{
+		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
+		Oid ntype = exprType(nexpr);
+		/* Check if second arg (replace_expression) is NULL literal */
+		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
+		{
+			return INT4OID;
+		}
+		/* If second argument is non-null string literal */
+		if (ntype == UNKNOWNOID)
+		{
+			return get_sys_varcharoid();
+		}
+		return ntype;
+	}
+	/* If first argument is non-null string literal */
+	if (ptype == UNKNOWNOID)
+	{
+		return get_sys_varcharoid();
+	}
+	return ptype;
+}
+
+
+/*  
+ * Hook functions for handling unquoted string defaults in parameter definitions
+ * for T-SQL CREATE PROCEDURE/CREATE FUNCTION.
+ */
+static void declare_parameter_unquoted_string (Node *paramDft, ObjectType objtype)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL && 
+       (objtype == OBJECT_PROCEDURE || objtype == OBJECT_FUNCTION) && 
+	   nodeTag(paramDft) == T_ColumnRef)
+	{
+		/* 
+		 * The node could be for a variable, which should not be treated as a 
+		 * an unquoted string, so verify it does not start with '@'.
+		 * This will cause parameter defaults with local variables to 
+		 * fail rather than to return the local variable name as a string,
+		 * which is identical to Babelfish behaviour before the fix
+		 * for unquoted string parameter.
+		 */
+		ColumnRef *colref = (ColumnRef *) paramDft;
+		Node *colnameField = (Node *) linitial(colref->fields);			
+		char *colname = strVal(colnameField);
+		if (colname[0] != '@') 
+		{
+			paramDft->type = T_TSQL_UnquotedString;
+		}		
+	}	
+	return;
+}			
+
+static void declare_parameter_unquoted_string_reset (Node *paramDft)
+{
+	/*
+	 * In the case of an unquoted string, restore the original node type
+	 * or we may run into an unknown node type downstream. 
+	 */
+	if (nodeTag(paramDft) == T_ColumnRef)
+	{	
+		paramDft->type = T_ColumnRef;
+	}	
+	return;	
+}	
+
+/*  
+ * Hook functions for handling unquoted string arguments in
+ * for T-SQL procedure calls.
+ */
+static Node* call_argument_unquoted_string (Node *arg)
+{
+	/*
+	 * Intercept unquoted string arguments in T-SQL procedure calls.
+	 * These arrive here as nodetype=T_ColumnRef. Temporarily change
+	 * the node type to T_TSQL_UnquotedString, which is picked up and 
+	 * handled in transformExprRecurse().
+	 */
+	Node *colref_arg = NULL; /* Points to temporarily modified node, if any. */
+	if (sql_dialect == SQL_DIALECT_TSQL) 
+	{
+		if (nodeTag(arg) == T_ColumnRef)
+		{
+			/* 
+			 * We get here for unnamed argument syntax, i.e. 
+			 * exec myproc mystring 
+			 * */
+			colref_arg = arg;
+		}
+		else if (nodeTag(arg) == T_NamedArgExpr)
+		{
+			/* 
+			 * We get here for named argument syntax, i.e. 
+			 * exec myproc @p=mystring 
+			 */
+			NamedArgExpr *na = (NamedArgExpr *) arg;
+			Assert(na->arg);
+			if (nodeTag((Node *) na->arg) == T_ColumnRef) 
+			{
+				colref_arg = (Node *) na->arg;
+			}
+		}
+		/* 
+		 * The argument could be a variable, which should not be treated
+		 * as an unquoted string, so verify it does not start with '@'.
+		 */
+		if (colref_arg) 					
+		{
+			ColumnRef *colref = (ColumnRef *) colref_arg;
+			Node *colnameField = (Node *) linitial(colref->fields);			
+			char *colname = strVal(colnameField);
+			if (colname[0] != '@') 
+			{
+				colref_arg->type = T_TSQL_UnquotedString;
+			}
+		}		
+	}
+	return colref_arg;
+}
+
+
+static void call_argument_unquoted_string_reset (Node *colref_arg)
+{
+	/*
+	 * In case of an unquoted string, restore original node type
+	 * or we may run into an unknown node type downstream.
+	 */
+	if (colref_arg) 
+	{
+		if (nodeTag(colref_arg) == T_TSQL_UnquotedString)
+		{
+			colref_arg->type = T_ColumnRef;
+		}
+	}
+	return;
+}
+

@@ -103,6 +103,10 @@ GO
 USE master
 GO
 
+-- reset the login password
+ALTER LOGIN BABEL_3117_login WITH PASSWORD = '123'
+GO
+
 -- Test if user default schema is not dbo schema
 -- tsql      user=BABEL_3117_login      password=123
 USE master

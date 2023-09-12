@@ -146,33 +146,53 @@ babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_pr
 ~~END~~
 
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_mytable5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_table_priviliges_vu_prepare_mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#INSERT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_MYTABLE5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_table_priviliges_vu_prepare_mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#INSERT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_mytable6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_table_priviliges_vu_prepare_mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#INSERT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_table_privileges @TABLE_NAME = [babel_sp_table_priviliges_vu_prepare_MYTABLE6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_table_priviliges_vu_prepare_mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#INSERT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+babel_sp_table_priviliges_vu_prepare_db1#!#dbo#!#babel_sp_table_priviliges_vu_prepare_mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 -- tests fUsePattern = 0

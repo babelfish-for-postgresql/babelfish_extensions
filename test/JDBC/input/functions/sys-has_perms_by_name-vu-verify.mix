@@ -1,3 +1,8 @@
+-- tsql
+-- reset the login password
+ALTER LOGIN user_perms_by_name WITH PASSWORD='test';
+GO
+
 -- tsql user=user_perms_by_name password=test
 USE db_perms_by_name;
 GO
