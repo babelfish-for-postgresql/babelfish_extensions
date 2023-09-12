@@ -279,6 +279,47 @@ typedef struct FormData_bbf_function_ext
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 
 /*****************************************
+ *			SCHEMA
+ *****************************************/
+#define BBF_SCHEMA_TABLE_NAME "babelfish_schema"
+#define BBF_SCHEMA_IDX_NAME "babelfish_schema_pkey"
+
+extern Oid bbf_schema_oid;
+extern Oid bbf_schema_idx_oid;
+
+extern Oid get_bbf_schema_oid(void);
+extern Oid get_bbf_schema_idx_oid(void);
+
+typedef struct FormData_bbf_schema
+{
+	NameData	db_name;
+	NameData	schema_name;
+	NameData	object_name;
+	NameData	permission;
+	NameData	grantee;
+} FormData_bbf_schema;
+
+typedef FormData_bbf_schema *Form_bbf_schema;
+
+extern void add_entry_to_bbf_schema(const char *db_name,
+				  const char *schema_name,
+				  const char *object_name,
+				  const char *permission,
+				  const char *grantee);
+
+extern bool check_bbf_schema_for_entry(const char *db_name,
+									   const char *schema_name,
+									   const char *object_name,
+									   const char *permission,
+									   const char *grantee);
+
+extern void del_from_bbf_schema(const char *db_name,
+					  const char *schema_name,
+					  const char *object_name,
+					  const char *permission,
+					  const char *grantee);
+
+/*****************************************
  *			DOMAIN MAPPING
  *****************************************/
 #define BBF_DOMAIN_MAPPING_TABLE_NAME "babelfish_domain_mapping"

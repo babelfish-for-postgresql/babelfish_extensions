@@ -185,8 +185,9 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_FULL,
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
-	PLTSQL_STMT_GRANTDB
-} PLtsql_stmt_type;
+	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_GRANTSCHEMA
+	} PLtsql_stmt_type;
 
 /*
  * Execution node return codes
@@ -999,6 +1000,22 @@ typedef struct PLtsql_stmt_grantdb
 	bool		is_grant;
 	List	   *grantees;		/* list of users */
 } PLtsql_stmt_grantdb;
+
+/*
+ *	Grant on schema stmt
+ */
+typedef struct PLtsql_stmt_grantschema
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	bool		is_grant;
+	List	   *privileges;		/* list of privileges */
+	//char *privilege;
+	/* privileges == NIL denotes ALL PRIVILEGES */
+	List	   *grantees;		/* list of users */
+	bool with_grant_option;
+	char	*schema_name;	/* schema name*/
+} PLtsql_stmt_grantschema;
 
 /*
  * ASSERT statement

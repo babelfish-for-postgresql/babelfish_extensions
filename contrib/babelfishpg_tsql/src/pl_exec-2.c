@@ -50,8 +50,10 @@ static int	exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_r
 static int	exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
+static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
+static List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char *dynstmt);
@@ -3286,4 +3288,134 @@ int
 get_insert_bulk_kilobytes_per_batch()
 {
 	return insert_bulk_kilobytes_per_batch;
+}
+
+static int
+exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
+{
+	List	   *parsetree_list;
+	ListCell   *parsetree_item;
+	char	   *dbname = get_cur_db_name();
+	char	   *login = GetUserNameFromId(GetSessionUserId(), false);
+	bool		login_is_db_owner;
+	Oid			datdba;
+	char		*rolname;
+	char		*schema_name;
+	ListCell   *lc;
+	ListCell	*lc1;
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	datdba = get_role_oid("sysadmin", false);
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission..", stmt->schema_name)));
+
+	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
+	foreach(lc1, stmt->privileges)
+	{
+		char	*priv_name = (char *) lfirst(lc1);
+		foreach(lc, stmt->grantees)
+		{
+			char	   *grantee_name = (char *) lfirst(lc);
+			rolname = get_physical_user_name(dbname, grantee_name);
+
+			parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);
+			/* Run all subcommands */
+			foreach(parsetree_item, parsetree_list)
+			{
+				Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+				PlannedStmt *wrapper;
+
+				/* need to make a wrapper PlannedStmt */
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = stmt;
+				wrapper->stmt_location = 0;
+				wrapper->stmt_len = 16;
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							"(GRANT SCHEMA )",
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+			}
+			/* Add entry for each */
+			if (stmt->is_grant && !check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
+				add_entry_to_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
+		}
+
+	}
+	return PLTSQL_RC_OK;
+}
+
+static List
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
+{
+	StringInfoData query;
+	List	   *stmt_list;
+	//int			expected_stmts = (strcmp(privilege, "execute") == 0) ? 3 : 2;
+	int			expected_stmts = 2;
+	initStringInfo(&query);
+	if (is_grant)
+	{
+		if (strcmp(privilege, "execute") == 0)
+		{
+			if (with_grant_option)
+			{
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+			}
+			else
+			{
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+			}
+			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON FUNCTIONS TO \"%s\"; ", schema, privilege, rolname);
+			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON PROCEDURES TO \"%s\"; ", schema, privilege, rolname);
+		}
+		else
+		{
+			if (with_grant_option)
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+			else
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON TABLES TO \"%s\"; ", schema, privilege, rolname);
+		}	
+	}
+	else
+	{
+		if (strcmp(privilege, "execute") == 0)
+		{
+			appendStringInfo(&query, "REVOKE \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "REVOKE \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+			/* Whenever a new FUNCTION/PROCEDURE is created, EXECUTE permission is revoked. */
+			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON FUNCTIONS FROM \"%s\"; ", schema, privilege, rolname);
+			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON PROCEDURES FROM \"%s\"; ", schema, privilege, rolname);
+		}
+		else
+		{
+			appendStringInfo(&query, "REVOKE \"%s\" ON ALL TABLES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON TABLES FROM \"%s\"; ", schema, privilege, rolname);
+		}
+	}
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+	return stmt_list;
 }
