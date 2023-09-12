@@ -53,7 +53,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
-
+#include "hooks.h"
 #include "pltsql.h"
 #include "access/xact.h"
 #include "err_handler.h"
@@ -4606,6 +4606,11 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  * needs to use that, fix those callers to push/pop stmt_mcontext.
  * ----------
  */
+// PLtsql_expr *prevExpr = NULL;
+// CachedPlan *prevcp;
+// CachedPlanSource *cachedplansource;
+// CachedPlanSource *prevplansource;
+// CachedPlan *cp;
 static int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
@@ -4616,10 +4621,18 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
-	CachedPlan *cp;
+	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
+	// Node 		*node = NULL;
+	// List 		*getplan;
 
+	// prevplansource = NULL;
+	// cachedplansource = NULL;
+	// prevcp = NULL;
+	// cp = NULL;
+	// CachedPlanSource *cachedplansource;
+	// ListCell 	*lstcell;
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
 	 * Reenable if a use-case is found.
@@ -4633,6 +4646,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	char	   *cur_dbname = get_cur_db_name();
 	bool		reset_session_properties = false;
 	bool		inside_trigger = false;
+	Query	   *quuery;
+	// List	   *funcargs;
+	// int 		nfields;
+	// int 		i;
+	// ListCell	*lc;
 
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
@@ -4712,7 +4730,147 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
 		 */
-		cp = SPI_plan_get_cached_plan(expr->plan);
+		// cp = SPI_plan_get_cached_plan(expr->plan);
+		/*
+		 * Check whether the statement is an INSERT/DELETE with RETURNING
+		 */
+
+		// getplan = expr->plan->plancache_list;
+
+		// if(list_length(getplan)==1)
+		// {
+		// 	CachedPlanSource *cachedplansource = (CachedPlanSource *) linitial(getplan);
+		// 	if(prevplansource == cachedplansource)
+		// 	{
+		// 		cp = prevcp;
+		// 	}
+		// 	else
+		// 	{
+		// 		prevplansource = (CachedPlanSource *) linitial(getplan);
+
+		// 		cp = GetCachedPlan(cachedplansource, NULL,
+		// 				  expr->plan->saved ? CurrentResourceOwner : NULL,
+		// 				  NULL);
+
+		// 		prevcp = cp;
+		// 	}
+		// }
+		// else
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// 	prevcp = cp;
+		// }
+
+		// if(expr->plan->saved)
+		// {
+		// 	int			i;
+		// 	// cp = SPI_plan_get_cached_plan(expr->plan);
+		// 	i = 0;
+		// 	cachedplansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+		// 	foreach(lc, cachedplansource->gplan->stmt_list)
+		// 	{
+		// 		PlannedStmt *ps = (PlannedStmt *) lfirst(lc);
+
+		// 		if (ps->hasReturning)
+		// 		{
+		// 			is_returning = true;
+		// 			if (ps->commandType == CMD_INSERT)
+		// 				cmd = CMD_INSERT;
+		// 			else if (ps->commandType == CMD_DELETE)
+		// 				cmd = CMD_DELETE;
+		// 			else if (ps->commandType == CMD_UPDATE)
+		// 				cmd = CMD_UPDATE;
+		// 			break;
+		// 		}
+		// 		if (ps->commandType != CMD_SELECT)
+		// 		{
+		// 			is_select = false;
+		// 		}
+		// 		if (ps->commandType == CMD_UPDATE || ps->commandType == CMD_INSERT)
+		// 		{
+		// 			updateColumnUpdatedList(expr, i);
+		// 		}
+		// 		++i;
+		// 	}
+		// }
+		// else
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+
+		// if (!(stmt->into || stmt->strict || stmt->insert_exec || stmt->need_to_push_result || stmt->func_call || stmt->is_cross_db || stmt->is_tsql_select_assign_stmt))
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+
+		// if (!( stmt->need_to_push_result && estate->insert_exec ))    //not call SPI.. for select stmts
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+
+		// if (!( ((PLtsql_stmt_execsql *) stmt)->mod_stmt_tablevar &&
+		// 			estate->func->fn_prokind == PROKIND_FUNCTION &&
+		// 			estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER && stmt->need_to_push_result && estate->insert_exec ))    //not call SPI.. for select stmts
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+
+		// if (!( stmt->strict || stmt->insert_exec || stmt->need_to_push_result || stmt->func_call ))    //not call SPI.. for select stmts
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+
+		// PLtsql_expr *expr = stmt->sqlstmt;
+		// cachedplansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+
+	/*
+	 * If node is NULL, that means query is of one of INSERT/UPDATE/DELETE so
+	 * we start implicit transaction for it. Else query is a utility command
+	 * and we need to identify whether it qualifies to start an implicit
+	 * transaction
+	 */
+		// node = linitial_node(Query, cachedplansource->query_list)->utilityStmt;
+
+		// funcargs = expand_function_arguments(funcexpr->args,
+		// 								 false,
+		// 								 funcexpr->funcresulttype,
+		// 								 func_tuple);
+
+		// nfields = 0;
+		// i = 0;
+		// foreach(lc, funcargs)
+		// {
+		// 	Node	   *n = lfirst(lc);
+
+		// 	if (argmodes &&
+		// 		(argmodes[i] == PROARGMODE_INOUT ||
+		// 		 argmodes[i] == PROARGMODE_OUT))
+		// 	{
+		// 		if (parammodes &&
+		// 			parammodes[i] != PROARGMODE_INOUT &&
+		// 			parammodes[i] != PROARGMODE_OUT)
+		// 		{}
+				
+		// 	}
+				
+		// }
+		
+
+		quuery = linitial_node(Query, ((CachedPlanSource *) linitial(expr->plan->plancache_list))->query_list);
+
+		if( quuery->commandType==CMD_INSERT || quuery->commandType==CMD_DELETE)
+		{
+			if (//get_output_clause_status_hook
+			//get_output_clause_transformation_info()
+			output_update_transformation
+						&& sql_dialect == SQL_DIALECT_TSQL)
+						{
+							//transformCols = (*get_output_clause_status_hook) ();
+							cp = SPI_plan_get_cached_plan(expr->plan);
+						}
+		}
+		
+		
 		if (cp)
 		{
 			int			i;
