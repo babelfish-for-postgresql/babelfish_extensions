@@ -35,8 +35,8 @@ jobs:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_FROM}}
 
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
+      - name: Build PostGIS Extension using ${{env.EXTENSION_VER_FROM}}
+        id: build-postgis-extension-old
         if: always() && steps.compile-antlr.outcome == 'success'
         run: |
           cd ..
@@ -61,7 +61,7 @@ jobs:
 
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_FROM}}
         id: build-extensions-older
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-postgis-extension-old.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension
@@ -90,6 +90,11 @@ jobs:
         if: always() && steps.install-extensions-older.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
 
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+
       - name: Set env variables and build extensions
         id: build-extensions-newer
         uses: ./.github/composite-actions/build-extensions
@@ -103,11 +108,6 @@ jobs:
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
-        
-      - name: Install Extensions
-        id: install-extensions
-        if: always() && steps.build-extensions-newer.outcome == 'success'
-        uses: ./.github/composite-actions/install-extensions
 
       - name: Run JDBC Tests
         id: jdbc
