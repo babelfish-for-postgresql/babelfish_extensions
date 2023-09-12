@@ -160,3 +160,6 @@ datetimeoffset
 1999-02-16 00:00:00.0000000 +01:00
 ~~END~~
 
+
+DROP TABLE IF EXISTS test
+GO

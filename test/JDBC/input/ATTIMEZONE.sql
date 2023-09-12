@@ -66,4 +66,5 @@ DECLARE @testzone nvarchar(128) = 'Central European Standard Time';
 Select a AT TIME ZONE @testzone from test
 GO
 
-
+DROP TABLE IF EXISTS test
+GO
