@@ -7,8 +7,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t1 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY & Placed NOT NULL after Identity Column
@@ -20,8 +19,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t2 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY & Placed NOT NULL before PRIMARY KEY
@@ -33,8 +31,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t3 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql) and placed not null after identity column
@@ -45,8 +42,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t4 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 
@@ -58,8 +54,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t5 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql) and placed not null before primary key
@@ -70,8 +65,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t6 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used UNIQUE & Placed NOT NULL before Identity Column
@@ -83,8 +77,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t7 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used UNIQUE & Placed NOT NULL after Identity Column
@@ -96,8 +89,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t8 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used UNIQUE & Placed NOT NULL before PRIMARY KEY
@@ -109,8 +101,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t9 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used UNIQUE & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql) and placed not null after identity column
@@ -121,8 +112,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t10 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 
@@ -134,8 +124,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t11 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used UNIQUE & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql) and placed not null before UNIQUE Constraint
@@ -146,8 +135,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t12 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY, placed NOT NULL before Identity Column & added a check constraint before identity column
@@ -159,8 +147,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t13 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY, placed NOT NULL before Identity Column & added default constraint before identity column (it should give error)
@@ -178,8 +165,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t15 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY & Created Table first and then use alter table(in BABEL-4217-vu-verify.sql), placed not null before identity column and added "default" constraint before identity column
@@ -190,8 +176,7 @@ GO
 
 INSERT INTO BABEL_4217_vu_prepare_t16 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
 GO
 
 -- Used PRIMARY KEY, placed NOT NULL before Identity Column & added a check constraint before identity column
@@ -204,6 +189,60 @@ GO
 -- It should give error (check constraint violation)
 INSERT INTO BABEL_4217_vu_prepare_t17 (FIRSTNAME)
 VALUES ('John'),
-       ('Jane'), 
-       ('Jim');
+       ('Jane');
+GO
+
+--INSERT BULK queries are not op query, we are just handling the syntax from antlr parser side.
+-- Used PRIMARY KEY, placed NOT NULL before Identity Column & used INSERT BULK query
+CREATE TABLE BABEL_4217_vu_prepare_t18 (
+    ID INT PRIMARY KEY NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+INSERT INTO BABEL_4217_vu_prepare_t18 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane');
+GO
+
+INSERT BULK BABEL_4217_vu_prepare_t18 (
+    ID INT PRIMARY KEY NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+-- Used PRIMARY KEY, placed NOT NULL before Identity Column & added a check constraint before identity column & used INSERT BULK
+CREATE TABLE BABEL_4217_vu_prepare_t19 (
+    ID INT PRIMARY KEY NOT NULL CHECK(ID < 3) IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+INSERT INTO BABEL_4217_vu_prepare_t19 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane');
+GO
+
+INSERT BULK BABEL_4217_vu_prepare_t19 (
+    ID INT PRIMARY KEY NOT NULL CHECK(ID < 3) IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+-- Used PRIMARY KEY, placed NOT NULL after Identity Column & used INSERT BULK query
+CREATE TABLE BABEL_4217_vu_prepare_t20 (
+    ID INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
+    FIRSTNAME VARCHAR(50)
+);
+GO
+
+INSERT INTO BABEL_4217_vu_prepare_t20 (FIRSTNAME)
+VALUES ('John'),
+       ('Jane');
+GO
+
+INSERT BULK BABEL_4217_vu_prepare_t20 (
+    ID INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
+    FIRSTNAME VARCHAR(50)
+);
 GO

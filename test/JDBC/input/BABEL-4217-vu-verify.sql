@@ -75,3 +75,12 @@ GO
 -- It should give error (default and idenity cannot be assigned to same column)
 ALTER TABLE BABEL_4217_vu_prepare_t16 add id INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1);
 GO
+
+SELECT * FROM BABEL_4217_vu_prepare_t18;
+GO
+
+SELECT * FROM BABEL_4217_vu_prepare_t19;
+GO
+
+SELECT * FROM BABEL_4217_vu_prepare_t20;
+GO
