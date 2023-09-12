@@ -88,7 +88,7 @@ GO
 exec sp_column_privileges @table_name = 'MYTABLE5'
 GO
 
--- Delimiter table tests: NOTE: These produces errors due to BABEL-2883
+-- Delimiter table tests
 exec sp_column_privileges @table_name = [mytable4]
 GO
 

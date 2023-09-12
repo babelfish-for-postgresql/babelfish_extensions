@@ -5,6 +5,10 @@ go
 CREATE USER babel_login_vu_prepare_r2 WITH DEFAULT_SCHEMA = babel_login_vu_prepare_sch;
 go
 
+-- reset the login password
+ALTER LOGIN babel_login_vu_prepare_r1 WITH PASSWORD = 'abc';
+go
+
 -- tsql      user=babel_login_vu_prepare_r1      password=abc
 -- Login with a Babelfish user should succeed
 SELECT db_name();
@@ -90,6 +94,11 @@ master_babel_login_vu_prepare_r1_new#!#babel_login_vu_prepare_r1_new#!#babel_log
 master_babel_login_vu_prepare_r2#!#babel_login_vu_prepare_r2#!#babel_login_vu_prepare_r2#!#master#!#babel_login_vu_prepare_sch
 ~~END~~
 
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_login_vu_prepare_r2 WITH password = 'abc';
+go
 
 -- tsql      user=babel_login_vu_prepare_r2      password=abc
 SELECT db_name();
@@ -276,6 +285,10 @@ go
 
 
 CREATE USER babel_login_vu_prepare_err_user;
+go
+
+-- reset the login password
+ALTER LOGIN babel_login_vu_prepare_err_user WITH PASSWORD = '123';
 go
 
 -- tsql      user=babel_login_vu_prepare_err_user      password=123
@@ -466,6 +479,10 @@ go
 ALTER SERVER ROLE sysadmin ADD MEMBER babel_4080_sysadmin1;
 GO
 
+-- reset the login password
+ALTER LOGIN babel_4080_nonsysadmin1 with PASSWORD = '1234';
+GO
+
 -- tsql user=babel_4080_nonsysadmin1 password=1234
 
 SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
@@ -499,6 +516,11 @@ GO
 
 ~~ERROR (Message: Cannot drop the login 'babel_4080_testlogin1', because it does not exist or you do not have permission.)~~
 
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4080_sysadmin1 with PASSWORD = '1234';
+GO
 
 -- tsql user=babel_4080_sysadmin1 password=1234
 ALTER LOGIN babel_4080_sysadmin1 WITH PASSWORD = 'abcd';
@@ -549,6 +571,11 @@ DROP LOGIN babel_4080_testlogin1;
 GO
 
 ALTER SERVER ROLE sysadmin DROP MEMBER babel_4080_sysadmin1;
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4080_testlogin2 with PASSWORD = '1234';
 GO
 
 -- tsql user=babel_4080_testlogin2 password=1234
