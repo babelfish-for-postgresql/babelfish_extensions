@@ -4,7 +4,7 @@
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
-#include "utils/pg_locale.h"
+// #include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
@@ -387,7 +387,7 @@ InstallExtendedHooks(void)
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
 	select_common_type_hook = select_common_type_for_isnull;
-	collation_cache_entry_hook = collation_cache_entry_hook_function;
+	// collation_cache_entry_hook = collation_cache_entry_hook_function;
 }
 
 void
@@ -503,26 +503,26 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	return false;
 }									  
 
-Oid prev_cache_collid;
-pg_locale_t *prev_locale = NULL;
+// Oid prev_cache_collid;
+// pg_locale_t *prev_locale = NULL;
 
-pg_locale_t *
-collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
-{
-	if(!locale)
-	{
-		if(prev_locale && (Oid)(prev_cache_collid)==(Oid)(collid))
-		{
-			return prev_locale;
-		}
-	}
-	else
-	{
-		prev_cache_collid = collid;
-		prev_locale = locale;
-	}
-	return NULL;
-}			
+// pg_locale_t *
+// collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
+// {
+// 	if(!locale)
+// 	{
+// 		if(prev_locale && (Oid)(prev_cache_collid)==(Oid)(collid))
+// 		{
+// 			return prev_locale;
+// 		}
+// 	}
+// 	else
+// 	{
+// 		prev_cache_collid = collid;
+// 		prev_locale = locale;
+// 	}
+// 	return NULL;
+// }			
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
