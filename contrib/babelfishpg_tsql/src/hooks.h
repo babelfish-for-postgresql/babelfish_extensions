@@ -15,6 +15,7 @@ extern void InstallExtendedHooks(void);
 extern void UninstallExtendedHooks(void);
 
 void pre_wrapper_pgstat_init_function_usage(const char *);
+pg_locale_t *collation_cache_entry_hook_function(Oid ,pg_locale_t *);
 extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
 extern char *extract_identifier(const char *start);
