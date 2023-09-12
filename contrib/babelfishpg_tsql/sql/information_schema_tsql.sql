@@ -765,9 +765,9 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	FROM
 		pg_constraint c 
 		JOIN sys.pg_namespace_ext nc ON (nc.oid = c.connamespace)
-		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname
 		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f')
 		JOIN sys.pg_namespace_ext nr ON r.relnamespace = nr.oid AND r.relkind in ('r','p')
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
 		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
 		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
 	WHERE
