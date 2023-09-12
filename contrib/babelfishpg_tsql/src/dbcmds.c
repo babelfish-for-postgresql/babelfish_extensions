@@ -409,6 +409,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *guest;
 	const char *prev_current_user;
 	int			stmt_number = 0;
+	char	   *lower_dbname = downcase_identifier(dbname, strlen(dbname), false, false);
 
 	/* TODO: Extract options */
 
@@ -446,11 +447,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	check_is_member_of_role(GetSessionUserId(), datdba);
 
 	/* pre check availablity of critical structures */
-	dbo_scm = get_dbo_schema_name(downcase_identifier(dbname, strlen(dbname), false, false));
-	dbo_role = get_dbo_role_name(downcase_identifier(dbname, strlen(dbname), false, false));
-	db_owner_role = get_db_owner_name(downcase_identifier(dbname, strlen(dbname), false, false));
-	guest = get_guest_role_name(downcase_identifier(dbname, strlen(dbname), false, false));
-	guest_scm = get_guest_schema_name(downcase_identifier(dbname, strlen(dbname), false, false));
+	dbo_scm = get_dbo_schema_name(lower_dbname);
+	dbo_role = get_dbo_role_name(lower_dbname);
+	db_owner_role = get_db_owner_name(lower_dbname);
+	guest = get_guest_role_name(lower_dbname);
+	guest_scm = get_guest_schema_name(lower_dbname);
 
 	if (SearchSysCacheExists1(NAMESPACENAME, PointerGetDatum(dbo_scm)))
 		ereport(NOTICE,
@@ -474,7 +475,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* For simplicity, do not allow bbf db name clides with pg dbnames */
 	/* TODO: add another check in orignal createdb */
-	if (OidIsValid(get_database_oid(downcase_identifier(dbname, strlen(dbname), false, false), true)))
+	if (OidIsValid(get_database_oid(lower_dbname, true)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("postgres database \"%s\" already exists", dbname)));
@@ -490,7 +491,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	new_record[2] = Int32GetDatum(0);
 	new_record[3] = CStringGetDatum(owner);
 	new_record[4] = NameGetDatum(&default_collation);
-	new_record[5] = CStringGetTextDatum(downcase_identifier(dbname, strlen(dbname), false, false));
+	new_record[5] = CStringGetTextDatum(lower_dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
 	new_record[7] = CStringGetTextDatum("{}");
 	new_record[8] = CStringGetTextDatum(dbname);
@@ -514,7 +515,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, downcase_identifier(dbname, strlen(dbname), false, false));	/* temporarily set current dbid as the new id */
+	set_cur_db(dbid, lower_dbname);	/* temporarily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -552,9 +553,9 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		}
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", downcase_identifier(dbname, strlen(dbname), false, false), "dbo", NULL, false, true, false);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", lower_dbname, "dbo", NULL, false, true, false);
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", downcase_identifier(dbname, strlen(dbname), false, false), NULL, NULL, true, true, false);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", lower_dbname, NULL, NULL, true, true, false);
 		if (guest)
 		{
 			/*
@@ -564,7 +565,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			if (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0 || strcmp(dbname, "msdb") == 0)
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, true, false);
 			else
-				add_to_bbf_authid_user_ext(guest, "guest", downcase_identifier(dbname, strlen(dbname), false, false), NULL, NULL, false, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", lower_dbname, NULL, NULL, false, false, false);
 		}
 	}
 	PG_CATCH();

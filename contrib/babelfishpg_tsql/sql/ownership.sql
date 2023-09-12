@@ -9,7 +9,7 @@ CREATE TABLE sys.babelfish_sysdatabases (
 	name TEXT NOT NULL COLLATE "C",
 	crdate timestamptz NOT NULL,
 	properties TEXT NOT NULL COLLATE "C",
-  orig_name TEXT NOT NULL COLLATE "C",
+	orig_name TEXT NOT NULL COLLATE "C",
 	PRIMARY KEY (name)
 );
 

@@ -471,38 +471,31 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-					CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
-					List	   *db_options = NIL;
-					ListCell   *option;
-
-					/* Check if creating login or role. Expect islogin first */
-					if (stmt->options != NIL)
+				CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
+				List	   *db_options = NIL;
+				ListCell   *option;
+				if (stmt->options != NIL)
+				{
+					char	   *orig_dbname = NULL;
+					foreach(option, stmt->options)
 					{
-						char	   *orig_dbname = NULL;
-
-						foreach(option, stmt->options)
+						DefElem    *defel = (DefElem *) lfirst(option);
+						if (strcmp(defel->defname, "name_location") == 0)
 						{
-							DefElem    *defel = (DefElem *) lfirst(option);
-
-							/* Filter login options from default role options */
-							if (strcmp(defel->defname, "name_location") == 0)
-								{
-									int			location = defel->location;
-
-									orig_dbname = extract_identifier(queryString + location);
-									db_options = lappend(db_options, defel);
-								}
+							int			location = defel->location;
+							orig_dbname = extract_identifier(queryString + location);
+							db_options = lappend(db_options, defel);
 						}
-						foreach(option, db_options)
-							{
-								stmt->options = list_delete_ptr(stmt->options,
-																lfirst(option));
-							}
-						
-						pfree(stmt->dbname);
-						stmt->dbname = convertToUPN(orig_dbname);
-		
-						}
+					}
+					
+					foreach(option, db_options)
+					{
+						stmt->options = list_delete_ptr(stmt->options,lfirst(option));
+					}
+					
+					pfree(stmt->dbname);
+					stmt->dbname = convertToUPN(orig_dbname);
+				}
 				create_bbf_db(pstate, stmt);
 				return true;
 			}

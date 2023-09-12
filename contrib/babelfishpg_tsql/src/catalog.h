@@ -42,7 +42,7 @@ extern Oid	sysdatabaese_idx_name_oid;
 #define SYSDATABASES_NUM_COLS 9
 #define Anum_sysdatabaese_oid 1
 #define Anum_sysdatabaese_name 6
-#define Anum_sysdatabaese_name_original 9
+#define Anum_sysdatabaese_orig_name 9
 #define Anum_sysdatabaese_crdate 7
 
 /* MUST comply with babelfish_sysdatabases table */

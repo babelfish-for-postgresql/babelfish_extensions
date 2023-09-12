@@ -296,7 +296,7 @@ get_db_original_name(const char *dbname)
 	if (!HeapTupleIsValid(tuple))
 		return InvalidDbid;
 
-	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_name_original, &isNull);
+	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_orig_name, &isNull);
 	original_name = TextDatumGetCString(name_datum);
 	ReleaseSysCache(tuple);
 
@@ -316,7 +316,7 @@ get_original_db_name(int16 dbid)
 	if (!HeapTupleIsValid(tuple))
 		return InvalidDbid;
 
-	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_name_original, &isNull);
+	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_orig_name, &isNull);
 	original_name = TextDatumGetCString(name_datum);
 	ReleaseSysCache(tuple);
 
