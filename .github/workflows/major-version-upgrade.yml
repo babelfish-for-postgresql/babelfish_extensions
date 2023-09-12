@@ -44,17 +44,10 @@ jobs:
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_BRANCH_FROM}}
-
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: always() && steps.compile-antlr.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
-        with:
-          install_dir: ${{env.NEW_INSTALL_DIR}}
       
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: build-extensions-old
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.compile-antlr.outcome == 'success'
         run: |
           export PG_CONFIG=~/${{env.OLD_INSTALL_DIR}}/bin/pg_config
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
@@ -98,10 +91,17 @@ jobs:
 
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
+
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
       
       - name: Build Extensions using latest version
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
@@ -131,10 +131,15 @@ jobs:
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.setup-new-datadir.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
       - name: Run JDBC Tests
         id: jdbc
         timeout-minutes: 60
-        if: always() && steps.run-pg_upgrade.outcome == 'success'
+        if: always() && steps.install-extensions.outcome == 'success'
         run: |
           export PATH=~/${{env.NEW_INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish

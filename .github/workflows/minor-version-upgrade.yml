@@ -103,6 +103,11 @@ jobs:
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
+        
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions-newer.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
 
       - name: Run JDBC Tests
         id: jdbc
