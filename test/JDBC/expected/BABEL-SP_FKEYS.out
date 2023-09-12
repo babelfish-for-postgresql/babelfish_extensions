@@ -155,47 +155,63 @@ db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#
 db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
 ~~END~~
 
--- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_fkeys @pktable_name = [mytable5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @pktable_name = [MYTABLE5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [mytable6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [MYTABLE6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [mytable7]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable7" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [MYTABLE7]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable7" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey#!#7
+~~END~~
 
 
 -- ensure that only tables from the same database are retrieved

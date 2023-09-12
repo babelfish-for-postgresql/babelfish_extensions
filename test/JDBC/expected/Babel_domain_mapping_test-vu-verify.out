@@ -84,6 +84,10 @@ abc\test#!#WINDOWS_LOGIN
 
 
 
+-- reset the login password
+alter login [test_login1] with password = '12345678';
+GO
+
 -- tsql user=test_login1 password=12345678
 -- test_login1 should not be able to add mapping
 exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
@@ -92,6 +96,11 @@ GO
 
 ~~ERROR (Message: Current login test_login1 does not have permission to add new domain mapping entry)~~
 
+
+-- tsql
+-- reset the login password
+alter login [test_login_sa] with password = '12345678';
+GO
 
 -- tsql user=test_login_sa password=12345678
 -- test_login_sa should be able to add/remove mapping

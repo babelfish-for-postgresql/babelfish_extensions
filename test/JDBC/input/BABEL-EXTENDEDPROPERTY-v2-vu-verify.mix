@@ -7,6 +7,11 @@ begin
 end $$;
 GO
 
+-- tsql
+-- reset the login password
+ALTER LOGIN owner WITH PASSWORD = '12345678';
+GO
+
 -- tsql user=owner password=12345678
 USE babel_extended_properties_db
 GO
@@ -841,6 +846,10 @@ SELECT * FROM babel_extended_properties_view
 GO
 
 EXEC babel_babelfish_extended_properties_proc
+GO
+
+-- reset the login password
+ALTER LOGIN normal_user WITH PASSWORD = '12345678';
 GO
 
 -- tsql user=normal_user password=12345678

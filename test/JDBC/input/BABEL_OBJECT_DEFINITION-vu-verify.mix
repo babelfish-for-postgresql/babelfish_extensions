@@ -56,6 +56,10 @@ GO
 SELECT * FROM object_definition_v2;
 GO
 
+-- reset the login password
+ALTER LOGIN object_definition_login1 WITH PASSWORD = '12345678';
+GO
+
 -- Test dependency of user's permission on object
 -- tsql      user=object_definition_login1 password=12345678
 USE object_definition_db;

@@ -5,6 +5,10 @@ go
 CREATE USER babel_login_vu_prepare_r2 WITH DEFAULT_SCHEMA = babel_login_vu_prepare_sch;
 go
 
+-- reset the login password
+ALTER LOGIN babel_login_vu_prepare_r1 WITH PASSWORD = 'abc';
+go
+
 -- Login with a Babelfish user should succeed
 -- tsql      user=babel_login_vu_prepare_r1      password=abc
 SELECT db_name();
@@ -44,6 +48,11 @@ SELECT rolname, orig_username, login_name, database_name, default_schema_name
 FROM sys.babelfish_authid_user_ext
 WHERE orig_username LIKE 'babel_login_vu_prepare%'
 ORDER BY rolname;
+go
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_login_vu_prepare_r2 WITH password = 'abc';
 go
 
 -- tsql      user=babel_login_vu_prepare_r2      password=abc
@@ -134,6 +143,10 @@ ALTER SERVER ROLE db_owner DROP MEMBER dummy;
 go
 
 CREATE USER babel_login_vu_prepare_err_user;
+go
+
+-- reset the login password
+ALTER LOGIN babel_login_vu_prepare_err_user WITH PASSWORD = '123';
 go
 
 -- tsql      user=babel_login_vu_prepare_err_user      password=123
@@ -267,6 +280,10 @@ go
 ALTER SERVER ROLE sysadmin ADD MEMBER babel_4080_sysadmin1;
 GO
 
+-- reset the login password
+ALTER LOGIN babel_4080_nonsysadmin1 with PASSWORD = '1234';
+GO
+
 -- tsql user=babel_4080_nonsysadmin1 password=1234
 
 SELECT name, type, type_desc FROM sys.server_principals where name like 'babel_4080%' order by name;
@@ -279,6 +296,11 @@ ALTER LOGIN babel_4080_testlogin1 WITH PASSWORD = 'newpassword';
 GO
 
 DROP LOGIN babel_4080_testlogin1;
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4080_sysadmin1 with PASSWORD = '1234';
 GO
 
 -- tsql user=babel_4080_sysadmin1 password=1234
@@ -310,6 +332,11 @@ DROP LOGIN babel_4080_testlogin1;
 GO
 
 ALTER SERVER ROLE sysadmin DROP MEMBER babel_4080_sysadmin1;
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN babel_4080_testlogin2 with PASSWORD = '1234';
 GO
 
 -- tsql user=babel_4080_testlogin2 password=1234

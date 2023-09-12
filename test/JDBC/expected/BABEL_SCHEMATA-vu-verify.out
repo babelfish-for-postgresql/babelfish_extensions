@@ -27,6 +27,10 @@ master#!#schema_schemata_13#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN schemata_login WITH PASSWORD = '123'
+GO
+
 -- tsql      user=schemata_login      password=123
 -- Test if user default schema is not dbo schema
 -- Check if after revoking the usage permission/ownership from user, it is still showing in catalog or not.
