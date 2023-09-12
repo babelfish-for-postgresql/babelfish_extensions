@@ -226,7 +226,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
-pg_locale_t *collation_cache_entry_hook(Oid collid, pg_locale_t *locale);
+pg_locale_t *collation_cache_entry_hook(Oid collid, pg_locale_t * locale);
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
