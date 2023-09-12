@@ -226,7 +226,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
-pg_locale_t *collation_cache_entry_hook(Oid ,pg_locale_t *);
+// pg_locale_t *collation_cache_entry_hook(Oid ,pg_locale_t *);
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -388,6 +388,7 @@ InstallExtendedHooks(void)
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
 	select_common_type_hook = select_common_type_for_isnull;
+	collation_cache_entry_hook = collation_cache_entry_hook_function;
 }
 
 void
@@ -507,7 +508,7 @@ Oid *prev_cache_collid = NULL;
 pg_locale_t *prev_locale = NULL;
 
 pg_locale_t *
-collation_cache_entry_hook(Oid collid, pg_locale_t *locale)
+collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
 {
 	if(!locale)
 	{
