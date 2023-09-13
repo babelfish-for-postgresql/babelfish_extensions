@@ -3471,6 +3471,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							logicalschema = get_logical_schema_name(schemaname, true);
 							funcname = strVal(func);
 						}
+						/* If ALL PRIVILEGES is granted/revoked. */
+						if (list_length(grant->privileges) == 0)
+							break;
 						foreach(lc1, grant->privileges)
 						{
 							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
