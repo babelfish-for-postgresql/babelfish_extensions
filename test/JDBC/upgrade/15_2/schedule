@@ -58,7 +58,7 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010
 BABEL-3116
-BABEL-3117-before-latest
+BABEL-3117-before-15-5
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -412,3 +412,4 @@ datetimeoffset-timezone-before-15_3
 BABEL-4046
 getdate
 BABEL_4330
+case_insensitive_collation-before-15-5

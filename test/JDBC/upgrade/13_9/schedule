@@ -317,3 +317,4 @@ timefromparts
 triggers_with_transaction
 BABEL-4046
 getdate
+case_insensitive_collation-before-15-5

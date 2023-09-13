@@ -335,3 +335,4 @@ triggers_with_transaction
 BABEL-4046
 BABEL_4330
 BABEL-2619
+case_insensitive_collation-before-15-5

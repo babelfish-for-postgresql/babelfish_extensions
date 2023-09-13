@@ -454,3 +454,4 @@ BABEL_4330
 db_name_change_test
 kill
 Test_ISNULL
+case_insensitive_collation
