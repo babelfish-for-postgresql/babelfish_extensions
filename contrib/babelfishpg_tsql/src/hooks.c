@@ -1301,7 +1301,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/*
 			 * If no alias is specified on a ColumnRef, then get the length of
 			 * the name from the ColumnRef and copy the column name from the
-			 * sourcetext
+			 * sourcetext.
 			 */
 			if (list_length(cref->fields) == 1 &&
 				IsA(linitial(cref->fields), String))
@@ -1318,67 +1318,114 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			colname_start = pstate->p_sourcetext + res->name_location;
 		}
 
+		/*
+		 * Case 1 : Handle both singlebyte and multibyte aliases when delimited by 
+		 * square bracket(sqb) and double quoutes(dq).
+		 * For instance, queries like : SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选选装";
+		 * Case 2 : Preserve the case of aliases with ascii characters when there is no sqb and dq.
+		 * For instance, queries like: SELECT 1 AS ABCD;
+		 * Case 3 : Handle both singlebyte and multibyte aliases whose length is
+		 * more than or equals to 63 when not delimited by sqb and dq.
+		 * For example, queries like : SELECT 1 AS 您对您对您对您对您对您对您对您对您对您对您对您对您对;
+		 */
 		if (alias_len > 0)
 		{
 			char	   *alias = palloc0(alias_len + 1);
 			bool		dq = *colname_start == '"';
 			bool		sqb = *colname_start == '[';
 			bool		sq = *colname_start == '\'';
-			int			a = 0;
+			bool		identifier_truncated = false;
 			const char *colname_end;
-			bool		closing_quote_reached = false;
+			bool		enc_is_single_byte;
+			enc_is_single_byte = pg_database_encoding_max_length() == 1;
 
-			if (dq || sqb || sq)
+
+			if (dq || sqb)
 			{
-				colname_start++;
+				return;
 			}
 
-			if (dq || sq)
-			{
-
-				for (colname_end = colname_start; a < alias_len; colname_end++)
-				{
-					if (dq && *colname_end == '"')
-					{
-						if ((*(++colname_end) != '"'))
-						{
-							closing_quote_reached = true;
-							break;	/* end of dbl-quoted identifier */
-						}
-					}
-					else if (sq && *colname_end == '\'')
-					{
-						if ((*(++colname_end) != '\''))
-						{
-							closing_quote_reached = true;
-							break;	/* end of single-quoted identifier */
-						}
-					}
-
-					alias[a++] = *colname_end;
-				}
-
-				/* Assert(a == alias_len); */
-			}
 			else
 			{
-				colname_end = colname_start + alias_len;
-				memcpy(alias, colname_start, alias_len);
-			}
+				if(sq)
+				{
+					colname_start++;
+				}
+				/*
+				 * After truncation, minimum truncated length of alias can be 61
+				 * If length is less than 61, it means alias is not truncated.
+				 */
+				if(alias_len < 61)
+				{
+					memcpy(alias, colname_start, alias_len);
+				}
+				else
+				{
+					/*
+					 * For aliases whose length is between 61 to 63, the case of multibyte and single byte
+					 * characters are handled separately.
+					 * It is needed to check whether last 32 bytes are equal to identifier_name or not,
+					 * because last 32 bytes would be MD5 hash in case of truncated identifier and 
+					 * we can leverage the fact that MD5 hash would be different from original identifier.
+					 * If they are not equal, this means identifier_name is truncated.
+					 */
+					for(int x = alias_len - 32; x < alias_len; x++)
+					{
+						colname_end = colname_start + x;
 
-			/*
-			 * If the end of the string is a uniquifier, then copy the
-			 * uniquifier into the last 32 characters of the alias
-			 */
-			if (alias_len == NAMEDATALEN - 1 &&
-				(((sq || dq) && !closing_quote_reached) ||
-				 is_identifier_char(*colname_end)))
+						/*
+						 * Check if colname_end is in upper case then does uppercase of identifier_name 
+						 * matches to colname_end or not in case of ascii values. 
+						 * If colname_end is in lowercase, then simply check colname_end is equals to 
+						 * identifier_name or not.
+						 */ 
+						if (*colname_end >= 'A' && *colname_end <= 'Z')
+						{
+							/* If original letter is in upper case then check it with upper case letter of identifier_name. */
+							if (!(*colname_end == identifier_name[x] + 'A' - 'a'))
+							{
+								identifier_truncated = true;
+								break;
+							}
+						}
+						else if(enc_is_single_byte && IS_HIGHBIT_SET(*colname_end) && isupper(*colname_end))
+						{
+							if (!(*colname_end == identifier_name[x] - 'A' + 'a'))
+							{
+								identifier_truncated = true;
+								break;
+							}
+						}
+						else
+						{
+							/* Original letter is already in lower case or it could be fractional byte of multibyte char. 
+							 * So it should match with original byte in either case.
+							 */
+							if(!(*colname_end == identifier_name[x]))
+							{
+								identifier_truncated = true;
+								break;
+							}
+						}
+					}
+					/* Identifier is not truncated. */
+					if(!(identifier_truncated))
+					{
+						memcpy(alias, colname_start, alias_len);
+					}
 
-			{
-				memcpy(alias + (NAMEDATALEN - 1) - 32,
-					   identifier_name + (NAMEDATALEN - 1) - 32,
-					   32);
-				alias[NAMEDATALEN] = '\0';
+					/* Identifier is truncated. */
+					else
+					{
+						/* First 32 characters of colname_start are assigned to alias. */
+						memcpy(alias, colname_start, (alias_len - 32) );
+						/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+						memcpy(alias + (alias_len) - 32,
+						identifier_name + (alias_len) - 32, 
+						32);
+						alias[alias_len+1] = '\0';
+					}
+				}
 			}
 
 			res->name = alias;
