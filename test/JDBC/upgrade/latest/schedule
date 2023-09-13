@@ -455,3 +455,4 @@ db_name_change_test
 kill
 Test_ISNULL
 case_insensitive_collation
+BABEL-4270
