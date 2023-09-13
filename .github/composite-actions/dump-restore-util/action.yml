@@ -22,6 +22,10 @@ inputs:
     description: "Logical Babelfish database to dump and restore"
     required: false
     default: 'null'
+  dump_data_as:
+    description: "Dump table data using COPY or INSERT"
+    required: false
+    default: 'copy'
 
 runs:
   using: "composite"
@@ -44,14 +48,21 @@ runs:
         mkdir -p upgrade
         cd upgrade
         export PGPASSWORD=12345678
+
+        if [[ '${{ inputs.dump_data_as }}' == 'inserts' ]];then
+          export DUMP_OPTS='--column-inserts'
+        else
+          export DUMP_OPTS=''
+        fi
+
         if [[ '${{ inputs.logical_database }}' == 'null' ]];then
           echo 'Starting to dump whole Babelfish physical database'
           ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords -f pg_dump_globals.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user --column-inserts --quote-all-identifiers --verbose --format=custom --file="pg_dump.custom" --dbname=jdbc_testdb 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --verbose --format=custom --file="pg_dump.custom" --dbname=jdbc_testdb 2>>error.log
         else
           echo "Starting to dump Babelfish logical database ${{ inputs.logical_database }}"
           ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords --bbf-database-name='${{ inputs.logical_database }}' -f pg_dump_globals.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user --column-inserts --quote-all-identifiers --verbose --format=custom --bbf-database-name='${{ inputs.logical_database }}' --file="pg_dump.custom" --dbname=jdbc_testdb 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --verbose --format=custom --bbf-database-name='${{ inputs.logical_database }}' --file="pg_dump.custom" --dbname=jdbc_testdb 2>>error.log
         fi
 
         # Stop old server and start the new.

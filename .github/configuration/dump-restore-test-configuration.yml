@@ -1,20 +1,48 @@
 dump-restore-version: [[
   {
     version: source.latest,
+    dump-data-as: copy,
     logical-database: null
   },
   {
     version: target.latest,
+    dump-data-as: copy,
     logical-database: null
   }
 ],
 [
   {
     version: source.latest,
+    dump-data-as: copy,
     logical-database: master
   },
   {
     version: target.latest,
-    logical-database: master 
+    dump-data-as: copy,
+    logical-database: master
+  }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: inserts,
+    logical-database: null
+  },
+  {
+    version: target.latest,
+    dump-data-as: inserts,
+    logical-database: null
+  }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: inserts,
+    logical-database: master
+  },
+  {
+    version: target.latest,
+    dump-data-as: inserts,
+    logical-database: master
   }
 ]]
