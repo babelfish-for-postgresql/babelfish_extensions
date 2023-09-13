@@ -1,0 +1,339 @@
+-- tsql
+-- create objects
+create database babel_4344_d1;
+go
+
+use babel_4344_d1;
+go
+
+create login babel_4344_l1 with password = '12345678'
+go
+
+create user babel_4344_u1 for login babel_4344_l1;
+go
+
+create schema babel_4344_s1;
+go
+
+create table babel_4344_t1(a int);
+go
+
+create table babel_4344_s1.babel_4344_t1(a int);
+go
+
+create view babel_4344_v1 as select 1;
+go
+
+create view babel_4344_s1.babel_4344_v1 as select 2;
+go
+
+create proc babel_4344_p1 as select 1;
+go
+
+create proc babel_4344_s1.babel_4344_p1 as select 2;
+go
+
+CREATE FUNCTION babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.tables) END
+go
+
+CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
+go
+
+-- tsql user=babel_4344_l1 password=12345678 
+use babel_4344_d1;
+go
+
+-- User doesn't have any privileges
+select * from babel_4344_t1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t1)~~
+
+select * from babel_4344_s1.babel_4344_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t1)~~
+
+select * from babel_4344_v1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_4344_v1)~~
+
+select * from babel_4344_s1.babel_4344_v1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_4344_v1)~~
+
+exec babel_4344_p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_4344_p1)~~
+
+exec babel_4344_s1.babel_4344_p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_4344_p1)~~
+
+select * from babel_4344_f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_4344_f1)~~
+
+select * from babel_4344_s1.babel_4344_f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_4344_f1)~~
+
+use master;
+go
+
+-- tsql
+-- GRANT OBJECT privilege
+use babel_4344_d1;
+go
+grant select on babel_4344_t1 to babel_4344_u1;
+go
+grant select on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
+go
+grant select on babel_4344_v1 to babel_4344_u1;
+go
+grant select on babel_4344_s1.babel_4344_v1 to babel_4344_u1;
+go
+grant execute on babel_4344_p1 to babel_4344_u1;
+go
+grant execute on babel_4344_s1.babel_4344_p1 to babel_4344_u1;
+go
+grant execute on babel_4344_f1 to babel_4344_u1;
+go
+grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_t1;
+go
+~~START~~
+int
+~~END~~
+
+select * from babel_4344_s1.babel_4344_t1
+go
+~~START~~
+int
+~~END~~
+
+select * from babel_4344_v1;
+go
+~~START~~
+int
+1
+~~END~~
+
+select * from babel_4344_s1.babel_4344_v1;
+go
+~~START~~
+int
+2
+~~END~~
+
+exec babel_4344_p1;
+go
+~~START~~
+int
+1
+~~END~~
+
+exec babel_4344_s1.babel_4344_p1;
+go
+~~START~~
+int
+2
+~~END~~
+
+select * from babel_4344_f1();
+go
+~~START~~
+int
+2
+~~END~~
+
+select * from babel_4344_s1.babel_4344_f1();
+go
+~~START~~
+int
+8
+~~END~~
+
+use master;
+go
+
+-- tsql
+-- GRANT SCHEMA privilege
+use babel_4344_d1;
+go
+grant all on schema::babel_4344_s11 to babel_4344_u1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The all permission has been deprecated and is not available for this class of entity.)~~
+
+grant select, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT and SCHEMA privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+~~START~~
+int
+~~END~~
+
+select * from babel_4344_s1.babel_4344_v1;
+go
+~~START~~
+int
+2
+~~END~~
+
+exec babel_4344_s1.babel_4344_p1;
+go
+~~START~~
+int
+2
+~~END~~
+
+select * from babel_4344_s1.babel_4344_f1();
+go
+~~START~~
+int
+8
+~~END~~
+
+use master;
+go
+
+-- tsql
+-- REVOKE OBJECT privileges
+use babel_4344_d1;
+go
+REVOKE select on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_v1 FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_p1 FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_f1 FROM babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has SCHEMA privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+~~START~~
+int
+~~END~~
+
+select * from babel_4344_s1.babel_4344_v1;
+go
+~~START~~
+int
+2
+~~END~~
+
+exec babel_4344_s1.babel_4344_p1;
+go
+~~START~~
+int
+2
+~~END~~
+
+select * from babel_4344_s1.babel_4344_f1();
+go
+~~START~~
+int
+8
+~~END~~
+
+use master;
+go
+
+-- tsql
+-- Drop objects
+use babel_4344_d1;
+go
+
+drop table babel_4344_t1;
+go
+
+drop table babel_4344_s1.babel_4344_t1;
+go
+
+drop view babel_4344_v1;
+go
+
+drop view babel_4344_s1.babel_4344_v1;
+go
+
+drop proc babel_4344_p1;
+go
+
+drop proc babel_4344_s1.babel_4344_p1;
+go
+
+drop function babel_4344_f1;
+go
+
+drop function babel_4344_s1.babel_4344_f1;
+go
+
+drop schema babel_4344_s1;
+go
+
+drop user babel_4344_u1;
+go
+
+use master;
+go
+
+drop database babel_4344_d1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4344_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login babel_4344_l1;
+go

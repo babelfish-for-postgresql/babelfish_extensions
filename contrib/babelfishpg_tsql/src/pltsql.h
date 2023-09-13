@@ -1009,12 +1009,10 @@ typedef struct PLtsql_stmt_grantschema
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	bool		is_grant;
-	List	   *privileges;		/* list of privileges */
-	//char *privilege;
-	/* privileges == NIL denotes ALL PRIVILEGES */
-	List	   *grantees;		/* list of users */
-	bool with_grant_option;
-	char	*schema_name;	/* schema name*/
+	List		*privileges;		/* list of privileges */
+	List		*grantees;		/* list of users */
+	bool 		with_grant_option;
+	char		*schema_name;	/* schema name */
 } PLtsql_stmt_grantschema;
 
 /*
