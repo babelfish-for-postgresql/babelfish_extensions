@@ -21,6 +21,12 @@ go
 create table babel_4344_s1.babel_4344_t1(a int);
 go
 
+create table babel_4344_t3(a int, b int);
+go
+
+create table babel_4344_s1.babel_4344_t3(a int, b int);
+go
+
 create view babel_4344_v1 as select 1;
 go
 
@@ -71,6 +77,10 @@ grant select on babel_4344_t1 to babel_4344_u1;
 go
 grant select on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
 go
+grant select on babel_4344_t3(a) to babel_4344_u1;
+go
+grant select on babel_4344_s1.babel_4344_t3(a) to babel_4344_u1;
+go
 grant select on babel_4344_v1 to babel_4344_u1;
 go
 grant select on babel_4344_s1.babel_4344_v1 to babel_4344_u1;
@@ -91,6 +101,10 @@ go
 select * from babel_4344_t1;
 go
 select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_t3;
+go
+select * from babel_4344_s1.babel_4344_t3
 go
 select * from babel_4344_v1;
 go
@@ -121,6 +135,8 @@ go
 use babel_4344_d1;
 go
 select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_s1.babel_4344_t3
 go
 select * from babel_4344_s1.babel_4344_v1;
 go
@@ -167,6 +183,8 @@ use babel_4344_d1;
 go
 REVOKE select on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
 go
+REVOKE select on babel_4344_s1.babel_4344_t3(a) FROM babel_4344_u1;
+go
 REVOKE select on babel_4344_s1.babel_4344_v1 FROM babel_4344_u1;
 go
 REVOKE execute on babel_4344_s1.babel_4344_p1 FROM babel_4344_u1;
@@ -179,6 +197,8 @@ go
 use babel_4344_d1;
 go
 select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_s1.babel_4344_t3
 go
 select * from babel_4344_s1.babel_4344_v1;
 go
@@ -198,6 +218,12 @@ drop table babel_4344_t1;
 go
 
 drop table babel_4344_s1.babel_4344_t1;
+go
+
+drop table babel_4344_t3;
+go
+
+drop table babel_4344_s1.babel_4344_t3;
 go
 
 drop table babel_4344_s1.babel_4344_t2;
