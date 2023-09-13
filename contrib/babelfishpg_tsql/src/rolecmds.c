@@ -2181,10 +2181,11 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
 
-	ScanKeyInit(&scanKey,
-				Anum_bbf_domain_mapping_netbios_domain_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				PG_GETARG_DATUM(0));
+	ScanKeyEntryInitialize(&scanKey, 0,
+						   Anum_bbf_domain_mapping_netbios_domain_name,
+						   BTEqualStrategyNumber, InvalidOid,
+						   tsql_get_server_collation_oid_internal(false),
+						   F_TEXTEQ, PG_GETARG_DATUM(0));
 
 	scan = systable_beginscan(bbf_domain_mapping_rel,
 							  get_bbf_domain_mapping_idx_oid(),
