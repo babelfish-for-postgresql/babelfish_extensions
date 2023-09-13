@@ -2920,6 +2920,48 @@ check_bbf_schema_for_entry(const char *db_name,
 	return catalog_entry_exists;
 }
 
+bool
+check_bbf_schema_for_schema(const char *db_name,
+									   const char *schema_name,
+									   const char *object_name,
+									   const char *permission)
+{
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+	ScanKeyData key[4];
+	TableScanDesc scan;
+	bool		catalog_entry_exists = false;
+
+	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+										 RowExclusiveLock);
+	ScanKeyInit(&key[0],
+				1,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(db_name));
+	ScanKeyInit(&key[1],
+				2,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(schema_name));
+	ScanKeyInit(&key[2],
+				3,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(object_name));
+	ScanKeyInit(&key[3],
+				4,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(permission));
+
+	scan = table_beginscan_catalog(bbf_schema_rel, 4, key);
+
+	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_bbf_schema))
+		catalog_entry_exists = true;
+
+	table_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+	return catalog_entry_exists;
+}
+
 void
 del_from_bbf_schema(const char *db_name,
 				  const char *schema_name,

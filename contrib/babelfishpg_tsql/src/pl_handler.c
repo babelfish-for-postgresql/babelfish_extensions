@@ -3455,8 +3455,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						ListCell	*lc1;
 						const char *logicalschema = NULL;
 						char *funcname = NULL;
-						if (pstmt->stmt_len == 0) /* Ignore Internal REVOKE statement during create procedure/function. */
-							break;
 						if (list_length(ob->objname) == 1)
 						{
 							Node *func = (Node *) linitial(ob->objname);
@@ -3471,7 +3469,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							logicalschema = get_logical_schema_name(schemaname, true);
 							funcname = strVal(func);
 						}
-						/* If ALL PRIVILEGES is granted/revoked. */
+						/* If ALL PRIVILEGES is granted/revoked internally during create function. */
+						if (pstmt->stmt_len == 0)
+						{
+							if(check_bbf_schema_for_schema(dbname, logicalschema, "ALL", "execute"))
+								return;
+						}
+						/* If ALL PRIVILEGES is granted/revoked */
 						if (list_length(grant->privileges) == 0)
 							break;
 						foreach(lc1, grant->privileges)

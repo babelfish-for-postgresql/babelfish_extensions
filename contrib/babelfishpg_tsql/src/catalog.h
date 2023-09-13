@@ -319,6 +319,11 @@ extern void del_from_bbf_schema(const char *db_name,
 					  const char *permission,
 					  const char *grantee);
 
+extern bool check_bbf_schema_for_schema(const char *db_name,
+									   const char *schema_name,
+									   const char *object_name,
+									   const char *permission);
+
 /*****************************************
  *			DOMAIN MAPPING
  *****************************************/
