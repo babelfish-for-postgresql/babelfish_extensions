@@ -3383,8 +3383,6 @@ static List
 				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
 				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
 			}
-			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON FUNCTIONS TO \"%s\"; ", schema, privilege, rolname);
-			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON PROCEDURES TO \"%s\"; ", schema, privilege, rolname);
 		}
 		else
 		{
@@ -3401,9 +3399,6 @@ static List
 		{
 			appendStringInfo(&query, "REVOKE \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
 			appendStringInfo(&query, "REVOKE \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
-			/* Whenever a new FUNCTION/PROCEDURE is created, EXECUTE permission is revoked. */
-			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON FUNCTIONS FROM \"%s\"; ", schema, privilege, rolname);
-			//appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON PROCEDURES FROM \"%s\"; ", schema, privilege, rolname);
 		}
 		else
 		{
