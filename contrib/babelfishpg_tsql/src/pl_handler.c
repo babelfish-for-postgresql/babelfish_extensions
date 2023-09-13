@@ -463,7 +463,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			{
 				InsertStmt *stmt = (InsertStmt *) parseTree->stmt;
 				SelectStmt *selectStmt = (SelectStmt *) stmt->selectStmt;
-				A_Const    *value;
 				Oid			relid;
 				ListCell   *lc;
 
@@ -473,50 +472,85 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				relid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 				/*
-				 * Insert new dbid column value in babelfish catalog if dump
-				 * did not provide it.
+				 * Insert new dbid and owner columns value in babelfish catalog
+				 * if dump did not provide it.
 				 */
 				if (relid == sysdatabases_oid ||
 					relid == namespace_ext_oid ||
 					relid == bbf_view_def_oid)
 				{
-					int16		dbid = 0;
-					ResTarget  *dbidCol;
-					bool		found = false;
+					ResTarget	*col = NULL;
+					A_Const 	*dbidValue = NULL;
+					A_Const 	*ownerValue = NULL;
+					bool    	dbid_found = false;
+					bool    	owner_found = false;
 
-					/* Skip if dbid column already exists */
+					/* Skip if dbid and owner column already exists */
 					foreach(lc, stmt->cols)
 					{
 						ResTarget  *col = (ResTarget *) lfirst(lc);
 
-						if (strcasecmp(col->name, "dbid") == 0)
-							found = true;
+						if (pg_strcasecmp(col->name, "dbid") == 0)
+							dbid_found = true;
+						if (relid == sysdatabases_oid &&
+							pg_strcasecmp(col->name, "owner") == 0)
+							owner_found = true;
 					}
-					if (found)
+					if (dbid_found && (owner_found || relid != sysdatabases_oid))
 						break;
 
-					dbid = getDbidForLogicalDbRestore(relid);
+					/*
+					 * Populate dbid column in Babelfish catalog tables with
+					 * new one.
+					 */
+					if (!dbid_found)
+					{
+						/* const value node to store into values clause */
+						dbidValue = makeNode(A_Const);
+						dbidValue->val.ival.type = T_Integer;
+						dbidValue->val.ival.ival = getDbidForLogicalDbRestore(relid);
+						dbidValue->location = -1;
 
-					/* const value node to store into values clause */
-					value = makeNode(A_Const);
-					value->val.ival.type = T_Integer;
-					value->val.ival.ival = dbid;
-					value->location = -1;
+						/* dbid column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "dbid";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
 
-					/* dbid column to store into InsertStmt's target list */
-					dbidCol = makeNode(ResTarget);
-					dbidCol->name = "dbid";
-					dbidCol->name_location = -1;
-					dbidCol->indirection = NIL;
-					dbidCol->val = NULL;
-					dbidCol->location = -1;
-					stmt->cols = lappend(stmt->cols, dbidCol);
+					/*
+					 * Populate owner column in babelfish_sysdatabases catalog table with
+					 * current user.
+					 */
+					if (!owner_found && relid == sysdatabases_oid)
+					{
+						/* const value node to store into values clause */
+						ownerValue = makeNode(A_Const);
+						ownerValue->val.sval.type = T_String;
+						ownerValue->val.sval.sval = GetUserNameFromId(GetSessionUserId(), false);
+						ownerValue->location = -1;
+
+						/* owner column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "owner";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
 
 					foreach(lc, selectStmt->valuesLists)
 					{
 						List	   *sublist = (List *) lfirst(lc);
 
-						sublist = lappend(sublist, value);
+						if (!dbid_found)
+							sublist = lappend(sublist, dbidValue);
+						if (!owner_found && relid == sysdatabases_oid)
+							sublist = lappend(sublist, ownerValue);
 					}
 				}
 				break;

@@ -3840,6 +3840,25 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		values[attnum - 1] = Int16GetDatum(dbid);
 		nulls[attnum - 1] = false;
 	}
+
+	/*
+	 * Populate owner column in babelfish_sysdatabases catalog table with
+	 * current user.
+	 */
+	if (relid == sysdatabases_oid)
+	{
+		const char *owner = GetUserNameFromId(GetSessionUserId(), false);
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "owner", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (!nulls[attnum - 1])
+			return;
+
+		values[attnum - 1] = CStringGetDatum(owner);
+		nulls[attnum - 1] = false;
+	}
 }
 
 static bool

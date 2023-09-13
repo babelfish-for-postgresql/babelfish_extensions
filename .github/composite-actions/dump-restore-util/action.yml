@@ -47,11 +47,11 @@ runs:
         if [[ '${{ inputs.logical_database }}' == 'null' ]];then
           echo 'Starting to dump whole Babelfish physical database'
           ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords -f pg_dump_globals.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --verbose --format=custom --file="pg_dump.custom" --dbname=jdbc_testdb 2>>error.log
         else
           echo "Starting to dump Babelfish logical database ${{ inputs.logical_database }}"
           ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --globals-only --quote-all-identifiers --verbose --no-role-passwords --bbf-database-name='${{ inputs.logical_database }}' -f pg_dump_globals.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --verbose --bbf-database-name='${{ inputs.logical_database }}' --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
+          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user --quote-all-identifiers --verbose --format=custom --bbf-database-name='${{ inputs.logical_database }}' --file="pg_dump.custom" --dbname=jdbc_testdb 2>>error.log
         fi
 
         # Stop old server and start the new.
@@ -63,35 +63,12 @@ runs:
         # Create and initialise Babelfish extensions in the new server to perform restore.
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
         echo 'Restoring from pg_dumpall'
-        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -h localhost -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
+        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
         echo 'Restoring from pg_dump'
-        sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -h localhost -d jdbc_testdb -U jdbc_user -f ~/upgrade/pg_dump.sql 2>> ~/upgrade/error.log
+        ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump.custom 2>> ~/upgrade/error.log
 
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
-      shell: bash
-
-    # Temporary step
-    - name: Temporarily disable failing tests
-      if: always() && steps.run-pg_dump-restore.outcome == 'success' && inputs.is_final_ver == 'true'
-      env:
-        migr_mode: ${{ inputs.migration_mode }}
-      run: |
-        if [[ "$migr_mode" == "multi-db" ]];then
-          base_dir=${{ matrix.upgrade-path.path[0] }}
-          if [[ "$base_dir" == *"latest"* ]]; then
-            base_dir="latest"
-          fi
-        else
-          base_dir="singledb"
-        fi
-
-        if [[ '${{ inputs.logical_database }}' != 'null' ]];then
-          base_dir="${{ inputs.logical_database }}"
-        fi
-
-        # Temporarily disable certain tests until fixed
-        sed -i "/BABEL-3513/d" test/JDBC/upgrade/$base_dir/schedule
       shell: bash
 
     - name: Run Verify Tests
