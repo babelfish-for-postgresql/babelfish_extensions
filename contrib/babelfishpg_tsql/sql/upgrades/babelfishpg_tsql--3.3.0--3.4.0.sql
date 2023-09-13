@@ -687,6 +687,7 @@ $BODY$
 DECLARE
     tz_offset PG_CATALOG.TEXT;
     tz_name PG_CATALOG.TEXT;
+    lower_tzn PG_CATALOG.TEXT;
     prev_res PG_CATALOG.TEXT;
     result PG_CATALOG.TEXT;
     is_dstt bool;
@@ -698,7 +699,12 @@ BEGIN
     RETURN NULL;
     END IF;
 
-    tz_name := sys.babelfish_timezone_mapping(lower(tzzone));
+    lower_tzn := lower(tzzone);
+    IF lower_tzn <> 'utc' THEN
+    tz_name := sys.babelfish_timezone_mapping(lower_tzn);
+    ELSE
+    tz_name := 'utc';
+    END IF;
 
     IF tz_name = 'NULL' THEN
         RAISE USING MESSAGE := format('Argument data type or the parameter %s provided to AT TIME ZONE clause is invalid.', tzzone);
@@ -713,7 +719,7 @@ BEGIN
         if LEFT(tz_diff,1) <> '-' THEN
         tz_diff := concat('+',tz_diff);
         END IF;
-        tz_offset := concat(split_part(tz_diff COLLATE "C",':',1),':',split_part(tz_diff COLLATE "C",':',2));
+        tz_offset := left(tz_diff,6);
         input_expr_tx := concat(input_expr_tx,tz_offset);
         return cast(input_expr_tx as sys.datetimeoffset);
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
@@ -724,7 +730,7 @@ BEGIN
         if LEFT(tz_diff,1) <> '-' THEN
         tz_diff := concat('+',tz_diff);
         END IF;
-        tz_offset := concat(split_part(tz_diff COLLATE "C",':',1),':',split_part(tz_diff COLLATE "C",':',2));
+        tz_offset := left(tz_diff,6);
         result := concat(result,tz_offset);
         return cast(result as sys.datetimeoffset);
     ELSE
