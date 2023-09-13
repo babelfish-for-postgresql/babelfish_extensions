@@ -1076,14 +1076,14 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 
-	ScanKeyInit(&scanKey[1],
-				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
+	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
-	ScanKeyInit(&scanKey[2],
-				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
+	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(view_name));
 
 	scan = systable_beginscan(bbf_view_def_rel,
@@ -2418,8 +2418,7 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 
 	// open the catalog table
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
-
-	// get the description of the table
+	/* get the description of the table */
 	bbf_view_def_dsc = RelationGetDescr(bbf_view_def_rel);
 
 	// search for the row for update => build the key
@@ -2429,14 +2428,15 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
-	ScanKeyInit(&key[1],
-				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(logical_schema_name));
-	ScanKeyInit(&key[2],
+	ScanKeyEntryInitialize(&key[1], 0, Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), 
+				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(stmt->relation->relname));
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(stmt->relation->relname));
 
 	// scan
 	tblscan = table_beginscan_catalog(bbf_view_def_rel, 3, key);
