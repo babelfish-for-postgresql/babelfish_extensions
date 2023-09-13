@@ -1,9 +1,31 @@
+--INSERT BULK queries are no-op query, we are just handling the syntax from antlr parser side.
+SELECT * FROM BABEL_4217_vu_prepare_t1;
+GO
+INSERT BULK BABEL_4217_vu_prepare_t1 (
+    ID INT PRIMARY KEY NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
 SELECT * FROM BABEL_4217_vu_prepare_t1;
 GO
 
 SELECT * FROM BABEL_4217_vu_prepare_t2;
 GO
+INSERT BULK BABEL_4217_vu_prepare_t2 (
+    ID INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t2;
+GO
 
+SELECT * FROM BABEL_4217_vu_prepare_t3;
+GO
+INSERT BULK BABEL_4217_vu_prepare_t3 (
+    ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
 SELECT * FROM BABEL_4217_vu_prepare_t3;
 GO
 
@@ -30,10 +52,31 @@ GO
 
 SELECT * FROM BABEL_4217_vu_prepare_t7;
 GO
+INSERT BULK BABEL_4217_vu_prepare_t7 (
+    ID INT UNIQUE NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t7;
+GO
 
 SELECT * FROM BABEL_4217_vu_prepare_t8;
 GO
+INSERT BULK BABEL_4217_vu_prepare_t8 (
+    ID INT UNIQUE IDENTITY(1,1) NOT NULL,
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t8;
+GO
 
+SELECT * FROM BABEL_4217_vu_prepare_t9;
+GO
+INSERT BULK BABEL_4217_vu_prepare_t9 (
+    ID INT NOT NULL UNIQUE IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
 SELECT * FROM BABEL_4217_vu_prepare_t9;
 GO
 
@@ -60,27 +103,20 @@ GO
 
 SELECT * FROM BABEL_4217_vu_prepare_t13;
 GO
-
-SELECT * FROM BABEL_4217_vu_prepare_t15;
+INSERT BULK BABEL_4217_vu_prepare_t13 (
+    ID INT PRIMARY KEY NOT NULL CHECK(ID < 5) IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t13;
 GO
 
-ALTER TABLE BABEL_4217_vu_prepare_t15 add id INT PRIMARY KEY NOT NULL CHECK(id < 5) IDENTITY(1,1);
+SELECT * FROM BABEL_4217_vu_prepare_t14;
 GO
-SELECT * FROM BABEL_4217_vu_prepare_t15;
+-- It should give error (default and identity cannot be assigned to same column)
+ALTER TABLE BABEL_4217_vu_prepare_t14 add id INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1);
 GO
-
-SELECT * FROM BABEL_4217_vu_prepare_t16;
+ALTER TABLE BABEL_4217_vu_prepare_t14 add id INT PRIMARY KEY NOT NULL CHECK(id < 5) IDENTITY(1,1);
 GO
-
--- It should give error (default and idenity cannot be assigned to same column)
-ALTER TABLE BABEL_4217_vu_prepare_t16 add id INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1);
-GO
-
-SELECT * FROM BABEL_4217_vu_prepare_t18;
-GO
-
-SELECT * FROM BABEL_4217_vu_prepare_t19;
-GO
-
-SELECT * FROM BABEL_4217_vu_prepare_t20;
+SELECT * FROM BABEL_4217_vu_prepare_t14;
 GO

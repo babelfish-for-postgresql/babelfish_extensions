@@ -24,15 +24,8 @@ drop table BABEL_4217_vu_prepare_t12;
 go
 drop table BABEL_4217_vu_prepare_t13;
 go
+drop table BABEL_4217_vu_prepare_t14;
+go
 drop table BABEL_4217_vu_prepare_t15;
 go
-drop table BABEL_4217_vu_prepare_t16;
-go
-drop table BABEL_4217_vu_prepare_t17;
-go
-drop table BABEL_4217_vu_prepare_t18;
-go
-drop table BABEL_4217_vu_prepare_t19;
-go
-drop table BABEL_4217_vu_prepare_t20;
-go
+
