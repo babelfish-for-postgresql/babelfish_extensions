@@ -1029,8 +1029,6 @@ BEGIN
         RAISE USING MESSAGE := format('Argument data type or the parameter %s provided to AT TIME ZONE clause is invalid.', tzzone);
     END IF;
 
-    RAISE LOG 'Hitting this func(text,anyelement) %',tz_name;
-
     IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
         input_expr_tx := input_expr::TEXT;
         input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
