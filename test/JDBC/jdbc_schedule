@@ -155,6 +155,6 @@ ignore#!#load_student
 ignore#!#babel_cursor
 
 # These tests are meant for upgrade scenario prior to (potential) 15_5 release
-case_insensitive_collation-before-15-5-vu-prepare
-case_insensitive_collation-before-15-5-vu-verify
-case_insensitive_collation-before-15-5-vu-cleanup
+ignore#!#case_insensitive_collation-before-15-5-vu-prepare
+ignore#!#case_insensitive_collation-before-15-5-vu-verify
+ignore#!#case_insensitive_collation-before-15-5-vu-cleanup
