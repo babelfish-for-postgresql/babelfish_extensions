@@ -12,10 +12,6 @@ all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
-# JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
-ignore#!#insertbulk
-ignore#!#BABEL-SQLvariant
-
 # Ignore upgrade tests in normal JDBC run. These are tests that cannot be run in non-upgrade contexts due
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
