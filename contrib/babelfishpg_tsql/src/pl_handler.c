@@ -5334,6 +5334,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	{
 		foreach(cell, stmt->objects)
 		{
+			relation = NULL;
 			address = get_object_address(stmt->removeType,
 										 lfirst(cell),
 										 &relation,
@@ -5341,7 +5342,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 true);
 
 			if (!relation)
-				return;
+				continue;
 
 			/* Get major_name */
 			major_name = pstrdup(RelationGetRelationName(relation));
@@ -5386,6 +5387,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 
 		foreach(cell, stmt->objects)
 		{
+			relation = NULL;
 			address = get_object_address(stmt->removeType,
 										 lfirst(cell),
 										 &relation,
@@ -5393,7 +5395,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 true);
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
-				return;
+				continue;
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
@@ -5403,7 +5405,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!HeapTupleIsValid(tuple))
 			{
 				table_close(relation, AccessShareLock);
-				return;
+				continue;
 			}
 
 			if (stmt->removeType == OBJECT_PROCEDURE ||
