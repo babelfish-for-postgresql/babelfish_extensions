@@ -1334,8 +1334,11 @@ timezone_mapping(PG_FUNCTION_ARGS)
 	VarChar    *result = cstring_to_text("NULL");
 	for(int i=0;i<161;i++)
 	{
-		if(strcmp(win32_tzmap[i].stdname,sqltmz) == 0)
+		if(pg_strcasecmp(win32_tzmap[i].stdname,sqltmz) == 0)
+		{
 		result = cstring_to_text(win32_tzmap[i].pgtzname);
+		break;
+		}
 	}
 	PG_RETURN_VARCHAR_P(result);
 }
