@@ -31,8 +31,8 @@ ignore#!#Test-Prep-Statements-vu-verify
 ignore#!#Test-Prep-Statements-vu-cleanup
 ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
-ignore#!#BABEL-3117-before-latest-vu-prepare
-ignore#!#BABEL-3117-before-latest-vu-verify
+ignore#!#BABEL-3117-before-15-5-vu-prepare
+ignore#!#BABEL-3117-before-15-5-vu-verify
 ignore#!#BABEL-3655-vu-prepare
 ignore#!#BABEL-3655-vu-verify
 
@@ -154,3 +154,7 @@ ignore#!#load_student
 # really have succeeded in the first place, so disabling the test for now
 ignore#!#babel_cursor
 
+# These tests are meant for upgrade scenario prior to (potential) 15_5 release
+BABEL-3117-before-15-5-vu-prepare
+BABEL-3117-before-15-5-vu-verify
+BABEL-3117-before-15-5-vu-cleanup
