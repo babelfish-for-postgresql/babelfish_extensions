@@ -71,6 +71,8 @@ datetimeoffset
 
 Select convert(datetimeoffset,'2022-10-29 20:01:00.000') AT TIME ZONE 23
 Go
+~~START~~
+datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type or the parameter 23 provided to AT TIME ZONE clause is invalid.)~~
@@ -78,6 +80,8 @@ Go
 
 Select convert(datetimeoffset,'2022-10-29 20:01:00.000') AT TIME ZONE convert(int,23)
 Go
+~~START~~
+datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type or the parameter 23 provided to AT TIME ZONE clause is invalid.)~~
@@ -100,6 +104,8 @@ datetimeoffset
 
 Select convert(datetimeoffset,'2022-10-29 20:01:00.0000000 -05:00') AT TIME ZONE 'Eastern  Standard  Time'
 GO
+~~START~~
+datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type or the parameter Eastern  Standard  Time provided to AT TIME ZONE clause is invalid.)~~
@@ -107,6 +113,8 @@ GO
 
 Select convert(datetimeoffset,'2022-10-29 20:01:00.0000000 -05:00') AT TIME ZONE 'Eastern Standard Time '
 GO
+~~START~~
+datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type or the parameter Eastern Standard Time  provided to AT TIME ZONE clause is invalid.)~~
@@ -114,6 +122,8 @@ GO
 
 Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'dgycgwycgqd'
 GO
+~~START~~
+datetimeoffset
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type or the parameter dgycgwycgqd provided to AT TIME ZONE clause is invalid.)~~
