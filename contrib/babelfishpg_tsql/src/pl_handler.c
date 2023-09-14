@@ -623,7 +623,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				}
 				else
 				{
-					rel_schema = "dbo";
+					rel_schema = get_authid_user_ext_schema_name(get_cur_db_name(), GetUserNameFromId(GetUserId(), false));
 				}
 
 				if (trig_schema != NULL && strcasecmp(trig_schema, rel_schema) != 0)

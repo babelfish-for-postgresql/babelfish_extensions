@@ -1,7 +1,22 @@
 -- tsql user=jdbc_user password=12345678
 -- Preparation
-use master;
-go
+USE master
+GO
+
+CREATE LOGIN babel_3326_non_owner WITH PASSWORD = '12345678'
+GO
+
+CREATE USER babel_3326_non_owner
+GO
+
+CREATE LOGIN babel_3326_u1 WITH PASSWORD = '12345678'
+GO
+
+CREATE DATABASE babel_3326_db1
+GO
+
+CREATE USER babel_3326_u1 FOR LOGIN babel_3326_u1
+GO
 
 CREATE TABLE babel_3326_Employees(
     EmployeeID      INT IDENTITY(1,1) PRIMARY KEY,
@@ -56,12 +71,6 @@ AS
     SELECT 'Trigger dbo.TR_temp Invoked'
 GO
 
-CREATE LOGIN babel_3326_non_owner WITH PASSWORD = '12345678'
-GO
-
-CREATE USER babel_3326_non_owner
-GO
-
 GRANT SELECT,UPDATE,INSERT,DELETE ON dbo.babel_3326_Employees TO babel_3326_non_owner
 GO
 
@@ -108,8 +117,4 @@ CREATE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel
 FOR INSERT
 AS
     SELECT 'Trigger s1.TR_ins Invoked'
-GO
-
-
-CREATE DATABASE babel_3326_db1
 GO

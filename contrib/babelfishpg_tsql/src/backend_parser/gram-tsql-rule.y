@@ -498,8 +498,7 @@ tsql_enable_disable_trigger:
 						
 						if (list_length(lst) > 1)
 						{
-							n1->name = strcat(((String *)list_nth(lst,0))->sval, ".");
-							n1->name = strcat(n1->name, ((String *)list_nth(lst,1))->sval);
+							n1->name = psprintf("%s.%s", ((String *)list_nth(lst,0))->sval, ((String *)list_nth(lst,1))->sval);
 						}
 						else
 						{

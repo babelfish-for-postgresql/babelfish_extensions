@@ -1467,7 +1467,7 @@ public:
 
 	void exitAlter_table(TSqlParser::Alter_tableContext *ctx) override
 	{
-		if (ctx->TRIGGER() && ctx->id().size() > 0)	/* condition to filter alter table statements which contains TRIGGER keyword and multiple trigger names */
+		if (ctx->TRIGGER() && ctx->id().size() > 1)	/* condition to filter alter table statements which contains TRIGGER keyword and multiple trigger names */
 		{
 			/*
 			 * When we come across a alter table query which enable/disable trigger with multiple trigger name, 
