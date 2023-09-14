@@ -1218,102 +1218,24 @@ DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 				}
 		;
 
-tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
-			SET set_clause_list
-			from_clause
-			where_or_current_clause
-			returning_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $3;
-					n->targetList = $5;
-					n->fromClause = $6;
-					n->whereClause = $7;
-					n->returningList = $8;
-					n->withClause = $1;
-					$$ = (Node *)n;
-				}
-			| opt_with_clause UPDATE relation_expr_opt_alias
-			tsql_table_hint_expr
-			SET set_clause_list
-			from_clause
-			where_or_current_clause
-			returning_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $3;
-					n->targetList = $6;
-					n->fromClause = $7;
-					n->whereClause = $8;
-					n->returningList = $9;
-					n->withClause = $1;
-					$$ = (Node *)n;
-				}
-			| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 			tsql_opt_table_hint_expr
 			SET set_clause_list
 			from_clause
 			where_or_current_clause
-			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $4;
 					n->limitCount = $3;
+					n->relation = $4;
 					n->targetList = $7;
 					n->fromClause = $8;
 					n->whereClause = $9;
-					n->returningList = $10;
+					n->returningList = NULL;
 					n->withClause = $1;
 					$$ = (Node *)n;
 				}
 			/* OUTPUT syntax */
-			| opt_with_clause UPDATE relation_expr_opt_alias
-			SET set_clause_list
-			tsql_output_clause
-			from_clause
-			where_or_current_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $3;
-					tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
-					n->targetList = $5;
-					if ($7 != NULL && IsA(linitial($7), JoinExpr))
-					{
-						n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
-											(Node*)n, $7, $8, NULL, $3,
-											yyscanner);
-
-					}
-					else
-					{
-						n->fromClause = $7;
-						n->whereClause = $8;
-					}
-					tsql_check_update_output_transformation($6);
-					n->returningList = $6;
-					n->withClause = $1;
-					$$ = (Node *)n;
-				}
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				tsql_table_hint_expr
-				SET set_clause_list
-				tsql_output_clause
-				from_clause
-				where_or_current_clause
-					{
-						UpdateStmt *n = makeNode(UpdateStmt);
-						n->relation = $3;
-						tsql_update_delete_stmt_from_clause_alias(n->relation,
-						$8);
-						n->targetList = $6;
-						n->fromClause = $8;
-						n->whereClause = $9;
-						tsql_check_update_output_transformation($7);
-						n->returningList = $7;
-						n->withClause = $1;
-						$$ = (Node *)n;
-					}
-				| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+				| opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				tsql_opt_table_hint_expr
 				SET set_clause_list
 				tsql_output_clause
@@ -1322,8 +1244,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 					{
 						UpdateStmt *n = makeNode(UpdateStmt);
 						n->relation = $4;
-						tsql_update_delete_stmt_from_clause_alias(n->relation,
-						$8);
+						tsql_update_delete_stmt_from_clause_alias(n->relation, $9);
 						n->targetList = $7;
 						if ($9 != NULL && IsA(linitial($9), JoinExpr))
 						{
@@ -1343,26 +1264,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						$$ = (Node *)n;
 					}
 				/* OUTPUT INTO syntax with OUTPUT target column list */
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				SET set_clause_list
-				tsql_output_clause INTO insert_target tsql_output_into_target_columns
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $5, $6, $8, 
-																		$9, $10, $11, yyscanner);
-					}
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				tsql_table_hint_expr
-				SET set_clause_list
-				tsql_output_clause INTO insert_target tsql_output_into_target_columns
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $6, $7, $9, 
-																	$10, $11, $12, yyscanner);
-					}
-				| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+				| opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				tsql_opt_table_hint_expr
 				SET set_clause_list
 				tsql_output_clause INTO insert_target tsql_output_into_target_columns
@@ -1373,26 +1275,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 																	$11, $12, $13, yyscanner);
 					}
 				/* Without OUTPUT target column list */
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				SET set_clause_list
-				tsql_output_clause INTO insert_target
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $5, $6, $8, 
-																		NIL, $9, $10, yyscanner);
-					}
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				tsql_table_hint_expr
-				SET set_clause_list
-				tsql_output_clause INTO insert_target
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $6, $7, $9, 
-																	NIL, $10, $11, yyscanner);
-					}
-				| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+				| opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				tsql_opt_table_hint_expr
 				SET set_clause_list
 				tsql_output_clause INTO insert_target
