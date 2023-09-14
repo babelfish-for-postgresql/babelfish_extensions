@@ -3009,3 +3009,63 @@ del_from_bbf_schema(const char *db_name,
 
 	CommandCounterIncrement();
 }
+
+void
+clean_up_bbf_schema(const char *db_name,
+				  const char *schema_name,
+				  const char *object_name,
+				  bool is_schema)
+{
+	SysScanDesc scan;
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+										 RowExclusiveLock);
+
+	if (is_schema)
+	{
+		ScanKeyData scanKey[2];
+		ScanKeyInit(&scanKey[0],
+					1,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(db_name));
+		ScanKeyInit(&scanKey[1],
+					2,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(schema_name));
+		scan = systable_beginscan(bbf_schema_rel,
+					get_bbf_schema_idx_oid(),
+					true, NULL, 2, scanKey);
+	}
+	else
+	{
+		ScanKeyData scanKey[3];
+		ScanKeyInit(&scanKey[0],
+					1,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(db_name));
+		ScanKeyInit(&scanKey[1],
+					2,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(schema_name));
+		ScanKeyInit(&scanKey[2],
+					3,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(object_name));
+		scan = systable_beginscan(bbf_schema_rel,
+					get_bbf_schema_idx_oid(),
+					true, NULL, 3, scanKey);
+	}
+
+	while ((tuple_bbf_schema = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(tuple_bbf_schema))
+			CatalogTupleDelete(bbf_schema_rel,
+							   &tuple_bbf_schema->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}

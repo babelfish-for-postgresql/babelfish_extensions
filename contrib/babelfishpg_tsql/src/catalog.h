@@ -324,6 +324,11 @@ extern bool check_bbf_schema_for_schema(const char *db_name,
 									   const char *object_name,
 									   const char *permission);
 
+extern void clean_up_bbf_schema(const char *db_name,
+								const char *schema_name,
+								const char *object_name,
+								bool is_schema);
+
 /*****************************************
  *			DOMAIN MAPPING
  *****************************************/

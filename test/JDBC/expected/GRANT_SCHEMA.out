@@ -1,5 +1,12 @@
 -- tsql
 -- create objects
+select * from babelfish_schema;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
 create database babel_4344_d1;
 go
 
@@ -109,9 +116,9 @@ grant select on babel_4344_t1 to babel_4344_u1;
 go
 grant select on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
 go
-grant select on babel_4344_t3(a) to babel_4344_u1;
+grant select on babel_4344_t3(a) to babel_4344_u1; -- column privilege
 go
-grant select on babel_4344_s1.babel_4344_t3(a) to babel_4344_u1;
+grant select on babel_4344_s1.babel_4344_t3(a) to babel_4344_u1; -- column privilege
 go
 grant select on babel_4344_v1 to babel_4344_u1;
 go
@@ -142,13 +149,13 @@ go
 int
 ~~END~~
 
-select * from babel_4344_t3;
+select * from babel_4344_t3; -- not accessible, only column privilege is granted
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table babel_4344_t3)~~
 
-select * from babel_4344_s1.babel_4344_t3
+select * from babel_4344_s1.babel_4344_t3 -- not accessible, only column privilege is granted
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -264,7 +271,7 @@ use master;
 go
 
 -- tsql user=babel_4344_l1 password=12345678
--- User has only SCHEMA privileges,objects should be accessible.
+-- User has SCHEMA privileges,objects should be accessible.
 use babel_4344_d1;
 go
 select * from babel_4344_s1.babel_4344_t2
@@ -434,3 +441,10 @@ void
 -- tsql
 drop login babel_4344_l1;
 go
+
+select * from babelfish_schema;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+

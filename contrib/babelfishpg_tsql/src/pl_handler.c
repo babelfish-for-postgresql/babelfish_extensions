@@ -3129,7 +3129,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						bbf_ExecDropStmt(drop_stmt);
-
 					break;
 				}
 
@@ -3141,10 +3140,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * database command.
 					 */
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+					char	   *cur_db = get_cur_db_name();
+					const char	*logicalschema = get_logical_schema_name(schemaname, true);
 
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
-						char	   *cur_db = get_cur_db_name();
 						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
 
 						if (strcmp(schemaname, guest_schema_name) == 0)
@@ -3157,6 +3157,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
+					clean_up_bbf_schema(cur_db, logicalschema, NULL, true);
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -5582,6 +5583,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Relation		relation = NULL;
 	Oid				schema_oid;
 	ListCell		*cell;
+	char	*dbname = get_cur_db_name();
+	const char *logicalschema = NULL;
 
 	db_id = get_cur_db_id();
 
@@ -5622,6 +5625,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
+			logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5647,6 +5651,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 											 major_name, NULL);
 				}
 			}
+			clean_up_bbf_schema(dbname, logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -5690,6 +5695,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
+			logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5703,6 +5709,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				delete_extended_property(db_id, type, schema_name, major_name,
 										 NULL);
 			}
+			clean_up_bbf_schema(dbname, logicalschema, major_name, false);
 		}
 	}
 }
