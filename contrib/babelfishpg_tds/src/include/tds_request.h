@@ -652,10 +652,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 					*offset += sizeof(uint32_t);
 					break;
 				case TDS_TYPE_SPATIAL:
-					{
-						colmetadata[i].maxLen = messageData[(*offset)++];
-						elog(LOG, "TYPE INFO FOR SPATIAL TYPES");
-					}
+					colmetadata[i].maxLen = messageData[(*offset)++];
 					break;
 				default:
 					ereport(ERROR,

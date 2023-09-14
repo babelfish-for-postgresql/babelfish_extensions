@@ -96,23 +96,23 @@ jobs:
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
 
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
+      - name: Build Extensions using latest version
+        id: build-extensions-new
         if: always() && steps.build-modified-postgres-new.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
+        uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
-      - name: Build Extensions using latest version
-        id: build-extensions-new
-        if: always() && steps.build-postgis-extension.outcome == 'success'
-        uses: ./.github/composite-actions/build-extensions
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.build-extensions-new.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Run TAP Tests
         id: tap
-        if: always() && steps.build-extensions-new.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         timeout-minutes: 5
         run: |
           export PG_CONFIG=~/${{env.NEW_INSTALL_DIR}}/bin/pg_config

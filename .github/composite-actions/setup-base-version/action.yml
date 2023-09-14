@@ -40,6 +40,25 @@ runs:
       with:
         install_dir: ${{ inputs.install_dir }}
 
+    - name: Set env variables and build extensions
+      if: always() && steps.compile-antlr.outcome == 'success'
+      uses: ./.github/composite-actions/build-extensions
+      with: 
+        install_dir: ${{ inputs.install_dir }}
+        extension_branch: ${{ inputs.extension_branch }}
+
+    - name: Build tds_fdw Extension
+      run: |
+        cd ..
+        export TDS_FDW_VERSION="2.0.3"
+        sudo apt-get install wget
+        wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
+        tar -xvzf v${TDS_FDW_VERSION}.tar.gz
+        cd tds_fdw-${TDS_FDW_VERSION}/
+        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+        sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
+      shell: bash
+
     - name: Build PostGIS Extension
       run: |
         cd ..
@@ -58,25 +77,6 @@ runs:
         sudo cmake --build . --target install
         cd ../../postgis-3.3.3dev
         ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
-        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
-        sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
-      shell: bash
-
-    - name: Set env variables and build extensions
-      if: always() && steps.compile-antlr.outcome == 'success'
-      uses: ./.github/composite-actions/build-extensions
-      with: 
-        install_dir: ${{ inputs.install_dir }}
-        extension_branch: ${{ inputs.extension_branch }}
-
-    - name: Build tds_fdw Extension
-      run: |
-        cd ..
-        export TDS_FDW_VERSION="2.0.3"
-        sudo apt-get install wget
-        wget https://github.com/tds-fdw/tds_fdw/archive/v${TDS_FDW_VERSION}.tar.gz
-        tar -xvzf v${TDS_FDW_VERSION}.tar.gz
-        cd tds_fdw-${TDS_FDW_VERSION}/
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
       shell: bash

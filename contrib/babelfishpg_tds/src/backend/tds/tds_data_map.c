@@ -95,7 +95,7 @@ TdsLCIDToEncodingMap TdsLCIDToEncodingMap_data[] =
 	{0x043e, PG_WIN1252}, //Malay:Malaysia
 	/* {0x044e, 0},// Marathi: India */
 	{0x0450, PG_WIN1251}, //Mongolian:Mongolia
-	{0x0414, PG_WIN1252}, //Norwegian:Norway(Bokm� � l)
+	{0x0414, PG_WIN1252}, //Norwegian:Norway(BokmÃ ¥ l)
 	{0x0814, PG_WIN1252}, //Norwegian:Norway(Nynorsk)
 	{0x0415, PG_WIN1250}, //Polish:Poland
 	{0x0416, PG_WIN1252}, //Portuguese:Brazil

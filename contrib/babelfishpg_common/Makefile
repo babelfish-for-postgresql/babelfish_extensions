@@ -12,19 +12,6 @@ PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
-pglib_dir := $(shell $(PG_CONFIG) --pkglibdir)
-
-#preprocessor check for postgis file
-POSTGIS_LIB := $(pglib_dir)
-file_to_check := postgis-3.so
-
-#check for file in the directory
-file_exists := $(wildcard $(POSTGIS_LIB)/$(file_to_check))
-
-ifneq ("$(strip $(file_exists))","")
-export POSTGIS_INCLUDED=1
-endif
-
 PG_CFLAGS += -g -Werror
 PG_CFLAGS += -fstack-protector-strong
 ifdef PREV_EXTVERSION

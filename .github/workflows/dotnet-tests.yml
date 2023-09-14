@@ -22,21 +22,21 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
-
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: always() && steps.compile-antlr.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
       
       - name: Build Extensions
         id: build-extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
       
       - name: Install Extensions
         id: install-extensions
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
+
+      - name: Build PostGIS Extension
+        id: build-postgis-extension
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/build-postgis-extension
       
       - name: Install MSSQL Tools
         id: install-mssql-tools
@@ -51,7 +51,7 @@ jobs:
       
       - name: Install Dotnet
         id: install-dotnet
-        if: always() && steps.install-extensions.outcome == 'success'
+        if: always() && steps.build-postgis-extension.outcome == 'success'
         run: | 
           cd ~
           wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb

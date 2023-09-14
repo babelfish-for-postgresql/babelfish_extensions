@@ -70,6 +70,13 @@
 #define Min(x, y)				((x) < (y) ? (x) : (y))
 #define ROWVERSION_SIZE 8
 
+/* 
+Driver Expects assembly Name and Length is case of Spatial DataTypes
+TODO: For Now assembly Name is Hardcoded but can be Altered in future 
+*/
+#define ASSEMBLY_NAME_GEOMETRY "Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080dd91"
+#define ASSEMBLY_NAME_GEOGRAPHY "Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080dd91"
+
 /*
  * Local structures and functions copied from printtup.c
  */
@@ -113,6 +120,7 @@ static uint16_t TdsPendingDoneStatus;
 static uint16_t TdsPendingDoneCurCmd;
 static uint64_t TdsPendingDoneRowCnt;
 static TdsExecutionState tds_estate = NULL;
+common_utility_plugin *common_utility_plugin_ptr = NULL;
 
 /*
  * This denotes whether we've sent an error token and the next done token
@@ -1194,7 +1202,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 {
 	StringInfoData tempBuf;
 	int			attno;
-	char 		*db_name, *assemblyName;       //Store Current Database Name and Assembly Name
+	char 		*db_name;						/* Store Current Database Name */
 	HeapTuple	tup;							/* PG Type Name (eg: Geography or Geometry) */
 	Form_pg_type typTup;
 	
@@ -1264,59 +1272,57 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			}
 		}
 
-		//For Spatial Types
-			tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(col->pgTypeOid));  //Search SysCache for type name
-			typTup = (Form_pg_type) GETSTRUCT(tup);
+		/* For Spatial Types */
+		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(col->pgTypeOid));  /* Search SysCache for type name */
+		typTup = (Form_pg_type) GETSTRUCT(tup);
 
-			/*
-			 * Check if it is spatial Data type
-			 * Send the Corresponding MetaData Columns
-			*/			
-			if(strcmp(NameStr(typTup->typname),"geometry") == 0 || strcmp(NameStr(typTup->typname),"geography") == 0)
-			{
-				//Driver Expects assembly Name and Length 
-				//TODO: For Now assembly Name is Hardcoded but can be Altered in future
-				if(strcmp(NameStr(typTup->typname),"geometry") == 0){
-					assemblyName = "Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91";
-				}
-				else
-				{
-					assemblyName = "Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91";
-				}
+		/*
+			* Check if it is spatial Data type
+			* Send the Corresponding MetaData Columns
+		*/			
+		if((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid) || (*common_utility_plugin_ptr->is_tsql_geography_datatype) (typTup->oid))
+		{
+			
+			/* Current Database Name and Length are expected by the Driver */
+			db_name = pltsql_plugin_handler_ptr->get_cur_db_name();
+			temp8 = (uint8_t) pg_mbstrlen(db_name);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, db_name,
+									strlen(db_name));
+			TdsPutbytes(&temp8, sizeof(temp8));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
 
-				//Current Database Name and Length are expected by the Driver
-				db_name = pltsql_plugin_handler_ptr->get_cur_db_name();
-				temp8 = (uint8_t) pg_mbstrlen(db_name);
+			/* Since Schema Name is always sys in Babelfish Server we can directly send it */
+			temp8 = (uint8_t) pg_mbstrlen("sys");
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, "sys",
+									strlen("sys"));
+			TdsPutbytes(&temp8, sizeof(temp8));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
+
+			/* Type name and Length */
+			temp8 = (uint8_t) pg_mbstrlen(NameStr(typTup->typname));
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, NameStr(typTup->typname),
+									strlen(NameStr(typTup->typname)));
+			TdsPutbytes(&temp8, sizeof(temp8));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
+
+			/* hardcode for assembly qualified name */
+			if((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid)){
+				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOMETRY);
 				resetStringInfo(&tempBuf);
-				TdsUTF8toUTF16StringInfo(&tempBuf, db_name,
-										strlen(db_name));
-				TdsPutbytes(&temp8, sizeof(temp8));
-				TdsPutbytes(tempBuf.data, tempBuf.len);
-
-				//Since Schema Name is always sys in Babelfish Server we can directly send it
-				temp8 = (uint8_t) pg_mbstrlen("sys");
+				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOMETRY,
+										strlen(ASSEMBLY_NAME_GEOMETRY));
+			}else{
+				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOGRAPHY);
 				resetStringInfo(&tempBuf);
-				TdsUTF8toUTF16StringInfo(&tempBuf, "sys",
-										strlen("sys"));
-				TdsPutbytes(&temp8, sizeof(temp8));
-				TdsPutbytes(tempBuf.data, tempBuf.len);
-
-				//Type name and Length
-				temp8 = (uint8_t) pg_mbstrlen(NameStr(typTup->typname));
-				resetStringInfo(&tempBuf);
-				TdsUTF8toUTF16StringInfo(&tempBuf, NameStr(typTup->typname),
-										strlen(NameStr(typTup->typname)));
-				TdsPutbytes(&temp8, sizeof(temp8));
-				TdsPutbytes(tempBuf.data, tempBuf.len);
-
-				//hardcode for assembly qualified name
-				temp16 = (uint16_t) pg_mbstrlen(assemblyName);
-				resetStringInfo(&tempBuf);
-				TdsUTF8toUTF16StringInfo(&tempBuf, assemblyName,
-										strlen(assemblyName));
-				TdsPutbytes(&temp16, sizeof(temp16));
-				TdsPutbytes(tempBuf.data, tempBuf.len);
+				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOGRAPHY,
+										strlen(ASSEMBLY_NAME_GEOGRAPHY));
 			}
+			TdsPutbytes(&temp16, sizeof(temp16));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
+		}
 
 		/*
 		 * If it is an expression column, send "0" as the column len
@@ -1940,18 +1946,13 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				/*
 				* TODO: Check TDS versioning requirements 
 				*/
-				elog(LOG, "tdsresponse: enter TDS_SEND_GEOMETRY");
 				SetColMetadataForBinaryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT);
-				elog(LOG, "tdsresponse: exit TDS_SEND_GEOMETRY");
 				break;
 			case TDS_SEND_GEOGRAPHY:
 				/*
 				 * TODO: Check TDS versioning requirements 
 				 */
-				elog(LOG, "tdsresponse: enter TDS_SEND_GEOGRAPHY");
 				SetColMetadataForBinaryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT);
-				elog(LOG, "tdsresponse: exit TDS_SEND_GEOGRAPHY");
-
 				break;
 			default:
 

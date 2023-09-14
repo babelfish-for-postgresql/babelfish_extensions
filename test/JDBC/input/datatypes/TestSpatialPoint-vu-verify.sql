@@ -26,6 +26,12 @@ SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
 Go
 
+SELECT * FROM TextFromGeom;
+GO
+
+SELECT * FROM BinaryFromGeom;
+GO
+
 SELECT location FROM SPATIALPOINTGEOM_dt; 
 GO
 
@@ -56,6 +62,12 @@ SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
 Go
+
+SELECT * FROM TextFromGeog;
+GO
+
+SELECT * FROM BinaryFromGeog;
+GO
 
 SELECT location FROM SPATIALPOINTGEOG_dt;
 GO

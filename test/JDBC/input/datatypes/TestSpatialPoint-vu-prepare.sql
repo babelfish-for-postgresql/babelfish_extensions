@@ -66,6 +66,16 @@ INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::Point(47.65100, -22.34900, 4326) )
 GO
 
+CREATE VIEW TextFromGeom AS
+SELECT STAsText(location) AS TextRepresentation
+FROM SPATIALPOINTGEOM_dt;
+GO
+
+CREATE VIEW BinaryFromGeom AS
+SELECT STAsBinary(location) AS BinaryRepresentation
+FROM SPATIALPOINTGEOM_dt;
+GO
+
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 GO
 
@@ -150,6 +160,16 @@ GO
 -- Negative Test for Point for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::Point(147.65100, -22.34900, 4326) )
+GO
+
+CREATE VIEW TextFromGeog AS
+SELECT STAsText(location) AS TextRepresentation
+FROM SPATIALPOINTGEOG_dt;
+GO
+
+CREATE VIEW BinaryFromGeog AS
+SELECT STAsBinary(location) AS BinaryRepresentation
+FROM SPATIALPOINTGEOG_dt;
 GO
 
 CREATE TABLE SPATIALPOINT_dt (GeomColumn geometry, GeogColumn geography)

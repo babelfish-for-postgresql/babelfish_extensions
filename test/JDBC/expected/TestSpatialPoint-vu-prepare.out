@@ -100,6 +100,16 @@ GO
 ~~ROW COUNT: 1~~
 
 
+CREATE VIEW TextFromGeom AS
+SELECT STAsText(location) AS TextRepresentation
+FROM SPATIALPOINTGEOM_dt;
+GO
+
+CREATE VIEW BinaryFromGeom AS
+SELECT STAsBinary(location) AS BinaryRepresentation
+FROM SPATIALPOINTGEOM_dt;
+GO
+
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 GO
 
@@ -237,6 +247,16 @@ GO
 
 ~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
 
+
+CREATE VIEW TextFromGeog AS
+SELECT STAsText(location) AS TextRepresentation
+FROM SPATIALPOINTGEOG_dt;
+GO
+
+CREATE VIEW BinaryFromGeog AS
+SELECT STAsBinary(location) AS BinaryRepresentation
+FROM SPATIALPOINTGEOG_dt;
+GO
 
 CREATE TABLE SPATIALPOINT_dt (GeomColumn geometry, GeogColumn geography)
 GO

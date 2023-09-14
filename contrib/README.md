@@ -297,6 +297,16 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
     CREATE EXTENSION
     ```
 
+# How to build the babelfishpg_tsql extension with TDS Support for Spatial Datatypes enabled
+
+1. To work with linked servers, you must install the `PostGIS` extension.
+2. Build the babelfishpg_tsql extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_SPATIAL' SHLIB_LINK='-lsybdb -L/usr/lib64' make
+    PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_SPATIAL' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
+    ```
+3. Create rest of the Babelfish extensions as usual, and initialize Babelfish.
+
 
 # How to build the Babelfish server with Kerberos authentication enabled
 

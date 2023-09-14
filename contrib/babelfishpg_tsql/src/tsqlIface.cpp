@@ -963,7 +963,7 @@ public:
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 
-		#ifdef POSTGIS_INCLUDED
+		#ifdef ENABLE_TDS_SPATIAL
 		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
 		{
 			TSqlParser::IdContext *idctx = ctx->id()[0];
@@ -2228,7 +2228,7 @@ public:
 
 	TSqlParser::IdContext *proc = ctx->procedure;
 
-	#ifdef POSTGIS_INCLUDED
+	#ifdef ENABLE_TDS_SPATIAL
 	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
 	{
 		TSqlParser::IdContext *idctx = ctx->id()[0];

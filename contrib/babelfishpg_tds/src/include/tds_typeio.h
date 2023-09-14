@@ -431,6 +431,7 @@ extern int	TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData);
+extern int  TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr);
 extern int  TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData); 
 extern int  TdsSendTypeGeography(FmgrInfo *finfo, Datum value, void *vMetaData);
 
