@@ -1258,6 +1258,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	{
 		u->fromClause = from_clause;
 		u->whereClause = where_or_current_clause;
+		u->limitCount = opt_top_clause;
 	}
 	u->returningList = get_transformed_output_list(tsql_output_clause);
 	u->withClause = opt_with_clause;

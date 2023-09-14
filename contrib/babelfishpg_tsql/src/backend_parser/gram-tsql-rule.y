@@ -1333,9 +1333,6 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						}
 						else
 						{
-							// n->fromClause = $8;
-							// n->whereClause = tsql_update_delete_stmt_with_top($3,
-							//					$4, $10, yyscanner);
 							n->limitCount = $3;
 							n->fromClause = $9;
 							n->whereClause = $10;
