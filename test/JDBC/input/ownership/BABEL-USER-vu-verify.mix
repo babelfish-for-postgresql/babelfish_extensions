@@ -98,6 +98,10 @@ GO
 EXEC babel_user_vu_prepare_db_principal_proc
 GO
 
+-- reset the login password
+ALTER LOGIN babel_user_vu_prepare_test5 WITH PASSWORD = 'abc';
+GO
+
 -- tsql user=babel_user_vu_prepare_test5 password=abc
 SELECT CURRENT_USER;
 go

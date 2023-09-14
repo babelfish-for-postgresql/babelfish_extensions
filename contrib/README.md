@@ -1,6 +1,6 @@
 # Contents
 
-This package includes 4 extensions:
+This package includes 5 extensions:
 
 
 - babelfishpg_tsql
@@ -11,6 +11,8 @@ This package includes 4 extensions:
     - Supports the various datatypes in MSSQL.
 - babelfishpg_money
     - supports the `money` type in MSSQL. This is a variation of the opensource fixeddecimal extension.
+- babelfishpg_unit
+    - Unit testing framework for babelfish. 
 
 # How do I build the extensions?
 
@@ -151,6 +153,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     cd ../babelfishpg_tsql
     make && make install
 
+Build babelfishpg_unit extension if you want to run/add unit tests (Optional):
+
+    cd contrib/babelfishpg_unit
+    make && make install
+
 
 # How to install the extensions and how to connect via SQLCMD?
 
@@ -226,6 +233,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
           ```
           sudo ~/postgres/bin/psql -d postgres -U your_user_name
           ```
+      - If you want to install babelfishpg_unit extension, run the following command after connecting from psql endpoint (switch to the database where babelfish extensions are installed):
+          ```
+          \c babelfish_db
+          CREATE EXTENSION IF NOT EXISTS "babelfishpg_unit";
+          ```
 
 6. Try connecting to Babelfish via SQLCMD
       ```
@@ -246,6 +258,14 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
 
     (1 rows affected)
     ```
+
+
+# How to run the unit tests?
+Run the following command from psql endpoint using `~/postgres/bin/psql -U your_user_name -d babelfish_db`:
+
+```
+SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();
+```
 
 # How to run the JDBC regression tests?
 1. Install Maven: https://maven.apache.org/install.html
