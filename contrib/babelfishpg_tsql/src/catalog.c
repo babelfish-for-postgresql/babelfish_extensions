@@ -1451,8 +1451,7 @@ get_bbf_schema_oid()
 {
 	if (!OidIsValid(bbf_schema_oid))
 		bbf_schema_oid = get_relname_relid(BBF_SCHEMA_TABLE_NAME,
-												 get_namespace_oid("sys", false));
-
+								get_namespace_oid("sys", false));
 	return bbf_schema_oid;
 }
 
@@ -1461,8 +1460,7 @@ get_bbf_schema_idx_oid()
 {
 	if (!OidIsValid(bbf_schema_idx_oid))
 		bbf_schema_idx_oid = get_relname_relid(BBF_SCHEMA_IDX_NAME,
-													 get_namespace_oid("sys", false));
-
+									get_namespace_oid("sys", false));
 	return bbf_schema_idx_oid;
 }
 
@@ -2832,10 +2830,10 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 /* Add a catalog entry. */
 void
 add_entry_to_bbf_schema(const char *db_name,
-				  const char *schema_name,
-				  const char *object_name,
-				  const char *permission,
-				  const char *grantee)
+				const char *schema_name,
+				const char *object_name,
+				const char *permission,
+				const char *grantee)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
@@ -2845,7 +2843,7 @@ add_entry_to_bbf_schema(const char *db_name,
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_oid(),
-										 RowExclusiveLock);
+									RowExclusiveLock);
 	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
 
 	/* Build a tuple to insert */
@@ -2859,8 +2857,8 @@ add_entry_to_bbf_schema(const char *db_name,
 	new_record_bbf_schema[4] = CStringGetDatum(pstrdup(grantee));
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
-									 new_record_bbf_schema,
-									 new_record_nulls_bbf_schema);
+									new_record_bbf_schema,
+									new_record_nulls_bbf_schema);
 
 	/* Insert new record in the bbf_authid_user_ext table */
 	CatalogTupleInsert(bbf_schema_rel, tuple_bbf_schema);
@@ -2875,19 +2873,19 @@ add_entry_to_bbf_schema(const char *db_name,
 /* Check if the catalog entry exists. */
 bool
 check_bbf_schema_for_entry(const char *db_name,
-									   const char *schema_name,
-									   const char *object_name,
-									   const char *permission,
-									   const char *grantee)
+							const char *schema_name,
+							const char *object_name,
+						   	const char *permission,
+							const char *grantee)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
-	ScanKeyData key[5];
-	TableScanDesc scan;
-	bool		catalog_entry_exists = false;
+	ScanKeyData	key[5];
+	TableScanDesc	scan;
+	bool	catalog_entry_exists = false;
 
 	bbf_schema_rel = table_open(get_bbf_schema_oid(),
-										 RowExclusiveLock);
+									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -2922,9 +2920,9 @@ check_bbf_schema_for_entry(const char *db_name,
 
 bool
 check_bbf_schema_for_schema(const char *db_name,
-									   const char *schema_name,
-									   const char *object_name,
-									   const char *permission)
+							const char *schema_name,
+							const char *object_name,
+							const char *permission)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -2933,7 +2931,7 @@ check_bbf_schema_for_schema(const char *db_name,
 	bool		catalog_entry_exists = false;
 
 	bbf_schema_rel = table_open(get_bbf_schema_oid(),
-										 RowExclusiveLock);
+									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -2975,7 +2973,7 @@ del_from_bbf_schema(const char *db_name,
 	TableScanDesc scan;
 
 	bbf_schema_rel = table_open(get_bbf_schema_oid(),
-										 RowExclusiveLock);
+									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -3022,7 +3020,7 @@ clean_up_bbf_schema(const char *db_name,
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_oid(),
-										 RowExclusiveLock);
+									RowExclusiveLock);
 
 	if (is_schema)
 	{

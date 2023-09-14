@@ -3395,8 +3395,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							ListCell	*lc1;
 							if (rv->schemaname != NULL)
 								logical_schema = get_logical_schema_name(rv->schemaname, true);	/* this is physical name */
-							else
-								logical_schema = "dbo";
 							/* If ALL PRIVILEGES is granted/revoked. */
 							if (list_length(grant->privileges) == 0)
 								break;
@@ -3419,6 +3417,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									foreach(lc, grant->grantees)
 									{
 										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										if (logical_schema == NULL)
+											logical_schema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
 										if ((ap->cols == NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
 											add_entry_to_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
 									}
@@ -3428,6 +3428,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									foreach(lc, grant->grantees)
 									{
 										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+										if (logical_schema == NULL)
+											logical_schema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
 										/*
 											* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 											* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
@@ -3460,7 +3462,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							Node *func = (Node *) linitial(ob->objname);
 							funcname = strVal(func);
-							logicalschema = "dbo";
 						}
 						else
 						{
@@ -3495,6 +3496,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									if (logicalschema == NULL)
+										logicalschema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
 									/* Don't store a row in catalog, if permission is granted for column */
 									if (!check_bbf_schema_for_entry(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename))
 										add_entry_to_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename);

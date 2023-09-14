@@ -1,5 +1,12 @@
 -- tsql
 -- create objects
+select * from babelfish_schema;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
 create database babel_4344_d1;
 go
 
@@ -434,4 +441,10 @@ void
 -- tsql
 drop login babel_4344_l1;
 go
+
+select * from babelfish_schema;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
 
