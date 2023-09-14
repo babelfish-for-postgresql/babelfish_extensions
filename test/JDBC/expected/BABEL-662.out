@@ -101,7 +101,7 @@ us emaster
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column "emaster" does not exist)~~
+~~ERROR (Message: procedure us(unknown) does not exist)~~
 
 
 -- BABEL-2067

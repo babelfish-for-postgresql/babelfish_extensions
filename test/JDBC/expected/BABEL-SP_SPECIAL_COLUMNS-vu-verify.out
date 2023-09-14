@@ -88,33 +88,41 @@ smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 ~~END~~
 
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_mytable1]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable1" does not exist)~~
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+1#!#ColB#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+~~END~~
 
 
 exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_MYTABLE1]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable1" does not exist)~~
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+1#!#ColB#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+~~END~~
 
 
 exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_mytable2]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable2" does not exist)~~
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+1#!#ColB#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+~~END~~
 
 
 exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_MYTABLE2]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable2" does not exist)~~
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+1#!#ColB#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+~~END~~
 
 
 -- unnamed invocation

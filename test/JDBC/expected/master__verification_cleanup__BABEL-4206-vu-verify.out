@@ -1,0 +1,48 @@
+-- check roles and users
+-- login_name should be empty after database-level restore
+EXEC babel_4206_vu_prepare_user_ext;
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar
+master_babel_4206_vu_prepare_role1#!##!#R#!#babel_4206_vu_prepare_role1#!#master
+master_babel_4206_vu_prepare_role2#!##!#R#!#babel_4206_vu_prepare_role2#!#master
+master_babel_4206_vu_prepare_user1#!##!#S#!#babel_4206_vu_prepare_user1#!#master
+master_babel_4206_vu_prepare_user2#!##!#S#!#babel_4206_vu_prepare_user2#!#master
+~~END~~
+
+
+-- check role membership is intact
+EXEC babel_4206_vu_prepare_role_members;
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+babel_4206_vu_prepare_role1#!#R#!#babel_4206_vu_prepare_role2#!#R
+babel_4206_vu_prepare_role1#!#R#!#babel_4206_vu_prepare_user1#!#S
+babel_4206_vu_prepare_role2#!#R#!#babel_4206_vu_prepare_user2#!#S
+~~END~~
+
+
+-- verify that users can be mapped to new logins
+CREATE LOGIN babel_4206_vu_prepare_login1 WITH PASSWORD = 'abc';
+GO
+
+CREATE LOGIN babel_4206_vu_prepare_login2 WITH PASSWORD = 'abc';
+GO
+
+ALTER USER babel_4206_vu_prepare_user1 WITH LOGIN = babel_4206_vu_prepare_login1;
+GO
+
+ALTER USER babel_4206_vu_prepare_user2 WITH LOGIN = babel_4206_vu_prepare_login2;
+GO
+
+-- again check updated users
+EXEC babel_4206_vu_prepare_user_ext;
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar
+master_babel_4206_vu_prepare_role1#!##!#R#!#babel_4206_vu_prepare_role1#!#master
+master_babel_4206_vu_prepare_role2#!##!#R#!#babel_4206_vu_prepare_role2#!#master
+master_babel_4206_vu_prepare_user1#!#babel_4206_vu_prepare_login1#!#S#!#babel_4206_vu_prepare_user1#!#master
+master_babel_4206_vu_prepare_user2#!#babel_4206_vu_prepare_login2#!#S#!#babel_4206_vu_prepare_user2#!#master
+~~END~~
+

@@ -494,6 +494,10 @@ dbo#!#test_sp_babelfish_volatility_f2#!#immutable
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN test_sp_babelfish_volatility_login WITH PASSWORD = '12345678';
+go
+
 -- tsql      user=test_sp_babelfish_volatility_login password=12345678
 /* function on which user has privilege is only visible */
 use test_sp_babelfish_volatility_db1
@@ -667,6 +671,10 @@ use test_sp_babelfish_volatility_db1
 go
 grant connect to guest
 go
+
+-- reset the login password
+ALTER LOGIN test_sp_babelfish_volatility_login_2 WITH PASSWORD = '12345678'
+GO
 
 -- tsql     user=test_sp_babelfish_volatility_login_2 password=12345678
 use test_sp_babelfish_volatility_db1

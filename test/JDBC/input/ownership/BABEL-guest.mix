@@ -35,7 +35,7 @@ SELECT nspname FROM sys.babelfish_namespace_ext ORDER BY nspname
 GO
 
 -- Login as guest to show default schema is guest
--- tsql         user=babel_2571_login1 password=12345678
+-- tsql         user=babel_2571_login1 password=123
 SELECT schema_name()
 GO
 

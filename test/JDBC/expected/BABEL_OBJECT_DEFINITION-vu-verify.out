@@ -120,6 +120,10 @@ int
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN object_definition_login1 WITH PASSWORD = '12345678';
+GO
+
 -- tsql      user=object_definition_login1 password=12345678
 -- Test dependency of user's permission on object
 USE object_definition_db;

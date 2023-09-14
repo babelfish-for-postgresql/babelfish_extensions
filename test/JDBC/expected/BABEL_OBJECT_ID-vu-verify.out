@@ -267,6 +267,10 @@ varchar
 DROP TABLE #babel_object_id_temp_t1;
 go
 
+-- reset the login password
+ALTER LOGIN babel_object_id_login1 WITH PASSWORD = '12345678';
+GO
+
 -- tsql      user=babel_object_id_login1 password=12345678
 -- test dependency of user's permission on object
 USE master
@@ -599,6 +603,10 @@ CREATE TABLE dbo.babel_object_id_table_in_dbo_schema (a int);
 GO
 
 grant connect to guest
+GO
+
+-- reset the login password
+ALTER LOGIN babel_object_id_login2 WITH PASSWORD = '12345678';
 GO
 
 -- tsql      user=babel_object_id_login2 password=12345678
