@@ -1,8 +1,5 @@
 -- tsql
 -- create objects
-select * from babelfish_schema;
-go
-
 create database babel_4344_d1;
 go
 
@@ -285,5 +282,3 @@ go
 drop login babel_4344_l1;
 go
 
-select * from babelfish_schema;
-go

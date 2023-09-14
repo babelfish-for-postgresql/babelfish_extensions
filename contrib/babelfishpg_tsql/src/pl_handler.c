@@ -5651,7 +5651,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 											 major_name, NULL);
 				}
 			}
-			clean_up_bbf_schema(dbname, logicalschema, major_name, false);
+			if (logicalschema != NULL)
+				clean_up_bbf_schema(dbname, logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
