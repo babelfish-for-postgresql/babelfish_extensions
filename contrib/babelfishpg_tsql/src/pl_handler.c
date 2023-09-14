@@ -3509,6 +3509,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									if (logicalschema == NULL)
+										logicalschema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
 									/* 
 									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
 									* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
