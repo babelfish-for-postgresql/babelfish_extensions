@@ -22,6 +22,15 @@ datetimeoffset
 ~~END~~
 
 
+Select convert(datetime,'2022-10-29 20:01:00.000') AT TIME ZONE 'NULL'
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type or the parameter NULL provided to AT TIME ZONE clause is invalid.)~~
+
+
 Select NULL AT TIME ZONE NULL
 Go
 ~~START~~
@@ -173,3 +182,39 @@ datetimeoffset
 
 DROP TABLE IF EXISTS test
 GO
+
+Select convert(smalldatetime,'2022-10-29 20:01:24.426') AT TIME ZONE 'Eastern Standard Time'
+GO
+~~START~~
+datetimeoffset
+2022-10-29 20:01:00.0000000 -04:00
+~~END~~
+
+
+Select convert(time,' 20:01:24.426') AT TIME ZONE 'Eastern Standard Time'
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
+
+
+Select convert(date,'2022-10-29')  AT TIME ZONE 'Eastern Standard Time'
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
+
+
+Select 123  AT TIME ZONE 'Eastern Standard Time'
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
+
+

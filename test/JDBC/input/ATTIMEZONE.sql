@@ -7,6 +7,9 @@ Go
 Select convert(datetime,'2022-10-29 20:01:00.000') AT TIME ZONE NULL
 GO
 
+Select convert(datetime,'2022-10-29 20:01:00.000') AT TIME ZONE 'NULL'
+GO
+
 Select NULL AT TIME ZONE NULL
 Go
 
@@ -68,3 +71,16 @@ GO
 
 DROP TABLE IF EXISTS test
 GO
+
+Select convert(smalldatetime,'2022-10-29 20:01:24.426') AT TIME ZONE 'Eastern Standard Time'
+GO
+
+Select convert(time,' 20:01:24.426') AT TIME ZONE 'Eastern Standard Time'
+GO
+
+Select convert(date,'2022-10-29')  AT TIME ZONE 'Eastern Standard Time'
+GO
+
+Select 123  AT TIME ZONE 'Eastern Standard Time'
+GO
+

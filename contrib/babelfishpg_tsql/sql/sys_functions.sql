@@ -1026,9 +1026,9 @@ BEGIN
 
     lower_tzn := lower(tzzone);
     IF lower_tzn <> 'utc' THEN
-    tz_name := sys.babelfish_timezone_mapping(lower_tzn);
+        tz_name := sys.babelfish_timezone_mapping(lower_tzn);
     ELSE
-    tz_name := 'utc';
+        tz_name := 'utc';
     END IF;
 
     IF tz_name = 'NULL' THEN
@@ -1042,7 +1042,7 @@ BEGIN
         result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
         if LEFT(tz_diff,1) <> '-' THEN
-        tz_diff := concat('+',tz_diff);
+            tz_diff := concat('+',tz_diff);
         END IF;
         tz_offset := left(tz_diff,6);
         input_expr_tx := concat(input_expr_tx,tz_offset);
@@ -1053,7 +1053,7 @@ BEGIN
         result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
         if LEFT(tz_diff,1) <> '-' THEN
-        tz_diff := concat('+',tz_diff);
+            tz_diff := concat('+',tz_diff);
         END IF;
         tz_offset := left(tz_diff,6);
         result := concat(result,tz_offset);
