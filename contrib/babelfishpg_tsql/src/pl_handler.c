@@ -3420,7 +3420,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 										if (logical_schema == NULL)
 											logical_schema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
-										if ((ap->cols == NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
+										if ((logical_schema != NULL) && (ap->cols == NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
 											add_entry_to_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
 									}
 								}
@@ -3435,7 +3435,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 											* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 											* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 											*/
-										if (!check_bbf_schema_for_entry(dbname, logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
+										if ((logical_schema != NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
 										{
 											if (prev_ProcessUtility)
 												prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3473,7 +3473,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							funcname = strVal(func);
 						}
 						/* If ALL PRIVILEGES is granted/revoked internally during create function. */
-						if (pstmt->stmt_len == 0)
+						if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
 						{
 							if(check_bbf_schema_for_schema(dbname, logicalschema, "ALL", "execute"))
 								return;
