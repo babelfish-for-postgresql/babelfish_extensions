@@ -3157,7 +3157,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-					clean_up_bbf_schema(cur_db, logicalschema, NULL, true);
+					if (logicalschema != NULL)
+						clean_up_bbf_schema(cur_db, logicalschema, NULL, true);
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -5713,7 +5714,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				delete_extended_property(db_id, type, schema_name, major_name,
 										 NULL);
 			}
-			clean_up_bbf_schema(dbname, logicalschema, major_name, false);
+			if (logicalschema != NULL)
+				clean_up_bbf_schema(dbname, logicalschema, major_name, false);
 		}
 	}
 }
