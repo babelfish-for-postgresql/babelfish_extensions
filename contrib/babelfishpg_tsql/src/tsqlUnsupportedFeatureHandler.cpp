@@ -1671,7 +1671,6 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 				unsupported_feature = "GRANT PERMISSION " + perm->getText();
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
-
 		}
 	}
 
@@ -1679,7 +1678,9 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	{
 		auto perm_obj = grant->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && !obj_type->OBJECT())
+		if (grant->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(grant));
+		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "GRANT ON " + obj_type->getText();
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
@@ -1764,7 +1765,6 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 				unsupported_feature = "REVOKE PERMISSION " + perm->getText();
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
-
 		}
 	}
 

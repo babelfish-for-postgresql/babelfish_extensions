@@ -1684,3 +1684,4 @@ Oid get_sys_varcharoid(void)
 	}
 	return sys_varcharoid;
 }
+
