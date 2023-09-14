@@ -741,3 +741,43 @@ GO
 DROP TABLE babel_1139_t1;
 DROP TABLE babel_1139_t2;
 GO
+
+-- TOP with OUTPUT & OUTPUT INTO w/out JOIN
+create table top_with_output_tbl(no_o_id int, no_w_id VARCHAR(20))
+go
+
+insert into top_with_output_tbl VALUES (-1, 'foo'), (2, 'foo');
+go
+
+declare @t_out table (no_o_id int);
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 10
+OUTPUT deleted.no_o_id INTO @t_out
+WHERE top_with_output_tbl.no_w_id = 'foo'
+
+select * from @t_out;
+GO
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+declare @t_out table (no_o_id int);
+
+DELETE TOP (1)
+FROM dbo.top_with_output_tbl
+OUTPUT deleted.no_o_id INTO @t_out
+WHERE top_with_output_tbl.no_w_id = 'foo'
+
+select * from @t_out;
+GO
+
+DELETE TOP (1)
+FROM dbo.top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+drop table top_with_output_tbl;
+go
