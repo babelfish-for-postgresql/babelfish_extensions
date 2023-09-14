@@ -2217,41 +2217,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								* objtype of atstmt for syntax1 is temporarily set to OBJECT_TRIGGER to identify whether the
 								* query was originally of syntax1 or syntax2, here astmt->objtype is reset back to OBJECT_TABLE
 								*/
-								if (atstmt->objtype != OBJECT_TRIGGER)
-								{
-									/*
-									* ALTER TABLE syntax to enable disable trigger supports cross-db reference
-									* hence changed Current Role to Session User to get required privilege
-									*/
-									Oid prev_current_user;
-									prev_current_user = GetUserId();
-
-									/* Set current role to login user id for cross db permission */
-									SetCurrentRoleId(GetSessionUserId(), false);
-
-									PG_TRY();
-									{
-										if (prev_ProcessUtility)
-											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-																params, queryEnv, dest,
-																qc);
-										else
-											standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
-																	params, queryEnv, dest,
-																	qc);
-									}
-									PG_CATCH();
-									{
-										SetCurrentRoleId(prev_current_user, false);
-										PG_RE_THROW();
-									}
-									PG_END_TRY();
-
-									SetCurrentRoleId(prev_current_user, false);
-
-									return;
-								}
-								else
+								if (atstmt->objtype == OBJECT_TRIGGER)
 								{
 									int16 dbid = get_cur_db_id();
 									int16 stmt_dbid = get_dbid_from_physical_schema_name(atstmt->relation->schemaname, true);
@@ -2263,9 +2229,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 												errmsg("Cannot %s trigger on '%s.%s.%s' as the target is not in the current database."
 													, cmd->subtype == AT_EnableTrig ? "enable" : "disable", get_db_name(stmt_dbid), get_logical_schema_name(atstmt->relation->schemaname, true), atstmt->relation->relname)));
 									}
+									atstmt->objtype = OBJECT_TABLE;
 								}
 							}
-							atstmt->objtype = OBJECT_TABLE;
 						}
 					}
 				}

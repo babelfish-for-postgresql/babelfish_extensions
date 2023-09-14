@@ -523,20 +523,15 @@ Trigger dbo.TR_ins Invoked
 ~~ROW COUNT: 1~~
 
 
+-- should throw error as, currently babelfish doesn't support alter table cross db referencing
 ALTER TABLE [master].[dbo].[babel_3326_Employees] DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
 GO
+~~ERROR (Code: 33557097)~~
 
--- TR_ins_안녕하세요_babel_3326_Employees should be disabled
-INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
-VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
-GO
-~~ROW COUNT: 1~~
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
 
 
-ALTER TABLE master.dbo.babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
-GO
-
--- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+-- TR_ins_안녕하세요_babel_3326_Employees should not be disabled
 INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
 VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
 GO
@@ -548,6 +543,15 @@ Trigger dbo.TR_ins Invoked
 ~~ROW COUNT: 1~~
 
 
+-- should throw error as, currently babelfish doesn't support alter table cross db referencing
+ALTER TABLE master.dbo.babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+-- should throw error as { ENABLE | DISABLE } TRIGGER syntax doesn't support cross db reference
 DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON master.dbo.babel_3326_Employees
 GO
 ~~ERROR (Code: 33557097)~~
@@ -555,7 +559,7 @@ GO
 ~~ERROR (Message: Cannot disable trigger on 'master.dbo.babel_3326_employees' as the target is not in the current database.)~~
 
 
--- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+-- TR_ins_안녕하세요_babel_3326_Employees should not be disabled
 INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
 VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
 GO
@@ -567,23 +571,12 @@ Trigger dbo.TR_ins Invoked
 ~~ROW COUNT: 1~~
 
 
+-- should throw error as { ENABLE | DISABLE } TRIGGER syntax doesn't support cross db reference
 ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON master.dbo.babel_3326_Employees
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Cannot enable trigger on 'master.dbo.babel_3326_employees' as the target is not in the current database.)~~
-
-
--- TR_ins_안녕하세요_babel_3326_Employees should be enabled
-INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
-VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
-GO
-~~START~~
-varchar
-Trigger dbo.TR_ins Invoked
-~~END~~
-
-~~ROW COUNT: 1~~
 
 
 USE master
