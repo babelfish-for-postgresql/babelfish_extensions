@@ -27,20 +27,20 @@ jobs:
         id: build-extensions
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
-      
-      - name: Install Extensions
-        id: install-extensions
-        if: always() && steps.build-extensions.outcome == 'success'
-        uses: ./.github/composite-actions/install-extensions
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.install-extensions.outcome == 'success'
+        if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
+      
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-postgis-extension.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
 
       - name: Install Python
         id: install-python
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.install-extensions.outcome == 'success'
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
