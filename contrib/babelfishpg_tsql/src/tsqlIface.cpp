@@ -174,7 +174,6 @@ static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
 static std::string getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id);
 static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
-
 /*
  * Structure / Utility function for general purpose of query string modification
  *
@@ -2075,6 +2074,37 @@ public:
 	{
 		graft(makeExecBodyBatch(ctx), peekContainer());
 	}
+
+	PLtsql_expr *rewrite_if_condition(TSqlParser::Search_conditionContext *ctx)
+	{
+		PLtsql_expr *expr = makeTsqlExpr(ctx, false);
+		PLtsql_expr_query_mutator mutator(expr, ctx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+		clear_rewritten_query_fragment();
+
+		/* Now we can prepend SELECT to rewritten search_condition */
+		expr->query = strdup((std::string("SELECT ") + std::string(expr->query)).c_str());
+		return expr;
+	}
+
+	void exitSearch_condition(TSqlParser::Search_conditionContext *ctx) override
+	{
+		if (!ctx->parent || !ctx->parent->parent)
+			return;
+
+		if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->if_statement())
+		{
+
+			PLtsql_stmt_if *fragment = (PLtsql_stmt_if *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = rewrite_if_condition(ctx);
+		}
+		else if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->while_statement())
+		{
+			PLtsql_stmt_while *fragment = (PLtsql_stmt_while *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = rewrite_if_condition(ctx);
+		}
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3914,10 +3944,13 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 
 	result->cmd_type = PLTSQL_STMT_IF;
 	result->lineno = getLineNo(ctx);
-	result->cond = makeTsqlExpr(ctx->search_condition(), true);
 
-	// Note that we record the then_body and the else_body
-	// in exitIf_statement()
+	/*
+	 * Note that 
+	 * 1/ We fill in result->cond during exitIf_statement so that search_condition would have
+	 *    been rewritten at that point. 
+	 * 2/ We record the then_body and the else_body in exitIf_statement().
+	 */
 
 	return result;
 }
@@ -4055,10 +4088,10 @@ void *
 makeWhileStmt(TSqlParser::While_statementContext *ctx)
 {
 	PLtsql_stmt_while *result = (PLtsql_stmt_while *) palloc0(sizeof(*result));
-
 	result->cmd_type = PLTSQL_STMT_WHILE;
-	result->cond = makeTsqlExpr(ctx->search_condition(), true);
-	
+
+	/* We will populate result->cond during exitSearch_condition() */
+
 	return result;
 }
 

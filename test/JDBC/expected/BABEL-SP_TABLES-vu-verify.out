@@ -50,33 +50,37 @@ babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_mytable2#!#TAB
 ~~END~~
 
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_tables @TABLE_NAME = [babel_sp_tables_vu_prepare_mytable1]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_tables_vu_prepare_mytable1" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_mytable1#!#TABLE#!#<NULL>
+~~END~~
 
 
 exec sp_tables @TABLE_NAME = [babel_sp_tables_vu_prepare_MYTABLE1]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_tables_vu_prepare_mytable1" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_mytable1#!#TABLE#!#<NULL>
+~~END~~
 
 
 exec sp_tables @TABLE_NAME = [babel_sp_tables_vu_prepare_mytable2]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_tables_vu_prepare_mytable2" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_mytable2#!#TABLE#!#<NULL>
+~~END~~
 
 
 exec sp_tables @TABLE_NAME = [babel_sp_tables_vu_prepare_MYTABLE2]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_tables_vu_prepare_mytable2" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+babel_sp_tables_vu_prepare_db1#!#dbo#!#babel_sp_tables_vu_prepare_mytable2#!#TABLE#!#<NULL>
+~~END~~
 
 
 -- should only get table within current database
