@@ -1,0 +1,289 @@
+-- tsql
+-- create objects
+select * from babelfish_schema;
+go
+
+create database babel_4344_d1;
+go
+
+use babel_4344_d1;
+go
+
+create login babel_4344_l1 with password = '12345678'
+go
+
+create user babel_4344_u1 for login babel_4344_l1;
+go
+
+create schema babel_4344_s1;
+go
+
+create table babel_4344_t1(a int);
+go
+
+create table babel_4344_s1.babel_4344_t1(a int);
+go
+
+create table babel_4344_t3(a int, b int);
+go
+
+create table babel_4344_s1.babel_4344_t3(a int, b int);
+go
+
+create view babel_4344_v1 as select 1;
+go
+
+create view babel_4344_s1.babel_4344_v1 as select 2;
+go
+
+create proc babel_4344_p1 as select 1;
+go
+
+create proc babel_4344_s1.babel_4344_p1 as select 2;
+go
+
+CREATE FUNCTION babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.tables) END
+go
+
+CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
+go
+
+-- tsql user=babel_4344_l1 password=12345678 
+use babel_4344_d1;
+go
+
+-- User doesn't have any privileges, objects should not be accessible
+select * from babel_4344_t1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_v1;
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_p1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_f1();
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+use master;
+go
+
+-- tsql
+-- GRANT OBJECT privilege
+use babel_4344_d1;
+go
+grant select on babel_4344_t1 to babel_4344_u1;
+go
+grant select on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
+go
+grant select on babel_4344_t3(a) to babel_4344_u1; -- column privilege
+go
+grant select on babel_4344_s1.babel_4344_t3(a) to babel_4344_u1; -- column privilege
+go
+grant select on babel_4344_v1 to babel_4344_u1;
+go
+grant select on babel_4344_s1.babel_4344_v1 to babel_4344_u1;
+go
+grant execute on babel_4344_p1 to babel_4344_u1;
+go
+grant execute on babel_4344_s1.babel_4344_p1 to babel_4344_u1;
+go
+grant execute on babel_4344_f1 to babel_4344_u1;
+go
+grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_t1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_t3; -- not accessible, only column privilege is granted
+go
+select * from babel_4344_s1.babel_4344_t3 -- not accessible, only column privilege is granted
+go
+select * from babel_4344_v1;
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_p1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_f1();
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+use master;
+go
+
+-- tsql
+-- GRANT SCHEMA privilege
+use babel_4344_d1;
+go
+grant select, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT and SCHEMA privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_s1.babel_4344_t3
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+use master;
+go
+
+-- tsql
+-- create new objects in same schema
+use babel_4344_d1;
+go
+create table babel_4344_s1.babel_4344_t2(a int);
+go
+create view babel_4344_s1.babel_4344_v2 as select 2;
+go
+create proc babel_4344_s1.babel_4344_p2 as select 2;
+go
+CREATE FUNCTION babel_4344_s1.babel_4344_f2() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has SCHEMA privileges,objects should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t2
+go
+select * from babel_4344_s1.babel_4344_v2;
+go
+exec babel_4344_s1.babel_4344_p2;
+go
+select * from babel_4344_s1.babel_4344_f2();
+go
+use master;
+go
+
+-- tsql
+-- REVOKE OBJECT privileges
+use babel_4344_d1;
+go
+REVOKE select on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_t3(a) FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_v1 FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_p1 FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_f1 FROM babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has SCHEMA privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_s1.babel_4344_t3
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+use master;
+go
+
+-- tsql
+-- Drop objects
+use babel_4344_d1;
+go
+
+drop table babel_4344_t1;
+go
+
+drop table babel_4344_s1.babel_4344_t1;
+go
+
+drop table babel_4344_t3;
+go
+
+drop table babel_4344_s1.babel_4344_t3;
+go
+
+drop table babel_4344_s1.babel_4344_t2;
+go
+
+drop view babel_4344_v1;
+go
+
+drop view babel_4344_s1.babel_4344_v1;
+go
+
+drop view babel_4344_s1.babel_4344_v2;
+go
+
+drop proc babel_4344_p1;
+go
+
+drop proc babel_4344_s1.babel_4344_p1;
+go
+
+drop proc babel_4344_s1.babel_4344_p2;
+go
+
+drop function babel_4344_f1;
+go
+
+drop function babel_4344_s1.babel_4344_f1;
+go
+
+drop function babel_4344_s1.babel_4344_f2;
+go
+
+drop schema babel_4344_s1;
+go
+
+drop user babel_4344_u1;
+go
+
+use master;
+go
+
+drop database babel_4344_d1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4344_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login babel_4344_l1;
+go
+
+select * from babelfish_schema;
+go
