@@ -2,11 +2,13 @@ dump-restore-version: [[
   {
     version: source.latest,
     dump-data-as: copy,
+    dump-format: plain,
     logical-database: null
   },
   {
     version: target.latest,
     dump-data-as: copy,
+    dump-format: plain,
     logical-database: null
   }
 ],
@@ -14,11 +16,13 @@ dump-restore-version: [[
   {
     version: source.latest,
     dump-data-as: copy,
+    dump-format: custom,
     logical-database: master
   },
   {
     version: target.latest,
     dump-data-as: copy,
+    dump-format: custom,
     logical-database: master
   }
 ],
@@ -26,11 +30,13 @@ dump-restore-version: [[
   {
     version: source.latest,
     dump-data-as: inserts,
+    dump-format: tar,
     logical-database: null
   },
   {
     version: target.latest,
     dump-data-as: inserts,
+    dump-format: tar,
     logical-database: null
   }
 ],
@@ -38,11 +44,13 @@ dump-restore-version: [[
   {
     version: source.latest,
     dump-data-as: inserts,
+    dump-format: directory,
     logical-database: master
   },
   {
     version: target.latest,
     dump-data-as: inserts,
+    dump-format: directory,
     logical-database: master
   }
 ]]
