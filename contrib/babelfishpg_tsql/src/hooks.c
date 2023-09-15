@@ -106,7 +106,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
@@ -474,6 +474,7 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 				CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
 				List	   *db_options = NIL;
 				ListCell   *option;
+
 				if (stmt->options != NIL)
 				{
 					char	   *orig_dbname = NULL;
@@ -493,8 +494,14 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 						stmt->options = list_delete_ptr(stmt->options,lfirst(option));
 					}
 					
-					pfree(stmt->dbname);
-					stmt->dbname = convertToUPN(orig_dbname);
+					if (orig_dbname)
+						{
+							stmt->options = lappend(stmt->options, 
+													makeDefElem("original_db_name",
+																(Node *) makeString(orig_dbname),
+																-1));
+						}
+				
 				}
 				create_bbf_db(pstate, stmt);
 				return true;
@@ -1340,7 +1347,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||

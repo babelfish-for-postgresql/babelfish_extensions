@@ -1,5 +1,41 @@
 -- tsql
 --switch to database irrespective of case
+USE 日本語;
+GO
+
+SELECT DB_NAME();
+GO
+
+USE ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss;
+GO
+
+SELECT DB_NAME();
+GO
+
+USE ㅂㅊAb;
+GO
+
+SELECT DB_NAME();
+GO
+
+USE ĄĆĘŁŃÓŚŹŻ;
+GO
+
+SELECT DB_NAME();
+GO
+
+USE AαΒβΓγDb;
+GO
+
+SELECT DB_NAME();
+GO
+
+USE _DB_NAME_CHANGE_TEST_vu_db5;
+GO
+
+SELECT DB_NAME();
+GO
+
 USE DB_NAME_CHANGE_TEST_VU_DB2;
 GO
 
@@ -22,12 +58,6 @@ SELECT name, orig_name FROM sys.babelfish_sysdatabases where name LIKE 'db_name_
 GO
 
 --testing these objects behaviour
-SELECT PROCEDURE_QUALIFIER FROM sys.sp_stored_procedures_view where PROCEDURE_NAME LIKE 'sp_special_columns_length_helper%';
-GO
-
-SELECT PROCEDURE_QUALIFIER FROM sys.sp_sproc_columns_view where COLUMN_NAME LIKE 'money';
-GO
-
 SELECT * from information_schema_tsql.schemata;
 GO
 

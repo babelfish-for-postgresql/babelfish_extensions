@@ -9,7 +9,7 @@ CREATE TABLE sys.babelfish_sysdatabases (
 	name TEXT NOT NULL COLLATE "C",
 	crdate timestamptz NOT NULL,
 	properties TEXT NOT NULL COLLATE "C",
-	orig_name TEXT NOT NULL COLLATE "C",
+	orig_name TEXT COLLATE sys.database_default,
 	PRIMARY KEY (name)
 );
 
@@ -493,7 +493,7 @@ RETURNS table (
 
 create or replace view sys.databases as
 select
-  CAST(d.orig_name as SYS.SYSNAME) as name
+   CAST(d.orig_name as SYS.SYSNAME) as name
   , CAST(sys.db_id(d.name) as INT) as database_id
   , CAST(NULL as INT) as source_database_id
   , cast(s.sid as SYS.VARBINARY(85)) as owner_sid

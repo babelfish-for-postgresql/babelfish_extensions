@@ -659,11 +659,7 @@ IMMUTABLE;
 
 SET allow_system_table_mods = on;
 
-ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT COLLATE "C";
-
-UPDATE sys.babelfish_sysdatabases SET orig_name = name WHERE orig_name IS NULL;
-
-ALTER TABLE sys.babelfish_sysdatabases ALTER COLUMN orig_name SET NOT NULL;
+ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT COLLATE sys.database_default;
 
 RESET allow_system_table_mods;
 
@@ -683,8 +679,8 @@ BEGIN
 		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
 	END
 	
-	IF (@pktable_qualifier != '' AND (SELECT LOWER(sys.db_name())) != @pktable_qualifier) OR
-		(@fktable_qualifier != '' AND (SELECT LOWER(sys.db_name())) != @fktable_qualifier)
+	IF (@pktable_qualifier != '' AND (SELECdb_name(  collate sys.database_defaultcollate sys.database_default) != @pktable_qualifier) OR
+		(@fktable_qualifier != '' AND (SELECdb_name(  collate sys.database_defaultcollate sys.database_default) != @fktable_qualifier)
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
   	END
@@ -742,7 +738,7 @@ WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
 UNION 
 
-SELECT CAST((SELECT LOWER(sys.db_name())) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+SELECT CAST((SELECdb_name(  collate sys.database_defaultcollate sys.database_default) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
 CASE 
@@ -791,9 +787,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = LOWER(DB_NAME())
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate sys.database_default
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = LOWER(DB_NAME())
+		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
 		AND Ext1.type != 'R'
 		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
@@ -812,7 +808,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR lower(orig_username) = lower(@name_in_db))
-					AND database_name = LOWER(DB_NAME())
+					AND database_name = DB_NAME() collate sys.database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
@@ -824,8 +820,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
-		WHERE Ext1.database_name = LOWER(DB_NAME())
-		AND Ext2.database_name = LOWER(DB_NAME())
+		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
+		AND Ext2.database_name = DB_NAME() collate sys.database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
@@ -836,7 +832,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR lower(orig_username) = lower(@name_in_db))
-					AND database_name = LOWER(DB_NAME())
+					AND database_name = DB_NAME() collate sys.database_default
 					AND type != 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
@@ -861,9 +857,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = LOWER(DB_NAME())
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate sys.database_default
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = LOWER(DB_NAME())
+		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
 		AND Ext1.type != 'R'
 		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
@@ -889,7 +885,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = LOWER(DB_NAME())
+		WHERE Ext.database_name = DB_NAME() collate sys.database_default
 		AND Ext.type = 'R'
 		ORDER BY RoleName;
 	END
@@ -898,7 +894,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR lower(orig_username) = lower(@rolename))
-					AND database_name = LOWER(DB_NAME())
+					AND database_name = DB_NAME() collate sys.database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -907,7 +903,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = LOWER(DB_NAME())
+		WHERE Ext.database_name = DB_NAME() collate sys.database_default
 		AND Ext.type = 'R'
 		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
 		ORDER BY RoleName;
@@ -935,8 +931,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = LOWER(DB_NAME())
-		AND Ext2.database_name = LOWER(DB_NAME())
+		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
+		AND Ext2.database_name = DB_NAME() collate sys.database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		ORDER BY RoleName, MemberName;
@@ -946,7 +942,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR lower(orig_username) = lower(@rolename))
-					AND database_name = LOWER(DB_NAME())
+					AND database_name = DB_NAME() collate sys.database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -957,8 +953,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = LOWER(DB_NAME())
-		AND Ext2.database_name = LOWER(DB_NAME())
+		WHERE Ext1.database_nDB_NAME(  collate sys.database_defaultcollate sys.database_default
+		AND Ext2.database_nDB_NAME(  collate sys.database_defaultcollate sys.database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
@@ -972,260 +968,6 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helprolemember TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
-AS
-SELECT
-CAST(LOWER(sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
-, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
-, CAST(
-CASE
-  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
-  ELSE CONCAT(ss.proname, ';0')
-END
-AS sys.nvarchar(134)) AS PROCEDURE_NAME
-, CAST(
-CASE 
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
-    ELSE '@RETURN_VALUE'
-  END 
-ELSE COALESCE(ss.proargnames[n], '')
-END
-AS sys.SYSNAME) AS COLUMN_NAME
-, CAST(
-CASE
-WHEN ss.n IS NULL THEN
-  CASE 
-    WHEN ss.proretset THEN 3
-    ELSE 5
-  END
-WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
-ELSE 1
-END
-AS smallint) AS COLUMN_TYPE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
-    WHEN ss.proretset THEN NULL
-    ELSE sdit.data_type 
-    END
-  WHEN st.is_table_type = 1 THEN -153
-  ELSE sdit.data_type 
-END
-AS smallint) AS DATA_TYPE
-, CAST(
-CASE 
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset THEN 'table' 
-      WHEN ss.prokind = 'p' THEN 'int'
-      ELSE st.name
-    END
-  ELSE st.name
-END
-AS sys.sysname) AS TYPE_NAME
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset THEN 0 
-    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
-    ELSE st.precision
-  END
-  WHEN st.is_table_type = 1 THEN 0
-  ELSE st.precision 
-END 
-AS sys.int) AS PRECISION
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN 0
-    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
-    ELSE st.max_length
-  END
-  WHEN st.is_table_type = 1 THEN 2147483647
-  ELSE st.max_length 
-END
-AS sys.int) AS LENGTH
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN 
-    CASE
-      WHEN ss.proretset THEN 0 
-      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
-      ELSE st.scale
-    END
-  WHEN st.is_table_type = 1 THEN NULL
-  ELSE st.scale
-END
-AS smallint) AS SCALE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN 0
-    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-    ELSE sdit.num_prec_radix
-  END
-  WHEN st.is_table_type = 1 THEN NULL
-  ELSE sdit.num_prec_radix
-END
-AS smallint) AS RADIX
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
-      ELSE sdit.nullable 
-    END
-  WHEN st.is_table_type = 1 THEN 1
-  ELSE sdit.nullable 
-END
-AS smallint) AS NULLABLE
-, CAST(
-CASE 
-  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
-  ELSE NULL
-END
-AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
-, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN NULL
-      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-      ELSE sdit.sql_data_type
-    END
-  WHEN st.is_table_type = 1 THEN -153
-  ELSE sdit.sql_data_type 
-END
-AS smallint) AS SQL_DATA_TYPE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset THEN 0
-      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-      ELSE sdit.sql_datetime_sub
-    END
-  ELSE sdit.sql_datetime_sub 
-END 
-AS smallint) AS SQL_DATETIME_SUB
-, CAST(
-CASE
-  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
-  ELSE NULL
-END
-AS sys.int) AS CHAR_OCTET_LENGTH
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN 0
-  ELSE n 
-END 
-AS sys.int) AS ORDINAL_POSITION
-, CAST(
-CASE
-  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
-  WHEN st.is_table_type = 1 THEN 'YES'
-  WHEN sdit.nullable = 1 THEN 'YES'
-  ELSE 'NO'
-END
-AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN 0
-      WHEN ss.prokind = 'p' THEN 56
-      ELSE sdit.ss_data_type
-    END
-  WHEN st.is_table_type = 1 THEN 0
-  ELSE sdit.ss_data_type
-END
-AS sys.tinyint) AS SS_DATA_TYPE
-, CAST(ss.proname AS sys.sysname) AS original_procedure_name
-FROM 
-( 
-  -- CTE to query procedures related to bbf
-  WITH bbf_proc AS (
-    SELECT
-      p.proname as proname,
-      p.proargnames as proargnames,
-      p.proargmodes as proargmodes,
-      p.prokind as prokind,
-      p.proretset as proretset,
-      p.prorettype as prorettype,
-      p.proallargtypes as proallargtypes,
-      p.proargtypes as proargtypes,
-      s.name as schema_name
-    FROM 
-      pg_proc p
-    INNER JOIN (
-      SELECT name as name, schema_id as id  FROM sys.schemas 
-      UNION ALL 
-      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
-        from pg_namespace WHERE nspname in ('sys', 'information_schema')
-    ) as s ON p.pronamespace = s.id
-    WHERE (
-      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-      AND (s.name != 'sys' 
-        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
-        OR p.proname like 'xp\_%'
-        OR p.proname like 'dm\_%'
-        OR p.proname like 'fn\_%'))
-  )
-
-  SELECT *
-  FROM ( 
-    SELECT -- Selects all parameters (input and output), but NOT return values
-    p.proname as proname,
-    p.proargnames as proargnames,
-    p.proargmodes as proargmodes,
-    p.prokind as prokind,
-    p.proretset as proretset,
-    p.prorettype as prorettype,
-    p.schema_name as schema_name,
-    (information_schema._pg_expandarray(
-    COALESCE(p.proallargtypes,
-      CASE 
-        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
-        ELSE CAST(p.proargtypes AS oid[])
-      END
-    ))).x AS x,
-    (information_schema._pg_expandarray(
-    COALESCE(p.proallargtypes,
-      CASE 
-        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
-        ELSE CAST(p.proargtypes AS oid[])
-      END
-    ))).n AS n
-    FROM bbf_proc p) AS t
-  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
-
-  UNION ALL
-
-  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
-  p.proname as proname,
-  p.proargnames as proargnames,
-  p.proargmodes as proargmodes,
-  p.prokind as prokind,
-  p.proretset as proretset,
-  p.prorettype as prorettype,
-  p.schema_name as schema_name,
-  p.prorettype AS x, 
-  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
-  FROM bbf_proc p
-) ss
-LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return type of table-valued functions may not have an entry in sys.types
--- Because spt_datatype_info_table does contain user-defind types and their names,
--- the join below allows us to retrieve the name of the base type of the user-defined type
-LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
-GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_word_parse(
 	IN "@input" sys.nvarchar(776),
@@ -1274,7 +1016,7 @@ BEGIN
 					IF @row_count > 3
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
-							IF @dbname != LOWER(sys.db_name())
+							IF @dbdb_name(  collate sys.database_defaultcollate sys.database_defaultcollate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -1302,7 +1044,7 @@ BEGIN
 					IF @row_count > 2
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
-							IF @dbname != LOWER(sys.db_name())
+							IF @dbdb_name(  collate sys.database_defaultcollate sys.database_defaultcollate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -1313,230 +1055,6 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_word_parse(IN sys.nvarchar(776), IN sys.varchar(13), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776)) TO PUBLIC;
-
-CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
-	SELECT CAST(LOWER(sys.db_name()) AS sys.sysname) AS "CATALOG_NAME",
-	CAST(CASE WHEN np.nspname LIKE CONCAT(LOWER(sys.db_name()),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(LOWER(sys.db_name())) - 1)
-	     ELSE np.nspname END AS sys.nvarchar(128)) AS "SCHEMA_NAME",
-	-- For system-defined schemas, schema-owner name will be same as schema_name
-	-- For user-defined schemas having default owner, schema-owner will be dbo
-	-- For user-defined schemas with explicit owners, rolname contains dbname followed
-	-- by owner name, so need to extract the owner name from rolname always.
-	CAST(CASE WHEN sys.bbf_is_shared_schema(np.nspname) = TRUE THEN np.nspname
-		  WHEN r.rolname LIKE CONCAT(LOWER(sys.db_name()),'%') THEN
-			CASE WHEN RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(LOWER(sys.db_name())) - 1) = 'db_owner' THEN 'dbo'
-			     ELSE RIGHT(r.rolname, LENGTH(r.rolname) - LENGTH(LOWER(sys.db_name())) - 1) END ELSE 'dbo' END
-			AS sys.nvarchar(128)) AS "SCHEMA_OWNER",
-	CAST(null AS sys.varchar(6)) AS "DEFAULT_CHARACTER_SET_CATALOG",
-	CAST(null AS sys.varchar(3)) AS "DEFAULT_CHARACTER_SET_SCHEMA",
-	-- TODO: We need to first create mapping of collation name to char-set name;
-	-- Until then return null for DEFAULT_CHARACTER_SET_NAME
-	CAST(null AS sys.sysname) AS "DEFAULT_CHARACTER_SET_NAME"
-	FROM ((pg_catalog.pg_namespace np LEFT JOIN sys.pg_namespace_ext nc on np.nspname = nc.nspname)
-		LEFT JOIN pg_catalog.pg_roles r on r.oid = nc.nspowner) LEFT JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
-	WHERE (ext.dbid = cast(sys.db_id() as oid) OR np.nspname in ('sys', 'information_schema_tsql')) AND
-	      (pg_has_role(np.nspowner, 'USAGE') OR has_schema_privilege(np.oid, 'CREATE, USAGE'))
-	ORDER BY nc.nspname, np.nspname;
-
-GRANT SELECT ON information_schema_tsql.schemata TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.sp_who(
-	IN "@loginame" sys.sysname DEFAULT NULL,
-	IN "@option"   sys.VARCHAR(30) DEFAULT NULL)
-LANGUAGE 'pltsql'
-AS $$
-BEGIN
-	SET NOCOUNT ON
-	DECLARE @msg sys.VARCHAR(200)
-	DECLARE @show_pg BIT = 0
-	DECLARE @hide_col sys.VARCHAR(50) 
-	
-	IF @option IS NOT NULL
-	BEGIN
-		IF LOWER(TRIM(@option)) <> 'postgres' 
-		BEGIN
-			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
-			RETURN			
-		END
-	END
-	
-	-- Take a copy of sysprocesses so that we reference it only once
-	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
-
-	-- Get the executing statement for each spid and extract the main stmt type
-	-- This is for informational purposes only
-	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
-	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
-	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
-	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
-	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
-	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE sys.CHARINDEX('  ',query)>0) > 0 
-	BEGIN
-		UPDATE #sp_who_tmp SET query = sys.REPLACE(query, '  ', ' ')
-	END
-
-	-- Determine type of stmt to report by sp_who: very basic only
-	-- NB: not handling presence of comments in the query string
-	UPDATE #sp_who_tmp 
-	SET query = 
-	    CASE 
-			WHEN PATINDEX('%[^a-zA-Z0-9_]UPDATE[^a-zA-Z0-9_]%', query) > 0 THEN 'UPDATE'
-			WHEN PATINDEX('%[^a-zA-Z0-9_]DELETE[^a-zA-Z0-9_]%', query) > 0 THEN 'DELETE'
-			WHEN PATINDEX('%[^a-zA-Z0-9_]INSERT[^a-zA-Z0-9_]%', query) > 0 THEN 'INSERT'
-			WHEN PATINDEX('%[^a-zA-Z0-9_]SELECT[^a-zA-Z0-9_]%', query) > 0 THEN 'SELECT'
-			WHEN PATINDEX('%[^a-zA-Z0-9_]WAITFOR[^a-zA-Z0-9_]%', query) > 0 THEN 'WAITFOR'
-			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('CREATE ', query))
-			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('ALTER ', query))
-			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('DROP ', query))
-			ELSE sys.SUBSTRING(query, 1, sys.CHARINDEX(' ', query))
-		END
-
-	UPDATE #sp_who_tmp 
-	SET query = sys.SUBSTRING(query,1, 8-1 + sys.CHARINDEX(' ', sys.SUBSTRING(query,8,99)))
-	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %'	
-
-	-- The executing spid is always shown as doing a SELECT
-	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
-	UPDATE #sp_who_tmp SET query = TRIM(query)
-
-	-- Get all current connections
-	SELECT 
-		spid, 
-		MAX(blocked) AS blocked, 
-		0 AS ecid, 
-		CAST('' AS sys.VARCHAR(100)) AS status,
-		CAST('' AS sys.VARCHAR(100)) AS loginname,
-		CAST('' AS sys.VARCHAR(100)) AS hostname,
-		0 AS dbid,
-		CAST('' AS sys.VARCHAR(100)) AS cmd,
-		0 AS request_id,
-		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
-		hostprocess
-	INTO #sp_who_proc
-	FROM #sp_who_sysprocesses
-		GROUP BY spid, status, hostprocess
-		
-	-- Add attributes to each connection
-	UPDATE #sp_who_proc
-	SET ecid = sp.ecid,
-		status = sp.status,
-		loginname = sp.loginname,
-		hostname = sp.hostname,
-		dbid = sp.dbid,
-		request_id = sp.request_id
-	FROM #sp_who_sysprocesses sp
-		WHERE #sp_who_proc.spid = sp.spid				
-
-	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
-	-- and therefore PG connections do not have a value here
-	UPDATE #sp_who_proc
-	SET connection = 'PostgreSQL'
-	WHERE hostprocess IS NULL 
-
-	-- Keep or delete PG connections
-	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
-	begin    
-		-- Show PG connections; these have dbid = 0
-		-- This is a Babelfish-specific enhancement, since PG connections may also be active in the Babelfish DB
-		-- and it may be useful to see these displayed
-		SET @show_pg = 1
-		
-		-- blank out the loginame parameter for the tests below
-		IF LOWER(@loginame) = 'postgres' SET @loginame = NULL
-	END
-	
-	-- By default, do not show the column indicating the connection type since SQL Server does not have this column
-	SET @hide_col = 'connection' 
-	
-	IF (@show_pg = 1) 
-	BEGIN
-		SET @hide_col = ''
-	END
-	ELSE 
-	BEGIN
-		-- Delete PG connections
-		DELETE #sp_who_proc
-		WHERE dbid = 0
-	END
-			
-	-- Apply filter if specified
-	IF (@loginame IS NOT NULL)
-	BEGIN
-		IF (TRIM(@loginame) = '')
-		BEGIN
-			-- Raise error
-			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
-			RAISERROR(@msg, 16, 1)
-			RETURN
-		END
-		
-		IF (sys.ISNUMERIC(@loginame) = 1)
-		BEGIN
-			-- Remove all connections except the specified one
-			DELETE #sp_who_proc
-			WHERE spid <> CAST(@loginame AS INT)
-		END
-		ELSE 
-		BEGIN	
-			IF (LOWER(@loginame) = 'active')
-			BEGIN
-				-- Remove all 'idle' connections 
-				DELETE #sp_who_proc
-				WHERE status = 'idle'
-			END
-			ELSE 
-			BEGIN
-				-- Verify the specified login name exists
-				IF (sys.SUSER_ID(@loginame) IS NULL)
-				BEGIN
-					SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
-					RAISERROR(@msg, 16, 1)
-					RETURN					
-				END
-				ELSE 
-				BEGIN
-					-- Keep only connections for the specified login
-					DELETE #sp_who_proc
-					WHERE sys.SUSER_ID(loginname) <> sys.SUSER_ID(@loginame)
-				END
-			END
-		END
-	END			
-			
-	-- Create final result set; use DISTINCT since there are usually duplicate rows from the PG catalogs
-	SELECT distinct 
-		p.spid AS spid, 
-		p.ecid AS ecid, 
-		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
-		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
-		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
-		p.blocked AS blk, 
-		CAST(LEFT(LOWER(db_name(p.dbid)),40) AS sys.VARCHAR(40)) AS dbname,
-		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
-		p.request_id AS request_id,
-		connection
-	INTO #sp_who_tmp2
-	FROM #sp_who_proc p, #sp_who_tmp
-		WHERE p.spid = #sp_who_tmp.pid
-		ORDER BY spid		
-	
-	-- Patch up remaining cases
-	UPDATE #sp_who_tmp2
-	SET cmd = 'AWAITING COMMAND'
-	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
-	
-	UPDATE #sp_who_tmp2
-	SET cmd = 'UNKNOWN'
-	WHERE TRIM(cmd) = ''	
-	
-	-- Format the result set as narrow as possible for readability
-	SET @hide_col += ',hostprocess'
-	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
-	RETURN
-END	
-$$;
-GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT

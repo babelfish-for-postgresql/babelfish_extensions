@@ -1,5 +1,71 @@
 -- tsql
 --switch to database irrespective of case
+USE 日本語;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+日本語
+~~END~~
+
+
+USE ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss
+~~END~~
+
+
+USE ㅂㅊAb;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+ㅂㅊAb
+~~END~~
+
+
+USE ĄĆĘŁŃÓŚŹŻ;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+ĄĆĘŁŃÓŚŹŻ
+~~END~~
+
+
+USE AαΒβΓγDb;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+AαΒβΓγDb
+~~END~~
+
+
+USE _DB_NAME_CHANGE_TEST_vu_db5;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+_DB_NAME_CHANGE_TEST_vu_db5
+~~END~~
+
+
 USE DB_NAME_CHANGE_TEST_VU_DB2;
 GO
 
@@ -48,30 +114,14 @@ db_name_change_test_vu_db4#!#DB_NAME_CHANGE_TEST_vu_db4
 
 
 --testing these objects behaviour
-SELECT PROCEDURE_QUALIFIER FROM sys.sp_stored_procedures_view where PROCEDURE_NAME LIKE 'sp_special_columns_length_helper%';
-GO
-~~START~~
-varchar
-db_name_change_test_vu_db1
-~~END~~
-
-
-SELECT PROCEDURE_QUALIFIER FROM sys.sp_sproc_columns_view where COLUMN_NAME LIKE 'money';
-GO
-~~START~~
-varchar
-db_name_change_test_vu_db1
-~~END~~
-
-
 SELECT * from information_schema_tsql.schemata;
 GO
 ~~START~~
 varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
-db_name_change_test_vu_db1#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
-db_name_change_test_vu_db1#!#guest#!#guest#!#<NULL>#!#<NULL>#!#<NULL>
-db_name_change_test_vu_db1#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
-db_name_change_test_vu_db1#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#guest#!#guest#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 

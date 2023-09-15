@@ -2813,12 +2813,17 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	old_db_name = get_cur_db_name();
 	old_db_id = get_cur_db_id();
 	new_db_id = get_db_id(stmt->db_name);
-	original_name = get_db_original_name(stmt->db_name);
+	original_name = dbname_get_original_db_name(stmt->db_name);
+
+	if(!original_name)
+	{
+		original_name = (char*) stmt->db_name;
+	}
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", stmt->db_name)));
+				 errmsg("database \"%s\" does not exist", original_name)));
 
 	/* Raise an error if the login does not have access to the database */
 	check_session_db_access(stmt->db_name);

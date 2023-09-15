@@ -26,13 +26,13 @@ GO
 DROP PROC db_name_change_test_role_members
 GO
 
-drop table db_name_change_test_t1
+DROP table db_name_change_test_t1
 go
 
 USE master;
 GO
 
---dropping databases
+--DROPping DATABASEs
 DROP DATABASE DB_NAME_CHANGE_TEST_vu_db1;
 GO
 
@@ -45,5 +45,29 @@ GO
 DROP DATABASE DB_NAME_CHANGE_TEST_vu_db4;
 GO
 
-drop database DB_NAME_CHANGE_vu_db1;
+DROP DATABASE DB_NAME_CHANGE_vu_db1;
 GO
+
+DROP DATABASE _DB_NAME_CHANGE_TEST_vu_db5;
+GO
+
+DROP DATABASE 日本語;
+GO
+
+DROP DATABASE 中国人;
+GO
+
+DROP DATABASE ㅂㅊAb;
+GO
+
+DROP DATABASE ĄĆĘŁŃÓŚŹŻ;
+GO
+
+DROP DATABASE AαΒβΓγDb;
+GO
+
+DROP DATABASE ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss;
+GO
+
+DROP DATABASE kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkhghjgD;
+go

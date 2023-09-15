@@ -283,8 +283,9 @@ get_db_id(const char *dbname)
 	return db_id;
 }
 
+/* will take dbname and return orig_name for that dbname.*/
 char *
-get_db_original_name(const char *dbname)
+dbname_get_original_db_name(const char *dbname)
 {
 	char	   *original_name = NULL;
 	HeapTuple	tuple;
@@ -303,8 +304,9 @@ get_db_original_name(const char *dbname)
 	return original_name;
 }
 
+/* will take dbid and return orig_name for that dbid.*/
 char *
-get_original_db_name(int16 dbid)
+dbid_get_original_db_name(int16 dbid)
 {
 	char	   *original_name = NULL;
 	HeapTuple	tuple;

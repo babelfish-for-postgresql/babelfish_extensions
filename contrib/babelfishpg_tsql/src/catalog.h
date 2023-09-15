@@ -84,8 +84,8 @@ typedef FormData_authid_login_ext *Form_authid_login_ext;
 #define DbidIsValid(id)  ((bool) ((id) != InvalidDbid))
 
 extern int16 get_db_id(const char *dbname);
-extern char *get_db_original_name(const char *dbname);
-extern char *get_original_db_name(int16 dbid);
+extern char *dbname_get_original_db_name(const char *dbname);
+extern char *dbid_get_original_db_name(int16 dbid);
 extern char *get_db_name(int16 dbid);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
