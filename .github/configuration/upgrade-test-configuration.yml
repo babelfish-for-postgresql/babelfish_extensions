@@ -106,7 +106,7 @@ upgrade-version: [[
 ],
 [
   {
-    version: 14.latest,
+    version: 14.10,
     upgrade-type: null
   },
   { 
