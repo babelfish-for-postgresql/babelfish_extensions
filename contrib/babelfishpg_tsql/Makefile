@@ -12,7 +12,6 @@ EXTVERSION = $(PGTSQL_MAJOR_VERSION).$(PGTSQL_MINOR_VERSION).$(PGTSQL_MICRO_VERS
 #	babel_upgrade test target should at the top of the src/test/regress/babel_schedule
 # 	src/test/regress/sql/babel_upgrade.sql should be modified to include the PREV_EXTVERSION to test the upgrade path
 # 	contrib/babelfishpg_tsql/sql/upgrades/$(EXTENSION)--$(PREV_EXTVERSION).sql should be present to test the upgrade path
-
 PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(PGTSQL_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
@@ -91,7 +90,6 @@ PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g -Werror
 PG_CFLAGS += -fstack-protector-strong
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
-PG_CPPFLAGS += -DENABLE_TDS_SPATIAL
 
 SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto
 

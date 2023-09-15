@@ -4,10 +4,25 @@ GO
 DROP VIEW IF EXISTS BinaryFromGeom
 GO
 
+DROP VIEW IF EXISTS CoordsFromGeom
+GO
+
+DROP VIEW IF EXISTS point_distances_geom
+GO
+
 DROP VIEW IF EXISTS TextFromGeog
 GO
 
 DROP VIEW IF EXISTS BinaryFromGeog
+GO
+
+DROP VIEW IF EXISTS CoordsFromGeog
+GO
+
+DROP VIEW IF EXISTS TransformFromGeog
+GO
+
+DROP VIEW IF EXISTS point_distances_geog
 GO
 
 DROP TABLE IF EXISTS SPATIALPOINTGEOM_dt

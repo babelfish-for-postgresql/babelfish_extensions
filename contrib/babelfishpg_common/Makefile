@@ -2,6 +2,7 @@ include Version.config
 
 EXTENSION = babelfishpg_common
 EXTVERSION = $(BBFPGCMN_MAJOR_VERSION).$(BBFPGCMN_MINOR_VERSION).$(BBFPGCMN_MICRO_VERSION)
+PREEXTVERSION = $(BBFPGCMN_MAJOR_VERSION).$(shell expr $(BBFPGCMN_MINOR_VERSION) - 1).$(BBFPGCMN_MICRO_VERSION)
 
 # Note:
 #	Set PREV_EXTVERSION after release, i.e after release of 2.0.0, set PREV_EXTVERSION to 1.0.0
@@ -78,6 +79,7 @@ include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
+all: sql/upgrades/$(EXTENSION)--$(PREEXTVERSION)--$(EXTVERSION).sql sql/upgrades/babelfishpg_upgrades.in
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
@@ -87,8 +89,24 @@ $(EXTENSION).control: $(EXTENSION).control.in
 		| sed -e 's|@MODULEPATH@|$(MODULEPATH)|g' \
 		> $@
 
-sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
-	cpp $< | sed 's/^# /-- /g' > $@
+FLAG_TO_CHECK := -DENABLE_SPATIAL_TYPES
+
+# Check if the flag is present in PG_CPPFLAGS
+ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
+# The flag is not present then build the .in file not including the spatial type files
+    sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
+		cpp $< | sed 's/^# /-- /g' > $@
+
+    sql/upgrades/$(EXTENSION)--$(PREEXTVERSION)--$(EXTVERSION).sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp $< | sed 's/^# /-- /g' > $@
+else
+# The flag is present build the .in file including the spatial type files
+    sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
+		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
+
+    sql/upgrades/$(EXTENSION)--$(PREEXTVERSION)--$(EXTVERSION).sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
+endif
 
 sql/%.sql: sql/upgrades/%.sql
 	cp $< $@

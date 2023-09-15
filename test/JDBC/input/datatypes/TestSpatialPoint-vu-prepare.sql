@@ -76,6 +76,24 @@ SELECT STAsBinary(location) AS BinaryRepresentation
 FROM SPATIALPOINTGEOM_dt;
 GO
 
+CREATE VIEW CoordsFromGeom AS
+SELECT STX(location), STY(location)  AS Coordinates
+FROM SPATIALPOINTGEOM_dt;
+GO
+
+CREATE VIEW point_distances_geom AS
+SELECT
+    p1.location AS point1,
+    p2.location AS point2,
+    STDistance( p1.location, p2.location ) AS distance
+FROM
+    SPATIALPOINTGEOM_dt p1
+CROSS JOIN
+    SPATIALPOINTGEOM_dt p2
+WHERE
+    p1.location <> p2.location;
+GO
+
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 GO
 
@@ -170,6 +188,30 @@ GO
 CREATE VIEW BinaryFromGeog AS
 SELECT STAsBinary(location) AS BinaryRepresentation
 FROM SPATIALPOINTGEOG_dt;
+GO
+
+CREATE VIEW CoordsFromGeog AS
+SELECT long(location), lat(location)  AS Coordinates
+FROM SPATIALPOINTGEOG_dt;
+GO
+
+
+CREATE VIEW TransformFromGeog AS
+SELECT ST_Transform(location, 4326) AS Modified_points
+FROM SPATIALPOINTGEOG_dt;
+GO
+
+CREATE VIEW point_distances_geog AS
+SELECT
+    p1.location AS point1,
+    p2.location AS point2,
+    STDistance( p1.location, p2.location ) AS distance
+FROM
+    SPATIALPOINTGEOG_dt p1
+CROSS JOIN
+    SPATIALPOINTGEOG_dt p2
+WHERE
+    p1.location <> p2.location;
 GO
 
 CREATE TABLE SPATIALPOINT_dt (GeomColumn geometry, GeogColumn geography)

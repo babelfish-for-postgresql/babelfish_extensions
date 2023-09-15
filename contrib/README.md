@@ -297,15 +297,42 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
     CREATE EXTENSION
     ```
 
-# How to build the babelfishpg_tsql extension with TDS Support for Spatial Datatypes enabled
+# How to build the babelfishpg_tsql extension with Support for Spatial Datatypes enabled
 
-1. To work with linked servers, you must install the `PostGIS` extension.
-2. Build the babelfishpg_tsql extension as follows:
+1. To work with Spatial Datatypes, you must install the `PostGIS` extension. 
+Steps on how to get PostGIS working on open-source:
     ```
-    PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_SPATIAL' SHLIB_LINK='-lsybdb -L/usr/lib64' make
-    PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_SPATIAL' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
+    wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
+    tar -xvzf postgis-3.3.3dev.tar.gz
+    sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    sudo yum install gdal gdal-devel
+    sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-3.7.2-1.el8.x86_64.rpm
+    sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-devel-3.7.2-1.el8.x86_64.rpm
+    wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
+    tar -xvzf proj-4.9.1.tar.gz
+    cd proj-4.9.1
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+    sudo cmake --build . --target install
+    cd ../../postgis-3.3.3dev
+    ./configure
+    make
+    sudo make install
     ```
-3. Create rest of the Babelfish extensions as usual, and initialize Babelfish.
+2. More information about building and installing the extension can be found [at this link](https://postgis.net/docs/postgis_installation.html)
+3. Build the babelfishpg_common extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make -j 4
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make install
+    ```
+4. Build the babelfishpg_tsql extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make install
+    ```
+4. Create rest of the Babelfish extensions as usual, and initialize Babelfish.
 
 
 # How to build the Babelfish server with Kerberos authentication enabled

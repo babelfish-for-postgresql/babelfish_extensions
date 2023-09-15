@@ -32,6 +32,12 @@ GO
 SELECT * FROM BinaryFromGeom;
 GO
 
+SELECT * FROM CoordsFromGeom;
+GO
+
+SELECT * FROM point_distances_geom;
+GO
+
 SELECT location FROM SPATIALPOINTGEOM_dt; 
 GO
 
@@ -67,6 +73,15 @@ SELECT * FROM TextFromGeog;
 GO
 
 SELECT * FROM BinaryFromGeog;
+GO
+
+SELECT * FROM CoordsFromGeog;
+GO
+
+SELECT * FROM TransformFromGeog;
+GO
+
+SELECT * FROM point_distances_geog;
 GO
 
 SELECT location FROM SPATIALPOINTGEOG_dt;

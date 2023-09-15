@@ -103,7 +103,7 @@ const char *GetMsgBytes(StringInfo msg, int datalen);
 unsigned int GetMsgInt(StringInfo msg, int b);
 int64		GetMsgInt64(StringInfo msg);
 uint128		GetMsgUInt128(StringInfo msg);
-int32_t     get_srid(uint8_t *id);
+static int32_t get_srid(uint8_t *id);
 float4		GetMsgFloat4(StringInfo msg);
 float8		GetMsgFloat8(StringInfo msg);
 static void SwapData(StringInfo buf, int st, int end);
@@ -131,10 +131,7 @@ Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
 
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
-/* 
-   Local structures for the Function Cache by TDS Type ID
-   This is copy of a struct from POSTGIS so that we could store and use the following values directly
-*/
+/* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
 typedef struct
 {
     uint32_t size; /* For PgSQL use only, use VAR* macros to manipulate. */
@@ -143,6 +140,7 @@ typedef struct
     uint8_t data[1]; /* See gserialized.txt */
 } GSERIALIZED;
 
+/* Local structures for the Function Cache by TDS Type ID */
 typedef struct FunctionCacheByTdsIdKey
 {
 	int32_t		tdstypeid;
@@ -156,9 +154,10 @@ typedef struct FunctionCacheByTdsIdEntry
 } FunctionCacheByTdsIdEntry;
 
 /* 
-   This is a modified copy of a function from POSTGIS to get SRID from GSERIALIZED struct
-*/
-int32_t get_srid(uint8_t *id)
+ * This is a modified copy of a function from POSTGIS to get SRID from GSERIALIZED struct
+ */
+static int32_t 
+get_srid(uint8_t *id)
 {
 	int32_t srid = 0;
 	srid = srid | (id[0] << 16);
