@@ -8,7 +8,6 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
-ATTIMEZONE-dep
 BABEL-1189
 BABEL-1206
 BABEL-1243

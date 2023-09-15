@@ -8,7 +8,6 @@
 # This should be the first test to check there are no duplicated object_ids
 BABEL-3613
 
-ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep-before-15-2-or-14-7
 BABEL-1189
