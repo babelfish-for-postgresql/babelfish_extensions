@@ -1104,12 +1104,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 	if (schema_name)
 		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum(pstrdup(schema_name));
 	else
-	{
-		if (strcmp(orig_user_name, "guest") == 0)
-			new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum(pstrdup("guest"));
-		else
-			new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("");
-	}
+		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("");
 	new_record_user_ext[USER_EXT_DEFAULT_LANGUAGE_NAME] = CStringGetTextDatum("English");
 	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE_DESC] = CStringGetTextDatum("");	/* placeholder */
 	if (has_dbaccess)

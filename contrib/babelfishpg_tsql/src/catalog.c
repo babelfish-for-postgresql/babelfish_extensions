@@ -2532,7 +2532,7 @@ create_guest_role_for_db(const char *dbname)
 			CommandCounterIncrement();
 		}
 		set_cur_db(old_dbid, old_dbname);
-		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false, false);
+		add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, false, false);
 	}
 	PG_CATCH();
 	{
