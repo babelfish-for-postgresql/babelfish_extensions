@@ -57,3 +57,12 @@ extern TestResult *test_fixeddecimal_int2_le(void);
 extern TestResult *test_fixeddecimal_int2_gt(void);
 extern TestResult *test_fixeddecimal_int2_ne(void);
 extern TestResult *test_fixeddecimal_int2_cmp(void);
+
+#ifdef USE_SSL
+extern TestResult *test_ssl_handshakeRead(void);
+extern TestResult *test_ssl_handshakeRead_pkt_type(void);
+extern TestResult *test_ssl_handshakeRead_oversize(void);
+
+extern TestResult *test_ssl_handshakeWrite(void);
+extern TestResult *test_ssl_handshakeWrite_sizeCheck(void);
+#endif
