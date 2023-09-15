@@ -3378,107 +3378,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				GrantStmt *grant = (GrantStmt *) parsetree;
 				char	   *dbname = get_cur_db_name();
+				const char *current_user = GetUserNameFromId(GetUserId(), false);
 				/* If object is table. */
-				if (sql_dialect == SQL_DIALECT_TSQL && grant->targtype == ACL_TARGET_OBJECT)
+				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
+					break;
+				Assert(list_length(grant->objects) == 1);
+				if (grant->objtype == OBJECT_SCHEMA)
+						break;
+				else if (grant->objtype == OBJECT_TABLE)
 				{
-					Assert(list_length(grant->objects) == 1);
-					if (grant->objtype == OBJECT_SCHEMA)
-							break;
-					else if (grant->objtype == OBJECT_TABLE)
+					/* Ignore CREATE database subcommands */
+					if (!(pstmt->stmt_len == 18 || pstmt->stmt_len == 19))
 					{
-						/* Ignore CREATE database subcommands */
-						if (!(pstmt->stmt_len == 18 || pstmt->stmt_len == 19))
-						{
-							RangeVar   *rv = (RangeVar *) linitial(grant->objects);
-							const char *logical_schema = NULL;
-							char	   *obj = rv->relname;
-							ListCell   *lc;
-							ListCell	*lc1;
-							if (rv->schemaname != NULL)
-								logical_schema = get_logical_schema_name(rv->schemaname, true);	/* this is physical name */
-							/* If ALL PRIVILEGES is granted/revoked. */
-							if (list_length(grant->privileges) == 0)
-								break;
-							foreach(lc1, grant->privileges)
-							{
-								AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-								if (grant->is_grant)
-								{
-									/*
-									 * 1. Execute the GRANT statement.
-									 * 2. Add its corresponding entry in the catalog, if doesn't exist already.
-									 * 3. Don't add an entry, if the permission is granted on column list.
-									 */
-									if (prev_ProcessUtility)
-										prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-											queryEnv, dest, qc);
-									else
-										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-											queryEnv, dest, qc);
-									foreach(lc, grant->grantees)
-									{
-										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-										if (logical_schema == NULL)
-											logical_schema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
-										if ((strcmp(logical_schema, "") != 0) && (ap->cols == NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
-											add_entry_to_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
-									}
-								}
-								else
-								{
-									foreach(lc, grant->grantees)
-									{
-										RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-										if (logical_schema == NULL)
-											logical_schema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
-										/*
-											* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
-											* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
-											*/
-										if ((logical_schema != NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
-										{
-											if (prev_ProcessUtility)
-												prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																	queryEnv, dest, qc);
-											else
-												standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																		queryEnv, dest, qc);
-										}
-										if ((ap->cols == NULL) && check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
-											del_from_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
-									}
-								}
-							}
-							return;
-						}
-					}
-					else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
-					{
-						ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+						RangeVar   *rv = (RangeVar *) linitial(grant->objects);
+						const char *logical_schema = NULL;
+						char	   *obj = rv->relname;
 						ListCell   *lc;
 						ListCell	*lc1;
-						const char *logicalschema = NULL;
-						char *funcname = NULL;
-						if (list_length(ob->objname) == 1)
-						{
-							Node *func = (Node *) linitial(ob->objname);
-							funcname = strVal(func);
-						}
+						if (rv->schemaname != NULL)
+							logical_schema = get_logical_schema_name(rv->schemaname, true);	/* this is physical name */
 						else
-						{
-							Node *schema = (Node *) linitial(ob->objname);
-							char *schemaname = strVal(schema);
-							Node *func = (Node *) lsecond(ob->objname);
-							logicalschema = get_logical_schema_name(schemaname, true);
-							funcname = strVal(func);
-						}
-						/* If ALL PRIVILEGES is granted/revoked internally during create function. */
-						if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
-						{
-							if(check_bbf_schema_for_schema(dbname, logicalschema, "ALL", "execute"))
-								return;
-						}
-						/* If ALL PRIVILEGES is granted/revoked */
+							logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
+						/* If ALL PRIVILEGES is granted/revoked. */
 						if (list_length(grant->privileges) == 0)
 							break;
 						foreach(lc1, grant->privileges)
@@ -3486,22 +3407,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
 							if (grant->is_grant)
 							{
-								/* Execute the GRANT statement. */
+								/*
+								* 1. Execute the GRANT statement.
+								* 2. Add its corresponding entry in the catalog, if doesn't exist already.
+								* 3. Don't add an entry, if the permission is granted on column list.
+								*/
 								if (prev_ProcessUtility)
 									prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 										queryEnv, dest, qc);
 								else
 									standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 										queryEnv, dest, qc);
-								/* Add entry to the catalog if it doesn't exist already. */
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									if (logicalschema == NULL)
-										logicalschema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
-									/* Don't store a row in catalog, if permission is granted for column */
-									if (!check_bbf_schema_for_entry(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-										add_entry_to_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+									if ((ap->cols == NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
+										add_entry_to_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
 								}
 							}
 							else
@@ -3509,15 +3430,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									if (logicalschema == NULL)
-										logicalschema = get_authid_user_ext_schema_name(dbname, rol_spec->rolename);
-									/* 
-									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
+									/*
+									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 									* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 									*/
-									if (!check_bbf_schema_for_entry(dbname, logicalschema, "ALL", ap->priv_name, rol_spec->rolename))
+									if ((logical_schema != NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
 									{
-										/* Execute REVOKE statement. */
 										if (prev_ProcessUtility)
 											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																queryEnv, dest, qc);
@@ -3525,15 +3443,90 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 											standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																	queryEnv, dest, qc);
 									}
-									if (check_bbf_schema_for_entry(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-										del_from_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+									if ((ap->cols == NULL) && check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
+										del_from_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
 								}
 							}
 						}
 						return;
 					}
+				}
+				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
+				{
+					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+					ListCell   *lc;
+					ListCell	*lc1;
+					const char *logicalschema = NULL;
+					char *funcname = NULL;
+					if (list_length(ob->objname) == 1)
+					{
+						Node *func = (Node *) linitial(ob->objname);
+						funcname = strVal(func);
+						logicalschema = get_authid_user_ext_schema_name(dbname, current_user);
+					}
 					else
+					{
+						Node *schema = (Node *) linitial(ob->objname);
+						char *schemaname = strVal(schema);
+						Node *func = (Node *) lsecond(ob->objname);
+						logicalschema = get_logical_schema_name(schemaname, true);
+						funcname = strVal(func);
+					}
+					/* If ALL PRIVILEGES is granted/revoked internally during create function. */
+					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
+					{
+						if(check_bbf_schema_for_schema(dbname, logicalschema, "ALL", "execute"))
+							return;
+					}
+					/* If ALL PRIVILEGES is granted/revoked */
+					if (list_length(grant->privileges) == 0)
 						break;
+					foreach(lc1, grant->privileges)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+						if (grant->is_grant)
+						{
+							/* Execute the GRANT statement. */
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+							/* Add entry to the catalog if it doesn't exist already. */
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* Don't store a row in catalog, if permission is granted for column */
+								if (!check_bbf_schema_for_entry(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename))
+									add_entry_to_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+							}
+						}
+						else
+						{
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* 
+								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
+								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
+								*/
+								if (!check_bbf_schema_for_entry(dbname, logicalschema, "ALL", ap->priv_name, rol_spec->rolename))
+								{
+									/* Execute REVOKE statement. */
+									if (prev_ProcessUtility)
+										prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+															queryEnv, dest, qc);
+									else
+										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+																queryEnv, dest, qc);
+								}
+								if (check_bbf_schema_for_entry(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename))
+									del_from_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+							}
+						}
+					}
+					return;
 				}
 			}
 		default:
