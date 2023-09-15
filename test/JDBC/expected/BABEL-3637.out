@@ -12,6 +12,10 @@ BEGIN
 	SELECT ServerRole, MemberName FROM @tmp_babel_3637;
 END
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "test_babel_3637_proc1" already exists with same argument types)~~
+
 
 CREATE PROC test_babel_3637_proc2 @rolename AS SYS.SYSNAME = NULL
 AS
@@ -21,6 +25,10 @@ BEGIN
 	SELECT UserName, RoleName, LoginName, DefDBName, DefSchemaName from @tmp_babel_3637;
 END
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "test_babel_3637_proc2" already exists with same argument types)~~
+
 
 CREATE LOGIN babel_3637_login1 WITH PASSWORD='12345678';
 GO
@@ -43,7 +51,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -92,7 +100,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -117,7 +125,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -140,7 +148,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -162,7 +170,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -190,7 +198,7 @@ GO
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -219,7 +227,7 @@ GO
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -243,7 +251,7 @@ GO
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
@@ -267,7 +275,7 @@ GO
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 babel_3637_login2#!#public#!#babel_3637_login2#!#master#!#dbo
 dbo#!#db_owner#!#jdbc_user#!#<NULL>#!#dbo
-guest#!#public#!#<NULL>#!#<NULL>#!#
+guest#!#public#!#<NULL>#!#<NULL>#!#guest
 ~~END~~
 
 
