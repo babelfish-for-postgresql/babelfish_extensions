@@ -71,9 +71,9 @@
 #define ROWVERSION_SIZE 8
 
 /* 
-Driver Expects assembly Name and Length is case of Spatial DataTypes
-TODO: For Now assembly Name is Hardcoded but can be Altered in future 
-*/
+ * Driver Expects assembly Name and Length is case of Spatial DataTypes
+ * TODO: For Now assembly Name is Hardcoded but can be Altered in future 
+ */
 #define ASSEMBLY_NAME_GEOMETRY "Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080dd91"
 #define ASSEMBLY_NAME_GEOGRAPHY "Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080dd91"
 
@@ -1280,7 +1280,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			* Check if it is spatial Data type
 			* Send the Corresponding MetaData Columns
 		*/			
-		if((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid) || (*common_utility_plugin_ptr->is_tsql_geography_datatype) (typTup->oid))
+		if((*common_utility_plugin_ptr -> is_tsql_geometry_datatype) (typTup -> oid) || (*common_utility_plugin_ptr -> is_tsql_geography_datatype) (typTup -> oid))
 		{
 			
 			/* Current Database Name and Length are expected by the Driver */
@@ -1309,12 +1309,12 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 
 			/* hardcode for assembly qualified name */
-			if((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid)){
+			if((*common_utility_plugin_ptr -> is_tsql_geometry_datatype) (typTup -> oid)){
 				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOMETRY);
 				resetStringInfo(&tempBuf);
 				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOMETRY,
 										strlen(ASSEMBLY_NAME_GEOMETRY));
-			}else{
+			} else {
 				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOGRAPHY);
 				resetStringInfo(&tempBuf);
 				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOGRAPHY,
@@ -1943,15 +1943,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				}
 				break;
 			case TDS_SEND_GEOMETRY:
-				/*
-				* TODO: Check TDS versioning requirements 
-				*/
 				SetColMetadataForBinaryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT);
 				break;
 			case TDS_SEND_GEOGRAPHY:
-				/*
-				 * TODO: Check TDS versioning requirements 
-				 */
 				SetColMetadataForBinaryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT);
 				break;
 			default:
