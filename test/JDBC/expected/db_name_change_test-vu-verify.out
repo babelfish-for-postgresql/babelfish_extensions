@@ -125,6 +125,20 @@ DB_NAME_CHANGE_TEST_vu_db1#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
+SELECT PROCEDURE_QUALIFIER FROM sys.sp_stored_procedures_view where PROCEDURE_NAME LIKE 'DB_NAME_CHANGE_test_vu%';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT PROCEDURE_QUALIFIER FROM sys.sp_sproc_columns_view where PROCEDURE_NAME LIKE 'DB_NAME_CHANGE_test_vu%';
+GO
+~~START~~
+varchar
+~~END~~
+
+
 SELECT name FROM sys.sysdatabases where name = DB_NAME();
 GO
 ~~START~~
