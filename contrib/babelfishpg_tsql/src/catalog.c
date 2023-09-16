@@ -1549,7 +1549,7 @@ static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
 static char *get_db_owner_role_name(const char *dbname);
-static char alter_guest_schema_for_db(const char *dbname);
+static void alter_guest_schema_for_db(const char *dbname);
 
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
@@ -2851,7 +2851,7 @@ alter_guest_schema_for_db (const char *dbname)
 	ScanKeyInit(&key[1],
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
+				CStringGetTextDatum(dbname));
 
 	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
@@ -2861,15 +2861,13 @@ alter_guest_schema_for_db (const char *dbname)
 	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
 
 	usertuple = heap_getnext(tblscan, ForwardScanDirection);
-
 	if (!HeapTupleIsValid(usertuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", user_name)));
+				 errmsg("tuple does not exist")));
 
 	new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("guest");
 	new_record_repl_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = true;
-
 	new_tuple = heap_modify_tuple(usertuple,
 								  bbf_authid_user_ext_dsc,
 								  new_record_user_ext,
