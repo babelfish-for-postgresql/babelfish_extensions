@@ -657,8 +657,8 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--- This is a temporary procedure which is called during upgrade to create guest users
--- for the user created databases if it doesn't have guest user already.
+-- This is a temporary procedure which is called during upgrade to update guest schema
+-- for the guest users in the already existing databases
 CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
