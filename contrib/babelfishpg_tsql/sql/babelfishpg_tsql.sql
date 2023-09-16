@@ -2425,7 +2425,7 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = collate sys.database_defaultDB_NAME()) collate sys.database_default
+		WHERE Ext1.database_name = DB_NAME() collate database_default
 		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
