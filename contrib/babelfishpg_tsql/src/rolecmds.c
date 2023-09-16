@@ -1231,9 +1231,9 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			 * enabled by default
 			 */
 			if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, "guest", NULL, false, true, false);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true, false);
 			else
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, "guest", NULL, false, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false, false);
 		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);

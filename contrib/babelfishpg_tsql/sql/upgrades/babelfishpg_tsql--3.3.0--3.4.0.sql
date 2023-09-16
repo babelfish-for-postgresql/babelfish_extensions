@@ -657,5 +657,16 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+-- This is a temporary procedure which is called during upgrade to create guest users
+-- for the user created databases if it doesn't have guest user already.
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
+
+CALL sys.babelfish_update_user_catalog_for_guest_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
