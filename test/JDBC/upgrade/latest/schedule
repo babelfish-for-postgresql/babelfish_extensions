@@ -453,6 +453,7 @@ sp_who
 BABEL_4330
 db_name_change_test
 kill
+BABEL-4217
 Test_ISNULL
 case_insensitive_collation
 BABEL-4270

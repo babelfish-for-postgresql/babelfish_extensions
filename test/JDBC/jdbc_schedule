@@ -157,4 +157,3 @@ ignore#!#case_insensitive_collation-before-15-5-vu-verify
 ignore#!#case_insensitive_collation-before-15-5-vu-cleanup
 ignore#!#db_name_change_test-vu-prepare
 ignore#!#db_name_change_test-vu-verify
-ignore#!#db_name_change_test-vu-cleanup
