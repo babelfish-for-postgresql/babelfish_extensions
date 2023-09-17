@@ -3,12 +3,12 @@
 
 static const struct
 {
-    const char *stdname;		/* Windows name of standard timezone */
+    	const char *stdname;		/* Windows name of standard timezone */
 	const char *dstname;		/* Windows name of daylight timezone */
 	const char *pgtzname;		/* Name of pgsql timezone to map to */
 }	win32_tzmap[] =
-
-{
+	
+	{
 	/*
 	 * This list was built from the contents of the registry at
 	 * HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time
