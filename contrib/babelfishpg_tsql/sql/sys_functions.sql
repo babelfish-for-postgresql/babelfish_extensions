@@ -996,7 +996,7 @@ BEGIN
     END IF;
 
     IF input_expr IS NULL OR tzzone IS NULL THEN 
-    RETURN NULL;
+    	RETURN NULL;
     END IF;
 
     RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
@@ -1021,7 +1021,7 @@ DECLARE
     input_expr_tmz TIMESTAMPTZ;
 BEGIN
     IF input_expr IS NULL OR tzzone IS NULL THEN 
-    RETURN NULL;
+    	RETURN NULL;
     END IF;
 
     lower_tzn := lower(tzzone);
