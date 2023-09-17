@@ -671,7 +671,7 @@ BEGIN
     END IF;
 
     IF input_expr IS NULL OR tzzone IS NULL THEN 
-    RETURN NULL;
+        RETURN NULL;
     END IF;
 
     RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
@@ -696,14 +696,14 @@ DECLARE
     input_expr_tmz TIMESTAMPTZ;
 BEGIN
     IF input_expr IS NULL OR tzzone IS NULL THEN 
-    RETURN NULL;
+        RETURN NULL;
     END IF;
 
     lower_tzn := lower(tzzone);
     IF lower_tzn <> 'utc' THEN
-    tz_name := sys.babelfish_timezone_mapping(lower_tzn);
+        tz_name := sys.babelfish_timezone_mapping(lower_tzn);
     ELSE
-    tz_name := 'utc';
+        tz_name := 'utc';
     END IF;
 
     IF tz_name = 'NULL' THEN
