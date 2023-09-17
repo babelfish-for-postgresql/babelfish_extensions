@@ -3401,7 +3401,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
 						/* If ALL PRIVILEGES is granted/revoked. */
 						if (list_length(grant->privileges) == 0)
-							break;
+						{
+							if (grant->is_grant)
+								break;
+							else
+							{
+								foreach(lc, grant->grantees)
+								{
+									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									int i = 0;
+									char *permissions[] = {"select", "insert", "update", "references", "delete"};
+									for(i = 0; i < 5; i++)
+									{
+										if (check_bbf_schema_for_entry(dbname, logical_schema, "ALL", permissions[i], rol_spec->rolename))
+											return;
+									}
+								}
+								break;
+							}
+						}
 						foreach(lc1, grant->privileges)
 						{
 							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
@@ -3472,15 +3490,32 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						logicalschema = get_logical_schema_name(schemaname, true);
 						funcname = strVal(func);
 					}
-					/* If ALL PRIVILEGES is granted/revoked internally during create function. */
+					/* 
+					 * Case: When ALL PRIVILEGES is revoked internally during create function.
+					 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+					 */
 					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
 					{
 						if(check_bbf_schema_for_schema(dbname, logicalschema, "ALL", "execute"))
 							return;
-					}
-					/* If ALL PRIVILEGES is granted/revoked */
-					if (list_length(grant->privileges) == 0)
 						break;
+					}
+					/* If ALL PRIVILEGES is granted/revoked. */
+					if (list_length(grant->privileges) == 0)
+					{
+						if (grant->is_grant)
+							break;
+						else
+						{
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if (check_bbf_schema_for_entry(dbname, logicalschema, "ALL", "execute", rol_spec->rolename))
+									return;
+							}
+							break;
+						}
+					}
 					foreach(lc1, grant->privileges)
 					{
 						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
