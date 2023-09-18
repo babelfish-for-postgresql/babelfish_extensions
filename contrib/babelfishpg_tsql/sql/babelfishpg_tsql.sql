@@ -1965,8 +1965,8 @@ BEGIN
 		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
 	END
 	
-	IF (@pktable_qualifier != '' AND (SELECT sys.db_name()) != @pktable_qualifier) OR
-		(@fktable_qualifier != '' AND (SELECT sys.db_name()) != @fktable_qualifier)
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @pktable_qualifier) OR
+		(@fktable_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @fktable_qualifier)
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
   	END
@@ -2281,9 +2281,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate database_default
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME()
+		WHERE Ext1.database_name = DB_NAME() collate database_default
 		AND Ext1.type != 'R'
 		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
@@ -2302,7 +2302,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR lower(orig_username) = lower(@name_in_db))
-					AND database_name = DB_NAME()
+					AND database_name = DB_NAME() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
@@ -2314,8 +2314,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
@@ -2326,7 +2326,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR lower(orig_username) = lower(@name_in_db))
-					AND database_name = DB_NAME()
+					AND database_name = DB_NAME() collate database_default
 					AND type != 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
@@ -2351,9 +2351,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate database_default
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME()
+		WHERE Ext1.database_name = DB_NAME() collate database_default
 		AND Ext1.type != 'R'
 		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
@@ -2379,7 +2379,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME()
+		WHERE Ext.database_name = DB_NAME() collate database_default
 		AND Ext.type = 'R'
 		ORDER BY RoleName;
 	END
@@ -2388,7 +2388,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR lower(orig_username) = lower(@rolename))
-					AND database_name = DB_NAME()
+					AND database_name = DB_NAME() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -2397,7 +2397,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME()
+		WHERE Ext.database_name = DB_NAME() collate database_default
 		AND Ext.type = 'R'
 		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
 		ORDER BY RoleName;
@@ -2425,8 +2425,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		ORDER BY RoleName, MemberName;
@@ -2436,7 +2436,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR lower(orig_username) = lower(@rolename))
-					AND database_name = DB_NAME()
+					AND database_name = DB_NAME() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -2447,8 +2447,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME()
-		AND Ext2.database_name = DB_NAME()
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
@@ -2872,7 +2872,7 @@ AS $$
 	SELECT @procedure_qualifier = LOWER(COALESCE(@procedure_qualifier, ''))
 	SELECT @column_name = LOWER(COALESCE(@column_name, ''))
 BEGIN 
-	IF (@procedure_qualifier != '' AND (SELECT sys.db_name()) != @procedure_qualifier)
+	IF (@procedure_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @procedure_qualifier)
 		BEGIN
 			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
  	   	END
@@ -3048,7 +3048,7 @@ BEGIN
 					IF @row_count > 3
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
-							IF @dbname != sys.db_name()
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -3076,7 +3076,7 @@ BEGIN
 					IF @row_count > 2
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
-							IF @dbname != sys.db_name()
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
