@@ -1034,10 +1034,12 @@ extract_identifier(const char *start)
 
 	bool		dq = false;
 	bool		sqb = false;
+	bool		sq = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
 	bool		found_escaped_in_dq = false;
+	bool		found_escaped_in_sq = false;
 
 	/* check identifier is delimited */
 	Assert(start);
@@ -1045,6 +1047,8 @@ extract_identifier(const char *start)
 		dq = true;
 	else if (start[0] == '[')
 		sqb = true;
+	else if (start[0] == '\'')
+		sq = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
@@ -1059,7 +1063,7 @@ extract_identifier(const char *start)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb)		/* normal case */
+		if (!dq && !sqb && !sq)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -1109,6 +1113,51 @@ extract_identifier(const char *start)
 					{
 						original_name[wcur] = start[rcur];
 						if (start[rcur] == '"')
+							++rcur; /* skip next character */
+					}
+					original_name[wcur] = '\0';
+					return original_name;
+				}
+			}
+		}
+		else if (sq)
+		{
+			/* please see xdinside in scan.l */
+			valid = (c != '\'');
+			if (!valid && start[i + 1] == '\'')	/* escaped */
+			{
+				++i;
+				++i;			/* advance two characters */
+				found_escaped_in_sq = true;
+				continue;
+			}
+
+			if (!valid)
+			{
+				if (!found_escaped_in_sq)
+				{
+					/* no escaped character. copy whole string at once */
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					memcpy(original_name, start + 1, i - 1);
+					original_name[i - 1] = '\0';
+					return original_name;
+				}
+				else
+				{
+					/*
+					 * there is escaped character. copy one by one to handle
+					 * escaped character
+					 */
+					int			rcur = 1;	/* read-cursor */
+					int			wcur = 0;	/* write-cursor */
+
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					for (; rcur < i; ++rcur, ++wcur)
+					{
+						original_name[wcur] = start[rcur];
+						if (start[rcur] == '\'')
 							++rcur; /* skip next character */
 					}
 					original_name[wcur] = '\0';
@@ -1490,19 +1539,20 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			bool		sq = *colname_start == '\'';
 			const char	*original_name = NULL;
 			int actual_alias_len = 0;
+
+			/* To extract the identifier name from the query.*/
+			original_name = extract_identifier(colname_start);
+			actual_alias_len = strlen(original_name);
 			
 			/* check if identifier is delimited or not. In case of delimiters,
 			 * colname_start is incremented by one to point at identifier name. 
 			 */
+			
 			if(sq || sqb || dq)
 			{
 				colname_start++;
 			}
 
-			/* To extract the identifier name from the query.*/
-			original_name = extract_identifier(colname_start);
-			actual_alias_len = strlen(original_name);
-		
 			/* Maximum alias_len can be 63 after truncation.
 			 * If alias_len is smaller than actual_alias_len,
 			 * this means Identifier is truncated.
