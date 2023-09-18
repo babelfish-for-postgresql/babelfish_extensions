@@ -18,10 +18,16 @@ go
 create schema babel_4344_s1;
 go
 
+create schema babel_4344_s2 authorization babel_4344_u1;
+go
+
 create table babel_4344_t1(a int);
 go
 
 create table babel_4344_s1.babel_4344_t1(a int);
+go
+
+create table babel_4344_s2.babel_4344_t1(a int);
 go
 
 create table babel_4344_t3(a int, b int);
@@ -100,6 +106,11 @@ grant execute on babel_4344_f1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
 go
+-- Grant schema permission to its owner, should fail
+grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
+go
+grant select on schema::babel_4344_s2 to guest; -- should pass 
+go
 
 -- tsql user=babel_4344_l1 password=12345678
 -- User has OBJECT privileges, should be accessible.
@@ -126,6 +137,11 @@ go
 select * from babel_4344_f1();
 go
 select * from babel_4344_s1.babel_4344_f1();
+go
+-- Grant schema permission to its owner
+grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
+go
+grant select on schema::babel_4344_s2 to guest; -- should pass 
 go
 use master;
 go
@@ -154,6 +170,8 @@ go
 exec babel_4344_s1.babel_4344_p1;
 go
 select * from babel_4344_s1.babel_4344_f1();
+go
+select * from babel_4344_s2.babel_4344_t1;
 go
 use master;
 go
@@ -225,6 +243,8 @@ exec babel_4344_s1.babel_4344_p1;
 go
 select * from babel_4344_s1.babel_4344_f1();
 go
+select * from babel_4344_s2.babel_4344_t1;
+go
 use master;
 go
 
@@ -276,6 +296,12 @@ drop function babel_4344_s1.babel_4344_f2;
 go
 
 drop schema babel_4344_s1;
+go
+
+drop table babel_4344_s2.babel_4344_t1;
+go
+
+drop schema babel_4344_s2;
 go
 
 drop user babel_4344_u1;

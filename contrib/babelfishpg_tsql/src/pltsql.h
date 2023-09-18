@@ -1980,6 +1980,7 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
+extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);

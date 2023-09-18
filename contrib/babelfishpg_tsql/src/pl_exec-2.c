@@ -53,7 +53,6 @@ static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
-static List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char *dynstmt);
@@ -3303,6 +3302,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	char		*schema_name;
 	ListCell   *lc;
 	ListCell	*lc1;
+	Oid 		schemaOid;
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
@@ -3310,19 +3310,29 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
+	schemaOid = LookupExplicitNamespace(schema_name, true);
+	
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission..", stmt->schema_name)));
 
-	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
 	foreach(lc1, stmt->privileges)
 	{
 		char	*priv_name = (char *) lfirst(lc1);
 		foreach(lc, stmt->grantees)
 		{
 			char	   *grantee_name = (char *) lfirst(lc);
-			rolname = get_physical_user_name(dbname, grantee_name);
+			//Oid schemaOid = LookupExplicitNamespace(schema_name, true);
+			Oid	role_oid;
+			rolname	= get_physical_user_name(dbname, grantee_name);
+			role_oid = get_role_oid(rolname, true);
+	
+			if (pg_namespace_ownercheck(schemaOid, role_oid))
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
 			parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);
 			/* Run all subcommands */
@@ -3359,58 +3369,4 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 
 	}
 	return PLTSQL_RC_OK;
-}
-
-static List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
-{
-	StringInfoData query;
-	List	   *stmt_list;
-	//int			expected_stmts = (strcmp(privilege, "execute") == 0) ? 3 : 2;
-	int			expected_stmts = 2;
-	initStringInfo(&query);
-	if (is_grant)
-	{
-		if (strcmp(privilege, "execute") == 0)
-		{
-			if (with_grant_option)
-			{
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
-			}
-			else
-			{
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
-			}
-		}
-		else
-		{
-			if (with_grant_option)
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
-			else
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON TABLES TO \"%s\"; ", schema, privilege, rolname);
-		}	
-	}
-	else
-	{
-		if (strcmp(privilege, "execute") == 0)
-		{
-			appendStringInfo(&query, "REVOKE \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
-			appendStringInfo(&query, "REVOKE \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
-		}
-		else
-		{
-			appendStringInfo(&query, "REVOKE \"%s\" ON ALL TABLES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON TABLES FROM \"%s\"; ", schema, privilege, rolname);
-		}
-	}
-	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
-	if (list_length(stmt_list) != expected_stmts)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected %d statements, but got %d statements after parsing",
-						expected_stmts, list_length(stmt_list))));
-	return stmt_list;
 }
