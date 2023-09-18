@@ -523,14 +523,14 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 
 					/*
 					 * Populate owner column in babelfish_sysdatabases catalog table with
-					 * current user.
+					 * SA of the current database.
 					 */
 					if (!owner_found && relid == sysdatabases_oid)
 					{
 						/* const value node to store into values clause */
 						ownerValue = makeNode(A_Const);
 						ownerValue->val.sval.type = T_String;
-						ownerValue->val.sval.sval = GetUserNameFromId(GetSessionUserId(), false);
+						ownerValue->val.sval.sval = GetUserNameFromId(get_sa_role_oid(), false);
 						ownerValue->location = -1;
 
 						/* owner column to store into InsertStmt's target list */

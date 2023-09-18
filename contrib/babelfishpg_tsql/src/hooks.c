@@ -3842,7 +3842,7 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 
 	/*
 	 * Populate owner column in babelfish_sysdatabases catalog table with
-	 * current user.
+	 * SA of the current database.
 	 */
 	if (relid == sysdatabases_oid)
 	{
@@ -3853,7 +3853,7 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 
 		if (nulls[attnum - 1])
 		{
-			const char *owner = GetUserNameFromId(GetSessionUserId(), false);
+			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
 
 			values[attnum - 1] = CStringGetDatum(owner);
 			nulls[attnum - 1] = false;
