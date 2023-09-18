@@ -106,7 +106,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
@@ -1315,7 +1315,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||
@@ -1488,10 +1488,12 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			bool		dq = *colname_start == '"';
 			bool		sqb = *colname_start == '[';
 			bool		sq = *colname_start == '\'';
-			const char	   *original_name = NULL;
+			const char	*original_name = NULL;
 			int actual_alias_len = 0;
 			
-			/* In case of delimiters, colname_start is incremented by one to point the identifier name. */
+			/* check if identifier is delimited or not. In case of delimiters,
+			 * colname_start is incremented by one to point at identifier name. 
+			 */
 			if(sq || sqb || dq)
 			{
 				colname_start++;
@@ -1500,7 +1502,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/* To extract the identifier name from the query.*/
 			original_name = extract_identifier(colname_start);
 			actual_alias_len = strlen(original_name);
-		 
+		
 			/* Maximum alias_len can be 63 after truncation.
 			 * If alias_len is smaller than actual_alias_len,
 			 * this means Identifier is truncated.
@@ -1521,7 +1523,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				memcpy(alias, colname_start, alias_len);
 			}
 			res->name = alias;			
-		}	
+		}
 	}
 	/* Update table set qualified column name, resolve qualifiers here */
 	else if (exprKind == EXPR_KIND_UPDATE_SOURCE && res->indirection)
