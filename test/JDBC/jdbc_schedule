@@ -143,9 +143,3 @@ ignore#!#load_road
 ignore#!#load_tenk
 ignore#!#load_stud_emp
 ignore#!#load_student
-
-# This test case has implemented cursor functionality which SQL Server does not even support
-# When fixing unquoted string parameters in BABEL-334, this test now fails, but it should never 
-# really have succeeded in the first place, so disabling the test for now
-ignore#!#babel_cursor
-
