@@ -1684,3 +1684,56 @@ Oid get_sys_varcharoid(void)
 	}
 	return sys_varcharoid;
 }
+
+List
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
+{
+	StringInfoData query;
+	List	   *stmt_list;
+	int			expected_stmts = 2;
+	initStringInfo(&query);
+	if (is_grant)
+	{
+		if (strcmp(privilege, "execute") == 0)
+		{
+			if (with_grant_option)
+			{
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+			}
+			else
+			{
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+			}
+		}
+		else
+		{
+			if (with_grant_option)
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+			else
+				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON TABLES TO \"%s\"; ", schema, privilege, rolname);
+		}
+	}
+	else
+	{
+		if (strcmp(privilege, "execute") == 0)
+		{
+			appendStringInfo(&query, "REVOKE \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "REVOKE \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+		}
+		else
+		{
+			appendStringInfo(&query, "REVOKE \"%s\" ON ALL TABLES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON TABLES FROM \"%s\"; ", schema, privilege, rolname);
+		}
+	}
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+	return stmt_list;
+}

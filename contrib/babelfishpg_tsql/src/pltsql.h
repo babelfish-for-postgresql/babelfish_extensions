@@ -185,8 +185,9 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_FULL,
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
-	PLTSQL_STMT_GRANTDB
-} PLtsql_stmt_type;
+	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_GRANTSCHEMA
+	} PLtsql_stmt_type;
 
 /*
  * Execution node return codes
@@ -999,6 +1000,20 @@ typedef struct PLtsql_stmt_grantdb
 	bool		is_grant;
 	List	   *grantees;		/* list of users */
 } PLtsql_stmt_grantdb;
+
+/*
+ *	Grant on schema stmt
+ */
+typedef struct PLtsql_stmt_grantschema
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	bool		is_grant;
+	List		*privileges;		/* list of privileges */
+	List		*grantees;		/* list of users */
+	bool 		with_grant_option;
+	char		*schema_name;	/* schema name */
+} PLtsql_stmt_grantschema;
 
 /*
  * ASSERT statement
@@ -1965,6 +1980,7 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
+extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
