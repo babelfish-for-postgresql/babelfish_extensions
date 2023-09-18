@@ -22,10 +22,16 @@ go
 create schema babel_4344_s1;
 go
 
+create schema babel_4344_s2 authorization babel_4344_u1;
+go
+
 create table babel_4344_t1(a int);
 go
 
 create table babel_4344_s1.babel_4344_t1(a int);
+go
+
+create table babel_4344_s2.babel_4344_t1(a int);
 go
 
 create table babel_4344_t3(a int, b int);
@@ -140,6 +146,15 @@ grant execute on babel_4344_f1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
 go
+-- Grant schema permission to its owner, should fail
+grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.)~~
+
+grant select on schema::babel_4344_s2 to guest; -- should pass 
+go
 
 -- tsql user=babel_4344_l1 password=12345678
 -- User has OBJECT privileges, should be accessible.
@@ -205,16 +220,25 @@ select * from babel_4344_f1();
 go
 ~~START~~
 int
-2
+3
 ~~END~~
 
 select * from babel_4344_s1.babel_4344_f1();
 go
 ~~START~~
 int
-8
+9
 ~~END~~
 
+-- Grant schema permission to its owner
+grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.)~~
+
+grant select on schema::babel_4344_s2 to guest; -- should pass 
+go
 use master;
 go
 
@@ -266,7 +290,13 @@ select * from babel_4344_s1.babel_4344_f1();
 go
 ~~START~~
 int
-9
+10
+~~END~~
+
+select * from babel_4344_s2.babel_4344_t1;
+go
+~~START~~
+int
 ~~END~~
 
 use master;
@@ -319,7 +349,7 @@ select * from babel_4344_s1.babel_4344_f2();
 go
 ~~START~~
 int
-13
+14
 ~~END~~
 
 use master;
@@ -385,7 +415,13 @@ select * from babel_4344_s1.babel_4344_f1();
 go
 ~~START~~
 int
-13
+14
+~~END~~
+
+select * from babel_4344_s2.babel_4344_t1;
+go
+~~START~~
+int
 ~~END~~
 
 use master;
@@ -439,6 +475,12 @@ drop function babel_4344_s1.babel_4344_f2;
 go
 
 drop schema babel_4344_s1;
+go
+
+drop table babel_4344_s2.babel_4344_t1;
+go
+
+drop schema babel_4344_s2;
 go
 
 drop user babel_4344_u1;
