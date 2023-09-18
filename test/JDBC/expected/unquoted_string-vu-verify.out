@@ -1,0 +1,516 @@
+
+-- tsql
+
+-- BABEL-334: Support unquoted string parameter values in procedure calls/declarations
+-- unquoted strings in procedure call arguments
+create procedure unqStr_proc_1(@par1 varchar(20), @par2 varchar(20))
+as 
+select @par1, @par2
+go
+-- should print strings:
+exec unqStr_proc_1 abc, def$ghi
+go
+~~START~~
+varchar#!#varchar
+abc#!#def$ghi
+~~END~~
+
+exec unqStr_proc_1 abc, 'this is a string'
+go
+~~START~~
+varchar#!#varchar
+abc#!#this is a string
+~~END~~
+
+exec unqStr_proc_1 'this is a string', def
+go
+~~START~~
+varchar#!#varchar
+this is a string#!#def
+~~END~~
+
+exec unqStr_proc_1 abc#def, null
+go
+~~START~~
+varchar#!#varchar
+abc#def#!#<NULL>
+~~END~~
+
+exec unqStr_proc_1 @par1=abc$def, @par2=null
+go
+~~START~~
+varchar#!#varchar
+abc$def#!#<NULL>
+~~END~~
+
+exec unqStr_proc_1 @par1=null, @par2=abc#def
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#abc#def
+~~END~~
+
+-- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
+exec unqStr_proc_1 [abc], [def$ghi]
+go
+~~START~~
+varchar#!#varchar
+abc#!#def$ghi
+~~END~~
+
+-- should print strings, bracketed identifiers as procedure args are also interpreted as unquoted strings in SQL Server:
+set quoted_identifier on
+go
+exec unqStr_proc_1 "abc", "def$ghi"
+go
+~~START~~
+varchar#!#varchar
+abc#!#def$ghi
+~~END~~
+
+set quoted_identifier off
+go
+-- now they are just regular double-quoted strings:
+exec unqStr_proc_1 "abc abc", "def ?! ghi"
+go
+~~START~~
+varchar#!#varchar
+abc abc#!#def ?! ghi
+~~END~~
+
+-- should raise error since 'user' is a function and not allowed as argument
+exec unqStr_proc_1 user, 'abc'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'user' at line 2 and character position 19)~~
+
+exec unqStr_proc_1 @par1=user, @par2='abc'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'user' at line 1 and character position 25)~~
+
+-- should raise error because the unquoted argument cannot be interpreted as a string:
+exec unqStr_proc_1 abc, def.ghi
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 2 and character position 27)~~
+
+exec unqStr_proc_1 abc, def~ghi
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '~' at line 1 and character position 27)~~
+
+
+-- should print contents of variables:
+declare @myvar varchar(20), @myvar2 varchar(20) = 'this is myvar2'
+exec unqStr_proc_1 @myvar, @myvar2
+exec unqStr_proc_1 @par1=@myvar2, @par2=@myvar
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#this is myvar2
+~~END~~
+
+~~START~~
+varchar#!#varchar
+this is myvar2#!#<NULL>
+~~END~~
+
+exec unqStr_proc_1 @@language, @@servicename
+go
+~~START~~
+varchar#!#varchar
+us_english#!#MSSQLSERVER
+~~END~~
+
+
+-- should print variable names with leading space:
+exec unqStr_proc_1 [ @@language], [ @@servicename]
+go
+~~START~~
+varchar#!#varchar
+ @@language#!# @@servicename
+~~END~~
+
+
+-- should print arguments as strings
+exec unqStr_proc_1 '[@@language]', '[@@servicename]'
+go
+~~START~~
+varchar#!#varchar
+[@@language]#!#[@@servicename]
+~~END~~
+
+exec unqStr_proc_1 '@@language', '@@servicename'
+go
+~~START~~
+varchar#!#varchar
+@@language#!#@@servicename
+~~END~~
+
+
+-- should print variables names, not their contents
+-- however, this does not work correctly in Babelfish: it raises error 'column "@@language" does not exist' 
+-- both before and after the fix of unquoted strings in BABEL-334
+exec unqStr_proc_1 [@@language], [@@servicename]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@@language" does not exist)~~
+
+
+-- unlike T-SQL procedure calls, function call arguments do not support unquoted strings
+create function unqStr_func_1(@par varchar(20)) 
+returns varchar(20) 
+as begin 
+return @par
+end
+go
+-- should return column value:
+select dbo.unqStr_func_1(abc) from unqStr_tab  
+go
+~~START~~
+varchar
+this is column abc
+~~END~~
+
+select dbo.unqStr_func_1([abc]) from unqStr_tab  
+go
+~~START~~
+varchar
+this is column abc
+~~END~~
+
+-- should return NULL
+select dbo.unqStr_func_1(null) from unqStr_tab  
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+select dbo.unqStr_func_1(null)
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+set quoted_identifier on
+go
+select dbo.unqStr_func_1("abc") from unqStr_tab  
+go
+~~START~~
+varchar
+this is column abc
+~~END~~
+
+set quoted_identifier off
+go
+-- now it's just a regular double-quoted string:
+select dbo.unqStr_func_1("abc") from unqStr_tab  
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+-- should fail:
+select dbo.unqStr_func_1(abc) 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+select dbo.unqStr_func_1([abc]) 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+set quoted_identifier on
+go
+-- should fail:
+select dbo.unqStr_func_1("abc") 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+set quoted_identifier off
+go
+-- now it's just a regular double-quoted string:
+select dbo.unqStr_func_1("abc") 
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- unquoted string in parameter declaration
+create proc unqStr_proc_2 @par1 varchar(20) = abc
+as
+select @par1
+go
+-- should print 'abc':
+exec unqStr_proc_2
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- 'user' is handled as function call
+create proc unqStr_proc_3 @par1 varchar(20) = user
+as
+select @par1
+go
+-- should print 'dbo':
+exec unqStr_proc_3 
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+create function unqStr_func_2(@par1 varchar(20) = abc) 
+returns varchar(20)
+as
+begin
+return @par1
+end
+go
+-- should reflect column value:
+select dbo.unqStr_func_2(abc) from unqStr_tab  
+go
+~~START~~
+varchar
+this is column abc
+~~END~~
+
+-- should print 'dbo', since 'user' is a function call
+select dbo.unqStr_func_2(user)
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+-- should print 'abc':
+declare @v varchar(20)
+execute @v = unqStr_func_2
+select @v
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+-- this test will fail since 'default' arguments are not yet supported in Babelfish (BABEL-335)
+-- once supported, should print 'abc':
+select dbo.unqStr_func_2(default) 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'default' is not currently supported in Babelfish)~~
+
+
+-- should print value of @@language:
+create procedure unqStr_proc_4 @p1 varchar(20) = @@language as select @p1
+go
+exec unqStr_proc_4
+go
+~~START~~
+varchar
+us_english
+~~END~~
+
+
+-- as a default, @p2 should take value of @p1.
+-- however this does not work in Babelfish, both before and after 
+-- the fix for unquoted strings in BABEL-334
+create procedure unqStr_proc_5 @p1 varchar(20), @p2 varchar(20) = @p1
+as select @p2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@p1" does not exist)~~
+
+exec unqStr_proc_5 'this is @p1'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure unqstr_proc_5(unknown) does not exist)~~
+
+
+-- should raise error:
+create procedure unqStr_proc_6 @p0 varchar(20) = @@myvar
+as select @p1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function sys.myvar() does not exist)~~
+
+
+-- variable as column default is invalid syntax in SQL Server, but works in Babelfish, which is harmless
+-- in Babelfish this only works for a global (@@) variable, not for a local variable
+create function unqStr_func_3 (@p1 varchar(20) = @@language) returns varchar(20)
+as 
+begin
+return @p1
+end
+go
+
+-- this will not work until 'default' arguments are supported (BABEL-335)
+select dbo.unqStr_func_3(default)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'default' is not currently supported in Babelfish)~~
+
+
+-- should print value of @@language:
+declare @v varchar(20)
+exec @v = unqStr_func_3
+select @v
+go
+~~START~~
+varchar
+us_english
+~~END~~
+
+
+-- invalid in SQL Server, should also fail in Babelfish:
+create function unqStr_func_4 (@p1 varchar(20), @p2 varchar(20) = @p1) returns varchar(20)
+as
+begin
+return @p2
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@p1" does not exist)~~
+
+
+-- psql
+
+
+
+-- PG test cases
+-- call T-SQL proc from PG, T-SQL semantics still apply
+-- should print 'abc':
+-- NOTE: test is disabled as it crashes the JDBC test framework with message 'Received resultset tuples, but no field structure for them'
+--call master_dbo.unqStr_proc_2();
+--go
+-- PG procedure/function calls should not be affected by the T-SQL fix 
+-- for unquoted strings in BABEL-334
+CREATE OR REPLACE PROCEDURE unqStr_pgproc_1(par1 varchar(20))
+LANGUAGE plpgsql
+AS $$
+begin
+raise notice 'arg=[%]', par1;
+end
+$$;
+go
+-- should print 'abc':
+CALL unqStr_pgproc_1('abc');
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: arg=[abc]  Server SQLState: 00000)~~
+
+-- should raise an error about column not found:
+CALL unqStr_pgproc_1(abc);
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: column "abc" does not exist
+  Position: 71
+    Server SQLState: 42703)~~
+
+
+CREATE function unqStr_pgfunc_1(par1 name) 
+returns varchar(20)
+LANGUAGE plpgsql
+AS $$
+begin
+return par1;
+end
+$$;
+go
+-- should print 'abc':
+select unqStr_pgfunc_1('abc'); 
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+-- should print column value:
+select unqStr_pgfunc_1(abc) from master_dbo.unqStr_tab;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function unqstr_pgfunc_1(sys."varchar") does not exist
+  Hint: No function matches the given name and argument types. You might need to add explicit type casts.
+  Position: 38
+    Server SQLState: 42883)~~
+
+-- should raise an error about column not found:
+select unqStr_pgfunc_1(abc);
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: column "abc" does not exist
+  Position: 73
+    Server SQLState: 42703)~~
+
+-- should print 'jdbc_user', since 'user' is a function call:
+select unqStr_pgfunc_1(user);
+go
+~~START~~
+varchar
+jdbc_user
+~~END~~
+
+
+-- should fail since PG does not support unquoted string defaults:
+CREATE OR REPLACE PROCEDURE unqStr_pgproc_2(par1 varchar(20) = abc)
+LANGUAGE plpgsql
+AS $$
+begin
+raise notice 'arg=[%]', par1;
+end
+$$;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: column "abc" does not exist
+  Position: 131
+    Server SQLState: 42703)~~
+
+
+-- should fail since PG does not support unquoted string defaults:
+CREATE function unqStr_pgfunc_2(par1 varchar(20) = abc) 
+returns varchar(20)
+LANGUAGE plpgsql
+AS $$
+begin
+return par1;
+end
+$$;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: column "abc" does not exist
+  Position: 119
+    Server SQLState: 42703)~~
+
+

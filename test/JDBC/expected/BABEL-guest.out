@@ -52,7 +52,7 @@ tempdb_guest
 ~~END~~
 
 
--- tsql         user=babel_2571_login1 password=12345678
+-- tsql         user=babel_2571_login1 password=123
 -- Login as guest to show default schema is guest
 SELECT schema_name()
 GO
