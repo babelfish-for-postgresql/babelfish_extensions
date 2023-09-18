@@ -679,8 +679,8 @@ BEGIN
 		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
 	END
 	
-	IF (@pktable_qualifier != '' AND (SELECdb_name(  collate sys.database_defaultcollate sys.database_default) != @pktable_qualifier) OR
-		(@fktable_qualifier != '' AND (SELECdb_name(  collate sys.database_defaultcollate sys.database_default) != @fktable_qualifier)
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @pktable_qualifier) OR
+		(@fktable_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @fktable_qualifier)
 	BEGIN
 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
   	END
@@ -714,51 +714,6 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
-SELECT 
-CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
-
-CASE 
-	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
-	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
-END AS PROCEDURE_NAME,
-
--1 AS NUM_INPUT_PARAMS,
--1 AS NUM_OUTPUT_PARAMS,
--1 AS NUM_RESULT_SETS,
-CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
-cast(2 AS smallint) AS PROCEDURE_TYPE
-
-FROM pg_catalog.pg_proc p 
-
-INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
-INNER JOIN sys.databases d ON d.database_id = sys.db_id()
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
-
-UNION 
-
-SELECT CAST((SELECdb_name(  collate sys.database_defaultcollate sys.database_default) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
-CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
-
-CASE 
-	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
-	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
-END AS PROCEDURE_NAME,
-
--1 AS NUM_INPUT_PARAMS,
--1 AS NUM_OUTPUT_PARAMS,
--1 AS NUM_RESULT_SETS,
-CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
-cast(2 AS smallint) AS PROCEDURE_TYPE
-
-FROM    pg_catalog.pg_namespace n 
-JOIN    pg_catalog.pg_proc p 
-ON      pronamespace = n.oid   
-WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
-
-GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
-
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
 BEGIN
@@ -787,9 +742,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate sys.database_default
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate database_default
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
+		WHERE Ext1.database_name = DB_NAME() collate database_default
 		AND Ext1.type != 'R'
 		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
@@ -808,7 +763,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR lower(orig_username) = lower(@name_in_db))
-					AND database_name = DB_NAME() collate sys.database_default
+					AND database_name = DB_NAME() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
@@ -820,8 +775,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
-		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
-		AND Ext2.database_name = DB_NAME() collate sys.database_default
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
@@ -832,7 +787,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @name_in_db
 					OR lower(orig_username) = lower(@name_in_db))
-					AND database_name = DB_NAME() collate sys.database_default
+					AND database_name = DB_NAME() collate database_default
 					AND type != 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
@@ -857,9 +812,9 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
-		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate sys.database_default
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate database_default
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
-		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
+		WHERE Ext1.database_name = DB_NAME() collate database_default
 		AND Ext1.type != 'R'
 		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
@@ -885,7 +840,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME() collate sys.database_default
+		WHERE Ext.database_name = DB_NAME() collate database_default
 		AND Ext.type = 'R'
 		ORDER BY RoleName;
 	END
@@ -894,7 +849,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR lower(orig_username) = lower(@rolename))
-					AND database_name = DB_NAME() collate sys.database_default
+					AND database_name = DB_NAME() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -903,7 +858,7 @@ BEGIN
 		FROM pg_catalog.pg_roles AS Base 
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext
 		ON Base.rolname = Ext.rolname
-		WHERE Ext.database_name = DB_NAME() collate sys.database_default
+		WHERE Ext.database_name = DB_NAME() collate database_default
 		AND Ext.type = 'R'
 		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
 		ORDER BY RoleName;
@@ -931,8 +886,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_name = DB_NAME() collate sys.database_default
-		AND Ext2.database_name = DB_NAME() collate sys.database_default
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		ORDER BY RoleName, MemberName;
@@ -942,7 +897,7 @@ BEGIN
 					FROM sys.babelfish_authid_user_ext
 					WHERE (orig_username = @rolename
 					OR lower(orig_username) = lower(@rolename))
-					AND database_name = DB_NAME() collate sys.database_default
+					AND database_name = DB_NAME() collate database_default
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
@@ -953,8 +908,8 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.database_nDB_NAME(  collate sys.database_defaultcollate sys.database_default
-		AND Ext2.database_nDB_NAME(  collate sys.database_defaultcollate sys.database_default
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
 		AND Ext1.type = 'R'
 		AND Ext2.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
@@ -968,6 +923,86 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helprolemember TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
+	"@procedure_name" sys.nvarchar(390) = '%',
+	"@procedure_owner" sys.nvarchar(384) = NULL,
+	"@procedure_qualifier" sys.sysname = NULL,
+	"@column_name" sys.nvarchar(384) = NULL,
+	"@odbcver" int = 2,
+	"@fusepattern" sys.bit = '1'
+)	
+AS $$
+	SELECT @procedure_name = LOWER(COALESCE(@procedure_name, ''))
+	SELECT @procedure_owner = LOWER(COALESCE(@procedure_owner, ''))
+	SELECT @procedure_qualifier = LOWER(COALESCE(@procedure_qualifier, ''))
+	SELECT @column_name = LOWER(COALESCE(@column_name, ''))
+BEGIN 
+	IF (@procedure_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @procedure_qualifier)
+		BEGIN
+			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+ 	   	END
+	IF @fusepattern = '1'
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
+				AND (@column_name = '' OR column_name LIKE @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+	ELSE
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner = @procedure_owner)
+				AND (@column_name = '' OR column_name = @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_word_parse(
 	IN "@input" sys.nvarchar(776),
@@ -1016,7 +1051,7 @@ BEGIN
 					IF @row_count > 3
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
-							IF @dbdb_name(  collate sys.database_defaultcollate sys.database_defaultcollate database_default
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
@@ -1044,7 +1079,7 @@ BEGIN
 					IF @row_count > 2
 						BEGIN
 							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
-							IF @dbdb_name(  collate sys.database_defaultcollate sys.database_defaultcollate database_default
+							IF @dbname != sys.db_name() collate database_default
 								BEGIN
 									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
 								END
