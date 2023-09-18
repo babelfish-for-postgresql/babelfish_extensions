@@ -3067,7 +3067,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List	   *res;
 					GrantStmt  *stmt;
 					PlannedStmt *wrapper;
-					RoleSpec *rolspec = create_schema->authrole;
+					//RoleSpec *rolspec = create_schema->authrole;
 
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
@@ -3116,61 +3116,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								   NULL);
 
 					CommandCounterIncrement();
-
-					/* Grant all privileges to the user.*/
-					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
-					{
-						int i;
-						char	   *dbname = get_cur_db_name();
-						char *schema_name = NULL;
-						const char *logicalschema = NULL;
-						char *permissions[] = {"select", "insert", "update", "references", "delete", "execute"};
-						List	   *parsetree_list;
-						ListCell   *parsetree_item;
-						if (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0 || strcmp(dbname, "msdb") == 0)
-						{
-							schema_name = create_schema->schemaname;
-							logicalschema = get_logical_schema_name(schema_name, true);
-						}
-						else
-						{
-							schema_name = get_physical_schema_name(dbname, create_schema->schemaname);
-							logicalschema = create_schema->schemaname;
-						}
-						for (i = 0; i < 6; i++)
-						{
-							parsetree_list = gen_grantschema_subcmds(schema_name, rolspec->rolename, true, false, permissions[i]);
-							/* Run all subcommands */
-							foreach(parsetree_item, parsetree_list)
-							{
-								Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-								PlannedStmt *wrapper;
-
-								/* need to make a wrapper PlannedStmt */
-								wrapper = makeNode(PlannedStmt);
-								wrapper->commandType = CMD_UTILITY;
-								wrapper->canSetTag = false;
-								wrapper->utilityStmt = stmt;
-								wrapper->stmt_location = 0;
-								wrapper->stmt_len = 16;
-
-								/* do this step */
-								ProcessUtility(wrapper,
-											"(GRANT SCHEMA )",
-											false,
-											PROCESS_UTILITY_SUBCOMMAND,
-											NULL,
-											NULL,
-											None_Receiver,
-											NULL);
-
-								/* make sure later steps can see the object created here */
-								CommandCounterIncrement();
-							}
-							//if (!check_bbf_schema_for_entry(dbname, create_schema->schemaname, "ALL", permissions[i], rolspec->rolename))
-							add_entry_to_bbf_schema(dbname, logicalschema , "ALL", permissions[i], rolspec->rolename);
-						}
-					}
 					return;
 				}
 				else
