@@ -239,6 +239,12 @@ go
 
 grant select on schema::babel_4344_s2 to guest; -- should pass 
 go
+grant select on schema::babel_4344_s1 to babel_4344_u1; -- should fail
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the schema "babel_4344_s1", because it does not exist or you do not have permission..)~~
+
 use master;
 go
 

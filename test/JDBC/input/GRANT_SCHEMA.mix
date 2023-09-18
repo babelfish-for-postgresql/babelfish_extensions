@@ -143,6 +143,8 @@ grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
 go
 grant select on schema::babel_4344_s2 to guest; -- should pass 
 go
+grant select on schema::babel_4344_s1 to babel_4344_u1; -- should fail
+go
 use master;
 go
 
