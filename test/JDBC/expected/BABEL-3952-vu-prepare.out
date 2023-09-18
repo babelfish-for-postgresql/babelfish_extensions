@@ -492,3 +492,47 @@ CREATE VIEW DATE_BUCKET_vu_prepare_v49  AS (
 		DATE_BUCKET(ms, 2, cast('2023-09-23 11:12:32.64537' as datetime2),  cast('1965-09-25 09:32:43.343' as datetime2)) as db16
     );
 GO
+
+-- Procedures
+CREATE PROCEDURE BABEL_3952_vu_prepare_p1 as (
+	SELECT
+		date_bucket(month, 2, cast('2015-10-11' as date)) as db1,
+		date_bucket(month, 3, cast('2012-04-09' as date)) as db2
+	);
+GO
+
+CREATE PROCEDURE BABEL_3952_vu_prepare_p2 as (
+	SELECT
+		date_bucket(year, 12, cast('2030-01-01 00:00:00 ' as datetime)) as db1,
+		date_bucket(year, 15, cast('2019-12-23 23:59:59.997' as datetime)) as db2
+	);
+GO
+
+CREATE PROCEDURE BABEL_3952_vu_prepare_p3 as (
+	SELECT
+		date_bucket(hour, 5, cast('2000-01-01 00:00:00' as datetime2)) as dt1,
+		date_bucket(hour, 5, cast('2020-09-23 12:43:43.43' as datetime2)) as dt2
+	);
+GO
+
+-- Functions
+CREATE FUNCTION BABEL_3952_vu_prepare_f1()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT date_bucket(week, 7, cast('2012-01-23 12:32:23.324' as datetime2)));
+END
+GO
+
+CREATE FUNCTION BABEL_3952_vu_prepare_f2()
+RETURNS time AS
+BEGIN
+RETURN (select date_bucket(second, 19, cast('12:32:53.23' as time), cast('02:12:53.32' as time)));
+END
+GO
+
+CREATE FUNCTION BABEL_3952_vu_prepare_f3()
+RETURNS date AS
+BEGIN
+RETURN (select date_bucket(day, 23, cast('2001-11-14' as date), cast('1980-09-10' as date)));
+END
+GO

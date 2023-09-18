@@ -174,3 +174,91 @@ GO
 
 SELECT DATE_BUCKET(second, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS SECONDS_BUCKET
 GO
+
+EXEC BABEL_3952_vu_prepare_p1
+GO
+
+EXEC BABEL_3952_vu_prepare_p2
+GO
+
+EXEC BABEL_3952_vu_prepare_p3
+GO
+
+SELECT BABEL_3952_vu_prepare_f1()
+GO
+
+SELECT BABEL_3952_vu_prepare_f2()
+GO
+
+SELECT BABEL_3952_vu_prepare_f3()
+GO
+
+DECLARE @test_date date;
+SET @test_date = '1998-09-12';
+SELECT date_bucket(day,109, @test_date);
+GO
+
+DECLARE @test_date datetime;
+SET @test_date = '2010-09-12 12:23:12.564';
+SELECT date_bucket(hour,200, @test_date);
+GO
+
+DECLARE @test_date datetime2;
+SET @test_date = '2010-09-12 12:23:12.56443';
+SELECT date_bucket(week, 19, @test_date);
+GO
+
+DECLARE @test_date smalldatetime;
+SET @test_date = '2010-09-12 12:23:12';
+SELECT date_bucket(week, 3, @test_date);
+GO
+
+DECLARE @test_date datetimeoffset;
+SET @test_date = '2010-09-12 12:23:12.56443 +10:12';
+SELECT date_bucket(week,5, @test_date);
+GO
+
+DECLARE @test_date time;
+SET @test_date = '12:23:12.56443';
+SELECT date_bucket(hour,12, @test_date);
+GO
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a datetime)
+insert into dbucket (a) values(date_bucket(day, 21, CAST('2020-01-09 12:32:23.23' as datetime)))
+Select * from dbucket
+Select date_bucket(week,12, a) from dbucket
+GO
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a date)
+insert into dbucket (a) values(date_bucket(month, 24, CAST('2020-01-09' as date)))
+Select * from dbucket
+Select date_bucket(week,23, a) from dbucket
+GO
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a datetimeoffset)
+insert into dbucket (a) values(date_bucket(day, 123, CAST('2020-01-09 12:32:23.23 -10:23' as datetimeoffset)))
+Select * from dbucket
+Select date_bucket(month,3, a) from dbucket
+GO
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a smalldatetime)
+insert into dbucket (a) values(date_bucket(week, 9, CAST('2020-01-09 12:32:23' as smalldatetime)))
+Select * from dbucket
+Select date_bucket(hour,4, a) from dbucket
+GO
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a time)
+insert into dbucket (a) values(date_bucket(minute,12, CAST('12:32:23.23' as time)))
+Select * from dbucket
+Select date_bucket(second,10, a) from dbucket
+GO

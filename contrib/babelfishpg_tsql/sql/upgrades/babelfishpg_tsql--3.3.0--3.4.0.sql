@@ -779,7 +779,6 @@ BEGIN
             result_date = date_bin(date_difference_interval, date::timestamp, date_trunc('millisecond', origin::timestamp)) + millisec_trunc_diff_interval;
 
             -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result.
-            -- Example. query #4 of test VIEW DATE_BUCKET_vu_prepare_v29
             IF result_date + date_difference_interval <= date::timestamp THEN
                 result_date = result_date + date_difference_interval;
             END IF;
@@ -847,7 +846,6 @@ BEGIN
             date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
             result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
             -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. 
-            -- For Example. query #4 of test VIEW DATE_BUCKET_vu_prepare_v29.
             IF result_date + date_difference_interval <= date::TIMESTAMP THEN
                 result_date = result_date + date_difference_interval;
             END IF;
