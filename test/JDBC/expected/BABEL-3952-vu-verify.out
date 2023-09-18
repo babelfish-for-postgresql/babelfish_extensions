@@ -443,3 +443,211 @@ time
 12:23:55.5464460
 ~~END~~
 
+
+EXEC BABEL_3952_vu_prepare_p1
+GO
+~~START~~
+date#!#date
+2015-09-01#!#2012-04-01
+~~END~~
+
+
+EXEC BABEL_3952_vu_prepare_p2
+GO
+~~START~~
+datetime#!#datetime
+2020-01-01 00:00:00.0#!#2005-01-01 00:00:00.0
+~~END~~
+
+
+EXEC BABEL_3952_vu_prepare_p3
+GO
+~~START~~
+datetime2#!#datetime2
+1999-12-31 23:00:00.0000000#!#2020-09-23 10:00:00.0000000
+~~END~~
+
+
+SELECT BABEL_3952_vu_prepare_f1()
+GO
+~~START~~
+datetime2
+2012-01-09 00:00:00.0000000
+~~END~~
+
+
+SELECT BABEL_3952_vu_prepare_f2()
+GO
+~~START~~
+time
+12:32:36.3200000
+~~END~~
+
+
+SELECT BABEL_3952_vu_prepare_f3()
+GO
+~~START~~
+date
+2001-11-07
+~~END~~
+
+
+DECLARE @test_date date;
+SET @test_date = '1998-09-12';
+SELECT date_bucket(day,109, @test_date);
+GO
+~~START~~
+date
+1998-06-26
+~~END~~
+
+
+DECLARE @test_date datetime;
+SET @test_date = '2010-09-12 12:23:12.564';
+SELECT date_bucket(hour,200, @test_date);
+GO
+~~START~~
+datetime
+2010-09-06 00:00:00.0
+~~END~~
+
+
+DECLARE @test_date datetime2;
+SET @test_date = '2010-09-12 12:23:12.56443';
+SELECT date_bucket(week, 19, @test_date);
+GO
+~~START~~
+datetime2
+2010-05-03 00:00:00.0000000
+~~END~~
+
+
+DECLARE @test_date smalldatetime;
+SET @test_date = '2010-09-12 12:23:12';
+SELECT date_bucket(week, 3, @test_date);
+GO
+~~START~~
+smalldatetime
+2010-09-06 00:00:00.0
+~~END~~
+
+
+DECLARE @test_date datetimeoffset;
+SET @test_date = '2010-09-12 12:23:12.56443 +10:12';
+SELECT date_bucket(week,5, @test_date);
+GO
+~~START~~
+datetimeoffset
+2010-09-06 10:12:00.0000000 +10:12
+~~END~~
+
+
+DECLARE @test_date time;
+SET @test_date = '12:23:12.56443';
+SELECT date_bucket(hour,12, @test_date);
+GO
+~~START~~
+time
+12:00:00.0000000
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a datetime)
+insert into dbucket (a) values(date_bucket(day, 21, CAST('2020-01-09 12:32:23.23' as datetime)))
+Select * from dbucket
+Select date_bucket(week,12, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime
+2019-12-30 00:00:00.0
+~~END~~
+
+~~START~~
+datetime
+2019-10-28 00:00:00.0
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a date)
+insert into dbucket (a) values(date_bucket(month, 24, CAST('2020-01-09' as date)))
+Select * from dbucket
+Select date_bucket(week,23, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+date
+2020-01-01
+~~END~~
+
+~~START~~
+date
+2019-11-25
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a datetimeoffset)
+insert into dbucket (a) values(date_bucket(day, 123, CAST('2020-01-09 12:32:23.23 -10:23' as datetimeoffset)))
+Select * from dbucket
+Select date_bucket(month,3, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset
+2019-11-20 13:37:00.0000000 -10:23
+~~END~~
+
+~~START~~
+datetimeoffset
+2019-09-30 13:37:00.0000000 -10:23
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a smalldatetime)
+insert into dbucket (a) values(date_bucket(week, 9, CAST('2020-01-09 12:32:23' as smalldatetime)))
+Select * from dbucket
+Select date_bucket(hour,4, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+smalldatetime
+2019-11-18 00:00:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2019-11-18 00:00:00.0
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a time)
+insert into dbucket (a) values(date_bucket(minute,12, CAST('12:32:23.23' as time)))
+Select * from dbucket
+Select date_bucket(second,10, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+time
+12:24:00.0000000
+~~END~~
+
+~~START~~
+time
+12:24:00.0000000
+~~END~~
+
