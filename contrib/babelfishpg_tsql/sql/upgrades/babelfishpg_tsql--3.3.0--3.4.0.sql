@@ -1091,6 +1091,8 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_word_parse(IN sys.nvarchar(776), IN sys.varchar(13), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776)) TO PUBLIC;
 
+ALTER VIEW sys.sysdatabases RENAME TO sys.sysdatabases_deprecated_3_4_0;
+
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT
 t.orig_name AS name,
@@ -1109,6 +1111,9 @@ FROM sys.babelfish_sysdatabases AS t
 LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
 
 GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys.sysdatabases_deprecated_3_4_0');
+
+ALTER VIEW sys.pg_namespace_ext RENAME TO sys.pg_namespace_ext_deprecated_3_4_0;
 
 CREATE OR REPLACE VIEW sys.pg_namespace_ext AS
 SELECT BASE.* , DB.orig_name as dbname FROM
@@ -1117,6 +1122,9 @@ LEFT OUTER JOIN sys.babelfish_namespace_ext AS EXT on BASE.nspname = EXT.nspname
 INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid;
 
 GRANT SELECT ON sys.pg_namespace_ext TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys.pg_namespace_ext_deprecated_3_4_0');
+
+ALTER VIEW sys.databases RENAME TO sys.databases_deprecated_3_4_0;
 
 create or replace view sys.databases as
 select
@@ -1216,6 +1224,7 @@ select
  INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
  LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
 GRANT SELECT ON sys.databases TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sys.databases_deprecated_3_4_0');
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
