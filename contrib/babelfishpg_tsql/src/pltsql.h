@@ -2026,6 +2026,7 @@ extern Oid	tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id);
 extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
+extern Oid get_sys_varcharoid(void);
 
 typedef struct
 {

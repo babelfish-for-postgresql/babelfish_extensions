@@ -39,6 +39,10 @@ go
 drop user guest;
 go
 
+-- reset the login password
+alter login grant_connect_abc with password = 'Babel123'
+go
+
 -- tsql  user=grant_connect_abc password=Babel123
 -- should fail because the grant_connect_db1 doesn't have any user. It has guest user but that's disabled.
 use grant_connect_db1;

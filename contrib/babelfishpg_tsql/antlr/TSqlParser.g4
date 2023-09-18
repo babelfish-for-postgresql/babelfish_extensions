@@ -3156,7 +3156,7 @@ column_def_table_constraint
 // empirically found: ROWGUIDCOL can be in various locations
 column_definition
     : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | collation | null_notnull )*
-      ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
+      ( column_constraint* IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* inline_index?
     | TIMESTAMP null_notnull? column_constraint?
     ;
@@ -3164,7 +3164,7 @@ column_definition
 // Temporary workaround for COLLATE default in INSERT BULK
 insert_bulk_column_definition
     : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE (id | DEFAULT)) | null_notnull )*
-      ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
+      ( column_constraint* IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* inline_index?
     ;
 

@@ -166,33 +166,53 @@ db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
 ~~END~~
 
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_table_privileges @TABLE_NAME = [mytable5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_table_privileges @TABLE_NAME = [MYTABLE5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_table_privileges @TABLE_NAME = [mytable6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 exec sp_table_privileges @TABLE_NAME = [MYTABLE6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable6#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
 
 
 -- tests fUsePattern = 0

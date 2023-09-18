@@ -107,6 +107,33 @@ GO
 -- Test for object that is ms_shipped
 SELECT OBJECTPROPERTY(OBJECT_ID('sys.sp_tables'), 'IsMSShipped')
 GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.xp_qv'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.xp_instance_regread'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_addlinkedserver'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_addlinkedsrvlogin'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_dropserver'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_droplinkedsrvlogin'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_testlinkedserver'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.sp_enum_oledb_providers'), 'IsMSShipped')
+GO
+
+USE msdb
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.fn_syspolicy_is_automation_enabled'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.syspolicy_configuration'), 'IsMSShipped')
+GO
+SELECT OBJECTPROPERTY(OBJECT_ID('dbo.syspolicy_system_health_state'), 'IsMSShipped')
+GO
+USE master
+GO
 
 -- Test for invalid object
 SELECT OBJECTPROPERTY(0, 'IsMSShipped')

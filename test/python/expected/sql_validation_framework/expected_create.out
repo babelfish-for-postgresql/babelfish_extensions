@@ -66,6 +66,8 @@ Could not find tests for procedure sys.babel_drop_all_dbs
 Could not find tests for procedure sys.babel_drop_all_logins
 Could not find tests for procedure sys.babel_initialize_logins
 Could not find tests for procedure sys.printarg
+Could not find tests for procedure sys.sp_cursor_list
+Could not find tests for procedure sys.sp_describe_cursor
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
@@ -127,7 +129,6 @@ Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
 Could not find upgrade tests for function sys.is_collated_ci_as_internal
 Could not find upgrade tests for function sys.is_rolemember_internal
-Could not find upgrade tests for function sys.language
 Could not find upgrade tests for function sys.max_precision
 Could not find upgrade tests for function sys.microsoftversion
 Could not find upgrade tests for function sys.openjson_array
@@ -139,7 +140,6 @@ Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.pgerror
 Could not find upgrade tests for function sys.role_id
 Could not find upgrade tests for function sys.servername
-Could not find upgrade tests for function sys.servicename
 Could not find upgrade tests for function sys.sp_columns_100_internal
 Could not find upgrade tests for function sys.sp_columns_managed_internal
 Could not find upgrade tests for function sys.sp_datatype_info_helper
@@ -191,8 +191,6 @@ Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
-Could not find upgrade tests for procedure xp_instance_regread
-Could not find upgrade tests for procedure xp_qv
 Could not find upgrade tests for table sys.babelfish_configurations
 Could not find upgrade tests for table sys.babelfish_helpcollation
 Could not find upgrade tests for table sys.babelfish_syslanguages

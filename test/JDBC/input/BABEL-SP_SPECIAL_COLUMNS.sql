@@ -153,7 +153,7 @@ go
 exec sp_special_columns @table_name = 'MYTABLE2'
 go
 
--- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_special_columns @table_name = [mytable1]
 go
 
