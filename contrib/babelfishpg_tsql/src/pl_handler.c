@@ -3119,13 +3119,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Grant all privileges to the user.*/
 					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
 					{
-						//char	   *dbname = get_cur_db_name();
-						//const char *logicalschema = NULL;
+						char	   *dbname = get_cur_db_name();
+						const char *logicalschema = NULL;
 						char *permissions[] = {"select", "insert", "update", "references", "delete", "execute"};
 						List	   *parsetree_list;
 						ListCell   *parsetree_item;
 						int i;
-						//logicalschema = get_logical_schema_name(create_schema->schemaname, true);
+						logicalschema = get_logical_schema_name(create_schema->schemaname, true);
 						for (i = 0; i < 6; i++)
 						{
 							parsetree_list = gen_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
@@ -3156,8 +3156,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/* make sure later steps can see the object created here */
 								CommandCounterIncrement();
 							}
-							//if (!check_bbf_schema_for_entry(dbname, logicalschema, "ALL", permissions[i], rolspec->rolename))
-							//	add_entry_to_bbf_schema(dbname, logicalschema , "ALL", permissions[i], rolspec->rolename);
+							if (!check_bbf_schema_for_entry(dbname, logicalschema, "ALL", permissions[i], rolspec->rolename))
+								add_entry_to_bbf_schema(dbname, logicalschema , "ALL", permissions[i], rolspec->rolename);
 						}
 					}
 					return;
