@@ -856,7 +856,7 @@ insert into t1 values(1, 'one'), (2, 'two'), (3, 'three'), (4, 'four'), (5, 'fiv
 go
 
 -- delete with top
-delete top 2 t1
+delete top (2) t1
 output deleted.* into t2
 where num<5;
 go
@@ -870,7 +870,7 @@ go
 -- delete with top in subquery
 delete t1
 output deleted.num, deleted.word into t2
-from (select top 2 * from t1 order by num asc) as x
+from (select top (2) * from t1 order by num asc) as x
 where t1.num = x.num and t1.num<5;
 go
 

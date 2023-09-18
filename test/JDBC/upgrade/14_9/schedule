@@ -86,6 +86,7 @@ sys-trigger_nestlevel
 schema_resolution_proc
 BABEL-404
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-775
 BABEL-1206
@@ -403,3 +404,6 @@ BABEL-4078
 BABEL-3215
 orderby
 BABEL-4046
+getdate
+BABEL_4330
+BABEL-2619

@@ -216,13 +216,14 @@ typedef FormData_bbf_view_def * Form_bbf_view_def;
 #define BBF_SERVERS_DEF_IDX_NAME "babelfish_server_options_pkey"
 #define Anum_bbf_servers_def_servername 1
 #define Anum_bbf_servers_def_query_timeout 2
-#define BBF_SERVERS_DEF_NUM_COLS 2
+#define Anum_bbf_servers_def_connect_timeout 3
+#define BBF_SERVERS_DEF_NUM_COLS 3
 extern Oid	bbf_servers_def_oid;
 extern Oid	bbf_servers_def_idx_oid;
 
 extern Oid get_bbf_servers_def_oid(void);
 extern Oid get_bbf_servers_def_idx_oid(void);
-extern int get_query_timeout_from_server_name(char *servername);
+extern int get_timeout_from_server_name(char *servername, int attnum);
 extern int get_server_id_from_server_name(char *servername);
 extern void clean_up_bbf_server_def(void);
 
@@ -230,6 +231,7 @@ typedef struct FormData_bbf_servers_def
 {
 	text		servername;
 	int32		query_timeout;
+	int32		connect_timeout;
 } FormData_bbf_servers_def;
 
 typedef FormData_bbf_servers_def *Form_bbf_servers_def;
@@ -291,6 +293,42 @@ extern Oid	bbf_domain_mapping_idx_oid;
 
 extern Oid	get_bbf_domain_mapping_oid(void);
 extern Oid	get_bbf_domain_mapping_idx_oid(void);
+
+/*****************************************
+ *			EXTENDED_PROPERTIES
+ *****************************************/
+#define BBF_EXTENDED_PROPERTIES_TABLE_NAME "babelfish_extended_properties"
+#define BBF_EXTENDED_PROPERTIES_IDX_NAME "babelfish_extended_properties_pkey"
+
+#define Anum_bbf_extended_properties_dbid 1
+#define Anum_bbf_extended_properties_schema_name 2
+#define Anum_bbf_extended_properties_major_name 3
+#define Anum_bbf_extended_properties_minor_name 4
+#define Anum_bbf_extended_properties_type 5
+#define Anum_bbf_extended_properties_name 6
+#define Anum_bbf_extended_properties_orig_name 7
+#define Anum_bbf_extended_properties_value 8
+#define BBF_EXTENDED_PROPERTIES_NUM_COLS 8
+
+extern Oid	bbf_extended_properties_oid;
+extern Oid	bbf_extended_properties_idx_oid;
+
+extern Oid	get_bbf_extended_properties_oid(void);
+extern Oid	get_bbf_extended_properties_idx_oid(void);
+
+typedef struct FormData_bbf_extended_properties
+{
+	int16		dbid;
+	NameData	schema_name;
+	NameData	major_name;
+	NameData	minor_name;
+	VarChar		type;
+	VarChar		name;
+	VarChar		orig_name;
+	bytea		value;
+} FormData_bbf_extended_properties;
+
+typedef FormData_bbf_extended_properties *Form_bbf_extended_properties;
 
 /*****************************************
  *			Metadata Check Rule

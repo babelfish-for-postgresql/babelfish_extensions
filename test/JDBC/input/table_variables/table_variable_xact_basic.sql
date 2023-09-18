@@ -206,6 +206,18 @@ BEGIN TRANSACTION
 COMMIT
 SELECT * FROM @tv5                              -- should see (100, 2)
 GO
+
+-- Also test with Identity columns
+DECLARE @tv5 TABLE(c1 INT IDENTITY, c2 INT)
+INSERT INTO @tv5 VALUES(1)
+BEGIN TRANSACTION
+    UPDATE @tv5 SET c2 = 10 WHERE c1 = 1
+    UPDATE @tv5 SET c2 = 100 WHERE c1 = 1
+ROLLBACK
+SELECT * FROM @tv5                              -- should see (1, 100)
+INSERT INTO @tv5 VALUES(2)
+SELECT * FROM @tv5                              -- should see (2, 2)
+GO
 -------------------------------------------------------------------------------
 -- Test 5: Data with multiple versions
 -------------------------------------------------------------------------------
@@ -363,7 +375,7 @@ DROP TABLE TestTable
 GO
 
 -------------------------------------------------------------------------------
--- Test 12: Table Variable used with CURSOR
+-- Test 13: Table Variable used with CURSOR
 -------------------------------------------------------------------------------
 
 DECLARE @source TABLE(c1 INT, c2 INT)
@@ -390,6 +402,22 @@ DEALLOCATE cur
 SELECT * FROM @source
 
 GO
+
+-------------------------------------------------------------------------------
+-- Test 14: BABEL-4267 Table Variables with Identity Columns
+-------------------------------------------------------------------------------
+CREATE TABLE numbers (number INT NOT NULL)
+GO
+
+DECLARE @FirstString nVarchar(255)
+DECLARE @PseudoMatrix TABLE(location int identity primary key, c2 int)
+SELECT number, SUBSTRING(@FirstString,number,1) AS ch
+    FROM numbers WHERE number <= LEN(@FirstString) union all Select 0, Char(0)
+GO
+
+DROP TABLE numbers
+GO
+
 -------------------------------------------------------------------------------
 -- Cleanup
 -------------------------------------------------------------------------------

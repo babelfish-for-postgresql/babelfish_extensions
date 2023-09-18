@@ -1,0 +1,256 @@
+-- tsql
+-- Throws an error if the argument is empty
+exec sp_execute_postgresql NULL;
+go
+
+exec sp_execute_postgresql '';
+go
+
+-- Throw error if extension statement is empty after removing trailing spaces
+exec sp_execute_postgresql '       ';
+go
+
+-- Throw error if no argument or more than 2 arguments are passed to sp_execute_postgresql procedure
+exec sp_execute_postgresql;
+go
+
+EXEC sp_execute_postgresql '', '','';
+go
+
+-- Creates extension even if extension statement contains leading/trailing spaces by removing trailing spaces
+exec sp_execute_postgresql '     create extension pg_stat_statements      ';
+
+-- throw an error if more than one statement is passed
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema sys; create extension pg_stat_statements';
+go
+
+-- check if dialect, current_user and search_path are switched back to it's original values after error
+select current_user
+go
+
+select current_setting('search_path')
+go
+
+select current_setting('babelfishpg_tsql.sql_dialect')
+go
+
+-- throw error if statements has syntax error
+exec sp_execute_postgresql 'crete extension pg_stat_statements';
+go
+
+
+-- throw error if anything other than extension object is created
+exec sp_execute_postgresql 'create table test(A int)'
+go
+
+-- throw error if unprivileged login(does not have superuser as well as sysadmin) tries to create the extension
+create login l1 with password = '12345678'
+go
+
+-- tsql user=l1 password=12345678
+exec sp_execute_postgresql 'create extension pg_stat_statements';
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+
+-- psql
+select pg_sleep(1);
+GO
+
+-- tsql
+drop login l1
+go
+
+
+-- throw error if login does not have superuser privilege(it has only sysadmin)
+create login l2 with password = '12345678'
+go
+-- grant role sysadmin
+alter role sysadmin add member l2
+go
+
+-- tsql user=l2 password=12345678
+exec sp_execute_postgresql 'create extension pg_stat_statements';
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+
+-- psql
+select pg_sleep(1);
+GO
+
+-- tsql
+drop login l2
+go
+
+-- Create extension
+exec sp_execute_postgresql 'create extension if not exists pg_stat_statements';
+go
+select extname from pg_extension where extname = 'pg_stat_statements'
+go
+
+-- psql
+ALTER SYSTEM SET pg_stat_statements.track = 'top';
+ALTER SYSTEM SET compute_query_id = 1;
+SELECT pg_reload_conf();
+go
+
+SELECT pg_sleep(1);
+go
+
+SELECT pg_stat_statements_reset();
+go
+
+-- tsql
+-- for accessing the extension we need to give schema qualifier i.e. [public].pg_stat_statements
+SELECT toplevel, query, calls, rows, plans from [public].pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+go
+
+-- create extension without using 'if not exists' option will throw error
+exec sp_execute_postgresql 'create extension pg_stat_statements';
+go
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- throw an error if user creates anything other than allowed extensions(tds_fdw, pg_stat_statements and fuzzystrmatch for now)
+exec sp_execute_postgresql 'create extension pg_visibility';
+go
+
+-- create extension with any schema other than user created schemas
+-- non-babelfish schema
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema public';
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- user created schema 
+create schema sch1
+go
+
+-- throw error if try to create extension in user created schema
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema sch1'
+go
+
+-- babelfish schema
+exec sp_execute_postgresql 'create extension pg_stat_statements with schema sys';
+go
+
+drop schema sch1
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- try extension creation after switching database context
+create database sp_exec_psql_db1;
+go
+
+use sp_exec_psql_db1;
+go
+
+exec sp_execute_postgresql 'create extension pg_stat_statements;';
+go
+
+select nsp.nspname from pg_extension ext join pg_namespace nsp on ext.extnamespace=nsp.oid where ext.extname = 'pg_stat_statements';
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements;';
+go
+
+use master;
+go
+
+drop database sp_exec_psql_db1;
+go
+
+-- cascade not supported yet, it will throw error
+exec sp_execute_postgresql 'create extension pg_stat_statements with cascade';
+go
+
+-- create extension with any previous version
+exec sp_execute_postgresql 'create extension pg_stat_statements with version "1.4"';
+go
+
+select extname, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+
+-- alter extension version
+exec sp_execute_postgresql 'alter extension pg_stat_statements update to "1.10"';
+go
+
+select extname, extversion from pg_extension where extname = 'pg_stat_statements'
+go
+
+-- throw an error if user tries to alter schema
+exec sp_execute_postgresql 'alter extension pg_stat_statements set schema sys'
+go
+
+-- throw an error if user tries to Add/Drop objects in extension
+create table demo(A int)
+go
+exec sp_execute_postgresql 'alter extension pg_stat_statements add table demo'
+go
+drop table demo
+go
+
+-- throw error if we drop any other object other than extension
+create table proc_tmp(A int)
+go
+exec sp_execute_postgresql 'drop table proc_tmp'
+go
+drop table proc_tmp
+go
+
+-- cannot drop extension if other objects depend on it
+create view pg_view as select query from [public].pg_stat_statements;
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements'
+go
+drop view pg_view
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- drop extension without using 'if exists' option will throw error
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+-- drop extension using 'if exists' option
+exec sp_execute_postgresql 'drop extension if exists pg_stat_statements';
+go
+
+exec sp_execute_postgresql 'create extension pg_stat_statements'
+go
+
+-- Restrict option prevents the specified extensions from being dropped if other objects depend on table_schema
+create view pg_view as select query from [public].pg_stat_statements;
+go
+exec sp_execute_postgresql 'drop extension pg_stat_statements restrict'
+go
+drop view pg_view
+go
+
+exec sp_execute_postgresql 'drop extension pg_stat_statements';
+go
+
+-- check if dialect, current_user and search_path are switched back to it's default values
+select current_user
+go
+
+select current_setting('search_path')
+go
+
+select current_setting('babelfishpg_tsql.sql_dialect')
+go

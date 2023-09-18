@@ -800,6 +800,7 @@ void
 pltsql_free_function_memory(PLtsql_function *func)
 {
 	int			i;
+	MemoryContext func_cxt = NULL;
 
 	/* Better not call this on an in-use function */
 	Assert(func->use_count == 0);
@@ -864,10 +865,16 @@ pltsql_free_function_memory(PLtsql_function *func)
 	 * And finally, release all memory except the PLtsql_function struct
 	 * itself (which has to be kept around because there may be multiple
 	 * fn_extra pointers to it).
+	 * It is also possible that PLtsql_function struct was allocated in
+	 * the same func->fn_cxt memory context, so we avoid accessing struct
+	 * fields after memory context is released.
 	 */
 	if (func->fn_cxt)
-		MemoryContextDelete(func->fn_cxt);
-	func->fn_cxt = NULL;
+	{
+		func_cxt = func->fn_cxt;
+		func->fn_cxt = NULL;
+		MemoryContextDelete(func_cxt);
+	}
 }
 
 

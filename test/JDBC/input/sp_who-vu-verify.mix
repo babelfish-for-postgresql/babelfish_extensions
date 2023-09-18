@@ -1,0 +1,133 @@
+-- sla 1000000
+/* tests for sp_babelfish_autoformat */
+sp_babelfish_autoformat 't_sp_who'
+go
+
+INSERT t_sp_who VALUES (NULL, NULL, NULL)
+go
+
+sp_babelfish_autoformat 't_sp_who'
+go
+
+DELETE t_sp_who
+go
+
+INSERT t_sp_who VALUES (1, 'a', cast('01-Feb-2023 11:12:13' AS DATETIME))
+go
+
+sp_babelfish_autoformat 't_sp_who'
+go
+
+INSERT t_sp_who VALUES (123456789, 'abcdefghijabcdefghijabcdefghij', cast('02-Jan-2023 11:12:13' AS DATETIME))
+go
+
+sp_babelfish_autoformat 't_sp_who'
+go
+
+sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc'
+go
+
+sp_babelfish_autoformat 't_sp_who', @orderby='order by a desc', @hiddencols='a'
+go
+
+CREATE TABLE #t(a INT, b INT)
+INSERT #t VALUES (1, 98765432)
+INSERT #t VALUES (2, NULL)
+INSERT #t VALUES (NULL, 345)
+go
+
+sp_babelfish_autoformat '#t'
+go
+
+sp_babelfish_autoformat '[sp_who test table]'
+go
+
+INSERT [sp_who test table] VALUES (123, 987)
+INSERT [sp_who test table] VALUES (1, 454)
+go
+
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='d'
+go
+
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[d]'
+go
+
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[test col]'
+go
+
+sp_babelfish_autoformat '[sp_who test table]', @orderby = 'ORDER by [test col]'
+go
+
+sp_babelfish_autoformat '[sp_who test table]', @hiddencols='[test col]', @orderby = 'ORDER BY d'
+go
+
+/* negative tests */
+sp_babelfish_autoformat NULL
+go
+
+sp_babelfish_autoformat ''
+go
+
+sp_babelfish_autoformat 'nosuchtable'
+go
+
+sp_babelfish_autoformat 'sp_who_myprocedure'
+go
+
+sp_babelfish_autoformat 't_sp_who', @hiddencols='nosuchcolumn'
+go
+
+sp_babelfish_autoformat 't_sp_who', @orderby='a'
+go
+
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn'
+go
+
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=0
+go
+
+sp_babelfish_autoformat 't_sp_who', @orderby='order by nosuchcolumn', @printrc=1
+go
+
+
+/* tests for sp_who */
+/* 
+ * Since the spid and hostname columns in the output of sp_who have unpredictable values, the tests should avoid showing those.
+ * Normally, a workaround for this issue is to call the procedure as INSERT..EXECUTE <proc> and insert the result set into a table
+ * and show only the columns that are predictable.
+ * However, this does not work for procedures where the final SELECT is inside EXECUTE() -- and that is the case for sp_who.
+ * All of this means we cannot actually run sp_who for the normal use cases
+ * This test file is created as a .mix file in anticipation of it becoming possible to include full test cases for sp_who
+ */
+
+sp_who 0
+go
+
+sp_who '0'
+go
+
+sp_who 'sp_who_login'
+go
+
+sp_who 'sp_who_login', NULL
+go
+
+sp_who 'sp_who_login', ''
+go
+
+-- commenting out this test due to unexpected PG connections showing up
+--sp_who 'sp_who_login', 'postgres'
+go
+
+sp_who 'nosuchlogin'
+go
+
+sp_who @option=NULL, @loginame='sp_who_login'
+go
+
+sp_who @option='', @loginame='sp_who_login'
+go
+
+-- commenting out this test due to unexpected PG connections showing up
+--sp_who @option='postgres', @loginame='sp_who_login'
+go

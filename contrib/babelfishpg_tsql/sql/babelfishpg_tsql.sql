@@ -697,7 +697,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
     "@browse_information_mode" sys.tinyint = 0)
 AS $$
 BEGIN
-	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode);
+	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode) order by column_ordinal;
 END;
 $$
 LANGUAGE 'pltsql';
@@ -3222,3 +3222,398 @@ BEGIN
 END;
 $$
 LANGUAGE pltsql STABLE;
+
+-- sp_babelfish_autoformat is a helper procedure which formats the contents of a table (or view)
+-- as narrowly as possible given its actual column contents.
+-- This proc is currently only used by sp_who but could be applied more generically.
+-- A complication is that the metadata for #tmp tables cannot be found in the babelfish
+-- catalogs, so we have to use some trickery to make things work.
+-- Not all datatypes are handled as well as might be possible, but it is sufficient for 
+-- the current purposes.
+-- Note that this proc may increase the response time for the first execution of sp_who, but 
+-- we are looking at prioritizing user-friendliness (easy-to-read output) here. Also, sp_who 
+-- is very unlikely to be part of performance-critical workload.
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_autoformat(
+	IN "@tab"        sys.VARCHAR(257) DEFAULT NULL,
+	IN "@orderby"    sys.VARCHAR(1000) DEFAULT '',
+	IN "@printrc"    sys.bit DEFAULT 1,
+	IN "@hiddencols" sys.VARCHAR(1000) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @rc INT
+	DECLARE @id INT
+	DECLARE @objtype sys.VARCHAR(2)	
+	DECLARE @msg sys.VARCHAR(200)	
+	
+	IF @tab IS NULL
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END
+	
+	IF TRIM(@tab) = ''
+	BEGIN
+		RAISERROR('Must specify table name', 16, 1)
+		RETURN		
+	END	
+	
+	-- Since we cannot find #tmp tables in the Babelfish catalogs, we cannot check 
+	-- their existence other than by trying to select from them
+	-- Function sys.babelfish_get_enr_list() could be used to determine if a #tmp table
+	-- exists but the columns and datatypes can still not be retrieved, it would be of 
+	-- little use here. 
+	-- NB: not handling uncommon but valid T-SQL syntax '<schemaname>.#tmp' for #tmp tables
+	IF sys.SUBSTRING(@tab,1,1) <> '#'
+	BEGIN
+		SET @id = sys.OBJECT_ID(@tab)
+		IF @id IS NULL
+		BEGIN
+			IF sys.SUBSTRING(UPPER(@tab),1,4) = 'DBO.'
+			BEGIN
+				SET @id = sys.OBJECT_ID('SYS.' + sys.SUBSTRING(@tab,5))
+			END
+			IF @id IS NULL
+			BEGIN		
+				SET @msg = 'Table or view '''+@tab+''' not found'
+				RAISERROR(@msg, 16, 1)
+				RETURN		
+			END
+		END
+	END
+	
+	SELECT @objtype = type COLLATE DATABASE_DEFAULT FROM sys.sysobjects WHERE id = @id 
+	IF @objtype NOT IN ('U', 'S', 'V') 
+	BEGIN
+		SET @msg = ''''+@tab+''' is not a table or view'
+		RAISERROR(@msg, 16, 1)
+		RETURN		
+	END
+	
+	-- check for 'ORDER BY', if specified
+	SET @orderby = TRIM(@orderby)
+	IF @orderby <> ''
+	BEGIN
+		IF UPPER(@orderby) NOT LIKE 'ORDER BY%'
+		BEGIN
+			RAISERROR('@orderby parameter must start with ''ORDER BY''', 16, 1)
+			RETURN
+		END
+	END
+	
+	-- columns to hide in final client output
+	-- assuming delimited column names do not contain spaces or commas inside the name
+	-- remove any spaces around the commas:
+	WHILE (sys.CHARINDEX(' ,', @hiddencols) > 0) or (sys.CHARINDEX(', ', @hiddencols) > 0)
+	BEGIN
+		SET @hiddencols = sys.REPLACE(@hiddencols, ' ,', ',')
+		SET @hiddencols = sys.REPLACE(@hiddencols, ', ', ',')
+	END
+	IF sys.LEN(@hiddencols) IS NOT NULL SET @hiddencols = ',' + @hiddencols + ','
+	SET @hiddencols = UPPER(@hiddencols)	
+
+	-- Need to use a guaranteed-uniquely named table as intermediate step since we cannot 
+	-- access the metadata in case a #tmp table is passed as argument
+	-- But when we copy the #tmp table into another table, we get all the attributes and metadata
+	DECLARE @tmptab sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(NEWID(), '-', '')
+	DECLARE @tmptab2 sys.VARCHAR(63) = 'sp_babelfish_autoformat' + sys.REPLACE(NEWID(), '-', '')
+	DECLARE @cmd sys.VARCHAR(1000) = 'SELECT * INTO ' + @tmptab + ' FROM ' + @tab
+	
+	BEGIN TRY
+		-- create the first work table
+		EXECUTE(@cmd)
+
+		-- Get the columns
+		SELECT 
+		   c.name AS colname, c.colid AS colid, t.name AS basetype, 0 AS maxlen
+		INTO #sp_bbf_autoformat
+		FROM sys.syscolumns c left join sys.systypes t 
+		ON c.xusertype = t.xusertype		
+		WHERE c.id = sys.OBJECT_ID(@tmptab)
+		ORDER BY c.colid
+
+		-- Get max length for each column based on the data
+		DECLARE @colname sys.VARCHAR(63), @basetype sys.VARCHAR(63), @maxlen int
+		DECLARE c CURSOR FOR SELECT colname, basetype, maxlen FROM #sp_bbf_autoformat ORDER BY colid
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			SET @cmd = 'DECLARE @i INT SELECT @i=ISNULL(MAX(sys.LEN(CAST([' + @colname + '] AS sys.VARCHAR(500)))),4) FROM ' + @tmptab + ' UPDATE #sp_bbf_autoformat SET maxlen = @i WHERE colname = ''' + @colname + ''''
+			EXECUTE(@cmd)
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Generate the final SELECT
+		DECLARE @selectlist sys.VARCHAR(8000) = ''
+		DECLARE @collist sys.VARCHAR(8000) = ''
+		DECLARE @fmtstart sys.VARCHAR(30) = ''
+		DECLARE @fmtend sys.VARCHAR(30) = ''
+		OPEN c
+		WHILE 1=1
+		BEGIN
+			FETCH c INTO @colname, @basetype, @maxlen
+			IF @@fetch_status <> 0 BREAK
+			IF sys.LEN(@colname) > @maxlen SET @maxlen = sys.LEN(@colname)
+			IF @maxlen <= 0 SET @maxlen = 1
+			
+			IF (sys.CHARINDEX(',' + UPPER(@colname) + ',', @hiddencols) > 0) OR (sys.CHARINDEX(',[' + UPPER(@colname) + '],', @hiddencols) > 0) 
+			BEGIN
+				SET @selectlist += ' [' + @colname + '],'			
+			END
+			ELSE 
+			BEGIN
+				SET @fmtstart = ''
+				SET @fmtend = ''
+				IF @basetype IN ('tinyint', 'smallint', 'int', 'bigint', 'decimal', 'numeric', 'real', 'float') 
+				BEGIN
+					SET @fmtstart = 'CAST(right(space('+CAST(@maxlen AS sys.VARCHAR)+')+'
+					SET @fmtend = ','+CAST(@maxlen AS sys.VARCHAR)+') AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'
+				END
+
+				SET @selectlist += ' '+@fmtstart+'CAST([' + @colname + '] AS sys.VARCHAR(' + CAST(@maxlen AS sys.VARCHAR) + '))'+@fmtend+' AS [' + @colname + '],'
+				SET @collist += '['+@colname + '],'
+			END
+		END
+		CLOSE c
+		DEALLOCATE c
+
+		-- Remove redundant commas
+		SET @collist = sys.SUBSTRING(@collist, 1, sys.LEN(@collist)-1)
+		SET @selectlist = sys.SUBSTRING(@selectlist, 1, sys.LEN(@selectlist)-1)	
+		SET @selectlist = 'SELECT ' + @selectlist + ' INTO ' + @tmptab2 + ' FROM ' + @tmptab + ' ' + @orderby
+		
+		-- create the second work table
+		EXECUTE(@selectlist)
+		
+		-- perform the final SELECT to generate the result set for the client
+		EXECUTE('SELECT ' + @collist + ' FROM ' + @tmptab2)
+			
+		-- PRINT rowcount if desired
+		SET @rc = @@rowcount
+		IF @printrc = 1
+		BEGIN
+			PRINT '   '
+			SET @cmd = '(' + CAST(@rc AS sys.VARCHAR) + ' rows affected)'
+			PRINT @cmd
+		END
+		
+		-- Cleanup: these work tables are permanent tables after all
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)	
+	END TRY	
+	BEGIN CATCH
+		-- Cleanup in case of an unexpected error
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab)
+		EXECUTE('DROP TABLE IF EXISTS ' + @tmptab2)		
+	END CATCH
+
+	RETURN
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN sys.VARCHAR(257), IN sys.VARCHAR(1000), sys.bit, sys.VARCHAR(1000)) TO PUBLIC;
+
+
+-- sp_who presents the contents of sysprocesses in a human-readable format.
+-- With 'postgres' as argument or with optional second argument as 'postgres',
+-- active PG connections will also be reported; by default only TDS connections are reported.
+CREATE OR REPLACE PROCEDURE sys.sp_who(
+	IN "@loginame" sys.sysname DEFAULT NULL,
+	IN "@option"   sys.VARCHAR(30) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @msg sys.VARCHAR(200)
+	DECLARE @show_pg BIT = 0
+	DECLARE @hide_col sys.VARCHAR(50) 
+	
+	IF @option IS NOT NULL
+	BEGIN
+		IF LOWER(TRIM(@option)) <> 'postgres' 
+		BEGIN
+			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
+			RETURN			
+		END
+	END
+	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
+	-- Get the executing statement for each spid and extract the main stmt type
+	-- This is for informational purposes only
+	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
+	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE sys.CHARINDEX('  ',query)>0) > 0 
+	BEGIN
+		UPDATE #sp_who_tmp SET query = sys.REPLACE(query, '  ', ' ')
+	END
+
+	-- Determine type of stmt to report by sp_who: very basic only
+	-- NB: not handling presence of comments in the query string
+	UPDATE #sp_who_tmp 
+	SET query = 
+	    CASE 
+			WHEN PATINDEX('%[^a-zA-Z0-9_]UPDATE[^a-zA-Z0-9_]%', query) > 0 THEN 'UPDATE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DELETE[^a-zA-Z0-9_]%', query) > 0 THEN 'DELETE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]INSERT[^a-zA-Z0-9_]%', query) > 0 THEN 'INSERT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]SELECT[^a-zA-Z0-9_]%', query) > 0 THEN 'SELECT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]WAITFOR[^a-zA-Z0-9_]%', query) > 0 THEN 'WAITFOR'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('CREATE ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('ALTER ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('DROP ', query))
+			ELSE sys.SUBSTRING(query, 1, sys.CHARINDEX(' ', query))
+		END
+
+	UPDATE #sp_who_tmp 
+	SET query = sys.SUBSTRING(query,1, 8-1 + sys.CHARINDEX(' ', sys.SUBSTRING(query,8,99)))
+	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %'	
+
+	-- The executing spid is always shown as doing a SELECT
+	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
+	UPDATE #sp_who_tmp SET query = TRIM(query)
+
+	-- Get all current connections
+	SELECT 
+		spid, 
+		MAX(blocked) AS blocked, 
+		0 AS ecid, 
+		CAST('' AS sys.VARCHAR(100)) AS status,
+		CAST('' AS sys.VARCHAR(100)) AS loginname,
+		CAST('' AS sys.VARCHAR(100)) AS hostname,
+		0 AS dbid,
+		CAST('' AS sys.VARCHAR(100)) AS cmd,
+		0 AS request_id,
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
+	INTO #sp_who_proc
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status, hostprocess
+		
+	-- Add attributes to each connection
+	UPDATE #sp_who_proc
+	SET ecid = sp.ecid,
+		status = sp.status,
+		loginname = sp.loginname,
+		hostname = sp.hostname,
+		dbid = sp.dbid,
+		request_id = sp.request_id
+	FROM #sp_who_sysprocesses sp
+		WHERE #sp_who_proc.spid = sp.spid				
+
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
+	UPDATE #sp_who_proc
+	SET connection = 'PostgreSQL'
+	WHERE hostprocess IS NULL 
+
+	-- Keep or delete PG connections
+	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
+	begin    
+		-- Show PG connections; these have dbid = 0
+		-- This is a Babelfish-specific enhancement, since PG connections may also be active in the Babelfish DB
+		-- and it may be useful to see these displayed
+		SET @show_pg = 1
+		
+		-- blank out the loginame parameter for the tests below
+		IF LOWER(@loginame) = 'postgres' SET @loginame = NULL
+	END
+	
+	-- By default, do not show the column indicating the connection type since SQL Server does not have this column
+	SET @hide_col = 'connection' 
+	
+	IF (@show_pg = 1) 
+	BEGIN
+		SET @hide_col = ''
+	END
+	ELSE 
+	BEGIN
+		-- Delete PG connections
+		DELETE #sp_who_proc
+		WHERE dbid = 0
+	END
+			
+	-- Apply filter if specified
+	IF (@loginame IS NOT NULL)
+	BEGIN
+		IF (TRIM(@loginame) = '')
+		BEGIN
+			-- Raise error
+			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+			RAISERROR(@msg, 16, 1)
+			RETURN
+		END
+		
+		IF (sys.ISNUMERIC(@loginame) = 1)
+		BEGIN
+			-- Remove all connections except the specified one
+			DELETE #sp_who_proc
+			WHERE spid <> CAST(@loginame AS INT)
+		END
+		ELSE 
+		BEGIN	
+			IF (LOWER(@loginame) = 'active')
+			BEGIN
+				-- Remove all 'idle' connections 
+				DELETE #sp_who_proc
+				WHERE status = 'idle'
+			END
+			ELSE 
+			BEGIN
+				-- Verify the specified login name exists
+				IF (sys.SUSER_ID(@loginame) IS NULL)
+				BEGIN
+					SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+					RAISERROR(@msg, 16, 1)
+					RETURN					
+				END
+				ELSE 
+				BEGIN
+					-- Keep only connections for the specified login
+					DELETE #sp_who_proc
+					WHERE sys.SUSER_ID(loginname) <> sys.SUSER_ID(@loginame)
+				END
+			END
+		END
+	END			
+			
+	-- Create final result set; use DISTINCT since there are usually duplicate rows from the PG catalogs
+	SELECT distinct 
+		p.spid AS spid, 
+		p.ecid AS ecid, 
+		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
+		p.blocked AS blk, 
+		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
+		p.request_id AS request_id,
+		connection
+	INTO #sp_who_tmp2
+	FROM #sp_who_proc p, #sp_who_tmp
+		WHERE p.spid = #sp_who_tmp.pid
+		ORDER BY spid		
+	
+	-- Patch up remaining cases
+	UPDATE #sp_who_tmp2
+	SET cmd = 'AWAITING COMMAND'
+	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	
+	UPDATE #sp_who_tmp2
+	SET cmd = 'UNKNOWN'
+	WHERE TRIM(cmd) = ''	
+	
+	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
+	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
+	RETURN
+END	
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;

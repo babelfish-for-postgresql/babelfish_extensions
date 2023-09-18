@@ -353,6 +353,157 @@ LANGUAGE plpgsql
 IMMUTABLE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+    str_hr TEXT;
+    str_mi TEXT;
+    precision_str TEXT;
+    sign_flag INTEGER;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    v_precision INTEGER;
+    input_expr_datetime2 datetime2;
+BEGIN
+
+    BEGIN
+    input_expr_datetime2 := cast(input_expr as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;   
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi ::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := v_hr * sign_flag;
+
+    v_string := CONCAT(input_expr_datetime2::pg_catalog.text , tz_offset);
+
+    BEGIN
+    RETURN cast(v_string as sys.datetimeoffset);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+    hr INTEGER;
+    mi INTEGER;
+    tz_sign INTEGER;
+    tz_offset_smallint INTEGER;
+    input_expr_datetime2 datetime2;
+BEGIN
+
+        BEGIN
+        input_expr_datetime2:= cast(input_expr as sys.datetime2);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+        END;
+
+
+        IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
+            'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype ,'varbinary'::regtype) THEN
+            RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+        END IF;
+
+        BEGIN
+        IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+            tz_offset := FLOOR(tz_offset);
+        END IF;
+        tz_offset_smallint := cast(tz_offset AS smallint);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+        END;
+
+        IF input_expr IS NULL THEN 
+            RETURN NULL;
+        END IF;
+    
+        IF tz_offset_smallint < 0 THEN
+            tz_sign := 1;
+        ELSE 
+            tz_sign := 0;
+        END IF;
+
+        IF tz_offset_smallint > 840 or tz_offset_smallint < -840  THEN
+            RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+        END IF;
+
+        hr := tz_offset_smallint / 60;
+        mi := tz_offset_smallint % 60;
+
+        v_sign := (
+        SELECT CASE
+            WHEN (tz_sign) = 1
+                THEN '-'
+            WHEN (tz_sign) = 0
+                THEN '+'    
+        END
+    );
+
+    
+        v_string := CONCAT(input_expr_datetime2::pg_catalog.text,v_sign,abs(hr)::SMALLINT::text,':',
+                                                          abs(mi)::SMALLINT::text);
+
+        BEGIN
+        RETURN cast(v_string as sys.datetimeoffset);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+        END;
+    
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year TEXT,
                                                                 IN p_month TEXT,
                                                                 IN p_day TEXT,
@@ -720,7 +871,7 @@ BEGIN
         RAISE most_specific_type_mismatch;
 
     -- Check if arguments are out of range
-    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+    ELSIF ((p_year NOT BETWEEN 0001 AND 9999) OR
         (p_month NOT BETWEEN 1 AND 12) OR
         (p_day NOT BETWEEN 1 AND 31) OR
         (p_hour NOT BETWEEN 0 AND 23) OR
@@ -758,7 +909,12 @@ BEGIN
     );
     v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
                                                           abs(p_minute_offset)::SMALLINT::text);
-    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE invalid_datetime_format;
+    END;
 EXCEPTION
     WHEN most_specific_type_mismatch THEN
         RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
@@ -774,6 +930,295 @@ EXCEPTION
                     DETAIL := format('Source value is out of %s data type range.', v_err_message),
                     HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.SMALLDATETIMEFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER
+                                                               )
+RETURNS sys.smalldatetime
+AS
+$BODY$
+DECLARE
+    v_ressmalldatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    p_seconds INTEGER;
+BEGIN
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Check if arguments are out of range
+    IF ((p_year NOT BETWEEN 1900 AND 2079) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR (p_year = 2079 AND p_month > 6) OR (p_year = 2079 AND p_month = 6 AND p_day > 6))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    p_seconds := 0;
+    v_ressmalldatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    p_seconds);
+
+    v_string := v_ressmalldatetime::pg_catalog.text;
+    RETURN CAST(v_string AS sys.SMALLDATETIME);
+EXCEPTION   
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type smalldatetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string pg_catalog.text;
+    isoverflow pg_catalog.text;
+BEGIN
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END; 
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    tzfm := sign_flag*((v_hr*60)+v_mi);
+
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
+
+
+    f_tzoffset := p_tzoffset + tzfm;
+
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+    
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string pg_catalog.text;
+    v_sign PG_CATALOG.TEXT;
+    tz_offset_smallint smallint;
+    isoverflow pg_catalog.text;
+BEGIN
+
+    IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype,'varbinary'::regtype ) THEN
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    BEGIN
+    IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+        tz_offset := FLOOR(tz_offset);
+    END IF;
+    tz_offset_smallint := cast(tz_offset AS smallint);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+    END;  
+
+    IF input_expr IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+    if tz_offset_smallint > 840 or tz_offset_smallint < -840 THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := tz_offset_smallint/60;
+    v_mi := tz_offset_smallint%60;
+    
+
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
+
+    v_sign := (
+        SELECT CASE
+            WHEN (tz_offset_smallint) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
+
+    f_tzoffset := p_tzoffset + tz_offset_smallint;
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
+
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+    
+
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
 END;
 $BODY$
 LANGUAGE plpgsql
@@ -1740,12 +2185,6 @@ $BODY$
 STRICT
 LANGUAGE sql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
-$BODY$
-SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
-$BODY$
-LANGUAGE SQL STABLE PARALLEL SAFE;
-
 -- These come from the built-in pg_catalog.count in pg_aggregate.dat
 CREATE AGGREGATE sys.count(*)
 (
@@ -2068,61 +2507,6 @@ LANGUAGE C PARALLEL SAFE IMMUTABLE;
 CREATE OR REPLACE FUNCTION sys.db_name() RETURNS sys.nvarchar(128)
 AS 'babelfishpg_tsql', 'babelfish_db_name'
 LANGUAGE C PARALLEL SAFE IMMUTABLE;
-
--- BABEL-1783: (partial) support for sys.fn_listextendedproperty
-create table if not exists sys.extended_properties (
-class sys.tinyint,
-class_desc sys.nvarchar(60),
-major_id int,
-minor_id int,
-name sys.sysname,
-value sys.sql_variant
-);
-GRANT SELECT ON sys.extended_properties TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
-property_name varchar(128),
-level0_object_type varchar(128),
-level0_object_name varchar(128),
-level1_object_type varchar(128),
-level1_object_name varchar(128),
-level2_object_type varchar(128),
-level2_object_name varchar(128)
-)
-returns table (
-objtype	sys.sysname,
-objname	sys.sysname,
-name	sys.sysname,
-value	sys.sql_variant
-) 
-as $$
-begin
--- currently only support COLUMN property
-IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
-    ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
-	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
-	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
-	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
-		RETURN query 
-		select CAST('COLUMN' AS sys.sysname) as objtype,
-		       CAST(t3.column_name AS sys.sysname) as objname,
-		       t1.name as name,
-		       t1.value as value
-		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
-		where t1.major_id = t2.oid and 
-			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
-		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
-			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
-	END IF;
-END IF;
-RETURN;
-end;
-$$
-LANGUAGE plpgsql
-STABLE;
-GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
-	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
-) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
@@ -3284,122 +3668,15 @@ begin
    end if;
 end
 $body$
-LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
     property SYS.VARCHAR
     )
-RETURNS INT
-AS $$
-BEGIN
-
-    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
-    THEN
-        RETURN NULL;
-    END IF;
-
-    property := RTRIM(LOWER(COALESCE(property, '')));
-
-    IF property = 'ownerid' -- OwnerId
-    THEN
-        RETURN (
-                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
-                FROM sys.all_objects t1
-                INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
-                WHERE t1.object_id = id);
-
-    ELSEIF property = 'isdefaultcnst' -- IsDefaultCnst
-    THEN
-        RETURN (SELECT count(distinct dc.object_id) FROM sys.default_constraints dc WHERE dc.object_id = id);
-
-    ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
-    THEN
-        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
-
-    ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
-    THEN
-        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
-            RETURN NULL;
-        END IF;
-        RETURN 0;
-
-    ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
-    THEN
-        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
-            RETURN NULL;
-        END IF;
-        RETURN 0;
-
-    ELSEIF property = 'ismsshipped' -- IsMSShipped
-    THEN
-        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
-
-    ELSEIF property = 'isschemabound' -- IsSchemaBound
-    THEN
-        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
-
-    ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
-    THEN
-        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
-
-    ELSEIF property = 'isdeterministic' -- IsDeterministic
-    THEN
-        RETURN 0;
-    
-    ELSEIF property = 'isprocedure' -- IsProcedure
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
-
-    ELSEIF property = 'istable' -- IsTable
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));
-
-    ELSEIF property = 'isview' -- IsView
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
-    
-    ELSEIF property = 'isusertable' -- IsUserTable
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
-    
-    ELSEIF property = 'istablefunction' -- IsTableFunction
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
-    
-    ELSEIF property = 'isinlinefunction' -- IsInlineFunction
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
-    
-    ELSEIF property = 'isscalarfunction' -- IsScalarFunction
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
-
-    ELSEIF property = 'isprimarykey' -- IsPrimaryKey
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
-    
-    ELSEIF property = 'isindexed' -- IsIndexed
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
-
-    ELSEIF property = 'isdefault' -- IsDefault
-    THEN
-        RETURN 0;
-
-    ELSEIF property = 'isrule' -- IsRule
-    THEN
-        RETURN 0;
-    
-    ELSEIF property = 'istrigger' -- IsTrigger
-    THEN
-        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
-    END IF;
-
-    RETURN NULL;
-END;
-$$
-LANGUAGE plpgsql STABLE;
+RETURNS INT AS
+'babelfishpg_tsql', 'objectproperty_internal'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
@@ -3442,6 +3719,22 @@ RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.host_id()
+RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
+RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
+RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
+RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 BIGINT)
 RETURNS bigint  AS 'babelfishpg_tsql','bigint_degrees' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.degrees(BIGINT) TO PUBLIC;
@@ -3475,19 +3768,19 @@ RETURNS int  AS 'babelfishpg_tsql','smallint_radians' LANGUAGE C STRICT IMMUTABL
 GRANT EXECUTE ON FUNCTION sys.radians(TINYINT) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC)
-RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS bigint  AS 'babelfishpg_tsql','bigint_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(BIGINT,NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC)
-RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','int_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(INT,NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC)
-RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(SMALLINT,NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC)
-RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+RETURNS int  AS 'babelfishpg_tsql','smallint_power' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.power(TINYINT,NUMERIC) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.degrees(IN arg1 NUMERIC)
@@ -3614,3 +3907,135 @@ CREATE OR REPLACE FUNCTION sys.EOMONTH(date,int DEFAULT 0)
 RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
 LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty
+(
+    IN "@name" sys.sysname DEFAULT NULL,
+    IN "@level0type" VARCHAR(128) DEFAULT NULL,
+    IN "@level0name" sys.sysname DEFAULT NULL,
+    IN "@level1type" VARCHAR(128) DEFAULT NULL,
+    IN "@level1name" sys.sysname DEFAULT NULL,
+    IN "@level2type" VARCHAR(128) DEFAULT NULL,
+    IN "@level2name" sys.sysname DEFAULT NULL,
+    OUT objtype sys.sysname,
+    OUT objname sys.sysname,
+    OUT name sys.sysname,
+    OUT value sys.sql_variant
+)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;
+
+-- Matches and returns column length of the corresponding column of the given table
+CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
+RETURNS SMALLINT AS $BODY$
+    DECLARE
+        col_name TEXT;
+        object_id oid;
+        column_id INT;
+        column_length INT;
+        column_data_type TEXT;
+        column_precision INT;
+    BEGIN
+        -- Get the object ID for the provided object_name
+        object_id = sys.OBJECT_ID(object_name);
+        IF object_id IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        -- Truncate and normalize the column name
+        col_name = sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
+
+        -- Get the column ID for the provided column_name
+        SELECT attnum INTO column_id FROM pg_attribute 
+        WHERE attrelid = object_id AND lower(attname) = col_name 
+        COLLATE sys.database_default;
+
+        IF column_id IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        -- Retrieve the data type, precision, scale, and column length in characters
+        SELECT a.atttypid::regtype, 
+               CASE 
+                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) >> 16) & 65535
+                   ELSE NULL
+               END,
+               CASE
+                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) & 65535)
+                   ELSE a.atttypmod
+               END
+        INTO column_data_type, column_precision, column_length
+        FROM pg_attribute a
+        WHERE a.attrelid = object_id AND a.attnum = column_id;
+
+        -- Remove delimiters
+        column_data_type := sys.babelfish_remove_delimiter_pair(column_data_type);
+
+        IF column_data_type IS NOT NULL THEN
+            column_length := CASE
+                -- Columns declared with max specifier case
+                WHEN column_length = -1 AND column_data_type IN ('varchar', 'nvarchar', 'varbinary')
+                THEN -1
+                WHEN column_data_type = 'xml'
+                THEN -1
+                WHEN column_data_type IN ('tinyint', 'bit') 
+                THEN 1
+                WHEN column_data_type = 'smallint'
+                THEN 2
+                WHEN column_data_type = 'date'
+                THEN 3
+                WHEN column_data_type IN ('int', 'integer', 'real', 'smalldatetime', 'smallmoney') 
+                THEN 4
+                WHEN column_data_type IN ('time', 'time without time zone')
+                THEN 5
+                WHEN column_data_type IN ('double precision', 'bigint', 'datetime', 'datetime2', 'money') 
+                THEN 8
+                WHEN column_data_type = 'datetimeoffset'
+                THEN 10
+                WHEN column_data_type IN ('uniqueidentifier', 'text', 'image', 'ntext')
+                THEN 16
+                WHEN column_data_type = 'sysname'
+                THEN 256
+                WHEN column_data_type = 'sql_variant'
+                THEN 8016
+                WHEN column_data_type IN ('bpchar', 'char', 'varchar', 'binary', 'varbinary') 
+                THEN column_length
+                WHEN column_data_type IN ('nchar', 'nvarchar') 
+                THEN column_length * 2
+                WHEN column_data_type IN ('numeric', 'decimal')
+                THEN 
+                    CASE
+                        WHEN column_precision IS NULL 
+                        THEN NULL
+                        ELSE ((column_precision + 8) / 9 * 4 + 1)
+                    END
+                ELSE NULL
+            END;
+        END IF;
+
+        RETURN column_length::SMALLINT;
+    END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
+
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+    BEGIN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;

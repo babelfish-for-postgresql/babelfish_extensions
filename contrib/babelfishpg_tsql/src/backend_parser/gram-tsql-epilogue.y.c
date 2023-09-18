@@ -230,6 +230,13 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	return result;
 }
 
+Node *
+TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location)
+{
+	ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("IDENTITY() function in SELECT INTO is not supported.")));
+	// Temporarily throw Syntax error instaed of reverting code until Select into identity function with order by is fixed 
+}
+
 /* TsqlFunctionParse -- Implements the PARSE and TRY_PARSE functions.
  * Takes in expression, target type, regional culture, try boolean, location.
  *

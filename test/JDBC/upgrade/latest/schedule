@@ -115,6 +115,7 @@ BABEL-4078
 BABEL-4098
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -133,6 +134,8 @@ babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-v2
+babel_int4_varbinary_div
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
@@ -144,6 +147,7 @@ babelfish_sysdatabases
 babel_function_string
 BABEL_GRANT_CONNECT
 babel_isnumeric
+BABEL_COL_NAME
 BABEL-LOGIN
 BABEL-LOGIN-USER-EXT
 BABEL-NEXT-VALUE-FOR
@@ -179,12 +183,14 @@ BABEL-TABLEOPTIONS
 babel_trigger
 babel_try_parse
 BABEL-USER
+babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
 case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
+col_length
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -227,7 +233,7 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 objectpropertyex
 openjson
-openquery_upgrd
+openquery_upgrd_before_15_4
 orderby
 routines_definition
 rowcount
@@ -236,7 +242,9 @@ schema_resolution_proc
 schema_resolution_trigger
 sp_describe_first_result_set
 sp_tablecollations
+smalldatetimefromparts-dep
 str
+switchoffset-dep
 sys-all_columns
 sys-all_columns-dep
 sys_all_objects
@@ -283,6 +291,7 @@ sys-endpoints
 sys-eomonth
 sys-events
 sys-extended_properties
+sys-sql_expression_dependencies
 sys-filegroups
 sys-filetables
 sys-filetable_system_defined_objects
@@ -407,6 +416,7 @@ Test-sp_addrolemember
 Test-sp_babelfish_volatility
 Test-sp_droprole
 Test-sp_droprolemember
+Test-sp_execute_postgresql
 Test-sp_helpdbfixedrole
 Test-sp_helprole-dep
 Test-sp_helprolemember-dep
@@ -432,6 +442,17 @@ test_windows_login
 test_windows_sp_helpuser
 TestXML
 timefromparts
+todatetimeoffset-dep
 triggers_with_transaction
+unquoted_string
 datetimeoffset-timezone
 BABEL-4046
+host_id
+linked_srv_4229
+BABEL-4175
+sp_who
+BABEL_4330
+kill
+BABEL-4217
+Test_ISNULL
+BABEL-4270

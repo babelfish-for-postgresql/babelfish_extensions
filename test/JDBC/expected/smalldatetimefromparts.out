@@ -1,0 +1,565 @@
+SELECT SMALLDATETIMEFROMPARTS ( 1899, 12, 31, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1899, 01, 01, 00, 00 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1900, 12, 31, 23, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+1900-12-31 23:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1900, 1, 1, 00, 00 ) AS Result
+go
+~~START~~
+smalldatetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, 00, NULL ) AS Result
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, NULL, 23 ) AS Result
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, NULL, 00, 23  ) AS Result
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, NULL, 01, 00, 23 ) AS Result
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( NULL, 1, 01, 00, 13 ) AS Result
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( NULL,NULL, NULL, NULL, NULL ) AS Result
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1899, 6, 30, 23, 59 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1900, 13, 31, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 12, 31, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2080, 1 , 1 , 00 , 0 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 12, 31, 23, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-12-31 23:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 13, 31, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 1, 1, 00,      00 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-01-01 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 1, 1, 00, '     00' ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-01-01 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 00, 31, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 0, 31, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 6, 6, 23, 59) AS Result
+GO
+~~START~~
+smalldatetime
+2079-06-06 23:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 6, 7, 00, 00) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 7, 6, 00, 00) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 01, 31, 23, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-31 23:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 31, 23, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-31 23:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 32, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 0, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 00, 23, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, 23, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-01 23:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, 24, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, 00, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-01 00:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -01, 59 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -00, 59 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-01 00:59:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -00, 60 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -00, 00 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-01 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -00, 0 ) AS Result
+go
+~~START~~
+smalldatetime
+2078-01-01 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -00, -1 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 01, -00, -01 ) AS Result
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( '2078', 1, 01, 00, 22) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-01 00:22:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ('2078','1','01','00','22' ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-01 00:22:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078.03, 1, 01, 00, 22 ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-01 00:22:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078.45, 1, 01, 00, 22 ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-01 00:22:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078.60, 1, 01, 00, 22 ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-01 00:22:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078.60, 1.0, 0.1, 0.0, 2.2 ) AS Result
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1.0, 2, 0, 2 ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-02 00:02:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 2, 0.0, 2 ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-02 00:02:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2078, 1, 2, 0, 2.0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-02 00:02:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( cast(2078 as varchar), cast(1 as numeric), cast(2 as bigint), cast(0 as float), cast(2 as real) ) AS Result
+GO
+~~START~~
+smalldatetime
+2078-01-02 00:02:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( cast(0x12 as int), 1, 2, 0, 2.0 ) AS Result
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( cast(0x123 as int), 1, 2, 0, 2.0 ) AS Result
+GO
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1017*2,2*5, 4*5, 2*11, 14*2*2 ) AS Result
+GO
+~~START~~
+smalldatetime
+2034-10-20 22:56:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( cast(0x7D0 as int), 1, 2, 0, 2.0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2000-01-02 00:02:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 1, 1, 00, 2.2 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-01-01 00:02:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 1, 2,-3,4) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, 1, -2,3,4) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 2079, -1,2,3,4) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS (- 2079, 1,2,3,4) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS (2079, 1,2,3,4) AS Result
+GO
+~~START~~
+smalldatetime
+2079-01-02 03:04:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 1, 7, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-01-07 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 3, 7, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-03-07 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 1899, 1, 1, 0, 0 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 7, 6, 0, 0 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1900, 0, 1, 00, 00 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS ( 1900, 1, 0, 00, 00 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 6, 6, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-06-06 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 5, 6, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-05-06 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 6, 5, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-06-05 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 6, 4, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-06-04 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 6, 3, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-06-03 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 7, 1, 0, 0 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 6, 7, 0, 0 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 6, 5, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-06-05 00:00:00.0
+~~END~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 7, 6, 0, 0 ) AS Result
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot construct data type smalldatetime, some of the arguments have values which are not valid.)~~
+
+
+SELECT SMALLDATETIMEFROMPARTS( 2079, 5, 7, 0, 0 ) AS Result
+GO
+~~START~~
+smalldatetime
+2079-05-07 00:00:00.0
+~~END~~
+
+

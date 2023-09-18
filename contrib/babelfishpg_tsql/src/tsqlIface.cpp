@@ -174,7 +174,6 @@ static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getProcNameFromExecParam(TSqlParser::Execute_parameterContext *exParamCtx);
 static std::string getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id);
 static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
-
 /*
  * Structure / Utility function for general purpose of query string modification
  *
@@ -245,6 +244,7 @@ static std::string validate_and_stringify_hints();
 static int find_hint_offset(const char * queryTxt);
 
 static bool pltsql_parseonly = false;
+bool has_identity_function = false;
 
 static void
 breakHere()
@@ -789,6 +789,12 @@ public:
 	void enterWaitfor_receive_statement(TSqlParser::Waitfor_receive_statementContext * ctx) override { 
 		if (in_create_or_alter_function && ctx->WAITFOR()){
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'WAITFOR' within a function.", 0, 0);
+		}
+	}
+
+	void enterKill_statement(TSqlParser::Kill_statementContext *ctx) override {
+		if (in_create_or_alter_function){
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Invalid use of a side-effecting operator 'KILL' within a function.", 0, 0);
 		}
 	}
 
@@ -1971,6 +1977,21 @@ public:
                               }
 
 			}
+
+			if (ctx->func_proc_name_server_database_schema()->procedure)
+			{
+				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
+				{
+					has_identity_function = true;
+				}
+				
+				if (pg_strncasecmp(proc_name.c_str(), "identity_into", strlen("identity_into")) == 0)
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
+						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
+			}
 		}
 	}
 
@@ -1978,8 +1999,18 @@ public:
 	// statement analysis
 	//////////////////////////////////////////////////////////////////////////////
 
+	void enterQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		has_identity_function = false;
+	}
+
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
+		// if select doesnt contains into but it contains identity we should throw error
+		if(has_identity_function && !ctx->INTO()){
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "The IDENTITY function can only be used when the SELECT statement has an INTO clause.", getLineAndPos(ctx));
+		}
+		has_identity_function = false;
 		if (statementMutator)
 			process_query_specification(ctx, statementMutator.get());
 	}
@@ -2027,6 +2058,37 @@ public:
 	void enterExecute_body_batch(TSqlParser::Execute_body_batchContext *ctx) override
 	{
 		graft(makeExecBodyBatch(ctx), peekContainer());
+	}
+
+	PLtsql_expr *rewrite_if_condition(TSqlParser::Search_conditionContext *ctx)
+	{
+		PLtsql_expr *expr = makeTsqlExpr(ctx, false);
+		PLtsql_expr_query_mutator mutator(expr, ctx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+		clear_rewritten_query_fragment();
+
+		/* Now we can prepend SELECT to rewritten search_condition */
+		expr->query = strdup((std::string("SELECT ") + std::string(expr->query)).c_str());
+		return expr;
+	}
+
+	void exitSearch_condition(TSqlParser::Search_conditionContext *ctx) override
+	{
+		if (!ctx->parent || !ctx->parent->parent)
+			return;
+
+		if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->if_statement())
+		{
+
+			PLtsql_stmt_if *fragment = (PLtsql_stmt_if *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = rewrite_if_condition(ctx);
+		}
+		else if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->while_statement())
+		{
+			PLtsql_stmt_while *fragment = (PLtsql_stmt_while *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = rewrite_if_condition(ctx);
+		}
 	}
 };
 
@@ -3867,10 +3929,13 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 
 	result->cmd_type = PLTSQL_STMT_IF;
 	result->lineno = getLineNo(ctx);
-	result->cond = makeTsqlExpr(ctx->search_condition(), true);
 
-	// Note that we record the then_body and the else_body
-	// in exitIf_statement()
+	/*
+	 * Note that 
+	 * 1/ We fill in result->cond during exitIf_statement so that search_condition would have
+	 *    been rewritten at that point. 
+	 * 2/ We record the then_body and the else_body in exitIf_statement().
+	 */
 
 	return result;
 }
@@ -4008,10 +4073,10 @@ void *
 makeWhileStmt(TSqlParser::While_statementContext *ctx)
 {
 	PLtsql_stmt_while *result = (PLtsql_stmt_while *) palloc0(sizeof(*result));
-
 	result->cmd_type = PLTSQL_STMT_WHILE;
-	result->cond = makeTsqlExpr(ctx->search_condition(), true);
-	
+
+	/* We will populate result->cond during exitSearch_condition() */
+
 	return result;
 }
 
@@ -4716,12 +4781,26 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		int lineno = getLineNo(ctx);
 		int return_code_dno = -1;
 
+		std::string rewritten_name = "";
+		if (body->func_proc_name_server_database_schema())
+		{
+			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
+			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(body->func_proc_name_server_database_schema(), getDatabase, getSchema);
+		}
+
+		std::string name = (!rewritten_name.empty() ? rewritten_name : func_proc_name);
+		// Rewrite proc name to sp_* if the schema is "dbo" or "sys" and proc name starts with "sp_"
+		if ((pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0) || (pg_strncasecmp(name.c_str(), "sys.sp_", 6) == 0))
+			name.erase(name.begin() + 0, name.begin() + 4);
+
 		auto *localID = body->return_status ? body->LOCAL_ID()[0] : nullptr;
 		if (localID)
 			return_code_dno = getVarno(localID);
 
-		if (is_sp_proc(func_proc_name))
-			return makeSpStatement(func_proc_name, func_proc_args, lineno, return_code_dno);
+		if (is_sp_proc(name))
+			return makeSpStatement(name, func_proc_args, lineno, return_code_dno);
 
 		PLtsql_stmt_exec *result = (PLtsql_stmt_exec *) palloc0(sizeof(*result));
 		result->cmd_type = PLTSQL_STMT_EXEC;
@@ -4759,20 +4838,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 			}
 		}
 
-		std::string rewritten_name = "";
-		if (body->func_proc_name_server_database_schema())
-		{
-			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
-			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
-			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
-			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(body->func_proc_name_server_database_schema(), getDatabase, getSchema);
-		}
-
 		std::stringstream ss;
-		std::string name = (!rewritten_name.empty() ? rewritten_name : func_proc_name);
-		// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
-		if (pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0)
-			name.erase(name.begin() + 0, name.begin() + 4);
 		ss << "EXEC " << name;
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
@@ -5035,6 +5101,27 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 }
 
 PLtsql_stmt *
+makeKillStatement(TSqlParser::Kill_statementContext *ctx)
+{
+	PLtsql_stmt_kill *result = (PLtsql_stmt_kill *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_KILL;
+	result->lineno = getLineNo(ctx);
+
+	/* 
+	 * Only supporting numeric argument for the spid,
+	 * other flavours of KILL are intercepted in the parser.
+	 */
+	if (ctx->kill_process()) {
+		char *strtol_endptr;
+		std::string spidStr = ::getFullText(ctx->kill_process());
+		result->spid = (int) strtol(spidStr.c_str(), &strtol_endptr, 10);
+	}
+
+	return (PLtsql_stmt *) result;
+}
+
+PLtsql_stmt *
 makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 {
 	if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
@@ -5146,6 +5233,8 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 		result.push_back(makeTransactionStatement(ctx->transaction_statement())); /* relaying transaction statement to main parser */
 	else if (ctx->use_statement())
 		result.push_back(makeUseStatement(ctx->use_statement()));
+	else if (ctx->kill_statement())
+		result.push_back(makeKillStatement(ctx->kill_statement()));
 
 	// FIXME: handle remaining statement types
 
@@ -5163,6 +5252,11 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	bool is_cross_db = false;
 	std::string db_name;
 	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+
+	// Rewrite proc name to sp_* if the schema is "dbo" or "sys" and proc name starts with "sp_"
+	if ((pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0) || (pg_strncasecmp(func_proc_name.c_str(), "sys.sp_", 6) == 0))
+		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
+
 	if (ctx->func_proc_name_server_database_schema()->database)
 	{
 		db_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database);
@@ -5213,9 +5307,6 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	}
 
 	std::stringstream ss;
-	// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
-	if (pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0)
-		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
 	ss << "EXEC " << func_proc_name;
 	if (func_proc_args)
 		ss << " " << ::getFullText(func_proc_args);

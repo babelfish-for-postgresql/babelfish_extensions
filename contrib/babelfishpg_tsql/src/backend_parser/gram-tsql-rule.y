@@ -417,6 +417,17 @@ tsql_alter_user_options:
 									 (Node *)makeString($3),
 									 @1);
 				}
+			| TSQL_LOGIN '=' RoleId
+				{
+					RoleSpec	*login = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					List		*rolelist;
+
+					login->rolename = pstrdup($3);
+					rolelist = list_make1(login);
+					$$ = makeDefElem("rolemembers",
+									 (Node *)rolelist,
+									 @1);
+				}
 		;
 
 tsql_AlterLoginStmt:
@@ -1883,6 +1894,18 @@ func_expr_common_subexpr:
 			| JSON_MODIFY '(' a_expr ',' a_expr ',' a_expr ')'
 				{
 					$$ = (Node *) TsqlJsonModifyMakeFuncCall($3, $5, $7);
+				}
+			| IDENTITY_P '(' Typename ',' a_expr ',' a_expr ')'
+				{
+					$$ = TsqlFunctionIdentityInto($3, $5, $7, @1);	 
+				}
+			| IDENTITY_P '(' Typename ',' a_expr ')'
+				{ 
+					$$ = TsqlFunctionIdentityInto($3, $5, (Node *)makeIntConst(1, -1), @1);
+				}
+			| IDENTITY_P '(' Typename ')'
+				{
+					$$ = TsqlFunctionIdentityInto($3, (Node *)makeIntConst(1, -1), (Node *)makeIntConst(1, -1), @1);
 				}
 		;
 

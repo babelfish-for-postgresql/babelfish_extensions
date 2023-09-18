@@ -17,7 +17,7 @@ GO
 DO
 $$
 BEGIN
-IF NOT EXISTS (SELECT * FROM pg_user_mappings WHERE srvname = 'bbf_server') THEN
+IF NOT EXISTS (SELECT * FROM pg_user_mappings WHERE srvname = 'bbf_server' OR srvname = 'server_4229') THEN
         SET client_min_messages = 'error';
         DROP EXTENSION tds_fdw CASCADE;
 END IF;

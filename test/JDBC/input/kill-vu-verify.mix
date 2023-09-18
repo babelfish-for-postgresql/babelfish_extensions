@@ -1,0 +1,227 @@
+-- tsql
+create table tab_kill_spid(spid int)
+go
+create login victim_user_tds with password = '12345678';
+go
+
+-- tsql user=victim_user_tds password=12345678
+select 1
+go
+-- not allowed: no sysadmin role
+KILL 1
+go
+
+-- tsql user=jdbc_user password=12345678
+/* find a TDS session that is not the current one */
+declare @victim_user_tds int
+declare @sql varchar(20)
+select top 1 @victim_user_tds = session_id from sys.dm_exec_sessions where login_name = 'victim_user_tds' and session_id <> @@spid
+if @victim_user_tds is null
+begin
+print 'ERROR: no victim spid found'
+end
+insert tab_kill_spid values(@victim_user_tds)
+set @sql = 'kill ' + convert(varchar, @victim_user_tds)
+execute(@sql)
+go
+
+-- allow the kill to complete; this might take a while under heavy workload
+exec pg_sleep 10
+go
+
+-- verify session does not exist anymore
+declare @victim_user_tds int
+select @victim_user_tds = spid from tab_kill_spid
+select count(distinct session_id) from sys.dm_exec_sessions where session_id = @victim_user_tds
+go
+
+
+/* Cannot currently be tested: trying to kill a PG session
+ * Reason is that the error message contains the spid number, which is not predicatable
+ * and will therefore always lead to a test failure
+ */
+go
+
+-- KILL in a procedure: allowed
+CREATE PROC kill_proc_1
+as
+KILL 1
+go
+EXECUTE kill_proc_1
+go
+
+-- KILL not allowed in a SQL function: not allowed
+CREATE FUNCTION kill_func() RETURNS INT
+AS
+BEGIN
+KILL 1
+END
+go
+
+-- try to kill current TDS session 
+declare @sql varchar(100)
+set @sql = 'kill ' + convert(varchar, @@spid)
+execute(@sql)
+go
+
+-- kill non-existing spid
+KILL 1
+go
+
+KILL -123
+go
+
+KILL 999999999999999999999999999999999999999999999
+go
+
+KILL 123 WITH STATUSONLY
+go
+
+KILL UOW WITH STATUSONLY
+go
+
+KILL 'A0499C66-F938-45CA-BF7E-E2B6194B48CF'
+go
+
+KILL 'A0499C66-F938-45CA-BF7E-E2B6194B48CF' with statusonly
+go
+
+KILL STATS JOB 123
+go
+
+KILL QUERY NOTIFICATION SUBSCRIPTION ALL
+go
+
+KILL QUERY NOTIFICATION SUBSCRIPTION 123
+go
+
+-- error semantics tests:
+
+-- basic: cannot use KILL inside a transaction
+BEGIN TRAN
+go
+KILL 1
+go
+ROLLBACK
+go
+
+CREATE TABLE tab_kill_test(a INT)
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+ROLLBACK
+go
+
+-- cannot use KILL in a transaction, XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+
+-- batch is not aborted when KILL in transaction, XACT_ABORT=OFF
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+ROLLBACK
+go
+
+-- respects XACT_ABORT=ON
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+go
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+
+-- KILL in procedure, XACT_ABORT=OFF
+CREATE PROCEDURE kill_proc_2
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT OFF
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_2
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go
+ROLLBACK
+go
+ 
+-- KILL in procedure, XACT_ABORT=ON
+CREATE PROCEDURE kill_proc_3
+AS
+BEGIN
+PRINT 'before kill'
+INSERT tab_kill_test values(2)
+KILL 1
+PRINT 'after kill'
+INSERT tab_kill_test values(3)
+END
+go
+SET XACT_ABORT ON
+go
+BEGIN TRANSACTION
+INSERT tab_kill_test values(1)
+EXECUTE kill_proc_3
+go
+SELECT @@TRANCOUNT
+go
+SELECT * FROM tab_kill_test
+go

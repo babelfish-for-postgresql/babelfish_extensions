@@ -107,6 +107,7 @@ BABEL-4078
 BABEL-4098
 babel_417
 BABEL-493
+BABEL_539
 BABEL-621
 BABEL-728
 BABEL-733
@@ -402,3 +403,6 @@ timefromparts
 triggers_with_transaction
 datetimeoffset-timezone-before-15_3
 BABEL-4046
+getdate
+BABEL_4330
+BABEL-2619

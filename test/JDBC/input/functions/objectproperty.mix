@@ -1,0 +1,1085 @@
+-- used to test when user does not have permission on the object
+CREATE LOGIN objectproperty_login_1 WITH PASSWORD = '12345678'
+go
+
+-- Global setup for tests
+CREATE DATABASE db1
+GO
+USE db1
+GO
+
+create user objectproperty_login_1
+go
+
+-- =============== OwnerId ===============
+
+-- Setup
+CREATE SCHEMA ownerid_schema
+GO
+
+CREATE TABLE ownerid_schema.ownerid_table(a int) 
+GO
+
+-- Check for correct case
+SELECT CASE
+    WHEN OBJECTPROPERTY(OBJECT_ID('ownerid_schema.ownerid_table'), 'OwnerId')  = (SELECT principal_id 
+            FROM sys.database_principals
+            WHERE name = CURRENT_USER)
+        Then 'SUCCESS'
+    ELSE
+        'FAILED'
+END
+GO
+
+-- Check for system object. Should return 10 since that's the owner ID. 
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.objects'), 'OwnerId')
+GO
+
+-- Invalid property ID (should return NULL)
+SELECT OBJECTPROPERTY(0, 'OwnerId')
+GO
+
+-- Check for mix-cased property
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.objects'), 'oWnEriD')
+GO
+
+-- Check for trailing white spaces
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.objects'), 'OwnerId     ')
+GO
+
+-- Check for trailing white spaces and mixed case
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.objects'), 'oWnEriD     ')
+GO
+
+-- Cleanup
+DROP TABLE ownerid_schema.ownerid_table
+GO
+
+DROP SCHEMA ownerid_schema
+GO
+-- =============== IsDefaultCnst ===============
+
+-- Setup
+CREATE TABLE isdefaultcnst_table(a int DEFAULT 10)
+GO
+
+CREATE TABLE isdefaultcnst_table2(a int DEFAULT 10, b int DEFAULT 20)
+GO
+
+-- Check for correct cases (should return 1)
+SELECT OBJECTPROPERTY(ct.object_id, 'isdefaultcnst') 
+from sys.default_constraints ct
+where parent_object_id = OBJECT_ID('isdefaultcnst_table')
+GO
+
+SELECT OBJECTPROPERTY(ct.object_id, 'isdefaultcnst') 
+from sys.default_constraints ct
+where parent_object_id = OBJECT_ID('isdefaultcnst_table2')
+GO
+
+-- Check for object_id that exists, but not an index (should return 0)
+SELECT OBJECTPROPERTY(OBJECT_ID('isdefaultcnst_table'), 'IsDefaultCnst')
+GO
+
+-- Check for invalid object_id (should return NULL)
+SELECT OBJECTPROPERTY(0, 'IsDefaultCnst')
+GO
+
+USE master;
+go
+
+-- tsql user=objectproperty_login_1 password=12345678
+USE db1
+GO
+
+select user_name()
+go
+
+-- user does not have permission on the object (should return NO rows as object_id returns NULL)
+SELECT OBJECTPROPERTY(ct.object_id, 'isdefaultcnst') 
+from sys.default_constraints ct
+where parent_object_id = OBJECT_ID('isdefaultcnst_table')
+GO
+
+-- user does not have permission on the object (should return NO rows as object_id returns NULL)
+SELECT OBJECTPROPERTY(ct.object_id, 'isdefaultcnst') 
+from sys.default_constraints ct
+where parent_object_id = OBJECT_ID('isdefaultcnst_table2')
+GO
+
+-- tsql
+-- Cleanup
+USE db1
+GO
+
+DROP TABLE isdefaultcnst_table
+GO
+
+-- =============== ExecIsQuotedIdentOn ===============
+
+-- Does not function properly due to sys.sql_modules not recording the correct settings
+
+-- Setup
+SET QUOTED_IDENTIFIER OFF
+GO
+
+CREATE PROC execisquotedident_proc_off
+AS
+RETURN 1
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROC execisquotedident_proc_on
+AS
+RETURN 1
+GO
+
+CREATE TABLE execisquotedident_table(a int)
+GO
+
+-- Currently does not work due to hardcoded value in sys.sql_modules (should be 0)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_proc_off'), 'ExecIsQuotedIdentOn') 
+GO
+
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_proc_on'), 'ExecIsQuotedIdentOn')
+GO
+
+-- Check for object_id that exists, but not a proc, view, function, or sproc (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_table'), 'ExecIsQuotedIdentOn')
+GO
+
+-- Check for invalid object_id (should return NULL)
+SELECT OBJECTPROPERTY(0, 'ExecIsQuotedIdentOn')
+GO
+
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_proc_off'), 'ExecIsQuotedIdentOn') 
+GO
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_proc_on'), 'ExecIsQuotedIdentOn')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('execisquotedident_table'), 'ExecIsQuotedIdentOn')
+GO
+
+-- tsql
+use db1
+go
+-- Cleanup
+DROP PROC execisquotedident_proc_on
+GO
+DROP PROC execisquotedident_proc_off
+GO
+DROP TABLE execisquotedident_table
+GO
+
+-- =============== IsMSShipped ===============
+
+-- Setup
+CREATE TABLE is_ms_shipped_table(a int)
+GO
+
+-- Test for object that exists but isn't ms_shipped
+SELECT OBJECTPROPERTY(OBJECT_ID('is_ms_shipped_table'), 'IsMSShipped')
+GO
+
+-- Test for object that is ms_shipped
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.sp_tables'), 'IsMSShipped')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsMSShipped')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('is_ms_shipped_table'), 'IsMSShipped')
+GO
+
+-- user does have permission on the object and the object is ms shipped (should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('sys.sp_tables'), 'IsMSShipped')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE is_ms_shipped_table
+GO
+
+-- =============== TableFullTextPopulateStatus ===============
+
+-- Setup
+CREATE TABLE tablefulltextpopulatestatus_table(a int)
+GO
+
+CREATE PROC tablefulltextpopulatestatus_proc
+AS
+RETURN 1
+GO
+
+-- Test with table object
+SELECT OBJECTPROPERTY(OBJECT_ID('tablefulltextpopulatestatus_table'), 'TableFullTextPopulateStatus')
+GO
+
+-- Test with non-table object
+SELECT OBJECTPROPERTY(OBJECT_ID('tablefulltextpopulatestatus_proc'), 'TableFullTextPopulateStatus')
+GO
+
+-- Test with invalid object id
+SELECT OBJECTPROPERTY(0, 'TableFullTextPopulateStatus')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('tablefulltextpopulatestatus_table'), 'TableFullTextPopulateStatus')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('tablefulltextpopulatestatus_proc'), 'TableFullTextPopulateStatus')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE tablefulltextpopulatestatus_table
+GO
+
+DROP PROC tablefulltextpopulatestatus_proc
+GO
+
+-- =============== TableHasVarDecimalStorageFormat ===============
+
+-- Setup
+CREATE TABLE TableHasVarDecimalStorageFormat_table(a int)
+GO
+
+CREATE proc TableHasVarDecimalStorageFormat_proc
+AS
+RETURN 1
+GO
+
+-- Test with table object
+SELECT OBJECTPROPERTY(OBJECT_ID('TableHasVarDecimalStorageFormat_table'), 'TableHasVarDecimalStorageFormat')
+GO
+
+-- Test with non-table object
+SELECT OBJECTPROPERTY(OBJECT_ID('TableHasVarDecimalStorageFormat_proc'), 'TableHasVarDecimalStorageFormat')
+GO
+
+-- Test with invalid object id
+SELECT OBJECTPROPERTY(0, 'TableHasVarDecimalStorageFormat')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('TableHasVarDecimalStorageFormat_table'), 'TableHasVarDecimalStorageFormat')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('TableHasVarDecimalStorageFormat_proc'), 'TableHasVarDecimalStorageFormat')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE TableHasVarDecimalStorageFormat_table
+GO
+
+DROP PROC TableHasVarDecimalStorageFormat_proc
+GO
+
+-- =============== IsSchemaBound ===============
+
+-- Currently does not work due to hardcoded value in sys.sql_modules
+-- Setup
+CREATE FUNCTION IsSchemaBound_function_false()
+RETURNS int
+BEGIN
+    return 1
+END
+GO
+
+CREATE FUNCTION IsSchemaBound_function_true()
+RETURNS int
+WITH SCHEMABINDING
+BEGIN
+    return 1
+END
+GO
+
+CREATE TABLE IsSchemaBound_table(a int)
+GO
+
+-- Test when object is not schema bound 
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_function_false'), 'IsSchemaBound')
+GO
+
+-- Test when object is schema bound (Currently does not work due to hardcoded value in sys.sql_modules, should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_function_true'), 'IsSchemaBound')
+GO
+
+-- Test with object that doesn't have schema bound settings
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_table'), 'IsSchemaBound')
+GO
+
+-- Test with invalid object id
+SELECT OBJECTPROPERTY(0, 'IsSchemaBound')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_function_false'), 'IsSchemaBound')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_function_true'), 'IsSchemaBound')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsSchemaBound_table'), 'IsSchemaBound')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsSchemaBound_table
+GO
+
+DROP FUNCTION IsSchemaBound_function_false
+GO
+
+DROP FUNCTION IsSchemaBound_function_true
+GO
+
+-- =============== ExecIsAnsiNullsOn ===============
+
+-- Currently does not work due to hardcoded value in sys.sql_modules
+-- Setup
+SET ANSI_NULLS OFF
+GO
+
+CREATE PROC ansi_nulls_off_proc
+AS
+SELECT CASE WHEN NULL = NULL then 1 else 0 end
+GO
+
+SET ANSI_NULLS ON
+GO
+
+CREATE PROC ansi_nulls_on_proc
+AS
+SELECT CASE WHEN NULL = NULL then 1 else 0 end
+GO
+
+CREATE TABLE ansi_nulls_on_table(a int)
+GO
+
+-- Tests when object is created with ansi nulls off and ansi nulls on
+
+-- Currently does not work due to hardcoded value in sys.sql_modules (should return 0)
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_off_proc'), 'ExecIsAnsiNullsOn')
+GO
+
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_on_proc'), 'ExecIsAnsiNullsOn')
+GO
+
+-- Test with invalid object id
+SELECT OBJECTPROPERTY(0, 'ExecIsAnsiNullsOn')
+GO
+
+-- Check for object_id that exists, but not a proc, view, function, or sproc (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_on_table'), 'ExecIsAnsiNullsOn')
+GO
+
+-- Check for invalid object_id (should return NULL)
+SELECT OBJECTPROPERTY(0, 'ExecIsAnsiNullsOn')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_off_proc'), 'ExecIsAnsiNullsOn')
+GO
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('ansi_nulls_on_proc'), 'ExecIsAnsiNullsOn')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP PROC ansi_nulls_off_proc
+GO
+
+DROP PROC ansi_nulls_on_proc
+GO
+
+DROP TABLE ansi_nulls_on_table
+GO
+
+-- =============== IsDeterministic ===============
+
+-- Currently does not work since INFORMATION_SCHEMA.ROUTINES does not evaluate if a function is deterministic
+-- Setup
+CREATE FUNCTION IsDeterministic_function_yes()
+RETURNS int
+WITH SCHEMABINDING
+BEGIN
+    return 1;
+END
+GO
+
+CREATE FUNCTION IsDeterministic_function_no()
+RETURNS sys.datetime
+WITH SCHEMABINDING
+BEGIN
+    return GETDATE();
+END
+GO
+
+CREATE TABLE IsDeterministic_table(a int)
+GO
+
+-- Tests for a deterministic function (Currently does not work, should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_function_yes'), 'IsDeterministic')
+GO
+
+-- Tests for a non-deterministic function
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_function_yes'), 'IsDeterministic')
+GO
+
+-- Tests for an object that is not a function
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_table'), 'IsDeterministic')
+GO
+
+-- Tests for a non-valid object
+SELECT OBJECTPROPERTY(0, 'IsDeterministic')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_function_yes'), 'IsDeterministic')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_function_yes'), 'IsDeterministic')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDeterministic_table'), 'IsDeterministic')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+
+DROP FUNCTION IsDeterministic_function_no
+GO
+
+DROP FUNCTION IsDeterministic_function_yes
+GO
+
+DROP TABLE IsDeterministic_table
+GO
+
+-- =============== IsProcedure ===============
+-- Setup
+CREATE PROC IsProcedure_proc AS
+SELECT 1
+GO
+
+CREATE TABLE IsProcedure_table(a int)
+GO
+
+-- Test for success
+SELECT OBJECTPROPERTY(OBJECT_ID('IsProcedure_proc'), 'IsProcedure')
+GO
+
+-- Test for failure 
+SELECT OBJECTPROPERTY(OBJECT_ID('IsProcedure_table'), 'IsProcedure')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsProcedure')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsProcedure_proc'), 'IsProcedure')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsProcedure_table'), 'IsProcedure')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP PROC IsProcedure_proc
+GO
+
+DROP TABLE IsProcedure_table
+GO
+
+-- =============== IsTable ===============
+-- Setup
+CREATE TABLE IsTable_table(a int)
+GO
+
+CREATE PROC IsTable_proc AS
+SELECT 1
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTable_table'), 'IsTable')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTable_proc'), 'IsTable')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsTable')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTable_table'), 'IsTable')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTable_proc'), 'IsTable')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsTable_table
+GO
+
+DROP PROC IsTable_proc
+GO
+
+-- =============== IsView ===============
+-- Setup
+CREATE VIEW IsView_view AS
+SELECT 1
+GO
+
+CREATE TABLE IsView_table(a int)
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsView_view'), 'IsView')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsView_table'), 'IsView')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsView')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsView_view'), 'IsView')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsView_table'), 'IsView')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP VIEW IsView_view
+GO
+
+DROP TABLE IsView_table
+GO
+-- =============== IsUserTable ===============
+-- Setup
+CREATE TABLE IsUserTable_table(a int)
+GO
+
+CREATE VIEW IsUserTable_view AS
+SELECT 1
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsUserTable_table'), 'IsUserTable')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsUserTable_view'), 'IsUserTable')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsUserTable')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsUserTable_table'), 'IsUserTable')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsUserTable_view'), 'IsUserTable')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsUserTable_table
+GO
+
+DROP VIEW IsUserTable_view
+GO
+
+-- =============== IsTableFunction ===============
+-- NOTE: Currently will return 0 since sys.all_objects does not identify objects of type TF (BABELFISH-483)
+
+-- Setup
+CREATE FUNCTION IsTableFunction_tablefunction()
+RETURNS @t TABLE (
+    c1 int,
+    c2 int
+)
+AS
+BEGIN
+    INSERT INTO @t
+    SELECT 1 as c1, 2 as c2;
+    RETURN;
+END
+GO
+
+CREATE FUNCTION IsTableFunction_inlinetablefunction()
+RETURNS TABLE
+AS
+RETURN
+(
+  SELECT 1 AS c1, 2 AS c2
+)
+GO
+
+CREATE FUNCTION IsTableFunction_function()
+RETURNS INT
+AS
+BEGIN
+RETURN 1
+END
+GO
+
+-- Test for valid table function (currently incorrect from note above, should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_tablefunction'), 'IsTableFunction')
+GO
+
+-- Test for valid inline table function (currently incorrect from note above, should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_inlinetablefunction'), 'IsTableFunction')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_function'), 'IsTableFunction')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsTableFunction')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_tablefunction'), 'IsTableFunction')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_inlinetablefunction'), 'IsTableFunction')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_function'), 'IsTableFunction')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP FUNCTION IsTableFunction_tablefunction
+GO
+
+DROP FUNCTION IsTableFunction_function
+GO
+
+-- =============== IsInlineFunction ===============
+-- NOTE: Currently will return 0 since BBF cannot currently identify if a function is inline or not
+
+-- Setup
+CREATE FUNCTION IsInlineFunction_tablefunction()
+RETURNS INT
+AS
+BEGIN
+    RETURN 1
+END
+GO
+
+CREATE FUNCTION IsInlineFunction_function()
+RETURNS INT
+AS
+BEGIN
+RETURN 1
+END
+GO
+
+-- Test for correct case (currently incorrect from note above, should return 1)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsInlineFunction_tablefunction'), 'IsInlineFunction')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsInlineFunction_function'), 'IsInlineFunction')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsInlineFunction')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsInlineFunction_tablefunction'), 'IsInlineFunction')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsInlineFunction_function'), 'IsInlineFunction')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP FUNCTION IsInlineFunction_tablefunction
+GO
+
+DROP FUNCTION IsInlineFunction_function
+GO
+-- =============== IsScalarFunction ===============
+
+-- Setup
+CREATE FUNCTION IsScalarFunction_function()
+RETURNS INT
+AS
+BEGIN
+    RETURN 1
+END
+GO
+
+CREATE TABLE IsScalarFunction_table(a int)
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsScalarFunction_function'), 'IsScalarFunction')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsScalarFunction_table'), 'IsScalarFunction')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsScalarFunction')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsScalarFunction_function'), 'IsScalarFunction')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsScalarFunction_table'), 'IsScalarFunction')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP FUNCTION IsScalarFunction_function
+GO
+
+DROP TABLE IsScalarFunction_table
+GO
+
+-- =============== IsPrimaryKey ===============
+-- Setup
+CREATE TABLE IsPrimaryKey_table(a int, CONSTRAINT pk_isprimarykey PRIMARY KEY(a))
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY((SELECT TOP(1) object_id FROM sys.all_objects where name like 'pk_isprimarykey%' ), 'IsPrimaryKey')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsPrimaryKey_table'), 'IsPrimaryKey')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsPrimaryKey')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsPrimaryKey_table'), 'IsPrimaryKey')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsPrimaryKey_table
+GO
+
+-- =============== IsIndexed ===============
+-- Setup
+CREATE TABLE IsIndexed_table(a int, CONSTRAINT PK_isprimarykey PRIMARY KEY(a))
+GO
+
+CREATE TABLE IsIndexed_nonindexed_table(a int)
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsIndexed_table'), 'IsIndexed')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsIndexed_nonindexed_table'), 'IsIndexed')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsIndexed')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsIndexed_table'), 'IsIndexed')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsIndexed_nonindexed_table'), 'IsIndexed')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsIndexed_nonindexed_table
+GO
+
+DROP TABLE IsIndexed_table
+GO
+
+-- =============== IsDefault ===============
+-- NOTE: Defaults are currently not supported so will return 0
+
+-- Setup
+CREATE TABLE IsDefault_table(a int)
+GO
+
+-- Test for valid object
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDefault_table'), 'IsDefault')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsDefault')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsDefault_table'), 'IsDefault')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsDefault_table
+GO
+
+-- =============== IsRule ===============
+-- NOTE: Rules are currently not supported so will return 0
+
+-- Setup
+CREATE TABLE IsRule_table(a int)
+GO
+
+-- Test for valid object
+SELECT OBJECTPROPERTY(OBJECT_ID('IsRule_table'), 'IsRule')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsRule')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsRule_table'), 'IsRule')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsRule_table
+GO
+
+-- =============== IsTrigger ===============
+
+-- Setup
+CREATE TABLE IsTrigger_table(a int)
+GO
+
+CREATE TRIGGER IsTrigger_trigger ON IsTrigger_table INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT * FROM IsTrigger_table
+END
+GO
+
+-- Test for correct case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
+GO
+
+-- Test for incorrect case
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_table', 'TR'), 'IsTrigger')
+GO
+
+-- Test for invalid object
+SELECT OBJECTPROPERTY(0, 'IsTrigger')
+GO
+
+-- tsql user=objectproperty_login_1 password=12345678
+use db1
+go
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
+GO
+
+-- user does not have permission on the object (should return NULL)
+SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_table', 'TR'), 'IsTrigger')
+GO
+
+-- tsql
+use db1
+go
+
+-- Cleanup
+DROP TABLE IsTrigger_table
+GO
+
+-- logical schema is 'information_schema', we should return NULL
+select objectproperty(object_id('information_schema.columns'), 'IsView')
+go 
+
+use master
+go
+
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'objectproperty_login_1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+-- Global cleanup for tests
+USE master
+GO
+
+drop login objectproperty_login_1
+go
+
+DROP DATABASE db1
+GO

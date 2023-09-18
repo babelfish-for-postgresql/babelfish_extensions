@@ -831,6 +831,9 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_DBCC:
 			exec_stmt_dbcc(estate, (PLtsql_stmt_dbcc *) stmt);
 			break;
+		case PLTSQL_STMT_KILL:
+			exec_stmt_kill(estate, (PLtsql_stmt_kill *) stmt);
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1416,6 +1419,9 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 			pre_exec_measure(config->trace_mode, stat, &stmt_begin, cur_pc);
 
 			reset_exec_error_data(estate);
+
+			/* Set the current Statement Start time at satement level and not at batch. */
+			SetCurrentStatementStartTimestamp();
 
 			/*
 			 * Let the protocol plugin know that we are about to execute this

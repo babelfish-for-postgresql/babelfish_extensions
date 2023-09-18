@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/attnum.h"
+#include "access/relation.h"
 #include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/heap.h"
@@ -26,10 +27,12 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
+#include "commands/trigger.h"
 #include "commands/user.h"
 #include "common/md5.h"
 #include "common/string.h"
@@ -71,6 +74,7 @@
 #include "collation.h"
 #include "dbcmds.h"
 #include "err_handler.h"
+#include "extendedproperty.h"
 #include "guc.h"
 #include "hooks.h"
 #include "iterative_exec.h"
@@ -131,6 +135,7 @@ extern void pltsql_function_probin_reader(ParseState *pstate, List *fargs, Oid *
 static void check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column);
 static bool is_identity_constraint(ColumnDef *column);
 static bool has_unique_nullable_constraint(ColumnDef *column);
+static bool has_nullable_constraint(ColumnDef *column);
 static bool is_nullable_constraint(Constraint *cst, Oid rel_oid);
 static bool is_nullable_index(IndexStmt *stmt);
 extern PLtsql_function *find_cached_batch(int handle);
@@ -138,6 +143,9 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
+static char *get_oid_type_string(int type_oid);
+static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
 extern int	CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
@@ -152,6 +160,8 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 											   ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
+
+static void bbf_ExecDropStmt(DropStmt *stmt);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -171,6 +181,7 @@ static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
 											 * function */
 static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
 												 * function */
+Oid tsql_select_into_seq_oid = InvalidOid; /* Sequence table oid used by select into*/
 
 PG_MODULE_MAGIC;
 
@@ -886,8 +897,38 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 							case T_Constraint:
 								{
 									Constraint *c = (Constraint *) element;
+									ListCell   *lc;
 
 									c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
+
+									if (escape_hatch_unique_constraint != EH_IGNORE &&
+										c->contype == CONSTR_UNIQUE)
+									{
+										foreach(lc, (List *) c->keys)
+										{
+											char	*colname = strVal(lfirst(lc));
+											int		 colname_len = strlen(colname);
+
+											foreach(elements, stmt->tableElts)
+											{
+												Node	*element = lfirst(elements);
+												if (nodeTag(element) == T_ColumnDef)
+												{
+													ColumnDef* def = (ColumnDef *) element;
+
+													if (strlen(def->colname) == colname_len && 
+														strncmp(def->colname, colname, colname_len) == 0 && 
+														has_nullable_constraint(def))
+													{
+														ereport(ERROR,
+															(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+															errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+																"or add a NOT NULL constraint")));
+													}
+												}	
+											}
+										}		
+									}
 
 									if (rowversion_column_name)
 										validate_rowversion_table_constraint(c, rowversion_column_name);
@@ -957,6 +998,14 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
+								}
+								if (escape_hatch_unique_constraint != EH_IGNORE &&
+									has_unique_nullable_constraint(castNode(ColumnDef, cmd->def)))
+								{
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
+												"or add a NOT NULL constraint")));
 								}
 								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 								{
@@ -1509,11 +1558,42 @@ has_unique_nullable_constraint(ColumnDef *column)
 	return is_unique & !is_notnull;
 }
 
+/* has_nullable_constraint
+ *		Given a Column definition
+ *		return true if column does not have any NOT NULL constraint else false
+ */
+static bool
+has_nullable_constraint(ColumnDef *column)
+{
+	ListCell   *clist;
+	bool		is_notnull = false;
+
+	foreach(clist, column->constraints)
+	{
+		Constraint *constraint = lfirst_node(Constraint, clist);
+
+		switch (constraint->contype)
+		{
+			case CONSTR_NOTNULL:
+				is_notnull = true;
+				break;
+			default:
+				break;
+		}
+	}
+
+	return !is_notnull;
+}
+
+/* is_nullable_constraint
+ *		Given a Constraint
+ *		return true if atleast one of the attribute in the constraint is nullable else false
+ */
 static bool
 is_nullable_constraint(Constraint *cst, Oid rel_oid)
 {
 	ListCell   *lc;
-	bool		is_notnull = false;
+	bool		is_null = false;
 
 	/* Loop through the constraint keys */
 	foreach(lc, cst->keys)
@@ -1534,15 +1614,15 @@ is_nullable_constraint(Constraint *cst, Oid rel_oid)
 
 		attnum = get_attnum(rel_oid, col_name);
 
-		if (get_attnotnull(rel_oid, attnum))
+		if (!get_attnotnull(rel_oid, attnum))
 		{
-			/* found a NOT NULL attr, break and return */
-			is_notnull = true;
+			/* found a NULL attr, break and return */
+			is_null = true;
 			break;
 		}
 	}
 
-	return !is_notnull;
+	return is_null;
 }
 
 /*
@@ -1575,11 +1655,15 @@ get_attnotnull(Oid relid, AttrNumber attnum)
 	return false;
 }
 
+/* is_nullable_index
+ *		Given an Index Statement
+ *		return true if atleast one of the attribute in the index is nullable else false
+ */
 static bool
 is_nullable_index(IndexStmt *stmt)
 {
 	ListCell   *lc;
-	bool		is_notnull = false;
+	bool		is_null = false;
 	Oid			rel_oid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 	/* Loop through the index columns */
@@ -1589,14 +1673,14 @@ is_nullable_index(IndexStmt *stmt)
 		const char *col_name = elem->name;
 		AttrNumber	attnum = get_attnum(rel_oid, col_name);
 
-		if (get_attnotnull(rel_oid, attnum))
+		if (!get_attnotnull(rel_oid, attnum))
 		{
-			is_notnull = true;
+			is_null = true;
 			break;
 		}
 	}
 
-	return !is_notnull;
+	return is_null;
 }
 
 static void
@@ -1694,7 +1778,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid			tsqlSeqTypOid;
 	TypeName   *type_def;
 	List	   *type_names;
-	List	   *new_type_names;
+	List	   *new_type_names = NULL;
 	AclResult	aclresult;
 	Oid			base_type;
 	int			list_len;
@@ -1966,7 +2050,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	pstate->p_sourcetext = queryString;
 
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
-		return;					/* Don't execute anything */
+	{
+		if (qc && parsetree) {
+			/*
+			* Some utility statements return a row count, even though the
+			* tuples are not returned to the caller.
+			*/
+			Assert(qc->commandTag == CMDTAG_UNKNOWN);
+			if (IsA(parsetree, CreateTableAsStmt))
+				SetQueryCompletion(qc, CMDTAG_SELECT, 0);
+			else if (IsA(parsetree, CopyStmt))
+				SetQueryCompletion(qc, CMDTAG_COPY, 0);
+		}
+
+		return;                                 /* Don't execute anything */
+	}
 
 	/*
 	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
@@ -2174,7 +2272,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (windows_login_contains_invalid_chars(orig_loginname))
 									ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 													errmsg("'%s' is not a valid name because it contains invalid characters.", orig_loginname)));
-								
+
 								/*
 								 * Check whether the domain name contains invalid characters or not.
 								 */
@@ -2493,8 +2591,31 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 								if (strcmp(defel->defname, "default_schema") == 0)
 									user_options = lappend(user_options, defel);
-								if (strcmp(defel->defname, "rename") == 0)
+								else if (strcmp(defel->defname, "rename") == 0)
 									user_options = lappend(user_options, defel);
+								else if (strcmp(defel->defname, "rolemembers") == 0)
+								{
+									RoleSpec   *login = (RoleSpec *) linitial((List *) defel->arg);
+
+									if (strchr(login->rolename, '\\') != NULL)
+									{
+										/*
+										 * If login->rolename contains '\'
+										 * then treat it as windows login.
+										 */
+										char	   *upn_login = convertToUPN(login->rolename);
+
+										if (upn_login != login->rolename)
+										{
+											pfree(login->rolename);
+											login->rolename = upn_login;
+										}
+										if (!pltsql_allow_windows_login)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Windows login is not supported in babelfish")));
+									}
+								}
 							}
 
 							foreach(option, user_options)
@@ -2581,7 +2702,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						if (!has_privs_of_role(GetSessionUserId(), datdba) && !has_password)
-							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 								errmsg("Cannot alter the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
 
 						if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
@@ -2620,13 +2741,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						const char *db_name;
 						const char *dbo_name;
+						char	   *db_name;
+						char	   *user_name;
+						char	   *cur_user;
 						Oid			dbo_id;
 
 						db_name = get_cur_db_name();
 						dbo_name = get_dbo_role_name(db_name);
 						dbo_id = get_role_oid(dbo_name, false);
+						user_name = stmt->role->rolename;
+						cur_user = GetUserNameFromId(GetUserId(), false);
 
 						/*
 						 * Check if the current user has privileges.
@@ -2634,11 +2759,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						foreach(option, user_options)
 						{
 							DefElem    *defel = (DefElem *) lfirst(option);
-							char	   *user_name;
-							char	   *cur_user;
 
-							user_name = stmt->role->rolename;
-							cur_user = GetUserNameFromId(GetUserId(), false);
 							if (strcmp(defel->defname, "default_schema") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
@@ -2647,13 +2768,27 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change schema")));
 							}
-							if (strcmp(defel->defname, "rename") == 0)
+							else if (strcmp(defel->defname, "rename") == 0)
 							{
 								if (strcmp(cur_user, dbo_name) != 0 &&
 									strcmp(cur_user, user_name) != 0)
 									ereport(ERROR,
 											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 											 errmsg("Current user does not have privileges to change user name")));
+							}
+						}
+
+						foreach(option, stmt->options)
+						{
+							DefElem    *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "rolemembers") == 0)
+							{
+								if (strcmp(cur_user, dbo_name) != 0 &&
+									strcmp(cur_user, user_name) != 0)
+									ereport(ERROR,
+											(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+											 errmsg("Current user does not have privileges to change login")));
 							}
 						}
 
@@ -2684,6 +2819,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						SetCurrentRoleId(prev_current_user, false);
 						set_session_properties(db_name);
+						pfree(cur_user);
+						pfree(db_name);
 
 						return;
 					}
@@ -2715,9 +2852,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							drop_user = true;
 						else if (strcmp(headrol->rolename, "is_role") == 0)
 							drop_role = true;
-						else 
+						else
 							drop_login = true;
-						
+
 						if (drop_user || drop_role)
 						{
 							char	   *db_name = NULL;
@@ -2845,8 +2982,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							other = true;
 
 						if (drop_login && is_login(roleform->oid) && !has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))){
-							ereport(ERROR, 
-									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 						}
 
@@ -2989,7 +3126,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				DropStmt   *drop_stmt = (DropStmt *) parsetree;
 
 				if (drop_stmt->removeType != OBJECT_SCHEMA)
+				{
+					if (sql_dialect == SQL_DIALECT_TSQL)
+						bbf_ExecDropStmt(drop_stmt);
+
 					break;
+				}
+
 
 				if (sql_dialect == SQL_DIALECT_TSQL)
 				{
@@ -3012,6 +3155,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 
+					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
 
 					if (prev_ProcessUtility)
@@ -3698,6 +3842,8 @@ _PG_init(void)
 	get_func_language_oids_hook = get_func_language_oids;
 	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
+	check_pltsql_support_tsql_transactions_hook = pltsql_support_tsql_transactions;
+
 	inited = true;
 }
 
@@ -4297,7 +4443,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	bool 		is_itvf;
 	char		*prosrc = NULL;
 	bool		is_mstvf = false;
-	
+
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
 	int			saved_dialect = sql_dialect;
 
@@ -4445,9 +4591,9 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				func = pltsql_compile(fake_fcinfo, true);
 
 			if(func && func->table_varnos)
-			{	
+			{
 				is_mstvf = func->is_mstvf;
-				/* 
+				/*
 				 * if a function has tvp declared or as argument in the function
 				 * or it is a TVF has_table_var will be true
 				 */
@@ -4462,10 +4608,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		}
 
 		ReleaseSysCache(tuple);
-		
-		/* 
-		 * If the function has TVP in its arguments or function body 
-		 * it should be declared as VOLATILE by default 
+
+		/*
+		 * If the function has TVP in its arguments or function body
+		 * it should be declared as VOLATILE by default
 		 * TVF are VOLATILE by default so we donot need to update tuple for it
 		 */
 		if(prokind == PROKIND_FUNCTION && (has_table_var && !is_itvf && !is_mstvf))
@@ -5011,6 +5157,224 @@ pltsql_revert_guc(int nest_level)
 
 }
 
+static char *get_oid_type_string(int type_oid){
+	char *type_string = NULL;
+	if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype) (type_oid))
+	{
+		type_string = "decimal";
+		return type_string;
+	}
+
+	switch(type_oid)
+	{
+		case INT2OID:
+			type_string = "pg_catalog.int2";
+			break;
+		case INT4OID:
+			type_string = "pg_catalog.int4";
+			break;
+		case INT8OID:
+			type_string = "pg_catalog.int8";
+			break;
+		case NUMERICOID:
+			type_string = "pg_catalog.numeric";
+			break;
+		default:
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
+			break;
+	}
+	return type_string;
+}
+
+static int64 get_identity_into_args(Node *node)
+{
+	int64 val = 0;
+	Const *con = NULL;
+	FuncExpr *fxpr = NULL;
+	OpExpr *opxpr = NULL;
+	Node *n = NULL;
+
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			con = (Const *)node;
+			val = (int64)DatumGetInt64(con->constvalue);
+			break;
+		case T_FuncExpr:
+			fxpr = (FuncExpr *)node;
+			if ((fxpr->args)->length != 1)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			n = (Node *)list_nth(fxpr->args, 0);
+			val = get_identity_into_args(n);
+			break;
+		case T_OpExpr:
+			opxpr = (OpExpr *)node;
+			if ((opxpr->args)->length != 1)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			n = (Node *)list_nth(opxpr->args, 0);
+			val = get_identity_into_args(n);
+			break;
+		default:
+			ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("syntax error near 'identity'")));
+			break;
+		}
+	return val;
+}
+
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
+{
+	List *result;
+	ListCell *elements;
+	CreateSeqStmt *seqstmt;
+	AlterSeqStmt *altseqstmt;
+	List *attnamelist;
+	IntoClause *into;
+	Node *n;
+
+	n = stmt->query;
+	into = stmt->into;
+	result = NIL;
+	seqstmt = NULL;
+	altseqstmt = NULL;
+
+	if (n && n->type == T_Query)
+	{
+		Query *q = (Query *)n;
+		bool seen_identity = false;
+		foreach (elements, q->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *)lfirst(elements);
+
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
+			{
+				FuncExpr *funcexpr;
+				Oid snamespaceid;
+				char *snamespace;
+				char *sname;
+				List *seqoptions = NIL;
+				ListCell *arg;
+				int typeoid = 0;
+				char *type = NULL;
+
+				TypeName *typename = NULL;
+				int64 seedvalue = 0;
+				int64 incrementvalue = 0;
+				int argnum;
+
+				if (seen_identity)
+					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+
+				if (tle->resname == NULL)
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
+
+				funcexpr = (FuncExpr *)tle->expr;
+				argnum = 0;
+				foreach (arg, funcexpr->args)
+				{
+					Node *farg_node = (Node *)lfirst(arg);
+					argnum++;
+					switch (argnum)
+					{
+					case 1:
+						typeoid = get_identity_into_args(farg_node);
+						type = get_oid_type_string(typeoid);
+						typename = typeStringToTypeName(type);
+						seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						break;
+					case 2:
+						seedvalue = get_identity_into_args(farg_node);
+						seqoptions = lappend(seqoptions, makeDefElem("start", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						break;
+					case 3:
+						incrementvalue = get_identity_into_args(farg_node);
+						seqoptions = lappend(seqoptions, makeDefElem("increment", (Node *)makeFloat(psprintf(INT64_FORMAT, incrementvalue)), -1));
+						if (incrementvalue > 0)
+						{
+							seqoptions = lappend(seqoptions, makeDefElem("minvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						}
+						else
+						{
+							seqoptions = lappend(seqoptions, makeDefElem("maxvalue", (Node *)makeFloat(psprintf(INT64_FORMAT, seedvalue)), -1));
+						}
+						break;
+					}
+				}
+
+				into->identityName = tle->resname;
+				into->identityType = TypeNameToString(typename);
+				seen_identity = true;
+
+				snamespaceid = RangeVarGetCreationNamespace(into->rel);
+				snamespace = get_namespace_name(snamespaceid);
+				sname = ChooseRelationName(into->rel->relname, tle->resname, "seq", snamespaceid, false);
+				seqstmt = makeNode(CreateSeqStmt);
+				seqstmt->for_identity = true;
+				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
+				seqstmt->sequence->relpersistence = into->rel->relpersistence;
+				seqstmt->options = seqoptions;
+
+				altseqstmt = makeNode(AlterSeqStmt);
+				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
+				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname), makeString(tle->resname));
+				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *)attnamelist, -1));
+				altseqstmt->for_identity = true;
+			}
+		}
+	}
+
+	if (seqstmt)
+		result = lappend(result, seqstmt);
+	result = lappend(result, stmt);
+	if (altseqstmt)
+		result = lappend(result, altseqstmt);
+
+	return result;
+}
+
+void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, QueryEnvironment *queryEnv,
+								 ParamListInfo params, QueryCompletion *qc)
+{
+
+	Node *parsetree = pstmt->utilityStmt;
+	ObjectAddress address;
+	ObjectAddress secondaryObject = InvalidObjectAddress;
+	List *stmts;
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, queryString);
+	while (stmts != NIL)
+	{
+		Node *stmt = (Node *)linitial(stmts);
+		stmts = list_delete_first(stmts);
+		if (IsA(stmt, CreateTableAsStmt))
+		{
+			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
+			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
+		}
+		else if (IsA(stmt, CreateSeqStmt))
+		{
+			address = DefineSequence(pstate, (CreateSeqStmt *)stmt);
+			Assert(address.objectId != InvalidOid);
+			tsql_select_into_seq_oid = address.objectId;
+			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
+		}
+		else
+		{
+			PlannedStmt *wrapper;
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = pstmt->stmt_location;
+			wrapper->stmt_len = pstmt->stmt_len;
+
+			ProcessUtility(wrapper, queryString, false, PROCESS_UTILITY_SUBCOMMAND, params, NULL, None_Receiver, NULL);
+		}
+		if (stmts != NIL)
+			CommandCounterIncrement();
+	}
+}
+
 void
 set_current_query_is_create_tbl_check_constraint(Node *expr)
 {
@@ -5044,5 +5408,144 @@ pltsql_remove_current_query_env(void)
 		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
 	{
 		destroy_failed_transactions_map();
-	} 
+	}
+}
+
+/*
+ * Drop statement of babelfish, currently delete extended property as well.
+ */
+static void
+bbf_ExecDropStmt(DropStmt *stmt)
+{
+	int16			db_id;
+	const char		*type = NULL;
+	char			*schema_name = NULL,
+					*major_name = NULL;
+	ObjectAddress	address;
+	Relation		relation = NULL;
+	Oid				schema_oid;
+	ListCell		*cell;
+
+	db_id = get_cur_db_id();
+
+	if (stmt->removeType == OBJECT_SCHEMA)
+	{
+		foreach(cell, stmt->objects)
+		{
+			schema_name = strVal(lfirst(cell));
+
+			if (get_namespace_oid(schema_name, true) == InvalidOid)
+				return;
+
+			type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SCHEMA];
+			delete_extended_property(db_id, type, schema_name, NULL, NULL);
+		}
+	}
+	else if (stmt->removeType == OBJECT_TABLE ||
+			 stmt->removeType == OBJECT_VIEW ||
+			 stmt->removeType == OBJECT_SEQUENCE)
+	{
+		foreach(cell, stmt->objects)
+		{
+			relation = NULL;
+			address = get_object_address(stmt->removeType,
+										 lfirst(cell),
+										 &relation,
+										 AccessShareLock,
+										 true);
+
+			if (!relation)
+				continue;
+
+			/* Get major_name */
+			major_name = pstrdup(RelationGetRelationName(relation));
+			relation_close(relation, AccessShareLock);
+
+			/* Get schema_name */
+			schema_oid = get_object_namespace(&address);
+			if (OidIsValid(schema_oid))
+				schema_name = get_namespace_name(schema_oid);
+
+			if (schema_name && major_name)
+			{
+				if (stmt->removeType == OBJECT_TABLE)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TABLE_COLUMN];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+				else if (stmt->removeType == OBJECT_VIEW)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_VIEW];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+				else if (stmt->removeType == OBJECT_SEQUENCE)
+				{
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SEQUENCE];
+					delete_extended_property(db_id, type, schema_name,
+											 major_name, NULL);
+				}
+			}
+		}
+	}
+	else if (stmt->removeType == OBJECT_PROCEDURE ||
+			 stmt->removeType == OBJECT_FUNCTION ||
+			 stmt->removeType == OBJECT_TYPE)
+	{
+		HeapTuple	tuple;
+
+		foreach(cell, stmt->objects)
+		{
+			relation = NULL;
+			address = get_object_address(stmt->removeType,
+										 lfirst(cell),
+										 &relation,
+										 AccessShareLock,
+										 true);
+			Assert(relation == NULL);
+			if (!OidIsValid(address.objectId))
+				continue;
+
+			/* Get major_name */
+			relation = table_open(address.classId, AccessShareLock);
+			tuple = get_catalog_object_by_oid(relation,
+											  get_object_attnum_oid(address.classId),
+											  address.objectId);
+			if (!HeapTupleIsValid(tuple))
+			{
+				table_close(relation, AccessShareLock);
+				continue;
+			}
+
+			if (stmt->removeType == OBJECT_PROCEDURE ||
+				stmt->removeType == OBJECT_FUNCTION)
+				major_name = pstrdup(NameStr(((Form_pg_proc) GETSTRUCT(tuple))->proname));
+			else if (stmt->removeType == OBJECT_TYPE)
+				major_name = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname));
+
+			table_close(relation, AccessShareLock);
+
+			/* Get schema_name */
+			schema_oid = get_object_namespace(&address);
+			if (OidIsValid(schema_oid))
+				schema_name = get_namespace_name(schema_oid);
+
+			if (schema_name && major_name)
+			{
+				if (stmt->removeType == OBJECT_PROCEDURE)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_PROCEDURE];
+				else if (stmt->removeType == OBJECT_FUNCTION)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION];
+				else if (stmt->removeType == OBJECT_TYPE)
+					type = ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE];
+
+				delete_extended_property(db_id, type, schema_name, major_name,
+										 NULL);
+			}
+		}
+	}
 }

@@ -101,19 +101,19 @@ do_encoding_conversion(unsigned char *src, int len,
 		switch (dest_encoding)
 		{
 			case PG_BIG5:
-				*encodedByteLen = utf8_to_big5(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_utf8_to_big5(src_encoding, dest_encoding, src, result, len);
 				break;
 			case PG_GBK:
-				*encodedByteLen = utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
 				break;
 			case PG_UHC:
-				*encodedByteLen = utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
 				break;
 			case PG_SJIS:
-				*encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
 				break;
 			default:
-				*encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_utf8_to_win(src_encoding, dest_encoding, src, result, len);
 				break;
 		}
 	}
@@ -122,19 +122,19 @@ do_encoding_conversion(unsigned char *src, int len,
 		switch (src_encoding)
 		{
 			case PG_BIG5:
-				*encodedByteLen = big5_to_utf8(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_big5_to_utf8(src_encoding, dest_encoding, src, result, len);
 				break;
 			case PG_GBK:
-				*encodedByteLen = gbk_to_utf8(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_gbk_to_utf8(src_encoding, dest_encoding, src, result, len);
 				break;
 			case PG_UHC:
-				*encodedByteLen = uhc_to_utf8(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_uhc_to_utf8(src_encoding, dest_encoding, src, result, len);
 				break;
 			case PG_SJIS:
-				*encodedByteLen = sjis_to_utf8(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_sjis_to_utf8(src_encoding, dest_encoding, src, result, len);
 				break;
 			default:
-				*encodedByteLen = win_to_utf8(src_encoding, dest_encoding, src, result, len);
+				*encodedByteLen = tsql_win_to_utf8(src_encoding, dest_encoding, src, result, len);
 				break;
 		}
 	}

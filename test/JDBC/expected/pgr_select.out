@@ -1,0 +1,1025 @@
+
+--
+-- SELECT
+--
+-- btree index
+-- awk '{if($1<10){print;}else{next;}}' onek.data | sort +0n -1
+--
+SELECT * FROM onek
+   WHERE onek.unique1 < 10
+   ORDER BY onek.unique1;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#varchar#!#varchar
+0#!#998#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#1#!#AAAAAA#!#KMBAAA#!#OOOOxx
+1#!#214#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#2#!#3#!#BAAAAA#!#GIAAAA#!#OOOOxx
+2#!#326#!#0#!#2#!#2#!#2#!#2#!#2#!#2#!#2#!#2#!#4#!#5#!#CAAAAA#!#OMAAAA#!#OOOOxx
+3#!#431#!#1#!#3#!#3#!#3#!#3#!#3#!#3#!#3#!#3#!#6#!#7#!#DAAAAA#!#PQAAAA#!#VVVVxx
+4#!#833#!#0#!#0#!#4#!#4#!#4#!#4#!#4#!#4#!#4#!#8#!#9#!#EAAAAA#!#BGBAAA#!#HHHHxx
+5#!#541#!#1#!#1#!#5#!#5#!#5#!#5#!#5#!#5#!#5#!#10#!#11#!#FAAAAA#!#VUAAAA#!#HHHHxx
+6#!#978#!#0#!#2#!#6#!#6#!#6#!#6#!#6#!#6#!#6#!#12#!#13#!#GAAAAA#!#QLBAAA#!#OOOOxx
+7#!#647#!#1#!#3#!#7#!#7#!#7#!#7#!#7#!#7#!#7#!#14#!#15#!#HAAAAA#!#XYAAAA#!#VVVVxx
+8#!#653#!#0#!#0#!#8#!#8#!#8#!#8#!#8#!#8#!#8#!#16#!#17#!#IAAAAA#!#DZAAAA#!#HHHHxx
+9#!#49#!#1#!#1#!#9#!#9#!#9#!#9#!#9#!#9#!#9#!#18#!#19#!#JAAAAA#!#XBAAAA#!#HHHHxx
+~~END~~
+
+
+--
+-- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
+--
+SELECT onek.unique1, onek.stringu1 FROM onek
+   WHERE onek.unique1 < 20
+   ORDER BY unique1 desc;
+GO
+~~START~~
+int#!#varchar
+19#!#TAAAAA
+18#!#SAAAAA
+17#!#RAAAAA
+16#!#QAAAAA
+15#!#PAAAAA
+14#!#OAAAAA
+13#!#NAAAAA
+12#!#MAAAAA
+11#!#LAAAAA
+10#!#KAAAAA
+9#!#JAAAAA
+8#!#IAAAAA
+7#!#HAAAAA
+6#!#GAAAAA
+5#!#FAAAAA
+4#!#EAAAAA
+3#!#DAAAAA
+2#!#CAAAAA
+1#!#BAAAAA
+0#!#AAAAAA
+~~END~~
+
+
+--
+-- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
+--
+SELECT onek.unique1, onek.stringu1 FROM onek
+   WHERE onek.unique1 > 980
+   ORDER BY stringu1 asc;
+GO
+~~START~~
+int#!#varchar
+988#!#AMAAAA
+989#!#BMAAAA
+990#!#CMAAAA
+991#!#DMAAAA
+992#!#EMAAAA
+993#!#FMAAAA
+994#!#GMAAAA
+995#!#HMAAAA
+996#!#IMAAAA
+997#!#JMAAAA
+998#!#KMAAAA
+999#!#LMAAAA
+981#!#TLAAAA
+982#!#ULAAAA
+983#!#VLAAAA
+984#!#WLAAAA
+985#!#XLAAAA
+986#!#YLAAAA
+987#!#ZLAAAA
+~~END~~
+
+
+--
+-- awk '{if($1>980){print $1,$16;}else{next;}}' onek.data |
+-- sort +1d -2 +0nr -1
+--
+SELECT onek.unique1, onek.string4 FROM onek
+   WHERE onek.unique1 > 980
+   ORDER BY string4 asc, unique1 desc;
+GO
+~~START~~
+int#!#varchar
+999#!#AAAAxx
+995#!#AAAAxx
+983#!#AAAAxx
+982#!#AAAAxx
+981#!#AAAAxx
+998#!#HHHHxx
+997#!#HHHHxx
+993#!#HHHHxx
+990#!#HHHHxx
+986#!#HHHHxx
+996#!#OOOOxx
+991#!#OOOOxx
+988#!#OOOOxx
+987#!#OOOOxx
+985#!#OOOOxx
+994#!#VVVVxx
+992#!#VVVVxx
+989#!#VVVVxx
+984#!#VVVVxx
+~~END~~
+
+
+--
+-- awk '{if($1>980){print $1,$16;}else{next;}}' onek.data |
+-- sort +1dr -2 +0n -1
+--
+SELECT onek.unique1, onek.string4 FROM onek
+   WHERE onek.unique1 > 980
+   ORDER BY string4 desc, unique1 asc;
+GO
+~~START~~
+int#!#varchar
+984#!#VVVVxx
+989#!#VVVVxx
+992#!#VVVVxx
+994#!#VVVVxx
+985#!#OOOOxx
+987#!#OOOOxx
+988#!#OOOOxx
+991#!#OOOOxx
+996#!#OOOOxx
+986#!#HHHHxx
+990#!#HHHHxx
+993#!#HHHHxx
+997#!#HHHHxx
+998#!#HHHHxx
+981#!#AAAAxx
+982#!#AAAAxx
+983#!#AAAAxx
+995#!#AAAAxx
+999#!#AAAAxx
+~~END~~
+
+
+--
+-- awk '{if($1<20){print $1,$16;}else{next;}}' onek.data |
+-- sort +0nr -1 +1d -2
+--
+SELECT onek.unique1, onek.string4 FROM onek
+   WHERE onek.unique1 < 20
+   ORDER BY unique1 desc, string4 asc;
+GO
+~~START~~
+int#!#varchar
+19#!#OOOOxx
+18#!#VVVVxx
+17#!#HHHHxx
+16#!#OOOOxx
+15#!#VVVVxx
+14#!#AAAAxx
+13#!#OOOOxx
+12#!#AAAAxx
+11#!#OOOOxx
+10#!#AAAAxx
+9#!#HHHHxx
+8#!#HHHHxx
+7#!#VVVVxx
+6#!#OOOOxx
+5#!#HHHHxx
+4#!#HHHHxx
+3#!#VVVVxx
+2#!#OOOOxx
+1#!#OOOOxx
+0#!#OOOOxx
+~~END~~
+
+
+--
+-- awk '{if($1<20){print $1,$16;}else{next;}}' onek.data |
+-- sort +0n -1 +1dr -2
+--
+SELECT onek.unique1, onek.string4 FROM onek
+   WHERE onek.unique1 < 20
+   ORDER BY unique1 asc, string4 desc;
+GO
+~~START~~
+int#!#varchar
+0#!#OOOOxx
+1#!#OOOOxx
+2#!#OOOOxx
+3#!#VVVVxx
+4#!#HHHHxx
+5#!#HHHHxx
+6#!#OOOOxx
+7#!#VVVVxx
+8#!#HHHHxx
+9#!#HHHHxx
+10#!#AAAAxx
+11#!#OOOOxx
+12#!#AAAAxx
+13#!#OOOOxx
+14#!#AAAAxx
+15#!#VVVVxx
+16#!#OOOOxx
+17#!#HHHHxx
+18#!#VVVVxx
+19#!#OOOOxx
+~~END~~
+
+
+-- psql
+--
+-- test partial btree indexes
+--
+-- As of 7.2, planner probably won't pick an indexscan without stats,
+-- so ANALYZE first.  Also, we want to prevent it from picking a bitmapscan
+-- followed by sort, because that could hide index ordering problems.
+--
+ANALYZE master_dbo.onek2;
+GO
+
+-- tsql
+select set_config('enable_seqscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+select set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+select set_config('enable_sort', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+--
+-- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
+--
+-- ORDER IS DIFFERENT compared with orginal regression test
+SELECT onek2.* FROM onek2 WHERE onek2.unique1 < 10;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#varchar#!#varchar
+9#!#49#!#1#!#1#!#9#!#9#!#9#!#9#!#9#!#9#!#9#!#18#!#19#!#JAAAAA#!#XBAAAA#!#HHHHxx
+1#!#214#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#2#!#3#!#BAAAAA#!#GIAAAA#!#OOOOxx
+2#!#326#!#0#!#2#!#2#!#2#!#2#!#2#!#2#!#2#!#2#!#4#!#5#!#CAAAAA#!#OMAAAA#!#OOOOxx
+3#!#431#!#1#!#3#!#3#!#3#!#3#!#3#!#3#!#3#!#3#!#6#!#7#!#DAAAAA#!#PQAAAA#!#VVVVxx
+5#!#541#!#1#!#1#!#5#!#5#!#5#!#5#!#5#!#5#!#5#!#10#!#11#!#FAAAAA#!#VUAAAA#!#HHHHxx
+7#!#647#!#1#!#3#!#7#!#7#!#7#!#7#!#7#!#7#!#7#!#14#!#15#!#HAAAAA#!#XYAAAA#!#VVVVxx
+8#!#653#!#0#!#0#!#8#!#8#!#8#!#8#!#8#!#8#!#8#!#16#!#17#!#IAAAAA#!#DZAAAA#!#HHHHxx
+4#!#833#!#0#!#0#!#4#!#4#!#4#!#4#!#4#!#4#!#4#!#8#!#9#!#EAAAAA#!#BGBAAA#!#HHHHxx
+6#!#978#!#0#!#2#!#6#!#6#!#6#!#6#!#6#!#6#!#6#!#12#!#13#!#GAAAAA#!#QLBAAA#!#OOOOxx
+0#!#998#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#1#!#AAAAAA#!#KMBAAA#!#OOOOxx
+~~END~~
+
+
+--
+-- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
+--
+SELECT onek2.unique1, onek2.stringu1 FROM onek2
+    WHERE onek2.unique1 < 20
+    ORDER BY unique1 desc;
+GO
+~~START~~
+int#!#varchar
+19#!#TAAAAA
+18#!#SAAAAA
+17#!#RAAAAA
+16#!#QAAAAA
+15#!#PAAAAA
+14#!#OAAAAA
+13#!#NAAAAA
+12#!#MAAAAA
+11#!#LAAAAA
+10#!#KAAAAA
+9#!#JAAAAA
+8#!#IAAAAA
+7#!#HAAAAA
+6#!#GAAAAA
+5#!#FAAAAA
+4#!#EAAAAA
+3#!#DAAAAA
+2#!#CAAAAA
+1#!#BAAAAA
+0#!#AAAAAA
+~~END~~
+
+
+--
+-- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
+--
+-- ORDER IS DIFFERENT compared with orginal regression test
+SELECT onek2.unique1, onek2.stringu1 FROM onek2
+   WHERE onek2.unique1 > 980;
+GO
+~~START~~
+int#!#varchar
+997#!#JMAAAA
+995#!#HMAAAA
+999#!#LMAAAA
+983#!#VLAAAA
+989#!#BMAAAA
+986#!#YLAAAA
+996#!#IMAAAA
+982#!#ULAAAA
+992#!#EMAAAA
+990#!#CMAAAA
+991#!#DMAAAA
+984#!#WLAAAA
+981#!#TLAAAA
+998#!#KMAAAA
+993#!#FMAAAA
+994#!#GMAAAA
+988#!#AMAAAA
+987#!#ZLAAAA
+985#!#XLAAAA
+~~END~~
+
+
+-- RESET enable_seqscan;
+-- RESET enable_bitmapscan;
+-- RESET enable_sort;
+select set_config('enable_seqscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+select set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+select set_config('enable_sort', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- psql
+--
+-- awk '{print $1,$2;}' person.data |
+-- awk '{if(NF!=2){print $3,$2;}else{print;}}' - emp.data |
+-- awk '{if(NF!=2){print $3,$2;}else{print;}}' - student.data |
+-- awk 'BEGIN{FS="      ";}{if(NF!=2){print $4,$5;}else{print;}}' - stud_emp.data
+--
+-- SELECT name, age FROM person*; ??? check if different
+-- MISSING LAST 8 ROWS compared with orginal regression test
+SELECT p.name, p.age FROM master_dbo.person* p;
+GO
+~~START~~
+"sys"."varchar"#!#int4
+mike#!#40
+joe#!#20
+sally#!#34
+sandra#!#19
+alex#!#30
+sue#!#50
+denise#!#24
+sarah#!#88
+teresa#!#38
+nan#!#28
+leah#!#68
+wendy#!#78
+melissa#!#28
+joan#!#18
+mary#!#8
+jane#!#58
+liza#!#38
+jean#!#28
+jenifer#!#38
+juanita#!#58
+susan#!#78
+zena#!#98
+martie#!#88
+chris#!#78
+pat#!#18
+zola#!#58
+louise#!#98
+edna#!#18
+bertha#!#88
+sumi#!#38
+koko#!#88
+gina#!#18
+rean#!#48
+sharon#!#78
+paula#!#68
+julie#!#68
+belinda#!#38
+karen#!#48
+carina#!#58
+diane#!#18
+esther#!#98
+trudy#!#88
+fanny#!#8
+carmen#!#78
+lita#!#25
+pamela#!#48
+sandy#!#38
+trisha#!#88
+uma#!#78
+velma#!#68
+~~END~~
+
+
+--
+-- awk '{print $1,$2;}' person.data |
+-- awk '{if(NF!=2){print $3,$2;}else{print;}}' - emp.data |
+-- awk '{if(NF!=2){print $3,$2;}else{print;}}' - student.data |
+-- awk 'BEGIN{FS="      ";}{if(NF!=1){print $4,$5;}else{print;}}' - stud_emp.data |
+-- sort +1nr -2
+--
+SELECT p.name, p.age FROM master_dbo.person* p ORDER BY age desc, name;
+GO
+~~START~~
+"sys"."varchar"#!#int4
+esther#!#98
+louise#!#98
+zena#!#98
+bertha#!#88
+koko#!#88
+martie#!#88
+sarah#!#88
+trisha#!#88
+trudy#!#88
+carmen#!#78
+chris#!#78
+sharon#!#78
+susan#!#78
+uma#!#78
+wendy#!#78
+julie#!#68
+leah#!#68
+paula#!#68
+velma#!#68
+carina#!#58
+jane#!#58
+juanita#!#58
+zola#!#58
+sue#!#50
+karen#!#48
+pamela#!#48
+rean#!#48
+mike#!#40
+belinda#!#38
+jenifer#!#38
+liza#!#38
+sandy#!#38
+sumi#!#38
+teresa#!#38
+sally#!#34
+alex#!#30
+jean#!#28
+melissa#!#28
+nan#!#28
+lita#!#25
+denise#!#24
+joe#!#20
+sandra#!#19
+diane#!#18
+edna#!#18
+gina#!#18
+joan#!#18
+pat#!#18
+fanny#!#8
+mary#!#8
+~~END~~
+
+
+-- psql
+--
+-- Test some cases involving whole-row Var referencing a subquery
+--
+select foo from (select 1 offset 0) as foo;
+GO
+~~START~~
+record
+(1)
+~~END~~
+
+select foo from (select null offset 0) as foo;
+GO
+~~START~~
+record
+()
+~~END~~
+
+select foo from (select 'xyzzy',1,null offset 0) as foo;
+GO
+~~START~~
+record
+(xyzzy,1,)
+~~END~~
+
+
+--
+-- Test VALUES lists
+--
+select * from master_dbo.onek, (values(147, 'RFAAAA'), (931, 'VJAAAA')) as v (i, j)
+    WHERE master_dbo.onek.unique1 = v.i and master_dbo.onek.stringu1 = v.j;
+GO
+~~START~~
+int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#name#!#name#!#name#!#int4#!#text
+~~END~~
+
+-- a more complex case
+-- looks like we're coding lisp :-)
+select * from master_dbo.onek,
+  (values ((select i from
+    (values(10000), (2), (389), (1000), (2000), ((select 10029))) as foo(i)
+    order by i asc limit 1))) bar (i)
+  where master_dbo.onek.unique1 = bar.i;
+GO
+~~START~~
+int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#name#!#name#!#name#!#int4
+2#!#326#!#0#!#2#!#2#!#2#!#2#!#2#!#2#!#2#!#2#!#4#!#5#!#CAAAAA#!#OMAAAA#!#OOOOxx#!#2
+~~END~~
+
+-- try VALUES in a subquery
+select * from master_dbo.onek
+    where (unique1,ten) in (values (1,1), (20,0), (99,9), (17,99))
+    order by unique1;
+GO
+~~START~~
+int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#name#!#name#!#name
+1#!#214#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#1#!#2#!#3#!#BAAAAA#!#GIAAAA#!#OOOOxx
+20#!#306#!#0#!#0#!#0#!#0#!#0#!#20#!#20#!#20#!#20#!#0#!#1#!#UAAAAA#!#ULAAAA#!#OOOOxx
+99#!#101#!#1#!#3#!#9#!#19#!#9#!#99#!#99#!#99#!#99#!#18#!#19#!#VDAAAA#!#XDAAAA#!#HHHHxx
+~~END~~
+
+-- VALUES is also legal as a standalone query or a set-operation member
+VALUES (1,2), (3,4+4), (7,77.7);
+GO
+~~START~~
+int4#!#numeric
+1#!#2
+3#!#8
+7#!#77.7
+~~END~~
+
+
+VALUES (1,2), (3,4+4), (7,77.7)
+UNION ALL
+SELECT 2+2, 57
+UNION ALL
+TABLE master_dbo.int8_tbl;
+GO
+~~START~~
+int8#!#numeric
+1#!#2
+3#!#8
+7#!#77.7
+4#!#57
+123#!#456
+123#!#4567890123456789
+4567890123456789#!#123
+4567890123456789#!#4567890123456789
+4567890123456789#!#-4567890123456789
+~~END~~
+
+
+-- corner case: VALUES with no columns
+CREATE TEMP TABLE nocols();
+GO
+INSERT INTO nocols DEFAULT VALUES;
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM nocols n, LATERAL (VALUES(n.*)) v;
+GO
+~~START~~
+
+
+~~END~~
+
+
+-- tsql
+--
+-- Test ORDER BY options
+--
+CREATE TABLE #foo (f1 int);
+GO
+
+INSERT INTO #foo VALUES (42),(3),(10),(7),(null),(null),(1);
+GO
+~~ROW COUNT: 7~~
+
+
+SELECT * FROM #foo ORDER BY f1;
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+1
+3
+7
+10
+42
+~~END~~
+
+SELECT * FROM #foo ORDER BY f1 ASC;	-- same thing
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+1
+3
+7
+10
+42
+~~END~~
+
+-- SELECT * FROM foo ORDER BY f1 NULLS FIRST;
+-- GO
+SELECT * FROM #foo ORDER BY f1 DESC;
+GO
+~~START~~
+int
+42
+10
+7
+3
+1
+<NULL>
+<NULL>
+~~END~~
+
+
+-- SELECT * FROM foo ORDER BY f1 DESC NULLS LAST;
+-- GO
+-- check if indexscans do the right things
+CREATE INDEX fooi ON #foo (f1);
+GO
+select set_config('enable_sort', 'false', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SELECT * FROM #foo ORDER BY f1;
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+1
+3
+7
+10
+42
+~~END~~
+
+-- SELECT * FROM foo ORDER BY f1 NULLS FIRST;
+-- GO
+SELECT * FROM #foo ORDER BY f1 DESC;
+GO
+~~START~~
+int
+42
+10
+7
+3
+1
+<NULL>
+<NULL>
+~~END~~
+
+
+-- SELECT * FROM foo ORDER BY f1 DESC NULLS LAST;
+-- GO
+DROP INDEX fooi ON #foo;
+GO
+CREATE INDEX fooi ON #foo (f1 DESC);
+GO
+
+SELECT * FROM #foo ORDER BY f1;
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+1
+3
+7
+10
+42
+~~END~~
+
+-- SELECT * FROM foo ORDER BY f1 NULLS FIRST;
+-- GO
+SELECT * FROM #foo ORDER BY f1 DESC;
+GO
+~~START~~
+int
+42
+10
+7
+3
+1
+<NULL>
+<NULL>
+~~END~~
+
+
+-- SELECT * FROM foo ORDER BY f1 DESC NULLS LAST;
+-- GO
+DROP INDEX fooi ON #foo;
+GO
+-- CREATE INDEX fooi ON foo (f1 DESC NULLS LAST);
+GO
+
+SELECT * FROM #foo ORDER BY f1;
+GO
+~~START~~
+int
+<NULL>
+<NULL>
+1
+3
+7
+10
+42
+~~END~~
+
+-- SELECT * FROM foo ORDER BY f1 NULLS FIRST;
+-- GO
+SELECT * FROM #foo ORDER BY f1 DESC;
+GO
+~~START~~
+int
+42
+10
+7
+3
+1
+<NULL>
+<NULL>
+~~END~~
+
+
+
+-- psql
+-- SELECT * FROM foo ORDER BY f1 DESC NULLS LAST;
+-- GO
+--
+-- Test planning of some cases with partial indexes
+--
+-- partial index is usable
+explain (costs off)
+select * from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((unique2 = 11) AND (stringu1 = 'ATAAAA'::name))
+~~END~~
+
+select * from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLATE "C";
+GO
+~~START~~
+int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#name#!#name#!#name
+494#!#11#!#0#!#2#!#4#!#14#!#4#!#94#!#94#!#494#!#494#!#8#!#9#!#ATAAAA#!#LAAAAA#!#VVVVxx
+~~END~~
+
+-- actually run the query with an analyze to use the partial index
+explain (costs off, analyze on, timing off, summary off)
+select * from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2 (actual rows=1 loops=1)
+  Filter: ((unique2 = 11) AND (stringu1 = 'ATAAAA'::name))
+  Rows Removed by Filter: 999
+~~END~~
+
+explain (costs off)
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((unique2 = 11) AND (stringu1 = 'ATAAAA'::name))
+~~END~~
+
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 = 'ATAAAA' COLLATE "C";
+GO
+~~START~~
+int4
+11
+~~END~~
+
+-- partial index predicate implies clause, so no need for retest
+explain (costs off)
+select * from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((stringu1 < 'B'::name) AND (unique2 = 11))
+~~END~~
+
+select * from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#int4#!#name#!#name#!#name
+494#!#11#!#0#!#2#!#4#!#14#!#4#!#94#!#94#!#494#!#494#!#8#!#9#!#ATAAAA#!#LAAAAA#!#VVVVxx
+~~END~~
+
+explain (costs off)
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((stringu1 < 'B'::name) AND (unique2 = 11))
+~~END~~
+
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+int4
+11
+~~END~~
+
+-- but if it's an update target, must retest anyway
+explain (costs off)
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C" for update;
+GO
+~~START~~
+text
+LockRows
+  ->  Seq Scan on onek2
+        Filter: ((stringu1 < 'B'::name) AND (unique2 = 11))
+~~END~~
+
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C" for update;
+GO
+~~START~~
+int4
+11
+~~END~~
+
+-- partial index is not applicable
+explain (costs off)
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'C' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((stringu1 < 'C'::name) AND (unique2 = 11))
+~~END~~
+
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'C' COLLATE "C";
+GO
+~~START~~
+int4
+11
+~~END~~
+
+-- partial index implies clause, but bitmap scan must recheck predicate anyway
+SET enable_indexscan TO off;
+GO
+explain (costs off)
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((stringu1 < 'B'::name) AND (unique2 = 11))
+~~END~~
+
+select unique2 from master_dbo.onek2 where unique2 = 11 and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+int4
+11
+~~END~~
+
+RESET enable_indexscan;
+GO
+-- check multi-index cases too
+explain (costs off)
+select unique1, unique2 from master_dbo.onek2
+  where (unique2 = 11 or unique1 = 0) and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: ((stringu1 < 'B'::name) AND ((unique2 = 11) OR (unique1 = 0)))
+~~END~~
+
+select unique1, unique2 from master_dbo.onek2
+  where (unique2 = 11 or unique1 = 0) and stringu1 < 'B' COLLATE "C";
+GO
+~~START~~
+int4#!#int4
+494#!#11
+0#!#998
+~~END~~
+
+explain (costs off)
+select unique1, unique2 from master_dbo.onek2
+  where (unique2 = 11 and stringu1 < 'B' COLLATE "C") or unique1 = 0;
+GO
+~~START~~
+text
+Seq Scan on onek2
+  Filter: (((unique2 = 11) AND (stringu1 < 'B'::name)) OR (unique1 = 0))
+~~END~~
+
+select unique1, unique2 from master_dbo.onek2
+  where (unique2 = 11 and stringu1 < 'B' COLLATE "C") or unique1 = 0;
+GO
+~~START~~
+int4#!#int4
+494#!#11
+0#!#998
+~~END~~
+
+
+
+--
+-- Test some corner cases that have been known to confuse the planner
+--
+-- ORDER BY on a constant doesn't really need any sorting
+SELECT 1 AS x ORDER BY x;
+GO
+~~START~~
+int4
+1
+~~END~~
+
+
+-- But ORDER BY on a set-valued expression does
+create function sillysrf(int) returns setof int as
+  'values (1),(10),(2),($1)' language sql immutable;
+GO
+
+select sillysrf(42);
+GO
+~~START~~
+int4
+1
+10
+2
+42
+~~END~~
+
+select sillysrf(-1) order by 1;
+GO
+~~START~~
+int4
+-1
+1
+2
+10
+~~END~~
+
+
+drop function sillysrf(int);
+GO
+
+-- X = X isn't a no-op, it's effectively X IS NOT NULL assuming = is strict
+-- (see bug #5084)
+select * from (values (2),(null),(1)) v(k) where k = k order by k;
+GO
+~~START~~
+int4
+1
+2
+~~END~~
+
+select * from (values (2),(null),(1)) v(k) where k = k;
+GO
+~~START~~
+int4
+2
+1
+~~END~~
+
+
+-- Test partitioned tables with no partitions, which should be handled the
+-- same as the non-inheritance case when expanding its RTE.
+create table list_parted_tbl (a int,b int) partition by list (a);
+GO
+create table list_parted_tbl1 partition of list_parted_tbl
+  for values in (1) partition by list(b);
+GO
+explain (costs off) select * from list_parted_tbl;
+GO
+~~START~~
+text
+Result
+  One-Time Filter: false
+~~END~~
+
+drop table list_parted_tbl;
+GO
