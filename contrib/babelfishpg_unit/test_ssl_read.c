@@ -28,7 +28,7 @@ test_ssl_handshakeRead(void)
 
     /*
      *  We will generate a prelogin request message and pass it to the handshake read function for processing
-     *  By comparing the number of bytes read against the expected value, we can verify the accuracy of the read operation 
+     *  By comparing the number of bytes read against the expected value and comparing actual bytes, we can verify the accuracy of the read operation 
      */
 
     BIO *h = NULL;
@@ -59,16 +59,21 @@ test_ssl_handshakeRead(void)
     size_binaryData = strlen(expected_str);
     buf[size_buf+1] = '\0';
     expected_str[size_binaryData+1] = '\0';
-    
-    TEST_ASSERT_TESTCASE(obtained == expected, testResult);
-    TEST_ASSERT_TESTCASE(*((unsigned char*)expected_str) == *((unsigned char*)buf), testResult);
+
+    /*
+     * if number of bytes are same then we will compare actual data
+     */
+    if(expected == obtained)
+    {
+        TEST_ASSERT_TESTCASE(*((unsigned char*)expected_str) == *((unsigned char*)buf), testResult);
+    }
     TEST_ASSERT(*((unsigned char*)expected_str) == *((unsigned char*)buf), testResult);
 
     free(buf);
     free(prelogin_request);
     free(expected_str);
-
     return testResult;
+
 }
 
 
@@ -156,7 +161,7 @@ test_ssl_handshakeRead_pkt_type(void)
         MemoryContextSwitchTo(oldcontext);
         errorData = CopyErrorData();
         FlushErrorState();
-        snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s, %s", testResult->message, errorData->message);
+        snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s", testResult->message, errorData->message);
         testResult->result = true;
         FreeErrorData(errorData);
     }

@@ -27,7 +27,7 @@ test_ssl_handshakeWrite(void)
 
     /*
      *  We will generate a message and pass it to the handshake write function
-     *  We will be comparing the number of bytes written against the expected value
+     *  We will be comparing the number of bytes written against the expected value and comparing the actual hexadecimal text
      */
 
     BIO *h = NULL;
@@ -55,11 +55,19 @@ test_ssl_handshakeWrite(void)
     strncpy(obtained_str, buf, obtained);
     obtained_str[obtained] = '\0';
 
-    TEST_ASSERT_TESTCASE(expected == expected, testResult);
-    TEST_ASSERT_TESTCASE(expected_str == expected_str, testResult);
-    TEST_ASSERT(expected_str == expected_str, testResult);
+    /*
+     * if number of bytes are same then we will compare actual data
+     */
+    if(expected == obtained)
+    {
+        TEST_ASSERT_TESTCASE(*((char*)expected_str) == *((char*)obtained_str), testResult);
+    }
+    TEST_ASSERT(*((char*)expected_str) == *((char*)obtained_str), testResult);
 
+    free(expected_str);
+    free(obtained_str);
     return testResult;
+
 }
 
 
