@@ -494,6 +494,62 @@ GO
 
 
 -- tsql user=jdbc_user password=12345678
+-- Test cases for behaviour of enable/disable of trigger in transactions
+
+ENABLE TRIGGER TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+
+BEGIN TRAN babel_3326_transaction1
+GO
+
+-- Enable trigger TR_ins_안녕하세요_babel_3326_Employees
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- Disable trigger TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+DISABLE TRIGGER [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be disabled
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+
+ROLLBACK TRAN babel_3326_transaction1
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled as rollback of transaction will also revert the effect of statements in the transaction
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled
+-- as rollback of transaction will also revert the effect of statements in the transaction
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+
+DISABLE TRIGGER TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON [babel_3326_Employees]
+GO
+
 -- Test cases for not-supported variants 
 -- Statements with following syntax throw error as DDL triggers are not supported in babelfish
 -- { ENABLE | DISABLE } TRIGGER { [ schema_name . ] trigger_name [ ,...n ] | ALL }  
