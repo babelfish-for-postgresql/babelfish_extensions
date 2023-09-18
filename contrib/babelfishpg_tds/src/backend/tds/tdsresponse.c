@@ -1280,7 +1280,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			* Check if it is spatial Data type
 			* Send the Corresponding MetaData Columns
 		*/			
-		if((*common_utility_plugin_ptr -> is_tsql_geometry_datatype) (typTup -> oid) || (*common_utility_plugin_ptr -> is_tsql_geography_datatype) (typTup -> oid))
+		if ((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid) || (*common_utility_plugin_ptr->is_tsql_geography_datatype) (typTup->oid))
 		{
 			
 			/* Current Database Name and Length are expected by the Driver */
@@ -1309,7 +1309,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 
 			/* hardcode for assembly qualified name */
-			if((*common_utility_plugin_ptr -> is_tsql_geometry_datatype) (typTup -> oid)){
+			if ((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid)){
 				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOMETRY);
 				resetStringInfo(&tempBuf);
 				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOMETRY,
