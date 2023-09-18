@@ -1547,7 +1547,7 @@ define_escape_hatch_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 	
-	/* CHECKPOINT */
+	/* SET TRANSACTION ISOLATION */
 	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_set_transaction_isolation_level",
 							 gettext_noop("escape hatch for SET TRANSACTION ISOLATION LEVEL"),
 							 NULL,
