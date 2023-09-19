@@ -1035,6 +1035,7 @@ extract_identifier(const char *start)
 	bool		dq = false;
 	bool		sqb = false;
 	bool		sq = false;
+	bool		sb = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
@@ -1049,6 +1050,8 @@ extract_identifier(const char *start)
 		sqb = true;
 	else if (start[0] == '\'')
 		sq = true;
+	else if (start[0] == '(')
+		sb = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
@@ -1063,7 +1066,7 @@ extract_identifier(const char *start)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb && !sq)		/* normal case */
+		if (!dq && !sqb && !sq && !sb)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -1163,6 +1166,18 @@ extract_identifier(const char *start)
 					original_name[wcur] = '\0';
 					return original_name;
 				}
+			}
+		}
+		else if (sb)
+		{
+			valid = (c != ')');
+			if (!valid)
+			{
+				original_name = palloc(i);	/* exclude first/last small
+											 * bracket */
+				memcpy(original_name, start + 1, i - 1);
+				original_name[i - 1] = '\0';
+				return original_name;
 			}
 		}
 		else if (sqb)
@@ -1534,33 +1549,20 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		if (alias_len > 0)
 		{
 			char	   *alias = palloc0(alias_len + 1);
-			bool		dq = *colname_start == '"';
-			bool		sqb = *colname_start == '[';
-			bool		sq = *colname_start == '\'';
 			const char	*original_name = NULL;
 			int actual_alias_len = 0;
 
 			/* To extract the identifier name from the query.*/
 			original_name = extract_identifier(colname_start);
 			actual_alias_len = strlen(original_name);
-			
-			/* check if identifier is delimited or not. In case of delimiters,
-			 * colname_start is incremented by one to point at identifier name. 
-			 */
-			
-			if(sq || sqb || dq)
-			{
-				colname_start++;
-			}
 
-			/* Maximum alias_len can be 63 after truncation.
-			 * If alias_len is smaller than actual_alias_len,
-			 * this means Identifier is truncated.
+			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
+			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
 			 */
 			if(actual_alias_len > alias_len)
 			{
-				/* First 32 characters of colname_start are assigned to alias. */
-				memcpy(alias, colname_start, (alias_len - 32) );
+				/* First 32 characters of original_name are assigned to alias. */
+				memcpy(alias, original_name, (alias_len - 32) );
 				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
 				memcpy(alias + (alias_len) - 32,
 				identifier_name + (alias_len) - 32, 
@@ -1570,9 +1572,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/* Identifier is not truncated. */
 			else
 			{
-				memcpy(alias, colname_start, alias_len);
+				memcpy(alias, original_name, alias_len);
 			}
-			res->name = alias;			
+			res->name = alias;
 		}
 	}
 	/* Update table set qualified column name, resolve qualifiers here */
