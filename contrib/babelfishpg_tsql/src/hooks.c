@@ -40,6 +40,7 @@
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
+#include "regex/regex.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
@@ -140,9 +141,9 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
-static void pltsql_parse_time_error(int dterr, const char *str, const char *datatype);
-static bool pltsql_handle_textMonth_case(int type, bool *haveTextMonth, int fmask, int *tmask, struct pg_tm *tm, int val);
-static int pltsql_date_decoder(int nf, char **field, int fmask, int tmask, bool is2digits, struct pg_tm *tm, bool bc, bool isjulian);
+static void gen_func_time_in_error();
+static bool containsInMonthFormat(int *ftype);
+static Datum pltsql_time_in(const char *str, int32 typmod);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
@@ -229,10 +230,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static time_datatype_parse_error_hook_type prev_time_datatype_parse_error_hook = NULL;
-static date_decoder_hook_type prev_date_decoder_hook = NULL;
-static handle_textMonth_case_hook_type prev_handle_textMonth_case_hook = NULL;
-
+static time_in_hook_type prev_time_in_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -394,14 +392,8 @@ InstallExtendedHooks(void)
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
-	prev_time_datatype_parse_error_hook = time_datatype_parse_error_hook;
-	time_datatype_parse_error_hook = pltsql_parse_time_error;
-
-	prev_date_decoder_hook = date_decoder_hook;
-	date_decoder_hook = pltsql_date_decoder;
-
-	prev_handle_textMonth_case_hook = handle_textMonth_case_hook;
-	handle_textMonth_case_hook = pltsql_handle_textMonth_case;
+	prev_time_in_hook = time_in_hook;
+	time_in_hook = pltsql_time_in;
 
 	select_common_type_hook = select_common_type_for_isnull;
 }
@@ -466,9 +458,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
-	time_datatype_parse_error_hook = prev_time_datatype_parse_error_hook;
-	date_decoder_hook = prev_date_decoder_hook;
-	handle_textMonth_case_hook = prev_handle_textMonth_case_hook;
+	time_in_hook = prev_time_in_hook;
 }
 
 /*****************************************
@@ -2710,73 +2700,166 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 }
 
 /*
- * Handle the case where month is given in text format
- */
-bool pltsql_handle_textMonth_case(int type, bool *haveTextMonth, int fmask, int *tmask, struct pg_tm *tm, int val)
-{
-	if(sql_dialect == SQL_DIALECT_TSQL && type == MONTH)
-	{
-		/*
-		 * already have a (numeric) month? then see if we can
-		 * substitute...
-		 */
-		if ((fmask & DTK_M(MONTH)) && !*haveTextMonth &&
-			!(fmask & DTK_M(DAY)) && tm->tm_mon >= 1 &&
-			tm->tm_mon <= 31)
-		{
-			tm->tm_mday = tm->tm_mon;
-			*tmask = DTK_M(DAY);
-		}
-		*haveTextMonth = true;
-		tm->tm_mon = val;
-		return true;
-	}
-	return false;
-}
-/*
  * Throw a common error message while casting to time datatype
  */
-void pltsql_parse_time_error(int dterr, const char *str, const char *datatype)
+static void gen_func_time_in_error()
 {
-	if(sql_dialect == SQL_DIALECT_TSQL)
-		switch (dterr)
-		{
-			default:
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-						errmsg("Conversion failed when converting date and/or time from character string.")));
-				break;
-		}
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+			errmsg("Conversion failed when converting date and/or time from character string.")));
 }
 
-/*
- * If the input contains only date field then validate the input.
- * If contains more fields(date, time, offset) then do nothing and continue with the next step.
- */
-int pltsql_date_decoder(int nf, char **field, int fmask, int tmask, bool is2digits, struct pg_tm *tm, bool bc, bool isjulian)
-{
-	if (sql_dialect == SQL_DIALECT_TSQL && nf == 1)
+static bool containsInMonthFormat(int *ftype){
+	int count0 = 0, count1 = 0;
+	for(int i=0;i<3;i++)
 	{
-		/* do final checking/adjustment of Y/M/D fields */
-		int dterr = DecodeDateWrapper(field[0], fmask,
-							&tmask, &is2digits, tm);
-		if (dterr)
-			return dterr;
-
-		if (tmask & fmask)
-			return DTERR_BAD_FORMAT;
-		fmask |= tmask;
-
-		/* do final checking/adjustment of Y/M/D fields */
-		dterr = ValidateDate(fmask, isjulian, is2digits, bc, tm);
-		if (dterr)
-			return dterr;
-
-		/* No error then just return 0 */
-		return 0;
+		if(ftype[i] == DTK_NUMBER)
+			count0++;
+		else if(ftype[i] == DTK_STRING)
+			/* To-Do Check if valid text month is given */
+			count1++;
+		else
+			return false;
 	}
-	/* returning -6 as the given input is not of format 'yyyy-mm-dd' */
-	return -6;
+	if(count0 ==2 && count1 ==1)
+		return true;
+	return false;
+}
+
+Datum pltsql_time_in(const char *str, int32	typmod)
+{
+	TimeADT		result;
+	fsec_t		fsec;
+	struct pg_tm tt,
+			   *tm = &tt;
+	int			tz;
+	int			nf;
+	int			dterr;
+	char		workbuf[MAXDATELEN + 1];
+	char	   *field[MAXDATEFIELDS];
+	int			dtype;
+	int			ftype[MAXDATEFIELDS];
+	StringInfo	sf_1 ;
+	int status;
+
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+	{
+		if(nf >= 3)
+		{
+			if(containsInMonthFormat(ftype))
+			{
+				StringInfoData buf;
+				initStringInfo(&buf);
+				appendStringInfoString(&buf, field[0]);
+				for(int i=1;i<3;i++)
+				{
+					appendStringInfoString(&buf, "-");
+					appendStringInfoString(&buf, field[i]);
+
+				}
+				field[0]=buf.data;
+				ftype[0] = DTK_DATE;
+				nf = nf - 2;
+				for(int i = 1; i < nf; i++)
+				{
+					field[i] = field[i+2];
+					ftype[i] = ftype[i+2];
+				}
+			}
+		}
+
+		for(int i=0;i < nf; i++)
+		{
+			switch(ftype[i])
+			{
+				case DTK_NUMBER:
+					switch(strlen(field[i]))
+					{
+						case 1:
+						case 2:
+							/*
+							 * At this point the 1,2 digit number should be considered as
+							 * time only if there is an [AP]M after the number or else
+							 * should throw an error
+							 */
+							if(i == nf-1 || ftype[i+1] != DTK_STRING)
+							{
+								gen_func_time_in_error();
+							}
+							status = RE_compile_and_execute(cstring_to_text("^([AP]M)$"),
+															(char *) field[i+1], strlen(field[i+1]),
+															REG_ADVANCED | REG_ICASE, DEFAULT_COLLATION_OID,
+															0, NULL);
+							if(!status)
+								gen_func_time_in_error();
+
+							sf_1 = makeStringInfo();
+							appendStringInfo(sf_1, "%s%s", field[i], ":0:0");
+							field[i] = sf_1->data;
+							ftype[i] = DTK_TIME;
+							break;
+						/*
+						 * To-Do
+						 * Case 6,8 needs special handling to convert the
+						 * given numeric to date format(YYYY-MM-DD/YY-MM-DD)
+						 */
+						case 4:
+						case 6:
+						case 8:
+							break;
+						/*
+						 * If the numeric is of length {3,5,7, >8} then an error should be thrown*/
+						default:
+							gen_func_time_in_error();
+							break;
+					}
+			}
+		}
+		switch(nf)
+		{
+			case 1:
+				/*
+				 * To-Do
+				 * If the input is of format `Mon{/.}yyyy{/.}dd` or `Mon{/.}dd{/.}yyyy
+				 * shouldn't be supported.
+				 */
+				/*
+				 * If only date is specified add an default time of
+				 * 0:0:0
+				 */
+				if(ftype[0] == DTK_DATE)
+				{
+					ftype[1] = DTK_TIME;
+					field[1] = "0:0:0";
+					nf = nf+1;
+ 				}
+				break;
+			case 3:
+				/*
+				 * If the given input is of format `yyyy-mm-ddThh:mm:ss`
+				 * then conver it to `yyyy-mm-dd hh:mm:ss` by ignoring 'T'
+				 */
+				if(ftype[1] == DTK_STRING && pg_strcasecmp(field[1], "t") == 0 && ftype[2] == DTK_TIME)
+				{
+					ftype[1] = ftype[2];
+					field[1] = field[2];
+					nf = nf - 1;
+				}
+			default:
+				break;
+		}
+
+		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	}
+	if (dterr != 0)
+		gen_func_time_in_error();
+
+	tm2time(tm, fsec, &result);
+	AdjustTimeForTypmod(&result, typmod);
+
+	PG_RETURN_TIMEADT(result);
 }
 
 /*

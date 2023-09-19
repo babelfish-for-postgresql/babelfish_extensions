@@ -10,8 +10,31 @@ GO
 
 
 -- tsql
--- when month is given in numeric format and date can have ['-', '/']
-SELECT CAST('2012-02-23' AS TIME)
+-- if only date is given as input
+-- accepted formats are `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
+-- If text month is given then acceptable formats are `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`
+SELECT CAST('   23   -     11   -   2000   ' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('23-2000-11' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('11-2000-23' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('11-23-2000' AS TIME)
 GO
 ~~START~~
 time
@@ -19,7 +42,7 @@ time
 ~~END~~
 
 
-SELECT CAST('     2012   -    02   -    23        ' AS TIME)
+SELECT CAST('2000-11-23' AS TIME)
 GO
 ~~START~~
 time
@@ -27,64 +50,35 @@ time
 ~~END~~
 
 
-SELECT CAST('2012   -    02   -    23     2    :      ' AS TIME)
+SELECT CAST('2000-23-11' AS TIME)
 GO
-~~START~~
-time
-02:00:00.0000000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CAST('2012   -    02   -    23     2    :      3' AS TIME)
+SELECT CAST('     23     /       11    /     2000     ' AS TIME)
 GO
-~~START~~
-time
-02:03:00.0000000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CAST('2012   -    02   -    23     2    :      3       :' AS TIME)
+SELECT CAST('23/2000/11' AS TIME)
 GO
-~~START~~
-time
-02:03:00.0000000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CAST('2012   -    02   -    23     2    :      3       :       8' AS TIME)
+SELECT CAST('11/2000/23' AS TIME)
 GO
-~~START~~
-time
-02:03:08.0000000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
-SELECT CAST('2012   /    02   /   23     2    :      3       :       8' AS TIME)
-GO
-~~START~~
-time
-02:03:08.0000000
-~~END~~
-
-
-SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876' AS TIME)
-GO
-~~START~~
-time
-02:03:08.8760000
-~~END~~
-
-
-SELECT CAST('2012   /    02   /    23     2    :      3       :       8    .          876' AS TIME)
-GO
-~~START~~
-time
-02:03:08.8760000
-~~END~~
-
-
--- when month is given text format and date can have ['-', '/', ' ']
-SELECT CAST('2012-02-23' AS TIME)
+SELECT CAST('11/23/2000' AS TIME)
 GO
 ~~START~~
 time
@@ -92,7 +86,7 @@ time
 ~~END~~
 
 
-SELECT CAST('2012   -   FeB   -    23' AS TIME)
+SELECT CAST('2000/11/23' AS TIME)
 GO
 ~~START~~
 time
@@ -100,7 +94,14 @@ time
 ~~END~~
 
 
-SELECT CAST('2012   -   FeBruAry   -    23' AS TIME)
+SELECT CAST('2000/23/11' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST(' 23   -     Nov    -      2000 ' AS TIME)
 GO
 ~~START~~
 time
@@ -108,68 +109,316 @@ time
 ~~END~~
 
 
-SELECT CAST('2012   -    feb   -    23     2    :      ' AS TIME)
+SELECT CAST('23-2000-Nov' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov-2000-23' AS TIME)
 GO
 ~~START~~
 time
-02:00:00.0000000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3' AS TIME)
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov-23-2000' AS TIME)
 GO
 ~~START~~
 time
-02:03:00.0000000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3       :' AS TIME)
+SELECT CAST('2000-Nov-23' AS TIME)
 GO
 ~~START~~
 time
-02:03:00.0000000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8' AS TIME)
+SELECT CAST('2000-23-Nov' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('  23    /   Nov    /    2000   ' AS TIME)
 GO
 ~~START~~
 time
-02:03:08.0000000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   /    FeB   /    23     2    :      3       :       8' AS TIME)
+SELECT CAST('23/2000/Nov' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov/2000/23' AS TIME)
 GO
 ~~START~~
 time
-02:03:08.0000000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876' AS TIME)
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov/23/2000' AS TIME)
 GO
 ~~START~~
 time
-02:03:08.8760000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   /    FeB   /    23     2    :      3       :       8    .          876' AS TIME)
+SELECT CAST('2000/Nov/23' AS TIME)
 GO
 ~~START~~
 time
-02:03:08.8760000
+00:00:00.0000000
 ~~END~~
 
 
-SELECT CAST('2012   -    FeBruary   -    23     2    :      3' AS TIME)
+SELECT CAST('2000/23/Nov' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('23        .        11      .     2000' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('23.2000.11' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('11.2000.23' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('11.23.2000' AS TIME)
 GO
 ~~START~~
 time
-02:03:00.0000000
+00:00:00.0000000
 ~~END~~
+
+
+SELECT CAST('2000.11.23' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('2000.23.11' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('   23   . Nov  .  2000  ' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('23.2000.Nov' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov.2000.23' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov.23.2000' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('2000.Nov.23' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('2000.23.Nov' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+-- If numeric is specified
+-- If `am` or `pm` is specified
+SELECT CAST('1' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('10' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('102' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+-- need handling
+-- SELECT CAST('1020' AS TIME)
+-- GO
+SELECT CAST('10202' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+-- need handling
+-- SELECT CAST('102022' AS TIME)
+-- GO
+SELECT CAST('1010101' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+
+-- need handling
+-- SELECT CAST('10101010' AS TIME)
+-- GO
+SELECT CAST('101010101' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('01 Am' AS TIME)
+GO
+~~START~~
+time
+01:00:00.0000000
+~~END~~
+
+
+SELECT CAST('Am 01' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('13 Am' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('01 Pm' AS TIME)
+GO
+~~START~~
+time
+13:00:00.0000000
+~~END~~
+
+
+SELECT CAST('24 Pm' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('11:58:59 Pm' AS TIME)
+GO
+~~START~~
+time
+23:58:59.0000000
+~~END~~
+
+
+SELECT CAST('2000-11-23 Am' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('2000-11-23 11:58:59 Pm' AS TIME)
+GO
+~~START~~
+time
+23:58:59.0000000
+~~END~~
+
+
+-- different kind of input
+SELECT CAST('1998-02-23T14:23:05' AS time)
+GO
+~~START~~
+time
+14:23:05.0000000
+~~END~~
+
+
+SELECT CAST('1998-02-23num14:23:05' AS time)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 SELECT CAST('12 jan 20 2:3' AS TIME)
@@ -468,10 +717,9 @@ time
 -- case where input is of format 'mm yyyy dd hhmmss.ss'
 SELECT CAST('Jan   2021   01 010506.289' AS TIME)
 GO
-~~START~~
-time
-01:05:06.2890000
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 -- if input is given in hhmmss
@@ -565,16 +813,10 @@ GO
 --if given yyyymmdd as input
 SELECT CAST('2012jan01' AS TIME)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
-
-
-SELECT CAST('20121201' AS TIME)
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+~~START~~
+time
+00:00:00.0000000
+~~END~~
 
 
 SELECT CAST('Jan   2021    010506.289' AS TIME)

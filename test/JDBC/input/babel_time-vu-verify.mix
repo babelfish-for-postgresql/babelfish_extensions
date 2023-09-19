@@ -1,69 +1,181 @@
--- psql
--- behaviour of casting to time in psql
-SELECT CAST('2012-02-23' AS TIME)
+-- if only date is given as input
+-- accepted formats are `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
+-- If text month is given then acceptable formats are `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`
+SELECT CAST('   23   -     11   -   2000   ' AS TIME)
 GO
 
--- tsql
--- when month is given in numeric format and date can have ['-', '/']
-SELECT CAST('2012-02-23' AS TIME)
+SELECT CAST('23-2000-11' AS TIME)
 GO
 
-SELECT CAST('     2012   -    02   -    23        ' AS TIME)
+SELECT CAST('11-2000-23' AS TIME)
 GO
 
-SELECT CAST('2012   -    02   -    23     2    :      ' AS TIME)
+SELECT CAST('11-23-2000' AS TIME)
 GO
 
-SELECT CAST('2012   -    02   -    23     2    :      3' AS TIME)
+SELECT CAST('2000-11-23' AS TIME)
 GO
 
-SELECT CAST('2012   -    02   -    23     2    :      3       :' AS TIME)
+SELECT CAST('2000-23-11' AS TIME)
 GO
 
-SELECT CAST('2012   -    02   -    23     2    :      3       :       8' AS TIME)
+SELECT CAST('     23     /       11    /     2000     ' AS TIME)
 GO
 
-SELECT CAST('2012   /    02   /   23     2    :      3       :       8' AS TIME)
+SELECT CAST('23/2000/11' AS TIME)
 GO
 
-SELECT CAST('2012   -    02   -    23     2    :      3       :       8    .          876' AS TIME)
+SELECT CAST('11/2000/23' AS TIME)
 GO
 
-SELECT CAST('2012   /    02   /    23     2    :      3       :       8    .          876' AS TIME)
+SELECT CAST('11/23/2000' AS TIME)
 GO
 
--- when month is given text format and date can have ['-', '/', ' ']
-SELECT CAST('2012-02-23' AS TIME)
+SELECT CAST('2000/11/23' AS TIME)
 GO
 
-SELECT CAST('2012   -   FeB   -    23' AS TIME)
+SELECT CAST('2000/23/11' AS TIME)
 GO
 
-SELECT CAST('2012   -   FeBruAry   -    23' AS TIME)
+SELECT CAST(' 23   -     Nov    -      2000 ' AS TIME)
 GO
 
-SELECT CAST('2012   -    feb   -    23     2    :      ' AS TIME)
+SELECT CAST('23-2000-Nov' AS TIME)
 GO
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3' AS TIME)
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov-2000-23' AS TIME)
 GO
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3       :' AS TIME)
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov-23-2000' AS TIME)
 GO
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8' AS TIME)
+SELECT CAST('2000-Nov-23' AS TIME)
 GO
 
-SELECT CAST('2012   /    FeB   /    23     2    :      3       :       8' AS TIME)
+SELECT CAST('2000-23-Nov' AS TIME)
 GO
 
-SELECT CAST('2012   -    FeB   -    23     2    :      3       :       8    .          876' AS TIME)
+SELECT CAST('  23    /   Nov    /    2000   ' AS TIME)
 GO
 
-SELECT CAST('2012   /    FeB   /    23     2    :      3       :       8    .          876' AS TIME)
+SELECT CAST('23/2000/Nov' AS TIME)
 GO
 
-SELECT CAST('2012   -    FeBruary   -    23     2    :      3' AS TIME)
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov/2000/23' AS TIME)
+GO
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov/23/2000' AS TIME)
+GO
+
+SELECT CAST('2000/Nov/23' AS TIME)
+GO
+
+SELECT CAST('2000/23/Nov' AS TIME)
+GO
+
+SELECT CAST('23        .        11      .     2000' AS TIME)
+GO
+
+SELECT CAST('23.2000.11' AS TIME)
+GO
+
+SELECT CAST('11.2000.23' AS TIME)
+GO
+
+SELECT CAST('11.23.2000' AS TIME)
+GO
+
+SELECT CAST('2000.11.23' AS TIME)
+GO
+
+SELECT CAST('2000.23.11' AS TIME)
+GO
+
+SELECT CAST('   23   . Nov  .  2000  ' AS TIME)
+GO
+
+SELECT CAST('23.2000.Nov' AS TIME)
+GO
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov.2000.23' AS TIME)
+GO
+
+-- Need handling(was failing in SQL Server)
+SELECT CAST('Nov.23.2000' AS TIME)
+GO
+
+SELECT CAST('2000.Nov.23' AS TIME)
+GO
+
+SELECT CAST('2000.23.Nov' AS TIME)
+GO
+
+-- If numeric is specified
+-- If `am` or `pm` is specified
+SELECT CAST('1' AS TIME)
+GO
+
+SELECT CAST('10' AS TIME)
+GO
+
+SELECT CAST('102' AS TIME)
+GO
+
+-- need handling
+-- SELECT CAST('1020' AS TIME)
+-- GO
+
+SELECT CAST('10202' AS TIME)
+GO
+
+-- need handling
+-- SELECT CAST('102022' AS TIME)
+-- GO
+
+SELECT CAST('1010101' AS TIME)
+GO
+
+-- need handling
+-- SELECT CAST('10101010' AS TIME)
+-- GO
+
+SELECT CAST('101010101' AS TIME)
+GO
+
+SELECT CAST('01 Am' AS TIME)
+GO
+
+SELECT CAST('Am 01' AS TIME)
+GO
+
+SELECT CAST('13 Am' AS TIME)
+GO
+
+SELECT CAST('01 Pm' AS TIME)
+GO
+
+SELECT CAST('24 Pm' AS TIME)
+GO
+
+SELECT CAST('11:58:59 Pm' AS TIME)
+GO
+
+SELECT CAST('2000-11-23 Am' AS TIME)
+GO
+
+SELECT CAST('2000-11-23 11:58:59 Pm' AS TIME)
+GO
+
+-- different kind of input
+SELECT CAST('1998-02-23T14:23:05' AS time)
+GO
+
+SELECT CAST('1998-02-23num14:23:05' AS time)
 GO
 
 SELECT CAST('12 jan 20 2:3' AS TIME)
@@ -226,9 +338,6 @@ GO
 
 --if given yyyymmdd as input
 SELECT CAST('2012jan01' AS TIME)
-GO
-
-SELECT CAST('20121201' AS TIME)
 GO
 
 SELECT CAST('Jan   2021    010506.289' AS TIME)
