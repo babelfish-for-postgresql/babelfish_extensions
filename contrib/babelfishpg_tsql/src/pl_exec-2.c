@@ -3161,6 +3161,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	Oid		current_user_id = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
+	char		message[200];
 
 
     bool    is_cross_db = false;
@@ -3303,9 +3304,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			 * DBCC command option.
 			 */
 			if (!dbcc_stmt.no_infomsgs)
-				ereport(WARNING,
-					(errmsg("Checking identity information: current"
-					" identity value '%ld'.\n", cur_identity_value)));
+				snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
 
 			DirectFunctionCall2(setval_oid,
 				ObjectIdGetDatum(seqid),
@@ -3328,12 +3327,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				max_identity_value = pg_strtoint64(max_identity_value_str);
 
 			if (!dbcc_stmt.no_infomsgs)
-				ereport(WARNING,
-					(errmsg("Checking identity information: current"
-					" identity value '%ld', current column value "
-					"'%s'.\n", cur_identity_value,
-					max_identity_value_str ?
-					max_identity_value_str : "NULL")));
+				snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
+													cur_identity_value, 
+													max_identity_value_str ? max_identity_value_str : "NULL");
 
 			pfree(query);
 			SPI_freetuptable(SPI_tuptable);
@@ -3368,9 +3364,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			if (dbcc_stmt.new_reseed_value)
 			{
-				ereport(WARNING,
-					(errmsg("Checking identity information: current"
-					" identity value 'NULL'.\n")));
+				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL'.\n");
 
 				DirectFunctionCall3(setval3_oid,
 					ObjectIdGetDatum(seqid),
@@ -3379,9 +3373,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			}
 			else
 			{
-				ereport(WARNING,
-					(errmsg("Checking identity information: current"
-					" identity value 'NULL', current column value 'NULL'.\n")));
+				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
 			}
 		}
 		else
@@ -3401,9 +3393,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	if (!dbcc_stmt.no_infomsgs)
 	{
-		ereport(WARNING,
-			(errmsg( "DBCC execution completed. If DBCC printed error messages,"
-				" contact your system administrator.")));
+		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
+		/* send message to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
 	}
 }
 

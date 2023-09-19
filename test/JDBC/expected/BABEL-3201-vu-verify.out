@@ -333,6 +333,11 @@ DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 10);
 INSERT INTO babel_3201_t_decimal VALUES (9);
 commit;
 go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '18'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
 
 
@@ -375,6 +380,11 @@ BEGIN TRAN;
     INSERT INTO babel_3201_t_decimal VALUES (11);
 ROLLBACK;
 GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '13'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
 ~~ROW COUNT: 1~~
 
 
