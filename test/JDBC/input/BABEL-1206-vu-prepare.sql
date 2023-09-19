@@ -15,7 +15,7 @@ CREATE NONCLUSTERED INDEX babel_1206_vu_prepare_t2_i1
     ON babel_1206_vu_prepare_t2 ([Login] ASC, [UserLicenseKey] ASC, [PasswordSHA1] ASC)
     WITH (FILLFACTOR = 90);
 go
-insert into babel_1206_vu_prepare_t2 values (0xaaa, 0xbbb, 1);
+insert into babel_1206_vu_prepare_t2 values ('abc', 0xbbb, 1);
 go
 
 CREATE TABLE babel_1206_vu_prepare_t3(
@@ -44,8 +44,8 @@ CREATE TABLE babel_1206_vu_prepare_t4(
  ) ON [PRIMARY]
 go
 
-insert into babel_1206_vu_prepare_t4 values (0xaaa);
+insert into babel_1206_vu_prepare_t4 values ('abc');
 go
 --should throw an error because of duplicate index key
-insert into babel_1206_vu_prepare_t4 values (0xaaa);
+insert into babel_1206_vu_prepare_t4 values ('abc');
 go

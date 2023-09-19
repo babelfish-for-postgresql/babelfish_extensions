@@ -25,7 +25,7 @@ my $tempdir    = PostgreSQL::Test::Utils::tempdir;
 my $dump1_file = "$tempdir/dump_all_old.sql";
 my $dump2_file = "$tempdir/dump_db_old.sql";
 my $dump3_file = "$tempdir/dump_all_new.sql";
-my $dump4_file = "$tempdir/dump_db_new.sql";
+my $dump4_file = "$tempdir/dump_db_new.custom";
 
 ############################################################################################
 ############################### Test for cross version mode ################################
@@ -92,6 +92,7 @@ $newnode->command_fails_like(
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
+		'--single-transaction',
 		'-f',         $dump1_file,
 	],
 	qr/Dump and restore across different Postgres versions is not yet supported./,
@@ -104,6 +105,7 @@ $newnode->command_fails_like(
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
+		'--single-transaction',
 		'-f',         $dump2_file,
 	],
 	qr/Dump and restore across different Postgres versions is not yet supported./,
@@ -136,11 +138,12 @@ $tsql_newnode2->init_tsql('test_master', 'testdb', 'multi-db');
 	'--port', $newnode2->port, '--globals-only', '--quote-all-identifiers',
 	'--verbose', '--no-role-passwords', '--file', $dump3_file);
 $newnode2->command_ok(\@dumpall_command, 'Dump global objects.');
-# Dump Babelfish database using pg_dump.
+# Dump Babelfish database using pg_dump. Let's dump with the custom format
+# this time so that we cover pg_restore as well.
 @dump_command = (
 	'pg_dump', '--username', 'test_master', '--quote-all-identifiers',
 	'--port', $newnode2->port, '--verbose', '--dbname', 'testdb',
-	'--file', $dump4_file);
+	'--format', 'custom', '--file', $dump4_file);
 $newnode2->command_ok(\@dump_command, 'Dump Babelfish database.');
 $newnode2->stop;
 
@@ -155,6 +158,7 @@ $newnode->command_fails_like(
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
+		'--single-transaction',
 		'-f',         $dump3_file,
 	],
 	qr/Dump and restore across different migration modes is not yet supported./,
@@ -163,11 +167,12 @@ $newnode->command_fails_like(
 # Similarly, restore of dump file should also cause a failure.
 $newnode->command_fails_like(
 	[
-		'psql',
+		'pg_restore',
 		'-d',         'testdb',
 		'-U',         'test_master',
 		'-p',         $newnode->port,
-		'-f',         $dump4_file,
+		'--single-transaction',
+		$dump4_file,
 	],
 	qr/Dump and restore across different migration modes is not yet supported./,
 	'Restore of Babelfish database failed since source and target migration modes do not match.');
