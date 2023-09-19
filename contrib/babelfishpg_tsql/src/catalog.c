@@ -2864,7 +2864,7 @@ alter_guest_schema_for_db (const char *dbname)
 	if (!HeapTupleIsValid(usertuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tuple does not exist")));
+				 errmsg("Cannot find the user \"guest\", because it does not exist or you do not have permission.")));
 
 	new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("guest");
 	new_record_repl_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = true;
