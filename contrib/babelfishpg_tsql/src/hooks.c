@@ -893,6 +893,7 @@ extract_identifier(const char *start)
 	bool		sq = false;
 	bool		sb = false;
 	int			i = 0;
+	int			count = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
 	bool		found_escaped_in_dq = false;
@@ -1026,13 +1027,19 @@ extract_identifier(const char *start)
         }
         else if (sb)
         {
-            valid = (c != ')');
+			while(start[i] == '(')
+			{
+				/*Count how many sb are in the name. */
+				count++;
+				i++;
+			}
+			valid = (c != ')');
             if (!valid)
             {
                 original_name = palloc(i);  /* exclude first/last small
                                              * bracket */
-                memcpy(original_name, start + 1, i - 1);
-                original_name[i - 1] = '\0';
+                memcpy(original_name, start + count + 1, i - count - 1);
+                original_name[i - count - 1] = '\0';
                 return original_name;
             }
         }
