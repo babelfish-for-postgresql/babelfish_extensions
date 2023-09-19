@@ -6,9 +6,9 @@
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
 #ifdef ENABLE_SPATIAL_TYPES
-#include "spatial_types.sql"
+#include "spatial_types--3.2.0--3.3.0.sql"
 #endif
-#include "other_types.sql"
+#include "other_types--3.2.0--3.3.0.sql"
 
 /*
  * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason

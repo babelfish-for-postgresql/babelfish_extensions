@@ -179,4 +179,4 @@ CREATE OR REPLACE FUNCTION sys.GeomPoint_helper(float8, float8, srid integer)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3', 'ST_Point'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE; 
-	
+

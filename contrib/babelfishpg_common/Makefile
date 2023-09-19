@@ -2,7 +2,6 @@ include Version.config
 
 EXTENSION = babelfishpg_common
 EXTVERSION = $(BBFPGCMN_MAJOR_VERSION).$(BBFPGCMN_MINOR_VERSION).$(BBFPGCMN_MICRO_VERSION)
-PREEXTVERSION = $(BBFPGCMN_MAJOR_VERSION).$(shell expr $(BBFPGCMN_MINOR_VERSION) - 1).$(BBFPGCMN_MICRO_VERSION)
 
 # Note:
 #	Set PREV_EXTVERSION after release, i.e after release of 2.0.0, set PREV_EXTVERSION to 1.0.0
@@ -79,7 +78,7 @@ include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
-all: sql/upgrades/$(EXTENSION)--$(PREEXTVERSION)--$(EXTVERSION).sql sql/upgrades/babelfishpg_upgrades.in
+all: sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql sql/upgrades/babelfishpg_upgrades--3.2.0--3.3.0.in
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
@@ -97,14 +96,14 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
 		cpp $< | sed 's/^# /-- /g' > $@
 
-    sql/upgrades/$(EXTENSION)--$(PREEXTVERSION)--$(EXTVERSION).sql: sql/upgrades/babelfishpg_upgrades.in
+    sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades--3.2.0--3.3.0.in
 		cpp $< | sed 's/^# /-- /g' > $@
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
 		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
 
-    sql/upgrades/$(EXTENSION)--$(PREEXTVERSION)--$(EXTVERSION).sql: sql/upgrades/babelfishpg_upgrades.in
+    sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades--3.2.0--3.3.0.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
 endif
 

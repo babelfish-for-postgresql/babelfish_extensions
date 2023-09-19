@@ -297,4 +297,4 @@ CREATE OR REPLACE FUNCTION sys.STDistance_helper(geog1 sys.GEOGRAPHY, geog2 sys.
 	RETURNS float8
 	AS '$libdir/postgis-3', 'LWGEOM_distance_ellipsoid'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-    
+
