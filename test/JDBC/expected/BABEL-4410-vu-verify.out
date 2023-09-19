@@ -1,12 +1,13 @@
 -- psql
-SELECT pg_attribute.attname, pg_type.typname, pg_type.typinput, pg_type.typoutput, pg_type.typreceive, pg_type.typsend 
-FROM pg_attribute LEFT OUTER JOIN pg_type 
-ON pg_attribute.atttypid = pg_type.oid 
-WHERE pg_attribute.attname='TABLE_TYPE';
+SELECT table_schema, table_name, column_name, udt_schema, udt_name, collation_schema, collation_name 
+FROM information_schema.columns 
+WHERE table_schema='information_schema_tsql' 
+    AND table_name='tables' 
+    AND column_name='TABLE_TYPE';
 GO
 ~~START~~
-name#!#name#!#regproc#!#regproc#!#regproc#!#regproc
-TABLE_TYPE#!#varchar#!#sys.varcharin#!#sys.varcharout#!#sys.varcharrecv#!#sys.varcharsend
+name#!#name#!#name#!#name#!#name#!#name#!#name
+information_schema_tsql#!#tables#!#TABLE_TYPE#!#sys#!#varchar#!#sys#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
