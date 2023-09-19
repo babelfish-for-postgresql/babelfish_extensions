@@ -1,0 +1,294 @@
+--INSERT BULK queries are no-op query, we are just handling the syntax from antlr parser side.
+SELECT * FROM BABEL_4217_vu_prepare_t1;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t1 (
+    ID INT PRIMARY KEY NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t1;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t2;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t2 (
+    ID INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t2;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t3;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t3 (
+    ID INT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t3;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t4;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t4 add id INT PRIMARY KEY IDENTITY(1,1) NOT NULL;
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t4;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t5;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t5 add id INT PRIMARY KEY NOT NULL IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t5;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t6;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t6 add id INT NOT NULL PRIMARY KEY IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t6;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t7;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t7 (
+    ID INT UNIQUE NOT NULL IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t7;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t8;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t8 (
+    ID INT UNIQUE IDENTITY(1,1) NOT NULL,
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t8;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t9;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t9 (
+    ID INT NOT NULL UNIQUE IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t9;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t10;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t10 add id INT UNIQUE IDENTITY(1,1) NOT NULL;
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t10;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t11;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t11 add id INT UNIQUE NOT NULL IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t11;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t12;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t12 add id INT NOT NULL UNIQUE IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t12;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t13;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+INSERT BULK BABEL_4217_vu_prepare_t13 (
+    ID INT PRIMARY KEY NOT NULL CHECK(ID < 5) IDENTITY(1,1),
+    FIRSTNAME VARCHAR(50)
+);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t13;
+GO
+~~START~~
+int#!#varchar
+1#!#John
+2#!#Jane
+~~END~~
+
+
+SELECT * FROM BABEL_4217_vu_prepare_t14;
+GO
+~~START~~
+varchar
+John
+Jane
+~~END~~
+
+-- It should give error (default and identity cannot be assigned to same column)
+ALTER TABLE BABEL_4217_vu_prepare_t14 add id INT PRIMARY KEY NOT NULL DEFAULT 0 IDENTITY(1,1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: both default and identity specified for column "id" of table "babel_4217_vu_prepare_t14")~~
+
+ALTER TABLE BABEL_4217_vu_prepare_t14 add id INT PRIMARY KEY NOT NULL CHECK(id < 5) IDENTITY(1,1);
+GO
+SELECT * FROM BABEL_4217_vu_prepare_t14;
+GO
+~~START~~
+varchar#!#int
+John#!#1
+Jane#!#2
+~~END~~
+
