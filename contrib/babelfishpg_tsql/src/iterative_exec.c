@@ -986,10 +986,10 @@ is_set_tran_isolation(PLtsql_stmt *stmt)
 	if( stmt->cmd_type == PLTSQL_STMT_EXECSQL)
 	{
 		PLtsql_stmt_execsql	*execsql = (PLtsql_stmt_execsql *) stmt;
-		return execsql->is_set_tran_isolation;
+		if(execsql->is_set_tran_isolation)
+			return execsql->is_set_tran_isolation;
 	}
-	else
-		return true;
+	return false;
 }
 
 static
