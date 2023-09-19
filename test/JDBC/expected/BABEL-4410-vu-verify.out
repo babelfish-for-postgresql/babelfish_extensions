@@ -1,0 +1,84 @@
+-- psql
+SELECT pg_attribute.attname, pg_type.typname, pg_type.typinput, pg_type.typoutput, pg_type.typreceive, pg_type.typsend 
+FROM pg_attribute LEFT OUTER JOIN pg_type 
+ON pg_attribute.atttypid = pg_type.oid 
+WHERE pg_attribute.attname='TABLE_TYPE';
+GO
+~~START~~
+name#!#name#!#regproc#!#regproc#!#regproc#!#regproc
+TABLE_TYPE#!#varchar#!#sys.varcharin#!#sys.varcharout#!#sys.varcharrecv#!#sys.varcharsend
+~~END~~
+
+
+-- tsql
+USE babel_4410_db
+GO
+
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_CATALOG = DB_NAME() AND TABLE_NAME = 'babel_4410_My_Table'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+babel_4410_db#!#dbo#!#babel_4410_My_Table#!#BASE TABLE
+~~END~~
+
+
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'base table'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+babel_4410_db#!#dbo#!#babel_4410_My_Table#!#BASE TABLE
+~~END~~
+
+
+SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+babel_4410_db#!#dbo#!#babel_4410_My_Table#!#BASE TABLE
+~~END~~
+
+
+IF (EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'babel_4410_My_Table'))
+BEGIN
+    SELECT 'TABLE EXISTS - THIS IS CORRECT'
+END
+ELSE
+BEGIN
+    SELECT 'TABLE NOT EXISTS - THIS IS WRONG, BECAUSE IT DOES EXIST'
+END
+GO
+~~START~~
+varchar
+TABLE EXISTS - THIS IS CORRECT
+~~END~~
+
+                                                                                                                                                                
+IF (NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'babel_4410_My_Table'))
+BEGIN
+    SELECT 'TABLE NOT EXISTS - THIS IS WRONG, BECAUSE IT DOES EXIST'
+END
+ELSE
+BEGIN
+    SELECT 'TABLE EXISTS - THIS IS CORRECT'
+END
+GO
+~~START~~
+varchar
+TABLE EXISTS - THIS IS CORRECT
+~~END~~
+
+
+IF (NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = lower('babel_4410_My_Table')))
+BEGIN
+     SELECT 'TABLE NOT EXISTS - THIS IS WRONG, BECAUSE IT DOES EXIST'
+END
+ELSE
+BEGIN
+     SELECT 'TABLE EXISTS - THIS IS CORRECT' 
+END
+GO
+~~START~~
+varchar
+TABLE EXISTS - THIS IS CORRECT
+~~END~~
+
