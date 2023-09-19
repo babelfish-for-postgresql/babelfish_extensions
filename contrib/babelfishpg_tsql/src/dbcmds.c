@@ -31,6 +31,7 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/timestamp.h"
+#include "parser/scansup.h"
 
 #include "catalog.h"
 #include "collation.h"
@@ -265,7 +266,11 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "collate") == 0)
+		if(strcmp(defel->defname, "original_db_name") == 0)
+		{
+			continue;
+		}
+		else if (strcmp(defel->defname, "collate") == 0)
 		{
 			const char *server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", false, false);
 
@@ -367,12 +372,34 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 {
 	int16		dbid;
 	const char *prev_current_user;
+	const char	*orig_dbname = NULL;
+	ListCell	*option;
+
+	/* TODO: Extract options */
+
+	foreach(option, options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+		if (strcmp(defel->defname, "original_db_name") == 0)
+		{
+			if (defel->arg)
+			{
+				orig_dbname = strVal(defel->arg);
+			}
+		}
+	
+	}
+
+	if(!orig_dbname)
+	{
+		orig_dbname = dbname;
+	}
 
 	if (DbidIsValid(get_db_id(dbname)))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("Database '%s' already exists. Choose a different database name.",
-						dbname)));
+						orig_dbname)));
 
 	/* Get new DB ID. Need sysadmin to do that. */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -408,8 +435,29 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *guest;
 	const char *prev_current_user;
 	int			stmt_number = 0;
+	const char	*orig_dbname = NULL;
+	ListCell	*option;
 
 	/* TODO: Extract options */
+
+	foreach(option, options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+		if (strcmp(defel->defname, "original_db_name") == 0)
+		{
+			if (defel->arg)
+			{
+				orig_dbname = strVal(defel->arg);
+			}
+		}
+	
+	}
+
+	if(!orig_dbname)
+	{
+		orig_dbname = dbname;
+	}
+
 
 	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
@@ -492,6 +540,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
 	new_record[7] = CStringGetTextDatum("{}");
+	new_record[8] = CStringGetTextDatum(orig_dbname);
 
 	tuple = heap_form_tuple(RelationGetDescr(sysdatabase_rel),
 							new_record, new_record_nulls);

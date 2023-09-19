@@ -140,7 +140,6 @@ babel_trigger
 babel_try_parse
 BABEL-USER
 bbf_view_def-before-14_5
-case_insensitive_collation
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -322,3 +321,4 @@ timefromparts
 triggers_with_transaction
 BABEL-4046
 getdate
+case_insensitive_collation-before-15-5

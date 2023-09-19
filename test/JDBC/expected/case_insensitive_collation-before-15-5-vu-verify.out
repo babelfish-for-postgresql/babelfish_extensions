@@ -50,7 +50,7 @@ select name from sys.databases where name = 'test';
 go
 ~~START~~
 varchar
-TEST
+test
 ~~END~~
 
 
@@ -58,7 +58,7 @@ select name from sys.databases where name = 'TEST';
 go
 ~~START~~
 varchar
-TEST
+test
 ~~END~~
 
 

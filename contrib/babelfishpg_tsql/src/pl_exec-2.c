@@ -2801,6 +2801,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
 	char		message[128];
 	char	   *old_db_name;
+	char	   *original_name;
 	int16		old_db_id;
 	int16		new_db_id;
 	PLExecStateCallStack *top_es_entry;
@@ -2812,11 +2813,17 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	old_db_name = get_cur_db_name();
 	old_db_id = get_cur_db_id();
 	new_db_id = get_db_id(stmt->db_name);
+	original_name = dbname_get_original_db_name(stmt->db_name);
+
+	if(!original_name)
+	{
+		original_name = (char*) stmt->db_name;
+	}
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database \"%s\" does not exist", stmt->db_name)));
+				 errmsg("database \"%s\" does not exist", original_name)));
 
 	/* Raise an error if the login does not have access to the database */
 	check_session_db_access(stmt->db_name);
@@ -2856,7 +2863,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 			top_es_entry = top_es_entry->next;
 	}
 
-	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+	snprintf(message, sizeof(message), "Changed database context to '%s'.", original_name);
 	/* send env change token to user */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
 		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);

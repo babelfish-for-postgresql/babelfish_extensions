@@ -283,6 +283,48 @@ get_db_id(const char *dbname)
 	return db_id;
 }
 
+/* will take dbname and return orig_name for that dbname.*/
+char *
+dbname_get_original_db_name(const char *dbname)
+{
+	char	   *original_name = NULL;
+	HeapTuple	tuple;
+	Datum		name_datum;
+	bool		isNull;
+
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+
+	if (!HeapTupleIsValid(tuple))
+		return InvalidDbid;
+
+	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_orig_name, &isNull);
+	original_name = TextDatumGetCString(name_datum);
+	ReleaseSysCache(tuple);
+
+	return original_name;
+}
+
+/* will take dbid and return orig_name for that dbid.*/
+char *
+dbid_get_original_db_name(int16 dbid)
+{
+	char	   *original_name = NULL;
+	HeapTuple	tuple;
+	Datum		name_datum;
+	bool		isNull;
+
+	tuple = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(dbid));
+
+	if (!HeapTupleIsValid(tuple))
+		return InvalidDbid;
+
+	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_orig_name, &isNull);
+	original_name = TextDatumGetCString(name_datum);
+	ReleaseSysCache(tuple);
+
+	return original_name;
+}
+
 char *
 get_db_name(int16 dbid)
 {

@@ -54,7 +54,7 @@ SELECT count(*) FROM BABEL_3117_schema.BABEL_3117_t1;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Changed database context to 'BABEL_3117_prepare_db4'.  Server SQLState: S0001)~~
+~~WARNING (Message: Changed database context to 'babel_3117_prepare_db4'.  Server SQLState: S0001)~~
 
 ~~START~~
 int
@@ -124,7 +124,7 @@ SELECT count(*) FROM BABEL_3117_schemaB.BABEL_3117_t1;
 GO
 ~~WARNING (Code: 0)~~
 
-~~WARNING (Message: Changed database context to 'BABEL_3117_prepare_db6'.  Server SQLState: S0001)~~
+~~WARNING (Message: Changed database context to 'babel_3117_prepare_db6'.  Server SQLState: S0001)~~
 
 ~~START~~
 int

@@ -1,0 +1,251 @@
+-- tsql
+--switch to database irrespective of case
+USE 日本語;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+日本語
+~~END~~
+
+
+USE ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss
+~~END~~
+
+
+USE ㅂㅊAb;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+ㅂㅊAb
+~~END~~
+
+
+USE ĄĆĘŁŃÓŚŹŻ;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+ĄĆĘŁŃÓŚŹŻ
+~~END~~
+
+
+USE AαΒβΓγDb;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+AαΒβΓγDb
+~~END~~
+
+
+USE _DB_NAME_CHANGE_TEST_vu_db5;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+_DB_NAME_CHANGE_TEST_vu_db5
+~~END~~
+
+
+USE DB_NAME_CHANGE_TEST_VU_DB2;
+GO
+
+--returning original_case_dbname
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+DB_NAME_CHANGE_TEST_vu_db2
+~~END~~
+
+
+--showing newly added column returning original_case_dbname
+SELECT orig_name FROM sys.babelfish_sysdatabases where name LIKE 'db_name_change_test%';
+GO
+~~START~~
+text
+DB_NAME_CHANGE_TEST_vu_db1
+DB_NAME_CHANGE_TEST_vu_db2
+DB_NAME_CHANGE_TEST_vu_db3
+DB_NAME_CHANGE_TEST_vu_db4
+~~END~~
+
+
+USE db_name_change_test_vu_db1;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+DB_NAME_CHANGE_TEST_vu_db1
+~~END~~
+
+
+--showing name column storing lowercase dbname and newly added column with original_case_dbname
+SELECT name, orig_name FROM sys.babelfish_sysdatabases where name LIKE 'db_name_change_test%';
+GO
+~~START~~
+text#!#text
+db_name_change_test_vu_db1#!#DB_NAME_CHANGE_TEST_vu_db1
+db_name_change_test_vu_db2#!#DB_NAME_CHANGE_TEST_vu_db2
+db_name_change_test_vu_db3#!#DB_NAME_CHANGE_TEST_vu_db3
+db_name_change_test_vu_db4#!#DB_NAME_CHANGE_TEST_vu_db4
+~~END~~
+
+
+--testing these objects behaviour
+SELECT * from information_schema_tsql.schemata;
+GO
+~~START~~
+varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar
+DB_NAME_CHANGE_TEST_vu_db1#!#dbo#!#dbo#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#guest#!#guest#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#information_schema_tsql#!#information_schema_tsql#!#<NULL>#!#<NULL>#!#<NULL>
+DB_NAME_CHANGE_TEST_vu_db1#!#sys#!#sys#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT PROCEDURE_QUALIFIER FROM sys.sp_stored_procedures_view where PROCEDURE_NAME LIKE 'DB_NAME_CHANGE_test_vu%';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT PROCEDURE_QUALIFIER FROM sys.sp_sproc_columns_view where PROCEDURE_NAME LIKE 'DB_NAME_CHANGE_test_vu%';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT name FROM sys.sysdatabases where name = DB_NAME();
+GO
+~~START~~
+text
+DB_NAME_CHANGE_TEST_vu_db1
+~~END~~
+
+
+SELECT dbname FROM sys.pg_namespace_ext where dbname = DB_NAME();
+GO
+~~START~~
+text
+DB_NAME_CHANGE_TEST_vu_db1
+DB_NAME_CHANGE_TEST_vu_db1
+~~END~~
+
+
+SELECT name FROM sys.databases where name = DB_NAME();
+GO
+~~START~~
+varchar
+DB_NAME_CHANGE_TEST_vu_db1
+~~END~~
+
+
+CREATE ROLE db_name_change_test_role1
+GO
+
+CREATE ROLE db_name_change_test_role2
+GO
+
+ALTER ROLE db_name_change_test_role1 ADD MEMBER db_name_change_test_role2
+GO
+
+EXEC db_name_change_test_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+db_name_change_test_vu_db1_db_name_change_test_role1#!#R#!#db_name_change_test_role1#!#db_name_change_test_vu_db1
+db_name_change_test_vu_db1_db_name_change_test_role2#!#R#!#db_name_change_test_role2#!#db_name_change_test_vu_db1
+~~END~~
+
+
+EXEC db_name_change_test_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+db_name_change_test_role1#!#DATABASE_ROLE
+db_name_change_test_role2#!#DATABASE_ROLE
+~~END~~
+
+
+EXEC db_name_change_test_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+db_name_change_test_role1#!#R#!#db_name_change_test_role2#!#R
+~~END~~
+
+
+DROP ROLE db_name_change_test_role2
+GO
+
+DROP ROLE db_name_change_test_role1
+GO
+
+use db_name_change_vu_DB1;
+GO
+
+SELECT * FROM information_schema.tables WHERE TABLE_NAME LIKE '%db_name_change%' 
+ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+db_name_change_vu_DB1#!#db_name_change_vu_schema1#!#db_name_change_vu_table2#!#BASE TABLE
+db_name_change_vu_DB1#!#dbo#!#db_name_change_vu_table1#!#BASE TABLE
+db_name_change_vu_DB1#!#dbo#!#db_name_change_vu_table2#!#BASE TABLE
+~~END~~
+
+
+EXEC sp_rename 'db_name_change_vu_schema1.db_name_change_vu_table2', 'db_name_change_vu_table2_new', 'OBJECT';
+GO
+
+EXEC sp_rename 'db_name_change_vu_schema1.db_name_change_vu_table2_new.db_name_change_vu_s1_t2_col1', 'db_name_change_vu_s1_t2_col1_new', 'COLUMN';
+GO
+
+
+DECLARE @db_name_change_helperfunc_out1 nvarchar(776);
+DECLARE @db_name_change_helperfunc_out2 nvarchar(776);
+DECLARE @db_name_change_helperfunc_out3 nvarchar(776);
+DECLARE @db_name_change_helperfunc_out4 nvarchar(776);
+EXEC sys.babelfish_sp_rename_word_parse 'db_name_change_vu_schema1.db_name_change_vu_table2_new.db_name_change_vu_s1_t2_col1_new', 'COLUMN', @db_name_change_helperfunc_out1 OUT, @db_name_change_helperfunc_out2 OUT, @db_name_change_helperfunc_out3 OUT, @db_name_change_helperfunc_out4 OUT;
+SELECT @db_name_change_helperfunc_out1, @db_name_change_helperfunc_out2, @db_name_change_helperfunc_out3, @db_name_change_helperfunc_out4;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+db_name_change_vu_s1_t2_col1_new#!#db_name_change_vu_table2_new#!#db_name_change_vu_schema1#!#<NULL>
+~~END~~
+
+
+USE master;
+GO
+
+SELECT DB_NAME();
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+

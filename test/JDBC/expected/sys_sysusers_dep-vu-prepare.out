@@ -1,7 +1,8 @@
-CREATE DATABASE sysusersdb
+-- tsql
+CREATE DATABASE sysusersDB
 GO
 
-USE sysusersdb
+USE sysusersDB
 GO
 
 CREATE LOGIN sysusers_dep_vu_prepare_login1 WITH PASSWORD = '123'

@@ -1,3 +1,9 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
 CREATE LOGIN test1 WITH PASSWORD = 'abc';
 GO
 
@@ -24,6 +30,14 @@ GO
 
 -- Check for default users
 CREATE DATABASE db1;
+GO
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+
+CREATE DATABASE DB2;
 GO
 
 SELECT rolname, login_name, orig_username, database_name, default_schema_name
@@ -214,4 +228,12 @@ DROP LOGIN test4;
 GO
 
 DROP DATABASE db1;
+GO
+
+DROP DATABASE DB2;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
 GO

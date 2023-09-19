@@ -187,7 +187,6 @@ babel_varbinary_int4_div
 bbf_view_def
 binary-index
 bitwise_not-operator
-case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 col_length
@@ -452,7 +451,9 @@ linked_srv_4229
 BABEL-4175
 sp_who
 BABEL_4330
+db_name_change_test
 kill
 BABEL-4217
 Test_ISNULL
+case_insensitive_collation
 BABEL-4270

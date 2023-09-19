@@ -56,7 +56,7 @@ BABEL-3000
 BABEL-3000-dep
 BABEL-3010
 BABEL-3116
-BABEL-3117
+BABEL-3117-before-15-5
 BABEL-3118
 BABEL-3121
 BABEL-3144
@@ -161,7 +161,6 @@ BABEL-USER
 bbf_view_def-before-14_7-or-15_2
 binary-index
 bitwise_not-operator
-case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
 collation_tests
@@ -385,3 +384,4 @@ BABEL-4046
 getdate
 BABEL_4330
 BABEL-2619
+case_insensitive_collation-before-15-5

@@ -146,7 +146,6 @@ babel_try_parse
 BABEL-USER
 bbf_view_def-before-14_5
 binary-index
-case_insensitive_collation
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -336,3 +335,4 @@ triggers_with_transaction
 BABEL-4046
 BABEL_4330
 BABEL-2619
+case_insensitive_collation-before-15-5

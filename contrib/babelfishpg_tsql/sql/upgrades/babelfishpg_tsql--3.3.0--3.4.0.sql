@@ -298,10 +298,6 @@ ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
 
 ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 -- Matches and returns column length of the corresponding column of the given table
 CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
 RETURNS SMALLINT AS $BODY$
@@ -656,6 +652,579 @@ END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
+
+SET allow_system_table_mods = on;
+
+ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN IF NOT EXISTS orig_name TEXT COLLATE sys.database_default;
+
+RESET allow_system_table_mods;
+
+CREATE OR REPLACE PROCEDURE sys.sp_fkeys(
+	"@pktable_name" sys.sysname = '',
+	"@pktable_owner" sys.sysname = '',
+	"@pktable_qualifier" sys.sysname = '',
+	"@fktable_name" sys.sysname = '',
+	"@fktable_owner" sys.sysname = '',
+	"@fktable_qualifier" sys.sysname = ''
+)
+AS $$
+BEGIN
+	
+	IF coalesce(@pktable_name,'') = '' AND coalesce(@fktable_name,'') = '' 
+	BEGIN
+		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
+	END
+	
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @pktable_qualifier) OR
+		(@fktable_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @fktable_qualifier)
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+  	END
+  	
+  	SELECT 
+	PKTABLE_QUALIFIER,
+	PKTABLE_OWNER,
+	PKTABLE_NAME,
+	PKCOLUMN_NAME,
+	FKTABLE_QUALIFIER,
+	FKTABLE_OWNER,
+	FKTABLE_NAME,
+	FKCOLUMN_NAME,
+	KEY_SEQ,
+	UPDATE_RULE,
+	DELETE_RULE,
+	FK_NAME,
+	PK_NAME,
+	DEFERRABILITY
+	FROM sys.sp_fkeys_view
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR LOWER(pktable_owner) = LOWER(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR LOWER(pktable_qualifier) = LOWER(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR LOWER(fktable_owner) = LOWER(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR LOWER(fktable_qualifier) = LOWER(@fktable_qualifier))
+	ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If security account is not specified, return info about all users
+	IF @name_in_db IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public'
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate database_default
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext1.type != 'R'
+		AND Ext1.orig_username != 'db_owner'
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is the db fixed role - db_owner
+    ELSE IF @name_in_db = 'db_owner'
+	BEGIN
+		-- TODO: Need to change after we can add/drop members to/from db_owner
+		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
+			   ROLE_ID('db_owner') AS 'Role_id',
+			   CAST('dbo' AS SYS.SYSNAME) AS 'Users_in_role',
+			   USER_ID('dbo') AS 'Userid';
+	END
+	-- If the security account is a db role
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME() collate database_default
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
+			   CAST(Base1.oid AS INT) AS 'Role_id',
+			   CAST(Ext2.orig_username AS SYS.SYSNAME) AS 'Users_in_role',
+			   CAST(Base2.oid AS INT) AS 'Userid'
+		FROM sys.babelfish_authid_user_ext AS Ext2
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.rolname = Ext2.rolname
+		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY Role_name, Users_in_role;
+	END
+	-- If the security account is a user
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME() collate database_default
+					AND type != 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public' 
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE LogExt.orig_loginname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					WHEN Ext1.orig_username = 'guest' THEN CAST(0 AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME() collate database_default
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext1.type != 'R'
+		AND Ext1.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is not valid
+	ELSE 
+		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helprole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If role is not specified, return info for all roles in the current db
+	IF @rolename IS NULL
+	BEGIN
+		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Base.oid AS INT) AS 'RoleId',
+			   0 AS 'IsAppRole'
+		FROM pg_catalog.pg_roles AS Base 
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		WHERE Ext.database_name = DB_NAME() collate database_default
+		AND Ext.type = 'R'
+		ORDER BY RoleName;
+	END
+	-- If a valid role is specified, return its info
+	ELSE IF EXISTS (SELECT 1 
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @rolename
+					OR lower(orig_username) = lower(@rolename))
+					AND database_name = DB_NAME() collate database_default
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Base.oid AS INT) AS 'RoleId',
+			   0 AS 'IsAppRole'
+		FROM pg_catalog.pg_roles AS Base 
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		WHERE Ext.database_name = DB_NAME() collate database_default
+		AND Ext.type = 'R'
+		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
+		ORDER BY RoleName;
+	END
+	-- If the specified role is not valid
+	ELSE
+		RAISERROR('%s is not a role.', 16, 1, @rolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helprole TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helprolemember("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If role is not specified, return info for all roles that have at least
+	-- one member in the current db
+	IF @rolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Ext2.orig_username AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		ORDER BY RoleName, MemberName;
+	END
+	-- If a valid role is specified, return its member info
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @rolename
+					OR lower(orig_username) = lower(@rolename))
+					AND database_name = DB_NAME() collate database_default
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Ext2.orig_username AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.database_name = DB_NAME() collate database_default
+		AND Ext2.database_name = DB_NAME() collate database_default
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
+		ORDER BY RoleName, MemberName;
+	END
+	-- If the specified role is not valid
+	ELSE
+		RAISERROR('%s is not a role.', 16, 1, @rolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helprolemember TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
+	"@procedure_name" sys.nvarchar(390) = '%',
+	"@procedure_owner" sys.nvarchar(384) = NULL,
+	"@procedure_qualifier" sys.sysname = NULL,
+	"@column_name" sys.nvarchar(384) = NULL,
+	"@odbcver" int = 2,
+	"@fusepattern" sys.bit = '1'
+)	
+AS $$
+	SELECT @procedure_name = LOWER(COALESCE(@procedure_name, ''))
+	SELECT @procedure_owner = LOWER(COALESCE(@procedure_owner, ''))
+	SELECT @procedure_qualifier = LOWER(COALESCE(@procedure_qualifier, ''))
+	SELECT @column_name = LOWER(COALESCE(@column_name, ''))
+BEGIN 
+	IF (@procedure_qualifier != '' AND (SELECT sys.db_name() collate database_default) != @procedure_qualifier)
+		BEGIN
+			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+ 	   	END
+	IF @fusepattern = '1'
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
+				AND (@column_name = '' OR column_name LIKE @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+	ELSE
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner = @procedure_owner)
+				AND (@column_name = '' OR column_name = @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_sp_rename_word_parse(
+	IN "@input" sys.nvarchar(776),
+	IN "@objtype" sys.varchar(13),
+	INOUT "@subname" sys.nvarchar(776),
+	INOUT "@curr_relname" sys.nvarchar(776),
+	INOUT "@schemaname" sys.nvarchar(776),
+	INOUT "@dbname" sys.nvarchar(776)
+)
+AS $$
+BEGIN
+	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as row, * 
+	INTO #sp_rename_temptable 
+	FROM STRING_SPLIT(@input, '.') ORDER BY row DESC;
+
+	SELECT (ROW_NUMBER() OVER (ORDER BY NULL)) as id, * 
+	INTO #sp_rename_temptable2 
+	FROM #sp_rename_temptable;
+	
+	DECLARE @row_count INT;
+	SELECT @row_count = COUNT(*) FROM #sp_rename_temptable2;
+
+	IF @objtype = 'COLUMN'
+		BEGIN
+			IF @row_count = 1
+				BEGIN
+					THROW 33557097, N'Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.', 1;
+				END
+			ELSE IF @row_count > 4
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			ELSE
+				BEGIN
+					IF @row_count > 1
+						BEGIN
+							SELECT @subname = value FROM #sp_rename_temptable2 WHERE id = 1;
+							SELECT @curr_relname = value FROM #sp_rename_temptable2 WHERE id = 2;
+							SET @schemaname = sys.schema_name();
+
+						END
+					IF @row_count > 2
+						BEGIN
+							SELECT @schemaname = value FROM #sp_rename_temptable2 WHERE id = 3;
+						END
+					IF @row_count > 3
+						BEGIN
+							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 4;
+							IF @dbname != sys.db_name() collate database_default
+								BEGIN
+									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+								END
+						END
+				END
+		END
+	ELSE
+		BEGIN
+			IF @row_count > 3
+				BEGIN
+					THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+				END
+			ELSE
+				BEGIN
+					SET @curr_relname = NULL;
+					IF @row_count > 0
+						BEGIN
+							SELECT @subname = value FROM #sp_rename_temptable2 WHERE id = 1;
+							SET @schemaname = sys.schema_name();
+						END
+					IF @row_count > 1
+						BEGIN
+							SELECT @schemaname = value FROM #sp_rename_temptable2 WHERE id = 2;
+						END
+					IF @row_count > 2
+						BEGIN
+							SELECT @dbname = value FROM #sp_rename_temptable2 WHERE id = 3;
+							IF @dbname != sys.db_name() collate database_default
+								BEGIN
+									THROW 33557097, N'No item by the given @objname could be found in the current database', 1;
+								END
+						END
+				END
+		END
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_word_parse(IN sys.nvarchar(776), IN sys.varchar(13), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776)) TO PUBLIC;
+
+ALTER VIEW sys.sysdatabases RENAME TO sysdatabases_deprecated_3_4_0;
+
+CREATE OR REPLACE VIEW sys.sysdatabases AS
+SELECT
+t.orig_name AS name,
+sys.db_id(t.name) AS dbid,
+CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
+CAST(0 AS SMALLINT) AS mode,
+t.status,
+t.status2,
+CAST(t.crdate AS SYS.DATETIME) AS crdate,
+CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
+CAST(0 AS INT) AS category,
+CAST(120 AS SYS.TINYINT) AS cmptlevel,
+CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
+CAST(NULL AS SMALLINT) AS version
+FROM sys.babelfish_sysdatabases AS t
+LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
+
+GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysdatabases_deprecated_3_4_0');
+
+ALTER VIEW sys.pg_namespace_ext RENAME TO pg_namespace_ext_deprecated_3_4_0;
+
+CREATE OR REPLACE VIEW sys.pg_namespace_ext AS
+SELECT BASE.* , DB.orig_name as dbname FROM
+pg_catalog.pg_namespace AS base
+LEFT OUTER JOIN sys.babelfish_namespace_ext AS EXT on BASE.nspname = EXT.nspname
+INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid;
+
+GRANT SELECT ON sys.pg_namespace_ext TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'pg_namespace_ext_deprecated_3_4_0');
+
+ALTER VIEW sys.databases RENAME TO databases_deprecated_3_4_0;
+
+create or replace view sys.databases as
+select
+  CAST(d.orig_name as SYS.SYSNAME) as name
+  , CAST(sys.db_id(d.name) as INT) as database_id
+  , CAST(NULL as INT) as source_database_id
+  , cast(s.sid as SYS.VARBINARY(85)) as owner_sid
+  , CAST(d.crdate AS SYS.DATETIME) as create_date
+  , CAST(s.cmptlevel AS SYS.TINYINT) as compatibility_level
+  , CAST(c.collname as SYS.SYSNAME) as collation_name
+  , CAST(0 AS SYS.TINYINT)  as user_access
+  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
+  , CAST(0 AS SYS.BIT) as is_read_only
+  , CAST(0 AS SYS.BIT) as is_auto_close_on
+  , CAST(0 AS SYS.BIT) as is_auto_shrink_on
+  , CAST(0 AS SYS.TINYINT) as state
+  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc
+  , CAST(
+	  	CASE 
+			WHEN pg_is_in_recovery() is false THEN 0 
+			WHEN pg_is_in_recovery() is true THEN 1 
+		END 
+	AS SYS.BIT) as is_in_standby
+  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown
+  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled
+  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state
+  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc
+  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on
+  , CAST(1 AS SYS.TINYINT) as recovery_model
+  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc
+  , CAST(0 AS SYS.TINYINT) as page_verify_option
+  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc
+  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on
+  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on
+  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on
+  , CAST(0 AS SYS.BIT) as is_ansi_padding_on
+  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on
+  , CAST(0 AS SYS.BIT) as is_arithabort_on
+  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on
+  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on
+  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on
+  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on
+  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on
+  , CAST(0 AS SYS.BIT) as is_local_cursor_default
+  , CAST(0 AS SYS.BIT) as is_fulltext_enabled
+  , CAST(0 AS SYS.BIT) as is_trustworthy_on
+  , CAST(0 AS SYS.BIT) as is_db_chaining_on
+  , CAST(0 AS SYS.BIT) as is_parameterization_forced
+  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server
+  , CAST(0 AS SYS.BIT) as is_query_store_on
+  , CAST(0 AS SYS.BIT) as is_published
+  , CAST(0 AS SYS.BIT) as is_subscribed
+  , CAST(0 AS SYS.BIT) as is_merge_published
+  , CAST(0 AS SYS.BIT) as is_distributor
+  , CAST(0 AS SYS.BIT) as is_sync_with_backup
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid
+  , CAST(0 AS SYS.BIT) as is_broker_enabled
+  , CAST(0 AS SYS.TINYINT) as log_reuse_wait
+  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc
+  , CAST(0 AS SYS.BIT) as is_date_correlation_on
+  , CAST(0 AS SYS.BIT) as is_cdc_enabled
+  , CAST(0 AS SYS.BIT) as is_encrypted
+  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id
+  , CAST(NULL AS INT) as resource_pool_id
+  , CAST(NULL AS SMALLINT) as default_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name
+  , CAST(NULL AS INT) as default_fulltext_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name
+  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on
+  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on
+  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff
+  , CAST(0 AS SYS.TINYINT) as containment
+  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc
+  , CAST(0 AS INT) as target_recovery_time_in_seconds
+  , CAST(0 AS INT) as delayed_durability
+  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on
+  , CAST(0 AS SYS.BIT) as is_federation_member
+  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled
+  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on
+  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled
+  , CAST(0 AS INT) as catalog_collation_type
+  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc
+  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name
+  , CAST(0 AS SYS.BIT) as is_result_set_caching_on
+  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on
+  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store
+  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
+  , CAST(0 AS SYS.BIT) as is_ledger_on
+ from sys.babelfish_sysdatabases d 
+ INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
+ LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
+GRANT SELECT ON sys.databases TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'databases_deprecated_3_4_0');
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

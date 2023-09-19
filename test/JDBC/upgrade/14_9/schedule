@@ -130,7 +130,7 @@ BABEL-2845
 BABEL-2884
 BABEL-2944
 BABEL-3116
-BABEL-3117
+BABEL-3117-before-15-5
 BABEL-3118
 BABEL-3249
 BABEL-3486
@@ -376,7 +376,6 @@ app_name
 str
 ISC-sequences
 jira-BABEL-3504-upgrade
-case_insensitive_collation
 sys-has_perms_by_name
 sys-has_perms_by_name-dep
 BABEL_OBJECT_ID
@@ -407,3 +406,4 @@ BABEL-4046
 getdate
 BABEL_4330
 BABEL-2619
+case_insensitive_collation-before-15-5

@@ -106,7 +106,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
@@ -471,7 +471,39 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 		{
 			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
-				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
+				CreatedbStmt *stmt = (CreatedbStmt *) parsetree;
+				List	   *db_options = NIL;
+				ListCell   *option;
+
+				if (stmt->options != NIL)
+				{
+					char	   *orig_dbname = NULL;
+					foreach(option, stmt->options)
+					{
+						DefElem    *defel = (DefElem *) lfirst(option);
+						if (strcmp(defel->defname, "name_location") == 0)
+						{
+							int			location = defel->location;
+							orig_dbname = extract_identifier(queryString + location);
+							db_options = lappend(db_options, defel);
+						}
+					}
+					
+					foreach(option, db_options)
+					{
+						stmt->options = list_delete_ptr(stmt->options,lfirst(option));
+					}
+					
+					if (orig_dbname)
+						{
+							stmt->options = lappend(stmt->options, 
+													makeDefElem("original_db_name",
+																(Node *) makeString(orig_dbname),
+																-1));
+						}
+				
+				}
+				create_bbf_db(pstate, stmt);
 				return true;
 			}
 			break;
@@ -1315,7 +1347,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||

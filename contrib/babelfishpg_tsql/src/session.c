@@ -259,7 +259,13 @@ babelfish_db_name(PG_FUNCTION_ARGS)
 		strncpy(dbname, "msdb", MAX_BBF_NAMEDATALEND);
 	}
 	else
-		dbname = get_db_name(dbid);
+	{
+		dbname = dbid_get_original_db_name(dbid);
+		if(!dbname)
+		{
+			dbname = get_db_name(dbid);
+		}
+	}
 
 	if (dbname == NULL)
 		PG_RETURN_NULL();

@@ -1,8 +1,8 @@
 -- tsql
-CREATE DATABASE BABEL_ROLE_MEMBER_vu_prepare_db
+CREATE DATABASE babel_role_member_vu_prepare_db
 go
 
-USE BABEL_ROLE_MEMBER_vu_prepare_db
+USE babel_role_member_vu_prepare_db
 go
 
 SELECT DB_NAME()

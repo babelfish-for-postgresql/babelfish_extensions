@@ -1,0 +1,118 @@
+-- tsql
+--mixedcase DATABASE name
+CREATE DATABASE DB_NAME_CHANGE_TEST_vu_db1;
+GO
+
+CREATE DATABASE DB_NAME_CHANGE_TEST_vu_db2;
+GO
+
+CREATE DATABASE DB_NAME_CHANGE_TEST_vu_db3;
+GO
+
+CREATE DATABASE _DB_NAME_CHANGE_TEST_vu_db5;
+GO
+
+-- collations
+CREATE DATABASE 日本語
+GO
+
+CREATE DATABASE 中国人
+GO
+
+CREATE DATABASE ㅂㅊAb;
+GO
+
+CREATE DATABASE ĄĆĘŁŃÓŚŹŻ;
+GO
+
+CREATE DATABASE AαΒβΓγDb;
+GO
+
+--name with long bytes cases
+CREATE DATABASE ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddKkkkkssssss;
+go
+
+CREATE DATABASE kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkhghjgD;
+go
+
+--error throwing original_name 
+CREATE DATABASE DB_NAME_CHANGE_TEST_vu_db1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database 'DB_NAME_CHANGE_TEST_vu_db1' already exists. Choose a different database name.)~~
+
+
+--different syntax
+CREATE DATABASE DB_NAME_CHANGE_TEST_vu_db4 ON
+(NAME = data_one,
+    FILENAME = 'C:\print.pdf',
+    SIZE = 10,
+    MAXSIZE = 50,
+    FILEGROWTH = 5)
+LOG ON
+(NAME = data_two,
+    FILENAME = 'print.pdf',
+    SIZE = 5 MB,
+    MAXSIZE = 25 MB,
+    FILEGROWTH = 5 MB);
+GO
+
+USE DB_NAME_CHANGE_TEST_vu_db1
+GO
+
+CREATE PROC db_name_change_test_user_ext AS
+BEGIN 
+	SELECT rolname, type, orig_username, DATABASE_name
+	FROM sys.babelfish_authid_user_ext
+	WHERE orig_username LIKE 'db_name_change_test%'
+	ORDER BY rolname, orig_username
+END
+GO
+
+CREATE PROC db_name_change_test_db_principal AS
+BEGIN
+	SELECT name, type_desc
+	FROM sys.DATABASE_principals
+	WHERE name LIKE 'db_name_change_test%'
+	ORDER BY name
+END
+GO
+
+CREATE PROC db_name_change_test_role_members AS
+BEGIN
+	SELECT dp1.name AS RoleName, dp1.type AS RoleType,
+		   dp2.name AS MemberName, dp2.type AS MemberType
+	FROM sys.DATABASE_role_members AS drm
+	INNER JOIN sys.DATABASE_principals AS dp1
+	ON drm.role_principal_id = dp1.principal_id
+	INNER JOIN sys.DATABASE_principals AS dp2
+	ON drm.member_principal_id = dp2.principal_id
+	WHERE dp1.name LIKE 'db_name_change_test%'
+	ORDER BY dp1.name, dp2.name
+END
+GO
+
+CREATE table db_name_change_test_t1(a int, primary key(a))
+go
+
+CREATE DATABASE db_name_change_vu_DB1;
+GO
+
+use db_name_change_vu_DB1;
+GO
+
+CREATE TABLE db_name_change_vu_table1(db_name_change_vu_t1_col1 int, db_name_change_vu_t1_col2 int);
+GO
+
+CREATE TABLE db_name_change_vu_table2(db_name_change_vu_t2_col1 int, db_name_change_vu_t2_col2 int);
+GO
+
+CREATE SCHEMA db_name_change_vu_schema1;
+GO
+
+CREATE TABLE db_name_change_vu_schema1.db_name_change_vu_table2(db_name_change_vu_s1_t2_col1 int, db_name_change_vu_s1_t2_col2 int);
+GO
+
+use master;
+GO
