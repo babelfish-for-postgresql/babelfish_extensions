@@ -379,6 +379,35 @@ SELECT CAST(N'ΘЖऌฒ' AS NCHAR(15))
 ORDER BY 1
 GO
 
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
+SET babelfish_showplan_all ON
+GO
+
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
+UNION
+SELECT CAST('1' AS CHAR(4)) AS Col1
+ORDER BY 1
+GO
+
+SELECT NULL
+UNION
+SELECT NULL
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(12)) AS Col1
+ORDER BY 1
+GO
+
+SELECT cast('foo' as CHAR(3))
+UNION
+SELECT 'longer string'
+ORDER BY 1
+GO
+
+SET babelfish_showplan_all OFF
+GO
+
 CREATE TABLE babel3392_nchar_tbl(a NCHAR(20))
 GO
 
@@ -410,23 +439,6 @@ AS (
 )
 SELECT a from babel3392_recursive_cte order by a
 GO
-
--- CASE
--- CREATE TABLE babel3392_case(a INT)
--- GO
-
--- INSERT INTO babel3392_case (a) VALUES (1), (2), (3)
--- GO
-
--- SELECT CASE a
---     WHEN 1 THEN NULL
---     WHEN 2 THEN CAST('char' AS CHAR(10))
--- END
--- FROM babel3392_case
--- GO
-
--- DROP TABLE babel3392_case;
--- GO
 
 -- COALESCE / ISNULL
 SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
@@ -561,7 +573,7 @@ go
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT N'ΘЖऌฒ' AS babel4157_c1
-    UNION
+    UNION ALL
     SELECT c1 from babel4157_tbl2
 ) AS tbl
 ORDER BY 1
@@ -603,7 +615,7 @@ go
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST('string' AS VARCHAR(40)) AS babel4157_c1
-    UNION
+    UNION ALL
     SELECT c1 from babel4157_tbl2
 ) AS tbl
 ORDER BY 1
@@ -645,7 +657,7 @@ go
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
-    UNION
+    UNION ALL
     SELECT c1 from babel4157_tbl2
 ) AS tbl
 ORDER BY 1
@@ -988,13 +1000,6 @@ GO
 
 DROP TABLE babel3392_vals;
 GO
-
--- GREATEST / LEAST Lengths are wrong
--- SELECT GREATEST(CAST('1' AS CHAR(20)), CAST(N'A' AS NCHAR(10)), NULL)
--- GO
-
--- SELECT LEAST(CAST('1' AS CHAR(20)), CAST(N'A' AS NCHAR(10)), NULL)
--- GO
 
 -- IN
 SELECT 1 WHERE CAST('1' AS CHAR(10)) IN (

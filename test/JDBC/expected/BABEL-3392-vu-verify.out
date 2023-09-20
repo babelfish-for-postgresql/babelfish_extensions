@@ -745,6 +745,90 @@ nchar
 ~~END~~
 
 
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+SELECT CAST(N'ΘЖऌฒ' AS NCHAR(8)) AS Col1
+UNION
+SELECT CAST('1' AS CHAR(4)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+text
+Query Text: SELECT CAST(N'????' AS NCHAR(8)) AS Col1
+UNION
+SELECT CAST('1' AS CHAR(4)) AS Col1
+ORDER BY 1
+Sort
+  Sort Key: ('????    '::"nchar"(8)) NULLS FIRST
+  ->  Unique
+        ->  Sort
+              Sort Key: ('????    '::"nchar"(8))
+              ->  Append
+                    ->  Result
+                    ->  Result
+~~END~~
+
+
+SELECT NULL
+UNION
+SELECT NULL
+UNION
+SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(12)) AS Col1
+ORDER BY 1
+GO
+~~START~~
+text
+Query Text: SELECT NULL
+UNION
+SELECT NULL
+UNION
+SELECT CAST(N'????' AS NVARCHAR(12)) AS Col1
+ORDER BY 1
+Sort
+  Sort Key: (NULL::nvarchar(12)) NULLS FIRST
+  ->  HashAggregate
+        Group Key: (NULL::nvarchar(12))
+        ->  Append
+              ->  Result
+              ->  Result
+              ->  Result
+~~END~~
+
+
+SELECT cast('foo' as CHAR(3))
+UNION
+SELECT 'longer string'
+ORDER BY 1
+GO
+~~START~~
+text
+Query Text: SELECT cast('foo' as CHAR(3))
+UNION
+SELECT 'longer string'
+ORDER BY 1
+Sort
+  Sort Key: ('foo'::"varchar"(13)) NULLS FIRST
+  ->  Unique
+        ->  Sort
+              Sort Key: ('foo'::"varchar"(13))
+              ->  Append
+                    ->  Result
+                    ->  Result
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
 CREATE TABLE babel3392_nchar_tbl(a NCHAR(20))
 GO
 
@@ -787,23 +871,6 @@ GO
 ~~ERROR (Message: recursive query "babel3392_recursive_cte" column 1 has type text in non-recursive term but type "varchar"(10) overall)~~
 
 
-
-
-
-
--- CASE
--- CREATE TABLE babel3392_case(a INT)
--- GO
--- INSERT INTO babel3392_case (a) VALUES (1), (2), (3)
--- GO
--- SELECT CASE a
---     WHEN 1 THEN NULL
---     WHEN 2 THEN CAST('char' AS CHAR(10))
--- END
--- FROM babel3392_case
--- GO
--- DROP TABLE babel3392_case;
--- GO
 -- COALESCE / ISNULL
 SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
 GO
@@ -1018,7 +1085,7 @@ go
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT N'ΘЖऌฒ' AS babel4157_c1
-    UNION
+    UNION ALL
     SELECT c1 from babel4157_tbl2
 ) AS tbl
 ORDER BY 1
@@ -1080,7 +1147,7 @@ go
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST('string' AS VARCHAR(40)) AS babel4157_c1
-    UNION
+    UNION ALL
     SELECT c1 from babel4157_tbl2
 ) AS tbl
 ORDER BY 1
@@ -1142,7 +1209,7 @@ go
 
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT CAST(N'ΘЖऌฒ' AS NVARCHAR(40)) AS babel4157_c1
-    UNION
+    UNION ALL
     SELECT c1 from babel4157_tbl2
 ) AS tbl
 ORDER BY 1
@@ -1738,13 +1805,6 @@ babel3392_c1#!#30
 DROP TABLE babel3392_vals;
 GO
 
-
-
--- GREATEST / LEAST Lengths are wrong
--- SELECT GREATEST(CAST('1' AS CHAR(20)), CAST(N'A' AS NCHAR(10)), NULL)
--- GO
--- SELECT LEAST(CAST('1' AS CHAR(20)), CAST(N'A' AS NCHAR(10)), NULL)
--- GO
 -- IN
 SELECT 1 WHERE CAST('1' AS CHAR(10)) IN (
     CAST(N'1' AS NCHAR(10)),  CAST('2' AS CHAR(20)), CAST('3' AS VARCHAR), '4', NULL
