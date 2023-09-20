@@ -37,6 +37,7 @@
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/parse_coerce.h"
 #include "parser/parse_type.h"
+#include "utils/hsearch.h"
 #include "parser/scansup.h"
 #include "storage/proc.h"
 #include "tcop/pquery.h"
@@ -180,6 +181,12 @@ typedef struct					/* cast_hash table entry */
 
 static MemoryContext shared_cast_context = NULL;
 static HTAB *shared_cast_hash = NULL;
+
+typedef struct					/* cached pointer hash table entry */
+{
+	_SPI_plan	plan;			//key
+	CachedPlan *cp;
+} cachedPtrHashEntry;
 
 /*
  * LOOP_RC_PROCESSING encapsulates common logic for looping statements to
@@ -4607,10 +4614,12 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  * ----------
  */
 // PLtsql_expr *prevExpr = NULL;
-// CachedPlan *prevcp;
+// CachedPlan *prev_cp  = NULL;
 // CachedPlanSource *cachedplansource;
 // CachedPlanSource *prevplansource;
 // CachedPlan *cp;
+
+
 static int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
@@ -4618,12 +4627,16 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	ParamListInfo paramLI;
 	long		tcount;
 	int			rc;
+	// int 		prev_rc =  0;
+
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
 	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
+	// SPIPlanPtr  temp;
+	// SPIPlanPtr	prev_plan;
 	// Node 		*node = NULL;
 	// List 		*getplan;
 
@@ -4646,7 +4659,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	char	   *cur_dbname = get_cur_db_name();
 	bool		reset_session_properties = false;
 	bool		inside_trigger = false;
-	Query	   *quuery;
+	HASHCTL		hashCtl;
+	bool		found;
+	static 		HTAB *cachedTable;
+	MemoryContext oldContext;
+	cachedPtrHashEntry	*entry = NULL;
+	cachedPtrHashEntry  *new_entry;
+	_SPI_plan 	pllan;
+	
+	// Query	   *quuery;
 	// List	   *funcargs;
 	// int 		nfields;
 	// int 		i;
@@ -4654,6 +4675,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
+
+	// entry->plan = expr->plan;
+	// entry->cp = NULL;
 
 	if (stmt->original_query)
 		original_query_string = stmt->original_query;
@@ -4725,6 +4749,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * Set up ParamListInfo to pass to executor
 		 */
 		paramLI = setup_param_list(estate, expr);
+
+		// temp = (SPIPlanPtr) MemoryContextAlloc(CacheMemoryContext, sizeof(expr->plan));
+		// temp = NULL;
+
+		// if(temp)
+		// {
+		// 	memcpy(temp, expr->plan ,sizeof(SPIPlanPtr *));
+		// }
+
+		entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
+		new_entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
 
 
 		/*
@@ -4856,19 +4891,93 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		// }
 		
 
-		quuery = linitial_node(Query, ((CachedPlanSource *) linitial(expr->plan->plancache_list))->query_list);
+		// quuery = linitial_node(Query, ((CachedPlanSource *) linitial(expr->plan->plancache_list))->query_list);
 
-		if( quuery->commandType==CMD_INSERT || quuery->commandType==CMD_DELETE)
-		{
-			if (//get_output_clause_status_hook
-			//get_output_clause_transformation_info()
-			output_update_transformation
-						&& sql_dialect == SQL_DIALECT_TSQL)
-						{
-							//transformCols = (*get_output_clause_status_hook) ();
-							cp = SPI_plan_get_cached_plan(expr->plan);
-						}
-		}
+		// if( quuery->commandType==CMD_DELETE || quuery->commandType==CMD_UPDATE)
+		// {
+		
+			// if (strcasestr(stmt->sqlstmt->query, " OUTPUT "))
+			// // get_output_clause_transformation_info()
+			// // output_update_transformation
+			// 			// && sql_dialect == SQL_DIALECT_TSQL)
+			// 			{
+			// 				//transformCols = (*get_output_clause_status_hook) ();
+			// 				if(prev_plan==expr->plan)
+			// 				{
+			// 					cp = prev_cp;
+			// 				}
+			// 				else
+							// {
+								if(cachedTable == NULL)		//Creating hash table
+								{
+									oldContext = MemoryContextSwitchTo(TopMemoryContext);
+									MemSet(&hashCtl, 0, sizeof(hashCtl));
+									hashCtl.keysize = sizeof(expr->plan);
+									hashCtl.entrysize = sizeof(cachedPtrHashEntry);
+									hashCtl.hcxt = CurrentMemoryContext;
+									
+									cachedTable = hash_create("Cachepointer Values",
+										16,
+										&hashCtl,
+										HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+									MemoryContextSwitchTo(oldContext);
+								}
+
+														// retrieving value in new_entry if present in hash table
+								// entry->plan = *expr->plan;
+								pllan = (_SPI_plan) *(expr->plan);
+								memcpy(&entry->plan, &pllan ,sizeof(_SPI_plan));
+
+								new_entry = (cachedPtrHashEntry *) hash_search(cachedTable,
+											   &entry->plan,
+											   HASH_FIND,
+											   &found);
+
+								if(found)
+								{
+									cp = new_entry->cp;
+								}
+
+								// if(new_entry->cp == NULL)
+								if(!found)							//if value not present in hash table, calling 
+								{													//SPI_plan_get_cached_plan and storing value in table
+									cp = SPI_plan_get_cached_plan(expr->plan);
+							
+									// new_entry->plan = expr->plan;
+									memcpy(&new_entry->plan, &pllan ,sizeof(_SPI_plan));
+									new_entry->cp = cp;
+									entry->cp = cp;
+									// entry->plan = expr->plan;
+									// memcpy(entry->plan, expr->plan ,sizeof(SPIPlanPtr *));
+
+									new_entry = (cachedPtrHashEntry *) hash_search(cachedTable,
+											   &entry->plan,
+											   HASH_ENTER,
+											   &found);
+									
+									// if(!found)
+									// {
+									// 	// MemSet(new_entry, 0 ,sizeof(cachedPtrHashEntry));
+									memcpy(&new_entry->plan, &pllan ,sizeof(_SPI_plan));
+									new_entry->cp = cp;
+									// }
+									
+									/* should not try to insert same entry multiple times */
+									Assert(found == false);
+									
+									if (new_entry == NULL)
+									{
+										ereport(DEBUG5,
+											(errmsg(" could not insert hash entry")));
+									}
+								}
+
+								cp = SPI_plan_get_cached_plan(expr->plan);  //rechecking
+			// 					prev_cp = cp;
+			// 					prev_plan=expr->plan;
+							// }
+			// 			}
+		// }
 		
 		
 		if (cp)
@@ -4992,9 +5101,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
 				restore_session_properties();
 		}
+		// else if(expr->plan==prev_plan )
+		// {
+		// 	rc = prev_rc;
+		// }
 		else
+		{
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
+			// prev_rc = rc;
+			// prev_plan = expr->plan;
+		}
 
 		/*
 		 * Check for error, and set FOUND if appropriate (for historical
@@ -6434,6 +6551,12 @@ exec_stmt_set(PLtsql_execstate *estate, PLtsql_stmt_set *stmt)
  * exec_assign_expr			Put an expression's result into a variable.
  * ----------
  */
+// bool		prev_isnull;
+// Datum		prev_value;
+// PLtsql_execstate *prev_estate;
+// PLtsql_expr *prev_expr;
+// Oid			prev_valtype;
+// int32		prev_valtypmod;
 static void
 exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 				 PLtsql_expr *expr)
@@ -6486,7 +6609,21 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 		return;
 	}
 
-	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
+	// if(estate == prev_estate && expr==prev_expr && isnull==prev_isnull && valtype==prev_valtype && valtypmod==prev_valtypmod)
+	// {
+	// 	value = prev_value;
+	// 	// value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
+	// }
+	else
+	// {
+		value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
+	// 	prev_value = value;
+	// 	prev_estate=estate;
+	// 	prev_expr=expr;
+	// 	prev_isnull=isnull;
+	// 	prev_valtype=valtype;
+	// 	prev_valtypmod=valtypmod;
+	// }
 
 	/*
 	 * Unlike other scenario using implicit castings to (var)char, (i.e.
@@ -7692,6 +7829,9 @@ loop_exit:
  * It will be freed when exec_eval_cleanup is done.
  * ----------
  */
+
+CachedPlan *prev_cplan = NULL;
+SPIPlanPtr	prev_cplan_ptr;
 static bool
 exec_eval_simple_expr(PLtsql_execstate *estate,
 					  PLtsql_expr *expr,
@@ -7734,7 +7874,17 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 * is needed, do that work in the eval_mcontext.
 	 */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-	cplan = SPI_plan_get_cached_plan(expr->plan);
+	// cplan = SPI_plan_get_cached_plan(expr->plan);
+	if(prev_cplan_ptr==expr->plan)
+	{
+		cplan = prev_cplan;
+	}
+	else
+	{
+		cplan = SPI_plan_get_cached_plan(expr->plan);
+		prev_cplan = cplan;
+		prev_cplan_ptr=expr->plan;
+	}
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
