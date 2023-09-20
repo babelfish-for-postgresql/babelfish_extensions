@@ -875,8 +875,8 @@ GO
 SELECT ISNULL(null, cast(N'ΘЖऌฒ' as NCHAR(15)))
 GO
 ~~START~~
-char
-????           
+nchar
+ΘЖऌฒ           
 ~~END~~
 
 

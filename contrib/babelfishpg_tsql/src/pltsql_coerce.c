@@ -48,6 +48,9 @@ extern select_common_typmod_hook_type select_common_typmod_hook;
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
 
+static Oid select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr);
+static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
+
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
 
@@ -1120,9 +1123,8 @@ expr_is_var_max(Node *expr)
 }
 
 /* 
- * When we must merge types together (i.e. UNION), if all types are
- * null, literals, or [n][var]char types, then return the correct
- * output type based on TSQL's precedence rules
+ * Handles special cases for finding a type when two or more need to be merged
+ * Splits handling between cases with setops and values, and for ISNULL
  * 
  * If InvalidOid is returned, pg's select_common_type will attempt to
  * find a common type instead.
@@ -1131,19 +1133,34 @@ static Oid
 tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *context,
 				  				Node **which_expr)
 {
-	Node		*result_expr = (Node*) linitial(exprs);
-	Oid			result_type = InvalidOid;
-	ListCell	*lc;
-
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return InvalidOid;
 
-	/* Limit changes for Set Operations and Values only for now
-	 * We may want to expand to other callers in the future */
-	if (context && strcmp(context, "UNION") != 0 && strcmp(context, "INTERSECT") != 0 
-		&& strcmp(context, "EXCEPT") != 0 && strcmp(context, "VALUES") != 0 &&
-		strcmp(context, "UNION/INTERSECT/EXCEPT"))
+	if (!context)
 		return InvalidOid;
+	else if (strncmp(context, "COALESCE", strlen("COALESCE")) == 0)
+		return select_common_type_for_isnull(pstate, exprs);
+	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
+			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
+			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
+			strncmp(context, "VALUES", strlen("VALUES")) == 0 ||
+			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")))
+		return select_common_type_setop(pstate, exprs, which_expr);
+
+	return InvalidOid;
+}
+
+/*
+ * When we must merge types together (i.e. UNION), if all types are
+ * null, literals, or [n][var]char types, then return the correct
+ * output type based on TSQL's precedence rules
+ */ 
+static Oid
+select_common_type_setop(ParseState *pstate, List *exprs, Node **which_expr)
+{
+	Node		*result_expr = (Node*) linitial(exprs);
+	Oid			result_type = InvalidOid;
+	ListCell	*lc;
 
 	/* Find a common type based on precedence. NULLs are ignored, and make 
 	 * string literals varchars. If a type besides CHAR, NCHAR, VARCHAR, 
@@ -1170,6 +1187,47 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 	if (which_expr)
 		*which_expr = result_expr;
 	return result_type;
+}
+
+/*
+ * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
+ * function.
+ * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
+ * replacement_value. If replacement_value is also NULL then return INT.
+ */
+static Oid
+select_common_type_for_isnull(ParseState *pstate, List *exprs)
+{
+	Node	   *pexpr;
+	Oid		   ptype;
+
+	Assert(exprs != NIL);
+	pexpr = (Node *) linitial(exprs);
+	ptype = exprType(pexpr);
+
+	/* Check if first arg (check_expression) is NULL literal */
+	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
+	{
+		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
+		Oid ntype = exprType(nexpr);
+		/* Check if second arg (replace_expression) is NULL literal */
+		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
+		{
+			return INT4OID;
+		}
+		/* If second argument is non-null string literal */
+		if (ntype == UNKNOWNOID)
+		{
+			return get_sys_varcharoid();
+		}
+		return ntype;
+	}
+	/* If first argument is non-null string literal */
+	if (ptype == UNKNOWNOID)
+	{
+		return get_sys_varcharoid();
+	}
+	return ptype;
 }
 
 /* 

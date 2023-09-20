@@ -141,7 +141,6 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
-static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 
 /*****************************************
  * 			Executor Hooks
@@ -385,8 +384,6 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
-
-	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
@@ -3897,48 +3894,6 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 			}
 		}
 	}	
-}
-
-
-/*
- * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
- * function.
- * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
- * replacement_value. If replacement_value is also NULL then return INT.
- */
-static Oid
-select_common_type_for_isnull(ParseState *pstate, List *exprs)
-{
-	Node	   *pexpr;
-	Oid		   ptype;
-
-	Assert(exprs != NIL);
-	pexpr = (Node *) linitial(exprs);
-	ptype = exprType(pexpr);
-
-	/* Check if first arg (check_expression) is NULL literal */
-	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
-	{
-		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
-		Oid ntype = exprType(nexpr);
-		/* Check if second arg (replace_expression) is NULL literal */
-		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
-		{
-			return INT4OID;
-		}
-		/* If second argument is non-null string literal */
-		if (ntype == UNKNOWNOID)
-		{
-			return get_sys_varcharoid();
-		}
-		return ntype;
-	}
-	/* If first argument is non-null string literal */
-	if (ptype == UNKNOWNOID)
-	{
-		return get_sys_varcharoid();
-	}
-	return ptype;
 }
 
 
