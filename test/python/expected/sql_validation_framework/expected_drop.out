@@ -26,5 +26,6 @@ Unexpected drop found for procedure sys.babelfish_remove_object_from_extension i
 Unexpected drop found for procedure sys.babelfish_update_collation_to_default in file babelfishpg_common--2.2.0--2.3.0.sql
 Unexpected drop found for procedure sys.babelfish_update_collation_to_default in file babelfishpg_tsql--2.2.0--2.3.0.sql
 Unexpected drop found for procedure sys.babelfish_update_user_catalog_for_guest in file babelfishpg_tsql--2.2.0--2.3.0.sql
+Unexpected drop found for procedure sys.babelfish_update_user_catalog_for_guest_schema in file babelfishpg_tsql--2.5.0--2.6.0.sql
 Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file babelfishpg_tsql--1.1.0--1.2.0.sql
 Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file babelfishpg_tsql--1.1.0--1.2.0.sql
