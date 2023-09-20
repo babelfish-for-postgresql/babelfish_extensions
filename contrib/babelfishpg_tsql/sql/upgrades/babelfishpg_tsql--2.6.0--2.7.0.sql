@@ -4,6 +4,17 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- This is a temporary procedure which is called during upgrade to update guest schema
+-- for the guest users in the already existing databases
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
+
+CALL sys.babelfish_update_user_catalog_for_guest_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
+
 -- Drops an object if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
