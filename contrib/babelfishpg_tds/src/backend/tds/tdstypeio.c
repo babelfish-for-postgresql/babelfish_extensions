@@ -210,6 +210,10 @@ getSendFunc(int funcId)
 			return TdsSendTypeSqlvariant;
 		case TDS_SEND_DATETIMEOFFSET:
 			return TdsSendTypeDatetimeoffset;
+		case TDS_SEND_GEOMETRY:
+			return TdsSendTypeGeometry; 
+		case TDS_SEND_GEOGRAPHY: 
+			return TdsSendTypeGeography; 
 			/* TODO: should Assert here once all types are implemented */
 		default:
 			return NULL;
@@ -285,6 +289,10 @@ getRecvFunc(int funcId)
 			return TdsRecvTypeSqlvariant;
 		case TDS_RECV_DATETIMEOFFSET:
 			return TdsRecvTypeDatetimeoffset;
+		case TDS_RECV_GEOMETRY:
+			return TdsRecvTypeGeometry; 
+		case TDS_RECV_GEOGRAPHY: 
+			return TdsRecvTypeGeography;
 			/* TODO: should Assert here once all types are implemented */
 		default:
 			return NULL;
@@ -1963,6 +1971,50 @@ TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 	return result;
 }
 
+/* -------------------------------
+ * TdsRecvTypeGeometry - converts external binary format to
+ * Geometry data type
+ * --------------------------------
+ */
+Datum
+TdsRecvTypeGeometry(const char *message, const ParameterToken token)
+{
+	Datum result = 0; 
+
+	//Decode binary and convert if needed 
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+
+	//Return in Datum val
+
+	ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("tdstypeio.c: TdsRecvTypeGeometry")));    
+
+	pfree(buf); 
+	return result; 
+}
+
+/* -------------------------------
+ * TdsRecvTypeGeography - converts external binary format to
+ * Geography data type 
+ * --------------------------------
+ */ 
+Datum
+TdsRecvTypeGeography(const char *message, const ParameterToken token)
+{
+	Datum result = 0; 
+
+	//Decode binary and convert if needed 
+	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+
+	//Return in Datum val
+
+
+	pfree(buf); 
+	return result; 
+}
+
+
 static inline uint128
 StringToInteger(char *str)
 {
@@ -2332,6 +2384,12 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 							break;
 						case TDS_TYPE_SQLVARIANT:
 							values[i] = TdsTypeSqlVariantToDatum(temp);
+							break;
+						case TDS_TYPE_GEOMETRY: 
+							elog(ERROR,"TdsTypeSqlGeometryToDatum() here"); 
+							break; 
+						case TDS_TYPE_GEOGRAPHY: 
+							elog(ERROR,"TdsTypeSqlGeographyToDatum() here"); 
 							break;
 					}
 				/* Build a string for bind parameters. */
@@ -4048,6 +4106,37 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 		TdsPutbytes(&numSec, length - 5) == 0 &&
 		TdsPutDate(numDays) == 0)
 		rc = TdsPutUInt16LE(timezone);
+
+	return rc;
+}
+
+int
+TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc = EOF,
+				len,			/* number of bytes used to store the string. */
+				actualLen;		/* Number of bytes that would be needed to
+								 * store given string in given encoding. */
+	char	   *destBuf,
+			   *buf = OutputFunctionCall(finfo, value);
+	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
+
+	len = strlen(buf);
+
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
+
+	TDSInstrumentation(INSTR_TDS_DATATYPE_GEOMETRY);
+
+	rc = TdsSendPlpDataHelper(destBuf, actualLen);
+	
+	pfree(buf);
+	return rc;
+}
+
+int
+TdsSendTypeGeography(FmgrInfo *finfo, Datum value, void *vMetaData)
+{
+	int			rc = 0;
 
 	return rc;
 }

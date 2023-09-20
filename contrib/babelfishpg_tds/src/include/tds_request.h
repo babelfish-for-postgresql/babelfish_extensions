@@ -333,6 +333,22 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 						*offset += rowData->columnValues[i].len;
 					}
 					break;
+				case TDS_TYPE_GEOMETRY:
+				case TDS_TYPE_GEOGRAPHY:
+					{
+						retStatus = ReadPlp(temp, message, offset);
+						CheckPLPStatusNotOKForTVP(temp, retStatus);
+						if (temp->isNull)
+						{
+							rowData->isNull[i] = 'n';
+							i++;
+							temp->isNull = false;
+							continue;
+						}
+						rowData->columnValues[i] = *(TdsGetPlpStringInfoBufferFromToken(messageData, temp));
+
+					}
+					break;
 				case TDS_TYPE_NUMERICN:
 				case TDS_TYPE_DECIMALN:
 					{
@@ -636,6 +652,14 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint32_t));
 					*offset += sizeof(uint32_t);
 					break;
+				case TDS_TYPE_GEOMETRY:
+				case TDS_TYPE_GEOGRAPHY:
+					{
+						colmetadata[i].maxLen = messageData[(*offset)++];
+						elog(LOG, "TYPE INFO FOR SPATIAL TYPES");
+					}
+					break;
+
 				default:
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),

@@ -431,6 +431,8 @@ extern int	TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData);
+extern int  TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData); 
+extern int  TdsSendTypeGeography(FmgrInfo *finfo, Datum value, void *vMetaData);
 
 extern Datum TdsRecvTypeBit(const char *, const ParameterToken);
 extern Datum TdsRecvTypeTinyInt(const char *, const ParameterToken);
@@ -461,6 +463,8 @@ extern Datum TdsRecvTypeXml(const char *, const ParameterToken);
 extern Datum TdsRecvTypeTable(const char *, const ParameterToken);
 extern Datum TdsRecvTypeSqlvariant(const char *message, const ParameterToken);
 extern Datum TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken);
+extern Datum TdsRecvTypeGeometry(const char *message, const ParameterToken token); 
+extern Datum TdsRecvTypeGeography(const char *message, const ParameterToken token); 
 
 extern Datum TdsTypeBitToDatum(StringInfo buf);
 extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);

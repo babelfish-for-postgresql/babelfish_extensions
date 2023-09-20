@@ -1151,6 +1151,13 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 10;
 			}
 			break;
+		case TDS_SEND_GEOGRAPHY:
+		case TDS_SEND_GEOMETRY: 
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("spatial type not supported as out parameter")));
+			break;
+
 		default:
 
 			/*
@@ -1559,14 +1566,14 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 		 * Get the IO function info from our type cache
 		 */
 		finfo = TdsLookupTypeFunctionsByOid(atttypid, &atttypmod);
-		/* atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod); */
+		/* atttypid = getBaseTypeAndTypmod(atttypid, &atttypmod); */ 
 #if 0
 		{
 			/* Test a reverse lookup */
 			TdsIoFunctionInfo finfo2;
 			int32_t		typeid = finfo->ttmtdstypeid;
 			int32_t		typelen = finfo->ttmtdstypelen;
-
+		
 			elog(LOG, "found finfo for Oid %d: tdstype=%d tdstyplen=%d",
 				 atttypid, typeid, typelen);
 			if (!att->attbyval)
@@ -1868,6 +1875,23 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIMEOFFSET, atttypmod);
 				}
+				break;
+			case TDS_SEND_GEOMETRY:
+				/*
+				* TODO: Check TDS versioning requirements 
+				*/
+				elog(LOG, "tdsresponse: enter TDS_SEND_GEOMETRY");
+				SetColMetadataForFixedType(col, TDS_TYPE_GEOMETRY, 0);
+				elog(LOG, "tdsresponse: exit TDS_SEND_GEOMETRY");
+				break;
+			case TDS_SEND_GEOGRAPHY:
+				/*
+				 * TODO: Check TDS versioning requirements 
+				 */
+				elog(LOG, "tdsresponse: enter TDS_TYPE_GEOGRAPHY");
+				SetColMetadataForFixedType(col, TDS_TYPE_GEOGRAPHY, 0);
+				elog(LOG, "tdsresponse: exit TDS_TYPE_GEOGRAPHY");
+
 				break;
 			default:
 
