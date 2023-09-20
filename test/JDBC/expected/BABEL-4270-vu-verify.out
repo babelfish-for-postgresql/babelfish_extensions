@@ -1,0 +1,574 @@
+use babel_4270
+go
+
+-- check test list
+select * from t
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like expression without escape clause
+select * from t where a like 'abc'
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+select * from t where a like 'ab_'
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+select * from t where a like 'abc%'
+go
+~~START~~
+varchar
+abc
+abc_d_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+select * from t where a like 'abd'
+go
+~~START~~
+varchar
+~~END~~
+
+select * from t where a like 'abd_'
+go
+~~START~~
+varchar
+~~END~~
+
+select * from t where a like 'abc%'
+go
+~~START~~
+varchar
+abc
+abc_d_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+select * from t where a like '[a-z]bc%'
+go
+~~START~~
+varchar
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like expression with postgres default escape character '\'
+select * from t where a like 'abc\%'
+go
+~~START~~
+varchar
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+~~END~~
+
+select * from t where a like 'abc\_d\_'
+go
+~~START~~
+varchar
+abc\_d\_
+abc\ad\c
+abc\cd\_
+~~END~~
+
+
+-- not like expression with postgres default escape character '\'
+select * from t where a not like 'abc\%'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abcxFFcd\_
+~~END~~
+
+select * from t where a not like 'abc\_d\_'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like expression that pattern has default invalid UTF-8 character ‘\xFE’
+select * from t where a like 'abc\xFEcd\_'
+go
+~~START~~
+varchar
+abc\xFEcd\_
+~~END~~
+
+select * from t where a like 'abc\xFE%'
+go
+~~START~~
+varchar
+abc\xFEcd\_
+~~END~~
+
+
+-- not like expression that pattern has default invalid UTF-8 character ‘\xFE’
+select * from t where a not like 'abc\xFEcd\_'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+select * from t where a not like 'abc\xFE%'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like pattern from result of a select clause
+select * from t where a like (select 'abc\xFE%')
+go
+~~START~~
+varchar
+abc\xFEcd\_
+~~END~~
+
+select * from t where a like (select * from t where a like (select 'abc\xFE%'))
+go
+~~START~~
+varchar
+abc\xFEcd\_
+~~END~~
+
+
+-- not like pattern from result of a select clause
+select * from t where a not like (select 'abc\xFE%')
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+select * from t where a not like (select * from t where a like (select 'abc\xFE%'))
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like pattern from a variable ?
+declare @f varchar(20) = 'abc%'
+select * from t where a like @f
+go
+~~START~~
+varchar
+abc
+abc_d_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like pattern from a function (babelfish bug, tsql have output while bbf doesn't)
+select * from t where a like BABEL_4270_abc();
+go
+~~START~~
+varchar
+abc\xFEcd\_
+~~END~~
+
+
+-- like pattern from a non-varchar pattern
+select * from t where a like 0
+go
+~~START~~
+varchar
+0
+~~END~~
+
+select * from t where a like 4270
+go
+~~START~~
+varchar
+4270
+~~END~~
+
+select * from t where a like 4272
+go
+~~START~~
+varchar
+~~END~~
+
+select * from t where a like 0.599
+go
+~~START~~
+varchar
+0.599
+~~END~~
+
+
+-- like expression with escape clause
+select * from t where a like 'abcc_%' escape 'c'
+go
+~~START~~
+varchar
+abc_d_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+select * from t where a not like 'abcc_%' escape 'c'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+bbc_d_
+xbc_f_
+~~END~~
+
+
+-- like, escape clause with special escape clause
+select * from t where a like 'abc\_%' escape '\'
+go
+~~START~~
+varchar
+abc_d_
+~~END~~
+
+select * from t where a like 'abc\\xFE_d\_' escape '\xFE'
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+select * from t where a like 'abc_\__%' escape '_'
+go
+~~START~~
+varchar
+abc\_d\_
+abc\_d_
+~~END~~
+
+
+-- not like, escape clause of special escape clause
+select * from t where a not like 'abc\_%' escape '\'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+select * from t where a not like 'abc\\xFE_d\_' escape '\xFE'
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+select * from t where a not like 'abc_\__%' escape '_'
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like, escape character is from result of a select clause
+select * from t where a like 'abc\_%' escape (select '\')
+go
+~~START~~
+varchar
+abc_d_
+~~END~~
+
+
+select * from t where a not like 'abc\\xFE_d\_' escape ( select'\xFE')
+go
+~~START~~
+varchar
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+select * from t where a not like 'abc_\__%' escape (select '_')
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+abc_d_
+bbc_d_
+xbc_f_
+abcdde
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+-- like, escape character is from a variable
+declare @f varchar(20) = '\xFE'
+select * from t where a like 'abc\\xFE_d\_' escape @f
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+declare @f varchar(20) = '\'
+select * from t where a like 'abc\_%' escape @f
+go
+~~START~~
+varchar
+abc_d_
+~~END~~
+
+
+-- like pattern and escape character both come from a variable
+declare @f varchar(20) = '\'
+declare @d varchar(20) = 'abc\_%'
+select * from t where a like @d escape @f
+go
+~~START~~
+varchar
+abc_d_
+~~END~~
+
+
+declare @f varchar(20) = '\xFE'
+declare @d varchar(20) = 'abc\\xFE_d\_'
+select * from t where a like @d escape @f
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+-- not like pattern and escape character both come from a variable
+declare @f varchar(20) = '\'
+declare @d varchar(20) = 'abc\_%'
+select * from t where a not like @d escape @f
+go
+~~START~~
+varchar
+0
+4270
+0.599
+abc
+bbc_d_
+xbc_f_
+abcdde
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+abcxFFcd\_
+~~END~~
+
+
+declare @f varchar(20) = '\xFE'
+declare @d varchar(20) = 'abc\\xFE_d\_'
+select * from t where a not like @d escape @f
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+-- like, escape character is from a non-varchar value
+select * from t where a like 'abc0\0_%' escape 0
+go
+~~START~~
+varchar
+abc\_d\_
+abc\_d_
+~~END~~
+
+
+-- like, escape character is from a non-varchar value
+select * from t where a like 'abc0\0_%' escape 0.5
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+-- like expression with default escape '\' in a procedure
+exec BABEL_4270_test_default_escape
+go
+~~START~~
+varchar
+abc\_d\_
+abc\_d_
+abc\ad\c
+abc\cd\_
+abc\xFEcd\_
+abc\xFFcd\_
+~~END~~
+

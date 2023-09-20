@@ -191,6 +191,7 @@ bitwise_not-operator
 case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
+col_length
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -444,6 +445,7 @@ TestXML
 timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
+unquoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -452,4 +454,6 @@ BABEL-4175
 sp_who
 BABEL_4330
 kill
+BABEL-4217
 Test_ISNULL
+BABEL-4270

@@ -149,6 +149,10 @@ varchar
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN babel_733_log1 WITH PASSWORD = '123456789';
+GO
+
 -- tsql user=babel_733_log1 password=123456789
 -- test user permissions
 SELECT current_user;
