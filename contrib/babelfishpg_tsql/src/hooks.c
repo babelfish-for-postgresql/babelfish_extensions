@@ -102,7 +102,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
@@ -1220,7 +1220,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||
@@ -1382,6 +1382,8 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			char	*alias = palloc0(alias_len + 1);
 			const char	*original_name = NULL;
 			int		actual_alias_len = 0;
+			
+			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
 			while(*colname_start == '(')
 			{
 				colname_start++;
