@@ -657,6 +657,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'timezone_mapping'
 LANGUAGE C IMMUTABLE ;
@@ -750,6 +751,18 @@ CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
     AS $$select date_trunc('millisecond', ((statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::pg_catalog.text::pg_catalog.TIMESTAMP))::sys.datetime;$$
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
+
+-- This is a temporary procedure which is called during upgrade to update guest schema
+-- for the guest users in the already existing databases
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
+
+CALL sys.babelfish_update_user_catalog_for_guest_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
+
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
