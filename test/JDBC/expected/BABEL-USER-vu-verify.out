@@ -8,13 +8,13 @@ GO
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
-master_guest#!#guest#!#guest#!#master#!#
+master_guest#!##!#guest#!#master#!#guest
 msdb_db_owner#!##!#db_owner#!#msdb#!#
 msdb_dbo#!##!#dbo#!#msdb#!#dbo
-msdb_guest#!#guest#!#guest#!#msdb#!#
+msdb_guest#!##!#guest#!#msdb#!#guest
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
-tempdb_guest#!#guest#!#guest#!#tempdb#!#
+tempdb_guest#!##!#guest#!#tempdb#!#guest
 ~~END~~
 
 
