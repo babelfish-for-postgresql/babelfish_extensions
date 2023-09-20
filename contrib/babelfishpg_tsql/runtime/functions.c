@@ -1711,8 +1711,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	int			i;
-	Oid			nspoid = get_namespace_oid("sys", false);
-	Oid			sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(nspoid));
+	Oid			sys_varcharoid = get_sys_varcharoid();
 	Oid			colloid = tsql_get_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -2630,15 +2629,15 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-	int	num_db_objects = 10;
-	int	shipped_objects_not_in_sys_db_type[10] = {
+#define NUM_DB_OBJECTS 11
+	int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
-		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW
+		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_STORED_PROCEDURE
 	};
-	char	*shipped_objects_not_in_sys_db[10][2] = {
+	char	*shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
 		{"xp_qv","master_dbo"},
 		{"xp_instance_regread","master_dbo"},
 		{"sp_addlinkedserver", "master_dbo"},
@@ -2648,16 +2647,17 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 		{"sp_testlinkedserver", "master_dbo"},
 		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
 		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"}
+		{"syspolicy_system_health_state", "msdb_dbo"},
+		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*
 	 * This array contains information of objects that reside in a schema in any number of databases.
      	 * For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
 	 */
-	int	num_all_db_objects = 1;
-	int	shipped_objects_not_in_sys_all_db_type[1] = {OBJECT_TYPE_VIEW};
-	char	*shipped_objects_not_in_sys_all_db[1][2] = {
+#define NUM_ALL_DB_OBJECTS 1
+	int	shipped_objects_not_in_sys_all_db_type[NUM_ALL_DB_OBJECTS] = {OBJECT_TYPE_VIEW};
+	char	*shipped_objects_not_in_sys_all_db[NUM_ALL_DB_OBJECTS][2] = {
 		{"sysdatabases","dbo"}
 	};
 
@@ -2678,7 +2678,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	/*
 	 * Check whether the object is present in shipped_objects_not_in_sys_db.
 	 */
-	for (i = 0; i < num_db_objects; i++)
+	for (i = 0; i < NUM_DB_OBJECTS; i++)
 	{
 		if (is_ms_shipped || (type == shipped_objects_not_in_sys_db_type[i] &&
 			pg_strcasecmp(object_name, shipped_objects_not_in_sys_db[i][0]) == 0 &&
@@ -2688,6 +2688,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 			break;
 		}
 	}
+#undef NUM_DB_OBJECTS
 
 	rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(rel);
@@ -2699,7 +2700,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	 * We scan the pg_namespace catalog to find the occurences in all the databases and find whether 
 	 * any entry matches the object that we are looking for.
 	 */
-	for (i = 0; i < num_all_db_objects; i++)
+	for (i = 0; i < NUM_ALL_DB_OBJECTS; i++)
 	{
 		char		*tempnspname = NULL;
 		bool		isNull = false;
@@ -2732,6 +2733,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 		if (tempnspname)
 			pfree(tempnspname);
 	}
+#undef NUM_ALL_DB_OBJECTS
 
 	table_close(rel, AccessShareLock);
 

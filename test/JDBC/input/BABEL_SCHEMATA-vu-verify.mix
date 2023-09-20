@@ -12,6 +12,10 @@ go
 SELECT * FROM information_schema.schemata WHERE SCHEMA_NAME LIKE 'schema_schemata_%' ORDER BY SCHEMA_NAME;
 go
 
+-- reset the login password
+ALTER LOGIN schemata_login WITH PASSWORD = '123'
+GO
+
 -- Test if user default schema is not dbo schema
 -- Check if after revoking the usage permission/ownership from user, it is still showing in catalog or not.
 -- tsql      user=schemata_login      password=123

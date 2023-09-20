@@ -110,6 +110,7 @@ BABEL-383
 BABEL-3844
 BABEL-3914
 BABEL-3938
+BABEL-3952
 BABEL-404
 BABEL-405
 BABEL-4078
@@ -191,6 +192,7 @@ bitwise_not-operator
 case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
+col_length
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -244,6 +246,7 @@ sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
 str
+switchoffset-dep
 sys-all_columns
 sys-all_columns-dep
 sys_all_objects
@@ -441,7 +444,9 @@ test_windows_login
 test_windows_sp_helpuser
 TestXML
 timefromparts
+todatetimeoffset-dep
 triggers_with_transaction
+unquoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -449,3 +454,7 @@ linked_srv_4229
 BABEL-4175
 sp_who
 BABEL_4330
+kill
+BABEL-4217
+Test_ISNULL
+BABEL-4270

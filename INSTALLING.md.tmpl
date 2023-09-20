@@ -308,6 +308,27 @@ sqlcmd -S localhost -U babelfish_user -P 12345678
 
 > Note that `mssql-tools` does not support _arm64_ packages.
 
+## How to build and install the babelfishpg_unit extension and run unit tests (Optional)
+
+Build the babelfishpg_unit module. Use the command:
+
+```
+cd ${PG_SRC}/contrib/babelfishpg_unit
+make -j ${JOBS}
+sudo make PG_CONFIG=${PG_CONFIG} install
+```
+
+After babelfishpg_unit is built successfully, connect through psql endpoint and install the extension:
+
+```
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "CREATE EXTENSION IF NOT EXISTS "babelfishpg_unit";"
+```
+
+To run unit tests:
+```
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();"
+```
+
 ## How to build the babelfishpg_tsql extension with linked servers enabled
 
 - To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md). The linked servers feature is supported using the FreeTDS library which is licensed under the GNU LGPL license. See [COPYING_LIB.txt](https://github.com/FreeTDS/freetds/blob/master/COPYING_LIB.txt) for details.

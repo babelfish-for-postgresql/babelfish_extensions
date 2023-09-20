@@ -177,6 +177,58 @@ datetime#!#datetime
 ~~END~~
 
 
+/* 8. Prefixed with dbo.<> and sys.<> */
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC dbo.sp_executesql @SQLString;
+go
+~~START~~
+nvarchar
+hello world
+~~END~~
+
+
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC sys.sp_executesql @SQLString;
+go
+~~START~~
+nvarchar
+hello world
+~~END~~
+
+
+/* 9. With omitted database and schema name */
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC .dbo.sp_executesql @SQLString;
+go
+~~START~~
+nvarchar
+hello world
+~~END~~
+
+
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC .sys.sp_executesql @SQLString;
+go
+~~START~~
+nvarchar
+hello world
+~~END~~
+
+
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC ..sp_executesql @SQLString;
+go
+~~START~~
+nvarchar
+hello world
+~~END~~
+
+
 /* Exceptions */
 /* 1. Wrong order of named/unnamed params */
 DECLARE @SQLString NVARCHAR(100);

@@ -34,6 +34,10 @@ go
 select count(*) from information_schema.table_constraints where table_name in ('tbl_fk') and constraint_name like '%chk_1234%';
 go
 
+-- reset the login password
+alter login user_tbl_const with password='123456789';
+go
+
 -- tsql user=user_tbl_const password=123456789
 -- should return 0 since user_tbl_const doesn't have any privileges
 use db1;

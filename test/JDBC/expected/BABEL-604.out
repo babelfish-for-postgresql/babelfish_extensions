@@ -12,14 +12,14 @@ call p_employee_select
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column "p_employee_select" does not exist)~~
+~~ERROR (Message: procedure call(unknown) does not exist)~~
 
 
 call p_employee_select
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: column "p_employee_select" does not exist)~~
+~~ERROR (Message: procedure call(unknown) does not exist)~~
 
 
 create procedure p as select 2; select 1;

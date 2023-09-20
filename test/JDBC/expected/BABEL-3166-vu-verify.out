@@ -1,6 +1,3 @@
-USE db_babel_3166;
-go
-
 -- Look at function's probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
 go
@@ -38,10 +35,4 @@ binary
 
 
 DROP PROCEDURE babel_3166_proc;
-go
-
-USE master;
-go
-
-DROP DATABASE db_babel_3166;
 go
