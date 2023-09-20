@@ -101,16 +101,5 @@ LANGUAGE C STABLE;
 
 ALTER FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) IMMUTABLE;
 
--- This is a temporary procedure which is called during upgrade to update guest schema
--- for the guest users in the already existing databases
-CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
-
-CALL sys.babelfish_update_user_catalog_for_guest_schema();
-
--- Drop this procedure after it gets executed once.
-DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
-
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
