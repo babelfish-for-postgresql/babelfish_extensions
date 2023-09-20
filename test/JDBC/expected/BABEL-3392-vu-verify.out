@@ -1989,3 +1989,111 @@ longer string#!#1#!#1
 
 DROP TABLE babel1874
 GO
+
+CREATE TABLE babel3392_collation(c1 NVARCHAR(20) COLLATE japanese_cs_as, c2 NCHAR(10) COLLATE japanese_cs_as);
+GO
+
+INSERT INTO babel3392_collation VALUES ('う', 'ｳ')
+go
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel3392_collation
+GO
+~~START~~
+nvarchar#!#nchar
+う#!#ｳ         
+~~END~~
+
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT c1 as babel4157_c1 FROM babel3392_collation 
+    UNION
+    SELECT c2 as babel4157_c1 FROM babel3392_collation
+) tbl
+GO
+
+SELECT * FROM babel4157_tbl order by 1
+GO
+~~START~~
+nvarchar
+う
+ｳ         
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#40
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT c1 as babel4157_c1 FROM babel3392_collation
+    UNION
+    SELECT N'ΘЖऌฒ' as babel4157_c1
+) tbl
+GO
+
+SELECT * FROM babel4157_tbl order by 1
+GO
+~~START~~
+nvarchar
+ΘЖऌฒ
+う
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#40
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+
+CREATE TABLE babel3392_nocol(c1 VARCHAR(30))
+GO
+
+INSERT INTO babel3392_nocol VALUES('foo')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
+    SELECT c1 as babel4157_c1 FROM babel3392_nocol
+    UNION
+    SELECT c1 as babel4157_c1 FROM babel3392_collation 
+) tbl
+GO
+
+SELECT * FROM babel4157_tbl order by 1
+GO
+~~START~~
+nvarchar
+foo
+う
+~~END~~
+
+
+SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
+GO
+~~START~~
+varchar#!#smallint
+babel4157_c1#!#60
+~~END~~
+
+
+DROP TABLE babel4157_tbl
+GO
+DROP TABLE babel3392_nocol
+DROP TABLE babel3392_collation
+GO
