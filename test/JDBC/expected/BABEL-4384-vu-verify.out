@@ -1,0 +1,62 @@
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v1';
+GO
+~~START~~
+text
+ SELECT babel_4384_t1.abc AS "ABC"<newline>   FROM master_dbo.babel_4384_t1;
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v2';
+GO
+~~START~~
+text
+ SELECT babel_4384_t1.abc AS "ABC"<newline>   FROM master_dbo.babel_4384_t1;
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v3';
+GO
+~~START~~
+text
+ SELECT babel_4384_t1.abc AS "ABC"<newline>   FROM master_dbo.babel_4384_t1;
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v4';
+GO
+~~START~~
+text
+ SELECT babel_4384_t1.abc AS "ABC"<newline>   FROM master_dbo.babel_4384_t1;
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v5';
+GO
+~~START~~
+text
+ SELECT babel_4384_t1."de.f" AS "DE.f"<newline>   FROM master_dbo.babel_4384_t1;
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v6';
+GO
+~~START~~
+text
+ SELECT babel_4384_t2."您对"<newline>   FROM master_dbo.babel_4384_t2;
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'babel_4384_v7';
+GO
+~~START~~
+text
+ SELECT babel_4384_t3."您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de"<newline>   FROM master_dbo.babel_4384_t3;
+~~END~~
+
