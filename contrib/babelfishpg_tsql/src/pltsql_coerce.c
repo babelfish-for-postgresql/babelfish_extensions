@@ -1138,13 +1138,13 @@ tsql_select_common_type_hook(ParseState *pstate, List *exprs, const char *contex
 
 	if (!context)
 		return InvalidOid;
-	else if (strncmp(context, "COALESCE", strlen("COALESCE")) == 0)
+	else if (strncmp(context, "ISNULL", strlen("ISNULL")) == 0)
 		return select_common_type_for_isnull(pstate, exprs);
 	else if (strncmp(context, "UNION", strlen("UNION")) == 0 || 
 			strncmp(context, "INTERSECT", strlen("INTERSECT")) == 0 ||
 			strncmp(context, "EXCEPT", strlen("EXCEPT")) == 0 ||
 			strncmp(context, "VALUES", strlen("VALUES")) == 0 ||
-			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")))
+			strncmp(context, "UNION/INTERSECT/EXCEPT", strlen("UNION/INTERSECT/EXCEPT")) == 0)
 		return select_common_type_setop(pstate, exprs, which_expr);
 
 	return InvalidOid;
