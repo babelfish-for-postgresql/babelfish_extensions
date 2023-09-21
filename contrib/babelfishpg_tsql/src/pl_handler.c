@@ -610,7 +610,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				{
 					trig_schema = NULL;
 				}
-				
+
 				if (atstmt->relation->schemaname != NULL)
 				{
 					rel_schema = atstmt->relation->schemaname;

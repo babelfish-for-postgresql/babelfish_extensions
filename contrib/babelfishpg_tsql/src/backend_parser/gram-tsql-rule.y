@@ -485,25 +485,27 @@ tsql_enable_disable_trigger:
 					foreach(lc, $3)
 					{
 						List *lst = lfirst_node(List, lc);
-						n1 = (AlterTableCmd_tsql *)newNode(sizeof(AlterTableCmd_tsql), T_AlterTableCmd);
+
+						n1 = (AlterTableCmd_tsql *)palloc0fast(sizeof(AlterTableCmd_tsql));
+						n1->cmd.type = T_AlterTableCmd;
 
 						if ($1)
 						{
-							n1->subtype = AT_EnableTrig;
+							n1->cmd.subtype = AT_EnableTrig;
 						}
 						else
 						{
-							n1->subtype = AT_DisableTrig;
+							n1->cmd.subtype = AT_DisableTrig;
 						}
 						
 						if (list_length(lst) > 1)
 						{
-							n1->schemaname = ((String *)list_nth(lst,0))->sval;
-							n1->name = ((String *)list_nth(lst,1))->sval;
+							n1->schemaname = strVal(list_nth(lst,0));
+							n1->cmd.name = strVal(list_nth(lst,1));
 						}
 						else
 						{
-							n1->name = ((String *)list_nth(lst,0))->sval;
+							n1->cmd.name = strVal(list_nth(lst,0));
 						}
 						n3->cmds = list_concat(n3->cmds, list_make1((Node *) n1));
 					}
