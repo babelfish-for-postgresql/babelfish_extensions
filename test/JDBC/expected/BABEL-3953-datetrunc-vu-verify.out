@@ -172,6 +172,28 @@ GO
 
 ~~ERROR (Message: syntax error at or near "null")~~
 
+select datetrunc(null, 'NULL') as dt1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "null")~~
+
+select datetrunc('NULL', null) as dt1
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NULL' is not a recognized datetrunc option.)~~
+
+select datetrunc('NULL', 'NULL') as dt1
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NULL' is not a recognized datetrunc option.)~~
+
 select datetrunc(year, null) as dt3
 GO
 ~~START~~

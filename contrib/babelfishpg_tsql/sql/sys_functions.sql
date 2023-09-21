@@ -4334,7 +4334,6 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
-
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
 DECLARE
@@ -4347,10 +4346,13 @@ DECLARE
     datefirst_value INT;
 BEGIN
     BEGIN
+        /* perform input validation */
         date_arg_datatype := pg_typeof(date);
-        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'doy', 'day', 'nanosecond', 'tzoffset') THEN
+        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                            'doy', 'day', 'nanosecond', 'tzoffset') THEN
             RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
-        ELSIF date_arg_datatype NOT IN ('date'::regtype, 'time'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype) THEN
+        ELSIF date_arg_datatype NOT IN ('date'::regtype, 'time'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype,
+                                        'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype) THEN
             RAISE EXCEPTION 'Argument data type ''%'' is invalid for argument 2 of datetrunc function.', date_arg_datatype;
         ELSIF datepart IN ('nanosecond', 'tzoffset') THEN
             RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''%''.',datepart, date_arg_datatype;
@@ -4370,11 +4372,10 @@ BEGIN
             -- sufficient for provided datepart (millisecond, microsecond) value
         ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
             -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype
-            --  is sufficient for provided datepart (millisecond, microsecond) value;  
+            -- is sufficient for provided datepart (millisecond, microsecond) value;  
         END IF;
-    END;
 
-    BEGIN
+        /* input validation is complete, proceed with result calculation. */
         IF date_arg_datatype = 'time'::regtype THEN
             RETURN date_trunc(datepart, date);
         ELSE
@@ -4419,15 +4420,17 @@ $body$
 DECLARE
     input_expr_datetime2 sys.datetime2;
 BEGIN
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                        'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+    END IF;
     BEGIN
     input_expr_datetime2 := cast(date as sys.datetime2);
     exception
         WHEN others THEN
                 RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
     END;
-    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'doy', 'day', 'nanosecond', 'tzoffset') THEN
-            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
-    ELSIF input_expr_datetime2 IS NULL THEN
+    IF input_expr_datetime2 IS NULL THEN
         RETURN NULL;
     ELSE
         -- input string literal is valid, call the datetrunc function with datetime2 datatype. 

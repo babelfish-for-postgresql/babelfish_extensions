@@ -62,6 +62,12 @@ select datetrunc(null, CAST('2020-01-01' as date)) as dt1
 GO
 select datetrunc(null, null) as dt1
 GO
+select datetrunc(null, 'NULL') as dt1
+GO
+select datetrunc('NULL', null) as dt1
+GO
+select datetrunc('NULL', 'NULL') as dt1
+GO
 select datetrunc(year, null) as dt3
 GO
 select datetrunc(years, null) as dt4
