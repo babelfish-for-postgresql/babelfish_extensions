@@ -1112,7 +1112,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) tbl
 GO
 
-SELECT * FROM babel4157_tbl order by 1
+SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE japanese_cs_as
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -1128,7 +1128,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) tbl
 GO
 
-SELECT * FROM babel4157_tbl order by 1
+SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE japanese_cs_as
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
@@ -1150,7 +1150,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) tbl
 GO
 
-SELECT * FROM babel4157_tbl order by 1
+SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE japanese_cs_as
 GO
 
 SELECT name, max_length FROM sys.columns WHERE name = 'babel4157_c1'
