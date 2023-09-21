@@ -102,7 +102,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
@@ -890,10 +890,12 @@ extract_identifier(const char *start)
 
 	bool		dq = false;
 	bool		sqb = false;
+	bool		sq = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
 	bool		found_escaped_in_dq = false;
+	bool		found_escaped_in_sq = false;
 
 	/* check identifier is delimited */
 	Assert(start);
@@ -901,6 +903,8 @@ extract_identifier(const char *start)
 		dq = true;
 	else if (start[0] == '[')
 		sqb = true;
+	else if (start[0] == '\'')
+		sq = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
@@ -915,7 +919,7 @@ extract_identifier(const char *start)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb)		/* normal case */
+		if (!dq && !sqb && !sq)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -965,6 +969,51 @@ extract_identifier(const char *start)
 					{
 						original_name[wcur] = start[rcur];
 						if (start[rcur] == '"')
+							++rcur; /* skip next character */
+					}
+					original_name[wcur] = '\0';
+					return original_name;
+				}
+			}
+		}
+		else if (sq)
+		{
+			/* please see xdinside in scan.l */
+			valid = (c != '\'');
+			if (!valid && start[i + 1] == '\'')	/* escaped */
+			{
+				++i;
+				++i;			/* advance two characters */
+				found_escaped_in_sq = true;
+				continue;
+			}
+
+			if (!valid)
+			{
+				if (!found_escaped_in_sq)
+				{
+					/* no escaped character. copy whole string at once */
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					memcpy(original_name, start + 1, i - 1);
+					original_name[i - 1] = '\0';
+					return original_name;
+				}
+				else
+				{
+					/*
+					 * there is escaped character. copy one by one to handle
+					 * escaped character
+					 */
+					int			rcur = 1;	/* read-cursor */
+					int			wcur = 0;	/* write-cursor */
+
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					for (; rcur < i; ++rcur, ++wcur)
+					{
+						original_name[wcur] = start[rcur];
+						if (start[rcur] == '\'')
 							++rcur; /* skip next character */
 					}
 					original_name[wcur] = '\0';
@@ -1171,7 +1220,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||
@@ -1330,105 +1379,40 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		 */
 		if (alias_len > 0)
 		{
-			char	   *alias = palloc0(alias_len + 1);
-			bool		dq = *colname_start == '"';
-			bool		sqb = *colname_start == '[';
-			bool		sq = *colname_start == '\'';
-			bool		identifier_truncated = false;
-			const char *colname_end;
-			bool		enc_is_single_byte;
-			enc_is_single_byte = pg_database_encoding_max_length() == 1;
-
-
-			if (dq || sqb)
+			char	*alias = palloc0(alias_len + 1);
+			const char	*original_name = NULL;
+			int		actual_alias_len = 0;
+			
+			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
+			while(*colname_start == '(' || *colname_start == ' ')
 			{
-				return;
+				colname_start++;
 			}
 
+			/* To extract the identifier name from the query.*/
+			original_name = extract_identifier(colname_start);
+			actual_alias_len = strlen(original_name);
+
+			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
+			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
+			 */
+			if(actual_alias_len > alias_len)
+			{
+				/* First 32 characters of original_name are assigned to alias. */
+				memcpy(alias, original_name, (alias_len - 32) );
+				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+				memcpy(alias + (alias_len) - 32,
+				identifier_name + (alias_len) - 32, 
+				32);
+				alias[alias_len+1] = '\0';
+			}
+			/* Identifier is not truncated. */
 			else
 			{
-				if(sq)
-				{
-					colname_start++;
-				}
-				/*
-				 * After truncation, minimum truncated length of alias can be 61
-				 * If length is less than 61, it means alias is not truncated.
-				 */
-				if(alias_len < 61)
-				{
-					memcpy(alias, colname_start, alias_len);
-				}
-				else
-				{
-					/*
-					 * For aliases whose length is between 61 to 63, the case of multibyte and single byte
-					 * characters are handled separately.
-					 * It is needed to check whether last 32 bytes are equal to identifier_name or not,
-					 * because last 32 bytes would be MD5 hash in case of truncated identifier and 
-					 * we can leverage the fact that MD5 hash would be different from original identifier.
-					 * If they are not equal, this means identifier_name is truncated.
-					 */
-					for(int x = alias_len - 32; x < alias_len; x++)
-					{
-						colname_end = colname_start + x;
-
-						/*
-						 * Check if colname_end is in upper case then does uppercase of identifier_name 
-						 * matches to colname_end or not in case of ascii values. 
-						 * If colname_end is in lowercase, then simply check colname_end is equals to 
-						 * identifier_name or not.
-						 */ 
-						if (*colname_end >= 'A' && *colname_end <= 'Z')
-						{
-							/* If original letter is in upper case then check it with upper case letter of identifier_name. */
-							if (!(*colname_end == identifier_name[x] + 'A' - 'a'))
-							{
-								identifier_truncated = true;
-								break;
-							}
-						}
-						else if(enc_is_single_byte && IS_HIGHBIT_SET(*colname_end) && isupper(*colname_end))
-						{
-							if (!(*colname_end == identifier_name[x] - 'A' + 'a'))
-							{
-								identifier_truncated = true;
-								break;
-							}
-						}
-						else
-						{
-							/* Original letter is already in lower case or it could be fractional byte of multibyte char. 
-							 * So it should match with original byte in either case.
-							 */
-							if(!(*colname_end == identifier_name[x]))
-							{
-								identifier_truncated = true;
-								break;
-							}
-						}
-					}
-					/* Identifier is not truncated. */
-					if(!(identifier_truncated))
-					{
-						memcpy(alias, colname_start, alias_len);
-					}
-
-					/* Identifier is truncated. */
-					else
-					{
-						/* First 32 characters of colname_start are assigned to alias. */
-						memcpy(alias, colname_start, (alias_len - 32) );
-						/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
-						memcpy(alias + (alias_len) - 32,
-						identifier_name + (alias_len) - 32, 
-						32);
-						alias[alias_len+1] = '\0';
-					}
-				}
+				memcpy(alias, original_name, alias_len);
 			}
-
 			res->name = alias;
+
 		}
 	}
 	/* Update table set qualified column name, resolve qualifiers here */
