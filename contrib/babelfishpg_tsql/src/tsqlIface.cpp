@@ -5359,7 +5359,7 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 		}
 		else if (ctx->NORESEED())
 		{
-			stmt->dbcc_stmt_data.dbcc_checkident.is_reseed = false;
+			is_reseed = false;
 		}
 
 		if(ctx->dbcc_options())

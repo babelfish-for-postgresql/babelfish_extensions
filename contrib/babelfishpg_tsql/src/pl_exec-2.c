@@ -3290,13 +3290,18 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	PG_TRY();
 	{
-		/* Lock table to ensure concurrency. eaaaa*/
-		LockRelationOid( table_oid, RowExclusiveLock);
-
+		// Lock table to ensure concurrency.
+		if(dbcc_stmt.is_reseed)
+		{
+			LockRelationOid( table_oid, AccessExclusiveLock);
+		}
+		else
+		{
+			LockRelationOid( table_oid, ShareLock);
+		}	
 		cur_identity_value = DirectFunctionCall1(pg_sequence_last_value,
 						ObjectIdGetDatum(seqid));
 		cur_value_is_null = false;
-
 		if (dbcc_stmt.new_reseed_value)
 		{
 			/* 
@@ -3349,7 +3354,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		}
 		if (is_cross_db)
             SetCurrentRoleId(current_user_id, false);
-		UnlockRelationOid(table_oid, RowExclusiveLock);
 	}
 	PG_CATCH();
 	{
@@ -3380,10 +3384,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			PG_RE_THROW();
 	    if (is_cross_db)
             SetCurrentRoleId(current_user_id, false);
-
-		UnlockRelationOid(table_oid, RowExclusiveLock);
 	}
 	PG_END_TRY();
+	
 
 	if (max_identity_value_str)
 		pfree(max_identity_value_str);
@@ -3391,6 +3394,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	pfree(table_name);
 	pfree(nsp_name);
 
+	if(!dbcc_stmt.is_reseed)
+	{
+		UnlockRelationOid(table_oid,ShareLock);
+	}	
 	if (!dbcc_stmt.no_infomsgs)
 	{
 		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
@@ -3398,6 +3405,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
 	}
+
+	
 }
 
 
