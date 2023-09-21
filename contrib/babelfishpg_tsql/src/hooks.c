@@ -3934,18 +3934,37 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid)
 	{
-		int16		dbid = 0;
 		AttrNumber	attnum;
 
 		attnum = (AttrNumber) attnameAttNum(rel, "dbid", false);
 		Assert(attnum != InvalidAttrNumber);
 
-		if (!nulls[attnum - 1])
-			return;
+		if (nulls[attnum - 1])
+		{
+			int16 dbid = getDbidForLogicalDbRestore(relid);
+			values[attnum - 1] = Int16GetDatum(dbid);
+			nulls[attnum - 1] = false;
+		}
+	}
 
-		dbid = getDbidForLogicalDbRestore(relid);
-		values[attnum - 1] = Int16GetDatum(dbid);
-		nulls[attnum - 1] = false;
+	/*
+	 * Populate owner column in babelfish_sysdatabases catalog table with
+	 * SA of the current database.
+	 */
+	if (relid == sysdatabases_oid)
+	{
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "owner", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (nulls[attnum - 1])
+		{
+			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
+
+			values[attnum - 1] = CStringGetDatum(owner);
+			nulls[attnum - 1] = false;
+		}
 	}
 }
 
