@@ -1035,7 +1035,6 @@ extract_identifier(const char *start)
 	bool		dq = false;
 	bool		sqb = false;
 	bool		sq = false;
-	bool		sb = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
@@ -1050,8 +1049,6 @@ extract_identifier(const char *start)
 		sqb = true;
 	else if (start[0] == '\'')
 		sq = true;
-	else if (start[0] == '(')
-		sb = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
@@ -1066,7 +1063,7 @@ extract_identifier(const char *start)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb && !sq && !sb)		/* normal case */
+		if (!dq && !sqb && !sq)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -1166,18 +1163,6 @@ extract_identifier(const char *start)
 					original_name[wcur] = '\0';
 					return original_name;
 				}
-			}
-		}
-		else if (sb)
-		{
-			valid = (c != ')');
-			if (!valid)
-			{
-				original_name = palloc(i);	/* exclude first/last small
-											 * bracket */
-				memcpy(original_name, start + 1, i - 1);
-				original_name[i - 1] = '\0';
-				return original_name;
 			}
 		}
 		else if (sqb)
@@ -1551,6 +1536,12 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			char	   *alias = palloc0(alias_len + 1);
 			const char	*original_name = NULL;
 			int actual_alias_len = 0;
+
+			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
+			while(*colname_start == '(' || *colname_start == ' ')
+			{
+				colname_start++;
+			}
 
 			/* To extract the identifier name from the query.*/
 			original_name = extract_identifier(colname_start);
