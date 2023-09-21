@@ -1704,6 +1704,24 @@ typedef struct PLwdatum
 	List	   *idents;			/* valid if composite name */
 } PLwdatum;
 
+typedef struct AlterTableCmd_tsql	/* Extending AlterTableCmd structure to support attribute schemaname */
+{
+	NodeTag		type;
+	AlterTableType subtype;		/* Type of table alteration to apply */
+	char	   *name;			/* column, constraint, or trigger to act on,
+								 * or tablespace */
+	int16		num;			/* attribute number for columns referenced by
+								 * number */
+	RoleSpec   *newowner;
+	Node	   *def;			/* definition of new column, index,
+								 * constraint, or parent table */
+	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
+	bool		missing_ok;		/* skip error if missing? */
+	bool		recurse;		/* exec-time recursion */
+	
+	char	   *schemaname;
+} AlterTableCmd_tsql;
+
 /**********************************************************************
  * Global variable declarations
  **********************************************************************/

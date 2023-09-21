@@ -595,17 +595,16 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		AlterTableStmt *atstmt = (AlterTableStmt *) parseTree->stmt;
 		ListCell *lc;
 		char *trig_schema;
-		const char *rel_schema;
+		char *rel_schema;
 
 		foreach(lc, atstmt->cmds)
 		{
 			AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
 			if (cmd->subtype == AT_EnableTrig || cmd->subtype == AT_DisableTrig)
 			{
-				if (strchr(cmd->name, '.') != NULL)
-				{
-					trig_schema = strtok(cmd->name, ".");
-					cmd->name = strtok(NULL, ".");
+				if (atstmt->objtype == OBJECT_TRIGGER){
+					AlterTableCmd_tsql *t_cmd = (AlterTableCmd_tsql *)cmd;
+					trig_schema = t_cmd->schemaname;
 				}
 				else
 				{
@@ -614,24 +613,23 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				
 				if (atstmt->relation->schemaname != NULL)
 				{
-					rel_schema = get_logical_schema_name(atstmt->relation->schemaname, true);
-
-					if (rel_schema == NULL)
-					{
-						rel_schema = atstmt->relation->schemaname;
-					}
+					rel_schema = atstmt->relation->schemaname;
 				}
 				else
 				{
 					rel_schema = get_authid_user_ext_schema_name(get_cur_db_name(), GetUserNameFromId(GetUserId(), false));
 				}
 
-				if (trig_schema != NULL && strcasecmp(trig_schema, rel_schema) != 0)
+				if (trig_schema != NULL && strncmp(trig_schema, rel_schema, Min(strlen(rel_schema), strlen(trig_schema))) != 0)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
 							errmsg("Trigger %s.%s on table %s.%s does not exists or table %s.%s does not exists",
 									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
+				}
+
+				if(atstmt->relation->schemaname == NULL){
+					pfree((char *) rel_schema);
 				}
 			}
 		}

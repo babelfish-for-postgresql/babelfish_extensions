@@ -478,14 +478,14 @@ tsql_AlterLoginStmt:
 tsql_enable_disable_trigger:
 			tsql_enable_disable TRIGGER tsql_trigger_list ON relation_expr
 				{
-					AlterTableCmd *n1;
+					AlterTableCmd_tsql *n1;
 					AlterTableStmt *n3 = makeNode(AlterTableStmt);
 					ListCell *lc;
 
 					foreach(lc, $3)
 					{
 						List *lst = lfirst_node(List, lc);
-						n1 = makeNode(AlterTableCmd);
+						n1 = (AlterTableCmd_tsql *)newNode(sizeof(AlterTableCmd_tsql), T_AlterTableCmd);
 
 						if ($1)
 						{
@@ -498,7 +498,8 @@ tsql_enable_disable_trigger:
 						
 						if (list_length(lst) > 1)
 						{
-							n1->name = psprintf("%s.%s", ((String *)list_nth(lst,0))->sval, ((String *)list_nth(lst,1))->sval);
+							n1->schemaname = ((String *)list_nth(lst,0))->sval;
+							n1->name = ((String *)list_nth(lst,1))->sval;
 						}
 						else
 						{
