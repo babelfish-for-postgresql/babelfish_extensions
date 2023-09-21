@@ -194,3 +194,19 @@ SELECT @@trancount
 SELECT current_setting('transaction_isolation')
 SELECT current_setting('default_transaction_isolation')
 GO
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+SAVE TRANSACTION sp1
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+COMMIT
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
