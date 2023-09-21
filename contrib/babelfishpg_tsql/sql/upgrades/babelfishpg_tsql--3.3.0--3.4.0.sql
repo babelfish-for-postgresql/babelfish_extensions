@@ -763,6 +763,49 @@ END;
 $body$
 LANGUAGE plpgsql STABLE;
 
+-- internal helper function for date_bucket().
+CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
+AS 
+$body$
+DECLARE
+    date_arg_datatype regtype;
+BEGIN
+    date_arg_datatype := pg_typeof(date);
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'doy', 'day', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
+
+    -- Check for NULL value of number argument
+    ELSIF number IS NULL THEN
+        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
+
+    ELSIF check_date IS NULL THEN
+        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of date_bucket function.';
+
+    ELSIF check_date IS false THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+    
+    ELSIF check_date IS true THEN
+        IF date_arg_datatype NOT IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+        ELSIF datepart IN ('doy', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type %.', datepart, date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype AND datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''time''.', datepart;
+        ELSIF origin IS false THEN
+            RAISE EXCEPTION 'Argument data type varchar is invalid for argument 4 of date_bucket function.';
+        ELSIF number <= 0 THEN
+            RAISE EXCEPTION 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.';
+        END IF;
+        RETURN true;
+    ELSE
+        RAISE EXCEPTION 'Argument data type varchar is invalid for argument 3 of date_bucket function.';
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 -- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
 AS 
