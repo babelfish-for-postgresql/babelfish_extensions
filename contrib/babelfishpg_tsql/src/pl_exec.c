@@ -4621,8 +4621,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	ParamListInfo paramLI;
 	long		tcount;
 	int			rc;
-	// int 		prev_rc =  0;
-
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
@@ -4726,10 +4724,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 		// entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
 		
-		// if (strcasestr(stmt->sqlstmt->query, " OUTPUT "))
-		// {
-			// cp = SPI_plan_get_cached_plan(expr->plan);
-		// }
+		if (strcasestr(stmt->sqlstmt->query, " OUTPUT "))
+		{
+			cp = SPI_plan_get_cached_plan(expr->plan);
+		}
 		// else
 		// {
 		// 	if(cachedTable == NULL)		//Creating hash table
@@ -4913,16 +4911,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
 				restore_session_properties();
 		}
-		// else if(expr->plan==prev_plan )
-		// {
-		// 	rc = prev_rc;
-		// }
 		else
 		{
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
-			// prev_rc = rc;
-			// prev_plan = expr->plan;
 		}
 
 		/*
@@ -6421,22 +6413,8 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 		return;
 	}
 
-	// if(estate == prev_estate && expr==prev_expr && isnull==prev_isnull && valtype==prev_valtype && valtypmod==prev_valtypmod)
-	// {
-	// 	value = prev_value;
-	// 	// value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
-	// }
-	else
-	// {
-		value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
-	// 	prev_value = value;
-	// 	prev_estate=estate;
-	// 	prev_expr=expr;
-	// 	prev_isnull=isnull;
-	// 	prev_valtype=valtype;
-	// 	prev_valtypmod=valtypmod;
-	// }
-
+	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
+	
 	/*
 	 * Unlike other scenario using implicit castings to (var)char, (i.e.
 	 * insert into table) SET statement should suppress data truncation error.
@@ -7642,8 +7620,6 @@ loop_exit:
  * ----------
  */
 
-CachedPlan *prev_cplan = NULL;
-SPIPlanPtr	prev_cplan_ptr;
 static bool
 exec_eval_simple_expr(PLtsql_execstate *estate,
 					  PLtsql_expr *expr,
@@ -7686,17 +7662,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 * is needed, do that work in the eval_mcontext.
 	 */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-	// cplan = SPI_plan_get_cached_plan(expr->plan);
-	if(prev_cplan_ptr==expr->plan)
-	{
-		cplan = prev_cplan;
-	}
-	else
-	{
-		cplan = SPI_plan_get_cached_plan(expr->plan);
-		prev_cplan = cplan;
-		prev_cplan_ptr=expr->plan;
-	}
+	cplan = SPI_plan_get_cached_plan(expr->plan);
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
