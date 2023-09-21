@@ -2036,15 +2036,15 @@ GO
 SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
     SELECT c1 as babel4157_c1 FROM babel3392_collation
     UNION
-    SELECT N'ΘЖऌฒ' as babel4157_c1
+    SELECT 'foo' as babel4157_c1
 ) tbl
 GO
 
-SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE japanese_cs_as
+SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE SQL_Latin1_General_CP1_CI_AS
 GO
 ~~START~~
 nvarchar
-ΘЖऌฒ
+foo
 う
 ~~END~~
 
@@ -2075,7 +2075,7 @@ SELECT tbl.babel4157_c1 INTO babel4157_tbl FROM (
 ) tbl
 GO
 
-SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE japanese_cs_as
+SELECT * FROM babel4157_tbl order by babel4157_c1 COLLATE SQL_Latin1_General_CP1_CI_AS
 GO
 ~~START~~
 nvarchar
