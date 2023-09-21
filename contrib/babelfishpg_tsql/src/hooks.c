@@ -387,7 +387,6 @@ InstallExtendedHooks(void)
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
 	select_common_type_hook = select_common_type_for_isnull;
-	// collation_cache_entry_hook = collation_cache_entry_hook_function;
 }
 
 void
