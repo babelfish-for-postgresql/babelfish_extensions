@@ -843,6 +843,32 @@ SetColMetadataForTimeType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t scale
 	col->metaEntry.type6.scale = scale;
 }
 
+static inline void
+SetColMetadataForGeometryType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t maxSize, char *assemblyName, char *typeName)
+{
+	col->sizeLen = 1;
+	col->metaLen = sizeof(col->metaEntry.type7);
+	col->metaEntry.type7.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	col->metaEntry.type7.tdsTypeId = tdsType;
+	col->metaEntry.type7.maxSize = maxSize;
+	col->isSpatialType = true;
+	col->assemblyName = assemblyName;
+	col->typeName = typeName;
+}
+
+static inline void
+SetColMetadataForGeographyType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t maxSize, char *assemblyName, char *typeName)
+{
+	col->sizeLen = 1;
+	col->metaLen = sizeof(col->metaEntry.type7);
+	col->metaEntry.type7.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	col->metaEntry.type7.tdsTypeId = tdsType;
+	col->metaEntry.type7.maxSize = maxSize;
+	col->isSpatialType = true;
+	col->assemblyName = assemblyName;
+	col->typeName = typeName;
+}
+
 /*
  * SetColMetadataForCharTypeHelper - set the collation for tds char datatypes by
  * doing lookup on the hashtable setup by babelfishpg_tsql extension, which maps

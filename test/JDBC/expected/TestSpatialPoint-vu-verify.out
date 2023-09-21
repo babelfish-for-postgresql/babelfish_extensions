@@ -127,6 +127,16 @@ E6100000010C17D9CEF753D34740D34D6210585936C0
 ~~END~~
 
 
+-- Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
+-- TODO: Make it similar to T-SQL
+SELECT * FROM TypeTable;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040
+~~END~~
+
+
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);

@@ -41,6 +41,11 @@ GO
 SELECT location FROM SPATIALPOINTGEOM_dt; 
 GO
 
+-- Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
+-- TODO: Make it similar to T-SQL
+SELECT * FROM TypeTable;
+GO
+
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);

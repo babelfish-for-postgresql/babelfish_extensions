@@ -180,6 +180,13 @@ typedef struct TdsColumnMetaData
 	pg_enc		encoding;
 
 	/*
+	 * Following information is needed when we need to send Meta Column for Spatial Data Types
+	 */
+	char	   *assemblyName;
+	bool		isSpatialType;
+	char	   *typeName;
+
+	/*
 	 * Following information are only needed if we need to send TABNAME and
 	 * COLINFO tokens.
 	 */

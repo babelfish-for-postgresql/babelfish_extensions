@@ -24,8 +24,6 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_datetimeoffset_datatype) (Oid oid);
 	bool		(*is_tsql_decimal_datatype) (Oid oid);
 	bool		(*is_tsql_rowversion_or_timestamp_datatype) (Oid oid);
-	bool		(*is_tsql_geometry_datatype) (Oid oid);
-	bool		(*is_tsql_geography_datatype) (Oid oid);
 	Datum		(*datetime_in_str) (char *str);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
 	Datum		(*tinyint2sqlvariant) (PG_FUNCTION_ARGS);

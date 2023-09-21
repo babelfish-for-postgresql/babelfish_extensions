@@ -5,10 +5,13 @@
 \echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '3.3.0'" to load this file. \quit
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+#define QUOTEME_(M)       #M
+#define QUOTEME(M)       QUOTEME_(M)
+
 #ifdef ENABLE_SPATIAL_TYPES
-#include "spatial_types--3.2.0--3.3.0.sql"
+#include QUOTEME(spatial_types--PREV_VERSION--CUR_VERSION.sql)
 #endif
-#include "other_types--3.2.0--3.3.0.sql"
+#include QUOTEME(other_types--PREV_VERSION--CUR_VERSION.sql)
 
 /*
  * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason

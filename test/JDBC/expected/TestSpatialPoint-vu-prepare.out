@@ -131,6 +131,21 @@ GO
 CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
 GO
 
+-- Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
+-- TODO: Make it similar to T-SQL
+CREATE TYPE geom
+FROM geometry NOT NULL ;
+GO
+
+CREATE TABLE TypeTable(ID INT PRIMARY KEY, Shape geom)
+GO
+
+INSERT INTO TypeTable(ID, Shape)
+VALUES(1, geometry::Point(1, 2, 4326));
+GO
+~~ROW COUNT: 1~~
+
+
 
 -- Geography Test Cases
 -- Positive Test for STGeomFromText with SRID 4326

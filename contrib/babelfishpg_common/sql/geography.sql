@@ -119,11 +119,11 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		lat float8;
 	BEGIN     
 		srid := $2;
-		-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
 		IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 			-- Call the underlying function after preprocessing
-			-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+			-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 			RETURN (SELECT sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2)));
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
@@ -138,7 +138,7 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -196,7 +196,7 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.STAsBinary_helper(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -232,11 +232,11 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		lat float8;
 	BEGIN
 		srid := $2;
-		-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
 		IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 			-- Call the underlying function after preprocessing
-			-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+			-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 			RETURN (SELECT sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2)));
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
@@ -252,7 +252,7 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we're flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.STDistance_helper(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

@@ -70,13 +70,6 @@
 #define Min(x, y)				((x) < (y) ? (x) : (y))
 #define ROWVERSION_SIZE 8
 
-/* 
- * Driver Expects assembly Name and Length is case of Spatial DataTypes
- * TODO: For Now assembly Name is Hardcoded but can be Altered in future 
- */
-#define ASSEMBLY_NAME_GEOMETRY "Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080dd91"
-#define ASSEMBLY_NAME_GEOGRAPHY "Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080dd91"
-
 /*
  * Local structures and functions copied from printtup.c
  */
@@ -120,7 +113,6 @@ static uint16_t TdsPendingDoneStatus;
 static uint16_t TdsPendingDoneCurCmd;
 static uint64_t TdsPendingDoneRowCnt;
 static TdsExecutionState tds_estate = NULL;
-common_utility_plugin *common_utility_plugin_ptr = NULL;
 
 /*
  * This denotes whether we've sent an error token and the next done token
@@ -1203,8 +1195,6 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 	StringInfoData tempBuf;
 	int			attno;
 	char 		*db_name;						/* Store Current Database Name */
-	HeapTuple	tup;							/* PG Type Name (eg: Geography or Geometry) */
-	Form_pg_type typTup;
 	
 	uint32_t	tdsVersion = GetClientTDSVersion();
 
@@ -1273,14 +1263,11 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 		}
 
 		/* For Spatial Types */
-		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(col->pgTypeOid));  /* Search SysCache for type name */
-		typTup = (Form_pg_type) GETSTRUCT(tup);
-
 		/*
 			* Check if it is spatial Data type
 			* Send the Corresponding MetaData Columns
 		*/			
-		if ((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid) || (*common_utility_plugin_ptr->is_tsql_geography_datatype) (typTup->oid))
+		if (col->isSpatialType)
 		{
 			
 			/* Current Database Name and Length are expected by the Driver */
@@ -1301,25 +1288,18 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 
 			/* Type name and Length */
-			temp8 = (uint8_t) pg_mbstrlen(NameStr(typTup->typname));
+			temp8 = (uint8_t) pg_mbstrlen(col->typeName);
 			resetStringInfo(&tempBuf);
-			TdsUTF8toUTF16StringInfo(&tempBuf, NameStr(typTup->typname),
-									strlen(NameStr(typTup->typname)));
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->typeName,
+									strlen(col->typeName));
 			TdsPutbytes(&temp8, sizeof(temp8));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 
-			/* hardcode for assembly qualified name */
-			if ((*common_utility_plugin_ptr->is_tsql_geometry_datatype) (typTup->oid)){
-				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOMETRY);
-				resetStringInfo(&tempBuf);
-				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOMETRY,
-										strlen(ASSEMBLY_NAME_GEOMETRY));
-			} else {
-				temp16 = (uint16_t) pg_mbstrlen(ASSEMBLY_NAME_GEOGRAPHY);
-				resetStringInfo(&tempBuf);
-				TdsUTF8toUTF16StringInfo(&tempBuf, ASSEMBLY_NAME_GEOGRAPHY,
-										strlen(ASSEMBLY_NAME_GEOGRAPHY));
-			}
+			/* assembly qualified name */
+			temp16 = (uint16_t) pg_mbstrlen(col->assemblyName);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->assemblyName,
+									strlen(col->assemblyName));
 			TdsPutbytes(&temp16, sizeof(temp16));
 			TdsPutbytes(tempBuf.data, tempBuf.len);
 		}
@@ -1943,10 +1923,10 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				}
 				break;
 			case TDS_SEND_GEOMETRY:
-				SetColMetadataForBinaryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT);
+				SetColMetadataForGeometryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT, "", "geometry");
 				break;
 			case TDS_SEND_GEOGRAPHY:
-				SetColMetadataForBinaryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT);
+				SetColMetadataForGeographyType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT, "", "geography");
 				break;
 			default:
 

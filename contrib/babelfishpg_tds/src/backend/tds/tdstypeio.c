@@ -2023,7 +2023,7 @@ TdsRecvTypeGeometry(const char *message, const ParameterToken token)
 
 	ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("tdstypeio.c: TdsRecvTypeGeometry is currently a placeholder function, Feature Not Supported")));    
+							 errmsg("Prepared Queries for Geometry DataType Currently not Supported in BabelFish")));    
 
 	pfree(buf); 
 	return result; 
@@ -2050,7 +2050,7 @@ TdsRecvTypeGeography(const char *message, const ParameterToken token)
 
 	ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("tdstypeio.c: TdsRecvTypeGeography is currently a placeholder function, Feature Not Supported")));
+							 errmsg("Prepared Queries for Geography DataType Currently not Supported in BabelFish")));
 
 	pfree(buf); 
 	return result; 
