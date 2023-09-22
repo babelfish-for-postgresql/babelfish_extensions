@@ -4561,6 +4561,12 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
+		else if(set_special_ctx->ISOLATION())
+		{
+			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeSQL(ctx);
+			stmt->is_set_tran_isolation = true;
+			return (PLtsql_stmt *) stmt;
+		}
 		else
 			return makeSQL(ctx);
 	}

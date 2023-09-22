@@ -10,6 +10,7 @@
 #include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/snapmgr.h"
 #include "common/md5.h"
 
 #include "src/backend_parser/gramparse.h"
@@ -84,3 +85,6 @@ static Node *tsql_update_output_into_cte_transformation(WithClause *opt_with_cla
 														List *from_clause, Node *where_or_current_clause, core_yyscan_t yyscanner);
 static List *get_transformed_output_list(List *tsql_output_clause);
 static bool returning_list_has_column_name(List *existing_colnames, char *current_colname);
+
+static int isolation_to_int(char *isolation_level);
+static void bbf_set_tran_isolation(char *new_isolation_level_str);
