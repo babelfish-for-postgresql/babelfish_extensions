@@ -1792,10 +1792,12 @@ bbf_set_tran_isolation(char *new_isolation_level_str)
 		if( FirstSnapshotSet || IsSubTransaction() || 
 				( new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress() ))
 		{
-			ignore_isolation = GetConfigOption("babelfishpg_tsql.escape_hatch_set_transaction_isolation_level", false, false);
+			ignore_isolation = GetConfigOption("babelfishpg_tsql.escape_hatch_set_transaction_isolation_level",
+												false, false);
 
 			if(strcmp(ignore_isolation, "ignore"))
-				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error");
+				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch "
+					"'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error");
 			else
 				return;
 		}
