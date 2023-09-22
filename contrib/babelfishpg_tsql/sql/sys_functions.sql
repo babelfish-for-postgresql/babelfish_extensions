@@ -806,6 +806,10 @@ CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEG
 'babelfishpg_tsql', 'has_dbaccess'
 LANGUAGE C STABLE STRICT;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEXT AS 
+'babelfishpg_tsql', 'babelfish_fts_rewrite'
+LANGUAGE C STABLE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
 $BODY$
