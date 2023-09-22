@@ -323,12 +323,6 @@ ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
 
 ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
 
-
-
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 -- Update data-type of information_schema_tsql.TABLE_TYPE to sys.varchar if it's data-type is pg_catalog.varchar
 DO
 $$
