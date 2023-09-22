@@ -1,0 +1,653 @@
+-- Test with null datepart
+-- Should Throw Error - 'syntax error at or near "null"' (error from parser side)
+select date_bucket(null, 2, cast('2020-01-01' as date)) as db
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "null")~~
+
+
+select date_bucket(null, null, cast('2020-01-01' as date)) as db2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "null")~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid bucket width value passed to date_bucket function. Only positive values are allowed.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v4
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 3 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 2 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 2 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 2 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 3 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v10
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type text is invalid for argument 3 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type integer is invalid for argument 3 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v11_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type integer is invalid for argument 3 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 4 of date_bucket function.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v12_origin_IS_NULL
+GO
+~~START~~
+date
+2023-01-01
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v13
+GO
+~~START~~
+date#!#date
+9999-12-31#!#0001-01-01
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v14
+GO
+~~START~~
+datetime
+9999-12-31 00:00:00.0
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v15
+GO
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v16
+GO
+~~START~~
+datetime2
+9999-12-31 00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v17
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetime2)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v18
+GO
+~~START~~
+datetimeoffset
+9999-12-31 04:00:00.0000000 +14:00
+~~END~~
+
+
+-- Should Throw - data out of range for datetimeoffset
+select date_bucket(day, 1, cast('0001-01-01 00:00:00 +14:00' as datetimeoffset), cast('9999-12-31 23:59:59.999999 +14:00' as datetimeoffset)) as db1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetimeoffset)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v20
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+2079-06-06 00:00:00.0#!#2079-06-06 00:00:00.0
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v21
+GO
+~~START~~
+time#!#time
+23:59:00.0000000#!#23:59:59.9999990
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v22
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function date_bucket for data type 'time'.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v23
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart hour is not supported by date function date_bucket for data type 'date'.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v24
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart nanosecond is not supported by date function date_bucket for data type datetime2.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_invalid_datepart
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: dayofmonth is not a recognized date_bucket option.)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v25
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v26
+GO
+~~START~~
+datetime2
+2020-04-29 00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v27
+GO
+~~START~~
+date#!#date#!#date#!#date#!#date
+2000-01-01#!#2000-01-01#!#2000-01-01#!#2000-01-01#!#1999-12-20
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v28
+GO
+~~START~~
+date#!#date#!#date#!#date#!#date
+1999-09-12#!#1999-09-12#!#1999-11-12#!#2000-01-01#!#1999-12-28
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v29
+GO
+~~START~~
+date#!#date#!#date#!#date#!#date
+1998-09-21#!#1999-09-21#!#1999-11-21#!#2000-01-01#!#1999-12-28
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v30
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#1999-12-20 00:00:00.0#!#2000-01-01 22:00:00.0#!#2000-01-01 23:30:00.0#!#2000-01-01 23:30:04.0#!#2000-01-01 23:30:05.523
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v31
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+1998-09-12 23:45:10.433#!#1999-09-12 23:45:10.433#!#1999-11-12 23:45:10.433#!#1999-12-30 23:45:10.433#!#1999-12-20 23:45:10.433#!#2000-01-01 21:45:10.433#!#2000-01-01 23:29:10.433#!#2000-01-01 23:30:04.433#!#2000-01-01 23:30:05.523
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v32
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+1910-01-01 23:30:05.523#!#1910-07-01 23:30:05.523#!#1910-09-01 23:30:05.523#!#1910-09-12 23:30:05.523#!#1910-09-10 23:30:05.523#!#1910-09-12 23:30:05.523#!#1910-09-12 23:44:05.523#!#1910-09-12 23:45:09.523#!#1910-09-12 23:45:10.433
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v33
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+2000-01-01 00:00:00.0000000#!#2000-01-01 00:00:00.0000000#!#2000-01-01 00:00:00.0000000#!#2000-01-01 00:00:00.0000000#!#1999-12-20 00:00:00.0000000#!#2000-01-01 22:00:00.0000000#!#2000-01-01 23:30:00.0000000#!#2000-01-01 23:30:04.0000000#!#2000-01-01 23:30:05.5220000
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v34
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+1999-08-15 22:35:05.4224560#!#1999-08-15 22:35:05.4224560#!#1999-12-15 22:35:05.4224560#!#2000-01-01 22:35:05.4224560#!#1999-12-26 22:35:05.4224560#!#2000-01-01 22:35:05.4224560#!#2000-01-01 23:29:05.4224560#!#2000-01-01 23:30:05.4224560#!#2000-01-01 23:30:05.5224560
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v35
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+1916-01-01 23:30:05.5234560#!#1916-07-01 23:30:05.5234560#!#1916-07-01 23:30:05.5234560#!#1916-08-13 23:30:05.5234560#!#1916-08-05 23:30:05.5234560#!#1916-08-15 21:30:05.5234560#!#1916-08-15 22:34:05.5234560#!#1916-08-15 22:35:03.5234560#!#1916-08-15 22:35:05.4214560
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v36
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+2019-08-02 02:12:30.4467000#!#2020-07-02 02:12:30.4467000#!#2020-02-02 02:12:30.4467000#!#2020-06-30 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4467000#!#2020-08-02 02:12:30.4447000
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v37
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+2000-01-01 02:00:00.0000000 +02:00#!#2000-01-01 09:20:00.0000000 +09:20#!#1999-11-01 13:10:00.0000000 +13:10#!#2000-01-01 10:23:00.0000000 +10:23#!#1999-12-19 13:28:00.0000000 -10:32#!#2000-01-01 12:08:00.0000000 +12:08#!#2000-01-01 12:24:00.0000000 -08:10#!#2000-01-01 12:25:32.0000000 +00:00#!#2000-01-01 12:25:32.0000000 +11:00
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v38
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+1998-03-22 13:20:31.0000000 +02:12#!#1999-09-22 13:21:31.0000000 +01:11#!#1999-11-22 14:15:31.0000000 +04:10#!#1999-12-30 22:18:31.0000000 -03:00#!#1999-12-27 10:42:31.0000000 -05:02#!#2000-01-01 10:46:31.0000000 -01:05#!#2000-01-01 12:24:31.0000000 +00:09#!#2000-01-01 12:25:31.0000000 +10:17#!#2000-01-01 12:25:32.0000000 +07:20
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v39
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+1920-01-01 15:42:32.0000000 +02:12#!#1920-01-01 16:35:32.0000000 +01:10#!#1920-03-01 20:42:32.0000000 +03:15#!#1920-03-21 14:10:32.0000000 +12:02#!#1920-03-13 08:50:32.0000000 -02:24#!#1920-03-22 12:56:32.0000000 +03:29#!#1920-03-22 13:18:32.0000000 -06:45#!#1920-03-22 13:20:30.0000000 +05:10#!#1920-03-22 13:20:31.0000000 +12:32
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v40
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+2019-08-02 02:12:30.4467000 +00:00#!#2020-07-02 02:12:30.4467000 +00:00#!#2020-02-02 02:12:30.4467000 +00:00#!#2020-06-30 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4467000 +00:00#!#2020-08-02 02:12:30.4447000 +00:00
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v41
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#2000-01-01 00:00:00.0#!#1999-12-20 00:00:00.0#!#2000-01-01 22:00:00.0#!#2000-01-01 23:58:00.0#!#2000-01-01 23:59:00.0#!#2000-01-01 23:59:00.0
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v42
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+1999-02-11 21:56:00.0#!#1999-08-11 21:56:00.0#!#1999-12-11 21:56:00.0#!#2000-01-01 21:56:00.0#!#1999-12-30 21:56:00.0#!#2000-01-01 23:56:00.0#!#2000-01-01 23:58:00.0#!#2000-01-01 23:59:00.0#!#2000-01-01 23:59:00.0
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v43
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+1910-01-01 23:59:00.0#!#1911-01-01 23:59:00.0#!#1911-01-01 23:59:00.0#!#1911-02-09 23:59:00.0#!#1911-01-28 23:59:00.0#!#1911-02-11 19:59:00.0#!#1911-02-11 21:55:00.0#!#1911-02-11 21:56:00.0#!#1911-02-11 21:56:00.0
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v44
+GO
+~~START~~
+time#!#time#!#time#!#time
+22:00:00.0000000#!#23:58:00.0000000#!#23:58:58.0000000#!#23:58:59.0000000
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v45
+GO
+~~START~~
+time#!#time#!#time#!#time
+22:23:56.8463630#!#23:57:56.8463630#!#23:58:58.8463630#!#23:58:59.5463630
+~~END~~
+
+ 
+SELECT * FROM DATE_BUCKET_vu_prepare_v46
+GO
+~~START~~
+time#!#time#!#time#!#time
+11:58:59.5464460#!#12:22:59.5464460#!#12:23:55.5464460#!#12:23:56.8464460
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v47
+GO
+~~START~~
+time#!#time#!#time#!#time
+23:23:56.8463630#!#01:23:56.8463630#!#01:23:50.8463630#!#01:23:50.8463630
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v48
+GO
+~~START~~
+datetime#!#datetime
+2020-08-02 02:12:30.45#!#2020-09-02 02:12:30.45
+~~END~~
+
+
+SELECT * FROM DATE_BUCKET_vu_prepare_v49
+GO
+~~START~~
+date#!#datetime#!#datetime2#!#datetime2#!#date#!#datetime#!#date#!#datetime#!#date#!#datetime#!#datetime2#!#datetimeoffset#!#time#!#datetime#!#smalldatetime#!#datetime2
+2028-02-21#!#2034-09-20 00:00:00.0#!#2023-09-23 00:00:00.0000000#!#2023-09-23 00:00:00.0000000#!#2027-12-23#!#2034-08-01 00:00:00.0#!#2023-03-25#!#2023-03-25 00:00:00.0#!#2027-09-23#!#2030-01-01 00:00:00.0#!#2023-09-23 22:43:46.8300000#!#2023-09-23 14:43:23.3230000 +01:34#!#19:43:56.3223000#!#2023-09-23 12:32:33.847#!#2023-09-23 05:35:00.0#!#2023-09-23 11:12:32.6450000
+~~END~~
+
+
+SELECT DATE_BUCKET(m, 5, CAST('2034-09-23 08:34:32.432' as datetime)) as db6
+GO
+~~START~~
+datetime
+2034-08-01 00:00:00.0
+~~END~~
+
+
+SELECT DATE_BUCKET(month, 2, CAST('2000-01-01 23:58:59' AS SMALLDATETIME), CAST('1909-02-11 21:55:56' AS SMALLDATETIME)) AS MONTHS_BUCKET
+GO
+~~START~~
+smalldatetime
+1999-12-11 21:56:00.0
+~~END~~
+
+
+SELECT DATE_BUCKET(day, 2, CAST('1916-08-15 22:35:05.422456' AS DATETIME2), CAST('2000-01-01 23:30:05.523456' AS DATETIME2)) AS DAYS_BUCKET
+GO
+~~START~~
+datetime2
+1916-08-13 23:30:05.5234560
+~~END~~
+
+
+SELECT DATE_BUCKET(month, 2, CAST('2000-01-01' AS DATE), CAST('1905-09-12' AS DATE)) AS MONTHS_BUCKET
+GO
+~~START~~
+date
+1999-11-12
+~~END~~
+
+
+SELECT date_bucket(second, 1, cast('2020-08-02 02:12:30.4463 +00:00' as datetimeoffset), cast('2019-08-02 02:12:30.4467 +00:00' as datetimeoffset)) AS second_BUCKET
+GO
+~~START~~
+datetimeoffset
+2020-08-02 02:12:30.4467000 +00:00
+~~END~~
+
+
+SELECT DATE_BUCKET(second, 2, CAST('12:23:56.846363' AS TIME), CAST('23:58:59.546446' AS TIME)) AS SECONDS_BUCKET
+GO
+~~START~~
+time
+12:23:55.5464460
+~~END~~
+
+
+EXEC BABEL_3952_vu_prepare_p1
+GO
+~~START~~
+date#!#date
+2015-09-01#!#2012-04-01
+~~END~~
+
+
+EXEC BABEL_3952_vu_prepare_p2
+GO
+~~START~~
+datetime#!#datetime
+2020-01-01 00:00:00.0#!#2005-01-01 00:00:00.0
+~~END~~
+
+
+EXEC BABEL_3952_vu_prepare_p3
+GO
+~~START~~
+datetime2#!#datetime2
+1999-12-31 23:00:00.0000000#!#2020-09-23 10:00:00.0000000
+~~END~~
+
+
+SELECT BABEL_3952_vu_prepare_f1()
+GO
+~~START~~
+datetime2
+2012-01-09 00:00:00.0000000
+~~END~~
+
+
+SELECT BABEL_3952_vu_prepare_f2()
+GO
+~~START~~
+time
+12:32:36.3200000
+~~END~~
+
+
+SELECT BABEL_3952_vu_prepare_f3()
+GO
+~~START~~
+date
+2001-11-07
+~~END~~
+
+
+DECLARE @test_date date;
+SET @test_date = '1998-09-12';
+SELECT date_bucket(day,109, @test_date);
+GO
+~~START~~
+date
+1998-06-26
+~~END~~
+
+
+DECLARE @test_date datetime;
+SET @test_date = '2010-09-12 12:23:12.564';
+SELECT date_bucket(hour,200, @test_date);
+GO
+~~START~~
+datetime
+2010-09-06 00:00:00.0
+~~END~~
+
+
+DECLARE @test_date datetime2;
+SET @test_date = '2010-09-12 12:23:12.56443';
+SELECT date_bucket(week, 19, @test_date);
+GO
+~~START~~
+datetime2
+2010-05-03 00:00:00.0000000
+~~END~~
+
+
+DECLARE @test_date smalldatetime;
+SET @test_date = '2010-09-12 12:23:12';
+SELECT date_bucket(week, 3, @test_date);
+GO
+~~START~~
+smalldatetime
+2010-09-06 00:00:00.0
+~~END~~
+
+
+DECLARE @test_date datetimeoffset;
+SET @test_date = '2010-09-12 12:23:12.56443 +10:12';
+SELECT date_bucket(week,5, @test_date);
+GO
+~~START~~
+datetimeoffset
+2010-09-06 10:12:00.0000000 +10:12
+~~END~~
+
+
+DECLARE @test_date time;
+SET @test_date = '12:23:12.56443';
+SELECT date_bucket(hour,12, @test_date);
+GO
+~~START~~
+time
+12:00:00.0000000
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a datetime)
+insert into dbucket (a) values(date_bucket(day, 21, CAST('2020-01-09 12:32:23.23' as datetime)))
+Select * from dbucket
+Select date_bucket(week,12, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime
+2019-12-30 00:00:00.0
+~~END~~
+
+~~START~~
+datetime
+2019-10-28 00:00:00.0
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a date)
+insert into dbucket (a) values(date_bucket(month, 24, CAST('2020-01-09' as date)))
+Select * from dbucket
+Select date_bucket(week,23, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+date
+2020-01-01
+~~END~~
+
+~~START~~
+date
+2019-11-25
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a datetimeoffset)
+insert into dbucket (a) values(date_bucket(day, 123, CAST('2020-01-09 12:32:23.23 -10:23' as datetimeoffset)))
+Select * from dbucket
+Select date_bucket(month,3, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset
+2019-11-20 13:37:00.0000000 -10:23
+~~END~~
+
+~~START~~
+datetimeoffset
+2019-09-30 13:37:00.0000000 -10:23
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a smalldatetime)
+insert into dbucket (a) values(date_bucket(week, 9, CAST('2020-01-09 12:32:23' as smalldatetime)))
+Select * from dbucket
+Select date_bucket(hour,4, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+smalldatetime
+2019-11-18 00:00:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2019-11-18 00:00:00.0
+~~END~~
+
+
+DROP TABLE IF EXISTS dbucket
+GO
+Create table dbucket(a time)
+insert into dbucket (a) values(date_bucket(minute,12, CAST('12:32:23.23' as time)))
+Select * from dbucket
+Select date_bucket(second,10, a) from dbucket
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+time
+12:24:00.0000000
+~~END~~
+
+~~START~~
+time
+12:24:00.0000000
+~~END~~
+

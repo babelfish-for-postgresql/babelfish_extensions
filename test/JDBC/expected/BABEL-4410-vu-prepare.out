@@ -1,0 +1,12 @@
+-- tsql
+CREATE DATABASE babel_4410_db
+GO
+
+USE babel_4410_db
+GO
+
+CREATE TABLE [dbo].[babel_4410_My_Table](
+    [My_ID] [VARCHAR](3) NOT NULL,
+    [My_Column] [VARCHAR](250) NOT NULL
+)
+GO

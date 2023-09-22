@@ -415,7 +415,7 @@ CREATE VIEW information_schema_tsql.tables AS
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
 				  WHEN c.relkind = 'v' THEN 'VIEW'
 				  ELSE null END
-			 AS varchar(10)) AS "TABLE_TYPE"
+			 AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
 		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname

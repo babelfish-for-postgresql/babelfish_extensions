@@ -603,6 +603,26 @@ gen_droplogin_subcmds(const char *login)
 }
 
 /*
+ * Returns OID of SA of the current database.
+ * We assume that SA is the DBA of the babelfish DB.
+ */
+Oid
+get_sa_role_oid(void)
+{
+	HeapTuple	tuple;
+	Oid			dba = InvalidOid;
+
+	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+	if (HeapTupleIsValid(tuple))
+	{
+		dba = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
+		ReleaseSysCache(tuple);
+	}
+
+	return dba;
+}
+
+/*
  * Check if the given role is SA of the current database.
  * We assume that SA is the DBA of the babelfish DB.
  */

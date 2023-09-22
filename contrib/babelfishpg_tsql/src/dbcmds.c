@@ -560,9 +560,9 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			 * enabled by default
 			 */
 			if (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0 || strcmp(dbname, "msdb") == 0)
-				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, true, false);
+				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, true, false);
 			else
-				add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, false, false);
 		}
 	}
 	PG_CATCH();
