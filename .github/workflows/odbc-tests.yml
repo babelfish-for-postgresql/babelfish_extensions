@@ -58,9 +58,9 @@ jobs:
         if: steps.install-extensions.outcome == 'success' && steps.install-unix-odbc-driver.outcome=='success'
         run: |
           cd ~
-          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-12.01.0000.tar.gz
-          tar -zxvf psqlodbc-12.01.0000.tar.gz
-          cd psqlodbc-12.01.0000
+          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-12.02.0000.tar.gz
+          tar -zxvf psqlodbc-12.02.0000.tar.gz
+          cd psqlodbc-12.02.0000
           ./configure
           sudo make
           sudo make install
