@@ -4724,7 +4724,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 		// entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
 		
-		if (strcasestr(stmt->sqlstmt->query, "OUTPUT") )
+		if (strcasestr(stmt->sqlstmt->query, "OUTPUT") || strcasestr(stmt->sqlstmt->query, "UPDATE"))
 				// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
 		{
 			cp = SPI_plan_get_cached_plan(expr->plan);
