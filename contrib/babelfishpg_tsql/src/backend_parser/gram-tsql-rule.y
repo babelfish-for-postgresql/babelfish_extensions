@@ -3954,9 +3954,9 @@ tsql_VariableSetStmt:
 					$$ = (Node *) n;
 				}
 			| SET TRANSACTION tsql_IsolationLevel
-			{
-				$$ = NULL;
-			}
+				{
+					$$ = NULL;
+				}
 			| SET TSQL_IDENTITY_INSERT qualified_name opt_boolean_or_string
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
