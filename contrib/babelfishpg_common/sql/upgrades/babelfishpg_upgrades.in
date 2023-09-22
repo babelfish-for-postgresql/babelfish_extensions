@@ -2,7 +2,7 @@
  * All objects created by the included files will be created in sys
  */
 
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '3.3.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO "CUR_VERSION"" to load this file. \quit
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
 #define QUOTEME_(M)       #M
@@ -11,7 +11,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #ifdef ENABLE_SPATIAL_TYPES
 #include QUOTEME(spatial_types--PREV_VERSION--CUR_VERSION.sql)
 #endif
-#include QUOTEME(other_types--PREV_VERSION--CUR_VERSION.sql)
+#include QUOTEME(babelfish_common_helper--PREV_VERSION--CUR_VERSION.sql)
 
 /*
  * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason
