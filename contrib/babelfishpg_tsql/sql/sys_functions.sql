@@ -4333,3 +4333,51 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION TYPE_NAME(IN type_id INT)
+RETURNS VARCHAR AS $$
+    BEGIN
+        RETURN (SELECT ty.name FROM sys.types ty WHERE ty.user_type_id = type_id);
+    END;
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
+
+CREATE OR REPLACE FUNCTION TYPE_ID(IN typename VARCHAR)
+RETURNS INT AS $$
+    DECLARE
+        schemaid int;
+        schema_name VARCHAR;
+        type_name VARCHAR;
+    BEGIN
+        IF typename LIKE '%.%' THEN
+            schema_name := TRIM(LOWER(split_part(typename COLLATE "C", '.', 1)));
+            type_name :=  TRIM(LOWER((split_part(typename COLLATE "C",'.', 2))));
+        ELSE
+            schema_name := 'dbo';
+            type_name := TRIM(LOWER(typename COLLATE "C"));
+        END IF;
+        
+        -- Check if type_name exists
+        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default)
+        THEN
+            RETURN NULL;
+        END IF;
+        
+        -- Check if schema_name exists
+        IF NOT EXISTS (SELECT sc.name FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
+        THEN
+            RETURN NULL;
+        END IF;
+
+        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) 
+        THEN
+            schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
+            RETURN (SELECT ty.user_type_id FROM sys.types ty WHERE ty.schema_id = schemaid AND ty.name = type_name COLLATE sys.database_default);
+        ELSE
+            RETURN (SELECT ty.user_type_id FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default);
+        END IF;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
