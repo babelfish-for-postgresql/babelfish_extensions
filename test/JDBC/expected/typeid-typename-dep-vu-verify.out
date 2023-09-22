@@ -1,0 +1,31 @@
+SELECT * FROM typeid_typename_dep_vu_prepare_view1
+GO
+~~START~~
+varchar#!#varchar
+typeid_typename_dep_vu_prepare_t1#!#typeid_typename_dep_vu_prepare_t1
+~~END~~
+
+
+EXEC typeid_typename_dep_vu_prepare_proc1
+GO
+~~START~~
+varchar#!#varchar
+typeid_typename_dep_vu_prepare_t1#!#typeid_typename_dep_vu_prepare_t1
+~~END~~
+
+
+SELECT * FROM typeid_typename_dep_vu_prepare_view2
+GO
+~~START~~
+varchar
+datetime
+~~END~~
+
+
+EXEC typeid_typename_dep_vu_prepare_proc2
+GO
+~~START~~
+varchar
+datetime
+~~END~~
+
