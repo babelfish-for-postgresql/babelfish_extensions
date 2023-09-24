@@ -153,6 +153,12 @@ go
 
 ~~ERROR (Message: Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.)~~
 
+grant select on schema::babel_4344_s2 to jdbc_user; -- should fail
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.)~~
+
 grant select on schema::babel_4344_s2 to guest; -- should pass 
 go
 
@@ -251,6 +257,10 @@ go
 -- tsql
 -- GRANT SCHEMA privilege
 use babel_4344_d1;
+go
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
 go
 grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
 go

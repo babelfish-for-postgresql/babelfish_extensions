@@ -3306,7 +3306,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
@@ -3316,7 +3316,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission..", stmt->schema_name)));
+				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
 	foreach(lc1, stmt->privileges)
 	{
@@ -3324,12 +3324,13 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		foreach(lc, stmt->grantees)
 		{
 			char	   *grantee_name = (char *) lfirst(lc);
-			//Oid schemaOid = LookupExplicitNamespace(schema_name, true);
 			Oid	role_oid;
+			bool		grantee_is_db_owner;
 			rolname	= get_physical_user_name(dbname, grantee_name);
 			role_oid = get_role_oid(rolname, true);
+			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
 	
-			if (pg_namespace_ownercheck(schemaOid, role_oid))
+			if (pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba) || grantee_is_db_owner)
 				ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
@@ -3362,11 +3363,13 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				/* make sure later steps can see the object created here */
 				CommandCounterIncrement();
 			}
-			/* Add entry for each */
+			/* Add entry for each grant statement. */
 			if (stmt->is_grant && !check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
 				add_entry_to_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
+			/* Remove entry for each revoke statement. */
+			if (!stmt->is_grant && check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
+				del_from_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
 		}
-
 	}
 	return PLTSQL_RC_OK;
 }

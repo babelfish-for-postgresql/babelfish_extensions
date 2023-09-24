@@ -109,6 +109,8 @@ go
 -- Grant schema permission to its owner, should fail
 grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
 go
+grant select on schema::babel_4344_s2 to jdbc_user; -- should fail
+go
 grant select on schema::babel_4344_s2 to guest; -- should pass 
 go
 
@@ -151,6 +153,10 @@ go
 -- tsql
 -- GRANT SCHEMA privilege
 use babel_4344_d1;
+go
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
 go
 grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
 go
