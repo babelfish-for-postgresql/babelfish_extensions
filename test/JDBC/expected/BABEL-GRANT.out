@@ -155,10 +155,6 @@ GO
 
 REVOKE SELECT ON SCHEMA::scm FROM guest; -- unsupported permission
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'REVOKE ON SCHEMA' is not currently supported in Babelfish)~~
-
 
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
@@ -185,7 +181,7 @@ REVOKE ALL ON SCHEMA::scm TO guest; -- unsupported class
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'REVOKE ON SCHEMA' is not currently supported in Babelfish)~~
+~~ERROR (Message: The all permission has been deprecated and is not available for this class of entity.)~~
 
 
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION AS superuser;
