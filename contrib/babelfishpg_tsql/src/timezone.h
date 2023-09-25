@@ -60,11 +60,6 @@ static const struct
 		"America/Buenos_Aires"
 	},
 	{
-		/* (UTC+04:00) Baku, Tbilisi, Yerevan */
-		"armenian standard time", "Armenian Daylight Time",
-		"Asia/Yerevan"
-	},
-	{
 		/* (UTC+04:00) Astrakhan, Ulyanovsk */
 		"astrakhan standard time", "Astrakhan Daylight Time",
 		"Europe/Astrakhan"
@@ -120,18 +115,13 @@ static const struct
 		"Pacific/Bougainville"
 	},
 	{
-		/* (UTC-01:00) Cabo Verde Is. */
-		"cabo verde standard time", "Cabo Verde Daylight Time",
-		"Atlantic/Cape_Verde"
-	},
-	{
 		/* (UTC-06:00) Saskatchewan */
 		"canada central standard time", "Canada Central Daylight Time",
 		"America/Regina"
 	},
 	{
 		/* (UTC-01:00) Cape Verde Is. */
-		"cape cerde standard time", "Cape Verde Daylight Time",
+		"cape verde standard time", "Cape Verde Daylight Time",
 		"Atlantic/Cape_Verde"
 	},
 	{
@@ -151,7 +141,7 @@ static const struct
 	},
 	{
 		/* (UTC+06:00) Astana */
-		"central csia standard time", "Central Asia Daylight Time",
+		"central asia standard time", "Central Asia Daylight Time",
 		"Asia/Almaty"
 	},
 	{
@@ -193,11 +183,6 @@ static const struct
 		/* (UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi */
 		"china standard time", "China Daylight Time",
 		"Asia/Shanghai"
-	},
-	{
-		/* (UTC) Coordinated Universal Time */
-		"coordinated universal time", "Coordinated Universal Time",
-		"UTC"
 	},
 	{
 		/* (UTC-05:00) Havana */
@@ -322,11 +307,6 @@ static const struct
 		"Asia/Jerusalem"
 	},
 	{
-		/* (UTC+02:00) Jerusalem (old spelling of zone name) */
-		"jerusalem standard time", "Jerusalem Daylight Time",
-		"Asia/Jerusalem"
-	},
-	{
 		/* (UTC+02:00) Amman */
 		"jordan standard time", "Jordan Daylight Time",
 		"Asia/Amman"
@@ -372,11 +352,6 @@ static const struct
 		"America/Punta_Arenas"
 	},
 	{
-		/* (UTC+08:00) Kuala Lumpur, Singapore */
-		"malay peninsula standard time", "Malay Peninsula Daylight Time",
-		"Asia/Kuala_Lumpur"
-	},
-	{
 		/* (UTC-09:30) Marquesas Islands */
 		"marquesas standard time", "Marquesas Daylight Time",
 		"Pacific/Marquesas"
@@ -385,16 +360,6 @@ static const struct
 		/* (UTC+04:00) Port Louis */
 		"mauritius standard time", "Mauritius Daylight Time",
 		"Indian/Mauritius"
-	},
-	{
-		/* (UTC-06:00) Guadalajara, Mexico City, Monterrey */
-		"mexico standard time", "Mexico Daylight Time",
-		"America/Mexico_City"
-	},
-	{
-		/* (UTC-07:00) Chihuahua, La Paz, Mazatlan */
-		"mexico standard time 2", "Mexico Daylight Time 2",
-		"America/Chihuahua"
 	},
 	{
 		/* (UTC-02:00) Mid-Atlantic - Old */
@@ -477,11 +442,6 @@ static const struct
 		"Asia/Pyongyang"
 	},
 	{
-		/* (UTC+07:00) Novosibirsk */
-		"novosibirsk standard time", "Novosibirsk Daylight Time",
-		"Asia/Novosibirsk"
-	},
-	{
 		/* (UTC+06:00) Omsk */
 		"omsk standard time", "Omsk Daylight Time",
 		"Asia/Omsk"
@@ -535,61 +495,6 @@ static const struct
 		/* (UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky */
 		"russia time zone 11", "Russia time zone 11",
 		"Asia/Kamchatka"
-	},
-	{
-		/* (UTC+02:00) Kaliningrad */
-		"russia tz 1 standard time", "Russia TZ 1 Daylight Time",
-		"Europe/Kaliningrad"
-	},
-	{
-		/* (UTC+03:00) Moscow, St. Petersburg */
-		"russia tz 2 standard time", "Russia TZ 2 Daylight Time",
-		"Europe/Moscow"
-	},
-	{
-		/* (UTC+04:00) Izhevsk, Samara */
-		"russia tz 3 standard time", "Russia TZ 3 Daylight Time",
-		"Europe/Samara"
-	},
-	{
-		/* (UTC+05:00) Ekaterinburg */
-		"russia tz 4 standard time", "Russia TZ 4 Daylight Time",
-		"Asia/Yekaterinburg"
-	},
-	{
-		/* (UTC+06:00) Novosibirsk (RTZ 5) */
-		"russia tz 5 standard time", "Russia TZ 5 Daylight Time",
-		"Asia/Novosibirsk"
-	},
-	{
-		/* (UTC+07:00) Krasnoyarsk */
-		"russia tz 6 standard time", "Russia TZ 6 Daylight Time",
-		"Asia/Krasnoyarsk"
-	},
-	{
-		/* (UTC+08:00) Irkutsk */
-		"russia tz 7 standard time", "Russia TZ 7 Daylight Time",
-		"Asia/Irkutsk"
-	},
-	{
-		/* (UTC+09:00) Yakutsk */
-		"russia tz 8 standard time", "Russia TZ 8 Daylight Time",
-		"Asia/Yakutsk"
-	},
-	{
-		/* (UTC+10:00) Vladivostok */
-		"russia tz 9 standard time", "Russia TZ 9 Daylight Time",
-		"Asia/Vladivostok"
-	},
-	{
-		/* (UTC+11:00) Chokurdakh */
-		"russia tz 10 standard time", "Russia TZ 10 Daylight Time",
-		"Asia/Magadan"
-	},
-	{
-		/* (UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky */
-		"russia tz 11 standard time", "Russia TZ 11 Daylight Time",
-		"Asia/Anadyr"
 	},
 	{
 		/* (UTC+03:00) Moscow, St. Petersburg */
@@ -805,11 +710,6 @@ static const struct
 		/* (UTC+05:00) Ashgabat, Tashkent */
 		"west asia standard time", "West Asia Daylight Time",
 		"Asia/Tashkent"
-	},
-	{
-		/* (UTC+02:00) Gaza, Hebron */
-		"west bank gaza standard time", "West Bank Gaza Daylight Time",
-		"Asia/Gaza"
 	},
 	{
 		/* (UTC+02:00) Gaza, Hebron */
