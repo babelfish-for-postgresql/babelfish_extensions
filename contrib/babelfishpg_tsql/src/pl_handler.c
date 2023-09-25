@@ -3495,7 +3495,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char *permissions[] = {"select", "insert", "update", "references", "delete"};
 									for(i = 0; i < 5; i++)
 									{
-										if (!check_bbf_schema_for_entry(dbname, logical_schema, obj, permissions[i], rol_spec->rolename))
+										if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, permissions[i], rol_spec->rolename))
 											add_entry_to_bbf_schema(dbname, logical_schema, obj, permissions[i], rol_spec->rolename);
 									}
 								}
