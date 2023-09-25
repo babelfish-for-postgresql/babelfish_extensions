@@ -4342,7 +4342,7 @@ DECLARE
     result_date timestamp;
     input_expr_timestamp timestamp;
     date_arg_datatype regtype;
-    offset_string TEXT;
+    offset_string PG_CATALOG.TEXT;
     datefirst_value INT;
 BEGIN
     BEGIN
@@ -4369,10 +4369,10 @@ BEGIN
                 RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''time''.', datepart;
             END IF;
             -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
-            -- sufficient for provided datepart (millisecond, microsecond) value
+            -- insufficient to support provided datepart (millisecond, microsecond) value
         ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
-            -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype
-            -- is sufficient for provided datepart (millisecond, microsecond) value;  
+            -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype is
+            -- insufficient to support for provided datepart (millisecond, microsecond) value
         END IF;
 
         /* input validation is complete, proceed with result calculation. */
@@ -4382,8 +4382,8 @@ BEGIN
             input_expr_timestamp = date::timestamp;
             -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
             IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
-                offset_string = RIGHT(date::TEXT, 6);
-                input_expr_timestamp := LEFT(date::TEXT, -6)::timestamp;
+                offset_string = RIGHT(date::PG_CATALOG.TEXT, 6);
+                input_expr_timestamp := LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
             END IF;
             CASE
                 WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN
@@ -4415,7 +4415,7 @@ $body$
 LANGUAGE plpgsql STABLE;
 
 -- another definition of datetrunc as anyelement can not handle unknown type.
-CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date TEXT) RETURNS SYS.DATETIME2 AS
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date PG_CATALOG.TEXT) RETURNS SYS.DATETIME2 AS
 $body$
 DECLARE
     input_expr_datetime2 sys.datetime2;
