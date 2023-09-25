@@ -3955,7 +3955,11 @@ tsql_VariableSetStmt:
 				}
 			| SET TRANSACTION tsql_IsolationLevel
 				{
-					$$ = NULL;
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->kind = VAR_SET_MULTI;
+					n->name = "SESSION CHARACTERISTICS";
+					n->args = $3;
+					$$ = (Node *) n;
 				}
 			| SET TSQL_IDENTITY_INSERT qualified_name opt_boolean_or_string
 				{
@@ -4222,7 +4226,8 @@ tsql_OptTranName:
 tsql_IsolationLevel:
 			ISOLATION LEVEL tsql_IsolationLevelStr
 				{
-					bbf_set_tran_isolation($3);
+					$$ = list_make1(makeDefElem("transaction_isolation",
+									makeStringConst($3, @3), @1));
 				}
 		;
 

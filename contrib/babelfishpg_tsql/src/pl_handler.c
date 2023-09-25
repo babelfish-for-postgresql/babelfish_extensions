@@ -163,6 +163,9 @@ static void validateUserAndRole(char *name);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
 
+static int isolation_to_int(char *isolation_level);
+static void bbf_set_tran_isolation(char *new_isolation_level_str);
+
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -3406,6 +3409,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
+		case T_VariableSetStmt:
+			{
+				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
+
+				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
+				{
+					ListCell   		*head;
+
+					foreach(head, variable_set->args)
+					{
+						DefElem		*item = (DefElem *) lfirst(head);
+						A_Const		*con = (A_Const *) item->arg;
+
+						if(strcmp(item->defname, "transaction_isolation") == 0 && con)
+						{
+							bbf_set_tran_isolation(strVal(&con->val));
+							return;
+						}
+					}
+				}
+				break;
+			}
 		default:
 			break;
 	}
@@ -5582,4 +5607,48 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			}
 		}
 	}
+}
+
+static int
+isolation_to_int(char *isolation_level)
+{
+	if (strcmp(isolation_level, "serializable") == 0)
+		return XACT_SERIALIZABLE;
+	else if (strcmp(isolation_level, "repeatable read") == 0)
+		return XACT_REPEATABLE_READ;
+	else if (strcmp(isolation_level, "read committed") == 0)
+		return XACT_READ_COMMITTED;
+	else if (strcmp(isolation_level, "read uncommitted") == 0)
+		return XACT_READ_UNCOMMITTED;
+
+	return 0;
+}
+
+static void
+bbf_set_tran_isolation(char *new_isolation_level_str)
+{
+	const char*		ignore_isolation;
+	const int 		new_isolation_int_val = isolation_to_int(new_isolation_level_str);
+
+	if(new_isolation_int_val != DefaultXactIsoLevel)
+	{
+		if(FirstSnapshotSet || IsSubTransaction() || 
+				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
+		{
+			ignore_isolation = GetConfigOption("babelfishpg_tsql.escape_hatch_set_transaction_isolation_level",
+												false, false);
+
+			if(strcmp(ignore_isolation, "ignore")==0)
+				return;
+			else
+				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch "
+					"'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error");
+		}
+		else
+		{
+			SetConfigOption("transaction_isolation", new_isolation_level_str, PGC_USERSET, PGC_S_SESSION);
+			SetConfigOption("default_transaction_isolation", new_isolation_level_str, PGC_USERSET, PGC_S_SESSION);
+		}
+	}
+	return ;
 }
