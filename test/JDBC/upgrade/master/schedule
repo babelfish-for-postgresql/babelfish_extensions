@@ -334,6 +334,7 @@ TestVariableDataLength
 TestXML
 timefromparts
 triggers_with_transaction
+BABEL-4217
 datetimeoffset-timezone
 BABEL-4046
 host_id
