@@ -1,0 +1,12 @@
+-- tsql
+USE babel_4410_db
+GO
+
+DROP TABLE [dbo].[babel_4410_My_Table]
+GO
+
+USE master
+GO
+
+DROP DATABASE babel_4410_db
+GO
