@@ -3984,28 +3984,31 @@ tsql_VariableSetStmt:
 
 					if (strcmp($4, "on") == 0 || strcmp($4, "off") == 0)
 					{
+						char *physical_schema_name = NULL;
+						if ($3->schemaname)
+							physical_schema_name = get_physical_schema_name(get_cur_db_name(), $3->schemaname);
 						/* Pass in user input with namepath in reverse for simpler assignment */
 						if ($3->catalogname != NULL)
 						{
 							char *input_string = palloc(strlen($4) +
 							                            strlen($3->catalogname) +
-							                            strlen($3->schemaname) +
+							                            strlen(physical_schema_name) +
 							                            strlen($3->relname) +
 							                            4);
 							input_string = psprintf("%s.%s.%s.%s",
 							                        $4,
 							                        $3->relname,
-							                        $3->schemaname,
+							                        physical_schema_name,
 							                        $3->catalogname);
 							n->args = list_make1(makeStringConst(input_string, @1));
 						}
 						else if ($3->schemaname != NULL)
 						{
 							char *input_string = palloc(strlen($4) +
-							                            strlen($3->schemaname) +
+							                            strlen(physical_schema_name) +
 							                            strlen($3->relname) +
 							                            3);
-							input_string = psprintf("%s.%s.%s", $4, $3->relname, $3->schemaname);
+							input_string = psprintf("%s.%s.%s", $4, $3->relname, physical_schema_name);
 							n->args = list_make1(makeStringConst(input_string, @1));
 						}
 						else
