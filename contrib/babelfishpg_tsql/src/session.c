@@ -1,4 +1,5 @@
 #include "postgres.h"
+#include "access/parallel.h"
 #include "fmgr.h"
 #include "miscadmin.h"
 
@@ -48,6 +49,9 @@ get_cur_db_id(void)
 char *
 get_cur_db_name(void)
 {
+	if (IsParallelWorker())
+		return pstrdup(current_db_name_guc);
+
 	return pstrdup(current_db_name);
 }
 
