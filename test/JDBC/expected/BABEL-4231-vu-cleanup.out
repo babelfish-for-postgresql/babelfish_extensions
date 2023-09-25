@@ -1,0 +1,156 @@
+-- tsql
+DROP VIEW view_babel_4231_1;
+GO
+
+DROP VIEW view_babel_4231_2;
+GO
+
+DROP VIEW view_babel_4231_3;
+GO
+
+DROP VIEW view_babel_4231_4;
+GO
+
+DROP VIEW view_babel_4231_5;
+GO
+
+DROP VIEW view_babel_4231_6;
+GO
+
+DROP VIEW view_babel_4231_7;
+GO
+
+DROP VIEW view_babel_4231_8;
+GO
+
+DROP VIEW view_babel_4231_9;
+GO
+
+DROP VIEW view_babel_4231_10;
+GO
+
+DROP VIEW view_babel_4231_11;
+GO
+
+DROP VIEW view_babel_4231_12;
+GO
+
+DROP VIEW view_babel_4231_13;
+GO
+
+DROP VIEW view_babel_4231_14;
+GO
+
+DROP VIEW view_babel_4231_15;
+GO
+
+DROP VIEW view_babel_4231_16;
+GO
+
+DROP VIEW view_babel_4231_17;
+GO
+
+DROP VIEW view_babel_4231_18;
+GO
+
+DROP VIEW view_babel_4231_19;
+GO
+DROP TABLE table1_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_20;
+GO
+DROP TABLE table2_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_21;
+GO
+DROP TABLE table3_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_22;
+GO
+DROP TABLE table4_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_23;
+GO
+DROP TABLE table5_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_24;
+GO
+DROP TABLE table6_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_25;
+GO
+DROP TABLE table7_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_26;
+GO
+DROP TABLE table8_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_27;
+GO
+DROP TABLE table9_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_28;
+GO
+DROP TABLE table10_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_29;
+GO
+DROP TABLE table11_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_30;
+GO
+DROP TABLE table12_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_31;
+GO
+DROP TABLE table13_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_32;
+GO
+DROP TABLE table14_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_33;
+GO
+DROP TABLE table15_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_34;
+GO
+DROP TABLE table16_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_35;
+GO
+DROP TABLE table17_babel_4231;
+GO
+
+DROP VIEW view_babel_4231_36;
+GO
+
+DROP VIEW view_babel_4231_37;
+GO
+
+DROP VIEW view_babel_4231_38;
+GO
+
+DROP VIEW view_babel_4231_39;
+GO
+
+DROP VIEW view_babel_4231_40;
+GO
+DROP TABLE table18_babel_4231;
+GO
