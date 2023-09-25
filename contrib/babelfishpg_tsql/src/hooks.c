@@ -1588,6 +1588,8 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		int			alias_len = 0;
 		const char *colname_start;
 		const char *identifier_name = NULL;
+		int			open_square_bracket = 0;
+		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
@@ -1606,6 +1608,43 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
 			}
+			if(list_length(cref->fields) > 1 &&
+                IsA(llast(cref->fields), String))
+            {
+                identifier_name = strVal(llast(cref->fields));
+                alias_len = strlen(identifier_name);
+                colname_start = pstate->p_sourcetext + res->location;
+                while(true)
+                {	/*To check how many open sqb are present in sourcetext. */
+                    if(*colname_start == '[')
+                    {
+                        open_square_bracket++;
+                    }
+                    if(*colname_start == ']')
+                    {
+                        open_square_bracket--;
+                    }
+					/*
+					 * last_dot pointer is to trace the last dot in the sourcetext,
+					 * as last dot indicates the starting of column name.
+					 */
+                    if(open_square_bracket == 0 && *colname_start == '.')
+                    {
+                        last_dot = colname_start;
+                    }
+					/* 
+					 * If there is no open sqb and colname_start is at ' ' , 
+					 * It means, colname_start is at the end of column name.
+					 */
+                    if(open_square_bracket == 0 && (*colname_start == ' ' || *colname_start == ','))
+                    {
+						last_dot++;
+                        colname_start = last_dot;
+                        break;
+                    }
+					colname_start++;
+                }
+            }
 		}
 		else if (res->name != NULL && res->name_location != -1)
 		{

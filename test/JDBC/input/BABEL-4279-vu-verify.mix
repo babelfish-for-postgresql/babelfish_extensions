@@ -1,0 +1,18 @@
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v1';
+GO
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v2';
+GO
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_sv1';
+GO
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v3';
+GO
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v4';
+GO
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v5';
+GO
