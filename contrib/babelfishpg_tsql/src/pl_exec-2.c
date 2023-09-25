@@ -3365,7 +3365,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			}
 			/* Add entry for each grant statement. */
 			if (stmt->is_grant && !check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
-				add_entry_to_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
+				add_entry_to_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname, NULL);
 			/* Remove entry for each revoke statement. */
 			if (!stmt->is_grant && check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
 			{

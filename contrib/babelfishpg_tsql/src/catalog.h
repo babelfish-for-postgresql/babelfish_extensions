@@ -297,6 +297,7 @@ typedef struct FormData_bbf_schema_perms
 	NameData	object_name;
 	NameData	permission;
 	NameData	grantee;
+	NameData	object_type;
 } FormData_bbf_schema_perms;
 
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
@@ -305,7 +306,8 @@ extern void add_entry_to_bbf_schema(const char *db_name,
 				  const char *schema_name,
 				  const char *object_name,
 				  const char *permission,
-				  const char *grantee);
+				  const char *grantee,
+				  const char *object_type);
 
 extern bool check_bbf_schema_for_entry(const char *db_name,
 									   const char *schema_name,

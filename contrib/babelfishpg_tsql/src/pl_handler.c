@@ -3460,7 +3460,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						break;
 				else if (grant->objtype == OBJECT_TABLE)
 				{
-					/* Ignore the GRANT statements executed while REVOKE on Schema. */
+					/* Don't add any entry for the GRANT statements executed while REVOKE on Schema. */
 					if (pstmt->stmt_len == 1 && grant->is_grant)
 					{
 						if (prev_ProcessUtility)
@@ -3496,7 +3496,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									for(i = 0; i < 5; i++)
 									{
 										if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, permissions[i], rol_spec->rolename))
-											add_entry_to_bbf_schema(dbname, logical_schema, obj, permissions[i], rol_spec->rolename);
+											add_entry_to_bbf_schema(dbname, logical_schema, obj, permissions[i], rol_spec->rolename, NULL);
 									}
 								}
 								break;
@@ -3537,7 +3537,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									if ((ap->cols == NULL) && !check_bbf_schema_for_entry(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename))
-										add_entry_to_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename);
+										add_entry_to_bbf_schema(dbname, logical_schema, obj, ap->priv_name, rol_spec->rolename, NULL);
 								}
 							}
 							else
@@ -3573,6 +3573,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					ListCell	*lc1;
 					const char *logicalschema = NULL;
 					char *funcname = NULL;
+					const char *obj_type = NULL;
+					if (grant->objtype == OBJECT_FUNCTION)
+						obj_type = "f";
 					if (list_length(ob->objname) == 1)
 					{
 						Node *func = (Node *) linitial(ob->objname);
@@ -3606,7 +3609,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(dbname, logicalschema, funcname, "execute", rol_spec->rolename))
-									add_entry_to_bbf_schema(dbname, logicalschema, funcname, "execute", rol_spec->rolename);
+									add_entry_to_bbf_schema(dbname, logicalschema, funcname, "execute", rol_spec->rolename, NULL);
 							}
 							break;
 						}
@@ -3639,7 +3642,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Don't store a row in catalog, if permission is granted for column */
 								if (!check_bbf_schema_for_entry(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-									add_entry_to_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+									add_entry_to_bbf_schema(dbname, logicalschema, funcname, ap->priv_name, rol_spec->rolename, obj_type);
 							}
 						}
 						else

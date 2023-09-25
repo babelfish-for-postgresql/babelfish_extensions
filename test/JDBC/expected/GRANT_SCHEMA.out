@@ -3,7 +3,7 @@
 select * from babelfish_schema_permissions;
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
@@ -348,15 +348,17 @@ int
 
 exec babel_4344_s1.babel_4344_p1; -- TODO: should be  accessible
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure babel_4344_p1)~~
+~~START~~
+int
+2
+~~END~~
 
 select * from babel_4344_s1.babel_4344_f1(); -- TODO: should be  accessible
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for function babel_4344_f1)~~
+~~START~~
+int
+9
+~~END~~
 
 select * from babel_4344_s2.babel_4344_t1;
 go
@@ -638,6 +640,6 @@ go
 select * from babelfish_schema_permissions;
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#varchar
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 

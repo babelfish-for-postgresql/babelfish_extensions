@@ -2834,13 +2834,14 @@ add_entry_to_bbf_schema(const char *db_name,
 				const char *schema_name,
 				const char *object_name,
 				const char *permission,
-				const char *grantee)
+				const char *grantee,
+				const char *object_type)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
 	HeapTuple	tuple_bbf_schema;
-	Datum		new_record_bbf_schema[5];
-	bool		new_record_nulls_bbf_schema[5];
+	Datum		new_record_bbf_schema[6];
+	bool		new_record_nulls_bbf_schema[6];
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_oid(),
@@ -2856,6 +2857,10 @@ add_entry_to_bbf_schema(const char *db_name,
 	new_record_bbf_schema[2] = CStringGetDatum(pstrdup(object_name));
 	new_record_bbf_schema[3] = CStringGetDatum(pstrdup(permission));
 	new_record_bbf_schema[4] = CStringGetDatum(pstrdup(grantee));
+	if (object_type != NULL)
+		new_record_bbf_schema[5] = CStringGetDatum(pstrdup(object_type));
+	else
+		new_record_nulls_bbf_schema[5] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -3079,6 +3084,7 @@ grant_perms_to_objects_in_schema(const char *db_name,
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
 	const char	*object_name;
+	const char	*object_type;
 	ScanKeyData scanKey[4];
 
 	/* Fetch the relation */
@@ -3109,9 +3115,10 @@ grant_perms_to_objects_in_schema(const char *db_name,
 		Form_bbf_schema_perms schemaform;
 		schemaform = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
 		object_name = pstrdup(NameStr(schemaform->object_name));
+		object_type = pstrdup(NameStr(schemaform->object_type));
 
 		/* For each object, grant the permission explicitly. */
-		if (strcmp(object_name, "ALL") != 0 && strcmp(permission, "execute") != 0)
+		if (strcmp(object_name, "ALL") != 0)
 		{
 			StringInfoData	query;
 			char			*schema;
@@ -3121,7 +3128,15 @@ grant_perms_to_objects_in_schema(const char *db_name,
 
 			schema = get_physical_schema_name((char *)db_name, schema_name);
 			initStringInfo(&query);
-			appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+			if (strcmp(permission, "execute") != 0)
+				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+			else
+			{
+				if (object_type != NULL && strcmp(object_type, "f") == 0)
+					appendStringInfo(&query, "GRANT \"%s\" ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+				else
+					appendStringInfo(&query, "GRANT \"%s\" ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+			}
 			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 			res_stmt = ((RawStmt *) linitial(res))->stmt;
 
