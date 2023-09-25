@@ -420,9 +420,6 @@ datetimeoffset
 ~~END~~
 
 	
--- Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'central brazilian standard time' AS 'central brazilian standard time' ;	
--- GO	
-	
 Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'central europe standard time' AS 'central europe standard time' ;	
 GO
 ~~START~~
@@ -871,11 +868,6 @@ datetimeoffset
 ~~END~~
 
 
-
-	
--- Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'north korea standard time' AS 'north korea standard time' ;	
--- GO	
--- --GAP
 Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'omsk standard time' AS 'omsk standard time' ;	
 GO
 ~~START~~
@@ -908,9 +900,6 @@ datetimeoffset
 ~~END~~
 
 	
--- Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'pakistan standard time' AS 'pakistan standard time' ;	
--- GO	
-	
 Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'paraguay standard time' AS 'paraguay standard time' ;	
 GO
 ~~START~~
@@ -942,9 +931,6 @@ datetimeoffset
 2023-09-16 05:01:00.0000000 +04:00
 ~~END~~
 
-	
--- Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'russia time zone 10' AS 'russia time zone 10' ;	
--- GO	
 	
 Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'russia time zone 11' AS 'russia time zone 11' ;	
 GO
@@ -993,9 +979,6 @@ datetimeoffset
 2023-09-15 23:01:00.0000000 -02:00
 ~~END~~
 
-	
--- Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'sakhalin standard time' AS 'sakhalin standard time' ;	
--- GO	
 	
 Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE 'samoa standard time' AS 'samoa standard time' ;	
 GO
