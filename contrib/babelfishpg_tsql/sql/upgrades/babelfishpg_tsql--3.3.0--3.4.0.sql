@@ -702,8 +702,8 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
--- BABELFISH_SCHEMA
-CREATE TABLE IF NOT EXISTS sys.babelfish_schema (
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   db_name NAME NOT NULL,
   schema_name NAME NOT NULL,
   object_name NAME NOT NULL,
@@ -711,7 +711,7 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema (
   grantee NAME NOT NULL,
   PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
 );
-GRANT SELECT ON sys.babelfish_schema TO PUBLIC;
+GRANT SELECT ON sys.babelfish_schema_permissions TO PUBLIC;
 
 -- internal helper function for date_bucket().
 CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 

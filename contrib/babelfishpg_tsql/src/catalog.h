@@ -279,10 +279,10 @@ typedef struct FormData_bbf_function_ext
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 
 /*****************************************
- *			SCHEMA
+ *			SCHEMA_PERMISSIONS
  *****************************************/
-#define BBF_SCHEMA_TABLE_NAME "babelfish_schema"
-#define BBF_SCHEMA_IDX_NAME "babelfish_schema_pkey"
+#define BBF_SCHEMA_PERMS_TABLE_NAME "babelfish_schema_permissions"
+#define BBF_SCHEMA_PERMS_IDX_NAME "babelfish_schema_permissions_pkey"
 
 extern Oid bbf_schema_oid;
 extern Oid bbf_schema_idx_oid;
@@ -290,16 +290,16 @@ extern Oid bbf_schema_idx_oid;
 extern Oid get_bbf_schema_oid(void);
 extern Oid get_bbf_schema_idx_oid(void);
 
-typedef struct FormData_bbf_schema
+typedef struct FormData_bbf_schema_perms
 {
 	NameData	db_name;
 	NameData	schema_name;
 	NameData	object_name;
 	NameData	permission;
 	NameData	grantee;
-} FormData_bbf_schema;
+} FormData_bbf_schema_perms;
 
-typedef FormData_bbf_schema *Form_bbf_schema;
+typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
 extern void add_entry_to_bbf_schema(const char *db_name,
 				  const char *schema_name,

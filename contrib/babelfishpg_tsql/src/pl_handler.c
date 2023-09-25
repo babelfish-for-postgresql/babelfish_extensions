@@ -3601,13 +3601,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (list_length(grant->privileges) == 0)
 					{
 						if (grant->is_grant)
+						{
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(dbname, logicalschema, funcname, "execute", rol_spec->rolename))
+									add_entry_to_bbf_schema(dbname, logicalschema, funcname, "execute", rol_spec->rolename);
+							}
 							break;
+						}
 						else
 						{
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								if (check_bbf_schema_for_entry(dbname, logicalschema, "ALL", "execute", rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(dbname, logicalschema, "ALL", "execute", rol_spec->rolename))
 									return;
 							}
 							break;

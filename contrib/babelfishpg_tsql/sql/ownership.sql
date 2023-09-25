@@ -14,8 +14,8 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
--- BABELFISH_SCHEMA
-CREATE TABLE sys.babelfish_schema (
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE sys.babelfish_schema_permissions (
   db_name NAME NOT NULL,
   schema_name NAME NOT NULL,
   object_name NAME NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE sys.babelfish_schema (
   grantee NAME NOT NULL,
   PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
 );
-GRANT SELECT ON sys.babelfish_schema TO PUBLIC;
+GRANT SELECT ON sys.babelfish_schema_permissions TO PUBLIC;
 
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (

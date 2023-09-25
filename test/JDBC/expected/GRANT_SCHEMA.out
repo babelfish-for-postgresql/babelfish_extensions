@@ -1,6 +1,6 @@
 -- tsql
 -- create objects
-select * from babelfish_schema;
+select * from babelfish_schema_permissions;
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
@@ -635,7 +635,7 @@ void
 drop login babel_4344_l1;
 go
 
-select * from babelfish_schema;
+select * from babelfish_schema_permissions;
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar

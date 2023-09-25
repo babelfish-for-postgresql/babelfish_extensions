@@ -1450,7 +1450,7 @@ Oid
 get_bbf_schema_oid()
 {
 	if (!OidIsValid(bbf_schema_oid))
-		bbf_schema_oid = get_relname_relid(BBF_SCHEMA_TABLE_NAME,
+		bbf_schema_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME,
 								get_namespace_oid("sys", false));
 	return bbf_schema_oid;
 }
@@ -1459,7 +1459,7 @@ Oid
 get_bbf_schema_idx_oid()
 {
 	if (!OidIsValid(bbf_schema_idx_oid))
-		bbf_schema_idx_oid = get_relname_relid(BBF_SCHEMA_IDX_NAME,
+		bbf_schema_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME,
 									get_namespace_oid("sys", false));
 	return bbf_schema_idx_oid;
 }
@@ -3106,24 +3106,23 @@ grant_perms_to_objects_in_schema(const char *db_name,
 
 	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
-		Form_bbf_schema schemaform;
-		schemaform = (Form_bbf_schema) GETSTRUCT(tuple_bbf_schema);
+		Form_bbf_schema_perms schemaform;
+		schemaform = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
 		object_name = pstrdup(NameStr(schemaform->object_name));
 
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, "ALL") != 0 && strcmp(permission, "execute") != 0)
 		{
-			StringInfoData query;
-			char *schema;
-			char *dbname = get_cur_db_name();
-			List *res;
-			Node	*res_stmt;
-			PlannedStmt *wrapper;
-			schema = get_physical_schema_name(dbname, schema_name);
+			StringInfoData	query;
+			char			*schema;
+			List			*res;
+			Node			*res_stmt;
+			PlannedStmt		*wrapper;
+
+			schema = get_physical_schema_name((char *)db_name, schema_name);
 			initStringInfo(&query);
 			appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
 			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
 			res_stmt = ((RawStmt *) linitial(res))->stmt;
 
 			/* need to make a wrapper PlannedStmt */
