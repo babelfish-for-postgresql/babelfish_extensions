@@ -215,6 +215,7 @@
 							case TSQL_DATEADD:
 							case TSQL_DATEDIFF:
 							case TSQL_DATEDIFF_BIG:
+							case TSQL_DATE_BUCKET:
 							case TSQL_DATENAME:
 							case TSQL_DATEPART:
 							case TSQL_D:
