@@ -106,7 +106,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
@@ -1034,10 +1034,12 @@ extract_identifier(const char *start)
 
 	bool		dq = false;
 	bool		sqb = false;
+	bool		sq = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
 	bool		found_escaped_in_dq = false;
+	bool		found_escaped_in_sq = false;
 
 	/* check identifier is delimited */
 	Assert(start);
@@ -1045,6 +1047,8 @@ extract_identifier(const char *start)
 		dq = true;
 	else if (start[0] == '[')
 		sqb = true;
+	else if (start[0] == '\'')
+		sq = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
@@ -1059,7 +1063,7 @@ extract_identifier(const char *start)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb)		/* normal case */
+		if (!dq && !sqb && !sq)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -1109,6 +1113,51 @@ extract_identifier(const char *start)
 					{
 						original_name[wcur] = start[rcur];
 						if (start[rcur] == '"')
+							++rcur; /* skip next character */
+					}
+					original_name[wcur] = '\0';
+					return original_name;
+				}
+			}
+		}
+		else if (sq)
+		{
+			/* please see xdinside in scan.l */
+			valid = (c != '\'');
+			if (!valid && start[i + 1] == '\'')	/* escaped */
+			{
+				++i;
+				++i;			/* advance two characters */
+				found_escaped_in_sq = true;
+				continue;
+			}
+
+			if (!valid)
+			{
+				if (!found_escaped_in_sq)
+				{
+					/* no escaped character. copy whole string at once */
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					memcpy(original_name, start + 1, i - 1);
+					original_name[i - 1] = '\0';
+					return original_name;
+				}
+				else
+				{
+					/*
+					 * there is escaped character. copy one by one to handle
+					 * escaped character
+					 */
+					int			rcur = 1;	/* read-cursor */
+					int			wcur = 0;	/* write-cursor */
+
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					for (; rcur < i; ++rcur, ++wcur)
+					{
+						original_name[wcur] = start[rcur];
+						if (start[rcur] == '\'')
 							++rcur; /* skip next character */
 					}
 					original_name[wcur] = '\0';
@@ -1315,7 +1364,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||
@@ -1472,69 +1521,50 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 		}
 
+		/*
+		 * Case 1 : Handle both singlebyte and multibyte aliases when delimited by 
+		 * square bracket(sqb) and double quoutes(dq) and single quotes(sq).
+		 * For instance, queries like : SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选选装";
+		 * Case 2 : Preserve the case of aliases with ascii characters when there is no sq, sqb and dq.
+		 * For instance, queries like: SELECT 1 AS ABCD;
+		 * Case 3 : Handle both singlebyte and multibyte aliases whose length is
+		 * more than or equals to 63 when not delimited by sq, sqb and dq.
+		 * For example, queries like : SELECT 1 AS 您对您对您对您对您对您对您对您对您对您对您对您对您对;
+		 */
 		if (alias_len > 0)
 		{
 			char	   *alias = palloc0(alias_len + 1);
-			bool		dq = *colname_start == '"';
-			bool		sqb = *colname_start == '[';
-			bool		sq = *colname_start == '\'';
-			int			a = 0;
-			const char *colname_end;
-			bool		closing_quote_reached = false;
+			const char	*original_name = NULL;
+			int actual_alias_len = 0;
 
-			if (dq || sqb || sq)
+			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
+			while(*colname_start == '(' || *colname_start == ' ')
 			{
 				colname_start++;
 			}
 
-			if (dq || sq)
+			/* To extract the identifier name from the query.*/
+			original_name = extract_identifier(colname_start);
+			actual_alias_len = strlen(original_name);
+
+			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
+			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
+			 */
+			if(actual_alias_len > alias_len)
 			{
-
-				for (colname_end = colname_start; a < alias_len; colname_end++)
-				{
-					if (dq && *colname_end == '"')
-					{
-						if ((*(++colname_end) != '"'))
-						{
-							closing_quote_reached = true;
-							break;	/* end of dbl-quoted identifier */
-						}
-					}
-					else if (sq && *colname_end == '\'')
-					{
-						if ((*(++colname_end) != '\''))
-						{
-							closing_quote_reached = true;
-							break;	/* end of single-quoted identifier */
-						}
-					}
-
-					alias[a++] = *colname_end;
-				}
-
-				/* Assert(a == alias_len); */
+				/* First 32 characters of original_name are assigned to alias. */
+				memcpy(alias, original_name, (alias_len - 32) );
+				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+				memcpy(alias + (alias_len) - 32,
+				identifier_name + (alias_len) - 32, 
+				32);
+				alias[alias_len+1] = '\0';
 			}
+			/* Identifier is not truncated. */
 			else
 			{
-				colname_end = colname_start + alias_len;
-				memcpy(alias, colname_start, alias_len);
+				memcpy(alias, original_name, alias_len);
 			}
-
-			/*
-			 * If the end of the string is a uniquifier, then copy the
-			 * uniquifier into the last 32 characters of the alias
-			 */
-			if (alias_len == NAMEDATALEN - 1 &&
-				(((sq || dq) && !closing_quote_reached) ||
-				 is_identifier_char(*colname_end)))
-
-			{
-				memcpy(alias + (NAMEDATALEN - 1) - 32,
-					   identifier_name + (NAMEDATALEN - 1) - 32,
-					   32);
-				alias[NAMEDATALEN] = '\0';
-			}
-
 			res->name = alias;
 		}
 	}
