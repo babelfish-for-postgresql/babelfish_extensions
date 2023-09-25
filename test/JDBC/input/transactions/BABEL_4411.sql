@@ -4,7 +4,7 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
 SELECT current_setting('transaction_isolation')
 SELECT current_setting('default_transaction_isolation')
-SELECT set_config('babelfishpg_tsql.escape_hatch_set_transaction_isolation_level', 'strict', false)
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'strict'
 GO
 
 BEGIN TRANSACTION
@@ -149,7 +149,7 @@ GO
 
 -- Escape hatch enabled
 
-SELECT set_config('babelfishpg_tsql.escape_hatch_set_transaction_isolation_level', 'ignore', false)
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'ignore'
 GO
 
 BEGIN TRANSACTION

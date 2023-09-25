@@ -4,7 +4,7 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
 SELECT current_setting('transaction_isolation')
 SELECT current_setting('default_transaction_isolation')
-SELECT set_config('babelfishpg_tsql.escape_hatch_set_transaction_isolation_level', 'strict', false)
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'strict'
 GO
 ~~START~~
 text
@@ -14,11 +14,6 @@ read committed
 ~~START~~
 text
 read committed
-~~END~~
-
-~~START~~
-text
-strict
 ~~END~~
 
 
@@ -49,7 +44,7 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
 
 
 SELECT @@trancount
@@ -101,7 +96,7 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
 
 
 SELECT @@trancount
@@ -274,7 +269,7 @@ SET TRANSACTION ISOLATION LEVEL SNAPSHOT
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
 
 
 SELECT @@trancount
@@ -396,13 +391,8 @@ read uncommitted
 
 
 -- Escape hatch enabled
-SELECT set_config('babelfishpg_tsql.escape_hatch_set_transaction_isolation_level', 'ignore', false)
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'ignore'
 GO
-~~START~~
-text
-ignore
-~~END~~
-
 
 BEGIN TRANSACTION
 GO

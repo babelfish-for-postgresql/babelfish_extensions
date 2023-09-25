@@ -5642,7 +5642,7 @@ bbf_set_tran_isolation(char *new_isolation_level_str)
 				return;
 			else
 				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch "
-					"'babelfishpg_tsql.escape_hatch_set_transaction_isolation_level' to ignore such error");
+					"'escape_hatch_set_transaction_isolation_level' to ignore such error");
 		}
 		else
 		{
