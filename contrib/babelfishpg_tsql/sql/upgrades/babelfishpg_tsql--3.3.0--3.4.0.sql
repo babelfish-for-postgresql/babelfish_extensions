@@ -709,6 +709,7 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   object_name NAME NOT NULL,
   permission NAME NOT NULL,
   grantee NAME NOT NULL,
+  object_type NAME,
   PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
 );
 GRANT SELECT ON sys.babelfish_schema_permissions TO PUBLIC;
