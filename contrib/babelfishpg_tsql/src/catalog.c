@@ -3069,6 +3069,90 @@ clean_up_bbf_schema(const char *db_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
+void
+grant_perms_to_objects_in_schema(const char *db_name,
+				  const char *schema_name,
+				  const char *permission,
+				  const char *grantee)
+{
+	TableScanDesc scan;
+	Relation	bbf_schema_rel;
+	HeapTuple	tuple_bbf_schema;
+	const char	*object_name;
+	ScanKeyData scanKey[4];
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+									RowExclusiveLock);
+	ScanKeyInit(&scanKey[0],
+				1,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(db_name));
+	ScanKeyInit(&scanKey[1],
+				2,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(schema_name));
+	ScanKeyInit(&scanKey[2],
+				4,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(permission));
+	ScanKeyInit(&scanKey[3],
+				5,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(grantee));
+
+	scan = table_beginscan_catalog(bbf_schema_rel, 4, scanKey);
+	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		Form_bbf_schema schemaform;
+		schemaform = (Form_bbf_schema) GETSTRUCT(tuple_bbf_schema);
+		object_name = pstrdup(NameStr(schemaform->object_name));
+
+		/* For each object, grant the permission explicitly. */
+		if (strcmp(object_name, "ALL") != 0 && strcmp(permission, "execute") != 0)
+		{
+			StringInfoData query;
+			char *schema;
+			char *dbname = get_cur_db_name();
+			List *res;
+			Node	*res_stmt;
+			PlannedStmt *wrapper;
+			schema = get_physical_schema_name(dbname, schema_name);
+			initStringInfo(&query);
+			appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+			res_stmt = ((RawStmt *) linitial(res))->stmt;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = res_stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 1;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(GRANT STATEMENT )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+		tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
+}
+
 PG_FUNCTION_INFO_V1(update_user_catalog_for_guest_schema);
 Datum
 update_user_catalog_for_guest_schema(PG_FUNCTION_ARGS)

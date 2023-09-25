@@ -260,10 +260,6 @@ use babel_4344_d1;
 go
 grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
 go
-revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
-go
-grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
-go
 use master;
 go
 
@@ -309,6 +305,59 @@ int
 10
 ~~END~~
 
+use master;
+go
+
+-- tsql
+-- REVOKE SCHEMA privilege
+use babel_4344_d1;
+go
+revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+insert into babel_4344_s1.babel_4344_t1 values(3); 
+go
+~~ROW COUNT: 1~~
+
+select * from babel_4344_s1.babel_4344_t3 -- not accessible
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t3)~~
+
+select * from babel_4344_s1.babel_4344_v1;
+go
+~~START~~
+int
+2
+~~END~~
+
+exec babel_4344_s1.babel_4344_p1; -- TODO: should be  accessible
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_4344_p1)~~
+
+select * from babel_4344_s1.babel_4344_f1(); -- TODO: should be  accessible
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_4344_f1)~~
+
 select * from babel_4344_s2.babel_4344_t1;
 go
 ~~START~~
@@ -321,6 +370,9 @@ go
 -- tsql
 -- create new objects in same schema
 use babel_4344_d1;
+go
+-- Grant the permissions again
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
 go
 create table babel_4344_s1.babel_4344_t2(a int);
 go
@@ -400,6 +452,7 @@ go
 int
 2
 3
+3
 4
 ~~END~~
 
@@ -407,7 +460,7 @@ insert into babel_4344_s1.babel_4344_t1 values(5);
 go
 ~~ROW COUNT: 1~~
 
-select * from babel_4344_s1.babel_4344_t3
+select * from babel_4344_s1.babel_4344_t3;
 go
 ~~START~~
 int#!#int
@@ -439,6 +492,56 @@ go
 ~~START~~
 int
 ~~END~~
+
+use master;
+go
+
+-- tsql
+-- REVOKE SCHEMA privileges
+use babel_4344_d1;
+go
+revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has no privileges, shouldn't be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t1)~~
+
+insert into babel_4344_s1.babel_4344_t1 values(5);
+go
+~~ROW COUNT: 1~~
+
+select * from babel_4344_s1.babel_4344_t3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t3)~~
+
+select * from babel_4344_s1.babel_4344_v1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view babel_4344_v1)~~
+
+exec babel_4344_s1.babel_4344_p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_4344_p1)~~
+
+select * from babel_4344_s1.babel_4344_f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function babel_4344_f1)~~
 
 use master;
 go

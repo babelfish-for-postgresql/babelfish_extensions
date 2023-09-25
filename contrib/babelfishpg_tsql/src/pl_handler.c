@@ -3460,6 +3460,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						break;
 				else if (grant->objtype == OBJECT_TABLE)
 				{
+					/* Ignore the GRANT statements executed while REVOKE on Schema. */
+					if (pstmt->stmt_len == 1 && grant->is_grant)
+					{
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+								queryEnv, dest, qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+								queryEnv, dest, qc);
+						return;
+					}
 					/* Ignore CREATE database subcommands */
 					if (!(pstmt->stmt_len == 18 || pstmt->stmt_len == 19))
 					{
@@ -3476,7 +3487,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (list_length(grant->privileges) == 0)
 						{
 							if (grant->is_grant)
+							{
+								foreach(lc, grant->grantees)
+								{
+									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									int i = 0;
+									char *permissions[] = {"select", "insert", "update", "references", "delete"};
+									for(i = 0; i < 5; i++)
+									{
+										if (!check_bbf_schema_for_entry(dbname, logical_schema, obj, permissions[i], rol_spec->rolename))
+											add_entry_to_bbf_schema(dbname, logical_schema, obj, permissions[i], rol_spec->rolename);
+									}
+								}
 								break;
+							}
 							else
 							{
 								foreach(lc, grant->grantees)

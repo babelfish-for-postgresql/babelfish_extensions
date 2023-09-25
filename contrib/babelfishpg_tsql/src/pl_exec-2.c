@@ -3368,7 +3368,10 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				add_entry_to_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
 			/* Remove entry for each revoke statement. */
 			if (!stmt->is_grant && check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
+			{
 				del_from_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
+				grant_perms_to_objects_in_schema(dbname, stmt->schema_name, priv_name, rolname);
+			}
 		}
 	}
 	return PLTSQL_RC_OK;
