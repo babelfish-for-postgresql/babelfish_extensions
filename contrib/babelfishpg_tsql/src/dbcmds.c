@@ -512,7 +512,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
+	set_cur_db(dbid, dbname, false);	/* temporarily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -548,7 +548,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
-		set_cur_db(old_dbid, old_dbname);
+		set_cur_db(old_dbid, old_dbname, false);
 		if (dbo_role)
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false, true, false);
 		if (db_owner_role)
@@ -569,7 +569,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	{
 		/* Clean up. Restore previous state. */
 		bbf_set_current_user(prev_current_user);
-		set_cur_db(old_dbid, old_dbname);
+		set_cur_db(old_dbid, old_dbname, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1043,7 +1043,7 @@ create_schema_if_not_exists(const uint16 dbid,
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);
+	set_cur_db(dbid, dbname, false);
 
 	PG_TRY();
 	{
@@ -1074,12 +1074,12 @@ create_schema_if_not_exists(const uint16 dbid,
 	PG_FINALLY();
 	{
 		bbf_set_current_user(prev_current_user);
-		set_cur_db(old_dbid, old_dbname);
+		set_cur_db(old_dbid, old_dbname, false);
 	}
 	PG_END_TRY();
 
 	bbf_set_current_user(prev_current_user);
-	set_cur_db(old_dbid, old_dbname);
+	set_cur_db(old_dbid, old_dbname, false);
 
 }
 

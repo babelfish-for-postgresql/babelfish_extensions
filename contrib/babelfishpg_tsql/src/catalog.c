@@ -2501,7 +2501,7 @@ create_guest_role_for_db(const char *dbname)
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);	/* temporarily set current dbid as the new id */
+	set_cur_db(dbid, dbname, false);	/* temporarily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -2532,14 +2532,14 @@ create_guest_role_for_db(const char *dbname)
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
-		set_cur_db(old_dbid, old_dbname);
+		set_cur_db(old_dbid, old_dbname, false);
 		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false, false);
 	}
 	PG_CATCH();
 	{
 		/* Clean up. Restore previous state. */
 		bbf_set_current_user(prev_current_user);
-		set_cur_db(old_dbid, old_dbname);
+		set_cur_db(old_dbid, old_dbname, false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

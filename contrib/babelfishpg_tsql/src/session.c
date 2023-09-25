@@ -52,7 +52,7 @@ get_cur_db_name(void)
 }
 
 void
-set_cur_db(int16 id, const char *name)
+set_cur_db(int16 id, const char *name, bool guc_assign)
 {
 	int			len = strlen(name);
 
@@ -61,6 +61,10 @@ set_cur_db(int16 id, const char *name)
 	current_db_id = id;
 	strncpy(current_db_name, name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
+
+	if (!guc_assign)
+		SetConfigOption("babelfishpg_tsql.current_database",
+						current_db_name, PGC_INTERNAL, PGC_S_CLIENT);
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_db_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_db_stat_var(id);
@@ -88,7 +92,7 @@ set_session_properties(const char *db_name)
 
 	check_session_db_access(db_name);
 
-	set_cur_user_db_and_path(db_name);
+	set_cur_user_db_and_path(db_name, false);
 }
 
 /*
@@ -114,15 +118,19 @@ check_session_db_access(const char *db_name)
 	}
 }
 
-/* Caller responsible for checking db_name is valid */
+/* 
+ * set_cur_user_db_and_path - Caller responsible for checking db_name is valid;
+ * This routine also takes guc_assign to indicate if this is called to assign
+ * value to babelfishpg_tsql.current_database GUC.
+ */
 void
-set_cur_user_db_and_path(const char *db_name)
+set_cur_user_db_and_path(const char *db_name, bool guc_assign)
 {
 	const char *user = get_user_for_database(db_name);
 	int16		db_id = get_db_id(db_name);
 
 	/* set current DB */
-	set_cur_db(db_id, db_name);
+	set_cur_db(db_id, db_name, guc_assign);
 
 	/* set current user */
 	bbf_set_current_user(user);

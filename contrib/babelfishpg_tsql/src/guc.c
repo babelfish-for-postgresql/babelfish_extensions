@@ -5,11 +5,13 @@
 #include "miscadmin.h"
 
 #include "guc.h"
+#include "catalog.h"
 #include "collation.h"
 #include "pltsql_instr.h"
 #include "pltsql.h"
 #include "pl_explain.h"
 #include "miscadmin.h"
+#include "session.h"
 #include "access/parallel.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
@@ -67,6 +69,8 @@ char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
+
+char *current_db_name_guc = NULL;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -390,6 +394,62 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	return true;
 }
 
+/*
+ * Not that check for babelfishpg_tsql.current_database should only be called
+ * in parallel worker.
+ */
+static bool
+check_current_database_name(char **newval, void **extra, GucSource source)
+{
+	int16		new_db_id;
+
+	/* Special case for boot value. */
+	if (*newval == NULL)
+	{
+		Assert(source == PGC_S_DEFAULT);
+		return true;
+	}
+
+	/* We should perform this extra checks only if backend is parallel worker */
+	if(IsParallelWorker())
+	{
+		new_db_id = get_db_id(*newval);
+		if (!DbidIsValid(new_db_id))
+			return false;
+
+		PG_TRY();
+		{
+			/* 
+			* check_session_db_access may raise an error if the login does not 
+			* have access to the database
+			*/
+			check_session_db_access(*newval);
+		}
+		PG_CATCH();
+		{
+			return false;
+		}
+		PG_END_TRY();
+		/*
+		*  Try to get a session-level shared lock on the new logical db we are 
+		* about to use.
+		*/
+		if (!TryLockLogicalDatabaseForSession(new_db_id, ShareLock))
+		{
+			ereport(WARNING,
+					(errmsg("Cannot use database \"%s\", failed to obtain lock. "
+							"\"%s\" is probably undergoing DDL statements in another session.",
+							*newval, *newval)));
+			return false;
+		}
+	}
+	else
+	{
+		Assert(source == PGC_S_CLIENT);
+	}
+	return true;
+}
+
 static void
 assign_enable_pg_hint(bool newval, void *extra)
 {
@@ -599,6 +659,32 @@ assign_datefirst(int newval, void *extra)
 {
 	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, newval);
+}
+
+/*
+ * set babelfishpg_tsql.current_database should only be set in the context
+ * of the parallel worker. 
+ */
+static void
+assign_current_database_name(const char *newval, void *extra)
+{
+	/* Special case for boot value */
+	if (newval == NULL)
+	{
+		return;
+	}
+
+	/* We should perform this set operation only if backend is parallel worker */
+	if (IsParallelWorker())
+	{
+		/* 
+		* We have already checked IsParallelWorker during check_current_database_name
+		* so its better to use Assert here instead of throwing error. Anyway assign_hook
+		* should not throw any error.
+		*/
+		Assert(IsParallelWorker());
+		set_cur_user_db_and_path(newval, true);
+	}
 }
 
 void
@@ -1173,6 +1259,15 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.current_database",
+								gettext_noop("Current logical database of the session"),
+								NULL,
+								&current_db_name_guc,
+								NULL,
+								PGC_INTERNAL,
+								GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE | GUC_IS_NAME,
+								check_current_database_name, assign_current_database_name, NULL);
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;
