@@ -1704,12 +1704,6 @@ typedef struct PLwdatum
 	List	   *idents;			/* valid if composite name */
 } PLwdatum;
 
-typedef struct AlterTableCmd_tsql	/* Extending AlterTableCmd structure to support attribute schemaname */
-{
-	struct AlterTableCmd cmd;
-	char	   *schemaname;
-} AlterTableCmd_tsql;
-
 /**********************************************************************
  * Global variable declarations
  **********************************************************************/

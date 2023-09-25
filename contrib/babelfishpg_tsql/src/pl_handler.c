@@ -603,8 +603,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			if (cmd->subtype == AT_EnableTrig || cmd->subtype == AT_DisableTrig)
 			{
 				if (atstmt->objtype == OBJECT_TRIGGER){
-					AlterTableCmd_tsql *t_cmd = (AlterTableCmd_tsql *)cmd;
-					trig_schema = t_cmd->schemaname;
+					trig_schema = cmd->schemaname;
 				}
 				else
 				{
