@@ -982,6 +982,101 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION typeproperty(
+    typename sys.VARCHAR,
+    property sys.VARCHAR
+    )
+RETURNS INT
+AS $$
+DECLARE
+    var_sc int;
+    schemaid int;
+    preci int;
+    schema_name VARCHAR;
+    type_name VARCHAR;
+    type_namee VARCHAR;
+    sys_id int;
+    testt VARCHAR;
+    mx_ln int;
+BEGIN
+
+    property := RTRIM(LOWER(COALESCE(property COLLATE "C",'')));
+
+    IF typename LIKE '%.%'  THEN
+    schema_name := RTRIM(lower(split_part(typename COLLATE "C", '.', 1)));
+    type_name :=  RTRIM(lower((split_part(typename COLLATE "C",'.', 2))));
+    ELSE
+    schema_name := 'dbo';
+    type_name := RTRIM(LOWER(typename));
+    END IF;
+
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.types ao WHERE ao.name = type_name COLLATE sys.database_default)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT ao.name FROM sys.schemas ao WHERE ao.name = schema_name COLLATE sys.database_default OR schema_name = 'sys' OR schema_name = 'pg_catalog')
+    THEN
+        RETURN NULL ;
+    END IF;
+
+    IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+    schemaid := (SELECT sc.schema_id FROM sys.schemas sc WHERE sc.name = schema_name COLLATE sys.database_default);
+    ELSE
+        schemaid := (SELECT sc.schema_id FROM sys.types sc WHERE sc.name = type_name COLLATE sys.database_default);
+        IF schema_name = 'dbo'
+        THEN
+        schema_name := schema_name(schemaid);
+        END IF;
+    END IF;
+
+
+    if (SELECT schema_id(schema_name)) <> schemaid
+    THEN
+    RETURN NULL;
+    END IF;
+
+    sys_id := (SELECT CAST(dc.system_type_id AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+    type_namee := (SELECT CAST(dc.name AS VARCHAR) FROM sys.types dc WHERE dc.system_type_id = sys_id AND dc.is_user_defined = 0);
+    mx_ln := (SELECT CAST(dc.max_length AS INT) FROM sys.types dc WHERE dc.name = type_name COLLATE sys.database_default AND dc.schema_id = schemaid);
+    
+    IF property = 'allowsnull'
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'precision'
+    THEN
+       RETURN 0;       
+
+    ELSEIF property = 'scale'
+    THEN
+        RETURN 0;
+    ELSEIF property = 'ownerid'
+    THEN
+        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE sys.database_default AND ty.is_user_defined = 0) THEN
+        RETURN(SELECT CAST(dc.nspowner AS INT) FROM  pg_catalog.pg_namespace dc WHERE dc.oid = schemaid);
+        ELSE
+        RETURN 10;
+        END IF;
+
+    ELSEIF property = 'usesansitrim'
+    THEN
+        IF type_name::regtype IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'tinyint'::regtype,
+            'numeric'::regtype, 'float'::regtype, 'real'::regtype, 'money'::regtype)
+        THEN
+            RETURN NULL;
+        ELSE
+            RETURN 1;
+        END IF;
+
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
+
 
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
                                                                IN tz_offset PG_CATALOG.TEXT)
