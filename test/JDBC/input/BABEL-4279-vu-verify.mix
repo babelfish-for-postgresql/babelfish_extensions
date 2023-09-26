@@ -16,3 +16,6 @@ GO
 
 SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v5';
 GO
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_babel_4279_v6';
+GO

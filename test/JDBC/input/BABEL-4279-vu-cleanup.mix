@@ -37,3 +37,12 @@ GO
 
 DROP TABLE test_babel_4279_t2;
 GO
+
+DROP VIEW test_babel_4279_v6;
+GO
+
+DROP TABLE "tngdf'".[sc,sdg"fdsngjds'];
+GO
+
+DROP SCHEMA "tngdf'";
+GO

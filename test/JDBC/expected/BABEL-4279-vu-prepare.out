@@ -37,3 +37,12 @@ GO
 
 CREATE VIEW test_babel_4279_v5 AS SELECT ぁあ.[您您对您对您对您对您对您对您对您对您对您您您] from test_babel_4279_t2 AS ぁあ;
 GO
+
+CREATE SCHEMA "tngdf'";
+GO
+
+CREATE TABLE "tngdf'".[sc,sdg"fdsngjds']("AB[C" INT);
+GO
+
+CREATE VIEW test_babel_4279_v6 AS SELECT "tngdf'".[sc,sdg"fdsngjds']."AB[C" from "tngdf'".[sc,sdg"fdsngjds'];
+GO
