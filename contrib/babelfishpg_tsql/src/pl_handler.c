@@ -89,6 +89,7 @@
 #include "access/xact.h"
 
 extern bool escape_hatch_unique_constraint;
+extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
@@ -162,6 +163,9 @@ static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
+
+static int isolation_to_int(char *isolation_level);
+static void bbf_set_tran_isolation(char *new_isolation_level_str);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -463,7 +467,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			{
 				InsertStmt *stmt = (InsertStmt *) parseTree->stmt;
 				SelectStmt *selectStmt = (SelectStmt *) stmt->selectStmt;
-				A_Const    *value;
 				Oid			relid;
 				ListCell   *lc;
 
@@ -473,50 +476,85 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				relid = RangeVarGetRelid(stmt->relation, NoLock, false);
 
 				/*
-				 * Insert new dbid column value in babelfish catalog if dump
-				 * did not provide it.
+				 * Insert new dbid and owner columns value in babelfish catalog
+				 * if dump did not provide it.
 				 */
 				if (relid == sysdatabases_oid ||
 					relid == namespace_ext_oid ||
 					relid == bbf_view_def_oid)
 				{
-					int16		dbid = 0;
-					ResTarget  *dbidCol;
-					bool		found = false;
+					ResTarget	*col = NULL;
+					A_Const 	*dbidValue = NULL;
+					A_Const 	*ownerValue = NULL;
+					bool    	dbid_found = false;
+					bool    	owner_found = false;
 
-					/* Skip if dbid column already exists */
+					/* Skip if dbid and owner column already exists */
 					foreach(lc, stmt->cols)
 					{
 						ResTarget  *col = (ResTarget *) lfirst(lc);
 
-						if (strcasecmp(col->name, "dbid") == 0)
-							found = true;
+						if (pg_strcasecmp(col->name, "dbid") == 0)
+							dbid_found = true;
+						if (relid == sysdatabases_oid &&
+							pg_strcasecmp(col->name, "owner") == 0)
+							owner_found = true;
 					}
-					if (found)
+					if (dbid_found && (owner_found || relid != sysdatabases_oid))
 						break;
 
-					dbid = getDbidForLogicalDbRestore(relid);
+					/*
+					 * Populate dbid column in Babelfish catalog tables with
+					 * new one.
+					 */
+					if (!dbid_found)
+					{
+						/* const value node to store into values clause */
+						dbidValue = makeNode(A_Const);
+						dbidValue->val.ival.type = T_Integer;
+						dbidValue->val.ival.ival = getDbidForLogicalDbRestore(relid);
+						dbidValue->location = -1;
 
-					/* const value node to store into values clause */
-					value = makeNode(A_Const);
-					value->val.ival.type = T_Integer;
-					value->val.ival.ival = dbid;
-					value->location = -1;
+						/* dbid column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "dbid";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
 
-					/* dbid column to store into InsertStmt's target list */
-					dbidCol = makeNode(ResTarget);
-					dbidCol->name = "dbid";
-					dbidCol->name_location = -1;
-					dbidCol->indirection = NIL;
-					dbidCol->val = NULL;
-					dbidCol->location = -1;
-					stmt->cols = lappend(stmt->cols, dbidCol);
+					/*
+					 * Populate owner column in babelfish_sysdatabases catalog table with
+					 * SA of the current database.
+					 */
+					if (!owner_found && relid == sysdatabases_oid)
+					{
+						/* const value node to store into values clause */
+						ownerValue = makeNode(A_Const);
+						ownerValue->val.sval.type = T_String;
+						ownerValue->val.sval.sval = GetUserNameFromId(get_sa_role_oid(), false);
+						ownerValue->location = -1;
+
+						/* owner column to store into InsertStmt's target list */
+						col = makeNode(ResTarget);
+						col->name = "owner";
+						col->name_location = -1;
+						col->indirection = NIL;
+						col->val = NULL;
+						col->location = -1;
+						stmt->cols = lappend(stmt->cols, col);
+					}
 
 					foreach(lc, selectStmt->valuesLists)
 					{
 						List	   *sublist = (List *) lfirst(lc);
 
-						sublist = lappend(sublist, value);
+						if (!dbid_found)
+							sublist = lappend(sublist, dbidValue);
+						if (!owner_found && relid == sysdatabases_oid)
+							sublist = lappend(sublist, ownerValue);
 					}
 				}
 				break;
@@ -3372,6 +3410,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
+		case T_VariableSetStmt:
+			{
+				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
+
+				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
+				{
+					ListCell   		*head;
+
+					foreach(head, variable_set->args)
+					{
+						DefElem		*item = (DefElem *) lfirst(head);
+						A_Const		*isolation_level = (A_Const *) item->arg;
+
+						if(strcmp(item->defname, "transaction_isolation") == 0)
+						{
+							bbf_set_tran_isolation(strVal(&isolation_level->val));
+							return;
+						}
+					}
+				}
+				break;
+			}
 		default:
 			break;
 	}
@@ -3808,8 +3868,6 @@ _PG_init(void)
 	pltsql_setval_hook = pltsql_setval_identity;
 
 	suppress_string_truncation_error_hook = pltsql_suppress_string_truncation_error;
-
-	pre_function_call_hook = pre_function_call_hook_impl;
 	prev_relname_lookup_hook = relname_lookup_hook;
 	relname_lookup_hook = bbf_table_var_lookup;
 	prev_ProcessUtility = ProcessUtility_hook;
@@ -5447,6 +5505,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	{
 		foreach(cell, stmt->objects)
 		{
+			relation = NULL;
 			address = get_object_address(stmt->removeType,
 										 lfirst(cell),
 										 &relation,
@@ -5454,7 +5513,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 true);
 
 			if (!relation)
-				return;
+				continue;
 
 			/* Get major_name */
 			major_name = pstrdup(RelationGetRelationName(relation));
@@ -5499,6 +5558,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 
 		foreach(cell, stmt->objects)
 		{
+			relation = NULL;
 			address = get_object_address(stmt->removeType,
 										 lfirst(cell),
 										 &relation,
@@ -5506,7 +5566,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 										 true);
 			Assert(relation == NULL);
 			if (!OidIsValid(address.objectId))
-				return;
+				continue;
 
 			/* Get major_name */
 			relation = table_open(address.classId, AccessShareLock);
@@ -5516,7 +5576,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			if (!HeapTupleIsValid(tuple))
 			{
 				table_close(relation, AccessShareLock);
-				return;
+				continue;
 			}
 
 			if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -5546,4 +5606,44 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			}
 		}
 	}
+}
+
+static int
+isolation_to_int(char *isolation_level)
+{
+	if (strcmp(isolation_level, "serializable") == 0)
+		return XACT_SERIALIZABLE;
+	else if (strcmp(isolation_level, "repeatable read") == 0)
+		return XACT_REPEATABLE_READ;
+	else if (strcmp(isolation_level, "read committed") == 0)
+		return XACT_READ_COMMITTED;
+	else if (strcmp(isolation_level, "read uncommitted") == 0)
+		return XACT_READ_UNCOMMITTED;
+
+	return 0;
+}
+
+static void
+bbf_set_tran_isolation(char *new_isolation_level_str)
+{
+	const int 		new_isolation_int_val = isolation_to_int(new_isolation_level_str);
+
+	if(new_isolation_int_val != DefaultXactIsoLevel)
+	{
+		if(FirstSnapshotSet || IsSubTransaction() || 
+				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
+		{
+			if(escape_hatch_set_transaction_isolation_level == EH_IGNORE)
+				return;
+			else
+				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch "
+					"'escape_hatch_set_transaction_isolation_level' to ignore such error");
+		}
+		else
+		{
+			SetConfigOption("transaction_isolation", new_isolation_level_str, PGC_USERSET, PGC_S_SESSION);
+			SetConfigOption("default_transaction_isolation", new_isolation_level_str, PGC_USERSET, PGC_S_SESSION);
+		}
+	}
+	return ;
 }

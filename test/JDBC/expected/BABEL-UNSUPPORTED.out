@@ -2021,6 +2021,7 @@ babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch fo
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
 babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
 babelfishpg_tsql.escape_hatch_session_settings#!#strict#!#escape hatch for session settings
+babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
 babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
@@ -2086,6 +2087,7 @@ babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch fo
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
 babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
 babelfishpg_tsql.escape_hatch_session_settings#!#strict#!#escape hatch for session settings
+babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
 babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
@@ -2132,6 +2134,7 @@ babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch fo
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
 babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
 babelfishpg_tsql.escape_hatch_session_settings#!#strict#!#escape hatch for session settings
+babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
 babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
@@ -2367,14 +2370,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'ALTER AUTHORIZATION ON' is not currently supported in Babelfish)~~
-
-
--- kill (BABEL-2159)
-KILL 1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'KILL' is not currently supported in Babelfish)~~
 
 
 -- alter view (BABEL-2017)

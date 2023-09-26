@@ -1849,6 +1849,20 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
+			| TSQL_DATE_BUCKET '(' datediff_arg ',' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("date_bucket"),
+												list_make3(makeStringConst($3, @3), $5, $7),
+												COERCE_EXPLICIT_CALL,
+												@1);
+				}
+			| TSQL_DATE_BUCKET '(' datediff_arg ',' a_expr ',' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("date_bucket"),
+												list_make4(makeStringConst($3, @3), $5, $7, $9),
+												COERCE_EXPLICIT_CALL,
+												@1);
+				}
 			| TSQL_DATEPART '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datepart"),
@@ -1957,8 +1971,14 @@ AexprConst:
 				{
 					/* This is to support N'str' in various locations */
 					TypeName *t = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("nvarchar")));
+					/* Include a typmod based on the length of the literal */
+					int32 typmod = strlen($2);
+					if (typmod == 0)
+						typmod = 2; /* typmod can't be 0 */
+					else if (typmod > 4000)
+						typmod = TSQLMaxTypmod;
 					t->location = @1;
-					t->typmods = list_make1(makeIntConst(TSQLMaxTypmod, -1));
+					t->typmods = list_make1(makeIntConst(typmod, -1));
 					$$ = makeStringConstCast($2, @2, t);
 				}
 		;
@@ -4375,6 +4395,7 @@ reserved_keyword:
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
 			| TSQL_DATEDIFF_BIG
+			| TSQL_DATE_BUCKET
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF

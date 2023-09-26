@@ -828,6 +828,9 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			}
 			exec_stmt_restore_ctx_partial(estate, (PLtsql_stmt_restore_ctx_partial *) stmt);
 			break;
+		case PLTSQL_STMT_KILL:
+			exec_stmt_kill(estate, (PLtsql_stmt_kill *) stmt);
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -974,6 +977,18 @@ is_batch_command(PLtsql_stmt *stmt)
 		default:
 			return false;
 	}
+}
+
+static
+bool
+is_set_tran_isolation(PLtsql_stmt *stmt)
+{
+	if(stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+	{
+		PLtsql_stmt_execsql	*execsql = (PLtsql_stmt_execsql *) stmt;
+		return execsql->is_set_tran_isolation;
+	}
+	return false;
 }
 
 static
@@ -1189,7 +1204,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * savepoints and let the caller be responsible for handling the
 		 * error.
 		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive())
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt))
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);

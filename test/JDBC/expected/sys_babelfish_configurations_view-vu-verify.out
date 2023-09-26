@@ -2,7 +2,7 @@ SELECT * FROM sys_babelfish_configurations_view_vu_prepare_view
 GO
 ~~START~~
 int
-39
+40
 ~~END~~
 
 
@@ -10,7 +10,7 @@ EXEC sys_babelfish_configurations_view_vu_prepare_proc
 GO
 ~~START~~
 int
-39
+40
 ~~END~~
 
 
@@ -18,7 +18,7 @@ SELECT * FROM sys_babelfish_configurations_view_vu_prepare_func()
 GO
 ~~START~~
 int
-39
+40
 ~~END~~
 
 

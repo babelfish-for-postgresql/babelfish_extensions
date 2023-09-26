@@ -306,8 +306,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\%ones'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
-  Filter: ((c1)::text = '%ones'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* '\%ones'::text COLLATE "default") AND ((c1)::text >= '\'::text COLLATE "default") AND ((c1)::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -317,8 +317,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\_ones'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
-  Filter: ((c1)::text = '_ones'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* '\_ones'::text COLLATE "default") AND ((c1)::text >= '\'::text COLLATE "default") AND ((c1)::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -398,9 +398,9 @@ p2 as (select c3 from testing4 where c3 LIKE 'äƀ__')
 select * from p1 union all select * from p2;
 GO
 ~~START~~
-varchar
-äb?D
-ä?Cd
+nvarchar
+äbĆD
+äƀCd
 ~~END~~
 
 -- test case expression

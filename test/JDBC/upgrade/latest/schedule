@@ -82,6 +82,7 @@ BABEL-3360
 BABEL-3369
 BABEL-3370
 BABEL-3380
+BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
@@ -109,6 +110,7 @@ BABEL-383
 BABEL-3844
 BABEL-3914
 BABEL-3938
+BABEL-3952
 BABEL-404
 BABEL-405
 BABEL-4078
@@ -190,6 +192,7 @@ bitwise_not-operator
 case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
+col_length
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -443,6 +446,7 @@ TestXML
 timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
+unquoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -450,3 +454,9 @@ linked_srv_4229
 BABEL-4175
 sp_who
 BABEL_4330
+kill
+BABEL-4217
+Test_ISNULL
+BABEL-4270
+BABEL-4410
+BABEL-4231

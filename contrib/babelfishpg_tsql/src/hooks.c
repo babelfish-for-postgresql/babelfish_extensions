@@ -4,6 +4,7 @@
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
+#include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
@@ -52,8 +53,8 @@
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
+#include "pgstat.h"
 #include "executor/nodeFunctionscan.h"
-
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -106,7 +107,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
@@ -153,6 +154,12 @@ static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
+static void declare_parameter_unquoted_string(Node *paramDft, ObjectType objtype);
+static void declare_parameter_unquoted_string_reset(Node *paramDft);
+
+static Node* call_argument_unquoted_string(Node *arg);
+static void call_argument_unquoted_string_reset(Node *colref_arg);
+
 /*****************************************
  * 			Replication Hooks
  *****************************************/
@@ -177,7 +184,7 @@ static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NUL
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_setop_tree_hook_type prev_pre_transform_setop_tree_hook = NULL;
-static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
+static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -204,6 +211,10 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
+static declare_parameter_unquoted_string_hook_type prev_declare_parameter_unquoted_string_hook = NULL;
+static declare_parameter_unquoted_string_reset_hook_type prev_declare_parameter_unquoted_string_reset_hook = NULL;
+static call_argument_unquoted_string_hook_type prev_call_argument_unquoted_string_hook = NULL;
+static call_argument_unquoted_string_reset_hook_type prev_call_argument_unquoted_string_reset_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
 static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
@@ -247,8 +258,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_setop_tree_hook = pre_transform_setop_tree_hook;
 	pre_transform_setop_tree_hook = pre_transform_setop_tree;
-	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
-	post_transform_sort_clause_hook = post_transform_sort_clause;
+	prev_pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -331,6 +342,16 @@ InstallExtendedHooks(void)
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
 
+	prev_declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string_hook;
+	declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string;
+	prev_declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset_hook;
+	declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset;
+
+	prev_call_argument_unquoted_string_hook = call_argument_unquoted_string_hook;
+	call_argument_unquoted_string_hook = call_argument_unquoted_string;
+	prev_call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset_hook;
+	call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset;
+
 	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
 	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
 
@@ -381,7 +402,7 @@ UninstallExtendedHooks(void)
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
-	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = prev_pre_transform_setop_sort_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
@@ -410,6 +431,10 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
+	declare_parameter_unquoted_string_hook = prev_declare_parameter_unquoted_string_hook;
+	declare_parameter_unquoted_string_reset_hook = prev_declare_parameter_unquoted_string_reset_hook;
+	call_argument_unquoted_string_hook = prev_call_argument_unquoted_string_hook;
+	call_argument_unquoted_string_reset_hook = prev_call_argument_unquoted_string_reset_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
 	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
@@ -473,7 +498,27 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	}
 	return false;
 }									  
-								
+
+Oid prev_cache_collid;
+pg_locale_t *prev_locale = NULL;
+
+pg_locale_t *
+collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
+{
+	if(!locale)
+	{
+		if(prev_locale && prev_cache_collid==collid)
+		{
+			return prev_locale;
+		}
+	}
+	else
+	{
+		prev_cache_collid = collid;
+		prev_locale = locale;
+	}
+	return NULL;
+}			
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
@@ -652,6 +697,92 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 		cur = cur->next;
 	}
 	return false;
+}
+
+/*
+ * Wrapper function that calls the initilization function.
+ * Calls the pre function call hook on the procname 
+ * before invoking the initilization function. Performing a 
+ * system cache search in case fcinfo isnull for getting the procname
+ */
+
+static char *
+replace_with_underscore(const char *s)
+{
+	int			i,
+				n = strlen(s);
+	char	   *s_copy = palloc(n + 1);
+
+	s_copy[0] = '\0';
+	strncat(s_copy, s, n);
+
+	for (i = 0; i < n; i++)
+	{
+		if (s_copy[i] == '.')
+			s_copy[i] = '_';
+	}
+
+	return s_copy;
+}
+
+void
+pre_wrapper_pgstat_init_function_usage(const char *funcName)
+{
+	if ((pltsql_instr_plugin_ptr &&
+		 (*pltsql_instr_plugin_ptr) &&
+		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
+	{
+		char	   *prefix = "instr_tsql_";
+		char	   *funcname_edited = replace_with_underscore(funcName);
+		StringInfoData metricName;
+
+		initStringInfo(&metricName);
+
+		appendStringInfoString(&metricName, prefix);
+		appendStringInfoString(&metricName, funcname_edited);
+
+		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
+		{
+			/* check with "unsupported" in prefix */
+			prefix = "instr_unsupported_tsql_";
+
+			resetStringInfo(&metricName);
+			appendStringInfoString(&metricName, prefix);
+			appendStringInfoString(&metricName, funcname_edited);
+			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
+		}
+
+		if (funcname_edited != NULL)
+			pfree(funcname_edited);
+		if (metricName.data != NULL)
+			pfree(metricName.data);
+	}
+}
+
+void
+pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
+						   PgStat_FunctionCallUsage *fcusageptr, char *procname)
+{
+
+	if (IsTransactionState())
+	{
+		if(!(fcinfo->isnull))
+		{
+			pre_wrapper_pgstat_init_function_usage((procname));
+		}
+		else
+		{
+			HeapTuple proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+			if (HeapTupleIsValid(proctup))
+			{
+				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+			}
+
+			ReleaseSysCache(proctup);
+		}
+	}
+
 }
 
 static Node *
@@ -1006,10 +1137,12 @@ extract_identifier(const char *start)
 
 	bool		dq = false;
 	bool		sqb = false;
+	bool		sq = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
 	bool		found_escaped_in_dq = false;
+	bool		found_escaped_in_sq = false;
 
 	/* check identifier is delimited */
 	Assert(start);
@@ -1017,6 +1150,8 @@ extract_identifier(const char *start)
 		dq = true;
 	else if (start[0] == '[')
 		sqb = true;
+	else if (start[0] == '\'')
+		sq = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
@@ -1031,7 +1166,7 @@ extract_identifier(const char *start)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb)		/* normal case */
+		if (!dq && !sqb && !sq)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -1081,6 +1216,51 @@ extract_identifier(const char *start)
 					{
 						original_name[wcur] = start[rcur];
 						if (start[rcur] == '"')
+							++rcur; /* skip next character */
+					}
+					original_name[wcur] = '\0';
+					return original_name;
+				}
+			}
+		}
+		else if (sq)
+		{
+			/* please see xdinside in scan.l */
+			valid = (c != '\'');
+			if (!valid && start[i + 1] == '\'')	/* escaped */
+			{
+				++i;
+				++i;			/* advance two characters */
+				found_escaped_in_sq = true;
+				continue;
+			}
+
+			if (!valid)
+			{
+				if (!found_escaped_in_sq)
+				{
+					/* no escaped character. copy whole string at once */
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					memcpy(original_name, start + 1, i - 1);
+					original_name[i - 1] = '\0';
+					return original_name;
+				}
+				else
+				{
+					/*
+					 * there is escaped character. copy one by one to handle
+					 * escaped character
+					 */
+					int			rcur = 1;	/* read-cursor */
+					int			wcur = 0;	/* write-cursor */
+
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					for (; rcur < i; ++rcur, ++wcur)
+					{
+						original_name[wcur] = start[rcur];
+						if (start[rcur] == '\'')
 							++rcur; /* skip next character */
 					}
 					original_name[wcur] = '\0';
@@ -1275,9 +1455,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			Oid			sys_nspoid = get_namespace_oid("sys", false);
-			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_varchartypoid = get_sys_varcharoid();
 
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
 											 restype, sys_varchartypoid, -1,
@@ -1289,7 +1467,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||
@@ -1446,69 +1624,50 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 		}
 
+		/*
+		 * Case 1 : Handle both singlebyte and multibyte aliases when delimited by 
+		 * square bracket(sqb) and double quoutes(dq) and single quotes(sq).
+		 * For instance, queries like : SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选选装";
+		 * Case 2 : Preserve the case of aliases with ascii characters when there is no sq, sqb and dq.
+		 * For instance, queries like: SELECT 1 AS ABCD;
+		 * Case 3 : Handle both singlebyte and multibyte aliases whose length is
+		 * more than or equals to 63 when not delimited by sq, sqb and dq.
+		 * For example, queries like : SELECT 1 AS 您对您对您对您对您对您对您对您对您对您对您对您对您对;
+		 */
 		if (alias_len > 0)
 		{
 			char	   *alias = palloc0(alias_len + 1);
-			bool		dq = *colname_start == '"';
-			bool		sqb = *colname_start == '[';
-			bool		sq = *colname_start == '\'';
-			int			a = 0;
-			const char *colname_end;
-			bool		closing_quote_reached = false;
+			const char	*original_name = NULL;
+			int actual_alias_len = 0;
 
-			if (dq || sqb || sq)
+			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
+			while(*colname_start == '(' || *colname_start == ' ')
 			{
 				colname_start++;
 			}
 
-			if (dq || sq)
+			/* To extract the identifier name from the query.*/
+			original_name = extract_identifier(colname_start);
+			actual_alias_len = strlen(original_name);
+
+			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
+			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
+			 */
+			if(actual_alias_len > alias_len)
 			{
-
-				for (colname_end = colname_start; a < alias_len; colname_end++)
-				{
-					if (dq && *colname_end == '"')
-					{
-						if ((*(++colname_end) != '"'))
-						{
-							closing_quote_reached = true;
-							break;	/* end of dbl-quoted identifier */
-						}
-					}
-					else if (sq && *colname_end == '\'')
-					{
-						if ((*(++colname_end) != '\''))
-						{
-							closing_quote_reached = true;
-							break;	/* end of single-quoted identifier */
-						}
-					}
-
-					alias[a++] = *colname_end;
-				}
-
-				/* Assert(a == alias_len); */
+				/* First 32 characters of original_name are assigned to alias. */
+				memcpy(alias, original_name, (alias_len - 32) );
+				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+				memcpy(alias + (alias_len) - 32,
+				identifier_name + (alias_len) - 32, 
+				32);
+				alias[alias_len+1] = '\0';
 			}
+			/* Identifier is not truncated. */
 			else
 			{
-				colname_end = colname_start + alias_len;
-				memcpy(alias, colname_start, alias_len);
+				memcpy(alias, original_name, alias_len);
 			}
-
-			/*
-			 * If the end of the string is a uniquifier, then copy the
-			 * uniquifier into the last 32 characters of the alias
-			 */
-			if (alias_len == NAMEDATALEN - 1 &&
-				(((sq || dq) && !closing_quote_reached) ||
-				 is_identifier_char(*colname_end)))
-
-			{
-				memcpy(alias + (NAMEDATALEN - 1) - 32,
-					   identifier_name + (NAMEDATALEN - 1) - 32,
-					   32);
-				alias[NAMEDATALEN] = '\0';
-			}
-
 			res->name = alias;
 		}
 	}
@@ -2339,6 +2498,14 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	HeapTuple	tuple;
 	List	   *insert_col_list = NIL,
 			   *temp_col_list;
+	char		relkind = get_rel_relkind(relid);
+
+	if(relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The target '%s' of the OUTPUT INTO clause cannot be a view or common table expression.", stmt->relation->relname)));
+	}
 
 	if (!output_into_insert_transformation)
 		return;
@@ -3793,18 +3960,37 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid)
 	{
-		int16		dbid = 0;
 		AttrNumber	attnum;
 
 		attnum = (AttrNumber) attnameAttNum(rel, "dbid", false);
 		Assert(attnum != InvalidAttrNumber);
 
-		if (!nulls[attnum - 1])
-			return;
+		if (nulls[attnum - 1])
+		{
+			int16 dbid = getDbidForLogicalDbRestore(relid);
+			values[attnum - 1] = Int16GetDatum(dbid);
+			nulls[attnum - 1] = false;
+		}
+	}
 
-		dbid = getDbidForLogicalDbRestore(relid);
-		values[attnum - 1] = Int16GetDatum(dbid);
-		nulls[attnum - 1] = false;
+	/*
+	 * Populate owner column in babelfish_sysdatabases catalog table with
+	 * SA of the current database.
+	 */
+	if (relid == sysdatabases_oid)
+	{
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "owner", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (nulls[attnum - 1])
+		{
+			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
+
+			values[attnum - 1] = CStringGetDatum(owner);
+			nulls[attnum - 1] = false;
+		}
 	}
 }
 
@@ -3845,3 +4031,118 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 		}
 	}	
 }
+
+
+/*  
+ * Hook functions for handling unquoted string defaults in parameter definitions
+ * for T-SQL CREATE PROCEDURE/CREATE FUNCTION.
+ */
+static void declare_parameter_unquoted_string (Node *paramDft, ObjectType objtype)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL && 
+       (objtype == OBJECT_PROCEDURE || objtype == OBJECT_FUNCTION) && 
+	   nodeTag(paramDft) == T_ColumnRef)
+	{
+		/* 
+		 * The node could be for a variable, which should not be treated as a 
+		 * an unquoted string, so verify it does not start with '@'.
+		 * This will cause parameter defaults with local variables to 
+		 * fail rather than to return the local variable name as a string,
+		 * which is identical to Babelfish behaviour before the fix
+		 * for unquoted string parameter.
+		 */
+		ColumnRef *colref = (ColumnRef *) paramDft;
+		Node *colnameField = (Node *) linitial(colref->fields);			
+		char *colname = strVal(colnameField);
+		if (colname[0] != '@') 
+		{
+			paramDft->type = T_TSQL_UnquotedString;
+		}		
+	}	
+	return;
+}			
+
+static void declare_parameter_unquoted_string_reset (Node *paramDft)
+{
+	/*
+	 * In the case of an unquoted string, restore the original node type
+	 * or we may run into an unknown node type downstream. 
+	 */
+	if (nodeTag(paramDft) == T_ColumnRef)
+	{	
+		paramDft->type = T_ColumnRef;
+	}	
+	return;	
+}	
+
+/*  
+ * Hook functions for handling unquoted string arguments in
+ * for T-SQL procedure calls.
+ */
+static Node* call_argument_unquoted_string (Node *arg)
+{
+	/*
+	 * Intercept unquoted string arguments in T-SQL procedure calls.
+	 * These arrive here as nodetype=T_ColumnRef. Temporarily change
+	 * the node type to T_TSQL_UnquotedString, which is picked up and 
+	 * handled in transformExprRecurse().
+	 */
+	Node *colref_arg = NULL; /* Points to temporarily modified node, if any. */
+	if (sql_dialect == SQL_DIALECT_TSQL) 
+	{
+		if (nodeTag(arg) == T_ColumnRef)
+		{
+			/* 
+			 * We get here for unnamed argument syntax, i.e. 
+			 * exec myproc mystring 
+			 * */
+			colref_arg = arg;
+		}
+		else if (nodeTag(arg) == T_NamedArgExpr)
+		{
+			/* 
+			 * We get here for named argument syntax, i.e. 
+			 * exec myproc @p=mystring 
+			 */
+			NamedArgExpr *na = (NamedArgExpr *) arg;
+			Assert(na->arg);
+			if (nodeTag((Node *) na->arg) == T_ColumnRef) 
+			{
+				colref_arg = (Node *) na->arg;
+			}
+		}
+		/* 
+		 * The argument could be a variable, which should not be treated
+		 * as an unquoted string, so verify it does not start with '@'.
+		 */
+		if (colref_arg) 					
+		{
+			ColumnRef *colref = (ColumnRef *) colref_arg;
+			Node *colnameField = (Node *) linitial(colref->fields);			
+			char *colname = strVal(colnameField);
+			if (colname[0] != '@') 
+			{
+				colref_arg->type = T_TSQL_UnquotedString;
+			}
+		}		
+	}
+	return colref_arg;
+}
+
+
+static void call_argument_unquoted_string_reset (Node *colref_arg)
+{
+	/*
+	 * In case of an unquoted string, restore original node type
+	 * or we may run into an unknown node type downstream.
+	 */
+	if (colref_arg) 
+	{
+		if (nodeTag(colref_arg) == T_TSQL_UnquotedString)
+		{
+			colref_arg->type = T_ColumnRef;
+		}
+	}
+	return;
+}
+

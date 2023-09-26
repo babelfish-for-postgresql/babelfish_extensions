@@ -2,6 +2,7 @@ create table TxnTable(c1 int);
 
 # Begin transaction -> commit transaction
 begin transaction;
+set transaction isolation level read committed;
 select @@trancount;
 ~~START~~
 int
@@ -15,7 +16,6 @@ int
 2
 ~~END~~
 
-set transaction isolation level read committed;
 #show transaction_isolation;
 #show default_transaction_isolation;
 insert into TxnTable values(1);
@@ -71,6 +71,7 @@ int
 
 # Begin tran -> rollback tran
 begin tran;
+set transaction isolation level read uncommitted;
 select @@trancount;
 ~~START~~
 int
@@ -78,7 +79,6 @@ int
 ~~END~~
 
 begin tran;
-set transaction isolation level read uncommitted;
 #show transaction_isolation;
 #show default_transaction_isolation;
 insert into TxnTable values(3);

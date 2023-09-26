@@ -45,6 +45,40 @@ GO
 USE master;
 GO
 
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+USE tempdb;
+GO
+
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+tempdb
+~~END~~
+
+
+USE msdb;
+GO
+
+SELECT db_name();
+GO
+~~START~~
+nvarchar
+msdb
+~~END~~
+
+
+USE master;
+GO
+
+
 -- tsql user=r1 password=abc
 USE db1;
 GO

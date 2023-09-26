@@ -58,14 +58,14 @@ jobs:
         if: steps.install-extensions.outcome == 'success' && steps.install-unix-odbc-driver.outcome=='success'
         run: |
           cd ~
-          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-12.01.0000.tar.gz
-          tar -zxvf psqlodbc-12.01.0000.tar.gz
-          cd psqlodbc-12.01.0000
+          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-16.00.0000.tar.gz
+          tar -zxvf psqlodbc-16.00.0000.tar.gz
+          cd psqlodbc-16.00.0000
           ./configure
           sudo make
           sudo make install
-          echo '[ODBC_Driver_12_for_PostgreSQL]' | sudo tee -a /etc/odbcinst.ini > /dev/null
-          echo 'Description=ODBC Driver 12 for PostgreSQL Server' | sudo tee -a /etc/odbcinst.ini > /dev/null
+          echo '[ODBC_Driver_16_for_PostgreSQL]' | sudo tee -a /etc/odbcinst.ini > /dev/null
+          echo 'Description=ODBC Driver 16 for PostgreSQL Server' | sudo tee -a /etc/odbcinst.ini > /dev/null
           echo 'Driver=/usr/local/lib/psqlodbcw.so' | sudo tee -a /etc/odbcinst.ini > /dev/null
           echo 'UsageCount=1' | sudo tee -a /etc/odbcinst.ini > /dev/null
       
@@ -81,7 +81,7 @@ jobs:
             MSSQL_BABEL_DB_USER=jdbc_user \
             MSSQL_BABEL_DB_PASSWORD=12345678 \
             MSSQL_BABEL_DB_NAME=master \
-            PSQL_ODBC_DRIVER_NAME=ODBC_Driver_12_for_PostgreSQL \
+            PSQL_ODBC_DRIVER_NAME=ODBC_Driver_16_for_PostgreSQL \
             PSQL_BABEL_DB_SERVER=localhost \
             PSQL_BABEL_DB_PORT=5432 \
             PSQL_BABEL_DB_USER=jdbc_user \

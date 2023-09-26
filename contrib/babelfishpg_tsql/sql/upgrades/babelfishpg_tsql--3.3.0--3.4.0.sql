@@ -298,9 +298,149 @@ ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
 
 ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+-- Update data-type of information_schema_tsql.TABLE_TYPE to sys.varchar if it's data-type is pg_catalog.varchar
+DO
+$$
+BEGIN  
+
+    IF EXISTS(
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema='information_schema_tsql'
+            AND table_name='tables'
+            AND column_name='TABLE_TYPE'
+            AND udt_schema='pg_catalog'
+            AND udt_name='varchar'
+    ) THEN
+        ALTER VIEW information_schema_tsql.tables RENAME TO tables_deprecated_in_3_4_0;
+
+        CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+            SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+                CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+                CAST(
+                    CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
+                        ELSE c.relname END
+                    AS sys._ci_sysname) AS "TABLE_NAME",
+
+                CAST(
+                    CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+                        WHEN c.relkind = 'v' THEN 'VIEW'
+                        ELSE null END
+                    AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
+
+            FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+                LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+
+            WHERE c.relkind IN ('r', 'v', 'p')
+                AND (NOT pg_is_other_temp_schema(nc.oid))
+                AND (pg_has_role(c.relowner, 'USAGE')
+                    OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+                    OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+                AND ext.dbid = cast(sys.db_id() as oid)
+                AND (NOT c.relname = 'sysdatabases');
+
+        GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
+
+        CALL sys.babelfish_drop_deprecated_object('view', 'information_schema_tsql', 'tables_deprecated_in_3_4_0');
+    END IF;
+END
+$$
+LANGUAGE plpgsql;
+
+-- Matches and returns column length of the corresponding column of the given table
+CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
+RETURNS SMALLINT AS $BODY$
+    DECLARE
+        col_name TEXT;
+        object_id oid;
+        column_id INT;
+        column_length INT;
+        column_data_type TEXT;
+        column_precision INT;
+    BEGIN
+        -- Get the object ID for the provided object_name
+        object_id = sys.OBJECT_ID(object_name);
+        IF object_id IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        -- Truncate and normalize the column name
+        col_name = sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
+
+        -- Get the column ID for the provided column_name
+        SELECT attnum INTO column_id FROM pg_attribute 
+        WHERE attrelid = object_id AND lower(attname) = col_name 
+        COLLATE sys.database_default;
+
+        IF column_id IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        -- Retrieve the data type, precision, scale, and column length in characters
+        SELECT a.atttypid::regtype, 
+               CASE 
+                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) >> 16) & 65535
+                   ELSE NULL
+               END,
+               CASE
+                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) & 65535)
+                   ELSE a.atttypmod
+               END
+        INTO column_data_type, column_precision, column_length
+        FROM pg_attribute a
+        WHERE a.attrelid = object_id AND a.attnum = column_id;
+
+        -- Remove delimiters
+        column_data_type := sys.babelfish_remove_delimiter_pair(column_data_type);
+
+        IF column_data_type IS NOT NULL THEN
+            column_length := CASE
+                -- Columns declared with max specifier case
+                WHEN column_length = -1 AND column_data_type IN ('varchar', 'nvarchar', 'varbinary')
+                THEN -1
+                WHEN column_data_type = 'xml'
+                THEN -1
+                WHEN column_data_type IN ('tinyint', 'bit') 
+                THEN 1
+                WHEN column_data_type = 'smallint'
+                THEN 2
+                WHEN column_data_type = 'date'
+                THEN 3
+                WHEN column_data_type IN ('int', 'integer', 'real', 'smalldatetime', 'smallmoney') 
+                THEN 4
+                WHEN column_data_type IN ('time', 'time without time zone')
+                THEN 5
+                WHEN column_data_type IN ('double precision', 'bigint', 'datetime', 'datetime2', 'money') 
+                THEN 8
+                WHEN column_data_type = 'datetimeoffset'
+                THEN 10
+                WHEN column_data_type IN ('uniqueidentifier', 'text', 'image', 'ntext')
+                THEN 16
+                WHEN column_data_type = 'sysname'
+                THEN 256
+                WHEN column_data_type = 'sql_variant'
+                THEN 8016
+                WHEN column_data_type IN ('bpchar', 'char', 'varchar', 'binary', 'varbinary') 
+                THEN column_length
+                WHEN column_data_type IN ('nchar', 'nvarchar') 
+                THEN column_length * 2
+                WHEN column_data_type IN ('numeric', 'decimal')
+                THEN 
+                    CASE
+                        WHEN column_precision IS NULL 
+                        THEN NULL
+                        ELSE ((column_precision + 8) / 9 * 4 + 1)
+                    END
+                ELSE NULL
+            END;
+        END IF;
+
+        RETURN column_length::SMALLINT;
+    END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
 
 -- Matches and returns column name of the corresponding table
 CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
@@ -561,6 +701,315 @@ END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
+
+-- internal helper function for date_bucket().
+CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
+AS 
+$body$
+DECLARE
+    date_arg_datatype regtype;
+BEGIN
+    date_arg_datatype := pg_typeof(date);
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'doy', 'day', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
+
+    -- Check for NULL value of number argument
+    ELSIF number IS NULL THEN
+        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
+
+    ELSIF check_date IS NULL THEN
+        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of date_bucket function.';
+
+    ELSIF check_date IS false THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+    
+    ELSIF check_date IS true THEN
+        IF date_arg_datatype NOT IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+        ELSIF datepart IN ('doy', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type %.', datepart, date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype AND datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''time''.', datepart;
+        ELSIF origin IS false THEN
+            RAISE EXCEPTION 'Argument data type varchar is invalid for argument 4 of date_bucket function.';
+        ELSIF number <= 0 THEN
+            RAISE EXCEPTION 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.';
+        END IF;
+        RETURN true;
+    ELSE
+        RAISE EXCEPTION 'Argument data type varchar is invalid for argument 3 of date_bucket function.';
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
+AS 
+$body$
+DECLARE
+BEGIN
+    IF date IS NULL THEN
+        -- check_date is NULL when date is NULL
+        -- check_date is false when we are sure that date can not be a valid datatype.
+        -- check_date is true when date might be valid datatype so check is required. 
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false, 'NULL'::text);
+    ELSE
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, NULL, date);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Another definition of date_bucket() with arg date of type ANYELEMENT and origin of type TEXT.
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin PG_CATALOG.TEXT) RETURNS ANYELEMENT 
+AS 
+$body$
+DECLARE
+BEGIN
+    IF date IS NULL THEN
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, NULL, 'NULL'::text);
+    ELSIF pg_typeof(date) IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
+            IF origin IS NULL THEN
+                RETURN sys.date_bucket(datepart, number, date);
+            ELSE
+                RETURN sys.date_bucket_internal_helper(datepart, number, true, false, date);
+            END IF;
+    ELSE
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, NULL, date);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin ANYELEMENT default NULL) RETURNS ANYELEMENT 
+AS 
+$body$
+DECLARE
+    required_bucket INT;
+    years_diff INT;
+    quarters_diff INT;
+    months_diff INT;
+    hours_diff INT;
+    minutes_diff INT;
+    seconds_diff INT;
+    milliseconds_diff INT;
+    timezone INT;
+    result_time time;
+    result_date timestamp;
+    offset_string PG_CATALOG.text;
+    date_difference_interval INTERVAL;
+    millisec_trunc_diff_interval INTERVAL;
+    date_arg_datatype regtype;
+    is_valid boolean;
+BEGIN
+    BEGIN
+        date_arg_datatype := pg_typeof(date);
+        is_valid := sys.date_bucket_internal_helper(datepart, number, true, true, date);
+
+        -- If optional argument origin's value is not provided by user then set it's default value of valid datatype.
+        IF origin IS NULL THEN
+                IF date_arg_datatype = 'sys.datetime'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime);
+                ELSIF date_arg_datatype = 'sys.datetime2'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime2);
+                ELSIF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetimeoffset);
+                ELSIF date_arg_datatype = 'sys.smalldatetime'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.smalldatetime);
+                ELSIF date_arg_datatype = 'date'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS pg_catalog.date);
+                ELSIF date_arg_datatype = 'time'::regtype THEN
+                    origin := CAST('00:00:00.000' AS pg_catalog.time);
+                END IF;
+        END IF;
+    END;
+
+    /* support of date_bucket() for different kinds of date datatype starts here */
+    -- support of date_bucket() when date is of 'time' datatype
+    IF date_arg_datatype = 'time'::regtype THEN
+        -- Find interval between date and origin and extract hour, minute, second, millisecond from the interval
+        date_difference_interval := date_trunc('millisecond', date) - date_trunc('millisecond', origin);
+        hours_diff := EXTRACT('hour' from date_difference_interval)::INT;
+        minutes_diff := EXTRACT('minute' from date_difference_interval)::INT;
+        seconds_diff := FLOOR(EXTRACT('second' from date_difference_interval))::INT;
+        milliseconds_diff := FLOOR(EXTRACT('millisecond' from date_difference_interval))::INT;
+        CASE datepart
+            WHEN 'hour' THEN
+                -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                -- For Ex. 'date_bucket(hour, 2, '01:00:00', '08:00:00')' hence check if the result_time is greater then date
+                -- For comparision we are trunceting the result_time to milliseconds
+                required_bucket := hours_diff/number;
+                result_time := origin + make_interval(hours => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(hours => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'minute' THEN
+                required_bucket := (hours_diff * 60 + minutes_diff)/number;
+                result_time := origin + make_interval(mins => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(mins => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'second' THEN
+                required_bucket := ((hours_diff * 60 + minutes_diff) * 60 + seconds_diff)/number;
+                result_time := origin + make_interval(secs => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'millisecond' THEN
+                required_bucket := (((hours_diff * 60 + minutes_diff) * 60) * 1000 + milliseconds_diff)/number;
+                result_time := origin + make_interval(secs => ((required_bucket * number)::numeric) * 0.001);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => (number::numeric) * 0.001);
+                END IF;
+                RETURN result_time;
+        END CASE;
+
+    -- support of date_bucket() when date is of {'datetime2', 'datetimeoffset'} datatype
+    -- handling separately because both the datatypes have precision in milliseconds
+    ELSIF date_arg_datatype IN ('sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype) THEN
+        -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
+        IF datepart IN ('year', 'quarter', 'month') THEN
+            date_difference_interval := AGE(date_trunc('day', date::timestamp), date_trunc('day', origin::timestamp));
+            years_diff := EXTRACT('Year' from date_difference_interval)::INT;
+            months_diff := EXTRACT('Month' from date_difference_interval)::INT;
+            CASE datepart
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Ex. date_bucket(year, 2, '2010-01-01', '2019-01-01')) hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
+
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
+
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number*3);
+                    END IF;
+            END CASE;  
+        
+        -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function. 
+        ELSE
+            -- trunceting origin to millisecond before passing it to date_bin() function. 
+            -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
+            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            millisec_trunc_diff_interval := (origin::timestamp - date_trunc('millisecond', origin::timestamp))::interval;
+            result_date = date_bin(date_difference_interval, date::timestamp, date_trunc('millisecond', origin::timestamp)) + millisec_trunc_diff_interval;
+
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result.
+            IF result_date + date_difference_interval <= date::timestamp THEN
+                result_date = result_date + date_difference_interval;
+            END IF;
+        END IF;
+
+        -- All the above operations are performed by converting every date datatype into TIMESTAMPS. 
+        -- datetimeoffset is typecasted into TIMESTAMPS that changes the value. 
+        -- Ex. '2023-02-23 09:19:21.23 +10:12'::sys.datetimeoffset::timestamp => '2023-02-22 23:07:21.23'
+        -- The output of date_bucket() for datetimeoffset datatype will always be in the same time-zone as of provided date argument. 
+        -- Here, converting TIMESTAMP into datetimeoffset datatype with the same timezone as of date argument.
+        IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+            timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
+            offset_string = right(date::PG_CATALOG.TEXT, 6);
+            result_date = result_date + make_interval(mins => timezone);
+            RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+        ELSE
+            RETURN result_date;
+        END IF;
+
+    -- support of date_bucket() when date is of {'date', 'datetime', 'smalldatetime'} datatype
+    ELSE
+        -- Round datetime to fixed bins (e.g. .000, .003, .007)
+        IF date_arg_datatype = 'sys.datetime'::regtype THEN
+            date := sys.babelfish_conv_string_to_datetime('DATETIME', date::TEXT)::sys.datetime;
+            origin := sys.babelfish_conv_string_to_datetime('DATETIME', origin::TEXT)::sys.datetime;
+        END IF;
+        -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
+        IF datepart IN ('year', 'quarter', 'month') THEN
+            date_difference_interval := AGE(date_trunc('day', date::timestamp), date_trunc('day', origin::timestamp));
+            years_diff := EXTRACT('Year' from date_difference_interval)::INT;
+            months_diff := EXTRACT('Month' from date_difference_interval)::INT;
+            CASE datepart
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Example. date_bucket(year, 2, '2010-01-01', '2019-01-01') hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
+
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
+
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number * 3);
+                    END IF;
+            END CASE;
+            RETURN result_date;
+        
+        -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function.
+        ELSE
+            -- trunceting origin to millisecond before passing it to date_bin() function. 
+            -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
+            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. 
+            IF result_date + date_difference_interval <= date::TIMESTAMP THEN
+                result_date = result_date + date_difference_interval;
+            END IF;
+            RETURN result_date;
+        END IF;
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- This is a temporary procedure which is called during upgrade to update guest schema
+-- for the guest users in the already existing databases
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
+
+CALL sys.babelfish_update_user_catalog_for_guest_schema();
+
+-- Drop this procedure after it gets executed once.
+DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
