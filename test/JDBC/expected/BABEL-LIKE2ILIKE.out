@@ -179,9 +179,9 @@ p2 as (select c3 from like_tesing1 where c3 LIKE 'äƀ__')
 select * from p1 union all select * from p2
 GO
 ~~START~~
-varchar
-äb?D
-ä?Cd
+nvarchar
+äbĆD
+äƀCd
 ~~END~~
 
 -- test case expression

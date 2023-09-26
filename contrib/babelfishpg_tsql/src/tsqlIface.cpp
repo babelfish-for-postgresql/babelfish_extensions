@@ -848,8 +848,13 @@ public:
 			TSqlParser::IdContext *obj_name = ctx->object_name;
 
 			std::string full_object_name = ::getFullText(ctx);
+			std::string server_name_str;
 
-			std::string server_name_str = getIDName(obj_server->DOUBLE_QUOTE_ID(), obj_server->SQUARE_BRACKET_ID(), obj_server->ID());
+			if (obj_server->keyword())
+				server_name_str = getFullText(obj_server->keyword());
+			else
+				server_name_str = getIDName(obj_server->DOUBLE_QUOTE_ID(), obj_server->SQUARE_BRACKET_ID(), obj_server->ID());
+
 			std::string quoted_server_str = std::string("'") + server_name_str + std::string("'");
 
 			std::string three_part_name = ::getFullText(obj_database) + std::string(".") + ::getFullText(obj_schema) + std::string(".") + ::getFullText(obj_name);
@@ -1009,7 +1014,13 @@ public:
 		 */
 		if (linked_srv)
 		{
-			std::string linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
+			std::string linked_srv_name;
+
+			if (linked_srv->keyword())
+				linked_srv_name = getFullText(linked_srv->keyword());
+			else
+				linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
+
 			std::string str = std::string("'") + linked_srv_name + std::string("'");
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->OPENQUERY()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->OPENQUERY()), "openquery_internal")));
@@ -4550,6 +4561,12 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
+		else if(set_special_ctx->ISOLATION())
+		{
+			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeSQL(ctx);
+			stmt->is_set_tran_isolation = true;
+			return (PLtsql_stmt *) stmt;
+		}
 		else
 			return makeSQL(ctx);
 	}
