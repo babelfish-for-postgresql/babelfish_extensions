@@ -1,0 +1,268 @@
+-- tsql
+-- column aliases with english characters whose length is less than 64
+CREATE VIEW view_babel_4231_1 AS SELECT 1 AS "AbcdE";
+GO
+
+-- tsql
+-- column aliases with english characters whose length is more than or equals 64
+CREATE VIEW view_babel_4231_2 AS SELECT 1 AS "AbnkxalnclKSNcfjNAJCb jdsb;FCBouiwehyriuoqjhINCKSJBDCJS csjkndbcjsdbcjsNDJFKWcdE";
+GO
+
+-- tsql
+-- column aliases with english characters whose length is more than or equals 64
+CREATE VIEW view_babel_4231_3 AS SELECT 1 AS [AbnkxalnclKSNcfjNAJCb jdsb;FCBouiwehyriuoqjhINCKSJBDCJS csjkndbcjsdbcjsND];
+GO
+
+
+-- tsql
+-- column aliases with chinese characters whose length is less than 64
+CREATE VIEW view_babel_4231_4 AS SELECT 1 AS "您对“数";
+GO
+
+
+-- tsql
+-- column aliases with chinese characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_5 AS SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选装, ";
+GO
+
+
+-- tsql
+-- column aliases with chinese characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_6 AS SELECT 1 AS [您对“数据一览“中的车型，颜色，内饰，选装, ];
+GO
+
+
+-- tsql
+-- column aliases with japanese characters whose length is less than 64
+CREATE VIEW view_babel_4231_7 AS SELECT 1 AS " ぁ あ ";
+GO
+
+
+-- tsql
+-- column aliases with japanese characters whose length is less than 64
+CREATE VIEW view_babel_4231_8 AS SELECT 1 AS [ぁ あ ];
+GO
+
+
+-- tsql
+-- column aliases with japanese characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_9 AS SELECT 1 AS " ぁ あ ぃ い ぅ う ぇ え ぉ せ ぜ す じ し ざ さ ゑ ス ウ ゎ ぺ";
+GO
+
+-- tsql
+-- column aliases with korean characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_10 AS SELECT 1 AS "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ ㅋ ㅌ ㅍ ㅎㅏ ㅑ ㅓ ㅕ ㅗ ㅛ ㅜ ㅠ ㅡ ㅣ";
+GO
+
+
+-- tsql
+-- column aliases with korean characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_11 AS SELECT 1 AS [ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ ㅋ ㅌ ㅍ ㅎㅏ ㅑ ㅓ ㅕ ㅗ ㅛ ㅜ ㅠ ㅡ ㅣ];
+GO
+
+
+-- tsql
+-- column aliases with korean characters whose length is less than 64
+CREATE VIEW view_babel_4231_12 AS SELECT 1 AS "ㄴ ㄷ ㄹ ㅁ";
+GO
+
+
+-- tsql
+-- column aliases with arabic characters whose length is less than 64
+CREATE VIEW view_babel_4231_13 AS SELECT 1 AS "خ	ذ	ض	ظ";
+GO
+
+
+-- tsql
+-- column aliases with arabic characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_14 AS SELECT 1 AS "ج	د	ه	و	ز	ح	ط	ي	ك	ل	م	ن	س	ع	ف	ص	ق	ر	ش	ت	ث	خ	ذ	ض	ظ	غ";
+GO
+
+
+-- tsql
+-- column aliases with polish characters whose length is less than 64
+CREATE VIEW view_babel_4231_15 AS SELECT 1 AS [ĄĆĘŁŃÓŚŹŻąćęłńóśź];
+GO
+
+
+-- tsql
+-- column aliases with polish characters whose length is less than 64
+CREATE VIEW view_babel_4231_16 AS SELECT 1 AS "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
+GO
+
+
+-- tsql
+-- column aliases with greek characters whose length is less than 64
+CREATE VIEW view_babel_4231_17 AS SELECT 1 AS "αΒβΓγΔδΕε";
+GO
+
+
+-- tsql
+-- column aliases with greek characters whose length is greater than or equals to 64
+CREATE VIEW view_babel_4231_18 AS SELECT 1 AS "αΒβΓγΔδΕεΖζ ΗηΘΙιΚ κ, Λ λ, Μ μ, Ν ν, Ξ ξ, Ο ο, Π π, Ρ ρ, Σ σ/ς, Τ τ, Υ υ, Φ φ, Χ χ, Ψ ψ";
+GO
+
+
+-- tsql
+-- table aliases with english characters whose length is less than 64
+CREATE TABLE table1_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_19 AS SELECT * FROM table1_babel_4231 as "abndand_dkandf""";
+GO
+
+
+-- tsql
+-- table aliases with english characters whose length is more than or equals 64
+CREATE TABLE table2_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_20 AS SELECT * FROM table2_babel_4231 AS "AbnkxalnclKSNcfjNAJCb jdsb;FCBouiwehyriuoqjhINCKSJBDCJS csjkndbcjsdbcjsNDJFKWcdE";
+GO
+
+
+-- tsql
+-- table aliases with chinese characters whose length is less than 64
+CREATE TABLE table3_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_21 AS SELECT * FROM table3_babel_4231 AS "您对数";
+GO
+
+
+-- tsql
+-- table aliases with chinese characters whose length is less than 64
+CREATE TABLE table4_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_22 AS SELECT * FROM table4_babel_4231 AS [您对数];
+GO
+
+
+-- tsql
+-- table aliases with chinese characters whose length is greater than or equals to 64
+CREATE TABLE table5_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_23 AS SELECT * FROM table5_babel_4231 AS "您对“数据一览“中的车型，颜色，内饰，选装";
+GO
+
+
+-- tsql
+-- table aliases with japanese characters whose length is less than 64
+CREATE TABLE table6_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_24 AS SELECT * FROM table6_babel_4231 AS " ぁ あ";
+GO
+
+
+-- tsql
+-- table aliases with japanese characters whose length is more than or equals to 64
+CREATE TABLE table7_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_25 AS SELECT * FROM table7_babel_4231 AS "ぁ あ ぃ い ぅ う ぇ え ぉ せ ぜ す じ し ざ さ ゑ ス ウ ゎ ぺ";
+GO
+
+
+-- tsql
+-- table aliases with japanese characters whose length is more than or equals to 64
+CREATE TABLE table8_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_26 AS SELECT * FROM table8_babel_4231 AS [ぁ あ ぃ い ぅ う ぇ え ぉ せ ぜ す じ し ざ さ ゑ ス ウ ゎ ぺ];
+GO
+
+
+-- tsql
+-- table aliases with korean characters whose length is less than 64
+CREATE TABLE table9_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_27 AS SELECT * FROM table9_babel_4231 AS "ㄱ ㄴ ㄷ ㄹ";
+GO
+
+
+-- tsql
+-- table aliases with korean characters whose length is less than 64
+CREATE TABLE table10_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_28 AS SELECT * FROM table10_babel_4231 AS [ㄱ ㄴ ㄷ ㄹ];
+GO
+
+
+-- tsql
+-- table aliases with korean characters whose length is more than or equals to 64
+CREATE TABLE table11_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_29 AS SELECT * FROM table11_babel_4231 AS "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ ㅈ ㅊ ㅋ ㅌ ㅍ ㅎㅏ ㅑ ㅓ ㅕ ㅗ ㅛ ㅜ ㅠ ㅡ ㅣ";
+GO
+
+-- tsql
+-- table aliases with arabic characters whose length is less than 64
+CREATE TABLE table12_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_30 AS SELECT * FROM table12_babel_4231 AS "خ	ذ	ض	ظ";
+GO
+
+
+-- tsql
+-- table aliases with arabic characters whose length is more than or equals to 64
+CREATE TABLE table13_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_31 AS SELECT * FROM table13_babel_4231 AS "ج	د	ه	و	ز	ح	ط	ي	ك	ل	م	ن	س	ع	ف	ص	ق	ر	ش	ت	ث	خ	ذ	ض	ظ	غ";
+GO
+
+
+-- tsql
+-- table aliases with polish characters whose length is less than 64
+CREATE TABLE table14_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_32 AS SELECT * FROM table14_babel_4231 AS "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
+GO
+
+
+-- tsql
+-- table aliases with greek characters whose length is less than 64
+CREATE TABLE table15_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_33 AS SELECT * FROM table15_babel_4231 AS "αΒβΓγΔδΕε";
+GO
+
+
+-- tsql
+-- table aliases with greek characters whose length is less than 64
+CREATE TABLE table16_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_34 AS SELECT * FROM table16_babel_4231 AS [αΒβΓγΔδΕε];
+GO
+
+
+-- tsql
+-- table aliases with greek characters whose length is more than or equals to 64
+CREATE TABLE table17_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_35 AS SELECT * FROM table17_babel_4231 AS "αΒβΓγΔδΕεΖζ ΗηΘΙιΚ κ, Λ λ, Μ μ, Ν ν, Ξ ξ, Ο ο, Π π, Ρ ρ, Σ σ/ς, Τ τ, Υ υ, Φ φ, Χ χ, Ψ ψ";
+GO
+
+-- tsql
+-- table aliases which are not delimited by double quote, square bracket and length is less than 64
+CREATE VIEW view_babel_4231_36 AS SELECT 1 AS ABCD;
+GO
+
+-- tsql
+-- table aliases with single byte characters which are not delimited by double quote, square bracket and length is more than or equals to 64
+CREATE VIEW view_babel_4231_37 AS SELECT 1 AS ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF;
+GO
+
+-- tsql
+-- table aliases with single byte characters which are delimited by single quote and length is more than or equals to 64
+CREATE VIEW view_babel_4231_38 AS SELECT 1 AS 'ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF';
+GO
+
+-- tsql
+-- table aliases with single byte characters which are delimited by single quote and length is less than 64
+CREATE VIEW view_babel_4231_39 AS SELECT 1 AS N'ANfjws';
+GO
+
+-- tsql
+-- table aliases with chinese characters whose length is more than or equals to 64
+CREATE TABLE table18_babel_4231(a INT , b INT);
+GO
+CREATE VIEW view_babel_4231_40 AS SELECT 您您对您对您对您对您对您对您对您对您对您您您.* FROM table18_babel_4231 AS 您您对您对您对您对您对您对您对您对您对您您您;
+GO
+
+
+

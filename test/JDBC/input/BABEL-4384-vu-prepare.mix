@@ -1,0 +1,30 @@
+-- tsql
+CREATE TABLE babel_4384_t1(ABC INT, [DE.f] INT);
+GO
+
+CREATE VIEW babel_4384_v1 AS SELECT (ABC) FROM babel_4384_t1;
+GO
+
+CREATE VIEW babel_4384_v2 AS SELECT (((ABC))) FROM babel_4384_t1;
+GO
+
+CREATE VIEW babel_4384_v3 AS SELECT ( ( (ABC))) FROM babel_4384_t1;
+GO
+
+CREATE VIEW babel_4384_v4 AS SELECT (( (ABC)) ) FROM babel_4384_t1;
+GO
+
+CREATE VIEW babel_4384_v5 AS SELECT ( ( ([DE.f]))) FROM babel_4384_t1;
+GO
+
+CREATE TABLE babel_4384_t2(您对 INT);
+GO
+
+CREATE VIEW babel_4384_v6 AS SELECT ( ( (您对))) FROM babel_4384_t2;
+GO
+
+CREATE TABLE babel_4384_t3(您您对您对您对您对您对您对您对您对您对您您您 INT);
+GO
+
+CREATE VIEW babel_4384_v7 AS SELECT ( ( (您您对您对您对您对您对您对您对您对您对您您您))) FROM babel_4384_t3;
+GO

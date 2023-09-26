@@ -1,0 +1,359 @@
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_1';
+GO
+~~START~~
+text
+ SELECT 1 AS "AbcdE";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_2';
+GO
+~~START~~
+text
+ SELECT 1 AS "AbnkxalnclKSNcfjNAJCb jdsb;FCBo3230b498a93d3d3c201b75df000f7422";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_3';
+GO
+~~START~~
+text
+ SELECT 1 AS "AbnkxalnclKSNcfjNAJCb jdsb;FCBo98276e81604b6c8f5b25ae3f87180e62";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_4';
+GO
+~~START~~
+text
+ SELECT 1 AS "您对“数";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_5';
+GO
+~~START~~
+text
+ SELECT 1 AS "您对“数据一览“中的f14d4ea72c5ab09dd327efc75f66d708";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_6';
+GO
+~~START~~
+text
+ SELECT 1 AS "您对“数据一览“中的f14d4ea72c5ab09dd327efc75f66d708";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_7';
+GO
+~~START~~
+text
+ SELECT 1 AS " ぁ あ ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_8';
+GO
+~~START~~
+text
+ SELECT 1 AS "ぁ あ ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_9';
+GO
+~~START~~
+text
+ SELECT 1 AS " ぁ あ ぃ い ぅ う ぇ 837c554dda804e3ffe7d700d76c55bc0";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_10';
+GO
+~~START~~
+text
+ SELECT 1 AS "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_11';
+GO
+~~START~~
+text
+ SELECT 1 AS "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_12';
+GO
+~~START~~
+text
+ SELECT 1 AS "ㄴ ㄷ ㄹ ㅁ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_13';
+GO
+~~START~~
+text
+ SELECT 1 AS "خ	ذ	ض	ظ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_14';
+GO
+~~START~~
+text
+ SELECT 1 AS "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_15';
+GO
+~~START~~
+text
+ SELECT 1 AS "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_16';
+GO
+~~START~~
+text
+ SELECT 1 AS "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_17';
+GO
+~~START~~
+text
+ SELECT 1 AS "αΒβΓγΔδΕε";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_18';
+GO
+~~START~~
+text
+ SELECT 1 AS "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_19';
+GO
+~~START~~
+text
+ SELECT "abndand_dkandf""".a,<newline>    "abndand_dkandf""".b<newline>   FROM master_dbo.table1_babel_4231 "abndand_dkandf""";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_20';
+GO
+~~START~~
+text
+ SELECT "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422".a,<newline>    "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422".b<newline>   FROM master_dbo.table2_babel_4231 "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_21';
+GO
+~~START~~
+text
+ SELECT "您对数".a,<newline>    "您对数".b<newline>   FROM master_dbo.table3_babel_4231 "您对数";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_22';
+GO
+~~START~~
+text
+ SELECT "您对数".a,<newline>    "您对数".b<newline>   FROM master_dbo.table4_babel_4231 "您对数";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_23';
+GO
+~~START~~
+text
+ SELECT "您对“数据一览“中的车型，颜色，内饰，选装".a,<newline>    "您对“数据一览“中的车型，颜色，内饰，选装".b<newline>   FROM master_dbo.table5_babel_4231 "您对“数据一览“中的车型，颜色，内饰，选装";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_24';
+GO
+~~START~~
+text
+ SELECT " ぁ あ".a,<newline>    " ぁ あ".b<newline>   FROM master_dbo.table6_babel_4231 " ぁ あ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_25';
+GO
+~~START~~
+text
+ SELECT "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".a,<newline>    "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".b<newline>   FROM master_dbo.table7_babel_4231 "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_26';
+GO
+~~START~~
+text
+ SELECT "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".a,<newline>    "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".b<newline>   FROM master_dbo.table8_babel_4231 "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_27';
+GO
+~~START~~
+text
+ SELECT "ㄱ ㄴ ㄷ ㄹ".a,<newline>    "ㄱ ㄴ ㄷ ㄹ".b<newline>   FROM master_dbo.table9_babel_4231 "ㄱ ㄴ ㄷ ㄹ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_28';
+GO
+~~START~~
+text
+ SELECT "ㄱ ㄴ ㄷ ㄹ".a,<newline>    "ㄱ ㄴ ㄷ ㄹ".b<newline>   FROM master_dbo.table10_babel_4231 "ㄱ ㄴ ㄷ ㄹ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_29';
+GO
+~~START~~
+text
+ SELECT "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6".a,<newline>    "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6".b<newline>   FROM master_dbo.table11_babel_4231 "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_30';
+GO
+~~START~~
+text
+ SELECT "خ	ذ	ض	ظ".a,<newline>    "خ	ذ	ض	ظ".b<newline>   FROM master_dbo.table12_babel_4231 "خ	ذ	ض	ظ";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_31';
+GO
+~~START~~
+text
+ SELECT "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8".a,<newline>    "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8".b<newline>   FROM master_dbo.table13_babel_4231 "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_32';
+GO
+~~START~~
+text
+ SELECT "ĄĆĘŁŃÓŚŹŻąćęłńóśź".a,<newline>    "ĄĆĘŁŃÓŚŹŻąćęłńóśź".b<newline>   FROM master_dbo.table14_babel_4231 "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_33';
+GO
+~~START~~
+text
+ SELECT "αΒβΓγΔδΕε".a,<newline>    "αΒβΓγΔδΕε".b<newline>   FROM master_dbo.table15_babel_4231 "αΒβΓγΔδΕε";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_34';
+GO
+~~START~~
+text
+ SELECT "αΒβΓγΔδΕε".a,<newline>    "αΒβΓγΔδΕε".b<newline>   FROM master_dbo.table16_babel_4231 "αΒβΓγΔδΕε";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_35';
+GO
+~~START~~
+text
+ SELECT "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c".a,<newline>    "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c".b<newline>   FROM master_dbo.table17_babel_4231 "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_36';
+GO
+~~START~~
+text
+ SELECT 1 AS "ABCD";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_37';
+GO
+~~START~~
+text
+ SELECT 1 AS "ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_38';
+GO
+~~START~~
+text
+ SELECT 1 AS "ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_39';
+GO
+~~START~~
+text
+ SELECT 1 AS "ANfjws";
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_40';
+GO
+~~START~~
+text
+ SELECT "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de".a,<newline>    "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de".b<newline>   FROM master_dbo.table18_babel_4231 "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de";
+~~END~~
+
