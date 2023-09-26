@@ -4613,7 +4613,7 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  * needs to use that, fix those callers to push/pop stmt_mcontext.
  * ----------
  */
-
+// int count = 0;
 static int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
@@ -4624,6 +4624,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
+	// static int count = 0;
+	static bool count = false;
 	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
@@ -4722,13 +4724,45 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		paramLI = setup_param_list(estate, expr);
 
+		if (enable_txn_in_triggers)
+		{
+			count = true;
+		}
+
+		// if(strcasestr(stmt->sqlstmt->query, "COLUMNS_UPDATED"))
+		// {
+		// 	call  = true;
+		// }
+		// count++;
 		// entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
 		
-		if (strcasestr(stmt->sqlstmt->query, "OUTPUT") || strcasestr(stmt->sqlstmt->query, "UPDATE") || strcasestr(stmt->sqlstmt->query, "TRIGGER"))
+		if ((!(strcasestr(stmt->sqlstmt->query, "INSERT")) || strcasestr(stmt->sqlstmt->query, "DELETE")))
 				// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
 		{
+			if((strcasestr(stmt->sqlstmt->query, "OUTPUT")))
+			{
+				cp = SPI_plan_get_cached_plan(expr->plan);
+			}
+		}
+		// if (!strcasestr(stmt->sqlstmt->query, "INSERT"))
+		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+		if(count){
+			count = false ;
 			cp = SPI_plan_get_cached_plan(expr->plan);
 		}
+		// if (strcasestr(stmt->sqlstmt->query, "CREATE"))
+		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+		// if(strcasestr(stmt->sqlstmt->query, "UPDATE"))
+		// {
+		// 	cp = SPI_plan_get_cached_plan(expr->plan);
+		// }
+
 		// else
 		// {
 		// 	if(cachedTable == NULL)		//Creating hash table
@@ -4993,6 +5027,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				exec_set_rowcount(SPI_processed);
 			}
 			/* Close nesting level on engine side */
+			count = true;
 			EndCompositeTriggers(false);
 			estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
 		}
