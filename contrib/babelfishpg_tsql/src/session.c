@@ -257,18 +257,21 @@ babelfish_db_name(PG_FUNCTION_ARGS)
 
 	if (dbid == 1)
 	{
-		dbname = palloc((strlen("master") + 1) * sizeof(char));
-		strncpy(dbname, "master", MAX_BBF_NAMEDATALEND);
+		int dbnamelen = strlen("master");
+		dbname = palloc0((dbnamelen + 1) * sizeof(char));
+		strncpy(dbname, "master", dbnamelen);
 	}
 	else if (dbid == 2)
 	{
-		dbname = palloc((strlen("tempdb") + 1) * sizeof(char));
-		strncpy(dbname, "tempdb", MAX_BBF_NAMEDATALEND);
+		int dbnamelen = strlen("tempdb");
+		dbname = palloc0((dbnamelen + 1) * sizeof(char));
+		strncpy(dbname, "tempdb", dbnamelen);
 	}
 	else if (dbid == 4)
 	{
-		dbname = palloc((strlen("msdb") + 1) * sizeof(char));
-		strncpy(dbname, "msdb", MAX_BBF_NAMEDATALEND);
+		int dbnamelen = strlen("msdb");
+		dbname = palloc0((dbnamelen + 1) * sizeof(char));
+		strncpy(dbname, "msdb", dbnamelen);
 	}
 	else
 		dbname = get_db_name(dbid);

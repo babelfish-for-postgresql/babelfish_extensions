@@ -282,6 +282,16 @@ select sum(a), b from dbo.babel4169_t2 group by b, c
 order by c
 go
 
+CREATE FUNCTION babel4169_error_on_func_create ()
+RETURNS TABLE
+AS
+RETURN
+    select sum(a), b from dbo.babel4169_t1 group by b, c
+    union
+    select sum(a), b from dbo.babel4169_t2 group by b, c
+    order by c
+go
+
 drop table dbo.babel4169_t1;
 drop table dbo.babel4169_t2;
 go

@@ -4,18 +4,22 @@ SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION 
 SELECT NULL AS Col1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+char
+1         
+<NULL>
+~~END~~
 
 
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION ALL
 SELECT NULL AS Col1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+~~START~~
+char
+1         
+<NULL>
+~~END~~
 
 
 -- taking suggestion from above error, added explicit CAST and CONVERT
