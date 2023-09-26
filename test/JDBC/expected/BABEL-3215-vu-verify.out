@@ -520,7 +520,21 @@ order by c
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
+
+
+CREATE FUNCTION babel4169_error_on_func_create ()
+RETURNS TABLE
+AS
+RETURN
+    select sum(a), b from dbo.babel4169_t1 group by b, c
+    union
+    select sum(a), b from dbo.babel4169_t2 group by b, c
+    order by c
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
 drop table dbo.babel4169_t1;
@@ -592,7 +606,7 @@ ORDER BY babel4210_t3.val;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
 select babel4210_t1.id,  babel4210_t2.val, babel4210_t3.t1_id from babel4210_t1
@@ -606,7 +620,7 @@ ORDER BY babel4210_t3.val;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
 select babel4210_t3.val from babel4210_t3
@@ -616,7 +630,7 @@ ORDER BY (CASE WHEN babel4210_t3.val = 'b' THEN 1 ELSE 2 END)
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
 select DISTINCT babel4210_t1.id, babel4210_t2.val, babel4210_t3.val from babel4210_t1
@@ -649,7 +663,7 @@ ORDER BY babel4210_t3.val;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
 select COUNT(DISTINCT babel4210_t3.val), babel4210_t2.val from babel4210_t1
@@ -678,7 +692,7 @@ ORDER BY babel4210_t1.id
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ORDER/GROUP BY expression not found in targetlist)~~
+~~ERROR (Message: ORDER BY items must appear in the select list if the statement contains a UNION, INTERSECT or EXCEPT operator.)~~
 
 
 WITH babel4210_cte (id, val) AS
