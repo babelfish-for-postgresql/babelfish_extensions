@@ -89,6 +89,7 @@
 #include "access/xact.h"
 
 extern bool escape_hatch_unique_constraint;
+extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
@@ -3420,11 +3421,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					foreach(head, variable_set->args)
 					{
 						DefElem		*item = (DefElem *) lfirst(head);
-						A_Const		*con = (A_Const *) item->arg;
+						A_Const		*isolation_level = (A_Const *) item->arg;
 
-						if(strcmp(item->defname, "transaction_isolation") == 0 && con)
+						if(strcmp(item->defname, "transaction_isolation") == 0)
 						{
-							bbf_set_tran_isolation(strVal(&con->val));
+							bbf_set_tran_isolation(strVal(&isolation_level->val));
 							return;
 						}
 					}
@@ -5627,7 +5628,6 @@ isolation_to_int(char *isolation_level)
 static void
 bbf_set_tran_isolation(char *new_isolation_level_str)
 {
-	const char*		ignore_isolation;
 	const int 		new_isolation_int_val = isolation_to_int(new_isolation_level_str);
 
 	if(new_isolation_int_val != DefaultXactIsoLevel)
@@ -5635,10 +5635,7 @@ bbf_set_tran_isolation(char *new_isolation_level_str)
 		if(FirstSnapshotSet || IsSubTransaction() || 
 				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
 		{
-			ignore_isolation = GetConfigOption("babelfishpg_tsql.escape_hatch_set_transaction_isolation_level",
-												false, false);
-
-			if(strcmp(ignore_isolation, "ignore") == 0)
+			if(escape_hatch_set_transaction_isolation_level == EH_IGNORE)
 				return;
 			else
 				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch "
