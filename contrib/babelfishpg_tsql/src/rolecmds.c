@@ -404,8 +404,6 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	NameData	rolname;
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
@@ -419,23 +417,15 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
 
-	/* Search and drop on the role */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(ROLNAMEMAP, NameGetDatum(&rolname));
 
 	if (HeapTupleIsValid(tuple))
+	{
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
+		ReleaseSysCache(tuple);
+	}
 
-	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 	ReleaseSysCache(authtuple);
 }
@@ -445,30 +435,20 @@ drop_bbf_authid_user_ext_by_rolname(const char *rolname)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 
 	/* Fetch the relation */
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
 
-	/* Search and drop on the role */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(rolname));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(ROLNAMEMAP, CStringGetDatum(rolname));
 
 	if (HeapTupleIsValid(tuple))
+	{
 		CatalogTupleDelete(bbf_authid_user_ext_rel,
 						   &tuple->t_self);
+		ReleaseSysCache(tuple);
+	}
 
-	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 }
 
@@ -674,10 +654,7 @@ Datum
 user_name(PG_FUNCTION_ARGS)
 {
 	Oid			id;
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	char	   *physical_user;
 	NameData   *physical_user_name;
 	char	   *user;
@@ -693,37 +670,24 @@ user_name(PG_FUNCTION_ARGS)
 	if (!physical_user)
 		PG_RETURN_NULL();
 
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
 	/* Search and obtain the tuple on the role name */
 	physical_user_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(physical_user_name->data, NAMEDATALEN, "%s", physical_user);
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(physical_user_name));
+	
+	tuple = SearchSysCache1(ROLNAMEMAP, NameGetDatum(physical_user_name));
+	
 
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 		PG_RETURN_NULL();
 	}
 
-	datum = heap_getattr(tuple,
+	datum = SysCacheGetAttr(ROLNAMEMAP, tuple,
 						 Anum_bbf_authid_user_ext_orig_username,
-						 bbf_authid_user_ext_rel->rd_att,
 						 &is_null);
 	user = pstrdup(TextDatumGetCString(datum));
 
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	ReleaseSysCache(tuple);
 
 	PG_RETURN_TEXT_P(CStringGetTextDatum(user));
 }
@@ -1343,8 +1307,6 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	ListCell   *option;
 	NameData   *user_name;
 	RoleSpec   *login = NULL;
@@ -1395,16 +1357,8 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* Search and obtain the tuple on the role name */
 	user_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(user_name->data, NAMEDATALEN, "%s", stmt->role->rolename);
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(user_name));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	
+	tuple = SearchSysCache1(ROLNAMEMAP, NameGetDatum(user_name));
 
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
@@ -1460,7 +1414,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	/* Advance the command counter to see the new record */
 	CommandCounterIncrement();
 
-	systable_endscan(scan);
+	ReleaseSysCache(tuple);
 	heap_freetuple(new_tuple);
 
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);

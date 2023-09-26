@@ -136,6 +136,17 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
+	},
+	{-1,						/* ROLNAMEMAP */
+		-1,
+		1,
+		{
+			Anum_bbf_authid_user_ext_rolname,
+			0,
+			0,
+			0
+		},
+		16
 	}
 };
 
@@ -162,6 +173,12 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
 	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
 
+	/* user ext */
+	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
+												sys_schema_oid);
+	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
+													sys_schema_oid);
+
 	/* syscache info */
 	my_cacheinfo[0].reloid = sysdatabases_oid;
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
@@ -169,17 +186,14 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
 	my_cacheinfo[2].reloid = bbf_function_ext_oid;
 	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
+	my_cacheinfo[3].reloid = bbf_authid_user_ext_oid;
+	my_cacheinfo[3].indoid = bbf_authid_user_ext_idx_oid;	
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
 												 sys_schema_oid);
 	bbf_authid_login_ext_idx_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_IDX_NAME,
 													 sys_schema_oid);
-	/* user ext */
-	bbf_authid_user_ext_oid = get_relname_relid(BBF_AUTHID_USER_EXT_TABLE_NAME,
-												sys_schema_oid);
-	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
-													sys_schema_oid);
 
 	/* bbf_view_def */
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
@@ -202,7 +216,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 4);
 		tsql_syscache_inited = true;
 	}
 }
@@ -763,10 +777,7 @@ get_authid_login_ext_idx_oid(void)
 bool
 is_user(Oid role_oid)
 {
-	Relation	relation;
 	bool		is_user = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
@@ -779,18 +790,7 @@ is_user(Oid role_oid)
 				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
 
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(ROLNAMEMAP, NameGetDatum(&rolname));
 
 	if (!HeapTupleIsValid(tuple))
 		is_user = false;
@@ -798,12 +798,12 @@ is_user(Oid role_oid)
 	{
 		Datum		datum;
 		bool		isnull;
-		TupleDesc	dsc;
 
-		dsc = RelationGetDescr(relation);
-		datum = heap_getattr(tuple, USER_EXT_TYPE + 1, dsc, &isnull);
+		datum = SysCacheGetAttr(ROLNAMEMAP, tuple, USER_EXT_TYPE + 1, &isnull);
 		if (!isnull)
 			type_str = pstrdup(TextDatumGetCString(datum));
+		
+		ReleaseSysCache(tuple);
 	}
 
 	/*
@@ -813,9 +813,6 @@ is_user(Oid role_oid)
 	if (strcmp(type_str, "R") == 0)
 		is_user = false;
 
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
-
 	ReleaseSysCache(authtuple);
 
 	return is_user;
@@ -824,10 +821,7 @@ is_user(Oid role_oid)
 bool
 is_role(Oid role_oid)
 {
-	Relation	relation;
 	bool		is_role = true;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
@@ -840,19 +834,7 @@ is_role(Oid role_oid)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("role with OID %u does not exist", role_oid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
-
-	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(&rolname));
-
-	scan = systable_beginscan(relation,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(ROLNAMEMAP, NameGetDatum(&rolname));
 
 	if (!HeapTupleIsValid(tuple))
 		is_role = false;
@@ -863,10 +845,8 @@ is_role(Oid role_oid)
 
 		if (strcmp(type_str, "R") != 0)
 			is_role = false;
+		ReleaseSysCache(tuple);
 	}
-
-	systable_endscan(scan);
-	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
@@ -2427,32 +2407,15 @@ guest_role_exists_for_db(const char *dbname)
 {
 	const char *guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 
-	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
-	/* Search if the role exists */
-	ScanKeyInit(&scanKey,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(guest_role));
-
-	scan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(ROLNAMEMAP, CStringGetTextDatum(guest_role));
 
 	if (HeapTupleIsValid(tuple))
+	{
 		role_exists = true;
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		ReleaseSysCache(tuple);
+	}
 
 	return role_exists;
 }
