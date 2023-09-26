@@ -31,25 +31,28 @@ select field1 from (select (
   ( field1 )
 ) from select_strip_parens_t1) a;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "field1" does not exist)~~
+~~START~~
+int
+41
+~~END~~
 
 select field1 from (select (
   ( "field1" )
 ) from select_strip_parens_t1) a;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "field1" does not exist)~~
+~~START~~
+int
+41
+~~END~~
 
 select field1 from (select (
   ( [field1] )
 ) from select_strip_parens_t1) a;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "field1" does not exist)~~
+~~START~~
+int
+41
+~~END~~
 
 
 -- unquoted field failed queries
@@ -124,9 +127,10 @@ select " field2  ", [  field3 ] from (select (
   ( [  field3 ] )
 ) from select_strip_parens_t1) a;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column " field2  " does not exist)~~
+~~START~~
+int#!#int
+42#!#43
+~~END~~
 
 
 -- quoted fields failed queries
