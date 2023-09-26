@@ -60,9 +60,9 @@ test_ssl_handshakeWrite(void)
      */
     if(expected == obtained)
     {
-        TEST_ASSERT_TESTCASE(*((char*)expected_str) == *((char*)obtained_str), testResult);
+        TEST_ASSERT_TESTCASE(strcmp(obtained_str, expected_str) == 0, testResult);
     }
-    TEST_ASSERT(*((char*)expected_str) == *((char*)obtained_str), testResult);
+    TEST_ASSERT(strcmp(obtained_str, expected_str) == 0, testResult);
 
     free(expected_str);
     free(obtained_str);

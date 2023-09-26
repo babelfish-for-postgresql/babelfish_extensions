@@ -55,8 +55,8 @@ test_ssl_handshakeRead(void)
     
     obtained = test_ssl_handshake_read(h, buf, expected, mock_socket_read, ReadPointer);
 
-    size_buf = strlen(buf);
-    size_binaryData = strlen(expected_str);
+    size_buf = strnlen(buf, sizeof(buf));
+    size_binaryData = strnlen(expected_str, sizeof(size_binaryData));
     buf[size_buf+1] = '\0';
     expected_str[size_binaryData+1] = '\0';
 
@@ -65,9 +65,9 @@ test_ssl_handshakeRead(void)
      */
     if(expected == obtained)
     {
-        TEST_ASSERT_TESTCASE(*((unsigned char*)expected_str) == *((unsigned char*)buf), testResult);
+        TEST_ASSERT_TESTCASE(strcmp(buf, expected_str) == 0, testResult);
     }
-    TEST_ASSERT(*((unsigned char*)expected_str) == *((unsigned char*)buf), testResult);
+    TEST_ASSERT(strcmp(buf, expected_str) == 0, testResult);
 
     free(buf);
     free(prelogin_request);
@@ -114,7 +114,7 @@ test_ssl_handshakeRead_oversize(void)
     TEST_ASSERT(expected != obtained, testResult);
     if(testResult->result == true)
     {
-        strncpy(testResult->message, " SSL packet expand more than one TDS packet", MAX_TEST_MESSAGE_LENGTH);
+        strncpy(testResult->message, "SSL packet expand more than one TDS packet", MAX_TEST_MESSAGE_LENGTH);
     }
 
     free(buf);
@@ -170,7 +170,7 @@ test_ssl_handshakeRead_pkt_type(void)
     // If the error doesn't occurr, then the following message gets displayed
     if(testResult->result == false)
     {
-        strncpy(testResult->message, ", Error doesn't occur since packet type is PRE_LOGIN", MAX_TEST_MESSAGE_LENGTH);
+        strncpy(testResult->message, "Error doesn't occur since packet type is PRE_LOGIN", MAX_TEST_MESSAGE_LENGTH);
     }
 
     free(buf);

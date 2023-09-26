@@ -135,7 +135,7 @@ SslHandShakeRead(BIO * h, char *buf, int size)
 			ereport(unit_testing ? ERROR : FATAL,
 					(errcode(ERRCODE_ADMIN_SHUTDOWN),
 					 errmsg("terminating connection due to unexpected ssl packet header")));
-
+			
 		/* endian conversion is required for length */
 		pkt_data.header.length = pg_bswap16(pkt_data.header.length);
 
@@ -183,11 +183,17 @@ test_ssl_handshake_read(BIO * h, char *buf, int size, TdsSecureSocketApi mock_so
     tds_secure_raw_read = mock_socket_read;
     unit_testing = true;
     pkt_bytes_read = ReadPointer;
+	PG_TRY();
+    {
+        res = SslHandShakeRead(h, buf, size);
+    }
+    PG_FINALLY();
+    {
+        unit_testing = false;
+    }
+    PG_END_TRY();
 
-    res = SslHandShakeRead(h, buf, size);
-
-    unit_testing = false;
-
+	tds_secure_raw_read = secure_raw_read;
     return res;
 }
 
@@ -288,10 +294,17 @@ test_ssl_handshake_write(BIO * h, char *buf, int size, TdsSecureSocketApiConst m
     tds_secure_raw_write = mock_socket_write;
     unit_testing = true;
 
-    res = SslHandShakeWrite(h, buf, size);
+	PG_TRY();
+    {
+        res = SslHandShakeWrite(h, buf, size);
+    }
+    PG_FINALLY();
+    {
+        unit_testing = false;
+    }
+    PG_END_TRY();
 
-    unit_testing = false;
-
+    tds_secure_raw_write = secure_raw_write;
     return res;
 }
 
