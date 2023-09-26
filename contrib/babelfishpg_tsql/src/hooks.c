@@ -141,7 +141,6 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
-static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 
 /*****************************************
  * 			Executor Hooks
@@ -184,7 +183,7 @@ static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NUL
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_setop_tree_hook_type prev_pre_transform_setop_tree_hook = NULL;
-static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
+static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -259,8 +258,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_setop_tree_hook = pre_transform_setop_tree_hook;
 	pre_transform_setop_tree_hook = pre_transform_setop_tree;
-	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
-	post_transform_sort_clause_hook = post_transform_sort_clause;
+	prev_pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -385,8 +384,6 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
-
-	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
@@ -405,7 +402,7 @@ UninstallExtendedHooks(void)
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
-	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = prev_pre_transform_setop_sort_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
@@ -3927,48 +3924,6 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 			}
 		}
 	}	
-}
-
-
-/*
- * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
- * function.
- * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
- * replacement_value. If replacement_value is also NULL then return INT.
- */
-static Oid
-select_common_type_for_isnull(ParseState *pstate, List *exprs)
-{
-	Node	   *pexpr;
-	Oid		   ptype;
-
-	Assert(exprs != NIL);
-	pexpr = (Node *) linitial(exprs);
-	ptype = exprType(pexpr);
-
-	/* Check if first arg (check_expression) is NULL literal */
-	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
-	{
-		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
-		Oid ntype = exprType(nexpr);
-		/* Check if second arg (replace_expression) is NULL literal */
-		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
-		{
-			return INT4OID;
-		}
-		/* If second argument is non-null string literal */
-		if (ntype == UNKNOWNOID)
-		{
-			return get_sys_varcharoid();
-		}
-		return ntype;
-	}
-	/* If first argument is non-null string literal */
-	if (ptype == UNKNOWNOID)
-	{
-		return get_sys_varcharoid();
-	}
-	return ptype;
 }
 
 
