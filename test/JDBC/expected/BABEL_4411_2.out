@@ -97,6 +97,28 @@ read uncommitted
 ROLLBACK
 GO
 
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+
+EXEC BABEL_4411_P_2
+GO
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+EXEC BABEL_4411_P_1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+
+
 -- PROCEDURES #### ESCAPE HATCH ENABLED
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
@@ -187,6 +209,34 @@ read uncommitted
 
 ROLLBACK
 GO
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+
+EXEC BABEL_4411_P_2
+GO
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+EXEC BABEL_4411_P_1
+GO
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
 
 -- CLEANUP PROCEDURES
 DROP PROCEDURE IF EXISTS BABEL_4411_P_1, BABEL_4411_P_2
@@ -282,6 +332,25 @@ repeatable read
 COMMIT
 GO
 
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+
+SELECT BABEL_4367_F2()
+GO
+~~START~~
+varchar
+read uncommitted
+~~END~~
+
+SELECT BABEL_4367_F1()
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET is not allowed in a non-volatile function)~~
+
+
 -- FUNCTIONS #### ESCAPE HATCH ENABLED
 SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 GO
@@ -355,6 +424,25 @@ repeatable read
 
 COMMIT
 GO
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+
+SELECT BABEL_4367_F2()
+GO
+~~START~~
+varchar
+read uncommitted
+~~END~~
+
+SELECT BABEL_4367_F1()
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET is not allowed in a non-volatile function)~~
+
 
 -- CLEANUP FUNCTIONS
 DROP FUNCTION IF EXISTS BABEL_4367_F1, BABEL_4367_F2
