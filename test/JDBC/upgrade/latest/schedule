@@ -446,6 +446,8 @@ TestXML
 timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
+typeid-typename
+typeid-typename-dep
 unquoted_string
 datetimeoffset-timezone
 BABEL-4046

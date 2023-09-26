@@ -18,3 +18,4 @@ GO
 
 DROP SCHEMA typeid_typename_dep_vu_prepare_s1
 GO
+

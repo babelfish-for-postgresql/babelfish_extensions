@@ -9,3 +9,4 @@ GO
 
 EXEC typeid_typename_dep_vu_prepare_proc2
 GO
+

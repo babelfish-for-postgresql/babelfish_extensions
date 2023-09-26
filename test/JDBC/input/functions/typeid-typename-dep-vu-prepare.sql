@@ -22,3 +22,4 @@ GO
 CREATE PROC typeid_typename_dep_vu_prepare_proc2 AS
 SELECT TYPE_NAME(TYPE_ID('datetime')) AS [TYPE_NAME];
 GO
+

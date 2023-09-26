@@ -64,3 +64,4 @@ GO
 
 SELECT TYPE_NAME(TYPE_ID('  text     '));
 GO
+
