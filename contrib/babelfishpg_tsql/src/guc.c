@@ -70,8 +70,6 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 
-char *current_db_name_guc = NULL;
-
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
 	{"xml", EXPLAIN_FORMAT_XML, false},
@@ -394,6 +392,7 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	return true;
 }
 
+#if 0
 /*
  * Not that check for babelfishpg_tsql.current_database should only be called
  * in parallel worker.
@@ -449,6 +448,7 @@ check_current_database_name(char **newval, void **extra, GucSource source)
 	}
 	return true;
 }
+#endif
 
 static void
 assign_enable_pg_hint(bool newval, void *extra)
@@ -661,6 +661,7 @@ assign_datefirst(int newval, void *extra)
 		(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, newval);
 }
 
+#if 0
 /*
  * set babelfishpg_tsql.current_database should only be set in the context
  * of the parallel worker. 
@@ -686,6 +687,7 @@ assign_current_database_name(const char *newval, void *extra)
 		set_cur_user_db_and_path(newval, true);
 	}
 }
+#endif
 
 void
 			define_escape_hatch_variables(void);
@@ -1260,6 +1262,7 @@ define_custom_variables(void)
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+#if 0
 	DefineCustomStringVariable("babelfishpg_tsql.current_database",
 								gettext_noop("Current logical database of the session"),
 								NULL,
@@ -1268,6 +1271,7 @@ define_custom_variables(void)
 								PGC_INTERNAL,
 								GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE | GUC_IS_NAME,
 								check_current_database_name, assign_current_database_name, NULL);
+#endif
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;

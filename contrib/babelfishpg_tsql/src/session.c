@@ -50,8 +50,12 @@ char *
 get_cur_db_name(void)
 {
 	if (IsParallelWorker())
-		return pstrdup(current_db_name_guc);
-
+	{
+		if (current_db_name_guc)
+			return pstrdup(current_db_name_guc);
+		else
+			return pstrdup("");
+	}
 	return pstrdup(current_db_name);
 }
 
@@ -67,8 +71,12 @@ set_cur_db(int16 id, const char *name, bool guc_assign)
 	current_db_name[len] = '\0';
 
 	if (!guc_assign)
+	{
+		/* Should never come here for parallel worker. */
+		Assert(!IsParallelWorker());
 		SetConfigOption("babelfishpg_tsql.current_database",
 						current_db_name, PGC_INTERNAL, PGC_S_CLIENT);
+	}
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_db_stat_var)
 		(*pltsql_protocol_plugin_ptr)->set_db_stat_var(id);
