@@ -3868,8 +3868,6 @@ _PG_init(void)
 	pltsql_setval_hook = pltsql_setval_identity;
 
 	suppress_string_truncation_error_hook = pltsql_suppress_string_truncation_error;
-
-	pre_function_call_hook = pre_function_call_hook_impl;
 	prev_relname_lookup_hook = relname_lookup_hook;
 	relname_lookup_hook = bbf_table_var_lookup;
 	prev_ProcessUtility = ProcessUtility_hook;
