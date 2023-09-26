@@ -14,6 +14,12 @@ go
 select * from babel4264 where CAST('true' as VARCHAR(20)) = flag1
 go
 
+select * from babel4264 where -flag1 = CAST('true' as VARCHAR(20))
+go
+
+select * from babel4264 where CAST('true' as VARCHAR(20)) = ~flag1
+go
+
 set babelfish_showplan_all on
 go
 
@@ -77,9 +83,11 @@ go
 drop table babel4264
 go
 
+-- Not allowed
 SELECT cast(cast('true' as varchar(20)) as INT)
 go
 
+-- Note, negative varbinary not allowed in T-SQL
 SELECT (123 + (-0x42));
 GO
 SELECT ((-0x42) + 123);
@@ -90,6 +98,8 @@ GO
 SELECT (0x42 - 123);
 GO
 
+-- Return type of int const and varbinary is now INT, not BIGINT. This can
+-- result in overflows that didn't previously occur, but overflow matches T-SQL
 SELECT (2147483640 + 0x10)
 GO
 SELECT (0x10 + 2147483640)
