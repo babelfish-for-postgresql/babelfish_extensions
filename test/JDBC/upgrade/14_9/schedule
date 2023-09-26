@@ -57,7 +57,6 @@ cast_numeric_types_to_smalldatetime
 routines_definition
 column_domain_usage
 constraint_column_usage
-select-strip-parens-before-15_5
 sp_describe_first_result_set
 sys-host_name
 SYSTEM_USER
