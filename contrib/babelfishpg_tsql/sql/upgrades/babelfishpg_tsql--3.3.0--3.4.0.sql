@@ -750,6 +750,102 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+
+
+create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'timezone_mapping'
+LANGUAGE C IMMUTABLE ;
+
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+BEGIN
+    IF input_expr = 'NULL' THEN
+        RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.';
+    END IF;
+
+    IF input_expr IS NULL OR tzzone IS NULL THEN 
+        RETURN NULL;
+    END IF;
+
+    RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT , IN input_expr anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    tz_offset PG_CATALOG.TEXT;
+    tz_name PG_CATALOG.TEXT;
+    lower_tzn PG_CATALOG.TEXT;
+    prev_res PG_CATALOG.TEXT;
+    result PG_CATALOG.TEXT;
+    is_dstt bool;
+    tz_diff PG_CATALOG.TEXT;
+    input_expr_tx PG_CATALOG.TEXT;
+    input_expr_tmz TIMESTAMPTZ;
+BEGIN
+    IF input_expr IS NULL OR tzzone IS NULL THEN 
+        RETURN NULL;
+    END IF;
+
+    lower_tzn := lower(tzzone);
+    IF lower_tzn <> 'utc' THEN
+        tz_name := sys.babelfish_timezone_mapping(lower_tzn);
+    ELSE
+        tz_name := 'utc';
+    END IF;
+
+    IF tz_name = 'NULL' THEN
+        RAISE USING MESSAGE := format('Argument data type or the parameter %s provided to AT TIME ZONE clause is invalid.', tzzone);
+    END IF;
+
+    IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
+        input_expr_tx := input_expr::TEXT;
+        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+
+        result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
+        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        if LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := concat('+',tz_diff);
+        END IF;
+        tz_offset := left(tz_diff,6);
+        input_expr_tx := concat(input_expr_tx,tz_offset);
+        return cast(input_expr_tx as sys.datetimeoffset);
+    ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
+        input_expr_tx := input_expr::TEXT;
+        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+        result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
+        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        if LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := concat('+',tz_diff);
+        END IF;
+        tz_offset := left(tz_diff,6);
+        result := concat(result,tz_offset);
+        return cast(result as sys.datetimeoffset);
+    ELSE
+        RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
+    END IF;
+       
+END;
+$BODY$
+LANGUAGE 'plpgsql' STABLE;
+
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
+    AS $$select (statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', ((statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::pg_catalog.text::pg_catalog.TIMESTAMP))::sys.datetime;$$
+    LANGUAGE SQL STABLE;
+GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
+
 -- internal helper function for date_bucket().
 CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
 AS 
@@ -1044,6 +1140,7 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+
 -- This is a temporary procedure which is called during upgrade to update guest schema
 -- for the guest users in the already existing databases
 CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema()
@@ -1055,9 +1152,11 @@ CALL sys.babelfish_update_user_catalog_for_guest_schema();
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

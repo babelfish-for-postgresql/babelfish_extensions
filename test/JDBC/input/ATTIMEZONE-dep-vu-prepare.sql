@@ -1,0 +1,25 @@
+CREATE VIEW ATTIMEZONE_dep_vu_prepare_v1 as (Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'Central Europe Standard Time');
+GO
+
+CREATE VIEW ATTIMEZONE_dep_vu_prepare_v2 as (Select 'hdhdhdhdj' AT TIME ZONE 'Eastern Standard Time');
+GO
+
+CREATE PROCEDURE  ATTIMEZONE_dep_vu_prepare_p1 as (Select convert(datetimeoffset,'9999-12-31 15:59:59.000 +00:00') AT TIME ZONE 'Central Europe Standard Time');
+GO
+
+CREATE PROCEDURE  ATTIMEZONE_dep_vu_prepare_p2 as (Select '9999-12-31 15:59:59.000 +00:00' AT TIME ZONE 'Central Europe Standard Time');
+GO
+
+CREATE FUNCTION ATTIMEZONE_dep_vu_prepare_f1()
+RETURNS DATETIMEOFFSET AS
+BEGIN
+RETURN (Select convert(datetime2,'2002-01-01 02:01:00.000 +00:00') AT TIME ZONE 'eAstern stAnDard tIMe');
+END
+GO
+
+CREATE FUNCTION ATTIMEZONE_dep_vu_prepare_f2()
+RETURNS DATETIMEOFFSET as
+begin
+RETURN (Select '2002-01-01 02:01:00.000 +00:00' AT TIME ZONE 'eAstern stAnDard tIMe');
+END
+GO

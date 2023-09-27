@@ -43,6 +43,7 @@
 #include "../src/multidb.h"
 #include "../src/session.h"
 #include "../src/catalog.h"
+#include "../src/timezone.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
@@ -102,6 +103,7 @@ PG_FUNCTION_INFO_V1(servicename);
 PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
+PG_FUNCTION_INFO_V1(timezone_mapping);
 PG_FUNCTION_INFO_V1(is_member);
 PG_FUNCTION_INFO_V1(schema_id);
 PG_FUNCTION_INFO_V1(schema_name);
@@ -178,6 +180,7 @@ char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
+
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -491,6 +494,23 @@ tsql_random(PG_FUNCTION_ARGS)
 	result = drandom(fcinfo1);
 
 	return result;
+}
+
+Datum
+timezone_mapping(PG_FUNCTION_ARGS)
+{
+	char *sqltmz = text_to_cstring(PG_GETARG_TEXT_P(0));
+	VarChar    *result = cstring_to_text("NULL");
+	int len = (sizeof(win32_tzmap) / sizeof(*(win32_tzmap)));
+	for(int i=0;i<len;i++)
+	{
+		if(pg_strcasecmp(win32_tzmap[i].stdname,sqltmz) == 0)
+		{
+			result = cstring_to_text(win32_tzmap[i].pgtzname);
+			break;
+		}
+	}
+	PG_RETURN_VARCHAR_P(result);
 }
 
 Datum
