@@ -89,6 +89,7 @@
 #include "access/xact.h"
 
 extern bool escape_hatch_unique_constraint;
+extern int  escape_hatch_set_transaction_isolation_level;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
@@ -162,6 +163,9 @@ static void set_current_query_is_create_tbl_check_constraint(Node *expr);
 static void validateUserAndRole(char *name);
 
 static void bbf_ExecDropStmt(DropStmt *stmt);
+
+static int isolation_to_int(char *isolation_level);
+static void bbf_set_tran_isolation(char *new_isolation_level_str);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -3671,6 +3675,27 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					return;
 				}
+		case T_VariableSetStmt:
+			{
+				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
+
+				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
+				{
+					ListCell   		*head;
+
+					foreach(head, variable_set->args)
+					{
+						DefElem		*item = (DefElem *) lfirst(head);
+						A_Const		*isolation_level = (A_Const *) item->arg;
+
+						if(strcmp(item->defname, "transaction_isolation") == 0)
+						{
+							bbf_set_tran_isolation(strVal(&isolation_level->val));
+							return;
+						}
+					}
+				}
+				break;
 			}
 		default:
 			break;
@@ -4108,8 +4133,6 @@ _PG_init(void)
 	pltsql_setval_hook = pltsql_setval_identity;
 
 	suppress_string_truncation_error_hook = pltsql_suppress_string_truncation_error;
-
-	pre_function_call_hook = pre_function_call_hook_impl;
 	prev_relname_lookup_hook = relname_lookup_hook;
 	relname_lookup_hook = bbf_table_var_lookup;
 	prev_ProcessUtility = ProcessUtility_hook;
@@ -5856,4 +5879,44 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				clean_up_bbf_schema(dbname, logicalschema, major_name, false);
 		}
 	}
+}
+
+static int
+isolation_to_int(char *isolation_level)
+{
+	if (strcmp(isolation_level, "serializable") == 0)
+		return XACT_SERIALIZABLE;
+	else if (strcmp(isolation_level, "repeatable read") == 0)
+		return XACT_REPEATABLE_READ;
+	else if (strcmp(isolation_level, "read committed") == 0)
+		return XACT_READ_COMMITTED;
+	else if (strcmp(isolation_level, "read uncommitted") == 0)
+		return XACT_READ_UNCOMMITTED;
+
+	return 0;
+}
+
+static void
+bbf_set_tran_isolation(char *new_isolation_level_str)
+{
+	const int 		new_isolation_int_val = isolation_to_int(new_isolation_level_str);
+
+	if(new_isolation_int_val != DefaultXactIsoLevel)
+	{
+		if(FirstSnapshotSet || IsSubTransaction() || 
+				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
+		{
+			if(escape_hatch_set_transaction_isolation_level == EH_IGNORE)
+				return;
+			else
+				elog(ERROR, "SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch "
+					"'escape_hatch_set_transaction_isolation_level' to ignore such error");
+		}
+		else
+		{
+			SetConfigOption("transaction_isolation", new_isolation_level_str, PGC_USERSET, PGC_S_SESSION);
+			SetConfigOption("default_transaction_isolation", new_isolation_level_str, PGC_USERSET, PGC_S_SESSION);
+		}
+	}
+	return ;
 }

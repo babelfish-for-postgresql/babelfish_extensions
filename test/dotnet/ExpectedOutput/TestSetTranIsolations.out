@@ -1,0 +1,87 @@
+#Q#EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'strict'
+#Q#SELECT @@trancount
+#D#int
+0
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+read committed
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+read committed
+#Q#BEGIN TRAN
+#Q#SELECT @@trancount
+#D#int
+2
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#COMMIT TRAN
+#Q#SELECT @@trancount
+#D#int
+0
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#BEGIN TRAN
+#Q#SELECT @@trancount
+#D#int
+2
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT @@trancount
+#D#int
+1
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#ROLLBACK TRAN
+#Q#SELECT @@trancount
+#D#int
+0
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+read committed
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+read committed
+#Q#BEGIN TRAN
+#Q#SELECT @@trancount
+#D#int
+2
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#SELECT @@trancount
+#D#int
+0
+#Q#SELECT current_setting('transaction_isolation')
+#D#text
+read committed
+#Q#SELECT current_setting('default_transaction_isolation')
+#D#text
+read committed

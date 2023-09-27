@@ -17,6 +17,8 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_ntext_datatype) (Oid oid);
 	bool		(*is_tsql_image_datatype) (Oid oid);
 	bool		(*is_tsql_binary_datatype) (Oid oid);
+	bool		(*is_tsql_sys_binary_datatype) (Oid oid);
+	bool		(*is_tsql_sys_varbinary_datatype) (Oid oid);
 	bool		(*is_tsql_varbinary_datatype) (Oid oid);
 	bool		(*is_tsql_timestamp_datatype) (Oid oid);
 	bool		(*is_tsql_datetime2_datatype) (Oid oid);

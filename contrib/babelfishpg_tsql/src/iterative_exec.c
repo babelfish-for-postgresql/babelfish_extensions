@@ -989,6 +989,18 @@ is_batch_command(PLtsql_stmt *stmt)
 }
 
 static
+bool
+is_set_tran_isolation(PLtsql_stmt *stmt)
+{
+	if(stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+	{
+		PLtsql_stmt_execsql	*execsql = (PLtsql_stmt_execsql *) stmt;
+		return execsql->is_set_tran_isolation;
+	}
+	return false;
+}
+
+static
 void
 record_error_state(PLtsql_execstate *estate)
 {
@@ -1201,7 +1213,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * savepoints and let the caller be responsible for handling the
 		 * error.
 		 */
-		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive())
+		if (!ro_func && !pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive() && !is_set_tran_isolation(stmt))
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
