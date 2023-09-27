@@ -584,7 +584,7 @@ exec_simple_check_plan(PLtsql_execstate *estate, PLtsql_expr *expr)
 		}
 	}
 	/* Release our plan refcount */
-	ReleaseCachedPlan(cplan, NULL);
+	ReleaseCachedPlan(cplan, CurrentResourceOwner);
 }
 
 /*
