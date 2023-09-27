@@ -6,6 +6,9 @@ analyze master_dbo.babel_3513_t2;
 go
 
 -- tsql
+exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
+go
+
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
 ~~START~~

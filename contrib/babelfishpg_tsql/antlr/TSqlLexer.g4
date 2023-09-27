@@ -243,6 +243,7 @@ DATASPACE:                                       D A T A S P A C E;
 DATEADD:                                         D A T E A D D;
 DATEDIFF:                                        D A T E D I F F;
 DATEDIFF_BIG:                                    D A T E D I F F  UNDERLINE  B I G;
+DATE_BUCKET:                                     D A T E UNDERLINE B U C K E T;
 DATEFIRST:                                       D A T E F I R S T;
 DATEFORMAT:                                      D A T E F O R M A T;
 DATE_FORMAT:                                     D A T E  UNDERLINE  F O R M A T;

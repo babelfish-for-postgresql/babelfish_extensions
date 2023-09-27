@@ -4360,6 +4360,7 @@ keyword
     | DATEADD
     | DATEDIFF
     | DATEDIFF_BIG
+    | DATE_BUCKET
     | DATEFIRST
     | DATEFORMAT
     | DATE_FORMAT

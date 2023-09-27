@@ -15,7 +15,13 @@ jobs:
         run: |
           config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/dump-restore-test-configuration.yml)'"
           config=$(echo $config | sed "s/\"/\\\\\"/g")
-          DUMP_RESTORE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['dump-restore-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: (itm[itm.length - 1]['logical-database'] == null ? 'Instance-level-' : 'Database-level-') + itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
+          DUMP_RESTORE_PATH_LIST=$(node -e "let k = JSON.parse($config); \
+          let p = k['dump-restore-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), \
+          title: (itm[itm.length - 1]['logical-database'] == null ? 'Instance-level-' : 'Database-level-') + itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), \
+          last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\"), \
+          dump_method: itm[itm.length - 1]['dump-data-as'] == 'copy' ? 'COPY' : 'INSERTS', \
+          dump_format: itm[itm.length - 1]['dump-format']})); \
+          console.log(JSON.stringify(p));")
           echo "::set-output name=dump-restore-path-list::$DUMP_RESTORE_PATH_LIST"
 
   run-dump-restore-test:
@@ -24,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         upgrade-path: ${{ fromJson(needs.generate-dump-restore-tests.outputs.dump-restore-path-list) }}
-    name: Run Dump Restore Test for ${{ matrix.upgrade-path.title }}
+    name: Dump Restore Test using ${{ matrix.upgrade-path.dump_method }} for ${{ matrix.upgrade-path.title }} - format=${{ matrix.upgrade-path.dump_format }}
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
