@@ -12,7 +12,7 @@ GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
 
 
 CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
-    AS $$select (statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
+    AS $$select (statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
 
@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
 GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', statement_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime;$$
+    AS $$select date_trunc('millisecond', ((statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::pg_catalog.text::pg_catalog.TIMESTAMP))::sys.datetime;$$
     LANGUAGE SQL STABLE;
 GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
 
