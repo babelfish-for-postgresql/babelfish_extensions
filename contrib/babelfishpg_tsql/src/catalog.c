@@ -2409,7 +2409,7 @@ guest_role_exists_for_db(const char *dbname)
 	bool		role_exists = false;
 	HeapTuple	tuple;
 
-	tuple = SearchSysCache1(ROLNAMEMAP, CStringGetTextDatum(guest_role));
+	tuple = SearchSysCache1(ROLNAMEMAP, CStringGetDatum(guest_role));
 
 	if (HeapTupleIsValid(tuple))
 	{
