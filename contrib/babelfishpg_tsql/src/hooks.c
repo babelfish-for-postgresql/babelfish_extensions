@@ -4,6 +4,7 @@
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
+#include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
@@ -52,8 +53,8 @@
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
+#include "pgstat.h"
 #include "executor/nodeFunctionscan.h"
-
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -141,7 +142,6 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
-static Oid select_common_type_for_isnull(ParseState *pstate, List *exprs);
 
 /*****************************************
  * 			Executor Hooks
@@ -184,7 +184,7 @@ static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NUL
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_setop_tree_hook_type prev_pre_transform_setop_tree_hook = NULL;
-static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
+static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -225,7 +225,6 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 
-
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -259,8 +258,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_setop_tree_hook = pre_transform_setop_tree_hook;
 	pre_transform_setop_tree_hook = pre_transform_setop_tree;
-	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
-	post_transform_sort_clause_hook = post_transform_sort_clause;
+	prev_pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -385,8 +384,6 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
-
-	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
@@ -405,7 +402,7 @@ UninstallExtendedHooks(void)
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
-	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = prev_pre_transform_setop_sort_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
@@ -501,7 +498,27 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	}
 	return false;
 }									  
-								
+
+Oid prev_cache_collid;
+pg_locale_t *prev_locale = NULL;
+
+pg_locale_t *
+collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
+{
+	if(!locale)
+	{
+		if(prev_locale && prev_cache_collid==collid)
+		{
+			return prev_locale;
+		}
+	}
+	else
+	{
+		prev_cache_collid = collid;
+		prev_locale = locale;
+	}
+	return NULL;
+}			
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
@@ -680,6 +697,92 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 		cur = cur->next;
 	}
 	return false;
+}
+
+/*
+ * Wrapper function that calls the initilization function.
+ * Calls the pre function call hook on the procname 
+ * before invoking the initilization function. Performing a 
+ * system cache search in case fcinfo isnull for getting the procname
+ */
+
+static char *
+replace_with_underscore(const char *s)
+{
+	int			i,
+				n = strlen(s);
+	char	   *s_copy = palloc(n + 1);
+
+	s_copy[0] = '\0';
+	strncat(s_copy, s, n);
+
+	for (i = 0; i < n; i++)
+	{
+		if (s_copy[i] == '.')
+			s_copy[i] = '_';
+	}
+
+	return s_copy;
+}
+
+void
+pre_wrapper_pgstat_init_function_usage(const char *funcName)
+{
+	if ((pltsql_instr_plugin_ptr &&
+		 (*pltsql_instr_plugin_ptr) &&
+		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
+	{
+		char	   *prefix = "instr_tsql_";
+		char	   *funcname_edited = replace_with_underscore(funcName);
+		StringInfoData metricName;
+
+		initStringInfo(&metricName);
+
+		appendStringInfoString(&metricName, prefix);
+		appendStringInfoString(&metricName, funcname_edited);
+
+		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
+		{
+			/* check with "unsupported" in prefix */
+			prefix = "instr_unsupported_tsql_";
+
+			resetStringInfo(&metricName);
+			appendStringInfoString(&metricName, prefix);
+			appendStringInfoString(&metricName, funcname_edited);
+			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
+		}
+
+		if (funcname_edited != NULL)
+			pfree(funcname_edited);
+		if (metricName.data != NULL)
+			pfree(metricName.data);
+	}
+}
+
+void
+pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
+						   PgStat_FunctionCallUsage *fcusageptr, char *procname)
+{
+
+	if (IsTransactionState())
+	{
+		if(!(fcinfo->isnull))
+		{
+			pre_wrapper_pgstat_init_function_usage((procname));
+		}
+		else
+		{
+			HeapTuple proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+			if (HeapTupleIsValid(proctup))
+			{
+				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+			}
+
+			ReleaseSysCache(proctup);
+		}
+	}
+
 }
 
 static Node *
@@ -3927,48 +4030,6 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 			}
 		}
 	}	
-}
-
-
-/*
- * select_common_type_for_isnull - Deduce common data type for ISNULL(check_expression , replacement_value) 
- * function.
- * This function should return same as check_expression. If that expression is NULL then reyurn the data type of
- * replacement_value. If replacement_value is also NULL then return INT.
- */
-static Oid
-select_common_type_for_isnull(ParseState *pstate, List *exprs)
-{
-	Node	   *pexpr;
-	Oid		   ptype;
-
-	Assert(exprs != NIL);
-	pexpr = (Node *) linitial(exprs);
-	ptype = exprType(pexpr);
-
-	/* Check if first arg (check_expression) is NULL literal */
-	if (IsA(pexpr, Const) && ((Const *) pexpr)->constisnull && ptype == UNKNOWNOID)
-	{
-		Node *nexpr = (Node *) lfirst(list_second_cell(exprs));
-		Oid ntype = exprType(nexpr);
-		/* Check if second arg (replace_expression) is NULL literal */
-		if (IsA(nexpr, Const) && ((Const *) nexpr)->constisnull && ntype == UNKNOWNOID)
-		{
-			return INT4OID;
-		}
-		/* If second argument is non-null string literal */
-		if (ntype == UNKNOWNOID)
-		{
-			return get_sys_varcharoid();
-		}
-		return ntype;
-	}
-	/* If first argument is non-null string literal */
-	if (ptype == UNKNOWNOID)
-	{
-		return get_sys_varcharoid();
-	}
-	return ptype;
 }
 
 
