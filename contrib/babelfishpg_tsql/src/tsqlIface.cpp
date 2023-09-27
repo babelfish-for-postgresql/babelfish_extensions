@@ -1475,6 +1475,62 @@ public:
 		popContainer(ctx);
 	}
 
+	void exitAlter_table(TSqlParser::Alter_tableContext *ctx) override
+	{
+		if (ctx->TRIGGER() && ctx->id().size() > 1)	/* condition to filter alter table statements which contains TRIGGER keyword and multiple trigger names */
+		{
+			/*
+			 * When we come across a alter table query which enable/disable trigger with multiple trigger name, 
+			 * we will replace it with list of alter table statements, a statement for each trigger.
+			 * As Postgres only support enabling/disabling of only one trigger using alter table syntax, so a call like:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a, trigger_b
+			 *	GO
+			 * 
+			 * will be re-written as:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a; 
+			 *  ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_b;
+			 */
+
+			std::vector<TSqlParser::IdContext *> list_id = ctx->id();
+			TSqlParser::Table_nameContext *table_name = ctx->tabname;
+
+			std::string str = std::string("");
+			std::string action_type;
+			if (ctx->ENABLE() != nullptr)
+			{
+				action_type = std::string(" ENABLE");
+			}
+			else
+			{
+				action_type = std::string(" DISABLE");
+			}
+
+			for (TSqlParser::IdContext *id : list_id) {
+				str += std::string("ALTER TABLE ") + ::getFullText(table_name) + action_type + std::string(" TRIGGER ") + ::getFullText(id) + "; ";
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
+		}
+	}
+
+	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+	}
+
+	void exitDisable_trigger(TSqlParser::Disable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Non-container statement management
 	//////////////////////////////////////////////////////////////////////////////
