@@ -9,3 +9,4 @@ GO
 
 DROP SCHEMA typeid_typename_vu_prepare_s1
 GO
+
