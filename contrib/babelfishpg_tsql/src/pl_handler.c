@@ -3451,6 +3451,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
+		case T_VariableSetStmt:
+			{
+				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
+
+				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
+				{
+					ListCell   		*head;
+
+					foreach(head, variable_set->args)
+					{
+						DefElem		*item = (DefElem *) lfirst(head);
+						A_Const		*isolation_level = (A_Const *) item->arg;
+
+						if(strcmp(item->defname, "transaction_isolation") == 0)
+						{
+							bbf_set_tran_isolation(strVal(&isolation_level->val));
+							return;
+						}
+					}
+				}
+				break;
+			}
 		case T_GrantStmt:
 			{
 				GrantStmt *grant = (GrantStmt *) parsetree;
@@ -3675,27 +3697,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					return;
 				}
-		case T_VariableSetStmt:
-			{
-				VariableSetStmt *variable_set = (VariableSetStmt *) parsetree;
-
-				if(strcmp(variable_set->name, "SESSION CHARACTERISTICS") == 0)
-				{
-					ListCell   		*head;
-
-					foreach(head, variable_set->args)
-					{
-						DefElem		*item = (DefElem *) lfirst(head);
-						A_Const		*isolation_level = (A_Const *) item->arg;
-
-						if(strcmp(item->defname, "transaction_isolation") == 0)
-						{
-							bbf_set_tran_isolation(strVal(&isolation_level->val));
-							return;
-						}
-					}
-				}
-				break;
 			}
 		default:
 			break;
