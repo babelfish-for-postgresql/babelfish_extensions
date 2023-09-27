@@ -4752,7 +4752,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				}
 				++i;
 			}
-			ReleaseCachedPlan(cp, CurrentResourceOwner);
+			ReleaseCachedPlan(cp, NULL);
 		}
 
 
@@ -7613,7 +7613,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 			ResourceOwner saveResourceOwner = CurrentResourceOwner;
  
 			CurrentResourceOwner = estate->simple_eval_resowner;
-			ReleaseCachedPlan(expr->expr_simple_plan, CurrentResourceOwner);
+			ReleaseCachedPlan(expr->expr_simple_plan, NULL);
 			CurrentResourceOwner = saveResourceOwner;
 			expr->expr_simple_plan = NULL;
 			expr->expr_simple_plan_lxid = InvalidLocalTransactionId;
@@ -7649,7 +7649,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 		else
 		{
 			/* Release SPI_plan_get_cached_plan's refcount */
-			ReleaseCachedPlan(cplan, CurrentResourceOwner);
+			ReleaseCachedPlan(cplan, NULL);
 			/* Mark expression as non-simple, and fail */
 			expr->expr_simple_expr = NULL;
 			return false;
@@ -7659,7 +7659,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 		 * SPI_plan_get_cached_plan acquired a plan refcount stored in the
 		 * active resowner.  We don't need that anymore, so release it.
 		 */
-		ReleaseCachedPlan(cplan, CurrentResourceOwner);
+		ReleaseCachedPlan(cplan, NULL);
  
 		/* Extract desired scalar expression from cached plan */
 		exec_save_simple_expr(expr, cplan);
