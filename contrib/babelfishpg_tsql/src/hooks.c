@@ -394,8 +394,6 @@ InstallExtendedHooks(void)
 
 	prev_tsql_time_in_hook = tsql_time_in_hook;
 	tsql_time_in_hook = pltsql_time_in;
-
-	select_common_type_hook = select_common_type_for_isnull;
 }
 
 void
