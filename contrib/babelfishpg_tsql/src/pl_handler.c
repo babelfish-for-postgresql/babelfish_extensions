@@ -658,15 +658,12 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					rel_schema = get_authid_user_ext_schema_name(get_cur_db_name(), GetUserNameFromId(GetUserId(), false));
 				}
 
-				if (trig_schema != NULL)
+				if (trig_schema != NULL && strcmp(trig_schema, rel_schema) != 0)
 				{
-					if ((strlen(rel_schema) != strlen(trig_schema)) || strncmp(trig_schema, rel_schema, strlen(rel_schema)) != 0)
-					{
-						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
-								errmsg("Trigger %s.%s on table %s.%s does not exists or table %s.%s does not exists",
-										trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
-					}
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("Trigger %s.%s on table %s.%s does not exists or table %s.%s does not exists",
+									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
 				}
 
 				if(atstmt->relation->schemaname == NULL)
