@@ -2,13 +2,13 @@
 USE master
 GO
 
-DROP TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees]
+DROP TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees]
 GO
 
-DROP TABLE s1.babel_3326_Employees
+DROP TABLE db.babel_3326_Employees
 GO
 
-DROP SCHEMA s1
+DROP SCHEMA db
 GO
 
 REVOKE SELECT,UPDATE,INSERT,DELETE ON dbo.babel_3326_Employees TO babel_3326_non_owner
