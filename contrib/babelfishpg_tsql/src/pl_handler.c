@@ -18,6 +18,7 @@
 #include "access/attnum.h"
 #include "access/relation.h"
 #include "access/htup_details.h"
+#include "access/parallel.h"
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -272,6 +273,9 @@ set_procid(Oid oid)
 static void
 assign_identity_insert(const char *newval, void *extra)
 {
+	if (IsParallelWorker())
+		return;
+
 	if (strcmp(newval, "") != 0)
 	{
 		List	   *elemlist;
