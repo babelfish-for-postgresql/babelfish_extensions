@@ -5,18 +5,41 @@ go
 
 select * from grant_schema_s1.grant_schema_t1;
 go
+~~START~~
+int
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_t2; -- case 1: has no permission
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table grant_schema_t2)~~
+
 
 select * from grant_schema_s1.grant_schema_v1;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 exec grant_schema_s1.grant_schema_p1;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_f1();
 go
+~~START~~
+int
+10
+~~END~~
+
 
 -- tsql
 -- REVOKE OBJECT privilege
@@ -38,15 +61,31 @@ go
 
 select * from grant_schema_s1.grant_schema_t1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table grant_schema_t1)~~
+
 
 select * from grant_schema_s1.grant_schema_v1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view grant_schema_v1)~~
+
 
 exec grant_schema_s1.grant_schema_p1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure grant_schema_p1)~~
+
 
 select * from grant_schema_s1.grant_schema_f1();
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function grant_schema_f1)~~
+
 
 -- tsql
 -- GRANT SCHEMA privilege
@@ -64,18 +103,41 @@ go
 
 select * from grant_schema_s1.grant_schema_t1;
 go
+~~START~~
+int
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_t2;
 go
+~~START~~
+int
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_v1;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 exec grant_schema_s1.grant_schema_p1;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_f1();
 go
+~~START~~
+int
+11
+~~END~~
+
 
 -- User has OBJECT and SCHEMA privileges, should be accessible.
 use grant_schema_d1;
@@ -83,15 +145,34 @@ go
 
 select * from grant_schema_s1.grant_schema_t3;
 go
+~~START~~
+int
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_v2;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 exec grant_schema_s1.grant_schema_p2;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_f2();
 go
+~~START~~
+int
+11
+~~END~~
+
 
 -- tsql
 -- Case 6: User has SCHEMA privilege, REVOKE OBJECT privilege
@@ -113,15 +194,34 @@ go
 
 select * from grant_schema_s1.grant_schema_t3;
 go
+~~START~~
+int
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_v2;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 exec grant_schema_s1.grant_schema_p2;
 go
+~~START~~
+int
+2
+~~END~~
+
 
 select * from grant_schema_s1.grant_schema_f2();
 go
+~~START~~
+int
+11
+~~END~~
+
 
 -- tsql
 -- User has OBJECT privilege, REVOKE OBJECT privilege
@@ -139,6 +239,10 @@ go
 
 select * from grant_schema_s2.grant_schema_t2;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table grant_schema_t2)~~
+
 
 -- tsql
 -- User has OBJECT privilege, REVOKE SCHEMA privilege
@@ -156,6 +260,10 @@ go
 
 select * from grant_schema_s2.grant_schema_t1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table grant_schema_t1)~~
+
 
 -- tsql
 -- User has OBJECT privilege, GRANT and REVOKE SCHEMA privilege
@@ -176,4 +284,8 @@ go
 
 select * from grant_schema_s2.grant_schema_t1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table grant_schema_t1)~~
+
 

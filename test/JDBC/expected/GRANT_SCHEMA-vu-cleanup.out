@@ -56,10 +56,19 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'grant_schema_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
+~~START~~
+bool
+~~END~~
+
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 go
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 drop login grant_schema_l1;
