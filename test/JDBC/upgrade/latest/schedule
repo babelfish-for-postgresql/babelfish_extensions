@@ -214,6 +214,7 @@ bitwise_not-operator
 BABEL-1683
 BABEL-1953
 schema_resolution_trigger
+select-strip-parens
 sys_all_objects-dep
 sys-columns-dep
 sys-databases-dep
