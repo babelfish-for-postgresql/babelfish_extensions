@@ -228,7 +228,8 @@ initTsqlSyscache()
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
+	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid
+			|| relationId == bbf_authid_user_ext_oid)
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
