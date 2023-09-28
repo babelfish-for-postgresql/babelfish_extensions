@@ -380,7 +380,7 @@ GO
 -- psql
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
 GO
-ALTER TABLE master_s1.babel_3326_Employees OWNER TO master_babel_3326_u1;
+ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;
 GO
 
 -- tsql user=babel_3326_u1 password=12345678
@@ -402,17 +402,17 @@ GO
 
 
 -- will not work, throw error; as default schema is dbo, relation dbo.babel_3326_Employees will be used below
-ENABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
 GO
 
-DISABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
 GO
 
 
-ALTER USER babel_3326_u1 WITH DEFAULT_SCHEMA=s1
+ALTER USER babel_3326_u1 WITH DEFAULT_SCHEMA=db
 GO
 
--- will work; as default schema is s1, relation s1.babel_3326_Employees will be used below
+-- will work; as default schema is db, relation db.babel_3326_Employees will be used below
 ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
 GO
 
@@ -420,7 +420,7 @@ DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Emp
 GO
 
 
--- will not work, throw error; as default schema is s1, relation s1.babel_3326_Employees will be used below
+-- will not work, throw error; as default schema is db, relation db.babel_3326_Employees will be used below
 ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
 GO
 
@@ -428,11 +428,11 @@ DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_33
 GO
 
 
--- will work; as default schema is s1, relation s1.babel_3326_Employees will be used below
-ENABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+-- will work; as default schema is db, relation db.babel_3326_Employees will be used below
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
 GO
 
-DISABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
 GO
 
 
@@ -448,10 +448,10 @@ GO
 
 
 -- will work
-ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 GO
 
-DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 GO
 
 
@@ -464,32 +464,32 @@ GO
 
 
 -- will not work, throw error
-ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 GO
 
-DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 GO
 
 
 -- will not work, throw error
-ENABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
 GO
 
-DISABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
 GO
 
 
 -- will work
-ENABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 GO
 
-DISABLE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 GO
 
 -- psql
 ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_dbo;
 GO
-ALTER TABLE master_s1.babel_3326_Employees OWNER TO master_dbo;
+ALTER TABLE master_db.babel_3326_Employees OWNER TO master_dbo;
 GO
 
 
