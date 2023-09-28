@@ -10,6 +10,7 @@ BABEL-3613
 
 app_name
 atn2
+ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 BABEL-1062
@@ -413,6 +414,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
