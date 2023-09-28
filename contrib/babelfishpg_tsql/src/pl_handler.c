@@ -3533,12 +3533,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									int i = 0;
+									bool has_schema_perms = false;
 									char *permissions[] = {"select", "insert", "update", "references", "delete"};
 									for(i = 0; i < 5; i++)
 									{
-										if (check_bbf_schema_for_entry(dbname, logical_schema, "ALL", permissions[i], rol_spec->rolename))
-											return;
+										if (check_bbf_schema_for_entry(dbname, logical_schema, "ALL", permissions[i], rol_spec->rolename) && !has_schema_perms)
+											has_schema_perms = true;
+										if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(dbname, logical_schema, obj, permissions[i], rol_spec->rolename))
+											del_from_bbf_schema(dbname, logical_schema, obj, permissions[i], rol_spec->rolename);
 									}
+									if (has_schema_perms)
+										return;
 								}
 								break;
 							}
@@ -3644,7 +3649,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(dbname, logicalschema, "ALL", "execute", rol_spec->rolename))
+								bool has_schema_perms = false;
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(dbname, logicalschema, "ALL", "execute", rol_spec->rolename) && !has_schema_perms)
+									has_schema_perms = true;
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(dbname, logicalschema, funcname, "execute", rol_spec->rolename))
+									del_from_bbf_schema(dbname, logicalschema, funcname, "execute", rol_spec->rolename);
+								if (has_schema_perms)
 									return;
 							}
 							break;

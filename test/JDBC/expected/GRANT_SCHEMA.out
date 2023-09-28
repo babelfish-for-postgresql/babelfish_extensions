@@ -429,8 +429,6 @@ go
 -- REVOKE OBJECT privileges
 use babel_4344_d1;
 go
-REVOKE select on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
-go
 REVOKE all on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
 go
 REVOKE select on babel_4344_s1.babel_4344_t3(a) FROM babel_4344_u1;
@@ -519,7 +517,9 @@ go
 
 insert into babel_4344_s1.babel_4344_t1 values(5);
 go
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t1)~~
 
 select * from babel_4344_s1.babel_4344_t3;
 go
