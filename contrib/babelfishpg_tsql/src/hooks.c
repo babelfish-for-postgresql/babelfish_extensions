@@ -141,8 +141,8 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
-static void gen_func_time_in_error();
-static bool containsInMonthFormat(int *ftype);
+static bool isTextMonthPresent(char* field);
+static bool containsInTextMonthFormat(int *ftype, char **field);
 static Datum pltsql_time_in(const char *str, int32 typmod);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
@@ -230,7 +230,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static time_in_hook_type prev_time_in_hook = NULL;
+static tsql_time_in_hook_type prev_tsql_time_in_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -392,8 +392,8 @@ InstallExtendedHooks(void)
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
-	prev_time_in_hook = time_in_hook;
-	time_in_hook = pltsql_time_in;
+	prev_tsql_time_in_hook = tsql_time_in_hook;
+	tsql_time_in_hook = pltsql_time_in;
 
 	select_common_type_hook = select_common_type_for_isnull;
 }
@@ -458,7 +458,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
-	time_in_hook = prev_time_in_hook;
+	tsql_time_in_hook = prev_tsql_time_in_hook;
 }
 
 /*****************************************
@@ -2699,30 +2699,61 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 }
 
-/*
- * Throw a common error message while casting to time datatype
- */
-static void gen_func_time_in_error()
+/* Checks whether the field is valid text month */
+static bool isTextMonthPresent(char* field)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-			errmsg("Conversion failed when converting date and/or time from character string.")));
+	char* months[] = {"january", "february", "march", "april", "may",
+					"june", "july", "august", "september", "october",
+					"november", "december", "jan", "feb", "mar", "apr",
+					"may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"};
+	for(int i = 0; i < 24; i++)
+		if(pg_strcasecmp(field, months[i]) == 0)
+			return true;
+	return false;
 }
 
-static bool containsInMonthFormat(int *ftype){
-	int count0 = 0, count1 = 0;
-	for(int i=0;i<3;i++)
+/*
+ * This function will check whether the first 3 inputs are in any of the format
+ * `DD MON YYY`, `DD YYYY MON`, `MON DD YYYY`, `MON YYYY DD`, `YYYY MM DD`, `YYYY DD MM`
+ * where MON is month in text format then returns true if present.
+ */
+static bool containsInTextMonthFormat(int *ftype, char **field){
+	int count_number = 0, count_string = 0;
+	for(int i = 0; i < 3; i++)
 	{
 		if(ftype[i] == DTK_NUMBER)
-			count0++;
+			count_number++;
 		else if(ftype[i] == DTK_STRING)
-			/* To-Do Check if valid text month is given */
-			count1++;
+		{
+			/* Check whether the string is valid text month */
+			if(!isTextMonthPresent(field[i]))
+				return false;
+			count_string++;
+		}
 		else
 			return false;
 	}
-	if(count0 ==2 && count1 ==1)
+	if(count_number == 2 && count_string == 1)
+	{
+		/*
+		 * If the first field is an string then swap with the second field
+		 * as when the date is given separatly then all different forms of
+		 * dates is supported. To avoid the conversion failure from `isTextMonthPresent`
+		 * later we are swapping earlier.
+		 */
+		if(ftype[0] == DTK_STRING)
+		{
+			char* temp_field;
+			int temp_ftype;
+			temp_field = field[0];
+			temp_ftype = ftype[0];
+			field[0] = field[1];
+			field[1] = temp_field;
+			ftype[0] = ftype[1];
+			ftype[1] = temp_ftype;
+		}
 		return true;
+	}
 	return false;
 }
 
@@ -2739,8 +2770,14 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
-	StringInfo	sf_1 ;
+	StringInfo	res ;
 	int status;
+
+	/* Throw a common error message while casting to time datatype */
+	#define TIME_IN_ERROR()	\
+		ereport(ERROR,	\
+			(errcode(ERRCODE_INVALID_DATETIME_FORMAT),	\
+			errmsg("Conversion failed when converting date and/or time from character string.")));	\
 
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						field, ftype, MAXDATEFIELDS, &nf);
@@ -2748,20 +2785,26 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 	{
 		if(nf >= 3)
 		{
-			if(containsInMonthFormat(ftype))
+			/*
+			 * If the input is of format "YYYY MON DD", then convert
+			 * to format of YYYY-MON-DD and ftype changes to "DTK_DATE"
+			 */
+			if(containsInTextMonthFormat(ftype, field))
 			{
-				StringInfoData buf;
-				initStringInfo(&buf);
-				appendStringInfoString(&buf, field[0]);
-				for(int i=1;i<3;i++)
-				{
-					appendStringInfoString(&buf, "-");
-					appendStringInfoString(&buf, field[i]);
-
-				}
-				field[0]=buf.data;
+				/*
+				 * For example if input is "2000 nov 23" will be converted
+				 * to "2000-nov-23".
+				 */
+				res = makeStringInfo();
+				appendStringInfo(res, "%s-%s-%s", field[0], field[1], field[2]);
+				field[0] = NULL;
+				field[0] = res->data;
 				ftype[0] = DTK_DATE;
 				nf = nf - 2;
+				/*
+				 * Since the first 3 fields converted to 1,
+				 * skip the attached fields.
+				 */
 				for(int i = 1; i < nf; i++)
 				{
 					field[i] = field[i+2];
@@ -2770,70 +2813,112 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 			}
 		}
 
-		for(int i=0;i < nf; i++)
+		for(int i = 0; i < nf; i++)
 		{
+			char *temp_field;
+			int len;
+			char* different_date_formats[] = {"/", ".", "-"};
+			temp_field = pstrdup(field[i]);
+			len = strlen(temp_field);
 			switch(ftype[i])
 			{
 				case DTK_NUMBER:
-					switch(strlen(field[i]))
+					switch(len)
 					{
 						case 1:
 						case 2:
 							/*
-							 * At this point the 1,2 digit number should be considered as
-							 * time only if there is an [AP]M after the number or else
+							 * At this point the digit number of length 1,2 should be considered as
+							 * time only if there is an [ap]m after the number or else
 							 * should throw an error
 							 */
-							if(i == nf-1 || ftype[i+1] != DTK_STRING)
-							{
-								gen_func_time_in_error();
-							}
-							status = RE_compile_and_execute(cstring_to_text("^([AP]M)$"),
+							if(i == nf - 1 || ftype[i+1] != DTK_STRING)
+								TIME_IN_ERROR();
+							status = RE_compile_and_execute(cstring_to_text("^([ap]m)$"),
 															(char *) field[i+1], strlen(field[i+1]),
-															REG_ADVANCED | REG_ICASE, DEFAULT_COLLATION_OID,
+															REG_ADVANCED, DEFAULT_COLLATION_OID,
 															0, NULL);
 							if(!status)
-								gen_func_time_in_error();
-
-							sf_1 = makeStringInfo();
-							appendStringInfo(sf_1, "%s%s", field[i], ":0:0");
-							field[i] = sf_1->data;
+								TIME_IN_ERROR();
+							/*
+							 * For example if the input is "1 am"
+							 * will be converted to "1:00:00 am".
+							 */
+							res = makeStringInfo();
+							appendStringInfo(res, "%s%s", field[i], ":00:00");
+							field[i] = NULL;
+							field[i] = res->data;
 							ftype[i] = DTK_TIME;
 							break;
-						/*
-						 * To-Do
-						 * Case 6,8 needs special handling to convert the
-						 * given numeric to date format(YYYY-MM-DD/YY-MM-DD)
-						 */
+
 						case 4:
+							/*
+							 * If the numeric input is of length 4, then convert
+							 * to year with default format of YYYY-01-01.
+							 * For example if input is "2000" will be converted
+							 * to "2000-01-01".
+							 */
+							res = makeStringInfo();
+							appendStringInfo(res, "%s%s", field[i], "-01-01");
+							field[i] = NULL;
+							field[i] = res->data;
+							ftype[i] = DTK_DATE;
+							break;
+
 						case 6:
 						case 8:
+							res = makeStringInfo();
+							for(int k = 0; k < len; k++)
+							{
+								appendStringInfo(res, "%c", temp_field[k]);
+								if((len == 6 && ((k + 1) % 2 == 0 && k < 5)) ||
+									(len == 8 && (k == 3 || k == 5)))
+										appendStringInfo(res, "%c", '-');
+							}
+							field[i] = NULL;
+							field[i] = res->data;	
+							ftype[i] = DTK_DATE;
 							break;
 						/*
 						 * If the numeric is of length {3,5,7, >8} then an error should be thrown*/
 						default:
-							gen_func_time_in_error();
+							TIME_IN_ERROR();
+					}
+					break;
+
+				case DTK_DATE:
+					/*
+					 * If the input is of format `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy
+					 * shouldn't be supported.
+					 * Supported date formats are `Mon yyyy dd`, `Mon dd yyyy`, `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
+					 */
+					for(int k = 0 ; k < 3; k++)
+					{
+						temp_field = strtok(temp_field, different_date_formats[k]);
+						if (pg_strcasecmp(field[i], temp_field) != 0)
 							break;
 					}
+					if(isTextMonthPresent(temp_field))
+						TIME_IN_ERROR();
+					break;
+
+				default:
+					break;
 			}
+			pfree(temp_field);
 		}
 		switch(nf)
 		{
 			case 1:
 				/*
-				 * To-Do
-				 * If the input is of format `Mon{/.}yyyy{/.}dd` or `Mon{/.}dd{/.}yyyy
-				 * shouldn't be supported.
-				 */
-				/*
 				 * If only date is specified add an default time of
-				 * 0:0:0
+				 * 00:00:00
 				 */
 				if(ftype[0] == DTK_DATE)
 				{
 					ftype[1] = DTK_TIME;
-					field[1] = "0:0:0";
-					nf = nf+1;
+					field[1] = "00:00:00";
+					nf = nf + 1;
  				}
 				break;
 			case 3:
@@ -2853,8 +2938,9 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 
 		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	}
+
 	if (dterr != 0)
-		gen_func_time_in_error();
+		TIME_IN_ERROR();
 
 	tm2time(tm, fsec, &result);
 	AdjustTimeForTypmod(&result, typmod);
