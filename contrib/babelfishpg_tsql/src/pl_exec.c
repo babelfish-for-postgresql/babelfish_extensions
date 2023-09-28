@@ -5444,9 +5444,8 @@ exec_fmtonly(PLtsql_execstate *estate,
 			estate->simple_eval_estate = NULL;
 			estate->simple_eval_resowner = NULL;
 		}
-	// estate->simple_eval_estate = NULL;
-	// estate->simple_eval_resowner = NULL;
-		estate->simple_eval_resowner = NULL;
+		// estate->simple_eval_estate = NULL;
+		// estate->simple_eval_resowner = NULL;
 		pltsql_create_econtext(estate);
 	}
 
