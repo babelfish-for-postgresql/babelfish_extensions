@@ -2580,8 +2580,13 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 		 * If we are in a new transaction after the call, we need to reset
 		 * some internal state.
 		 */
-		estate->simple_eval_estate = NULL;
-		estate->simple_eval_resowner = NULL;
+		// estate->simple_eval_estate = NULL;
+		// estate->simple_eval_resowner = NULL;
+		if (estate->use_shared_simple_eval_state)
+		{
+			estate->simple_eval_estate = NULL;
+			estate->simple_eval_resowner = NULL;
+		}
 		pltsql_create_econtext(estate);
 	}
 
@@ -6235,8 +6240,13 @@ exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 	SPI_commit();
 	SPI_start_transaction();
 
-	estate->simple_eval_estate = NULL;
-	estate->simple_eval_resowner = NULL;
+	// estate->simple_eval_estate = NULL;
+	// estate->simple_eval_resowner = NULL;
+	if (estate->use_shared_simple_eval_state)
+	{
+		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
 	pltsql_create_econtext(estate);
 
 	return PLTSQL_RC_OK;
@@ -6253,8 +6263,13 @@ exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 	SPI_rollback();
 	SPI_start_transaction();
 
-	estate->simple_eval_estate = NULL;
-	estate->simple_eval_resowner = NULL;
+	// estate->simple_eval_estate = NULL;
+	// estate->simple_eval_resowner = NULL;
+	if (estate->use_shared_simple_eval_state)
+	{
+		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
 	pltsql_create_econtext(estate);
 
 	return PLTSQL_RC_OK;
