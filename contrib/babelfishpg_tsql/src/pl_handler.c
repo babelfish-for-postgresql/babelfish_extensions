@@ -640,7 +640,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
 			if (cmd->subtype == AT_EnableTrig || cmd->subtype == AT_DisableTrig)
 			{
-				if (atstmt->objtype == OBJECT_TRIGGER){
+				if (atstmt->objtype == OBJECT_TRIGGER)
+				{
 					trig_schema = cmd->schemaname;
 				}
 				else
@@ -657,7 +658,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					rel_schema = get_authid_user_ext_schema_name(get_cur_db_name(), GetUserNameFromId(GetUserId(), false));
 				}
 
-				if (trig_schema != NULL && strncmp(trig_schema, rel_schema, Min(strlen(rel_schema), strlen(trig_schema))) != 0)
+				if (trig_schema != NULL && strcmp(trig_schema, rel_schema) != 0)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
@@ -665,7 +666,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
 				}
 
-				if(atstmt->relation->schemaname == NULL){
+				if(atstmt->relation->schemaname == NULL)
+				{
 					pfree((char *) rel_schema);
 				}
 			}
