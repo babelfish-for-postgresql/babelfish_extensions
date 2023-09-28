@@ -1590,7 +1590,6 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		const char *identifier_name = NULL;
 		int			open_square_bracket = 0;
 		int			double_quotes = 0;
-		int			single_quotes = 0;
 		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
@@ -1612,15 +1611,15 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 			/*
 			 * This condition will preserve the case of column name when there are more than
-			 * one cref->feilds. For instance, Queries like 
-			 * select [database].[schema].[table].[column] from table.
-			 * select [schema].[table].[column] from table.
-			 * selec [t].[column] from table as t
+			 * one cref->fields. For instance, Queries like 
+			 * 1. select [database].[schema].[table].[column] from table.
+			 * 2. select [schema].[table].[column] from table.
+			 * 3. select [t].[column] from table as t
 			 * Case 1: Handle the cases when column name is passed with no delimiters
 			 * For example, select ABC from table
-			 * Case 2: Handle the cases when column name is delimited with sq and dq.
-			 * In such cases, we are checking if no. of dq or sq are even or not. When sq are odd,
-			 * we are not tracing number of sqb and dq within sq, similar with the case of dq.
+			 * Case 2: Handle the cases when column name is delimited with dq.
+			 * In such cases, we are checking if no. of dq are even or not. When dq are odd,
+			 * we are not tracing number of sqb and sq within dq.
 			 * For instance, Queries like select "AF bjs'vs] " from table.
 			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
 			 * are zero, it means we are out of sqb.
@@ -1633,20 +1632,16 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				colname_start = pstate->p_sourcetext + res->location;
 				while(true)
 				{	
-					if(open_square_bracket == 0 && single_quotes % 2 == 0 && *colname_start == '"')
+					if(open_square_bracket == 0 && *colname_start == '"')
 					{
 						double_quotes++;
 					}
-					if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '\'')
-					{
-						single_quotes++;
-					}
 					/* To check how many open sqb are present in sourcetext. */
-					if(double_quotes % 2 == 0 && single_quotes % 2 == 0 && *colname_start == '[')
+					else if(double_quotes % 2 == 0 && *colname_start == '[')
 					{
 						open_square_bracket++;
 					}
-					if(double_quotes % 2 == 0 && single_quotes % 2 == 0 && *colname_start == ']')
+					else if(double_quotes % 2 == 0 && *colname_start == ']')
 					{
 						open_square_bracket--;
 					}
@@ -1654,7 +1649,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					 * last_dot pointer is to trace the last dot in the sourcetext,
 					 * as last dot indicates the starting of column name.
 					 */
-					if(open_square_bracket == 0 && double_quotes % 2 == 0 && single_quotes % 2 == 0 && *colname_start == '.')
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '.')
 					{
 						last_dot = colname_start;
 					}
@@ -1662,7 +1657,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
 					 * space or comma, it means colname_start is at the end of column name.
 					 */
-					if(open_square_bracket == 0 && double_quotes % 2 == 0 && single_quotes % 2 == 0 && open_square_bracket == 0 && (*colname_start == ' ' || *colname_start == ','))
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
 					{
 						last_dot++;
 						colname_start = last_dot;

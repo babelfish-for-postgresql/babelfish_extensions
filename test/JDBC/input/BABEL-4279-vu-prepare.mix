@@ -46,3 +46,15 @@ GO
 
 CREATE VIEW test_babel_4279_v6 AS SELECT "tngdf'".[sc,sdg"fdsngjds']."AB[C" from "tngdf'".[sc,sdg"fdsngjds'];
 GO
+
+CREATE TABLE test_babel_4279_t3(ABCD INT);
+GO
+
+CREATE VIEW test_babel_4279_v7 AS SELECT  test_babel_4279_t3.ABCD FROM test_babel_4279_t3;
+GO
+
+CREATE TABLE test_babel_4279_t4([ぁあ'"] INT);
+GO
+
+CREATE VIEW test_babel_4279_v8 AS SELECT test_babel_4279_t4.[ぁあ'"] FROM test_babel_4279_t4;
+GO

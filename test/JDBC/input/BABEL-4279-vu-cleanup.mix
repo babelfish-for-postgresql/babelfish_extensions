@@ -46,3 +46,15 @@ GO
 
 DROP SCHEMA "tngdf'";
 GO
+
+DROP VIEW test_babel_4279_v7;
+GO
+
+DROP TABLE test_babel_4279_t3;
+GO
+
+DROP VIEW test_babel_4279_v8;
+GO
+
+DROP TABLE test_babel_4279_t4;
+GO
