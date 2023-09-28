@@ -1,3 +1,4 @@
+-- sla 50000
 exec sysdatetime_dep_proc
 go
 
