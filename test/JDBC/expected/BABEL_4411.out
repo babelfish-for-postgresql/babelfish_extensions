@@ -1,0 +1,559 @@
+
+-- Escape hatch disabled
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+GO
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'strict'
+GO
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+ROLLBACK
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+COMMIT
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+GO
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+BEGIN TRANSACTION
+GO
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+ROLLBACK
+GO
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SAVE TRANSACTION sp1
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SET TRANSACTION ISOLATION failed, transaction aborted, set escape hatch 'escape_hatch_set_transaction_isolation_level' to ignore such error)~~
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+BEGIN TRANSACTION
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+COMMIT
+GO
+COMMIT
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+~~START~~
+text
+repeatable read
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+COMMIT
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+
+
+
+-- Escape hatch enabled
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'ignore'
+GO
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+COMMIT
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED 
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+ROLLBACK
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+~~START~~
+text
+read committed
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+GO
+SAVE TRANSACTION sp1
+GO
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT
+GO
+COMMIT
+GO
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+
+~~START~~
+text
+read uncommitted
+~~END~~
+

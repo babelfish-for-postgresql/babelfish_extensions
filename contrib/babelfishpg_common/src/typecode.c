@@ -254,7 +254,9 @@ Oid			tsql_nvarchar_oid = InvalidOid;
 Oid			tsql_ntext_oid = InvalidOid;
 Oid			tsql_image_oid = InvalidOid;
 Oid			tsql_binary_oid = InvalidOid;
+Oid			tsql_sys_binary_oid = InvalidOid;
 Oid			tsql_varbinary_oid = InvalidOid;
+Oid			tsql_sys_varbinary_oid = InvalidOid;
 Oid			tsql_rowversion_oid = InvalidOid;
 Oid			tsql_timestamp_oid = InvalidOid;
 Oid			tsql_datetime2_oid = InvalidOid;
@@ -339,11 +341,27 @@ is_tsql_binary_datatype(Oid oid)
 }
 
 bool
+is_tsql_sys_binary_datatype(Oid oid)
+{
+	if (tsql_sys_binary_oid == InvalidOid)
+		tsql_sys_binary_oid = lookup_tsql_datatype_oid("binary");
+	return tsql_sys_binary_oid == oid;
+}
+
+bool
 is_tsql_varbinary_datatype(Oid oid)
 {
 	if (tsql_varbinary_oid == InvalidOid)
 		tsql_varbinary_oid = lookup_tsql_datatype_oid("bbf_varbinary");
 	return tsql_varbinary_oid == oid;
+}
+
+bool
+is_tsql_sys_varbinary_datatype(Oid oid)
+{
+	if (tsql_sys_varbinary_oid == InvalidOid)
+		tsql_sys_varbinary_oid = lookup_tsql_datatype_oid("varbinary");
+	return tsql_sys_varbinary_oid == oid;
 }
 
 bool
