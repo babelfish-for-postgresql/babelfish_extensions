@@ -4466,7 +4466,12 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 	 * transactions do not affect it
 	 */
 	if (estate->use_shared_simple_eval_state && simple_econtext_stack == NULL)
+	{
 		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
+	// estate->simple_eval_estate = NULL;
+	// estate->simple_eval_resowner = NULL;
 
 	/*
 	 * simple_econtext_stack being NULL only reliably identifies
@@ -5435,7 +5440,13 @@ exec_fmtonly(PLtsql_execstate *estate,
 		 * simple-expression infrastructure.
 		 */
 		if (estate->use_shared_simple_eval_state)
+		{
 			estate->simple_eval_estate = NULL;
+			estate->simple_eval_resowner = NULL;
+		}
+	// estate->simple_eval_estate = NULL;
+	// estate->simple_eval_resowner = NULL;
+		estate->simple_eval_resowner = NULL;
 		pltsql_create_econtext(estate);
 	}
 
@@ -9627,7 +9638,12 @@ pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate)
 	MemoryContextSwitchTo(cur_ctxt);
 
 	if (estate->use_shared_simple_eval_state)
+	{
 		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
+	// estate->simple_eval_estate = NULL;
+	// estate->simple_eval_resowner = NULL;
 	pltsql_create_econtext(estate);
 }
 
@@ -9766,6 +9782,9 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
 	{
 		txn_clean_estate(true);
+		if (shared_simple_eval_estate)
+			FreeExecutorState(shared_simple_eval_estate);
+		shared_simple_eval_estate = NULL;
 		if (shared_simple_eval_resowner)
 			ResourceOwnerReleaseAllPlanCacheRefs(shared_simple_eval_resowner);
 		shared_simple_eval_resowner = NULL;
