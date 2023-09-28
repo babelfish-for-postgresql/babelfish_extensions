@@ -35,9 +35,9 @@ GO
 
 -- Begin tran -> rollback tran
 begin tran;
+set transaction isolation level read uncommitted;
 select @@trancount;
 begin tran;
-set transaction isolation level read uncommitted;
 insert into TxnTable values(3);
 select @@trancount;
 rollback tran;

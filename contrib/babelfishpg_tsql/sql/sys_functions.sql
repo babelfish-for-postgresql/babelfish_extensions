@@ -982,6 +982,7 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+
 CREATE OR REPLACE FUNCTION typeproperty(
     typename sys.VARCHAR,
     property sys.VARCHAR
@@ -1076,6 +1077,92 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql STABLE;
+
+create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'timezone_mapping'
+LANGUAGE C IMMUTABLE ;
+
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+BEGIN
+    IF input_expr = 'NULL' THEN
+        RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.';
+    END IF;
+
+    IF input_expr IS NULL OR tzzone IS NULL THEN 
+    	RETURN NULL;
+    END IF;
+
+    RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT , IN input_expr anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    tz_offset PG_CATALOG.TEXT;
+    tz_name PG_CATALOG.TEXT;
+    lower_tzn PG_CATALOG.TEXT;
+    prev_res PG_CATALOG.TEXT;
+    result PG_CATALOG.TEXT;
+    is_dstt bool;
+    tz_diff PG_CATALOG.TEXT;
+    input_expr_tx PG_CATALOG.TEXT;
+    input_expr_tmz TIMESTAMPTZ;
+BEGIN
+    IF input_expr IS NULL OR tzzone IS NULL THEN 
+    	RETURN NULL;
+    END IF;
+
+    lower_tzn := lower(tzzone);
+    IF lower_tzn <> 'utc' THEN
+        tz_name := sys.babelfish_timezone_mapping(lower_tzn);
+    ELSE
+        tz_name := 'utc';
+    END IF;
+
+    IF tz_name = 'NULL' THEN
+        RAISE USING MESSAGE := format('Argument data type or the parameter %s provided to AT TIME ZONE clause is invalid.', tzzone);
+    END IF;
+
+    IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
+        input_expr_tx := input_expr::TEXT;
+        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+
+        result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
+        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        if LEFT(tz_diff,1) <> '-' THEN
+            tz_diff := concat('+',tz_diff);
+        END IF;
+        tz_offset := left(tz_diff,6);
+        input_expr_tx := concat(input_expr_tx,tz_offset);
+        return cast(input_expr_tx as sys.datetimeoffset);
+    ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
+        input_expr_tx := input_expr::TEXT;
+        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+        result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
+        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        if LEFT(tz_diff,1) <> '-' THEN
+            tz_diff := concat('+',tz_diff);
+        END IF;
+        tz_offset := left(tz_diff,6);
+        result := concat(result,tz_offset);
+        return cast(result as sys.datetimeoffset);
+    ELSE
+        RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
+    END IF;
+       
+END;
+$BODY$
+LANGUAGE 'plpgsql' STABLE;
+
+
 
 
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
