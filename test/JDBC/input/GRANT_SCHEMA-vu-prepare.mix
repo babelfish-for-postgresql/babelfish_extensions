@@ -1,8 +1,5 @@
 -- tsql
 -- create objects
-select * from babelfish_schema_permissions;
-go
-
 create database grant_schema_d1;
 go
 
