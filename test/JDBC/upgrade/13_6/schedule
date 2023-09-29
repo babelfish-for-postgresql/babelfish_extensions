@@ -170,6 +170,7 @@ rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
+select-strip-parens-before-pr1812
 sp_describe_first_result_set
 sp_tablecollations
 sys-all_columns

@@ -228,6 +228,7 @@ ISC-Tables
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
+key_column_usage
 linked_servers
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
@@ -243,6 +244,7 @@ rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
+select-strip-parens
 sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
@@ -414,6 +416,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
