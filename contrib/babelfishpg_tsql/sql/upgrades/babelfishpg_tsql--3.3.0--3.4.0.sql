@@ -735,7 +735,6 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   object_type NAME,
   PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
 );
-GRANT SELECT ON sys.babelfish_schema_permissions TO PUBLIC;
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'timezone_mapping'

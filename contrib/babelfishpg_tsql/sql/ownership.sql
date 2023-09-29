@@ -24,7 +24,6 @@ CREATE TABLE sys.babelfish_schema_permissions (
   object_type NAME,
   PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
 );
-GRANT SELECT ON sys.babelfish_schema_permissions TO PUBLIC;
 
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (

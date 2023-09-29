@@ -3564,7 +3564,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				GrantStmt *grant = (GrantStmt *) parsetree;
 				char	   *dbname = get_cur_db_name();
 				const char *current_user = GetUserNameFromId(GetUserId(), false);
-				/* If object is table. */
+				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;
 				Assert(list_length(grant->objects) == 1);
@@ -3572,19 +3572,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						break;
 				else if (grant->objtype == OBJECT_TABLE)
 				{
-					/* Don't add any entry for the GRANT statements executed while REVOKE on Schema. */
-					if (pstmt->stmt_len == 1 && grant->is_grant)
-					{
-						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-								queryEnv, dest, qc);
-						else
-							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-								queryEnv, dest, qc);
-						return;
-					}
 					/* Ignore CREATE database subcommands */
-					if (!(pstmt->stmt_len == 18 || pstmt->stmt_len == 19))
+					if (strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
 					{
 						RangeVar   *rv = (RangeVar *) linitial(grant->objects);
 						const char *logical_schema = NULL;

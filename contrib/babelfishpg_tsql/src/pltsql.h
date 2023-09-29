@@ -187,7 +187,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_INSERT_BULK,
 	PLTSQL_STMT_GRANTDB,
 	PLTSQL_STMT_GRANTSCHEMA
-	} PLtsql_stmt_type;
+} PLtsql_stmt_type;
 
 /*
  * Execution node return codes

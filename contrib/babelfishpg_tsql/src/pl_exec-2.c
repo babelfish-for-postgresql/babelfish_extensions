@@ -3312,10 +3312,16 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	datdba = get_role_oid("sysadmin", false);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
 	schemaOid = LookupExplicitNamespace(schema_name, true);
+
+	if (!OidIsValid(schemaOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist",
+							schema_name)));
 	
 	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
 	foreach(lc1, stmt->privileges)
@@ -3332,7 +3338,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	
 			if (pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba) || grantee_is_db_owner)
 				ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
 			parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);

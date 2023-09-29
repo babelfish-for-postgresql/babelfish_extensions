@@ -86,8 +86,8 @@ Oid			bbf_function_ext_idx_oid;
 /*****************************************
  *			SCHEMA
  *****************************************/
-Oid			bbf_schema_oid;
-Oid			bbf_schema_idx_oid;
+Oid			bbf_schema_perms_oid;
+Oid			bbf_schema_perms_idx_oid;
 
 /*****************************************
  *			DOMAIN MAPPING
@@ -1447,21 +1447,21 @@ clean_up_bbf_function_ext(int16 dbid)
  *****************************************/
 
 Oid
-get_bbf_schema_oid()
+get_bbf_schema_perms_oid()
 {
-	if (!OidIsValid(bbf_schema_oid))
-		bbf_schema_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME,
+	if (!OidIsValid(bbf_schema_perms_oid))
+		bbf_schema_perms_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME,
 								get_namespace_oid("sys", false));
-	return bbf_schema_oid;
+	return bbf_schema_perms_oid;
 }
 
 Oid
-get_bbf_schema_idx_oid()
+get_bbf_schema_perms_idx_oid()
 {
-	if (!OidIsValid(bbf_schema_idx_oid))
-		bbf_schema_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME,
+	if (!OidIsValid(bbf_schema_perms_idx_oid))
+		bbf_schema_perms_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME,
 									get_namespace_oid("sys", false));
-	return bbf_schema_idx_oid;
+	return bbf_schema_perms_idx_oid;
 }
 
 /*****************************************
@@ -2844,7 +2844,7 @@ add_entry_to_bbf_schema(const char *db_name,
 	bool		new_record_nulls_bbf_schema[6];
 
 	/* Fetch the relation */
-	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
 
@@ -2890,7 +2890,7 @@ check_bbf_schema_for_entry(const char *db_name,
 	TableScanDesc	scan;
 	bool	catalog_entry_exists = false;
 
-	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
@@ -2936,7 +2936,7 @@ check_bbf_schema_for_schema(const char *db_name,
 	TableScanDesc scan;
 	bool		catalog_entry_exists = false;
 
-	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
@@ -2978,7 +2978,7 @@ del_from_bbf_schema(const char *db_name,
 	ScanKeyData key[5];
 	TableScanDesc scan;
 
-	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
@@ -3025,7 +3025,7 @@ clean_up_bbf_schema(const char *db_name,
 	HeapTuple	tuple_bbf_schema;
 
 	/* Fetch the relation */
-	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 
 	if (is_schema)
@@ -3040,7 +3040,7 @@ clean_up_bbf_schema(const char *db_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(schema_name));
 		scan = systable_beginscan(bbf_schema_rel,
-					get_bbf_schema_idx_oid(),
+					get_bbf_schema_perms_idx_oid(),
 					true, NULL, 2, scanKey);
 	}
 	else
@@ -3059,7 +3059,7 @@ clean_up_bbf_schema(const char *db_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(object_name));
 		scan = systable_beginscan(bbf_schema_rel,
-					get_bbf_schema_idx_oid(),
+					get_bbf_schema_perms_idx_oid(),
 					true, NULL, 3, scanKey);
 	}
 
@@ -3088,7 +3088,7 @@ grant_perms_to_objects_in_schema(const char *db_name,
 	ScanKeyData scanKey[4];
 
 	/* Fetch the relation */
-	bbf_schema_rel = table_open(get_bbf_schema_oid(),
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&scanKey[0],
 				1,
