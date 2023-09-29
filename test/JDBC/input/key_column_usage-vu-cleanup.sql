@@ -8,6 +8,9 @@ GO
 DROP PROCEDURE key_column_usage_vu_prepare_p1;
 GO
 
+DROP TABLE key_column_usage_vu_prepare_tbl6
+GO
+
 DROP TABLE key_column_usage_vu_prepare_tbl5
 GO
 
