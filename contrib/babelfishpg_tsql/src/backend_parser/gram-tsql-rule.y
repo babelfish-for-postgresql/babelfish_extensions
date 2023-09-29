@@ -1527,46 +1527,105 @@ simple_select:
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					SelectStmt 	*wrapper_sl = makeNode(SelectStmt);
-					SelectStmt 	*s_sql = makeNode(SelectStmt);
-					SelectStmt 	*c_sql = makeNode(SelectStmt);
-					ResTarget	*w_func = makeNode(ResTarget);
+					
+					FuncCall   	*pivotCall;
+					ColumnDef   *rowid_df;
+					TypeName 	*t;
 
-					A_Const *g_a1 = (A_Const *) makeIntConst(1, -1);
-					A_Const *g_a2 = (A_Const *) makeIntConst(2, -1);
-					SortBy * s = makeNode(SortBy);
+					ColumnRef  		*a_star;
+					ResTarget		*a_star_restarget;
+					RangeFunction	*funCallNode;
+				
+					SelectStmt 	*s_sql;
+					SelectStmt 	*c_sql;
+					SelectStmt 	*wrapper_sl;
+
+					SortBy 		*s;
+					A_Const 	*g_a1;
+					A_Const 	*g_a2;
 
 					Node *rowid = (Node *) list_nth($3, 0);
 					Node *r_col = (Node *) list_nth((List *)$6, 0);
 					Node *r_func = (Node *) list_nth((List *)$6, 1);
 
+					/* prepare SortBy node for source sql */
+					s = makeNode(SortBy);
 					s->node = makeIntConst(1, -1);
-					/* SORTBY_DEFAULT */
 					s->sortby_dir = 0;
-					/* SORTBY_NULLS_DEFAULT */    
 					s->sortby_nulls = 0;     
 					s->useOp = NIL;
 					s->location = -1;
 
+					/* prepare group by clause for source sql*/
+					g_a1 = (A_Const *) makeIntConst(1, -1);
+					g_a2 = (A_Const *) makeIntConst(2, -1);
+
+					/* transform to select * from funcCall as newtable(a type1, b type2 ...) */
+					/* create * node for select target list */
+					a_star = makeNode(ColumnRef);
+					a_star->fields = list_make1(makeNode(A_Star));
+					a_star->location = -1;
+					a_star_restarget = makeNode(ResTarget);
+					a_star_restarget->name = NULL;
+					a_star_restarget->name_location = -1;
+					a_star_restarget->indirection = NIL;
+					a_star_restarget->val = (Node *) a_star;
+					a_star_restarget->location = -1;
+
 					/* prepare source sql for babelfish_pivot function */
+					s_sql = makeNode(SelectStmt);
 					s_sql->targetList = list_make3(rowid, r_col, r_func);
 					s_sql->fromClause = $5;
 					s_sql->groupClause = list_make2(g_a1, g_a2);
 					s_sql->sortClause = list_make1(s);
 
 					/* prepare category sql for babelfish_pivot function */
+					c_sql = makeNode(SelectStmt);
 					c_sql->distinctClause = list_make1(NIL);
 					c_sql->targetList = list_make1(r_col);
 					c_sql->fromClause = $5;
 					c_sql->whereClause = list_nth((List *)$6, 2);
+
+					/* create a function call node for the fromClause */
+					funCallNode = makeNode(RangeFunction);
+					pivotCall = makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
+					funCallNode->lateral = false;
+					funCallNode->is_rowsfrom = false;
+					funCallNode->functions = list_make1(list_make2((Node *) pivotCall, NIL));
+
+					/* prepare for alias clause */
+					/* prepare the column list for alias clause */
+					/* TODO: add 0 - 2+ non pivot columns support */
+					rowid_df = makeNode(ColumnDef);
+					/* TODO: add support for other data type */
+					t = SystemTypeName("int4");
+					t->location = -1;
+					/* rowid_df->colname = ((String *)((List *)((ColumnRef)((ResTarget *)rowid)->val)->field)->elements[0])->sval; */
+					rowid_df->colname = "venderid";
+					rowid_df->typeName = t;
+					rowid_df->inhcount = 0;
+					rowid_df->is_local = true;
+					rowid_df->is_not_null = false;
+					rowid_df->is_from_type = false;
+					rowid_df->storage = 0;
+					rowid_df->raw_default = NULL;
+					rowid_df->cooked_default = NULL;
+					rowid_df->collOid = InvalidOid;
+					rowid_df->location = -1;
+
+					/* alias_clause */
+					funCallNode->alias = $7;
+					/* column definiation for new pivot table */
+					/* TODO: change the following to list_concat after support 0 - 2+ non pivot columns */
+					funCallNode->coldeflist = list_insert_nth((List *) list_nth((List *)$6, 3), 0, rowid_df);
 					
-					/* prepare wrapper select */
-					w_func->val = (Node *) makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
-					wrapper_sl->targetList = list_make1(w_func);
+					wrapper_sl = makeNode(SelectStmt);
+					wrapper_sl->targetList = list_make1(a_star_restarget);
+					// wrapper_sl->targetList = $3;
+					wrapper_sl->fromClause = list_make1(funCallNode);
 					wrapper_sl->larg = s_sql;
 					wrapper_sl->rarg = c_sql;
 					wrapper_sl->isPivot = true;
-					/* alias_clause has not processed */
 					
 					$$ = (Node *)wrapper_sl;
 				}	
@@ -1578,6 +1637,7 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 					A_Expr	*where_clause;
 					List    *ret;
 					List	*col_list = NULL;
+					List    *coldf_list = NULL;
 					ColumnRef	*c = makeNode(ColumnRef);
 					ResTarget	*r_col = makeNode(ResTarget);
 					ResTarget	*r_func = makeNode(ResTarget);
@@ -1603,15 +1663,36 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 							ColumnRef	*tempRef = list_nth((List *)$7, i);
 							String	*s = list_nth(tempRef->fields, 0);
 							Node	*n = makeStringConst(s->sval, -1);
-							if (col_list == NULL){
+
+							//prepare for the alias clause 
+							ColumnDef   *coldf = makeNode(ColumnDef);				
+							TypeName 	*t = SystemTypeName("int4");
+							t->location = -1;
+
+							coldf->colname = s->sval;
+							coldf->typeName = t;
+							coldf->inhcount = 0;
+							coldf->is_local = true;
+							coldf->is_not_null = false;
+							coldf->is_from_type = false;
+							coldf->storage = 0;
+							coldf->raw_default = NULL;
+							coldf->cooked_default = NULL;
+							coldf->collOid = InvalidOid;
+							coldf->location = -1;
+
+							if (col_list == NULL || coldf_list == NULL){
 								col_list = list_make1(n);
+								coldf_list = list_make1(coldf);
 							}else{
 								col_list = lappend(col_list, n);
+								coldf_list = lappend(coldf_list, coldf);
 							}
 						}
 					}
 					where_clause = makeSimpleA_Expr(AEXPR_IN, "=",(Node *) c,(Node *) col_list, -1);
-					ret = list_make3(r_col, r_func, (Node *)where_clause);
+					ret = list_make4(r_col, r_func, (Node *)where_clause, coldf_list);
+					
 					$$ = (Node*) ret; 
 				} 
 			;

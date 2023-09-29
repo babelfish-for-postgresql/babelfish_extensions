@@ -712,8 +712,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			   and save to global variable for later pivot 
 			   function use 
 			*/
-			selectStmt->larg = NULL;
-			selectStmt->rarg = NULL;
 		}
 	}
 
