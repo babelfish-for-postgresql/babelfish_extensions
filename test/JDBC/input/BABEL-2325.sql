@@ -13,7 +13,7 @@ GO
 SELECT "string"
 GO
 
--- should report error (double-quoted string literals cannot contain single-quotes while QUOTED_IDENTIFIER=OFF)
+-- should return f'oo with QUOTED_IDENTIFIER=OFF
 SELECT "f'oo"
 GO
 
