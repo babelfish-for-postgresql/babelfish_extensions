@@ -925,8 +925,13 @@ public:
 			TSqlParser::IdContext *obj_name = ctx->object_name;
 
 			std::string full_object_name = ::getFullText(ctx);
+			std::string server_name_str;
 
-			std::string server_name_str = getIDName(obj_server->DOUBLE_QUOTE_ID(), obj_server->SQUARE_BRACKET_ID(), obj_server->ID());
+			if (obj_server->keyword())
+				server_name_str = getFullText(obj_server->keyword());
+			else
+				server_name_str = getIDName(obj_server->DOUBLE_QUOTE_ID(), obj_server->SQUARE_BRACKET_ID(), obj_server->ID());
+				
 			std::string quoted_server_str = std::string("'") + server_name_str + std::string("'");
 
 			std::string three_part_name = ::getFullText(obj_database) + std::string(".") + ::getFullText(obj_schema) + std::string(".") + ::getFullText(obj_name);
@@ -1039,6 +1044,26 @@ public:
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 
+		#ifdef ENABLE_SPATIAL_TYPES
+		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+		{
+			TSqlParser::IdContext *idctx = ctx->id()[0];
+			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+			{
+				std::string idText = ::getFullText(idctx->id()[0]);
+				transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
+				size_t start = idText.find_first_not_of(" \n\r\t\f\v");
+				idText = (start == std::string::npos) ? "" : idText.substr(start);
+				size_t end = idText.find_last_not_of(" \n\r\t\f\v");
+				idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
+				if(idText == "geography" || idText == "geometry"){
+					rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), idText))); 
+					rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "__")));		
+				}
+			}
+		}
+		#endif
+		
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
 
@@ -1086,7 +1111,13 @@ public:
 		 */
 		if (linked_srv)
 		{
-			std::string linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
+			std::string linked_srv_name;
+
+			if (linked_srv->keyword())
+				linked_srv_name = getFullText(linked_srv->keyword());
+			else
+				linked_srv_name = getIDName(linked_srv->DOUBLE_QUOTE_ID(), linked_srv->SQUARE_BRACKET_ID(), linked_srv->ID());
+				
 			std::string str = std::string("'") + linked_srv_name + std::string("'");
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->OPENQUERY()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->OPENQUERY()), "openquery_internal")));
@@ -1541,6 +1572,62 @@ public:
 		popContainer(ctx);
 	}
 
+	void exitAlter_table(TSqlParser::Alter_tableContext *ctx) override
+	{
+		if (ctx->TRIGGER() && ctx->id().size() > 1)	/* condition to filter alter table statements which contains TRIGGER keyword and multiple trigger names */
+		{
+			/*
+			 * When we come across a alter table query which enable/disable trigger with multiple trigger name, 
+			 * we will replace it with list of alter table statements, a statement for each trigger.
+			 * As Postgres only support enabling/disabling of only one trigger using alter table syntax, so a call like:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a, trigger_b
+			 *	GO
+			 * 
+			 * will be re-written as:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a; 
+			 *  ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_b;
+			 */
+
+			std::vector<TSqlParser::IdContext *> list_id = ctx->id();
+			TSqlParser::Table_nameContext *table_name = ctx->tabname;
+
+			std::string str = std::string("");
+			std::string action_type;
+			if (ctx->ENABLE() != nullptr)
+			{
+				action_type = std::string(" ENABLE");
+			}
+			else
+			{
+				action_type = std::string(" DISABLE");
+			}
+
+			for (TSqlParser::IdContext *id : list_id) {
+				str += std::string("ALTER TABLE ") + ::getFullText(table_name) + action_type + std::string(" TRIGGER ") + ::getFullText(id) + "; ";
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
+		}
+	}
+
+	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+	}
+
+	void exitDisable_trigger(TSqlParser::Disable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+	}
+	
 	//////////////////////////////////////////////////////////////////////////////
 	// Non-container statement management
 	//////////////////////////////////////////////////////////////////////////////
@@ -1737,35 +1824,6 @@ public:
 		}
 		clear_rewritten_query_fragment();
 	}
-		
-    void exitCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
-    {
-		PLtsql_expr *expr = nullptr;
-		if (ctx->print_statement())
-		{
-			PLtsql_stmt_print *stmt = (PLtsql_stmt_print *) getPLtsql_fragment(ctx);
-			expr = (PLtsql_expr *) linitial(stmt->exprs);
-		}
-		else if (ctx->raiseerror_statement() && ctx->raiseerror_statement()->raiseerror_msg() && ctx->raiseerror_statement()->raiseerror_msg()->char_string())
-		{
-			PLtsql_stmt_raiserror *stmt = (PLtsql_stmt_raiserror *) getPLtsql_fragment(ctx);
-			expr = (PLtsql_expr *) linitial(stmt->params);
-		}
-		else if (ctx->return_statement())
-		{
-			PLtsql_stmt_return *stmt = (PLtsql_stmt_return *) getPLtsql_fragment(ctx);
-			expr = (PLtsql_expr *) stmt->expr;
-		}
-		if (expr) 
-		{
-			PLtsql_expr_query_mutator mutator(expr, ctx);
-			add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
-			mutator.run(); // expr->query will be rewitten here	
-		}
-
-		clear_rewritten_query_fragment();    	
-	}
-	
 
 	void exitSecurity_statement(TSqlParser::Security_statementContext *ctx) override
 	{
@@ -1825,6 +1883,10 @@ public:
 	
 	void exitAnother_statement(TSqlParser::Another_statementContext *ctx) override
 	{
+		if (ctx->set_statement()) {
+			//std::cout << "set_statement: CURSOR=" << ctx->set_statement()->CURSOR() << "expression=" << ctx->set_statement()->expression()<< "\n";	
+		}
+		
 		// currently, declare_cursor only need rewriting because it contains select statement
 		if (ctx->cursor_statement() && ctx->cursor_statement()->declare_cursor())
 		{
@@ -1850,7 +1912,7 @@ public:
 			}
 		}
 
-		else if (ctx->set_statement() && (ctx->set_statement()->EQUAL() || ctx->set_statement()->assignment_operator()))
+		else if (ctx->set_statement() && ctx->set_statement()->expression())
 		{
 			//std::cout << "set_statement rewrite pre : \n";		
 				
@@ -2223,6 +2285,38 @@ public:
 	{
 		graft(makeExecBodyBatch(ctx), peekContainer());
 	}
+	
+
+	PLtsql_expr *rewrite_if_condition(TSqlParser::Search_conditionContext *ctx)
+	{
+		PLtsql_expr *expr = makeTsqlExpr(ctx, false);
+		PLtsql_expr_query_mutator mutator(expr, ctx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+		clear_rewritten_query_fragment();
+
+		/* Now we can prepend SELECT to rewritten search_condition */
+		expr->query = strdup((std::string("SELECT ") + std::string(expr->query)).c_str());
+		return expr;
+	}
+
+	void exitSearch_condition(TSqlParser::Search_conditionContext *ctx) override
+	{
+		if (!ctx->parent || !ctx->parent->parent)
+			return;
+
+		if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->if_statement())
+		{
+
+			PLtsql_stmt_if *fragment = (PLtsql_stmt_if *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = rewrite_if_condition(ctx);
+		}
+		else if (((TSqlParser::Cfl_statementContext *) ctx->parent->parent)->while_statement())
+		{
+			PLtsql_stmt_while *fragment = (PLtsql_stmt_while *) getPLtsql_fragment(ctx->parent->parent);
+			fragment->cond = rewrite_if_condition(ctx);
+		}
+	}	
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2298,6 +2392,29 @@ public:
 
 	TSqlParser::IdContext *proc = ctx->procedure;
 
+	#ifdef ENABLE_SPATIAL_TYPES
+	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+	{
+		TSqlParser::IdContext *idctx = ctx->id()[0];
+		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+		{
+			std::string idText = idctx->id()[0]->getText();
+			transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
+			size_t start = idText.find_first_not_of(" \n\r\t\f\v");
+    		idText = (start == std::string::npos) ? "" : idText.substr(start);
+			size_t end = idText.find_last_not_of(" \n\r\t\f\v");
+    		idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
+			if(idText == "geography" || idText == "geometry"){
+				// Replace colon_colon with underscores of the same length
+				std::string colonText = idctx->colon_colon()->getText();
+				std::string underScores(colonText.size(), '_');
+
+				stream.setText(idctx->colon_colon()->start->getStartIndex(), underScores.c_str());
+			}
+		}
+	}
+	#endif
+	
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
     {
@@ -3974,10 +4091,13 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 
 	result->cmd_type = PLTSQL_STMT_IF;
 	result->lineno = getLineNo(ctx);
-	result->cond = makeTsqlExpr(ctx->search_condition(), true);
 
-	// Note that we record the then_body and the else_body
-	// in exitIf_statement()
+	/*
+	 * Note that 
+	 * 1/ We fill in result->cond during exitIf_statement so that search_condition would have
+	 *    been rewritten at that point. 
+	 * 2/ We record the then_body and the else_body in exitIf_statement().
+	 */
 
 	return result;
 }
@@ -4115,10 +4235,10 @@ void *
 makeWhileStmt(TSqlParser::While_statementContext *ctx)
 {
 	PLtsql_stmt_while *result = (PLtsql_stmt_while *) palloc0(sizeof(*result));
-
 	result->cmd_type = PLTSQL_STMT_WHILE;
-	result->cond = makeTsqlExpr(ctx->search_condition(), true);
-	
+
+	/* We will populate result->cond during exitSearch_condition() */
+
 	return result;
 }
 
@@ -4638,6 +4758,12 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
+		else if(set_special_ctx->ISOLATION())
+		{
+			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeSQL(ctx);
+			stmt->is_set_tran_isolation = true;
+			return (PLtsql_stmt *) stmt;
+		}			
 		else
 			return makeSQL(ctx);
 	}

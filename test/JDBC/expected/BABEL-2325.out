@@ -30,11 +30,10 @@ string
 -- should return f'oo with QUOTED_IDENTIFIER=OFF
 SELECT "f'oo"
 GO
-
-TART~~
-+varchar
-+f'oo
-+~~END~~
+~~START~~
+varchar
+f'oo
+~~END~~
 
 
 --------------------------------------------------------------------------------
