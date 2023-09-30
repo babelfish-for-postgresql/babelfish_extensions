@@ -1,34 +1,38 @@
-drop procedure proc_doublequote
+drop procedure dubquote_p
 go
-drop procedure proc_doublequote2
+drop procedure dubquote_p2
 go
-drop function func_doublequote
+drop function dubquote_f1
 go
-drop function func2_doublequote
+drop function dubquote_f2
 go
-drop function func3_doublequote
+drop function dubquote_f3
 go
-drop proc if exists dubquote_p2
+drop procedure dubquote_p2a
 go
-drop proc if exists dubquote_p3
+drop procedure dubquote_p3
 go
-drop procedure if exists dubquote_p4
+drop procedure dubquote_p4
 go
-drop function if exists dubquote_f15
+drop function dubquote_f4
 go
-drop procedure if exists dubquote_p5
+drop function dubquote_f5
 go
-drop proc if exists dubquote_p6
+drop function dubquote_f6
 go
-drop sequence if exists dubquote_myseq
+drop procedure dubquote_p5
 go
-drop sequence if exists dubquote_myseq2
+drop procedure dubquote_p6
 go
-drop sequence if exists dubquote_myseq3
+drop sequence dubquote_myseq
 go
-drop sequence if exists dubquote_myseq4
+drop sequence dubquote_myseq2
 go
-drop proc if exists dubquote_p7
+drop sequence dubquote_myseq3
 go
-drop proc if exists dubquote_p8
+drop sequence dubquote_myseq4
+go
+drop procedure dubquote_p7
+go
+drop procedure dubquote_p8
 go

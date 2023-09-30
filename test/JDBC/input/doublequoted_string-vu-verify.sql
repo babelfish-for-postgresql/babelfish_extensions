@@ -1,7 +1,7 @@
-create procedure proc_doublequote @p varchar(20) = "ab'cd" , @p2 varchar(20)='xyz'
+create procedure dubquote_p @p varchar(20) = "ab'cd" , @p2 varchar(20)='xyz'
 as select @p
 go
-create proc proc_doublequote2 @p varchar(20) = "ab""cd"
+create procedure dubquote_p2 @p varchar(20) = "ab""cd"
 as select @p
 go
 
@@ -9,29 +9,29 @@ set quoted_identifier off
 go
 select "abc"
 go
-exec proc_doublequote
+exec dubquote_p
 go
-exec proc_doublequote2
+exec dubquote_p2
 go
-exec proc_doublequote "abc"
+exec dubquote_p "abc"
 go
-exec proc_doublequote 'abc'
+exec dubquote_p 'abc'
 go
-exec proc_doublequote abc
+exec dubquote_p abc
 go
 set quoted_identifier on
 go
 select "abc"
 go
-exec proc_doublequote
+exec dubquote_p
 go
-exec proc_doublequote2
+exec dubquote_p2
 go
-exec proc_doublequote "abc"
+exec dubquote_p "abc"
 go
-exec proc_doublequote 'abc'
+exec dubquote_p 'abc'
 go
-exec proc_doublequote abc
+exec dubquote_p abc
 go
 
 set quoted_identifier off
@@ -65,118 +65,114 @@ go
 
 set quoted_identifier on
 go
-exec proc_doublequote
+exec dubquote_p
 go
-exec proc_doublequote "xx'yy"
+exec dubquote_p "xx'yy"
 go
-exec proc_doublequote 'xx"yy'
+exec dubquote_p 'xx"yy'
 go
-exec proc_doublequote """"
+exec dubquote_p """"
 go
-exec proc_doublequote ''''
+exec dubquote_p ''''
 go
-exec proc_doublequote '"'
+exec dubquote_p '"'
 go
-exec proc_doublequote '""'
+exec dubquote_p '""'
 go
-exec proc_doublequote "'"
+exec dubquote_p "'"
 go
-exec proc_doublequote "''"
+exec dubquote_p "''"
 go
-exec proc_doublequote """'""'"""
+exec dubquote_p """'""'"""
 go
 
 -- same as above but with named notation
-exec proc_doublequote @p="xx'yy"  , @p2='x"y'
+exec dubquote_p @p="xx'yy"  , @p2='x"y'
 go
-exec proc_doublequote @p='xx"yy'  , @p2="x""y"
+exec dubquote_p @p='xx"yy'  , @p2="x""y"
 go
-exec proc_doublequote @p=""""     , @p2="x'y"
+exec dubquote_p @p=""""     , @p2="x'y"
 go
-exec proc_doublequote @p=''''     , @p2="x''y"
+exec dubquote_p @p=''''     , @p2="x''y"
 go
-exec proc_doublequote @p='"'      , @p2="x''y"
+exec dubquote_p @p='"'      , @p2="x''y"
 go
-exec proc_doublequote @p='""'     , @p2="x''y"
+exec dubquote_p @p='""'     , @p2="x''y"
 go
-exec proc_doublequote @p="'"      , @p2="x''y"
+exec dubquote_p @p="'"      , @p2="x''y"
 go
-exec proc_doublequote @p="''"     , @p2="x''y"
+exec dubquote_p @p="''"     , @p2="x''y"
 go
-exec proc_doublequote @p="""'""'""" , @p2="x''y"
+exec dubquote_p @p="""'""'""" , @p2="x''y"
 go
 
 -- using N'...' notation:
-exec proc_doublequote N'xx"yy'
+exec dubquote_p N'xx"yy'
 go
-exec proc_doublequote N''''
+exec dubquote_p N''''
 go
-exec proc_doublequote N'"'
+exec dubquote_p N'"'
 go
-exec proc_doublequote N'""'
+exec dubquote_p N'""'
 go
-exec proc_doublequote @p=N'xx"yy'
+exec dubquote_p @p=N'xx"yy'
 go
-exec proc_doublequote @p=N''''
+exec dubquote_p @p=N''''
 go
-exec proc_doublequote @p=N'"'
+exec dubquote_p @p=N'"'
 go
-exec proc_doublequote @p=N'""'
+exec dubquote_p @p=N'""'
 go
 
 -- functions
 set quoted_identifier off
 go
-create function func_doublequote(@p varchar(20) = "ab'cd") returns varchar(20) as begin return @p end
+create function dubquote_f1(@p varchar(20) = "ab'cd") returns varchar(20) as begin return @p end
 go
-create function func2_doublequote(@p varchar(20) = "ab""cd") returns varchar(20) as begin return @p end
+create function dubquote_f2(@p varchar(20) = "ab""cd") returns varchar(20) as begin return @p end
 go
-create function func3_doublequote(@p varchar(20) = abcd) returns varchar(20) as begin return @p end
+create function dubquote_f3(@p varchar(20) = abcd) returns varchar(20) as begin return @p end
 go
 declare @v varchar(20)
-exec @v = func_doublequote
+exec @v = dubquote_f1
 select @v
 go
 declare @v varchar(20)
-exec @v = func2_doublequote
+exec @v = dubquote_f2
 select @v
 go
 declare @v varchar(20)
-exec @v = func3_doublequote
+exec @v = dubquote_f3
 select @v
 go
 
-select dbo.func_doublequote("ab'cd")
+select dbo.dubquote_f1("ab'cd")
 go
-select dbo.func_doublequote('ab"cd')
+select dbo.dubquote_f1('ab"cd')
 go
-select dbo.func_doublequote(N'ab"cd')
+select dbo.dubquote_f1(N'ab"cd')
 go
-select dbo.func_doublequote("ab""cd")
+select dbo.dubquote_f1("ab""cd")
 go
 
 set quoted_identifier on
 go
-select dbo.func_doublequote("ab'cd")
+select dbo.dubquote_f1("ab'cd")
 go
-select dbo.func_doublequote('ab"cd')
+select dbo.dubquote_f1('ab"cd')
 go
-select dbo.func_doublequote(N'ab"cd')
+select dbo.dubquote_f1(N'ab"cd')
 go
-select dbo.func_doublequote("ab""cd")
+select dbo.dubquote_f1("ab""cd")
 go
 
 set quoted_identifier off
 go
-drop proc if exists dubquote_p2
+create procedure dubquote_p2a @p varchar(20) ="abc" as select @p
 go
-create proc dubquote_p2 @p varchar(20) ="abc" as print @p
+exec dubquote_p2a
 go
-exec dubquote_p2
-go
-drop proc if exists dubquote_p3
-go
-create proc dubquote_p3 @p varchar(20) ="'abc'" as print @p
+create procedure dubquote_p3 @p varchar(20) ="'abc'" as select @p
 go
 exec dubquote_p3
 go
@@ -226,15 +222,22 @@ go
 declare @v varchar(20) ="a""bc" , @v2 varchar(10) = 'x''z' , @v3 varchar(10) = "x""y'z'z" select @v, @v2, @v3
 go
 
+-- the JDBC test cases do not capture PRINT output, but including them here for when it will
 print "abc"
 go
 print "'abc'"  
 go
 print "a""b'c"  
 go
+print "a""b'c," + session_user +  ",d""e'f," + system_user
+go
      /*test*/ print     "abc" 
 go
    /*hello*/    print /*hello*/ "abc" 
+go
+print    /*hello*/  "a""b'c," +    /*hello*/     
+session_user +     /*hello*/    
+",d""e'f," +    /*hello*/     system_user
 go
 RAISERROR("Message from RAISERROR", 16,1)
 go
@@ -245,8 +248,6 @@ go
       /*test*/RAISERROR( /*hello*/"Message from 'RAISERROR'", 16,1)
 go
 
-drop procedure if exists dubquote_p4
-go
 create procedure dubquote_p4 @p varchar(20) ="a'bc" as select @p,@p
 go
 exec dubquote_p4
@@ -259,16 +260,22 @@ exec dubquote_p4 "ab'cd"
 go
 select "ab'cd" 
 go
-drop function if exists dubquote_f15 
+create function dubquote_f4 (@p varchar(20) = "'abc'") returns varchar(50) as begin return  ((("function's return" +( " string value:" ))) +"'" + @p + "'")  end 
 go
-create function dubquote_f15 (@p varchar(20) = "'abc'") returns varchar(50) as begin return  ((("function's return" +( " string value:" ))) +"'" + @p + "'")  end 
-go
-select dbo.dubquote_f15("x")
+select dbo.dubquote_f4("x")
 go
 
-drop procedure if exists dubquote_p5 
+create function dubquote_f5 () returns varchar(50) as begin return "a""b'c" end 
 go
-create procedure dubquote_p5 @p varchar(10) as print @p
+select dbo.dubquote_f5()
+go
+
+create function dubquote_f6 () returns varchar(50) as begin return "a""b'c," + session_user +  ",d""e'f," + system_user end 
+go
+select dbo.dubquote_f6()
+go
+
+create procedure dubquote_p5 @p varchar(10) as select @p
 go
 exec dubquote_p5 'xyz' exec dubquote_p5 abc
 go
@@ -287,13 +294,10 @@ go
 declare @v varchar(20) = 'hij' exec dubquote_p5 @p=@v
 go
 
-drop proc if exists dubquote_p6
-go
-create proc dubquote_p6 @par1 varchar(10) = abc as print @par1
+create procedure dubquote_p6 @par1 varchar(10) = abc as select @par1
 go
 exec dubquote_p6
 go
-
 
 declare @v varchar(20) = session_user select @v, session_user
 go
@@ -358,19 +362,11 @@ go
 declare @v varchar(20) = session_user select @v 
 go
 
-drop sequence if exists dubquote_myseq
-go
 create sequence dubquote_myseq
-go
-drop sequence if exists dubquote_myseq2
 go
 create sequence dubquote_myseq2
 go
-drop sequence if exists dubquote_myseq3
-go
 create sequence dubquote_myseq3
-go
-drop sequence if exists dubquote_myseq4
 go
 create sequence dubquote_myseq4
 go
@@ -402,15 +398,11 @@ go
 
 set quoted_identifier on
 go
-drop proc if exists dubquote_p7
-go
-create proc dubquote_p7 @p varchar(20) ="abc" as print @p
+create procedure dubquote_p7 @p varchar(20) ="abc" as select @p
 go
 exec dubquote_p7
 go
-drop proc if exists dubquote_p8
-go
-create proc dubquote_p8 @p varchar(20) ="'abc'" as print @p
+create procedure dubquote_p8 @p varchar(20) ="'abc'" as select @p
 go
 exec dubquote_p8
 go
