@@ -20,72 +20,103 @@ GO
 DBCC CHECKIDENT(babel_3201_sch1.babel_3201_t2);
 GO
 
--- Set identity value to 5 which is less than the maximum value of the identity
+-- Set identity value to 5 which is less than the maximum value(which is 9) of the identity
 -- column, using RESEED option in this case should will reset the identity value
 -- to maximum value of the identity column. Value inserted in next insert will
--- be (max_identity_col_value + increment).
-DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 3);
+-- be (max_identity_col_value + increament).
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 5);
 GO
-
 INSERT INTO babel_3201_t_bigint VALUES (8);
 GO
-
 SELECT * from babel_3201_t_bigint;
 GO
 
+-- This will reset the current identity value(currently 8) to the maximum value of the identity column (currently 9)
 DBCC CHECKIDENT(babel_3201_t_bigint, RESEED);
 GO
-
 INSERT INTO babel_3201_t_bigint VALUES (9);
 GO
-
 SELECT * from babel_3201_t_bigint;
 GO
 
 -- no rows have been inserted in the table; both current identity value current
 -- column value should be NULL (TO-DO)
+BEGIN TRAN;
 DBCC CHECKIDENT(babel_3201_t1, NORESEED);
+SELECT * FROM babel_3201_t1;
+COMMIT;
 GO
 
+BEGIN TRAN;
 DBCC CHECKIDENT(babel_3201_t1, RESEED);
+SELECT * FROM babel_3201_t1;
+COMMIT;
 GO
 
 -- current identity value should be NULL (TO-DO), identity value inserted in
 -- next INSERT operation should be new_reseed_value.
+BEGIN TRAN;
 DBCC CHECKIDENT(babel_3201_t1, RESEED, 5);
+INSERT INTO babel_3201_t1 VALUES (50);
+COMMIT;
 GO
 
-INSERT INTO babel_3201_t_int VALUES (5);
+BEGIN TRAN;
+DBCC CHECKIDENT(babel_3201_t1, NORESEED);
+select * from babel_3201_t1;
+COMMIT;
 GO
 
-SELECT * FROM babel_3201_t_int;
+-- Remove all rows in table using TRUNCATE TABLE, Identity value will become NULL
+-- next insert operation should be default identity value if no new_reseed_value is provided.
+TRUNCATE TABLE babel_3201_t_int;
 GO
+dbcc checkident(babel_3201_t_int, NORESEED);
+GO
+INSERT INTO babel_3201_t_int values(15);
+GO
+select * from babel_3201_t_int;
 
 -- Remove all rows in table using TRUNCATE TABLE, identity value inserted in
 -- next INSERT operation should be new_reseed_value.
 TRUNCATE TABLE babel_3201_t_int;
 GO
-
 DBCC CHECKIDENT(babel_3201_t_int, RESEED, 10);
 GO
-
 INSERT INTO babel_3201_t_int VALUES (5);
 GO
-
 SELECT * FROM babel_3201_t_int;
 GO
+
 
 -- Remove all rows in table using DELETE TABLE, identity value inserted in next
 -- INSERT operation should be (new_reseed_value + increment).
 DELETE FROM babel_3201_t_bigint;
 GO
-
 DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 10);
 GO
-
 INSERT INTO babel_3201_t_bigint VALUES (5);
 GO
+SELECT * FROM babel_3201_t_bigint;
+GO
 
+-- Remove all rows in table using DELETE TABLE current identity will not become default identity value, 
+-- identity value inserted in next operation should use (default identity value + increament) if no new_reseed_value is provided.
+DELETE FROM babel_3201_t_bigint;
+GO
+dbcc checkident(babel_3201_t_bigint, NORESEED);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (5);
+GO
+SELECT * FROM babel_3201_t_bigint;
+GO
+
+-- If some rows are present already in the table, identity value inserted in next 
+-- INSERT operation should be (new_reseed_value + increament)
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 27);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (32);
+GO
 SELECT * FROM babel_3201_t_bigint;
 GO
 
@@ -120,12 +151,12 @@ GO
 DBCC CHECKIDENT(fake_db.dbo.babel_3201_t1, NORESEED);
 GO
 
--- Table undefined
-DBCC CHECKIDENT(babel_3201_t1, RESEED);
+-- Schema undefined
+DBCC CHECKIDENT(fake_schema.babel_3201_t1, NORESEED);
 GO
 
--- Schema undefined
-DBCC CHECKIDENT(babel_3201_sch3.babel_3201_t1, NORESEED);
+-- Table undefined
+DBCC CHECKIDENT(fake_babel_3201_t1, RESEED);
 GO
 
 -- Table does not have identity column
@@ -174,6 +205,10 @@ GO
 DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 15.65);
 GO
 
+-- When reseed_value is negative and zero, bbf currently does not support reseed to negative/zero value
+dbcc checkident(babel_3201_t_decimal, reseed, -10) 
+dbcc checkident(babel_3201_t_decimal, reseed, 0)
+
 INSERT INTO babel_3201_t_decimal VALUES (8);
 GO
 
@@ -204,7 +239,13 @@ BEGIN TRAN;
 ROLLBACK;
 GO
 
+-- Check current_identity value after tran rollback 
+-- babelfish does not support rolling-back dbcc changes after transection rollback. 
+-- Current identity value will be = reseed_value inside the rollbacked transection + increament = 20+3=23
+BEGIN TRAN;
+dbcc checkident(babel_3201_t_decimal, noreseed);
 SELECT * FROM babel_3201_t_decimal;
+COMMIT;
 GO
 
 EXEC babel_3201_proc1;

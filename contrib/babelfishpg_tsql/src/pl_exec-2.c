@@ -3180,7 +3180,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
     db_name = get_cur_db_name();
     if (dbcc_stmt.db_name)
     {
-        if (pg_strcasecmp(db_name, dbcc_stmt.db_name) != 0)
+        if (pg_strncasecmp(db_name, dbcc_stmt.db_name, NAMEDATALEN) != 0)
             is_cross_db = true;
         db_name = pstrdup(dbcc_stmt.db_name);
     }
@@ -3290,73 +3290,32 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	PG_TRY();
 	{
-		// Lock table to ensure concurrency.
-		if(dbcc_stmt.is_reseed)
-		{
-			LockRelationOid( table_oid, AccessExclusiveLock);
-		}
-		else
-		{
-			LockRelationOid( table_oid, ShareLock);
-		}	
 		cur_identity_value = DirectFunctionCall1(pg_sequence_last_value,
-						ObjectIdGetDatum(seqid));
+									ObjectIdGetDatum(seqid));
 		cur_value_is_null = false;
-		if (dbcc_stmt.new_reseed_value)
-		{
-			/* 
-			 * Print informational messages if NO_INFOMSGS is not passed as a
-			 * DBCC command option.
-			 */
-			if (!dbcc_stmt.no_infomsgs)
-				snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
-
-			DirectFunctionCall2(setval_oid,
-				ObjectIdGetDatum(seqid),
-				Int64GetDatum(reseed_value));
-		}
-		else
-		{
-			SPI_connect();
-			query = psprintf("SELECT MAX(%s) FROM %s.%s", attname,
-							schema_name, table_name);
-			rc = SPI_execute(query, true, 0);
-
-			if (rc != SPI_OK_SELECT)
-				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
-
-			max_identity_value_str = SPI_getvalue(SPI_tuptable->vals[0],
-									SPI_tuptable->tupdesc, 1);
-
-			if(max_identity_value_str)
-				max_identity_value = pg_strtoint64(max_identity_value_str);
-
-			if (!dbcc_stmt.no_infomsgs)
-				snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
-													cur_identity_value, 
-													max_identity_value_str ? max_identity_value_str : "NULL");
-
-			pfree(query);
-			SPI_freetuptable(SPI_tuptable);
-
-			/*
-			* RESEED option only resets the identity column value if the 
-			* current identity value for a table is less than the maximum 
-			* identity value stored in the identity column.
-			*/
-			if (dbcc_stmt.is_reseed && max_identity_value_str &&
-				cur_identity_value < max_identity_value)
-			{
-				DirectFunctionCall2(setval_oid,
-					ObjectIdGetDatum(seqid),
-					Int64GetDatum(max_identity_value));
-			}
-		}
-		if (is_cross_db)
-            SetCurrentRoleId(current_user_id, false);
 	}
 	PG_CATCH();
 	{
+		FlushErrorState();
+	}
+	PG_END_TRY();
+
+	PG_TRY();
+	{
+		/*
+		 * Acquiring an AccessExclusiveLock on the table is essential when
+		 * reseeding the identity current value to new_ressed_value to
+		 * ensure concurrency control.
+		 */
+		if(dbcc_stmt.new_reseed_value)
+		{
+			LockRelationOid(table_oid, AccessExclusiveLock);
+		}
+		else
+		{
+			LockRelationOid(table_oid, ShareLock);
+		}
+
 		/* 
 		 * If cur_value_is_null is true, then the function pg_sequence_last_value
 		 * has returned a NULL value, which means either no rows have been 
@@ -3380,24 +3339,82 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
 			}
 		}
+
 		else
-			PG_RE_THROW();
+		{
+			if (dbcc_stmt.new_reseed_value)
+			{
+				/* 
+				* Print informational messages if NO_INFOMSGS is not passed as a
+				* DBCC command option.
+				*/
+				if (!dbcc_stmt.no_infomsgs)
+					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
+
+				DirectFunctionCall2(setval_oid,
+					ObjectIdGetDatum(seqid),
+					Int64GetDatum(reseed_value));
+			}
+			else
+			{	
+				SPI_connect();
+				query = psprintf("SELECT MAX(%s) FROM %s.%s", attname,
+								schema_name, table_name);
+				rc = SPI_execute(query, true, 0);
+
+				if (rc != SPI_OK_SELECT)
+					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+				max_identity_value_str = SPI_getvalue(SPI_tuptable->vals[0],
+										SPI_tuptable->tupdesc, 1);
+
+				if(max_identity_value_str)
+					max_identity_value = pg_strtoint64(max_identity_value_str);
+
+				if (!dbcc_stmt.no_infomsgs)
+					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
+														cur_identity_value, 
+														max_identity_value_str ? max_identity_value_str : "NULL");
+
+				pfree(query);
+				SPI_freetuptable(SPI_tuptable);
+
+				/*
+				* RESEED option only resets the identity column value if the 
+				* current identity value for a table is less than the maximum 
+				* identity value stored in the identity column.
+				*/
+				if (dbcc_stmt.is_reseed && max_identity_value_str &&
+					cur_identity_value < max_identity_value)
+				{
+					DirectFunctionCall2(setval_oid,
+						ObjectIdGetDatum(seqid),
+						Int64GetDatum(max_identity_value));
+				}
+			}
+		}
+		
+		if (is_cross_db)
+            SetCurrentRoleId(current_user_id, false);
+	}
+	PG_CATCH();
+	{
+		PG_RE_THROW();
 	    if (is_cross_db)
             SetCurrentRoleId(current_user_id, false);
 	}
 	PG_END_TRY();
 	
-
 	if (max_identity_value_str)
 		pfree(max_identity_value_str);
 	pfree(schema_name);
 	pfree(table_name);
 	pfree(nsp_name);
 
-	if(!dbcc_stmt.is_reseed)
+	if(!dbcc_stmt.new_reseed_value)
 	{
-		UnlockRelationOid(table_oid,ShareLock);
-	}	
+		UnlockRelationOid(table_oid, ShareLock);
+	}
 	if (!dbcc_stmt.no_infomsgs)
 	{
 		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
@@ -3406,7 +3423,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
 	}
 
-	
 }
 
 

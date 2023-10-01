@@ -31,9 +31,6 @@ GO
 CREATE TABLE babel_3201_t2( a int, b int);
 GO
 
-INSERT INTO babel_3201_t1 VALUES (1);
-GO
-
 INSERT INTO babel_3201_sch1.babel_3201_t2 VALUES ('string 1');
 GO
 
