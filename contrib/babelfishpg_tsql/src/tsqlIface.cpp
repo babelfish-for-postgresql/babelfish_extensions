@@ -544,7 +544,8 @@ PLtsql_expr_query_mutator::PLtsql_expr_query_mutator(PLtsql_expr *e, ParserRuleC
 void PLtsql_expr_query_mutator::markFromInitializer(ParserRuleContext *ctx)	
 {
 	assert(ctx);
-
+	assert(fragmentOffsets.count(ctx) > 0);
+	
 	auto p = fragmentOffsets.at(ctx);
 	//cout << "using initializer fragment for " << ctx << " offsetStart=" << p.first << " offsetEnd=" << p.second.first << " offsetStartShift=" <<  p.second.second << "\n";		
 	
@@ -1843,9 +1844,12 @@ public:
 		}
 		else if (ctx->return_statement())
 		{
-			PLtsql_stmt_return *stmt = (PLtsql_stmt_return *) getPLtsql_fragment(ctx);
-			expr = (PLtsql_expr *) stmt->expr;
-			//cout << "exitCfl_statement->return_statement " << ctx->return_statement() << " stmt=" << stmt  << "\n";
+			if (pltsql_curr_compile && pltsql_curr_compile->fn_prokind != PROKIND_PROCEDURE)
+			{
+				PLtsql_stmt_return *stmt = (PLtsql_stmt_return *) getPLtsql_fragment(ctx);
+				expr = (PLtsql_expr *) stmt->expr;
+				//cout << "exitCfl_statement->return_statement " << ctx->return_statement() << " stmt=" << stmt  << "\n";
+			}
 		}
 		if (expr) 
 		{
@@ -1856,7 +1860,10 @@ public:
 			}
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
-			
+
+			// remove the offsets for processed fragments
+			fragmentOffsets.clear();	
+					
 			clear_rewritten_query_fragment();    				
 		}
 	}
