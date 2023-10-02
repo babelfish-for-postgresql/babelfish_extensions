@@ -1358,8 +1358,16 @@ validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name
 
 	foreach(lc, colnames)
 	{
-		char	   *colname = strVal(lfirst(lc));
-		bool		found = false;
+		char *colname = NULL;
+		bool found = false;
+
+		/* T-SQL Parser might have directly prepared IndexElem instead of String*/
+		if (nodeTag(lfirst(lc)) == T_IndexElem) {
+			IndexElem *ie = (IndexElem *) lfirst(lc);
+			colname = ie->name;
+		} else {
+			colname = strVal(lfirst(lc));
+		}
 
 		if (strlen(colname) == rv_colname_len)
 		{
