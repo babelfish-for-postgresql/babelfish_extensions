@@ -136,6 +136,17 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
+	},
+	{-1, 						/* NAMESPACEEXTOID */
+		-1,
+		1,
+		{
+			Anum_namespace_ext_namespace,
+			0,
+			0,
+			0
+		},
+		16
 	}
 };
 
@@ -169,6 +180,8 @@ init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
 	my_cacheinfo[2].reloid = bbf_function_ext_oid;
 	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
+	my_cacheinfo[3].reloid = namespace_ext_oid;
+	my_cacheinfo[3].indoid = namespace_ext_idx_oid_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -202,7 +215,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 4);
 		tsql_syscache_inited = true;
 	}
 }
@@ -214,7 +227,8 @@ initTsqlSyscache()
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
+	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid 
+			|| relationId == namespace_ext_oid)
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -505,90 +519,54 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 const char *
 get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	Datum		datum;
 	const char *logical_name;
-	TupleDesc	dsc;
 	bool		isnull;
 
 	if (get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
 		return NULL;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	dsc = RelationGetDescr(rel);
-
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(physical_schema_name));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(NAMESPACEEXTOID, CStringGetDatum(physical_schema_name));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
+		ReleaseSysCache(tuple);
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
-	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
+	datum = SysCacheGetAttr(NAMESPACEEXTOID, tuple, Anum_namespace_ext_orig_name, &isnull);
 	logical_name = pstrdup(TextDatumGetCString(datum));
-
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
+	ReleaseSysCache(tuple);
 	return logical_name;
 }
 
 int16
 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 	Datum		datum;
 	int16		dbid;
-	TupleDesc	dsc;
 	bool		isnull;
 
 	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
 		return InvalidDbid;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	dsc = RelationGetDescr(rel);
-
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(physical_schema_name));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(NAMESPACEEXTOID, CStringGetDatum(physical_schema_name));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
+		ReleaseSysCache(tuple);
 		if (!missingOk)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
 		return InvalidDbid;
 	}
-	datum = heap_getattr(tuple, Anum_namespace_ext_dbid, dsc, &isnull);
+	datum = SysCacheGetAttr(NAMESPACEEXTOID, tuple, Anum_namespace_ext_dbid, &isnull);
 	dbid = DatumGetInt16(datum);
-
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
+	ReleaseSysCache(tuple);
 	return dbid;
 }
 

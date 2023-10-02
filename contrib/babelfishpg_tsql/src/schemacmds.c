@@ -13,6 +13,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 #include "catalog.h"
 #include "guc.h"
@@ -68,38 +69,22 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 void
 del_ns_ext_info(const char *schemaname, bool missing_ok)
 {
-	Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
 
 	if (get_namespace_oid(schemaname, missing_ok) == InvalidOid)
 		return;
 
-	rel = table_open(namespace_ext_oid, RowExclusiveLock);
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(schemaname));
-
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(NAMESPACEEXTOID, CStringGetDatum(schemaname));
 	if (!HeapTupleIsValid(tuple))
 	{
-		systable_endscan(scan);
-		table_close(rel, RowExclusiveLock);
+		ReleaseSysCache(tuple);
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Could not drop schema created under PostgreSQL dialect: \"%s\"", schemaname)));
 		return;
 	}
-
-	CatalogTupleDelete(rel, &tuple->t_self);
-	systable_endscan(scan);
-	table_close(rel, RowExclusiveLock);
-
+	
+	ReleaseSysCache(tuple);
 	CommandCounterIncrement();
 }
 
@@ -149,27 +134,28 @@ check_extra_schema_restrictions(Node *stmt)
 static bool
 has_ext_info(const char *schemaname)
 {
-	Relation	rel;
+	//Relation	rel;
 	HeapTuple	tuple;
-	ScanKeyData scanKey;
-	SysScanDesc scan;
+	//ScanKeyData scanKey;
+	//SysScanDesc scan;
 	bool		found = true;
 
-	rel = table_open(namespace_ext_oid, AccessShareLock);
-	ScanKeyInit(&scanKey,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(schemaname));
+	//rel = table_open(namespace_ext_oid, AccessShareLock);
+	// ScanKeyInit(&scanKey,
+	// 			Anum_namespace_ext_namespace,
+	// 			BTEqualStrategyNumber, F_NAMEEQ,
+	// 			CStringGetDatum(schemaname));
 
-	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
-							  NULL, 1, &scanKey);
+	// scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
+	// 						  NULL, 1, &scanKey);
 
-	tuple = systable_getnext(scan);
+	//tuple = systable_getnext(scan);
+	tuple = SearchSysCache1(NAMESPACEEXTOID, CStringGetDatum(schemaname));
 	if (!HeapTupleIsValid(tuple))
 		found = false;
 
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
-
+	//systable_endscan(scan);
+	//table_close(rel, AccessShareLock);
+	ReleaseSysCache(tuple);
 	return found;
 }
