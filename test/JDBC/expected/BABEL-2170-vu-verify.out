@@ -1,0 +1,138 @@
+-- Instead of Insert Trigger on View 
+CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employees_view
+INSTEAD OF INSERT
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees SET EmployeeAddress = 'New Street' WHERE EmployeeID = 3;
+END
+GO
+
+INSERT INTO babel_2170_vu_employees_view VALUES(5, 'alex', '1st Street', '5000');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees_view;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+UPDATE babel_2170_vu_employees SET EmployeeAddress = '1st Street' WHERE EmployeeID = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Instead of Update Trigger on View 
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees SET MonthSalary = MonthSalary + 100 WHERE EmployeeID = 3;
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 3;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID,EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID = 3 ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+3#!#ana#!#1st Street#!#3100.00
+~~END~~
+
+
+UPDATE babel_2170_vu_employees SET MonthSalary = 3000 WHERE EmployeeID = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+BEGIN TRANSACTION
+    UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID IN (3, 4);
+COMMIT TRANSACTION;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID IN (3, 4) ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+3#!#ana#!#1st Street#!#3100.00
+4#!#adam#!#1st Street#!#4000.00
+~~END~~
+
+
+UPDATE babel_2170_vu_employees SET MonthSalary = 3000 WHERE EmployeeID = 3;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Instead of Delete Trigger on View
+CREATE TRIGGER babel_2170_vu_employees_view_iot_delete ON babel_2170_vu_employees_view
+INSTEAD OF DELETE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees SET MonthSalary = MonthSalary + 100 WHERE EmployeeID = 3;
+END
+GO
+
+BEGIN TRANSACTION
+    DELETE FROM babel_2170_vu_employees_view WHERE EmployeeID IN (1, 2);
+COMMIT TRANSACTION;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees_view;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+3#!#ana#!#1st Street#!#3100.00
+4#!#adam#!#1st Street#!#4000.00
+~~END~~
+
+
+UPDATE babel_2170_vu_employees SET MonthSalary = 3000 WHERE EmployeeID = 3;
+GO
+~~ROW COUNT: 1~~
+
