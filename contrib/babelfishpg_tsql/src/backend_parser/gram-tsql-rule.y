@@ -3063,19 +3063,9 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = $5;
-					tsql_update_delete_stmt_from_clause_alias(n->relation, $8);
-					if ($8 != NULL && IsA(linitial($8), JoinExpr))
-					{
-						n = (DeleteStmt*)tsql_update_delete_stmt_with_join(
-											(Node*)n, $8, $9, $3, $5,
-											yyscanner);
-					}
-					else
-					{
-						n->limitCount = $3;
-						n->usingClause = $8;
-						n->whereClause = $9;
-					}
+					n->limitCount = $3;
+					n->usingClause = $8;
+					n->whereClause = $9;
 					n->returningList = $7;
 					n->withClause = $1;
 					$$ = (Node *)n;
