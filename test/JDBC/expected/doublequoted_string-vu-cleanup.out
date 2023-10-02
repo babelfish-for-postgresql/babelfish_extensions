@@ -20,9 +20,9 @@ drop function dubquote_f5
 go
 drop function dubquote_f6
 go
-drop procedure dubquote_p5
+drop function dubquote_f7
 go
-drop procedure dubquote_p6
+drop procedure dubquote_p5
 go
 drop sequence dubquote_myseq
 go
@@ -32,7 +32,9 @@ drop sequence dubquote_myseq3
 go
 drop sequence dubquote_myseq4
 go
+drop procedure dubquote_p6
+go
 drop procedure dubquote_p7
 go
-drop procedure dubquote_p8
+drop table dubquote_t1
 go

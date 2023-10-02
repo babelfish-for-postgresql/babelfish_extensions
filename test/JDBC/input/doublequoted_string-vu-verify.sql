@@ -19,6 +19,7 @@ exec dubquote_p 'abc'
 go
 exec dubquote_p abc
 go
+
 set quoted_identifier on
 go
 select "abc"
@@ -222,6 +223,15 @@ go
 declare @v varchar(20) ="a""bc" , @v2 varchar(10) = 'x''z' , @v3 varchar(10) = "x""y'z'z" select @v, @v2, @v3
 go
 
+-- bracketed identifiers containing double-quoted strings should not be affected by double-quoted string replacement
+-- this SELECT should return 0 rows and no error
+create table dubquote_t1([x"a'b"y] int, c varchar(20))
+go
+select [x"a'b"y] from dubquote_t1 where c = "a'b"
+go
+
+set quoted_identifier off
+go
 -- the JDBC test cases do not capture PRINT output, but including them here for when it will
 print "abc"
 go
@@ -248,6 +258,41 @@ go
       /*test*/RAISERROR( /*hello*/"Message from 'RAISERROR'", 16,1)
 go
 
+declare @v varchar(20) = "a""b'c"
+if @v = 'a"b''c' select 'correct' 
+else select 'wrong'
+go
+
+declare @v varchar(20) = "a""b'c"
+while @v = 'a"b''c' 
+begin 
+select 'correct' 
+break 
+end 
+go
+
+declare @v varchar(20) = system_user
+if @v = system_user select 'correct' 
+else select 'wrong'
+go
+
+declare @v varchar(20) = system_user
+while @v = system_user
+begin 
+select 'correct' 
+break 
+end 
+go
+
+set quoted_identifier on
+go
+print "abc"
+go
+RAISERROR("Message from RAISERROR", 16,1)
+go
+
+set quoted_identifier off
+go
 create procedure dubquote_p4 @p varchar(20) ="a'bc" as select @p,@p
 go
 exec dubquote_p4
@@ -275,6 +320,11 @@ go
 select dbo.dubquote_f6()
 go
 
+CREATE function dubquote_f7() returns varchar(30) as begin return system_user end
+go
+select select dbo.dubquote_f7(), system_user
+go
+
 create procedure dubquote_p5 @p varchar(10) as select @p
 go
 exec dubquote_p5 'xyz' exec dubquote_p5 abc
@@ -292,11 +342,6 @@ go
 declare @v varchar(20) exec dubquote_p5 @p=@v
 go
 declare @v varchar(20) = 'hij' exec dubquote_p5 @p=@v
-go
-
-create procedure dubquote_p6 @par1 varchar(10) = abc as select @par1
-go
-exec dubquote_p6
 go
 
 declare @v varchar(20) = session_user select @v, session_user
@@ -395,16 +440,15 @@ declare @v int = 1 set @v /= len("a'bc") + next value for dubquote_myseq + len(s
 go
 
 
-
 set quoted_identifier on
 go
-create procedure dubquote_p7 @p varchar(20) ="abc" as select @p
+create procedure dubquote_p6 @p varchar(20) ="abc" as select @p
+go
+exec dubquote_p6
+go
+create procedure dubquote_p7 @p varchar(20) ="'abc'" as select @p
 go
 exec dubquote_p7
-go
-create procedure dubquote_p8 @p varchar(20) ="'abc'" as select @p
-go
-exec dubquote_p8
 go
 declare @v varchar(20) = 'abc' select @v
 go

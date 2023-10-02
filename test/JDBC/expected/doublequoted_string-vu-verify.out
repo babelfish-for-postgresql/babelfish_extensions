@@ -49,6 +49,7 @@ varchar
 abc
 ~~END~~
 
+
 set quoted_identifier on
 go
 select "abc"
@@ -649,6 +650,19 @@ a"bc#!#x'z#!#x"y'z'z
 ~~END~~
 
 
+-- bracketed identifiers containing double-quoted strings should not be affected by double-quoted string replacement
+-- this SELECT should return 0 rows and no error
+create table dubquote_t1([x"a'b"y] int, c varchar(20))
+go
+select [x"a'b"y] from dubquote_t1 where c = "a'b"
+go
+~~START~~
+int
+~~END~~
+
+
+set quoted_identifier off
+go
 -- the JDBC test cases do not capture PRINT output, but including them here for when it will
 print "abc"
 go
@@ -691,6 +705,69 @@ go
 ~~ERROR (Message: Message from 'RAISERROR')~~
 
 
+declare @v varchar(20) = "a""b'c"
+if @v = 'a"b''c' select 'correct' 
+else select 'wrong'
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+declare @v varchar(20) = "a""b'c"
+while @v = 'a"b''c' 
+begin 
+select 'correct' 
+break 
+end 
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+declare @v varchar(20) = system_user
+if @v = system_user select 'correct' 
+else select 'wrong'
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+declare @v varchar(20) = system_user
+while @v = system_user
+begin 
+select 'correct' 
+break 
+end 
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+set quoted_identifier on
+go
+print "abc"
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+RAISERROR("Message from RAISERROR", 16,1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"Message from RAISERROR"' at line 1 and character position 10)~~
+
+
+set quoted_identifier off
+go
 create procedure dubquote_p4 @p varchar(20) ="a'bc" as select @p,@p
 go
 exec dubquote_p4
@@ -758,6 +835,15 @@ a"b'c,dbo,d"e'f,jdbc_user
 ~~END~~
 
 
+CREATE function dubquote_f7() returns varchar(30) as begin return system_user end
+go
+select select dbo.dubquote_f7(), system_user
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'select' at line 1 and character position 7)~~
+
+
 create procedure dubquote_p5 @p varchar(10) as select @p
 go
 exec dubquote_p5 'xyz' exec dubquote_p5 abc
@@ -819,16 +905,6 @@ go
 ~~START~~
 varchar
 hij
-~~END~~
-
-
-create procedure dubquote_p6 @par1 varchar(10) = abc as select @par1
-go
-exec dubquote_p6
-go
-~~START~~
-varchar
-abc
 ~~END~~
 
 
@@ -1118,21 +1194,20 @@ int
 
 
 
-
 set quoted_identifier on
 go
-create procedure dubquote_p7 @p varchar(20) ="abc" as select @p
+create procedure dubquote_p6 @p varchar(20) ="abc" as select @p
 go
-exec dubquote_p7
+exec dubquote_p6
 go
 ~~START~~
 varchar
 abc
 ~~END~~
 
-create procedure dubquote_p8 @p varchar(20) ="'abc'" as select @p
+create procedure dubquote_p7 @p varchar(20) ="'abc'" as select @p
 go
-exec dubquote_p8
+exec dubquote_p7
 go
 ~~START~~
 varchar
