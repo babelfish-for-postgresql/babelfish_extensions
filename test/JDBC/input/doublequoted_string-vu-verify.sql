@@ -258,6 +258,11 @@ go
       /*test*/RAISERROR( /*hello*/"Message from 'RAISERROR'", 16,1)
 go
 
+-- RAISERROR arguments are not yet rewritten. this should raise an error
+RAISERROR ('%s %s',  10, 1, 'abc', "def");
+go
+
+
 declare @v varchar(20) = "a""b'c"
 if @v = 'a"b''c' select 'correct' 
 else select 'wrong'

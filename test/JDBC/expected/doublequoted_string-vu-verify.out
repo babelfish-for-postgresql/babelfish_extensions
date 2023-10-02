@@ -705,6 +705,15 @@ go
 ~~ERROR (Message: Message from 'RAISERROR')~~
 
 
+-- RAISERROR arguments are not yet rewritten. this should raise an error
+RAISERROR ('%s %s',  10, 1, 'abc', "def");
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "def" does not exist)~~
+
+
+
 declare @v varchar(20) = "a""b'c"
 if @v = 'a"b''c' select 'correct' 
 else select 'wrong'

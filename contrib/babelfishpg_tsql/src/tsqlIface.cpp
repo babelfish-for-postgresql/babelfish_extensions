@@ -575,16 +575,16 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 	
 	if (isSelectFragment) {
 		// For SELECT fragments, only apply the item when antlr_pos is between idxStart and idxEnd:
-		// when there are multiple xpressions per statement (only for DECLARE), the rewrites must be 
+		// when there are multiple expressions per statement (only for DECLARE), the rewrites must be 
 		// applied to the correct expression
 		if ((antlr_pos < idxStart) || (antlr_pos > idxEnd)) {
 			return;
 		}
 
-		// Adjust offset to reflect the fact that the expression in the fragment is now prefixed with only "SELECT "
+		// Adjust offset to reflect the fact that the expression in the fragment is now prefixed with only 'SELECT '
 		offset = antlr_pos - idxStart;
 			
-		// Adjust offset once more if the expression was shifted left (for a compound operator)
+		// Adjust offset once more if the expression was shifted left (for a compound SET @v operator)
 		if (idxStartShift > 0) {
 			offset = offset + idxStartShift;
 		}					
@@ -1813,10 +1813,10 @@ public:
 			mutator.run();
 
 			// remove the offsets for processed fragments
-			selectFragmentOffsets.clear();	
+			selectFragmentOffsets.clear();
 					
-			clear_rewritten_query_fragment();    				
-		}
+			clear_rewritten_query_fragment();
+		}		
 	}
 	
 	void exitSecurity_statement(TSqlParser::Security_statementContext *ctx) override
@@ -4245,10 +4245,10 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 
 	// msg, severity, state
 	result->params = lappend(result->params, makeTsqlExpr(ctx->msg->getText(), true));
+	recordSelectFragmentOffsets(ctx->parent, ctx->raiseerror_msg());
+
 	result->params = lappend(result->params, makeTsqlExpr(ctx->severity, true));
 	result->params = lappend(result->params, makeTsqlExpr(ctx->state, true));
-	
-	recordSelectFragmentOffsets(ctx->parent, ctx->raiseerror_msg());
 
 	// additional arguments
 	if (ctx->argument.size() > 20)
