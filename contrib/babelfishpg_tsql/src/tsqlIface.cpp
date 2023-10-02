@@ -616,15 +616,15 @@ void PLtsql_expr_query_mutator::run()
 			
 	//cout << "mutator: orig query=[" << converter.to_bytes(query) << "]  m=" << m.size() << "  mutator.fromInitializer=" << fromInitializer << "\n";
 					
-	bool doubleQuoteFound = false;
+//	bool doubleQuoteFound = false;
 	size_t cursor = 0; // cursor to expr->query where next copy should start
 	for (const auto &entry : m)
 	{		
 		if (entry.second.first.c_str()[0] == '"') 
 		{
 			// Double-quoted string replacements are done below in a second loop.
-			doubleQuoteFound = true;
-			continue;			
+			//doubleQuoteFound = true;
+			//continue;			
 		}		
 		size_t offset = entry.first;
 		//cout << "mutator loop: offset=" << offset <<  std::endl;
@@ -651,31 +651,34 @@ void PLtsql_expr_query_mutator::run()
 	//cout << "mutator: doubleQuoteFound=[" << doubleQuoteFound << "] \n";
 	
 	// Now handle double-quoted string replacements, if any.
-	int lastReplace = -1;
-	if (doubleQuoteFound) 	
-	{
-		for (const auto &entry : m)
-		{
-			if (entry.second.first.c_str()[0] != '"') 
-			{
-				continue;			
-			}
-			const std::u32string& orig_text = utf8_to_utf32(entry.second.first.c_str());
-			const std::u32string& repl_text = utf8_to_utf32(entry.second.second.c_str());
-			//cout << "mutator: orig_text=[" << converter.to_bytes(orig_text)  << "] \n";
-			//cout << "mutator: repl_text=[" << converter.to_bytes(repl_text)  << "] \n";
-			size_t i = rewritten_query.find(orig_text);
-			if (i == std::string::npos) 
-			{
-				// This may happen in some cases, continue
-				continue;
-			}
-			//cout << "mutator: lastReplace=[" << lastReplace << "] i=[" << i << "] orig_text=[" << converter.to_bytes(orig_text)  << "] \n";			
-			assert(lastReplace <= (int)i); // The rewrite actions should always come in the right order
-			rewritten_query.replace(i, orig_text.length(), repl_text);
-			lastReplace = (int)i;
-		}	
-	}
+//	int lastReplace = -1;
+//	if (doubleQuoteFound) 	
+//	{
+//		for (const auto &entry : m)
+//		{
+//			if (entry.second.first.c_str()[0] != '"') 
+//			{
+//				continue;			
+//			}
+//			size_t offset = entry.first;
+//			const std::u32string& orig_text = utf8_to_utf32(entry.second.first.c_str());
+//			const std::u32string& repl_text = utf8_to_utf32(entry.second.second.c_str());
+//			cout << "mutator: orig_text=[" << converter.to_bytes(orig_text)  << "] \n";
+//			cout << "mutator: repl_text=[" << converter.to_bytes(repl_text)  << "] \n";
+//			cout << "mutator loop: offset=" << offset <<  std::endl;	
+//
+//			size_t i = rewritten_query.find(orig_text);
+//			if (i == std::string::npos) 
+//			{
+//				// This may happen in some cases, continue
+//				continue;
+//			}
+//			//cout << "mutator: lastReplace=[" << lastReplace << "] i=[" << i << "] orig_text=[" << converter.to_bytes(orig_text)  << "] \n";			
+//			assert(lastReplace <= (int)i); // The rewrite actions should always come in the right order
+//			rewritten_query.replace(i, orig_text.length(), repl_text);
+//			lastReplace = (int)i;
+//		}	
+//	}
 
 	//cout << "mutator: rewritten_query=[" << converter.to_bytes(rewritten_query)  << "] \n";
 				
@@ -1855,9 +1858,9 @@ public:
 		{
 			//cout << "exitCfl_statement: expr=[" << expr << "]\n";			
 			PLtsql_expr_query_mutator mutator(expr, ctx);
-			if (ctx->print_statement() || ctx->return_statement()) {
+			//if (ctx->print_statement() || ctx->return_statement()) {
 				mutator.markFromInitializer(ctx);
-			}
+			//}
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 
@@ -4315,6 +4318,9 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 	result->params = lappend(result->params, makeTsqlExpr(ctx->msg->getText(), true));
 	result->params = lappend(result->params, makeTsqlExpr(ctx->severity, true));
 	result->params = lappend(result->params, makeTsqlExpr(ctx->state, true));
+	
+	cout << "makeRaiseErrorStmt: ctx->parent=" << ctx->parent << " ctx->raiseerror_msg=" << ctx->raiseerror_msg() << " result->params[0]" << (PLtsql_expr *) linitial(result->params) << " result->params[1]" << (PLtsql_expr *) lsecond(result->params) << " result->params[2]" << (PLtsql_expr *) lthird(result->params) << " expr start=" << ctx->raiseerror_msg()->getStart()->getStartIndex() << " expr stop=" << ctx->raiseerror_msg()->getStop()->getStopIndex() << "\n";								
+	fragmentOffsets.emplace(std::make_pair(ctx->parent, std::make_pair(ctx->raiseerror_msg()->getStart()->getStartIndex(),  std::make_pair(ctx->raiseerror_msg()->getStop()->getStopIndex(),0))));
 
 	// additional arguments
 	if (ctx->argument.size() > 20)
