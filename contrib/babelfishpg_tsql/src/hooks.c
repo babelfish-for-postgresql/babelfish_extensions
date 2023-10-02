@@ -971,9 +971,15 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 						field1 = (Node *) linitial(cref->fields);
 						qualifier = strVal(field1);
 
-						if ((command == CMD_INSERT && !strcmp(qualifier, "inserted"))
-							|| (command == CMD_DELETE && !strcmp(qualifier, "deleted")))
+						if (command == CMD_INSERT && (
+								!strcmp(qualifier, "inserted") || 
+								!strcmp(qualifier, "deleted") ))
 							cref->fields = list_delete_first(cref->fields);
+						else if (command == CMD_DELETE && !strcmp(qualifier, "deleted"))
+						{
+							Assert(pstate->p_target_nsitem->p_names->aliasname);
+							linitial(cref->fields) = makeString(pstate->p_target_nsitem->p_names->aliasname);
+						}
 					}
 				}
 				else if (IsA(node, A_Expr))

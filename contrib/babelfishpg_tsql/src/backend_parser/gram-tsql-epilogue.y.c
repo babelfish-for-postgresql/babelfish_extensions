@@ -1082,15 +1082,12 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		d = (DeleteStmt *) tsql_update_delete_stmt_with_join(
 															 (Node *) d, from_clause, where_or_current_clause, opt_top_clause,
 															 relation_expr_opt_alias, yyscanner);
-		output_update_transformation = true;
 	}
 	else
 	{
 		d->usingClause = from_clause;
 		d->whereClause = where_or_current_clause;
 		d->limitCount = opt_top_clause;
-		if (from_clause != NULL && (IsA(linitial(from_clause), RangeSubselect) || IsA(linitial(from_clause), RangeVar)))
-			output_update_transformation = true;
 	}
 	d->returningList = get_transformed_output_list(tsql_output_clause);
 	d->withClause = opt_with_clause;
