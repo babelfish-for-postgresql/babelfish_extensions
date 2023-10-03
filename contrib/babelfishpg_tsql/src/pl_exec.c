@@ -4625,7 +4625,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	// static int count = 0;
-	// static bool count = false;
+	static bool count = false;
 	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
@@ -4739,10 +4739,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		// if ((!(strcasestr(stmt->sqlstmt->query, "INSERT")) || strcasestr(stmt->sqlstmt->query, "DELETE")))
 		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
 		// {
-			if((strcasestr(stmt->sqlstmt->query, "OUTPUT"))|| !strcasestr(stmt->sqlstmt->query, "COLUMNS_UPDATED") || strcasestr(stmt->sqlstmt->query, "UPDATE"))
-			{
-				cp = SPI_plan_get_cached_plan(expr->plan);
-			}
+		if(strcasestr(stmt->sqlstmt->query, " COLUMNS_UPDATED"))
+		{
+			count = true;
+		}
+		if((strcasestr(stmt->sqlstmt->query, "OUTPUT"))|| strcasestr(stmt->sqlstmt->query, "UPDATE") || count)
+		{
+			cp = SPI_plan_get_cached_plan(expr->plan);
+		}
 		// }
 		// if (!strcasestr(stmt->sqlstmt->query, "INSERT"))
 		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
