@@ -1387,6 +1387,7 @@ dtrunc_(float8 arg1)
 	return result;
 }
 
+BBF_Pragma_IgnoreFloatConversionWarning_Push
 inline static float4
 ftrunc_(float4 arg1)
 {
@@ -1400,6 +1401,7 @@ ftrunc_(float4 arg1)
 
 	return result;
 }
+BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 /* dtrunci8(X) = dtoi8(dtrunc(X)) */
 PG_FUNCTION_INFO_V1(dtrunci8);
@@ -1489,7 +1491,9 @@ ftrunci8(PG_FUNCTION_ARGS)
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
+	BBF_Pragma_IgnoreFloatConversionWarning_Push
 	num = rint(ftrunc_(num));
+	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
 	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT64(num)))
@@ -1514,7 +1518,9 @@ ftrunci4(PG_FUNCTION_ARGS)
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
+	BBF_Pragma_IgnoreFloatConversionWarning_Push
 	num = rint(ftrunc_(num));
+	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
 	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT32(num)))
@@ -1539,7 +1545,9 @@ ftrunci2(PG_FUNCTION_ARGS)
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
+	BBF_Pragma_IgnoreFloatConversionWarning_Push
 	num = rint(ftrunc_(num));
+	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
 	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT16(num)))
