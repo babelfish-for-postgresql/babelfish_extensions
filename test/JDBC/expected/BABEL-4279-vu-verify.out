@@ -19,7 +19,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_d1_test_babel_4279_s1.test_babel_4279_st1;
 ~~END~~
 
 
@@ -27,7 +27,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_d1_test_babel_4279_s1.test_babel_4279_st1;
 ~~END~~
 
 
