@@ -10224,17 +10224,9 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 			{
 				if (top_es_entry->estate->db_name == NULL)
 				{
-					/*
-					 * Don't change the search path, if the statement inside
-					 * the procedure is a function or schema qualified.
-					 */
-					if (stmt->func_call || stmt->is_schema_specified)
-						break;
-					else
-					{
-						physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-						dbo_schema = get_dbo_schema_name(cur_dbname);
-					}
+					
+					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
+					dbo_schema = get_dbo_schema_name(cur_dbname);
 				}
 				else
 				{
@@ -10242,13 +10234,9 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 					{
 						set_session_properties(top_es_entry->estate->db_name);
 						*reset_session_properties = true;
-						break;
 					}
-					else
-					{
-						physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
-						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
-					}
+					physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
+					dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
 				}
 				if (!*old_search_path)
 				{
@@ -10327,8 +10315,8 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 	 * object. If not found, then search the dbo schema. Don't update the path
 	 * for "sys" schema.
 	 */
-	if ((stmt->func_call || stmt->is_create_view) && stmt->schema_name != NULL &&
-		(strcmp(stmt->schema_name, "sys") != 0 && strcmp(stmt->schema_name, "pg_catalog") != 0))
+	if (stmt->is_create_view && stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") != 0 
+												&& strcmp(stmt->schema_name, "pg_catalog") != 0))
 	{
 		cur_dbname = get_cur_db_name();
 		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
