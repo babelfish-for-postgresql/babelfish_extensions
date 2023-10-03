@@ -1,0 +1,46 @@
+SELECT * FROM ATTIMEZONE_dep_vu_prepare_v1
+GO
+~~START~~
+datetimeoffset
+2002-01-01 02:01:00.0000000 +01:00
+~~END~~
+
+
+SELECT * FROM ATTIMEZONE_dep_vu_prepare_v2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
+
+
+EXEC ATTIMEZONE_dep_vu_prepare_p1
+GO
+~~START~~
+datetimeoffset
+9999-12-31 16:59:59.0000000 +01:00
+~~END~~
+
+
+EXEC ATTIMEZONE_dep_vu_prepare_p2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
+
+
+SELECT ATTIMEZONE_dep_vu_prepare_f1()
+GO
+~~START~~
+datetimeoffset
+2002-01-01 02:01:00.0000000 -05:00
+~~END~~
+
+
+SELECT ATTIMEZONE_dep_vu_prepare_f2()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.)~~
+
