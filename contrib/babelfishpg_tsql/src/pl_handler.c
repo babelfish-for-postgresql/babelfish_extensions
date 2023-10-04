@@ -18,6 +18,7 @@
 #include "access/attnum.h"
 #include "access/relation.h"
 #include "access/htup_details.h"
+#include "access/parallel.h"
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -276,6 +277,9 @@ set_procid(Oid oid)
 static void
 assign_identity_insert(const char *newval, void *extra)
 {
+	if (IsParallelWorker())
+		return;
+
 	if (strcmp(newval, "") != 0)
 	{
 		List	   *elemlist;
@@ -640,7 +644,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			AlterTableCmd *cmd = (AlterTableCmd *)lfirst(lc);
 			if (cmd->subtype == AT_EnableTrig || cmd->subtype == AT_DisableTrig)
 			{
-				if (atstmt->objtype == OBJECT_TRIGGER){
+				if (atstmt->objtype == OBJECT_TRIGGER)
+				{
 					trig_schema = cmd->schemaname;
 				}
 				else
@@ -657,7 +662,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					rel_schema = get_authid_user_ext_schema_name(get_cur_db_name(), GetUserNameFromId(GetUserId(), false));
 				}
 
-				if (trig_schema != NULL && strncmp(trig_schema, rel_schema, Min(strlen(rel_schema), strlen(trig_schema))) != 0)
+				if (trig_schema != NULL && strcmp(trig_schema, rel_schema) != 0)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
@@ -665,7 +670,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
 				}
 
-				if(atstmt->relation->schemaname == NULL){
+				if(atstmt->relation->schemaname == NULL)
+				{
 					pfree((char *) rel_schema);
 				}
 			}
@@ -988,8 +994,18 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 									{
 										foreach(lc, (List *) c->keys)
 										{
-											char	*colname = strVal(lfirst(lc));
-											int		 colname_len = strlen(colname);
+											char	*colname = NULL;
+											int		 colname_len = 0;
+
+											/* T-SQL Parser might have directly prepared IndexElem instead of String*/
+											if (nodeTag(lfirst(lc)) == T_IndexElem) {
+												IndexElem *ie = (IndexElem *) lfirst(lc);
+												colname = ie->name;
+												colname_len = strlen(colname);
+											} else {
+												colname = strVal(lfirst(lc));
+												colname_len = strlen(colname);
+											}
 
 											foreach(elements, stmt->tableElts)
 											{
@@ -1479,8 +1495,16 @@ validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name
 
 	foreach(lc, colnames)
 	{
-		char	   *colname = strVal(lfirst(lc));
-		bool		found = false;
+		char *colname = NULL;
+		bool found = false;
+
+		/* T-SQL Parser might have directly prepared IndexElem instead of String*/
+		if (nodeTag(lfirst(lc)) == T_IndexElem) {
+			IndexElem *ie = (IndexElem *) lfirst(lc);
+			colname = ie->name;
+		} else {
+			colname = strVal(lfirst(lc));
+		}
 
 		if (strlen(colname) == rv_colname_len)
 		{

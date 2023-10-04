@@ -333,6 +333,21 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 						*offset += rowData->columnValues[i].len;
 					}
 					break;
+				case TDS_TYPE_SPATIAL:
+					{
+						retStatus = ReadPlp(temp, message, offset);
+						CheckPLPStatusNotOKForTVP(temp, retStatus);
+						if (temp->isNull)
+						{
+							rowData->isNull[i] = 'n';
+							i++;
+							temp->isNull = false;
+							continue;
+						}
+						rowData->columnValues[i] = *(TdsGetPlpStringInfoBufferFromToken(messageData, temp));
+
+					}
+					break;
 				case TDS_TYPE_NUMERICN:
 				case TDS_TYPE_DECIMALN:
 					{
@@ -636,6 +651,9 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint32_t));
 					*offset += sizeof(uint32_t);
 					break;
+				case TDS_TYPE_SPATIAL:
+					colmetadata[i].maxLen = messageData[(*offset)++];
+					break;
 				default:
 					ereport(ERROR,
 							(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -823,6 +841,32 @@ SetColMetadataForTimeType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t scale
 	col->metaEntry.type6.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
 	col->metaEntry.type6.tdsTypeId = tdsType;
 	col->metaEntry.type6.scale = scale;
+}
+
+static inline void
+SetColMetadataForGeometryType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t maxSize, char *assemblyName, char *typeName)
+{
+	col->sizeLen = 1;
+	col->metaLen = sizeof(col->metaEntry.type7);
+	col->metaEntry.type7.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	col->metaEntry.type7.tdsTypeId = tdsType;
+	col->metaEntry.type7.maxSize = maxSize;
+	col->isSpatialType = true;
+	col->assemblyName = assemblyName;
+	col->typeName = typeName;
+}
+
+static inline void
+SetColMetadataForGeographyType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t maxSize, char *assemblyName, char *typeName)
+{
+	col->sizeLen = 1;
+	col->metaLen = sizeof(col->metaEntry.type7);
+	col->metaEntry.type7.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	col->metaEntry.type7.tdsTypeId = tdsType;
+	col->metaEntry.type7.maxSize = maxSize;
+	col->isSpatialType = true;
+	col->assemblyName = assemblyName;
+	col->typeName = typeName;
 }
 
 /*

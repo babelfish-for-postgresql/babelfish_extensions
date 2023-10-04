@@ -1,0 +1,70 @@
+USE key_column_usage_vu_prepare_db;
+GO
+
+SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY constraint_name, column_name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl1#!#arg1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2_arg4_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2#!#arg4#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2#!#arg3#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3#!#arg5#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3#!#arg6#!#2
+key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4_arg7_fkey#!#key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4#!#arg7#!#1
+key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4_pkey#!#key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4#!#arg7#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5_arg10_arg11_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5#!#arg10#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5_arg10_arg11_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5#!#arg11#!#2
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_arg13_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg13#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_arg15_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg15#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg12#!#1
+~~END~~
+
+
+SELECT * FROM key_column_usage_vu_prepare_v1;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl1#!#arg1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2_arg4_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2#!#arg4#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2#!#arg3#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3#!#arg5#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3#!#arg6#!#2
+key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4_arg7_fkey#!#key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4#!#arg7#!#1
+key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4_pkey#!#key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4#!#arg7#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5_arg10_arg11_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5#!#arg10#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5_arg10_arg11_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5#!#arg11#!#2
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_arg13_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg13#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_arg15_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg15#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg12#!#1
+~~END~~
+
+
+EXECUTE key_column_usage_vu_prepare_p1;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl1#!#arg1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2_arg4_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2#!#arg4#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl2#!#arg3#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3#!#arg5#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl3#!#arg6#!#2
+key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4_arg7_fkey#!#key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4#!#arg7#!#1
+key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4_pkey#!#key_column_usage_vu_prepare_db#!#key_column_usage_vu_prepare_sc1#!#key_column_usage_vu_prepare_tbl4#!#arg7#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5_arg10_arg11_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5#!#arg10#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5_arg10_arg11_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl5#!#arg11#!#2
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_arg13_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg13#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_arg15_fkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg15#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tbl6#!#arg12#!#1
+~~END~~
+
+
+USE master;
+GO
+
+SELECT * FROM information_schema.key_column_usage WHERE TABLE_NAME LIKE 'key_column_usage_vu_prepare%' ORDER BY constraint_name, column_name;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
