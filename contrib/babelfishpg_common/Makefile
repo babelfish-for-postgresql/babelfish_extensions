@@ -12,7 +12,7 @@ PREV_EXTVERSION = 1.0.0
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 MODULE_big = $(EXTENSION)
 
-PG_CFLAGS += -g -Werror
+PG_CFLAGS += -g -Werror -Wfloat-conversion
 PG_CFLAGS += -fstack-protector-strong
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
@@ -78,6 +78,7 @@ include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
+all: sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql sql/upgrades/babelfishpg_upgrades.in
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
@@ -87,8 +88,24 @@ $(EXTENSION).control: $(EXTENSION).control.in
 		| sed -e 's|@MODULEPATH@|$(MODULEPATH)|g' \
 		> $@
 
-sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
-	cpp $< | sed 's/^# /-- /g' > $@
+FLAG_TO_CHECK := -DENABLE_SPATIAL_TYPES
+
+# Check if the flag is present in PG_CPPFLAGS
+ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
+# The flag is not present then build the .in file not including the spatial type files
+    sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
+		cpp $< | sed 's/^# /-- /g' > $@
+
+    sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D PREV_VERSION=3.2.0 -D CUR_VERSION=3.3.0 $< | sed 's/^# /-- /g' > $@
+else
+# The flag is present build the .in file including the spatial type files
+    sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
+		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
+
+    sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=3.2.0 -D CUR_VERSION=3.3.0 $< | sed 's/^# /-- /g' > $@
+endif
 
 sql/%.sql: sql/upgrades/%.sql
 	cp $< $@

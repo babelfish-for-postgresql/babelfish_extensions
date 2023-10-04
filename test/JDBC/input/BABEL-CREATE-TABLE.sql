@@ -1,0 +1,104 @@
+-- BABEL-4433: Crashes during CREATE TABLE with ASC/DESC Keys
+
+-- This should fail with collation error but it should not crash
+CREATE TABLE [Babel4433Table1](
+        [Id] [uniqueidentifier] NOT NULL,
+        [SequenceId] [bigint] IDENTITY(1,1) NOT NULL,
+        [PanelId] [uniqueidentifier] NOT NULL,
+        [Name] [nvarchar](400) COLLATE Latin1_General_100_CI_AS_SC NULL,
+ CONSTRAINT [PK_Babel4433Table1] PRIMARY KEY CLUSTERED
+(
+        [Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+ CONSTRAINT [UC_Babel4433Table1_SequenceId] UNIQUE NONCLUSTERED
+(
+        [SequenceId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+-----------------------------------------------------------------------
+
+CREATE TABLE [Babel4433Table2](
+        [col1] [int] IDENTITY(1,1) NOT NULL,
+        [col2] [nvarchar](64) NOT NULL,
+        [col3] [int] NOT NULL,
+        [col4] [int] NOT NULL,
+ CONSTRAINT [PK_Babel4433Table2] PRIMARY KEY CLUSTERED
+(
+        [col1]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+ CONSTRAINT [IX_Babel4433Table2] UNIQUE NONCLUSTERED
+(
+        [col2] ,
+        [col3] DESC,
+        [col4]
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+DROP TABLE [Babel4433Table2]
+GO
+
+-----------------------------------------------------------------------
+
+CREATE TABLE [Babel4433Table3](
+        [ID] [int] IDENTITY(1,1) NOT NULL,
+        [Userid] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_Users] PRIMARY KEY CLUSTERED
+(
+        [ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+ CONSTRAINT [Unique_Key_Userid] UNIQUE NONCLUSTERED
+(
+        [Userid] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+go
+
+DROP TABLE [Babel4433Table3]
+GO
+
+-----------------------------------------------------------------------
+
+CREATE TABLE [Babel4433Table4](
+        [ContainerID] [int] IDENTITY(1,1) NOT NULL,
+        [ContentIdentifier] [varchar](100) NOT NULL,
+ CONSTRAINT [PK_Babel4433Table3] PRIMARY KEY CLUSTERED
+(
+        [ContainerID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+ CONSTRAINT [NC_Container__ContentIdentifier_UIX1] UNIQUE NONCLUSTERED
+(
+        [ContentIdentifier] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+go
+
+DROP TABLE [Babel4433Table4]
+GO
+
+-----------------------------------------------------------------------
+
+-- This should fail because schema does not exist but it should not crash
+CREATE TABLE [Dummy].[Babel4433Table5](
+        [ProcessID] [int] NOT NULL,
+        [Ordinal] [int] NOT NULL,
+        [StageKey] [varchar](64) NOT NULL,
+ CONSTRAINT [PK_Babel4433Table5] PRIMARY KEY CLUSTERED
+(
+        [ProcessID] ASC,
+        [Ordinal] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY],
+ CONSTRAINT [AK_ProcessStage] UNIQUE NONCLUSTERED
+(
+        [ProcessID] ASC,
+        [StageKey] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+-----------------------------------------------------------------------
+
+
+

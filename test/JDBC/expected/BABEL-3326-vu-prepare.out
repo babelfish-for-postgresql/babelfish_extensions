@@ -75,10 +75,10 @@ GRANT SELECT,UPDATE,INSERT,DELETE ON dbo.babel_3326_Employees TO babel_3326_non_
 GO
 
 -- creating another table in different schema with same table name
-CREATE SCHEMA s1
+CREATE SCHEMA db
 GO
 
-CREATE TABLE s1.babel_3326_Employees(
+CREATE TABLE db.babel_3326_Employees(
     EmployeeID      INT IDENTITY(1,1) PRIMARY KEY,
     EmployeeName    VARCHAR(50) NOT NULL,
     EmployeeAddress VARCHAR(50) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE s1.babel_3326_Employees(
 )
 GO
  
-INSERT INTO s1.babel_3326_Employees
+INSERT INTO db.babel_3326_Employees
 (
     EmployeeName,
     EmployeeAddress,
@@ -113,8 +113,8 @@ GO
 ~~ROW COUNT: 4~~
 
 
-CREATE TRIGGER [s1].[TR_ins_안녕하세요_babel_3326_Employees] ON [s1].[babel_3326_Employees]
+CREATE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
 FOR INSERT
 AS
-    SELECT 'Trigger s1.TR_ins Invoked'
+    SELECT 'Trigger db.TR_ins Invoked'
 GO
