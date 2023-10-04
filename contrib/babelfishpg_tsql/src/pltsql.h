@@ -48,13 +48,13 @@
 #undef _
 #define _(x) dgettext(TEXTDOMAIN, x)
 
-#define PLTSQL_INSTR_ENABLED()	\
-	(pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && \
-	 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric)
+#define PLTSQL_INSTR_ENABLED() \
+       (pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && \
+        (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric)
 
-#define TSQLInstrumentation(metric)												\
-({	if ((pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric))		\
-		(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);		\
+#define TSQLInstrumentation(metric)                                                                                            \
+({     if ((pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric))               \
+               (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);              \
 })
 
 #define TSQL_TXN_NAME_LIMIT 64	/* Transaction name limit */
@@ -1048,6 +1048,7 @@ typedef struct PLtsql_stmt_execsql
 	char	   *db_name;		/* db_name: only for cross db query */
 	bool		is_schema_specified;	/* is schema name specified? */
 	bool		is_create_view; /* CREATE VIEW? */
+	bool		is_set_tran_isolation; /* SET TRANSACTION ISOLATION? */
 	char	   *original_query; /* Only for batch level statement. */
 } PLtsql_stmt_execsql;
 

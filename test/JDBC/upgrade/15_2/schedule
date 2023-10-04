@@ -223,6 +223,7 @@ rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
+select-strip-parens-before-pr1812
 sp_describe_first_result_set
 sp_tablecollations
 str
@@ -413,3 +414,4 @@ datetimeoffset-timezone-before-15_3
 BABEL-4046
 getdate
 BABEL_4330
+BABEL-4410

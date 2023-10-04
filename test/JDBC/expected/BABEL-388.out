@@ -79,8 +79,8 @@ select cast(pg_typeof(a) as varchar(10)) as typname from babel_388_v8;
 GO
 ~~START~~
 varchar
-text
-text
+"varchar"
+"varchar"
 ~~END~~
 
 
@@ -90,8 +90,8 @@ select cast(pg_typeof(a) as varchar(10)) as typname from babel_388_v9;
 GO
 ~~START~~
 varchar
-text
-text
+"varchar"
+"varchar"
 ~~END~~
 
 
