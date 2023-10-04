@@ -3170,10 +3170,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		/* If float value is passed as reseed_value, only decimal part is considered.*/
 		token = strtok(dbcc_stmt.new_reseed_value, ".");
 		reseed_value = pg_strtoint64(token);
-		if(reseed_value >= 0)
-			reseed_value = floor(reseed_value);
-		else
-			reseed_value = -floor(-reseed_value);
 		pfree(token);
 	}
 

@@ -1,8 +1,6 @@
 setup
 {
 
-  create database babel_3201_dbcc_check;
-  use babel_3201_dbcc_check;
   create table dbcc_test_locks (a int identity,  b int);
   INSERT INTO dbcc_test_locks VALUES (5);
   INSERT INTO dbcc_test_locks VALUES (7);
@@ -11,13 +9,11 @@ setup
 
 teardown
 {
-    use master;
-    drop database babel_3201_dbcc_check;
+    drop table dbcc_test_locks;
 }
 
 session s1
 setup     { 
-            use babel_3201_dbcc_check;
             BEGIN TRAN TR1;
           }
 step s1dbcc_noreseed  { dbcc checkident(dbcc_test_locks, NORESEED) }
@@ -29,7 +25,6 @@ step s1c  { COMMIT; }
 
 session s2
 setup	  { 
-          use babel_3201_dbcc_check;
           BEGIN TRAN TR2;
         }
 step s2s  { SELECT * from dbcc_test_locks; }
