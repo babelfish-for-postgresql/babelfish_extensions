@@ -38,6 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+ALTER VIEW sys.types RENAME TO types_deprecated_3_4_0;
 
 create or replace view sys.types As
 with RECURSIVE type_code_list as
@@ -121,7 +122,7 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
-
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
