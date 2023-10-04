@@ -15,11 +15,22 @@
 
 #include "postgres.h"
 
+#include "utils/hsearch.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
+#include "utils/memutils.h"
+#include "utils/builtins.h"
+#include "catalog/pg_type.h"
+#include "catalog/pg_collation.h"
+#include "catalog/namespace.h"
+#include "tsearch/ts_locale.h"
+#include "nodes/makefuncs.h"
+
+#include "collation.h"
 #include <ctype.h>
 
 #include "access/detoast.h"
 #include "access/htup_details.h"
-#include "postgres.h"
 #include <stdlib.h>
 
 #include "nodes/parsenodes.h"
@@ -196,12 +207,6 @@ typedef struct					/* cast_hash table entry */
 
 static MemoryContext shared_cast_context = NULL;
 static HTAB *shared_cast_hash = NULL;
-
-// typedef struct					/* cached pointer hash table entry */
-// {
-// 	_SPI_plan	plan;			//key
-// 	CachedPlan 	cp;
-// } cachedPtrHashEntry;
 
 /*
  * LOOP_RC_PROCESSING encapsulates common logic for looping statements to
@@ -4639,8 +4644,7 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  * needs to use that, fix those callers to push/pop stmt_mcontext.
  * ----------
  */
-// int count = 0;
-static bool count = false;
+
 static int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
@@ -4651,8 +4655,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
-	// static int count = 0;
-	// static bool count = false;
 	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
@@ -4669,13 +4671,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	char	   *cur_dbname = get_cur_db_name();
 	bool		reset_session_properties = false;
 	bool		inside_trigger = false;
-	// HASHCTL		hashCtl;
-	// bool		found;
-	// static 		HTAB *cachedTable;
-	// MemoryContext oldContext;
-	// cachedPtrHashEntry	*entry = NULL;
-	// cachedPtrHashEntry  *new_entry;
-	// _SPI_plan 	pllan;
 	
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
@@ -4751,113 +4746,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 */
 		paramLI = setup_param_list(estate, expr);
 
-		// if (enable_txn_in_triggers)
-		// {
-		// 	count = true;
-		// }
-
-		// if(strcasestr(stmt->sqlstmt->query, "COLUMNS_UPDATED"))
-		// {
-		// 	call  = true;
-		// }
-		// count++;
-		// entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
-		
-		// if ((!(strcasestr(stmt->sqlstmt->query, "INSERT")) || strcasestr(stmt->sqlstmt->query, "DELETE")))
-		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
-		// {
-		if(strcasestr(stmt->sqlstmt->query, " COLUMNS_UPDATED") || estate->trigdata)
-		{
-			count = true;
-		}
-		if((strcasestr(stmt->sqlstmt->query, "OUTPUT"))|| strcasestr(stmt->sqlstmt->query, "UPDATE") || count)
+		if((pg_strcasecmp(stmt->sqlstmt->query, "OUTPUT")) || pg_strcasecmp(stmt->sqlstmt->query, "UPDATE"))
 		{
 			cp = SPI_plan_get_cached_plan(expr->plan);
-			// count = false;
 		}
-		// }
-		// if (!strcasestr(stmt->sqlstmt->query, "INSERT"))
-		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
-		// {
-		// 	cp = SPI_plan_get_cached_plan(expr->plan);
-		// }
-
-		// if(count){
-		// 	count = false ;
-		// 	cp = SPI_plan_get_cached_plan(expr->plan);
-		// }
-
-		// if (strcasestr(stmt->sqlstmt->query, "CREATE"))
-		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
-		// {
-		// 	cp = SPI_plan_get_cached_plan(expr->plan);
-		// }
-		// if(strcasestr(stmt->sqlstmt->query, "UPDATE"))
-		// {
-		// 	cp = SPI_plan_get_cached_plan(expr->plan);
-		// }
-
-		// else
-		// {
-		// 	if(cachedTable == NULL)		//Creating hash table
-		// 	{
-		// 		oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		// 		MemSet(&hashCtl, 0, sizeof(hashCtl));
-		// 		hashCtl.keysize = sizeof(expr->plan);
-		// 		hashCtl.entrysize = sizeof(cachedPtrHashEntry);
-		// 		hashCtl.hcxt = CurrentMemoryContext;
-									
-		// 		cachedTable = hash_create("Cachepointer Values",
-		// 			16,
-		// 			&hashCtl,
-		// 			HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
-		// 		MemoryContextSwitchTo(oldContext);
-		// 	}
-
-		// 													// retrieving value in new_entry if present in hash table
-								
-		// 	pllan = (_SPI_plan) *(expr->plan);
-		// 	memcpy(&entry->plan, &pllan ,sizeof(_SPI_plan));
-		// 	entry->plan = pllan;
-
-		// 	new_entry = (cachedPtrHashEntry *) hash_search(cachedTable,
-		// 				   &entry->plan,
-		// 				   HASH_FIND,
-		// 				   &found);
-
-		// 	if(found)
-		// 	{
-		// 		memcpy(&cp, &new_entry->cp ,sizeof(CachedPlan));
-		// 	}
-		// 	else												//if value not present in hash table, calling 
-		// 	{													//SPI_plan_get_cached_plan and storing value in table
-		// 		cp = SPI_plan_get_cached_plan(expr->plan);
-							
-		// 		new_entry = (cachedPtrHashEntry *) MemoryContextAlloc(CacheMemoryContext, sizeof(cachedPtrHashEntry));
-		// 		memcpy(&new_entry->plan, &pllan ,sizeof(_SPI_plan));
-		// 		memcpy(&new_entry->cp, &cp ,sizeof(CachedPlan));
-					
-		// 		memcpy(&entry->cp, &cp ,sizeof(CachedPlan));
-									
-		// 		new_entry = (cachedPtrHashEntry *) hash_search(cachedTable,
-		// 				   &entry->plan,
-		// 				   HASH_ENTER,
-		// 					&found);
-									
-		// 		memcpy(&new_entry->plan, &pllan ,sizeof(_SPI_plan));
-		// 		memcpy(&new_entry->cp, &cp ,sizeof(CachedPlan));
-									
-		// 							/* should not try to insert same entry multiple times */
-		// 		Assert(found == false);
-									
-		// 		if (new_entry == NULL)
-		// 		{
-		// 			ereport(DEBUG5,
-		// 				(errmsg(" could not insert hash entry")));
-		// 		}
-		// 	}
-		// 	cp = SPI_plan_get_cached_plan(expr->plan);		//checking
-		// }
 			
 		if (cp)
 		{
