@@ -404,18 +404,18 @@ static std::map<ParseTree *,  std::pair<int, std::pair<int, int>>> selectFragmen
 	
 // Record the offsets for a 'SELECT <expr>' fragment
 void
-recordSelectFragmentOffsetsIx(ParseTree *ctx, int ixStart, int ixEnd, int ixShift)
+recordSelectFragmentOffsets(ParseTree *ctx, int ixStart, int ixEnd, int ixShift)
 {
-	assert(ctx);	
+	Assert(ctx);	
 	selectFragmentOffsets.emplace(std::make_pair(ctx, std::make_pair(ixStart, std::make_pair(ixEnd, ixShift))));		
 }	
 
 void 
 recordSelectFragmentOffsets(ParseTree *ctx, ParserRuleContext *expr)
 {
-	assert(ctx);
-	assert(expr);
-	recordSelectFragmentOffsetsIx(ctx, expr->getStart()->getStartIndex(), expr->getStop()->getStopIndex(), 0);		
+	Assert(ctx);
+	Assert(expr);
+	recordSelectFragmentOffsets(ctx, expr->getStart()->getStartIndex(), expr->getStop()->getStopIndex(), 0);		
 }
 
 void
@@ -558,8 +558,8 @@ PLtsql_expr_query_mutator::PLtsql_expr_query_mutator(PLtsql_expr *e, ParserRuleC
 
 void PLtsql_expr_query_mutator::markSelectFragment(ParserRuleContext *ctx)	
 {
-	assert(ctx);
-	assert(selectFragmentOffsets.count(ctx) > 0);
+	Assert(ctx);
+	Assert(selectFragmentOffsets.count(ctx) > 0);
 	
 	auto p = selectFragmentOffsets.at(ctx);
 	
@@ -573,11 +573,13 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 {
 	int offset = antlr_pos - base_idx;
 	
-	if (isSelectFragment) {
+	if (isSelectFragment) 
+	{
 		// For SELECT fragments, only apply the item when antlr_pos is between idxStart and idxEnd:
 		// when there are multiple expressions per statement (only for DECLARE), the rewrites must be 
 		// applied to the correct expression
-		if ((antlr_pos < idxStart) || (antlr_pos > idxEnd)) {
+		if ((antlr_pos < idxStart) || (antlr_pos > idxEnd)) 
+		{
 			return;
 		}
 
@@ -585,12 +587,14 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 		offset = antlr_pos - idxStart;
 			
 		// Adjust offset once more if the expression was shifted left (for a compound SET @v operator)
-		if (idxStartShift > 0) {
+		if (idxStartShift > 0) 
+		{
 			offset = offset + idxStartShift;
 		}					
 	}	
 						
-	if ((orig_text.front() == '"') && (orig_text.back() == '"') && (repl_text.front() == '\'') && (repl_text.back() == '\'')) {
+	if ((orig_text.front() == '"') && (orig_text.back() == '"') && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
+	{
 		// Do not validate the positions of strings as these are not replaced by their positions
 	}
 	else {
@@ -1905,7 +1909,7 @@ public:
 		else if (ctx->set_statement() && ctx->set_statement()->expression())
 		{
 			// There should always be offsets for SET expressions
-			assert(selectFragmentOffsets.find(ctx->set_statement()) != selectFragmentOffsets.end());			
+			Assert(selectFragmentOffsets.find(ctx->set_statement()) != selectFragmentOffsets.end());			
 															
 			PLtsql_stmt_assign *stmt = (PLtsql_stmt_assign *) getPLtsql_fragment(ctx->set_statement());
 			PLtsql_expr_query_mutator mutator(stmt->expr, ctx->set_statement());
@@ -1914,17 +1918,21 @@ public:
 			mutator.run();
 		}
 		
-		else if (ctx->declare_statement()) {			
+		else if (ctx->declare_statement()) 
+		{			
 			if (ctx->declare_statement()->declare_local().size() > 0) 
 			{
 				// For each assignment to a @variable, a fragment was created (via makeInitializer).
 				// There can be multiple declarations and assignments in a single DECLARE, and these are processed below.
 				int i = 0;
-				for (TSqlParser::Declare_localContext *d : ctx->declare_statement()->declare_local() ) {
+				for (TSqlParser::Declare_localContext *d : ctx->declare_statement()->declare_local() ) 
+				{
 					i++;
-					if (d->expression()) {  
+					if (d->expression()) 
+					{  
 						ParserRuleContext *ctx_fragment = (ParserRuleContext *) ctx;			
-						if (selectFragmentOffsets.find(d->expression()) != selectFragmentOffsets.end()) { 
+						if (selectFragmentOffsets.find(d->expression()) != selectFragmentOffsets.end()) 
+						{ 
 							ctx_fragment = d->expression();
 						}
 								
@@ -4377,7 +4385,8 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx, std::map<PLtsql_stmt 
 
 				if (var->dtype == PLTSQL_DTYPE_TBL)
 					result.push_back(makeDeclTableStmt(var, type, getLineNo(ctx)));
-				else if (local->expression()) {
+				else if (local->expression()) 
+				{
 					PLtsql_stmt *e = makeInitializer(var->dno, getLineNo(ctx), local->expression());
 					result.push_back(e);
 					
@@ -4563,7 +4572,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 
 		// Each variable assignment becomes a fragment, for which rewriting may be required. We need to keep track of where 
 		// the assignment is located (start-end of range) so that we can apply the rewrites correctly
-		recordSelectFragmentOffsetsIx(ctx, posStart, posEnd, posBracket);
+		recordSelectFragmentOffsets(ctx, posStart, posEnd, posBracket);
 			
 		return (PLtsql_stmt *) result;
 	}
@@ -5408,12 +5417,15 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 
 	// FIXME: handle remaining statement types
 
-	for (PLtsql_stmt *stmt : result) {
+	for (PLtsql_stmt *stmt : result) 
+	{
 		// Associate each fragement with a tree node
-		if (declare_local_expr.find(stmt) != declare_local_expr.end()) {
+		if (declare_local_expr.find(stmt) != declare_local_expr.end()) 
+		{
 			attachPLtsql_fragment(declare_local_expr.at(stmt), stmt);	
 		}
-		else if (ctx->set_statement()) {
+		else if (ctx->set_statement()) 
+		{
 			attachPLtsql_fragment(ctx->set_statement(), stmt);	
 		}
 		else {
