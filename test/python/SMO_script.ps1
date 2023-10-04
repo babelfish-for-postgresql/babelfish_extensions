@@ -17,6 +17,8 @@ $script_flag = $paramsArray[5]
 $schm = "sys"
 $dtb = "sysdatabases"
 $var_one = "1"
+$schm1 = "dbo"
+$schm2 = "guest"
 
 
 
@@ -27,7 +29,6 @@ if($script_flag -eq $var_one)
     $Objects += $db.Views
     $Objects += $db.StoredProcedures
     $Objects += $db.UserDefinedFunctions
-    $Objects += $db.Users
     $Objects += $db.Tables.Indexes
     $Objects += $db.Tables.Triggers
     foreach ($CurrentObject in $Objects)
@@ -51,9 +52,9 @@ else
     $Objects += $db.Views
     $Objects += $db.StoredProcedures
     $Objects += $db.UserDefinedFunctions
-    $Objects += $db.Users
     $SubObjects += $db.Tables.Indexes
     $SubObjects += $db.Tables.Triggers
+    $SubObjects += $db.Users
     foreach ($CurrentObject in $Objects)
     {
         if ($CurrentObject.schema -ne $schm -and $CurrentObject.schema -ne $dtb -and $CurrentObject.schema -ne $null -and -not $CurrentObject.IsSystemObject )
@@ -69,21 +70,7 @@ else
     }
     foreach ($CurrentObject in $SubObjects)
     {
-        if (-not $CurrentObject.IsSystemObject )
-            {
-                $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
-                $Scripter.Options.DriAll = $True;
-                $Scripter.Options.ScriptSchema = $True;
-                $Scripter.Options.ScriptData  = $False;
-                $Scripter.Options.NoCollation = $True;
-                $Scripter.Script($CurrentObject);
-                Write-Output "GO`n"
-            }
-    }
-
-    foreach ($CurrentObject in $db.Users)
-    {
-        if (-not $CurrentObject.IsSystemObject )
+        if (-not $CurrentObject.IsSystemObject -and $CurrentObject.Name -ne $schm1 -and $CurrentObject.Name -ne $schm2)
             {
                 $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
                 $Scripter.Options.DriAll = $True;
