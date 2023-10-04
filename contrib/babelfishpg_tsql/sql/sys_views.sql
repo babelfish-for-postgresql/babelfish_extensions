@@ -3051,3 +3051,19 @@ SELECT
     CAST(0 as sys.BIT) AS is_ambiguous
 WHERE FALSE;
 GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_permissions
+AS
+SELECT
+    CAST(0 as tinyint) AS class,
+    CAST('' as NVARCHAR(60)) AS class_desc,
+    CAST(0 as INT) AS major_id,
+    CAST(0 as INT) AS minor_id,
+    CAST(0 as INT) AS grantee_principal_id,
+    CAST(0 as INT) AS grantor_principal_id,
+    CAST('a' as CHAR(4)) AS type,
+    CAST('' as NVARCHAR(128)) AS permission_name,
+    CAST('G' as CHAR(1)) AS state,
+    CAST('' as NVARCHAR(60)) AS state_desc
+WHERE FALSE;
+GRANT SELECT ON sys.database_permissions TO PUBLIC;

@@ -27,6 +27,7 @@ if($script_flag -eq $var_one)
     $Objects += $db.Views
     $Objects += $db.StoredProcedures
     $Objects += $db.UserDefinedFunctions
+    $Objects += $db.Users
     $Objects += $db.Tables.Indexes
     $Objects += $db.Tables.Triggers
     foreach ($CurrentObject in $Objects)
@@ -50,6 +51,7 @@ else
     $Objects += $db.Views
     $Objects += $db.StoredProcedures
     $Objects += $db.UserDefinedFunctions
+    $Objects += $db.Users
     $SubObjects += $db.Tables.Indexes
     $SubObjects += $db.Tables.Triggers
     foreach ($CurrentObject in $Objects)
@@ -66,6 +68,20 @@ else
         }
     }
     foreach ($CurrentObject in $SubObjects)
+    {
+        if (-not $CurrentObject.IsSystemObject )
+            {
+                $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
+                $Scripter.Options.DriAll = $True;
+                $Scripter.Options.ScriptSchema = $True;
+                $Scripter.Options.ScriptData  = $False;
+                $Scripter.Options.NoCollation = $True;
+                $Scripter.Script($CurrentObject);
+                Write-Output "GO`n"
+            }
+    }
+
+    foreach ($CurrentObject in $db.Users)
     {
         if (-not $CurrentObject.IsSystemObject )
             {
