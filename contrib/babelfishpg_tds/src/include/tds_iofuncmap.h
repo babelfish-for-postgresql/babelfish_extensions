@@ -49,6 +49,8 @@
 #define		TDS_SEND_XML					26
 #define		TDS_SEND_SQLVARIANT				28
 #define		TDS_SEND_DATETIMEOFFSET				29
+#define		TDS_SEND_GEOMETRY				30
+#define		TDS_SEND_GEOGRAPHY				31
 
 #define		TDS_RECV_INVALID				0
 #define		TDS_RECV_BIT					1
@@ -80,6 +82,8 @@
 #define		TDS_RECV_TABLE					27
 #define		TDS_RECV_SQLVARIANT				28
 #define		TDS_RECV_DATETIMEOFFSET				29
+#define		TDS_RECV_GEOMETRY				30
+#define		TDS_RECV_GEOGRAPHY				31
 
 /*
  * Supported TDS data types
@@ -113,6 +117,7 @@
 #define TDS_TYPE_SQLVARIANT		98	/* 0x62 */
 #define TDS_TYPE_DATETIMEOFFSET		43	/* 0x2B */
 #define TDS_TYPE_SMALLDATETIME          58	/* 0x3A */
+#define TDS_TYPE_SPATIAL		240	/* 0xF0 */
 
 /*
  * macros for supporting sqlvariant datatype on TDS side
@@ -159,4 +164,5 @@
 #define TDS_MAXLEN_DATETIME 				8
 #define TDS_MAXLEN_SMALLMONEY				4
 #define TDS_MAXLEN_MONEY				8
+#define TDS_MAXLEN_POINT				    65535
 #endif							/* TDS_IOFUNCMAP_H */

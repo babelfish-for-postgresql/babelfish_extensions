@@ -28,7 +28,7 @@
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
+#include "babelfishpg_common.h" // BBF_Pragma_IgnoreFloatConversionWarning_Push
 
 #include <math.h>
 
@@ -53,6 +53,7 @@ dtrunc_(float8 arg1)
 	return result;
 }
 
+BBF_Pragma_IgnoreFloatConversionWarning_Push
 inline static float4
 ftrunc_(float4 arg1)
 {
@@ -65,6 +66,7 @@ ftrunc_(float4 arg1)
 
 	return result;
 }
+BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 /* dtrunci8(X) = dtoi8(dtrunc(X)) */
 PG_FUNCTION_INFO_V1(dtrunci8);
@@ -154,7 +156,9 @@ ftrunci8(PG_FUNCTION_ARGS)
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
+	BBF_Pragma_IgnoreFloatConversionWarning_Push
 	num = rint(ftrunc_(num));
+	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
 	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT64(num)))
@@ -164,6 +168,8 @@ ftrunci8(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT64((int64) num);
 }
+
+
 
 
 /* ftrunci4(X) = ftoi4(ftrunc(X)) */
@@ -179,7 +185,9 @@ ftrunci4(PG_FUNCTION_ARGS)
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
+	BBF_Pragma_IgnoreFloatConversionWarning_Push
 	num = rint(ftrunc_(num));
+	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
 	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT32(num)))
@@ -189,7 +197,6 @@ ftrunci4(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32((int32) num);
 }
-
 
 /* ftrunci2(X) = ftoi2(ftrunc(X)) */
 PG_FUNCTION_INFO_V1(ftrunci2);
@@ -204,7 +211,9 @@ ftrunci2(PG_FUNCTION_ARGS)
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
+	BBF_Pragma_IgnoreFloatConversionWarning_Push
 	num = rint(ftrunc_(num));
+	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
 	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT16(num)))

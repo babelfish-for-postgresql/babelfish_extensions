@@ -128,6 +128,12 @@ ignore#!#Test-Identity-before-14_7-or-15_2-vu-cleanup
 ignore#!#datetimeoffset-timezone-before-15_3-vu-prepare
 ignore#!#datetimeoffset-timezone-before-15_3-vu-verify
 ignore#!#datetimeoffset-timezone-before-15_3-vu-cleanup
+ignore#!#select-strip-parens-before-pr1812-vu-prepare
+ignore#!#select-strip-parens-before-pr1812-vu-verify
+ignore#!#select-strip-parens-before-pr1812-vu-cleanup
+ignore#!#select-strip-parens-before-15_5-vu-prepare
+ignore#!#select-strip-parens-before-15_5-vu-verify
+ignore#!#select-strip-parens-before-15_5-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare

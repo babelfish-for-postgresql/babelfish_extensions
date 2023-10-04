@@ -968,6 +968,26 @@ public:
 		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 
+		#ifdef ENABLE_SPATIAL_TYPES
+		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+		{
+			TSqlParser::IdContext *idctx = ctx->id()[0];
+			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+			{
+				std::string idText = ::getFullText(idctx->id()[0]);
+				transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
+				size_t start = idText.find_first_not_of(" \n\r\t\f\v");
+				idText = (start == std::string::npos) ? "" : idText.substr(start);
+				size_t end = idText.find_last_not_of(" \n\r\t\f\v");
+				idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
+				if(idText == "geography" || idText == "geometry"){
+					rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), idText))); 
+					rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "__")));		
+				}
+			}
+		}
+		#endif
+
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
 
@@ -1474,6 +1494,62 @@ public:
 	{
 		// just throw away all PLtsql_stmts in the container. Please see the comment in exitCreate_or_alter_procedure()
 		popContainer(ctx);
+	}
+
+	void exitAlter_table(TSqlParser::Alter_tableContext *ctx) override
+	{
+		if (ctx->TRIGGER() && ctx->id().size() > 1)	/* condition to filter alter table statements which contains TRIGGER keyword and multiple trigger names */
+		{
+			/*
+			 * When we come across a alter table query which enable/disable trigger with multiple trigger name, 
+			 * we will replace it with list of alter table statements, a statement for each trigger.
+			 * As Postgres only support enabling/disabling of only one trigger using alter table syntax, so a call like:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a, trigger_b
+			 *	GO
+			 * 
+			 * will be re-written as:
+			 * 
+			 * 	ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_a; 
+			 *  ALTER TABLE Employees { ENABLE | DISABLE } TRIGGER trigger_b;
+			 */
+
+			std::vector<TSqlParser::IdContext *> list_id = ctx->id();
+			TSqlParser::Table_nameContext *table_name = ctx->tabname;
+
+			std::string str = std::string("");
+			std::string action_type;
+			if (ctx->ENABLE() != nullptr)
+			{
+				action_type = std::string(" ENABLE");
+			}
+			else
+			{
+				action_type = std::string(" DISABLE");
+			}
+
+			for (TSqlParser::IdContext *id : list_id) {
+				str += std::string("ALTER TABLE ") + ::getFullText(table_name) + action_type + std::string(" TRIGGER ") + ::getFullText(id) + "; ";
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), str)));
+		}
+	}
+
+	void exitEnable_trigger(TSqlParser::Enable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
+	}
+
+	void exitDisable_trigger(TSqlParser::Disable_triggerContext *ctx) override
+	{
+		if(ctx->SERVER() || ctx->DATABASE())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'DDL trigger' is not currently supported in Babelfish.", 0, 0);
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -2265,6 +2341,29 @@ public:
 	// "char" is a data type name in PostgreSQL
 
 	TSqlParser::IdContext *proc = ctx->procedure;
+
+	#ifdef ENABLE_SPATIAL_TYPES
+	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
+	{
+		TSqlParser::IdContext *idctx = ctx->id()[0];
+		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
+		{
+			std::string idText = idctx->id()[0]->getText();
+			transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
+			size_t start = idText.find_first_not_of(" \n\r\t\f\v");
+    		idText = (start == std::string::npos) ? "" : idText.substr(start);
+			size_t end = idText.find_last_not_of(" \n\r\t\f\v");
+    		idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
+			if(idText == "geography" || idText == "geometry"){
+				// Replace colon_colon with underscores of the same length
+				std::string colonText = idctx->colon_colon()->getText();
+				std::string underScores(colonText.size(), '_');
+
+				stream.setText(idctx->colon_colon()->start->getStartIndex(), underScores.c_str());
+			}
+		}
+	}
+	#endif
 
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
@@ -4578,6 +4677,12 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
+		else if(set_special_ctx->ISOLATION())
+		{
+			PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) makeSQL(ctx);
+			stmt->is_set_tran_isolation = true;
+			return (PLtsql_stmt *) stmt;
+		}
 		else
 			return makeSQL(ctx);
 	}

@@ -218,5 +218,10 @@ go
 drop table t1;
 go
 
+-- Test BABEL-4433
+CREATE TABLE t( c timestamp NOT NULL, PRIMARY KEY ( [ID] ASC))
+GO
+
+
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
