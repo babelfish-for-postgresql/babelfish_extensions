@@ -19,6 +19,20 @@
 
 #include "access/detoast.h"
 #include "access/htup_details.h"
+#include "postgres.h"
+#include <stdlib.h>
+
+#include "nodes/parsenodes.h"
+#include "parser/parser.h"
+#include "parser/scansup.h"
+#include "libpq/pqformat.h"
+#include "utils/memutils.h"
+#include "pltsql.h"
+#include "pltsql-2.h"
+#include "pltsql_instr.h"
+#include "utils/builtins.h"
+#include "utils/numeric.h"
+#include "utils/syscache.h"
 #include "access/printtup.h"
 #include "access/transam.h"
 #include "access/tupconvert.h"
@@ -114,6 +128,7 @@ typedef struct SimpleEcontextStackEntry
 
 static EState *shared_simple_eval_estate = NULL;
 static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
+static ResourceOwner shared_simple_eval_resowner = NULL;
 
 /*
  * Memory management within a pltsql function generally works with three
@@ -341,7 +356,8 @@ static int	exec_stmt_set(PLtsql_execstate *estate,
 void		pltsql_estate_setup(PLtsql_execstate *estate,
 								PLtsql_function *func,
 								ReturnSetInfo *rsi,
-								EState *simple_eval_estate);
+								EState *simple_eval_estate,
+								ResourceOwner simple_eval_resowner);
 void		exec_eval_cleanup(PLtsql_execstate *estate);
 
 int			exec_fmtonly(PLtsql_execstate *estate,
@@ -506,7 +522,7 @@ extern int
  */
 Datum
 pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
-					 EState *simple_eval_estate, bool atomic)
+					 EState *simple_eval_estate, ResourceOwner simple_eval_resowner, bool atomic)
 {
 	PLtsql_execstate estate;
 	ErrorContextCallback plerrcontext;
@@ -517,7 +533,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	 * Setup the execution state
 	 */
 	pltsql_estate_setup(&estate, func, (ReturnSetInfo *) fcinfo->resultinfo,
-						simple_eval_estate);
+						simple_eval_estate,simple_eval_resowner);
 	estate.atomic = atomic;
 
 	/*
@@ -1061,7 +1077,7 @@ pltsql_exec_trigger(PLtsql_function *func,
 	/*
 	 * Setup the execution state
 	 */
-	pltsql_estate_setup(&estate, func, NULL, NULL);
+	pltsql_estate_setup(&estate, func, NULL, NULL, NULL);
 
 	if (pltsql_support_tsql_transactions() && !pltsql_disable_txn_in_triggers)
 		estate.atomic = false;
@@ -1343,7 +1359,7 @@ pltsql_exec_event_trigger(PLtsql_function *func, EventTriggerData *trigdata)
 	/*
 	 * Setup the execution state
 	 */
-	pltsql_estate_setup(&estate, func, NULL, NULL);
+	pltsql_estate_setup(&estate, func, NULL, NULL, NULL);
 	estate.evtrigdata = trigdata;
 
 	/*
@@ -2586,6 +2602,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 		 * some internal state.
 		 */
 		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
 		pltsql_create_econtext(estate);
 	}
 
@@ -4224,7 +4241,8 @@ void
 pltsql_estate_setup(PLtsql_execstate *estate,
 					PLtsql_function *func,
 					ReturnSetInfo *rsi,
-					EState *simple_eval_estate)
+					EState *simple_eval_estate,
+					ResourceOwner simple_eval_resowner)
 {
 	HASHCTL		ctl;
 	PLExecStateCallStack *es_cs_entry;
@@ -4326,6 +4344,11 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 		estate->cast_hash = shared_cast_hash;
 		estate->cast_hash_context = shared_cast_context;
 	}
+	/* likewise for the simple-expression resource owner */
+	if (simple_eval_resowner)
+		estate->simple_eval_resowner = simple_eval_resowner;
+	else
+		estate->simple_eval_resowner = shared_simple_eval_resowner;
 
 	/*
 	 * We start with no stmt_mcontext; one will be created only if needed.
@@ -4464,7 +4487,10 @@ commit_stmt(PLtsql_execstate *estate, bool txnStarted)
 	 * transactions do not affect it
 	 */
 	if (estate->use_shared_simple_eval_state && simple_econtext_stack == NULL)
+	{
 		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
 
 	/*
 	 * simple_econtext_stack being NULL only reliably identifies
@@ -4614,6 +4640,7 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
  * ----------
  */
 // int count = 0;
+static bool count = false;
 static int
 exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt)
@@ -4625,7 +4652,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Portal		portal = NULL;
 	ListCell   *lc;
 	// static int count = 0;
-	static bool count = false;
+	// static bool count = false;
 	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
@@ -4739,13 +4766,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		// if ((!(strcasestr(stmt->sqlstmt->query, "INSERT")) || strcasestr(stmt->sqlstmt->query, "DELETE")))
 		// 		// && (strcasestr(stmt->sqlstmt->query, " INSERT ") || strcasestr(stmt->sqlstmt->query, " UPDATE ") || strcasestr(stmt->sqlstmt->query, " DELETE ")))
 		// {
-		if(strcasestr(stmt->sqlstmt->query, " COLUMNS_UPDATED"))
+		if(strcasestr(stmt->sqlstmt->query, " COLUMNS_UPDATED") || estate->trigdata)
 		{
 			count = true;
 		}
 		if((strcasestr(stmt->sqlstmt->query, "OUTPUT"))|| strcasestr(stmt->sqlstmt->query, "UPDATE") || count)
 		{
 			cp = SPI_plan_get_cached_plan(expr->plan);
+			// count = false;
 		}
 		// }
 		// if (!strcasestr(stmt->sqlstmt->query, "INSERT"))
@@ -5547,7 +5575,10 @@ exec_fmtonly(PLtsql_execstate *estate,
 		 * simple-expression infrastructure.
 		 */
 		if (estate->use_shared_simple_eval_state)
+		{
 			estate->simple_eval_estate = NULL;
+			estate->simple_eval_resowner = NULL;
+		}
 		pltsql_create_econtext(estate);
 	}
 
@@ -6337,7 +6368,11 @@ exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 	SPI_commit();
 	SPI_start_transaction();
 
-	estate->simple_eval_estate = NULL;
+	if (estate->use_shared_simple_eval_state)
+	{
+		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
 	pltsql_create_econtext(estate);
 
 	return PLTSQL_RC_OK;
@@ -6354,7 +6389,11 @@ exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 	SPI_rollback();
 	SPI_start_transaction();
 
-	estate->simple_eval_estate = NULL;
+	if (estate->use_shared_simple_eval_state)
+	{
+		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
 	pltsql_create_econtext(estate);
 
 	return PLTSQL_RC_OK;
@@ -7672,7 +7711,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 {
 	ExprContext *econtext = estate->eval_econtext;
 	LocalTransactionId curlxid = MyProc->lxid;
-	CachedPlan *cplan;
+	ParamListInfo paramLI;
 	void	   *save_setup_arg;
 	bool		need_snapshot;
 	MemoryContext oldcontext;
@@ -7686,7 +7725,8 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	/*
 	 * If expression is in use in current xact, don't touch it.
 	 */
-	if (expr->expr_simple_in_use && expr->expr_simple_lxid == curlxid)
+	if (unlikely(expr->expr_simple_in_use) &&
+		expr->expr_simple_lxid == curlxid)
 		return false;
 
 	/*
@@ -7699,24 +7739,84 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	EnsurePortalSnapshotExists();
 
 	/*
-	 * Revalidate cached plan, so that we will notice if it became stale. (We
-	 * need to hold a refcount while using the plan, anyway.)  If replanning
-	 * is needed, do that work in the eval_mcontext.
+	 * Check to see if the cached plan has been invalidated.  If not, and this
+	 * is the first use in the current transaction, save a plan refcount in
+	 * the simple-expression resowner.
 	 */
-	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-	cplan = SPI_plan_get_cached_plan(expr->plan);
-	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * We can't get a failure here, because the number of CachedPlanSources in
-	 * the SPI plan can't change from what exec_simple_check_plan saw; it's a
-	 * property of the raw parsetree generated from the query text.
-	 */
-	Assert(cplan != NULL);
-
-	/* If it got replanned, update our copy of the simple expression */
-	if (cplan->generation != expr->expr_simple_generation)
+	if (likely(CachedPlanIsSimplyValid(expr->expr_simple_plansource,
+									   expr->expr_simple_plan,
+									   (expr->expr_simple_plan_lxid != curlxid ?
+										estate->simple_eval_resowner : NULL))))
 	{
+		/*
+		 * It's still good, so just remember that we have a refcount on the
+		 * plan in the current transaction.  (If we already had one, this
+		 * assignment is a no-op.)
+		 */
+		expr->expr_simple_plan_lxid = curlxid;
+	}
+	else
+	{
+		/* Need to replan */
+		CachedPlan *cplan;
+
+		/*
+		 * If we have a valid refcount on some previous version of the plan,
+		 * release it, so we don't leak plans intra-transaction.
+		 */
+		if (expr->expr_simple_plan_lxid == curlxid)
+		{
+			ResourceOwner saveResourceOwner = CurrentResourceOwner;
+
+			CurrentResourceOwner = estate->simple_eval_resowner;
+			ReleaseCachedPlan(expr->expr_simple_plan, CurrentResourceOwner);
+			CurrentResourceOwner = saveResourceOwner;
+			expr->expr_simple_plan = NULL;
+			expr->expr_simple_plan_lxid = InvalidLocalTransactionId;
+		}
+		/* Do the replanning work in the eval_mcontext */
+		oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
+		cplan = SPI_plan_get_cached_plan(expr->plan);
+		MemoryContextSwitchTo(oldcontext);
+
+		/*
+		 * We can't get a failure here, because the number of
+		 * CachedPlanSources in the SPI plan can't change from what
+		 * exec_simple_check_plan saw; it's a property of the raw parsetree
+		 * generated from the query text.
+		 */
+		Assert(cplan != NULL);
+		/*
+		 * These tests probably can't fail either, but if they do, cope by
+		 * declaring the plan to be non-simple.  On success, we'll acquire a
+		 * refcount on the new plan, stored in simple_eval_resowner.
+		 */
+		if (CachedPlanAllowsSimpleValidityCheck(expr->expr_simple_plansource,
+												cplan, CurrentResourceOwner) &&
+			CachedPlanIsSimplyValid(expr->expr_simple_plansource, cplan,
+									estate->simple_eval_resowner))
+		{
+			/* Remember that we have the refcount */
+			expr->expr_simple_plan = cplan;
+			expr->expr_simple_plan_lxid = curlxid;
+		}
+		else
+		{
+			/* Release SPI_plan_get_cached_plan's refcount */
+			ReleaseCachedPlan(cplan, CurrentResourceOwner);
+			/* Mark expression as non-simple, and fail */
+			expr->expr_simple_expr = NULL;
+			return false;
+		}
+
+		/*
+		 * SPI_plan_get_cached_plan acquired a plan refcount stored in the
+		 * active resowner.  We don't need that anymore, so release it.
+		 */
+		ReleaseCachedPlan(cplan, CurrentResourceOwner);
+
+		/* Extract desired scalar expression from cached plan */
+		 	
 		exec_save_simple_expr(expr, cplan);
 		/* better recheck r/w safety, as it could change due to inlining */
 		if (expr->rwparam >= 0)
@@ -7733,9 +7833,16 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 * Set up ParamListInfo to pass to executor.  For safety, save and restore
 	 * estate->paramLI->parserSetupArg around our use of the param list.
 	 */
-	save_setup_arg = estate->paramLI->parserSetupArg;
-
-	econtext->ecxt_param_list_info = setup_param_list(estate, expr);
+	paramLI = estate->paramLI;
+	save_setup_arg = paramLI->parserSetupArg;
+	/*
+	 * We can skip using setup_param_list() in favor of just doing this
+	 * unconditionally, because there's no need for the optimization of
+	 * possibly setting ecxt_param_list_info to NULL; we've already forced use
+	 * of a generic plan.
+	 */
+	paramLI->parserSetupArg = (void *) expr;
+	econtext->ecxt_param_list_info = paramLI;
 
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
@@ -7745,7 +7852,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 * commit/rollback. There is still leak when it is Top level batch +
 	 * replan and needs fix.
 	 */
-	if (expr->expr_simple_lxid != curlxid && (expr->expr_simple_state == NULL || estate->use_shared_simple_eval_state))
+	if (unlikely(expr->expr_simple_lxid != curlxid) && (expr->expr_simple_state == NULL || estate->use_shared_simple_eval_state))
 	{
 		oldcontext = MemoryContextSwitchTo(estate->simple_eval_estate->es_query_cxt);
 		expr->expr_simple_state =
@@ -7793,17 +7900,12 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 
 	econtext->ecxt_param_list_info = NULL;
 
-	estate->paramLI->parserSetupArg = save_setup_arg;
+	paramLI->parserSetupArg = save_setup_arg;
 
 	if (need_snapshot)
 		PopActiveSnapshot();
 
 	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * Now we can release our refcount on the cached plan.
-	 */
-	ReleaseCachedPlan(cplan, CurrentResourceOwner);
 
 	/*
 	 * That's it.
@@ -9622,6 +9724,17 @@ pltsql_create_econtext(PLtsql_execstate *estate)
 		}
 		estate->simple_eval_estate = shared_simple_eval_estate;
 	}
+	/*
+	 * Likewise for the simple-expression resource owner.
+	 */
+	if (estate->simple_eval_resowner == NULL)
+	{
+		if (shared_simple_eval_resowner == NULL)
+			shared_simple_eval_resowner =
+				ResourceOwnerCreate(TopTransactionResourceOwner,
+									"PL/pgSQL simple expressions");
+		estate->simple_eval_resowner = shared_simple_eval_resowner;
+	}
 
 	/*
 	 * Create a child econtext for the current function.
@@ -9670,7 +9783,10 @@ pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate)
 	MemoryContextSwitchTo(cur_ctxt);
 
 	if (estate->use_shared_simple_eval_state)
+	{
 		estate->simple_eval_estate = NULL;
+		estate->simple_eval_resowner = NULL;
+	}
 	pltsql_create_econtext(estate);
 }
 
@@ -9797,15 +9913,30 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	 * any remaining resources will be released correctly). In an abort, we
 	 * expect the regular abort recovery procedures to release everything of
 	 * interest.
+	 * * If we are doing a clean transaction shutdown, free the EState and tell
+	 * the resowner to release whatever plancache references it has, so that
+	 * all remaining resources will be released correctly.  (We don't need to
+	 * actually delete the resowner here; deletion of the
+	 * TopTransactionResourceOwner will take care of that.)
+	 *
+	 * In an abort, we expect the regular abort recovery procedures to release
+	 * everything of interest, so just clear our pointers.
 	 */
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
 	{
 		txn_clean_estate(true);
+		if (shared_simple_eval_estate)
+			FreeExecutorState(shared_simple_eval_estate);
+		shared_simple_eval_estate = NULL;
+		if (shared_simple_eval_resowner)
+			ResourceOwnerReleaseAllPlanCacheRefs(shared_simple_eval_resowner);
+		shared_simple_eval_resowner = NULL;
 	}
 	else if (event == XACT_EVENT_ABORT)
 	{
 		simple_econtext_stack = NULL;
 		shared_simple_eval_estate = NULL;
+		shared_simple_eval_resowner = NULL;
 	}
 	/* Reset portal snapshot in case of commit/rollback */
 	if (pltsql_snapshot_portal != NULL)

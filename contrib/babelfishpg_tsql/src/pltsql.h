@@ -310,11 +310,20 @@ typedef struct PLtsql_expr
 
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;	/* NULL means not a simple expr */
-	int			expr_simple_generation; /* plancache generation we checked */
 	Oid			expr_simple_type;	/* result type Oid, if simple */
 	int32		expr_simple_typmod; /* result typmod, if simple */
 	bool		expr_simple_mutable;	/* true if simple expr is mutable */
 
+	/*
+	 * If the expression was ever determined to be simple, we remember its
+	 * CachedPlanSource and CachedPlan here.  If expr_simple_plan_lxid matches
+	 * current LXID, then we hold a refcount on expr_simple_plan in the
+	 * current transaction.  Otherwise we need to get one before re-using it.
+	 */
+	CachedPlanSource *expr_simple_plansource;	/* extracted from "plan" */
+	CachedPlan *expr_simple_plan;	/* extracted from "plan" */
+	LocalTransactionId expr_simple_plan_lxid;
+	
 	/*
 	 * if expr is simple AND prepared in current transaction,
 	 * expr_simple_state and expr_simple_in_use are valid. Test validity by
@@ -1366,8 +1375,9 @@ typedef struct PLtsql_execstate
 	 */
 	ParamListInfo paramLI;
 
-	/* EState to use for "simple" expression evaluation */
+	/* EState and resowner to use for "simple" expression evaluation */
 	EState	   *simple_eval_estate;
+	ResourceOwner simple_eval_resowner;
 	bool		use_shared_simple_eval_state;
 
 	/* lookup table to use for executing type casts */
@@ -1894,6 +1904,7 @@ extern uint64 execute_bulk_load_insert(int ncol, int nrow,
 extern Datum pltsql_exec_function(PLtsql_function *func,
 								  FunctionCallInfo fcinfo,
 								  EState *simple_eval_estate,
+								  ResourceOwner simple_eval_resowner,
 								  bool atomic);
 extern HeapTuple pltsql_exec_trigger(PLtsql_function *func,
 									 TriggerData *trigdata);
