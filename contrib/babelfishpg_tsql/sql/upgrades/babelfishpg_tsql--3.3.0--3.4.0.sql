@@ -124,6 +124,16 @@ and
 GRANT SELECT ON sys.types TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
 
+create or replace view sys.table_types as
+select st.*
+  , pt.typrelid::int as type_table_object_id
+  , 0::sys.bit as is_memory_optimized -- return 0 until we support in-memory tables
+from sys.types st
+inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
+where is_table_type = 1;
+GRANT SELECT ON sys.table_types TO PUBLIC;
+
+
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
 		CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
