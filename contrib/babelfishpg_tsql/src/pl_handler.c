@@ -235,9 +235,6 @@ static validate_set_config_function_hook_type prev_validate_set_config_function_
 static void pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action);
 bool		current_query_is_create_tbl_check_constraint = false;
 
-RawStmt	   *bbf_pivot_sql1;
-RawStmt	   *bbf_pivot_sql2;
-
 /* Configurations */
 bool		pltsql_trace_tree = false;
 bool		pltsql_trace_exec_codes = false;
@@ -678,40 +675,6 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					pfree((char *) rel_schema);
 				}
 			}
-		}
-	}
-
-	if (parseTree->stmt->type == T_SelectStmt)
-	{
-		SelectStmt	*selectStmt;
-
-		selectStmt = (SelectStmt *) parseTree->stmt;
-		if (selectStmt->isPivot){
-			RawStmt	*s_sql;
-			RawStmt	*c_sql;
-			MemoryContext oldContext = CurrentMemoryContext;
-			MemoryContextSwitchTo(TopMemoryContext);
-			/* save rewrited sqls to global variable for later retrive */
-			s_sql = makeNode(RawStmt);
-			c_sql = makeNode(RawStmt);
-			
-			s_sql->stmt = (Node *) selectStmt->larg;
-			s_sql->stmt_location = 0;
-			s_sql->stmt_len = 0;
-
-			c_sql->stmt = (Node *) selectStmt->rarg;
-			c_sql->stmt_location = 0;
-			c_sql->stmt_len = 0;
-
-			bbf_pivot_sql1 = copyObject(s_sql);
-			bbf_pivot_sql2 = copyObject(c_sql);
-
-			MemoryContextSwitchTo(oldContext);
-			/* 
-			   call analyzer to generate two plan 
-			   and save to global variable for later pivot 
-			   function use 
-			*/
 		}
 	}
 

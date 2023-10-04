@@ -3523,7 +3523,8 @@ SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
 	if (parsetree == NULL || tcount < 0)
 		return SPI_ERROR_ARGUMENT;
 	
-
+	sql_dialect = SQL_DIALECT_TSQL;
+	
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
 	plan.parse_mode = RAW_PARSE_DEFAULT;
@@ -3614,7 +3615,6 @@ bbf_pivot(PG_FUNCTION_ARGS)
 
 	return (Datum) 0;
 }
-
 
 /*
  * load up the categories hash table
