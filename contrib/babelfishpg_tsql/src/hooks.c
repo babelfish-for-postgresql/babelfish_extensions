@@ -1641,7 +1641,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int actual_alias_len = 0;
 
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || *colname_start == ' ')
+			while(*colname_start == '(' || scanner_isspace(*colname_start))
 			{
 				colname_start++;
 			}
@@ -2807,8 +2807,15 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	 * added to total_digit_count
 	 */
 	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
-		total_digit_count += (partially_filled_numeric_block > 0) ?
-			log10(partially_filled_numeric_block) + 1 : 1;
+	{
+		if (partially_filled_numeric_block > 0)
+		{
+			int log_10 = (int) log10(partially_filled_numeric_block); // keep compiler happy
+			total_digit_count += log_10 + 1;
+		}
+		else
+			total_digit_count += 1;
+	}
 
 	/*
 	 * calculating exact #digits in last block if decimal point exists If
