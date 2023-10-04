@@ -2921,7 +2921,6 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 	StringInfo	res ;
-	int status;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
