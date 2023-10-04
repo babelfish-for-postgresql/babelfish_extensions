@@ -144,7 +144,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  ParamListInfo params, QueryCompletion *qc);
 static bool isTextMonthPresent(char* field);
 static bool containsInTextMonthFormat(int *ftype, char **field);
-static Datum pltsql_time_in(const char *str, int32 typmod);
+static bool pltsql_time_in(const char *str, int32 typmod, TimeADT *result);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
@@ -2837,23 +2837,23 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 static bool isTextMonthPresent(char* field)
 {
 	char* months[] = {"january", "february", "march", "april", "may",
-					"june", "july", "august", "september", "october",
-					"november", "december", "jan", "feb", "mar", "apr",
-					"may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"};
-	for(int i = 0; i < 24; i++)
-		if(pg_strcasecmp(field, months[i]) == 0)
+		"june", "july", "august", "september", "october",
+		"november", "december", "jan", "feb", "mar", "apr",
+		"may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"};
+	for (int i = 0; i < 24; i++)
+		if (pg_strcasecmp(field, months[i]) == 0)
 			return true;
 	return false;
 }
 
 /*
  * This function will check whether the first 3 inputs are in any of the format
- * `DD MON YYY`, `DD YYYY MON`, `MON DD YYYY`, `MON YYYY DD`, `YYYY MM DD`, `YYYY DD MM`
+ * `DD MON YYY`, `DD YYYY MON`, `MON DD YYYY`, `MON YYYY DD`, `YYYY MON DD`, `YYYY DD MON`
  * where MON is month in text format then returns true if present.
  */
 static bool containsInTextMonthFormat(int *ftype, char **field){
 	int count_number = 0, count_string = 0;
-	for(int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		if(ftype[i] == DTK_NUMBER)
 			count_number++;
@@ -2867,15 +2867,17 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 		else
 			return false;
 	}
-	if(count_number == 2 && count_string == 1)
+	if (count_number == 2 && count_string == 1)
 	{
 		/*
 		 * If the first field is an string then swap with the second field
 		 * as when the date is given separatly then all different forms of
 		 * dates is supported. To avoid the conversion failure from `isTextMonthPresent`
 		 * later we are swapping earlier.
+		 *
+		 * For example convert the input from "JULY-23-2000" to "23-JULY-2000"
 		 */
-		if(ftype[0] == DTK_STRING)
+		if (ftype[0] == DTK_STRING)
 		{
 			char* temp_field;
 			int temp_ftype;
@@ -2891,9 +2893,16 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 	return false;
 }
 
-Datum pltsql_time_in(const char *str, int32	typmod)
+/*
+ * pltsql_time_in
+ *		The function modifies the given input into valid form and
+ *		stores the output to result.
+ * Returns
+ * 		false - If the sql_dialect is not an TSQL
+ * 		true - If the sql_dialect is an TSQL
+ */
+bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 {
-	TimeADT		result;
 	fsec_t		fsec;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -2907,23 +2916,28 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 	StringInfo	res ;
 	int status;
 
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+
 	/* Throw a common error message while casting to time datatype */
 	#define TIME_IN_ERROR()	\
 		ereport(ERROR,	\
-			(errcode(ERRCODE_INVALID_DATETIME_FORMAT),	\
-			errmsg("Conversion failed when converting date and/or time from character string.")));	\
+				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),	\
+				 errmsg("Conversion failed when converting date and/or time from character string.")));	\
 
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
-						field, ftype, MAXDATEFIELDS, &nf);
+			field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 	{
-		if(nf >= 3)
+		if (nf >= 3)
 		{
 			/*
-			 * If the input is of format "YYYY MON DD", then convert
-			 * to format of YYYY-MON-DD and ftype changes to "DTK_DATE"
+			 * If the input is of format `DD MON YYY`, `DD YYYY MON`, `MON DD YYYY`,
+			 * `MON YYYY DD`, `YYYY MON DD`, `YYYY DD MON`, then convert
+			 * to format of `DD MON YYY`, `DD YYYY MON`, `YYYY MON DD`, `YYYY DD MON`
+			 * and ftype changes to "DTK_DATE"
 			 */
-			if(containsInTextMonthFormat(ftype, field))
+			if (containsInTextMonthFormat(ftype, field))
 			{
 				/*
 				 * For example if input is "2000 nov 23" will be converted
@@ -2931,7 +2945,6 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 				 */
 				res = makeStringInfo();
 				appendStringInfo(res, "%s-%s-%s", field[0], field[1], field[2]);
-				field[0] = NULL;
 				field[0] = res->data;
 				ftype[0] = DTK_DATE;
 				nf = nf - 2;
@@ -2947,17 +2960,17 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 			}
 		}
 
-		for(int i = 0; i < nf; i++)
+		for (int i = 0; i < nf; i++)
 		{
 			char *temp_field;
 			int len;
 			char* different_date_formats[] = {"/", ".", "-"};
 			temp_field = pstrdup(field[i]);
 			len = strlen(temp_field);
-			switch(ftype[i])
+			switch (ftype[i])
 			{
 				case DTK_NUMBER:
-					switch(len)
+					switch (len)
 					{
 						case 1:
 						case 2:
@@ -2966,23 +2979,21 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 							 * time only if there is an [ap]m after the number or else
 							 * should throw an error
 							 */
-							if(i == nf - 1 || ftype[i+1] != DTK_STRING)
-								TIME_IN_ERROR();
-							status = RE_compile_and_execute(cstring_to_text("^([ap]m)$"),
-															(char *) field[i+1], strlen(field[i+1]),
-															REG_ADVANCED, DEFAULT_COLLATION_OID,
-															0, NULL);
-							if(!status)
+							if (i == nf - 1 || ftype[i+1] != DTK_STRING)
 								TIME_IN_ERROR();
 							/*
 							 * For example if the input is "1 am"
 							 * will be converted to "1:00:00 am".
 							 */
-							res = makeStringInfo();
-							appendStringInfo(res, "%s%s", field[i], ":00:00");
-							field[i] = NULL;
-							field[i] = res->data;
-							ftype[i] = DTK_TIME;
+							if (pg_strcasecmp(field[i+1], "am") == 0 || pg_strcasecmp(field[i+1], "pm") == 0)
+							{
+								res = makeStringInfo();
+								appendStringInfo(res, "%s%s", field[i], ":00:00");
+								field[i] = res->data;
+								ftype[i] = DTK_TIME;
+							}
+							else
+								TIME_IN_ERROR();
 							break;
 
 						case 4:
@@ -2994,7 +3005,6 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 							 */
 							res = makeStringInfo();
 							appendStringInfo(res, "%s%s", field[i], "-01-01");
-							field[i] = NULL;
 							field[i] = res->data;
 							ftype[i] = DTK_DATE;
 							break;
@@ -3002,19 +3012,19 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 						case 6:
 						case 8:
 							res = makeStringInfo();
-							for(int k = 0; k < len; k++)
+							for (int k = 0; k < len; k++)
 							{
 								appendStringInfo(res, "%c", temp_field[k]);
 								if((len == 6 && ((k + 1) % 2 == 0 && k < 5)) ||
-									(len == 8 && (k == 3 || k == 5)))
-										appendStringInfo(res, "%c", '-');
+										(len == 8 && (k == 3 || k == 5)))
+									appendStringInfo(res, "%c", '-');
 							}
-							field[i] = NULL;
 							field[i] = res->data;	
 							ftype[i] = DTK_DATE;
 							break;
 						/*
-						 * If the numeric is of length {3,5,7, >8} then an error should be thrown*/
+						 * If the numeric is of length {3,5,7, >8} then an error should be thrown
+						 */
 						default:
 							TIME_IN_ERROR();
 					}
@@ -3024,15 +3034,17 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 					/*
 					 * If the input is of format `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy
 					 * shouldn't be supported.
-					 * Supported date formats are `Mon yyyy dd`, `Mon dd yyyy`, `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
+					 * Supported date formats are `Mon yyyy dd`, `Mon dd yyyy`,
+					 * `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`,
+					 * `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`
 					 */
-					for(int k = 0 ; k < 3; k++)
+					for (int k = 0 ; k < 3; k++)
 					{
 						temp_field = strtok(temp_field, different_date_formats[k]);
 						if (pg_strcasecmp(field[i], temp_field) != 0)
 							break;
 					}
-					if(isTextMonthPresent(temp_field))
+					if (isTextMonthPresent(temp_field))
 						TIME_IN_ERROR();
 					break;
 
@@ -3041,26 +3053,27 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 			}
 			pfree(temp_field);
 		}
-		switch(nf)
+		switch (nf)
 		{
 			case 1:
 				/*
-				 * If only date is specified add an default time of
-				 * 00:00:00
+				 * If only date is specified then add an default
+				 * time of 00:00:00
 				 */
-				if(ftype[0] == DTK_DATE)
+				if (ftype[0] == DTK_DATE)
 				{
 					ftype[1] = DTK_TIME;
 					field[1] = "00:00:00";
 					nf = nf + 1;
  				}
 				break;
+
 			case 3:
 				/*
 				 * If the given input is of format `yyyy-mm-ddThh:mm:ss`
 				 * then conver it to `yyyy-mm-dd hh:mm:ss` by ignoring 'T'
 				 */
-				if(ftype[1] == DTK_STRING && pg_strcasecmp(field[1], "t") == 0 && ftype[2] == DTK_TIME)
+				if (ftype[1] == DTK_STRING && pg_strcasecmp(field[1], "t") == 0 && ftype[2] == DTK_TIME)
 				{
 					ftype[1] = ftype[2];
 					field[1] = field[2];
@@ -3076,10 +3089,10 @@ Datum pltsql_time_in(const char *str, int32	typmod)
 	if (dterr != 0)
 		TIME_IN_ERROR();
 
-	tm2time(tm, fsec, &result);
-	AdjustTimeForTypmod(&result, typmod);
+	tm2time(tm, fsec, result);
+	AdjustTimeForTypmod(result, typmod);
 
-	PG_RETURN_TIMEADT(result);
+	return true;
 }
 
 /*
