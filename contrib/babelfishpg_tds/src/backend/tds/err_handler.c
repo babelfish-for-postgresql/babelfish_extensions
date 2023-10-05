@@ -195,8 +195,12 @@ get_tsql_error_details(ErrorData *edata,
 
 		/* Possible infinite loop of errors. Do not touch it further. */
 		if (!error_stack_full())
+		{
+			HOLD_INTERRUPTS();
 			elog(LOG, "Unmapped error found. Code: %d, Message: %s, File: %s, Line: %d, Context: %s",
 				 edata->sqlerrcode, edata->message, edata->filename, edata->lineno, error_context);
+			RESUME_INTERRUPTS();
+		}
 
 		return false;
 	}
@@ -267,8 +271,12 @@ get_tsql_error_details(ErrorData *edata,
 
 			/* Possible infinite loop of errors. Do not touch it further. */	
 			if (!error_stack_full())
+			{
+				HOLD_INTERRUPTS();
 				elog(LOG, "Unmapped error found. Code: %d, Message: %s, File: %s, Line: %d, Context: %s",
 					 edata->sqlerrcode, edata->message, edata->filename, edata->lineno, error_context);
+				RESUME_INTERRUPTS();
+			}
 
 			*tsql_error_code = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
 			*tsql_error_severity = 16;
@@ -356,9 +364,11 @@ emit_tds_log(ErrorData *edata)
 		/* Log the internal error message */
 		ErrorData  *next_edata;
 
+		HOLD_INTERRUPTS();
 		next_edata = CopyErrorData();
 		elog(LOG, "internal error occurred: %s", next_edata->message);
 		FreeErrorData(next_edata);
+		RESUME_INTERRUPTS();
 	}
 	PG_END_TRY();
 

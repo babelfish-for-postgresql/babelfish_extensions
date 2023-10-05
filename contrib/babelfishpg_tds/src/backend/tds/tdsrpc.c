@@ -550,6 +550,7 @@ SPExecuteSQL(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("sp_executesql statement: %s", s.data),
@@ -558,6 +559,7 @@ SPExecuteSQL(TDSRequestSP req)
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		PG_RE_THROW();
+		RESUME_INTERRUPTS();
 	}
 	PG_END_TRY();
 
@@ -749,6 +751,7 @@ SPExecute(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("sp_execute handle: %d", req->handle),
@@ -758,6 +761,7 @@ SPExecute(TDSRequestSP req)
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		tvp_lookup_list = NIL;
 		PG_RE_THROW();
+		RESUME_INTERRUPTS();
 	}
 	PG_END_TRY();
 
@@ -871,6 +875,7 @@ SPPrepExec(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("sp_prepexec handle: %d, "
@@ -881,6 +886,7 @@ SPPrepExec(TDSRequestSP req)
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		tvp_lookup_list = NIL;
 		PG_RE_THROW();
+		RESUME_INTERRUPTS();
 	}
 	PG_END_TRY();
 
@@ -1099,6 +1105,7 @@ SPCustomType(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("stored procedure: %s", req->name.data),
@@ -1108,6 +1115,7 @@ SPCustomType(TDSRequestSP req)
 		tvp_lookup_list = NIL;
 
 		PG_RE_THROW();
+		RESUME_INTERRUPTS();
 	}
 	PG_END_TRY();
 

@@ -1141,6 +1141,7 @@ handle_error(PLtsql_execstate *estate,
 	{
 		elog(DEBUG1, "TSQL TXN Stop execution error mapping failed : %d current batch status : %d read only function : %d", last_error_mapping_failed, *terminate_batch, ro_func);
 		FreeErrorData(edata);
+		RESUME_INTERRUPTS();
 		PG_RE_THROW();
 	}
 
@@ -1149,6 +1150,7 @@ handle_error(PLtsql_execstate *estate,
 	FlushErrorState();
 
 	FreeErrorData(edata);
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -1253,6 +1255,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		int			last_error;
 		bool		error_mapped;
 
+		HOLD_INTERRUPTS();
 		support_tsql_trans = pltsql_support_tsql_transactions();
 
 		/* Close trigger nesting in engine */
@@ -1298,6 +1301,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 				estate->simple_eval_estate = NULL;
 			if (simple_econtext_stack == NULL || topEntry != simple_econtext_stack)
 				pltsql_create_econtext(estate);
+			RESUME_INTERRUPTS();
 			PG_RE_THROW();
 		}
 
@@ -1308,6 +1312,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			/* Cleanup SPI connections if they exist. */
 			AtEOXact_SPI(false);
+			RESUME_INTERRUPTS();
 			PG_RE_THROW();
 		}
 
