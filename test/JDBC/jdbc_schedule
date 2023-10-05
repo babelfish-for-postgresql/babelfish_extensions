@@ -151,6 +151,4 @@ ignore#!#load_stud_emp
 ignore#!#load_student
 
 # These tests are running in multidb mode in upgrade and singledb mode in JDBC
-ignore#!#BABEL-4279-vu-prepare
-ignore#!#BABEL-4279-vu-verify
-ignore#!#BABEL-4279-vu-cleanup
+ignore#!#BABEL-4279-multidb-mode

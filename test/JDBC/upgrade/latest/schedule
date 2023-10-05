@@ -469,3 +469,4 @@ sys_asymmetric_keys
 sys_certificates
 sys_database_permissions
 BABEL-4279
+BABEL-4279-multidb-mode
