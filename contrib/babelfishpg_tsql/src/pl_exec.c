@@ -7663,7 +7663,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 		 * refcount on the new plan, stored in simple_eval_resowner.
 		 */
 		if (CachedPlanAllowsSimpleValidityCheck(expr->expr_simple_plansource,
-												cplan, CurrentResourceOwner) &&
+												cplan) &&
 			CachedPlanIsSimplyValid(expr->expr_simple_plansource, cplan,
 									estate->simple_eval_resowner))
 		{
