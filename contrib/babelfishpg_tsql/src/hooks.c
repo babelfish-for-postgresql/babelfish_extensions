@@ -142,7 +142,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
-static bool isTextMonthPresent(char* field);
+static bool isValidTextMonth(char* field);
 static bool containsInTextMonthFormat(int *ftype, char **field);
 static bool pltsql_time_in(const char *str, int32 typmod, TimeADT *result);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
@@ -2841,7 +2841,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 }
 
 /* Checks whether the field is valid text month */
-static bool isTextMonthPresent(char* field)
+static bool isValidTextMonth(char* field)
 {
 	char* months[] = {"january", "february", "march", "april", "may",
 		"june", "july", "august", "september", "october",
@@ -2867,7 +2867,7 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 		else if(ftype[i] == DTK_STRING)
 		{
 			/* Check whether the string is valid text month */
-			if(!isTextMonthPresent(field[i]))
+			if(!isValidTextMonth(field[i]))
 				return false;
 			count_string++;
 		}
@@ -2879,7 +2879,7 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 		/*
 		 * If the first field is an string then swap with the second field
 		 * as when the date is given separatly then all different forms of
-		 * dates is supported. To avoid the conversion failure from `isTextMonthPresent`
+		 * dates is supported. To avoid the conversion failure from `isValidTextMonth`
 		 * later we are swapping earlier.
 		 *
 		 * For example convert the input from "JULY-23-2000" to "23-JULY-2000"
@@ -2976,6 +2976,15 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 			switch (ftype[i])
 			{
 				case DTK_NUMBER:
+					/* If only number fields are present in
+					 * the input then following considerations should
+					 * be followed.
+					 * 1. len = 1,2 : Time and [ap]m should be specified
+					 * 2. len = 4 : Considered as year with format "YYYY-01-01"
+					 * 3. len = 6 : Considered as format `"YYMMDD"
+					 * 4. len = 8 : Considered as format "YYYYMMDD"
+					 * 5. len = 3,5,7,>8 :  Not an valid and should throw error
+					 */
 					switch (len)
 					{
 						case 1:
@@ -3017,6 +3026,11 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 
 						case 6:
 						case 8:
+							/*
+							 * For example if input is "201213" will be converted
+							 * to "2000-12-13", and input "20001118" will be
+							 * converted to "2000-11-18"
+							 */
 							res = makeStringInfo();
 							for (int k = 0; k < len; k++)
 							{
@@ -3028,9 +3042,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 							field[i] = res->data;	
 							ftype[i] = DTK_DATE;
 							break;
-						/*
-						 * If the numeric is of length {3,5,7, >8} then an error should be thrown
-						 */
+
 						default:
 							TIME_IN_ERROR();
 					}
@@ -3039,10 +3051,11 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 				case DTK_DATE:
 					/*
 					 * If the input is of format `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy
+					 * "DD MM YYYY", "DD YYYY MM", "MM YYYY DD", "MM DD YYYY", "YYYY DD MM",
+					 * "YYYY MM DD", "DD{/.-}MM{/.-}YYYY", "DD{/.-}YYYY{/.-}DD"
 					 * shouldn't be supported.
 					 * Supported date formats are `Mon yyyy dd`, `Mon dd yyyy`,
-					 * `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`,
-					 * `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`
+					 * `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
 					 */
 					for (int k = 0 ; k < 3; k++)
 					{
@@ -3050,7 +3063,12 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						if (pg_strcasecmp(field[i], temp_field) != 0)
 							break;
 					}
-					if (isTextMonthPresent(temp_field))
+					/*
+					 * If text month is present in start of field like
+					 * `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy then
+					 * an error should be thrown
+					 */
+					if (isValidTextMonth(temp_field))
 						TIME_IN_ERROR();
 					break;
 
