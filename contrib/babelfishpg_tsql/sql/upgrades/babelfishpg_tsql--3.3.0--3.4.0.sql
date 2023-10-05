@@ -126,7 +126,6 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
-
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
                                                                IN p_day INTEGER,
