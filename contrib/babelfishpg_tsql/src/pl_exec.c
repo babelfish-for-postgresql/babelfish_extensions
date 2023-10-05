@@ -10224,9 +10224,17 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 			{
 				if (top_es_entry->estate->db_name == NULL)
 				{
-					
-					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-					dbo_schema = get_dbo_schema_name(cur_dbname);
+					/*
+					 * Don't change the search path, if the statement inside
+					 * the procedure is a function or schema qualified.
+					 */
+					if (stmt->func_call || stmt->is_schema_specified)
+						break;
+					else
+					{
+						physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
+						dbo_schema = get_dbo_schema_name(cur_dbname);
+					}
 				}
 				else
 				{
@@ -10234,9 +10242,13 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 					{
 						set_session_properties(top_es_entry->estate->db_name);
 						*reset_session_properties = true;
+						break;
 					}
-					physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
-					dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
+					else
+					{
+						physical_schema = get_physical_schema_name((char *) top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
+						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
+					}
 				}
 				if (!*old_search_path)
 				{

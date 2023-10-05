@@ -159,6 +159,7 @@ static void declare_parameter_unquoted_string_reset(Node *paramDft);
 
 static Node* call_argument_unquoted_string(Node *arg);
 static void call_argument_unquoted_string_reset(Node *colref_arg);
+static char *get_local_schema_for_bbf_functions(Oid proc_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -224,6 +225,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+static set_local_schema_for_func_hookType prev_set_local_schema_for_func_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -384,6 +386,9 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
+	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
 }
 
 void
@@ -446,6 +451,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 }
 
 /*****************************************
@@ -4146,3 +4152,48 @@ static void call_argument_unquoted_string_reset (Node *colref_arg)
 	return;
 }
 
+static char *
+get_local_schema_for_bbf_functions(Oid proc_oid)
+{
+	Datum 			datum;
+	HeapTuple 	 	tuple,
+					proc_tuple;
+	Form_pg_proc	proc_struct;
+	bool 		 	is_null = false;
+	
+	char 			*full_schema_name = NULL,
+					*new_search_path = NULL;
+	const char  	*func_dbo_schema,
+					*cur_dbname = get_cur_db_name();
+
+	proc_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
+	proc_struct = (Form_pg_proc) GETSTRUCT(proc_tuple);
+	
+	if(proc_struct->pronamespace && proc_struct->prokind == PROKIND_FUNCTION 
+			&& strcmp(format_type_be(proc_struct->prorettype), "trigger") != 0)
+	{
+		tuple = SearchSysCache1(NAMESPACEOID, 
+							ObjectIdGetDatum(proc_struct->pronamespace));
+		if(HeapTupleIsValid(tuple))
+		{
+			datum = SysCacheGetAttr(NAMESPACENAME, tuple,
+								Anum_pg_namespace_nspname, 
+								&is_null);
+			if(!is_null)
+				full_schema_name = DatumGetCString(datum);
+
+			if(full_schema_name && strcmp(full_schema_name, "sys") != 0
+					&& strcmp(full_schema_name, "pg_catalog") != 0)
+			{
+				func_dbo_schema = get_dbo_schema_name(cur_dbname);
+				new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+											full_schema_name, func_dbo_schema);
+			}
+			
+			ReleaseSysCache(tuple);
+		}
+	}
+
+	ReleaseSysCache(proc_tuple);
+	return new_search_path;
+}
