@@ -28,6 +28,7 @@ if($script_flag -eq $var_one)
     $Objects += $db.StoredProcedures
     $Objects += $db.UserDefinedFunctions
     $Objects += $db.UserDefinedDataTypes
+    $Objects += $db.UserDefinedTableTypes
     $Objects += $db.Tables.Indexes
     $Objects += $db.Tables.Triggers
     foreach ($CurrentObject in $Objects)
@@ -52,6 +53,7 @@ else
     $Objects += $db.StoredProcedures
     $Objects += $db.UserDefinedFunctions
     $Objects += $db.UserDefinedDataTypes
+    $Objects += $db.UserDefinedTableTypes
     $SubObjects += $db.Tables.Indexes
     $SubObjects += $db.Tables.Triggers
     foreach ($CurrentObject in $Objects)
