@@ -1759,15 +1759,16 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			if(actual_alias_len > alias_len)
 			{
 				/* First 32 characters of original_name are assigned to alias. */
-				memcpy(alias, original_name, (alias_len - 32) );
+				memcpy(alias, original_name, (alias_len - 32));
+
 				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
-				memcpy(alias + (alias_len) - 32,
-				identifier_name + (alias_len) - 32, 
-				32);
+				memcpy(alias + (alias_len - 32),
+					   identifier_name + (alias_len - 32), 
+	   				   32);
+
 				alias[alias_len] = '\0';
 			}
-			/* Identifier is not truncated. */
-			else
+			else	/* Identifier is not truncated. */
 			{
 				memcpy(alias, original_name, actual_alias_len);
 			}
@@ -2636,7 +2637,13 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 		if (att->attnum > 0)
 		{
-			col->name = NameStr(att->attname);
+			/*
+ 			* Do a deep copy of attname because tuple is a pointer 
+ 			* to a shared_buffer page which is released when scan
+ 			* is ended.
+ 			*/
+			col->name = pstrdup(NameStr(att->attname));
+
 			col->indirection = NIL;
 			col->val = NULL;
 			col->location = 1;
