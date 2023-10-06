@@ -240,6 +240,21 @@ bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
 	return IsToastNamespace(pg_class_tup->relnamespace);
 }
 
+void pltsql_drop_relation_refcnt_hook(Relation relation)
+{
+	int expected_refcnt = 0;
+	if (sql_dialect != SQL_DIALECT_TSQL ||
+		!RelationIsBBFTableVariable(relation))
+		return;
+
+	expected_refcnt = relation->rd_isnailed ? 2 : 1;
+
+	while (relation->rd_refcnt > expected_refcnt)
+	{
+		RelationDecrementReferenceCount(relation);
+	}
+}
+
 /*****************************************
  *			SYSDATABASES
  *****************************************/
@@ -1212,7 +1227,7 @@ get_bbf_servers_def_oid()
 	return bbf_servers_def_oid;
 }
 
-Oid 
+Oid
 get_bbf_servers_def_idx_oid()
 {
 	if (!OidIsValid(bbf_servers_def_idx_oid))
@@ -1222,7 +1237,7 @@ get_bbf_servers_def_idx_oid()
 	return bbf_servers_def_idx_oid;
 }
 
-int 
+int
 get_query_timeout_from_server_name(char *servername)
 {
 	Relation	bbf_servers_def_rel;

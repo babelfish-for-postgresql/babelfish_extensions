@@ -865,11 +865,11 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 		 * Errors will be re-thrwon.
 		 */
 
-		/* Drop the tables linked to table variables */
-		pltsql_clean_table_variables(&estate, func);
-
 		/* Close/Deallocate LOCAL cursors */
 		pltsql_cleanup_local_cursors(&estate);
+
+		/* Drop the tables linked to table variables */
+		pltsql_clean_table_variables(&estate, func);
 
 		/* Clean up any leftover temporary memory */
 		pltsql_destroy_econtext(&estate);
@@ -889,11 +889,11 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (*pltsql_plugin_ptr && (*pltsql_plugin_ptr)->func_end)
 		((*pltsql_plugin_ptr)->func_end) (&estate, func);
 
-	/* Drop the tables linked to table variables */
-	pltsql_clean_table_variables(&estate, func);
-
 	/* Close/Deallocate LOCAL cursors */
 	pltsql_cleanup_local_cursors(&estate);
+
+	/* Drop the tables linked to table variables */
+	pltsql_clean_table_variables(&estate, func);
 
 	/* Clean up any leftover temporary memory */
 	pltsql_destroy_econtext(&estate);
@@ -6939,7 +6939,7 @@ exec_eval_datum(PLtsql_execstate *estate,
 				*typeid = tbl->tbltypeid;
 				*typetypmod = -1;
 				*value = CStringGetDatum(tbl->tblname);
-				*isnull = false;
+				*isnull = !tbl->tblname ? true : false;
 				break;
 			}
 
@@ -10097,9 +10097,17 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	bool		old_pltsql_explain_only = pltsql_explain_only;
 	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
+	bool old_abort_curr_txn = AbortCurTransaction;
 
 	PG_TRY();
 	{
+		/*
+		 * Temporarily set this to false to allow DROP to continue.
+		 * Othewise, DROP would not be allowed to acquire xlock on the
+		 * relation.
+		 */
+		AbortCurTransaction = false;
+
 		foreach(lc, func->table_varnos)
 		{
 			n = lfirst_int(lc);
@@ -10126,9 +10134,15 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 				append_explain_info(NULL, query);
 			}
 		}
+
+		Assert(!AbortCurTransaction); /* engine should not change this value */
+		AbortCurTransaction = old_abort_curr_txn;
 	}
 	PG_CATCH();
 	{
+		Assert(!AbortCurTransaction); /* engine should not change this value */
+		AbortCurTransaction = old_abort_curr_txn;
+
 		pltsql_explain_only = old_pltsql_explain_only;	/* Recover EXPLAIN ONLY
 														 * mode */
 		PG_RE_THROW();
