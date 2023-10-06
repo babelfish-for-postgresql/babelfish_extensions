@@ -96,9 +96,9 @@ SELECT
     CAST(0 as INT) AS grantee_principal_id,
     CAST(0 as INT) AS grantor_principal_id,
     CAST('a' as CHAR(4)) AS type,
-    CAST('' as NVARCHAR(128)) AS permission_name,
+    CAST('' as sys.NVARCHAR(128)) AS permission_name,
     CAST('G' as CHAR(1)) AS state,
-    CAST('' as NVARCHAR(60)) AS state_desc
+    CAST('' as sys.NVARCHAR(60)) AS state_desc
 WHERE FALSE;
 GRANT SELECT ON sys.database_permissions TO PUBLIC;
 
