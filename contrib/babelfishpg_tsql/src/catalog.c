@@ -3207,7 +3207,6 @@ alter_guest_schema_for_db (const char *dbname)
 	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
-	int16		dbid = get_db_id(dbname);
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -3220,8 +3219,8 @@ alter_guest_schema_for_db (const char *dbname)
 				CStringGetTextDatum("guest"));
 	ScanKeyInit(&key[1],
 				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(dbname));
 
 	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
