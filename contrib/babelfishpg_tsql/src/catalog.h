@@ -292,7 +292,7 @@ extern Oid get_bbf_schema_perms_idx_oid(void);
 
 typedef struct FormData_bbf_schema_perms
 {
-	NameData	db_name;
+	int16		dbid;
 	NameData	schema_name;
 	NameData	object_name;
 	NameData	permission;
