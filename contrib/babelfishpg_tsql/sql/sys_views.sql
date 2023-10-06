@@ -2778,7 +2778,7 @@ SELECT
   , CAST(0 as int) AS key_length
   , CAST(null as sys.varbinary(85)) as sid
   , CAST('' as sys.nvarchar(128)) AS string_sid
-  , CAST('abcderhfjfkdds' as sys.nvarchar(260)) AS public_key
+  , CAST(NULL as varbinary(8000)) AS public_key
   , CAST('' as sys.nvarchar(260)) AS attested_by
   , CAST('' as sys.nvarchar(120)) AS provider_type
   , CAST(NULL as sys.UNIQUEIDENTIFIER) as cryptographic_provider_guid
