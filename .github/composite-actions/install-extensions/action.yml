@@ -12,7 +12,7 @@ inputs:
   parallel_query_mode:
     description: 'Postgres Parallel Query Mode'
     required: no
-    default: 'false'
+    default: false
 
 runs:
   using: "composite"

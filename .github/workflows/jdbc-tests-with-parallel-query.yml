@@ -2,7 +2,7 @@ name: JDBC Tests With Parallel Query
 on: [push, pull_request]
 
 jobs:
-  run-babelfish-jdbc-tests:
+  run-babelfish-jdbc-tests-with-parallel-query-mode:
     env:
       INSTALL_DIR: psql
     runs-on: ubuntu-20.04
@@ -45,7 +45,7 @@ jobs:
         if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
         with:
-          parallel_query_mode: 'true'
+          parallel_query_mode: true
 
       - name: Run JDBC Tests
         id: jdbc

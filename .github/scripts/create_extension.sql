@@ -8,12 +8,13 @@ GRANT ALL ON SCHEMA sys to :user;
 ALTER USER :user CREATEDB;
 ALTER SYSTEM SET babelfishpg_tsql.database_name = :db;
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = :'migration_mode';
-IF :parallel_query_mode = 'true'
+IF :parallel_query_mode = true THEN
     ALTER SYSTEM SET parallel_setup_cost = 0;
     ALTER SYSTEM SET parallel_tuple_cost = 0;
     ALTER SYSTEM SET min_parallel_index_scan_size = 0;
     ALTER SYSTEM SET min_parallel_table_scan_size = 0;
     ALTER SYSTEM SET force_parallel_mode = 1;
     ALTER SYSTEM SET max_parallel_workers_per_gather = 4;
+END IF;
 SELECT pg_reload_conf();
 CALL SYS.INITIALIZE_BABELFISH(:'user');
