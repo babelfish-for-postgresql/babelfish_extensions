@@ -3370,14 +3370,14 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				CommandCounterIncrement();
 			}
 			/* Add entry for each grant statement. */
-			if (stmt->is_grant && !check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
-				add_entry_to_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname, NULL);
+			if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, "ALL", priv_name, rolname))
+				add_entry_to_bbf_schema(stmt->schema_name, "ALL", priv_name, rolname, NULL);
 			/* Remove entry for each revoke statement. */
-			if (!stmt->is_grant && check_bbf_schema_for_entry(dbname, stmt->schema_name, "ALL", priv_name, rolname))
+			if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", priv_name, rolname))
 			{
 				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
-				grant_perms_to_objects_in_schema(dbname, stmt->schema_name, priv_name, rolname);
-				del_from_bbf_schema(dbname, stmt->schema_name, "ALL", priv_name, rolname);
+				grant_perms_to_objects_in_schema(stmt->schema_name, priv_name, rolname);
+				del_from_bbf_schema(stmt->schema_name, "ALL", priv_name, rolname);
 			}
 		}
 	}

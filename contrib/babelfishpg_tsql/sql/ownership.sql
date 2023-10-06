@@ -16,13 +16,13 @@ GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
 -- BABELFISH_SCHEMA_PERMISSIONS
 CREATE TABLE sys.babelfish_schema_permissions (
-  db_name NAME NOT NULL,
+  dbid smallint NOT NULL,
   schema_name NAME NOT NULL,
   object_name NAME NOT NULL,
   permission NAME NOT NULL,
   grantee NAME NOT NULL,
   object_type NAME,
-  PRIMARY KEY(db_name, schema_name, object_name, permission, grantee)
+  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
 );
 
 -- BABELFISH_FUNCTION_EXT

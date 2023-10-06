@@ -302,37 +302,31 @@ typedef struct FormData_bbf_schema_perms
 
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
-extern void add_entry_to_bbf_schema(const char *db_name,
-				  const char *schema_name,
+extern void add_entry_to_bbf_schema(const char *schema_name,
 				  const char *object_name,
 				  const char *permission,
 				  const char *grantee,
 				  const char *object_type);
 
-extern bool check_bbf_schema_for_entry(const char *db_name,
-									   const char *schema_name,
+extern bool check_bbf_schema_for_entry(const char *schema_name,
 									   const char *object_name,
 									   const char *permission,
 									   const char *grantee);
 
-extern void del_from_bbf_schema(const char *db_name,
-					  const char *schema_name,
+extern void del_from_bbf_schema(const char *schema_name,
 					  const char *object_name,
 					  const char *permission,
 					  const char *grantee);
 
-extern bool check_bbf_schema_for_schema(const char *db_name,
-									   const char *schema_name,
+extern bool check_bbf_schema_for_schema(const char *schema_name,
 									   const char *object_name,
 									   const char *permission);
 
-extern void clean_up_bbf_schema(const char *db_name,
-								const char *schema_name,
+extern void clean_up_bbf_schema(const char *schema_name,
 								const char *object_name,
 								bool is_schema);
 
-extern void grant_perms_to_objects_in_schema(const char *db_name,
-				  const char *schema_name,
+extern void grant_perms_to_objects_in_schema(const char *schema_name,
 				  const char *permission,
 				  const char *grantee);
 

@@ -2830,8 +2830,7 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 
 /* Add a catalog entry. */
 void
-add_entry_to_bbf_schema(const char *db_name,
-				const char *schema_name,
+add_entry_to_bbf_schema(const char *schema_name,
 				const char *object_name,
 				const char *permission,
 				const char *grantee,
@@ -2842,6 +2841,7 @@ add_entry_to_bbf_schema(const char *db_name,
 	HeapTuple	tuple_bbf_schema;
 	Datum		new_record_bbf_schema[6];
 	bool		new_record_nulls_bbf_schema[6];
+	int16	dbid = get_cur_db_id();
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
@@ -2852,7 +2852,7 @@ add_entry_to_bbf_schema(const char *db_name,
 	MemSet(new_record_bbf_schema, 0, sizeof(new_record_bbf_schema));
 	MemSet(new_record_nulls_bbf_schema, false, sizeof(new_record_nulls_bbf_schema));
 
-	new_record_bbf_schema[0] = CStringGetDatum(pstrdup(db_name));
+	new_record_bbf_schema[0] = Int16GetDatum(dbid);
 	new_record_bbf_schema[1] = CStringGetDatum(pstrdup(schema_name));
 	new_record_bbf_schema[2] = CStringGetDatum(pstrdup(object_name));
 	new_record_bbf_schema[3] = CStringGetDatum(pstrdup(permission));
@@ -2878,8 +2878,7 @@ add_entry_to_bbf_schema(const char *db_name,
 
 /* Check if the catalog entry exists. */
 bool
-check_bbf_schema_for_entry(const char *db_name,
-							const char *schema_name,
+check_bbf_schema_for_entry(const char *schema_name,
 							const char *object_name,
 						   	const char *permission,
 							const char *grantee)
@@ -2889,13 +2888,14 @@ check_bbf_schema_for_entry(const char *db_name,
 	ScanKeyData	key[5];
 	TableScanDesc	scan;
 	bool	catalog_entry_exists = false;
+	int16	dbid = get_cur_db_id();
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(db_name));
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
 	ScanKeyInit(&key[1],
 				2,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -2925,8 +2925,7 @@ check_bbf_schema_for_entry(const char *db_name,
 }
 
 bool
-check_bbf_schema_for_schema(const char *db_name,
-							const char *schema_name,
+check_bbf_schema_for_schema(const char *schema_name,
 							const char *object_name,
 							const char *permission)
 {
@@ -2935,13 +2934,14 @@ check_bbf_schema_for_schema(const char *db_name,
 	ScanKeyData key[4];
 	TableScanDesc scan;
 	bool		catalog_entry_exists = false;
+	int16	dbid = get_cur_db_id();
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(db_name));
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
 	ScanKeyInit(&key[1],
 				2,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -2967,8 +2967,7 @@ check_bbf_schema_for_schema(const char *db_name,
 }
 
 void
-del_from_bbf_schema(const char *db_name,
-				  const char *schema_name,
+del_from_bbf_schema(const char *schema_name,
 				  const char *object_name,
 				  const char *permission,
 				  const char *grantee)
@@ -2977,13 +2976,14 @@ del_from_bbf_schema(const char *db_name,
 	HeapTuple	tuple_bbf_schema;
 	ScanKeyData key[5];
 	TableScanDesc scan;
+	int16	dbid = get_cur_db_id();
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
 				1,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(db_name));
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
 	ScanKeyInit(&key[1],
 				2,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -3015,14 +3015,14 @@ del_from_bbf_schema(const char *db_name,
 }
 
 void
-clean_up_bbf_schema(const char *db_name,
-				  const char *schema_name,
+clean_up_bbf_schema(const char *schema_name,
 				  const char *object_name,
 				  bool is_schema)
 {
 	SysScanDesc scan;
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
+	int16	dbid = get_cur_db_id();
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
@@ -3033,8 +3033,8 @@ clean_up_bbf_schema(const char *db_name,
 		ScanKeyData scanKey[2];
 		ScanKeyInit(&scanKey[0],
 					1,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(db_name));
+					BTEqualStrategyNumber, F_INT2EQ,
+					Int16GetDatum(dbid));
 		ScanKeyInit(&scanKey[1],
 					2,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -3048,8 +3048,8 @@ clean_up_bbf_schema(const char *db_name,
 		ScanKeyData scanKey[3];
 		ScanKeyInit(&scanKey[0],
 					1,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(db_name));
+					BTEqualStrategyNumber, F_INT2EQ,
+					Int16GetDatum(dbid));
 		ScanKeyInit(&scanKey[1],
 					2,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -3075,8 +3075,7 @@ clean_up_bbf_schema(const char *db_name,
 }
 
 void
-grant_perms_to_objects_in_schema(const char *db_name,
-				  const char *schema_name,
+grant_perms_to_objects_in_schema(const char *schema_name,
 				  const char *permission,
 				  const char *grantee)
 {
@@ -3086,14 +3085,15 @@ grant_perms_to_objects_in_schema(const char *db_name,
 	const char	*object_name;
 	const char	*object_type;
 	ScanKeyData scanKey[4];
+	int16		dbid = get_cur_db_id();
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&scanKey[0],
 				1,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(db_name));
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
 	ScanKeyInit(&scanKey[1],
 				2,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -3206,6 +3206,7 @@ alter_guest_schema_for_db (const char *dbname)
 	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	int16		dbid = get_db_id(dbname);
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -3218,8 +3219,8 @@ alter_guest_schema_for_db (const char *dbname)
 				CStringGetTextDatum("guest"));
 	ScanKeyInit(&key[1],
 				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(dbname));
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
 
 	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
