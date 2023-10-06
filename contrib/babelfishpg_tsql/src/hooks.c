@@ -4186,17 +4186,20 @@ get_local_schema_for_bbf_functions(Oid proc_oid)
 			datum = SysCacheGetAttr(NAMESPACENAME, tuple,
 								Anum_pg_namespace_nspname, 
 								&is_null);
+			func_dbo_schema = get_dbo_schema_name(cur_dbname);
 			if(!is_null)
 				full_schema_name = DatumGetCString(datum);
 
 			if(full_schema_name && strcmp(full_schema_name, "sys") != 0
-					&& strcmp(full_schema_name, "pg_catalog") != 0)
+					&& strcmp(full_schema_name, "pg_catalog") != 0
+					&& strcmp(full_schema_name, "information_schema") != 0
+					&& strcmp(full_schema_name, "information_schema_tsql") != 0
+					&& strcmp(full_schema_name, func_dbo_schema) != 0)
 			{
-				func_dbo_schema = get_dbo_schema_name(cur_dbname);
-				new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
-											full_schema_name, func_dbo_schema);
+				new_search_path = psprintf("%s, %s, \"$user\", sys",
+											quote_identifier(full_schema_name),
+											quote_identifier(func_dbo_schema));
 			}
-			
 			ReleaseSysCache(tuple);
 		}
 	}
