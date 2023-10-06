@@ -4,21 +4,21 @@ GO
 SELECT * FROM sys.asymmetric_keys
 GO
 ~~START~~
-varchar#!#int#!#int#!#char#!#nvarchar#!#varbinary#!#char#!#nvarchar#!#int#!#varbinary#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#uniqueidentifier#!#sql_variant
+varchar#!#int#!#int#!#char#!#nvarchar#!#varbinary#!#char#!#nvarchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar#!#uniqueidentifier#!#sql_variant
 ~~END~~
 
 
 SELECT * FROM sys_asymmetric_keys_vu_prepare_view
 GO
 ~~START~~
-varchar#!#int#!#int#!#char#!#nvarchar#!#varbinary#!#char#!#nvarchar#!#int#!#varbinary#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#uniqueidentifier#!#sql_variant
+varchar#!#int#!#int#!#char#!#nvarchar#!#varbinary#!#char#!#nvarchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar#!#uniqueidentifier#!#sql_variant
 ~~END~~
 
 
 EXEC sys_asymmetric_keys_vu_prepare_proc
 GO
 ~~START~~
-varchar#!#int#!#int#!#char#!#nvarchar#!#varbinary#!#char#!#nvarchar#!#int#!#varbinary#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#uniqueidentifier#!#sql_variant
+varchar#!#int#!#int#!#char#!#nvarchar#!#varbinary#!#char#!#nvarchar#!#int#!#varbinary#!#nvarchar#!#varbinary#!#nvarchar#!#nvarchar#!#uniqueidentifier#!#sql_variant
 ~~END~~
 
 
