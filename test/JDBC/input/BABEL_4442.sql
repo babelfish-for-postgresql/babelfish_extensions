@@ -56,7 +56,40 @@ GO
 SELECT f(), s1.f(), s2.f(), * FROM t
 GO
 
-SELECT f(), s1.f(), s2.f(), * FROM t
+SELECT f(), current_setting('search_path'), s1.f(), current_setting('search_path'),
+        s2.f(), 1, current_setting('search_path'), * FROM t
+GO
+
+SELECT current_setting('search_path')
+GO
+
+BEGIN TRANSACTION
+GO
+SELECT current_setting('search_path')
+GO
+SELECT s1.f(), s2.f(), * FROM t
+GO
+SELECT current_setting('search_path')
+GO
+SELECT s1.f(), s2.f(), * FROM t
+GO
+COMMIT
+GO
+
+SELECT current_setting('search_path')
+GO
+
+BEGIN TRANSACTION
+GO
+SELECT current_setting('search_path')
+GO
+SELECT s1.f(), s2.f(), * FROM t
+GO
+SELECT current_setting('search_path')
+GO
+SELECT s1.f(), s2.f(), * FROM t
+GO
+ROLLBACK
 GO
 
 SELECT current_setting('search_path')

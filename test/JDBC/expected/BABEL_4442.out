@@ -84,13 +84,96 @@ int#!#int#!#int#!#int
 ~~END~~
 
 
-SELECT f(), s1.f(), s2.f(), * FROM t
+SELECT f(), current_setting('search_path'), s1.f(), current_setting('search_path'),
+        s2.f(), 1, current_setting('search_path'), * FROM t
 GO
 ~~START~~
-int#!#int#!#int#!#int
-1#!#2#!#3#!#1
+int#!#text#!#int#!#text#!#int#!#int#!#text#!#int
+1#!#master_dbo, "$user", sys, pg_catalog#!#2#!#master_dbo, "$user", sys, pg_catalog#!#3#!#1#!#master_dbo, "$user", sys, pg_catalog#!#1
 ~~END~~
 
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT s1.f(), s2.f(), * FROM t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT s1.f(), s2.f(), * FROM t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+COMMIT
+GO
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT s1.f(), s2.f(), * FROM t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT s1.f(), s2.f(), * FROM t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+ROLLBACK
+GO
 
 SELECT current_setting('search_path')
 GO
