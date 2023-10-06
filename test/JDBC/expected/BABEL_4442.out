@@ -1,0 +1,112 @@
+CREATE DATABASE db1
+GO
+
+CREATE SCHEMA s1
+GO
+CREATE SCHEMA s2
+GO
+
+CREATE TABLE t (id int)
+GO
+CREATE TABLE s1.t (id int)
+GO
+CREATE TABLE s2.t (id int)
+GO
+
+INSERT INTO t VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO s1.t VALUES (2), (3)
+GO
+~~ROW COUNT: 2~~
+
+INSERT INTO s2.t VALUES (3), (4), (5)
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE FUNCTION f() RETURNS INT AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM t)
+END
+GO
+
+CREATE FUNCTION s1.f() RETURNS INT AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM t)
+END
+GO
+
+CREATE FUNCTION s2.f() RETURNS INT AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM t)
+END
+GO
+
+CREATE FUNCTION s2.f_new() RETURNS INT AS
+BEGIN
+    RETURN (SELECT s1.f())
+END
+GO
+
+SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA_NAME()
+GO
+~~START~~
+varchar#!#varchar
+t#!#BASE TABLE
+~~END~~
+
+
+SELECT f(), * FROM s1.t
+GO
+~~START~~
+int#!#int
+1#!#2
+1#!#3
+~~END~~
+
+
+SELECT f(), s1.f(), s2.f(), * FROM s1.t
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#2#!#3#!#2
+1#!#2#!#3#!#3
+~~END~~
+
+
+SELECT f(), s1.f(), s2.f(), * FROM t
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#2#!#3#!#1
+~~END~~
+
+
+SELECT f(), s1.f(), s2.f(), * FROM t
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#2#!#3#!#1
+~~END~~
+
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+DROP DATABASE db1
+GO
+DROP TABLE IF EXISTS t, s1.t, s2.t
+GO
+DROP FUNCTION IF EXISTS f, s1.f, s2.f, s2.f_new
+GO
+DROP SCHEMA s1
+GO
+DROP SCHEMA s2
+GO
