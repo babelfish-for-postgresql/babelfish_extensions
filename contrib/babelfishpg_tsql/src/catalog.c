@@ -3086,6 +3086,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	const char	*object_type;
 	ScanKeyData scanKey[4];
 	int16		dbid = get_cur_db_id();
+	const char *db_name = get_cur_db_name();
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
