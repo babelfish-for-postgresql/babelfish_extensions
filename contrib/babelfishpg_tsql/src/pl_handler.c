@@ -5837,7 +5837,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Relation		relation = NULL;
 	Oid				schema_oid;
 	ListCell		*cell;
-	char	*dbname = get_cur_db_name();
 	const char *logicalschema = NULL;
 
 	db_id = get_cur_db_id();
