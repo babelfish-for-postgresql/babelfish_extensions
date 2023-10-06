@@ -4193,9 +4193,10 @@ get_local_schema_for_bbf_functions(Oid proc_oid)
 			if(full_schema_name && strcmp(full_schema_name, "sys") != 0
 					&& strcmp(full_schema_name, "pg_catalog") != 0
 					&& strcmp(full_schema_name, "information_schema") != 0
-					&& strcmp(full_schema_name, "information_schema_tsql") != 0)
+					&& strcmp(full_schema_name, "information_schema_tsql") != 0
+					&& strcmp(full_schema_name, func_dbo_schema) != 0)
 			{
-				new_search_path = psprintf("%s, %s, \"$user\", sys",
+				new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
 											quote_identifier(full_schema_name),
 											quote_identifier(func_dbo_schema));
 			}
