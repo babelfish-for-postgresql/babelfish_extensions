@@ -44,17 +44,6 @@ BABEL-3234
 BABEL-3402
 BABEL-3748-before-14_7
 msdb-dbo-syspolicy_system_health_state
-nested_trigger_inside_proc
-nested_trigger_with_dml
-objectpropertyex
-routines_definition_before-14_7-or-15_2
-rowcount
-schema_resolution_func
-schema_resolution_proc
-schema_resolution_trigger
-select-strip-parens-before-pr1812
-sp_describe_first_result_set
-sp_tablecollations
 sys-all_columns
 sys-all_parameters
 sys-assembly_modules
