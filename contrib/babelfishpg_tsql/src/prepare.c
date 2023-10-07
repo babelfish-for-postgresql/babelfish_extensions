@@ -564,7 +564,7 @@ exec_simple_check_plan(PLtsql_execstate *estate, PLtsql_expr *expr)
 	 * CachedPlanIsSimplyValid.  Given the restrictions above, it's unlikely
 	 * that this could fail, but if it does, just treat plan as not simple.
 	 */
-	if (CachedPlanAllowsSimpleValidityCheck(plansource, cplan, CurrentResourceOwner))
+	if (CachedPlanAllowsSimpleValidityCheck(plansource, cplan))
 	{
 		/*
 		 * OK, use CachedPlanIsSimplyValid to save a refcount on the plan in
