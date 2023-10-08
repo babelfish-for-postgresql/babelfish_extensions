@@ -559,29 +559,32 @@ exec_simple_check_plan(PLtsql_execstate *estate, PLtsql_expr *expr)
 	/* Can't fail, because we checked for a single CachedPlanSource above */
 	Assert(cplan != NULL);
 
+	/* Share the remaining work with replan code path */
+	exec_save_simple_expr(expr, cplan);
+
 	/*
 	 * Verify that plancache.c thinks the plan is simple enough to use
 	 * CachedPlanIsSimplyValid.  Given the restrictions above, it's unlikely
 	 * that this could fail, but if it does, just treat plan as not simple.
 	 */
-	if (CachedPlanAllowsSimpleValidityCheck(plansource, cplan))
-	{
-		/*
-		 * OK, use CachedPlanIsSimplyValid to save a refcount on the plan in
-		 * the simple-expression resowner.  This shouldn't fail either, but if
-		 * somehow it does, again we can cope by treating plan as not simple.
-		 */
-		if (CachedPlanIsSimplyValid(plansource, cplan,
-									estate->simple_eval_resowner))
-		{
-			/* Remember that we have the refcount */
-			expr->expr_simple_plansource = plansource;
-			expr->expr_simple_plan = cplan;
-			expr->expr_simple_plan_lxid = MyProc->lxid;
-			/* Share the remaining work with the replan code path */
-			exec_save_simple_expr(expr, cplan);
-		}
-	}
+	// if (CachedPlanAllowsSimpleValidityCheck(plansource, cplan))
+	// {
+	// 	/*
+	// 	 * OK, use CachedPlanIsSimplyValid to save a refcount on the plan in
+	// 	 * the simple-expression resowner.  This shouldn't fail either, but if
+	// 	 * somehow it does, again we can cope by treating plan as not simple.
+	// 	 */
+	// 	if (CachedPlanIsSimplyValid(plansource, cplan,
+	// 								estate->simple_eval_resowner))
+	// 	{
+	// 		/* Remember that we have the refcount */
+	// 		expr->expr_simple_plansource = plansource;
+	// 		expr->expr_simple_plan = cplan;
+	// 		expr->expr_simple_plan_lxid = MyProc->lxid;
+	// 		/* Share the remaining work with the replan code path */
+	// 		exec_save_simple_expr(expr, cplan);
+	// 	}
+	// }
 
 	/* Release our plan refcount */
 	ReleaseCachedPlan(cplan, CurrentResourceOwner);
@@ -656,6 +659,7 @@ exec_save_simple_expr(PLtsql_expr *expr, CachedPlan *cplan)
 	 * current transaction".
 	 */
 	expr->expr_simple_expr = tle_expr;
+	expr->expr_simple_generation = cplan->generation;
 	expr->expr_simple_state = NULL;
 	expr->expr_simple_in_use = false;
 	expr->expr_simple_lxid = InvalidLocalTransactionId;
