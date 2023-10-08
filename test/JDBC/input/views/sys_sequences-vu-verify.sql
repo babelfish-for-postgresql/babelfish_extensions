@@ -1,9 +1,6 @@
 USE master
 GO
 
-SELECT * FROM sys.sequences
-GO
-
 SELECT * FROM sys_sequences_vu_prepare_view
 GO
 

@@ -1,14 +1,6 @@
 USE master
 GO
 
-SELECT * FROM sys.sequences
-GO
-~~START~~
-varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
-babel_datatype_sqlvariant_vu_prepare_t4_sec#!#44168#!#<NULL>#!#19396#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#9223372036854775807#!#0#!#1#!#0#!#20#!#20#!#0#!#0#!#ABC#!#0#!#ABC
-~~END~~
-
-
 SELECT * FROM sys_sequences_vu_prepare_view
 GO
 ~~START~~
