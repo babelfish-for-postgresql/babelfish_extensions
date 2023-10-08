@@ -4616,7 +4616,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
-	CachedPlan *cp;
+	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
 
@@ -4712,7 +4712,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
 		 */
-		cp = SPI_plan_get_cached_plan(expr->plan);
+
+		if(enable_txn_in_triggers || strcasestr(expr->query, "OUTPUT ") || strcasestr(expr->query, "UPDATE ") || 
+					strcasestr(expr->query, "TRIGGER "))
+		{
+			cp = SPI_plan_get_cached_plan(expr->plan);
+		}
+		
 		if (cp)
 		{
 			int			i;
