@@ -4655,7 +4655,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	PLtsql_expr *expr = stmt->sqlstmt;
 	Portal		portal = NULL;
 	ListCell   *lc;
-	CachedPlan *cp = NULL;
+	CachedPlan *cp;
 	bool		is_returning = false;
 	bool		is_select = true;
 
@@ -4751,27 +4751,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
 		 */
-		// if (strcasestr(stmt->sqlstmt->query, " OUTPUT") || strcasestr(stmt->sqlstmt->query, "UPDATE ") || strcasestr(stmt->sqlstmt->query, "TRIGGER") ||
-		// 		enable_txn_in_triggers)
-		// {
-			cp = SPI_plan_get_cached_plan(expr->plan);
-		// }
-
-		// if(strcasestr(stmt->sqlstmt->query, "INSERT "))
-		// {
-		// 	cmd = CMD_INSERT;
-		// }
-		// else if(strcasestr(stmt->sqlstmt->query, "DELETE "))
-		// {
-		// 	cmd = CMD_DELETE;
-		// }
-		// else if(strcasestr(stmt->sqlstmt->query, "SELECT "))
-		// {
-		// 	is_select = false;
-		// }
-		
-
-		
+		cp = SPI_plan_get_cached_plan(expr->plan);
 		if (cp)
 		{
 			int			i;
