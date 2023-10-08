@@ -8,5 +8,5 @@ GO
 select * from sys_table_types_dep_vu_prepare_v1
 GO
 
-select * from sys_table_types_dep_vu_prepare_v2
+exec sys_table_types_dep_vu_prepare_p2
 GO

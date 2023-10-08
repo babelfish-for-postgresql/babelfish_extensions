@@ -10,5 +10,5 @@ GO
 SELECT * FROM sys_types_dep_vu_prepare_v1
 GO
 
-SELECT * FROM sys_types_dep_vu_prepare_v2
+EXEC sys_types_dep_vu_prepare_p2
 GO
