@@ -113,6 +113,14 @@ typedef struct SimpleEcontextStackEntry
 
 static EState *shared_simple_eval_estate = NULL;
 static SimpleEcontextStackEntry *simple_econtext_stack = NULL;
+/*
+ * In addition to the shared simple-eval EState, we have a shared resource
+ * owner that holds refcounts on the CachedPlans for any "simple" expressions
+ * we have evaluated in the current transaction.  This allows us to avoid
+ * continually grabbing and releasing a plan refcount when a simple expression
+ * is used over and over.  (DO blocks use their own resowner, in exactly the
+ * same way described above for shared_simple_eval_estate.)
+ */
 static ResourceOwner shared_simple_eval_resowner = NULL;
 
 /*
@@ -7668,8 +7676,11 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 									estate->simple_eval_resowner))
 		{
 			/* Remember that we have the refcount */
+			// expr->expr_simple_plansource = plansource;
 			expr->expr_simple_plan = cplan;
-			expr->expr_simple_plan_lxid = curlxid;
+			expr->expr_simple_plan_lxid = MyProc->lxid;
+			/* Share the remaining work with the replan code path */
+			exec_save_simple_expr(expr, cplan);
 		}
 		else
 		{
@@ -9601,7 +9612,7 @@ pltsql_create_econtext(PLtsql_execstate *estate)
 		if (shared_simple_eval_resowner == NULL)
 			shared_simple_eval_resowner =
 				ResourceOwnerCreate(TopTransactionResourceOwner,
-									"PL/pgSQL simple expressions");
+									"PLTSQL simple expressions");
 		estate->simple_eval_resowner = shared_simple_eval_resowner;
 	}
 

@@ -4362,7 +4362,11 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	if (OPTION_ENABLED(codeblock_args, NO_FREE))
 		simple_eval_estate = NULL;
 	else
+	{	
+		simple_eval_resowner =
+			ResourceOwnerCreate(NULL, "PLTSQL DO block simple expressions");
 		simple_eval_estate = CreateExecutorState();
+	}
 
 	/*
 	 * If we are here for INSERT ... EXECUTE, prepare a resultinfo node for
