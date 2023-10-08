@@ -4751,11 +4751,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/*
 		 * Check whether the statement is an INSERT/DELETE with RETURNING
 		 */
-		if (strcasestr(stmt->sqlstmt->query, " OUTPUT") || strcasestr(stmt->sqlstmt->query, "UPDATE ") || strcasestr(stmt->sqlstmt->query, "TRIGGER") ||
-				enable_txn_in_triggers)
-		{
+		// if (strcasestr(stmt->sqlstmt->query, " OUTPUT") || strcasestr(stmt->sqlstmt->query, "UPDATE ") || strcasestr(stmt->sqlstmt->query, "TRIGGER") ||
+		// 		enable_txn_in_triggers)
+		// {
 			cp = SPI_plan_get_cached_plan(expr->plan);
-		}
+		// }
 
 		// if(strcasestr(stmt->sqlstmt->query, "INSERT "))
 		// {
