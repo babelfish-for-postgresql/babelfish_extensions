@@ -2,11 +2,59 @@ USE master
 GO
 
 CREATE VIEW sys_sequences_vu_prepare_view AS
-SELECT * FROM sys.sequences
+select
+    name
+  , principal_id
+  , parent_object_id
+  , type
+  , type_desc
+  , create_date
+  , modify_date
+  , is_ms_shipped
+  , is_published
+  , is_schema_published
+  , start_value
+  , increment
+  , minimum_value
+  , maximum_value
+  , is_cycling
+  , is_cached
+  , cache_size
+  , system_type_id
+  , user_type_id
+  , precision
+  , scale
+  , current_value
+  , is_exhausted
+  , last_used_value FROM sys.sequences
 GO
 
 CREATE PROC sys_sequences_vu_prepare_proc AS
-SELECT * FROM sys.sequences
+SELECT
+    name
+  , principal_id
+  , parent_object_id
+  , type
+  , type_desc
+  , create_date
+  , modify_date
+  , is_ms_shipped
+  , is_published
+  , is_schema_published
+  , start_value
+  , increment
+  , minimum_value
+  , maximum_value
+  , is_cycling
+  , is_cached
+  , cache_size
+  , system_type_id
+  , user_type_id
+  , precision
+  , scale
+  , current_value
+  , is_exhausted
+  , last_used_value FROM sys.sequences
 GO
 
 CREATE FUNCTION sys_sequences_vu_prepare_func()
