@@ -4658,6 +4658,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	CachedPlan *cp = NULL;
 	bool		is_returning = false;
 	bool		is_select = true;
+
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
 	 * Reenable if a use-case is found.
@@ -4669,37 +4670,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Oid			current_user_id = GetUserId();
 	bool		need_path_reset = false;
 	char	   *cur_dbname = get_cur_db_name();
-	// List 		*search_path = fetch_search_path(false);
-	// Oid			schema_name_oid;
-	// char		*schema_name;
 	bool		reset_session_properties = false;
 	bool		inside_trigger = false;
-	List *parsetree_list = raw_parser(expr->query,RAW_PARSE_DEFAULT);
-	// char		*start = NULL;
-	// char		*end = NULL;
-	// static char rel_name[256];
 
-	
-	// Oid			schema_oid = GetCurrentNamespace();
-	// List	   *stmt_list;
-	// const SPIExecuteOptions *options;
-	// Snapshot snapshot;
-	// Snapshot crosscheck_snapshot;
-	// int			my_res = 0;
-	// uint64		my_processed = 0;
-	// SPITupleTable *my_tuptable = NULL;
-	// int			res = 0;
-	// bool		pushed_active_snap = false;
-	// ResourceOwner plan_owner = options->owner;
-	// SPICallbackArg spicallbackarg;
-	// ErrorContextCallback spierrcontext;
-	// CachedPlan *cplan = NULL;
-	// ListCell   *lc1;
-	// QueryDesc  *qdesc;
-	
-	// Node		*parsetree;
-	// CachedPlanSource *plansource;
-	
 	/* fetch current search_path */
 	char	   *old_search_path = NULL;
 
@@ -4768,426 +4741,37 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 			prepare_stmt_execsql(estate, estate->func, stmt, true);
 		}
-		// prepare_stmt_execsql(estate, estate->func, stmt, true);
 
 		/*
 		 * Set up ParamListInfo to pass to executor
 		 */
 		paramLI = setup_param_list(estate, expr);
 
-		// if(search_path != NULL)
-		// {
-		// 	schema_name_oid = linitial_oid(search_path);
-		// 	schema_name = get_namespace_name(schema_name_oid);
-		// }
-
-		// start = strcasestr(stmt->sqlstmt->query, "FROM ");
-		// if(start)
-		// {
-		// 	start += 5;
-		// 	end = strpbrk(start, " \t\n");
-		// 	if(end)
-		// 	{
-		// 		strncpy(rel_name, start ,end-start);
-		// 		rel_name[end-start] = '\0';
-		// 	}
-		// }
-
-		// if(rel_name!=cur_dbname)
-		// {
-		// 	rel_name = schema_name;
-		// 	cp  = SPI_plan_get_cached_plan(expr->plan);
-		// 	schema_name = NULL;
-		// }
-		
 
 		/*
-		* Check for Trigger condition using query descriptor
-		* Parameters needed -
-		* stmt - parsetree, stmt_list,cplan <GetCachedPlan>
-		* plansource - plan
-		* snap, crosschecksnap - 0
-		* dest - canSetTag, stmt <CreateDestReciever(Destnone/DestSPI)>
-		* options - params,read_only,tcount
-		* SPI_current->queryEnvironment  - SPI_connection
-		*/
-		// if (expr && expr->plan)
-		// {
-		// 			foreach(l, SPI_plan_get_plan_sources(expr->plan))
-		// 			{
-		// 				plansource = (CachedPlanSource *) lfirst(l);
-
-		// 				if (plansource->commandTag)
-		// 				{
-		// 					if (plansource->commandTag == CMDTAG_INSERT)
-		// 					{
-		// 						command_type = TDS_CMD_INSERT;
-
-		// 						/*
-		// 						 * row_count should be invalid if the INSERT
-		// 						 * is inside the procedure of an INSERT-EXEC,
-		// 						 * or if the INSERT itself is an INSERT-EXEC
-		// 						 * and it just returned error.
-		// 						 */
-		// 						row_count_valid = !estate->insert_exec &&
-		// 							!(markErrorFlag &&
-		// 							  ((PLtsql_stmt_execsql *) stmt)->insert_exec);
-		// 					}
-		// 					else if (plansource->commandTag == CMDTAG_UPDATE)
-		// 					{
-		// 						command_type = TDS_CMD_UPDATE;
-		// 						row_count_valid = !estate->insert_exec;
-		// 					}
-		// 					else if (plansource->commandTag == CMDTAG_DELETE)
-		// 					{
-		// 						command_type = TDS_CMD_DELETE;
-		// 						row_count_valid = !estate->insert_exec;
-		// 					}
-
-		// 					/*
-		// 					 * [BABEL-2090] SELECT statement should show 'rows
-		// 					 * affected' count
-		// 					 */
-		// 					else if (plansource->commandTag == CMDTAG_SELECT)
-		// 					{
-		// 						command_type = TDS_CMD_SELECT;
-		// 						row_count_valid = !estate->insert_exec;
-		// 					}
-		// 				}
-		// 			}
-		// }
-
-		// parsetree = plansource->utilityStmt;
-
-
-		
-		
-		
-		
-	// 	res = _SPI_begin_call(true);
-	// 	if (res < 0)
-	// 		return res;
-
-	// 	memset(&options, 0, sizeof(options));
-	// 	options.params = params;
-	// 	options.read_only = read_only;
-	// 	options.tcount = tcount;
-
-	// 	/*
-	// 	 * Setup error traceback support for ereport()
-	// 	 */
-	// 	spicallbackarg.query = NULL;	/* we'll fill this below */
-	// 	spicallbackarg.mode = plan->parse_mode;
-	// 	spierrcontext.callback = _SPI_error_callback;
-	// 	spierrcontext.arg = &spicallbackarg;
-	// 	spierrcontext.previous = error_context_stack;
-	// 	error_context_stack = &spierrcontext;
-
-	// 	/*
-	// 	 * Ensure that we have a resource owner if plan is saved, and not if it
-	// 	 * isn't.
-	// 	 */
-	// 	if (!expr->plan->saved)
-	// 		plan_owner = NULL;
-	// 	else if (plan_owner == NULL)
-	// 		plan_owner = CurrentResourceOwner;
-
-	// 	/*
-	// 	 * We interpret must_return_tuples as "there must be at least one query,
-	// 	 * and all of them must return tuples".  This is a bit laxer than
-	// 	 * SPI_is_cursor_plan's check, but there seems no reason to enforce that
-	// 	 * there be only one query.
-	// 	 */
-	// 	if (options->must_return_tuples && expr->plan->plancache_list == NIL)
-	// 		ereport(ERROR,
-	// 				(errcode(ERRCODE_SYNTAX_ERROR),
-	// 				 errmsg("empty query does not return tuples")));
-
-	// 	foreach(lc1, expr->plan->plancache_list)
-	// 	{
-	// 	CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc1);
-	// 	List	   *stmt_list;
-	// 	ListCell   *lc2;
-
-	// 	spicallbackarg.query = plansource->query_string;
-
-	// 	/*
-	// 	 * If this is a one-shot plan, we still need to do parse analysis.
-	// 	 */
-	// 	if (expr->plan->oneshot)
-	// 	{
-	// 		RawStmt    *parsetree = plansource->raw_parse_tree;
-	// 		const char *src = plansource->query_string;
-	// 		List	   *stmt_list;
-
-	// 		/*
-	// 		 * Parameter datatypes are driven by parserSetup hook if provided,
-	// 		 * otherwise we use the fixed parameter list.
-	// 		 */
-	// 		if (parsetree == NULL)
-	// 			stmt_list = NIL;
-	// 		else if (plan->parserSetup != NULL)
-	// 		{
-	// 			Assert(expr->plan->nargs == 0);
-	// 			stmt_list = pg_analyze_and_rewrite_withcb(parsetree,
-	// 													  src,
-	// 													  expr->plan->parserSetup,
-	// 													  expr->plan->parserSetupArg,
-	// 													  _SPI_current->queryEnv);
-	// 		}
-	// 		else
-	// 		{
-	// 			stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
-	// 														   src,
-	// 														   expr->plan->argtypes,
-	// 														   expr->plan->nargs,
-	// 														   _SPI_current->queryEnv);
-	// 		}
-
-	// 		/* Finish filling in the CachedPlanSource */
-	// 		CompleteCachedPlan(plansource,
-	// 						   stmt_list,
-	// 						   NULL,
-	// 						   expr->plan->argtypes,
-	// 						   expr->plan->nargs,
-	// 						   expr->plan->parserSetup,
-	// 						   expr->plan->parserSetupArg,
-	// 						   expr->plan->cursor_options,
-	// 						   false);	/* not fixed result */
-	// 	}
-
-	// 	/*
-	// 	 * If asked to, complain when query does not return tuples.
-	// 	 * (Replanning can't change this, so we can check it before that.
-	// 	 * However, we can't check it till after parse analysis, so in the
-	// 	 * case of a one-shot plan this is the earliest we could check.)
-	// 	 */
-	// 	if (options->must_return_tuples && !plansource->resultDesc)
-	// 	{
-	// 		/* try to give a good error message */
-	// 		const char *cmdtag;
-
-	// 		/* A SELECT without resultDesc must be SELECT INTO */
-	// 		if (plansource->commandTag == CMDTAG_SELECT)
-	// 			cmdtag = "SELECT INTO";
-	// 		else
-	// 			cmdtag = GetCommandTagName(plansource->commandTag);
-	// 		ereport(ERROR,
-	// 				(errcode(ERRCODE_SYNTAX_ERROR),
-	// 		/* translator: %s is name of a SQL command, eg INSERT */
-	// 				 errmsg("%s query does not return tuples", cmdtag)));
-	// 	}
-
-	// 	/*
-	// 	 * Replan if needed, and increment plan refcount.  If it's a saved
-	// 	 * plan, the refcount must be backed by the plan_owner.
-	// 	 */
-	// 	cplan = GetCachedPlan(plansource, options->params,
-	// 						  plan_owner, _SPI_current->queryEnv);
-
-	// 	stmt_list = cplan->stmt_list;
-
-	// 	/*
-	// 	 * If we weren't given a specific snapshot to use, and the statement
-	// 	 * list requires a snapshot, set that up.
-	// 	 */
-	// 	if (snapshot == InvalidSnapshot &&
-	// 		(list_length(stmt_list) > 1 ||
-	// 		 (list_length(stmt_list) == 1 &&
-	// 		  PlannedStmtRequiresSnapshot(linitial_node(PlannedStmt,
-	// 													stmt_list)))))
-	// 	{
-	// 		/*
-	// 		 * First, ensure there's a Portal-level snapshot.  This back-fills
-	// 		 * the snapshot stack in case the previous operation was a COMMIT
-	// 		 * or ROLLBACK inside a procedure or DO block.  (We can't put back
-	// 		 * the Portal snapshot any sooner, or we'd break cases like doing
-	// 		 * SET or LOCK just after COMMIT.)  It's enough to check once per
-	// 		 * statement list, since COMMIT/ROLLBACK/CALL/DO can't appear
-	// 		 * within a multi-statement list.
-	// 		 */
-	// 		EnsurePortalSnapshotExists();
-
-	// 		/*
-	// 		 * In the default non-read-only case, get a new per-statement-list
-	// 		 * snapshot, replacing any that we pushed in a previous cycle.
-	// 		 * Skip it when doing non-atomic execution, though (we rely
-	// 		 * entirely on the Portal snapshot in that case).
-	// 		 */
-	// 		if (!options->read_only && !options->allow_nonatomic)
-	// 		{
-	// 			if (pushed_active_snap)
-	// 				PopActiveSnapshot();
-	// 			PushActiveSnapshot(GetTransactionSnapshot());
-	// 			pushed_active_snap = true;
-	// 		}
-	// 	}
-
-	// 	foreach(lc2, stmt_list)
-	// 	{
-	// 		PlannedStmt *stmt = lfirst_node(PlannedStmt, lc2);
-	// 		bool		canSetTag = stmt->canSetTag;
-	// 		DestReceiver *dest;
-
-	// 		/*
-	// 		 * Reset output state.  (Note that if a non-SPI receiver is used,
-	// 		 * _SPI_current->processed will stay zero, and that's what we'll
-	// 		 * report to the caller.  It's the receiver's job to count tuples
-	// 		 * in that case.)
-	// 		 */
-	// 		_SPI_current->processed = 0;
-	// 		_SPI_current->tuptable = NULL;
-
-	// 		/* Check for unsupported cases. */
-	// 		if (stmt->utilityStmt)
-	// 		{
-	// 			if (IsA(stmt->utilityStmt, CopyStmt))
-	// 			{
-	// 				CopyStmt   *cstmt = (CopyStmt *) stmt->utilityStmt;
-
-	// 				if (cstmt->filename == NULL)
-	// 				{
-	// 					my_res = SPI_ERROR_COPY;
-	// 					goto fail;
-	// 				}
-	// 			}
-	// 			else if (IsA(stmt->utilityStmt, TransactionStmt) &&
-	// 					 sql_dialect != SQL_DIALECT_TSQL)
-	// 			{
-	// 				/*
-	// 				 * Allow transaction only for TSQL mode
-	// 				 * This code path is used by do block
-	// 				 * and procedure execution
-	// 				 */
-	// 				my_res = SPI_ERROR_TRANSACTION;
-	// 				goto fail;
-	// 			}
-	// 		}
-
-	// 		if (options->read_only && !CommandIsReadOnly(stmt))
-	// 			ereport(ERROR,
-	// 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-	// 			/* translator: %s is a SQL statement name */
-	// 					 errmsg("%s is not allowed in a non-volatile function",
-	// 							CreateCommandName((Node *) stmt))));
-
-	// 		/*
-	// 		 * If not read-only mode, advance the command counter before each
-	// 		 * command and update the snapshot.  (But skip it if the snapshot
-	// 		 * isn't under our control.)
-	// 		 */
-	// 		if (!options->read_only && pushed_active_snap)
-	// 		{
-	// 			CommandCounterIncrement();
-	// 			UpdateActiveSnapshotCommandId();
-	// 		}
-
-	// 		/*
-	// 		 * Select appropriate tuple receiver.  Output from non-canSetTag
-	// 		 * subqueries always goes to the bit bucket.
-	// 		 */
-	// 		if (!canSetTag)
-	// 			dest = CreateDestReceiver(DestNone);
-	// 		else if (options->dest)
-	// 			dest = options->dest;
-	// 		else
-	// 			dest = CreateDestReceiver(DestSPI);
-
-	// 		if (stmt->utilityStmt == NULL || stmt->commandType == CMD_INSERT)
-	// 		{
-	// 			/*
-	// 			 * INSERT ... EXECUTE stmt can also have a utilityStmt attached,
-	// 			 * and here we should treat it like an INSERT stmt, and let it
-	// 			 * handle the EXECUTE during its execution.
-	// 			 */
-
-	// 			if (ActiveSnapshotSet())
-	// 				snap = GetActiveSnapshot();
-	// 			else
-	// 				snap = InvalidSnapshot;
-
-	// 			qdesc = CreateQueryDesc(stmt,
-	// 									plansource->query_string,
-	// 									false, false,
-	// 									dest,
-	// 									options->params,
-	// 									_SPI_current->queryEnv,
-	// 									0);
-	// 		}
-	// 	}
-	// }
-	
-
-
-		if((strcasestr(stmt->sqlstmt->query, "OUTPUT")) || strcasestr(stmt->sqlstmt->query, "UPDATE"))
+		 * Check whether the statement is an INSERT/DELETE with RETURNING
+		 */
+		if (strcasestr(stmt->sqlstmt->query, "OUTPUT") || strcasestr(stmt->sqlstmt->query, "UPDATE") || strcasestr(stmt->sqlstmt->query, "TRIGGER") ||
+				enable_txn_in_triggers)
 		{
 			cp = SPI_plan_get_cached_plan(expr->plan);
 		}
-		// else
-		// {
-		// 	foreach(lc, expr->plan->plancache_list)
-		// 	{
-		// 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
-		// 		if(rte->rtekind == RTE_RELATION){
-		// 			HeapScanDesc tgscan;
-   		// 			ScanKeyData skey[1];
-		// 			Relation relTrig = table_open(EventTriggerRelationId, AccessShareLock);
-		// 			ScanKeyInit(&skey[0],
-        //         		Anum_pg_trigger_tgrelid,
-        //         		BTEqualStrategyNumber, F_OIDEQ,
-        //         		ObjectIdGetDatum(rte->relid));
-		// 			tgscan = table_beginscan(relTrig, TriggerRelidNameIndexId, true,
-        //                         NULL, 1, skey)
-		// 			if (systable_getnext(tgscan) != NULL)
-		// 			{
-		// 				cp = SPI_plan_get_cached_plan(expr->plan);
-		// 			}
-		// 			table_close(EventTriggerRelationId, AccessShareLock);
-		// 		}
-		// 	}
-		// }
-		else
+
+		if(strcasestr(stmt->sqlstmt->query, "INSERT"))
 		{
-			foreach(lc, parsetree_list)
-			{
-    			Node *parsetree = (Node *) lfirst(lc);
-    			if (nodeTag(parsetree) == T_Query)
-  				{
-       				Query *query = (Query *) parsetree;
-        			RangeVar *relation = NULL;
-        			if (query->commandType == CMD_INSERT)
-            		relation = (RangeVar *) linitial(query->jointree->fromlist);
-        			else if (query->commandType == CMD_UPDATE || query->commandType == CMD_DELETE)
-        			{
-            		if (list_length(query->jointree->fromlist) > 0)
-                	relation = (RangeVar *) linitial(query->jointree->fromlist);
-        			}
-        			if (relation)
-        			{
-            			char *schema_name = relation->schemaname ? relation->schemaname : "public";
-            			char *table_name = relation->relname;
-            			Oid relid = get_relname_relid(table_name, get_namespace_oid(schema_name, false));
-            			if (OidIsValid(relid))
-            			{
-							ResultRelInfo *resRelInfo = makeNode(ResultRelInfo);
-							InitResultRelInfo(resRelInfo, NULL, 1, NULL, 0);
-							resRelInfo->ri_RangeTableIndex = 1; 
-							if (resRelInfo->ri_TrigDesc && resRelInfo->ri_TrigDesc->trig_insert_after_row)
-                			{
-								cp = SPI_plan_get_cached_plan(expr->plan);
-							}
-            			}
-        			}
-    			}	
-			}
-
-
-
-
+			cmd = CMD_INSERT;
 		}
-			
-		// FreeQueryDesc(qdesc);
+		else if(strcasestr(stmt->sqlstmt->query, "DELETE"))
+		{
+			cmd = CMD_DELETE;
+		}
+		else if(strcasestr(stmt->sqlstmt->query, "SELECT"))
+		{
+			is_select = false;
+		}
+		
 
+		
 		if (cp)
 		{
 			int			i;
@@ -5220,38 +4804,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 			ReleaseCachedPlan(cp, CurrentResourceOwner);
 		}
-		// else
-		// {
-		// 	int			i;
-
-		// 	i = 0;
-		// 	foreach(lc, expr->plan->plancache_list)
-		// 	{
-		// 		PlannedStmt *ps = (PlannedStmt *) lfirst(lc);
-
-		// 		if (ps->hasReturning)
-		// 		{
-		// 			is_returning = true;
-		// 			if (ps->commandType == CMD_INSERT)
-		// 				cmd = CMD_INSERT;
-		// 			else if (ps->commandType == CMD_DELETE)
-		// 				cmd = CMD_DELETE;
-		// 			else if (ps->commandType == CMD_UPDATE)
-		// 				cmd = CMD_UPDATE;
-		// 			break;
-		// 		}
-		// 		if (ps->commandType != CMD_SELECT)
-		// 		{
-		// 			is_select = false;
-		// 		}
-		// 		if (ps->commandType == CMD_UPDATE || ps->commandType == CMD_INSERT)
-		// 		{
-		// 			updateColumnUpdatedList(expr, i);
-		// 		}
-		// 		++i;
-		// 	}
-		// 	// ReleaseCachedPlan(cp, CurrentResourceOwner);
-		// }
 
 
 		/*
@@ -5342,10 +4894,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				restore_session_properties();
 		}
 		else
-		{
 			rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 												 estate->readonly_func, tcount);
-		}
 
 		/*
 		 * Check for error, and set FOUND if appropriate (for historical
@@ -5422,7 +4972,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				exec_set_rowcount(SPI_processed);
 			}
 			/* Close nesting level on engine side */
-			// count = true;
 			EndCompositeTriggers(false);
 			estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
 		}
