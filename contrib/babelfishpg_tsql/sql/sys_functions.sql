@@ -1066,7 +1066,7 @@ END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
 
-CREATE OR REPLACE FUNCTION typeproperty(
+CREATE OR REPLACE FUNCTION sys.typeproperty(
     typename sys.VARCHAR,
     property sys.VARCHAR
     )

@@ -23,3 +23,6 @@ CREATE VIEW sys_types_dep_vu_prepare_v1 AS
     SELECT count(*) FROM sys.types WHERE name = 'sys_types_dep_vu_prepare_ty1'
 GO
 
+CREATE VIEW sys_types_dep_vu_prepare_v2 AS
+    SELECT is_nullable FROM sys.types WHERE name = 'sys_types_dep_vu_prepare_ty1'
+GO

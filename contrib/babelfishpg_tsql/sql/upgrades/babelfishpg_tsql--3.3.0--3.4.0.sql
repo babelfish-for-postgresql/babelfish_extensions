@@ -637,7 +637,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION typeproperty(
+CREATE OR REPLACE FUNCTION sys.typeproperty(
     typename sys.VARCHAR,
     property sys.VARCHAR
     )
