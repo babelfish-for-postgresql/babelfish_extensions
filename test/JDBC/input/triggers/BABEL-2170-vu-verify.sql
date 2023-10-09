@@ -177,12 +177,6 @@ GO
 DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_insert;
 GO
 
-DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
-GO
-
-DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_delete;
-GO
-
 DROP VIEW IF EXISTS babel_2170_vu_employees_view;
 GO
 
