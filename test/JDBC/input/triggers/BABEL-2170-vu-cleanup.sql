@@ -1,4 +1,4 @@
--- clean  all objects in first database
+-- clean all objects in first database
 USE db1_BABEL2170;
 GO
 
@@ -23,11 +23,14 @@ GO
 DROP TABLE IF EXISTS babel_2170_vu_employees;
 GO
 
+DROP VIEW IF EXISTS babel_2170_vu_employees_view_txn;
+GO
+
+DROP TABLE IF EXISTS babel_2170_vu_employees_txn;
+GO
+
 USE MASTER; 
 GO
 
 DROP DATABASE IF EXISTS db1_BABEL2170;
-GO
-
-SELECT name FROM sys.sysobjects WHERE name LIKE 'babel_2170%' ORDER BY name;
 GO
