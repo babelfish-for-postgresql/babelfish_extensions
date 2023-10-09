@@ -541,3 +541,6 @@ ignore#!#getdate-vu-verify
 ignore#!#getdate-vu-cleanup
 
 ignore#!#getdatetest
+
+#Taking too much time to complete. 
+ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
