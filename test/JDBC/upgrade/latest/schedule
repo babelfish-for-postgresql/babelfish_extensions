@@ -451,6 +451,7 @@ timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
 unquoted_string
+doublequoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
