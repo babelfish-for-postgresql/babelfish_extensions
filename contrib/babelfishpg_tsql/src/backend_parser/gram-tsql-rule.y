@@ -1223,16 +1223,17 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 			SET set_clause_list
 			from_clause
 			where_or_current_clause
+			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					tsql_reset_update_delete_globals();
+					n->withClause = $1;
 					n->limitCount = $3;
 					n->relation = $4;
 					n->targetList = $7;
 					n->fromClause = $8;
 					n->whereClause = $9;
-					n->returningList = NULL;
-					n->withClause = $1;
+					n->returningList = $10;
 					$$ = (Node *)n;
 				}
 			/* OUTPUT syntax */
