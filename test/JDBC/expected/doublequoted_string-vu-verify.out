@@ -1,3 +1,5 @@
+set quoted_identifier off
+go
 create procedure dubquote_p @p varchar(20) = "ab'cd" , @p2 varchar(20)='xyz'
 as select @p
 go

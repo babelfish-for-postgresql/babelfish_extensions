@@ -173,7 +173,8 @@ static bool does_msg_exceeds_params_limit(const std::string& msg);
 static std::string getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id);
 static ANTLR_result antlr_parse_query(const char *sourceText, bool useSSLParsing);
 std::string rewriteDoubleQuotedString(const std::string strDoubleQuoted);
-
+std::string escapeDoubleQuotes(const std::string strWithDoubleQuote);
+	
 /*
  * Structure / Utility function for general purpose of query string modification
  *
@@ -560,7 +561,7 @@ void PLtsql_expr_query_mutator::markSelectFragment(ParserRuleContext *ctx)
 {
 	Assert(ctx);
 	Assert(selectFragmentOffsets.count(ctx) > 0);
-	
+
 	auto p = selectFragmentOffsets.at(ctx);
 	
 	isSelectFragment = true;
@@ -1506,7 +1507,7 @@ public:
 	void exitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx) override
 	{
 		// just throw away all PLtsql_stmt in the container.
-		// procedure body is a sequenece of sql_clauses. In create-procedure, we don't need to genereate PLtsql_stmt.
+		// procedure body is a sequence of sql_clauses. In create-procedure, we don't need to generate PLtsql_stmt.
 		//
 		// TODO: Ideally, we may stop visiting or disable vistior logic inside the procedure body. It will save the resoruce.
 
@@ -1747,10 +1748,9 @@ public:
 
 		if (is_compiling_create_function())
 		{
-			/* T-SQL doens't allow side-effecting operations in CREATE FUNCTION */
+			/* T-SQL doesn't allow side-effecting operations in CREATE FUNCTION */
 			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "DDL cannot be used within a function", getLineAndPos(ctx));
 		}
-
 
 		bool nop = false;
 		if (ctx->create_table())
@@ -1820,7 +1820,7 @@ public:
 			selectFragmentOffsets.clear();
 					
 			clear_rewritten_query_fragment();
-		}		
+		}
 	}
 	
 	void exitSecurity_statement(TSqlParser::Security_statementContext *ctx) override
@@ -1928,7 +1928,7 @@ public:
 				for (TSqlParser::Declare_localContext *d : ctx->declare_statement()->declare_local() ) 
 				{
 					i++;
-					if (d->expression()) 
+					if (d->expression())
 					{  
 						ParserRuleContext *ctx_fragment = (ParserRuleContext *) ctx;			
 						if (selectFragmentOffsets.find(d->expression()) != selectFragmentOffsets.end()) 
@@ -1987,7 +1987,7 @@ public:
 		if (ctx->id())
 		{
 			// A stored procedure parameter which is parsed as a column name (= identifier)
-			// is either an unquoted string, or a double-quoted string.
+			// is either an unquoted string, a double-quoted string, or a bracketed string.
 			// For a procedure call parameter, a double-quoted string is interpreted 
 			// as a string even with QUOTED_IDENTIFIER=ON.
 			
@@ -2000,19 +2000,35 @@ public:
 				// Change double-quoted string to single-quoted string
 				str = rewriteDoubleQuotedString(str);		    	
 				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), str)));
-			}
+			}		
 			else if (str.front() == '\'')
 			{
 				// This is a single-quoted string, no further action needed	
 				Assert(str.back() == '\'');		    						
 			}
+			else if (str.front() == '[') 
+			{
+				// When it's a bracketed identifier, remove the delimiters as T-SQL treats it as a string								
+				Assert(str.back() == ']');
+
+				// Temporarily turn this into a double-quoted string so that we can handle embedded quotes.
+				// Since embedded double quotes inside a bracketed identifier are not escaped (as they would be in a 
+				// double-quoted string), escape them first
+				str = escapeDoubleQuotes(str);
+				str = '"' + str.substr(1,str.length()-2) + '"';
+				str = rewriteDoubleQuotedString(str);		
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), str)));						
+			}
 			else 
 			{
-				// This is an unquoted string parameter which has been parsed as a column name.
-				// This is dealt with downstream.
+				// This is an unquoted string parameter which has been parsed as an identifier(column name).
+				// Put quotes around it: even though it is an identifier in the ANTLR parse tree, it will be 
+				// parsed as a string by the backend parser
+				str = "'" + str + "'";
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), str)));
 			}
 		}
-	}
+	}	
 
     void enterCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
     {
@@ -2315,7 +2331,9 @@ class tsqlMutator : public TSqlParserBaseListener
 {
 public:
     MyInputStream &stream;
-
+	bool in_procedure_parameter = false;    
+	bool in_procedure_parameter_id = false;    
+	
 	std::vector<int> double_quota_places;
 
     explicit tsqlMutator(MyInputStream &s)
@@ -2495,6 +2513,87 @@ public:
 							ereport(ERROR, (errcode(ERRCODE_SUBSTRING_ERROR), errmsg("Argument data type NULL is invalid for argument 1 of substring function")));
 					}
 				}
+			}
+		}
+	}
+	
+	void enterProcedure_param(TSqlParser::Procedure_paramContext *ctx) override
+	{
+		if (ctx->expression()) {
+			in_procedure_parameter = true;
+		}
+	}
+	
+	void enterFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
+	{
+		if (in_procedure_parameter) {
+			in_procedure_parameter_id = true;
+		}		
+	}
+	
+	void exitProcedure_param(TSqlParser::Procedure_paramContext *ctx) override
+	{
+		in_procedure_parameter = false;
+		in_procedure_parameter_id = false;
+	}
+
+	void exitId(TSqlParser::IdContext *ctx) override
+	{
+		if (in_procedure_parameter_id)
+		{
+			// This is a string parameter default which has been parsed as an identifier.
+			// Put quotes around it: even though it is an identifier in the ANTLR parse tree, it will then be 
+			// parsed as a string by the backend parser
+			std::string str = getFullText(ctx);
+				
+			// When it's a bracketed identifier, remove the delimiters as T-SQL treats it as a string				
+			// When it's a quoted identifier, T-SQL also treats it as a string independent of the QUOTED_IDENTIFIER setting		
+			// (as we get here, it means QUOTED_IDENTIFIER=ON)
+			// When it none of the above, it is an unquoted string 
+			if (str.front() == '[') {
+				Assert(str.back() == ']');
+				// Temporarily turn this into a double-quoted string so that we can handle embedded quotes.
+				// Since embedded double quotes inside a bracketed identifier are not escaped (as they would be in a 
+				// double-quoted string), escape them first
+				str = escapeDoubleQuotes(str);
+				str = '"' + str.substr(1,str.length()-2) + '"';
+				str = rewriteDoubleQuotedString(str);
+			}
+			else if (str.front() == '"') {
+				Assert(str.back() == '"');				
+				str = rewriteDoubleQuotedString(str);
+			}
+			else {
+				// Unquoted string, add quotes: there cannot be any quotes in the string otherwise it would 
+				// not have been parsed as an identifier
+				str = "'" + str + "'";				
+			}
+
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx), str)));
+		}
+	}
+	
+	void exitChar_string(TSqlParser::Char_stringContext *ctx) override
+	{
+		if (in_procedure_parameter)
+		{
+			std::string str = getFullText(ctx);
+			if (str.front() == '\'') 
+			{
+				// This is a single-quoted string used as parameter default: no further action needed
+				Assert(str.back() == '\'');
+			}
+			else
+			{
+				// This is a double-quoted string used as parameter default.
+				// (as we get here, it means QUOTED_IDENTIFIER=OFF)				
+				
+				Assert(str.front() == '"');
+				Assert(str.back() == '"');
+				
+				// Change to PG-compatible single-quoted string
+				str = rewriteDoubleQuotedString(str);
+				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx), str)));
 			}
 		}
 	}
@@ -2737,12 +2836,12 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 		tree::ParseTree *tree = nullptr;
 
 		/*
-		 * The sematnic of "RETURN SELECT ..." depends on whether it is used in Inlined Table Value Function or not.
+		 * The semantic of "RETURN SELECT ..." depends on whether it is used in Inlined Table Value Function or not.
 		 * In ITVF, they should be interpeted as return a result tuple of SELECT statement.
 		 * but in the other case (i.e. procedure or SQL batch), it should be interpreted as two separate statements like "RETURN; SELECT ..."
 		 *
 		 * Currently, we have only proc_body in input so accessing pltsql_curr_compile to check this is a body of ITVF or not.
-		 * If if it is ITVF, we parsed it with func_body_return_select_body grammar.
+		 * If it is ITVF, we parsed it with func_body_return_select_body grammar.
 		 */
 		if (pltsql_curr_compile && pltsql_curr_compile->is_itvf) /* special path to itvf */
 			tree = parser.func_body_return_select_body();
@@ -3048,13 +3147,13 @@ rewriteBatchLevelStatement(
 		/* DML trigger can have two WITH. one for trigger options and the other for WITH APPEND */
 		if (cctx->WITH().size() > 1 || (cctx->WITH().size() == 1 && !cctx->APPEND()))
 		{
-			size_t num_commas_in_dml_trigger_operaion = cctx->COMMA().size();
+			size_t num_commas_in_dml_trigger_operation = cctx->COMMA().size();
 			auto options = cctx->trigger_option();
 			/* COMMA is shared between dml_trigger_operation and WITH-clause. calculate the number of COMMA so that it can be removed properly */
-			num_commas_in_dml_trigger_operaion -= (cctx->trigger_option().size() - 1);
+			num_commas_in_dml_trigger_operation -= (cctx->trigger_option().size() - 1);
 			auto commas = cctx->COMMA();
 			std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
-			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_dml_trigger_operaion);
+			commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() , commas.end() - num_commas_in_dml_trigger_operation);
 			GetTokenFunc<TSqlParser::Trigger_optionContext*> getToken = [](TSqlParser::Trigger_optionContext* o) {
 				if (o->execute_as_clause())
 					return o->execute_as_clause()->CALLER();
@@ -5428,7 +5527,8 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 		{
 			attachPLtsql_fragment(ctx->set_statement(), stmt);	
 		}
-		else {
+		else 
+		{
 			attachPLtsql_fragment(ctx, stmt);
 		}
 	}
@@ -6999,7 +7099,8 @@ getIDName(TerminalNode *dq, TerminalNode *sb, TerminalNode *id)
 // - change the enclosing quotes to single quotes
 // - escape any single quotes in the string by doubling them
 // - unescape any double quotes
-std::string rewriteDoubleQuotedString(const std::string strDoubleQuoted)
+std::string 
+rewriteDoubleQuotedString(const std::string strDoubleQuoted)
 {
 	std::string str = strDoubleQuoted;
 
@@ -7041,5 +7142,28 @@ std::string rewriteDoubleQuotedString(const std::string strDoubleQuoted)
 		}
 	}
 
+	return str;
+}
+
+std::string 
+escapeDoubleQuotes(const std::string strWithDoubleQuote)
+{
+	std::string quote = "\"";
+	std::string str = strWithDoubleQuote;
+
+	if (str.find(quote) == std::string::npos)
+	{
+		// String contains no embedded double-quotes, so no further action needed
+	}
+	else
+	{
+		// String contains embedded quotes; these must be escaped by doubling them
+		for (size_t i = str.find(quote, 1);  // start at pos 1: char 0 has the enclosing delimiter
+			i != std::string::npos;   
+			i = str.find(quote, i + 2) )
+		{
+			str.replace(i, 1, quote+quote);	    // Change quote to 2 quotes					
+		}
+	}			
 	return str;
 }
