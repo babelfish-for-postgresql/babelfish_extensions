@@ -1225,6 +1225,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 			where_or_current_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
+					tsql_reset_update_delete_globals();
 					n->limitCount = $3;
 					n->relation = $4;
 					n->targetList = $7;
@@ -1243,6 +1244,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				where_or_current_clause
 					{
 						UpdateStmt *n = makeNode(UpdateStmt);
+						tsql_reset_update_delete_globals();
 						n->relation = $4;
 						tsql_update_delete_stmt_from_clause_alias(n->relation, $9);
 						n->targetList = $7;

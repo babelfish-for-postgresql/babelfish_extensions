@@ -884,6 +884,13 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation, RangeVar *r
 }
 
 static void
+tsql_reset_update_delete_globals()
+{
+	output_update_transformation = false;
+	update_delete_target_alias = NULL;
+}
+
+static void
 tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 {
 	ListCell   *lc;
@@ -1074,6 +1081,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
 
+	tsql_reset_update_delete_globals();
+
 	/* PreparableStmt inside CTE */
 	d->relation = relation_expr_opt_alias;
 	tsql_update_delete_stmt_from_clause_alias(d->relation, from_clause);
@@ -1240,6 +1249,8 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
+
+	tsql_reset_update_delete_globals();
 
 	/* PreparableStmt inside CTE */
 	u->relation = relation_expr_opt_alias;
