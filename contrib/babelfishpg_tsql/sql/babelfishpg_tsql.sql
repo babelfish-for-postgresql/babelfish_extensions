@@ -377,7 +377,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
      , sys.spt_datatype_info_table AS t5
   WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
-    AND ext.dbid = cast(sys.db_id() as oid);
+    AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
@@ -1128,7 +1128,7 @@ FROM pg_catalog.pg_class t1
 WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
-  AND ext.dbid = cast(sys.db_id() as oid);
+  AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 
@@ -3180,7 +3180,7 @@ BEGIN
 					IF @currtype = 'TR' OR @currtype = 'TA'
 						BEGIN
 							DECLARE @physical_schema_name sys.nvarchar(776) = '';
-							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = cast(sys.db_id() as oid) AND orig_name = @schemaname;
+							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = sys.db_id() AND orig_name = @schemaname;
 							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
 							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
 						END
