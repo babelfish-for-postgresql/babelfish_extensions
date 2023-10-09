@@ -179,10 +179,10 @@ test_ssl_handshake_read(BIO * h, char *buf, int size, TdsSecureSocketApi mock_so
      *  This intermediary function serves as a gateway, allowing us to invoke the SslHandShakeRead() function from our testing function
      */
 
-    int res;
-    tds_secure_raw_read = mock_socket_read;
-    unit_testing = true;
-    pkt_bytes_read = ReadPointer;
+	int res;
+	tds_secure_raw_read = mock_socket_read;
+	unit_testing = true;
+	pkt_bytes_read = ReadPointer;
 	PG_TRY();
 	{
 		res = SslHandShakeRead(h, buf, size);
@@ -290,9 +290,9 @@ test_ssl_handshake_write(BIO * h, char *buf, int size, TdsSecureSocketApiConst m
      *  This intermediary function serves as a gateway, allowing us to invoke the SslHandShakeWrite() function from our testing function
      */
 
-    int res;
-    tds_secure_raw_write = mock_socket_write;
-    unit_testing = true;
+	int res;
+	tds_secure_raw_write = mock_socket_write;
+	unit_testing = true;
 	PG_TRY();
 	{
 		res = SslHandShakeWrite(h, buf, size);
@@ -304,7 +304,7 @@ test_ssl_handshake_write(BIO * h, char *buf, int size, TdsSecureSocketApiConst m
 	}
 	PG_END_TRY();
 
-    return res;
+	return res;
 }
 
 
