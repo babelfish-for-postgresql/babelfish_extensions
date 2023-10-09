@@ -1,15 +1,21 @@
+USE db1_BABEL2170;
+GO
+
 -- Instead of Insert Trigger on View 
 CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employees_view
 INSTEAD OF INSERT
 AS
 BEGIN
-    UPDATE babel_2170_vu_employees SET EmployeeAddress = 'New Street' WHERE EmployeeID = 3;
+    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
 END
 GO
 
 INSERT INTO babel_2170_vu_employees_view VALUES(5, 'alex', '1st Street', '5000');
 GO
-~~ROW COUNT: 1~~
+~~START~~
+varchar
+Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_insert Invoked
+~~END~~
 
 ~~ROW COUNT: 1~~
 
@@ -30,23 +36,21 @@ int
 ~~END~~
 
 
-UPDATE babel_2170_vu_employees SET EmployeeAddress = '1st Street' WHERE EmployeeID = 3;
-GO
-~~ROW COUNT: 1~~
-
-
 -- Instead of Update Trigger on View 
 CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view
 INSTEAD OF UPDATE
 AS
 BEGIN
-    UPDATE babel_2170_vu_employees SET MonthSalary = MonthSalary + 100 WHERE EmployeeID = 3;
+    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked'
 END
 GO
 
 UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 3;
 GO
-~~ROW COUNT: 1~~
+~~START~~
+varchar
+Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
 
 ~~ROW COUNT: 1~~
 
@@ -55,20 +59,18 @@ SELECT EmployeeID,EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#numeric
-3#!#ana#!#1st Street#!#3100.00
+3#!#ana#!#1st Street#!#3000.00
 ~~END~~
-
-
-UPDATE babel_2170_vu_employees SET MonthSalary = 3000 WHERE EmployeeID = 3;
-GO
-~~ROW COUNT: 1~~
 
 
 BEGIN TRANSACTION
     UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID IN (3, 4);
 COMMIT TRANSACTION;
 GO
-~~ROW COUNT: 1~~
+~~START~~
+varchar
+Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
 
 ~~ROW COUNT: 2~~
 
@@ -77,14 +79,9 @@ SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#numeric
-3#!#ana#!#1st Street#!#3100.00
+3#!#ana#!#1st Street#!#3000.00
 4#!#adam#!#1st Street#!#4000.00
 ~~END~~
-
-
-UPDATE babel_2170_vu_employees SET MonthSalary = 3000 WHERE EmployeeID = 3;
-GO
-~~ROW COUNT: 1~~
 
 
 -- Instead of Delete Trigger on View
@@ -92,7 +89,7 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_delete ON babel_2170_vu_employee
 INSTEAD OF DELETE
 AS
 BEGIN
-    UPDATE babel_2170_vu_employees SET MonthSalary = MonthSalary + 100 WHERE EmployeeID = 3;
+    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_delete Invoked'
 END
 GO
 
@@ -100,7 +97,10 @@ BEGIN TRANSACTION
     DELETE FROM babel_2170_vu_employees_view WHERE EmployeeID IN (1, 2);
 COMMIT TRANSACTION;
 GO
-~~ROW COUNT: 1~~
+~~START~~
+varchar
+Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_delete Invoked
+~~END~~
 
 ~~ROW COUNT: 2~~
 
@@ -127,12 +127,127 @@ GO
 int#!#varchar#!#varchar#!#numeric
 1#!#amber#!#1st Street#!#1000.00
 2#!#angel#!#1st Street#!#2000.00
-3#!#ana#!#1st Street#!#3100.00
+3#!#ana#!#1st Street#!#3000.00
 4#!#adam#!#1st Street#!#4000.00
 ~~END~~
 
 
-UPDATE babel_2170_vu_employees SET MonthSalary = 3000 WHERE EmployeeID = 3;
+--- Tests multiple insert queries and check if inserted table can be accessed and trigger is working fine.
+CREATE TRIGGER babel_2170_vu_employees_view_iot_bulkinsert ON babel_2170_vu_employees_view_bulkinsert
+INSTEAD OF INSERT
+AS
+    SELECT * from INSERTED;
 GO
+
+BEGIN TRANSACTION
+DECLARE @i int = 1
+    WHILE @i <= 3
+    BEGIN
+        INSERT INTO babel_2170_vu_employees_view_bulkinsert VALUES(@i, 'bob', '1st Street', '1000');
+        SET @i = @i + 1
+    END
+COMMIT TRANSACTION
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#bob#!#1st Street#!#1000.00
+~~END~~
+
 ~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+2#!#bob#!#1st Street#!#1000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+3#!#bob#!#1st Street#!#1000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+
+-- Test Instead of Update trigger in same db but cross schema 
+-- cleanup default dbo schema IO upadte trigger
+DROP TRIGGER IF EXISTS [dbo].[babel_2170_vu_employees_view_iot_update];
+GO
+
+CREATE TRIGGER [schema_2170].[babel_2170_vu_employees_view_iot_update] ON [schema_2170].[babel_2170_vu_employees_view]
+INSTEAD OF UPDATE
+AS
+    SELECT 'Trigger db1_BABEL2170.schema_2170.babel_2170_vu_employees_view_iot_update Invoked'
+GO
+
+CREATE TRIGGER [babel_2170_vu_employees_view_iot_update] ON [babel_2170_vu_employees_view]
+INSTEAD OF UPDATE
+AS
+    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+GO
+
+UPDATE [schema_2170].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 3;
+GO
+~~START~~
+varchar
+Trigger db1_BABEL2170.schema_2170.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE [dbo].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 3;
+GO
+~~START~~
+varchar
+Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+DROP TRIGGER IF EXISTS [schema_2170].[babel_2170_vu_employees_view_iot_update];
+GO
+
+DROP TRIGGER IF EXISTS[dbo].[babel_2170_vu_employees_view_iot_update];
+GO
+
+-- create same name Instead of Insert trigger in second db to test Cross db behavior
+USE db2_BABEL2170;
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employees_view
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger db2_BABEL2170.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
+END
+GO
+
+-- should fire IOT trigger of second db
+INSERT INTO babel_2170_vu_employees_view VALUES(5, 'alex', '1st Street db2_BABEL2170', '5000');
+GO
+~~START~~
+varchar
+Trigger db2_BABEL2170.dbo.babel_2170_vu_employees_view_iot_insert Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID =3;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+3#!#ana#!#1st Street#!#3000.00
+~~END~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view WHERE EmployeeID =5;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+~~END~~
 
