@@ -50,13 +50,14 @@ jobs:
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 80
+        timeout-minutes: 120
         run: |
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
-          #ignore test crashing/failing tests
-          export scheduleFile=parallel_query_jdbc_schedule
+          for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" parallel_query_jdbc_schedule); do
+            echo "ignore#!#$filename" >> jdbc_schedule
+          done
           mvn test
 
       - name: Cleanup babelfish database
