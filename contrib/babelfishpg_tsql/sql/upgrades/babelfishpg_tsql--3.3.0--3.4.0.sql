@@ -1125,6 +1125,14 @@ inner join sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
 where ext.dbid = sys.db_id();
 GRANT SELECT ON sys.schemas TO PUBLIC;
 
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
+
 create or replace view sys.tables as
 select
   CAST(t.relname as sys._ci_sysname) as name
