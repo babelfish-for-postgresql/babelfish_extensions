@@ -50,7 +50,7 @@ jobs:
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 200
+        timeout-minutes: 80
         run: |
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
