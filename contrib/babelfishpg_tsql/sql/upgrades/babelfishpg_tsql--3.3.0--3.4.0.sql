@@ -1628,10 +1628,6 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
-/*
- * DOMAINS view
- */
-
 CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
@@ -1696,11 +1692,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 
 GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
 
-/*
- * TABLES view
- */
-
-CREATE VIEW information_schema_tsql.tables AS
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
@@ -1727,11 +1719,7 @@ CREATE VIEW information_schema_tsql.tables AS
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
-/*
- * TABLE_CONSTRAINTS view
- */
-
-CREATE VIEW information_schema_tsql.table_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -1764,10 +1752,6 @@ CREATE VIEW information_schema_tsql.table_constraints AS
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
-/*
- * VIEWS view
- */
-
 CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
@@ -1799,11 +1783,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 
 GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 
-/*
- * CHECK_CONSTRAINTS view
- */
-
-CREATE VIEW information_schema_tsql.check_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -1825,9 +1805,7 @@ CREATE VIEW information_schema_tsql.check_constraints AS
 
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
-/*
- *ISC routines view
- */
+
 CREATE OR REPLACE VIEW information_schema_tsql.routines AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
@@ -1993,9 +1971,6 @@ CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	;
 GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
-/*
- * SCHEMATA view
- */
 CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 	SELECT CAST(sys.db_name() AS sys.sysname) AS "CATALOG_NAME",
 	CAST(CASE WHEN np.nspname LIKE CONCAT(sys.db_name(),'%') THEN RIGHT(np.nspname, LENGTH(np.nspname) - LENGTH(sys.db_name()) - 1)
