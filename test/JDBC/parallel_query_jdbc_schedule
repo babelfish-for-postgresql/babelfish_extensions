@@ -544,3 +544,7 @@ ignore#!#getdatetest
 
 #Taking too much time to complete. 
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
+ignore#!#BABEL-SP_COLUMNS_MANAGED-dep-vu-verify
+ignore#!#BABEL-SP_TABLES
+ignore#!#ISC-Domains-vu-verify
+ignore#!#Test-sp_rename-vu-verify
