@@ -363,9 +363,9 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
 
   FROM pg_catalog.pg_class t1
-	 INNER JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
+     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-     INNER JOIN sys.babelfish_namespace_ext ext on (t2.nspname = ext.nspname and ext.dbid = sys.db_id())
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
      JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
@@ -376,7 +376,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      )
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
      , sys.spt_datatype_info_table AS t5
-  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'));
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
+    AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
@@ -1118,15 +1119,16 @@ CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
 CAST(t5.conname AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1 
-	JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-  	JOIN sys.babelfish_namespace_ext ext on (t2.nspname = ext.nspname and ext.dbid = sys.db_id())
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
 	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" )
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
-	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq];
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 

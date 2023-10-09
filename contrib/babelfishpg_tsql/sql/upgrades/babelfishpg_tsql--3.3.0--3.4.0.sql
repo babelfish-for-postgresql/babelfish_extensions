@@ -1388,9 +1388,9 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
 
   FROM pg_catalog.pg_class t1
-	 INNER JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
+     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-     INNER JOIN sys.babelfish_namespace_ext ext on (t2.nspname = ext.nspname and ext.dbid = sys.db_id())
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
      JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
@@ -1401,9 +1401,11 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      )
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
      , sys.spt_datatype_info_table AS t5
-  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'));
-
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
+    AND ext.dbid = sys.db_id();
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
+
+
 CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
 CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
@@ -1413,15 +1415,16 @@ CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
 CAST(t5.conname AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1 
-	JOIN pg_catalog.pg_namespace t2 ON t1.relnamespace = t2.oid
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-  	JOIN sys.babelfish_namespace_ext ext on (t2.nspname = ext.nspname and ext.dbid = sys.db_id())
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
 	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" )
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
-	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq];
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 
@@ -1535,7 +1538,7 @@ $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.columns AS
-	SELECT CAST(DB.name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 			CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
@@ -1598,7 +1601,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
 
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN DB.name ELSE null END
+				THEN nc.dbname ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
 				THEN ext.orig_name ELSE null END
@@ -1608,23 +1611,23 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
 
 	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
-		JOIN pg_class c ON a.attrelid = c.oid
-		JOIN pg_type t ON a.atttypid = t.oid
-		LEFT JOIN pg_type bt ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
 		LEFT JOIN pg_collation co on co.oid = a.attcollation
-		INNER JOIN pg_namespace nt on (c.relnamespace = nt.oid)
-		INNER JOIN sys.babelfish_namespace_ext ext on (nt.nspname = ext.nspname AND ext.dbid = sys.db_id())
-		INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid,
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
 		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
 		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
 		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
 
-	WHERE (NOT pg_is_other_temp_schema(nt.oid))
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
-									'SELECT, INSERT, UPDATE, REFERENCES'));
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid =sys.db_id();
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
