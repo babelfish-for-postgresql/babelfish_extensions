@@ -229,6 +229,7 @@ ISC-Tables
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
+key_column_usage
 linked_servers
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
@@ -451,6 +452,7 @@ timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
 unquoted_string
+doublequoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
