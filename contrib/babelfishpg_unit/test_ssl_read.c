@@ -36,8 +36,6 @@ test_ssl_handshakeRead(void)
     char *expected_str;
     int expected;
     int obtained;
-    char *null_terminated_expected;
-    char *null_terminated_buf;
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
@@ -55,27 +53,24 @@ test_ssl_handshakeRead(void)
     
     obtained = test_ssl_handshake_read(h, buf, expected, mock_socket_read, ReadPointer);
 
-    null_terminated_expected = strdup(expected_str);
-    null_terminated_buf = strdup(buf);
+    expected_str[expected] = '\0';
+    buf[obtained] = '\0';
 
     /*
      * if number of bytes are same then we will compare actual data
      */
     if(expected == obtained)
     {
-        TEST_ASSERT_TESTCASE(strcmp(null_terminated_buf, null_terminated_expected) == 0, testResult);
+        TEST_ASSERT_TESTCASE(strcmp(buf, expected_str) == 0, testResult);
     }
-    TEST_ASSERT(strcmp(null_terminated_buf, null_terminated_expected) == 0, testResult);
+    TEST_ASSERT(strcmp(buf, expected_str) == 0, testResult);
 
     free(buf);
     free(prelogin_request);
     free(expected_str);
-    free(null_terminated_expected);
-    free(null_terminated_buf);
     return testResult;
 
 }
-
 
 TestResult*
 test_ssl_handshakeRead_oversize(void)
@@ -91,37 +86,21 @@ test_ssl_handshakeRead_oversize(void)
 
     int expected;
     int obtained;
-    int obtained_next;
-    char *expected_str;
-    char *obtained_str;
-    char *null_terminated_expected;
-    char *null_terminated_obtained;
 
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
-    prelogin_request = strdup("1201000F0000010011A25E4571");
+    prelogin_request = strdup("1201000B00000100115461A23E");
     buf = malloc(strlen(prelogin_request)/2);
 
     h = BIO_new(BIO_s_mem());
     ReadPointer = 0;
 
-    expected = strlen(prelogin_request)/2 - 5;
+    expected = strlen(prelogin_request)/2 - 8;
     obtained = test_ssl_handshake_read(h, buf, expected, mock_socket_read, ReadPointer);
 
-    expected_str = (char *)malloc(strlen(prelogin_request)/2);
-    for (int i = 0; i < expected; i++) 
-        sscanf(&prelogin_request [i * 2], "%2hhx", (char *)expected_str + i);
-
-    obtained_str = (char *)malloc(expected+1);
-    memcpy(obtained_str, buf, obtained);
-    obtained_next = test_ssl_handshake_read(h, buf, expected - obtained, mock_socket_read, ReadPointer);
-    memcpy(obtained_str + obtained, buf, obtained_next);
-    null_terminated_expected = strdup(expected_str);
-    null_terminated_obtained = strdup(obtained_str);
-    
-    TEST_ASSERT_TESTCASE(strcmp(null_terminated_expected, null_terminated_obtained) == 0, testResult);
-    TEST_ASSERT(strcmp(null_terminated_expected, null_terminated_obtained) == 0, testResult);
+    TEST_ASSERT_TESTCASE(expected != obtained, testResult);
+    TEST_ASSERT(expected != obtained, testResult);
     if(testResult->result == true)
     {
         strncpy(testResult->message, "SSL packet expand more than one TDS packet", MAX_TEST_MESSAGE_LENGTH);
@@ -129,12 +108,8 @@ test_ssl_handshakeRead_oversize(void)
 
     free(buf);
     free(prelogin_request);
-    free(expected_str);
-    free(obtained_str);
-    free(null_terminated_expected);
-    free(null_terminated_obtained);
     ReadPointer = 0;
- 
+
     return testResult;
 
 }

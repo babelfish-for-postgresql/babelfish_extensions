@@ -43,8 +43,8 @@ test_ssl_handshakeWrite(void)
 
     h = BIO_new(BIO_s_mem());
 
-    prelogin = malloc(strlen(buf)/2 + 8);
-    expected = strlen(buf)/2;
+    prelogin = malloc(strlen(buf) + 8);
+    expected = strlen(buf);
     expected_str = (char *)malloc(expected + 1);
     strncpy(expected_str, buf, expected);
     expected_str[expected] = '\0';
@@ -86,9 +86,6 @@ test_ssl_handshakeWrite_sizeCheck(void)
     int expected;
     int obtained;
 
-    char expected_str[MAX_TEST_MESSAGE_LENGTH];
-    char obtained_str[MAX_TEST_MESSAGE_LENGTH];
-
     TestResult* testResult = palloc0(sizeof(TestResult));
     testResult->result = true;
 
@@ -97,17 +94,10 @@ test_ssl_handshakeWrite_sizeCheck(void)
     expected = -1;
     obtained = test_ssl_handshake_write(h, buf, expected, mock_socket_write);
 
-    snprintf(expected_str, MAX_TEST_MESSAGE_LENGTH, "%d", expected);
-    snprintf(obtained_str, MAX_TEST_MESSAGE_LENGTH, "%d", obtained);
-
     TEST_ASSERT_TESTCASE(expected == obtained, testResult);
     if(testResult->result == true)
     {
         snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s There is nothing to write", testResult->message);
-    }
-    else
-    {
-        snprintf(testResult->message, MAX_TEST_MESSAGE_LENGTH, "%s We need to write %ld bytes", testResult->message, strlen(buf));
     }
 
     return testResult;
