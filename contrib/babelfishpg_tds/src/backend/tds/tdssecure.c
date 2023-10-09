@@ -184,14 +184,14 @@ test_ssl_handshake_read(BIO * h, char *buf, int size, TdsSecureSocketApi mock_so
     unit_testing = true;
     pkt_bytes_read = ReadPointer;
 	PG_TRY();
-    {
-        res = SslHandShakeRead(h, buf, size);
-    }
-    PG_FINALLY();
-    {
-        unit_testing = false;
+	{
+		res = SslHandShakeRead(h, buf, size);
+	}
+	PG_FINALLY();
+	{
+		unit_testing = false;
 		tds_secure_raw_read = secure_raw_read;
-    }
+	}
     PG_END_TRY();
 
     return res;
@@ -295,15 +295,15 @@ test_ssl_handshake_write(BIO * h, char *buf, int size, TdsSecureSocketApiConst m
     unit_testing = true;
 
 	PG_TRY();
-    {
-        res = SslHandShakeWrite(h, buf, size);
-    }
-    PG_FINALLY();
-    {
-        unit_testing = false;
+	{
+		res = SslHandShakeWrite(h, buf, size);
+	}
+	PG_FINALLY();
+	{
+		unit_testing = false;
 		tds_secure_raw_write = secure_raw_write;
-    }
-    PG_END_TRY();
+	}
+	PG_END_TRY();
 
     return res;
 }
