@@ -1535,7 +1535,7 @@ $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.columns AS
-	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+	SELECT CAST(DB.name AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
 			CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
@@ -1598,7 +1598,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
 
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
-				THEN nc.dbname ELSE null END
+				THEN DB.name ELSE null END
 				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
 			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
 				THEN ext.orig_name ELSE null END
@@ -1608,23 +1608,23 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
 
 	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
-		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
-		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
-		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
-			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		JOIN pg_class c ON a.attrelid = c.oid
+		JOIN pg_type t ON a.atttypid = t.oid
+		LEFT JOIN pg_type bt ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
 		LEFT JOIN pg_collation co on co.oid = a.attcollation
-		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		INNER JOIN pg_namespace nt on (c.relnamespace = nt.oid)
+		INNER JOIN sys.babelfish_namespace_ext ext on (nt.nspname = ext.nspname AND ext.dbid = sys.db_id())
+		INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid,
 		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
 		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
 		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
 
-	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+	WHERE (NOT pg_is_other_temp_schema(nt.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
-									'SELECT, INSERT, UPDATE, REFERENCES'))
-		AND ext.dbid = sys.db_id();
+									'SELECT, INSERT, UPDATE, REFERENCES'));
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
