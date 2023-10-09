@@ -306,7 +306,7 @@ getAvailDbid(void)
 
 	do
 	{
-		RangeVar   *sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
 		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
 
 		dbid = nextval_internal(seqid, false);
