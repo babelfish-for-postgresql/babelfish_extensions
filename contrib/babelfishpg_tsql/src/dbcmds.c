@@ -301,9 +301,15 @@ getAvailDbid(void)
 	int16		dbid;
 	int16		start = 0;
 
+	if(GetUserId() != get_role_oid("sysadmin", true))
+		return InvalidDbid;
+
 	do
 	{
-		dbid = DirectFunctionCall1(nextval, CStringGetTextDatum("sys.babelfish_db_seq"));
+		RangeVar   *sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
+
+		dbid = nextval_internal(seqid, false);
 		if (start == 0)
 			start = dbid;
 		else if (start == dbid)
@@ -408,6 +414,10 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *guest;
 	const char *prev_current_user;
 	int			stmt_number = 0;
+	int 			save_sec_context;
+	int 			save_nestlevel;
+	bool 			is_set_userid;
+	Oid 			save_userid;
 
 	/* TODO: Extract options */
 
@@ -519,16 +529,24 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
 		{
-			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-			PlannedStmt *wrapper;
+			Node	   		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt 	*wrapper;
+			is_set_userid = false;
 
+			if(stmt->type == T_CreateSchemaStmt)
+			{
+				GetUserIdAndSecContext(&save_userid, &save_sec_context);
+				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				save_nestlevel = NewGUCNestLevel();
+				is_set_userid = true;
+			}
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
 			wrapper->commandType = CMD_UTILITY;
 			wrapper->canSetTag = false;
 			wrapper->utilityStmt = stmt;
 			wrapper->stmt_location = 0;
-
 			stmt_number++;
 			if (guest && list_length(parsetree_list) == stmt_number)
 				wrapper->stmt_len = 19;
@@ -545,7 +563,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 						   None_Receiver,
 						   NULL);
 
-			/* make sure later steps can see the object created here */
+			if(is_set_userid)
+			{
+				AtEOXact_GUC(false, save_nestlevel);
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+			}
 			CommandCounterIncrement();
 		}
 		set_cur_db(old_dbid, old_dbname);
@@ -567,6 +589,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	}
 	PG_CATCH();
 	{
+		if(is_set_userid)
+		{
+			AtEOXact_GUC(false, save_nestlevel);
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+		}
 		/* Clean up. Restore previous state. */
 		bbf_set_current_user(prev_current_user);
 		set_cur_db(old_dbid, old_dbname);
