@@ -1135,7 +1135,7 @@ select
   , CAST(ps.seqmax as sql_variant ) as maximum_value
   , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
   , CAST(ps.seqcache as sys.bit ) as is_cached
-  , CAST(0 as int ) as cache_size
+  , CAST(NULL as int ) as cache_size
   , CAST(ps.seqtypid as int ) as system_type_id
   , CAST(ps.seqtypid as int ) as user_type_id
   , CAST(0 as sys.tinyint ) as precision
