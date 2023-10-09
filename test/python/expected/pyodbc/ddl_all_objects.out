@@ -139,6 +139,15 @@ SET QUOTED_IDENTIFIER ON
 create function routines_fc6(@fc6_a char) RETURNS char AS BEGIN return @fc6_a END;
 GO
 
+CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_t_id_seq] 
+ AS [int]
+ START WITH 1
+ INCREMENT BY 1
+ MINVALUE 1
+ MAXVALUE 2147483647
+ CACHE 
+GO
+
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
 (
 	[id]
