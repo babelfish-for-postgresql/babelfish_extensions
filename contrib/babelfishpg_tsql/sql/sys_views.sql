@@ -2770,10 +2770,10 @@ SELECT
     CAST('' as sys.sysname) AS name
   , CAST(0 as sys.int) AS principal_id
   , CAST(0 as sys.int) AS asymmetric_key_id
-  , CAST('a' as char(2)) AS pvt_key_encryption_type
+  , CAST('a' as sys.bpchar(2)) AS pvt_key_encryption_type
   , CAST('' as sys.nvarchar(60)) AS pvt_key_encryption_type_desc
   , CAST(null as sys.varbinary(32)) as thumbprint
-  , CAST('a' as char(2)) AS algorithm
+  , CAST('a' as sys.bpchar(2)) AS algorithm
   , CAST('' as sys.nvarchar(60)) AS algorithm_desc
   , CAST(0 as sys.int) AS key_length
   , CAST(null as sys.varbinary(85)) as sid
@@ -2793,7 +2793,7 @@ SELECT
     CAST('' as sys.sysname) AS name
   , CAST(0 as sys.int) AS principal_id
   , CAST(0 as sys.int) AS asymmetric_key_id
-  , CAST('a' as char(2)) AS pvt_key_encryption_type
+  , CAST('a' as sys.bpchar(2)) AS pvt_key_encryption_type
   , CAST('' as sys.nvarchar(60)) AS pvt_key_encryption_type_desc
   , CAST(0 as sys.bit) AS is_active_for_begin_dialog
   , CAST('' as sys.nvarchar(442)) AS issuer_name
@@ -3061,9 +3061,9 @@ SELECT
     CAST(0 as sys.int) AS minor_id,
     CAST(0 as sys.int) AS grantee_principal_id,
     CAST(0 as sys.int) AS grantor_principal_id,
-    CAST('a' as CHAR(4)) AS type,
+    CAST('a' as sys.BPCHAR(4)) AS type,
     CAST('' as sys.NVARCHAR(128)) AS permission_name,
-    CAST('G' as CHAR(1)) AS state,
+    CAST('G' as sys.BPCHAR(1)) AS state,
     CAST('' as sys.NVARCHAR(60)) AS state_desc
 WHERE FALSE;
 GRANT SELECT ON sys.database_permissions TO PUBLIC;
