@@ -17,6 +17,8 @@ $script_flag = $paramsArray[5]
 $schm = "sys"
 $dtb = "sysdatabases"
 $var_one = "1"
+$schm1 = "dbo"
+$schm2 = "guest"
 
 
 
@@ -54,6 +56,8 @@ else
     $SubObjects += $db.Tables.Indexes
     $SubObjects += $db.Tables.Triggers
     $SubObjects += $db.Sequences
+    $SubObjects += $db.Users
+
     foreach ($CurrentObject in $Objects)
     {
         if ($CurrentObject.schema -ne $schm -and $CurrentObject.schema -ne $dtb -and $CurrentObject.schema -ne $null -and -not $CurrentObject.IsSystemObject )
@@ -69,7 +73,7 @@ else
     }
     foreach ($CurrentObject in $SubObjects)
     {
-        if (-not $CurrentObject.IsSystemObject )
+        if (-not $CurrentObject.IsSystemObject -and $CurrentObject.Name -ne $schm1 -and $CurrentObject.Name -ne $schm2)
             {
                 $Scripter = New-Object ('Microsoft.SqlServer.Management.Smo.Scripter') ($SmoServer)
                 $Scripter.Options.DriAll = $True;
