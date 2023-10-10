@@ -42,6 +42,9 @@
 #include "pltsql.h"
 #include "extendedproperty.h"
 
+Oid sys_babelfish_db_seq_oid = InvalidOid;
+
+static Oid get_sys_babelfish_db_seq_oid(void);
 static bool have_createdb_privilege(void);
 static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
@@ -56,6 +59,20 @@ static List *gen_dropdb_subcmds(const char *schema,
 static Oid	do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static void drop_related_bbf_namespace_entries(int16 dbid);
+
+static Oid
+get_sys_babelfish_db_seq_oid()
+{
+	if(!OidIsValid(sys_babelfish_db_seq_oid))
+	{
+		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
+		
+		Assert(OidIsValid(seqid));
+		sys_babelfish_db_seq_oid = seqid;
+	}
+	return sys_babelfish_db_seq_oid;
+}
 
 static bool
 have_createdb_privilege(void)
@@ -108,11 +125,6 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
 
-	/* create sysdatabases under current DB's DBO schema */
-	appendStringInfo(&query, "CREATE VIEW dummy.sysdatabases AS SELECT * FROM sys.sysdatabases; ");
-	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
-	appendStringInfo(&query, "GRANT SELECT ON dummy.sysdatabases TO dummy; ");
-
 	/* create guest schema in the database. This has to be the last statement */
 	if (guest)
 		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
@@ -120,9 +132,9 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 10 : 9;
+		expected_stmt_num = list_length(logins) > 0 ? 7 : 6;
 	else
-		expected_stmt_num = 7;
+		expected_stmt_num = 6;
 
 	if (list_length(res) != expected_stmt_num)
 		ereport(ERROR,
@@ -159,15 +171,6 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateSchemaStmt(stmt, schema, db_owner);
-
-	stmt = parsetree_nth_stmt(res, i++);
-	update_ViewStmt(stmt, schema);
-
-	stmt = parsetree_nth_stmt(res, i++);
-	update_AlterTableStmt(stmt, schema, db_owner);
-
-	stmt = parsetree_nth_stmt(res, i++);
-	update_GrantStmt(stmt, NULL, schema, db_owner);
 
 	if (guest)
 	{
@@ -306,11 +309,7 @@ getAvailDbid(void)
 
 	do
 	{
-		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
-		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
-
-		Assert(OidIsValid(seqid));
-		dbid = nextval_internal(seqid, false);
+		dbid = nextval_internal(get_sys_babelfish_db_seq_oid(), false);
 		if (start == 0)
 			start = dbid;
 		else if (start == dbid)
@@ -358,12 +357,8 @@ getDbidForLogicalDbRestore(Oid relid)
 	 * dbid while inserting into sysdatabases catalog.
 	 */
 	else
-	{
-		RangeVar   *sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
-		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
+		dbid = DirectFunctionCall1(currval_oid, get_sys_babelfish_db_seq_oid());
 
-		dbid = DirectFunctionCall1(currval_oid, seqid);
-	}
 	bbf_set_current_user(prev_current_user);
 
 	return dbid;
@@ -416,7 +411,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *prev_current_user;
 	int			stmt_number = 0;
 	int 			save_sec_context;
-	int 			save_nestlevel;
 	bool 			is_set_userid;
 	Oid 			save_userid;
 
@@ -539,7 +533,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 				GetUserIdAndSecContext(&save_userid, &save_sec_context);
 				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-				save_nestlevel = NewGUCNestLevel();
 				is_set_userid = true;
 			}
 			/* need to make a wrapper PlannedStmt */
@@ -565,10 +558,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 						   NULL);
 
 			if(is_set_userid)
-			{
-				AtEOXact_GUC(false, save_nestlevel);
 				SetUserIdAndSecContext(save_userid, save_sec_context);
-			}
+
 			CommandCounterIncrement();
 		}
 		set_cur_db(old_dbid, old_dbname);
@@ -591,10 +582,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	PG_CATCH();
 	{
 		if(is_set_userid)
-		{
-			AtEOXact_GUC(false, save_nestlevel);
 			SetUserIdAndSecContext(save_userid, save_sec_context);
-		}
+
 		/* Clean up. Restore previous state. */
 		bbf_set_current_user(prev_current_user);
 		set_cur_db(old_dbid, old_dbname);
