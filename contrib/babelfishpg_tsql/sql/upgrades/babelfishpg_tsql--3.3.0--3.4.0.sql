@@ -38,6 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+
 ALTER VIEW sys.types RENAME TO types_deprecated_3_4_0;
 
 create or replace view sys.types As
@@ -612,6 +613,71 @@ SELECT CAST(name as sys.sysname) as name
 FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_3_4_0');
+
+
+CREATE OR REPLACE VIEW sys.asymmetric_keys
+AS
+SELECT 
+    CAST('' as sys.sysname) AS name
+  , CAST(0 as sys.int) AS principal_id
+  , CAST(0 as sys.int) AS asymmetric_key_id
+  , CAST('a' as sys.bpchar(2)) AS pvt_key_encryption_type
+  , CAST('' as sys.nvarchar(60)) AS pvt_key_encryption_type_desc
+  , CAST(null as sys.varbinary(32)) as thumbprint
+  , CAST('a' as sys.bpchar(2)) AS algorithm
+  , CAST('' as sys.nvarchar(60)) AS algorithm_desc
+  , CAST(0 as sys.int) AS key_length
+  , CAST(null as sys.varbinary(85)) as sid
+  , CAST('' as sys.nvarchar(128)) AS string_sid
+  , CAST(NULL as sys.varbinary(8000)) AS public_key
+  , CAST('' as sys.nvarchar(260)) AS attested_by
+  , CAST('' as sys.nvarchar(120)) AS provider_type
+  , CAST(NULL as sys.UNIQUEIDENTIFIER) as cryptographic_provider_guid
+  , CAST(NULL AS sys.sql_variant) AS cryptographic_provider_algid
+  
+WHERE FALSE;
+GRANT SELECT ON sys.asymmetric_keys TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.certificates
+AS
+SELECT 
+    CAST('' as sys.sysname) AS name
+  , CAST(0 as sys.int) AS principal_id
+  , CAST(0 as sys.int) AS asymmetric_key_id
+  , CAST('a' as sys.bpchar(2)) AS pvt_key_encryption_type
+  , CAST('' as sys.nvarchar(60)) AS pvt_key_encryption_type_desc
+  , CAST(0 as sys.bit) AS is_active_for_begin_dialog
+  , CAST('' as sys.nvarchar(442)) AS issuer_name
+  , CAST('' as sys.nvarchar(64)) AS cert_serial_number
+  , CAST(null as sys.varbinary(85)) as sid
+  , CAST('' as sys.nvarchar(128)) AS string_sid
+  , CAST('' as sys.nvarchar(4000)) AS subject
+  , CAST('' as sys.datetime) AS expiry_date
+  , CAST('' as sys.datetime) AS start_date
+  , CAST(null as sys.varbinary(32)) as thumbprint
+  , CAST('' as sys.nvarchar(260)) as attested_by
+  , CAST('' as sys.datetime) AS pvt_key_last_backup_date
+  , CAST(0 AS sys.int) AS key_length
+  
+WHERE FALSE;
+GRANT SELECT ON sys.certificates TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_permissions
+AS
+SELECT
+    CAST(0 as sys.tinyint) AS class,
+    CAST('' as sys.NVARCHAR(60)) AS class_desc,
+    CAST(0 as sys.int) AS major_id,
+    CAST(0 as sys.int) AS minor_id,
+    CAST(0 as sys.int) AS grantee_principal_id,
+    CAST(0 as sys.int) AS grantor_principal_id,
+    CAST('a' as sys.bpchar(4)) AS type,
+    CAST('' as sys.NVARCHAR(128)) AS permission_name,
+    CAST('G' as sys.bpchar(1)) AS state,
+    CAST('' as sys.NVARCHAR(60)) AS state_desc
+WHERE FALSE;
+GRANT SELECT ON sys.database_permissions TO PUBLIC;
+
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
 	SELECT
