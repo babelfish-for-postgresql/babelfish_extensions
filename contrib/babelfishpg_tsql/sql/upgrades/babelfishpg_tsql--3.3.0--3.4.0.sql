@@ -1193,10 +1193,10 @@ select
   , CAST(0 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-  , CAST(ps.seqstart as sql_variant ) as start_value
-  , CAST(ps.seqincrement as sql_variant ) as increment
-  , CAST(ps.seqmin as sql_variant  ) as minimum_value
-  , CAST(ps.seqmax as sql_variant ) as maximum_value
+  , CAST(ps.seqstart as sys.sql_variant ) as start_value
+  , CAST(ps.seqincrement as sys.sql_variant) as increment
+  , CAST(ps.seqmin as sys.sql_variant ) as minimum_value
+  , CAST(ps.seqmax as sys.sql_variant) as maximum_value
   , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
   , CAST(0 as sys.bit ) as is_cached
   , CAST(ps.seqcache as int ) as cache_size
@@ -1204,9 +1204,9 @@ select
   , CAST(ps.seqtypid as int ) as user_type_id
   , CAST(0 as sys.tinyint ) as precision
   , CAST(0 as sys.tinyint ) as scale
-  , CAST('ABC' as sql_variant  ) as current_value
+  , CAST('ABC' as sys.sql_variant ) as current_value
   , CAST(0 as sys.bit ) as is_exhausted
-  , CAST('ABC' as sql_variant ) as last_used_value
+  , CAST('ABC' as sys.sql_variant) as last_used_value
 from pg_class p
 inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
