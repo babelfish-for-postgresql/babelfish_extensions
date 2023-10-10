@@ -452,6 +452,7 @@ timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
 unquoted_string
+doublequoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -465,3 +466,6 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+sys_asymmetric_keys
+sys_certificates
+sys_database_permissions

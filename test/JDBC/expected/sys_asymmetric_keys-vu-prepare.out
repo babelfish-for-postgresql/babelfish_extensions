@@ -1,0 +1,18 @@
+USE master
+GO
+
+CREATE VIEW sys_asymmetric_keys_vu_prepare_view AS
+SELECT * FROM sys.asymmetric_keys
+GO
+
+CREATE PROC sys_asymmetric_keys_vu_prepare_proc AS
+SELECT * FROM sys.asymmetric_keys
+GO
+
+CREATE FUNCTION sys_asymmetric_keys_vu_prepare_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.asymmetric_keys WHERE key_length= 0)
+END
+GO
