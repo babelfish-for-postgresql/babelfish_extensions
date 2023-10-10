@@ -145,7 +145,7 @@ CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_t_id_seq]
  INCREMENT BY 1
  MINVALUE 1
  MAXVALUE 2147483647
- CACHE 
+ NO CACHE 
 GO
 
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 

@@ -79,7 +79,7 @@ CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_employeedata_id_seq]
  INCREMENT BY 1
  MINVALUE 1
  MAXVALUE 2147483647
- CACHE 
+ NO CACHE 
 GO
 
 CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_t_id_seq] 
@@ -88,6 +88,6 @@ CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_t_id_seq]
  INCREMENT BY 1
  MINVALUE 1
  MAXVALUE 2147483647
- CACHE 
+ NO CACHE 
 GO
 
