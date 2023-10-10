@@ -55,10 +55,11 @@ jobs:
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
-          for filename in $(grep -v "^#.*\|^cmd.*\|^all.*\|^$" parallel_query_jdbc_schedule); do
-            echo "$filename" >> jdbc_schedule
-          done
+          # set env variable isParallelQueryMode to true to let jdbc know not to run tests of file parallel_query_jdbc_schedule
+          export isParallelQueryMode=true
           mvn test
+          # reset env variable
+          unset isParallelQueryMode
 
       - name: Cleanup babelfish database
         id: cleanup

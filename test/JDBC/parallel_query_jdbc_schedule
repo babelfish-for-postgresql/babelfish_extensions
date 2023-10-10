@@ -320,6 +320,8 @@ ignore#!#TestDatetime-numeric-dateaddfunction-vu-verify
 ignore#!#TestDatetime-numeric-representation-vu-verify
 ignore#!#TestSQLQueries
 ignore#!#babel_collation
+# Flaky - shows error -  lost connection to parallel worker
+ignore#!#babel_datetime2
 
 # Taking too much time to complete. 
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
