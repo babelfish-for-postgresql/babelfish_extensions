@@ -68,6 +68,8 @@ select datetrunc('NULL', null) as dt1
 GO
 select datetrunc('NULL', 'NULL') as dt1
 GO
+select datetrunc('year',CAST('2020-01-01' as date))
+go
 select datetrunc(year, null) as dt3
 GO
 select datetrunc(years, null) as dt4
@@ -80,6 +82,13 @@ select datetrunc(invalid_datepart, 2020)
 GO
 select datetrunc(hour, 2020.0)
 GO
+
+-- postgres support 6 digits of fractional time-scale so the bbf output will differ
+-- in the last fractional second digit from t-sql. bbf- 2021-12-08 11:30:15.1234570
+-- tsql- 2021-12-08 11:30:15.1234560
+DECLARE @d datetime2 = '2021-12-08 11:30:15.1234567';
+SELECT 'Microsecond', DATETRUNC(microsecond, @d);
+Go
 
 DECLARE @test_date date;
 SET @test_date = '1998-09-12';

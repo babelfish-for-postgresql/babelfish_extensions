@@ -194,6 +194,13 @@ datetime2
 
 ~~ERROR (Message: 'NULL' is not a recognized datetrunc option.)~~
 
+select datetrunc('year',CAST('2020-01-01' as date))
+go
+~~START~~
+date
+2020-01-01
+~~END~~
+
 select datetrunc(year, null) as dt3
 GO
 ~~START~~
@@ -239,6 +246,18 @@ numeric
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type 'numeric' is invalid for argument 2 of datetrunc function.)~~
+
+
+-- postgres support 6 digits of fractional time-scale so the bbf output will differ
+-- in the last fractional second digit from t-sql. bbf- 2021-12-08 11:30:15.1234570
+-- tsql- 2021-12-08 11:30:15.1234560
+DECLARE @d datetime2 = '2021-12-08 11:30:15.1234567';
+SELECT 'Microsecond', DATETRUNC(microsecond, @d);
+Go
+~~START~~
+varchar#!#datetime2
+Microsecond#!#2021-12-08 11:30:15.1234570
+~~END~~
 
 
 DECLARE @test_date date;
