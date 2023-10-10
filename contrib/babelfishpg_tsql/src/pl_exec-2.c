@@ -883,30 +883,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 					(argmodes[i] == PROARGMODE_INOUT ||
 					 argmodes[i] == PROARGMODE_OUT))
 				{
-					ListCell *paramcell;
-					relativeArgIndex = 0;
-
-					/*
-					 * The order of arguments in procedure call might be different from the order of 
-					 * arguments in the funcargs. 
-					 * For each argument in funcargs, find corresponding argument in stmt->params.	
-					 */
-					foreach(paramcell, stmt->params)
-					{
-						tsql_exec_param *p = (tsql_exec_param *) lfirst(paramcell);
-						if (argnames[i] && p->name && pg_strcasecmp(argnames[i], p->name) == 0)
-							break;
-						relativeArgIndex++;
-					}
-
-					/*
-					 * If argnames[i] is not found in stmt->params, i th parameter is passed in 
-					 * 'value' format instead of '@name = value'. In this case, argnames[i] should be mapped
-					 * to i th element in stmt->params. 
-					 */
-					if (relativeArgIndex >= stmt->paramno) 
-						relativeArgIndex = i;
-
 					if (parammodes &&
 						parammodes[i] != PROARGMODE_INOUT &&
 						parammodes[i] != PROARGMODE_OUT)
