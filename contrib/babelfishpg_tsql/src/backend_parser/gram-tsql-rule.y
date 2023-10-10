@@ -1325,7 +1325,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						tsql_update_delete_stmt_from_clause_alias(n->relation,
 						$8);
 						n->targetList = $7;
-						if ($8 != NULL && IsA(linitial($8), JoinExpr))
+						if ($9 != NULL && IsA(linitial($9), JoinExpr))
 						{
 							n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
 												(Node*)n, $9, $10, $3, $4,

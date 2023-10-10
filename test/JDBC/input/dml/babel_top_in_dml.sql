@@ -781,3 +781,37 @@ GO
 
 drop table top_with_output_tbl;
 go
+
+-- BABEL-2007
+CREATE TABLE babel2007_t1(c1PK INT PRIMARY KEY, c2INT INT, c4COMMENT VARCHAR(100))
+CREATE TABLE babel2007_t2(c1PK INT PRIMARY KEY, c2INT INT, c4COMMENT VARCHAR(100))
+GO
+
+INSERT INTO babel2007_t1 VALUES( 1, 10, 'insert' )
+        , ( 2, 20, 'insert' )
+        , ( 3, 30, 'insert' )
+        , ( 4, 40, 'insert' )
+GO
+
+INSERT INTO babel2007_t2 VALUES( 1, 10, 'insert' )
+        , ( 2, 20, 'insert' )
+        , ( 3, 30, 'insert' )
+        , ( 4, 40, 'insert' )
+GO
+
+UPDATE top(2) babel2007_t1 
+SET c4COMMENT = 'updated: TOP (2), output to client'
+OUTPUT INSERTED.*, DELETED.*
+FROM babel2007_t1 INNER JOIN babel2007_t2 ON ( babel2007_t1.c2INT = babel2007_t2.c2INT )
+WHERE babel2007_t2.c1PK <= 5
+GO
+
+DELETE top(2) babel2007_t1
+OUTPUT DELETED.*
+FROM babel2007_t1 INNER JOIN babel2007_t2 ON ( babel2007_t1.c2INT = babel2007_t2.c2INT )
+WHERE babel2007_t2.c1PK <= 5
+GO
+
+DROP TABLE babel2007_t1
+DROP TABLE babel2007_t2
+GO
