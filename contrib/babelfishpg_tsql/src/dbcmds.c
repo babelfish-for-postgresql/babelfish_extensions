@@ -309,6 +309,7 @@ getAvailDbid(void)
 		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
 		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
 
+		Assert(OidIsValid(seqid));
 		dbid = nextval_internal(seqid, false);
 		if (start == 0)
 			start = dbid;
