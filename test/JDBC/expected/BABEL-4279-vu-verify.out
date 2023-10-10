@@ -3,7 +3,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t1."abc.nfds"<newline>   FROM master_dbo.test_babel_4279_t1;
+ SELECT test_babel_4279_t1."abc.nfds" AS "ABC.nfds"<newline>   FROM master_dbo.test_babel_4279_t1;
 ~~END~~
 
 
@@ -11,7 +11,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t1."abc.nfds",<newline>    test_babel_4279_t1."def.j"<newline>   FROM master_dbo.test_babel_4279_t1;
+ SELECT test_babel_4279_t1."abc.nfds" AS "ABC.nfds",<newline>    test_babel_4279_t1."def.j" AS "DEf.j"<newline>   FROM master_dbo.test_babel_4279_t1;
 ~~END~~
 
 
@@ -19,7 +19,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM "test_babel_4279_d.1_test_babel_4279_s1".test_babel_4279_st1;
 ~~END~~
 
 
@@ -27,7 +27,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM "test_babel_4279_d.1_test_babel_4279_s1".test_babel_4279_st1;
 ~~END~~
 
 
@@ -51,7 +51,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT "sc,sdg""fdsngjds'"."ab[c"<newline>   FROM "master_tngdf'"."sc,sdg""fdsngjds'";
+ SELECT "sc,sdg""fdsngjds'"."ab[c" AS "AB[C"<newline>   FROM "master_tngdf'"."sc,sdg""fdsngjds'";
 ~~END~~
 
 
@@ -59,7 +59,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t3.abcd<newline>   FROM master_dbo.test_babel_4279_t3;
+ SELECT test_babel_4279_t3.abcd AS "ABCD"<newline>   FROM master_dbo.test_babel_4279_t3;
 ~~END~~
 
 

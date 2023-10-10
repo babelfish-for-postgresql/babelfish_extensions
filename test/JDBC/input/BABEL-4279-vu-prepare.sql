@@ -8,10 +8,10 @@ GO
 CREATE VIEW test_babel_4279_v2 AS SELECT [test_babel_4279_t1].[ABC.nfds] ,test_babel_4279_t1.[DEf.j] from test_babel_4279_t1;
 GO
 
-CREATE DATABASE ["test_babel_4279_d.1"];
+CREATE DATABASE [test_babel_4279_d.1];
 GO
 
-USE ["test_babel_4279_d.1"];
+USE [test_babel_4279_d.1];
 GO
 
 CREATE SCHEMA test_babel_4279_s1;
@@ -26,7 +26,7 @@ GO
 USE MASTER
 GO
 
-CREATE VIEW test_babel_4279_v3 AS SELECT ["test_babel_4279_d.1"].[test_babel_4279_s1].[test_babel_4279_st1].[ABC.nfds] from ["test_babel_4279_d.1"].[test_babel_4279_s1].[test_babel_4279_st1];
+CREATE VIEW test_babel_4279_v3 AS SELECT [test_babel_4279_d.1].[test_babel_4279_s1].[test_babel_4279_st1].[ABC.nfds] from [test_babel_4279_d.1].[test_babel_4279_s1].[test_babel_4279_st1];
 GO
 
 CREATE TABLE test_babel_4279_t2(您您对您对您对您对您对您对您对您对您对您您您 INT, 对您对您对您对您对您对您对您 INT);

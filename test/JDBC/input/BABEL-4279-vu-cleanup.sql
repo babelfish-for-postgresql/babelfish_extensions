@@ -11,7 +11,7 @@ GO
 DROP TABLE test_babel_4279_t1;
 GO
 
-USE ["test_babel_4279_d.1"];
+USE [test_babel_4279_d.1];
 GO
 
 DROP VIEW test_babel_4279_sv1;
@@ -26,7 +26,7 @@ GO
 USE MASTER;
 GO
 
-DROP DATABASE ["test_babel_4279_d.1"];
+DROP DATABASE [test_babel_4279_d.1];
 GO
 
 DROP VIEW test_babel_4279_v4;
