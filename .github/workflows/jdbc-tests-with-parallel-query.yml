@@ -55,8 +55,8 @@ jobs:
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
-          for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" parallel_query_jdbc_schedule); do
-            echo "ignore#!#$filename" >> jdbc_schedule
+          for filename in $(grep -v "^#.*\|^cmd.*\|^all.*\|^$" parallel_query_jdbc_schedule); do
+            echo "$filename" >> jdbc_schedule
           done
           mvn test
 
