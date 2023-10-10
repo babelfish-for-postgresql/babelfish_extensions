@@ -3053,7 +3053,6 @@ WHERE FALSE;
 GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
 
 
-
 create or replace view sys.sequences as
 select
     CAST(p.relname as sys.sysname) as name
