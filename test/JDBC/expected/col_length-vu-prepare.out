@@ -51,11 +51,78 @@ CREATE TABLE sys_col_length_test_schema.test_table(
 );
 GO
 
-INSERT INTO sys_col_length_test_schema.test_table (col_char, col_varchar, col_varbinary)
-VALUES ('ABCDEF', 'Hello, World!', 0x0123456789ABCDEF)
+-- for user defined data types
+-- Create User-Defined Types
+CREATE TYPE custom_char_10 FROM CHAR(10);
+CREATE TYPE custom_varchar_20 FROM VARCHAR(20);
+CREATE TYPE custom_binary_5 FROM BINARY(5);
+CREATE TYPE custom_varbinary_15 FROM VARBINARY(15);
+CREATE TYPE custom_nchar_8 FROM NCHAR(8);
+CREATE TYPE custom_nvarchar_16 FROM NVARCHAR(16);
+CREATE TYPE custom_text FROM TEXT;
+CREATE TYPE custom_image FROM IMAGE;
+CREATE TYPE custom_ntext FROM NTEXT;
+CREATE TYPE custom_sysname FROM sysname;
+CREATE TYPE custom_sql_variant FROM SQL_VARIANT;
+CREATE TYPE custom_xml FROM XML;
+CREATE TYPE custom_varcharmax FROM VARCHAR(MAX);
+CREATE TYPE custom_nvarcharmax FROM NVARCHAR(MAX);
+CREATE TYPE custom_varbinarymax FROM VARBINARY(MAX);
+CREATE TYPE custom_bit FROM BIT;
+CREATE TYPE custom_tinyint FROM TINYINT;
+CREATE TYPE custom_bigint FROM BIGINT;
+CREATE TYPE custom_smallint FROM SMALLINT;
+CREATE TYPE custom_smallmoney FROM SMALLMONEY;
+CREATE TYPE custom_money FROM MONEY;
+CREATE TYPE custom_smalldatetime FROM SMALLDATETIME;
+CREATE TYPE custom_real FROM REAL;
+CREATE TYPE custom_float FROM FLOAT;
+CREATE TYPE custom_time FROM TIME;
+CREATE TYPE custom_datetime FROM DATETIME;
+CREATE TYPE custom_datetime2 FROM DATETIME2;
+CREATE TYPE custom_datetimeoffset FROM DATETIMEOFFSET;
+CREATE TYPE custom_uniqueidentifier FROM UNIQUEIDENTIFIER;
+CREATE TYPE custom_date FROM DATE;
+CREATE TYPE custom_decimal_10_5 FROM DECIMAL(10,5);
+CREATE TYPE custom_numeric_3_0 FROM NUMERIC(3,0);
 GO
-~~ROW COUNT: 1~~
 
+-- Create Table with User-Defined Data Types
+CREATE TABLE udd_test_table (
+    col_customchar custom_char_10,
+    col_customvarchar custom_varchar_20,
+    col_custombinary custom_binary_5,
+    col_customvarbinary custom_varbinary_15,
+    col_customnchar custom_nchar_8,
+    col_customnvarchar custom_nvarchar_16,
+    col_customtext custom_text,
+    col_customimage custom_image,
+    col_customntext custom_ntext,
+    col_customsysname custom_sysname,
+    col_customsqlvariant custom_sql_variant,
+    col_customxml custom_xml,
+    col_customvarcharmax custom_varcharmax,
+    col_customnvarcharmax custom_nvarcharmax,
+    col_customvarbinarymax custom_varbinarymax,
+    col_custombit custom_bit,
+    col_customtinyint custom_tinyint,
+    col_custombigint custom_bigint,
+    col_customsmallint custom_smallint,
+    col_customsmallmoney custom_smallmoney,
+    col_custommoney custom_money,
+    col_customsmalldatetime custom_smalldatetime,
+    col_customreal custom_real,
+    col_customfloat custom_float,
+    col_customtime custom_time,
+    col_customdatetime custom_datetime,
+    col_customdatetime2 custom_datetime2,
+    col_customdatetimeoffset custom_datetimeoffset,
+    col_customuniqueidentifier custom_uniqueidentifier,
+    col_customdate custom_date,
+    col_customdecimal custom_decimal_10_5,
+    col_customnumeric custom_numeric_3_0
+);
+GO
 
 CREATE VIEW col_length_prepare_v1 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'ID'));
 GO

@@ -60,3 +60,38 @@ DROP FUNCTION IF EXISTS col_length_prepare_f14();
 DROP FUNCTION IF EXISTS col_length_prepare_f15();
 DROP FUNCTION IF EXISTS col_length_prepare_f16();
 GO
+
+-- Drop types
+DROP TYPE custom_char_10;
+DROP TYPE custom_varchar_20;
+DROP TYPE custom_binary_5;
+DROP TYPE custom_varbinary_15;
+DROP TYPE custom_nchar_8;
+DROP TYPE custom_nvarchar_16;
+DROP TYPE custom_text;
+DROP TYPE custom_image;
+DROP TYPE custom_ntext;
+DROP TYPE custom_sysname;
+DROP TYPE custom_sql_variant;
+DROP TYPE custom_xml;
+DROP TYPE custom_varcharmax;
+DROP TYPE custom_nvarcharmax;
+DROP TYPE custom_varbinarymax;
+DROP TYPE custom_bit;
+DROP TYPE custom_tinyint;
+DROP TYPE custom_bigint;
+DROP TYPE custom_smallint;
+DROP TYPE custom_smallmoney;
+DROP TYPE custom_money;
+DROP TYPE custom_smalldatetime;
+DROP TYPE custom_real;
+DROP TYPE custom_float;
+DROP TYPE custom_time;
+DROP TYPE custom_datetime;
+DROP TYPE custom_datetime2;
+DROP TYPE custom_datetimeoffset;
+DROP TYPE custom_uniqueidentifier;
+DROP TYPE custom_date;
+DROP TYPE custom_decimal_10_5;
+DROP TYPE custom_numeric_3_0;
+GO
