@@ -341,6 +341,13 @@ SELECT * FROM babel_delete_tbl1
 ROLLBACK
 GO
 
+BEGIN TRAN
+DELETE t1 OUTPUT deleted.*
+FROM babel_delete_tbl1 t1
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+GO
+
 -- alias + subquery
 BEGIN TRAN
 DELETE t1

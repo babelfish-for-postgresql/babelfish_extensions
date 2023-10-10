@@ -1276,3 +1276,24 @@ GO
 DROP TABLE babel4199_t1
 DROP TABLE babel4199_t2
 GO
+
+-- BABEL-1633
+create table deleted(num integer, nextnum integer);
+insert into deleted values(10, 11);
+GO
+
+create table babel1633(num integer, word varchar(10));
+insert into babel1633 values(10, 'ten');
+GO
+
+DELETE deleted
+  OUTPUT babel1633.word
+FROM deleted
+INNER JOIN babel1633
+  ON deleted.num=babel1633.num
+WHERE babel1633.num=10;
+GO
+
+drop table deleted;
+drop table babel1633;
+GO
