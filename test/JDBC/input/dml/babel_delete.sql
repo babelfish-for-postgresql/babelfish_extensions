@@ -29,6 +29,16 @@ delete babel_2020_delete_t1 output deleted.a
 from babel_2020_delete_t1 x where x.a = 2;
 go
 
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.a
+from babel_2020_delete_t1 where a = 2;
+go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.a
+from babel_2020_delete_t1 where babel_2020_delete_t1.a = 2;
+go
+
 -- multiple tables in FROM clause
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x, babel_2020_delete_t2 y;

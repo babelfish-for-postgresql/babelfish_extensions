@@ -3065,6 +3065,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr tsql_output_clause from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
+					tsql_reset_update_delete_globals();
 					n->relation = $5;
 					n->limitCount = $3;
 					n->usingClause = $8;
