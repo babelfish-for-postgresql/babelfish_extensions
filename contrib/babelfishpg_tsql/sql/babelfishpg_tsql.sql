@@ -1199,7 +1199,7 @@ CAST(t1.relpages AS int) AS PAGES,
 CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" COLLATE sys.database_default AND s1.name = t3."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" COLLATE C AND s1.name = t3."TABLE_SCHEMA")
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 UNION
 SELECT
@@ -1230,7 +1230,7 @@ CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND s1.name = t4."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE C AND s1.name = t4."TABLE_SCHEMA")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
