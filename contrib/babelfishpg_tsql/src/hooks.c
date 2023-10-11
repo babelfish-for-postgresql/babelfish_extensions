@@ -1677,7 +1677,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/* Identifier is not truncated. */
 			else
 			{
-				memcpy(alias, original_name, alias_len);
+				memcpy(alias, original_name, actual_alias_len);
 			}
 			res->name = alias;
 		}
