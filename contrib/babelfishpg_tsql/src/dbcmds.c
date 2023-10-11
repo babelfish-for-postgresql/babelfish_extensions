@@ -125,6 +125,10 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
 
+	/* create sysdatabases under current DB's DBO schema */
+	appendStringInfo(&query, "CREATE VIEW dummy.sysdatabases AS SELECT * FROM sys.sysdatabases; ");
+	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
+
 	/* create guest schema in the database. This has to be the last statement */
 	if (guest)
 		appendStringInfo(&query, "CREATE SCHEMA dummy AUTHORIZATION dummy; ");
@@ -132,7 +136,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
-		expected_stmt_num = list_length(logins) > 0 ? 7 : 6;
+		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
 	else
 		expected_stmt_num = 6;
 
@@ -171,6 +175,12 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_CreateSchemaStmt(stmt, schema, db_owner);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_ViewStmt(stmt, schema);
+
+	stmt = parsetree_nth_stmt(res, i++);
+	update_AlterTableStmt(stmt, schema, db_owner);
 
 	if (guest)
 	{
@@ -528,7 +538,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			PlannedStmt 	*wrapper;
 			is_set_userid = false;
 
-			if(stmt->type == T_CreateSchemaStmt)
+			if(stmt->type == T_CreateSchemaStmt || stmt->type == T_AlterTableStmt
+				|| stmt->type == T_ViewStmt)
 			{
 				GetUserIdAndSecContext(&save_userid, &save_sec_context);
 				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
