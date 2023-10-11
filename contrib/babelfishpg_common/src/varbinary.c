@@ -614,7 +614,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
     {
         PG_RETURN_TEXT_P(PG_GETARG_TEXT_P(0)); // If only the second string is NULL, return the first string
     }
-
+	//when both strings are not null
     SET_VARSIZE(result_text, VARHDRSZ+len1+len2);
     snprintf(VARDATA(result_text), VARHDRSZ+len1+len2 + 1, "%s%s", str1, str2);
     PG_RETURN_TEXT_P(result_text);
