@@ -2,6 +2,7 @@
 -- tsql
 
 -- BABEL-334: Support unquoted string parameter values in procedure calls/declarations
+-- This also exercises parts of the ANTLR parse tree rewriting
 -- unquoted strings in procedure call arguments
 create procedure unqStr_proc_1(@par1 varchar(100), @par2 varchar(100))
 as 
@@ -43,7 +44,21 @@ varchar#!#varchar
 aBc$def#!#<NULL>
 ~~END~~
 
+execute unqStr_proc_1 @par1=aBc$def, @par2=null
+go
+~~START~~
+varchar#!#varchar
+aBc$def#!#<NULL>
+~~END~~
+
 exec unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#aBc#def
+~~END~~
+
+execute unqStr_proc_1 @par1=null, @par2=aBc#def
 go
 ~~START~~
 varchar#!#varchar
@@ -68,8 +83,22 @@ varchar#!#varchar
 aBc#!#def$ghi
 ~~END~~
 
+execute unqStr_proc_1 "aBc", "def$ghi"
+go
+~~START~~
+varchar#!#varchar
+aBc#!#def$ghi
+~~END~~
+
 -- strings longer than 63 should not be truncated, hashed or downcased
 exec unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+~~START~~
+varchar#!#varchar
+a23456789B123456789C123456789d123456789E123456789F123456789G123456789H#!#AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+~~END~~
+
+execute    unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
 go
 ~~START~~
 varchar#!#varchar

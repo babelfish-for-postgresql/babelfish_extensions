@@ -1,4 +1,5 @@
 -- BABEL-334: Support unquoted string parameter values in procedure calls/declarations
+-- This also exercises parts of the ANTLR parse tree rewriting
 
 -- tsql
 
@@ -18,7 +19,11 @@ exec unqStr_proc_1 aBc#def, null
 go
 exec unqStr_proc_1 @par1=aBc$def, @par2=null
 go
+execute unqStr_proc_1 @par1=aBc$def, @par2=null
+go
 exec unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+execute unqStr_proc_1 @par1=null, @par2=aBc#def
 go
 -- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
 exec unqStr_proc_1 [aBc], [def$ghi]
@@ -28,8 +33,12 @@ set quoted_identifier on
 go
 exec unqStr_proc_1 "aBc", "def$ghi"
 go
+execute unqStr_proc_1 "aBc", "def$ghi"
+go
 -- strings longer than 63 should not be truncated, hashed or downcased
 exec unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+execute    unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
 go
 
 set quoted_identifier off
