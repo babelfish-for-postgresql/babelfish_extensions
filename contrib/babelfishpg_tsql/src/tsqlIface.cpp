@@ -2150,37 +2150,6 @@ public:
 			/* Re-write session_user to sys.session_user(). */
 			if (bctx->bif_no_brackets && bctx->SESSION_USER())
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
-
-			if(bctx->bif_cast_parse())
-			{
-				auto cast_parse = bctx->bif_cast_parse();
-				/* Re-write the expression for casting to time datatype. */
-				if(cast_parse->data_type() && pg_strncasecmp(::getFullText(cast_parse->data_type()).c_str(), "TIME", 4) == 0)
-				{
-					std::string cast_expression(pstrdup(::getFullText(cast_parse->expression()).c_str()));
-
-					/* 
-					 * Remove spaces between before or after {/:.} in the given expression.
-					 * If the expression contains input of '  dd   /   mm/   yyyy     hh:  mm :   ss  .  ss'
-					 * will be converted to '  dd/mm/yyyy     hh:mm:ss.ss'
-					 */
-					std::regex pattern("\\s*([/:.])\\s*");
-					std::string result_expression = std::regex_replace(cast_expression, pattern, "$1");
-
-					/* 
-					 * Remove spaces in between date in different kind of format dd   {-}   mm   {-}   yyyy.
-					 * The {-} was not included above as the timezone can contain {+,-} which shouldn't be affected.
-					 * For example if the expression contains ' dd - mm -yyyy  hh:mm'
-					 * will be converted to ' dd-mm-yyyy hh:mm'
-					 */
-					pattern = ("\\s*(\\d{2,4}|\\w+)\\s*(-)\\s*(\\d{1,2}|\\w+)\\s*(-)\\s*(\\d{1,4}|\\w+)\\s*");
-					result_expression = std::regex_replace(result_expression, pattern, "$1$2$3$4$5 ");
-
-					/* If the expression didn't change after comparing with above regex no need to change */
-					if ( cast_expression!= result_expression)
-						rewritten_query_fragment.emplace(std::make_pair(cast_parse->expression()->start->getStartIndex(), std::make_pair(::getFullText(cast_parse->expression()), result_expression)));
-				}
-			}
 		}
 
 		/* analyze scalar function call */

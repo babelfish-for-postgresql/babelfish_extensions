@@ -2841,7 +2841,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 }
 
 /* Checks whether the field is valid text month */
-static bool isValidTextMonth(char* field)
+static bool isTextMonthPresent(char* field)
 {
 	char* months[] = {"january", "february", "march", "april", "may",
 		"june", "july", "august", "september", "october",
@@ -2862,12 +2862,12 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 	int count_number = 0, count_string = 0;
 	for (int i = 0; i < 3; i++)
 	{
-		if(ftype[i] == DTK_NUMBER)
+		if (ftype[i] == DTK_NUMBER)
 			count_number++;
-		else if(ftype[i] == DTK_STRING)
+		else if (ftype[i] == DTK_STRING)
 		{
 			/* Check whether the string is valid text month */
-			if(!isValidTextMonth(field[i]))
+			if (!isTextMonthPresent(field[i]))
 				return false;
 			count_string++;
 		}
@@ -2879,10 +2879,10 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 		/*
 		 * If the first field is an string then swap with the second field
 		 * as when the date is given separatly then all different forms of
-		 * dates is supported. To avoid the conversion failure from `isValidTextMonth`
+		 * dates is supported. To avoid the conversion failure from `isTextMonthPresent`
 		 * later we are swapping earlier.
 		 *
-		 * For example convert the input from "JULY-23-2000" to "23-JULY-2000"
+		 * For example convert the input from "JULY 23 2000" to "23 JULY 2000"
 		 */
 		if (ftype[0] == DTK_STRING)
 		{
@@ -2920,8 +2920,15 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
-	StringInfo	res ;
+	StringInfo	res;
+	regex_t		time_regex;
+	char	   *pattern;
+	int len_str = strlen(str);
+	char* modified_string = (char*) malloc(len_str + 1);
+	int j = 0;
+	char* temp_field;
 
+	/* If sql_dialect is not an TSQL then return */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
 
@@ -2931,17 +2938,32 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),	\
 				 errmsg("Conversion failed when converting date and/or time from character string.")));	\
 
-	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+	/* Remove the spaces present before and after of ':', '/', '.', '-' */
+	for (int i = 0; i < len_str; i++)
+	{
+		if (str[i] == ' ' && (str[i+1] == ' ' || str[i+1] == ':' || str[i+1] == '/' || str[i+1] == '.' || str[i+1] == '-'))
+		continue;
+		if (str[i] == ':' || str[i] == '/' || str[i] == '.' || str[i] == '-')
+		{
+			modified_string[j++] = str[i++];
+            while (str[i] == ' ')
+                i++;
+        }
+        modified_string[j++] = str[i];
+	}
+	modified_string[j] = '\0';
+
+	dterr = ParseDateTime(modified_string, workbuf, sizeof(workbuf),
 			field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 	{
 		if (nf >= 3)
 		{
 			/*
-			 * If the input is of format `DD MON YYY`, `DD YYYY MON`, `MON DD YYYY`,
-			 * `MON YYYY DD`, `YYYY MON DD`, `YYYY DD MON`, then convert
-			 * to format of `DD MON YYY`, `DD YYYY MON`, `YYYY MON DD`, `YYYY DD MON`
-			 * and ftype changes to "DTK_DATE"
+			 * If the input contains text month and is of format `DD MON YYY`, `DD YYYY MON`,
+			 * `MON DD YYYY`, `MON YYYY DD`, `YYYY MON DD`, `YYYY DD MON`, then convert
+			 * to format of `DD-MON-YYY`, `DD-YYYY-MON`, `YYYY-MON-DD`, `YYYY-DD-MON`
+			 * and change ftype to "DTK_DATE"
 			 */
 			if (containsInTextMonthFormat(ftype, field))
 			{
@@ -2954,9 +2976,10 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 				field[0] = res->data;
 				ftype[0] = DTK_DATE;
 				nf = nf - 2;
+
 				/*
-				 * Since the first 3 fields converted to 1,
-				 * skip the attached fields.
+				 * Since the first 3 fields converted to 1, skip the
+				 * attached fields i.e., field[1]/[2], ftype[1]/[2]
 				 */
 				for(int i = 1; i < nf; i++)
 				{
@@ -2968,11 +2991,11 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 
 		for (int i = 0; i < nf; i++)
 		{
-			char *temp_field;
 			int len;
 			char* different_date_formats[] = {"/", ".", "-"};
 			temp_field = pstrdup(field[i]);
 			len = strlen(temp_field);
+
 			switch (ftype[i])
 			{
 				case DTK_NUMBER:
@@ -2990,16 +3013,11 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						case 1:
 						case 2:
 							/*
-							 * At this point the digit number of length 1,2 should be considered as
-							 * time only if there is an [ap]m after the number or else
-							 * should throw an error
-							 */
-							if (i == nf - 1 || ftype[i+1] != DTK_STRING)
-								TIME_IN_ERROR();
-							/*
 							 * For example if the input is "1 am"
 							 * will be converted to "1:00:00 am".
 							 */
+							if (i == nf - 1 || ftype[i+1] != DTK_STRING)
+								TIME_IN_ERROR();
 							if (pg_strcasecmp(field[i+1], "am") == 0 || pg_strcasecmp(field[i+1], "pm") == 0)
 							{
 								res = makeStringInfo();
@@ -3013,8 +3031,6 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 
 						case 4:
 							/*
-							 * If the numeric input is of length 4, then convert
-							 * to year with default format of YYYY-01-01.
 							 * For example if input is "2000" will be converted
 							 * to "2000-01-01".
 							 */
@@ -3035,7 +3051,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 							for (int k = 0; k < len; k++)
 							{
 								appendStringInfo(res, "%c", temp_field[k]);
-								if((len == 6 && ((k + 1) % 2 == 0 && k < 5)) ||
+								if ((len == 6 && ((k + 1) % 2 == 0 && k < 5)) ||
 										(len == 8 && (k == 3 || k == 5)))
 									appendStringInfo(res, "%c", '-');
 							}
@@ -3050,31 +3066,85 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 
 				case DTK_DATE:
 					/*
-					 * If the input is of format `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy
-					 * "DD MM YYYY", "DD YYYY MM", "MM YYYY DD", "MM DD YYYY", "YYYY DD MM",
-					 * "YYYY MM DD", "DD{/.-}MM{/.-}YYYY", "DD{/.-}YYYY{/.-}DD"
-					 * shouldn't be supported.
-					 * Supported date formats are `Mon yyyy dd`, `Mon dd yyyy`,
-					 * `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
+					 * If the input is of format '<DATE>T<TIME>, then the
+					 * <DATE> should be of format "YYYY-MM-DD"
 					 */
-					for (int k = 0 ; k < 3; k++)
+					if (i == 0 && nf > 1 && field[1] && pg_strcasecmp(field[1], "t") == 0)
 					{
-						temp_field = strtok(temp_field, different_date_formats[k]);
-						if (pg_strcasecmp(field[i], temp_field) != 0)
-							break;
+						pattern = "^[1-9][0-9]{3}-[0-9]?[0-9]-[0-9]?[0-9]$";
+						if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+							ereport(ERROR,
+										(errcode(ERRCODE_INTERNAL_ERROR),
+										errmsg("time format regex failed")));
+						if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+							TIME_IN_ERROR();
+						regfree(&time_regex);
 					}
-					/*
-					 * If text month is present in start of field like
-					 * `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy then
-					 * an error should be thrown
-					 */
-					if (isValidTextMonth(temp_field))
-						TIME_IN_ERROR();
+					else
+					{
+						/*
+						* If the date of input is of format `Mon{/.-}yyyy{/.-}dd`, `Mon{/.-}dd{/.-}yyyy
+						* "DD MM YYYY", "DD YYYY MM", "MM YYYY DD", "MM DD YYYY", "YYYY DD MM",
+						* "YYYY MM DD", "DD{/.-}MM{/.-}YYYY", "DD{/.-}YYYY{/.-}DD"
+						* then these dates shouldn't be supported.
+						* Supported date formats are `Mon yyyy dd`, `Mon dd yyyy`,
+						* `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
+						*/
+						for (int k = 0 ; k < 3; k++)
+						{
+							temp_field = strtok(temp_field, different_date_formats[k]);
+							if (pg_strcasecmp(field[i], temp_field) != 0)
+								break;
+						}
+						/*
+						* If text month is present in start of field like
+						* `Mon{/.-}yyyy{/.-}dd` or `Mon{/.-}dd{/.-}yyyy then
+						* an error should be thrown
+						*/
+						if (isTextMonthPresent(temp_field))
+							TIME_IN_ERROR();
+					}
 					break;
+
+				case DTK_TIME:
+					/*
+					 * If the input is of format '<DATE>T<TIME>, then the
+					 * <TIME> should be of format hh:mm:ss[.nnn]
+					 * where hh should be of 2 digit.
+					 */
+					if (i-1 == 1 && field[1] && pg_strcasecmp(field[1], "t") == 0)
+						pattern = "^([0-1][0-9]|2[0-3])(:[0-5]?[0-9]:[0-5]?[0-9]?.[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9])?$";
+					else
+						/* check if tsql time format in time type follows hh:mm[:ss][.nnn] format */
+						pattern = "^([0-1]?[0-9]|2[0-3])(:[0-5]?[0-9])(:[0-5]?[0-9]?.[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9])?$";
+					if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+						ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("time format regex failed")));
+					if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+						TIME_IN_ERROR();
+					regfree(&time_regex);
+					break;
+
+				case DTK_TZ:
+					/*
+					 * If the input contains timezone then the format should be "[+-]ZZ:ZZ" and the previous field should be time.
+					 */
+					if(i-1 < 0 || (i-1 >= 0 && ftype[i-1] != DTK_TIME))
+						TIME_IN_ERROR();
+					pattern = "([0-9]?[0-9]:[0-9]?[0-9])$";
+					if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+						ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("time format regex failed")));
+					if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+						TIME_IN_ERROR();
+					regfree(&time_regex);
 
 				default:
 					break;
 			}
+			/* Free the temp_field which stores the field[i] value */
 			pfree(temp_field);
 		}
 		switch (nf)
@@ -3094,11 +3164,22 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 
 			case 3:
 				/*
-				 * If the given input is of format `yyyy-mm-ddThh:mm:ss`
-				 * then conver it to `yyyy-mm-dd hh:mm:ss` by ignoring 'T'
+				 * If the given input is of valid format "YYYY-MM-DDThh:mm:ss"
+				 * then conver it to "YYYY-MM-DD hh:mm:ss" by ignoring 'T'.
+				 * Invalid formats are "YYYY-MM-DDthh:mm:ss", "YYYY-MM-DDT hh:mm:ss"
 				 */
 				if (ftype[1] == DTK_STRING && pg_strcasecmp(field[1], "t") == 0 && ftype[2] == DTK_TIME)
 				{
+					/* If the input contains "t" then throw error */
+					pattern = "t";
+					if (regcomp(&time_regex, pattern, 0) != 0)
+						ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									errmsg("time format regex failed")));
+					if (!regexec(&time_regex, modified_string, 0, NULL, 0))
+						TIME_IN_ERROR();
+					regfree(&time_regex);
+
 					ftype[1] = ftype[2];
 					field[1] = field[2];
 					nf = nf - 1;
