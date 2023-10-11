@@ -12,6 +12,10 @@
 
 #include <ctype.h>
 #include <limits.h>
+#include "postgres.h"
+
+#include <ctype.h>
+#include <limits.h>
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
@@ -34,6 +38,7 @@
 
 #include "instr.h"
 
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 PG_FUNCTION_INFO_V1(varbinaryin);
 PG_FUNCTION_INFO_V1(varbinaryout);
 PG_FUNCTION_INFO_V1(varbinaryrecv);
@@ -713,6 +718,24 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	else
 		result = (VarChar *) cstring_to_text_with_len(data, maxlen);
 	PG_RETURN_VARCHAR_P(result);
+}
+
+Datum
+babelfish_concat_wrapper(PG_FUNCTION_ARGS)
+{
+	text *t1 = (PG_GETARG_TEXT_PP(0));
+	text *t2 = (PG_GETARG_TEXT_PP(1));
+
+	char *str1 = text_to_cstring(t1);
+	char *str2 = text_to_cstring(t2);
+
+	int len1 = VARSIZE_ANY_EXHDR(t1);
+	int len2 = VARSIZE_ANY_EXHDR(t2);
+
+	text *result_text = (text *) palloc(VARHDRSZ+len1+len2);
+    SET_VARSIZE(result_text, VARHDRSZ+len1+len2);
+    snprintf(VARDATA(result_text), VARHDRSZ+len1+len2 + 1, "%s%s", str1, str2);
+    PG_RETURN_TEXT_P(result_text);
 }
 
 Datum
