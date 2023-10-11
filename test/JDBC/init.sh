@@ -1,11 +1,11 @@
 # Default values
 parallel_query_mode=false
 
-#Parse command-line flags/arguments
+# Parse command-line flags/arguments
 while [[ $# -gt 0 ]]; do
     key="$1"
     case $key in
-        -pq|--parallel)
+        -enable_parallel_query)
         parallel_query_mode=true
         shift
         ;;
@@ -17,8 +17,8 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
+# create test user and database from psql terminal
 if [[ $parallel_query_mode = false ]]; then
-#create test user and database from psql terminal
 echo "============================== CREATING USER AND DATABASE =============================="
 psql -U "$USER" -d postgres -a << EOF
 CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;
@@ -38,8 +38,8 @@ EOF
 echo "============================= BUILDING JDBC TEST FRAMEWORK ============================="
 fi
 
+# create test user and database from psql terminal when parallel query mode is on
 if [[ $parallel_query_mode = true ]]; then
-#create test user and database from psql terminal when parallel query mode is on
 echo "============================== CREATING USER AND DATABASE =============================="
 psql -U "$USER" -d postgres -a << EOF
 CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;
