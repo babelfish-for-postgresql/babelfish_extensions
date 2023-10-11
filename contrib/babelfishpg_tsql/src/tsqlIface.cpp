@@ -3,7 +3,6 @@
 #include <iostream>
 #include <strstream>
 #include <string>
-#include <regex>
 #include <unordered_map>
 
 #pragma GCC diagnostic ignored "-Wattributes"
