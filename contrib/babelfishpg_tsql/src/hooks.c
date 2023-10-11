@@ -41,7 +41,6 @@
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
-#include "regex/regex.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
@@ -69,6 +68,8 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include <regex.h>
+#include "utils/varlena.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -142,7 +143,7 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
-static bool isValidTextMonth(char* field);
+static bool isTextMonthPresent(char* field);
 static bool containsInTextMonthFormat(int *ftype, char **field);
 static bool pltsql_time_in(const char *str, int32 typmod, TimeADT *result);
 static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
