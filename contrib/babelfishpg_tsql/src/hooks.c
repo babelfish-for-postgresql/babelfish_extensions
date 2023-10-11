@@ -971,9 +971,7 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 						field1 = (Node *) linitial(cref->fields);
 						qualifier = strVal(field1);
 
-						if (command == CMD_INSERT && (
-								!strcmp(qualifier, "inserted") || 
-								!strcmp(qualifier, "deleted") ))
+						if (command == CMD_INSERT && !strcmp(qualifier, "inserted"))
 							cref->fields = list_delete_first(cref->fields);
 						else if (command == CMD_DELETE && !strcmp(qualifier, "deleted"))
 						{
