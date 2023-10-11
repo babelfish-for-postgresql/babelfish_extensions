@@ -36,6 +36,15 @@ FROM babel_2170_vu_employees
 WHERE EmployeeName LIKE 'b%';
 GO
 
+CREATE VIEW babel_2170_vu_employees_view_2 AS
+SELECT EmployeeID,
+       EmployeeName,
+       EmployeeAddress,
+       MonthSalary
+FROM babel_2170_vu_employees
+WHERE EmployeeName LIKE 'a%';
+GO
+
 CREATE SCHEMA schema_2170;
 GO
 

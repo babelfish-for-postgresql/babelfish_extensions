@@ -20,6 +20,9 @@ GO
 DROP VIEW IF EXISTS babel_2170_vu_employees_view_bulkinsert;
 GO
 
+DROP VIEW IF EXISTS babel_2170_vu_employees_view_2;
+GO
+
 DROP TABLE IF EXISTS babel_2170_vu_employees;
 GO
 

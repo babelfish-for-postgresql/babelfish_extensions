@@ -82,6 +82,24 @@ DECLARE @i int = 1
 COMMIT TRANSACTION
 GO
 
+-- Same trigger name on different View created on Same table in same schema
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view_2
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view2_iot_update Invoked'
+END
+GO
+
+-- Same trigger name on a Table in same schema
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees__table_iot_update Invoked'
+END
+GO
+
 -- Test Instead of Update trigger in same db but cross schema 
 
 -- Cleanup default dbo schema IO Update trigger
@@ -103,10 +121,20 @@ GO
 UPDATE [schema_2170].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
 GO
 
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM [schema_2170].[babel_2170_vu_employees_view] ORDER BY EmployeeID;
+GO
+
 UPDATE [dbo].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
 GO
 
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM [dbo].[babel_2170_vu_employees_view] ORDER BY EmployeeID;
+GO
+
+-- drop dbo schema trigger and test that schema_2170.update trigger is not dropped
 DROP TRIGGER IF EXISTS [dbo].[babel_2170_vu_employees_view_iot_update];
+GO
+
+UPDATE [schema_2170].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
 GO
 
 -- schema_2170 object cleanup
@@ -121,7 +149,6 @@ GO
 
 DROP SCHEMA IF EXISTS schema_2170;
 GO
-
 
 -- Test Transaction Commit and Rollback inside Instead of triggers
 CREATE TRIGGER babel_2170_vu_employees_view_iot_txn_update ON babel_2170_vu_employees_view_txn

@@ -707,7 +707,7 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 
 /**
  * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
- * does view have an INSTEAD OF trigger at statement level
+ * Checks if view have an INSTEAD OF trigger at statement level
  * If it does, we don't want to treat it as auto-updatable. 
  * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
 */
