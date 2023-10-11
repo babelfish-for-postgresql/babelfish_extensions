@@ -238,22 +238,22 @@ CREATE VIEW view_babel_4231_35 AS SELECT * FROM table17_babel_4231 AS "αΒβΓ�
 GO
 
 -- tsql
--- table aliases which are not delimited by double quote, square bracket and length is less than 64
+-- column aliases which are not delimited by double quote, square bracket and length is less than 64
 CREATE VIEW view_babel_4231_36 AS SELECT 1 AS ABCD;
 GO
 
 -- tsql
--- table aliases with single byte characters which are not delimited by double quote, square bracket and length is more than or equals to 64
+-- column aliases with single byte characters which are not delimited by double quote, square bracket and length is more than or equals to 64
 CREATE VIEW view_babel_4231_37 AS SELECT 1 AS ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF;
 GO
 
 -- tsql
--- table aliases with single byte characters which are delimited by single quote and length is more than or equals to 64
+-- column aliases with single byte characters which are delimited by single quote and length is more than or equals to 64
 CREATE VIEW view_babel_4231_38 AS SELECT 1 AS 'ABCDbdjaBFWFGRUWlgrefwfiwuegfdvfwefgvggfedfudywtitewutgfdWUIF';
 GO
 
 -- tsql
--- table aliases with single byte characters which are delimited by single quote and length is less than 64
+-- column aliases with single byte characters which are delimited by single quote and length is less than 64
 CREATE VIEW view_babel_4231_39 AS SELECT 1 AS N'ANfjws';
 GO
 
@@ -264,5 +264,7 @@ GO
 CREATE VIEW view_babel_4231_40 AS SELECT 您您对您对您对您对您对您对您对您对您对您您您.* FROM table18_babel_4231 AS 您您对您对您对您对您对您对您对您对您对您您您;
 GO
 
-
-
+-- tsql
+-- column aliases with multibyte characters which are delimited by single quote and length is more than 128
+CREATE VIEW view_babel_4231_41 AS SELECT 1 AS '您对“数据一览“中的车型，颜色，内饰，选装, 您对“数据一览“中的车型，颜色，内饰，选装,您对“数据一览“中的车型，颜色，内饰，选装,您对“数据一览“中的车型，颜色，内饰，选装,';
+GO
