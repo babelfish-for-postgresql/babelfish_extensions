@@ -591,33 +591,12 @@ rowversionbinary(PG_FUNCTION_ARGS)
 Datum
 babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 {
-	text *t1 = (PG_GETARG_TEXT_PP(0));
-	text *t2 = (PG_GETARG_TEXT_PP(1));
+	text	   *result;
 
-	char *str1 = text_to_cstring(t1);
-	char *str2 = text_to_cstring(t2);
-
-	int len1 = VARSIZE_ANY_EXHDR(t1);
-	int len2 = VARSIZE_ANY_EXHDR(t2);
-
-	text *result_text = (text *) palloc(VARHDRSZ+len1+len2);
-
-	// Check if the first string is NULL
-    if (PG_ARGISNULL(0))
-    {
-        if (PG_ARGISNULL(1))
-            PG_RETURN_NULL(); // If both are NULL, return NULL
-        else
-            PG_RETURN_TEXT_P(PG_GETARG_TEXT_P(1)); // If only the first string is NULL, return the second string
-    }
-    else if (PG_ARGISNULL(1))
-    {
-        PG_RETURN_TEXT_P(PG_GETARG_TEXT_P(0)); // If only the second string is NULL, return the first string
-    }
-	//when both strings are not null
-    SET_VARSIZE(result_text, VARHDRSZ+len1+len2);
-    snprintf(VARDATA(result_text), VARHDRSZ+len1+len2 + 1, "%s%s", str1, str2);
-    PG_RETURN_TEXT_P(result_text);
+	result = concat_internal("", 0, fcinfo);
+	if (result == NULL)
+		PG_RETURN_NULL();
+	PG_RETURN_TEXT_P(result);
 }
 
 Datum
