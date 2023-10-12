@@ -910,13 +910,12 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 514 (4*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter.For multibyte characters, maximum byte length can be 4 and
-	 * maximum characters in sql can be 128.
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end and truncate it to maximum length of 63 in both 
+	 * single and multibyte characters.  If the identifier is not valid,
+	 * the scanner should have already reported a syntax error.
 	 */
-	while (i < 514)
+	while (true)
 	{
 		char		c = start[i];
 
