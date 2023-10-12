@@ -910,12 +910,13 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
+	 * valid identifier cannot be longer than 514 (4*128+2) bytes. SQL server
 	 * allows up to 128 bascially. And escape character can take additional
 	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * delimiter.For multibyte characters, maximum byte length can be 4 and
+	 * maximum characters in sql can be 128.
 	 */
-	while (i < 258)
+	while (i < 514)
 	{
 		char		c = start[i];
 
@@ -1404,7 +1405,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				memcpy(alias + (alias_len) - 32,
 				identifier_name + (alias_len) - 32, 
 				32);
-				alias[alias_len+1] = '\0';
+				alias[alias_len] = '\0';
 			}
 			/* Identifier is not truncated. */
 			else
