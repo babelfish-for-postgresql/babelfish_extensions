@@ -147,6 +147,7 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -181,8 +182,6 @@ const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
 
-PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
-
 Datum
 trancount(PG_FUNCTION_ARGS)
 {
@@ -197,10 +196,25 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	
 	if (pltsql_concat_null_yields_null)
 	{
-		if(DatumGetPointer(PG_GETARG_DATUM(0)) == NULL || DatumGetPointer(PG_GETARG_DATUM(1)) == NULL)
+		if(PG_ARGISNULL(0) || PG_ARGISNULL(1))
   		{
   		  	PG_RETURN_NULL(); // If any is NULL, return NULL
    		}
+	}
+	else
+	{
+		if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
+    	{
+     	   PG_RETURN_NULL(); // If both are NULL, return NULL
+    	}
+    	else if (PG_ARGISNULL(1))
+    	{
+     	   PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
+    	}
+		else if (PG_ARGISNULL(0))
+		{
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(1)); // If only the first string is NULL, return the second string
+		}
 	}
 	arg1 = PG_GETARG_TEXT_PP(0);
 	arg2 = PG_GETARG_TEXT_PP(1);
