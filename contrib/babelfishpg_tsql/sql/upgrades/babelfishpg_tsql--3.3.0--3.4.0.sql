@@ -877,11 +877,11 @@ LANGUAGE 'plpgsql' STABLE;
 
 CREATE OR REPLACE FUNCTION sys.sysutcdatetime() returns sys.datetime2
 AS 'babelfishpg_tsql', 'sysutcdatetime'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C STABLE;
 
 create or replace function sys.getutcdate() returns sys.datetime
 AS 'babelfishpg_tsql', 'getutcdate'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C STABLE;
 
 -- internal helper function for date_bucket().
 CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 

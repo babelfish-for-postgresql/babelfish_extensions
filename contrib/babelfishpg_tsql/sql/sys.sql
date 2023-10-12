@@ -13,7 +13,7 @@ GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.sysutcdatetime() returns sys.datetime2
 AS 'babelfishpg_tsql', 'sysutcdatetime'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
     AS $$select date_trunc('millisecond', statement_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
@@ -22,7 +22,7 @@ GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
 
 create or replace function sys.getutcdate() returns sys.datetime
 AS 'babelfishpg_tsql', 'getutcdate'
-LANGUAGE C IMMUTABLE;
+LANGUAGE C STABLE;
 
 
 CREATE FUNCTION sys.isnull(text,text) RETURNS text AS $$
