@@ -159,7 +159,7 @@ static void declare_parameter_unquoted_string_reset(Node *paramDft);
 
 static Node* call_argument_unquoted_string(Node *arg);
 static void call_argument_unquoted_string_reset(Node *colref_arg);
-static char *get_local_schema_for_bbf_functions(Oid proc_oid);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -4160,50 +4160,28 @@ static void call_argument_unquoted_string_reset (Node *colref_arg)
 }
 
 static char *
-get_local_schema_for_bbf_functions(Oid proc_oid)
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 {
-	Datum 			datum;
-	HeapTuple 	 	tuple,
-					proc_tuple;
-	Form_pg_proc	proc_struct;
-	bool 		 	is_null = false;
-	
-	char 			*full_schema_name = NULL,
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
 					*new_search_path = NULL;
 	const char  	*func_dbo_schema,
 					*cur_dbname = get_cur_db_name();
-
-	proc_tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
-	proc_struct = (Form_pg_proc) GETSTRUCT(proc_tuple);
 	
-	if(proc_struct->pronamespace && proc_struct->prokind == PROKIND_FUNCTION 
-			&& strcmp(format_type_be(proc_struct->prorettype), "trigger") != 0)
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
 	{
-		tuple = SearchSysCache1(NAMESPACEOID, 
-							ObjectIdGetDatum(proc_struct->pronamespace));
-		if(HeapTupleIsValid(tuple))
-		{
-			datum = SysCacheGetAttr(NAMESPACENAME, tuple,
-								Anum_pg_namespace_nspname, 
-								&is_null);
-			func_dbo_schema = get_dbo_schema_name(cur_dbname);
-			if(!is_null)
-				full_schema_name = DatumGetCString(datum);
+		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
+		func_dbo_schema = get_dbo_schema_name(cur_dbname);
 
-			if(full_schema_name && strcmp(full_schema_name, "sys") != 0
-					&& strcmp(full_schema_name, "pg_catalog") != 0
-					&& strcmp(full_schema_name, "information_schema") != 0
-					&& strcmp(full_schema_name, "information_schema_tsql") != 0
-					&& strcmp(full_schema_name, func_dbo_schema) != 0)
-			{
-				new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
-											quote_identifier(full_schema_name),
-											quote_identifier(func_dbo_schema));
-			}
-			ReleaseSysCache(tuple);
-		}
+		if(strcmp(func_schema_name, func_dbo_schema) != 0
+			&& strcmp(func_schema_name, "sys") != 0)
+			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+										quote_identifier(func_schema_name),
+										quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
 	}
-
-	ReleaseSysCache(proc_tuple);
 	return new_search_path;
 }
