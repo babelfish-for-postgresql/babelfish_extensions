@@ -1082,6 +1082,24 @@ define_custom_variables(void)
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 check_babelfish_dump_restore_min_oid, NULL, NULL);
 
+	DefineCustomIntVariable("babelfishpg_tsql.temp_oid_buffer_start",
+							gettext_noop("Internal. Specifies the start range of the buffer for temp oids"),
+							NULL,
+							&temp_oid_buffer_start,
+							InvalidOid, INT_MIN, INT_MAX, /* Add INT_MIN to size, since Oid is uint32. */
+							PGC_INTERNAL,
+							GUC_NOT_IN_SAMPLE,
+							NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.temp_oid_buffer_size",
+							gettext_noop("Temp oid buffer size"),
+							NULL,
+							&temp_oid_buffer_size,
+							65536, 1, 131072, /* Eventually we can make this user adjustable */
+							PGC_USERSET,
+							GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							NULL, NULL, NULL);
+
 	/* T-SQL Hint Mapping */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
 				 gettext_noop("Enables T-SQL hint mapping in ANTLR parser"),

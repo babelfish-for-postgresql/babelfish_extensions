@@ -394,11 +394,11 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	minOid = atooid(babelfish_dump_restore_min_oid);
 	Assert(OidIsValid(minOid));
-	if (ShmemVariableCache->nextOid >= minOid + 1)
+	if (variableCache->nextOid >= minOid + 1)
 		return;
 
-	ShmemVariableCache->nextOid = minOid + 1;
-	ShmemVariableCache->oidCount = 0;
+	variableCache->nextOid = minOid + 1;
+	variableCache->oidCount = 0;
 }
 
 static void
