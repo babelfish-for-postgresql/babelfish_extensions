@@ -3136,81 +3136,99 @@ int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 
 void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 {
-	struct dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
+	struct	dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
 	Relation	rel;
 	TupleDesc	tupdesc;
 	char	*db_name = NULL;
-	char	*schema_name = NULL;
-	char	*nsp_name = NULL;
-	char	*table_name;
-	char	*query;
+	char	*max_identity_value_str = NULL;
+	char	*query = NULL;
 	char	*attname;
+	char	*token;
+	const char	*schema_name;
+	const char	*nsp_name;
 	const char	*user;
 	const char	*guest_role_name;
+	const char	*dbo_role_name;
+	const char	*login;
 	int64	max_identity_value = 0;
 	int64	cur_identity_value = 0;
-	char	*max_identity_value_str = NULL;
-    char	*login = GetUserNameFromId(GetSessionUserId(), false);
-	char	*token;
-	int		attnum;
-	int		rc;
+	int	attnum;
+	int	rc;
 	int64	reseed_value = 0;
-	Oid		nsp_oid;
+	Oid	nsp_oid;
 	Oid 	table_oid;
-	Oid		seqid = InvalidOid;
-	Oid		current_user_id = GetUserId();
+	Oid	seqid = InvalidOid;
+	Oid	current_user_id = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
-	char		message[200];
+	char	message[200];
+	bool	is_float_value;
+	bool    is_cross_db = false;
 
-
-    bool    is_cross_db = false;
 	if(dbcc_stmt.new_reseed_value)
 	{
-		/* If float value is passed as reseed_value, only decimal part is considered.*/
-		token = strtok(dbcc_stmt.new_reseed_value, ".");
-		reseed_value = pg_strtoint64(token);
-		pfree(token);
+		/* If float value is passed as reseed_value, only part before decimal is considered */
+		is_float_value = strchr(dbcc_stmt.new_reseed_value, '.') != NULL;
+
+		if (is_float_value)
+		{
+			if (dbcc_stmt.new_reseed_value[0] == '.' || 
+				(dbcc_stmt.new_reseed_value[0] == '-' && dbcc_stmt.new_reseed_value[1] == '.'))
+				reseed_value = 0;
+			else
+			{
+				token = strtok(dbcc_stmt.new_reseed_value, ".");
+				reseed_value = pg_strtoint64(token);
+				pfree(token);
+			}
+		}
+		else
+			reseed_value = pg_strtoint64(dbcc_stmt.new_reseed_value);
 	}
 
-    db_name = get_cur_db_name();
-    if (dbcc_stmt.db_name)
-    {
-        if (pg_strncasecmp(db_name, dbcc_stmt.db_name, NAMEDATALEN) != 0)
-            is_cross_db = true;
-        db_name = pstrdup(dbcc_stmt.db_name);
-    }
+    	db_name = get_cur_db_name();
+    	if (dbcc_stmt.db_name)
+    	{
+		if (!DbidIsValid(get_db_id(dbcc_stmt.db_name)))
+		{
+			ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+				errmsg("database \"%s\" does not exist", dbcc_stmt.db_name)));
+		}
+       		if (pg_strncasecmp(db_name, dbcc_stmt.db_name, NAMEDATALEN) != 0)
+        	{
+			is_cross_db = true;
+			pfree(db_name);
+        		db_name = pstrdup(dbcc_stmt.db_name);
+		}
+    	}
 
-	if (!DbidIsValid(get_db_id(db_name)))
-	{
-		ereport(ERROR,
-		(errcode(ERRCODE_UNDEFINED_DATABASE),
-			errmsg("database \"%s\" does not exist", db_name)));
-		pfree(db_name);
-	}
-
+	user = get_user_for_database(db_name);
 	login_is_db_owner = 0 == strncmp(GetUserNameFromId(GetSessionUserId(), false),
 										get_owner_of_db(db_name), NAMEDATALEN);
-	user = get_user_for_database(db_name);
-	guest_role_name = get_guest_role_name(db_name);
 
-    if(is_cross_db)
-    {
-        if (user)
-            SetCurrentRoleId(GetSessionUserId(), false);
-        else
-            ereport(ERROR,
-                    (errcode(ERRCODE_UNDEFINED_DATABASE),
-                     errmsg("The server principal \"%s\" is not able to access "
-                            "the database \"%s\" under the current security context",
-                            login, dbcc_stmt.db_name)));
-    }
-    pfree(login);
+	/* Raise an error if the login does not have access to the database */
+	if(is_cross_db)
+    	{
+        	if (user)
+            		SetCurrentRoleId(GetSessionUserId(), false);
+        	else
+        	{
+			login = GetUserNameFromId(GetSessionUserId(), false);
+			pfree(db_name);
+			ereport(ERROR,
+                    	(errcode(ERRCODE_UNDEFINED_DATABASE),
+                    		errmsg("The server principal \"%s\" is not able to access "
+                            	"the database \"%s\" under the current security context",
+                           	 login, dbcc_stmt.db_name)));
+		}
+    	}
 
+	/* get physical schema name from logical schema name */
 	if (dbcc_stmt.schema_name)
 	{
-		schema_name = pstrdup(dbcc_stmt.schema_name);
-		nsp_name = get_physical_schema_name(db_name, schema_name);
+		schema_name = dbcc_stmt.schema_name;
+		nsp_name = get_physical_schema_name(db_name, dbcc_stmt.schema_name);
 	}
 	else
 	{
@@ -3218,26 +3236,37 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		 * If schema_name is not provided, find default schema for current user
 		 * and get physical schema name
 		 */
+		guest_role_name = get_guest_role_name(db_name);
+		dbo_role_name = get_dbo_role_name(db_name);
 		if (!user)
 		{
+			pfree(db_name);
 			ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user does not exist")));
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("user does not exist")));
+		}
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+		if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
+		{
+			nsp_name = get_dbo_schema_name(db_name);
 		}
 		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
 		{
-			nsp_name = pstrdup(get_guest_schema_name(db_name));
+			nsp_name = get_guest_schema_name(db_name);
 		}
 		else
 		{
-			schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
-			nsp_name = get_physical_schema_name(db_name, schema_name);
+			nsp_name = get_physical_schema_name(db_name, dbcc_stmt.schema_name);
 		}
 	}
-
 	pfree(db_name);
 
+	/*
+	 * get schema oid from physical schema name, it will return InvalidOid if
+	 * user don't have lookup access
+	 */
 	nsp_oid = get_namespace_oid(nsp_name, false);
+
 	if(!OidIsValid(nsp_oid))
 	{
 		ereport(ERROR,
@@ -3251,13 +3280,12 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				login_is_db_owner))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
 
-	table_name = pstrdup(dbcc_stmt.table_name);
-	table_oid = get_relname_relid(table_name, nsp_oid);
+	table_oid = get_relname_relid(dbcc_stmt.table_name, nsp_oid);
 	if(!OidIsValid(table_oid))
 	{
 		ereport(ERROR,
 		(errcode(ERRCODE_UNDEFINED_TABLE),
-			errmsg("relation \"%s\" does not exist", table_name)));
+			errmsg("relation \"%s\" does not exist", dbcc_stmt.table_name)));
 	}
 
 	rel = RelationIdGetRelation(table_oid);
@@ -3279,10 +3307,12 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	RelationClose(rel);
 
 	if (!OidIsValid(seqid))
+	{
 		ereport(ERROR,
 		(errcode(ERRCODE_UNDEFINED_COLUMN),
 			errmsg("'%s.%s' does not contain an identity column.",
-				nsp_name, table_name)));
+				nsp_name, dbcc_stmt.table_name)));
+	}
 
 	PG_TRY();
 	{
@@ -3355,7 +3385,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			{	
 				SPI_connect();
 				query = psprintf("SELECT MAX(%s) FROM %s.%s", attname,
-								schema_name, table_name);
+								schema_name, dbcc_stmt.table_name);
 				rc = SPI_execute(query, true, 0);
 
 				if (rc != SPI_OK_SELECT)
@@ -3372,7 +3402,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 														cur_identity_value, 
 														max_identity_value_str ? max_identity_value_str : "NULL");
 
-				pfree(query);
 				SPI_freetuptable(SPI_tuptable);
 
 				/*
@@ -3391,21 +3420,30 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		}
 		
 		if (is_cross_db)
-            SetCurrentRoleId(current_user_id, false);
+            		SetCurrentRoleId(current_user_id, false);
 	}
 	PG_CATCH();
 	{
+		if (is_cross_db)
+           		 SetCurrentRoleId(current_user_id, false);
+		
+		if(query)
+			pfree(query);
+		if (max_identity_value_str)
+			pfree(max_identity_value_str);
+		if(!dbcc_stmt.new_reseed_value)
+		{
+			UnlockRelationOid(table_oid, ShareLock);
+		}
+
 		PG_RE_THROW();
-	    if (is_cross_db)
-            SetCurrentRoleId(current_user_id, false);
 	}
 	PG_END_TRY();
 	
+	if(query)
+		pfree(query);
 	if (max_identity_value_str)
 		pfree(max_identity_value_str);
-	pfree(schema_name);
-	pfree(table_name);
-	pfree(nsp_name);
 
 	if(!dbcc_stmt.new_reseed_value)
 	{

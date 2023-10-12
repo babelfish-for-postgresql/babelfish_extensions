@@ -1,6 +1,18 @@
 DROP TABLE babel_3201_t_int;
 GO
 
+DROP TABLE babel_dbcc_check_t1;
+GO
+
+DROP TABLE [babel_dbcc_check_t2 .with .dot_an_spaces];
+GO
+
+DROP TABLE [babel_dbcc_check_schema .with .dot_and_spaces]."babel_dbcc_check_t3 .with .dot_and_spaces";
+GO
+
+DROP SCHEMA [babel_dbcc_check_schema .with .dot_and_spaces]
+GO
+
 DROP TABLE babel_3201_t_tinyint;
 GO
 

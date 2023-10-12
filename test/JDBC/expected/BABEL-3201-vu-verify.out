@@ -1,6 +1,52 @@
 DBCC CHECKIDENT(babel_3201_t_int, NORESEED);
 GO
 
+-- test with mixed case in table name
+DBCC CHECKIDENT(BABEL_3201_t_iNt, NORESEED);
+GO
+DBCC CHECKIDENT(BABEL_3201_T_INT, NORESEED);
+GO
+
+-- test with table in quotes (+mixed cases)
+DBCC CHECKIDENT('babel_3201_t_int', NORESEED);
+GO
+DBCC CHECKIDENT('baBEl_3201_T_inT', NORESEED);
+GO
+
+-- test with table in brackets (+mixed case)
+DBCC CHECKIDENT([babel_3201_t_int], NORESEED);
+GO
+DBCC CHECKIDENT([baBEL_3201_t_InT], NORESEED);
+GO
+
+-- test with table in brackets with quotes (+mixed case)
+DBCC CHECKIDENT('[babel_3201_t_int]', NORESEED);
+GO
+DBCC CHECKIDENT('[BABEL_3201_t_int]', NORESEED);
+GO
+
+-- test when trailing space - should work
+DBCC CHECKIDENT('babel_3201_t_int      ', NORESEED);
+GO
+DBCC CHECKIDENT('babel_3201_T_INT      ', NORESEED);
+GO
+
+-- test when leading space - should throw error
+DBCC CHECKIDENT('   babel_3201_t_int  ', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "   babel_3201_t_int" does not exist)~~
+
+
+-- test when table name is empty in quotes
+DBCC CHECKIDENT('', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Parameter 1 is incorrect for this DBCC statement)~~
+
+
 -- same as DBCC CHECKIDENT(<table_name>, RESEED), identity value is not changed
 -- if current identity value for a table is less than the maximum identity value
 -- stored in the identity column
@@ -27,7 +73,7 @@ int#!#int
 ~~END~~
 
 
-DBCC CHECKIDENT(babel_3201_sch1.babel_3201_t2);
+DBCC CHECKIDENT('babel_3201_sch1.babel_3201_t2');
 GO
 
 -- Set identity value to 5 which is less than the maximum value(which is 9) of the identity
@@ -282,7 +328,7 @@ GO
 
 
 -- Database undefined
-DBCC CHECKIDENT(fake_db.dbo.babel_3201_t1, NORESEED);
+DBCC CHECKIDENT('fake_db.dbo.babel_3201_t1', NORESEED);
 GO
 ~~ERROR (Code: 911)~~
 
@@ -290,7 +336,7 @@ GO
 
 
 -- Schema undefined
-DBCC CHECKIDENT(fake_schema.babel_3201_t1, NORESEED);
+DBCC CHECKIDENT('fake_schema.babel_3201_t1', NORESEED);
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -395,15 +441,30 @@ GO
 DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 15.65);
 GO
 
-
 -- When reseed_value is negative and zero, bbf currently does not support reseed to negative/zero value
 dbcc checkident(babel_3201_t_decimal, reseed, -10) 
-dbcc checkident(babel_3201_t_decimal, reseed, 0)
-INSERT INTO babel_3201_t_decimal VALUES (8);
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: setval: value -10 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, 0)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 0 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, .123)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 0 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, -.123)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 0 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
 
 
 SELECT * FROM babel_3201_t_decimal;
@@ -522,13 +583,105 @@ GO
 ~~ERROR (Message: setval: value 257 is out of bounds for sequence "babel_3201_t_tinyint_a_seq" (5..255))~~
 
 
+-- testing different scenarios of 3-part name
+DBCC CHECKIDENT('dbo.babel_dbcc_check_t1')
+GO
+
+DBCC CHECKIDENT('..babel_dbcc_check_t1')
+GO
+
+DBCC CHECKIDENT('master.dbo.babel_dbcc_check_t1')
+GO
+
+DBCC CHECKIDENT('[master]."dbo".[babel_dbcc_check_t1]')
+GO
+
+DBCC CHECKIDENT('"master".[dbo]."babel_dbcc_check_t1"')
+GO
+
+DBCC CHECKIDENT('master..babel_dbcc_check_t1')
+GO
+
+-- with mixed case names of db, schema, and table.
+DBCC CHECKIDENT('dbo.BABEL_DBCC_check_t1')
+GO
+DBCC CHECKIDENT('master.DBO.BABEL_dbcc_check_t1')
+GO
+DBCC CHECKIDENT('[MASTER]."dBo".[babel_dbcc_CHECK_t1]')
+GO
+
+-- schema and object name containing spaces and dots
+DBCC CHECKIDENT('[babel_dbcc_check_t2 .with .dot_an_spaces]');
+GO
+
+DBCC CHECKIDENT('master.."babel_dbcc_check_t2 .with .dot_an_spaces"');
+GO
+
+DBCC CHECKIDENT('[babel_dbcc_check_schema .with .dot_and_spaces]."babel_dbcc_check_t3 .with .dot_and_spaces"');
+GO
+
+-- schema and object name containing spaces and dots + mixed case
+DBCC CHECKIDENT('[BABEL_DBCC_CHECK_T2 .with .dOT_AN_SPACES]');
+GO
+
+DBCC CHECKIDENT('MASTer.."babel_dbcc_CHECK_T2 .with .dot_an_SPACES"');
+GO
+
+DBCC CHECKIDENT('[babel_DBCC_CHECK_schema .with .DOT_and_spaces]."babel_dbcc_CHECK_T3 .with .dot_and_spaces"');
+GO
+
+-- db name longer then 63 and doing cross db call
+CREATE DATABASE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+GO
+
+USE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+GO
+
+CREATE TABLE babel_3201_longer__name_db_table (a int identity, b int);
+GO
+
+USE master;
+go
+
+DBCC CHECKIDENT('babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.dbo.babel_3201_longer__name_db_table', noreseed);
+GO
+
+-- drop this db because of single_mod
+DROP DATABASE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+GO
+
+-- create database to test cross db behavior.
+CREATE DATABASE babel_3201_db1;
+GO
+
+USE babel_3201_db1
+GO
+
+CREATE TABLE babel_3201_db1_database_table1(a int identity, b int);
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+-- Should throw - The server principal "babel_3201_log1" is not able to access the database "babel_3201_db1" under the current security context
+DBCC CHECKIDENT('babel_3201_db1..t1', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_3201_log1" is not able to access the database "babel_3201_db1" under the current security context)~~
+
+
+-- tsql
+USE babel_3201_db1
+GO
+GRANT CONNECT TO GUEST;
+GO
+
 -- tsql user=babel_3201_log1 password=12345678
 -- Permission Check
 USE babel_3201_db1;
 GO
 
--- should throw error
-DBCC CHECKIDENT(master.dbo.babel_3201_t_tinyint, RESEED, 10)
+-- should throw error - must be owner of schema master_dbo
+DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -546,7 +699,8 @@ GO
 USE babel_3201_db1;
 GO
 
-DBCC CHECKIDENT(master.dbo.babel_3201_t_tinyint, RESEED, 10)
+-- This should work correctly
+DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
 GO
 
 -- tsql

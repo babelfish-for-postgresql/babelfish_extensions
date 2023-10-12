@@ -3094,7 +3094,7 @@ shutdown_statement
     ;
 
 dbcc_statement
-    : DBCC CHECKIDENT ( LR_BRACKET table_name ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? new_value=(DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
+    : DBCC CHECKIDENT ( LR_BRACKET table_name_string ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? new_value=(DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
     | DBCC name=dbcc_command ( LR_BRACKET expression_list RR_BRACKET )? (WITH dbcc_options)? SEMI?
     //These are dbcc commands with strange syntax that doesn't fit the regular dbcc syntax
     | DBCC SHRINKLOG ( LR_BRACKET SIZE  EQUAL   (constant_expression| id | DEFAULT) (KB | MB | GB | TB)? RR_BRACKET )? (WITH dbcc_options)? SEMI?
@@ -3133,6 +3133,13 @@ dbcc_command
 dbcc_options
     :  ID (COMMA ID)?
     ;
+
+
+table_name_string
+    : table = id
+    | char_string
+    ;
+
 
 execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
@@ -5156,8 +5163,8 @@ id
     | DOUBLE_QUOTE_ID    // this is a double-quoted identifier in case of SET QUOTED_IDENTIFIER ON
     | SQUARE_BRACKET_ID
     | keyword
-    | DOLLAR_IDENTITY                                                           
-    | DOLLAR_ROWGUID														 
+    | DOLLAR_IDENTITY                        
+    | DOLLAR_ROWGUID								 
     | id colon_colon id
     ;
 

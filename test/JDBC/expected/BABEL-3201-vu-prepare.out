@@ -1,6 +1,3 @@
-CREATE DATABASE babel_3201_db1;
-GO
-
 CREATE SCHEMA babel_3201_sch1;
 GO
 
@@ -8,6 +5,18 @@ CREATE TABLE babel_3201_sch1.babel_3201_t2(a varchar(20), b int identity);
 GO
 
 CREATE TABLE babel_3201_t_int( a int identity, b int);
+GO
+
+CREATE TABLE babel_dbcc_check_t1 (a int identity, b int);
+GO
+
+CREATE TABLE [babel_dbcc_check_t2 .with .dot_an_spaces] (a int identity, b int);
+GO
+
+CREATE SCHEMA [babel_dbcc_check_schema .with .dot_and_spaces]
+GO
+
+CREATE TABLE [babel_dbcc_check_schema .with .dot_and_spaces]."babel_dbcc_check_t3 .with .dot_and_spaces" (a int identity, b int);
 GO
 
 CREATE TABLE babel_3201_t_tinyint( a tinyint identity(5,1), b int);
@@ -137,10 +146,4 @@ DBCC CHECKIDENT(babel_3201_t_tinyint, RESEED, 257)
 GO
 
 CREATE LOGIN babel_3201_log1 WITH PASSWORD='12345678';
-GO
-
-USE babel_3201_db1;
-GO
-
-GRANT CONNECT TO guest;
 GO

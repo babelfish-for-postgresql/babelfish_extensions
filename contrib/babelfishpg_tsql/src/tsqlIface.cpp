@@ -1893,12 +1893,9 @@ public:
 	void enterDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
 	{
 		if (ctx->CHECKIDENT())
-        	graft(makeDbccCheckidentStatement(ctx), peekContainer());
+        		graft(makeDbccCheckidentStatement(ctx), peekContainer());
 
 		clear_rewritten_query_fragment();
-		// PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
-		// Assert(stmt);
-		// statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
 	}
 
 	void exitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
@@ -5437,37 +5434,40 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 {
 	PLtsql_stmt_dbcc *stmt = (PLtsql_stmt_dbcc *) palloc0(sizeof(*stmt));
 
-	std::string db_name;
-	std::string schema_name;
-	std::string table_name;
-	std::string new_reseed_value;
-	bool is_reseed = true;
-	bool no_infomsgs = false;
+	std::string	new_reseed_value;
+	std::string	input_str;
+	int	i;
+	char	*db_name = NULL;
+	char	*schema_name = NULL;
+	char	*table_name = NULL;
+	char	*input_str_to_split;
+	char	**splited_object_name;
+	bool	is_reseed = true;
+	bool	no_infomsgs = false;
 
 	stmt->cmd_type = PLTSQL_STMT_DBCC;
 	stmt->dbcc_stmt_type = PLTSQL_DBCC_CHECKIDENT;
-	if (ctx->table_name())
+
+	if (ctx->table_name_string())
 	{
-		if (ctx->table_name()->database)
-			db_name = stripQuoteFromId(ctx->table_name()->database);
-		if (ctx->table_name()->schema)
-			schema_name = stripQuoteFromId(ctx->table_name()->schema);
-		if (ctx->table_name()->table)
-		table_name = stripQuoteFromId(ctx->table_name()->table);
-
-		if (!db_name.empty())
-			stmt->dbcc_stmt_data.dbcc_checkident.db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
-		if (!schema_name.empty())
-			stmt->dbcc_stmt_data.dbcc_checkident.schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-		if (!table_name.empty())
-			stmt->dbcc_stmt_data.dbcc_checkident.table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-
+		if(ctx->table_name_string()->table)
+		{
+			input_str = stripQuoteFromId(ctx->table_name_string()->table);
+		}
+		if (ctx->table_name_string()->char_string())
+		{
+			input_str = ctx->table_name_string()->char_string()->STRING()->getSymbol()->getText();
+			if (input_str.length() <= 2)
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE,
+					       	"Parameter 1 is incorrect for this DBCC statement",
+					       	getLineAndPos(ctx->table_name_string()));
+			input_str = input_str.substr(1, input_str.length()-2);
+		}
 		if (ctx->RESEED())
 		{
 			if (ctx->new_value)
 			{
 				if(ctx->MINUS())
-
 					stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText().insert(0,"-")).c_str());
 				else
 					stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
@@ -5480,7 +5480,8 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 
 		if(ctx->dbcc_options())
 		{
-			if (pg_strcasecmp(::getFullText(ctx->dbcc_options()).c_str(), "NO_INFOMSGS") == 0){
+			if (pg_strcasecmp(::getFullText(ctx->dbcc_options()).c_str(), "NO_INFOMSGS") == 0)
+			{
 				no_infomsgs = true;
 			}
 			else
@@ -5492,8 +5493,40 @@ makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 			}
 		}
 	}
+
+	input_str_to_split = pstrdup(input_str.c_str());
+
+	/* strip trailing whitespace from input string */
+	i = strlen(input_str_to_split);
+	while (i > 0 && isspace((unsigned char) input_str_to_split[i - 1]))
+		input_str_to_split[--i] = '\0';
+
+	splited_object_name = split_object_name(input_str_to_split);
+	db_name = !strcmp(splited_object_name[1], "")? NULL : splited_object_name[1];
+	schema_name = !strcmp(splited_object_name[2], "")? NULL : splited_object_name[2];
+	table_name = !strcmp(splited_object_name[3], "")? NULL : splited_object_name[3];
+
+	if(db_name)
+	{
+		stmt->dbcc_stmt_data.dbcc_checkident.db_name = pstrdup(downcase_truncate_identifier(db_name, strlen(db_name), true));
+		pfree(db_name);
+	}
+	if(schema_name)
+	{
+		stmt->dbcc_stmt_data.dbcc_checkident.schema_name = pstrdup(downcase_truncate_identifier(schema_name, strlen(schema_name), true));
+		pfree(schema_name);
+	}
+	if(table_name)
+	{
+		stmt->dbcc_stmt_data.dbcc_checkident.table_name = pstrdup(downcase_truncate_identifier(table_name, strlen(table_name), true));
+		pfree(table_name);
+	}
 	stmt->dbcc_stmt_data.dbcc_checkident.is_reseed = is_reseed;
 	stmt->dbcc_stmt_data.dbcc_checkident.no_infomsgs = no_infomsgs;
+
+	pfree(splited_object_name);
+	pfree(input_str_to_split);
+	
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 	return (PLtsql_stmt *) stmt;
 }
