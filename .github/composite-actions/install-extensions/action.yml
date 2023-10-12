@@ -9,6 +9,10 @@ inputs:
     description: 'Database migration mode'
     required: no
     default: "single-db"
+  parallel_query_mode:
+    description: 'Postgres Parallel Query Mode'
+    required: no
+    default: false
 
 runs:
   using: "composite"
@@ -26,6 +30,6 @@ runs:
         sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
         ~/${{inputs.install_dir}}/bin/pg_ctl -D ~/${{inputs.install_dir}}/data/ -l logfile restart
         cd ~/work/babelfish_extensions/babelfish_extensions/
-        sudo ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
+        sudo ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -v parallel_query_mode=${{inputs.parallel_query_mode}} -f .github/scripts/create_extension.sql
         sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       shell: bash
