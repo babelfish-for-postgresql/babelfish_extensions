@@ -2,8 +2,8 @@
 -- This is necessary because CONCAT accepts arguments of type VARIADIC "any". 
 -- CONCAT also automatically handles NULL which || does not.
 CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg text, rightarg text) RETURNS TEXT
-AS 'babelfishpg_common', 'babelfish_concat_wrapper'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'babelfish_concat_wrapper'
+LANGUAGE C STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper_outer(leftarg text, rightarg text) RETURNS sys.varchar(8000) AS
 $$

@@ -181,12 +181,40 @@ const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
 
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 
 Datum
 trancount(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_UINT32(NestedTranCount);
 }
+
+Datum
+babelfish_concat_wrapper(PG_FUNCTION_ARGS)
+{
+	text	   *arg1, *arg2, *new_text;
+	int32		arg1_size, arg2_size, new_text_size;
+	
+	if (pltsql_concat_null_yields_null)
+	{
+		if(DatumGetPointer(PG_GETARG_DATUM(0)) == NULL || DatumGetPointer(PG_GETARG_DATUM(1)) == NULL)
+  		{
+  		  	PG_RETURN_NULL(); // If any is NULL, return NULL
+   		}
+	}
+	arg1 = PG_GETARG_TEXT_PP(0);
+	arg2 = PG_GETARG_TEXT_PP(1);
+	arg1_size = VARSIZE_ANY_EXHDR(arg1);
+	arg2_size = VARSIZE_ANY_EXHDR(arg2);
+	new_text_size = arg1_size + arg2_size + VARHDRSZ;
+	new_text = (text *) palloc(new_text_size);
+
+	SET_VARSIZE(new_text, new_text_size);
+	memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
+	memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+	PG_RETURN_TEXT_P(new_text);
+}
+
 
 Datum
 procid(PG_FUNCTION_ARGS)
