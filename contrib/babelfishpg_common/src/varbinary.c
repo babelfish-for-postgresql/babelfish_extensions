@@ -591,33 +591,17 @@ rowversionbinary(PG_FUNCTION_ARGS)
 Datum
 babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 {
-	text *t1 = (PG_GETARG_TEXT_PP(0));
-	text *t2 = (PG_GETARG_TEXT_PP(1));
+	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	text	   *arg2 = PG_GETARG_TEXT_PP(1);
+	int32		arg1_size = VARSIZE_ANY_EXHDR(arg1);
+	int32		arg2_size = VARSIZE_ANY_EXHDR(arg2);
+	int32		new_text_size = arg1_size + arg2_size + VARHDRSZ;
+	text	   *new_text = (text *) palloc(new_text_size);
 
-	char *str1 = text_to_cstring(t1);
-	char *str2 = text_to_cstring(t2);
-
-	int len1 = VARSIZE_ANY_EXHDR(t1);
-	int len2 = VARSIZE_ANY_EXHDR(t2);
-
-	text *result_text = (text *) palloc(VARHDRSZ+len1+len2);
-
-	// Check if the first string is NULL
-    if (DatumGetPointer(PG_GETARG_DATUM(0)) == NULL)
-    {
-        if (DatumGetPointer(PG_GETARG_DATUM(1)) == NULL)
-            PG_RETURN_NULL(); // If both are NULL, return NULL
-        else
-            PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(1)); // If only the first string is NULL, return the second string
-    }
-    else if (DatumGetPointer(PG_GETARG_DATUM(1)) == NULL)
-    {
-        PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
-    }
-	//when both strings are not null
-    SET_VARSIZE(result_text, VARHDRSZ+len1+len2);
-    snprintf(VARDATA(result_text), VARHDRSZ+len1+len2 + 1, "%s%s", str1, str2);
-    PG_RETURN_TEXT_P(result_text);
+	SET_VARSIZE(new_text, new_text_size);
+	memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
+	memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+	PG_RETURN_TEXT_P(new_text);
 }
 
 Datum
