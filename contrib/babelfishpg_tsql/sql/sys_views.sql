@@ -3103,4 +3103,3 @@ SELECT
     CAST('' as sys.NVARCHAR(60)) AS state_desc
 WHERE FALSE;
 GRANT SELECT ON sys.database_permissions TO PUBLIC;
-
