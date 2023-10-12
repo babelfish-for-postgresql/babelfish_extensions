@@ -388,7 +388,7 @@ You will also be provided with the location of the `.diff` file containing the d
 ## Running Tests with Parallel Query Enabled
 
 After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
-1. Create a PostgreSQL database and initialize Babelfish (if you already have a database with Babelfish initialized, you can omit this step or perform the cleanup steps before you initialize) to enable parallel query mode pass -pq or --parallel flag when running ./init.sh
+1. Create a PostgreSQL database and initialize Babelfish (if you already have a database with Babelfish initialized, you can omit this step or perform the cleanup steps before you initialize) to enable parallel query mode pass -enable_parallel_query flag when running ./init.sh
 
    ```bash
     ./init.sh -enable_parallel_query
