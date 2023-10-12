@@ -77,6 +77,13 @@ TestInfo tests[]=
     {&test_fixeddecimal_int2_gt, true, "GreaterThanCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
     {&test_fixeddecimal_int2_ne, true, "NotEqualToCheck_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
     {&test_fixeddecimal_int2_cmp, true, "Comparison_FIXEDDECIMAL_INT2", "babelfish_money_datatype"},
+    {&test_pltsql_GetNewTempObjectId, true, "Test pltsql_GetNewTempObjectId", "temp_table"},
+    {&test_pltsql_GetNewTempObjectId_tempOidStartSet, true, "Test test_pltsql_GetNewTempObjectId_tempOidStartSet", "temp_table"},
+    {&test_pltsql_GetNewTempObjectId_oidCount, true, "Test test_pltsql_GetNewTempObjectId_oidCount", "temp_table"},
+    {&test_pltsql_GetNewTempObjectId_endWraparound, true, "Test test_pltsql_GetNewTempObjectId_endWraparound", "temp_table"},
+    {&test_pltsql_GetNewTempObjectId_endBuffer, true, "Test test_pltsql_GetNewTempObjectId_endBuffer", "temp_table"},
+    {&test_pltsql_GetNewTempOidWithIndex, true, "Test pltsql_GetNewTempOidWithIndex", "temp_table"},
+    {&test_pltsql_GetNewTempOidWithIndex_endBuffer, true, "Test test_pltsql_GetNewTempOidWithIndex_endBuffer", "temp_table"},
 };
 
 

@@ -31,3 +31,9 @@ BEGIN
 	  CREATE TABLE #tt (a int); -- throws error
 END;
 GO
+
+CREATE TYPE temp_table_type_int FROM int
+GO
+
+CREATE TYPE temp_table_type_char FROM nvarchar(200)
+GO
