@@ -35,10 +35,14 @@ exec unqStr_proc_1 "aBc", "def$ghi"
 go
 execute unqStr_proc_1 "aBc", "def$ghi"
 go
+execute unqStr_proc_1 @par1 = "aBc", @par2 = "def$ghi"
+go
 -- strings longer than 63 should not be truncated, hashed or downcased
 exec unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
 go
 execute    unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+execute    unqStr_proc_1     @par1 = "a23456789B123456789C123456789d123456789E123456789F123456789G123456789H", @par2="AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB"
 go
 
 set quoted_identifier off
@@ -310,8 +314,24 @@ go
 exec unqStr_proc_5 'this is @p1'
 go
 
+create procedure unqStr_proc_7 @p1 varchar(20) = N'aB"c''D', @p2 varchar(20) = dEfg, @p3 varchar(20) = "x'Y""z"
+as select @p1, @p2, @p3
+go
+exec unqStr_proc_7
+go
+
+create function unqStr_func_5 (@p1 varchar(20) = N'aB"c''D', @p2 varchar(20) = dEfg, @p3 varchar(20) = "x'Y""z")
+returns varchar(60)
+as
+begin
+ return @p1 + @p2 + @p3
+end 
+go
+select dbo.unqStr_func_5()
+go
+
 -- should raise error:
-create procedure unqStr_proc_6 @p0 varchar(20) = @@myvar
+create procedure unqStr_proc_6 @p1 varchar(20) = @@myvar
 as select @p1
 go
 

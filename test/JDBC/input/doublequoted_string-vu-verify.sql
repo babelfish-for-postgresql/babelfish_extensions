@@ -76,7 +76,7 @@ exec dubquote_p
 go
 exec dubquote_p "xx'yy"
 go
-exec dubquote_p 'xx"yy'
+exec dubquote_p 'xX"yY'
 go
 exec dubquote_p """"
 go
@@ -96,7 +96,7 @@ go
 -- same as above but with named notation
 exec dubquote_p @p="xx'yy"  , @p2='x"y'
 go
-exec dubquote_p @p='xx"yy'  , @p2="x""y"
+exec dubquote_p @p='xX"yY'  , @p2="x""y"
 go
 exec dubquote_p @p=""""     , @p2="x'y"
 go
@@ -114,7 +114,7 @@ exec dubquote_p @p="""'""'""" , @p2="x''y"
 go
 
 -- using N'...' notation:
-exec dubquote_p N'xx"yy'
+exec dubquote_p N'xX"yY'
 go
 exec dubquote_p N''''
 go
@@ -122,7 +122,7 @@ exec dubquote_p N'"'
 go
 exec dubquote_p N'""'
 go
-exec dubquote_p @p=N'xx"yy'
+exec dubquote_p @p=N'xX"yY'
 go
 exec dubquote_p @p=N''''
 go

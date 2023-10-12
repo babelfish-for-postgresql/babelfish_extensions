@@ -210,11 +210,11 @@ varchar
 xx'yy
 ~~END~~
 
-exec dubquote_p 'xx"yy'
+exec dubquote_p 'xX"yY'
 go
 ~~START~~
 varchar
-xx"yy
+xX"yY
 ~~END~~
 
 exec dubquote_p """"
@@ -275,11 +275,11 @@ varchar
 xx'yy
 ~~END~~
 
-exec dubquote_p @p='xx"yy'  , @p2="x""y"
+exec dubquote_p @p='xX"yY'  , @p2="x""y"
 go
 ~~START~~
 varchar
-xx"yy
+xX"yY
 ~~END~~
 
 exec dubquote_p @p=""""     , @p2="x'y"
@@ -333,11 +333,11 @@ varchar
 
 
 -- using N'...' notation:
-exec dubquote_p N'xx"yy'
+exec dubquote_p N'xX"yY'
 go
 ~~START~~
 varchar
-xx"yy
+xX"yY
 ~~END~~
 
 exec dubquote_p N''''
@@ -361,11 +361,11 @@ varchar
 ""
 ~~END~~
 
-exec dubquote_p @p=N'xx"yy'
+exec dubquote_p @p=N'xX"yY'
 go
 ~~START~~
 varchar
-xx"yy
+xX"yY
 ~~END~~
 
 exec dubquote_p @p=N''''

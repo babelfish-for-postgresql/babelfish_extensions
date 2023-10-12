@@ -44,11 +44,22 @@ go
 
 ~~ERROR (Message: could not find a procedure named "unqstr_proc_6")~~
 
+drop procedure unqStr_proc_7
+go
 drop function unqStr_func_1
 go
 drop function unqStr_func_2
 go
 drop function unqStr_func_3
+go
+-- this should fail as the function was not created
+drop function unqStr_func_4
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "unqstr_func_4")~~
+
+drop function unqStr_func_5
 go
 drop table unqStr_tab
 go

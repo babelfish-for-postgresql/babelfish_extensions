@@ -32,11 +32,18 @@ go
 -- this should fail as the proc was not created
 drop procedure unqStr_proc_6
 go
+drop procedure unqStr_proc_7
+go
 drop function unqStr_func_1
 go
 drop function unqStr_func_2
 go
 drop function unqStr_func_3
+go
+-- this should fail as the function was not created
+drop function unqStr_func_4
+go
+drop function unqStr_func_5
 go
 drop table unqStr_tab
 go
