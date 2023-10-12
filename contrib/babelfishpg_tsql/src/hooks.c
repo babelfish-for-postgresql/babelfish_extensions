@@ -2900,10 +2900,13 @@ static bool containsInTextMonthFormat(int *ftype, char **field)
 		 * and converting the input from "23 2000 JULY" to "23 2000 JULY"
 		 */
 		if (ftype[0] == DTK_STRING)
+		{
 			SWAP_FIELDS(0, 1);
+		}
 		else if (ftype[2] == DTK_STRING)
+		{
 			SWAP_FIELDS(1, 2);
-
+		}
 		return true;
 	}
 	return false;
