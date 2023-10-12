@@ -2859,8 +2859,20 @@ static bool isTextMonthPresent(char* field)
  * `DD MON YYY`, `DD YYYY MON`, `MON DD YYYY`, `MON YYYY DD`, `YYYY MON DD`, `YYYY DD MON`
  * where MON is month in text format then returns true if present.
  */
-static bool containsInTextMonthFormat(int *ftype, char **field){
+static bool containsInTextMonthFormat(int *ftype, char **field)
+{
 	int count_number = 0, count_string = 0;
+
+	#define SWAP_FIELDS(i, j) \
+		char* temp_field;	\
+		int temp_ftype;	\
+		temp_field = field[i];	\
+		temp_ftype = ftype[i];	\
+		field[i] = field[j];	\
+		field[j] = temp_field;	\
+		ftype[i] = ftype[1];	\
+		ftype[j] = temp_ftype;	\
+
 	for (int i = 0; i < 3; i++)
 	{
 		if (ftype[i] == DTK_NUMBER)
@@ -2878,24 +2890,20 @@ static bool containsInTextMonthFormat(int *ftype, char **field){
 	if (count_number == 2 && count_string == 1)
 	{
 		/*
-		 * If the first field is an string then swap with the second field
+		 * If the first field and third field is an string then swap with the second field
 		 * as when the date is given separatly then all different forms of
 		 * dates is supported. To avoid the conversion failure from `isTextMonthPresent`
-		 * later we are swapping earlier.
+		 * later we are swapping earlier. And convert to Supported date formats which are
+		 * `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
 		 *
 		 * For example convert the input from "JULY 23 2000" to "23 JULY 2000"
+		 * and converting the input from "23 2000 JULY" to "23 2000 JULY"
 		 */
 		if (ftype[0] == DTK_STRING)
-		{
-			char* temp_field;
-			int temp_ftype;
-			temp_field = field[0];
-			temp_ftype = ftype[0];
-			field[0] = field[1];
-			field[1] = temp_field;
-			ftype[0] = ftype[1];
-			ftype[1] = temp_ftype;
-		}
+			SWAP_FIELDS(0, 1);
+		else if (ftype[2] == DTK_STRING)
+			SWAP_FIELDS(1, 2);
+
 		return true;
 	}
 	return false;
@@ -2925,7 +2933,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 	regex_t		time_regex;
 	char	   *pattern;
 	int len_str = strlen(str);
-	char* modified_string = (char*) malloc(len_str + 1);
+	char* modified_str = (char*) malloc(len_str + 1);
 	int j = 0;
 	char* temp_field;
 
@@ -2946,15 +2954,15 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 		continue;
 		if (str[i] == ':' || str[i] == '/' || str[i] == '.' || str[i] == '-')
 		{
-			modified_string[j++] = str[i++];
+			modified_str[j++] = str[i++];
             while (str[i] == ' ')
                 i++;
         }
-        modified_string[j++] = str[i];
+        modified_str[j++] = str[i];
 	}
-	modified_string[j] = '\0';
+	modified_str[j] = '\0';
 
-	dterr = ParseDateTime(modified_string, workbuf, sizeof(workbuf),
+	dterr = ParseDateTime(modified_str, workbuf, sizeof(workbuf),
 			field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 	{
@@ -3177,7 +3185,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						ereport(ERROR,
 									(errcode(ERRCODE_INTERNAL_ERROR),
 									errmsg("time format regex failed")));
-					if (!regexec(&time_regex, modified_string, 0, NULL, 0))
+					if (!regexec(&time_regex, modified_str, 0, NULL, 0))
 						TIME_IN_ERROR();
 					regfree(&time_regex);
 

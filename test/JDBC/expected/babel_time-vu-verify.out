@@ -1334,6 +1334,20 @@ GO
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
+Select CAST('2001-04-022 16:23:51.766890 +12:00' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select CAST('02001-04-22 16:23:51.766890 +12:00' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
 SELECT CAST('Jan-2021-01 121200 -1' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
