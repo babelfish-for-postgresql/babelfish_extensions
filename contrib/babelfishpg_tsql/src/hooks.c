@@ -911,9 +911,8 @@ extract_identifier(const char *start)
 
 	/*
 	 * Reaching here implies of valid identifier. It means we can reach
-	 * identifier's end and truncate it to maximum length of 63 in both 
-	 * single and multibyte characters.  If the identifier is not valid,
-	 * the scanner should have already reported a syntax error.
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
 	while (true)
 	{
