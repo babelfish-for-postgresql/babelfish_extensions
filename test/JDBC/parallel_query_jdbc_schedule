@@ -7,31 +7,31 @@
 # These tests are crashing/failing with parallel query mode is on. 
 
 # Group 1: lost connection to parallel worker BABEL-4393
-ignore#!#BABEL-3702-vu-verify
-ignore#!#BABEL-728-vu-verify
-ignore#!#BABEL-728
-ignore#!#BABEL-735
-ignore#!#BABEL-OPENJSON
-ignore#!#Test-sp_addrolemember-vu-prepare
-ignore#!#Test-sp_addrolemember-vu-verify
-ignore#!#Test-sp_addrolemember-vu-cleanup
-ignore#!#Test-sp_droprolemember-vu-prepare
-ignore#!#Test-sp_droprolemember-vu-verify
-ignore#!#Test-sp_droprolemember-vu-cleanup
-ignore#!#TestDatetime-numeric-dateaddfunction-vu-prepare
-ignore#!#TestDatetime-numeric-dateaddfunction-vu-verify
-ignore#!#TestDatetime-numeric-representation-vu-prepare
-ignore#!#TestDatetime-numeric-representation-vu-verify
-ignore#!#babel_datatype_sqlvariant-vu-verify
-ignore#!#babel_datatype_sqlvariant
-ignore#!#babel_function
-ignore#!#babel_function_string-vu-verify
-ignore#!#babel_function_string
-ignore#!#cast_numeric_types_to_datetime-vu-verify
-ignore#!#cast_numeric_types_to_smalldatetime-vu-verify
-ignore#!#sys-eomonth-vu-verify
-ignore#!#babel_datetime2
-ignore#!#babel_collation
+# ignore#!#BABEL-3702-vu-verify
+# ignore#!#BABEL-728-vu-verify
+# ignore#!#BABEL-728
+# ignore#!#BABEL-735
+# ignore#!#BABEL-OPENJSON
+# ignore#!#Test-sp_addrolemember-vu-prepare
+# ignore#!#Test-sp_addrolemember-vu-verify
+# ignore#!#Test-sp_addrolemember-vu-cleanup
+# ignore#!#Test-sp_droprolemember-vu-prepare
+# ignore#!#Test-sp_droprolemember-vu-verify
+# ignore#!#Test-sp_droprolemember-vu-cleanup
+# ignore#!#TestDatetime-numeric-dateaddfunction-vu-prepare
+# ignore#!#TestDatetime-numeric-dateaddfunction-vu-verify
+# ignore#!#TestDatetime-numeric-representation-vu-prepare
+# ignore#!#TestDatetime-numeric-representation-vu-verify
+# ignore#!#babel_datatype_sqlvariant-vu-verify
+# ignore#!#babel_datatype_sqlvariant
+# ignore#!#babel_function
+# ignore#!#babel_function_string-vu-verify
+# ignore#!#babel_function_string
+# ignore#!#cast_numeric_types_to_datetime-vu-verify
+# ignore#!#cast_numeric_types_to_smalldatetime-vu-verify
+# ignore#!#sys-eomonth-vu-verify
+# ignore#!#babel_datetime2
+# ignore#!#babel_collation
 
 # Group 2: cannot start subtransactions during a parallel operation BABEL-4394
 ignore#!#babel_format_standard_date_time
