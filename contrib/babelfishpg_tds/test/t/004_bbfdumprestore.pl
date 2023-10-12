@@ -70,7 +70,7 @@ $newnode->stop;
 $oldnode->start;
 my @dumpall_command = (
 	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
-	'--port', $oldnode->port, '--globals-only', '--quote-all-identifiers',
+	'--port', $oldnode->port, '--roles-only', '--quote-all-identifiers',
 	'--verbose', '--no-role-passwords', '--file', $dump1_file);
 $newnode->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
@@ -135,7 +135,7 @@ $tsql_newnode2->init_tsql('test_master', 'testdb', 'multi-db');
 # need to use dump utilities from the new node here.
 @dumpall_command = (
 	'pg_dumpall', '--database', 'testdb', '--username', 'test_master',
-	'--port', $newnode2->port, '--globals-only', '--quote-all-identifiers',
+	'--port', $newnode2->port, '--roles-only', '--quote-all-identifiers',
 	'--verbose', '--no-role-passwords', '--file', $dump3_file);
 $newnode2->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump. Let's dump with the custom format
@@ -176,5 +176,24 @@ $newnode->command_fails_like(
 	],
 	qr/Dump and restore across different migration modes is not yet supported./,
 	'Restore of Babelfish database failed since source and target migration modes do not match.');
+$newnode->stop;
+
+############################################################################################
+########################### Test dump for non Babelfish database ###########################
+############################################################################################
+$newnode->start;
+
+# Dump global objects using pg_dumpall.
+my @dumpall_command = (
+	'pg_dumpall', '--database', 'postgres', '--port', $newnode->port,
+	'--roles-only', '--quote-all-identifiers', '--verbose',
+	'--no-role-passwords', '--file', $dump1_file);
+$newnode->command_ok(\@dumpall_command, 'Dump global objects.');
+# Dump Babelfish database using pg_dump.
+my @dump_command = (
+	'pg_dump', '--quote-all-identifiers', '--port', $newnode->port,
+	'--verbose', '--dbname', 'postgres',
+	'--file', $dump2_file);
+$newnode->command_ok(\@dump_command, 'Dump non-Babelfish (postgres db) database.');
 $newnode->stop;
 done_testing();
