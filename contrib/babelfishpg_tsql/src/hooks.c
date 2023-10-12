@@ -3153,6 +3153,32 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						*/
 						if (isTextMonthPresent(temp_field))
 							TIME_IN_ERROR();
+
+						/* Check whether text month is present in date */
+						pattern = "([a-z])";
+						if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+							ereport(ERROR,
+										(errcode(ERRCODE_INTERNAL_ERROR),
+										errmsg("time format regex failed")));
+
+						/* If dates are of formats "0YYYY-MON-0DD", where 0 are
+						 * present at the start of year or day then the dates are valid.
+						 * But for the formats "0MM{-/.}0DD{-/.}0YYYY", "0YYYY{-/.}0MM{-/.}0DD",
+						 * where 0 are present at the start of year/month/day then the dates are invalid.
+						 */
+						/* Text month not present */
+						if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+						{
+							pattern = "^([1-9][0-9]{3}|[0-9]{1,2})[-/.]([0-9]{1,2})[-/.]([1-9][0-9]{3}|[0-9]{1,2})$";
+							regfree(&time_regex);
+							if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+								ereport(ERROR,
+											(errcode(ERRCODE_INTERNAL_ERROR),
+											errmsg("time format regex failed")));
+							if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+								TIME_IN_ERROR();
+							regfree(&time_regex);
+						}
 					}
 					break;
 
