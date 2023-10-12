@@ -1384,7 +1384,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int		actual_alias_len = 0;
 			
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || *colname_start == ' ')
+			while(*colname_start == '(' || scanner_isspace(*colname_start))
 			{
 				colname_start++;
 			}
