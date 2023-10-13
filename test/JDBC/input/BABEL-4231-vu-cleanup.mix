@@ -154,3 +154,6 @@ DROP VIEW view_babel_4231_40;
 GO
 DROP TABLE table18_babel_4231;
 GO
+
+DROP VIEW view_babel_4231_41;
+GO
