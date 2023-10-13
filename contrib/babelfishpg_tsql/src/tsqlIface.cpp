@@ -1981,7 +1981,7 @@ public:
 
 		if (str.front() == 'N')
 		{
-			// This is only to make the assertion on str.front() easy (below)
+			// Temporarily remove the leading 'N' only locally here, to make the assertion on str.front() easy (below)
 			str.erase(0, 1);	
 		}
 
@@ -2015,18 +2015,17 @@ public:
 			// A stored procedure parameter which is parsed as a column name (= identifier)
 			// is either an unquoted string, a double-quoted string, or a bracketed string.
 			// For a procedure call parameter, a double-quoted string is interpreted 
-			// as a string even with QUOTED_IDENTIFIER=ON.
-			
+			// as a string even with QUOTED_IDENTIFIER=ON.			
 			std::string str = getFullText(ctx->id());
+			size_t startPosition = ctx->id()->start->getStartIndex();		
+			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch			
 
 			if (str.front() == '"')
 			{
 				Assert(str.back() == '"');
 								
 				// Change double-quoted string to single-quoted string
-				str = rewriteDoubleQuotedString(str);		    	
-				size_t startPosition = ctx->start->getStartIndex();		
-				if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch  	
+				str = rewriteDoubleQuotedString(str);		    	  	
 				rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(getFullText(ctx->id()), str)));										
 			}		
 			else if (str.front() == '\'')
@@ -2044,8 +2043,8 @@ public:
 				// double-quoted string), escape them first
 				str = escapeDoubleQuotes(str);
 				str = '"' + str.substr(1,str.length()-2) + '"';
-				str = rewriteDoubleQuotedString(str);		
-				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), str)));						
+				str = rewriteDoubleQuotedString(str);	
+				rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(getFullText(ctx->id()), str)));					
 			}
 			else 
 			{
@@ -2053,12 +2052,11 @@ public:
 				// Put quotes around it: even though it is an identifier in the ANTLR parse tree, it will be 
 				// parsed as a string by the backend parser
 				str = "'" + str + "'";
-				rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx->id()), str)));
+				rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(getFullText(ctx->id()), str)));
 			}
-		}
-		
+		}		
 		if (in_execute_body_batch_parameter) in_execute_body_batch_parameter = false;
-	}	
+	}
 
     void enterCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
     {

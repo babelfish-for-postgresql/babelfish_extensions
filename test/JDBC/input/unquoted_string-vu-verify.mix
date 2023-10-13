@@ -28,6 +28,7 @@ go
 -- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
 exec unqStr_proc_1 [aBc], [def$ghi]
 go
+
 -- should print strings, bracketed identifiers as procedure args are also interpreted as unquoted strings in SQL Server:
 set quoted_identifier on
 go
@@ -44,6 +45,39 @@ execute    unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123
 go
 execute    unqStr_proc_1     @par1 = "a23456789B123456789C123456789d123456789E123456789F123456789G123456789H", @par2="AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB"
 go
+
+
+-- without EXEC keyword:
+unqStr_proc_1 aBc, def$ghi
+go
+unqStr_proc_1 aBc, 'this is a string'
+go
+unqStr_proc_1 'this is a string', def
+go
+unqStr_proc_1 aBc#def, null
+go
+unqStr_proc_1 @par1=aBc$def, @par2=null
+go
+unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+/*test*/unqStr_proc_1 aBc, def$ghi
+go
+/*test*/
+unqStr_proc_1/*test*/
+aBc, 
+'this is a string'
+go
+-- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
+unqStr_proc_1 [aBc], [def$ghi]
+go
+-- strings longer than 63 should not be truncated, hashed or downcased
+unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+      unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+  unqStr_proc_1     @par1 = "a23456789B123456789C123456789d123456789E123456789F123456789G123456789H", @par2="AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB"
+go
+
 
 set quoted_identifier off
 go

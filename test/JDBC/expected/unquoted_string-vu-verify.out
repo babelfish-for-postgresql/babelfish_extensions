@@ -73,6 +73,7 @@ varchar#!#varchar
 aBc#!#def$ghi
 ~~END~~
 
+
 -- should print strings, bracketed identifiers as procedure args are also interpreted as unquoted strings in SQL Server:
 set quoted_identifier on
 go
@@ -118,6 +119,99 @@ go
 varchar#!#varchar
 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H#!#AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
 ~~END~~
+
+
+
+-- without EXEC keyword:
+unqStr_proc_1 aBc, def$ghi
+go
+~~START~~
+varchar#!#varchar
+aBc#!#def$ghi
+~~END~~
+
+unqStr_proc_1 aBc, 'this is a string'
+go
+~~START~~
+varchar#!#varchar
+aBc#!#this is a string
+~~END~~
+
+unqStr_proc_1 'this is a string', def
+go
+~~START~~
+varchar#!#varchar
+this is a string#!#def
+~~END~~
+
+unqStr_proc_1 aBc#def, null
+go
+~~START~~
+varchar#!#varchar
+aBc#def#!#<NULL>
+~~END~~
+
+unqStr_proc_1 @par1=aBc$def, @par2=null
+go
+~~START~~
+varchar#!#varchar
+aBc$def#!#<NULL>
+~~END~~
+
+unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+~~START~~
+varchar#!#varchar
+<NULL>#!#aBc#def
+~~END~~
+
+/*test*/unqStr_proc_1 aBc, def$ghi
+go
+~~START~~
+varchar#!#varchar
+aBc#!#def$ghi
+~~END~~
+
+/*test*/
+unqStr_proc_1/*test*/
+aBc, 
+'this is a string'
+go
+~~START~~
+varchar#!#varchar
+aBc#!#this is a string
+~~END~~
+
+-- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
+unqStr_proc_1 [aBc], [def$ghi]
+go
+~~START~~
+varchar#!#varchar
+aBc#!#def$ghi
+~~END~~
+
+-- strings longer than 63 should not be truncated, hashed or downcased
+unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+~~START~~
+varchar#!#varchar
+a23456789B123456789C123456789d123456789E123456789F123456789G123456789H#!#AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+~~END~~
+
+      unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+~~START~~
+varchar#!#varchar
+a23456789B123456789C123456789d123456789E123456789F123456789G123456789H#!#AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+~~END~~
+
+  unqStr_proc_1     @par1 = "a23456789B123456789C123456789d123456789E123456789F123456789G123456789H", @par2="AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB"
+go
+~~START~~
+varchar#!#varchar
+a23456789B123456789C123456789d123456789E123456789F123456789G123456789H#!#AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+~~END~~
+
 
 
 set quoted_identifier off
