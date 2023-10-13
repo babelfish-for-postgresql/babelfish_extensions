@@ -3,8 +3,6 @@ on: [push, pull_request]
 
 jobs:
   run-babelfish-jdbc-tests-with-parallel-query-mode:
-    env:
-      INSTALL_DIR: psql
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -42,8 +40,6 @@ jobs:
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 120
         run: |
-          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
-          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           cd test/JDBC/
           # set env variable isParallelQueryMode to true to let jdbc know not to run tests of file parallel_query_jdbc_schedule
           export isParallelQueryMode=true
@@ -55,14 +51,14 @@ jobs:
         id: cleanup
         if: always() && steps.install-extensions.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
-          path: ~/psql/data/logfile
+          path: ~/postgres/data/logfile
       
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
