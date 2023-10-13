@@ -439,6 +439,10 @@ int
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN BABEL_ROLE_MEMBER_vu_prepare_login1 WITH PASSWORD = '123'
+GO
+
 -- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login1      password=123
 -- Connect with different logins to test membership view permission
 -- Test on user1
@@ -508,6 +512,11 @@ int
 
 
 USE master
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN BABEL_ROLE_MEMBER_vu_prepare_login2 WITH PASSWORD = '123'
 GO
 
 -- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login2      password=123
@@ -585,6 +594,11 @@ int
 
 
 USE master
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN BABEL_ROLE_MEMBER_vu_prepare_login3 WITH PASSWORD = '123'
 GO
 
 -- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login3      password=123

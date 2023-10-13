@@ -1116,14 +1116,14 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 
-	ScanKeyInit(&scanKey[1],
-				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
+	ScanKeyEntryInitialize(&scanKey[1], 0, Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(logical_schema_name));
 
-	ScanKeyInit(&scanKey[2],
-				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
+	ScanKeyEntryInitialize(&scanKey[2], 0, Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), F_TEXTEQ,
 				CStringGetTextDatum(view_name));
 
 	scan = systable_beginscan(bbf_view_def_rel,
@@ -1549,6 +1549,7 @@ static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static void create_guest_role_for_db(const char *dbname);
 static char *get_db_owner_role_name(const char *dbname);
+static void alter_guest_schema_for_db(const char *dbname);
 
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
@@ -2634,7 +2635,6 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 
 	/* open the catalog table */
 	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
-
 	/* get the description of the table */
 	bbf_view_def_dsc = RelationGetDescr(bbf_view_def_rel);
 
@@ -2645,14 +2645,15 @@ rename_view_update_bbf_catalog(RenameStmt *stmt)
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
-	ScanKeyInit(&key[1],
-				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(logical_schema_name));
-	ScanKeyInit(&key[2],
+	ScanKeyEntryInitialize(&key[1], 0, Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false), 
+				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(stmt->relation->relname));
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(stmt->relation->relname));
 
 	/* scan */
 	tblscan = table_beginscan_catalog(bbf_view_def_rel, 3, key);
@@ -2796,4 +2797,87 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 
 	table_endscan(tblscan);
 	table_close(bbf_func_ext_rel, RowExclusiveLock);
+}
+
+PG_FUNCTION_INFO_V1(update_user_catalog_for_guest_schema);
+Datum
+update_user_catalog_for_guest_schema(PG_FUNCTION_ARGS)
+{
+	Relation	db_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+												 db_rel->rd_att, &is_null);
+		const char *db_name = TextDatumGetCString(db_name_datum);
+
+		alter_guest_schema_for_db(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
+static void
+alter_guest_schema_for_db (const char *dbname)
+{
+	Relation	bbf_authid_user_ext_rel;
+	TupleDesc	bbf_authid_user_ext_dsc;
+	ScanKeyData key[2];
+	HeapTuple	usertuple;
+	HeapTuple	new_tuple;
+	TableScanDesc tblscan;
+	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Search and obtain the tuple based on the user name and db name */
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum("guest"));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(dbname));
+
+	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	/* Build a tuple to insert */
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
+
+	usertuple = heap_getnext(tblscan, ForwardScanDirection);
+	if (!HeapTupleIsValid(usertuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot find the user \"guest\", because it does not exist or you do not have permission.")));
+
+	new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("guest");
+	new_record_repl_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = true;
+	new_tuple = heap_modify_tuple(usertuple,
+								  bbf_authid_user_ext_dsc,
+								  new_record_user_ext,
+								  new_record_nulls_user_ext,
+								  new_record_repl_user_ext);
+
+	CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
+
+	heap_freetuple(new_tuple);
+
+	table_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 }

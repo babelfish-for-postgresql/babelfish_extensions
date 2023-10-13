@@ -1,6 +1,6 @@
 # Contents
 
-This package includes 4 extensions:
+This package includes 5 extensions:
 
 
 - babelfishpg_tsql
@@ -11,6 +11,8 @@ This package includes 4 extensions:
     - Supports the various datatypes in MSSQL.
 - babelfishpg_money
     - supports the `money` type in MSSQL. This is a variation of the opensource fixeddecimal extension.
+- babelfishpg_unit
+    - Unit testing framework for babelfish. 
 
 # How do I build the extensions?
 
@@ -151,6 +153,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     cd ../babelfishpg_tsql
     make && make install
 
+Build babelfishpg_unit extension if you want to run/add unit tests (Optional):
+
+    cd contrib/babelfishpg_unit
+    make && make install
+
 
 # How to install the extensions and how to connect via SQLCMD?
 
@@ -226,6 +233,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
           ```
           sudo ~/postgres/bin/psql -d postgres -U your_user_name
           ```
+      - If you want to install babelfishpg_unit extension, run the following command after connecting from psql endpoint (switch to the database where babelfish extensions are installed):
+          ```
+          \c babelfish_db
+          CREATE EXTENSION IF NOT EXISTS "babelfishpg_unit";
+          ```
 
 6. Try connecting to Babelfish via SQLCMD
       ```
@@ -246,6 +258,14 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
 
     (1 rows affected)
     ```
+
+
+# How to run the unit tests?
+Run the following command from psql endpoint using `~/postgres/bin/psql -U your_user_name -d babelfish_db`:
+
+```
+SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();
+```
 
 # How to run the JDBC regression tests?
 1. Install Maven: https://maven.apache.org/install.html
@@ -276,6 +296,43 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
     babelfish_db=> CREATE EXTENSION tds_fdw;
     CREATE EXTENSION
     ```
+
+# How to build the babelfishpg_tsql extension with Support for Spatial Datatypes enabled
+
+1. To work with Spatial Datatypes, you must install the `PostGIS` extension. 
+Steps on how to get PostGIS working on open-source:
+    ```
+    wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
+    tar -xvzf postgis-3.3.3dev.tar.gz
+    sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    sudo yum install gdal gdal-devel
+    sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-3.7.2-1.el8.x86_64.rpm
+    sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-devel-3.7.2-1.el8.x86_64.rpm
+    wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
+    tar -xvzf proj-4.9.1.tar.gz
+    cd proj-4.9.1
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+    sudo cmake --build . --target install
+    cd ../../postgis-3.3.3dev
+    ./configure
+    make
+    sudo make install
+    ```
+2. More information about building and installing the extension can be found [at this link](https://postgis.net/docs/postgis_installation.html)
+3. Build the babelfishpg_common extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make -j 4
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make install
+    ```
+4. Build the babelfishpg_tsql extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make install
+    ```
+4. Create rest of the Babelfish extensions as usual, and initialize Babelfish.
 
 
 # How to build the Babelfish server with Kerberos authentication enabled

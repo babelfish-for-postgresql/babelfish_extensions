@@ -7,6 +7,11 @@ begin
 end $$;
 GO
 
+-- tsql
+-- reset the login password
+ALTER LOGIN owner WITH PASSWORD = '12345678';
+GO
+
 -- tsql user=owner password=12345678
 USE babel_extended_properties_db
 GO
@@ -2514,6 +2519,10 @@ GO
 
 ~~ERROR (Message: permission denied for table babelfish_extended_properties)~~
 
+
+-- reset the login password
+ALTER LOGIN normal_user WITH PASSWORD = '12345678';
+GO
 
 -- tsql user=normal_user password=12345678
 USE babel_extended_properties_db

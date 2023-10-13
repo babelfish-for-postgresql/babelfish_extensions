@@ -7,15 +7,17 @@ INSERT INTO babel_cursor_t1 VALUES (4, 4444.4444, 'dddddd', '4E984725-C51C-4BF4-
 INSERT INTO babel_cursor_t1 VALUES (NULL, NULL, NULL, NULL, NULL);
 GO
 
-CREATE PROCEDURE babel_fetch_cursor_helper_int_proc(@cur CURSOR, @num_fetch int)
+CREATE PROCEDURE babel_cursor_proc(@num_fetch int)
 AS
 BEGIN
 	DECLARE @var_i int;
 	DECLARE @cnt int = 0;
+	DECLARE cur CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i
+	OPEN cur
 
 	WHILE @cnt < @num_fetch
 	  BEGIN
-		FETCH FROM @cur INTO @var_i
+		FETCH FROM cur INTO @var_i
 		SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
 		IF @@FETCH_STATUS <> 0
 		BREAK
@@ -24,59 +26,12 @@ BEGIN
 		SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
 		SET @cnt = @cnt + 1
 	  END
+	
+	CLOSE cur
 END;
 GO
 
-CREATE PROCEDURE babel_fetch_cursor_helper_char_proc(@cur CURSOR, @num_fetch int)
-AS
-BEGIN
-	DECLARE @var_c varchar(100);
-	DECLARE @cnt int = 0;
-
-	WHILE @cnt < @num_fetch
-	BEGIN
-		FETCH FROM @cur INTO @var_c
-		SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
-		IF @@FETCH_STATUS <> 0
-			BREAK
-		SELECT '@var_c: ' + CAST(@var_c AS VARCHAR(100))
-		IF (@var_c IS NULL)
-			SELECT '@var_c is null: ' + CAST((case when @var_c is null then 'true' else 'false' end) AS VARCHAR(100))
-		SET @cnt = @cnt + 1
-	END
-END;
-GO
-
-CREATE PROCEDURE babel_cursor_proc
-AS
-BEGIN
-	DECLARE @var_a int;
-	DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
-	OPEN cur_a;
-
-	EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
-	CLOSE cur_a;
-END;
-GO
-
-EXEC babel_cursor_proc;
-GO
-
-CREATE PROCEDURE babel_cursor_no_semi_proc
-AS
-BEGIN
-	DECLARE @var_a int
-	DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i
-	OPEN cur_a
-
-	EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
-	CLOSE cur_a
-END;
-GO
-
-EXEC babel_cursor_no_semi_proc;
+EXEC babel_cursor_proc 5;
 GO
 
 -- no cursor cur_a (in OPEN)
@@ -96,9 +51,6 @@ BEGIN
 	DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	OPEN cur_a;
 	FETCH NEXT FROM cur_a INTO @var_a;
-
-	EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	CLOSE cur_b;
 END;
 GO
@@ -121,9 +73,6 @@ BEGIN
 	DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	OPEN cur_a;
 	FETCH NEXT FROM cur_a INTO @var_a;
-
-	EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	CLOSE @var_a;
 END;
 GO
@@ -150,9 +99,6 @@ BEGIN
 	DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	OPEN cur_a;
 	FETCH NEXT FROM cur_a INTO @var_a;
-
-	EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	CLOSE GLOBAL cur_a;
 END;
 GO
@@ -348,10 +294,21 @@ CREATE PROCEDURE babel_local_cursor_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  CLOSE cur_a;
 END;
@@ -364,10 +321,21 @@ CREATE PROCEDURE babel_forward_only_cursor_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR FORWARD_ONLY FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 3;
+	  WHILE @cnt < 3
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  -- error
 	  FETCH PRIOR FROM cur_a INTO @var_a;
@@ -384,10 +352,21 @@ CREATE PROCEDURE babel_scroll_cursor_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR SCROLL FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 3;
+	  WHILE @cnt < 3
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  FETCH PRIOR FROM cur_a INTO @var_a;
 	  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10));
@@ -403,10 +382,21 @@ CREATE PROCEDURE babel_static_cursor_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR STATIC FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  CLOSE cur_a;
 END;
@@ -421,9 +411,6 @@ BEGIN
 	  DECLARE @var_a int;
 	  DECLARE cur_a CURSOR KEYSET FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
-
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	  CLOSE cur_a;
 END;
 GO
@@ -437,9 +424,6 @@ BEGIN
 	  DECLARE @var_a int;
 	  DECLARE cur_a CURSOR DYNAMIC FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
-
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	  CLOSE cur_a;
 END;
 GO
@@ -451,10 +435,21 @@ CREATE PROCEDURE babel_fast_forward_cursor_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR FAST_FORWARD FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  CLOSE cur_a;
 END;
@@ -467,11 +462,22 @@ CREATE PROCEDURE babel_read_only_cursor_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR READ_ONLY FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 	  FETCH NEXT FROM cur_a INTO @var_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	-- TODO: currently READ_ONLY is ignored. read-only cursor is updatable.
 	-- UPDATE babel_cursor_t1 SET i = i+1 WHERE CURRENT OF cur_a;
@@ -489,9 +495,6 @@ BEGIN
 	  DECLARE cur_a CURSOR SCROLL_LOCKS FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 	  FETCH NEXT FROM cur_a INTO @var_a;
-
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	  CLOSE cur_a;
 END;
 GO
@@ -506,9 +509,6 @@ BEGIN
 	  DECLARE cur_a CURSOR OPTIMISTIC FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 	  FETCH NEXT FROM cur_a INTO @var_a;
-
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
-
 	  CLOSE cur_a;
 END;
 GO
@@ -588,11 +588,22 @@ CREATE PROCEDURE babel_cursor_fetch_failure_proc
 AS
 BEGIN
 	  DECLARE @var_a int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN cur_a;
 	  FETCH NEXT FROM cur_a INTO @var_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_a
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_a: ' + CAST(@var_a AS VARCHAR(100))
+		  IF (@var_a IS NULL)
+		  SELECT '@var_a is null: ' + CAST((case when @var_a is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  SET @var_a = 1;
 	  FETCH NEXT FROM cur_a INTO @var_a;
@@ -622,20 +633,42 @@ AS
 BEGIN
 	  DECLARE @var_i int;
 	  DECLARE @var_c varchar(10)
+	  DECLARE @cnt int = 0;
 	  DECLARE @cur_a CURSOR;
 
 	  SET @cur_a = CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc @cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM @cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  DEALLOCATE @cur_a;
 
 	  -- set another cursor for the same curvar
 	  SET @cur_a = CURSOR FOR SELECT c FROM babel_cursor_t1 ORDER BY i;
+	  SET @cnt = 0;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_char_proc @cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM @cur_a INTO @var_c
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_c: ' + CAST(@var_c AS VARCHAR(100))
+		  IF (@var_c IS NULL)
+		  SELECT '@var_c is null: ' + CAST((case when @var_c is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  CLOSE @cur_a;
 END;
@@ -649,20 +682,42 @@ AS
 BEGIN
 	  DECLARE @var_i int;
 	  DECLARE @var_c varchar(10)
+	  DECLARE @cnt int = 0;
 	  DECLARE @cur_a CURSOR;
 
 	  SET @cur_a = CURSOR FAST_FORWARD FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc @cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM @cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  DEALLOCATE @cur_a;
 
 	  -- set another cursor for the same curvar
 	  SET @cur_a = CURSOR SCROLL FOR SELECT c FROM babel_cursor_t1 ORDER BY c;
+	  SET @cnt = 0;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_char_proc @cur_a, 5;
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM @cur_a INTO @var_c
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_c: ' + CAST(@var_c AS VARCHAR(100))
+		  IF (@var_c IS NULL)
+		  SELECT '@var_c is null: ' + CAST((case when @var_c is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 
 	  CLOSE @cur_a;
 END;
@@ -681,13 +736,27 @@ BEGIN
 	  SET @cur_a = CURSOR FAST_FORWARD FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_int_proc @cur_a, 1;
+	  FETCH FROM @cur_a INTO @var_i
+	  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+	  IF @@FETCH_STATUS = 0
+	  BEGIN
+	  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+	  IF (@var_i IS NULL)
+	  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+	  END
 
 	  -- set another cursor for the same curvar without deallocate
 	  SET @cur_a = CURSOR SCROLL FOR SELECT c FROM babel_cursor_t1 ORDER BY c;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_char_proc @cur_a, 1;
+	  FETCH FROM @cur_a INTO @var_c
+	  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+	  IF @@FETCH_STATUS = 0
+	  BEGIN
+	  SELECT '@var_c: ' + CAST(@var_c AS VARCHAR(100))
+	  IF (@var_c IS NULL)
+	  SELECT '@var_c is null: ' + CAST((case when @var_c is null then 'true' else 'false' end) AS VARCHAR(100))
+	  END
 
 	  CLOSE @cur_a;
 END;
@@ -709,7 +778,14 @@ BEGIN
 	  SET @cur_a = CURSOR SCROLL FOR SELECT c FROM babel_cursor_t1;
 	  OPEN @cur_a;
 
-	  EXEC babel_fetch_cursor_helper_char_proc @cur_a, 1;
+	  FETCH FROM @cur_a INTO @var_c
+	  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+	  IF @@FETCH_STATUS = 0
+	  BEGIN
+	  SELECT '@var_c: ' + CAST(@var_c AS VARCHAR(100))
+	  IF (@var_c IS NULL)
+	  SELECT '@var_c is null: ' + CAST((case when @var_c is null then 'true' else 'false' end) AS VARCHAR(100))
+	  END
 
 	  CLOSE @cur_a;
 END;
@@ -739,7 +815,14 @@ BEGIN
 	  OPEN @cur_a;
 	  FETCH NEXT FROM @cur_a INTO @var_i;
 
-	  EXEC babel_fetch_cursor_helper_int_proc @cur_a, 1;
+	  FETCH FROM @cur_a INTO @var_i
+	  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+	  IF @@FETCH_STATUS = 0
+	  BEGIN
+	  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+	  IF (@var_i IS NULL)
+	  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+	  END
 
 	  DEALLOCATE @cur_a;
 	  DEALLOCATE @cur_a;
@@ -1150,16 +1233,39 @@ GO
 CREATE PROCEDURE babel_cursor_redecl_proc
 AS
 BEGIN
+	  DECLARE @var_i int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 	  CLOSE cur_a
 	  DEALLOCATE cur_a
 
 	  -- redeclare with different definition
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i+100 from babel_cursor_t1
+	  SET @cnt = 0
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 	  CLOSE cur_a
 	  DEALLOCATE cur_a
 END;
@@ -1172,15 +1278,26 @@ GO
 CREATE PROCEDURE babel_cursor_redecl_not_deallocd_proc_1
 AS
 BEGIN
+	  DECLARE @var_i int;
+	  DECLARE @cnt int = 0;
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 	  CLOSE cur_a
 
 	  -- redeclare with different definition
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i+100 from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
 	  CLOSE cur_a
 END;
 GO
@@ -1197,7 +1314,6 @@ BEGIN
 	  -- redeclare with different definition
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i+100 from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
 END;
 GO
 
@@ -1211,7 +1327,6 @@ BEGIN
 	  -- redeclare with different definition
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i+100 from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
 END;
 GO
 
@@ -1221,16 +1336,40 @@ GO
 CREATE PROCEDURE babel_cursor_redecl_goto_proc
 AS
 BEGIN
+	  DECLARE @var_i int;
+	  DECLARE @cnt int = 0;
 	  GOTO label1
 	label2:
+	  SET @cnt = 0
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i+100 from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 	  GOTO label3
 	label1:
+	  SET @cnt = 0
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 	  DEALLOCATE cur_a
 	  GOTO label2
 	label3:
@@ -1243,260 +1382,35 @@ GO
 CREATE PROCEDURE babel_cursor_redecl_goto_proc_2
 AS
 BEGIN
+	  DECLARE @var_i int;
+	  DECLARE @cnt int = 0;
 	  GOTO label1
 	label2:
 	  -- error is expected here because cur_a in label1 is not dealloc'd
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i+100 from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
 	  DEALLOCATE cur_a
 	  GOTO label3
 	label1:
 	  DECLARE cur_a CURSOR LOCAL FOR SELECT i from babel_cursor_t1
 	  OPEN cur_a
-	  EXEC babel_fetch_cursor_helper_int_proc cur_a, 5
+	  WHILE @cnt < 5
+	    BEGIN
+		  FETCH FROM cur_a INTO @var_i
+		  SELECT '@@fetch_status: ' + CAST(@@fetch_status AS VARCHAR(10))
+		  IF @@FETCH_STATUS <> 0
+		  BREAK
+		  SELECT '@var_i: ' + CAST(@var_i AS VARCHAR(100))
+		  IF (@var_i IS NULL)
+		  SELECT '@var_i is null: ' + CAST((case when @var_i is null then 'true' else 'false' end) AS VARCHAR(100))
+		  SET @cnt = @cnt + 1
+		END
 	  GOTO label2
 	label3:
 END
 GO
 
 EXEC babel_cursor_redecl_goto_proc_2
-GO
-
-CREATE PROCEDURE babel_print_sp_cursor_list(@cur CURSOR)
-AS
-BEGIN
-	  DECLARE @refname VARCHAR(200);
-	  DECLARE @curname VARCHAR(200);
-	  DECLARE @scope INT;
-	  DECLARE @status INT;
-	  DECLARE @model INT;
-	  DECLARE @concurrency INT;
-	  DECLARE @scrollable INT;
-	  DECLARE @open_status INT;
-	  DECLARE @cursor_rows DECIMAL(10,0);
-	  DECLARE @fetch_status INT;
-	  DECLARE @column_count INT;
-	  DECLARE @row_count DECIMAL(10,0);
-	  DECLARE @last_operation INT;
-
-	  FETCH FROM @cur INTO @refname, @curname, @scope, @status, @model, @concurrency, @scrollable, @open_status, @cursor_rows, @fetch_status, @column_count, @row_count, @last_operation;
-	  WHILE @@FETCH_STATUS = 0
-	  BEGIN
-		SELECT '(sp_cursor_list out) @refname: ' + @refname + ', @curname: ' + @curname + ', @scope: ' + cast(@scope as VARCHAR(10)) + ', @model: ' + cast(@model as varchar(10)) + ', @concurrency: ' + cast(@concurrency as varchar(10)) + ', @scrollable: ' + cast(@scrollable as varchar(10)) + ', @open_status: ' + cast(@open_status as varchar(10)) + ', @cursor_rows: ' + cast(@cursor_rows as varchar(10)) + ', @fetch_status: ' + cast(@fetch_status as varchar(10)) + ', @column_count: ' + cast(@column_count as varchar(10)) + ', @row_count: ' + cast(@row_count as varchar(10)) + ', @last_operation ' + cast(@last_operation as varchar(10));
-		FETCH FROM @cur INTO @refname, @curname, @scope, @status, @model, @concurrency, @scrollable, @open_status, @cursor_rows, @fetch_status, @column_count, @row_count, @last_operation;
-	  END
-
-	  CLOSE @cur;
-	  DEALLOCATE @cur;
-END
-GO
-
-
-CREATE PROCEDURE babel_sp_cursor_list_proc
-AS
-BEGIN
-	  DECLARE @report_cur CURSOR;
-	  DECLARE @var_a int;
-
-	  DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
-	  DECLARE cur_b CURSOR FOR SELECT i+1 FROM babel_cursor_t1 ORDER BY i;
-
-	  DECLARE @refcur_b CURSOR;
-	  DECLARE @refcur_c CURSOR;
-
-	  SELECT '== AFTER DECLARE ==';
-	  EXEC sp_cursor_list @report_cur OUT, 1;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  SET @refcur_b = cur_b;
-	  SET @refcur_c = CURSOR FOR SELECT i+2 FROM babel_cursor_t1 ORDER BY i;
-
-	  SELECT '== AFTER SET ==';
-	  EXEC sp_cursor_list @report_cur OUT, 1;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  OPEN cur_a;
-	  OPEN @refcur_b;
-	  OPEN @refcur_c;
-
-	  SELECT '== AFTER OPEN ==';
-	  EXEC sp_cursor_list @report_cur OUT, 1;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  FETCH NEXT FROM cur_a INTO @var_a;
-	  FETCH NEXT FROM @refcur_b INTO @var_a;
-	  FETCH NEXT FROM @refcur_c INTO @var_a;
-
-	  SELECT '== AFTER FETCH ==';
-	  EXEC sp_cursor_list @report_cur OUT, 1;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  CLOSE cur_a;
-	  CLOSE @refcur_b;
-	  CLOSE @refcur_c;
-
-	  SELECT '== AFTER CLOSE ==';
-	  EXEC sp_cursor_list @report_cur OUT, 1;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  DEALLOCATE cur_a;
-	  DEALLOCATE @refcur_b;
-	  DEALLOCATE @refcur_c;
-
-	  SELECT '== AFTER DEALLOCATE ==';
-	  EXEC sp_cursor_list @report_cur OUT, 1;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-END;
-GO
-
-EXEC babel_sp_cursor_list_proc;
-GO
-
-CREATE PROCEDURE babel_sp_cursor_list_nested_proc_2
-AS
-BEGIN
-	  DECLARE @report_cur CURSOR;
-	  DECLARE cur_a CURSOR FOR SELECT * FROM babel_cursor_t1 ORDER BY c;
-	  OPEN cur_a;
-
-	  SELECT '== in the nested proc ==';
-	  EXEC sp_cursor_list @report_cur OUT, 3;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-END;
-GO
-
-CREATE PROCEDURE babel_sp_cursor_list_nested_proc
-AS
-BEGIN
-	  DECLARE @report_cur CURSOR;
-	  DECLARE @var_a INT;
-	  DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
-	  DECLARE @refcur_a CURSOR;
-
-	  SET @refcur_a = cur_a;
-
-	  OPEN cur_a;
-	  FETCH NEXT FROM @refcur_a INTO @var_a;
-
-	  SELECT '== before calling nested proc ==';
-	  EXEC sp_cursor_list @report_cur OUT, 3;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  EXEC babel_sp_cursor_list_nested_proc_2;
-
-	  SELECT '== after calling nested proc ==';
-	  EXEC sp_cursor_list @report_cur OUT, 3;
-	  EXEC babel_print_sp_cursor_list @report_cur;
-END;
-GO
-
-EXEC babel_sp_cursor_list_nested_proc;
-GO
-
-CREATE PROCEDURE babel_sp_describe_cursor_proc
-AS
-BEGIN
-	  DECLARE @report_cur CURSOR;
-	  DECLARE @var_a int;
-
-	  DECLARE cur_a CURSOR FOR SELECT i FROM babel_cursor_t1 ORDER BY i;
-	  DECLARE cur_b CURSOR FOR SELECT i+1 FROM babel_cursor_t1 ORDER BY i;
-
-	  DECLARE @refcur_b CURSOR;
-	  DECLARE @refcur_c CURSOR;
-
-	  SELECT '== AFTER DECLARE ==';
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  SET @refcur_b = cur_b;
-	  SET @refcur_c = CURSOR FOR SELECT i+2 FROM babel_cursor_t1 ORDER BY i;
-
-	  SELECT '== AFTER SET ==';
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_c';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  OPEN cur_a;
-	  OPEN @refcur_b;
-	  OPEN @refcur_c;
-
-	  SELECT '== AFTER OPEN ==';
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_c';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  FETCH NEXT FROM cur_a INTO @var_a;
-	  FETCH NEXT FROM @refcur_b INTO @var_a;
-	  FETCH NEXT FROM @refcur_c INTO @var_a;
-
-	  SELECT '== AFTER FETCH ==';
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_c';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  SELECT '== BEGIN (call with invalid argument) =='
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', '@refcur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', '@refcur_not_exsits';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_not_exsits';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  SELECT '== END (call with invalid argument) =='
-
-	  CLOSE cur_a;
-	  CLOSE @refcur_b;
-	  CLOSE @refcur_c;
-
-	  SELECT '== AFTER CLOSE ==';
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_c';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-	  DEALLOCATE cur_a;
-	  DEALLOCATE @refcur_b;
-	  DEALLOCATE @refcur_c;
-
-	  SELECT '== AFTER DEALLOCATE ==';
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_a';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'local', 'cur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_b';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-	  EXEC sp_describe_cursor @report_cur OUT, 'variable', '@refcur_c';
-	  EXEC babel_print_sp_cursor_list @report_cur;
-
-END;
-GO
-
-EXEC babel_sp_describe_cursor_proc;
 GO
 
 CREATE PROCEDURE babel_same_cursor_name_proc(@opt int)
@@ -1922,7 +1836,6 @@ EXEC babel_943_proc
 GO
 
 DROP PROCEDURE babel_cursor_proc;
-DROP PROCEDURE babel_cursor_no_semi_proc;
 DROP PROCEDURE babel_cursor_double_precision_proc;
 DROP PROCEDURE babel_cursor_varchar_proc;
 DROP PROCEDURE babel_cursor_uniqueidentifier_proc;
@@ -1962,13 +1875,6 @@ DROP PROCEDURE babel_cursor_redecl_not_deallocd_proc_2;
 DROP PROCEDURE babel_cursor_redecl_not_deallocd_proc_3;
 DROP PROCEDURE babel_cursor_redecl_goto_proc;
 DROP PROCEDURE babel_cursor_redecl_goto_proc_2;
-DROP PROCEDURE babel_fetch_cursor_helper_int_proc;
-DROP PROCEDURE babel_fetch_cursor_helper_char_proc;
-DROP PROCEDURE babel_sp_cursor_list_proc;
-DROP PROCEDURE babel_sp_cursor_list_nested_proc_2;
-DROP PROCEDURE babel_sp_cursor_list_nested_proc;
-DROP PROCEDURE babel_sp_describe_cursor_proc;
-DROP PROCEDURE babel_print_sp_cursor_list;
 DROP PROCEDURE babel_same_cursor_name_proc;
 DROP PROCEDURE babel_cursor_rows_proc;
 DROP PROCEDURE babel_sp_cursor_proc;

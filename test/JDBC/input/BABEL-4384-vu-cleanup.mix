@@ -1,0 +1,30 @@
+-- tsql
+DROP VIEW babel_4384_v1;
+GO
+
+DROP VIEW babel_4384_v2;
+GO
+
+DROP VIEW babel_4384_v3;
+GO
+
+DROP VIEW babel_4384_v4;
+GO
+
+DROP VIEW babel_4384_v5;
+GO
+
+DROP VIEW babel_4384_v6;
+GO
+
+DROP VIEW babel_4384_v7;
+GO
+
+DROP table babel_4384_t1;
+GO
+
+DROP table babel_4384_t2;
+GO
+
+DROP table babel_4384_t3;
+GO

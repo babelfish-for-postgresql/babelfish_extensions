@@ -139,47 +139,63 @@ babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUm
 babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
 ~~END~~
 
--- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_fkeys @pktable_name = [babel_sp_fkeys_vu_prepare_mytable5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_fkeys_vu_prepare_mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @pktable_name = [babel_sp_fkeys_vu_prepare_MYTABLE5]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_fkeys_vu_prepare_mytable5" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [babel_sp_fkeys_vu_prepare_mytable6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_fkeys_vu_prepare_mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [babel_sp_fkeys_vu_prepare_MYTABLE6]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_fkeys_vu_prepare_mytable6" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable6_column_c_column_d_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [babel_sp_fkeys_vu_prepare_mytable7]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_fkeys_vu_prepare_mytable7" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+~~END~~
 
 
 exec sp_fkeys @fktable_name = [babel_sp_fkeys_vu_prepare_MYTABLE7]
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: column "babel_sp_fkeys_vu_prepare_mytable7" does not exist)~~
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#smallint
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#cOlUmN_a#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_a#!#1#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable5#!#CoLuMn_b#!#babel_sp_fkeys_vu_prepare_db1#!#dbo#!#babel_sp_fkeys_vu_prepare_mytable7#!#MyColumn_b#!#2#!#1#!#1#!#babel_sp_fkeys_vu_prepare_mytable7_mycolumn_a_mycolumn_b_fkey#!#babel_sp_fkeys_vu_prepare_mytable5_pkey#!#7
+~~END~~
 
 
 use master

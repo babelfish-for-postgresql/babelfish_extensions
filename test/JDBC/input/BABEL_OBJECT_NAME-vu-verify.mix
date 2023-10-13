@@ -114,6 +114,10 @@ GO
 GRANT SELECT ON babel_object_name_t_pk TO babel_object_name_master_user1;
 GO
 
+-- reset the login password
+ALTER LOGIN babel_object_name_login1 WITH PASSWORD = '12345678';
+GO
+
 -- tsql      user=babel_object_name_login1 password=12345678
 USE master
 GO

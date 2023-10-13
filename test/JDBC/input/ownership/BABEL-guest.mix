@@ -10,7 +10,7 @@ GO
 CREATE TABLE babel_2571_table1(a int, b int)
 GO
 
-CREATE LOGIN babel_2571_login1 WITH password='123'
+CREATE LOGIN babel_2571_login1 WITH password='12345678'
 GO
 
 CREATE DATABASE babel_2571_db1

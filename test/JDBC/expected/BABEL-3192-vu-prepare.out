@@ -1,9 +1,3 @@
-CREATE DATABASE db_babel_3192;
-go
-
-USE db_babel_3192;
-go
-
 -- T-SQL table-type
 CREATE TYPE babel_3192_type AS TABLE (a int, b int);
 go

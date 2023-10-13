@@ -2,6 +2,31 @@
 
 #include "fmgr.h"
 
+/*
+ * Casting float < -1.0 to unsigned integer could cause issues on ARM.
+ *
+ * For instance:
+ *     auto fvalue = -176.0;
+ *     auto tvalue = static_cast<uint16_t>(fvalue);
+ *     On Intel, tvalue = 65360 which is correct.
+ *     On ARM, tvalue = 0 which is wrong.
+ *
+ * Hence the compiler flag -Wfloat-conversion has been added to BBF Makefiles
+ * to guard the codebase from this bug.
+ *
+ * However, float-conversion is not too granular enough because it also
+ * flags things like float8 to float4 conversion or conversions where the
+ * original value is always greater than or equal to zero.
+ * For code that are being flagged but are not really an issue, we can suppress
+ * the compilation error by surrounding them with _Pragma().
+ */
+#define BBF_Pragma_IgnoreFloatConversionWarning_Push \
+    _Pragma("GCC diagnostic push") \
+    _Pragma("GCC diagnostic ignored \"-Wfloat-conversion\"")
+
+#define BBF_Pragma_IgnoreFloatConversionWarning_Pop \
+    _Pragma("GCC diagnostic pop")
+
 typedef struct common_utility_plugin
 {
 	/* Function pointers set up by the plugin */
@@ -17,6 +42,8 @@ typedef struct common_utility_plugin
 	bool		(*is_tsql_ntext_datatype) (Oid oid);
 	bool		(*is_tsql_image_datatype) (Oid oid);
 	bool		(*is_tsql_binary_datatype) (Oid oid);
+	bool		(*is_tsql_sys_binary_datatype) (Oid oid);
+	bool		(*is_tsql_sys_varbinary_datatype) (Oid oid);
 	bool		(*is_tsql_varbinary_datatype) (Oid oid);
 	bool		(*is_tsql_timestamp_datatype) (Oid oid);
 	bool		(*is_tsql_datetime2_datatype) (Oid oid);

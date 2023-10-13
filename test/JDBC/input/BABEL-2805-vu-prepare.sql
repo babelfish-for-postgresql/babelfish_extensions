@@ -13,7 +13,7 @@ select t.* from babel_2805_vu_t1
 CROSS APPLY
 (
     VALUES
-        (1, 'col1', col1),
+        (1, CAST('col1' as TEXT), col1),
         (2, 'col2', col2)
 ) t(id, [name], [value]);
 go

@@ -143,7 +143,7 @@ protected:
 		antlrcpp::Any visitCreate_contract(TSqlParser::Create_contractContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONTRACT, "CREATE CONTRACT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitAlter_queue(TSqlParser::Alter_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ALTER_QUEUE, "ALTER QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override;
 		antlrcpp::Any visitCreate_message_type(TSqlParser::Create_message_typeContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_MESSAGE, "CREATE MESSAGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitSecurity_statement(TSqlParser::Security_statementContext *ctx) override;
 		antlrcpp::Any visitSetuser_statement(TSqlParser::Setuser_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SET_USER, "SET USER", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -214,8 +214,9 @@ protected:
 		antlrcpp::Any visitXml_exist_call(TSqlParser::Xml_exist_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
+		#ifndef ENABLE_SPATIAL_TYPES
 		antlrcpp::Any visitSpatial_methods(TSqlParser::Spatial_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SPATIAL_METHOD, "spatial methods", getLineAndPos(ctx)); return visitChildren(ctx); }
-
+		#endif
 		// built-in functions
 		antlrcpp::Any visitBif_cast_parse(TSqlParser::Bif_cast_parseContext *ctx) override;
 		antlrcpp::Any visitSql_option(TSqlParser::Sql_optionContext *ctx) override;
@@ -266,6 +267,25 @@ void TsqlUnsupportedFeatureHandlerImpl::handle(PgTsqlInstrMetricType tm_type, co
 		else
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'%s\' is not currently supported in Babelfish", featureName), line_and_pos);
 	}
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitKill_statement(TSqlParser::Kill_statementContext *ctx)
+{
+	if (ctx->kill_query_notification())
+		handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with QUERY NOTIFICATION", getLineAndPos(ctx->KILL()));
+	else if (ctx->kill_stats_job())
+		handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with STATS JOB", getLineAndPos(ctx->KILL()));
+	else if (ctx->kill_process())
+	{
+		if (ctx->kill_process()->STATUSONLY())
+			handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with STATUSONLY", getLineAndPos(ctx->KILL()));		
+		else if (ctx->kill_process()->UOW())
+			handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with UOW", getLineAndPos(ctx->KILL()));
+		else if (ctx->kill_process()->char_string())
+			handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL with a session ID string", getLineAndPos(ctx->KILL()));			
+	}
+		
+	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx)
@@ -1061,6 +1081,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->drop_user()
 	 || ctx->drop_view()
 	 || ctx->truncate_table()
+	 || ctx->enable_trigger()
+	 || ctx->disable_trigger()
 	 )
 	{
 		// supported DDL or DDL which need special handling
@@ -1435,10 +1457,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 			}
 			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
 				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", getLineAndPos(ctx));
-			else if (pg_strcasecmp("geography", name.c_str()) == 0)
-				handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", getLineAndPos(ctx));
-			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
-				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", getLineAndPos(ctx));
+			#ifndef ENABLE_SPATIAL_TYPES
+				else if (pg_strcasecmp("geography", name.c_str()) == 0)
+					handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", getLineAndPos(ctx));
+				else if (pg_strcasecmp("geometry", name.c_str()) == 0)
+					handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", getLineAndPos(ctx));
+			#endif
 		}
 	}
 	if (ctx->NATIONAL())

@@ -29,7 +29,7 @@ select * from t join t_babel4046 on a like b;
 GO
 
 CREATE VIEW babel4046_2 as
-select * from t join t_babel4046 on a like 'aa%';
+select * from t join t_babel4046 on a like 'aa%' order by 1 offset 0 ROWS;;
 GO
 
 CREATE TABLE [dbo].[t3](

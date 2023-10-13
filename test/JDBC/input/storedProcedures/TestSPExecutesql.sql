@@ -118,6 +118,33 @@ EXEC sp_executesql @SQLString, @ParamDef, @a = @p1 OUT, @b = @p2 OUT;
 SELECT @p1, @p2;
 go
 
+/* 8. Prefixed with dbo.<> and sys.<> */
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC dbo.sp_executesql @SQLString;
+go
+
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC sys.sp_executesql @SQLString;
+go
+
+/* 9. With omitted database and schema name */
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC .dbo.sp_executesql @SQLString;
+go
+
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC .sys.sp_executesql @SQLString;
+go
+
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'SELECT N''hello world'';';
+EXEC ..sp_executesql @SQLString;
+go
+
 /* Exceptions */
 /* 1. Wrong order of named/unnamed params */
 DECLARE @SQLString NVARCHAR(100);

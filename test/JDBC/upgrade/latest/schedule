@@ -10,6 +10,7 @@ BABEL-3613
 
 app_name
 atn2
+ATTIMEZONE-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 BABEL-1062
@@ -37,6 +38,7 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
+BABEL-2170
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -82,6 +84,7 @@ BABEL-3360
 BABEL-3369
 BABEL-3370
 BABEL-3380
+BABEL-3392
 BABEL-3402
 BABEL-3474
 BABEL-3478
@@ -109,6 +112,7 @@ BABEL-383
 BABEL-3844
 BABEL-3914
 BABEL-3938
+BABEL-3952
 BABEL-404
 BABEL-405
 BABEL-4078
@@ -190,6 +194,7 @@ bitwise_not-operator
 case_insensitive_collation
 cast_numeric_types_to_datetime
 cast_numeric_types_to_smalldatetime
+col_length
 collation_tests
 collation_tests_arabic
 collation_tests_greek
@@ -225,6 +230,7 @@ ISC-Tables
 ISC-Views
 is_srvrolemember
 jira-BABEL-3504-upgrade
+key_column_usage
 linked_servers
 msdb-dbo-fn_syspolicy_is_automation_enabled
 msdb-dbo-syspolicy_configuration
@@ -240,6 +246,7 @@ rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
+select-strip-parens
 sp_describe_first_result_set
 sp_tablecollations
 smalldatetimefromparts-dep
@@ -411,6 +418,7 @@ TestRowVersion
 TestSmallDatetime
 TestSmallInt
 TestSmallMoney
+TestSpatialPoint
 Test-sp_addrole
 Test-sp_addrolemember
 Test-sp_babelfish_volatility
@@ -442,7 +450,10 @@ test_windows_login
 test_windows_sp_helpuser
 TestXML
 timefromparts
+todatetimeoffset-dep
 triggers_with_transaction
+unquoted_string
+doublequoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -450,3 +461,13 @@ linked_srv_4229
 BABEL-4175
 sp_who
 BABEL_4330
+kill
+BABEL-4217
+Test_ISNULL
+BABEL-4270
+BABEL-4410
+BABEL-4231
+sys_asymmetric_keys
+sys_certificates
+sys_database_permissions
+BABEL-4279

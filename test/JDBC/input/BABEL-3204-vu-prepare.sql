@@ -1,9 +1,3 @@
-CREATE DATABASE db_babel_3204;
-go
-
-USE db_babel_3204;
-go
-
 -- create ITVF which uses inbuilt functions
 -- function's body should not get compiled during restore
 CREATE FUNCTION babel_3204_complex_func
