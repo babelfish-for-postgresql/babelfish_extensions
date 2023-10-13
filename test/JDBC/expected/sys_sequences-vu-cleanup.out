@@ -15,3 +15,13 @@ GO
 
 DROP FUNCTION sys_sequences_vu_prepare_func2
 GO
+
+DROP sequence IF EXISTS test_seq 
+GO
+
+DROP sequence IF EXISTS sch.ははははははははははははははははは 
+GO
+
+DROP schema IF EXISTS sch
+GO
+

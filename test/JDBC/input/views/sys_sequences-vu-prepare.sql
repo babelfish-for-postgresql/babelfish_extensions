@@ -1,6 +1,15 @@
 USE master
 GO
 
+Create sequence test_seq as int 
+GO
+
+Create schema sch
+GO
+
+Create sequence sch.ははははははははははははははははは 
+GO
+
 CREATE VIEW sys_sequences_vu_prepare_view AS
 select
     name
@@ -69,7 +78,7 @@ CREATE FUNCTION sys_sequences_vu_prepare_func1()
 RETURNS INT
 AS
 BEGIN
-    RETURN (SELECT COUNT(*) FROM sys.sequences WHERE name='Babel_DATAtype_SQLvariant_vu_prepare_t4_SEC');
+    RETURN (SELECT COUNT(*) FROM sys.sequences WHERE name='TEST_SEq');
 END
 GO
 
