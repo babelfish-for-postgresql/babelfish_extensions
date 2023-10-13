@@ -184,13 +184,13 @@ $newnode->stop;
 $newnode->start;
 
 # Dump global objects using pg_dumpall.
-my @dumpall_command = (
+@dumpall_command = (
 	'pg_dumpall', '--database', 'postgres', '--port', $newnode->port,
 	'--roles-only', '--quote-all-identifiers', '--verbose',
 	'--no-role-passwords', '--file', $dump1_file);
 $newnode->command_ok(\@dumpall_command, 'Dump global objects.');
 # Dump Babelfish database using pg_dump.
-my @dump_command = (
+@dump_command = (
 	'pg_dump', '--quote-all-identifiers', '--port', $newnode->port,
 	'--verbose', '--dbname', 'postgres',
 	'--file', $dump2_file);
