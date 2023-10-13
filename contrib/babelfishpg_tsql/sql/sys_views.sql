@@ -3060,7 +3060,7 @@ select
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id
   , CAST(0 as int) as parent_object_id
-  , CAST('SO' as char(2)) as type
+  , CAST('SO' as sys.bpchar(2)) as type
   , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
