@@ -3262,7 +3262,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								wrapper->canSetTag = false;
 								wrapper->utilityStmt = stmt;
 								wrapper->stmt_location = 0;
-								wrapper->stmt_len = 16;
+								wrapper->stmt_len = 0;
 
 								/* do this step */
 								ProcessUtility(wrapper,
@@ -3582,7 +3582,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						ListCell	*lc1;
 						const char *obj_type = "r";
 						if (rv->schemaname != NULL)
-							logical_schema = get_logical_schema_name(rv->schemaname, true);	/* this is physical name */
+							logical_schema = get_logical_schema_name(rv->schemaname, true);
 						else
 							logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
 						/* If ALL PRIVILEGES is granted/revoked. */

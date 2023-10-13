@@ -3354,7 +3354,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				wrapper->canSetTag = false;
 				wrapper->utilityStmt = stmt;
 				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 16;
+				wrapper->stmt_len = 0;
 
 				/* do this step */
 				ProcessUtility(wrapper,

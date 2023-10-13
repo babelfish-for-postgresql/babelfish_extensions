@@ -283,6 +283,19 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
  *****************************************/
 #define BBF_SCHEMA_PERMS_TABLE_NAME "babelfish_schema_permissions"
 #define BBF_SCHEMA_PERMS_IDX_NAME "babelfish_schema_permissions_pkey"
+#define BBF_SCHEMA_PERMS_NUM_OF_COLS 6
+#define BBF_SCHEMA_PERMS_DBID 0
+#define BBF_SCHEMA_PERMS_SCHEMA_NAME 1
+#define BBF_SCHEMA_PERMS_OBJECT_NAME 2
+#define BBF_SCHEMA_PERMS_PERMISSION 3
+#define BBF_SCHEMA_PERMS_GRANTEE 4
+#define BBF_SCHEMA_PERMS_OBJECT_TYPE 5
+#define Anum_bbf_schema_perms_dbid 1
+#define Anum_bbf_schema_perms_schema_name 2
+#define Anum_bbf_schema_perms_object_name 3
+#define Anum_bbf_schema_perms_permission 4
+#define Anum_bbf_schema_perms_grantee 5
+#define Anum_bbf_schema_perms_object_type 6
 
 extern Oid bbf_schema_perms_oid;
 extern Oid bbf_schema_perms_idx_oid;

@@ -2839,8 +2839,8 @@ add_entry_to_bbf_schema(const char *schema_name,
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
 	HeapTuple	tuple_bbf_schema;
-	Datum		new_record_bbf_schema[6];
-	bool		new_record_nulls_bbf_schema[6];
+	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
+	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
 
 	/* Fetch the relation */
@@ -2852,15 +2852,15 @@ add_entry_to_bbf_schema(const char *schema_name,
 	MemSet(new_record_bbf_schema, 0, sizeof(new_record_bbf_schema));
 	MemSet(new_record_nulls_bbf_schema, false, sizeof(new_record_nulls_bbf_schema));
 
-	new_record_bbf_schema[0] = Int16GetDatum(dbid);
-	new_record_bbf_schema[1] = CStringGetDatum(pstrdup(schema_name));
-	new_record_bbf_schema[2] = CStringGetDatum(pstrdup(object_name));
-	new_record_bbf_schema[3] = CStringGetDatum(pstrdup(permission));
-	new_record_bbf_schema[4] = CStringGetDatum(pstrdup(grantee));
+	new_record_bbf_schema[BBF_SCHEMA_PERMS_DBID] = Int16GetDatum(dbid);
+	new_record_bbf_schema[BBF_SCHEMA_PERMS_SCHEMA_NAME] = CStringGetDatum(pstrdup(schema_name));
+	new_record_bbf_schema[BBF_SCHEMA_PERMS_OBJECT_NAME] = CStringGetDatum(pstrdup(object_name));
+	new_record_bbf_schema[BBF_SCHEMA_PERMS_PERMISSION] = CStringGetDatum(pstrdup(permission));
+	new_record_bbf_schema[BBF_SCHEMA_PERMS_GRANTEE] = CStringGetDatum(pstrdup(grantee));
 	if (object_type != NULL)
-		new_record_bbf_schema[5] = CStringGetDatum(pstrdup(object_type));
+		new_record_bbf_schema[BBF_SCHEMA_PERMS_OBJECT_TYPE] = CStringGetDatum(pstrdup(object_type));
 	else
-		new_record_nulls_bbf_schema[5] = true;
+		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_OBJECT_TYPE] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -2891,25 +2891,25 @@ check_bbf_schema_for_entry(const char *schema_name,
 	int16	dbid = get_cur_db_id();
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
-									RowExclusiveLock);
+									AccessShareLock);
 	ScanKeyInit(&key[0],
-				1,
+				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	ScanKeyInit(&key[1],
-				2,
+				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(schema_name));
 	ScanKeyInit(&key[2],
-				3,
+				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(object_name));
 	ScanKeyInit(&key[3],
-				4,
+				Anum_bbf_schema_perms_permission,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(permission));
 	ScanKeyInit(&key[4],
-				5,
+				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(grantee));
 
@@ -2920,7 +2920,7 @@ check_bbf_schema_for_entry(const char *schema_name,
 		catalog_entry_exists = true;
 
 	table_endscan(scan);
-	table_close(bbf_schema_rel, RowExclusiveLock);
+	table_close(bbf_schema_rel, AccessShareLock);
 	return catalog_entry_exists;
 }
 
@@ -2937,21 +2937,21 @@ check_bbf_schema_for_schema(const char *schema_name,
 	int16	dbid = get_cur_db_id();
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
-									RowExclusiveLock);
+									AccessShareLock);
 	ScanKeyInit(&key[0],
-				1,
+				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	ScanKeyInit(&key[1],
-				2,
+				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(schema_name));
 	ScanKeyInit(&key[2],
-				3,
+				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(object_name));
 	ScanKeyInit(&key[3],
-				4,
+				Anum_bbf_schema_perms_permission,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(permission));
 
@@ -2962,7 +2962,7 @@ check_bbf_schema_for_schema(const char *schema_name,
 		catalog_entry_exists = true;
 
 	table_endscan(scan);
-	table_close(bbf_schema_rel, RowExclusiveLock);
+	table_close(bbf_schema_rel, AccessShareLock);
 	return catalog_entry_exists;
 }
 
@@ -2981,23 +2981,23 @@ del_from_bbf_schema(const char *schema_name,
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
 	ScanKeyInit(&key[0],
-				1,
+				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	ScanKeyInit(&key[1],
-				2,
+				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(schema_name));
 	ScanKeyInit(&key[2],
-				3,
+				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(object_name));
 	ScanKeyInit(&key[3],
-				4,
+				Anum_bbf_schema_perms_permission,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(permission));
 	ScanKeyInit(&key[4],
-				5,
+				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(grantee));
 
@@ -3032,11 +3032,11 @@ clean_up_bbf_schema(const char *schema_name,
 	{
 		ScanKeyData scanKey[2];
 		ScanKeyInit(&scanKey[0],
-					1,
+					Anum_bbf_schema_perms_dbid,
 					BTEqualStrategyNumber, F_INT2EQ,
 					Int16GetDatum(dbid));
 		ScanKeyInit(&scanKey[1],
-					2,
+					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(schema_name));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -3047,15 +3047,15 @@ clean_up_bbf_schema(const char *schema_name,
 	{
 		ScanKeyData scanKey[3];
 		ScanKeyInit(&scanKey[0],
-					1,
+					Anum_bbf_schema_perms_dbid,
 					BTEqualStrategyNumber, F_INT2EQ,
 					Int16GetDatum(dbid));
 		ScanKeyInit(&scanKey[1],
-					2,
+					Anum_bbf_schema_perms_schema_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(schema_name));
 		ScanKeyInit(&scanKey[2],
-					3,
+					Anum_bbf_schema_perms_object_name,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(object_name));
 		scan = systable_beginscan(bbf_schema_rel,
@@ -3090,21 +3090,21 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
-									RowExclusiveLock);
+									AccessShareLock);
 	ScanKeyInit(&scanKey[0],
-				1,
+				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 	ScanKeyInit(&scanKey[1],
-				2,
+				Anum_bbf_schema_perms_schema_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(schema_name));
 	ScanKeyInit(&scanKey[2],
-				4,
+				Anum_bbf_schema_perms_permission,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(permission));
 	ScanKeyInit(&scanKey[3],
-				5,
+				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(grantee));
 
@@ -3165,7 +3165,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 		tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);
-	table_close(bbf_schema_rel, RowExclusiveLock);
+	table_close(bbf_schema_rel, AccessShareLock);
 }
 
 PG_FUNCTION_INFO_V1(update_user_catalog_for_guest_schema);
