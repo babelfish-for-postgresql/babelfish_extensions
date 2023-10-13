@@ -9,3 +9,9 @@ GO
 
 DROP FUNCTION sys_sequences_vu_prepare_func
 GO
+
+DROP FUNCTION sys_sequences_vu_prepare_func1
+GO
+
+DROP FUNCTION sys_sequences_vu_prepare_func2
+GO

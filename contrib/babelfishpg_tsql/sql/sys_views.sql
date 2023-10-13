@@ -3082,10 +3082,10 @@ select
   , CAST(0 as sys.bit ) as is_exhausted
   , CAST('ABC' as sys.sql_variant ) as last_used_value
 from pg_class p
+inner join pg_sequence ps on ps.seqrelid = p.oid
 inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
-and has_schema_privilege(s.schema_id, 'USAGE')
-inner join pg_sequence ps on ps.seqrelid = p.oid;
+and has_schema_privilege(s.schema_id, 'USAGE');
 GRANT SELECT ON sys.sequences TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.database_permissions

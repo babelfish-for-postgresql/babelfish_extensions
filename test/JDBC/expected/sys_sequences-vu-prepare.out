@@ -64,3 +64,19 @@ BEGIN
     RETURN (SELECT COUNT(*) FROM sys.sequences WHERE is_cycling= 0)
 END
 GO
+
+CREATE FUNCTION sys_sequences_vu_prepare_func1()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.sequences WHERE name='Babel_DATAtype_SQLvariant_vu_prepare_t4_SEC');
+END
+GO
+
+CREATE FUNCTION sys_sequences_vu_prepare_func2()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.sequences WHERE name='ははははははははははははははははは');
+END
+GO

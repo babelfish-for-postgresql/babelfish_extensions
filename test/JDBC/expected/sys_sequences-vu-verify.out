@@ -24,3 +24,18 @@ int
 1
 ~~END~~
 
+
+SELECT sys_sequences_vu_prepare_func1()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT sys_sequences_vu_prepare_func2()
+GO
+~~START~~
+int
+0
+~~END~~
