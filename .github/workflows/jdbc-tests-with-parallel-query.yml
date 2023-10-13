@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
         with:
           parallel_query_mode: true
