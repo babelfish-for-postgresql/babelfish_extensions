@@ -1012,7 +1012,7 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 }
 
 void
-update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee)
+update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv)
 {
 	GrantStmt  *stmt = (GrantStmt *) n;
 
@@ -1033,6 +1033,39 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
 
 		tmp->rolename = pstrdup(grantee);
+	}
+
+	if (priv && stmt->privileges)
+	{
+		AccessPriv *tmp = (AccessPriv *) llast(stmt->privileges);
+
+		tmp->priv_name = pstrdup(priv);
+	}
+}
+
+void
+update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
+{
+	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
+
+	ListCell *lc;
+
+	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
+
+	if (grantee && priv && stmt->action)
+	{
+		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
+	}
+
+	foreach(lc, stmt->options)
+	{
+		if (object)
+		{
+			DefElem *tmp = (DefElem *) lfirst(lc);
+			tmp->defname = pstrdup("schemas");
+			tmp->arg = (Node *)list_make1(makeString((char *)object));
+		}
 	}
 }
 
@@ -1690,7 +1723,9 @@ List
 {
 	StringInfoData query;
 	List	   *stmt_list;
+	Node	   *stmt;
 	int			expected_stmts = 2;
+	int			i = 0;
 	initStringInfo(&query);
 	if (is_grant)
 	{
@@ -1698,35 +1733,35 @@ List
 		{
 			if (with_grant_option)
 			{
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT dummy ON ALL FUNCTIONS IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
+				appendStringInfo(&query, "GRANT dummy ON ALL PROCEDURES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
 			}
 			else
 			{
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT dummy ON ALL FUNCTIONS IN SCHEMA dummy TO dummy; ");
+				appendStringInfo(&query, "GRANT dummy ON ALL PROCEDURES IN SCHEMA dummy TO dummy; ");
 			}
 		}
 		else
 		{
 			if (with_grant_option)
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\" WITH GRANT OPTION; ", privilege, schema, rolname);
+				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
 			else
-				appendStringInfo(&query, "GRANT \"%s\" ON ALL TABLES IN SCHEMA \"%s\" TO \"%s\"; ", privilege, schema, rolname);
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" GRANT \"%s\" ON TABLES TO \"%s\"; ", schema, privilege, rolname);
+				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
 		}
 	}
 	else
 	{
 		if (strcmp(privilege, "execute") == 0)
 		{
-			appendStringInfo(&query, "REVOKE \"%s\" ON ALL FUNCTIONS IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
-			appendStringInfo(&query, "REVOKE \"%s\" ON ALL PROCEDURES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
+			appendStringInfo(&query, "REVOKE dummy ON ALL FUNCTIONS IN SCHEMA dummy FROM dummy; ");
+			appendStringInfo(&query, "REVOKE dummy ON ALL PROCEDURES IN SCHEMA dummy FROM dummy; ");
 		}
 		else
 		{
-			appendStringInfo(&query, "REVOKE \"%s\" ON ALL TABLES IN SCHEMA \"%s\" FROM \"%s\"; ", privilege, schema, rolname);
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA \"%s\" REVOKE \"%s\" ON TABLES FROM \"%s\"; ", schema, privilege, rolname);
+			appendStringInfo(&query, "REVOKE dummy ON ALL TABLES IN SCHEMA dummy FROM dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
 		}
 	}
 	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
@@ -1735,5 +1770,15 @@ List
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Expected %d statements, but got %d statements after parsing",
 						expected_stmts, list_length(stmt_list))));
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmt, schema, NULL, rolname, privilege);
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	if (strcmp(privilege, "execute") == 0)
+		update_GrantStmt(stmt, schema, NULL, rolname, privilege);
+	else
+		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege);
+
 	return stmt_list;
 }
