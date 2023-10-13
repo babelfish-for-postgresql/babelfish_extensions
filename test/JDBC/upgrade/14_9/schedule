@@ -141,9 +141,9 @@ BABEL-3748
 BABEL-383
 BABEL-405
 BABEL-937
-forjson
-forjson-subquery
-forjson-datatypes
+forjson-before-14_9-or-15_5
+forjson-subquery-before-14_9-or-15_5
+forjson-datatypes-before-14_9-or-15_5
 forxml
 forxml-subquery
 BABEL-PROCID
