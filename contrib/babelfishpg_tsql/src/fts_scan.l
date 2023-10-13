@@ -32,11 +32,11 @@ static YY_BUFFER_STATE scanbufhandle;
 ","             { yylval = ","; return COMMA_TOKEN; }
 [ \t\r\n]+      { yylval = " "; return WS_TOKEN; }
 
-\"[^"]+\*\"              { yylval = yytext; return PREFIX_TERM_TOKEN; }  // Handle prefix terms
+\"[^"]+\*\"              { if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  // Handle prefix terms
 [a-zA-Z0-9]+       { yylval = yytext; return WORD_TOKEN; }  // Handle individual words
-\"([^"]+)\"          { yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
+\"[^"*]+\"          { yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
 
-<INITIAL>FORMSOF[[:space:]]*\([^)]+\) { yylval = yytext; return GENERATION_TERM_TOKEN; }  // Handle FORMSOF generation term
+FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\) { yylval = yytext; return GENERATION_TERM_TOKEN; }  // Handle FORMSOF generation term
 
 .               { return yytext[0]; }  // Other characters are returned as-is
 

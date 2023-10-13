@@ -29,10 +29,6 @@ babelfish_fts_rewrite(PG_FUNCTION_ARGS)
     }
     PG_CATCH();
     {
-        // Handle errors and reset memory context if needed
-        if (translated_query) {
-            pfree(translated_query);
-        }
         PG_RE_THROW();
     }
     PG_END_TRY();

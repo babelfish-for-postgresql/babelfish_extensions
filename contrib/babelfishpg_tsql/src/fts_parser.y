@@ -41,6 +41,8 @@ static char *trimInsideQuotes(char *s);
 
 contains_search_condition:
     simple_term
+    | prefix_term
+    | generation_term
     ;
 
 simple_term:
@@ -67,6 +69,36 @@ simple_term:
     }
     | WS_TOKEN TEXT_TOKEN WS_TOKEN {
         *result = translate_simple_term($2);
+    }
+    ;
+
+prefix_term:
+    PREFIX_TERM_TOKEN {
+        fts_yyerror(NULL, "Prefix term not supported");
+    }
+    ;
+
+generation_term:
+    FORMSOF_TOKEN O_PAREN_TOKEN generation_type COMMA_TOKEN simple_term_list C_PAREN_TOKEN {
+        fts_yyerror(NULL, "Generation term not supported");
+    }
+    ;
+
+generation_type:
+    INFLECTIONAL_TOKEN {
+        $$ = $1;
+    }
+    | THESAURUS_TOKEN {
+        $$ = $1;
+    }
+    ;
+
+simple_term_list:
+    simple_term {
+        $$ = $1;
+    }
+    | simple_term_list COMMA_TOKEN simple_term {
+        $$ = $1;
     }
     ;
 
