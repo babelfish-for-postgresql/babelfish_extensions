@@ -200,6 +200,9 @@ typecode_list(PG_FUNCTION_ARGS)
 		Datum		values[7];
 		bool		nulls[7];
 
+		if(strcmp(info->pg_typname,"rowversion") == 0)
+		continue;
+
 		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = info->oid;
