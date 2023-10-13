@@ -226,8 +226,16 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	new_text = (text *) palloc(new_text_size);
 
 	SET_VARSIZE(new_text, new_text_size);
-	memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
-	memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+
+	if(arg1_size>0)
+	{
+		memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
+	}
+	if(arg2_size>0)
+	{
+		memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+	}
+	
 	PG_RETURN_TEXT_P(new_text);
 }
 

@@ -1,0 +1,129 @@
+select ''+'ps';
+GO
+~~START~~
+varchar
+ps
+~~END~~
+
+
+select 'rs' + '';
+GO
+~~START~~
+varchar
+rs
+~~END~~
+
+
+select '' + '';
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+select '' + NULL;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+select NULL + '';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+set quoted_identifier off
+GO
+select ""+'s';
+GO
+~~START~~
+varchar
+s
+~~END~~
+
+
+set quoted_identifier off
+GO
+select 'rs' + "";
+GO
+~~START~~
+varchar
+rs
+~~END~~
+
+
+set quoted_identifier off
+GO
+select '' + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "" + NULL;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+set quoted_identifier off
+GO
+select NULL + "";
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+set quoted_identifier off
+GO
+select ""+"s";
+GO
+~~START~~
+varchar
+s
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "pr" + "";
+GO
+~~START~~
+varchar
+pr
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "" + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "" + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
