@@ -62,40 +62,36 @@ DROP FUNCTION IF EXISTS col_length_prepare_f16();
 GO
 
 -- Drop types
-DROP TYPE custom_char_10;
-DROP TYPE custom_varchar_20;
-DROP TYPE custom_binary_5;
-DROP TYPE custom_varbinary_15;
-DROP TYPE custom_nchar_8;
-DROP TYPE custom_nvarchar_16;
-DROP TYPE custom_text;
-DROP TYPE custom_image;
-DROP TYPE custom_ntext;
-DROP TYPE custom_sysname;
-DROP TYPE custom_sql_variant;
-DROP TYPE custom_xml;
-DROP TYPE custom_varcharmax;
-DROP TYPE custom_nvarcharmax;
-DROP TYPE custom_varbinarymax;
-DROP TYPE custom_bit;
-DROP TYPE custom_tinyint;
-DROP TYPE custom_bigint;
-DROP TYPE custom_smallint;
-DROP TYPE custom_smallmoney;
-DROP TYPE custom_money;
-DROP TYPE custom_smalldatetime;
-DROP TYPE custom_real;
-DROP TYPE custom_float;
-DROP TYPE custom_time;
-DROP TYPE custom_datetime;
-DROP TYPE custom_datetime2;
-DROP TYPE custom_datetimeoffset;
-DROP TYPE custom_uniqueidentifier;
-DROP TYPE custom_date;
-DROP TYPE custom_decimal_10_5;
-DROP TYPE custom_numeric_3_0;
+DROP TYPE IF EXISTS custom_char_10;
+DROP TYPE IF EXISTS custom_varchar_20;
+DROP TYPE IF EXISTS custom_binary_5;
+DROP TYPE IF EXISTS custom_varbinary_15;
+DROP TYPE IF EXISTS custom_nchar_8;
+DROP TYPE IF EXISTS custom_nvarchar_16;
+DROP TYPE IF EXISTS custom_text;
+DROP TYPE IF EXISTS custom_image;
+DROP TYPE IF EXISTS custom_ntext;
+DROP TYPE IF EXISTS custom_sysname;
+DROP TYPE IF EXISTS custom_sql_variant;
+DROP TYPE IF EXISTS custom_xml;
+DROP TYPE IF EXISTS custom_varcharmax;
+DROP TYPE IF EXISTS custom_nvarcharmax;
+DROP TYPE IF EXISTS custom_varbinarymax;
+DROP TYPE IF EXISTS custom_bit;
+DROP TYPE IF EXISTS custom_tinyint;
+DROP TYPE IF EXISTS custom_bigint;
+DROP TYPE IF EXISTS custom_smallint;
+DROP TYPE IF EXISTS custom_smallmoney;
+DROP TYPE IF EXISTS custom_money;
+DROP TYPE IF EXISTS custom_smalldatetime;
+DROP TYPE IF EXISTS custom_real;
+DROP TYPE IF EXISTS custom_float;
+DROP TYPE IF EXISTS custom_time;
+DROP TYPE IF EXISTS custom_datetime;
+DROP TYPE IF EXISTS custom_datetime2;
+DROP TYPE IF EXISTS custom_datetimeoffset;
+DROP TYPE IF EXISTS custom_uniqueidentifier;
+DROP TYPE IF EXISTS custom_date;
+DROP TYPE IF EXISTS custom_decimal_10_5;
+DROP TYPE IF EXISTS custom_numeric_3_0;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: type "custom_char_10" does not exist)~~
-

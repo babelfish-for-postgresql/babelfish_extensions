@@ -441,13 +441,14 @@ DECLARE
     col_name TEXT;
     object_id oid;
     column_id INT;
-    column_length INT;
+    column_length SMALLINT;
     column_data_type TEXT;
+    typeid oid;
     typelen INT;
     typemod INT;
 BEGIN
     -- Get the object ID for the provided object_name
-    object_id := sys.OBJECT_ID(object_name);
+    object_id := sys.OBJECT_ID(object_name, 'U');
     IF object_id IS NULL THEN
         RETURN NULL;
     END IF;
@@ -455,15 +456,18 @@ BEGIN
     -- Truncate and normalize the column name
     col_name := sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
 
-    -- Get the column ID, data type, length, and typmod for the provided column_name
-    SELECT attnum, sys.translate_pg_type_to_tsql(a.atttypid), a.attlen, a.atttypmod
-    INTO column_id, column_data_type, typelen, typemod
+    -- Get the column ID, typeid, length, and typmod for the provided column_name
+    SELECT attnum, a.atttypid, a.attlen, a.atttypmod
+    INTO column_id, typeid, typelen, typemod
     FROM pg_attribute a
     WHERE attrelid = object_id AND lower(attname) = col_name COLLATE sys.database_default;
 
     IF column_id IS NULL THEN
         RETURN NULL;
     END IF;
+
+    -- Get the correct data type
+    column_data_type := sys.translate_pg_type_to_tsql(typeid);
 
     IF column_data_type = 'sysname' THEN
         column_length := 256;
@@ -473,19 +477,20 @@ BEGIN
         SELECT sys.translate_pg_type_to_tsql(typbasetype), typlen, typtypmod 
         INTO column_data_type, typelen, typemod
         FROM pg_type
-        WHERE oid = (SELECT atttypid FROM pg_attribute WHERE attrelid = object_id AND attnum = column_id);
+        WHERE oid = typeid;
 
         IF column_data_type = 'sysname' THEN
             column_length := 256;
         ELSE 
             -- Calculate column length based on base type information
-            column_length := COALESCE(sys.tsql_type_max_length_helper(column_data_type, typelen, typemod), NULL);
+            column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
         END IF;
     ELSE
-        column_length := COALESCE(sys.tsql_type_max_length_helper(column_data_type, typelen, typemod), NULL);
+        -- Calculate column length based on base type information
+        column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
     END IF;
 
-    RETURN column_length::SMALLINT;
+    RETURN column_length;
 END;
 $BODY$
 LANGUAGE plpgsql

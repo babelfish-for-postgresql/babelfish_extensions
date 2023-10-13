@@ -164,7 +164,7 @@ smallint
 SELECT col_length_prepare_f1()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -172,7 +172,7 @@ int
 SELECT col_length_prepare_f2()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -180,7 +180,7 @@ int
 SELECT col_length_prepare_f3()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -188,7 +188,7 @@ int
 SELECT col_length_prepare_f4()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -196,7 +196,7 @@ int
 SELECT col_length_prepare_f5()
 GO
 ~~START~~
-int
+smallint
 1
 ~~END~~
 
@@ -204,7 +204,7 @@ int
 SELECT col_length_prepare_f6()
 GO
 ~~START~~
-int
+smallint
 1
 ~~END~~
 
@@ -212,7 +212,7 @@ int
 SELECT col_length_prepare_f7()
 GO
 ~~START~~
-int
+smallint
 8
 ~~END~~
 
@@ -220,7 +220,7 @@ int
 SELECT col_length_prepare_f8()
 GO
 ~~START~~
-int
+smallint
 2
 ~~END~~
 
@@ -228,7 +228,7 @@ int
 SELECT col_length_prepare_f9()
 GO
 ~~START~~
-int
+smallint
 4
 ~~END~~
 
@@ -236,7 +236,7 @@ int
 SELECT col_length_prepare_f10()
 GO
 ~~START~~
-int
+smallint
 8
 ~~END~~
 
@@ -244,7 +244,7 @@ int
 SELECT col_length_prepare_f11()
 GO
 ~~START~~
-int
+smallint
 4
 ~~END~~
 
@@ -252,7 +252,7 @@ int
 SELECT col_length_prepare_f12()
 GO
 ~~START~~
-int
+smallint
 4
 ~~END~~
 
@@ -260,7 +260,7 @@ int
 SELECT col_length_prepare_f13()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -268,7 +268,7 @@ int
 SELECT col_length_prepare_f14()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -276,7 +276,7 @@ int
 SELECT col_length_prepare_f15()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -284,7 +284,7 @@ int
 SELECT col_length_prepare_f16()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
