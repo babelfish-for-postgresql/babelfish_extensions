@@ -191,27 +191,29 @@ trancount(PG_FUNCTION_ARGS)
 Datum
 babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 {
-	text	   *arg1, *arg2, *new_text;
+	text		*arg1, *arg2, *new_text;
 	int32		arg1_size, arg2_size, new_text_size;
+	bool		first_param = PG_ARGISNULL(0);
+	bool		second_param = PG_ARGISNULL(1);
 	
 	if (pltsql_concat_null_yields_null)
 	{
-		if(PG_ARGISNULL(0) || PG_ARGISNULL(1))
-  		{
-  		  	PG_RETURN_NULL(); // If any is NULL, return NULL
-   		}
+		if(first_param || second_param)
+		{
+			PG_RETURN_NULL(); // If any is NULL, return NULL
+		}
 	}
 	else
 	{
-		if (PG_ARGISNULL(0) && PG_ARGISNULL(1))
-    	{
-     	   PG_RETURN_NULL(); // If both are NULL, return NULL
-    	}
-    	else if (PG_ARGISNULL(1))
-    	{
-     	   PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
-    	}
-		else if (PG_ARGISNULL(0))
+		if (first_param && second_param)
+		{
+			PG_RETURN_NULL(); // If both are NULL, return NULL
+		}
+		else if (second_param)
+		{
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
+		}
+		else if (first_param)
 		{
 			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(1)); // If only the first string is NULL, return the second string
 		}
