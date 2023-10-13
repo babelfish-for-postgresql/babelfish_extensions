@@ -48,13 +48,13 @@
 #undef _
 #define _(x) dgettext(TEXTDOMAIN, x)
 
-#define PLTSQL_INSTR_ENABLED()	\
-	(pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && \
-	 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric)
+#define PLTSQL_INSTR_ENABLED() \
+       (pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && \
+        (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric)
 
-#define TSQLInstrumentation(metric)												\
-({	if ((pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric))		\
-		(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);		\
+#define TSQLInstrumentation(metric)                                                                                            \
+({     if ((pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric))               \
+               (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);              \
 })
 
 #define TSQL_TXN_NAME_LIMIT 64	/* Transaction name limit */

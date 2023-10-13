@@ -179,6 +179,7 @@ GO
 SET babelfish_showplan_all ON
 GO
 
+-- the purpose of babel_3512_t2_cte is to check the behavior for invalid hint 
 EXEC babel_3512_proc_6
 GO
 
