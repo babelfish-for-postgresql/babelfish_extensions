@@ -181,9 +181,6 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_AlterTableStmt(stmt, schema, db_owner);
-
-	stmt = parsetree_nth_stmt(res, i++);
-	update_GrantStmt(stmt, NULL, schema, db_owner, NULL);
   
 	if (guest)
 	{
