@@ -205,7 +205,7 @@ gen_dropdb_subcmds(const char *schema,
 	List	   *stmt_list;
 	ListCell   *elem;
 	Node	   *stmt;
-	int			expected_stmts = 5;
+	int			expected_stmts = 6;
 	int			i = 0;
 
 	initStringInfo(&query);
@@ -225,6 +225,7 @@ gen_dropdb_subcmds(const char *schema,
 	}
 	/* Then drop db_owner and dbo in that order */
 	appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
+	appendStringInfo(&query, "REVOKE CREATE, CONNECT, TEMPORARY ON DATABASE dummy FROM dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 
@@ -258,7 +259,8 @@ gen_dropdb_subcmds(const char *schema,
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
-
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_owner);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
@@ -621,6 +623,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	const char *prev_current_user;
+	int 		save_sec_context;
+	bool 		is_set_userid;
+	Oid 		save_userid;
+	int i=0;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -716,7 +722,16 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		{
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			PlannedStmt *wrapper;
+			is_set_userid = false;
+			i++;
 
+			if(stmt->type != T_DropRoleStmt && stmt->type != T_GrantStmt)
+			{
+				GetUserIdAndSecContext(&save_userid, &save_sec_context);
+				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				is_set_userid = true;
+			}
 			/* need to make a wrapper PlannedStmt */
 			wrapper = makeNode(PlannedStmt);
 			wrapper->commandType = CMD_UTILITY;
@@ -734,7 +749,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 						   NULL,
 						   None_Receiver,
 						   NULL);
-
+			
+			if(is_set_userid)
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+			
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
