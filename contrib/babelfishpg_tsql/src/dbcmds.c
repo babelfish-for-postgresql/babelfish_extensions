@@ -259,8 +259,10 @@ gen_dropdb_subcmds(const char *schema,
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
+
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
+	
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_owner);
 	stmt = parsetree_nth_stmt(stmt_list, i++);
@@ -626,7 +628,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	int 		save_sec_context;
 	bool 		is_set_userid;
 	Oid 		save_userid;
-	int i=0;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
 		((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
@@ -723,7 +724,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
 			PlannedStmt *wrapper;
 			is_set_userid = false;
-			i++;
 
 			if(stmt->type != T_DropRoleStmt && stmt->type != T_GrantStmt)
 			{
