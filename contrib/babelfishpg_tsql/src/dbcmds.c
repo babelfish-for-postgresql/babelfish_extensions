@@ -772,6 +772,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	}
 	PG_CATCH();
 	{
+		if(is_set_userid)
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+				
 		/* Clean up. Restore previous state. */
 		bbf_set_current_user(prev_current_user);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
