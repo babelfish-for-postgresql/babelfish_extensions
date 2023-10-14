@@ -261,7 +261,7 @@ gen_dropdb_subcmds(const char *schema,
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
 	
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_owner);
