@@ -3,7 +3,7 @@
 #include "../src/query_generator.h"
 #include "../src/drivers.h"
 
-#include <filesystem>
+// #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <sqlext.h>
@@ -447,4 +447,94 @@ TEST_F(MSSQL_Data_Types, Varchar) {
   };
 
   DataTypesTestCommon(TEST_TABLE, TABLE_COLUMNS, INSERTED_VALUES, EXPECTED_VALUES);
+}
+
+// Test retrieval of type Geometry
+// This test differs from others in the following:
+// 1. the way the INSERTED_VALUES are defined - they already contain the 'order of insertion' values
+// 2. the way the INSERTED_VALUES are inserted - loop through the 'literal' inserted values since they 'hard code' the 'order of insertions' values
+// The reason it was done this way is because in SQL Server you have to call function to convert wkt to geometry type so it contains additional '()' which causes error while processing parameters
+// For example, if I had to insert Point(1.0 2.0) it will be done using geometry::STGeomFromText('Point(1.0 2.0)', 4326), which causes error in processInsertedValuesString.
+TEST_F(MSSQL_Data_Types, Geometry) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
+  
+  const string TEST_TABLE = "POINTGEOM_dt";
+  const string ORDER_BY_COLS = "OrderOfInsertion";
+  const vector<pair<string,string>> TABLE_COLUMNS = {
+    {"location", "GEOMETRY"},
+    {ORDER_BY_COLS, "INT"}
+  };
+
+  const vector<string> INSERTED_VALUES = {
+    "(geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326), 1)", "(geometry::STGeomFromText('Point(1.0 2.0)', 4326), 2)", 
+    "(geometry::STGeomFromText('Point(47.65100 -22.34900)', 0), 3)", "(geometry::STGeomFromText(NULL, 4326), 4)",
+    "(geometry::STPointFromText('Point(47.65100 -22.34900)', 4326), 5)", "(geometry::Point(47.65100, -22.34900, 4326), 6)"
+  };
+
+  vector<vector<string>> expectedValues = {
+    {"E6100000010C17D9CEF753D34740D34D6210585936C0", "E6100000010C000000000000F03F0000000000000040", "00000000010C17D9CEF753D34740D34D6210585936C0", 
+      NULL_STR, "E6100000010C17D9CEF753D34740D34D6210585936C0", "E6100000010C17D9CEF753D34740D34D6210585936C0"}
+  };
+
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
+  ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, TABLE_COLUMNS));
+
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true));
+  
+  for (short i = 0; i < INSERTED_VALUES.size(); i++) {
+    ASSERT_NO_FATAL_FAILURE(odbcHandler.ExecQuery(InsertStatement(TEST_TABLE, INSERTED_VALUES[i])));
+
+  }
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.ExecQuery(SelectStatement(TEST_TABLE, { "*" }, { ORDER_BY_COLS })));
+  
+  SQLSMALLINT sNumResults;
+  SQLNumResultCols(odbcHandler.GetStatementHandle(), &sNumResults);
+  ASSERT_EQ(sNumResults, TABLE_COLUMNS.size());
+
+  fetchAndCompare(odbcHandler, expectedValues);
+}
+
+// Test retrieval of type Geography
+// This test differs from others in the following:
+// 1. the way the INSERTED_VALUES are defined - they already contain the 'order of insertion' values
+// 2. the way the INSERTED_VALUES are inserted - loop through the 'literal' inserted values since they 'hard code' the 'order of insertions' values
+// The reason it was done this way is because in SQL Server you have to call function to convert wkt to geography type so it contains additional '()' which causes error while processing parameters
+// For example, if I had to insert Point(1.0 2.0) it will be done using geography::STGeomFromText('Point(1.0 2.0)', 4326), which causes error in processInsertedValuesString.
+TEST_F(MSSQL_Data_Types, Geography) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
+  
+  const string TEST_TABLE = "POINTGEOG_dt";
+  const string ORDER_BY_COLS = "OrderOfInsertion";
+  const vector<pair<string,string>> TABLE_COLUMNS = {
+    {"location", "GEOGRAPHY"},
+    {ORDER_BY_COLS, "INT"}
+  };
+
+  const vector<string> INSERTED_VALUES = {
+    "(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326), 1)", "(geography::STGeomFromText('Point(1.0 2.0)', 4326), 2)", 
+    "(geography::STGeomFromText(NULL, 4326), 3)", "(geography::STPointFromText('Point(1.0 2.0)', 4326), 4)",
+    "(geography::STPointFromText('Point(47.65100 -22.34900)', 4326), 5)", "(geography::Point(47.65100, -22.34900, 4326), 6)"
+  };
+
+  vector<vector<string>> expectedValues = {
+    {"E6100000010CD34D6210585936C017D9CEF753D34740", "E6100000010C0000000000000040000000000000F03F", NULL_STR, "E6100000010C0000000000000040000000000000F03F", 
+      "E6100000010CD34D6210585936C017D9CEF753D34740", "E6100000010C17D9CEF753D34740D34D6210585936C0"}
+  };
+
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
+  ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, TABLE_COLUMNS));
+
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true));
+  
+  for (short i = 0; i < INSERTED_VALUES.size(); i++) {
+    ASSERT_NO_FATAL_FAILURE(odbcHandler.ExecQuery(InsertStatement(TEST_TABLE, INSERTED_VALUES[i])));
+
+  }
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.ExecQuery(SelectStatement(TEST_TABLE, { "*" }, { ORDER_BY_COLS })));
+  
+  SQLSMALLINT sNumResults;
+  SQLNumResultCols(odbcHandler.GetStatementHandle(), &sNumResults);
+  ASSERT_EQ(sNumResults, TABLE_COLUMNS.size());
+
+  fetchAndCompare(odbcHandler, expectedValues);
 }

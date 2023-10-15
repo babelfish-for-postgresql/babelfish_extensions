@@ -304,6 +304,7 @@ TestInt
 TestMoney
 TestNotNull
 TestNumeric
+TestPoint
 TestReal
 TestRowVersion
 TestSmallDatetime

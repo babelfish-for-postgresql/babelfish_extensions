@@ -1,0 +1,5 @@
+SELECT location FROM POINTGEOM_dt;
+
+SELECT location FROM POINTGEOG_dt;
+
+SELECT * FROM POINT_dt;

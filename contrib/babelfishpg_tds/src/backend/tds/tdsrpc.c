@@ -1787,6 +1787,49 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					CheckPLPStatusNotOK(temp, retStatus);
 				}
 				break;
+			case TDS_TYPE_CLRUDT:
+				{
+					uint16_t	len;
+					uint8_t   typenamelen;
+					StringInfoData   typeName;
+
+					initStringInfo(&typeName);
+
+					memcpy(&len, &message->data[offset], sizeof(len));
+					offset += sizeof(len);
+
+					temp->maxLen = len;
+
+					/* We are reading the type name for spatial datatypes (geometry or geography) */
+					memcpy(&typenamelen, &message->data[offset], sizeof(typenamelen));
+					offset += sizeof(typenamelen);
+
+					TdsUTF16toUTF8StringInfo(&typeName, &(message->data[offset]), 2*typenamelen);
+					offset += 2*typenamelen;
+
+					if(!(pg_strcasecmp(typeName.data, "geometry") == 0 || pg_strcasecmp(typeName.data, "geography") == 0)){
+						ereport(ERROR,
+							(errcode(ERRCODE_PROTOCOL_VIOLATION),
+							errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+									"UdtTypeName is incorrect.")));
+					}
+
+					/* we set the column metadata for the appropriate types and also set TDS type from CLRUDT type to respective geometry or geography type */
+					if(pg_strcasecmp(typeName.data, "geometry") == 0){
+						SetColMetadataForGeometryType(&temp->paramMeta, tdsType, TDS_MAXLEN_POINT, "", "geometry");
+						temp->type = TDS_TYPE_GEOMETRY;
+						tdsType = TDS_TYPE_GEOMETRY;
+					}else{
+						SetColMetadataForGeographyType(&temp->paramMeta, tdsType, TDS_MAXLEN_POINT, "", "geography");
+						temp->type = TDS_TYPE_GEOGRAPHY;
+						tdsType = TDS_TYPE_GEOGRAPHY;
+					}
+
+					resetStringInfo(&typeName);
+					retStatus = ReadPlp(temp, message, &offset);
+					CheckPLPStatusNotOK(temp, retStatus);
+				}
+				break;
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),

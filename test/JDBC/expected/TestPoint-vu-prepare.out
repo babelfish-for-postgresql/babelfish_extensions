@@ -1,0 +1,133 @@
+CREATE TABLE POINTGEOM_dt(location GEOMETRY);
+prepst#!#INSERT INTO POINTGEOM_dt(location) values(?) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geometry.)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Illegal character in Well-Known text at position 3.)~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Illegal character in Well-Known text at position 0.)~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+CREATE TABLE POINTGEOG_dt(location GEOGRAPHY);
+prepst#!#INSERT INTO POINTGEOG_dt(location) values(?) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):1000000000
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):-1
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):<NULL>
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Error converting data type varbinary to geography.)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Illegal character in Well-Known text at position 3.)~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Illegal character in Well-Known text at position 0.)~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported in Babelfish)~~
+
+CREATE TABLE POINT_dt(geom GEOMETRY, geog GEOGRAPHY);
+prepst#!#INSERT INTO POINT_dt(geom) values(?) #!#GEOMETRY|-|geom|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#INSERT INTO POINT_dt(geog) values(?) #!#GEOGRAPHY|-|geog|-|Point(47.65100 -22.34900):4326
+~~ROW COUNT: 1~~
+
+prepst#!#INSERT INTO POINT_dt(geom, geog) values(?, ?) #!#GEOMETRY|-|geom|-|Point(1.0 2.0):4326#!#GEOGRAPHY|-|geog|-|Point(1.0 2.0):4326
+~~ROW COUNT: 1~~
+

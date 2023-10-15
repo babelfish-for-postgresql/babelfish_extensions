@@ -1,0 +1,37 @@
+CREATE TABLE POINTGEOM_dt(location GEOMETRY);
+prepst#!#INSERT INTO POINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):<NULL>
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
+prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
+CREATE TABLE POINTGEOG_dt(location GEOGRAPHY);
+prepst#!#INSERT INTO POINTGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):1000000000
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):-1
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):<NULL>
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
+CREATE TABLE POINT_dt(geom GEOMETRY, geog GEOGRAPHY);
+prepst#!#INSERT INTO POINT_dt(geom) values(@geom) #!#GEOMETRY|-|geom|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO POINT_dt(geog) values(@geog) #!#GEOGRAPHY|-|geog|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO POINT_dt(geom, geog) values(@geom, @geog) #!#GEOMETRY|-|geom|-|Point(1.0 2.0):4326#!#GEOGRAPHY|-|geog|-|Point(1.0 2.0):4326
+
+SELECT location FROM POINTGEOM_dt;
+SELECT location FROM POINTGEOG_dt;
+SELECT * FROM POINT_dt;
+
+DROP TABLE IF EXISTS POINTGEOM_dt;
+DROP TABLE IF EXISTS POINTGEOG_dt;
+DROP TABLE IF EXISTS POINT_dt;

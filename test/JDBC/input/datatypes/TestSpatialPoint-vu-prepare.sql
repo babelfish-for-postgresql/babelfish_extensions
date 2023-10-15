@@ -227,14 +227,14 @@ WHERE
     p1.location <> p2.location;
 GO
 
-CREATE TABLE SPATIALPOINT_dt (GeomColumn geometry, GeogColumn geography)
+CREATE TABLE SPATIALPOINT_dt (PrimaryKey int, GeomColumn geometry, GeogColumn geography)
 GO
-INSERT INTO SPATIALPOINT_dt (GeomColumn)
-VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn)
+VALUES ( 1, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-INSERT INTO SPATIALPOINT_dt (GeogColumn)
-VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeogColumn)
+VALUES ( 2, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-INSERT INTO SPATIALPOINT_dt (GeomColumn, GeogColumn)
-VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326), geography::STGeomFromText('Point(1.0 2.0)', 4326) )
+INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn, GeogColumn)
+VALUES ( 3, geometry::STGeomFromText('Point(1.0 2.0)', 4326), geography::STGeomFromText('Point(1.0 2.0)', 4326) )
 GO
