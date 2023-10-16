@@ -379,6 +379,7 @@ ignore#!#BABEL-1454
 ignore#!#BABEL-2337
 ignore#!#BABEL-2371
 ignore#!#BABEL-2877-vu-verify
+ignore#!#BABEL-3215-vu-verify
 
 # Error
 ignore#!#BABEL-VERSION
