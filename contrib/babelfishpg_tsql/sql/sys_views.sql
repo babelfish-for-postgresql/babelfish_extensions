@@ -7,7 +7,6 @@
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
-    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
     INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
     INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
     WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
