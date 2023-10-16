@@ -779,7 +779,6 @@ class tsqlCommonMutator : public TSqlParserBaseListener
 public:
 	explicit tsqlCommonMutator() = default;
 	bool in_create_or_alter_function = false;
-	//bool in_execute_body_batch = false;	
 
 	void enterCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx) override {
 		in_create_or_alter_function = true;
@@ -7264,19 +7263,13 @@ escapeDoubleQuotes(const std::string strWithDoubleQuote)
 	std::string quote = "\"";
 	std::string str = strWithDoubleQuote;
 
-	if (str.find(quote) == std::string::npos)
+	// If the string contains embedded quotes, these must be escaped by doubling them
+	for (size_t i = str.find(quote, 1);  // Start at pos 1: char 0 has the enclosing delimiter
+		i != std::string::npos;   
+		i = str.find(quote, i + 2) )
 	{
-		// String contains no embedded double-quotes, so no further action needed
+		str.replace(i, 1, quote+quote);	 // Change quote to 2 quotes					
 	}
-	else
-	{
-		// String contains embedded quotes; these must be escaped by doubling them
-		for (size_t i = str.find(quote, 1);  // Start at pos 1: char 0 has the enclosing delimiter
-			i != std::string::npos;   
-			i = str.find(quote, i + 2) )
-		{
-			str.replace(i, 1, quote+quote);	 // Change quote to 2 quotes					
-		}
-	}			
+
 	return str;
 }
