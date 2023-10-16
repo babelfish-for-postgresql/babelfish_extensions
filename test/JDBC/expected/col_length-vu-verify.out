@@ -164,7 +164,7 @@ smallint
 SELECT col_length_prepare_f1()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -172,7 +172,7 @@ int
 SELECT col_length_prepare_f2()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -180,7 +180,7 @@ int
 SELECT col_length_prepare_f3()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -188,7 +188,7 @@ int
 SELECT col_length_prepare_f4()
 GO
 ~~START~~
-int
+smallint
 -1
 ~~END~~
 
@@ -196,7 +196,7 @@ int
 SELECT col_length_prepare_f5()
 GO
 ~~START~~
-int
+smallint
 1
 ~~END~~
 
@@ -204,7 +204,7 @@ int
 SELECT col_length_prepare_f6()
 GO
 ~~START~~
-int
+smallint
 1
 ~~END~~
 
@@ -212,7 +212,7 @@ int
 SELECT col_length_prepare_f7()
 GO
 ~~START~~
-int
+smallint
 8
 ~~END~~
 
@@ -220,7 +220,7 @@ int
 SELECT col_length_prepare_f8()
 GO
 ~~START~~
-int
+smallint
 2
 ~~END~~
 
@@ -228,7 +228,7 @@ int
 SELECT col_length_prepare_f9()
 GO
 ~~START~~
-int
+smallint
 4
 ~~END~~
 
@@ -236,7 +236,7 @@ int
 SELECT col_length_prepare_f10()
 GO
 ~~START~~
-int
+smallint
 8
 ~~END~~
 
@@ -244,7 +244,7 @@ int
 SELECT col_length_prepare_f11()
 GO
 ~~START~~
-int
+smallint
 4
 ~~END~~
 
@@ -252,7 +252,7 @@ int
 SELECT col_length_prepare_f12()
 GO
 ~~START~~
-int
+smallint
 4
 ~~END~~
 
@@ -260,7 +260,7 @@ int
 SELECT col_length_prepare_f13()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -268,7 +268,7 @@ int
 SELECT col_length_prepare_f14()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -276,7 +276,7 @@ int
 SELECT col_length_prepare_f15()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -284,7 +284,7 @@ int
 SELECT col_length_prepare_f16()
 GO
 ~~START~~
-int
+smallint
 <NULL>
 ~~END~~
 
@@ -452,4 +452,260 @@ text
 SQL Variant Column
 ~~END~~
 
+
+-- Test Cases for User-Defined Data Types
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customchar');
+GO
+~~START~~
+smallint
+10
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarchar');
+GO
+~~START~~
+smallint
+20
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custombinary');
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarbinary');
+GO
+~~START~~
+smallint
+15
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnchar');
+GO
+~~START~~
+smallint
+16
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnvarchar');
+GO
+~~START~~
+smallint
+32
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customtext');
+GO
+~~START~~
+smallint
+16
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customimage');
+GO
+~~START~~
+smallint
+16
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customntext');
+GO
+~~START~~
+smallint
+16
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsysname');
+GO
+~~START~~
+smallint
+256
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsqlvariant');
+GO
+~~START~~
+smallint
+8016
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customxml');
+GO
+~~START~~
+smallint
+-1
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarcharmax');
+GO
+~~START~~
+smallint
+-1
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnvarcharmax');
+GO
+~~START~~
+smallint
+-1
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarbinarymax');
+GO
+~~START~~
+smallint
+-1
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custombit');
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customtinyint');
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custombigint');
+GO
+~~START~~
+smallint
+8
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsmallint');
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsmallmoney');
+GO
+~~START~~
+smallint
+4
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custommoney');
+GO
+~~START~~
+smallint
+8
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsmalldatetime');
+GO
+~~START~~
+smallint
+4
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customreal');
+GO
+~~START~~
+smallint
+4
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customfloat');
+GO
+~~START~~
+smallint
+8
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customtime');
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdatetime');
+GO
+~~START~~
+smallint
+8
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdatetime2');
+GO
+~~START~~
+smallint
+8
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdatetimeoffset');
+GO
+~~START~~
+smallint
+10
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customuniqueidentifier');
+GO
+~~START~~
+smallint
+16
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdate');
+GO
+~~START~~
+smallint
+3
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdecimal');
+GO
+~~START~~
+smallint
+9
+~~END~~
+
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnumeric');
+GO
+~~START~~
+smallint
+5
+~~END~~
 
