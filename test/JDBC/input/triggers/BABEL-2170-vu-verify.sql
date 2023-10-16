@@ -254,7 +254,23 @@ DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_delete;
 GO
 
 -- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
+-- Set current_user for testing db mode
+IF (SELECT 1 FROM pg_roles WHERE rolname='jdbc_user') = 1
+BEGIN
+	WITH SET_CTE
+	AS
+	(SELECT set_config('role', 'jdbc_user', false))
+	SELECT NULL
+	FROM SET_CTE
+END
+ELSE
+BEGIN
+	WITH SET_CTE
+	AS
+	(SELECT set_config('role', 'babeltestuser', false))
+	SELECT NULL
+	FROM SET_CTE
+END
 GO
 
 SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
