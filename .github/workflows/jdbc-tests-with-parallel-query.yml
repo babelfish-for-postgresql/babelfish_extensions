@@ -38,7 +38,7 @@ jobs:
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 120
+        timeout-minutes: 60
         run: |
           cd test/JDBC/
           # set env variable isParallelQueryMode to true to let jdbc know not to run tests of file parallel_query_jdbc_schedule
