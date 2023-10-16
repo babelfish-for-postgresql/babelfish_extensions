@@ -227,7 +227,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
-static set_local_schema_for_func_hookType prev_set_local_schema_for_func_hook = NULL;
+static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
