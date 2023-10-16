@@ -1,0 +1,18 @@
+USE master
+GO
+
+CREATE VIEW sys_certificates_vu_prepare_view AS
+SELECT * FROM sys.certificates
+GO
+
+CREATE PROC sys_certificates_vu_prepare_proc AS
+SELECT * FROM sys.certificates
+GO
+
+CREATE FUNCTION sys_certificates_vu_prepare_func()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.certificates WHERE key_length = 0)
+END
+GO

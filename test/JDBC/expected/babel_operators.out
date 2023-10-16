@@ -3,12 +3,12 @@ SELECT (123 + 0x42);
 SELECT (0x42 + 123);
 GO
 ~~START~~
-bigint
+int
 189
 ~~END~~
 
 ~~START~~
-bigint
+int
 189
 ~~END~~
 
@@ -18,12 +18,12 @@ SELECT (123 - 0x42);
 SELECT (0x42 - 123);
 GO
 ~~START~~
-bigint
+int
 57
 ~~END~~
 
 ~~START~~
-bigint
+int
 -57
 ~~END~~
 
@@ -33,12 +33,12 @@ SELECT (123 * CAST(123 AS varbinary(4)));
 SELECT (CAST(123 AS varbinary(4)) * 123);
 GO
 ~~START~~
-bigint
+int
 15129
 ~~END~~
 
 ~~START~~
-bigint
+int
 15129
 ~~END~~
 

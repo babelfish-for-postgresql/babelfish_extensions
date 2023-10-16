@@ -214,8 +214,9 @@ protected:
 		antlrcpp::Any visitXml_exist_call(TSqlParser::Xml_exist_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
+		#ifndef ENABLE_SPATIAL_TYPES
 		antlrcpp::Any visitSpatial_methods(TSqlParser::Spatial_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SPATIAL_METHOD, "spatial methods", getLineAndPos(ctx)); return visitChildren(ctx); }
-
+		#endif
 		// built-in functions
 		antlrcpp::Any visitBif_cast_parse(TSqlParser::Bif_cast_parseContext *ctx) override;
 		antlrcpp::Any visitSql_option(TSqlParser::Sql_optionContext *ctx) override;
@@ -1080,6 +1081,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->drop_user()
 	 || ctx->drop_view()
 	 || ctx->truncate_table()
+	 || ctx->enable_trigger()
+	 || ctx->disable_trigger()
 	 )
 	{
 		// supported DDL or DDL which need special handling
@@ -1454,10 +1457,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 			}
 			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
 				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", getLineAndPos(ctx));
-			else if (pg_strcasecmp("geography", name.c_str()) == 0)
-				handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", getLineAndPos(ctx));
-			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
-				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", getLineAndPos(ctx));
+			#ifndef ENABLE_SPATIAL_TYPES
+				else if (pg_strcasecmp("geography", name.c_str()) == 0)
+					handle(INSTR_TSQL_GEOGRAPHY_DATATYPE, "GEOGRAPHY datatype", getLineAndPos(ctx));
+				else if (pg_strcasecmp("geometry", name.c_str()) == 0)
+					handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", getLineAndPos(ctx));
+			#endif
 		}
 	}
 	if (ctx->NATIONAL())
@@ -1671,7 +1676,6 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 				unsupported_feature = "GRANT PERMISSION " + perm->getText();
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
-
 		}
 	}
 
@@ -1679,7 +1683,9 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	{
 		auto perm_obj = grant->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && !obj_type->OBJECT())
+		if (grant->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(grant));
+		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "GRANT ON " + obj_type->getText();
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
@@ -1764,7 +1770,6 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 				unsupported_feature = "REVOKE PERMISSION " + perm->getText();
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
-
 		}
 	}
 
@@ -1772,7 +1777,9 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 	{
 		auto perm_obj = revoke->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && !obj_type->OBJECT())
+		if (revoke->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(revoke));
+		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "REVOKE ON " + obj_type->getText();
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));

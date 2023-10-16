@@ -39,6 +39,92 @@ LANGUAGE plpgsql;
  */
 
 
+CREATE OR REPLACE VIEW sys.asymmetric_keys
+AS
+SELECT 
+    CAST('' as sys.sysname) AS name
+  , CAST(0 as sys.int) AS principal_id
+  , CAST(0 as sys.int) AS asymmetric_key_id
+  , CAST('a' as sys.bpchar(2)) AS pvt_key_encryption_type
+  , CAST('' as sys.nvarchar(60)) AS pvt_key_encryption_type_desc
+  , CAST(null as sys.varbinary(32)) as thumbprint
+  , CAST('a' as sys.bpchar(2)) AS algorithm
+  , CAST('' as sys.nvarchar(60)) AS algorithm_desc
+  , CAST(0 as sys.int) AS key_length
+  , CAST(null as sys.varbinary(85)) as sid
+  , CAST('' as sys.nvarchar(128)) AS string_sid
+  , CAST(NULL as sys.varbinary(8000)) AS public_key
+  , CAST('' as sys.nvarchar(260)) AS attested_by
+  , CAST('' as sys.nvarchar(120)) AS provider_type
+  , CAST(NULL as sys.UNIQUEIDENTIFIER) as cryptographic_provider_guid
+  , CAST(NULL AS sys.sql_variant) AS cryptographic_provider_algid
+  
+WHERE FALSE;
+GRANT SELECT ON sys.asymmetric_keys TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.certificates
+AS
+SELECT 
+    CAST('' as sys.sysname) AS name
+  , CAST(0 as sys.int) AS principal_id
+  , CAST(0 as sys.int) AS asymmetric_key_id
+  , CAST('a' as sys.bpchar(2)) AS pvt_key_encryption_type
+  , CAST('' as sys.nvarchar(60)) AS pvt_key_encryption_type_desc
+  , CAST(0 as sys.bit) AS is_active_for_begin_dialog
+  , CAST('' as sys.nvarchar(442)) AS issuer_name
+  , CAST('' as sys.nvarchar(64)) AS cert_serial_number
+  , CAST(null as sys.varbinary(85)) as sid
+  , CAST('' as sys.nvarchar(128)) AS string_sid
+  , CAST('' as sys.nvarchar(4000)) AS subject
+  , CAST('' as sys.datetime) AS expiry_date
+  , CAST('' as sys.datetime) AS start_date
+  , CAST(null as sys.varbinary(32)) as thumbprint
+  , CAST('' as sys.nvarchar(260)) as attested_by
+  , CAST('' as sys.datetime) AS pvt_key_last_backup_date
+  , CAST(0 AS sys.int) AS key_length
+  
+WHERE FALSE;
+GRANT SELECT ON sys.certificates TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_permissions
+AS
+SELECT
+    CAST(0 as sys.tinyint) AS class,
+    CAST('' as sys.NVARCHAR(60)) AS class_desc,
+    CAST(0 as sys.int) AS major_id,
+    CAST(0 as sys.int) AS minor_id,
+    CAST(0 as sys.int) AS grantee_principal_id,
+    CAST(0 as sys.int) AS grantor_principal_id,
+    CAST('a' as sys.bpchar(4)) AS type,
+    CAST('' as sys.NVARCHAR(128)) AS permission_name,
+    CAST('G' as sys.bpchar(1)) AS state,
+    CAST('' as sys.NVARCHAR(60)) AS state_desc
+WHERE FALSE;
+GRANT SELECT ON sys.database_permissions TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
+	SELECT
+		CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+		CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(ord AS int) AS "ORDINAL_POSITION"	
+	FROM
+		pg_constraint c 
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p')
+		JOIN sys.pg_namespace_ext nc ON nc.oid = c.connamespace AND r.relnamespace = nc.oid 
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
+		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
+	WHERE
+		pg_has_role(r.relowner, 'USAGE'::text) 
+  		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
+		AND NOT pg_is_other_temp_schema(nc.oid)
+	;
+GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
@@ -346,6 +432,7 @@ BEGIN
 END
 $$
 LANGUAGE plpgsql;
+
 
 -- Matches and returns column length of the corresponding column of the given table
 CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
@@ -702,7 +789,16 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name NAME NOT NULL,
+  object_name NAME NOT NULL,
+  permission NAME NOT NULL,
+  grantee NAME NOT NULL,
+  object_type NAME,
+  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+);
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'timezone_mapping'
