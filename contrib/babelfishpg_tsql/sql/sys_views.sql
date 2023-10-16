@@ -1275,24 +1275,6 @@ inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
-create or replace view sys.schemas1 as
-select
-  CAST(ext.orig_name as sys.SYSNAME) as name
-  , base.oid as schema_id
-  , base.nspowner as principal_id
-from pg_catalog.pg_namespace base INNER JOIN sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
-where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys', 'public')
-and ext.dbid = sys.db_id();
-GRANT SELECT ON sys.schemas1 TO PUBLIC;
-
-create or replace view sys.table_types_internal2 as
-SELECT pt.typrelid
-    FROM pg_catalog.pg_type pt
-    INNER join sys.schemas1 sch on pt.typnamespace = sch.schema_id
-    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
-    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
-
 create or replace view sys.all_objects as
 select 
     name collate sys.database_default
@@ -1324,7 +1306,7 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.table_types_internal2 tt on t.oid = tt.typrelid
+left join sys.table_types_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
@@ -1350,7 +1332,7 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
-left join sys.table_types_internal2 tt on t.oid = tt.typrelid
+left join sys.table_types_internal tt on t.oid = tt.typrelid
 left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
 left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
 where t.relpersistence in ('p', 'u', 't')
