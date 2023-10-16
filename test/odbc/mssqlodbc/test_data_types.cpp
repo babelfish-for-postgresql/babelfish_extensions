@@ -3,7 +3,7 @@
 #include "../src/query_generator.h"
 #include "../src/drivers.h"
 
-// #include <filesystem>
+#include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <sqlext.h>
