@@ -3129,7 +3129,8 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	int			rc = EOF,
 				precision = 0,
-				scale = -1;
+				scale = -1,
+				outlen = 0;
 	uint8		sign = 1,
 				length = 0;
 	char	   *out,
@@ -3152,7 +3153,8 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	 * response string is formatted to obtain string representation of TDS
 	 * unsigned integer along with its precision and scale
 	 */
-	decString = (char *) palloc(sizeof(char) * (strlen(out) + 1));
+	outlen = strlen(out) + max_scale;
+	decString = (char *) palloc(sizeof(char) * (outlen + 1));
 	/* While there is still digit in out and we haven't reached max_scale */
 	while (*out && scale < max_scale)
 	{
@@ -3185,6 +3187,7 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 		decString[precision++] = '0';
 	}
 	decString[precision] = '\0';
+	Assert(precision <= outlen);
 
 	if (precision > TDS_MAX_NUM_PRECISION ||
 		precision > max_precision)

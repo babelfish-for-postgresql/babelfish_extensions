@@ -49,7 +49,8 @@ typedef enum pltsql_stmt_type
 	PLTSQL_STMT_DEALLOCATE,
 	PLTSQL_STMT_INSERT_BULK,
 	PLTSQL_STMT_GRANTDB,
-	PLTSQL_STMT_DBCC
+	PLTSQL_STMT_DBCC,
+	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
 
 typedef struct PLtsql_expr

@@ -20,6 +20,10 @@ GO
 ---  Prepare Objects
 ---
 
+---- SCHEMA
+CREATE SCHEMA scm;
+GO
+
 ---- TABLE
 CREATE TABLE t1 ( a int, b int);
 GO
@@ -54,6 +58,12 @@ GO
 ---
 ---  Basic Grant / Revoke
 ---
+
+GRANT SELECT ON SCHEMA::scm TO guest;
+GO
+
+GRANT INSERT ON SCHEMA::scm TO guest;
+GO
 
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION;
 GO
@@ -133,6 +143,9 @@ GO
 REVOKE ALL TO alogin; -- database permission
 GO
 
+REVOKE SELECT ON SCHEMA::scm FROM guest; -- unsupported permission
+GO
+
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 
@@ -154,6 +167,9 @@ GO
 ---
 ---  Clean Up
 ---
+
+DROP SCHEMA scm;
+GO
 
 DROP VIEW IF EXISTS my_view;
 GO
