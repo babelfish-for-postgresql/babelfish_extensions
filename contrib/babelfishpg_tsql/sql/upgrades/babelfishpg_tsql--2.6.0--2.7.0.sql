@@ -1778,6 +1778,29 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.database_permissions TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() returns sys.datetime2
+AS 'babelfishpg_tsql', 'sysutcdatetime'
+LANGUAGE C STABLE;
+
+create or replace function sys.getutcdate() returns sys.datetime
+AS 'babelfishpg_tsql', 'getutcdate'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+AS 'babelfishpg_tsql', 'getdate_internal'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
+AS 'babelfishpg_tsql', 'sysdatetime'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+AS 'babelfishpg_tsql', 'sysdatetimeoffset'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

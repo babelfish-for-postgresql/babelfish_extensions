@@ -131,6 +131,11 @@ PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(sysutcdatetime);
+PG_FUNCTION_INFO_V1(getutcdate);
+PG_FUNCTION_INFO_V1(getdate_internal);
+PG_FUNCTION_INFO_V1(sysdatetime);
+PG_FUNCTION_INFO_V1(sysdatetimeoffset);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -219,6 +224,40 @@ version(PG_FUNCTION_ARGS)
 	info = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
+}
+
+Datum sysutcdatetime(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    
+}
+
+Datum getutcdate(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    
+}
+
+Datum getdate_internal(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
+						PointerGetDatum(GetCurrentStatementStartTimestamp())));
+	
+}
+
+Datum sysdatetime(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+}
+
+Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
+{
+	
+
+	PG_RETURN_POINTER((DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }
 
 void *
