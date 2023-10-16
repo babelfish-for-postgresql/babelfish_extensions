@@ -1531,18 +1531,13 @@ simple_select:
 					ColumnRef  		*a_star;
 					ResTarget		*a_star_restarget;
 					RangeFunction	*funCallNode;
-				
 					SelectStmt 	*s_sql;
 					SelectStmt 	*c_sql;
 					SelectStmt 	*pivot_sl;
-
 					SortBy 		*s;
 
-					/* TODO: Need to remove r_col after lowercase bug was fixed */
-					/* Node *pivotCol = (Node *) list_nth((List *)$6, 0); */
 					ColumnRef	*c = makeNode(ColumnRef);
 					ResTarget	*pivot_col = makeNode(ResTarget);
-					Node *r_col = (Node *) list_nth((List *)$6, 4);
 					char 		*pivot_colstr = (char *)list_nth((List *)$6, 0);
 					Node 		*aggFunc = (Node *) list_nth((List *)$6, 1);
 					
@@ -1584,9 +1579,10 @@ simple_select:
 					/* prepare category sql for babelfish_pivot function */
 					c_sql = makeNode(SelectStmt);
 					c_sql->distinctClause = list_make1(NIL);
-					c_sql->targetList = list_make1(r_col);
+					c_sql->targetList = list_make1(pivot_col);
 					c_sql->fromClause = $5;
 					c_sql->whereClause = list_nth((List *)$6, 2);
+					c_sql->sortClause = list_make1(copyObject(s));
 
 					/* create a function call node for the fromClause */
 					pivotCall = makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
@@ -1618,16 +1614,10 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 					List    *value_col_strlist = NULL;
 				
 					ColumnRef	*c = makeNode(ColumnRef);
-					ResTarget	*r_col = makeNode(ResTarget);
 					ResTarget	*r_func = makeNode(ResTarget);
 
 					c->location = -1;
 					c->fields = list_make1(makeString($5));
-					r_col->name = NULL;
-					r_col->name_location = -1;
-					r_col->indirection = NIL;
-					r_col->val = (Node *) c;
-					r_col->location = -1;
 
 					/* prepare aggregation function for pivot source sql */
 					r_func->name = NULL;
@@ -1636,25 +1626,27 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 					r_func->val = (Node *) $3;
 					r_func->location = -1;
 					
-					if (IsA((List *)$7, List)){
-						for (int i = 0; i < ((List *)$7)->length; i++){
+					if (IsA((List *)$7, List))
+					{
+						for (int i = 0; i < ((List *)$7)->length; i++)
+						{
 							ColumnRef	*tempRef = list_nth((List *)$7, i);
-							String	*s = list_nth(tempRef->fields, 0);
-							Node	*n = makeStringConst(s->sval, -1);
+							String		*s = list_nth(tempRef->fields, 0);
+							Node		*n = makeStringConst(s->sval, -1);
 
-							if (col_list == NULL || value_col_strlist == NULL){
+							if (col_list == NULL || value_col_strlist == NULL)
+							{
 								col_list = list_make1(n);
 								value_col_strlist = list_make1(s->sval);
-							}else{
+							}else
+							{
 								col_list = lappend(col_list, n);
 								value_col_strlist = lappend(value_col_strlist, s->sval);
 							}
 						}
 					}
 					where_clause = makeSimpleA_Expr(AEXPR_IN, "=",(Node *) c,(Node *) col_list, -1);
-					ret = list_make4($5, r_func, (Node *)where_clause, value_col_strlist);
-					/* TODO: Need to remove r_col after lowercase bug was fixed */
-					ret = lappend(ret, r_col);
+					ret = list_make4(pstrdup($5), r_func, (Node *)where_clause, value_col_strlist);
 					$$ = (Node*) ret; 
 				} 
 			;

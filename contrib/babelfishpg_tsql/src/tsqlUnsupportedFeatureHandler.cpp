@@ -1327,8 +1327,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
-	// if (ctx->PIVOT())
-	// 	handle(INSTR_UNSUPPORTED_TSQL_PIVOT, ctx->PIVOT());
 	if (ctx->UNPIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
 

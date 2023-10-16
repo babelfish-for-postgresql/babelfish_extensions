@@ -3515,14 +3515,20 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 int 
 SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
 {
-	_SPI_plan	plan;
-	int			ret;
-	List	   *plancache_list;
-	CachedPlanSource *plansource;
+	_SPI_plan			plan;
+	int					ret;
+	List				*plancache_list;
+	CachedPlanSource	*plansource;
+	int					prev_sql_dialect;
 
 	if (parsetree == NULL || tcount < 0)
 		return SPI_ERROR_ARGUMENT;
 	
+	/*
+	 * set sql_dialect to tsql, which is needed for raw parsetree parsing 
+	 * and processing
+	 */
+	prev_sql_dialect = sql_dialect;
 	sql_dialect = SQL_DIALECT_TSQL;
 	
 	memset(&plan, 0, sizeof(_SPI_plan));
@@ -3536,18 +3542,22 @@ SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
 	plancache_list = NIL;
 
 	/* 
-     * src sql can be optained from pstate->p_sourcetext, but
+	 * src sql can be optained from pstate->p_sourcetext, but
 	 * it is not important here
 	 */
 	plansource = CreateOneShotCachedPlan(parsetree,
-											 "SQL NOT AVAILABLE",
-											 CreateCommandTag(parsetree->stmt));
+										"SQL NOT AVAILABLE",
+										CreateCommandTag(parsetree->stmt));
 
 	plancache_list = lappend(plancache_list, plansource);
 	plan.plancache_list = plancache_list;
 	plan.oneshot = true;
 
 	ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
+
+	/* reset sql_dialect */
+	sql_dialect = prev_sql_dialect;
+
 	return ret;
 }
 
@@ -3555,11 +3565,11 @@ PG_FUNCTION_INFO_V1(bbf_pivot);
 Datum
 bbf_pivot(PG_FUNCTION_ARGS)
 {	
-	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
-	HTAB	   *crosstab_hash;
+	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc		tupdesc;
+	MemoryContext 	per_query_ctx;
+	MemoryContext 	oldcontext;
+	HTAB	   	   *crosstab_hash;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
