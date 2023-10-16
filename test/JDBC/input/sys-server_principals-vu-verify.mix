@@ -37,5 +37,5 @@ FROM sys.server_principals name WHERE name =  'sysadmin';
 GO
 
 SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id, is_fixed_role
-FROM sys.server_principals name WHERE name like 'sys_server_principals_vu_login%';
+FROM sys.server_principals name WHERE name like 'sys_server_principals_vu_login%' ORDER BY name;
 GO

@@ -259,7 +259,6 @@ sys-schema-name
 sys-schemas
 sys-schemas-dep
 sys-selective_xml_index_paths
-sys-server_principals
 sys-sid_binary
 sys-spatial_indexes
 sys-spatial_index_tessellations
