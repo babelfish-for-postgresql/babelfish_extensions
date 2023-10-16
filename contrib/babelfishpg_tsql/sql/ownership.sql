@@ -266,6 +266,7 @@ BEGIN
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
+  ANALYZE;
 END
 $$;
 
