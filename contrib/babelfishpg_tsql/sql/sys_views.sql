@@ -1292,7 +1292,7 @@ from
 (
 -- details of user defined and system tables
 select
-    t.relname::varchar as name
+    t.relname::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1318,7 +1318,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
  
 select
-    t.relname::varchar as name
+    t.relname::sys.sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
