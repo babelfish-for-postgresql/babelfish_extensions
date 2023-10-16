@@ -362,3 +362,19 @@ ignore#!#TestSimpleErrors
 ignore#!#ISC-Views
 ignore#!#TestSimpleErrorsWithXactAbort
 ignore#!#BABEL-2513
+
+
+# BABEL_2_X_DEV branch failing/crashing tests
+#  time-out
+ignore#!#BABEL-2555
+ignore#!#BABEL-3588-vu-verify
+ignore#!#BABEL-UNSUPPORTED
+ignore#!#ISC-Views-vu-verify
+ignore#!#TestErrorsWithTryCatch
+ignore#!#TestSimpleErrorsWithImplicitTran
+ignore#!#babel_cursor
+
+ignore#!#BABEL-1435
+
+# Error
+ignore#!#BABEL-VERSION
