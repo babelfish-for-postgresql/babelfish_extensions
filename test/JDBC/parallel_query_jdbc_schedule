@@ -375,6 +375,7 @@ ignore#!#TestSimpleErrorsWithImplicitTran
 ignore#!#babel_cursor
 
 ignore#!#BABEL-1435
+ignore#!#BABEL-1454
 
 # Error
 ignore#!#BABEL-VERSION
