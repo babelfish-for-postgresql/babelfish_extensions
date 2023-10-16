@@ -147,6 +147,8 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(sysutcdatetime);
+PG_FUNCTION_INFO_V1(getutcdate);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -238,6 +240,20 @@ version(PG_FUNCTION_ARGS)
 	info = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
+}
+
+Datum sysutcdatetime(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    
+}
+
+Datum getutcdate(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    
 }
 
 void *
