@@ -157,3 +157,11 @@ GO
 -- psql
 SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_40';
 GO
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_babel_4231_41';
+GO
+
+-- tsql
+select 1  as '您对“数据一览“中的车型，颜色，内饰，选装, 您对“数据一览“中的车型，颜色，内饰，选装,您对“数据一览“中的车型，颜色，内饰，选装,您对“数据一览“中的车型，颜色，内饰，选装,';
+GO
