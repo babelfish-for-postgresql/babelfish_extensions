@@ -2039,7 +2039,8 @@ public:
 
 				// Temporarily turn this into a double-quoted string so that we can handle embedded quotes.
 				// Since embedded double quotes inside a bracketed identifier are not escaped (as they would be in a 
-				// double-quoted string), escape them first
+				// double-quoted string), escape them first. We cannot just call rewriteDoubeQuotedString() since if we'd
+				// have two adjacent double quotes, i.e. [a""b], this would then become [a"b] so we'd lose one quote.
 				str = escapeDoubleQuotes(str);
 				str = '"' + str.substr(1,str.length()-2) + '"';
 				str = rewriteDoubleQuotedString(str);	
@@ -2592,9 +2593,11 @@ public:
 			// When it none of the above, it is an unquoted string 
 			if (str.front() == '[') {
 				Assert(str.back() == ']');
+
 				// Temporarily turn this into a double-quoted string so that we can handle embedded quotes.
 				// Since embedded double quotes inside a bracketed identifier are not escaped (as they would be in a 
-				// double-quoted string), escape them first
+				// double-quoted string), escape them first. We cannot just call rewriteDoubeQuotedString() since if we'd
+				// have two adjacent double quotes, i.e. [a""b], this would then become [a"b] so we'd lose one quote.
 				str = escapeDoubleQuotes(str);
 				str = '"' + str.substr(1,str.length()-2) + '"';
 				str = rewriteDoubleQuotedString(str);
