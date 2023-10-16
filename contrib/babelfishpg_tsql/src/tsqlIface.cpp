@@ -7218,39 +7218,25 @@ rewriteDoubleQuotedString(const std::string strDoubleQuoted)
 	Assert(str.front() == '"');
 	Assert(str.back() == '"');
 
-	if (str.find('\'') == std::string::npos)
+	// For any embedded single-quotes, these must be escaped by doubling them
+	for (size_t i = str.find("\'", 1);  // start at pos 1: char 0 has the enclosing quote
+		i != std::string::npos;   
+		i = str.find("\'", i + 2) )
 	{
-		// String contains no embedded single-quotes, so no further action needed
+		str.replace(i, 1, "''");	    // Change single quote to 2 single-quotes					
 	}
-	else
-	{
-		// String contains embedded single-quotes; these must be escaped by doubling them
-		for (size_t i = str.find("\'", 1);  // start at pos 1: char 0 has the enclosing quote
-			i != std::string::npos;   
-			i = str.find("\'", i + 2) )
-		{
-			str.replace(i, 1, "''");	    // Change single quote to 2 single-quotes					
-		}
-	}			
 
 	// Now change the enclosing quotes, i.e. from "foo" to 'foo'
 	// Must do this after embedded single-quote handling above
 	str.front() = '\'';
 	str.back() = '\'';
 
-	if (str.find('\"') == std::string::npos)
+	// For any embedded double-quotes, these must be un-escaped by removing one of the two
+	for (size_t i = str.find("\"\"", 1);  // Start at pos 1: char 0 has the enclosing quote
+		i != std::string::npos; 
+		i = str.find("\"\"", i + 1) )
 	{
-		// String contains no embedded double-quotes, so no further action needed
-	}
-	else
-	{
-		// String contains embedded double-quotes; these must be un-escaped by removing one of the two
-		for (size_t i = str.find("\"\"", 1);  // Start at pos 1: char 0 has the enclosing quote
-			i != std::string::npos; 
-			i = str.find("\"\"", i + 1) )
-		{
-			str.replace(i, 2, "\"");	     // Remove one of the double quotes
-		}
+		str.replace(i, 2, "\"");	     // Remove one of the double quotes
 	}
 
 	return str;
