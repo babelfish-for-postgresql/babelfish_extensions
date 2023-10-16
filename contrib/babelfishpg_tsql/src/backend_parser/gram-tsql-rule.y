@@ -1936,6 +1936,13 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
+			| TSQL_DATETRUNC '(' datepart_arg ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datetrunc"),
+												list_make2(makeStringConst($3, @3), $5),
+												COERCE_EXPLICIT_CALL,
+												@1);
+				}
 			| TSQL_DATENAME '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datename"),
@@ -4465,6 +4472,7 @@ reserved_keyword:
 			| TSQL_DATE_BUCKET
 			| TSQL_DATENAME
 			| TSQL_DATEPART
+			| TSQL_DATETRUNC
 			| TSQL_IIF
 			| TSQL_OUT
 			| TSQL_OUTER
