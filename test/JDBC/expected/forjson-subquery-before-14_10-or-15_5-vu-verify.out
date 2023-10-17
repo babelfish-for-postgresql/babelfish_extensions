@@ -20,7 +20,7 @@ SELECT * FROM forjson_subquery_vu_v_with
 GO
 ~~START~~
 nvarchar
-[{"Id": 1, "Age": 25, "Country": "India"}, {"Id": 2, "Age": 40, "Country": "USA"}, {"Id": 3, "Age": 30, "Country": "India"}]
+[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"}]
 ~~END~~
 
 
@@ -28,7 +28,7 @@ SELECT * FROM forjson_subquery_vu_v_with_order_by
 GO
 ~~START~~
 nvarchar
-[{"Id": 1, "Age": 25, "Country": "India"}, {"Id": 3, "Age": 30, "Country": "India"}, {"Id": 2, "Age": 40, "Country": "USA"}]
+[{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
 ~~END~~
 
 
@@ -93,4 +93,3 @@ GO
 nvarchar
 abcd
 ~~END~~
-

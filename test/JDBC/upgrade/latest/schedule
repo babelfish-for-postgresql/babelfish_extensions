@@ -143,6 +143,7 @@ BABEL-937
 forjson
 forjson-subquery
 forjson-datatypes
+forjson-nesting
 forxml
 forxml-subquery
 BABEL-PROCID
