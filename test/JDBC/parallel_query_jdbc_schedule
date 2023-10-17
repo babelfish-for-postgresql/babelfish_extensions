@@ -366,21 +366,21 @@ ignore#!#BABEL-2513
 
 # BABEL_2_X_DEV branch failing/crashing tests
 #  time-out
-ignore#!#BABEL-2555
-ignore#!#BABEL-3588-vu-verify
-ignore#!#BABEL-UNSUPPORTED
-ignore#!#ISC-Views-vu-verify
-ignore#!#TestErrorsWithTryCatch
-ignore#!#TestSimpleErrorsWithImplicitTran
-ignore#!#babel_cursor
+# ignore#!#BABEL-2555
+# ignore#!#BABEL-3588-vu-verify
+# ignore#!#BABEL-UNSUPPORTED
+# ignore#!#ISC-Views-vu-verify
+# ignore#!#TestErrorsWithTryCatch
+# ignore#!#TestSimpleErrorsWithImplicitTran
+# ignore#!#babel_cursor
 
-ignore#!#BABEL-1435
-ignore#!#BABEL-1454
-ignore#!#BABEL-2337
-ignore#!#BABEL-2371
-ignore#!#BABEL-2877-vu-verify
-ignore#!#BABEL-3215-vu-verify
-ignore#!#BABEL-LOGIN-vu-verify
+# ignore#!#BABEL-1435
+# ignore#!#BABEL-1454
+# ignore#!#BABEL-2337
+# ignore#!#BABEL-2371
+# ignore#!#BABEL-2877-vu-verify
+# ignore#!#BABEL-3215-vu-verify
+# ignore#!#BABEL-LOGIN-vu-verify
 
 # Error
 ignore#!#BABEL-VERSION
