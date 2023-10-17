@@ -1,63 +1,54 @@
-CREATE DATABASE db1
+CREATE SCHEMA babel_4442_s1
+GO
+CREATE SCHEMA babel_4442_s2
 GO
 
-CREATE SCHEMA s1
+CREATE TABLE babel_4442_t (id INT)
 GO
-CREATE SCHEMA s2
+CREATE TABLE babel_4442_s1.babel_4442_t (id INT)
 GO
-
-CREATE TABLE t (id int)
-GO
-CREATE TABLE s1.t (id int)
-GO
-CREATE TABLE s2.t (id int)
+CREATE TABLE babel_4442_s2.babel_4442_t (id INT)
 GO
 
-INSERT INTO t VALUES (1)
+INSERT INTO babel_4442_t VALUES (1)
 GO
-INSERT INTO s1.t VALUES (2), (3)
+INSERT INTO babel_4442_s1.babel_4442_t VALUES (2), (3)
 GO
-INSERT INTO s2.t VALUES (3), (4), (5)
+INSERT INTO babel_4442_s2.babel_4442_t VALUES (3), (4), (5)
 GO
 
-CREATE FUNCTION f() RETURNS INT AS
+CREATE FUNCTION babel_4442_f() RETURNS INT AS
 BEGIN
-    RETURN (SELECT COUNT(*) FROM t)
+    RETURN (SELECT COUNT(*) FROM babel_4442_t)
 END
 GO
 
-CREATE FUNCTION s1.f() RETURNS INT AS
+CREATE FUNCTION babel_4442_s1.babel_4442_f() RETURNS INT AS
 BEGIN
-    RETURN (SELECT COUNT(*) FROM t)
+    RETURN (SELECT COUNT(*) FROM babel_4442_t)
 END
 GO
 
-CREATE FUNCTION s2.f() RETURNS INT AS
+CREATE FUNCTION babel_4442_s2.babel_4442_f() RETURNS INT AS
 BEGIN
-    RETURN (SELECT COUNT(*) FROM t)
+    RETURN (SELECT COUNT(*) FROM babel_4442_t)
 END
 GO
 
-CREATE FUNCTION s2.f_new() RETURNS INT AS
-BEGIN
-    RETURN (SELECT s1.f())
-END
+SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA_NAME() and TABLE_NAME = 'babel_4442_t'
 GO
 
-SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA_NAME() and TABLE_NAME = 't'
+SELECT babel_4442_f(), * FROM babel_4442_s1.babel_4442_t
 GO
 
-SELECT f(), * FROM s1.t
+SELECT babel_4442_f(), babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_s1.babel_4442_t
 GO
 
-SELECT f(), s1.f(), s2.f(), * FROM s1.t
+SELECT babel_4442_f(), babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
 GO
 
-SELECT f(), s1.f(), s2.f(), * FROM t
-GO
-
-SELECT f(), current_setting('search_path'), s1.f(), current_setting('search_path'),
-        s2.f(), 1, current_setting('search_path'), * FROM t
+SELECT babel_4442_f(), current_setting('search_path'), babel_4442_s1.babel_4442_f(), current_setting('search_path'),
+        babel_4442_s2.babel_4442_f(), 1, current_setting('search_path'), * FROM babel_4442_t
 GO
 
 SELECT current_setting('search_path')
@@ -67,11 +58,11 @@ BEGIN TRANSACTION
 GO
 SELECT current_setting('search_path')
 GO
-SELECT s1.f(), s2.f(), * FROM t
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
 GO
 SELECT current_setting('search_path')
 GO
-SELECT s1.f(), s2.f(), * FROM t
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
 GO
 COMMIT
 GO
@@ -83,11 +74,11 @@ BEGIN TRANSACTION
 GO
 SELECT current_setting('search_path')
 GO
-SELECT s1.f(), s2.f(), * FROM t
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
 GO
 SELECT current_setting('search_path')
 GO
-SELECT s1.f(), s2.f(), * FROM t
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
 GO
 ROLLBACK
 GO
@@ -95,13 +86,11 @@ GO
 SELECT current_setting('search_path')
 GO
 
-DROP DATABASE db1
+DROP TABLE IF EXISTS babel_4442_t, babel_4442_s1.babel_4442_t, babel_4442_s2.babel_4442_t
 GO
-DROP TABLE IF EXISTS t, s1.t, s2.t
+DROP FUNCTION IF EXISTS babel_4442_f, babel_4442_s1.babel_4442_f, babel_4442_s2.babel_4442_f
 GO
-DROP FUNCTION IF EXISTS f, s1.f, s2.f, s2.f_new
+DROP SCHEMA babel_4442_s1
 GO
-DROP SCHEMA s1
-GO
-DROP SCHEMA s2
+DROP SCHEMA babel_4442_s2
 GO
