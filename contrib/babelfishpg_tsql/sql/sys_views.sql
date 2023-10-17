@@ -3055,7 +3055,7 @@ GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
 
 create or replace view sys.sequences as
 select
-    CAST(p.relname as sys.sysname) as name
+    CAST(p.relname as sys.nvarchar(128)) as name
   , CAST(p.oid as int) as object_id
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id

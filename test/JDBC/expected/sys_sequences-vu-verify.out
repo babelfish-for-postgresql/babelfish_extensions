@@ -4,18 +4,18 @@ GO
 SELECT * FROM sys_sequences_vu_prepare_view
 GO
 ~~START~~
-varchar#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+nvarchar#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
 test_seq#!#<NULL>#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#2147483647#!#0#!#0#!#1#!#23#!#23#!#0#!#0#!#ABC#!#0#!#ABC
-?????????????????#!#<NULL>#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#9223372036854775807#!#0#!#0#!#1#!#20#!#20#!#0#!#0#!#ABC#!#0#!#ABC
+ははははははははははははははははは#!#<NULL>#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#9223372036854775807#!#0#!#0#!#1#!#20#!#20#!#0#!#0#!#ABC#!#0#!#ABC
 ~~END~~
 
 
 EXEC sys_sequences_vu_prepare_proc
 GO
 ~~START~~
-varchar#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
+nvarchar#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#bit#!#bit#!#int#!#int#!#int#!#tinyint#!#tinyint#!#sql_variant#!#bit#!#sql_variant
 test_seq#!#<NULL>#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#2147483647#!#0#!#0#!#1#!#23#!#23#!#0#!#0#!#ABC#!#0#!#ABC
-?????????????????#!#<NULL>#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#9223372036854775807#!#0#!#0#!#1#!#20#!#20#!#0#!#0#!#ABC#!#0#!#ABC
+ははははははははははははははははは#!#<NULL>#!#0#!#SO#!#SEQUENCE_OBJECT#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#1#!#1#!#9223372036854775807#!#0#!#0#!#1#!#20#!#20#!#0#!#0#!#ABC#!#0#!#ABC
 ~~END~~
 
 

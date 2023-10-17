@@ -1181,7 +1181,7 @@ LANGUAGE plpgsql IMMUTABLE;
 
 create or replace view sys.sequences as
 select
-    CAST(p.relname as sys.sysname) as name
+    CAST(p.relname as sys.nvarchar(128)) as name
   , CAST(p.oid as int) as object_id
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id
@@ -1194,9 +1194,9 @@ select
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(ps.seqstart as sys.sql_variant ) as start_value
-  , CAST(ps.seqincrement as sys.sql_variant) as increment
-  , CAST(ps.seqmin as sys.sql_variant ) as minimum_value
-  , CAST(ps.seqmax as sys.sql_variant) as maximum_value
+  , CAST(ps.seqincrement as sys.sql_variant ) as increment
+  , CAST(ps.seqmin as sys.sql_variant  ) as minimum_value
+  , CAST(ps.seqmax as sys.sql_variant ) as maximum_value
   , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
   , CAST(0 as sys.bit ) as is_cached
   , CAST(ps.seqcache as int ) as cache_size
@@ -1204,14 +1204,14 @@ select
   , CAST(ps.seqtypid as int ) as user_type_id
   , CAST(0 as sys.tinyint ) as precision
   , CAST(0 as sys.tinyint ) as scale
-  , CAST('ABC' as sys.sql_variant ) as current_value
+  , CAST('ABC' as sys.sql_variant  ) as current_value
   , CAST(0 as sys.bit ) as is_exhausted
-  , CAST('ABC' as sys.sql_variant) as last_used_value
+  , CAST('ABC' as sys.sql_variant ) as last_used_value
 from pg_class p
+inner join pg_sequence ps on ps.seqrelid = p.oid
 inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
-and has_schema_privilege(s.schema_id, 'USAGE')
-inner join pg_sequence ps on ps.seqrelid = p.oid;
+and has_schema_privilege(s.schema_id, 'USAGE');
 GRANT SELECT ON sys.sequences TO PUBLIC;
 
 
