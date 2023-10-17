@@ -313,14 +313,10 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS cr
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE
-pg_has_role(suser_name()::TEXT, 'sysadmin'::TEXT, 'MEMBER')
-OR
-(
-  Ext.orig_loginname = suser_name()
-  OR
-  Ext.type = 'R'
-);
+WHERE pg_has_role(suser_name()::TEXT, 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.type = 'R';
+
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
 
