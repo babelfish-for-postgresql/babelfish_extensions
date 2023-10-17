@@ -384,5 +384,8 @@ ignore#!#BABEL-LOGIN-vu-verify
 ignore#!#BABEL-LOGIN-USER-EXT
 ignore#!#BABEL-RECURSIVE-CTE
 
+
+ignore#!#BABEL-3121-vu-verify
+
 # Error
 ignore#!#BABEL-VERSION
