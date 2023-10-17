@@ -149,6 +149,7 @@ PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -183,6 +184,77 @@ const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
 
+
+Datum
+babelfish_concat_wrapper(PG_FUNCTION_ARGS)
+{
+	text		*arg1, *arg2, *new_text;
+	int32		arg1_size, arg2_size, new_text_size;
+	bool		first_param = PG_ARGISNULL(0);
+	bool		second_param = PG_ARGISNULL(1);
+
+	if (pltsql_concat_null_yields_null)
+	{
+		if(first_param || second_param)
+		{
+			PG_RETURN_NULL(); // If any is NULL, return NULL
+		}
+	}
+	else
+	{
+		if (first_param && second_param)
+		{
+			PG_RETURN_NULL(); // If both are NULL, return NULL
+		}
+		else if (second_param)
+		{
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
+		}
+		else if (first_param)
+		{
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(1)); // If only the first string is NULL, return the second string
+		}
+	}
+	arg1 = PG_GETARG_TEXT_PP(0);
+	arg2 = PG_GETARG_TEXT_PP(1);
+	arg1_size = VARSIZE_ANY_EXHDR(arg1);
+	arg2_size = VARSIZE_ANY_EXHDR(arg2);
+
+	if((arg1_size>0)&&(arg2_size>0)&&((arg1_size + VARHDRSZ ) > INT_MAX - arg2_size))
+	{
+		//overflow detected
+		ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value overflows numeric format while adding")));
+	}
+	else if((arg1_size < 0) && (arg2_size < 0) && ((arg1_size + VARHDRSZ ) < INT_MIN - arg2_size))
+	{
+		//underflow detected
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value underflows numeric format while adding")));
+	}
+	else
+	{
+		//safe to add
+		new_text_size = arg1_size + arg2_size + VARHDRSZ;
+	}
+
+	new_text = (text *) palloc(new_text_size);
+
+	SET_VARSIZE(new_text, new_text_size);
+
+	if(arg1_size>0)
+	{
+		memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
+	}
+	if(arg2_size>0)
+	{
+		memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+	}
+
+	PG_RETURN_TEXT_P(new_text);
+}
 
 Datum
 trancount(PG_FUNCTION_ARGS)
