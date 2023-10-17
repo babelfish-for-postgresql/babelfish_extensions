@@ -175,8 +175,8 @@ dateadd_internal_df
 datediff_internal_date-before-14_7-or-15_2
 datepart
 datetime2fromparts
-forjson
-forjson-datatypes
+forjson-before-14_10-or-15_5
+forjson-datatypes-before-14_10-or-15_5
 format
 forxml
 fulltextserviceproperty
