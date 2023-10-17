@@ -50,7 +50,7 @@ SELECT * FROM babel_3696_7
 GO
 ~~START~~
 nvarchar
-{"a": "{\"x\": \"some string\"}"}
+{"a": "{\"x\":\"some string\"}"}
 ~~END~~
 
 
@@ -85,4 +85,3 @@ GO
 nvarchar
 {"Suspect": {"Name": "Homer Simpson", "Address": {"City": "Dunedin", "Region": "Otago", "Country": "New Zealand"}, "Hobbies": ["Chess", "Brain Surgery"]}}
 ~~END~~
-

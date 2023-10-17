@@ -4,7 +4,7 @@ SELECT * FROM forjson_datatypes_vu_v_numerics
 GO
 ~~START~~
 nvarchar
-[{"abigint": 9223372036854775807, "adecimal": 123, "aint": 2147483647, "anumeric": 12345, "asmallint": 32767, "atinyint": 255}]
+[{"abigint":9223372036854775807,"adecimal":123,"aint":2147483647,"anumeric":12345,"asmallint":32767,"atinyint":255}]
 ~~END~~
 
 
@@ -12,7 +12,7 @@ SELECT * FROM forjson_datatypes_vu_v_bit
 GO
 ~~START~~
 nvarchar
-[{"abit": true}]
+[{"abit":true}]
 ~~END~~
 
 
@@ -20,7 +20,7 @@ SELECT * FROM forjson_datatypes_vu_v_money
 GO
 ~~START~~
 nvarchar
-[{"amoney": 3148.2900}]
+[{"amoney":3148.2900}]
 ~~END~~
 
 
@@ -28,7 +28,7 @@ SELECT * FROM forjson_datatypes_vu_v_smallmoney
 GO
 ~~START~~
 nvarchar
-[{"asmallmoney": 3148.2900}]
+[{"asmallmoney":3148.2900}]
 ~~END~~
 
 
@@ -37,7 +37,7 @@ SELECT * FROM forjson_datatypes_vu_v_approx_numerics
 GO
 ~~START~~
 nvarchar
-[{"afloat": 12.05, "areal": 120.53}]
+[{"afloat":12.05,"areal":120.53}]
 ~~END~~
 
 
@@ -46,7 +46,7 @@ SELECT * FROM forjson_datatypes_vu_v_time_date
 GO
 ~~START~~
 nvarchar
-[{"atime": "23:17:08.56", "adate": "2022-11-11"}]
+[{"atime":"23:17:08.56","adate":"2022-11-11"}]
 ~~END~~
 
 
@@ -54,7 +54,7 @@ SELECT * FROM forjson_datatypes_vu_v_smalldatetime
 GO
 ~~START~~
 nvarchar
-[{"asmalldatetime": "2022-11-11T23:17:00"}]
+[{"asmalldatetime":"2022-11-11T23:17:00"}]
 ~~END~~
 
 
@@ -62,7 +62,7 @@ SELECT * FROM forjson_datatypes_vu_v_datetime
 GO
 ~~START~~
 nvarchar
-[{"adatetime": "2022-11-11T23:17:08.56"}]
+[{"adatetime":"2022-11-11T23:17:08.56"}]
 ~~END~~
 
 
@@ -70,7 +70,7 @@ SELECT * FROM forjson_datatypes_vu_v_datetime2
 GO
 ~~START~~
 nvarchar
-[{"adatetime2": "2022-11-11T23:17:08.56"}]
+[{"adatetime2":"2022-11-11T23:17:08.56"}]
 ~~END~~
 
 
@@ -78,7 +78,7 @@ SELECT * FROM forjson_datatypes_vu_v_datetimeoffset
 GO
 ~~START~~
 nvarchar
-[{"adatetimeoffset": "2022-11-11T23:17:08.56Z", "adatetimeoffset_2": "2012-10-12T12:34:56+02:30"}]
+[{"adatetimeoffset":"2022-11-11T23:17:08.56Z","adatetimeoffset_2":"2012-10-12T12:34:56+02:30"}]
 ~~END~~
 
 
@@ -87,7 +87,7 @@ SELECT * FROM forjson_datatypes_vu_v_strings
 GO
 ~~START~~
 nvarchar
-[{"achar": "a", "avarchar": "abc", "atext": "abc"}]
+[{"achar":"a","avarchar":"abc","atext":"abc"}]
 ~~END~~
 
 
@@ -96,7 +96,7 @@ SELECT * FROM forjson_datatypes_vu_v_unicode_strings
 GO
 ~~START~~
 nvarchar
-[{"anchar": "abc  ", "anvarchar": "abc", "antext": "abc"}]
+[{"anchar":"abc  ","anvarchar":"abc","antext":"abc"}]
 ~~END~~
 
 

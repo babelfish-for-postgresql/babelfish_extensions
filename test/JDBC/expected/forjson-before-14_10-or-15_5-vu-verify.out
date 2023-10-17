@@ -1,0 +1,157 @@
+-- Display Table Contents
+SELECT * FROM forjson_vu_t_people
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#Divya#!#Kumar#!#<NULL>
+2#!#<NULL>#!#Khanna#!#Bengaluru
+3#!#Tom#!#Mehta#!#Kolkata
+4#!#Kane#!#<NULL>#!#Delhi
+~~END~~
+
+
+SELECT * FROM forjson_vu_t_countries
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#25#!#India
+2#!#40#!#USA
+3#!#30#!#India
+4#!#20#!#<NULL>
+5#!#10#!#USA
+~~END~~
+
+
+SELECT * FROM forjson_vu_t_values
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#<NULL>
+3#!#<NULL>
+~~END~~
+
+
+-- FOR JSON PATH clause without nested support
+SELECT * FROM forjson_vu_v_people
+GO
+~~START~~
+nvarchar
+[{"EmpId":1,"Name.FirstName":"Divya","Name.LastName":"Kumar"},{"EmpId":2,"Name.LastName":"Khanna","State":"Bengaluru"},{"EmpId":3,"Name.FirstName":"Tom","Name.LastName":"Mehta","State":"Kolkata"},{"EmpId":4,"Name.FirstName":"Kane","State":"Delhi"}]
+~~END~~
+
+
+SELECT * FROM forjson_vu_v_countries
+GO
+~~START~~
+nvarchar
+[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"},{"Id":4,"Age":20},{"Id":5,"Age":10,"Country":"USA"}]
+~~END~~
+
+
+-- Multiple tables without nested support
+SELECT * FROM forjson_vu_v_join
+GO
+~~START~~
+nvarchar
+[{"Person.Name":"Divya","Person.Surname":"Kumar","Employee.Price":25,"Employee.Quantity":"India"},{"Person.Surname":"Khanna","Employee.Price":40,"Employee.Quantity":"USA"},{"Person.Name":"Tom","Person.Surname":"Mehta","Employee.Price":30,"Employee.Quantity":"India"},{"Person.Name":"Kane","Employee.Price":20}]
+~~END~~
+
+
+-- ROOT directive without specifying value
+SELECT * FROM forjson_vu_v_root
+GO
+~~START~~
+nvarchar
+{"root":[{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}]}
+~~END~~
+
+
+-- ROOT directive with specifying ROOT value
+SELECT * FROM forjson_vu_v_root_value
+GO
+~~START~~
+nvarchar
+{"Employee":[{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}]}
+~~END~~
+
+
+-- ROOT directive with specifying ROOT value with empty string
+SELECT * FROM forjson_vu_v_empty_root
+GO
+~~START~~
+nvarchar
+{"":[{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}]}
+~~END~~
+
+
+-- WITHOUT_ARRAY_WRAPPERS directive
+SELECT * FROM forjson_vu_v_without_array_wrapper
+GO
+~~START~~
+nvarchar
+{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}
+~~END~~
+
+
+-- INCLUDE_NULL_VALUES directive
+SELECT * FROM forjson_vu_v_include_null_values
+GO
+~~START~~
+nvarchar
+[{"FirstName":"Divya","LastName":"Kumar"},{"FirstName":null,"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane","LastName":null}]
+~~END~~
+
+
+-- Multiple Directives
+SELECT * FROM forjson_vu_v_root_include_null_values
+GO
+~~START~~
+nvarchar
+{"Employee":[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"},{"Id":4,"Age":20,"Country":null},{"Id":5,"Age":10,"Country":"USA"}]}
+~~END~~
+
+
+SELECT * FROM forjson_vu_v_without_array_wrapper_include_null_values
+GO
+~~START~~
+nvarchar
+{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"},{"Id":4,"Age":20,"Country":null},{"Id":5,"Age":10,"Country":"USA"}
+~~END~~
+
+
+
+-- Test case with parameters
+EXECUTE forjson_vu_p_params1 @id = 2
+GO
+~~START~~
+nvarchar
+[{"State": "Bengaluru"}]
+~~END~~
+
+
+EXECUTE forjson_vu_p_params2 @id = 3
+GO
+~~START~~
+nvarchar
+[{"nam\"@e": "Tom", "State\"@": "Kolkata"}]
+~~END~~
+
+
+-- All null values test
+SELECT * FROM forjson_vu_v_nulls
+GO
+~~START~~
+nvarchar
+[{},{},{}]
+~~END~~
+
+
+-- Test for all parser rules
+SELECT * FROM forjson_vu_v_order_by
+GO
+~~START~~
+nvarchar
+[{"Id":5,"Age":10,"Country":"USA"},{"Id":4,"Age":20},{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
+~~END~~
+
