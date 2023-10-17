@@ -20,8 +20,6 @@
 #include "pl_explain.h"
 #include "session.h"
 
-#include <math.h>
-
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
 PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
@@ -3257,7 +3255,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		}
 		else
 		{
-			nsp_name = get_physical_schema_name(db_name, dbcc_stmt.schema_name);
+			nsp_name = get_physical_schema_name(db_name, schema_name);
 		}
 	}
 	pfree(db_name);

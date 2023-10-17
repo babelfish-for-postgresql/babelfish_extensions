@@ -947,12 +947,12 @@ typedef union PLtsql_dbcc_stmt_data
 {
 	struct dbcc_checkident
 	{
-		char	   *db_name;
-		char	   *schema_name;
-		char	   *table_name;
-		bool		is_reseed;
-		char	   *new_reseed_value;
-		bool		no_infomsgs;
+		char	*db_name;
+		char	*schema_name;
+		char	*table_name;
+		bool	is_reseed;
+		char	*new_reseed_value;
+		bool	no_infomsgs;
 	} dbcc_checkident;
 
 } PLtsql_dbcc_stmt_data;
@@ -962,10 +962,10 @@ typedef union PLtsql_dbcc_stmt_data
  */
 typedef struct PLtsql_stmt_dbcc
 {
-	PLtsql_stmt_type cmd_type;
-	int			lineno;
-	PLtsql_dbcc_stmt_type dbcc_stmt_type;
-	PLtsql_dbcc_stmt_data dbcc_stmt_data;
+	int	lineno;
+	PLtsql_stmt_type	cmd_type;
+	PLtsql_dbcc_stmt_type	dbcc_stmt_type;
+	PLtsql_dbcc_stmt_data	dbcc_stmt_data;
 } PLtsql_stmt_dbcc;
 
 /*

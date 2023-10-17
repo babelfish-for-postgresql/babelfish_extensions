@@ -660,9 +660,28 @@ GO
 CREATE TABLE babel_3201_db1_database_table1(a int identity, b int);
 GO
 
+CREATE USER babel_3201_db1_log1_usr1 FOR LOGIN babel_3201_log1
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+-- Should throw - must be owner of schema dbo
+DBCC CHECKIDENT('babel_3201_db1..babel_3201_db1_database_table1', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of schema dbo)~~
+
+
+-- tsql
+USE babel_3201_db1
+GO
+DROP USER babel_3201_db1_log1_usr1
+GO
+
+
 -- tsql user=babel_3201_log1 password=12345678
 -- Should throw - The server principal "babel_3201_log1" is not able to access the database "babel_3201_db1" under the current security context
-DBCC CHECKIDENT('babel_3201_db1..t1', NORESEED);
+DBCC CHECKIDENT('babel_3201_db1..babel_3201_db1_database_table1', NORESEED);
 GO
 ~~ERROR (Code: 33557097)~~
 
