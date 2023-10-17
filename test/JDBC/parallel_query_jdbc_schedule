@@ -381,6 +381,7 @@ ignore#!#BABEL-2371
 ignore#!#BABEL-2877-vu-verify
 ignore#!#BABEL-3215-vu-verify
 ignore#!#BABEL-LOGIN-vu-verify
+ignore#!#BABEL-LOGIN-USER-EXT
 
 # Error
 ignore#!#BABEL-VERSION
