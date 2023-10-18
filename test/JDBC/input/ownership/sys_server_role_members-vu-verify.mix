@@ -27,6 +27,10 @@ GO
 GRANT EXECUTE ON sys_server_role_members_vu_prepare_func TO sys_server_role_members_vu_prepare_without_sa;
 GO
 
+-- reset the login password
+ALTER LOGIN sys_server_role_members_vu_prepare_without_sa WITH PASSWORD = '123';
+GO
+
 -- tsql user=sys_server_role_members_vu_prepare_without_sa  password=123
 
 SELECT * FROM sys_server_role_members_vu_prepare_view;
@@ -36,6 +40,10 @@ EXEC sys_server_role_members_vu_prepare_proc
 GO
 
 SELECT * FROM sys_server_role_members_vu_prepare_func();
+GO
+
+-- psql
+ALTER USER sys_server_role_members_vu_prepare_login1 PASSWORD '123';
 GO
 
 -- tsql user=sys_server_role_members_vu_prepare_login1 password=123
