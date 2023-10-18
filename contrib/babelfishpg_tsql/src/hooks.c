@@ -160,6 +160,7 @@ static void declare_parameter_unquoted_string_reset(Node *paramDft);
 
 static Node* call_argument_unquoted_string(Node *arg);
 static void call_argument_unquoted_string_reset(Node *colref_arg);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -226,6 +227,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -389,6 +391,9 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
+	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
 }
 
 void
@@ -452,6 +457,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 }
 
 /*****************************************
@@ -1195,12 +1201,11 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
-	while (i < 258)
+	while (true)
 	{
 		char		c = start[i];
 
@@ -1759,7 +1764,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				memcpy(alias + (alias_len) - 32,
 				identifier_name + (alias_len) - 32, 
 				32);
-				alias[alias_len+1] = '\0';
+				alias[alias_len] = '\0';
 			}
 			/* Identifier is not truncated. */
 			else
@@ -4251,3 +4256,29 @@ static void call_argument_unquoted_string_reset (Node *colref_arg)
 	return;
 }
 
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
+{
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	const char  	*func_dbo_schema,
+					*cur_dbname = get_cur_db_name();
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
+	{
+		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
+		func_dbo_schema = get_dbo_schema_name(cur_dbname);
+
+		if(strcmp(func_schema_name, func_dbo_schema) != 0
+			&& strcmp(func_schema_name, "sys") != 0)
+			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+										quote_identifier(func_schema_name),
+										quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
+	}
+	return new_search_path;
+}

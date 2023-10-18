@@ -33,6 +33,9 @@ ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
 ignore#!#BABEL-3655-vu-prepare
 ignore#!#BABEL-3655-vu-verify
+ignore#!#GRANT_SCHEMA-vu-prepare
+ignore#!#GRANT_SCHEMA-vu-verify
+ignore#!#GRANT_SCHEMA-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
@@ -71,6 +74,18 @@ ignore#!#sys-all_sql_modules_before-14_7-or-15_2-vu-cleanup
 ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-prepare
 ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-verify
 ignore#!#sys-sql_modules_before-14_7-or-15_2-vu-cleanup
+ignore#!#BABEL-3696-before-14_10-or-15_5-vu-prepare
+ignore#!#BABEL-3696-before-14_10-or-15_5-vu-verify
+ignore#!#BABEL-3696-before-14_10-or-15_5-vu-cleanup
+ignore#!#forjson-before-14_10-or-15_5-vu-prepare
+ignore#!#forjson-before-14_10-or-15_5-vu-verify
+ignore#!#forjson-before-14_10-or-15_5-vu-cleanup
+ignore#!#forjson-subquery-before-14_10-or-15_5-vu-prepare
+ignore#!#forjson-subquery-before-14_10-or-15_5-vu-verify
+ignore#!#forjson-subquery-before-14_10-or-15_5-vu-cleanup
+ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-prepare
+ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-verify
+ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-cleanup
 ignore#!#orderby-before-15_3-vu-prepare
 ignore#!#orderby-before-15_3-vu-verify
 ignore#!#orderby-before-15_3-vu-cleanup

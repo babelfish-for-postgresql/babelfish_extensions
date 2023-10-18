@@ -1,0 +1,561 @@
+SELECT * FROM DATETRUNC_vu_prepare_v1
+GO
+~~START~~
+date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date#!#date
+2020-01-01#!#2020-01-01#!#2020-01-01#!#2020-04-01#!#2020-04-01#!#2020-04-01#!#2020-04-01#!#2020-04-01#!#2020-04-01#!#2020-04-15#!#2020-04-15#!#2020-04-15#!#2020-04-15#!#2020-04-15#!#2020-04-15#!#2020-04-12#!#2020-04-12#!#2020-04-12#!#2020-04-13#!#2020-04-13#!#2020-04-13
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v2
+GO
+~~START~~
+time#!#time#!#time#!#time#!#time#!#time#!#time#!#time#!#time#!#time#!#time#!#time
+12:00:00.0000000#!#12:00:00.0000000#!#12:32:00.0000000#!#12:32:00.0000000#!#12:32:00.0000000#!#12:32:45.0000000#!#12:32:45.0000000#!#12:32:45.0000000#!#12:32:45.5640000#!#12:32:45.5640000#!#12:32:45.5647310#!#12:32:45.5647310
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v3
+GO
+~~START~~
+datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime#!#datetime
+2004-01-01 00:00:00.0#!#2004-04-01 00:00:00.0#!#2004-06-01 00:00:00.0#!#2004-06-17 00:00:00.0#!#2004-06-17 00:00:00.0#!#2004-06-13 00:00:00.0#!#2004-06-17 09:00:00.0#!#2004-06-17 09:32:00.0#!#2004-06-17 09:32:42.0#!#2004-06-17 09:32:42.567
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v4
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart 'microsecond' is not supported by date function datetrunc for data type 'datetime'.)~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v5
+GO
+~~START~~
+smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime#!#smalldatetime
+2004-01-01 00:00:00.0#!#2004-07-01 00:00:00.0#!#2004-08-01 00:00:00.0#!#2004-08-14 00:00:00.0#!#2004-08-14 00:00:00.0#!#2004-08-08 00:00:00.0#!#2004-08-14 22:00:00.0#!#2004-08-14 22:34:00.0#!#2004-08-14 22:34:00.0
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v6
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart 'microsecond' is not supported by date function datetrunc for data type 'smalldatetime'.)~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v7
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+2015-01-01 00:00:00.0000000#!#2015-10-01 00:00:00.0000000#!#2015-11-01 00:00:00.0000000#!#2015-11-30 00:00:00.0000000#!#2015-11-30 00:00:00.0000000#!#2015-11-29 00:00:00.0000000#!#2015-11-30 09:00:00.0000000#!#2015-11-30 09:34:00.0000000#!#2015-11-30 09:34:56.0000000#!#2015-11-30 09:34:56.6570000#!#2015-11-30 09:34:56.6574890
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v8
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset#!#datetimeoffset
+2015-01-01 00:00:00.0000000 +12:42#!#2015-10-01 00:00:00.0000000 +10:42#!#2015-11-01 00:00:00.0000000 +02:42#!#2015-11-30 00:00:00.0000000 +05:42#!#2015-11-30 00:00:00.0000000 +12:42#!#2015-11-29 00:00:00.0000000 +13:42#!#2015-11-30 09:00:00.0000000 +12:42#!#2015-11-30 09:34:00.0000000 -12:43#!#2015-11-30 09:34:56.0000000 +12:22#!#2015-11-30 09:34:56.6570000 -10:42#!#2015-11-30 09:34:56.6574890 +12:42
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v9
+GO
+~~START~~
+datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2#!#datetime2
+2021-01-01 00:00:00.0000000#!#2021-01-01 00:00:00.0000000#!#2021-01-01 00:00:00.0000000#!#2021-01-01 00:00:00.0000000#!#2020-01-01 00:00:00.0000000#!#1980-09-08 00:00:00.0000000#!#1900-01-01 00:00:00.0000000#!#1900-01-01 00:00:00.0000000#!#1990-09-09 00:00:00.0000000#!#1990-09-09 00:00:00.0000000#!#1990-09-09 00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v10
+GO
+~~START~~
+time#!#datetime2#!#datetimeoffset#!#datetime2#!#datetimeoffset
+12:00:00.0000000#!#2020-12-01 00:00:00.0000000#!#1989-09-17 00:00:00.0000000 +12:37#!#2027-12-13 10:13:00.0000000#!#2027-01-01 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT * FROM DATETRUNC_vu_prepare_v11
+GO
+~~START~~
+datetime2#!#datetimeoffset#!#time#!#datetime2#!#datetimeoffset
+2002-01-01 12:33:43.4400000#!#2020-01-01 12:33:32.4000000 +00:00#!#12:23:43.0000000#!#2002-01-01 12:33:43.4353500#!#2020-01-01 12:33:32.4377000 +00:00
+~~END~~
+
+
+EXEC BABEL_3953_vu_prepare_p1
+GO
+~~START~~
+date#!#date
+0001-01-01#!#9999-12-01
+~~END~~
+
+
+EXEC BABEL_3953_vu_prepare_p2
+GO
+~~START~~
+datetime#!#datetime
+1753-01-01 00:00:00.0#!#9999-12-01 00:00:00.0
+~~END~~
+
+
+EXEC BABEL_3953_vu_prepare_p3
+GO
+~~START~~
+datetime2#!#datetime2
+0001-01-01 00:00:00.0000000#!#9999-12-01 00:00:00.0000000
+~~END~~
+
+
+EXEC BABEL_3953_vu_prepare_p4
+GO
+~~START~~
+datetimeoffset#!#datetimeoffset
+0001-01-01 00:00:00.0000000 -14:00#!#9999-12-01 00:00:00.0000000 +14:00
+~~END~~
+
+
+EXEC BABEL_3953_vu_prepare_p5
+GO
+~~START~~
+smalldatetime#!#smalldatetime
+1900-01-01 00:00:00.0#!#2007-06-06 00:00:00.0
+~~END~~
+
+
+EXEC BABEL_3953_vu_prepare_p6
+GO
+~~START~~
+time#!#time
+00:00:00.0000000#!#23:59:59.0000000
+~~END~~
+
+
+SELECT BABEL_3953_vu_prepare_f1()
+GO
+~~START~~
+datetime2
+2012-01-23 00:00:00.0000000
+~~END~~
+
+
+SELECT BABEL_3953_vu_prepare_f2()
+GO
+~~START~~
+time
+12:32:53.0000000
+~~END~~
+
+
+SELECT BABEL_3953_vu_prepare_f3()
+GO
+~~START~~
+date
+2001-11-11
+~~END~~
+
+
+select datetrunc(null, CAST('2020-01-01' as date)) as dt1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "null")~~
+
+select datetrunc(null, null) as dt1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "null")~~
+
+select datetrunc(null, 'NULL') as dt1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "null")~~
+
+select datetrunc('NULL', null) as dt1
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NULL' is not a recognized datetrunc option.)~~
+
+select datetrunc('NULL', 'NULL') as dt1
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NULL' is not a recognized datetrunc option.)~~
+
+select datetrunc('year',CAST('2020-01-01' as date))
+go
+~~START~~
+date
+2020-01-01
+~~END~~
+
+select datetrunc(year, null) as dt3
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+select datetrunc(years, null) as dt4
+GO
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'years' is not a recognized datetrunc option.)~~
+
+select datetrunc(nanosecond ,null) as dt5
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+SELECT datetrunc(nanosecond, 2020)
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type 'integer' is invalid for argument 2 of datetrunc function.)~~
+
+select datetrunc(invalid_datepart, 2020)
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'invalid_datepart' is not a recognized datetrunc option.)~~
+
+select datetrunc(hour, 2020.0)
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type 'numeric' is invalid for argument 2 of datetrunc function.)~~
+
+
+-- postgres support 6 digits of fractional time-scale so the bbf output will differ
+-- in the last fractional second digit from t-sql. bbf- 2021-12-08 11:30:15.1234570
+-- tsql- 2021-12-08 11:30:15.1234560
+DECLARE @d datetime2 = '2021-12-08 11:30:15.1234567';
+SELECT 'Microsecond', DATETRUNC(microsecond, @d);
+Go
+~~START~~
+varchar#!#datetime2
+Microsecond#!#2021-12-08 11:30:15.1234570
+~~END~~
+
+
+DECLARE @test_date date;
+SET @test_date = '1998-09-12';
+SELECT datetrunc(week, @test_date);
+GO
+~~START~~
+date
+1998-09-06
+~~END~~
+
+
+DECLARE @test_date datetime;
+SET @test_date = '2010-09-12 12:23:12.564';
+SELECT datetrunc(week, @test_date);
+GO
+~~START~~
+datetime
+2010-09-12 00:00:00.0
+~~END~~
+
+
+DECLARE @test_date datetime2;
+SET @test_date = '2010-09-12 12:23:12.56443';
+SELECT datetrunc(week, @test_date);
+GO
+~~START~~
+datetime2
+2010-09-12 00:00:00.0000000
+~~END~~
+
+
+DECLARE @test_date smalldatetime;
+SET @test_date = '2010-09-12 12:23:12';
+SELECT datetrunc(week, @test_date);
+GO
+~~START~~
+smalldatetime
+2010-09-12 00:00:00.0
+~~END~~
+
+
+DECLARE @test_date datetimeoffset;
+SET @test_date = '2010-09-12 12:23:12.56443 +10:12';
+SELECT datetrunc(week, @test_date);
+GO
+~~START~~
+datetimeoffset
+2010-09-12 00:00:00.0000000 +10:12
+~~END~~
+
+
+DECLARE @test_date time;
+SET @test_date = '12:23:12.56443';
+SELECT datetrunc(hour, @test_date);
+GO
+~~START~~
+time
+12:00:00.0000000
+~~END~~
+
+
+DROP TABLE IF EXISTS dtrunc
+GO
+Create table dtrunc(a datetime)
+insert into dtrunc (a) values(datetrunc(day, CAST('2020-01-09 12:32:23.23' as datetime)))
+Select * from dtrunc
+Select datetrunc(week, a) from dtrunc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime
+2020-01-09 00:00:00.0
+~~END~~
+
+~~START~~
+datetime
+2020-01-05 00:00:00.0
+~~END~~
+
+
+DROP TABLE IF EXISTS dtrunc
+GO
+Create table dtrunc(a date)
+insert into dtrunc (a) values(datetrunc(day, CAST('2020-01-09' as date)))
+Select * from dtrunc
+Select datetrunc(week, a) from dtrunc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+date
+2020-01-09
+~~END~~
+
+~~START~~
+date
+2020-01-05
+~~END~~
+
+
+DROP TABLE IF EXISTS dtrunc
+GO
+Create table dtrunc(a datetime2)
+insert into dtrunc (a) values(datetrunc(day, '2020-01-09 12:32:23.23'))
+Select * from dtrunc
+Select datetrunc(day, a) from dtrunc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime2
+2020-01-09 00:00:00.0000000
+~~END~~
+
+~~START~~
+datetime2
+2020-01-09 00:00:00.0000000
+~~END~~
+
+
+DROP TABLE IF EXISTS dtrunc
+GO
+Create table dtrunc(a datetimeoffset)
+insert into dtrunc (a) values(datetrunc(day, CAST('2020-01-09 12:32:23.23 -10:23' as datetimeoffset)))
+Select * from dtrunc
+Select datetrunc(month, a) from dtrunc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset
+2020-01-09 00:00:00.0000000 -10:23
+~~END~~
+
+~~START~~
+datetimeoffset
+2020-01-01 00:00:00.0000000 -10:23
+~~END~~
+
+
+DROP TABLE IF EXISTS dtrunc
+GO
+Create table dtrunc(a smalldatetime)
+insert into dtrunc (a) values(datetrunc(day, CAST('2020-01-09 12:32:23' as smalldatetime)))
+Select * from dtrunc
+Select datetrunc(hour, a) from dtrunc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+smalldatetime
+2020-01-09 00:00:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2020-01-09 00:00:00.0
+~~END~~
+
+
+DROP TABLE IF EXISTS dtrunc
+GO
+Create table dtrunc(a time)
+insert into dtrunc (a) values(datetrunc(minute, CAST('12:32:23.23' as time)))
+Select * from dtrunc
+Select datetrunc(second, a) from dtrunc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+time
+12:32:00.0000000
+~~END~~
+
+~~START~~
+time
+12:32:00.0000000
+~~END~~
+
+
+SET DATEFIRST 1
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-09-13 21:32:32.23' as datetime2)) 
+SELECT DATETRUNC(WEEK, CAST('2020-09-13 21:32:32.23' as datetime2))
+GO
+~~START~~
+datetime2
+2020-09-07 00:00:00.0000000
+~~END~~
+
+~~START~~
+datetime2
+2020-09-07 00:00:00.0000000
+~~END~~
+
+
+SET DATEFIRST 1
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-08-12 21:32:32.23' as datetime2)) 
+SELECT DATETRUNC(WEEK, CAST('2020-08-12 21:32:32.23' as datetime2))
+GO
+~~START~~
+datetime2
+2020-08-10 00:00:00.0000000
+~~END~~
+
+~~START~~
+datetime2
+2020-08-10 00:00:00.0000000
+~~END~~
+
+
+SET DATEFIRST 2 
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-01-12 21:32:32.23' as datetime)) 
+SELECT DATETRUNC(WEEK, CAST('2020-01-12 21:32:32.23' as datetime))
+GO
+~~START~~
+datetime
+2020-01-06 00:00:00.0
+~~END~~
+
+~~START~~
+datetime
+2020-01-07 00:00:00.0
+~~END~~
+
+
+SET DATEFIRST 3 
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-01-12' as date)) 
+SELECT DATETRUNC(WEEK, CAST('2020-01-12' as date))
+GO
+~~START~~
+date
+2020-01-06
+~~END~~
+
+~~START~~
+date
+2020-01-08
+~~END~~
+
+
+SET DATEFIRST 4 
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-01-12 12:22:32' as smalldatetime)) 
+SELECT DATETRUNC(WEEK, CAST('2020-01-12 21:23:23' as smalldatetime))
+GO
+~~START~~
+smalldatetime
+2020-01-06 00:00:00.0
+~~END~~
+
+~~START~~
+smalldatetime
+2020-01-09 00:00:00.0
+~~END~~
+
+
+SET DATEFIRST 5 
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-01-12 12:22:32' as datetime2)) 
+SELECT DATETRUNC(WEEK, CAST('2020-01-12 21:23:23' as datetime2))
+GO
+~~START~~
+datetime2
+2020-01-06 00:00:00.0000000
+~~END~~
+
+~~START~~
+datetime2
+2020-01-10 00:00:00.0000000
+~~END~~
+
+
+SET DATEFIRST 6 
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-01-12 12:22:32 +12:32' as datetimeoffset)) 
+SELECT DATETRUNC(WEEK, CAST('2020-01-12 21:23:23 -09:43' as datetimeoffset))
+GO
+~~START~~
+datetimeoffset
+2020-01-06 00:00:00.0000000 +12:32
+~~END~~
+
+~~START~~
+datetimeoffset
+2020-01-11 00:00:00.0000000 -09:43
+~~END~~
+
+
+SET DATEFIRST 7 
+SELECT DATETRUNC(ISO_WEEK, CAST('2020-01-12 12:22:32 +12:32' as datetimeoffset)) 
+SELECT DATETRUNC(WEEK, CAST('2020-01-12 21:23:23 -09:43' as datetimeoffset))
+GO
+~~START~~
+datetimeoffset
+2020-01-06 00:00:00.0000000 +12:32
+~~END~~
+
+~~START~~
+datetimeoffset
+2020-01-12 00:00:00.0000000 -09:43
+~~END~~
+
