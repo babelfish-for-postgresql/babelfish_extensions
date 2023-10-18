@@ -167,6 +167,7 @@ static void declare_parameter_unquoted_string_reset(Node *paramDft);
 
 static Node* call_argument_unquoted_string(Node *arg);
 static void call_argument_unquoted_string_reset(Node *colref_arg);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -234,6 +235,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static tsql_time_in_hook_type prev_tsql_time_in_hook = NULL;
+static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -400,6 +402,9 @@ InstallExtendedHooks(void)
 
 	prev_tsql_time_in_hook = tsql_time_in_hook;
 	tsql_time_in_hook = pltsql_time_in;
+
+	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
+	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
 }
 
 void
@@ -464,6 +469,7 @@ UninstallExtendedHooks(void)
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 	tsql_time_in_hook = prev_tsql_time_in_hook;
+	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 }
 
 /*****************************************
@@ -1207,12 +1213,11 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
-	while (i < 258)
+	while (true)
 	{
 		char		c = start[i];
 
@@ -1638,6 +1643,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		int			alias_len = 0;
 		const char *colname_start;
 		const char *identifier_name = NULL;
+		int			open_square_bracket = 0;
+		int			double_quotes = 0;
+		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
@@ -1650,11 +1658,68 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * sourcetext
 			 */
 			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String))
+				IsA(linitial(cref->fields), String)) 
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
+			}
+			/*
+			 * This condition will preserve the case of column name when there are more than
+			 * one cref->fields. For instance, Queries like 
+			 * 1. select [database].[schema].[table].[column] from table.
+			 * 2. select [schema].[table].[column] from table.
+			 * 3. select [t].[column] from table as t
+			 * Case 1: Handle the cases when column name is passed with no delimiters
+			 * For example, select ABC from table
+			 * Case 2: Handle the cases when column name is delimited with dq.
+			 * In such cases, we are checking if no. of dq are even or not. When dq are odd,
+			 * we are not tracing number of sqb and sq within dq.
+			 * For instance, Queries like select "AF bjs'vs] " from table.
+			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
+			 * are zero, it means we are out of sqb.
+			 */
+			if(list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String))
+			{
+				identifier_name = strVal(llast(cref->fields));
+				alias_len = strlen(identifier_name);
+				colname_start = pstate->p_sourcetext + res->location;
+				while(true)
+				{	
+					if(open_square_bracket == 0 && *colname_start == '"')
+					{
+						double_quotes++;
+					}
+					/* To check how many open sqb are present in sourcetext. */
+					else if(double_quotes % 2 == 0 && *colname_start == '[')
+					{
+						open_square_bracket++;
+					}
+					else if(double_quotes % 2 == 0 && *colname_start == ']')
+					{
+						open_square_bracket--;
+					}
+					/*
+					 * last_dot pointer is to trace the last dot in the sourcetext,
+					 * as last dot indicates the starting of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '.')
+					{
+						last_dot = colname_start;
+					}
+					/* 
+					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
+					 * space or comma, it means colname_start is at the end of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					{
+						last_dot++;
+						colname_start = last_dot;
+						break;
+					}
+					colname_start++;
+				}
 			}
 		}
 		else if (res->name != NULL && res->name_location != -1)
@@ -1711,7 +1776,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				memcpy(alias + (alias_len) - 32,
 				identifier_name + (alias_len) - 32, 
 				32);
-				alias[alias_len+1] = '\0';
+				alias[alias_len] = '\0';
 			}
 			/* Identifier is not truncated. */
 			else
@@ -4600,3 +4665,29 @@ static void call_argument_unquoted_string_reset (Node *colref_arg)
 	return;
 }
 
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
+{
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	const char  	*func_dbo_schema,
+					*cur_dbname = get_cur_db_name();
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
+	{
+		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
+		func_dbo_schema = get_dbo_schema_name(cur_dbname);
+
+		if(strcmp(func_schema_name, func_dbo_schema) != 0
+			&& strcmp(func_schema_name, "sys") != 0)
+			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+										quote_identifier(func_schema_name),
+										quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
+	}
+	return new_search_path;
+}
