@@ -1532,24 +1532,12 @@ simple_select:
 					ResTarget		*a_star_restarget;
 					RangeFunction	*funCallNode;
 					SelectStmt 	*s_sql;
-					SelectStmt 	*c_sql;
 					SelectStmt 	*pivot_sl;
 					SortBy 		*s;
 
-					ColumnRef	*c = makeNode(ColumnRef);
-					ResTarget	*pivot_col = makeNode(ResTarget);
 					char 		*pivot_colstr = (char *)list_nth((List *)$6, 0);
 					Node 		*aggFunc = (Node *) list_nth((List *)$6, 1);
 					
-					/* prepare category column for pivot source sql */
-					c->location = -1;
-					c->fields = list_make1(makeString(pivot_colstr));
-					pivot_col->name = NULL;
-					pivot_col->name_location = -1;
-					pivot_col->indirection = NIL;
-					pivot_col->val = (Node *) c;
-					pivot_col->location = -1;
-
 					/* prepare SortBy node for source sql */
 					s = makeNode(SortBy);
 					s->node = makeIntConst(1, -1);
@@ -1559,7 +1547,6 @@ simple_select:
 					s->location = -1;
 
 					/* transform to select * from funcCall as newtable(a type1, b type2 ...) */
-					/* create * node for select target list */
 					a_star = makeNode(ColumnRef);
 					a_star->fields = list_make1(makeNode(A_Star));
 					a_star->location = -1;
@@ -1576,14 +1563,6 @@ simple_select:
 					s_sql->fromClause = $5;
 					s_sql->sortClause = list_make1(s);
 
-					/* prepare category sql for babelfish_pivot function */
-					c_sql = makeNode(SelectStmt);
-					c_sql->distinctClause = list_make1(NIL);
-					c_sql->targetList = list_make1(pivot_col);
-					c_sql->fromClause = $5;
-					c_sql->whereClause = list_nth((List *)$6, 2);
-					c_sql->sortClause = list_make1(copyObject(s));
-
 					/* create a function call node for the fromClause */
 					pivotCall = makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
 					funCallNode = makeNode(RangeFunction);
@@ -1597,10 +1576,10 @@ simple_select:
 					pivot_sl->fromClause = list_make1(funCallNode);
 					pivot_sl->isPivot = true;
 					pivot_sl->srcSql = s_sql;
-					pivot_sl->catSql = c_sql;
+					pivot_sl->catSql = list_nth((List *)$6, 2);
 					pivot_sl->pivotCol = pivot_colstr;
 					pivot_sl->aggFunc = aggFunc;
-					pivot_sl->value_col_strlist = (List *) list_nth((List *)$6, 3);;
+					pivot_sl->value_col_strlist = (List *) list_nth((List *)$6, 3);
 					$$ = (Node *)pivot_sl;
 				}	
 			| tsql_values_clause							{ $$ = $1; }
@@ -1608,23 +1587,35 @@ simple_select:
 
 tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 				{						
-					A_Expr	*where_clause;
+					ColumnRef 		*a_star;
+					ResTarget 		*a_star_restarget;
+					RangeSubselect 	*range_sub_select;
+					Alias 			*temptable_alias;
+					SortBy 			*s;
 					List    *ret;
-					List	*col_list = NULL;
 					List    *value_col_strlist = NULL;
-				
-					ColumnRef	*c = makeNode(ColumnRef);
-					ResTarget	*r_func = makeNode(ResTarget);
+					List	*subsel_valuelists = NULL;
+					
+					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
+					ResTarget	*restarget_aggfunc = makeNode(ResTarget);
 
-					c->location = -1;
-					c->fields = list_make1(makeString($5));
+					a_star = makeNode(ColumnRef);
+					a_star->fields = list_make1(makeNode(A_Star));
+					a_star->location = -1;
+					a_star_restarget = makeNode(ResTarget);
+					a_star_restarget->name = NULL;
+					a_star_restarget->name_location = -1;
+					a_star_restarget->indirection = NIL;
+					a_star_restarget->val = (Node *) a_star;
+					a_star_restarget->location = -1;
+					
 
 					/* prepare aggregation function for pivot source sql */
-					r_func->name = NULL;
-					r_func->name_location = -1;
-					r_func->indirection = NIL;
-					r_func->val = (Node *) $3;
-					r_func->location = -1;
+					restarget_aggfunc->name = NULL;
+					restarget_aggfunc->name_location = -1;
+					restarget_aggfunc->indirection = NIL;
+					restarget_aggfunc->val = (Node *) $3;
+					restarget_aggfunc->location = -1;
 					
 					if (IsA((List *)$7, List))
 					{
@@ -1633,20 +1624,41 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 							ColumnRef	*tempRef = list_nth((List *)$7, i);
 							String		*s = list_nth(tempRef->fields, 0);
 							Node		*n = makeStringConst(s->sval, -1);
-
-							if (col_list == NULL || value_col_strlist == NULL)
+							List 		*l = list_make1(copyObject(n));
+							if (value_col_strlist == NULL || subsel_valuelists == NULL)
 							{
-								col_list = list_make1(n);
 								value_col_strlist = list_make1(s->sval);
+								subsel_valuelists = list_make1(l);
 							}else
 							{
-								col_list = lappend(col_list, n);
 								value_col_strlist = lappend(value_col_strlist, s->sval);
+								subsel_valuelists = lappend(subsel_valuelists, l);
 							}
 						}
 					}
-					where_clause = makeSimpleA_Expr(AEXPR_IN, "=",(Node *) c,(Node *) col_list, -1);
-					ret = list_make4(pstrdup($5), r_func, (Node *)where_clause, value_col_strlist);
+
+					temptable_alias = makeNode(Alias);
+					temptable_alias->aliasname = "pivotTempTable";
+					temptable_alias->colnames = list_make1(makeString(pstrdup($5)));
+					
+					valuelists_sql->valuesLists = subsel_valuelists;
+
+					range_sub_select = makeNode(RangeSubselect);
+					range_sub_select->subquery = (Node *) valuelists_sql;
+					range_sub_select->alias = temptable_alias;
+
+					s = makeNode(SortBy);
+					s->node = makeIntConst(1, -1);
+					s->sortby_dir = 0;
+					s->sortby_nulls = 0;     
+					s->useOp = NIL;
+					s->location = -1;
+
+					cat_sql->targetList = list_make1(a_star_restarget);
+					cat_sql->fromClause = list_make1(range_sub_select);
+					cat_sql->sortClause = list_make1(s);
+
+					ret = list_make4(pstrdup($5), restarget_aggfunc, cat_sql, value_col_strlist);
 					$$ = (Node*) ret; 
 				} 
 			;
