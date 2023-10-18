@@ -88,6 +88,7 @@ typedef enum
 	OBJECT_TYPE_EXTENDED_STORED_PROCEDURE
 } ObjectPropertyType;
 
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 PG_FUNCTION_INFO_V1(trancount);
 PG_FUNCTION_INFO_V1(version);
 PG_FUNCTION_INFO_V1(error);
@@ -149,7 +150,6 @@ PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
-PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
