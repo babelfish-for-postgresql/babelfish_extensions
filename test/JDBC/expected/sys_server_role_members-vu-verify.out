@@ -1,3 +1,4 @@
+-- tsql
 SELECT * from sys_server_role_members_vu_prepare_view;
 GO
 ~~START~~
@@ -22,9 +23,6 @@ sysadmin#!#sys_server_role_members_vu_prepare_login2
 ~~END~~
 
 
-ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login2;
-GO
-
 ALTER SERVER ROLE sysadmin ADD MEMBER sys_server_role_members_vu_prepare_login3;
 GO
 
@@ -34,11 +32,83 @@ GO
 varchar#!#varchar
 sysadmin#!#jdbc_user
 sysadmin#!#sys_server_role_members_vu_prepare_login1
+sysadmin#!#sys_server_role_members_vu_prepare_login2
 sysadmin#!#sys_server_role_members_vu_prepare_login3
 ~~END~~
 
 
+--granting access to user
+GRANT SELECT ON sys_server_role_members_vu_prepare_view TO sys_server_role_members_vu_prepare_without_sa;
+GO
+
+GRANT EXECUTE ON sys_server_role_members_vu_prepare_proc TO sys_server_role_members_vu_prepare_without_sa;
+GO
+
+GRANT EXECUTE ON sys_server_role_members_vu_prepare_func TO sys_server_role_members_vu_prepare_without_sa;
+GO
+
+-- tsql user=sys_server_role_members_vu_prepare_without_sa  password=123
+
+SELECT * FROM sys_server_role_members_vu_prepare_view;
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+EXEC sys_server_role_members_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+SELECT * FROM sys_server_role_members_vu_prepare_func();
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+-- tsql user=sys_server_role_members_vu_prepare_login1 password=123
+SELECT * from sys_server_role_members_vu_prepare_view;
+GO
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+sysadmin#!#sys_server_role_members_vu_prepare_login1
+sysadmin#!#sys_server_role_members_vu_prepare_login2
+sysadmin#!#sys_server_role_members_vu_prepare_login3
+~~END~~
+
+
+EXEC sys_server_role_members_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+sysadmin#!#sys_server_role_members_vu_prepare_login1
+sysadmin#!#sys_server_role_members_vu_prepare_login2
+sysadmin#!#sys_server_role_members_vu_prepare_login3
+~~END~~
+
+
+SELECT * FROM sys_server_role_members_vu_prepare_func();
+GO
+~~START~~
+varchar#!#varchar
+sysadmin#!#jdbc_user
+sysadmin#!#sys_server_role_members_vu_prepare_login1
+sysadmin#!#sys_server_role_members_vu_prepare_login2
+sysadmin#!#sys_server_role_members_vu_prepare_login3
+~~END~~
+
+
+-- tsql
 ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login1;
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login2;
 GO
 
 ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login3;
@@ -61,4 +131,5 @@ GO
 varchar#!#varchar
 sysadmin#!#jdbc_user
 ~~END~~
+
 

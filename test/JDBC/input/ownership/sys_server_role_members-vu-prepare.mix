@@ -1,3 +1,4 @@
+-- tsql
 CREATE LOGIN sys_server_role_members_vu_prepare_login1 WITH PASSWORD = '123';
 GO
 
@@ -48,4 +49,10 @@ BEGIN
     INNER JOIN sys.server_principals AS members
         ON server_role_members.member_principal_id = members.principal_id;
 END;
+GO
+
+CREATE LOGIN sys_server_role_members_vu_prepare_without_sa WITH PASSWORD = '123';
+GO
+
+CREATE USER sys_server_role_members_vu_prepare_without_sa for login sys_server_role_members_vu_prepare_without_sa;
 GO

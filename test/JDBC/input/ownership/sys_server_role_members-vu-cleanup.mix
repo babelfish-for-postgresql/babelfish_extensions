@@ -18,3 +18,9 @@ GO
 
 DROP PROCEDURE sys_server_role_members_vu_prepare_proc;
 GO
+
+DROP USER sys_server_role_members_vu_prepare_without_sa;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_without_sa;
+GO

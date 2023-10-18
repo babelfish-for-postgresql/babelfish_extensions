@@ -486,9 +486,11 @@ SELECT
 CAST(Authmbr.roleid AS INT) AS role_principal_id,
 CAST(Authmbr.member AS INT) AS member_principal_id
 FROM pg_catalog.pg_auth_members AS Authmbr
-INNER JOIN sys.server_principals AS p1 ON p1.principal_id = Authmbr.roleid
-INNER JOIN sys.server_principals AS p2 ON p2.principal_id = Authmbr.member
-WHERE p1.type_desc='SERVER_ROLE';
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.type = 'R';
 
 GRANT SELECT ON sys.server_role_members TO PUBLIC;
 
