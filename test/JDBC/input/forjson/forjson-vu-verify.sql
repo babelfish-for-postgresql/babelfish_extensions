@@ -8,14 +8,14 @@ GO
 SELECT * FROM forjson_vu_t_values
 GO
 
--- FOR JSON PATH clause without nested support
+-- FOR JSON PATH clause with nested support
 SELECT * FROM forjson_vu_v_people
 GO
 
 SELECT * FROM forjson_vu_v_countries
 GO
 
--- Multiple tables without nested support
+-- Multiple tables with nested support
 SELECT * FROM forjson_vu_v_join
 GO
 

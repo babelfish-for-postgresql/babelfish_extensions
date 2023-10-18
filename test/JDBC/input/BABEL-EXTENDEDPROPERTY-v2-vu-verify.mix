@@ -7,6 +7,11 @@ begin
 end $$;
 GO
 
+-- tsql
+-- reset the login password
+ALTER LOGIN owner WITH PASSWORD = '12345678';
+GO
+
 -- tsql user=owner password=12345678
 USE babel_extended_properties_db
 GO
@@ -843,6 +848,10 @@ GO
 EXEC babel_babelfish_extended_properties_proc
 GO
 
+-- reset the login password
+ALTER LOGIN normal_user WITH PASSWORD = '12345678';
+GO
+
 -- tsql user=normal_user password=12345678
 USE babel_extended_properties_db
 GO
@@ -907,6 +916,9 @@ GO
 
 SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties
 GO
+
+select * from sys.babelfish_extended_properties;
+go
 
 -- psql
 do

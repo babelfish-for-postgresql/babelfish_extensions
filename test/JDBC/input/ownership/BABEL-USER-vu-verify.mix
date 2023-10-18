@@ -1,0 +1,152 @@
+-- tsql
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username IN ('dbo', 'db_owner', 'guest')
+AND database_name IN ('master', 'msdb', 'tempdb')
+ORDER BY rolname;
+GO
+
+-- Test default create user
+CREATE USER babel_user_vu_prepare_test1;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- Test create user with login uniqueness in the database
+CREATE USER babel_user_vu_prepare_test2 FOR LOGIN babel_user_vu_prepare_test2;
+GO
+
+CREATE USER babel_user_vu_prepare_test3 FOR LOGIN babel_user_vu_prepare_test2;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- Test create user with schema option
+CREATE USER babel_user_vu_prepare_test3 WITH DEFAULT_SCHEMA = babel_user_vu_prepare_sch;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- Test create user with invalid login
+CREATE USER babel_user_vu_prepare_test4 FOR LOGIN fake_login WITH DEFAULT_SCHEMA = dbo;
+GO
+
+-- Test with long name
+-- 65 character length name
+CREATE USER babel_user_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+FOR LOGIN babel_user_vu_prepare_test4;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- Test alter user
+ALTER USER babel_user_vu_prepare_test1 WITH DEFAULT_SCHEMA = babel_user_vu_prepare_sch;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+ALTER USER babel_user_vu_prepare_test1 WITH DEFAULT_SCHEMA = NULL;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+ALTER USER babel_user_vu_prepare_test1 WITH NAME = babel_user_vu_prepare_test1_new;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- test ALTER USER...WITH LOGIN
+-- login login name (65 character length name)
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_long_login_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+GO
+
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test5;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO
+
+-- reset the login password
+ALTER LOGIN babel_user_vu_prepare_test5 WITH PASSWORD = 'abc';
+GO
+
+-- tsql user=babel_user_vu_prepare_test5 password=abc
+SELECT CURRENT_USER;
+go
+
+-- New login is now member of the user after ALTER
+-- psql
+SELECT pg_has_role('babel_user_vu_prepare_test5', 'master_babel_user_vu_prepare_test3', 'member')
+GO
+
+-- tsql
+-- both of the commands below should fail
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = babel_user_vu_prepare_test1;
+GO
+
+ALTER USER babel_user_vu_prepare_test3 WITH LOGIN = jdbc_user;
+GO
+
+SELECT rolname FROM pg_roles WHERE rolname LIKE '%babel_user_vu_prepare%' ORDER BY rolname;
+GO
+
+-- Test alter user on predefined database users
+ALTER USER dbo WITH DEFAULT_SCHEMA = babel_user_vu_prepare_sch;
+GO
+
+ALTER USER db_owner WITH NAME = db_owner_new;
+GO
+
+ALTER USER guest WITH NAME = guest_new;
+GO
+
+-- Clean up
+DROP USER babel_user_vu_prepare_test1_new;
+GO
+
+DROP USER babel_user_vu_prepare_test2;
+GO
+
+DROP USER babel_user_vu_prepare_test3;
+GO
+
+DROP USER babel_user_vu_prepare_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;
+GO
+
+EXEC babel_user_vu_prepare_user_ext_proc
+GO
+
+EXEC babel_user_vu_prepare_db_principal_proc
+GO

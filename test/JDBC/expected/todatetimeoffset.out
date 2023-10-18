@@ -1,0 +1,605 @@
+Select todatetimeoffset('0000-04-22 16:23:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('9999-04-22 16:23:51.766890','+12:00')
+GO
+~~START~~
+datetimeoffset
+9999-04-22 16:23:51.7668900 +12:00
+~~END~~
+
+
+Select todatetimeoffset('-1-04-22 16:23:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-0a-22 16:23:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('20sb-04-22 16:23:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-2c 16:23:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-22 1d:23:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-0a-22 16:2a:51.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-22 16:23:5d.766890','+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-22 16:23:51.7668c0','+12:00') -- Wrong output , Need to fix BABEL-4328
+GO
+~~START~~
+datetimeoffset
+2000-04-22 16:23:51.7668000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('2000-05-22 16:23:51.766890','+1d:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset('2000-04-22 16:23:51.766890','+12:0e')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset('1-04-22 16:23:51.766890','+12:00')
+GO
+~~START~~
+datetimeoffset
+2022-01-04 16:23:51.7668900 +12:00
+~~END~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45.3682170' as datetime2), '-13:00')
+GO
+~~START~~
+datetimeoffset
+2023-08-08 16:06:45.3682170 -13:00
+~~END~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45' as datetime2), '-13:00')
+GO
+~~START~~
+datetimeoffset
+2023-08-08 16:06:45.0000000 -13:00
+~~END~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08' as datetime2), '-13:00')
+GO
+~~START~~
+datetimeoffset
+2023-08-08 00:00:00.0000000 -13:00
+~~END~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45' as datetime2), '-15:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45' as datetime2), '+23:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset('2000-04-22 1d:23:51.766890',120)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-22 16:2a:51.766890',340)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-22 16:23:5d.766890',841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('2000-04-22 16:23:51.7668c0',-342) -- Wrong output , Need to fix BABEL-4328
+GO
+~~START~~
+datetimeoffset
+2000-04-22 16:23:51.7668000 -05:42
+~~END~~
+
+
+Select todatetimeoffset('2000-05-22 16:23:51.766890',234)
+GO
+~~START~~
+datetimeoffset
+2000-05-22 16:23:51.7668900 +03:54
+~~END~~
+
+
+Select todatetimeoffset('2000-04-22 16:23:51.766890',345)
+GO
+~~START~~
+datetimeoffset
+2000-04-22 16:23:51.7668900 +05:45
+~~END~~
+
+
+Select todatetimeoffset('1-04-22 16:23:51.766890',-4556)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45.3682170' as datetime2), -345)
+GO
+~~START~~
+datetimeoffset
+2023-08-08 16:06:45.3682170 -05:45
+~~END~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08 16:06:45' as datetime2), -234)
+GO
+~~START~~
+datetimeoffset
+2023-08-08 16:06:45.0000000 -03:54
+~~END~~
+
+
+SELECT TODATETIMEOFFSET(cast('2023-08-08' as datetime2), 4556)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset('0001-01-00 00:00:00.00', '-10:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('0001-01-01 00:00:00.00', '+13:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('9999-12-31 23:59:59.59', '+12:00')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.5900000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('9999-12-31 23:59:59.59', '+12:00')
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:59:59.5900000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('10000-12-31 23:59:59.59', '+12:00')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('9934-11-30 22:52:59.59', '+14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset('9934-11-30 22:52:59.59', '-14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2), '+12:00')
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.9980000 +12:00
+~~END~~
+
+
+DECLARE @test_date datetime;
+SET @test_date = '2022-12-11';
+Select todatetimeoffset(@test_date,'+12:00');
+GO
+~~START~~
+datetimeoffset
+2022-12-11 00:00:00.0000000 +12:00
+~~END~~
+
+
+DECLARE @test_date datetime2;
+SET @test_date = '2345-12-31 23:59:59.59';
+Select todatetimeoffset(@test_date,-120);
+GO
+~~START~~
+datetimeoffset
+2345-12-31 23:59:59.5900000 -02:00
+~~END~~
+
+
+Select todatetimeoffset(DATETIME2FROMPARTS(2011, 8, 15, 14, 23, 44, 5, 6 ), 300)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:23:44.0000050 +05:00
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.998 -8:00' AS datetime2(2)), '+12:00')
+Go
+~~START~~
+datetimeoffset
+1900-05-06 13:59:30.0000000 +12:00
+~~END~~
+
+
+Select todatetimeoffset('0',120)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('0',0x23)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+DROP TABLE IF EXISTS tem
+GO
+Create table tem(a datetimeoffset)
+insert into tem (a) values(todatetimeoffset('2000-04-22 12:23:51.766890',120))
+Select * from tem
+Select todatetimeoffset(a,234) from tem
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset
+2000-04-22 12:23:51.7668900 +02:00
+~~END~~
+
+~~START~~
+datetimeoffset
+2000-04-22 12:23:51.7668900 +03:54
+~~END~~
+
+
+Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') + make_interval(1,0,3);
+GO
+~~START~~
+datetimeoffset
+2031-05-27 21:59:29.9980000 -08:00
+~~END~~
+
+
+Select todatetimeoffset('2030-05-06 13:59:29.998 ' ,'-08:00') - make_interval(1,0,3);
+GO
+~~START~~
+datetimeoffset
+2029-04-15 21:59:29.9980000 -08:00
+~~END~~
+
+
+Select todatetimeoffset('2345-12-31 23:59:59.59',NULL);
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select todatetimeoffset('2345-12-31 23:59:59.59','NULL');
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset(NULL,'+12:00');
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select todatetimeoffset('NULL','+12:00');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('NULL',234);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset(NULL,234);
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select todatetimeoffset(NULL,'+12:000');
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select todatetimeoffset('NULL','+12:000');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('NULL',1233456777888);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset(NULL,1233456777888);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type smallint.)~~
+
+
+Select todatetimeoffset('NULL','NULL')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset('NULL',NULL)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+Select todatetimeoffset(NULL,NULL)
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select todatetimeoffset(NULL,'NULL')
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 840)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 +14:00
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), 841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -841)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The timezone provided to builtin function todatetimeoffset is invalid.)~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2(4)), -840)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 -14:00
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 0x23)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 +00:35
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 234.49)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 +03:54
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 234.50)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 +03:54
+~~END~~
+
+
+Select todatetimeoffset(CAST('1900-05-06 13:59:29.050 -8:00' AS datetime2), 234.56)
+GO
+~~START~~
+datetimeoffset
+1900-05-06 13:59:29.0500000 +03:54
+~~END~~
+
+
+Select todatetimeoffset('2001-04-22 ', 120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 00:00:00.0000000 +02:00
+~~END~~
+
+
+Select todatetimeoffset('2001-04-22 ', '+12:30')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 00:00:00.0000000 +12:30
+~~END~~
+
+
+Select todatetimeoffset('2001-04-22 17:34:56', -120)
+GO
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.0000000 -02:00
+~~END~~
+
+
+Select todatetimeoffset('2001-04-22 17:34:56', '-13:34')
+GO
+~~START~~
+datetimeoffset
+2001-04-22 17:34:56.0000000 -13:34
+~~END~~
+
+
+Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 0x23)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +00:35
+~~END~~
+
+
+Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), '-09:46')
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 -09:46
+~~END~~
+
+
+Select todatetimeoffset(DATETIMEOFFSETFROMPARTS(2011, 8, 15, 14, 30, 00, 500, 12, 30, 3), 123/2*1.0)
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +01:01
+~~END~~
+
+
+Select todatetimeoffset('0001-01-01 00:00:01.00 +00:00',-743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 00:00:01.0000000 -12:23
+~~END~~
+
+
+Select todatetimeoffset('0001-01-01 00:00:00.00 +00:00',-743)
+GO
+~~START~~
+datetimeoffset
+0001-01-01 00:00:00.0000000 -12:23
+~~END~~
+
+
+Select todatetimeoffset('9999-12-31 23:12:00.123 +00:00',743)
+GO
+~~START~~
+datetimeoffset
+9999-12-31 23:12:00.1230000 +12:23
+~~END~~
+
+
+Select todatetimeoffset('10000-12-31 23:12:00.123 +00:00',743)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+

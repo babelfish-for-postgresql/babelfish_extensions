@@ -14,6 +14,17 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name NAME NOT NULL,
+  object_name NAME NOT NULL,
+  permission NAME NOT NULL,
+  grantee NAME NOT NULL,
+  object_type NAME,
+  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+);
+
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
@@ -298,10 +309,10 @@ CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
-    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
     WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
     WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
-    ELSE NULL 
+    ELSE NULL
   END
   AS NVARCHAR(60)) AS type_desc,
 CAST(Ext.is_disabled AS INT) AS is_disabled,
@@ -312,7 +323,10 @@ CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
-FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
@@ -648,7 +662,6 @@ CREATE TABLE sys.babelfish_extended_properties (
   value sys.sql_variant,
   PRIMARY KEY (dbid, type, schema_name, major_name, minor_name, name)
 );
-GRANT SELECT on sys.babelfish_extended_properties TO PUBLIC;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_extended_properties', '');
 
 -- This view contains many outer joins that could potentially impair performance.

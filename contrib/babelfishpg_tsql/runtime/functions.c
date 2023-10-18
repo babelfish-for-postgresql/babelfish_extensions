@@ -43,6 +43,7 @@
 #include "../src/multidb.h"
 #include "../src/session.h"
 #include "../src/catalog.h"
+#include "../src/timezone.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
@@ -102,6 +103,7 @@ PG_FUNCTION_INFO_V1(servicename);
 PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
+PG_FUNCTION_INFO_V1(timezone_mapping);
 PG_FUNCTION_INFO_V1(is_member);
 PG_FUNCTION_INFO_V1(schema_id);
 PG_FUNCTION_INFO_V1(schema_name);
@@ -145,6 +147,8 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(sysutcdatetime);
+PG_FUNCTION_INFO_V1(getutcdate);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -178,6 +182,7 @@ char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
+
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -235,6 +240,20 @@ version(PG_FUNCTION_ARGS)
 	info = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
+}
+
+Datum sysutcdatetime(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    
+}
+
+Datum getutcdate(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    
 }
 
 void *
@@ -491,6 +510,23 @@ tsql_random(PG_FUNCTION_ARGS)
 	result = drandom(fcinfo1);
 
 	return result;
+}
+
+Datum
+timezone_mapping(PG_FUNCTION_ARGS)
+{
+	char *sqltmz = text_to_cstring(PG_GETARG_TEXT_P(0));
+	VarChar    *result = cstring_to_text("NULL");
+	int len = (sizeof(win32_tzmap) / sizeof(*(win32_tzmap)));
+	for(int i=0;i<len;i++)
+	{
+		if(pg_strcasecmp(win32_tzmap[i].stdname,sqltmz) == 0)
+		{
+			result = cstring_to_text(win32_tzmap[i].pgtzname);
+			break;
+		}
+	}
+	PG_RETURN_VARCHAR_P(result);
 }
 
 Datum
@@ -1711,8 +1747,7 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 	int			i;
-	Oid			nspoid = get_namespace_oid("sys", false);
-	Oid			sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(nspoid));
+	Oid			sys_varcharoid = get_sys_varcharoid();
 	Oid			colloid = tsql_get_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
@@ -2103,12 +2138,13 @@ bigint_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int64 result;
 	Numeric		arg1_numeric,
+				result_trunc,
 				result_numeric;
 
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int8_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-
-	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_numeric)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT64(result);
 }
@@ -2120,12 +2156,13 @@ int_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
+				result_trunc,
 				result_numeric;
 
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg1));
 	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
-
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_numeric)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_trunc)));
 
 	PG_RETURN_INT32(result);
 }
@@ -2137,13 +2174,13 @@ smallint_power(PG_FUNCTION_ARGS)
 	Numeric		arg2 = PG_GETARG_NUMERIC(1);
 	int32 result;
 	Numeric		arg1_numeric,
-				result_numeric;
-
+				result_numeric,
+				result_trunc;
+				
 	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(int2_numeric, arg1));
-	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), Int16GetDatum(arg2)));
-
-	result = DatumGetInt32(DirectFunctionCall1(numeric_int2, NumericGetDatum(result_numeric)));
-
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_power, NumericGetDatum(arg1_numeric), NumericGetDatum(arg2)));
+	result_trunc = DatumGetNumeric(DirectFunctionCall2(numeric_trunc, NumericGetDatum(result_numeric), Int32GetDatum(0)));
+	result = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(result_trunc)));
 	PG_RETURN_INT32(result);
 }
 
@@ -2628,15 +2665,15 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	 * This array contains information of objects that reside in a schema in one specfic database.
 	 * For example, 'master_dbo' schema can only exist in the 'master' database.
 	 */
-	int	num_db_objects = 10;
-	int	shipped_objects_not_in_sys_db_type[10] = {
+#define NUM_DB_OBJECTS 11
+	int	shipped_objects_not_in_sys_db_type[NUM_DB_OBJECTS] = {
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_STORED_PROCEDURE,
 		OBJECT_TYPE_TSQL_STORED_PROCEDURE, OBJECT_TYPE_TSQL_SCALAR_FUNCTION,
-		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW
+		OBJECT_TYPE_VIEW, OBJECT_TYPE_VIEW, OBJECT_TYPE_TSQL_STORED_PROCEDURE
 	};
-	char	*shipped_objects_not_in_sys_db[10][2] = {
+	char	*shipped_objects_not_in_sys_db[NUM_DB_OBJECTS][2] = {
 		{"xp_qv","master_dbo"},
 		{"xp_instance_regread","master_dbo"},
 		{"sp_addlinkedserver", "master_dbo"},
@@ -2646,16 +2683,17 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 		{"sp_testlinkedserver", "master_dbo"},
 		{"fn_syspolicy_is_automation_enabled", "msdb_dbo"},
 		{"syspolicy_configuration", "msdb_dbo"},
-		{"syspolicy_system_health_state", "msdb_dbo"}
+		{"syspolicy_system_health_state", "msdb_dbo"},
+		{"sp_enum_oledb_providers", "master_dbo"}
 	};
 
 	/*
 	 * This array contains information of objects that reside in a schema in any number of databases.
      	 * For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
 	 */
-	int	num_all_db_objects = 1;
-	int	shipped_objects_not_in_sys_all_db_type[1] = {OBJECT_TYPE_VIEW};
-	char	*shipped_objects_not_in_sys_all_db[1][2] = {
+#define NUM_ALL_DB_OBJECTS 1
+	int	shipped_objects_not_in_sys_all_db_type[NUM_ALL_DB_OBJECTS] = {OBJECT_TYPE_VIEW};
+	char	*shipped_objects_not_in_sys_all_db[NUM_ALL_DB_OBJECTS][2] = {
 		{"sysdatabases","dbo"}
 	};
 
@@ -2676,7 +2714,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	/*
 	 * Check whether the object is present in shipped_objects_not_in_sys_db.
 	 */
-	for (i = 0; i < num_db_objects; i++)
+	for (i = 0; i < NUM_DB_OBJECTS; i++)
 	{
 		if (is_ms_shipped || (type == shipped_objects_not_in_sys_db_type[i] &&
 			pg_strcasecmp(object_name, shipped_objects_not_in_sys_db[i][0]) == 0 &&
@@ -2686,6 +2724,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 			break;
 		}
 	}
+#undef NUM_DB_OBJECTS
 
 	rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(rel);
@@ -2697,7 +2736,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 	 * We scan the pg_namespace catalog to find the occurences in all the databases and find whether 
 	 * any entry matches the object that we are looking for.
 	 */
-	for (i = 0; i < num_all_db_objects; i++)
+	for (i = 0; i < NUM_ALL_DB_OBJECTS; i++)
 	{
 		char		*tempnspname = NULL;
 		bool		isNull = false;
@@ -2730,6 +2769,7 @@ bool is_ms_shipped(char *object_name, int type, Oid schema_id)
 		if (tempnspname)
 			pfree(tempnspname);
 	}
+#undef NUM_ALL_DB_OBJECTS
 
 	table_close(rel, AccessShareLock);
 
@@ -2827,6 +2867,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 
 					table_close(depRel, RowExclusiveLock);
 				}
+				ReleaseSysCache(tp);
 			}
 			/*
 			 * If the object is not of Table type (TT), it should be user defined table (U)
@@ -2838,6 +2879,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			type = OBJECT_TYPE_VIEW;
 		else if (pg_class->relkind == 's')
 			type = OBJECT_TYPE_SEQUENCE_OBJECT;
+
+		ReleaseSysCache(tuple);
 	}
 	/* pg_proc */
 	if (!schema_id)
@@ -2884,6 +2927,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 								type = OBJECT_TYPE_TSQL_TABLE_VALUED_FUNCTION;
 							else
 								type = OBJECT_TYPE_TSQL_INLINE_TABLE_VALUED_FUNCTION;
+
+							ReleaseSysCache(tp);
 						}
 					}
 					else
@@ -2892,6 +2937,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 					pfree(temp);
 				}
 			}
+			ReleaseSysCache(tuple);
 		}
 	}
 	/* pg_attrdef */
@@ -2990,6 +3036,8 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 			 */
 			else if (con->contype == 'c' && con->conrelid != 0)
 				type = OBJECT_TYPE_CHECK_CONSTRAINT;
+			
+			ReleaseSysCache(tuple);
 		}
 	}
 

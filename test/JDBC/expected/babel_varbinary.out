@@ -124,14 +124,14 @@ int
 select 0x1F * 10;
 go
 ~~START~~
-bigint
+int
 310
 ~~END~~
 
 select 10 * 0x1F;
 go
 ~~START~~
-bigint
+int
 310
 ~~END~~
 

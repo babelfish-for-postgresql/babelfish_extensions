@@ -1,0 +1,11 @@
+create table babel_2619_t1(a int not null, b int null)
+create table babel_2619_t2(a int not null, b int null)
+create table babel_2619_t3(a int not null, b int null)
+create table babel_2619_t4(a int not null, b int null)
+create table babel_2619_t5_1(a int not null, b int null)
+create table babel_2619_t5_2(a int not null, b int null)
+create table babel_2619_t5_3(a int not null, b int null)
+create table babel_2619_t6_1(a int not null, b int null)
+create table babel_2619_t6_2(a int not null, b int null)
+create table babel_2619_t6_3(a int not null, b int null)
+go

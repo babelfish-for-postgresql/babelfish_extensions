@@ -603,6 +603,26 @@ gen_droplogin_subcmds(const char *login)
 }
 
 /*
+ * Returns OID of SA of the current database.
+ * We assume that SA is the DBA of the babelfish DB.
+ */
+Oid
+get_sa_role_oid(void)
+{
+	HeapTuple	tuple;
+	Oid			dba = InvalidOid;
+
+	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+	if (HeapTupleIsValid(tuple))
+	{
+		dba = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
+		ReleaseSysCache(tuple);
+	}
+
+	return dba;
+}
+
+/*
  * Check if the given role is SA of the current database.
  * We assume that SA is the DBA of the babelfish DB.
  */
@@ -777,6 +797,7 @@ get_original_login_name(char *login)
 	HeapTuple	tuple;
 	bool		isnull;
 	Datum		datum;
+	char 		*result = NULL;
 
 	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
 
@@ -803,10 +824,17 @@ get_original_login_name(char *login)
 	/* original login name should not be NULL. */
 	Assert(!isnull);
 
+	/*
+ 	* datum is a pointer to HeapTuple. On the other hand, HeapTuple
+ 	* is a pointer to a buffer page. We need to make a copy of that
+ 	* datum before closing the scan which releases the buffer.
+ 	*/
+	result = TextDatumGetCString(datum);
+
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
 
-	return TextDatumGetCString(datum);
+	return result;
 }
 
 
@@ -996,6 +1024,58 @@ drop_all_logins(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+static void
+verify_login_for_bbf_authid_user_ext(RoleSpec *login)
+{
+	Relation    	bbf_authid_user_ext_rel;
+	HeapTuple   	tuple_user_ext;
+	ScanKeyData 	key[2];
+	TableScanDesc	scan;
+	const char  	*cur_db_owner;
+	NameData    	*login_name;
+	char        	*login_name_str = NULL;
+
+	if (login == NULL || !is_login_name(login->rolename))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("The login '%s' does not exist.", login->rolename)));
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	/* Check for login to user uniqueness in the database */
+	login_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(login_name->data, NAMEDATALEN, "%s", login->rolename);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(login_name));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(get_cur_db_name()));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	pfree(login_name);
+
+	if (tuple_user_ext != NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+				 errmsg("Existing user already maps to login '%s' in current database.", login->rolename)));
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	login_name_str = login->rolename;
+	cur_db_owner = get_owner_of_db((const char *) get_cur_db_name());
+	if (strcmp(login_name_str, cur_db_owner) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+				 errmsg("The login already has an account under a different user name.")));
+}
+
 void
 add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *orig_user_name,
@@ -1081,7 +1161,6 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	char	   *default_schema = NULL;
 	char	   *original_user_name = NULL;
 	RoleSpec   *login = NULL;
-	NameData   *login_name;
 	char	   *login_name_str = NULL;
 
 	/* Extract options from the statement node tree */
@@ -1114,52 +1193,8 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 
 	if (has_login)
 	{
-		Relation	bbf_authid_user_ext_rel;
-		HeapTuple	tuple_user_ext;
-		ScanKeyData key[2];
-		TableScanDesc scan;
-		const char *cur_db_owner;
-
-		if (login == NULL || !is_login_name(login->rolename))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("The login '%s' does not exist.", login->rolename)));
-
-		/* Fetch the relation */
-		bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-											 RowExclusiveLock);
-
-		/* Check for login to user uniqueness in the database */
-		login_name = (NameData *) palloc0(NAMEDATALEN);
-		snprintf(login_name->data, NAMEDATALEN, "%s", login->rolename);
-		ScanKeyInit(&key[0],
-					Anum_bbf_authid_user_ext_login_name,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					NameGetDatum(login_name));
-		ScanKeyInit(&key[1],
-					Anum_bbf_authid_user_ext_database_name,
-					BTEqualStrategyNumber, F_TEXTEQ,
-					CStringGetTextDatum(get_cur_db_name()));
-
-		scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
-
-		tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
-		if (tuple_user_ext != NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
-					 errmsg("Existing user already maps to login '%s' in current database.", login->rolename)));
-
-		table_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-
+		verify_login_for_bbf_authid_user_ext(login);
 		login_name_str = login->rolename;
-		cur_db_owner = get_owner_of_db((const char *) get_cur_db_name());
-
-		if (strcmp(login_name_str, cur_db_owner) == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
-					 errmsg("The login already has an account under a different user name.")));
-
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
@@ -1320,9 +1355,11 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 	SysScanDesc scan;
 	ListCell   *option;
 	NameData   *user_name;
+	RoleSpec   *login = NULL;
 	char	   *default_schema = NULL;
 	char	   *new_user_name = NULL;
 	char	   *physical_name = NULL;
+	char	   *login_name_str = NULL;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1337,11 +1374,25 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 			if (defel->arg)
 				default_schema = strVal(defel->arg);
 		}
-		if (strcmp(defel->defname, "rename") == 0)
+		else if (strcmp(defel->defname, "rename") == 0)
 		{
 			if (defel->arg)
 				new_user_name = strVal(defel->arg);
 		}
+		else if (strcmp(defel->defname, "rolemembers") == 0)
+		{
+			List	   *rolemembers = NIL;
+
+			rolemembers = (List *) defel->arg;
+			login = (RoleSpec *) linitial(rolemembers);
+		}
+	}
+
+	if (login != NULL)
+	{
+		verify_login_for_bbf_authid_user_ext(login);
+		login_name_str = login->rolename;
+
 	}
 
 	/* Fetch the relation */
@@ -1398,6 +1449,12 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		}
 		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum(pstrdup(default_schema));
 		new_record_repl_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = true;
+	}
+
+	if (login_name_str)
+	{
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum(pstrdup(login_name_str));
+		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
 	}
 
 	new_tuple = heap_modify_tuple(tuple,
@@ -2152,10 +2209,11 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
 
-	ScanKeyInit(&scanKey,
-				Anum_bbf_domain_mapping_netbios_domain_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				PG_GETARG_DATUM(0));
+	ScanKeyEntryInitialize(&scanKey, 0,
+						   Anum_bbf_domain_mapping_netbios_domain_name,
+						   BTEqualStrategyNumber, InvalidOid,
+						   tsql_get_server_collation_oid_internal(false),
+						   F_TEXTEQ, PG_GETARG_DATUM(0));
 
 	scan = systable_beginscan(bbf_domain_mapping_rel,
 							  get_bbf_domain_mapping_idx_oid(),

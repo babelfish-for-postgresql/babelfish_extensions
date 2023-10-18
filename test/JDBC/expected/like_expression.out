@@ -1214,7 +1214,6 @@ select 1 where '_ab' like '\_ab'          -- no row, but returns 1  in BBF , BAB
 GO
 ~~START~~
 int
-1
 ~~END~~
 
 
@@ -1222,7 +1221,6 @@ select 1 where '%AAABBB%' like '\%AAA%'   -- no row, but returns 1  in BBF , BAB
 go
 ~~START~~
 int
-1
 ~~END~~
 
 
@@ -1258,7 +1256,6 @@ select 1 where 'AB[C]D' LIKE 'AB\[C]D' ESCAPE '\'  -- 1
 GO
 ~~START~~
 int
-1
 ~~END~~
 
 ~~START~~
@@ -1339,10 +1336,9 @@ int
  
 select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE ''  -- should raise error , BABEL-4271
 go
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
 
 select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
 go

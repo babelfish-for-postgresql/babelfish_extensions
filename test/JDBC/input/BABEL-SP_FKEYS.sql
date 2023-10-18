@@ -68,7 +68,7 @@ go
 
 exec sp_fkeys @fktable_name = 'MYTABLE7'
 go
--- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
+-- Delimiter table tests
 exec sp_fkeys @pktable_name = [mytable5]
 go
 

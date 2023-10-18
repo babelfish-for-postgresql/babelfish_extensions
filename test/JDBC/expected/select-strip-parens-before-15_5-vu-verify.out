@@ -1,0 +1,278 @@
+-- unquoted field successfull queries
+select field1 from (select field1 from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (field1) from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select ((field1)) from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (  ( field1 )  ) from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (
+  ( field1 )
+) from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (
+  ( "field1" )
+) from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (
+  ( [field1] )
+) from select_strip_parens_t1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select field1 from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (field1) from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select ((field1)) from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (  ( field1 )  ) from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (
+  ( field1 )
+) from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (
+  ( "field1" )
+) from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+select field1 from (select (
+  ( [field1] )
+) from select_strip_parens_v1) a;
+go
+~~START~~
+int
+41
+~~END~~
+
+
+-- unquoted field failed queries
+select field1 from (select " field1" from select_strip_parens_t1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select " field1" from select_strip_parens_v1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select [ field1] from select_strip_parens_t1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select [ field1] from select_strip_parens_v1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select (
+  ( " field1" )
+) from select_strip_parens_t1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select (
+  ( " field1" )
+) from select_strip_parens_v1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select (
+  ( [ field1] )
+) from select_strip_parens_t1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+select field1 from (select (
+  ( [ field1] )
+) from select_strip_parens_v1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field1" does not exist)~~
+
+
+-- quoted fields successfull queries
+select " field2  ", [  field3 ] from (select " field2  ", [  field3 ] from select_strip_parens_t1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select [ field2  ], [  field3 ] from (select " field2  ", [  field3 ] from select_strip_parens_t1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select (" field2  "), ([  field3 ]) from select_strip_parens_t1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select ((" field2  ")), (([  field3 ])) from select_strip_parens_t1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select ( ( " field2  " ) ), ( ( [  field3 ] ) ) from select_strip_parens_t1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select (
+  ( " field2  " )
+), (
+  ( [  field3 ] )
+) from select_strip_parens_t1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+
+select " field2  ", [  field3 ] from (select " field2  ", [  field3 ] from select_strip_parens_v1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", "  field3 " from (select " field2  ", [  field3 ] from select_strip_parens_v1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select (" field2  "), ([  field3 ]) from select_strip_parens_v1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select ((" field2  ")), (([  field3 ])) from select_strip_parens_v1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select ( ( " field2  " ) ), ( ( [  field3 ] ) ) from select_strip_parens_v1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+select " field2  ", [  field3 ] from (select (
+  ( " field2  " )
+), (
+  ( [  field3 ] )
+) from select_strip_parens_v1) a;
+go
+~~START~~
+int#!#int
+42#!#43
+~~END~~
+
+
+-- quoted fields failed queries
+select "  field2 " from (select " field2  ", [  field3 ] from select_strip_parens_t1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "  field2 " does not exist)~~
+
+select [ field3  ] from (select " field2  ", [  field3 ] from select_strip_parens_v1) a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column " field3  " does not exist)~~
+

@@ -148,6 +148,10 @@ GO
 SELECT IS_MEMBER('Public')
 GO
 
+-- reset the login password
+ALTER LOGIN BABEL_ROLE_MEMBER_vu_prepare_login1 WITH PASSWORD = '123'
+GO
+
 -- Connect with different logins to test membership view permission
 -- Test on user1
 -- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login1      password=123
@@ -177,6 +181,11 @@ SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu
 GO
 
 USE master
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN BABEL_ROLE_MEMBER_vu_prepare_login2 WITH PASSWORD = '123'
 GO
 
 -- Test on user2
@@ -209,6 +218,11 @@ SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu
 GO
 
 USE master
+GO
+
+-- tsql
+-- reset the login password
+ALTER LOGIN BABEL_ROLE_MEMBER_vu_prepare_login3 WITH PASSWORD = '123'
 GO
 
 -- Test on user3
