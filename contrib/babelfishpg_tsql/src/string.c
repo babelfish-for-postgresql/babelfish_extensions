@@ -387,8 +387,6 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 			memset(fmt_seg, 0, prev_fmt_seg_sz);
 			strncpy(fmt_seg, seg_start, seg_len);
 			prev_fmt_seg_sz = seg_len;
-			
-			arg = args[i];
 
 			if (i >= nargs || argisnull[i])
 			{
@@ -397,6 +395,7 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 				continue;
 			}
 
+			arg = args[i];
 			typid = argtypes[i];
 			type = TypeCategory(typid);
 
