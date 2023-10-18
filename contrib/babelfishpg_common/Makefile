@@ -61,8 +61,8 @@ endif
 
 DATA_built = \
     $(EXTENSION).control \
-	sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES) \
-  	$(GENERATED_UPGRADES)
+    sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES) \
+    $(GENERATED_UPGRADES)
 
 #include ../Makefile.common
 

@@ -51,6 +51,8 @@
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
 #define VARCHAR_MAX 2147483647
+/* TODO: need to add for other geometry types when introduced */
+#define POINTTYPE 1
 
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
@@ -1454,42 +1456,48 @@ Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
 	bytea	   *result;
-	int			nbytes;
-	int 		loopVar;
+	int		   nbytes,
+			   npoints;
+	StringInfoData  destBuf;
 
+	initStringInfo(&destBuf);
 	/*
 	 * Here the incoming buf format is -> 4 Byte SRID + 2 Byte Geometry Type + (16 Bytes)*npoints
 	 * But Driver expects -> 4 Byte SRID + 4 Byte Type + 4 Byte npoints + (16 Bytes)*npoints
-	 * so we first shift (16 Bytes)*npoints by 6 Bytes and handle the remaining in between bytes
 	 */
-	for (loopVar = buf->len - 1; loopVar >= buf->cursor + 6; loopVar--) {
-		buf->data[loopVar + 6] = buf->data[loopVar];
-	}
-
+	/* We are copying first 4 Byte SRID from buf */
+	appendBinaryStringInfo(&destBuf, buf->data + buf->cursor, 4);
+	
+	npoints = (buf->len - buf->cursor - 6)/16;
 	nbytes = buf->len - buf->cursor + 6;
 	result = (bytea *) palloc0(nbytes + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 
 	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
-	if (buf->data[buf->cursor + 4] == 1 && buf->data[buf->cursor + 5] == 12) {
-		
-		buf->data[buf->cursor + 4] = 0x01;
-		buf->data[buf->cursor + 5] = 0x00;
-		buf->data[buf->cursor + 6] = 0x00;
-		buf->data[buf->cursor + 7] = 0x00;
+	if (buf->data[buf->cursor + 4] == 1 && buf->data[buf->cursor + 5] == 12)
+	{
+		appendStringInfoChar(&destBuf, POINTTYPE & 0xFF);
+		appendStringInfoChar(&destBuf, (POINTTYPE >> 8)  & 0xFF);
+		appendStringInfoChar(&destBuf, (POINTTYPE >> 16)  & 0xFF);
+		appendStringInfoChar(&destBuf, (POINTTYPE >> 24)  & 0xFF);
 
-		buf->data[buf->cursor + 8] = 0x01;
-		buf->data[buf->cursor + 9] = 0x00;
-		buf->data[buf->cursor + 10] = 0x00;
-		buf->data[buf->cursor + 11] = 0x00;
-	} else {
+		appendStringInfoChar(&destBuf, npoints & 0xFF);
+		appendStringInfoChar(&destBuf, (npoints >> 8)  & 0xFF);
+		appendStringInfoChar(&destBuf, (npoints >> 16)  & 0xFF);
+		appendStringInfoChar(&destBuf, (npoints >> 24)  & 0xFF);
+	}
+	else
+	{
 		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Currently Only 2-D Point Type is Supported in BabelFish!")));
 	}
 
-	memcpy(VARDATA(result), &buf->data[buf->cursor], nbytes);
-	buf->cursor += nbytes;
+	/* We are copying the remaining bytes (16 Bytes)*npoints from buf */
+	appendBinaryStringInfo(&destBuf, buf->data + buf->cursor + 6, buf->len - 6);
+
+	memcpy(VARDATA(result), &destBuf.data, nbytes);
+	buf->cursor += nbytes - 6;
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -4215,12 +4223,16 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
 
 	/* Driver Expects 01 0C for 2-D Point Type as 2 constant Bytes to identify the Geometry Type */
 	/* TODO: Will need to introduce for Different Geometry Data Types */
-	if(*((uint32_t*)gser->data) == 1)
+	switch (*((uint32_t*)gser->data))
 	{
-		*itr = 1;
-		itr++;
-		*itr = 12;
-		itr++;
+		case 1:
+			*itr = 1;
+			itr++;
+			*itr = 12;
+			itr++;
+			break;
+		default:
+			elog(ERROR, "Currently only 2-D point datatype is supported in babelfish!");
 	}
 
     /* Data part of the Row has length 16 * (No. of Points) */

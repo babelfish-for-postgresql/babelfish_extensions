@@ -83,12 +83,12 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
 			IF Geomtype = 'ST_Point' THEN
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported in Babelfish';
+					RAISE EXCEPTION 'Z and M flags are currently not supported';
 				ELSE
 					RETURN geom;
 				END IF;
 			ELSE
-				RAISE EXCEPTION '% is currently not supported in Babelfish', Geomtype;
+				RAISE EXCEPTION '% is currently not supported', Geomtype;
 			END IF;
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
@@ -141,7 +141,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
 				IF encode(geomType, 'hex') = encode(E'\\x010c', 'hex') THEN
 					newVarBin := E'\\x0101000020' || varBin;
 				ELSE
-					RAISE EXCEPTION 'Currently only Point Type(without Z and M flags) is Supported in Babelfish';
+					RAISE EXCEPTION 'Currently only Point Type(without Z and M flags) is Supported';
 				END IF;
 			ELSE
 				RAISE EXCEPTION 'Error converting data type varbinary to geometry.';
@@ -225,12 +225,12 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
 			IF Geomtype = 'ST_Point' THEN
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported in Babelfish';
+					RAISE EXCEPTION 'Z and M flags are currently not supported';
 				ELSE
 					RETURN geom;
 				END IF;
 			ELSE
-				RAISE EXCEPTION '% is currently not supported in Babelfish', Geomtype;
+				RAISE EXCEPTION '% is currently not supported', Geomtype;
 			END IF;
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
