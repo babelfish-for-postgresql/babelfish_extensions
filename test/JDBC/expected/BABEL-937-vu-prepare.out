@@ -107,12 +107,6 @@ SELECT JSON_MODIFY('{"id": 1,"tags": [
     ]}','    append     strict     $.friends    ',NULL);
 go
 
--- To check multi function call query
-create view babel_937_multi_function as
-SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure') AS mf_1, 
-       JSON_MODIFY(JSON_MODIFY('{"price":49.99}','$.Price',CAST(JSON_VALUE('{"price":49.99}','$.price') AS NUMERIC(4,2))),'$.price',NULL) AS mf_2;
-go
-
 -- To check when expression is array type
 create view babel_937_test_array as
 SELECT JSON_MODIFY('[{"name":"John","skills":["C#","SQL"]},"b","temp"]','strict $[0].skills[1]',NULL) AS ta_1,

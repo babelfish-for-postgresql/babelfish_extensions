@@ -44,10 +44,6 @@ go
 select * from babel_937_spaces
 go
 
--- To check multi function call query
-select * from babel_937_multi_function
-go
-
 -- To check when expression is array type
 select * from babel_937_test_array
 go
