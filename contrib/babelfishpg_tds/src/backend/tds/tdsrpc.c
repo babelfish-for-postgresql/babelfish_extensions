@@ -558,8 +558,8 @@ SPExecuteSQL(TDSRequestSP req)
 					 errdetail_params(req->nTotalParams)));
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
-		PG_RE_THROW();
 		RESUME_INTERRUPTS();
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -760,8 +760,8 @@ SPExecute(TDSRequestSP req)
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		tvp_lookup_list = NIL;
-		PG_RE_THROW();
 		RESUME_INTERRUPTS();
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -885,8 +885,8 @@ SPPrepExec(TDSRequestSP req)
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		tvp_lookup_list = NIL;
-		PG_RE_THROW();
 		RESUME_INTERRUPTS();
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
@@ -1114,8 +1114,8 @@ SPCustomType(TDSRequestSP req)
 
 		tvp_lookup_list = NIL;
 
-		PG_RE_THROW();
 		RESUME_INTERRUPTS();
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
