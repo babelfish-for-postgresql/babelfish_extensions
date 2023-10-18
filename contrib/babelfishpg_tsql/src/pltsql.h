@@ -962,8 +962,8 @@ typedef union PLtsql_dbcc_stmt_data
  */
 typedef struct PLtsql_stmt_dbcc
 {
-	int	lineno;
 	PLtsql_stmt_type	cmd_type;
+	int	lineno;
 	PLtsql_dbcc_stmt_type	dbcc_stmt_type;
 	PLtsql_dbcc_stmt_data	dbcc_stmt_data;
 } PLtsql_stmt_dbcc;
