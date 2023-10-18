@@ -235,7 +235,7 @@ execute babel_2844_proc 3;
 go
 ~~START~~
 text
-Query Text: EXEC babel_2844_proc 3
+Query Text: EXEC    babel_2844_proc 3
   Query Text: insert babel_2844_t1 values (3, 3);
   ->  Insert on babel_2844_t1  (cost=0.00..0.01 rows=0 width=0)
         ->  Result  (cost=0.00..0.01 rows=1 width=8)
