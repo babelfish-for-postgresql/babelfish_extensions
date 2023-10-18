@@ -153,10 +153,10 @@ typedef struct FunctionCacheByTdsIdEntry
 	TdsIoFunctionData data;
 } FunctionCacheByTdsIdEntry;
 
-/* 
+/*
  * This is a modified copy of a function from POSTGIS to get SRID from GSERIALIZED struct
  */
-static int32_t 
+static int32_t
 get_srid(uint8_t *id)
 {
 	int32_t srid = 0;
@@ -242,9 +242,9 @@ getSendFunc(int funcId)
 		case TDS_SEND_DATETIMEOFFSET:
 			return TdsSendTypeDatetimeoffset;
 		case TDS_SEND_GEOMETRY:
-			return TdsSendTypeGeometry; 
-		case TDS_SEND_GEOGRAPHY: 
-			return TdsSendTypeGeography; 
+			return TdsSendTypeGeometry;
+		case TDS_SEND_GEOGRAPHY:
+			return TdsSendTypeGeography;
 			/* TODO: should Assert here once all types are implemented */
 		default:
 			return NULL;
@@ -321,8 +321,8 @@ getRecvFunc(int funcId)
 		case TDS_RECV_DATETIMEOFFSET:
 			return TdsRecvTypeDatetimeoffset;
 		case TDS_RECV_GEOMETRY:
-			return TdsRecvTypeGeometry; 
-		case TDS_RECV_GEOGRAPHY: 
+			return TdsRecvTypeGeometry;
+		case TDS_RECV_GEOGRAPHY:
 			return TdsRecvTypeGeography;
 			/* TODO: should Assert here once all types are implemented */
 		default:
@@ -2014,7 +2014,7 @@ TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeGeometry(const char *message, const ParameterToken token)
 {
-	Datum result = 0; 
+	Datum result = 0;
 
 	/* Decode binary and convert if needed */
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
@@ -2023,17 +2023,17 @@ TdsRecvTypeGeometry(const char *message, const ParameterToken token)
 
 	ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("Prepared Queries for Geometry DataType Currently not Supported in BabelFish")));    
+							 errmsg("Prepared Queries for Geometry DataType Currently not Supported in BabelFish")));
 
-	pfree(buf); 
-	return result; 
+	pfree(buf);
+	return result;
 }
 
 /* -------------------------------
  * TdsRecvTypeGeography - converts external binary format to
- * Geography data type 
+ * Geography data type
  * --------------------------------
- */ 
+ */
 /*
  * It is a Placeholder Function for now
  * TODO: Will need to address it in subsequent Code Changes
@@ -2041,7 +2041,7 @@ TdsRecvTypeGeometry(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeGeography(const char *message, const ParameterToken token)
 {
-	Datum result = 0; 
+	Datum result = 0;
 
 	/* Decode binary and convert if needed */
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
@@ -2052,8 +2052,8 @@ TdsRecvTypeGeography(const char *message, const ParameterToken token)
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("Prepared Queries for Geography DataType Currently not Supported in BabelFish")));
 
-	pfree(buf); 
-	return result; 
+	pfree(buf);
+	return result;
 }
 
 static inline uint128
@@ -2426,8 +2426,8 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 						case TDS_TYPE_SQLVARIANT:
 							values[i] = TdsTypeSqlVariantToDatum(temp);
 							break;
-						case TDS_TYPE_SPATIAL: 
-							break; 
+						case TDS_TYPE_SPATIAL:
+							break;
 					}
 				/* Build a string for bind parameters. */
 				if (colMetaData[currentColumn].columnTdsType != TDS_TYPE_NVARCHAR || row->isNull[currentColumn] == 'n')
@@ -2700,10 +2700,13 @@ TdsSendTypeBinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 				maxLen = 0;
 	bytea	   *vlena = DatumGetByteaPCopy(value);
 	bytea	   *buf;
+	int copyLen = 0;
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 
 	maxLen = col->metaEntry.type7.maxSize;
-	buf = (bytea *) palloc0(sizeof(bytea) * maxLen);
+	copyLen = Max((sizeof(bytea) * maxLen), VARSIZE_ANY_EXHDR(vlena));
+
+	buf = (bytea *) palloc0(copyLen);
 	memcpy(buf, VARDATA_ANY(vlena), VARSIZE_ANY_EXHDR(vlena));
 
 	if ((rc = TdsPutUInt16LE(maxLen)) == 0)
@@ -3129,7 +3132,8 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	int			rc = EOF,
 				precision = 0,
-				scale = -1;
+				scale = -1,
+				outlen = 0;
 	uint8		sign = 1,
 				length = 0;
 	char	   *out,
@@ -3138,6 +3142,7 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	TdsColumnMetaData *col = (TdsColumnMetaData *) vMetaData;
 	uint8_t		max_scale = col->metaEntry.type5.scale;
 	uint8_t		max_precision = col->metaEntry.type5.precision;
+	int			target_precision = 0;
 
 	out = OutputFunctionCall(finfo, value);
 	if (out[0] == '-')
@@ -3152,7 +3157,8 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	 * response string is formatted to obtain string representation of TDS
 	 * unsigned integer along with its precision and scale
 	 */
-	decString = (char *) palloc(sizeof(char) * (strlen(out) + 1));
+	outlen = strlen(out) + max_scale;
+	decString = (char *) palloc(sizeof(char) * (outlen + 1));
 	/* While there is still digit in out and we haven't reached max_scale */
 	while (*out && scale < max_scale)
 	{
@@ -3173,23 +3179,34 @@ TdsSendTypeNumeric(FmgrInfo *finfo, Datum value, void *vMetaData)
 	if (scale == -1)
 		scale = 0;
 
+	/* Perform the overflow check before scribbling on to decString. */
+	target_precision = precision + (max_scale - scale);
+	if (target_precision > TDS_MAX_NUM_PRECISION ||
+		target_precision > max_precision)
+		ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						errmsg("Arithmetic overflow error for data type numeric.")));
+
 	/*
-	 * Fill in the remaining 0's if the processed scale from out is less than
-	 * max_scale This is needed because the output generated by engine may not
-	 * always produce the same precision/scale as calculated by
-	 * resolve_numeric_typmod_from_exp, which is the precision/scale we have
-	 * sent to the client with column metadata.
-	 */
+	* Fill in the remaining 0's if the processed scale from out is less than
+	* max_scale This is needed because the output generated by engine may not
+	* always produce the same precision/scale as calculated by
+	* resolve_numeric_typmod_from_exp, which is the precision/scale we have
+	* sent to the client with column metadata.
+	*/
 	while (scale++ < max_scale)
 	{
 		decString[precision++] = '0';
 	}
 	decString[precision] = '\0';
+	Assert(precision == target_precision);
 
-	if (precision > TDS_MAX_NUM_PRECISION ||
-		precision > max_precision)
-		ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						errmsg("Arithmetic overflow error for data type numeric.")));
+	/*
+	* Verify that we did not go beyond the memory allocated.
+	* We allow precision < outlen. Consider the case when
+	* out="123.456", max_scale=8. Then by the end, precision=11
+	* but outlen=15.
+	*/
+	Assert(precision <= outlen);
 
 	if (precision >= 1 && precision < 10)
 		length = 4;
@@ -4147,16 +4164,16 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	return rc;
 }
 
-int 
+int
 TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr)
 {
     int    rc = EOF,
            npoints,
-           len,             /* number of bytes used to store the string. */      
+           len,             /* number of bytes used to store the string. */
            actualLen;       /* Number of bytes that would be needed to
                              * store given string in given encoding. */
-    char   *destBuf, 
-           *buf, 
+    char   *destBuf,
+           *buf,
            *itr;
 
 	int32_t   srid;
@@ -4172,7 +4189,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
      * 16 -> 2 8-Byte float coordinates (TODO: Need to change when Z and M flags are defined for N-dimension Points)
      * 6 -> 4 Byte SRID + 2 Byte (01 0C)
     */
-    len = npoints*16 + 6;      
+    len = npoints*16 + 6;
     buf = (char *) palloc0(len);
 
 	/* Driver Expects 4 Byte SRID */
@@ -4193,8 +4210,8 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
      * First 8 Bytes of gser->data are fixed in PostGIS:
      * 4 Bytes -> Represents the Type
      * 4 Bytes -> Represents the npoints
-    */ 
-    memcpy(itr, (char *) gser->data + 8, len - 6);  
+    */
+    memcpy(itr, (char *) gser->data + 8, len - 6);
 
     destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 

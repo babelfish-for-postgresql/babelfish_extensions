@@ -7,6 +7,12 @@ go
 exec dbo.sp_hello
 go
 
+exec master.dbo.sp_hello
+go
+
+exec master..sp_hello
+go
+
 create database db1
 go
 
@@ -16,10 +22,10 @@ go
 exec master.dbo.sp_hello
 go
 
-exec sp_hello
+exec master..sp_hello
 go
 
-sp_hello
+exec sp_hello
 go
 
 exec .sp_hello
@@ -31,7 +37,28 @@ go
 exec dbo.sp_hello
 go
 
+exec .dbo.sp_hello
+go
+
+exec ..dbo.sp_hello
+go
+
+sp_hello
+go
+
+.sp_hello
+go
+
+..sp_hello
+go
+
 dbo.sp_hello
+go
+
+.dbo.sp_hello
+go
+
+..dbo.sp_hello
 go
 
 create proc call_sp_helllo as exec sp_hello

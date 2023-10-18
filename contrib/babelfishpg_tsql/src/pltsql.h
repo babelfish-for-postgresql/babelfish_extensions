@@ -48,13 +48,13 @@
 #undef _
 #define _(x) dgettext(TEXTDOMAIN, x)
 
-#define PLTSQL_INSTR_ENABLED()	\
-	(pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && \
-	 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric)
+#define PLTSQL_INSTR_ENABLED() \
+       (pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && \
+        (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric)
 
-#define TSQLInstrumentation(metric)												\
-({	if ((pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric))		\
-		(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);		\
+#define TSQLInstrumentation(metric)                                                                                            \
+({     if ((pltsql_instr_plugin_ptr && (*pltsql_instr_plugin_ptr) && (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric))               \
+               (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_metric(metric);              \
 })
 
 #define TSQL_TXN_NAME_LIMIT 64	/* Transaction name limit */
@@ -185,7 +185,8 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_FULL,
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
-	PLTSQL_STMT_GRANTDB
+	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
 
 /*
@@ -999,6 +1000,20 @@ typedef struct PLtsql_stmt_grantdb
 	bool		is_grant;
 	List	   *grantees;		/* list of users */
 } PLtsql_stmt_grantdb;
+
+/*
+ *	Grant on schema stmt
+ */
+typedef struct PLtsql_stmt_grantschema
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	bool		is_grant;
+	List		*privileges;		/* list of privileges */
+	List		*grantees;		/* list of users */
+	bool 		with_grant_option;
+	char		*schema_name;	/* schema name */
+} PLtsql_stmt_grantschema;
 
 /*
  * ASSERT statement
@@ -1966,6 +1981,7 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
+extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2004,7 +2020,8 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
-extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee);
+extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
+extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);

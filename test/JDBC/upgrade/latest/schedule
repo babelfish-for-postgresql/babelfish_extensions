@@ -38,6 +38,7 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
+BABEL-2170
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -112,6 +113,7 @@ BABEL-3844
 BABEL-3914
 BABEL-3938
 BABEL-3952
+BABEL-3953-datetrunc
 BABEL-404
 BABEL-405
 BABEL-4078
@@ -209,6 +211,7 @@ datetime2fromparts-after-15-2
 forjson
 forjson-datatypes
 forjson-subquery
+forjson-nesting
 format
 forxml
 forxml-subquery
@@ -453,6 +456,7 @@ triggers_with_transaction
 typeid-typename
 typeid-typename-dep
 unquoted_string
+doublequoted_string
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -466,3 +470,8 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+sys_sequences
+sys_asymmetric_keys
+sys_certificates
+sys_database_permissions
+BABEL-4279
