@@ -51,8 +51,139 @@ CREATE TABLE sys_col_length_test_schema.test_table(
 );
 GO
 
-INSERT INTO sys_col_length_test_schema.test_table (col_char, col_varchar, col_varbinary)
-VALUES ('ABCDEF', 'Hello, World!', 0x0123456789ABCDEF)
+-- for user defined data types
+-- Create User-Defined Types
+CREATE TYPE custom_char_10 FROM CHAR(10);
+GO
+
+CREATE TYPE custom_varchar_20 FROM VARCHAR(20);
+GO
+
+CREATE TYPE custom_binary_5 FROM BINARY(5);
+GO
+
+CREATE TYPE custom_varbinary_15 FROM VARBINARY(15);
+GO
+
+CREATE TYPE custom_nchar_8 FROM NCHAR(8);
+GO
+
+CREATE TYPE custom_nvarchar_16 FROM NVARCHAR(16);
+GO
+
+CREATE TYPE custom_text FROM TEXT;
+GO
+
+CREATE TYPE custom_image FROM IMAGE;
+GO
+
+CREATE TYPE custom_ntext FROM NTEXT;
+GO
+
+CREATE TYPE custom_sysname FROM sysname;
+GO
+
+CREATE TYPE custom_sql_variant FROM SQL_VARIANT;
+GO
+
+CREATE TYPE custom_xml FROM XML;
+GO
+
+CREATE TYPE custom_varcharmax FROM VARCHAR(MAX);
+GO
+
+CREATE TYPE custom_nvarcharmax FROM NVARCHAR(MAX);
+GO
+
+CREATE TYPE custom_varbinarymax FROM VARBINARY(MAX);
+GO
+
+CREATE TYPE custom_bit FROM BIT;
+GO
+
+CREATE TYPE custom_tinyint FROM TINYINT;
+GO
+
+CREATE TYPE custom_bigint FROM BIGINT;
+GO
+
+CREATE TYPE custom_smallint FROM SMALLINT;
+GO
+
+CREATE TYPE custom_smallmoney FROM SMALLMONEY;
+GO
+
+CREATE TYPE custom_money FROM MONEY;
+GO
+
+CREATE TYPE custom_smalldatetime FROM SMALLDATETIME;
+GO
+
+CREATE TYPE custom_real FROM REAL;
+GO
+
+CREATE TYPE custom_float FROM FLOAT;
+GO
+
+CREATE TYPE custom_time FROM TIME;
+GO
+
+CREATE TYPE custom_datetime FROM DATETIME;
+GO
+
+CREATE TYPE custom_datetime2 FROM DATETIME2;
+GO
+
+CREATE TYPE custom_datetimeoffset FROM DATETIMEOFFSET;
+GO
+
+CREATE TYPE custom_uniqueidentifier FROM UNIQUEIDENTIFIER;
+GO
+
+CREATE TYPE custom_date FROM DATE;
+GO
+
+CREATE TYPE custom_decimal_10_5 FROM DECIMAL(10,5);
+GO
+
+CREATE TYPE custom_numeric_3_0 FROM NUMERIC(3,0);
+GO
+
+-- Create Table with User-Defined Data Types
+CREATE TABLE udd_test_table (
+    col_customchar custom_char_10,
+    col_customvarchar custom_varchar_20,
+    col_custombinary custom_binary_5,
+    col_customvarbinary custom_varbinary_15,
+    col_customnchar custom_nchar_8,
+    col_customnvarchar custom_nvarchar_16,
+    col_customtext custom_text,
+    col_customimage custom_image,
+    col_customntext custom_ntext,
+    col_customsysname custom_sysname,
+    col_customsqlvariant custom_sql_variant,
+    col_customxml custom_xml,
+    col_customvarcharmax custom_varcharmax,
+    col_customnvarcharmax custom_nvarcharmax,
+    col_customvarbinarymax custom_varbinarymax,
+    col_custombit custom_bit,
+    col_customtinyint custom_tinyint,
+    col_custombigint custom_bigint,
+    col_customsmallint custom_smallint,
+    col_customsmallmoney custom_smallmoney,
+    col_custommoney custom_money,
+    col_customsmalldatetime custom_smalldatetime,
+    col_customreal custom_real,
+    col_customfloat custom_float,
+    col_customtime custom_time,
+    col_customdatetime custom_datetime,
+    col_customdatetime2 custom_datetime2,
+    col_customdatetimeoffset custom_datetimeoffset,
+    col_customuniqueidentifier custom_uniqueidentifier,
+    col_customdate custom_date,
+    col_customdecimal custom_decimal_10_5,
+    col_customnumeric custom_numeric_3_0
+);
 GO
 
 CREATE VIEW col_length_prepare_v1 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'ID'));
@@ -118,84 +249,84 @@ CREATE PROCEDURE col_length_prepare_p10 AS (SELECT COL_LENGTH('sys_column_length
 GO
 
 CREATE FUNCTION col_length_prepare_f1()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_xml'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f2()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_varcharmax'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f3()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_nvarcharmax'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f4()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_varbinarymax'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f5()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_bit'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f6()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_tinyint'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f7()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_bigint'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f8()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_smallint'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f9()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_smallmoney'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f10()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_money'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f11()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_smalldatetime'));
 END
 GO
 
 CREATE FUNCTION col_length_prepare_f12()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_real'));
 END
@@ -203,7 +334,7 @@ GO
 
 -- Invalid column, should return NULL
 CREATE FUNCTION col_length_prepare_f13()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 1));
 END
@@ -211,7 +342,7 @@ GO
 
 -- Invalid column, should return NULL
 CREATE FUNCTION col_length_prepare_f14()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', -1));
 END
@@ -219,7 +350,7 @@ GO
 
 -- Invalid table, should return NULL
 CREATE FUNCTION col_length_prepare_f15()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH(NULL, 'col_char'));
 END
@@ -227,7 +358,7 @@ GO
 
 -- NULL column, should return NULL
 CREATE FUNCTION col_length_prepare_f16()
-RETURNS INT AS
+RETURNS SMALLINT AS
 BEGIN
 RETURN (SELECT COL_LENGTH('sys_column_length_test_table', NULL));
 END
