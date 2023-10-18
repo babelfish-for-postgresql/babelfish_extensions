@@ -17,6 +17,22 @@ int
 ~~END~~
 
 
+exec master.dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec master..sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
 create database db1
 go
 
@@ -31,7 +47,7 @@ int
 ~~END~~
 
 
-exec sp_hello
+exec master..sp_hello
 go
 ~~START~~
 int
@@ -39,7 +55,7 @@ int
 ~~END~~
 
 
-sp_hello
+exec sp_hello
 go
 ~~START~~
 int
@@ -71,7 +87,63 @@ int
 ~~END~~
 
 
+exec .dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec ..dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+..sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
 dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+.dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+..dbo.sp_hello
 go
 ~~START~~
 int
