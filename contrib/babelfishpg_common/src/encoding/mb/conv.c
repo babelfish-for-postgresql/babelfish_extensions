@@ -402,8 +402,8 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 		unsigned char b4 = 0;
 
 		/* "break" cases all represent errors */
-		if (*iso == '\0')
-			break;
+		// if (*iso == '\0')
+		// 	break;
 
 		if (!IS_HIGHBIT_SET(*iso))
 		{

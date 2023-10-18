@@ -15,6 +15,7 @@
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
+#include "collation.h"
 #include "catalog/pg_type.h"
 #include "common/int.h"
 #include "lib/hyperloglog.h"
@@ -31,6 +32,7 @@
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
 #include "utils/varlena.h"
+#include "encoding/encoding.h"
 
 #include "instr.h"
 
@@ -620,7 +622,7 @@ rowversionvarbinary(PG_FUNCTION_ARGS)
 Datum
 varcharvarbinary(PG_FUNCTION_ARGS)
 {
-	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);	/* source string is in UTF8 */
 	char	   *data = VARDATA_ANY(source);
 	char	   *rp;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
@@ -628,6 +630,9 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
 	bytea	   *result;
+	coll_info	collInfo;
+	char 		*edata;
+	int		encodedByteLen;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -645,11 +650,15 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	if (len > maxlen)
 		len = maxlen;
 
-	result = (bytea *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+
+	edata = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+
+	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
+	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 	rp = VARDATA(result);
-	memcpy(rp, data, len);
+	memcpy(rp, edata, encodedByteLen);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -701,18 +710,19 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	int32		maxlen = typmod - VARHDRSZ;
-	VarChar    *result;
+	coll_info	collInfo;
+	char 		*result;
+	int		encodedByteLen;
 
-	/*
-	 * Cast the entire input binary data if maxlen is invalid or supplied data
-	 * fits it
-	 */
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+
+	/* Encode the input string encoding to UTF8(server) encoding */
 	if (maxlen < 0 || len <= maxlen)
-		result = (VarChar *) cstring_to_text_with_len(data, len);
-	/* Else truncate it */
+		result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
 	else
-		result = (VarChar *) cstring_to_text_with_len(data, maxlen);
-	PG_RETURN_VARCHAR_P(result);
+		result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(result, encodedByteLen));
 }
 
 Datum

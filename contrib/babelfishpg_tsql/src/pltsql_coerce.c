@@ -21,6 +21,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "src/collation.h"
 #include "utils/builtins.h"
@@ -960,6 +961,21 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 	Oid			baseTypeId = newcon->consttype;
 	Type		baseType = typeidType(baseTypeId);
 	int32		inputTypeMod = newcon->consttypmod;
+	TypeName   *varcharTypeName = makeTypeName("varchar");
+
+	/* if target type is varbinary, we will treat string literal as varchar */
+	if ((*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (targetTypeId))
+	{
+		typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
+		baseType = typeidType(baseTypeId);
+		inputTypeMod = -1;
+
+		newcon->consttype = baseTypeId;
+		newcon->consttypmod = inputTypeMod;
+		newcon->constcollid = typeTypeCollation(baseType);
+		newcon->constlen = typeLen(baseType);
+		newcon->constbyval = typeByVal(baseType);
+	}
 
 	if (newcon->constisnull)
 	{
@@ -1106,7 +1122,28 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		}
 	}
 
+	pfree(varcharTypeName);
 	ReleaseSysCache(baseType);
+	if ((*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (targetTypeId)) 
+	{	
+		Node	   *result;
+		result = coerce_to_target_type(NULL, (Node *) newcon, baseTypeId,
+										targetTypeId, targetTypeMod,
+										COERCION_EXPLICIT,
+										COERCE_EXPLICIT_CAST,
+										location);
+		if (result == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+					errmsg("cannot cast type %s to %s",
+							format_type_be(baseTypeId),
+							format_type_be(targetTypeId))));
+
+		if (handle_type_and_collation_hook)
+			handle_type_and_collation_hook(result, targetTypeId, InvalidOid);
+	
+		return result;
+	}	
 
 	/*
 	 * NULL means the newcon is updated properly so that we can proceed the
