@@ -252,6 +252,12 @@ dbcc checkident(babel_3201_t_decimal, reseed, .123)
 Go
 dbcc checkident(babel_3201_t_decimal, reseed, -.123)
 Go
+dbcc checkident(babel_3201_t_decimal, reseed, .)
+GO
+dbcc checkident(babel_3201_t_decimal, reseed, -)
+GO
+dbcc checkident(babel_3201_t_decimal, reseed, .-);
+GO
 
 SELECT * FROM babel_3201_t_decimal;
 GO
@@ -364,7 +370,11 @@ go
 DBCC CHECKIDENT('babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.dbo.babel_3201_longer__name_db_table', noreseed);
 GO
 
--- drop this db because of single_mod
+-- db name longer and mixed case as well. 
+DBCC CHECKIDENT('bAbEl_dBcC_ChEcKiDeNt_dAtAbAsE_LoNgEr_tHaN_63_0AbCdEfGiJ1AbCdEfGiJ2AbCdEfGiJ3AbCdEfGiJ4AbCdEfGiJ5AbCdEfGiJ6AbCdEfGiJ7AbCdEfGiJ8AbCdEfGhIj9aBcDeFgHiJ.dbo.babel_3201_longer__name_db_table', noreseed);
+GO
+
+-- drop this db because of single_db mode
 DROP DATABASE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
 GO
 
@@ -428,6 +438,50 @@ GO
 DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
 GO
 
+-- test locks in two connections transaction. 
+-- tsql
+BEGIN TRAN
+DBCC CHECKIDENT('babel_3201_test_locks', noreseed)
+GO
+
+
+-- tsql user=babel_3201_test_locks password=123456
+-- This reseed the identity values while the other transaction is not yet completed.
+BEGIN TRAN
+DBCC CHECKIDENT('babel_3201_test_locks', reseed, 101);
+SELECT * FROM babel_3201_test_locks;
+COMMIT;
+GO
+
+-- tsql
+-- This will show the changed values of ident
+DBCC CHECKIDENT('babel_3201_test_locks', noreseed);
+SELECT * FROM babel_3201_test_locks;
+COMMIT;
+GO
+
+-- test with user name longer then 64 chars.
+-- tsql
+USE MASTER
+GO
+CREATE USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh FOR LOGIN babel_3201_log1
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+USE babel_3201_db1;
+GO
+CREATE SCHEMA [babel_3201_user_schema]
+GO
+CREATE TABLE [babel_3201_db1].[babel_3201_user_schema].[babel_3201_user_table] (a int identity, b int);
+GO
+-- This should work correctly
+DBCC CHECKIDENT('[babel_3201_db1].[babel_3201_user_schema].[babel_3201_user_table]', NORESEED);
+GO
+DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
+GO
+
 -- tsql
 USE master;
+GO
+DROP USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh
 GO

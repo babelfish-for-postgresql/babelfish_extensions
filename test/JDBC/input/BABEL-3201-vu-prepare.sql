@@ -40,6 +40,12 @@ GO
 CREATE TABLE babel_3201_t2( a int, b int);
 GO
 
+CREATE TABLE babel_3201_test_locks (a int identity, b int);
+GO
+
+INSERT INTO  babel_3201_test_locks VALUES (10);
+GO
+
 INSERT INTO babel_3201_sch1.babel_3201_t2 VALUES ('string 1');
 GO
 
@@ -108,4 +114,10 @@ DBCC CHECKIDENT(babel_3201_t_tinyint, RESEED, 257)
 GO
 
 CREATE LOGIN babel_3201_log1 WITH PASSWORD='12345678';
+GO
+
+CREATE LOGIN babel_3201_test_locks WITH PASSWORD='123456';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3201_test_locks
 GO

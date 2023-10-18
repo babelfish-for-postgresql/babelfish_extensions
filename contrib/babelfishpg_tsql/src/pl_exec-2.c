@@ -3152,7 +3152,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	int64	max_identity_value = 0;
 	int64	cur_identity_value = 0;
 	int	attnum;
-	int	rc;
+	int	rc = 0;
 	int64	reseed_value = 0;
 	Oid	nsp_oid;
 	Oid 	table_oid;
@@ -3163,6 +3163,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	char	message[200];
 	bool	is_float_value;
 	bool    is_cross_db = false;
+
 
 	if(dbcc_stmt.new_reseed_value)
 	{
@@ -3184,23 +3185,23 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		else
 			reseed_value = pg_strtoint64(dbcc_stmt.new_reseed_value);
 	}
-
-    	db_name = get_cur_db_name();
-    	if (dbcc_stmt.db_name)
-    	{
+	
+	db_name = get_cur_db_name();
+	if (dbcc_stmt.db_name)
+	{
 		if (!DbidIsValid(get_db_id(dbcc_stmt.db_name)))
 		{
 			ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_DATABASE),
 				errmsg("database \"%s\" does not exist", dbcc_stmt.db_name)));
 		}
-       		if (pg_strncasecmp(db_name, dbcc_stmt.db_name, NAMEDATALEN) != 0)
-        	{
+		if (pg_strncasecmp(db_name, dbcc_stmt.db_name, NAMEDATALEN) != 0)
+		{
 			is_cross_db = true;
 			pfree(db_name);
-        		db_name = pstrdup(dbcc_stmt.db_name);
+			db_name = pstrdup(dbcc_stmt.db_name);
 		}
-    	}
+	}
 
 	user = get_user_for_database(db_name);
 	login_is_db_owner = 0 == strncmp(GetUserNameFromId(GetSessionUserId(), false),
@@ -3208,11 +3209,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	/* Raise an error if the login does not have access to the database */
 	if(is_cross_db)
-    	{
-        	if (user)
-            		SetCurrentRoleId(GetSessionUserId(), false);
-        	else
-        	{
+	{
+		if (user)
+			SetCurrentRoleId(GetSessionUserId(), false);
+		else
+		{
 			login = GetUserNameFromId(GetSessionUserId(), false);
 			pfree(db_name);
 			ereport(ERROR,
@@ -3221,7 +3222,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
                             	"the database \"%s\" under the current security context",
                            	 login, dbcc_stmt.db_name)));
 		}
-    	}
+	}
 
 	/* get physical schema name from logical schema name */
 	if (dbcc_stmt.schema_name)
@@ -3237,13 +3238,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		 */
 		guest_role_name = get_guest_role_name(db_name);
 		dbo_role_name = get_dbo_role_name(db_name);
-		if (!user)
-		{
-			pfree(db_name);
-			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("user does not exist")));
-		}
+		
+		/* user will never be null here as cross-db calls are already handled */
+		Assert(user != NULL);
+
 		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
 		if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
 		{
@@ -3392,7 +3390,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 				max_identity_value_str = SPI_getvalue(SPI_tuptable->vals[0],
 										SPI_tuptable->tupdesc, 1);
-
+				
+				SPI_freetuptable(SPI_tuptable);
+				
 				if(max_identity_value_str)
 					max_identity_value = pg_strtoint64(max_identity_value_str);
 
@@ -3400,8 +3400,6 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
 														cur_identity_value, 
 														max_identity_value_str ? max_identity_value_str : "NULL");
-
-				SPI_freetuptable(SPI_tuptable);
 
 				/*
 				* RESEED option only resets the identity column value if the 
@@ -3430,6 +3428,13 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			pfree(query);
 		if (max_identity_value_str)
 			pfree(max_identity_value_str);
+
+		if(rc != 0)
+		{ 
+			SPI_finish();
+			/* running 'SELECT MAX' query above holds a AccessShareLock on table, we want to unlock that as well */
+			UnlockRelationOid(table_oid, AccessShareLock);
+		}
 		if(!dbcc_stmt.new_reseed_value)
 		{
 			UnlockRelationOid(table_oid, ShareLock);
@@ -3443,11 +3448,18 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		pfree(query);
 	if (max_identity_value_str)
 		pfree(max_identity_value_str);
-
+	if(rc != 0)
+	{
+		SPI_finish();
+		/* running 'SELECT MAX' query above holds a AccessShareLock on table, we want to unlock that as well */
+		UnlockRelationOid(table_oid, AccessShareLock);
+	}
+	
 	if(!dbcc_stmt.new_reseed_value)
 	{
 		UnlockRelationOid(table_oid, ShareLock);
 	}
+
 	if (!dbcc_stmt.no_infomsgs)
 	{
 		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
