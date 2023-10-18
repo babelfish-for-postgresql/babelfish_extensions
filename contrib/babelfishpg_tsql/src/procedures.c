@@ -508,11 +508,14 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			}
 			PG_CATCH();
 			{
-				HOLD_INTERRUPTS();
 				query = psprintf("DROP VIEW %s", sp_describe_first_result_set_view_name);
+				HOLD_INTERRUPTS();
 
 				if ((rc = SPI_execute(query, false, 1)) < 0)
+				{
+					RESUME_INTERRUPTS();
 					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+				}
 
 				pfree(query);
 				pfree(sp_describe_first_result_set_view_name);
