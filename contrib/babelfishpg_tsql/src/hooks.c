@@ -1620,10 +1620,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/*
 			 * If no alias is specified on a ColumnRef, then get the length of
 			 * the name from the ColumnRef and copy the column name from the
-			 * sourcetext
+			 * sourcetext. To prevent the server crash, res->location for queries
+			 * with join statement should not be zero.
 			 */
-			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String)) 
+			if (res->location != 0 && (list_length(cref->fields) == 1 &&
+				IsA(linitial(cref->fields), String)))
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
@@ -1644,13 +1645,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
 			 * are zero, it means we are out of sqb.
 			 */
-			if(list_length(cref->fields) > 1 &&
-				IsA(llast(cref->fields), String))
+			if(res->location != 0 && (list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String)))
 			{
 				identifier_name = strVal(llast(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
-				while(true)
+				last_dot = colname_start;
+				while(*colname_start != '\0')
 				{	
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
@@ -1721,7 +1723,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int actual_alias_len = 0;
 
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || scanner_isspace(*colname_start))
+			while(*colname_start != '\0' && (*colname_start == '(' || scanner_isspace(*colname_start)))
 			{
 				colname_start++;
 			}
