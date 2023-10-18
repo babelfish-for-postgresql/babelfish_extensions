@@ -9,6 +9,7 @@
 #include "parser/parse_collate.h"
 #include "parser/parse_target.h"
 #include "parser/scansup.h"		/* downcase_identifier */
+#include "utils/date.h"
 #include "utils/guc.h"
 
 #include "babelfishpg_common.h"
@@ -43,6 +44,7 @@ PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
 set_like_collation_hook_type prev_set_like_collation_hook = NULL;
 get_like_collation_hook_type prev_get_like_collation_hook = NULL;
 
+tsql_time_in_hook_type prev_tsql_time_in_hook = NULL;
 
 /* Module callbacks */
 void		_PG_init(void);
@@ -147,6 +149,9 @@ _PG_init(void)
  	prev_get_like_collation_hook = get_like_collation_hook;
 	get_like_collation_hook = bbf_get_like_collation;
 
+	prev_tsql_time_in_hook = tsql_time_in_hook;
+	tsql_time_in_hook = pltsql_time_in;
+
 }
 void
 _PG_fini(void)
@@ -159,6 +164,7 @@ _PG_fini(void)
 	PreCreateCollation_hook = prev_PreCreateCollation_hook;
 	set_like_collation_hook = prev_set_like_collation_hook;
 	get_like_collation_hook = prev_get_like_collation_hook;
+	tsql_time_in_hook = prev_tsql_time_in_hook;
 }
 
 common_utility_plugin *

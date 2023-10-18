@@ -34,4 +34,6 @@ extern Timestamp initializeToDefaultDatetime(void);
 
 extern Datum datetime_in_str(char *str);
 
+extern bool pltsql_time_in(const char *str, int32 typmod, TimeADT *result);
+
 #endif							/* PLTSQL_DATETIME_H */
