@@ -1217,5 +1217,5 @@ ANALYZE sys.babelfish_authid_login_ext;
 ANALYZE sys.babelfish_authid_user_ext;
 ANALYZE sys.babelfish_domain_mapping;
 ANALYZE sys.babelfish_extended_properties;
-ANALYZE sys.babelfish_extended_properties;
+ANALYZE sys.babelfish_namespace_ext;
 
