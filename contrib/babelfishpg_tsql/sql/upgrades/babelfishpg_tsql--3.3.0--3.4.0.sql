@@ -437,93 +437,61 @@ LANGUAGE plpgsql;
 -- Matches and returns column length of the corresponding column of the given table
 CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
 RETURNS SMALLINT AS $BODY$
-    DECLARE
-        col_name TEXT;
-        object_id oid;
-        column_id INT;
-        column_length INT;
-        column_data_type TEXT;
-        column_precision INT;
-    BEGIN
-        -- Get the object ID for the provided object_name
-        object_id = sys.OBJECT_ID(object_name);
-        IF object_id IS NULL THEN
-            RETURN NULL;
+DECLARE
+    col_name TEXT;
+    object_id oid;
+    column_id INT;
+    column_length SMALLINT;
+    column_data_type TEXT;
+    typeid oid;
+    typelen INT;
+    typemod INT;
+BEGIN
+    -- Get the object ID for the provided object_name
+    object_id := sys.OBJECT_ID(object_name, 'U');
+    IF object_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Truncate and normalize the column name
+    col_name := sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
+
+    -- Get the column ID, typeid, length, and typmod for the provided column_name
+    SELECT attnum, a.atttypid, a.attlen, a.atttypmod
+    INTO column_id, typeid, typelen, typemod
+    FROM pg_attribute a
+    WHERE attrelid = object_id AND lower(attname) = col_name COLLATE sys.database_default;
+
+    IF column_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Get the correct data type
+    column_data_type := sys.translate_pg_type_to_tsql(typeid);
+
+    IF column_data_type = 'sysname' THEN
+        column_length := 256;
+    ELSIF column_data_type IS NULL THEN
+
+        -- Check if it's a user-defined data type
+        SELECT sys.translate_pg_type_to_tsql(typbasetype), typlen, typtypmod 
+        INTO column_data_type, typelen, typemod
+        FROM pg_type
+        WHERE oid = typeid;
+
+        IF column_data_type = 'sysname' THEN
+            column_length := 256;
+        ELSE 
+            -- Calculate column length based on base type information
+            column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
         END IF;
+    ELSE
+        -- Calculate column length based on base type information
+        column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
+    END IF;
 
-        -- Truncate and normalize the column name
-        col_name = sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
-
-        -- Get the column ID for the provided column_name
-        SELECT attnum INTO column_id FROM pg_attribute 
-        WHERE attrelid = object_id AND lower(attname) = col_name 
-        COLLATE sys.database_default;
-
-        IF column_id IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        -- Retrieve the data type, precision, scale, and column length in characters
-        SELECT a.atttypid::regtype, 
-               CASE 
-                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) >> 16) & 65535
-                   ELSE NULL
-               END,
-               CASE
-                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) & 65535)
-                   ELSE a.atttypmod
-               END
-        INTO column_data_type, column_precision, column_length
-        FROM pg_attribute a
-        WHERE a.attrelid = object_id AND a.attnum = column_id;
-
-        -- Remove delimiters
-        column_data_type := sys.babelfish_remove_delimiter_pair(column_data_type);
-
-        IF column_data_type IS NOT NULL THEN
-            column_length := CASE
-                -- Columns declared with max specifier case
-                WHEN column_length = -1 AND column_data_type IN ('varchar', 'nvarchar', 'varbinary')
-                THEN -1
-                WHEN column_data_type = 'xml'
-                THEN -1
-                WHEN column_data_type IN ('tinyint', 'bit') 
-                THEN 1
-                WHEN column_data_type = 'smallint'
-                THEN 2
-                WHEN column_data_type = 'date'
-                THEN 3
-                WHEN column_data_type IN ('int', 'integer', 'real', 'smalldatetime', 'smallmoney') 
-                THEN 4
-                WHEN column_data_type IN ('time', 'time without time zone')
-                THEN 5
-                WHEN column_data_type IN ('double precision', 'bigint', 'datetime', 'datetime2', 'money') 
-                THEN 8
-                WHEN column_data_type = 'datetimeoffset'
-                THEN 10
-                WHEN column_data_type IN ('uniqueidentifier', 'text', 'image', 'ntext')
-                THEN 16
-                WHEN column_data_type = 'sysname'
-                THEN 256
-                WHEN column_data_type = 'sql_variant'
-                THEN 8016
-                WHEN column_data_type IN ('bpchar', 'char', 'varchar', 'binary', 'varbinary') 
-                THEN column_length
-                WHEN column_data_type IN ('nchar', 'nvarchar') 
-                THEN column_length * 2
-                WHEN column_data_type IN ('numeric', 'decimal')
-                THEN 
-                    CASE
-                        WHEN column_precision IS NULL 
-                        THEN NULL
-                        ELSE ((column_precision + 8) / 9 * 4 + 1)
-                    END
-                ELSE NULL
-            END;
-        END IF;
-
-        RETURN column_length::SMALLINT;
-    END;
+    RETURN column_length;
+END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE
@@ -789,6 +757,113 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
+
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
+$body$
+DECLARE
+    days_offset INT;
+    v_day INT;
+    result_date timestamp;
+    input_expr_timestamp timestamp;
+    date_arg_datatype regtype;
+    offset_string PG_CATALOG.TEXT;
+    datefirst_value INT;
+BEGIN
+    BEGIN
+        /* perform input validation */
+        date_arg_datatype := pg_typeof(date);
+        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                            'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+        ELSIF date_arg_datatype NOT IN ('date'::regtype, 'time'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype,
+                                        'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type ''%'' is invalid for argument 2 of datetrunc function.', date_arg_datatype;
+        ELSIF datepart IN ('nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''%''.',datepart, date_arg_datatype;
+        ELSIF datepart IN ('dow') THEN
+            RAISE EXCEPTION 'The datepart ''weekday'' is not supported by date function datetrunc for data type ''%''.', date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'datetime'::regtype AND datepart IN ('microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''datetime''.', datepart;
+        ELSIF date_arg_datatype = 'smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''smalldatetime''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype THEN
+            IF datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'tsql_week') THEN
+                RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''time''.', datepart;
+            END IF;
+            -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
+            -- insufficient to support provided datepart (millisecond, microsecond) value
+        ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
+            -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype is
+            -- insufficient to support for provided datepart (millisecond, microsecond) value
+        END IF;
+
+        /* input validation is complete, proceed with result calculation. */
+        IF date_arg_datatype = 'time'::regtype THEN
+            RETURN date_trunc(datepart, date);
+        ELSE
+            input_expr_timestamp = date::timestamp;
+            -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                offset_string = RIGHT(date::PG_CATALOG.TEXT, 6);
+                input_expr_timestamp := LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
+            END IF;
+            CASE
+                WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN
+                    result_date := date_trunc(datepart, input_expr_timestamp);
+                WHEN datepart IN ('doy', 'day') THEN
+                    result_date := date_trunc('day', input_expr_timestamp);
+                WHEN datepart IN ('tsql_week') THEN
+                -- sql server datepart 'iso_week' is similar to postgres 'week' datepart
+                -- handle sql server datepart 'week' here based on the value of set variable 'DATEFIRST'
+                    v_day := EXTRACT(dow from input_expr_timestamp)::INT;
+                    datefirst_value := current_setting('babelfishpg_tsql.datefirst')::INT;
+                    IF v_day = 0 THEN
+                        v_day := 7;
+                    END IF;
+                    result_date := date_trunc('day', input_expr_timestamp);
+                    days_offset := (7 + v_day - datefirst_value)%7;
+                    result_date := result_date - make_interval(days => days_offset);
+            END CASE;
+            -- concat offset_string to result_date in case of datetimeoffset before converting it to datetimeoffset datatype.
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+            ELSE
+                RETURN result_date;
+            END IF;
+        END IF;
+    END;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
+
+-- another definition of datetrunc as anyelement can not handle unknown type.
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date PG_CATALOG.TEXT) RETURNS SYS.DATETIME2 AS
+$body$
+DECLARE
+    input_expr_datetime2 sys.datetime2;
+BEGIN
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                        'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+    END IF;
+    BEGIN
+    input_expr_datetime2 := cast(date as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    IF input_expr_datetime2 IS NULL THEN
+        RETURN NULL;
+    ELSE
+        -- input string literal is valid, call the datetrunc function with datetime2 datatype. 
+        RETURN sys.DATETRUNC(datepart, input_expr_datetime2);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
+
 -- BABELFISH_SCHEMA_PERMISSIONS
 CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
@@ -884,15 +959,13 @@ END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
 
-CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
-    AS $$select (statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
-    LANGUAGE SQL STABLE;
-GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() returns sys.datetime2
+AS 'babelfishpg_tsql', 'sysutcdatetime'
+LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.getutcdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', ((statement_timestamp()::text::datetime2 AT TIME ZONE 'UTC'::pg_catalog.text)::pg_catalog.text::pg_catalog.TIMESTAMP))::sys.datetime;$$
-    LANGUAGE SQL STABLE;
-GRANT EXECUTE ON FUNCTION sys.getutcdate() TO PUBLIC;
+create or replace function sys.getutcdate() returns sys.datetime
+AS 'babelfishpg_tsql', 'getutcdate'
+LANGUAGE C STABLE;
 
 -- internal helper function for date_bucket().
 CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
@@ -1664,6 +1737,70 @@ from pg_catalog.pg_namespace base INNER JOIN sys.babelfish_namespace_ext ext on 
 where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys', 'public')
 and ext.dbid = sys.db_id();
 GRANT SELECT ON sys.schemas TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_name()::TEXT, 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.type = 'R';
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+create or replace view sys.sequences as
+select
+    CAST(p.relname as sys.nvarchar(128)) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as char(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(ps.seqstart as sys.sql_variant ) as start_value
+  , CAST(ps.seqincrement as sys.sql_variant ) as increment
+  , CAST(ps.seqmin as sys.sql_variant  ) as minimum_value
+  , CAST(ps.seqmax as sys.sql_variant ) as maximum_value
+  , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
+  , CAST(0 as sys.bit ) as is_cached
+  , CAST(ps.seqcache as int ) as cache_size
+  , CAST(ps.seqtypid as int ) as system_type_id
+  , CAST(ps.seqtypid as int ) as user_type_id
+  , CAST(0 as sys.tinyint ) as precision
+  , CAST(0 as sys.tinyint ) as scale
+  , CAST('ABC' as sys.sql_variant  ) as current_value
+  , CAST(0 as sys.bit ) as is_exhausted
+  , CAST('ABC' as sys.sql_variant ) as last_used_value
+from pg_class p
+inner join pg_sequence ps on ps.seqrelid = p.oid
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE');
+GRANT SELECT ON sys.sequences TO PUBLIC;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema
 -- for the guest users in the already existing databases

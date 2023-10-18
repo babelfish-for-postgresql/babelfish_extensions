@@ -490,9 +490,6 @@ GO
 ~~START~~
 varchar#!#char#!#nvarchar
 babel_4080_nonsysadmin1#!#S#!#SQL_LOGIN
-babel_4080_sysadmin1#!#S#!#SQL_LOGIN
-babel_4080_testlogin1#!#S#!#SQL_LOGIN
-babel_4080_testlogin2#!#S#!#SQL_LOGIN
 ~~END~~
 
 
