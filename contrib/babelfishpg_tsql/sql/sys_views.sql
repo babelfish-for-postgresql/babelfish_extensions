@@ -3043,6 +3043,42 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.sql_expression_dependencies TO PUBLIC;
 
+
+create or replace view sys.sequences as
+select
+    CAST(p.relname as sys.nvarchar(128)) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as sys.bpchar(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(ps.seqstart as sys.sql_variant ) as start_value
+  , CAST(ps.seqincrement as sys.sql_variant ) as increment
+  , CAST(ps.seqmin as sys.sql_variant  ) as minimum_value
+  , CAST(ps.seqmax as sys.sql_variant ) as maximum_value
+  , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
+  , CAST(0 as sys.bit ) as is_cached
+  , CAST(ps.seqcache as int ) as cache_size
+  , CAST(ps.seqtypid as int ) as system_type_id
+  , CAST(ps.seqtypid as int ) as user_type_id
+  , CAST(0 as sys.tinyint ) as precision
+  , CAST(0 as sys.tinyint ) as scale
+  , CAST('ABC' as sys.sql_variant  ) as current_value
+  , CAST(0 as sys.bit ) as is_exhausted
+  , CAST('ABC' as sys.sql_variant ) as last_used_value
+from pg_class p
+inner join pg_sequence ps on ps.seqrelid = p.oid
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE');
+GRANT SELECT ON sys.sequences TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.database_permissions
 AS
 SELECT

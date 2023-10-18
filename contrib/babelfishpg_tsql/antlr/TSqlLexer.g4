@@ -243,6 +243,7 @@ DATEFORMAT:                                      D A T E F O R M A T;
 DATE_FORMAT:                                     D A T E  UNDERLINE  F O R M A T;
 DATENAME:                                        D A T E N A M E;
 DATEPART:                                        D A T E P A R T;
+DATETRUNC:                                       D A T E T R U N C;
 DATE_CORRELATION_OPTIMIZATION:                   D A T E  UNDERLINE  C O R R E L A T I O N  UNDERLINE  O P T I M I Z A T I O N;
 DAY:                                             D A Y;
 DAYS:                                            D A Y S;

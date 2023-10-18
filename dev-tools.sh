@@ -197,10 +197,10 @@ pg_dump() {
     rm -f pg_dump_globals.sql pg_dump.sql error.log
 
     if [[ ! $2 ]];then
-        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dumpall --username jdbc_user --roles-only --quote-all-identifiers --verbose -f pg_dump_globals.sql 2>error.log
         $1/postgres/bin/pg_dump --create --username jdbc_user --column-inserts --quote-all-identifiers --verbose --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
     else
-        $1/postgres/bin/pg_dumpall --username jdbc_user --globals-only --quote-all-identifiers --verbose --bbf-database-name=$2 -f pg_dump_globals.sql 2>error.log
+        $1/postgres/bin/pg_dumpall --username jdbc_user --roles-only --quote-all-identifiers --verbose --bbf-database-name=$2 -f pg_dump_globals.sql 2>error.log
         $1/postgres/bin/pg_dump --username jdbc_user --column-inserts --quote-all-identifiers --verbose --bbf-database-name=$2 --file="pg_dump.sql" --dbname=jdbc_testdb 2>>error.log
     fi
     stop $1
