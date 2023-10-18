@@ -50,7 +50,7 @@ SELECT * FROM babel_3696_7
 GO
 ~~START~~
 nvarchar
-{"a": "{\"x\":\"some string\"}"}
+{"a": "{\"x\": \"some string\"}"}
 ~~END~~
 
 

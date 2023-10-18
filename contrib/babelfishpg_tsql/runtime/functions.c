@@ -147,6 +147,8 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(sysutcdatetime);
+PG_FUNCTION_INFO_V1(getutcdate);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -238,6 +240,20 @@ version(PG_FUNCTION_ARGS)
 	info = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
+}
+
+Datum sysutcdatetime(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    
+}
+
+Datum getutcdate(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    
 }
 
 void *
@@ -1504,7 +1520,7 @@ object_name(PG_FUNCTION_ARGS)
 	SysScanDesc tgscan;
 	EphemeralNamedRelation enr;
 	bool		found = false;
-	char	   *result = NULL;
+	text	   *result_text = NULL;
 
 	if (input1 < 0)
 		PG_RETURN_NULL();
@@ -1536,9 +1552,7 @@ object_name(PG_FUNCTION_ARGS)
 	enr = get_ENR_withoid(currentQueryEnv, object_id, ENR_TSQL_TEMP);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
-		result = enr->md.name;
-
-		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
 	}
 
 	/* search in pg_class by object_id */
@@ -1549,8 +1563,7 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
-			result = NameStr(pg_class->relname);
-
+			result_text = cstring_to_text(NameStr(pg_class->relname)); // make a copy before releasing syscache
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -1567,8 +1580,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-				result = NameStr(procform->proname);
-
+				result_text = cstring_to_text(NameStr(procform->proname));
 				schema_id = procform->pronamespace;
 			}
 			ReleaseSysCache(tuple);
@@ -1586,7 +1598,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (pg_type_aclcheck(object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
 			{
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-				result = NameStr(pg_type->typname);
+				result_text = cstring_to_text(NameStr(pg_type->typname));
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -1614,8 +1626,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (OidIsValid(pg_trigger->tgrelid) &&
 				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				result = NameStr(pg_trigger->tgname);
-
+				result_text = cstring_to_text(NameStr(pg_trigger->tgname));
 				schema_id = get_rel_namespace(pg_trigger->tgrelid);
 			}
 			found = true;
@@ -1635,8 +1646,7 @@ object_name(PG_FUNCTION_ARGS)
 			/* check if user have right permission on object */
 			if (OidIsValid(con->conrelid) && (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK))
 			{
-				result = NameStr(con->conname);
-
+				result_text = cstring_to_text(NameStr(con->conname));
 				schema_id = con->connamespace;
 			}
 			ReleaseSysCache(tuple);
@@ -1644,7 +1654,7 @@ object_name(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if (result)
+	if (result_text)
 	{
 		/*
 		 * Check if schema corresponding to found object belongs to specified
@@ -1652,9 +1662,13 @@ object_name(PG_FUNCTION_ARGS)
 		 * "information_schema_tsql". In case of pg_type schema_id will be
 		 * invalid.
 		 */
-		if (!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)
-			|| (schema_id == get_namespace_oid("sys", true)) || (schema_id == get_namespace_oid("information_schema_tsql", true)))
-			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+		if (!OidIsValid(schema_id) ||
+			is_schema_from_db(schema_id, database_id) ||
+			(schema_id == get_namespace_oid("sys", true)) ||
+			(schema_id == get_namespace_oid("information_schema_tsql", true)))
+		{
+			PG_RETURN_VARCHAR_P((VarChar *) result_text);
+		}
 	}
 	PG_RETURN_NULL();
 }

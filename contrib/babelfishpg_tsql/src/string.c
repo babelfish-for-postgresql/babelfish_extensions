@@ -407,8 +407,6 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 			strncpy(fmt_seg, seg_start, seg_len);
 			prev_fmt_seg_sz = seg_len;
 
-			arg = args[i];
-
 			if (i >= nargs || argisnull[i])
 			{
 				appendStringInfo(buf, "(null)");
@@ -416,6 +414,7 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 				continue;
 			}
 
+			arg = args[i];
 			typid = argtypes[i];
 			type = TypeCategory(typid);
 

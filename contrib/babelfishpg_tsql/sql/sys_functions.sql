@@ -4014,93 +4014,61 @@ GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty TO PUBLIC;
 -- Matches and returns column length of the corresponding column of the given table
 CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
 RETURNS SMALLINT AS $BODY$
-    DECLARE
-        col_name TEXT;
-        object_id oid;
-        column_id INT;
-        column_length INT;
-        column_data_type TEXT;
-        column_precision INT;
-    BEGIN
-        -- Get the object ID for the provided object_name
-        object_id = sys.OBJECT_ID(object_name);
-        IF object_id IS NULL THEN
-            RETURN NULL;
+DECLARE
+    col_name TEXT;
+    object_id oid;
+    column_id INT;
+    column_length SMALLINT;
+    column_data_type TEXT;
+    typeid oid;
+    typelen INT;
+    typemod INT;
+BEGIN
+    -- Get the object ID for the provided object_name
+    object_id := sys.OBJECT_ID(object_name, 'U');
+    IF object_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Truncate and normalize the column name
+    col_name := sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
+
+    -- Get the column ID, typeid, length, and typmod for the provided column_name
+    SELECT attnum, a.atttypid, a.attlen, a.atttypmod
+    INTO column_id, typeid, typelen, typemod
+    FROM pg_attribute a
+    WHERE attrelid = object_id AND lower(attname) = col_name COLLATE sys.database_default;
+
+    IF column_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Get the correct data type
+    column_data_type := sys.translate_pg_type_to_tsql(typeid);
+
+    IF column_data_type = 'sysname' THEN
+        column_length := 256;
+    ELSIF column_data_type IS NULL THEN
+
+        -- Check if it ia user-defined data type
+        SELECT sys.translate_pg_type_to_tsql(typbasetype), typlen, typtypmod 
+        INTO column_data_type, typelen, typemod
+        FROM pg_type
+        WHERE oid = typeid;
+
+        IF column_data_type = 'sysname' THEN
+            column_length := 256;
+        ELSE 
+            -- Calculate column length based on base type information
+            column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
         END IF;
+    ELSE
+        -- Calculate column length based on base type information
+        column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
+    END IF;
 
-        -- Truncate and normalize the column name
-        col_name = sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
-
-        -- Get the column ID for the provided column_name
-        SELECT attnum INTO column_id FROM pg_attribute 
-        WHERE attrelid = object_id AND lower(attname) = col_name 
-        COLLATE sys.database_default;
-
-        IF column_id IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        -- Retrieve the data type, precision, scale, and column length in characters
-        SELECT a.atttypid::regtype, 
-               CASE 
-                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) >> 16) & 65535
-                   ELSE NULL
-               END,
-               CASE
-                   WHEN a.atttypmod > 0 THEN ((a.atttypmod - 4) & 65535)
-                   ELSE a.atttypmod
-               END
-        INTO column_data_type, column_precision, column_length
-        FROM pg_attribute a
-        WHERE a.attrelid = object_id AND a.attnum = column_id;
-
-        -- Remove delimiters
-        column_data_type := sys.babelfish_remove_delimiter_pair(column_data_type);
-
-        IF column_data_type IS NOT NULL THEN
-            column_length := CASE
-                -- Columns declared with max specifier case
-                WHEN column_length = -1 AND column_data_type IN ('varchar', 'nvarchar', 'varbinary')
-                THEN -1
-                WHEN column_data_type = 'xml'
-                THEN -1
-                WHEN column_data_type IN ('tinyint', 'bit') 
-                THEN 1
-                WHEN column_data_type = 'smallint'
-                THEN 2
-                WHEN column_data_type = 'date'
-                THEN 3
-                WHEN column_data_type IN ('int', 'integer', 'real', 'smalldatetime', 'smallmoney') 
-                THEN 4
-                WHEN column_data_type IN ('time', 'time without time zone')
-                THEN 5
-                WHEN column_data_type IN ('double precision', 'bigint', 'datetime', 'datetime2', 'money') 
-                THEN 8
-                WHEN column_data_type = 'datetimeoffset'
-                THEN 10
-                WHEN column_data_type IN ('uniqueidentifier', 'text', 'image', 'ntext')
-                THEN 16
-                WHEN column_data_type = 'sysname'
-                THEN 256
-                WHEN column_data_type = 'sql_variant'
-                THEN 8016
-                WHEN column_data_type IN ('bpchar', 'char', 'varchar', 'binary', 'varbinary') 
-                THEN column_length
-                WHEN column_data_type IN ('nchar', 'nvarchar') 
-                THEN column_length * 2
-                WHEN column_data_type IN ('numeric', 'decimal')
-                THEN 
-                    CASE
-                        WHEN column_precision IS NULL 
-                        THEN NULL
-                        ELSE ((column_precision + 8) / 9 * 4 + 1)
-                    END
-                ELSE NULL
-            END;
-        END IF;
-
-        RETURN column_length::SMALLINT;
-    END;
+    RETURN column_length;
+END;
 $BODY$
 LANGUAGE plpgsql
 IMMUTABLE
@@ -4418,3 +4386,109 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
+$body$
+DECLARE
+    days_offset INT;
+    v_day INT;
+    result_date timestamp;
+    input_expr_timestamp timestamp;
+    date_arg_datatype regtype;
+    offset_string PG_CATALOG.TEXT;
+    datefirst_value INT;
+BEGIN
+    BEGIN
+        /* perform input validation */
+        date_arg_datatype := pg_typeof(date);
+        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                            'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+        ELSIF date_arg_datatype NOT IN ('date'::regtype, 'time'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype,
+                                        'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type ''%'' is invalid for argument 2 of datetrunc function.', date_arg_datatype;
+        ELSIF datepart IN ('nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''%''.',datepart, date_arg_datatype;
+        ELSIF datepart IN ('dow') THEN
+            RAISE EXCEPTION 'The datepart ''weekday'' is not supported by date function datetrunc for data type ''%''.', date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'datetime'::regtype AND datepart IN ('microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''datetime''.', datepart;
+        ELSIF date_arg_datatype = 'smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''smalldatetime''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype THEN
+            IF datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'tsql_week') THEN
+                RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''time''.', datepart;
+            END IF;
+            -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
+            -- insufficient to support provided datepart (millisecond, microsecond) value
+        ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
+            -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype is
+            -- insufficient to support for provided datepart (millisecond, microsecond) value
+        END IF;
+
+        /* input validation is complete, proceed with result calculation. */
+        IF date_arg_datatype = 'time'::regtype THEN
+            RETURN date_trunc(datepart, date);
+        ELSE
+            input_expr_timestamp = date::timestamp;
+            -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                offset_string = RIGHT(date::PG_CATALOG.TEXT, 6);
+                input_expr_timestamp := LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
+            END IF;
+            CASE
+                WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN
+                    result_date := date_trunc(datepart, input_expr_timestamp);
+                WHEN datepart IN ('doy', 'day') THEN
+                    result_date := date_trunc('day', input_expr_timestamp);
+                WHEN datepart IN ('tsql_week') THEN
+                -- sql server datepart 'iso_week' is similar to postgres 'week' datepart
+                -- handle sql server datepart 'week' here based on the value of set variable 'DATEFIRST'
+                    v_day := EXTRACT(dow from input_expr_timestamp)::INT;
+                    datefirst_value := current_setting('babelfishpg_tsql.datefirst')::INT;
+                    IF v_day = 0 THEN
+                        v_day := 7;
+                    END IF;
+                    result_date := date_trunc('day', input_expr_timestamp);
+                    days_offset := (7 + v_day - datefirst_value)%7;
+                    result_date := result_date - make_interval(days => days_offset);
+            END CASE;
+            -- concat offset_string to result_date in case of datetimeoffset before converting it to datetimeoffset datatype.
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+            ELSE
+                RETURN result_date;
+            END IF;
+        END IF;
+    END;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
+
+-- another definition of datetrunc as anyelement can not handle unknown type.
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date PG_CATALOG.TEXT) RETURNS SYS.DATETIME2 AS
+$body$
+DECLARE
+    input_expr_datetime2 sys.datetime2;
+BEGIN
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                        'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+    END IF;
+    BEGIN
+    input_expr_datetime2 := cast(date as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    IF input_expr_datetime2 IS NULL THEN
+        RETURN NULL;
+    ELSE
+        -- input string literal is valid, call the datetrunc function with datetime2 datatype. 
+        RETURN sys.DATETRUNC(datepart, input_expr_datetime2);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
