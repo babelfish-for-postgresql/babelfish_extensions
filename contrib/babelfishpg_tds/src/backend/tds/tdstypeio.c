@@ -1458,15 +1458,14 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	bytea	   *result;
 	int		   nbytes,
 			   npoints;
-	StringInfoData  destBuf;
+	StringInfo  destBuf = makeStringInfo();
 
-	initStringInfo(&destBuf);
 	/*
 	 * Here the incoming buf format is -> 4 Byte SRID + 2 Byte Geometry Type + (16 Bytes)*npoints
 	 * But Driver expects -> 4 Byte SRID + 4 Byte Type + 4 Byte npoints + (16 Bytes)*npoints
 	 */
 	/* We are copying first 4 Byte SRID from buf */
-	appendBinaryStringInfo(&destBuf, buf->data + buf->cursor, 4);
+	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, 4);
 	
 	npoints = (buf->len - buf->cursor - 6)/16;
 	nbytes = buf->len - buf->cursor + 6;
@@ -1476,15 +1475,15 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
 	if (buf->data[buf->cursor + 4] == 1 && buf->data[buf->cursor + 5] == 12)
 	{
-		appendStringInfoChar(&destBuf, POINTTYPE & 0xFF);
-		appendStringInfoChar(&destBuf, (POINTTYPE >> 8)  & 0xFF);
-		appendStringInfoChar(&destBuf, (POINTTYPE >> 16)  & 0xFF);
-		appendStringInfoChar(&destBuf, (POINTTYPE >> 24)  & 0xFF);
+		appendStringInfoChar(destBuf, POINTTYPE & 0xFF);
+		appendStringInfoChar(destBuf, (POINTTYPE >> 8)  & 0xFF);
+		appendStringInfoChar(destBuf, (POINTTYPE >> 16)  & 0xFF);
+		appendStringInfoChar(destBuf, (POINTTYPE >> 24)  & 0xFF);
 
-		appendStringInfoChar(&destBuf, npoints & 0xFF);
-		appendStringInfoChar(&destBuf, (npoints >> 8)  & 0xFF);
-		appendStringInfoChar(&destBuf, (npoints >> 16)  & 0xFF);
-		appendStringInfoChar(&destBuf, (npoints >> 24)  & 0xFF);
+		appendStringInfoChar(destBuf, npoints & 0xFF);
+		appendStringInfoChar(destBuf, (npoints >> 8)  & 0xFF);
+		appendStringInfoChar(destBuf, (npoints >> 16)  & 0xFF);
+		appendStringInfoChar(destBuf, (npoints >> 24)  & 0xFF);
 	}
 	else
 	{
@@ -1494,9 +1493,9 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	}
 
 	/* We are copying the remaining bytes (16 Bytes)*npoints from buf */
-	appendBinaryStringInfo(&destBuf, buf->data + buf->cursor + 6, buf->len - 6);
+	appendBinaryStringInfo(destBuf, buf->data + buf->cursor + 6, buf->len - 6);
 
-	memcpy(VARDATA(result), &destBuf.data, nbytes);
+	memcpy(VARDATA(result), &destBuf->data[0], nbytes);
 	buf->cursor += nbytes - 6;
 
 	PG_RETURN_BYTEA_P(result);
