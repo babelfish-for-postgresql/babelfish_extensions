@@ -59,9 +59,72 @@ GO
 SELECT TYPE_ID(TYPE_NAME(13134932));
 GO
 
+-- It should give null
 SELECT TYPE_NAME(TYPE_ID('   pg_catalog   .   text  '));
 GO
 
+-- It should give null
 SELECT TYPE_NAME(TYPE_ID('  text     '));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('"ab.d"."my.type"'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('"ab.d".[my.type]'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('[ab.d].[my.type]'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('[ab.d]."my.type"'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('"ab.d".type'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('[ab.d].type'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('ab."my.type"'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('ab.[my.type]'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('ab.type'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('"my.type"'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('abCDE'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('" my.,-][type "'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('您对'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('您对中的车色内饰选'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('ぁあぃいぅうぇ'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('ㄴㄷㄹㅁㅂㅅ'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('ĄĆĘŁŃÓŚŹŻąćęłńóśź'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('وزحطيكلم'));
+GO
+
+SELECT TYPE_NAME(TYPE_ID('αΒβΓγΔδΕε'));
+GO
+
+-- It should return null as type_id does not support three part name
+SELECT TYPE_ID('master.dbo.typeid_typename_vu_prepare_t1');
 GO
 

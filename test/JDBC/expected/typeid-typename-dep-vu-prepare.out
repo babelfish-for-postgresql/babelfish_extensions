@@ -23,3 +23,9 @@ CREATE PROC typeid_typename_dep_vu_prepare_proc2 AS
 SELECT TYPE_NAME(TYPE_ID('datetime')) AS [TYPE_NAME];
 GO
 
+CREATE LOGIN typeid_typename_dep_vu_prepare_log1 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER typeid_typename_dep_vu_prepare_user1 FOR LOGIN typeid_typename_dep_vu_prepare_log1;
+GO
+

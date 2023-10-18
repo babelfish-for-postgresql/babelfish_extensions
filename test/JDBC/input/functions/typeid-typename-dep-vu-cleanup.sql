@@ -19,3 +19,9 @@ GO
 DROP SCHEMA typeid_typename_dep_vu_prepare_s1
 GO
 
+DROP USER typeid_typename_dep_vu_prepare_user1
+GO
+
+DROP LOGIN typeid_typename_dep_vu_prepare_log1
+GO
+

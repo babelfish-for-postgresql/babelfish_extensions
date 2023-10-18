@@ -4388,45 +4388,14 @@ $body$
 LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION SYS.TYPE_NAME(IN type_id INT)
-RETURNS SYSNAME AS $$
-    BEGIN
-        RETURN (SELECT ty.name FROM sys.types ty WHERE ty.user_type_id = type_id);
-    END;
-$$
-LANGUAGE plpgsql IMMUTABLE
-STRICT;
+RETURNS SYS.NVARCHAR(128) AS
+'babelfishpg_tsql', 'type_name'
+LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN typename SYS.NVARCHAR)
-RETURNS INT AS $$
-    DECLARE
-        schemaid int;
-        schema_name VARCHAR;
-        type_name VARCHAR;
-    BEGIN
-        IF typename LIKE '%.%' THEN
-            schema_name := TRIM(LOWER(split_part(typename COLLATE "C", '.', 1)));
-            type_name :=  TRIM(LOWER((split_part(typename COLLATE "C",'.', 2))));
-        ELSE
-            schema_name := 'dbo';
-            type_name := TRIM(LOWER(typename COLLATE "C"));
-        END IF;
-
-        -- Check if schema_name exists
-        IF NOT EXISTS (SELECT sc.name FROM sys.schemas sc WHERE sc.name = schema_name OR schema_name = 'sys' OR schema_name = 'pg_catalog')
-        THEN
-            RETURN NULL;
-        END IF;
-
-        IF NOT EXISTS (SELECT ty.name FROM sys.types ty WHERE ty.name = type_name COLLATE "C" AND ty.is_user_defined = 0) 
-        THEN
-            RETURN (SELECT ty.user_type_id FROM sys.schemas sc JOIN sys.types ty ON sc.schema_id = ty.schema_id WHERE sc.name = schema_name AND ty.name = type_name COLLATE "C");
-        ELSE
-            RETURN (SELECT ty.user_type_id FROM sys.types ty WHERE ty.name = type_name COLLATE "C");
-        END IF;
-    END;
-$$
-LANGUAGE plpgsql IMMUTABLE
-STRICT;
+CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN type_name SYS.NVARCHAR)
+RETURNS INT AS
+'babelfishpg_tsql', 'type_id'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
