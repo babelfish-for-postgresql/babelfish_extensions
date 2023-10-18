@@ -1205,6 +1205,17 @@ DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
-ANALYZE sys.babelfish_namespace_ext;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+-- Run ANALYZE for BABELFISH catalogs
+ANALYZE sys.babelfish_sysdatabases;
+ANALYZE sys.babelfish_schema_permissions;
+ANALYZE sys.babelfish_function_ext;
+ANALYZE sys.babelfish_authid_login_ext;
+ANALYZE sys.babelfish_authid_user_ext;
+ANALYZE sys.babelfish_domain_mapping;
+ANALYZE sys.babelfish_extended_properties;
+ANALYZE sys.babelfish_extended_properties;
+
