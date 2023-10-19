@@ -932,10 +932,81 @@ DECLARE @dto datetimeoffset = CAST('1930-05-06 13:39:29.123456 +0:00' AS datetim
 exec cmp_datetimeoffset @dto;
 go
 
+DECLARE @lvDateEastern DATETIME, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+~~START~~
+datetime#!#datetime
+2021-01-01 00:00:00.0#!#2020-12-31 19:00:00.0
+~~END~~
+
+
+DECLARE @lvDateEastern DATETIME2, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+~~START~~
+datetime#!#datetime2
+2021-01-01 00:00:00.0#!#2020-12-31 19:00:00.0000000
+~~END~~
+
+
+DECLARE @lvDateEastern SMALLDATETIME, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+~~START~~
+datetime#!#smalldatetime
+2021-01-01 00:00:00.0#!#2020-12-31 19:00:00.0
+~~END~~
+
+
+DECLARE @lvDateEastern DATE, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+~~START~~
+datetime#!#date
+2021-01-01 00:00:00.0#!#2020-12-31
+~~END~~
+
+
+DECLARE @lvDateEastern TIME, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+~~START~~
+datetime#!#time
+2021-01-01 00:00:00.0#!#19:00:00.0000000
+~~END~~
+
+
+Create table implicit_cast ( a datetime)
+go
+insert into implicit_cast values (cast('1900-05-06 13:59:29.998 -8:00' as datetimeoffset))
+go
+~~ROW COUNT: 1~~
+
+Select * from implicit_cast
+go
+~~START~~
+datetime
+1900-05-06 13:59:29.997
+~~END~~
+
+
 -- Clean up
 drop table datetimeoffset_testing;
 go
 drop table t1;
+go
+drop table implicit_cast;
 go
 drop procedure cast_datetimeoffset;
 go
