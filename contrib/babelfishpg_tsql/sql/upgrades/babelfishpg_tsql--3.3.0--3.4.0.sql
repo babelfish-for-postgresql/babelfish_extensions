@@ -1297,7 +1297,7 @@ select
   , CAST(null as int) as principal_id
   , CAST(s.schema_id as int) as schema_id
   , CAST(0 as int) as parent_object_id
-  , CAST('SO' as char(2)) as type
+  , CAST('SO' as sys.bpchar(2)) as type
   , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
@@ -1309,9 +1309,9 @@ select
   , CAST(ps.seqmin as sys.sql_variant  ) as minimum_value
   , CAST(ps.seqmax as sys.sql_variant ) as maximum_value
   , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
-  , CAST(0 as sys.bit ) as is_cached
+  , CAST(1 as sys.bit ) as is_cached
   , CAST(ps.seqcache as int ) as cache_size
-  , CAST(ps.seqtypid as int ) as system_type_id
+  , CASE pt.typbasetype when 0 then CAST(ps.seqtypid as int ) else CAST(pt.typbasetype as int ) end as system_type_id
   , CAST(ps.seqtypid as int ) as user_type_id
   , CAST(0 as sys.tinyint ) as precision
   , CAST(0 as sys.tinyint ) as scale
@@ -1322,7 +1322,8 @@ from pg_class p
 inner join pg_sequence ps on ps.seqrelid = p.oid
 inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
-and has_schema_privilege(s.schema_id, 'USAGE');
+and has_schema_privilege(s.schema_id, 'USAGE')
+inner join pg_type pt on ps.seqtypid = pt.oid;
 GRANT SELECT ON sys.sequences TO PUBLIC;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema

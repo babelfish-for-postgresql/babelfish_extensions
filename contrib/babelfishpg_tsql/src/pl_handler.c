@@ -1876,7 +1876,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 							 bool for_identity,
 							 DefElem *as_type,
 							 DefElem **max_value,
-							 DefElem **min_value)
+							 DefElem **min_value,Oid *usr_type_id)
 {
 	int32		typmod_p;
 	Type		typ;
@@ -1895,7 +1895,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 										   for_identity,
 										   as_type,
 										   max_value,
-										   min_value);
+										   min_value,usr_type_id);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1933,6 +1933,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		aclcheck_error_type(aclresult, *newtypid);
 
 	tsqlSeqTypOid = pltsql_seq_type_map(*newtypid);
+	*usr_type_id = *newtypid;
 
 	if (type_def->typemod != -1)
 		typmod_p = type_def->typemod;
