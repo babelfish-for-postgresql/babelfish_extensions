@@ -66,8 +66,8 @@ bool		pltsql_enable_create_alter_view_from_pg = false;
 char	   *pltsql_host_destribution = NULL;
 char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
-char	   *pltsql_repeatable_read_isolation = false;
-char 	   *pltsql_serializable_isolation = false;
+char	   *pltsql_repeatable_read_isolation = NULL;
+char 	   *pltsql_serializable_isolation = NULL;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
