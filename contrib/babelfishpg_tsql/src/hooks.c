@@ -150,6 +150,7 @@ static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
+static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -201,6 +202,7 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
+static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -314,6 +316,9 @@ InstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 
+	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
+	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger; 
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -421,6 +426,7 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -695,6 +701,38 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 			}
 		}
 		cur = cur->next;
+	}
+	return false;
+}
+
+/**
+ * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
+ * Checks if view have an INSTEAD OF trigger at statement level
+ * If it does, we don't want to treat it as auto-updatable. 
+ * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
+*/
+static bool
+pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
+{
+	TriggerDesc *trigDesc = view->trigdesc;
+
+	switch (event)
+	{
+		case CMD_INSERT:
+			if(trigDesc && trigDesc->trig_insert_instead_statement)
+				return true;
+			break;
+		case CMD_UPDATE:
+			if (trigDesc && trigDesc->trig_update_instead_statement)
+				return true;
+			break;
+		case CMD_DELETE:
+			if (trigDesc && trigDesc->trig_delete_instead_statement)
+				return true;
+			break;
+		default:
+			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			break;
 	}
 	return false;
 }
@@ -1157,12 +1195,11 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
-	while (i < 258)
+	while (true)
 	{
 		char		c = start[i];
 
@@ -1588,6 +1625,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		int			alias_len = 0;
 		const char *colname_start;
 		const char *identifier_name = NULL;
+		int			open_square_bracket = 0;
+		int			double_quotes = 0;
+		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
@@ -1600,11 +1640,68 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * sourcetext
 			 */
 			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String))
+				IsA(linitial(cref->fields), String)) 
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
+			}
+			/*
+			 * This condition will preserve the case of column name when there are more than
+			 * one cref->fields. For instance, Queries like 
+			 * 1. select [database].[schema].[table].[column] from table.
+			 * 2. select [schema].[table].[column] from table.
+			 * 3. select [t].[column] from table as t
+			 * Case 1: Handle the cases when column name is passed with no delimiters
+			 * For example, select ABC from table
+			 * Case 2: Handle the cases when column name is delimited with dq.
+			 * In such cases, we are checking if no. of dq are even or not. When dq are odd,
+			 * we are not tracing number of sqb and sq within dq.
+			 * For instance, Queries like select "AF bjs'vs] " from table.
+			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
+			 * are zero, it means we are out of sqb.
+			 */
+			if(list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String))
+			{
+				identifier_name = strVal(llast(cref->fields));
+				alias_len = strlen(identifier_name);
+				colname_start = pstate->p_sourcetext + res->location;
+				while(true)
+				{	
+					if(open_square_bracket == 0 && *colname_start == '"')
+					{
+						double_quotes++;
+					}
+					/* To check how many open sqb are present in sourcetext. */
+					else if(double_quotes % 2 == 0 && *colname_start == '[')
+					{
+						open_square_bracket++;
+					}
+					else if(double_quotes % 2 == 0 && *colname_start == ']')
+					{
+						open_square_bracket--;
+					}
+					/*
+					 * last_dot pointer is to trace the last dot in the sourcetext,
+					 * as last dot indicates the starting of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '.')
+					{
+						last_dot = colname_start;
+					}
+					/* 
+					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
+					 * space or comma, it means colname_start is at the end of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					{
+						last_dot++;
+						colname_start = last_dot;
+						break;
+					}
+					colname_start++;
+				}
 			}
 		}
 		else if (res->name != NULL && res->name_location != -1)
@@ -1661,7 +1758,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				memcpy(alias + (alias_len) - 32,
 				identifier_name + (alias_len) - 32, 
 				32);
-				alias[alias_len+1] = '\0';
+				alias[alias_len] = '\0';
 			}
 			/* Identifier is not truncated. */
 			else

@@ -89,6 +89,7 @@ const char *pg_reserved_keywords_to_be_delimited[] = {
 	"date_bucket",
 	"datename",
 	"datepart",
+	"datetrunc",
 	"iif",
 	"out",
 	"output",

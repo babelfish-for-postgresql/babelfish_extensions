@@ -88,7 +88,7 @@ typedef enum
 	OBJECT_TYPE_EXTENDED_STORED_PROCEDURE
 } ObjectPropertyType;
 
-PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
+
 PG_FUNCTION_INFO_V1(trancount);
 PG_FUNCTION_INFO_V1(version);
 PG_FUNCTION_INFO_V1(error);
@@ -150,6 +150,7 @@ PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -184,11 +185,6 @@ const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
 
-Datum
-trancount(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_UINT32(NestedTranCount);
-}
 
 Datum
 babelfish_concat_wrapper(PG_FUNCTION_ARGS)
@@ -197,7 +193,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	int32		arg1_size, arg2_size, new_text_size;
 	bool		first_param = PG_ARGISNULL(0);
 	bool		second_param = PG_ARGISNULL(1);
-	
+
 	if (pltsql_concat_null_yields_null)
 	{
 		if(first_param || second_param)
@@ -225,7 +221,26 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	arg1_size = VARSIZE_ANY_EXHDR(arg1);
 	arg2_size = VARSIZE_ANY_EXHDR(arg2);
 
-	new_text_size = arg1_size + arg2_size + VARHDRSZ;
+	if((arg1_size>0)&&(arg2_size>0)&&((arg1_size + VARHDRSZ ) > INT_MAX - arg2_size))
+	{
+		//overflow detected
+		ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("value overflows numeric format while adding")));
+	}
+	else if((arg1_size < 0) && (arg2_size < 0) && ((arg1_size + VARHDRSZ ) < INT_MIN - arg2_size))
+	{
+		//underflow detected
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value underflows numeric format while adding")));
+	}
+	else
+	{
+		//safe to add
+		new_text_size = arg1_size + arg2_size + VARHDRSZ;
+	}
+
 	new_text = (text *) palloc(new_text_size);
 
 	SET_VARSIZE(new_text, new_text_size);
@@ -238,10 +253,15 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	{
 		memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
 	}
-	
+
 	PG_RETURN_TEXT_P(new_text);
 }
 
+Datum
+trancount(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_UINT32(NestedTranCount);
+}
 
 Datum
 procid(PG_FUNCTION_ARGS)
@@ -293,6 +313,20 @@ version(PG_FUNCTION_ARGS)
 	info = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
+}
+
+Datum sysutcdatetime(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    
+}
+
+Datum getutcdate(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    
 }
 
 void *
