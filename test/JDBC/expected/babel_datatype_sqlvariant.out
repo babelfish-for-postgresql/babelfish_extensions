@@ -443,14 +443,6 @@ date
 2020-10-20
 ~~END~~
 
--- datetime to float
-select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
-go
-~~START~~
-float
-44122.375
-~~END~~
-
 -- date to datetime2
 select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
 go

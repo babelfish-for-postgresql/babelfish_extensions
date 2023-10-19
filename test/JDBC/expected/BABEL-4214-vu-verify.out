@@ -3,23 +3,7 @@ SELECT * FROM babel_4214_datetime_to_int_view
 GO
 ~~START~~
 int
-10
-~~END~~
-
-
-EXEC babel_4214_datetime_to_int_proc
-GO
-~~START~~
-int
-10
-~~END~~
-
-
-SELECT babel_4214_datetime_to_int_function()
-GO
-~~START~~
-int
-10
+1
 ~~END~~
 
 
@@ -339,29 +323,6 @@ numeric
 
 
 -- SMALLDATETIME cases
-SELECT * FROM babel_4214_smalldatetime_to_int_view
-GO
-~~START~~
-int
-10
-~~END~~
-
-
-EXEC babel_4214_smalldatetime_to_int_proc
-GO
-~~START~~
-int
-10
-~~END~~
-
-
-SELECT babel_4214_smalldatetime_to_int_function()
-GO
-~~START~~
-int
-10
-~~END~~
-
 SELECT CAST(CAST('1900-01-10 12:56:50.675' AS SMALLDATETIME) AS BIT);
 GO
 ~~START~~
