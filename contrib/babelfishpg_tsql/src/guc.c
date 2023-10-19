@@ -394,8 +394,9 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 static bool
 check_bbf_isolation_type(char **newval, void **extra, GucSource source)
 {
-	if (!(*newval) || pg_strcasecmp(*newval, "pg_isolation") != 0)
-		*newval = "default";
+	if (pg_strcasecmp(*newval, "pg_isolation") != 0 &&
+			pg_strcasecmp(*newval, "default") != 0)
+		return false;
 
 	return true;
 }
