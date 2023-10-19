@@ -1,9 +1,17 @@
 -- DATETIME cases
-SELECT * FROM babel_4214_datetime_to_int_view
+EXEC babel_4214_datetime_to_int_proc
 GO
 ~~START~~
 int
-1
+9
+~~END~~
+
+
+SELECT babel_4214_datetime_to_int_function()
+GO
+~~START~~
+int
+9
 ~~END~~
 
 
@@ -20,6 +28,14 @@ GO
 ~~START~~
 tinyint
 10
+~~END~~
+
+
+SELECT CAST(CAST('1910-01-10 12:56:50.675' AS DATETIME) AS SMALLINT);
+GO
+~~START~~
+smallint
+3662
 ~~END~~
 
 
@@ -175,11 +191,19 @@ bit
 ~~END~~
 
 
-SELECT CAST(CAST(CAST('1900-01-10 11:00:50.675' AS DATETIME) AS sql_variant) AS TINYINT);
+SELECT CAST(CAST(CAST('1900-01-10 12:56:50.675' AS DATETIME) AS sql_variant) AS TINYINT);
 GO
 ~~START~~
 tinyint
-9
+10
+~~END~~
+
+
+SELECT CAST(CAST(CAST('1910-01-10 12:56:50.675' AS DATETIME) AS sql_variant) AS SMALLINT);
+GO
+~~START~~
+smallint
+3662
 ~~END~~
 
 
@@ -258,6 +282,14 @@ tinyint
 ~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
 
 
+SELECT CAST(CAST('1890-12-21 12:56:50.675' AS DATETIME) AS SMALLINT);
+GO
+~~START~~
+smallint
+-3297
+~~END~~
+
+
 SELECT CAST(CAST('1890-01-01 12:56:50.675' AS DATETIME) AS INT);
 GO
 ~~START~~
@@ -323,6 +355,22 @@ numeric
 
 
 -- SMALLDATETIME cases
+EXEC babel_4214_smalldatetime_to_int_proc
+GO
+~~START~~
+int
+9
+~~END~~
+
+
+SELECT babel_4214_smalldatetime_to_int_function();
+GO
+~~START~~
+int
+9
+~~END~~
+
+
 SELECT CAST(CAST('1900-01-10 12:56:50.675' AS SMALLDATETIME) AS BIT);
 GO
 ~~START~~
@@ -335,6 +383,14 @@ SELECT CAST(CAST('1900-01-10 12:56:50.675' AS SMALLDATETIME) AS TINYINT);
 GO
 ~~START~~
 tinyint
+10
+~~END~~
+
+
+SELECT CAST(CAST('1900-01-10 12:56:50.675' AS SMALLDATETIME) AS SMALLINT);
+GO
+~~START~~
+smallint
 10
 ~~END~~
 
@@ -443,6 +499,14 @@ tinyint
 ~~END~~
 
 
+SELECT CAST(CAST('1910-01-10 12:56:50.675' AS SMALLDATETIME) AS SMALLINT);
+GO
+~~START~~
+smallint
+3662
+~~END~~
+
+
 SELECT CAST(CAST('2023-01-01 12:56:50.675' AS SMALLDATETIME) AS INT);
 GO
 ~~START~~
@@ -523,11 +587,19 @@ bit
 ~~END~~
 
 
-SELECT CAST(CAST(CAST('1900-01-01 11:00:50.675' AS SMALLDATETIME) AS sql_variant) AS TINYINT);
+SELECT CAST(CAST(CAST('1900-01-01 12:56:50.675' AS SMALLDATETIME) AS sql_variant) AS TINYINT);
 GO
 ~~START~~
 tinyint
-0
+1
+~~END~~
+
+
+SELECT CAST(CAST(CAST('1910-01-01 12:56:50.675' AS SMALLDATETIME) AS sql_variant) AS SMALLINT);
+GO
+~~START~~
+smallint
+3653
 ~~END~~
 
 
