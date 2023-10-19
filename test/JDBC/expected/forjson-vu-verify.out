@@ -32,12 +32,12 @@ int#!#varchar
 ~~END~~
 
 
--- FOR JSON PATH clause without nested support
+-- FOR JSON PATH clause with nested support
 SELECT * FROM forjson_vu_v_people
 GO
 ~~START~~
 nvarchar
-[{"EmpId":1,"Name.FirstName":"Divya","Name.LastName":"Kumar"},{"EmpId":2,"Name.LastName":"Khanna","State":"Bengaluru"},{"EmpId":3,"Name.FirstName":"Tom","Name.LastName":"Mehta","State":"Kolkata"},{"EmpId":4,"Name.FirstName":"Kane","State":"Delhi"}]
+[{"EmpId": 1, "Name": {"FirstName": "Divya", "LastName": "Kumar"}}, {"EmpId": 2, "Name": {"LastName": "Khanna"}, "State": "Bengaluru"}, {"EmpId": 3, "Name": {"FirstName": "Tom", "LastName": "Mehta"}, "State": "Kolkata"}, {"EmpId": 4, "Name": {"FirstName": "Kane"}, "State": "Delhi"}]
 ~~END~~
 
 
@@ -45,16 +45,16 @@ SELECT * FROM forjson_vu_v_countries
 GO
 ~~START~~
 nvarchar
-[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"},{"Id":4,"Age":20},{"Id":5,"Age":10,"Country":"USA"}]
+[{"Id": 1, "Age": 25, "Country": "India"}, {"Id": 2, "Age": 40, "Country": "USA"}, {"Id": 3, "Age": 30, "Country": "India"}, {"Id": 4, "Age": 20}, {"Id": 5, "Age": 10, "Country": "USA"}]
 ~~END~~
 
 
--- Multiple tables without nested support
+-- Multiple tables with nested support
 SELECT * FROM forjson_vu_v_join
 GO
 ~~START~~
 nvarchar
-[{"Person.Name":"Divya","Person.Surname":"Kumar","Employee.Price":25,"Employee.Quantity":"India"},{"Person.Surname":"Khanna","Employee.Price":40,"Employee.Quantity":"USA"},{"Person.Name":"Tom","Person.Surname":"Mehta","Employee.Price":30,"Employee.Quantity":"India"},{"Person.Name":"Kane","Employee.Price":20}]
+[{"Person": {"Name": "Divya", "Surname": "Kumar"}, "Employee": {"Price": 25, "Quantity": "India"}}, {"Person": {"Surname": "Khanna"}, "Employee": {"Price": 40, "Quantity": "USA"}}, {"Person": {"Name": "Tom", "Surname": "Mehta"}, "Employee": {"Price": 30, "Quantity": "India"}}, {"Person": {"Name": "Kane"}, "Employee": {"Price": 20}}]
 ~~END~~
 
 
@@ -63,7 +63,7 @@ SELECT * FROM forjson_vu_v_root
 GO
 ~~START~~
 nvarchar
-{"root":[{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}]}
+{"root": [{"FirstName": "Divya", "LastName": "Kumar"}, {"LastName": "Khanna"}, {"FirstName": "Tom", "LastName": "Mehta"}, {"FirstName": "Kane"}]}
 ~~END~~
 
 
@@ -72,7 +72,7 @@ SELECT * FROM forjson_vu_v_root_value
 GO
 ~~START~~
 nvarchar
-{"Employee":[{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}]}
+{"Employee": [{"FirstName": "Divya", "LastName": "Kumar"}, {"LastName": "Khanna"}, {"FirstName": "Tom", "LastName": "Mehta"}, {"FirstName": "Kane"}]}
 ~~END~~
 
 
@@ -81,7 +81,7 @@ SELECT * FROM forjson_vu_v_empty_root
 GO
 ~~START~~
 nvarchar
-{"":[{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}]}
+{"": [{"FirstName": "Divya", "LastName": "Kumar"}, {"LastName": "Khanna"}, {"FirstName": "Tom", "LastName": "Mehta"}, {"FirstName": "Kane"}]}
 ~~END~~
 
 
@@ -90,7 +90,7 @@ SELECT * FROM forjson_vu_v_without_array_wrapper
 GO
 ~~START~~
 nvarchar
-{"FirstName":"Divya","LastName":"Kumar"},{"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane"}
+{"FirstName": "Divya", "LastName": "Kumar"}, {"LastName": "Khanna"}, {"FirstName": "Tom", "LastName": "Mehta"}, {"FirstName": "Kane"}
 ~~END~~
 
 
@@ -99,7 +99,7 @@ SELECT * FROM forjson_vu_v_include_null_values
 GO
 ~~START~~
 nvarchar
-[{"FirstName":"Divya","LastName":"Kumar"},{"FirstName":null,"LastName":"Khanna"},{"FirstName":"Tom","LastName":"Mehta"},{"FirstName":"Kane","LastName":null}]
+[{"FirstName": "Divya", "LastName": "Kumar"}, {"FirstName": null, "LastName": "Khanna"}, {"FirstName": "Tom", "LastName": "Mehta"}, {"FirstName": "Kane", "LastName": null}]
 ~~END~~
 
 
@@ -108,7 +108,7 @@ SELECT * FROM forjson_vu_v_root_include_null_values
 GO
 ~~START~~
 nvarchar
-{"Employee":[{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"},{"Id":4,"Age":20,"Country":null},{"Id":5,"Age":10,"Country":"USA"}]}
+{"Employee": [{"Id": 1, "Age": 25, "Country": "India"}, {"Id": 2, "Age": 40, "Country": "USA"}, {"Id": 3, "Age": 30, "Country": "India"}, {"Id": 4, "Age": 20, "Country": null}, {"Id": 5, "Age": 10, "Country": "USA"}]}
 ~~END~~
 
 
@@ -116,7 +116,7 @@ SELECT * FROM forjson_vu_v_without_array_wrapper_include_null_values
 GO
 ~~START~~
 nvarchar
-{"Id":1,"Age":25,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"},{"Id":3,"Age":30,"Country":"India"},{"Id":4,"Age":20,"Country":null},{"Id":5,"Age":10,"Country":"USA"}
+{"Id": 1, "Age": 25, "Country": "India"}, {"Id": 2, "Age": 40, "Country": "USA"}, {"Id": 3, "Age": 30, "Country": "India"}, {"Id": 4, "Age": 20, "Country": null}, {"Id": 5, "Age": 10, "Country": "USA"}
 ~~END~~
 
 
@@ -126,7 +126,7 @@ EXECUTE forjson_vu_p_params1 @id = 2
 GO
 ~~START~~
 nvarchar
-[{"State":"Bengaluru"}]
+[{"State": "Bengaluru"}]
 ~~END~~
 
 
@@ -134,7 +134,7 @@ EXECUTE forjson_vu_p_params2 @id = 3
 GO
 ~~START~~
 nvarchar
-[{"nam\"@e":"Tom","State\"@":"Kolkata"}]
+[{"nam\"@e": "Tom", "State\"@": "Kolkata"}]
 ~~END~~
 
 
@@ -143,7 +143,7 @@ SELECT * FROM forjson_vu_v_nulls
 GO
 ~~START~~
 nvarchar
-[{},{},{}]
+[{}, {}, {}]
 ~~END~~
 
 
@@ -152,6 +152,6 @@ SELECT * FROM forjson_vu_v_order_by
 GO
 ~~START~~
 nvarchar
-[{"Id":5,"Age":10,"Country":"USA"},{"Id":4,"Age":20},{"Id":1,"Age":25,"Country":"India"},{"Id":3,"Age":30,"Country":"India"},{"Id":2,"Age":40,"Country":"USA"}]
+[{"Id": 5, "Age": 10, "Country": "USA"}, {"Id": 4, "Age": 20}, {"Id": 1, "Age": 25, "Country": "India"}, {"Id": 3, "Age": 30, "Country": "India"}, {"Id": 2, "Age": 40, "Country": "USA"}]
 ~~END~~
 

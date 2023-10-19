@@ -4050,7 +4050,7 @@ BEGIN
         column_length := 256;
     ELSIF column_data_type IS NULL THEN
 
-        -- Check if it's a user-defined data type
+        -- Check if it ia user-defined data type
         SELECT sys.translate_pg_type_to_tsql(typbasetype), typlen, typtypmod 
         INTO column_data_type, typelen, typemod
         FROM pg_type

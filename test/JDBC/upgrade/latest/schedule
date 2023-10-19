@@ -211,6 +211,7 @@ datetime2fromparts-after-15-2
 forjson
 forjson-datatypes
 forjson-subquery
+forjson-nesting
 format
 forxml
 forxml-subquery
