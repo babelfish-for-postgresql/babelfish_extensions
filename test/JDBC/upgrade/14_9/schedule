@@ -147,6 +147,7 @@ forjson-datatypes
 forxml
 forxml-subquery
 BABEL-PROCID
+babel_time
 babel_trigger
 insteadoftriggers_with_transaction
 insteadof_nested_trigger_inside_proc

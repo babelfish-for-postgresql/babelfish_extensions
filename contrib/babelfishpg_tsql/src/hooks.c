@@ -45,8 +45,6 @@
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
-#include "utils/date.h"
-#include "utils/datetime.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"

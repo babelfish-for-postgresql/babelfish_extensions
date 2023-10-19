@@ -185,6 +185,7 @@ BABEL-SP_TABLES
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
+babel_time
 babel_trigger
 babel_try_parse
 BABEL-USER

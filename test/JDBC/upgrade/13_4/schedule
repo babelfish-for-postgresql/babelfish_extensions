@@ -97,6 +97,7 @@ BABEL-SP_TABLES
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
+babel_time
 babel_trigger
 babel_try_parse
 case_insensitive_collation-before-13-5

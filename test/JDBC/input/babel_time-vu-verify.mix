@@ -6,7 +6,20 @@ GO
 -- tsql
 -- if only date is given as input
 -- accepted formats are `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
--- If text month is given then acceptable formats are `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`, Mon yyyy dd`, `Mon dd yyyy`
+-- If text month is given then acceptable formats are `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`, `Mon yyyy dd`, `Mon dd yyyy`, `dd yyyy Mon`, `dd Mon yyyy`, `yyyy Mon dd`, `yyyy dd Mon`
+insert into babel_time_vu_prepare_t1 values ('2012   -    02-23')
+GO
+
+insert into babel_time_vu_prepare_t1 values ('2012   -    feb -023')
+GO
+
+-- expected to fail
+insert into babel_time_vu_prepare_t1 values ('2012   -    feb -23   2    :  4     -5')
+GO
+
+insert into babel_time_vu_prepare_t1 values ('2012   -    2 -023')
+GO
+
 SELECT CAST('   23   -     11   -   2000   ' AS TIME)
 GO
 

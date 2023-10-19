@@ -8,18 +8,18 @@
 
 #include "postgres.h"
 
+#include <regex.h>
 #include "fmgr.h"
+#include "parser/parser.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/timestamp.h"
+#include "utils/varlena.h"
 #include "libpq/pqformat.h"
 
 #include "miscadmin.h"
 #include "datetime.h"
-#include <regex.h>
-#include "utils/varlena.h"
-#include "parser/parser.h"
 
 
 PG_FUNCTION_INFO_V1(datetime_in);
