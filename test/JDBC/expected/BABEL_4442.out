@@ -1,0 +1,184 @@
+CREATE SCHEMA babel_4442_s1
+GO
+CREATE SCHEMA babel_4442_s2
+GO
+
+CREATE TABLE babel_4442_t (id INT)
+GO
+CREATE TABLE babel_4442_s1.babel_4442_t (id INT)
+GO
+CREATE TABLE babel_4442_s2.babel_4442_t (id INT)
+GO
+
+INSERT INTO babel_4442_t VALUES (1)
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4442_s1.babel_4442_t VALUES (2), (3)
+GO
+~~ROW COUNT: 2~~
+
+INSERT INTO babel_4442_s2.babel_4442_t VALUES (3), (4), (5)
+GO
+~~ROW COUNT: 3~~
+
+
+CREATE FUNCTION babel_4442_f() RETURNS INT AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM babel_4442_t)
+END
+GO
+
+CREATE FUNCTION babel_4442_s1.babel_4442_f() RETURNS INT AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM babel_4442_t)
+END
+GO
+
+CREATE FUNCTION babel_4442_s2.babel_4442_f() RETURNS INT AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM babel_4442_t)
+END
+GO
+
+SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = SCHEMA_NAME() and TABLE_NAME = 'babel_4442_t'
+GO
+~~START~~
+varchar#!#varchar
+babel_4442_t#!#BASE TABLE
+~~END~~
+
+
+SELECT babel_4442_f(), * FROM babel_4442_s1.babel_4442_t
+GO
+~~START~~
+int#!#int
+1#!#2
+1#!#3
+~~END~~
+
+
+SELECT babel_4442_f(), babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_s1.babel_4442_t
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#2#!#3#!#2
+1#!#2#!#3#!#3
+~~END~~
+
+
+SELECT babel_4442_f(), babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
+GO
+~~START~~
+int#!#int#!#int#!#int
+1#!#2#!#3#!#1
+~~END~~
+
+
+SELECT babel_4442_f(), current_setting('search_path'), babel_4442_s1.babel_4442_f(), current_setting('search_path'),
+        babel_4442_s2.babel_4442_f(), 1, current_setting('search_path'), * FROM babel_4442_t
+GO
+~~START~~
+int#!#text#!#int#!#text#!#int#!#int#!#text#!#int
+1#!#master_dbo, "$user", sys, pg_catalog#!#2#!#master_dbo, "$user", sys, pg_catalog#!#3#!#1#!#master_dbo, "$user", sys, pg_catalog#!#1
+~~END~~
+
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+COMMIT
+GO
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+BEGIN TRANSACTION
+GO
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT babel_4442_s1.babel_4442_f(), babel_4442_s2.babel_4442_f(), * FROM babel_4442_t
+GO
+~~START~~
+int#!#int#!#int
+2#!#3#!#1
+~~END~~
+
+ROLLBACK
+GO
+
+SELECT current_setting('search_path')
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+
+DROP TABLE IF EXISTS babel_4442_t, babel_4442_s1.babel_4442_t, babel_4442_s2.babel_4442_t
+GO
+DROP FUNCTION IF EXISTS babel_4442_f, babel_4442_s1.babel_4442_f, babel_4442_s2.babel_4442_f
+GO
+DROP SCHEMA babel_4442_s1
+GO
+DROP SCHEMA babel_4442_s2
+GO

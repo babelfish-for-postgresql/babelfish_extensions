@@ -1261,6 +1261,69 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_name()::TEXT, 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.type = 'R';
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+create or replace view sys.sequences as
+select
+    CAST(p.relname as sys.nvarchar(128)) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as char(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(ps.seqstart as sys.sql_variant ) as start_value
+  , CAST(ps.seqincrement as sys.sql_variant ) as increment
+  , CAST(ps.seqmin as sys.sql_variant  ) as minimum_value
+  , CAST(ps.seqmax as sys.sql_variant ) as maximum_value
+  , CASE ps.seqcycle when 't' then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_cycling
+  , CAST(0 as sys.bit ) as is_cached
+  , CAST(ps.seqcache as int ) as cache_size
+  , CAST(ps.seqtypid as int ) as system_type_id
+  , CAST(ps.seqtypid as int ) as user_type_id
+  , CAST(0 as sys.tinyint ) as precision
+  , CAST(0 as sys.tinyint ) as scale
+  , CAST('ABC' as sys.sql_variant  ) as current_value
+  , CAST(0 as sys.bit ) as is_exhausted
+  , CAST('ABC' as sys.sql_variant ) as last_used_value
+from pg_class p
+inner join pg_sequence ps on ps.seqrelid = p.oid
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE');
+GRANT SELECT ON sys.sequences TO PUBLIC;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema
 -- for the guest users in the already existing databases

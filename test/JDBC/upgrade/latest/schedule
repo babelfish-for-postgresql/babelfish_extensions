@@ -211,6 +211,7 @@ datetime2fromparts-after-15-2
 forjson
 forjson-datatypes
 forjson-subquery
+forjson-nesting
 format
 forxml
 forxml-subquery
@@ -467,6 +468,7 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+sys_sequences
 sys_asymmetric_keys
 sys_certificates
 sys_database_permissions
