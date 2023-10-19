@@ -193,13 +193,11 @@ trancount(PG_FUNCTION_ARGS)
 Datum
 babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 {
-	text		*new_text;
-	text		*arg1 = PG_GETARG_TEXT_PP(0);
-	text		*arg2 = PG_GETARG_TEXT_PP(1);
+	text		*arg1, *arg2, *new_text;
 	int32		arg1_size, arg2_size, new_text_size;
 	bool		first_param = PG_ARGISNULL(0);
 	bool		second_param = PG_ARGISNULL(1);
-
+	
 	if (pltsql_concat_null_yields_null)
 	{
 		if(first_param || second_param)
@@ -215,14 +213,15 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 		}
 		else if (second_param)
 		{
-			PG_RETURN_TEXT_P(arg1); // If only the second string is NULL, return the first string
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
 		}
 		else if (first_param)
 		{
-			PG_RETURN_TEXT_P(arg2); // If only the first string is NULL, return the second string
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(1)); // If only the first string is NULL, return the second string
 		}
 	}
-
+	arg1 = PG_GETARG_TEXT_PP(0);
+	arg2 = PG_GETARG_TEXT_PP(1);
 	arg1_size = VARSIZE_ANY_EXHDR(arg1);
 	arg2_size = VARSIZE_ANY_EXHDR(arg2);
 
@@ -239,7 +238,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	{
 		memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
 	}
-
+	
 	PG_RETURN_TEXT_P(new_text);
 }
 
