@@ -817,22 +817,22 @@ define_custom_variables(void)
 							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   NULL, NULL, NULL);
 	
-	DefineCustomStringVariable("babelfishpg_tsql.babelfish_repeatable_read_isolation",
+	DefineCustomStringVariable("babelfishpg_tsql.repeatable_read_isolation",
 							 gettext_noop("Select mapping for isolation level reapeatable read"),
 							 NULL,
 							 &pltsql_repeatable_read_isolation,
 							 "default",
 							 PGC_USERSET,
-							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 check_bbf_isolation_type, NULL, NULL);
 	
-	DefineCustomStringVariable("babelfishpg_tsql.babelfish_serializable_isolation",
+	DefineCustomStringVariable("babelfishpg_tsql.serializable_isolation",
 							 gettext_noop("Select mapping for isolation level serializable"),
 							 NULL,
 							 &pltsql_serializable_isolation,
 							 "default",
 							 PGC_USERSET,
-							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 check_bbf_isolation_type, NULL, NULL);
 
 

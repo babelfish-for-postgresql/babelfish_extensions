@@ -4347,7 +4347,7 @@ tsql_IsolationLevelStr:
 						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("Repeatable read is not supported by default, set configuration parameter 'babelfish_repeatable_read_isolation' to 'pg_isolation' to get PG repeatable read"),
+							errmsg("Repeatable read is not supported by default, set configuration parameter 'repeatable_read_isolation' to 'pg_isolation' to get PG repeatable read"),
 							parser_errposition(@1)));
 					}
 
@@ -4368,7 +4368,7 @@ tsql_IsolationLevelStr:
 						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("Serializable is not supported by default, set configuration parameter 'babelfish_serializable_isolation' to 'pg_isolation' to get PG serializable"),
+							errmsg("Serializable is not supported by default, set configuration parameter 'serializable_isolation' to 'pg_isolation' to get PG serializable"),
 							parser_errposition(@1)));
 					}
 				}

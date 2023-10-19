@@ -1,5 +1,5 @@
-SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','default',false);
-SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','default',false);
+SELECT set_config('babelfishpg_tsql.repeatable_read_isolation','default',false);
+SELECT set_config('babelfishpg_tsql.serializable_isolation','default',false);
 GO
 
 set transaction isolation level read uncommitted;

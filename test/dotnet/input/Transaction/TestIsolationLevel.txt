@@ -1,5 +1,5 @@
-SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','pg_isolation',false)
-SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','default',false)
+SELECT set_config('babelfishpg_tsql.repeatable_read_isolation','pg_isolation',false)
+SELECT set_config('babelfishpg_tsql.serializable_isolation','default',false)
 
 # Begin transaction -> rollback transaction
 txn#!#begin#!#isolation#!#rr
@@ -14,8 +14,8 @@ select @@trancount;
 select current_setting('transaction_isolation')
 select current_setting('default_transaction_isolation')
 
-SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','default',false)
-SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','pg_isolation',false)
+SELECT set_config('babelfishpg_tsql.repeatable_read_isolation','default',false)
+SELECT set_config('babelfishpg_tsql.serializable_isolation','pg_isolation',false)
 
 # Begin transaction -> error
 txn#!#begin#!#isolation#!#rr -- error
