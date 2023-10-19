@@ -8,15 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-<!-- all -->
-
-babel_datatype_sqlvariant
-babel_datatype_sqlvariant-vu-prepare
-babel_datatype_sqlvariant-vu-verify
-babel_datatype_sqlvariant-vu-cleanup
-BABEL-4214-vu-prepare
-BABEL-4214-vu-verify
-BABEL-4214-vu-cleanup
+all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
