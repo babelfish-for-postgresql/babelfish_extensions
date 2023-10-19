@@ -70,8 +70,8 @@ extern void TdsSendDone(int tag, int status,
 extern void SendColumnMetadataToken(int natts, bool sendRowStat);
 extern void SendTabNameToken(void);
 extern void SendColInfoToken(int natts, bool sendRowStat);
-extern void PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
-								  bool extendedInfo, bool fetchPkeys);
+extern void PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *targetlist,
+								  int16 *formats, bool extendedInfo, bool fetchPkeys);
 extern void SendReturnValueTokenInternal(ParameterToken token, uint8 status,
 										 FmgrInfo *finfo, Datum datum, bool isNull,
 										 bool forceCoercion);
@@ -85,7 +85,7 @@ extern void TdsSendEnvChangeBinary(int envid,
 								   void *old, int old_nbytes);
 extern void TdsSendReturnStatus(int status);
 extern void TdsSendHandle(void);
-extern void TdsSendRowDescription(TupleDesc typeinfo,
+extern void TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *PlannedStmt,
 								  List *targetlist, int16 *formats);
 extern bool TdsPrintTup(TupleTableSlot *slot, DestReceiver *self);
 extern void TdsPrintTupShutdown(void);
