@@ -3498,7 +3498,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							Constraint *con;
 
 							con = get_rowversion_default_constraint(makeTypeNameFromOid(attr->atttypid, attr->atttypmod));
-							rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+							rawEnt = (RawColumnDefault *) palloc0(sizeof(RawColumnDefault));
 							rawEnt->attnum = attr_num + 1;
 							rawEnt->raw_default = (Node *) con->raw_expr;
 							AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
