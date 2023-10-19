@@ -1645,7 +1645,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
 			 * are zero, it means we are out of sqb.
 			 */
-			if(res->location != 0 && (list_length(cref->fields) > 1 &&
+			else if(res->location != 0 && (list_length(cref->fields) > 1 &&
 				IsA(llast(cref->fields), String)))
 			{
 				identifier_name = strVal(llast(cref->fields));
