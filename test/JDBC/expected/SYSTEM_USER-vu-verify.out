@@ -7,6 +7,10 @@ dbo#!#jdbc_user#!#dbo#!#master
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN system_user_vu_prepare_r1 WITH PASSWORD = '123';
+GO
+
 -- tsql user=system_user_vu_prepare_r1 password=123
 SELECT session_user, system_user, current_user, db_name();
 GO
@@ -15,6 +19,11 @@ nvarchar#!#nvarchar#!#varchar#!#nvarchar
 guest#!#system_user_vu_prepare_r1#!#guest#!#master
 ~~END~~
 
+
+-- tsql
+-- reset the login password
+ALTER LOGIN system_user_vu_prepare_r2 WITH PASSWORD = '123';
+GO
 
 -- tsql user=system_user_vu_prepare_r2 password=123
 SELECT session_user, system_user, current_user, db_name();

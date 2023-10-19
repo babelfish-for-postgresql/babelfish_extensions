@@ -4,6 +4,7 @@
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
+#include "utils/pg_locale.h"
 #include "access/xact.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
@@ -52,8 +53,8 @@
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
+#include "pgstat.h"
 #include "executor/nodeFunctionscan.h"
-
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "pltsql.h"
@@ -106,7 +107,7 @@ static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar 
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
-static inline bool is_identifier_char(char c);
+static inline bool is_identifier_char(unsigned char c);
 static int	find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
@@ -149,9 +150,12 @@ static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
+static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
+
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -177,7 +181,7 @@ static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NUL
 static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_setop_tree_hook_type prev_pre_transform_setop_tree_hook = NULL;
-static post_transform_sort_clause_hook_type prev_post_transform_sort_clause_hook = NULL;
+static pre_transform_setop_sort_clause_hook_type prev_pre_transform_setop_sort_clause_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
@@ -194,6 +198,7 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
+static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -213,6 +218,7 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -247,8 +253,8 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_setop_tree_hook = pre_transform_setop_tree_hook;
 	pre_transform_setop_tree_hook = pre_transform_setop_tree;
-	prev_post_transform_sort_clause_hook = post_transform_sort_clause_hook;
-	post_transform_sort_clause_hook = post_transform_sort_clause;
+	prev_pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = pre_transform_setop_sort_clause;
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
@@ -302,6 +308,9 @@ InstallExtendedHooks(void)
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
+
+	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
+	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger; 
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
@@ -363,6 +372,9 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
+	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
 }
 
 void
@@ -381,7 +393,7 @@ UninstallExtendedHooks(void)
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
-	post_transform_sort_clause_hook = prev_post_transform_sort_clause_hook;
+	pre_transform_setop_sort_clause_hook = prev_pre_transform_setop_sort_clause_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
@@ -400,6 +412,7 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -421,6 +434,7 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 }
 
 /*****************************************
@@ -473,7 +487,27 @@ pltsql_bbfCustomProcessUtility(ParseState *pstate, PlannedStmt *pstmt, const cha
 	}
 	return false;
 }									  
-								
+
+Oid prev_cache_collid;
+pg_locale_t *prev_locale = NULL;
+
+pg_locale_t *
+collation_cache_entry_hook_function(Oid collid, pg_locale_t *locale)
+{
+	if(!locale)
+	{
+		if(prev_locale && prev_cache_collid==collid)
+		{
+			return prev_locale;
+		}
+	}
+	else
+	{
+		prev_cache_collid = collid;
+		prev_locale = locale;
+	}
+	return NULL;
+}			
 
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
@@ -652,6 +686,124 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 		cur = cur->next;
 	}
 	return false;
+}
+
+/**
+ * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
+ * Checks if view have an INSTEAD OF trigger at statement level
+ * If it does, we don't want to treat it as auto-updatable. 
+ * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
+*/
+static bool
+pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
+{
+	TriggerDesc *trigDesc = view->trigdesc;
+
+	switch (event)
+	{
+		case CMD_INSERT:
+			if(trigDesc && trigDesc->trig_insert_instead_statement)
+				return true;
+			break;
+		case CMD_UPDATE:
+			if (trigDesc && trigDesc->trig_update_instead_statement)
+				return true;
+			break;
+		case CMD_DELETE:
+			if (trigDesc && trigDesc->trig_delete_instead_statement)
+				return true;
+			break;
+		default:
+			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			break;
+	}
+	return false;
+}
+
+/*
+ * Wrapper function that calls the initilization function.
+ * Calls the pre function call hook on the procname 
+ * before invoking the initilization function. Performing a 
+ * system cache search in case fcinfo isnull for getting the procname
+ */
+
+static char *
+replace_with_underscore(const char *s)
+{
+	int			i,
+				n = strlen(s);
+	char	   *s_copy = palloc(n + 1);
+
+	s_copy[0] = '\0';
+	strncat(s_copy, s, n);
+
+	for (i = 0; i < n; i++)
+	{
+		if (s_copy[i] == '.')
+			s_copy[i] = '_';
+	}
+
+	return s_copy;
+}
+
+void
+pre_wrapper_pgstat_init_function_usage(const char *funcName)
+{
+	if ((pltsql_instr_plugin_ptr &&
+		 (*pltsql_instr_plugin_ptr) &&
+		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
+	{
+		char	   *prefix = "instr_tsql_";
+		char	   *funcname_edited = replace_with_underscore(funcName);
+		StringInfoData metricName;
+
+		initStringInfo(&metricName);
+
+		appendStringInfoString(&metricName, prefix);
+		appendStringInfoString(&metricName, funcname_edited);
+
+		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
+		{
+			/* check with "unsupported" in prefix */
+			prefix = "instr_unsupported_tsql_";
+
+			resetStringInfo(&metricName);
+			appendStringInfoString(&metricName, prefix);
+			appendStringInfoString(&metricName, funcname_edited);
+			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
+		}
+
+		if (funcname_edited != NULL)
+			pfree(funcname_edited);
+		if (metricName.data != NULL)
+			pfree(metricName.data);
+	}
+}
+
+void
+pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
+						   PgStat_FunctionCallUsage *fcusageptr, char *procname)
+{
+
+	if (IsTransactionState())
+	{
+		if(!(fcinfo->isnull))
+		{
+			pre_wrapper_pgstat_init_function_usage((procname));
+		}
+		else
+		{
+			HeapTuple proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fcinfo->flinfo->fn_oid));
+			if (HeapTupleIsValid(proctup))
+			{
+				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+			}
+
+			ReleaseSysCache(proctup);
+		}
+	}
+
 }
 
 static Node *
@@ -1006,10 +1158,12 @@ extract_identifier(const char *start)
 
 	bool		dq = false;
 	bool		sqb = false;
+	bool		sq = false;
 	int			i = 0;
 	char	   *original_name = NULL;
 	bool		valid = false;
 	bool		found_escaped_in_dq = false;
+	bool		found_escaped_in_sq = false;
 
 	/* check identifier is delimited */
 	Assert(start);
@@ -1017,21 +1171,22 @@ extract_identifier(const char *start)
 		dq = true;
 	else if (start[0] == '[')
 		sqb = true;
+	else if (start[0] == '\'')
+		sq = true;
 	++i;						/* advance cursor by one. As it is already a
 								 * valid identiifer, its length should be
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
-	while (i < 258)
+	while (true)
 	{
 		char		c = start[i];
 
-		if (!dq && !sqb)		/* normal case */
+		if (!dq && !sqb && !sq)		/* normal case */
 		{
 			/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 			valid = is_identifier_char(c);
@@ -1081,6 +1236,51 @@ extract_identifier(const char *start)
 					{
 						original_name[wcur] = start[rcur];
 						if (start[rcur] == '"')
+							++rcur; /* skip next character */
+					}
+					original_name[wcur] = '\0';
+					return original_name;
+				}
+			}
+		}
+		else if (sq)
+		{
+			/* please see xdinside in scan.l */
+			valid = (c != '\'');
+			if (!valid && start[i + 1] == '\'')	/* escaped */
+			{
+				++i;
+				++i;			/* advance two characters */
+				found_escaped_in_sq = true;
+				continue;
+			}
+
+			if (!valid)
+			{
+				if (!found_escaped_in_sq)
+				{
+					/* no escaped character. copy whole string at once */
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					memcpy(original_name, start + 1, i - 1);
+					original_name[i - 1] = '\0';
+					return original_name;
+				}
+				else
+				{
+					/*
+					 * there is escaped character. copy one by one to handle
+					 * escaped character
+					 */
+					int			rcur = 1;	/* read-cursor */
+					int			wcur = 0;	/* write-cursor */
+
+					original_name = palloc(i);	/* exclude first/last single
+												 * quote */
+					for (; rcur < i; ++rcur, ++wcur)
+					{
+						original_name[wcur] = start[rcur];
+						if (start[rcur] == '\'')
 							++rcur; /* skip next character */
 					}
 					original_name[wcur] = '\0';
@@ -1275,9 +1475,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			Oid			sys_nspoid = get_namespace_oid("sys", false);
-			Oid			sys_varchartypoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-															CStringGetDatum("varchar"), ObjectIdGetDatum(sys_nspoid));
+			Oid			sys_varchartypoid = get_sys_varcharoid();
 
 			tle->expr = (Expr *) coerce_type(pstate, (Node *) con,
 											 restype, sys_varchartypoid, -1,
@@ -1289,7 +1487,7 @@ resolve_target_list_unknowns(ParseState *pstate, List *targetlist)
 }
 
 static inline bool
-is_identifier_char(char c)
+is_identifier_char(unsigned char c)
 {
 	/* please see {tsql_ident_cont} in scan-tsql-decl.l */
 	bool		valid = ((c >= 'A' && c <= 'Z') ||
@@ -1410,6 +1608,9 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		int			alias_len = 0;
 		const char *colname_start;
 		const char *identifier_name = NULL;
+		int			open_square_bracket = 0;
+		int			double_quotes = 0;
+		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
@@ -1422,11 +1623,68 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * sourcetext
 			 */
 			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String))
+				IsA(linitial(cref->fields), String)) 
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
+			}
+			/*
+			 * This condition will preserve the case of column name when there are more than
+			 * one cref->fields. For instance, Queries like 
+			 * 1. select [database].[schema].[table].[column] from table.
+			 * 2. select [schema].[table].[column] from table.
+			 * 3. select [t].[column] from table as t
+			 * Case 1: Handle the cases when column name is passed with no delimiters
+			 * For example, select ABC from table
+			 * Case 2: Handle the cases when column name is delimited with dq.
+			 * In such cases, we are checking if no. of dq are even or not. When dq are odd,
+			 * we are not tracing number of sqb and sq within dq.
+			 * For instance, Queries like select "AF bjs'vs] " from table.
+			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
+			 * are zero, it means we are out of sqb.
+			 */
+			if(list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String))
+			{
+				identifier_name = strVal(llast(cref->fields));
+				alias_len = strlen(identifier_name);
+				colname_start = pstate->p_sourcetext + res->location;
+				while(true)
+				{	
+					if(open_square_bracket == 0 && *colname_start == '"')
+					{
+						double_quotes++;
+					}
+					/* To check how many open sqb are present in sourcetext. */
+					else if(double_quotes % 2 == 0 && *colname_start == '[')
+					{
+						open_square_bracket++;
+					}
+					else if(double_quotes % 2 == 0 && *colname_start == ']')
+					{
+						open_square_bracket--;
+					}
+					/*
+					 * last_dot pointer is to trace the last dot in the sourcetext,
+					 * as last dot indicates the starting of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '.')
+					{
+						last_dot = colname_start;
+					}
+					/* 
+					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
+					 * space or comma, it means colname_start is at the end of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					{
+						last_dot++;
+						colname_start = last_dot;
+						break;
+					}
+					colname_start++;
+				}
 			}
 		}
 		else if (res->name != NULL && res->name_location != -1)
@@ -1446,69 +1704,51 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			}
 		}
 
+		/*
+		 * Case 1 : Handle both singlebyte and multibyte aliases when delimited by 
+		 * square bracket(sqb) and double quoutes(dq) and single quotes(sq).
+		 * For instance, queries like : SELECT 1 AS "您对“数据一览“中的车型，颜色，内饰，选选装";
+		 * Case 2 : Preserve the case of aliases with ascii characters when there is no sq, sqb and dq.
+		 * For instance, queries like: SELECT 1 AS ABCD;
+		 * Case 3 : Handle both singlebyte and multibyte aliases whose length is
+		 * more than or equals to 63 when not delimited by sq, sqb and dq.
+		 * For example, queries like : SELECT 1 AS 您对您对您对您对您对您对您对您对您对您对您对您对您对;
+		 */
 		if (alias_len > 0)
 		{
 			char	   *alias = palloc0(alias_len + 1);
-			bool		dq = *colname_start == '"';
-			bool		sqb = *colname_start == '[';
-			bool		sq = *colname_start == '\'';
-			int			a = 0;
-			const char *colname_end;
-			bool		closing_quote_reached = false;
+			const char	*original_name = NULL;
+			int actual_alias_len = 0;
 
-			if (dq || sqb || sq)
+			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
+			while(*colname_start == '(' || scanner_isspace(*colname_start))
 			{
 				colname_start++;
 			}
 
-			if (dq || sq)
-			{
+			/* To extract the identifier name from the query.*/
+			original_name = extract_identifier(colname_start);
+			actual_alias_len = strlen(original_name);
 
-				for (colname_end = colname_start; a < alias_len; colname_end++)
-				{
-					if (dq && *colname_end == '"')
-					{
-						if ((*(++colname_end) != '"'))
-						{
-							closing_quote_reached = true;
-							break;	/* end of dbl-quoted identifier */
-						}
-					}
-					else if (sq && *colname_end == '\'')
-					{
-						if ((*(++colname_end) != '\''))
-						{
-							closing_quote_reached = true;
-							break;	/* end of single-quoted identifier */
-						}
-					}
-
-					alias[a++] = *colname_end;
-				}
-
-				/* Assert(a == alias_len); */
-			}
-			else
-			{
-				colname_end = colname_start + alias_len;
-				memcpy(alias, colname_start, alias_len);
-			}
-
-			/*
-			 * If the end of the string is a uniquifier, then copy the
-			 * uniquifier into the last 32 characters of the alias
+			/* Maximum alias_len can be 63 after truncation. If alias_len is smaller than actual_alias_len,
+			 * this means Identifier is truncated and it's last 32 bytes would be MD5 hash.
 			 */
-			if (alias_len == NAMEDATALEN - 1 &&
-				(((sq || dq) && !closing_quote_reached) ||
-				 is_identifier_char(*colname_end)))
-
+			if(actual_alias_len > alias_len)
 			{
-				memcpy(alias + (NAMEDATALEN - 1) - 32,
-					   identifier_name + (NAMEDATALEN - 1) - 32,
-					   32);
-				alias[NAMEDATALEN] = '\0';
-			}
+				/* First 32 characters of original_name are assigned to alias. */
+				memcpy(alias, original_name, (alias_len - 32));
 
+				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
+				memcpy(alias + (alias_len - 32),
+					   identifier_name + (alias_len - 32), 
+	   				   32);
+
+				alias[alias_len] = '\0';
+			}
+			else	/* Identifier is not truncated. */
+			{
+				memcpy(alias, original_name, actual_alias_len);
+			}
 			res->name = alias;
 		}
 	}
@@ -1567,13 +1807,28 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		/* Get relid either by s.t or t */
 		if (schemaname && relname)
 		{
-			relid = RangeVarGetRelid(makeRangeVar(schemaname, relname, res->location),
+			/* Get physical schema name from logical schema name */
+			char *physical_schema_name = get_physical_schema_name(get_cur_db_name(), schemaname);
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
 									 NoLock,
 									 true);
+			pfree(physical_schema_name);
 		}
 		else if (relname)
 		{
-			relid = RelnameGetRelid(relname);
+			/* 
+			 * In case of schema name is not specified, To get the relid of table
+			 * we will search for the table in schema of target relation.
+			 */
+			
+			/* Get physical schema name of target relation */
+			char *physical_schema_name = get_namespace_name(RelationGetNamespace(pstate->p_target_relation));
+			/* Get relid using physical schema name and relname */
+			relid = RangeVarGetRelid(makeRangeVar(physical_schema_name, relname, res->location),
+									 NoLock,
+									 true);
+			pfree(physical_schema_name);
 		}
 		targetRelid = RelationGetRelid(pstate->p_target_relation);
 		/* If relid matches or alias matches, try to resolve the qualifiers */
@@ -2324,6 +2579,14 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	HeapTuple	tuple;
 	List	   *insert_col_list = NIL,
 			   *temp_col_list;
+	char		relkind = get_rel_relkind(relid);
+
+	if(relkind == RELKIND_VIEW || relkind == RELKIND_MATVIEW)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("The target '%s' of the OUTPUT INTO clause cannot be a view or common table expression.", stmt->relation->relname)));
+	}
 
 	if (!output_into_insert_transformation)
 		return;
@@ -2351,7 +2614,13 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 		if (att->attnum > 0)
 		{
-			col->name = NameStr(att->attname);
+			/*
+ 			* Do a deep copy of attname because tuple is a pointer 
+ 			* to a shared_buffer page which is released when scan
+ 			* is ended.
+ 			*/
+			col->name = pstrdup(NameStr(att->attname));
+
 			col->indirection = NIL;
 			col->val = NULL;
 			col->location = 1;
@@ -2625,8 +2894,15 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	 * added to total_digit_count
 	 */
 	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
-		total_digit_count += (partially_filled_numeric_block > 0) ?
-			log10(partially_filled_numeric_block) + 1 : 1;
+	{
+		if (partially_filled_numeric_block > 0)
+		{
+			int log_10 = (int) log10(partially_filled_numeric_block); // keep compiler happy
+			total_digit_count += log_10 + 1;
+		}
+		else
+			total_digit_count += 1;
+	}
 
 	/*
 	 * calculating exact #digits in last block if decimal point exists If
@@ -3778,18 +4054,37 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid)
 	{
-		int16		dbid = 0;
 		AttrNumber	attnum;
 
 		attnum = (AttrNumber) attnameAttNum(rel, "dbid", false);
 		Assert(attnum != InvalidAttrNumber);
 
-		if (!nulls[attnum - 1])
-			return;
+		if (nulls[attnum - 1])
+		{
+			int16 dbid = getDbidForLogicalDbRestore(relid);
+			values[attnum - 1] = Int16GetDatum(dbid);
+			nulls[attnum - 1] = false;
+		}
+	}
 
-		dbid = getDbidForLogicalDbRestore(relid);
-		values[attnum - 1] = Int16GetDatum(dbid);
-		nulls[attnum - 1] = false;
+	/*
+	 * Populate owner column in babelfish_sysdatabases catalog table with
+	 * SA of the current database.
+	 */
+	if (relid == sysdatabases_oid)
+	{
+		AttrNumber	attnum;
+
+		attnum = (AttrNumber) attnameAttNum(rel, "owner", false);
+		Assert(attnum != InvalidAttrNumber);
+
+		if (nulls[attnum - 1])
+		{
+			const char *owner = GetUserNameFromId(get_sa_role_oid(), false);
+
+			values[attnum - 1] = CStringGetDatum(owner);
+			nulls[attnum - 1] = false;
+		}
 	}
 }
 
@@ -3829,4 +4124,31 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 			}
 		}
 	}	
+}
+
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
+{
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	const char  	*func_dbo_schema,
+					*cur_dbname = get_cur_db_name();
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
+	{
+		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
+		func_dbo_schema = get_dbo_schema_name(cur_dbname);
+
+		if(strcmp(func_schema_name, func_dbo_schema) != 0
+			&& strcmp(func_schema_name, "sys") != 0)
+			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+										quote_identifier(func_schema_name),
+										quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
+	}
+	return new_search_path;
 }

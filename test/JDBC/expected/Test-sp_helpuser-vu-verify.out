@@ -19,7 +19,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#int#!#varchar#!#varchar#!#nvarchar#!#int
 dbo#!#db_owner#!#1#!#<NULL>#!#dbo#!#dbo#!#1
-guest#!#public#!#0#!#<NULL>#!##!#guest#!#1
+guest#!#public#!#0#!#<NULL>#!#guest#!#guest#!#1
 ~~END~~
 
 

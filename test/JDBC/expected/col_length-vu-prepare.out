@@ -1,0 +1,365 @@
+CREATE DATABASE babel_3489_test_db;
+GO
+
+USE babel_3489_test_db;
+GO
+
+CREATE TABLE sys_column_length_test_table(
+    ID INT PRIMARY KEY,
+    col_char CHAR(10),
+    col_varchar VARCHAR(20),
+    col_binary BINARY(5),
+    col_varbinary VARBINARY(15),
+    col_nchar NCHAR(8),
+    col_nvarchar NVARCHAR(16),
+    col_text TEXT,
+    col_image IMAGE,
+    col_ntext NTEXT,
+    col_sysname sysname,
+    col_sql_variant SQL_VARIANT,
+    col_xml XML,
+    col_varcharmax VARCHAR(MAX),
+    col_nvarcharmax NVARCHAR(MAX),
+    col_varbinarymax VARBINARY(MAX),
+    col_bit BIT,
+    col_tinyint TINYINT,
+    col_bigint BIGINT,
+    col_smallint SMALLINT,
+    col_smallmoney SMALLMONEY,
+    col_money MONEY,
+    col_smalldatetime SMALLDATETIME,
+    col_real REAL,
+    col_float FLOAT,
+    col_time TIME,
+    col_datetime DATETIME,
+    col_datetime2 DATETIME2,
+    col_datetimeoffset DATETIMEOFFSET,
+    col_uniqueidentifier UNIQUEIDENTIFIER,
+    col_date DATE,
+    col_decimal DECIMAL(10,5),
+    col_numeric NUMERIC(3,0)
+);
+GO
+
+CREATE SCHEMA sys_col_length_test_schema;
+GO
+
+CREATE TABLE sys_col_length_test_schema.test_table(
+    col_char CHAR(20),
+    col_varchar VARCHAR(30),
+    col_varbinary VARBINARY(40)
+);
+GO
+
+-- for user defined data types
+-- Create User-Defined Types
+CREATE TYPE custom_char_10 FROM CHAR(10);
+GO
+
+CREATE TYPE custom_varchar_20 FROM VARCHAR(20);
+GO
+
+CREATE TYPE custom_binary_5 FROM BINARY(5);
+GO
+
+CREATE TYPE custom_varbinary_15 FROM VARBINARY(15);
+GO
+
+CREATE TYPE custom_nchar_8 FROM NCHAR(8);
+GO
+
+CREATE TYPE custom_nvarchar_16 FROM NVARCHAR(16);
+GO
+
+CREATE TYPE custom_text FROM TEXT;
+GO
+
+CREATE TYPE custom_image FROM IMAGE;
+GO
+
+CREATE TYPE custom_ntext FROM NTEXT;
+GO
+
+CREATE TYPE custom_sysname FROM sysname;
+GO
+
+CREATE TYPE custom_sql_variant FROM SQL_VARIANT;
+GO
+
+CREATE TYPE custom_xml FROM XML;
+GO
+
+CREATE TYPE custom_varcharmax FROM VARCHAR(MAX);
+GO
+
+CREATE TYPE custom_nvarcharmax FROM NVARCHAR(MAX);
+GO
+
+CREATE TYPE custom_varbinarymax FROM VARBINARY(MAX);
+GO
+
+CREATE TYPE custom_bit FROM BIT;
+GO
+
+CREATE TYPE custom_tinyint FROM TINYINT;
+GO
+
+CREATE TYPE custom_bigint FROM BIGINT;
+GO
+
+CREATE TYPE custom_smallint FROM SMALLINT;
+GO
+
+CREATE TYPE custom_smallmoney FROM SMALLMONEY;
+GO
+
+CREATE TYPE custom_money FROM MONEY;
+GO
+
+CREATE TYPE custom_smalldatetime FROM SMALLDATETIME;
+GO
+
+CREATE TYPE custom_real FROM REAL;
+GO
+
+CREATE TYPE custom_float FROM FLOAT;
+GO
+
+CREATE TYPE custom_time FROM TIME;
+GO
+
+CREATE TYPE custom_datetime FROM DATETIME;
+GO
+
+CREATE TYPE custom_datetime2 FROM DATETIME2;
+GO
+
+CREATE TYPE custom_datetimeoffset FROM DATETIMEOFFSET;
+GO
+
+CREATE TYPE custom_uniqueidentifier FROM UNIQUEIDENTIFIER;
+GO
+
+CREATE TYPE custom_date FROM DATE;
+GO
+
+CREATE TYPE custom_decimal_10_5 FROM DECIMAL(10,5);
+GO
+
+CREATE TYPE custom_numeric_3_0 FROM NUMERIC(3,0);
+GO
+
+-- Create Table with User-Defined Data Types
+CREATE TABLE udd_test_table (
+    col_customchar custom_char_10,
+    col_customvarchar custom_varchar_20,
+    col_custombinary custom_binary_5,
+    col_customvarbinary custom_varbinary_15,
+    col_customnchar custom_nchar_8,
+    col_customnvarchar custom_nvarchar_16,
+    col_customtext custom_text,
+    col_customimage custom_image,
+    col_customntext custom_ntext,
+    col_customsysname custom_sysname,
+    col_customsqlvariant custom_sql_variant,
+    col_customxml custom_xml,
+    col_customvarcharmax custom_varcharmax,
+    col_customnvarcharmax custom_nvarcharmax,
+    col_customvarbinarymax custom_varbinarymax,
+    col_custombit custom_bit,
+    col_customtinyint custom_tinyint,
+    col_custombigint custom_bigint,
+    col_customsmallint custom_smallint,
+    col_customsmallmoney custom_smallmoney,
+    col_custommoney custom_money,
+    col_customsmalldatetime custom_smalldatetime,
+    col_customreal custom_real,
+    col_customfloat custom_float,
+    col_customtime custom_time,
+    col_customdatetime custom_datetime,
+    col_customdatetime2 custom_datetime2,
+    col_customdatetimeoffset custom_datetimeoffset,
+    col_customuniqueidentifier custom_uniqueidentifier,
+    col_customdate custom_date,
+    col_customdecimal custom_decimal_10_5,
+    col_customnumeric custom_numeric_3_0
+);
+GO
+
+CREATE VIEW col_length_prepare_v1 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'ID'));
+GO
+
+CREATE VIEW col_length_prepare_v2 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_char'));
+GO
+
+CREATE VIEW col_length_prepare_v3 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_varchar'));
+GO
+
+CREATE VIEW col_length_prepare_v4 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_binary'));
+GO
+
+CREATE VIEW col_length_prepare_v5 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_varbinary'));
+GO
+
+CREATE VIEW col_length_prepare_v6 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_nchar'));
+GO
+
+CREATE VIEW col_length_prepare_v7 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_float'));
+GO
+
+CREATE VIEW col_length_prepare_v8 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_time'));
+GO
+
+CREATE VIEW col_length_prepare_v9 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_datetime'));
+GO
+
+CREATE VIEW col_length_prepare_v10 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_datetime2'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p1 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_nvarchar'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p2 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_text'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p3 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_image'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p4 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_ntext'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p5 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_sysname'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p6 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_sql_variant'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p7 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_datetimeoffset'));
+GO
+
+CREATE PROCEDURE col_length_prepare_p8 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'col_uniqueidentifier'));
+GO
+
+-- Invalid column, should return NULL
+CREATE PROCEDURE col_length_prepare_p9 AS (SELECT COL_LENGTH('sys_column_length_test_table', 'test_col'));
+GO
+
+-- Invalid table, should return NULL
+CREATE PROCEDURE col_length_prepare_p10 AS (SELECT COL_LENGTH('sys_column_length_test_table_invalid', 'col_char'));
+GO
+
+CREATE FUNCTION col_length_prepare_f1()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_xml'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f2()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_varcharmax'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f3()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_nvarcharmax'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f4()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_varbinarymax'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f5()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_bit'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f6()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_tinyint'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f7()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_bigint'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f8()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_smallint'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f9()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_smallmoney'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f10()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_money'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f11()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_smalldatetime'));
+END
+GO
+
+CREATE FUNCTION col_length_prepare_f12()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 'col_real'));
+END
+GO
+
+-- Invalid column, should return NULL
+CREATE FUNCTION col_length_prepare_f13()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', 1));
+END
+GO
+
+-- Invalid column, should return NULL
+CREATE FUNCTION col_length_prepare_f14()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', -1));
+END
+GO
+
+-- Invalid table, should return NULL
+CREATE FUNCTION col_length_prepare_f15()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH(NULL, 'col_char'));
+END
+GO
+
+-- NULL column, should return NULL
+CREATE FUNCTION col_length_prepare_f16()
+RETURNS SMALLINT AS
+BEGIN
+RETURN (SELECT COL_LENGTH('sys_column_length_test_table', NULL));
+END
+GO

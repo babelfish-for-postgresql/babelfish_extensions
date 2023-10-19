@@ -1,0 +1,110 @@
+-- Display Table Contents
+SELECT * FROM forjson_nesting_vu_t_users
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#John#!#Doe#!#johndoe@gmail.com
+2#!#Jane#!#Smith#!#janesmith@yahoo.com
+3#!#Mike#!#Johnson#!#mikejohnson
+~~END~~
+
+
+SELECT * FROM forjson_nesting_vu_t_products
+GO
+~~START~~
+int#!#varchar#!#varchar
+1#!#Product A#!#10.99
+2#!#Product B#!#19.99
+3#!#Product C#!#5.99
+~~END~~
+
+
+SELECT * FROM forjson_nesting_vu_t_orders
+GO
+~~START~~
+int#!#int#!#int#!#int#!#date
+1#!#1#!#1#!#2#!#2023-06-25
+2#!#1#!#2#!#1#!#2023-06-25
+3#!#2#!#3#!#3#!#2023-06-26
+~~END~~
+
+
+-- FOR JSON PATH CLAUSE with nested json support for existing objects
+SELECT * FROM forjson_nesting_vu_v_users
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "Name": {"first": "John", "last": "Doe"}, "email": "johndoe@gmail.com"}, {"Id": 2, "Name": {"first": "Jane", "last": "Smith"}, "email": "janesmith@yahoo.com"}, {"Id": 3, "Name": {"first": "Mike", "last": "Johnson"}, "email": "mikejohnson"}]
+~~END~~
+
+
+SELECT * FROM forjson_nesting_vu_v_products
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "Info": {"name": "Product A", "price": "10.99"}}, {"Id": 2, "Info": {"name": "Product B", "price": "19.99"}}, {"Id": 3, "Info": {"name": "Product C", "price": "5.99"}}]
+~~END~~
+
+
+SELECT * FROM forjson_nesting_vu_v_orders
+GO
+~~START~~
+nvarchar
+[{"Id": {"orderid": 1, "userid": 1, "productid": 1}, "orderinfo": {"quantity": 2, "orderdate": "2023-06-25"}}, {"Id": {"orderid": 2, "userid": 1, "productid": 2}, "orderinfo": {"quantity": 1, "orderdate": "2023-06-25"}}, {"Id": {"orderid": 3, "userid": 2, "productid": 3}, "orderinfo": {"quantity": 3, "orderdate": "2023-06-26"}}]
+~~END~~
+
+
+-- FOR JSON PATH support for multiple layers of nested JSON objects
+SELECT * FROM forjson_nesting_vu_v_deep
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "User": {"info": {"name": {"first": "John", "last": "Doe"}}}}, {"Id": 2, "User": {"info": {"name": {"first": "Jane", "last": "Smith"}}}}, {"Id": 3, "User": {"info": {"name": {"first": "Mike", "last": "Johnson"}}}}]
+~~END~~
+
+
+-- FOR JSON PATH support for multiple layers of nested JSON objects w/ join
+SELECT * FROM forjson_nesting_vu_v_join_deep
+GO
+~~START~~
+nvarchar
+[{"User": {"id": 1, "order": {"info": {"quantity": 2, "orderdate": "2023-06-25"}}}}, {"User": {"id": 1, "order": {"info": {"quantity": 1, "orderdate": "2023-06-25"}}}}, {"User": {"id": 2, "order": {"info": {"quantity": 3, "orderdate": "2023-06-26"}}}}]
+~~END~~
+
+
+-- FOR JSON PATH Support for key-values being inserted into mid layer of multi-layered JSON object
+SELECT * FROM forjson_nesting_vu_v_layered_insert
+GO
+~~START~~
+nvarchar
+[{"id": 1, "Order": {"Orderid": 1, "Product": {"Productid": 1}, "date": "2023-06-25"}}, {"id": 1, "Order": {"Orderid": 2, "Product": {"Productid": 2}, "date": "2023-06-25"}}, {"id": 2, "Order": {"Orderid": 3, "Product": {"Productid": 3}, "date": "2023-06-26"}}]
+~~END~~
+
+
+-- Error related to inserting value at Json object location
+SELECT * FROM forjson_nesting_vu_v_error
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Property user.name.last cannot be generated in JSON output due to a conflict with another column name or alias. Use different names and aliases for each column in SELECT list.)~~
+
+
+-- Queries that check NULL nested json object insert
+SELECT * FROM forjson_nesting_vu_v_no_null
+GO
+~~START~~
+nvarchar
+[{"id": 1, "user": {"name": {"first": "John", "last": "Doe"}}, "contact": {"email": "johndoe@gmail.com", "phone": "123-456-7890"}}, {"id": 2, "user": {"name": {"first": "Jane", "last": "Smith"}}, "contact": {"email": "janesmith@yahoo.com"}}, {"id": 3, "contact": {"email": "mikejohnson@myspace.com", "phone": "098-765-4321"}}, {"id": 4, "user": {"name": {"first": "Sergio", "last": "Giavanni"}}}]
+~~END~~
+
+
+SELECT * FROM forjson_nesting_vu_v_with_null
+GO
+~~START~~
+nvarchar
+[{"id": 1, "user": {"name": {"first": "John", "last": "Doe"}}, "contact": {"email": "johndoe@gmail.com", "phone": "123-456-7890"}}, {"id": 2, "user": {"name": {"first": "Jane", "last": "Smith"}}, "contact": {"email": "janesmith@yahoo.com", "phone": null}}, {"id": 3, "user": {"name": {"first": null, "last": null}}, "contact": {"email": "mikejohnson@myspace.com", "phone": "098-765-4321"}}, {"id": 4, "user": {"name": {"first": "Sergio", "last": "Giavanni"}}, "contact": {"email": null, "phone": null}}]
+~~END~~
+
+

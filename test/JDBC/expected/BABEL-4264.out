@@ -1,0 +1,281 @@
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+create table babel4264(name1 varchar(42), flag1 bit)
+go
+
+insert into babel4264 values ('true', 1)
+insert into babel4264 values ('false', 0)
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel4264 where flag1 = CAST('true' as VARCHAR(20))
+go
+~~START~~
+varchar#!#bit
+true#!#1
+~~END~~
+
+
+select * from babel4264 where CAST('true' as VARCHAR(20)) = flag1
+go
+~~START~~
+varchar#!#bit
+true#!#1
+~~END~~
+
+
+select * from babel4264 where -flag1 = CAST('true' as VARCHAR(20))
+go
+~~START~~
+varchar#!#bit
+false#!#0
+~~END~~
+
+
+select * from babel4264 where CAST('true' as VARCHAR(20)) = ~flag1
+go
+~~START~~
+varchar#!#bit
+false#!#0
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+
+select * from babel4264 where flag1 = CAST('true' as VARCHAR(20))
+go
+~~START~~
+text
+Query Text: select * from babel4264 where flag1 = CAST('true' as VARCHAR(20))
+Seq Scan on babel4264
+  Filter: (flag1 = '1'::"bit")
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+drop table babel4264
+go
+
+create table babel4264(date1 date)
+go
+
+set babelfish_showplan_all on
+go
+
+SELECT * from babel4264 where date1 = '1955-12-13 12:43:10'
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where date1 = '1955-12-13 12:43:10'
+Seq Scan on babel4264
+  Filter: (date1 = '1955-12-13'::date)
+~~END~~
+
+
+SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as datetime2)
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as datetime2)
+Seq Scan on babel4264
+  Filter: ((date1)::datetime2 = '1955-12-13 12:43:10'::datetime2)
+~~END~~
+
+
+SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as smalldatetime)
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where date1 = cast('1955-12-13 12:43:10' as smalldatetime)
+Seq Scan on babel4264
+  Filter: (date1 = '1955-12-13 12:43:00'::smalldatetime(0) without time zone)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+drop table babel4264
+go
+
+create table babel4264(dollars money)
+go
+
+set babelfish_showplan_all on
+go
+
+SELECT * from babel4264 where dollars = 10
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where dollars = 10
+Seq Scan on babel4264
+  Filter: ((dollars)::fixeddecimal = 10)
+~~END~~
+
+
+SELECT * from babel4264 where dollars = 10.0
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where dollars = 10.0
+Seq Scan on babel4264
+  Filter: ((dollars)::fixeddecimal = 10.0)
+~~END~~
+
+
+SELECT * from babel4264 where dollars = 2147483650
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where dollars = 2147483650
+Seq Scan on babel4264
+  Filter: ((dollars)::fixeddecimal = '2147483650'::bigint)
+~~END~~
+
+
+SELECT * from babel4264 where dollars = '10.12'
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where dollars = '10.12'
+Seq Scan on babel4264
+  Filter: ((dollars)::fixeddecimal = '10.1200'::fixeddecimal)
+~~END~~
+
+
+SELECT * from babel4264 where dollars = '10.123512341234'
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where dollars = '10.123512341234'
+Seq Scan on babel4264
+  Filter: ((dollars)::fixeddecimal = '10.1235'::fixeddecimal)
+~~END~~
+
+
+SELECT * from babel4264 where dollars = cast('10' as varchar(30))
+go
+~~START~~
+text
+Query Text: SELECT * from babel4264 where dollars = cast('10' as varchar(30))
+Seq Scan on babel4264
+  Filter: ((dollars)::fixeddecimal = '10.0000'::fixeddecimal)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+drop table babel4264
+go
+
+-- Not allowed
+SELECT cast(cast('true' as varchar(20)) as INT)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "true")~~
+
+
+-- Note, negative varbinary not allowed in T-SQL
+SELECT (123 + (-0x42));
+GO
+~~START~~
+bigint
+57
+~~END~~
+
+SELECT ((-0x42) + 123);
+GO
+~~START~~
+bigint
+57
+~~END~~
+
+
+SELECT (123 - 0x42);
+GO
+~~START~~
+int
+57
+~~END~~
+
+SELECT (0x42 - 123);
+GO
+~~START~~
+int
+-57
+~~END~~
+
+
+-- Return type of int const and varbinary is now INT, not BIGINT. This can
+-- result in overflows that didn't previously occur, but overflow matches T-SQL
+SELECT (2147483640 + 0x10)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT (0x10 + 2147483640)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT (cast(2147483640 as bigint) + 0x10)
+GO
+~~START~~
+bigint
+2147483656
+~~END~~
+
+SELECT (0x10 + cast(2147483640 as bigint))
+GO
+~~START~~
+bigint
+2147483656
+~~END~~
+
+
+SELECT (-2147483640 - 0x10)
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+SELECT (-0x10 - 2147483640)
+GO
+~~START~~
+bigint
+-2147483656
+~~END~~
+
+
+SELECT (cast(-2147483640 as bigint) - 0x10)
+GO
+~~START~~
+bigint
+-2147483656
+~~END~~
+
+SELECT (-0x10 - cast(2147483640 as bigint))
+GO
+~~START~~
+bigint
+-2147483656
+~~END~~
+

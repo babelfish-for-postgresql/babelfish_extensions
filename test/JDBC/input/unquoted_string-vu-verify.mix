@@ -1,0 +1,307 @@
+-- BABEL-334: Support unquoted string parameter values in procedure calls/declarations
+-- This also exercises parts of the ANTLR parse tree rewriting
+
+-- tsql
+
+-- should print strings:
+exec unqStr_proc_1 aBc, def$ghi
+go
+exec unqStr_proc_1 aBc, 'this is a string'
+go
+exec unqStr_proc_1 'this is a string', def
+go
+exec unqStr_proc_1 aBc#def, null
+go
+exec unqStr_proc_1 @par1=aBc$def, @par2=null
+go
+execute unqStr_proc_1 @par1=aBc$def, @par2=null
+go
+exec unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+execute unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+-- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
+exec unqStr_proc_1 [aBc], [def$ghi]
+go
+
+-- should print strings, bracketed identifiers as procedure args are also interpreted as unquoted strings in SQL Server:
+set quoted_identifier on
+go
+exec unqStr_proc_1 "aBc", "def$ghi"
+go
+execute unqStr_proc_1 "aBc", "def$ghi"
+go
+execute unqStr_proc_1 @par1 = "aBc", @par2 = "def$ghi"
+go
+-- strings longer than 63 should not be truncated, hashed or downcased
+exec unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+execute    unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+execute    unqStr_proc_1     @par1 = "a23456789B123456789C123456789d123456789E123456789F123456789G123456789H", @par2="AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB"
+go
+
+
+-- without EXEC keyword:
+unqStr_proc_1 aBc, def$ghi
+go
+unqStr_proc_1 aBc, 'this is a string'
+go
+unqStr_proc_1 'this is a string', def
+go
+unqStr_proc_1 aBc#def, null
+go
+unqStr_proc_1 @par1=aBc$def, @par2=null
+go
+unqStr_proc_1 @par1=null, @par2=aBc#def
+go
+/*test*/unqStr_proc_1 aBc, def$ghi
+go
+/*test*/
+unqStr_proc_1/*test*/
+aBc, 
+'this is a string'
+go
+-- should print strings, bracketed identifiers are also interpreted as unquoted strings in SQL Server:
+unqStr_proc_1 [aBc], [def$ghi]
+go
+-- strings longer than 63 should not be truncated, hashed or downcased
+unqStr_proc_1 a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+      unqStr_proc_1     @par1 = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, @par2=AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB
+go
+  unqStr_proc_1     @par1 = "a23456789B123456789C123456789d123456789E123456789F123456789G123456789H", @par2="AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB"
+go
+
+
+set quoted_identifier off
+go
+-- now they are just regular double-quoted strings:
+exec unqStr_proc_1 "aBc aBc", "def ?! ghi"
+go
+-- should raise error since 'user' is a function and not allowed as argument
+exec unqStr_proc_1 user, 'aBc'
+go
+exec unqStr_proc_1 @par1=user, @par2='aBc'
+go
+-- should raise error because the unquoted argument cannot be interpreted as a string:
+exec unqStr_proc_1 aBc, def.ghi
+go
+exec unqStr_proc_1 aBc, def~ghi
+go
+
+
+-- should print contents of variables:
+declare @myvar varchar(20), @myvar2 varchar(20) = 'this is myvar2'
+exec unqStr_proc_1 @myvar, @myvar2
+exec unqStr_proc_1 @par1=@myvar2, @par2=@myvar
+go
+exec unqStr_proc_1 @@language, @@servicename
+go
+
+-- should print variable names with leading space:
+exec unqStr_proc_1 [ @@language], [ @@servicename]
+go
+
+-- should print arguments as strings
+exec unqStr_proc_1 '[@@language]', '[@@servicename]'
+go
+exec unqStr_proc_1 '@@language', '@@servicename'
+go
+
+-- should print variables names, not their contents
+-- however, this does not work correctly in Babelfish: it raises error 'column "@@language" does not exist' 
+-- both before and after the fix of unquoted strings in BABEL-334
+exec unqStr_proc_1 [@@language], [@@servicename]
+go
+
+-- should return column value:
+select dbo.unqStr_func_1(aBc) from unqStr_tab  
+go
+select dbo.unqStr_func_1([aBc]) from unqStr_tab  
+go
+-- should return NULL
+select dbo.unqStr_func_1(null) from unqStr_tab  
+go
+select dbo.unqStr_func_1(null)
+go
+set quoted_identifier on
+go
+select dbo.unqStr_func_1("aBc") from unqStr_tab  
+go
+set quoted_identifier off
+go
+-- now it's just a regular double-quoted string:
+select dbo.unqStr_func_1("aBc") from unqStr_tab  
+go
+-- should fail:
+select dbo.unqStr_func_1(aBc) 
+go
+select dbo.unqStr_func_1([aBc]) 
+go
+set quoted_identifier on
+go
+-- should fail:
+select dbo.unqStr_func_1("aBc") 
+go
+set quoted_identifier off
+go
+-- now it's just a regular double-quoted string:
+select dbo.unqStr_func_1("aBc") 
+go
+
+-- should print 'aBc':
+exec unqStr_proc_2
+go
+
+set quoted_identifier on
+go
+exec unqStr_proc_2a
+go
+set quoted_identifier off
+go
+exec unqStr_proc_2a
+go
+
+set quoted_identifier on
+go
+exec unqStr_proc_2b
+go
+set quoted_identifier off
+go
+exec unqStr_proc_2b
+go
+
+set quoted_identifier on
+go
+exec unqStr_proc_2c
+go
+exec unqStr_proc_2c "[Xxx xxyZ]", "[Xx""yY'zZ]"
+go
+set quoted_identifier off
+go
+exec unqStr_proc_2c
+go
+exec unqStr_proc_2c "[Xxx xxyZ]", "[Xx""yY'zZ]"
+go
+
+set quoted_identifier on
+go
+exec unqStr_proc_2d
+go
+exec unqStr_proc_2d "[Xxx xxyZ]", "[Xx""yY'zZ]"
+go
+set quoted_identifier off
+go
+exec unqStr_proc_2d
+go
+exec unqStr_proc_2d "[Xxx xxyZ]", "[Xx""yY'zZ]"
+go
+
+set quoted_identifier on
+go
+exec unqStr_proc_2e
+go
+exec unqStr_proc_2e ["Xxx xxyZ"], ["Xx""yY'zZ"]
+go
+set quoted_identifier off
+go
+exec unqStr_proc_2e
+go
+exec unqStr_proc_2e ["Xxx xxyZ"], ["Xx""yY'zZ"]
+go
+
+-- empty bracketed identifier raises error in SQL Server, but succeeds in Babelfish,
+-- both before and after the fix for BABEL-334
+exec unqStr_proc_2e [], 'x'
+go
+
+-- double-quoted/bracketed datatype:
+set quoted_identifier off
+go
+exec unqStr_proc_2g
+go
+set quoted_identifier on
+go
+exec unqStr_proc_2h
+go
+
+exec unqStr_proc_2i
+go
+set quoted_identifier off
+go
+-- should print 'dbo':
+exec unqStr_proc_3 
+go
+
+-- should reflect column value:
+select dbo.unqStr_func_2(aBc) from unqStr_tab  
+go
+-- should print 'dbo', since 'user' is a function call
+select dbo.unqStr_func_2(user)
+go
+-- should print 'aBc':
+declare @v varchar(20)
+execute @v = unqStr_func_2
+select @v
+go
+-- this test will fail since 'default' arguments are not yet supported in Babelfish (BABEL-335)
+-- once supported, should print 'aBc':
+select dbo.unqStr_func_2(default) 
+go
+
+-- should print value of @@language:
+exec unqStr_proc_4
+go
+
+-- as a default, @p2 should take value of @p1.
+-- however this does not work in Babelfish, both before and after 
+-- the fix for unquoted strings in BABEL-334
+exec unqStr_proc_5 'this is @p1'
+go
+
+exec unqStr_proc_7
+go
+
+-- this will not work until 'default' arguments are supported (BABEL-335)
+select dbo.unqStr_func_3(default)
+go
+
+-- should print value of @@language:
+declare @v varchar(20)
+exec @v = unqStr_func_3
+select @v
+go
+
+-- psql
+
+-- PG test cases
+
+-- call T-SQL proc from PG, T-SQL semantics still apply
+-- should print 'aBc':
+-- NOTE: test is disabled as it crashes the JDBC test framework with message 'Received resultset tuples, but no field structure for them'
+--call master_dbo.unqStr_proc_2();
+--go
+
+-- PG procedure/function calls should not be affected by the T-SQL fix 
+-- for unquoted strings in BABEL-334
+
+-- should print 'aBc':
+CALL unqStr_pgproc_1('aBc');
+go
+-- should raise an error about column not found:
+CALL unqStr_pgproc_1(aBc);
+go
+
+-- should print 'aBc':
+select unqStr_pgfunc_1('aBc'); 
+go
+-- should print column value:
+select unqStr_pgfunc_1(aBc) from master_dbo.unqStr_tab;
+go
+-- should raise an error about column not found:
+select unqStr_pgfunc_1(aBc);
+go
+-- should print 'jdbc_user', since 'user' is a function call:
+select unqStr_pgfunc_1(user);
+go

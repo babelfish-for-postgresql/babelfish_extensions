@@ -866,12 +866,12 @@ drop_xml_schema_collection
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/disable-trigger-transact-sql
 disable_trigger
-    : DISABLE TRIGGER ( ( COMMA? (schema_name=id DOT)? trigger_name=id )+ | ALL)         ON ((schema_id=id DOT)? object_name=id|DATABASE|ALL SERVER)
+    : DISABLE TRIGGER ( ( COMMA? schema_trigger_name )+ | ALL)         ON (tabname=table_name|DATABASE|ALL SERVER)
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/enable-trigger-transact-sql
 enable_trigger
-    : ENABLE TRIGGER ( ( COMMA? (schema_name=id DOT)? trigger_name=id )+ | ALL)         ON ( (schema_id=id DOT)? object_name=id|DATABASE|ALL SERVER)
+    : ENABLE TRIGGER ( ( COMMA? schema_trigger_name )+ | ALL)         ON (tabname=table_name|DATABASE|ALL SERVER)
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/statements/truncate-table-transact-sql
@@ -3156,7 +3156,7 @@ column_def_table_constraint
 // empirically found: ROWGUIDCOL can be in various locations
 column_definition
     : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | collation | null_notnull )*
-      ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
+      ( column_constraint* IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* inline_index?
     | TIMESTAMP null_notnull? column_constraint?
     ;
@@ -3164,7 +3164,7 @@ column_definition
 // Temporary workaround for COLLATE default in INSERT BULK
 insert_bulk_column_definition
     : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE (id | DEFAULT)) | null_notnull )*
-      ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
+      ( column_constraint* IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* inline_index?
     ;
 
@@ -3397,6 +3397,7 @@ expression
     | DEFAULT                                                                   #default_expr
     | case_expression                                                           #case_expr
     | hierarchyid_coloncolon_methods                                            #hierarchyid_coloncolon
+    | spatial_coloncolon_methods                                                #spatial_coloncolon
     | over_clause                                                               #over_clause_expr
     | odbc_literal                                                              #odbc_literal_expr
     | DOLLAR_ACTION                                                             #dollar_action_expr
@@ -3813,6 +3814,10 @@ hierarchyid_methods
 
 hierarchyid_coloncolon_methods
     : id colon_colon  method=(GETROOT | PARSE) LR_BRACKET expression? RR_BRACKET
+    ;
+
+spatial_coloncolon_methods
+    : data_type colon_colon function_call
     ;
 
 // this is no longer used:
@@ -4327,11 +4332,13 @@ keyword
     | DATEADD
     | DATEDIFF
     | DATEDIFF_BIG
+    | DATE_BUCKET
     | DATEFIRST
     | DATEFORMAT
     | DATE_FORMAT
     | DATENAME
     | DATEPART
+    | DATETRUNC
     | DATE_CORRELATION_OPTIMIZATION
     | DATE_FORMAT
     | DAY
@@ -5026,6 +5033,10 @@ table_name
 
 simple_name
     : DOT? (schema=id? DOT)? name=id
+    ;
+
+schema_trigger_name
+    : (schema_name=id DOT)? trigger_name=id
     ;
 
 func_proc_name_schema

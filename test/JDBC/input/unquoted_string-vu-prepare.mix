@@ -1,0 +1,196 @@
+-- tsql
+create table unqStr_tab(abc varchar(20))
+insert into unqStr_tab values('this is column abc')
+go
+
+-- unquoted strings in procedure call arguments
+create procedure unqStr_proc_1(@par1 varchar(100), @par2 varchar(100))
+as 
+select @par1, @par2
+go
+
+-- unlike T-SQL procedure calls, function call arguments do not support unquoted strings
+create function unqStr_func_1(@par varchar(20)) 
+returns varchar(20) 
+as begin 
+return @par
+end
+go
+
+-- unquoted string in parameter declaration
+create proc unqStr_proc_2 @par1 varchar(20) = aBc
+as
+select @par1
+go
+
+-- strings longer than 63 should not be truncated, hashed or downcased
+create procedure unqStr_proc_2a(
+@par1 varchar(100) = a23456789B123456789C123456789d123456789E123456789F123456789G123456789H, 
+@par2 varchar(100) = [AaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaB])
+as 
+select @par1, @par2
+go
+
+create procedure unqStr_proc_2b(
+@par1 varchar(20) = [Aaa aaB],
+@par2 varchar(20) = [Aa"bB'cC])
+as 
+select @par1, @par2
+go
+
+set quoted_identifier off
+go
+create procedure unqStr_proc_2c(
+@par1 varchar(20) = "[Aaa aaB]",
+@par2 varchar(20) = "[Aa""bB'cC]")
+as 
+select @par1, @par2
+go
+set quoted_identifier on
+go
+
+set quoted_identifier on
+go
+create procedure unqStr_proc_2d(
+@par1 varchar(20) = "[Aaa aaB]",
+@par2 varchar(20) = "[Aa""bB'cC]")
+as 
+select @par1, @par2
+go
+set quoted_identifier off
+go
+create procedure unqStr_proc_2e(
+@par1 varchar(20) = ["Aaa aaB"],
+@par2 varchar(20) = ["Aa"bB'cC"])
+as 
+select @par1, @par2
+go
+set quoted_identifier on
+go
+
+-- double-quoted/bracketed datatype:
+set quoted_identifier off
+go
+-- should raise error
+create procedure unqStr_proc_2f(@par1 "varchar"(20) = aBc)
+as 
+select @par1
+go
+create procedure unqStr_proc_2g(@par1 [varchar](20) = aBc)
+as 
+select @par1
+go
+
+set quoted_identifier on
+go
+create procedure unqStr_proc_2h(@par1 "varchar"(20) = aBc)
+as 
+select @par1
+go
+
+create procedure unqStr_proc_2i(@par1 [varchar](20) = aBc)
+as 
+select @par1
+go
+
+set quoted_identifier off
+go
+
+-- 'user' is handled as function call in Babelfish, though it fails in SQL Server
+create proc unqStr_proc_3 @par1 varchar(20) = user
+as
+select @par1
+go
+
+create procedure unqStr_proc_4 @p1 varchar(20) = @@language as select @p1
+go
+
+create procedure unqStr_proc_5 @p1 varchar(20), @p2 varchar(20) = @p1
+as select @p2
+go
+
+-- should raise error:
+create procedure unqStr_proc_6 @p1 varchar(20) = @@myvar
+as select @p1
+go
+
+create procedure unqStr_proc_7 @p1 varchar(20) = N'aB"c''D', @p2 varchar(20) = dEfg, @p3 varchar(20) = "x'Y""z"
+as select @p1, @p2, @p3
+go
+
+create function unqStr_func_2(@par1 varchar(20) = aBc) 
+returns varchar(20)
+as
+begin
+return @par1
+end
+go
+
+-- invalid in SQL Server, should also fail in Babelfish:
+create function unqStr_func_4 (@p1 varchar(20), @p2 varchar(20) = @p1) returns varchar(20)
+as
+begin
+return @p2
+end
+go
+
+create function unqStr_func_5 (@p1 varchar(20) = N'aB"c''D', @p2 varchar(20) = dEfg, @p3 varchar(20) = "x'Y""z")
+returns varchar(60)
+as
+begin
+ return @p1 + @p2 + @p3
+end 
+go
+select dbo.unqStr_func_5()
+go
+
+-- variable as column default is invalid syntax in SQL Server, but works in Babelfish, which is harmless
+-- in Babelfish this only works for a global (@@) variable, not for a local variable
+create function unqStr_func_3 (@p1 varchar(20) = @@language) returns varchar(20)
+as 
+begin
+return @p1
+end
+go
+
+-- psql
+
+CREATE OR REPLACE PROCEDURE unqStr_pgproc_1(par1 varchar(20))
+LANGUAGE plpgsql
+AS $$
+begin
+raise notice 'arg=[%]', par1;
+end
+$$;
+go
+
+CREATE function unqStr_pgfunc_1(par1 varchar(20)) 
+returns varchar(20)
+LANGUAGE plpgsql
+AS $$
+begin
+return par1;
+end
+$$;
+go
+
+-- should fail since PG does not support unquoted string defaults:
+CREATE OR REPLACE PROCEDURE unqStr_pgproc_2(par1 varchar(20) = aBc)
+LANGUAGE plpgsql
+AS $$
+begin
+raise notice 'arg=[%]', par1;
+end
+$$;
+go
+
+-- should fail since PG does not support unquoted string defaults:
+CREATE function unqStr_pgfunc_2(par1 varchar(20) = aBc) 
+returns varchar(20)
+LANGUAGE plpgsql
+AS $$
+begin
+return par1;
+end
+$$;
+go

@@ -57,6 +57,7 @@ cast_numeric_types_to_smalldatetime
 routines_definition
 column_domain_usage
 constraint_column_usage
+select-strip-parens-before-15_5
 sp_describe_first_result_set
 sys-host_name
 SYSTEM_USER
@@ -242,7 +243,6 @@ sys-sql_modules-dep
 sys-system_sql_modules-dep
 sys-triggers-dep
 sys-proc_param_helper-dep
-BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
 BABEL-APPLOCK
@@ -385,7 +385,6 @@ isc-schemata-dep
 AVG-Aggregate-common
 AVG-Aggregate-Dep
 bbf_view_def
-Test-sp_babelfish_volatility
 BABEL-3802
 BABEL-3914
 BABEL_OBJECT_NAME
@@ -409,3 +408,6 @@ babel_varbinary_int4_div
 sys-sql_expression_dependencies
 smalldatetimefromparts-dep
 BABEL_4330
+BABEL-4231
+BABEL-4384
+GRANT_SCHEMA

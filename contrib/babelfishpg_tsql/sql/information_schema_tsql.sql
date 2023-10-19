@@ -415,7 +415,7 @@ CREATE VIEW information_schema_tsql.tables AS
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
 				  WHEN c.relkind = 'v' THEN 'VIEW'
 				  ELSE null END
-			 AS varchar(10)) AS "TABLE_TYPE"
+			 AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
 		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
@@ -751,6 +751,30 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
                 OR has_sequence_privilege(r.oid, 'SELECT, UPDATE, USAGE'));
 
 GRANT SELECT ON information_schema_tsql.sequences TO PUBLIC; 
+
+CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage AS
+	SELECT
+		CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+		CAST(c.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+		CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		CAST(r.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+		CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+		CAST(ord AS int) AS "ORDINAL_POSITION"	
+	FROM
+		pg_constraint c 
+		JOIN pg_class r ON r.oid = c.conrelid AND c.contype in ('p','u','f') AND r.relkind in ('r','p')
+		JOIN sys.pg_namespace_ext nc ON nc.oid = c.connamespace AND r.relnamespace = nc.oid 
+		JOIN sys.babelfish_namespace_ext ext ON ext.nspname = nc.nspname AND ext.dbid = sys.db_id()
+		CROSS JOIN unnest(c.conkey) WITH ORDINALITY AS ak(j,ord) 
+		LEFT JOIN pg_attribute a ON a.attrelid = r.oid AND a.attnum = ak.j		
+	WHERE
+		pg_has_role(r.relowner, 'USAGE'::text) 
+  		OR has_column_privilege(r.oid, a.attnum, 'SELECT, INSERT, UPDATE, REFERENCES'::text)
+		AND NOT pg_is_other_temp_schema(nc.oid)
+	;
+GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
 
 /*
  * SCHEMATA view

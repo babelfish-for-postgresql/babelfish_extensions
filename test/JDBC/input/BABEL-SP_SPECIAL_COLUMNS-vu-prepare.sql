@@ -131,10 +131,10 @@ GO
 
 CREATE TABLE dbo.tidentityintbigmulti (
     data_type_test CHAR(50) NULL
-    , test_scenario CHAR(60) NULL
+    , test_scenario CHAR(60) NOT NULL
     , value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL
     , inserted_dt DATETIME DEFAULT GETDATE()
-    , user_login CHAR(255) DEFAULT CURRENT_USER
+    , user_login CHAR(255) DEFAULT CURRENT_USER NOT NULL
 )
 GO
 CREATE UNIQUE NONCLUSTERED INDEX dbo_tidentityintbigmulti_value_test ON dbo.tidentityintbigmulti (user_login ASC, value_test ASC, test_scenario ASC);

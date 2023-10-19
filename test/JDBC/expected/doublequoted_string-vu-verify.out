@@ -1,0 +1,1627 @@
+
+-- BABEL-2442: Handle embedded double quotes in a double-quoted string
+-- BABEL-4387: Support double-quoted strings containing single-quote
+-- This also exercises parts of the ANTLR parse tree rewriting
+set quoted_identifier off
+go
+create procedure dubquote_p @p varchar(20) = "ab'cd" , @p2 varchar(20)='xyz'
+as select @p
+go
+create procedure dubquote_p2 @p varchar(20) = "ab""cd"
+as select @p
+go
+
+set quoted_identifier off
+go
+select "aBc"
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+exec dubquote_p
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+exec dubquote_p2
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+exec dubquote_p "aBc"
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+exec dubquote_p 'aBc'
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+exec dubquote_p aBc
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+
+set quoted_identifier on
+go
+select "aBc"
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+exec dubquote_p
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+exec dubquote_p2
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+exec dubquote_p "aBc"
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+exec dubquote_p 'aBc'
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+exec dubquote_p aBc
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+
+set quoted_identifier off
+go
+select "ab""cd"
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select "de'fg"
+go
+~~START~~
+varchar
+de'fg
+~~END~~
+
+select 'ab"cd'
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select "ab'cd"
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+select 'ab"cd'
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select 'ab"''"''"cd'
+go
+~~START~~
+varchar
+ab"'"'"cd
+~~END~~
+
+select """"
+go
+~~START~~
+varchar
+"
+~~END~~
+
+select ''''
+go
+~~START~~
+varchar
+'
+~~END~~
+
+select '"'
+go
+~~START~~
+varchar
+"
+~~END~~
+
+select '""'
+go
+~~START~~
+varchar
+""
+~~END~~
+
+select "'"
+go
+~~START~~
+varchar
+'
+~~END~~
+
+select "''"
+go
+~~START~~
+varchar
+''
+~~END~~
+
+select """'""'"""
+go
+~~START~~
+varchar
+"'"'"
+~~END~~
+
+
+set quoted_identifier on
+go
+exec dubquote_p
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+exec dubquote_p "xx'yy"
+go
+~~START~~
+varchar
+xx'yy
+~~END~~
+
+exec dubquote_p 'xX"yY'
+go
+~~START~~
+varchar
+xX"yY
+~~END~~
+
+exec dubquote_p """"
+go
+~~START~~
+varchar
+"
+~~END~~
+
+exec dubquote_p ''''
+go
+~~START~~
+varchar
+'
+~~END~~
+
+exec dubquote_p '"'
+go
+~~START~~
+varchar
+"
+~~END~~
+
+exec dubquote_p '""'
+go
+~~START~~
+varchar
+""
+~~END~~
+
+exec dubquote_p "'"
+go
+~~START~~
+varchar
+'
+~~END~~
+
+exec dubquote_p "''"
+go
+~~START~~
+varchar
+''
+~~END~~
+
+exec dubquote_p """'""'"""
+go
+~~START~~
+varchar
+"'"'"
+~~END~~
+
+
+-- same as above but with named notation
+exec dubquote_p @p="xx'yy"  , @p2='x"y'
+go
+~~START~~
+varchar
+xx'yy
+~~END~~
+
+exec dubquote_p @p='xX"yY'  , @p2="x""y"
+go
+~~START~~
+varchar
+xX"yY
+~~END~~
+
+exec dubquote_p @p=""""     , @p2="x'y"
+go
+~~START~~
+varchar
+"
+~~END~~
+
+exec dubquote_p @p=''''     , @p2="x''y"
+go
+~~START~~
+varchar
+'
+~~END~~
+
+exec dubquote_p @p='"'      , @p2="x''y"
+go
+~~START~~
+varchar
+"
+~~END~~
+
+exec dubquote_p @p='""'     , @p2="x''y"
+go
+~~START~~
+varchar
+""
+~~END~~
+
+exec dubquote_p @p="'"      , @p2="x''y"
+go
+~~START~~
+varchar
+'
+~~END~~
+
+exec dubquote_p @p="''"     , @p2="x''y"
+go
+~~START~~
+varchar
+''
+~~END~~
+
+exec dubquote_p @p="""'""'""" , @p2="x''y"
+go
+~~START~~
+varchar
+"'"'"
+~~END~~
+
+
+-- using N'...' notation:
+exec dubquote_p N'xX"yY'
+go
+~~START~~
+varchar
+xX"yY
+~~END~~
+
+exec dubquote_p N''''
+go
+~~START~~
+varchar
+'
+~~END~~
+
+exec dubquote_p N'"'
+go
+~~START~~
+varchar
+"
+~~END~~
+
+exec dubquote_p N'""'
+go
+~~START~~
+varchar
+""
+~~END~~
+
+exec dubquote_p @p=N'xX"yY'
+go
+~~START~~
+varchar
+xX"yY
+~~END~~
+
+exec dubquote_p @p=N''''
+go
+~~START~~
+varchar
+'
+~~END~~
+
+exec dubquote_p @p=N'"'
+go
+~~START~~
+varchar
+"
+~~END~~
+
+exec dubquote_p @p=N'""'
+go
+~~START~~
+varchar
+""
+~~END~~
+
+
+-- functions
+set quoted_identifier off
+go
+create function dubquote_f1(@p varchar(20) = "ab'cd") returns varchar(20) as begin return @p end
+go
+create function dubquote_f2(@p varchar(20) = "ab""cd") returns varchar(20) as begin return @p end
+go
+create function dubquote_f3(@p varchar(20) = aBcd) returns varchar(20) as begin return @p end
+go
+declare @v varchar(20)
+exec @v = dubquote_f1
+select @v
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+declare @v varchar(20)
+exec @v = dubquote_f2
+select @v
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+declare @v varchar(20)
+exec @v = dubquote_f3
+select @v
+go
+~~START~~
+varchar
+aBcd
+~~END~~
+
+
+select dbo.dubquote_f1("ab'cd")
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+select dbo.dubquote_f1('ab"cd')
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select dbo.dubquote_f1(N'ab"cd')
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select dbo.dubquote_f1("ab""cd")
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+
+set quoted_identifier on
+go
+select dbo.dubquote_f1("ab'cd")
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "ab'cd" does not exist)~~
+
+select dbo.dubquote_f1('ab"cd')
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select dbo.dubquote_f1(N'ab"cd')
+go
+~~START~~
+varchar
+ab"cd
+~~END~~
+
+select dbo.dubquote_f1("ab""cd")
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "ab"cd" does not exist)~~
+
+
+set quoted_identifier off
+go
+create procedure dubquote_p2a @p varchar(20) ="aBc" as select @p
+go
+exec dubquote_p2a
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+create procedure dubquote_p3 @p varchar(20) ="'aBc'" as select @p
+go
+exec dubquote_p3
+go
+~~START~~
+varchar
+'aBc'
+~~END~~
+
+declare @v varchar(40) set @v = "It's almost ""weekend""!" select @v
+go
+~~START~~
+varchar
+It's almost "weekend"!
+~~END~~
+
+
+select 'aBc'
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+select "aBc"
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+select "a'b""c''''''''''d"
+go
+~~START~~
+varchar
+a'b"c''''''''''d
+~~END~~
+
+select "a'b""c'd"
+go
+~~START~~
+varchar
+a'b"c'd
+~~END~~
+
+select "'aBc'",'xyz' 
+go
+~~START~~
+varchar#!#varchar
+'aBc'#!#xyz
+~~END~~
+
+
+declare @v varchar(20) = 'aBc' select @v
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+declare @v varchar(20) = "aBc" select @v
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+declare @v varchar(20) = "'a""bc'" select @v
+go
+~~START~~
+varchar
+'a"bc'
+~~END~~
+
+declare @v varchar(20) select @v = "aBc" select @v
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+declare @v varchar(20) = 'x' select @v += "aBc" select @v
+go
+~~START~~
+varchar
+xaBc
+~~END~~
+
+declare @v varchar(20) select @v = "'a""bc'" select @v
+go
+~~START~~
+varchar
+'a"bc'
+~~END~~
+
+declare @v varchar(20) = 'x' select @v += "'a""bc'" select @v
+go
+~~START~~
+varchar
+x'a"bc'
+~~END~~
+
+declare @v varchar(20) set @v = "'a""bc'" select @v
+go
+~~START~~
+varchar
+'a"bc'
+~~END~~
+
+declare @v varchar(20) = 'x' set @v += "'a""bc'" select @v
+go
+~~START~~
+varchar
+x'a"bc'
+~~END~~
+
+
+declare @v varchar(20) ="aBc" , @v2 varchar(10) = 'xyz' select @v
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+declare @v varchar(20), @v2 varchar(20) select @v="a""b''c'd", @v2="x""y''z" select @v, @v2
+go
+~~START~~
+varchar#!#varchar
+a"b''c'd#!#x"y''z
+~~END~~
+
+declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ" select @v+="a""b''c'd", @v2+="x""y''z" select @v, @v2
+go
+~~START~~
+varchar#!#varchar
+ABCa"b''c'd#!#XYZx"y''z
+~~END~~
+
+declare @v varchar(20) = "ABC", @v2 varchar(20)="XYZ" set @v+="a""b''c'd" set @v2+="x""y''z" select @v, @v2
+go
+~~START~~
+varchar#!#varchar
+ABCa"b''c'd#!#XYZx"y''z
+~~END~~
+
+declare @v varchar(20) ="a""bc" , @v2 varchar(10) = 'x''z' select @v, @v2
+go
+~~START~~
+varchar#!#varchar
+a"bc#!#x'z
+~~END~~
+
+declare @v varchar(20) ="a""bc" , @v2 varchar(10) = 'x''z' , @v3 varchar(10) = "x""y'z'z" select @v, @v2, @v3
+go
+~~START~~
+varchar#!#varchar#!#varchar
+a"bc#!#x'z#!#x"y'z'z
+~~END~~
+
+
+-- bracketed identifiers containing double-quoted strings should not be affected by double-quoted string replacement
+-- this SELECT should return 0 rows and no error
+create table dubquote_t1([x"a'b"y] int, c varchar(20))
+go
+select [x"a'b"y] from dubquote_t1 where c = "a'b"
+go
+~~START~~
+int
+~~END~~
+
+
+set quoted_identifier off
+go
+-- the JDBC test cases do not capture PRINT output, but including them here for when it will
+print "aBc"
+go
+print "'aBc'"  
+go
+print "a""b'c"  
+go
+print "a""b'c," + session_user +  ",d""e'f," + system_user
+go
+     /*test*/ print     "aBc" 
+go
+   /*hello*/    print /*hello*/ "aBc" 
+go
+print    /*hello*/  "a""b'c," +    /*hello*/     
+session_user +     /*hello*/    
+",d""e'f," +    /*hello*/     system_user
+go
+RAISERROR("Message from RAISERROR", 16,1)
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Message from RAISERROR)~~
+
+RAISERROR("'Message from RAISERROR'", 16,1)
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: 'Message from RAISERROR')~~
+
+RAISERROR("""Message from ""'RAISERROR'""", 16,1)
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: "Message from "'RAISERROR'")~~
+
+      /*test*/RAISERROR( /*hello*/"Message from 'RAISERROR'", 16,1)
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Message from 'RAISERROR')~~
+
+
+-- RAISERROR arguments are not yet rewritten. this should raise an error
+RAISERROR ('%s %s',  10, 1, 'aBc', "def");
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "def" does not exist)~~
+
+
+
+declare @v varchar(20) = "a""b'c"
+if @v = 'a"b''c' select 'correct' 
+else select 'wrong'
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+declare @v varchar(20) = "a""b'c"
+while @v = 'a"b''c' 
+begin 
+select 'correct' 
+break 
+end 
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+declare @v varchar(20) = system_user
+if @v = system_user select 'correct' 
+else select 'wrong'
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+declare @v varchar(20) = system_user
+while @v = system_user
+begin 
+select 'correct' 
+break 
+end 
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+set quoted_identifier on
+go
+print "aBc"
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+RAISERROR("Message from RAISERROR", 16,1)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '"Message from RAISERROR"' at line 1 and character position 10)~~
+
+
+set quoted_identifier off
+go
+create procedure dubquote_p4 @p varchar(20) ="a'bc" as select @p,@p
+go
+exec dubquote_p4
+go
+~~START~~
+varchar#!#varchar
+a'bc#!#a'bc
+~~END~~
+
+exec dubquote_p4 "aBc" 
+go
+~~START~~
+varchar#!#varchar
+aBc#!#aBc
+~~END~~
+
+exec dubquote_p4 "ab""cd" 
+go
+~~START~~
+varchar#!#varchar
+ab"cd#!#ab"cd
+~~END~~
+
+exec dubquote_p4 "ab'cd" 
+go
+~~START~~
+varchar#!#varchar
+ab'cd#!#ab'cd
+~~END~~
+
+select "ab'cd" 
+go
+~~START~~
+varchar
+ab'cd
+~~END~~
+
+create function dubquote_f4 (@p varchar(20) = "'aBc'") returns varchar(50) as begin return  ((("function's return" +( " string value:" ))) +"'" + @p + "'")  end 
+go
+select dbo.dubquote_f4("x")
+go
+~~START~~
+varchar
+function's return string value:'x'
+~~END~~
+
+
+create function dubquote_f5 () returns varchar(50) as begin return "a""b'c" end 
+go
+select dbo.dubquote_f5()
+go
+~~START~~
+varchar
+a"b'c
+~~END~~
+
+
+create function dubquote_f6 () returns varchar(50) as begin return "a""b'c," + session_user +  ",d""e'f," + system_user end 
+go
+select dbo.dubquote_f6()
+go
+~~START~~
+varchar
+a"b'c,dbo,d"e'f,jdbc_user
+~~END~~
+
+
+CREATE function dubquote_f7() returns varchar(30) as begin return system_user end
+go
+select dbo.dubquote_f7(), system_user
+go
+~~START~~
+varchar#!#nvarchar
+jdbc_user#!#jdbc_user
+~~END~~
+
+
+create procedure dubquote_p5 @p varchar(10) as select @p
+go
+exec dubquote_p5 'xyz' exec dubquote_p5 aBc
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+~~START~~
+varchar
+aBc
+~~END~~
+
+exec dubquote_p5 aBcd
+go
+~~START~~
+varchar
+aBcd
+~~END~~
+
+exec dubquote_p5 [aBcd]
+go
+~~START~~
+varchar
+aBcd
+~~END~~
+
+exec dubquote_p5 @p=aBcde
+go
+~~START~~
+varchar
+aBcde
+~~END~~
+
+declare @v varchar(20) exec dubquote_p5 @v
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+declare @v varchar(20) = 'efg' exec dubquote_p5 @v
+go
+~~START~~
+varchar
+efg
+~~END~~
+
+declare @v varchar(20) exec dubquote_p5 @p=@v
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+declare @v varchar(20) = 'hij' exec dubquote_p5 @p=@v
+go
+~~START~~
+varchar
+hij
+~~END~~
+
+
+declare @v varchar(20) = session_user select @v, session_user
+go
+~~START~~
+varchar#!#nvarchar
+dbo#!#dbo
+~~END~~
+
+declare @v varchar(20) = 'aBc' + session_user select @v, session_user
+go
+~~START~~
+varchar#!#nvarchar
+aBcdbo#!#dbo
+~~END~~
+
+declare @v varchar(20) = "aBc" + session_user select @v, session_user
+go
+~~START~~
+varchar#!#nvarchar
+aBcdbo#!#dbo
+~~END~~
+
+declare @v varchar(20) = "ab""c'd" + session_user select @v, session_user
+go
+~~START~~
+varchar#!#nvarchar
+ab"c'ddbo#!#dbo
+~~END~~
+
+
+declare @v varchar(20) = system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+jdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = 'aBc' + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+aBcjdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = "aBc" + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+aBcjdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = "ab""c'd" + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+ab"c'djdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = '' set @v = system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+jdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = '' set @v = 'aBc' + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+aBcjdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = '' set @v = "aBc" + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+aBcjdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = '' set @v =  "ab""c'd" + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+ab"c'djdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = '' set @v = "ab""c'd" + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+ab"c'djdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = 'ab,' set @v += system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+ab,jdbc_user#!#jdbc_user
+~~END~~
+
+declare @myvar varchar(20) = '' set @myvar += system_user select @myvar, system_user
+go
+~~START~~
+varchar#!#nvarchar
+jdbc_user#!#jdbc_user
+~~END~~
+
+
+/*hello*/declare @myvar varchar(50) = '' /*hello*/set /*hello*/@myvar/*hello*/ +=      
+/*hello*/system_user/*hello*/ + 
+/*hello*/",a""b'c," + /*hello*/system_user  
+select @myvar, system_user
+go
+~~START~~
+varchar#!#nvarchar
+jdbc_user,a"b'c,jdbc_user#!#jdbc_user
+~~END~~
+
+declare @v varchar(50) = system_user+"," set @v += "a""b'c," + system_user + ",a""b'c," + system_user select @v, system_user
+go
+~~START~~
+varchar#!#nvarchar
+jdbc_user,a"b'c,jdbc_user,a"b'c,jdbc_user#!#jdbc_user
+~~END~~
+
+
+-- all in one batch:
+declare @v varchar(20) = session_user select @v 
+declare @v1 varchar(20) = 'aBc' + session_user select @v1
+declare @v2 varchar(20) = "ab""c'd" + session_user select @v2
+declare @v3 varchar(20) ="a""bc" , @v4 varchar(20) = 'x''z' select @v3,@v4
+declare @v5 varchar(20) ="a""bc" , @v6 varchar(20) = 'x''z' , @v7 varchar(20) = "x""y'z'z" select @v5, @v6, @v7
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+~~START~~
+varchar
+aBcdbo
+~~END~~
+
+~~START~~
+varchar
+ab"c'ddbo
+~~END~~
+
+~~START~~
+varchar#!#varchar
+a"bc#!#x'z
+~~END~~
+
+~~START~~
+varchar#!#varchar#!#varchar
+a"bc#!#x'z#!#x"y'z'z
+~~END~~
+
+
+declare @v varchar(20) = session_user, @v2 varchar(20)= system_user select @v, @v2, session_user, system_user
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+dbo#!#jdbc_user#!#dbo#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = 'aBcd'  + session_user, @v2 varchar(20) = 'xy' + session_user select @v, @v2, session_user  
+go
+~~START~~
+varchar#!#varchar#!#nvarchar
+aBcddbo#!#xydbo#!#dbo
+~~END~~
+
+declare @v varchar(20) = 'aBcd'  + upper('x'), @v2 varchar(20) = 'xy' + upper('y') select @v, @v2  
+go
+~~START~~
+varchar#!#varchar
+aBcdX#!#xyY
+~~END~~
+
+declare @v varchar(20) = session_user, @v2 varchar(20)= system_user select @v,@v2,session_user, system_user
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+dbo#!#jdbc_user#!#dbo#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = "x'y" + session_user, @v2 varchar(20)= "a'b" + system_user select @v,@v2,session_user, system_user
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+x'ydbo#!#a'bjdbc_user#!#dbo#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = "x'y" + session_user, @v2 varchar(20)= "a'b" + system_user + "x''""" select @v,@v2,session_user, system_user
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#nvarchar
+x'ydbo#!#a'bjdbc_userx''"#!#dbo#!#jdbc_user
+~~END~~
+
+declare @v varchar(20) = session_user select @v 
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+create sequence dubquote_myseq
+go
+create sequence dubquote_myseq2
+go
+create sequence dubquote_myseq3
+go
+create sequence dubquote_myseq4
+go
+declare 
+@v  varchar(20) = '123' + next value for dubquote_myseq, 
+@v2 varchar(20) = next value for dubquote_myseq2,
+@v3 varchar(20) = next value for dubquote_myseq3 + "000",
+@v4 varchar(20) = "123" + next value for dubquote_myseq4 + "000"
+select @v, @v2, @v3, @v4 
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar
+124#!#1#!#1#!#124
+~~END~~
+
+declare @v int = next value for dubquote_myseq select @v 
+go
+~~START~~
+int
+2
+~~END~~
+
+declare @v int = next value for dubquote_myseq select @v 
+go
+~~START~~
+int
+3
+~~END~~
+
+declare @v int = len("a'bc") + next value for dubquote_myseq + len(system_user) select @v
+go
+~~START~~
+int
+17
+~~END~~
+
+declare @v int = 0 set @v = next value for dubquote_myseq select @v
+go
+~~START~~
+int
+5
+~~END~~
+
+declare @v int = 0 set @v += len("a'bc") + next value for dubquote_myseq + len(system_user) select @v
+go
+~~START~~
+int
+19
+~~END~~
+
+declare @v int = 0 set @v -= len("a'bc") + next value for dubquote_myseq + len(system_user) select @v
+go
+~~START~~
+int
+-20
+~~END~~
+
+declare @v int = 1 set @v *= len("a'bc") + next value for dubquote_myseq + len(system_user) select @v
+go
+~~START~~
+int
+21
+~~END~~
+
+declare @v int = 1 set @v /= len("a'bc") + next value for dubquote_myseq + len(system_user) select @v
+go
+~~START~~
+int
+0
+~~END~~
+
+
+set quoted_identifier on
+go
+create procedure dubquote_p6 @p varchar(20) ="aBc" as select @p
+go
+exec dubquote_p6
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+create procedure dubquote_p7 @p varchar(20) ="'aBc'" as select @p
+go
+exec dubquote_p7
+go
+~~START~~
+varchar
+'aBc'
+~~END~~
+
+declare @v varchar(20) = 'aBc' select @v
+go
+~~START~~
+varchar
+aBc
+~~END~~
+
+
+set quoted_identifier off
+go
+create procedure dubquote_p8 @p varchar(20) as select @p
+go
+execute dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+exec dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+execute[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+exec[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+exec ..[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+dbo.dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+.dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+..dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/execute dubquote_p8 "x'Y""z" 
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/exec dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/execute[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/exec[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/.dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/..dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/.[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/..[dubquote_p8]/*test*/"x'Y""z"
+execute dubquote_p8 "a'B""C"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+~~START~~
+varchar
+a'B"C
+~~END~~
+
+
+set quoted_identifier on
+go
+execute dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+exec dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+execute[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+exec[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+exec ..[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+dbo.dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+.dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+..dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/execute dubquote_p8 "x'Y""z" 
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/exec dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/execute[dubquote_p8]"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/exec[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/.dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/..dubquote_p8 "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/.[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/..[dubquote_p8]/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+"dubquote_p8" "x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/"dubquote_p8"/*test*/"x'Y""z"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+/*test*/"dubquote_p8"/*test*/"x'Y""z"
+execute dubquote_p8 "a'B""C"
+go
+~~START~~
+varchar
+x'Y"z
+~~END~~
+
+~~START~~
+varchar
+a'B"C
+~~END~~
+
+
+set quoted_identifier on
+go
+-- negative tests
+declare @v varchar(20) = "aBc" select @v
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "abc" does not exist)~~
+
+declare @v varchar(20) = "'aBc'" select @v
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "'abc'" does not exist)~~
+
+
+
+--cleanup
+drop procedure dubquote_p
+go
+drop procedure dubquote_p2
+go
+drop function dubquote_f1
+go
+drop function dubquote_f2
+go
+drop function dubquote_f3
+go
+drop procedure dubquote_p2a
+go
+drop procedure dubquote_p3
+go
+drop procedure dubquote_p4
+go
+drop function dubquote_f4
+go
+drop function dubquote_f5
+go
+drop function dubquote_f6
+go
+drop function dubquote_f7
+go
+drop procedure dubquote_p5
+go
+drop sequence dubquote_myseq
+go
+drop sequence dubquote_myseq2
+go
+drop sequence dubquote_myseq3
+go
+drop sequence dubquote_myseq4
+go
+drop procedure dubquote_p6
+go
+drop procedure dubquote_p7
+go
+drop procedure dubquote_p8
+go
+drop table dubquote_t1
+go

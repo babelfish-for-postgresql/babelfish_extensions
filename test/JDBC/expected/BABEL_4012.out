@@ -1,0 +1,622 @@
+CREATE SCHEMA BABEL_4012_sch
+GO
+
+CREATE TABLE BABEL_4012_sch.table1(a int, b int);
+GO
+
+INSERT INTO BABEL_4012_sch.table1 VALUES(1,4), (1,5);
+GO
+~~ROW COUNT: 2~~
+
+
+-- WITH ALIAS
+-- without qouted identifier in alias
+-- with schema name in set and update
+UPDATE BABEL_4012_sch.table1 SET BABEL_4012_sch.table1.a = 2 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- with schema name in set and not in update
+UPDATE table1 SET BABEL_4012_sch.table1.a = 3 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- with schema name in set and alias in update
+UPDATE t1 SET BABEL_4012_sch.table1.a = 1 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- with schema name in update and not in set
+UPDATE BABEL_4012_sch.table1 SET table1.a = 2 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- without schema in update and set
+UPDATE table1 SET table1.a = 3 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- without schema name in set and alias in update
+UPDATE t1 SET table1.a = 1 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- using alias in set and schema in update
+UPDATE BABEL_4012_sch.table1 SET t1.a = 2 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- using alias in set and without schema in update
+UPDATE table1 SET t1.a = 3 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- using alias in set and update
+UPDATE t1 SET t1.a = 1 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- using alias in set and update
+UPDATE t1 SET t1.a = 2 FROM BABEL_4012_sch.table1 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- WITH ALIAS
+-- with qouted identifier in alias
+-- with schema name in set and update
+UPDATE BABEL_4012_sch.table1 SET BABEL_4012_sch.table1.a = 3 FROM BABEL_4012_sch.table1 AS "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- with schema name in set and not in update
+UPDATE table1 SET BABEL_4012_sch.table1.a = 2 FROM BABEL_4012_sch.table1 AS  "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- with schema name in set and alias in update
+UPDATE  "_t1 AbC か₰₨" SET BABEL_4012_sch.table1.a = 1 FROM BABEL_4012_sch.table1 AS  "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- with schema name in update and not in set
+UPDATE BABEL_4012_sch.table1 SET table1.a = 3 FROM BABEL_4012_sch.table1 AS  "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- without schema in update and set
+UPDATE table1 SET table1.a = 2 FROM BABEL_4012_sch.table1 AS  "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- without schema name in set and alias in update
+UPDATE  "_t1 AbC か₰₨" SET table1.a = 1 FROM BABEL_4012_sch.table1 AS  "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- using alias in set and schema in update
+UPDATE BABEL_4012_sch.table1 SET "_t1 AbC か₰₨".a = 3 FROM BABEL_4012_sch.table1 AS  "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- using alias in set and without schema in update
+UPDATE table1 SET "_t1 AbC か₰₨".a = 2 FROM BABEL_4012_sch.table1 AS "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- using alias in set and update
+UPDATE "_t1 AbC か₰₨" SET "_t1 AbC か₰₨".a = 1 FROM BABEL_4012_sch.table1 AS "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- using alias in set and update
+UPDATE "_t1 AbC か₰₨" SET "_t1 AbC か₰₨".a = 2 FROM BABEL_4012_sch.table1 AS "_t1 AbC か₰₨"
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+
+
+
+
+-- WITHOUT ALIAS
+-- with schema name in set and update
+UPDATE BABEL_4012_sch.table1 SET BABEL_4012_sch.table1.a = 3 FROM BABEL_4012_sch.table1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- with schema name in set and not in update
+UPDATE table1 SET BABEL_4012_sch.table1.a = 1 FROM BABEL_4012_sch.table1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+1#!#4
+1#!#5
+~~END~~
+
+
+-- with schema name in update and not in set
+UPDATE BABEL_4012_sch.table1 SET table1.a = 2 FROM BABEL_4012_sch.table1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+2#!#4
+2#!#5
+~~END~~
+
+
+-- without schema in update and set
+UPDATE table1 SET table1.a = 3 FROM BABEL_4012_sch.table1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_sch.table1;
+GO
+~~START~~
+int#!#int
+3#!#4
+3#!#5
+~~END~~
+
+
+-- DEFAULT SCHEMA
+CREATE TABLE BABEL_4012_table2(a int, b int);
+GO
+
+INSERT INTO BABEL_4012_table2 VALUES(1,6), (1,7);
+GO
+~~ROW COUNT: 2~~
+
+
+-- WITH ALIAS
+-- with schema name in set and update
+-- error expected
+UPDATE dbo.BABEL_4012_table2 SET dbo.BABEL_4012_table2.a = 2 FROM BABEL_4012_table2 AS t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The objects "master_dbo.babel_4012_table2" and "babel_4012_table2" in the FROM clause have the same exposed names. Use correlation names to distinguish them.)~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- with schema name in set and not in update
+UPDATE BABEL_4012_table2 SET dbo.BABEL_4012_table2.a = 3 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+3#!#6
+3#!#7
+~~END~~
+
+
+-- with schema name in set and alias in update
+UPDATE t1 SET dbo.BABEL_4012_table2.a = 1 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- with schema name in update and not in set
+-- error expected
+UPDATE dbo.BABEL_4012_table2 SET BABEL_4012_table2.a = 2 FROM BABEL_4012_table2 AS t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The objects "master_dbo.babel_4012_table2" and "babel_4012_table2" in the FROM clause have the same exposed names. Use correlation names to distinguish them.)~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- without schema in update and set
+UPDATE BABEL_4012_table2 SET BABEL_4012_table2.a = 3 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+3#!#6
+3#!#7
+~~END~~
+
+
+-- without schema name in set and alias in update
+UPDATE t1 SET BABEL_4012_table2.a = 1 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- using alias in set and schema in update
+-- error expected
+UPDATE dbo.BABEL_4012_table2 SET t1.a = 2 FROM BABEL_4012_table2 AS t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The objects "master_dbo.babel_4012_table2" and "babel_4012_table2" in the FROM clause have the same exposed names. Use correlation names to distinguish them.)~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- using alias in set and without schema in update
+UPDATE BABEL_4012_table2 SET t1.a = 3 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+3#!#6
+3#!#7
+~~END~~
+
+
+-- using alias in set and update
+UPDATE t1 SET t1.a = 1 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- using alias in set and update
+UPDATE t1 SET t1.a = 2 FROM BABEL_4012_table2 AS t1
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+2#!#6
+2#!#7
+~~END~~
+
+
+
+-- WITHOUT ALIAS
+-- with schema name in set and update
+UPDATE dbo.BABEL_4012_table2 SET dbo.BABEL_4012_table2.a = 3 FROM dbo.BABEL_4012_table2
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM dbo.BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+3#!#6
+3#!#7
+~~END~~
+
+
+-- with schema name in set and not in update
+UPDATE BABEL_4012_table2 SET dbo.BABEL_4012_table2.a = 1 FROM dbo.BABEL_4012_table2
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM dbo.BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+1#!#6
+1#!#7
+~~END~~
+
+
+-- with schema name in update and not in set
+UPDATE dbo.BABEL_4012_table2 SET BABEL_4012_table2.a = 2 FROM dbo.BABEL_4012_table2
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM dbo.BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+2#!#6
+2#!#7
+~~END~~
+
+
+-- without schema in update and set
+UPDATE BABEL_4012_table2 SET BABEL_4012_table2.a = 3 FROM dbo.BABEL_4012_table2
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM dbo.BABEL_4012_table2;
+GO
+~~START~~
+int#!#int
+3#!#6
+3#!#7
+~~END~~
+
+
+
+
+-- CLEAR
+DROP TABLE BABEL_4012_table2;
+GO
+
+DROP TABLE BABEL_4012_sch.table1;
+GO
+
+DROP SCHEMA BABEL_4012_sch;
+GO

@@ -6947,7 +6947,7 @@ exec_eval_datum(PLtsql_execstate *estate,
 				*typeid = tbl->tbltypeid;
 				*typetypmod = -1;
 				*value = CStringGetDatum(tbl->tblname);
-				*isnull = false;
+				*isnull = !tbl->tblname ? true : false;
 				break;
 			}
 
@@ -10322,13 +10322,8 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 		top_es_entry = top_es_entry->next;
 	}
 
-	/*
-	 * When there is a function call: search the specified schema for the
-	 * object. If not found, then search the dbo schema. Don't update the path
-	 * for "sys" schema.
-	 */
-	if ((stmt->func_call || stmt->is_create_view) && stmt->schema_name != NULL &&
-		(strcmp(stmt->schema_name, "sys") != 0 && strcmp(stmt->schema_name, "pg_catalog") != 0))
+	if (stmt->is_create_view && stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") != 0 
+			&& strcmp(stmt->schema_name, "pg_catalog") != 0))
 	{
 		cur_dbname = get_cur_db_name();
 		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);

@@ -1,0 +1,57 @@
+EXEC sp_babelfish_configure 'escape_hatch_set_transaction_isolation_level', 'strict'
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+
+# SET TRAN ISOLATION INSIDE NESTED TRAN -> COMMIT -> COMMIT
+BEGIN TRAN
+txn#!#begin#!#isolation#!#ss
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+txn#!#commit
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+COMMIT TRAN
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+
+# RESET SESSION ISOLATION TO RC
+txn#!#begin#!#isolation#!#rc
+txn#!#commit
+
+# SET TRAN ISOLATION INSIDE NESTED TRAN -> COMMIT -> ROLLBACK
+BEGIN TRAN
+txn#!#begin#!#isolation#!#ss
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+txn#!#commit
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+ROLLBACK TRAN
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+
+
+# SET TRAN ISOLATION INSIDE NESTED TRAN -> COMMIT -> ROLLBACK
+BEGIN TRAN
+txn#!#begin#!#isolation#!#ss
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')
+txn#!#rollback
+
+
+SELECT @@trancount
+SELECT current_setting('transaction_isolation')
+SELECT current_setting('default_transaction_isolation')

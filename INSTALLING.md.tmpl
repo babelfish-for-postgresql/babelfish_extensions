@@ -308,6 +308,81 @@ sqlcmd -S localhost -U babelfish_user -P 12345678
 
 > Note that `mssql-tools` does not support _arm64_ packages.
 
+
+## How to build the babelfishpg_tsql extension with linked servers enabled
+
+- To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md). The linked servers feature is supported using the FreeTDS library which is licensed under the GNU LGPL license. See [COPYING_LIB.txt](https://github.com/FreeTDS/freetds/blob/master/COPYING_LIB.txt) for details.
+- Build the babelfishpg_tsql extension as follows:
+```
+PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make
+PG_CPPFLAGS='-I/usr/include -DENABLE_TDS_LIB' SHLIB_LINK='-lsybdb -L/usr/lib64' make install
+```
+- Create rest of the Babelfish extensions as usual, and initialize Babelfish.
+- Create the `tds_fdw` extension in the Babelfish database:
+```
+babelfish_db=> CREATE EXTENSION tds_fdw;
+CREATE EXTENSION
+```
+
+# How to build the babelfishpg_tsql extension with Support for Spatial Datatypes enabled
+
+- To work with Spatial Datatypes, you must install the `PostGIS` extension. 
+Steps on how to get PostGIS working on open-source:
+    ```
+    wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
+    tar -xvzf postgis-3.3.3dev.tar.gz
+    sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    sudo yum install gdal gdal-devel
+    sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-3.7.2-1.el8.x86_64.rpm
+    sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-devel-3.7.2-1.el8.x86_64.rpm
+    wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
+    tar -xvzf proj-4.9.1.tar.gz
+    cd proj-4.9.1
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+    sudo cmake --build . --target install
+    cd ../../postgis-3.3.3dev
+    ./configure
+    make
+    sudo make install
+    ```
+- More information about building and installing the extension can be found [at this link](https://postgis.net/docs/postgis_installation.html)
+- Build the babelfishpg_common extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make -j 4
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make install
+    ```
+- Build the babelfishpg_tsql extension as follows:
+    ```
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make
+    PG_CPPFLAGS='-I/usr/include -DENABLE_SPATIAL_TYPES' make install
+    ```
+- Create rest of the Babelfish extensions as usual, and initialize Babelfish.
+
+
+## How to build and install the babelfishpg_unit extension and run unit tests (Optional)
+
+Build the babelfishpg_unit module. Use the command:
+
+```
+cd ${PG_SRC}/contrib/babelfishpg_unit
+make -j ${JOBS}
+sudo make PG_CONFIG=${PG_CONFIG} install
+```
+
+After babelfishpg_unit is built successfully, connect through psql endpoint and install the extension:
+
+```
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "CREATE EXTENSION IF NOT EXISTS "babelfishpg_unit";"
+```
+
+To run unit tests:
+```
+${BABELFISH_HOME}/bin/psql -d babelfish_db -U postgres -c "SELECT * FROM babelfishpg_unit.babelfishpg_unit_run_tests();"
+```
+
 ## How to build the babelfishpg_tsql extension with linked servers enabled
 
 - To work with linked servers, you must install the `tds_fdw` extension. More information about building and installing the extension can be found [at this link](https://github.com/tds-fdw/tds_fdw/blob/master/README.md). The linked servers feature is supported using the FreeTDS library which is licensed under the GNU LGPL license. See [COPYING_LIB.txt](https://github.com/FreeTDS/freetds/blob/master/COPYING_LIB.txt) for details.

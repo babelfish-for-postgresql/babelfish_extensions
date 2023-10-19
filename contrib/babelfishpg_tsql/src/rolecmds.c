@@ -603,6 +603,26 @@ gen_droplogin_subcmds(const char *login)
 }
 
 /*
+ * Returns OID of SA of the current database.
+ * We assume that SA is the DBA of the babelfish DB.
+ */
+Oid
+get_sa_role_oid(void)
+{
+	HeapTuple	tuple;
+	Oid			dba = InvalidOid;
+
+	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+	if (HeapTupleIsValid(tuple))
+	{
+		dba = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
+		ReleaseSysCache(tuple);
+	}
+
+	return dba;
+}
+
+/*
  * Check if the given role is SA of the current database.
  * We assume that SA is the DBA of the babelfish DB.
  */
@@ -777,6 +797,7 @@ get_original_login_name(char *login)
 	HeapTuple	tuple;
 	bool		isnull;
 	Datum		datum;
+	char 		*result = NULL;
 
 	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
 
@@ -803,10 +824,17 @@ get_original_login_name(char *login)
 	/* original login name should not be NULL. */
 	Assert(!isnull);
 
+	/*
+ 	* datum is a pointer to HeapTuple. On the other hand, HeapTuple
+ 	* is a pointer to a buffer page. We need to make a copy of that
+ 	* datum before closing the scan which releases the buffer.
+ 	*/
+	result = TextDatumGetCString(datum);
+
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
 
-	return TextDatumGetCString(datum);
+	return result;
 }
 
 
@@ -2108,8 +2136,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	new_record = palloc0(sizeof(Datum) * BBF_DOMAIN_MAPPING_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * BBF_DOMAIN_MAPPING_NUM_COLS);
 
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-
 	new_record[0] = PG_GETARG_DATUM(0);
 	new_record[1] = PG_GETARG_DATUM(1);
 
@@ -2181,10 +2207,11 @@ babelfish_remove_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 
 	bbf_domain_mapping_rel = table_open(get_bbf_domain_mapping_oid(), RowExclusiveLock);
 
-	ScanKeyInit(&scanKey,
-				Anum_bbf_domain_mapping_netbios_domain_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				PG_GETARG_DATUM(0));
+	ScanKeyEntryInitialize(&scanKey, 0,
+						   Anum_bbf_domain_mapping_netbios_domain_name,
+						   BTEqualStrategyNumber, InvalidOid,
+						   tsql_get_server_collation_oid_internal(false),
+						   F_TEXTEQ, PG_GETARG_DATUM(0));
 
 	scan = systable_beginscan(bbf_domain_mapping_rel,
 							  get_bbf_domain_mapping_idx_oid(),

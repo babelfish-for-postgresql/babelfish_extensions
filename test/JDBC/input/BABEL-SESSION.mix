@@ -41,6 +41,25 @@ GO
 USE master;
 GO
 
+SELECT db_name();
+GO
+
+USE tempdb;
+GO
+
+SELECT db_name();
+GO
+
+USE msdb;
+GO
+
+SELECT db_name();
+GO
+
+USE master;
+GO
+
+
 -- tsql user=r1 password=abc
 USE db1;
 GO
@@ -80,6 +99,21 @@ USE master;
 GO
 
 -- tsql
+USE db1;
+GO
+
+DROP TABLE tb1;
+GO
+
+DROP TABLE janedoe_schema.t1;
+GO
+
+DROP SCHEMA janedoe_schema;
+GO
+
+USE master;
+go
+
 DROP DATABASE db1;
 GO
 

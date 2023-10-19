@@ -1,0 +1,71 @@
+-- tsql 
+drop procedure unqStr_proc_1
+go
+drop procedure unqStr_proc_2
+go
+drop procedure unqStr_proc_2a
+go
+drop procedure unqStr_proc_2b
+go
+drop procedure unqStr_proc_2c
+go
+drop procedure unqStr_proc_2d
+go
+drop procedure unqStr_proc_2e
+go
+-- this should fail as the proc was not created
+drop procedure unqStr_proc_2f
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "unqstr_proc_2f")~~
+
+drop procedure unqStr_proc_2g
+go
+drop procedure unqStr_proc_2h
+go
+drop procedure unqStr_proc_2i
+go
+drop procedure unqStr_proc_3
+go
+drop procedure unqStr_proc_4
+go
+-- this should fail as the proc was not created
+drop procedure unqStr_proc_5
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "unqstr_proc_5")~~
+
+-- this should fail as the proc was not created
+drop procedure unqStr_proc_6
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "unqstr_proc_6")~~
+
+drop procedure unqStr_proc_7
+go
+drop function unqStr_func_1
+go
+drop function unqStr_func_2
+go
+drop function unqStr_func_3
+go
+-- this should fail as the function was not created
+drop function unqStr_func_4
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a function named "unqstr_func_4")~~
+
+drop function unqStr_func_5
+go
+drop table unqStr_tab
+go
+
+-- psql
+drop procedure unqStr_pgproc_1;
+go
+drop function unqStr_pgfunc_1;
+go

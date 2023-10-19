@@ -45,9 +45,18 @@ select name, type_desc from sys.server_principals where name = 'ABC\tEst';
 GO
 
 
+-- reset the login password
+alter login [test_login1] with password = '12345678';
+GO
+
 -- tsql user=test_login1 password=12345678
 -- test_login1 should not be able to add mapping
 exec sys.babelfish_add_domain_mapping_entry 'xyz', 'xyz.babel';
+GO
+
+-- tsql
+-- reset the login password
+alter login [test_login_sa] with password = '12345678';
 GO
 
 -- tsql user=test_login_sa password=12345678

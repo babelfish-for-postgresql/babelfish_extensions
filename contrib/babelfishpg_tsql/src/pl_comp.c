@@ -465,6 +465,7 @@ do_compile(FunctionCallInfo fcinfo,
 				PLtsql_type *argdtype;
 				PLtsql_variable *argvariable;
 				PLtsql_nsitem_type argitemtype;
+				int typmod = 0;
 
 				/* Create $n name for variable */
 				snprintf(buf, sizeof(buf), "$%d", i + 1);
@@ -496,9 +497,15 @@ do_compile(FunctionCallInfo fcinfo,
 					function->is_mstvf = true;
 				}
 
-				/* Create datatype info */
+				/*
+ 				 * Create datatype info.
+ 				 * typmods array has length procStruct->pronargs and numargs >= procStruct->pronargs,
+ 				 * (See Assert in get_func_arg_info())
+ 				 * Pass in typmods[i] while we are not out of bounds, otherwise pass in -1.
+ 				 */
+				typmod = (typmods && i < procStruct->pronargs) ? typmods[i] : -1;
 				argdtype = pltsql_build_datatype(argtypeid,
-												 (typmods ? typmods[i] : -1),
+												 typmod,
 												 function->fn_input_collation,
 												 NULL);
 
@@ -1551,8 +1558,7 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 	Datum	   *optiondatums;
 	int			noptions,
 				i;
-	char	   *optstr,
-			   *bbf_original_name;
+	char	   *optstr;
 
 	foreach(li, l)
 	{
@@ -1605,9 +1611,7 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 				/*
 				 * We found the original name; rewrite it as bbf_original_name
 				 */
-				bbf_original_name = &optstr[18];
-				bbf_original_name[strlen(te->resname)] = '\0';
-				te->resname = pstrdup(bbf_original_name);
+				te->resname = pnstrdup((char *) &optstr[18], strlen(te->resname));
 				break;
 			}
 		}

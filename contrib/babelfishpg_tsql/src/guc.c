@@ -1226,6 +1226,7 @@ int			escape_hatch_ignore_dup_key = EH_STRICT;
 int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
 int			escape_hatch_checkpoint = EH_IGNORE;
+int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1561,6 +1562,17 @@ define_escape_hatch_variables(void)
 							 NULL,
 							 &escape_hatch_checkpoint,
 							 EH_IGNORE,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
+	/* SET TRANSACTION ISOLATION */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_set_transaction_isolation_level",
+							 gettext_noop("escape hatch for SET TRANSACTION ISOLATION LEVEL"),
+							 NULL,
+							 &escape_hatch_set_transaction_isolation_level,
+							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

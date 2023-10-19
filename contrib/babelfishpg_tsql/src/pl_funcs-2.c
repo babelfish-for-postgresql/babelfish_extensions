@@ -317,59 +317,6 @@ pltsql_convert_ident(const char *s, char **output, int numidents)
 			 sstart);
 }
 
-static char
-		   *
-replace_with_underscore(const char *s)
-{
-	int			i,
-				n = strlen(s);
-	char	   *s_copy = palloc(n + 1);
-
-	s_copy[0] = '\0';
-	strncat(s_copy, s, n);
-
-	for (i = 0; i < n; i++)
-	{
-		if (s_copy[i] == '.')
-			s_copy[i] = '_';
-	}
-
-	return s_copy;
-}
-
-void
-pre_function_call_hook_impl(const char *funcName)
-{
-	if ((pltsql_instr_plugin_ptr &&
-		 (*pltsql_instr_plugin_ptr) &&
-		 (*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
-	{
-		char	   *prefix = "instr_tsql_";
-		char	   *funcname_edited = replace_with_underscore(funcName);
-		StringInfoData metricName;
-
-		initStringInfo(&metricName);
-
-		appendStringInfoString(&metricName, prefix);
-		appendStringInfoString(&metricName, funcname_edited);
-
-		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
-		{
-			/* check with "unsupported" in prefix */
-			prefix = "instr_unsupported_tsql_";
-
-			resetStringInfo(&metricName);
-			appendStringInfoString(&metricName, prefix);
-			appendStringInfoString(&metricName, funcname_edited);
-			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
-		}
-
-		if (funcname_edited != NULL)
-			pfree(funcname_edited);
-		if (metricName.data != NULL)
-			pfree(metricName.data);
-	}
-}
 
 int32
 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr)
@@ -430,6 +377,13 @@ free_stmt2(PLtsql_stmt *stmt)
 					free_expr((PLtsql_expr *) lfirst(l));
 				break;
 			}
+
+		case PLTSQL_STMT_KILL:
+			{
+				/* Nothing to free */
+				break;
+			}
+
 
 		case PLTSQL_STMT_INIT:
 			{
@@ -529,6 +483,7 @@ free_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 		case PLTSQL_STMT_INSERT_BULK:
 		case PLTSQL_STMT_GRANTDB:
+		case PLTSQL_STMT_GRANTSCHEMA:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			{
 				/* Nothing to free */
@@ -571,6 +526,7 @@ free_stmt2(PLtsql_stmt *stmt)
 void		dump_stmt2(PLtsql_stmt *stmt);
 
 void		dump_stmt_print(PLtsql_stmt_print *stmt_print);
+void		dump_stmt_kill(PLtsql_stmt_kill *stmt_kill);
 void		dump_stmt_init(PLtsql_stmt_init *stmt_init);
 void		dump_stmt_push_result(PLtsql_stmt_push_result *stmt_push_result);
 void		dump_stmt_exec(PLtsql_stmt_exec *stmt_exec);
@@ -598,6 +554,12 @@ dump_stmt_print(PLtsql_stmt_print *stmt_print)
 		printf(" ,");
 	}
 	printf("\n");
+}
+
+void
+dump_stmt_kill(PLtsql_stmt_kill *stmt_kill)
+{
+	printf("KILL %d\n", stmt_kill->spid);
 }
 
 void
@@ -767,6 +729,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_PRINT:
 			{
 				dump_stmt_print((PLtsql_stmt_print *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_KILL:
+			{
+				dump_stmt_kill((PLtsql_stmt_kill *) stmt);
 				break;
 			}
 		case PLTSQL_STMT_INIT:

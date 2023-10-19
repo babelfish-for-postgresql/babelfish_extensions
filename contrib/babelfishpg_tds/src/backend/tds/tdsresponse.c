@@ -1151,6 +1151,14 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 10;
 			}
 			break;
+
+		case TDS_SEND_GEOGRAPHY:
+		case TDS_SEND_GEOMETRY:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("spatial type not supported as out parameter")));
+			break;
+
 		default:
 
 			/*
@@ -1186,6 +1194,8 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 {
 	StringInfoData tempBuf;
 	int			attno;
+	char 		*db_name;						/* Store Current Database Name */
+	
 	uint32_t	tdsVersion = GetClientTDSVersion();
 
 	/* Now send out the COLMETADATA token */
@@ -1198,6 +1208,7 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 	for (attno = 0; attno < natts; attno++)
 	{
 		uint8		temp8;
+		uint16		temp16;
 		TdsColumnMetaData *col = &colMetaData[attno];
 
 		/*
@@ -1249,6 +1260,48 @@ SendColumnMetadataToken(int natts, bool sendRowStat)
 					TdsPutbytes(&numParts, sizeof(numParts));
 				TdsPutInt16LE(0);
 			}
+		}
+
+		/* For Spatial Types */
+		/*
+			* Check if it is spatial Data type
+			* Send the Corresponding MetaData Columns
+		*/			
+		if (col->isSpatialType)
+		{
+			
+			/* Current Database Name and Length are expected by the Driver */
+			db_name = pltsql_plugin_handler_ptr->get_cur_db_name();
+			temp8 = (uint8_t) pg_mbstrlen(db_name);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, db_name,
+									strlen(db_name));
+			TdsPutbytes(&temp8, sizeof(temp8));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
+
+			/* Since Schema Name is always sys in Babelfish Server we can directly send it */
+			temp8 = (uint8_t) pg_mbstrlen("sys");
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, "sys",
+									strlen("sys"));
+			TdsPutbytes(&temp8, sizeof(temp8));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
+
+			/* Type name and Length */
+			temp8 = (uint8_t) pg_mbstrlen(col->typeName);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->typeName,
+									strlen(col->typeName));
+			TdsPutbytes(&temp8, sizeof(temp8));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
+
+			/* assembly qualified name */
+			temp16 = (uint16_t) pg_mbstrlen(col->assemblyName);
+			resetStringInfo(&tempBuf);
+			TdsUTF8toUTF16StringInfo(&tempBuf, col->assemblyName,
+									strlen(col->assemblyName));
+			TdsPutbytes(&temp16, sizeof(temp16));
+			TdsPutbytes(tempBuf.data, tempBuf.len);
 		}
 
 		/*
@@ -1868,6 +1921,12 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIMEOFFSET, atttypmod);
 				}
+				break;
+			case TDS_SEND_GEOMETRY:
+				SetColMetadataForGeometryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT, "", "geometry");
+				break;
+			case TDS_SEND_GEOGRAPHY:
+				SetColMetadataForGeographyType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT, "", "geography");
 				break;
 			default:
 
