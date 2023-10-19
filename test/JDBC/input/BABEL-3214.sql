@@ -41,8 +41,8 @@ SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
 GO
 
-SELECT SET_CONFIG('babelfishpg_tsql.enable_repeatable_read_isolation_level','on',false);
-SELECT SET_CONFIG('babelfishpg_tsql.enable_serializable_isolation_level','on',false);
+SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','pg_isolation',false);
+SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','pg_isolation',false);
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;

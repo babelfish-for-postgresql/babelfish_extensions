@@ -44,7 +44,7 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: REPEATABLE READ isolation level is not supported, consider setting babelfishpg_tsql.enable_repeatable_read_isolation_level to on)~~
+~~ERROR (Message: Repeatable read is not supported by default, set configuration parameter 'babelfish_repeatable_read_isolation' to 'pg_isolation' to get PG repeatable read)~~
 
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
@@ -65,7 +65,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SERIALIZABLE isolation level is not supported, consider setting babelfishpg_tsql.enable_serializable_isolation_level to on)~~
+~~ERROR (Message: Serializable is not supported by default, set configuration parameter 'babelfish_serializable_isolation' to 'pg_isolation' to get PG serializable)~~
 
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
@@ -99,8 +99,8 @@ smallint
 ~~END~~
 
 
-SELECT SET_CONFIG('babelfishpg_tsql.enable_repeatable_read_isolation_level','on',false);
-SELECT SET_CONFIG('babelfishpg_tsql.enable_serializable_isolation_level','on',false);
+SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','pg_isolation',false);
+SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','pg_isolation',false);
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;

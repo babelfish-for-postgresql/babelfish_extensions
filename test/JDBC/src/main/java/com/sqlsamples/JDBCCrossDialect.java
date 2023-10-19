@@ -20,6 +20,7 @@ public class JDBCCrossDialect {
     String physicalDatabaseName = properties.getProperty("physicalDatabaseName");
     String user = properties.getProperty("user");
     String password = properties.getProperty("password");
+    String password = properties.getProperty("RO_URL");
 
     // Key is the username, password and database name concatenated
     // Value is the connection object created using the above 3 attributes
@@ -82,7 +83,7 @@ public class JDBCCrossDialect {
         newDatabase = null;
     }
 
-    Connection getTsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
+    Connection getTsqlConnection (String strLine, BufferedWriter bw, Logger logger, bool is_ro) {
 
         Connection tsqlConnection = null;
 
@@ -97,7 +98,10 @@ public class JDBCCrossDialect {
 
             if (tsqlConnection == null) {
                 // Create a new connection on tsql port and use that
-                String connectionString = createSQLServerConnectionString(URL, tsql_port, newDatabase, newUser, newPassword);
+                if
+                    String connectionString = createSQLServerConnectionString(URL, tsql_port, newDatabase, newUser, newPassword);
+                else
+
                 tsqlConnection = DriverManager.getConnection(connectionString);
 
                 tsqlConnectionMap.put(newUser + newPassword + newDatabase, tsqlConnection);
