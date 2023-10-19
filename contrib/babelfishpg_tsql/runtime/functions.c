@@ -221,26 +221,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	arg1_size = VARSIZE_ANY_EXHDR(arg1);
 	arg2_size = VARSIZE_ANY_EXHDR(arg2);
 
-	if((arg1_size>0)&&(arg2_size>0)&&((arg1_size + VARHDRSZ ) > INT_MAX - arg2_size))
-	{
-		//overflow detected
-		ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("value overflows numeric format while adding")));
-	}
-	else if((arg1_size < 0) && (arg2_size < 0) && ((arg1_size + VARHDRSZ ) < INT_MIN - arg2_size))
-	{
-		//underflow detected
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value underflows numeric format while adding")));
-	}
-	else
-	{
-		//safe to add
-		new_text_size = arg1_size + arg2_size + VARHDRSZ;
-	}
-
+	new_text_size = arg1_size + arg2_size + VARHDRSZ;
 	new_text = (text *) palloc(new_text_size);
 
 	SET_VARSIZE(new_text, new_text_size);
