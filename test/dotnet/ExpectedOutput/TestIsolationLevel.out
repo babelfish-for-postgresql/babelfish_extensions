@@ -1,15 +1,15 @@
 #Q#SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','pg_isolation',false)
 #D#text
-on
+pg_isolation
 #Q#SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','default',false)
 #D#text
-off
+default
 #Q#select @@trancount;
 #D#int
 1
 #Q#select current_setting('transaction_isolation')
 #D#text
-read committed
+repeatable read
 #Q#select current_setting('default_transaction_isolation')
 #D#text
 repeatable read
@@ -24,10 +24,10 @@ read committed
 read committed
 #Q#SELECT set_config('babelfishpg_tsql.babelfish_repeatable_read_isolation','default',false)
 #D#text
-off
+default
 #Q#SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','pg_isolation',false)
 #D#text
-on
+pg_isolation
 #Q#select @@trancount;
 #D#int
 0
@@ -42,7 +42,7 @@ read committed
 1
 #Q#select current_setting('transaction_isolation')
 #D#text
-read committed
+serializable
 #Q#select current_setting('default_transaction_isolation')
 #D#text
 serializable

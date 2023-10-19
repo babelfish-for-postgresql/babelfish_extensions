@@ -3,12 +3,12 @@ SELECT set_config('babelfishpg_tsql.babelfish_serializable_isolation','default',
 GO
 ~~START~~
 text
-off
+default
 ~~END~~
 
 ~~START~~
 text
-off
+default
 ~~END~~
 
 

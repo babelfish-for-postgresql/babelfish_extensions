@@ -107,12 +107,12 @@ SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = 
 GO
 ~~START~~
 text
-on
+pg_isolation
 ~~END~~
 
 ~~START~~
 text
-on
+pg_isolation
 ~~END~~
 
 ~~START~~

@@ -67,7 +67,7 @@ char	   *pltsql_host_destribution = NULL;
 char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
 char	   *pltsql_repeatable_read_isolation = false;
-char 	   *pltsql_enable_serializable_isolation_level = false;
+char 	   *pltsql_serializable_isolation = false;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
