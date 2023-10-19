@@ -30,6 +30,10 @@ datetime
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN typeid_typename_dep_vu_prepare_log1 with PASSWORD = '12345678';
+GO
+
 -- tsql user=typeid_typename_dep_vu_prepare_log1 password=12345678
 SELECT current_user;
 GO
