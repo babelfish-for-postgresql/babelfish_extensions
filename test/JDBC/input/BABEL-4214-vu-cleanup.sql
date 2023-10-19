@@ -1,0 +1,17 @@
+DROP VIEW babel_4214_datetime_to_int_view
+GO
+
+DROP PROC babel_4214_datetime_to_int_proc
+GO
+
+DROP FUNCTION babel_4214_datetime_to_int_function
+GO
+
+DROP VIEW babel_4214_smalldatetime_to_int_view
+GO
+
+DROP PROC babel_4214_smalldatetime_to_int_proc
+GO
+
+DROP FUNCTION babel_4214_smalldatetime_to_int_function
+GO

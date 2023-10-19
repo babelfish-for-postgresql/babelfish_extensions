@@ -12,6 +12,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/numeric.h"
 #include "utils/timestamp.h"
 #include "libpq/pqformat.h"
 
@@ -42,6 +43,14 @@ PG_FUNCTION_INFO_V1(float8_mi_datetime);
 
 PG_FUNCTION_INFO_V1(datetime_pl_datetime);
 PG_FUNCTION_INFO_V1(datetime_mi_datetime);
+
+PG_FUNCTION_INFO_V1(datetime_to_bit);
+PG_FUNCTION_INFO_V1(datetime_to_int2);
+PG_FUNCTION_INFO_V1(datetime_to_int4);
+PG_FUNCTION_INFO_V1(datetime_to_int8);
+PG_FUNCTION_INFO_V1(datetime_to_float4);
+PG_FUNCTION_INFO_V1(datetime_to_float8);
+PG_FUNCTION_INFO_V1(datetime_to_numeric);
 
 void		CheckDatetimeRange(const Timestamp time);
 void		CheckDatetimePrecision(fsec_t fsec);
@@ -682,4 +691,80 @@ datetime_mi_datetime(PG_FUNCTION_ARGS)
 
 	CheckDatetimeRange(result);
 	PG_RETURN_TIMESTAMP(result);
+}
+
+/*
+* Common Utility function to calculate days elapsed from 1900-01-01 00:00:00 (default datetime)
+* Days will contains whole as well as fractional part
+*/
+double
+calculateDaysFromDefaultDatetime(Timestamp timestamp_left)
+{
+	Timestamp timestamp_right;
+	Interval   *result_interval;
+	struct pg_itm tt, *itm = &tt;
+	double result;
+
+	timestamp_right = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0, 0);
+	result_interval = (Interval *) DirectFunctionCall2(timestamp_mi, timestamp_left, timestamp_right);
+	interval2itm(*result_interval, itm);
+	result = result_interval->day + (itm->tm_hour * SECS_PER_HOUR + itm->tm_min * SECS_PER_MINUTE + itm->tm_sec)/(double) SECS_PER_DAY;
+	return result;
+}
+
+Datum
+datetime_to_bit(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_BOOL((bool)result);
+}
+
+Datum
+datetime_to_int2(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_INT16((int16)round(result));
+}
+
+
+Datum
+datetime_to_int4(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_INT32((int32)round(result));
+}
+
+Datum
+datetime_to_int8(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_INT64((int64)round(result));
+}
+
+Datum
+datetime_to_float4(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_FLOAT4((float4)result);
+}
+
+Datum
+datetime_to_float8(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_FLOAT8((float8)result);
+}
+
+Datum
+datetime_to_numeric(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_NUMERIC(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }
