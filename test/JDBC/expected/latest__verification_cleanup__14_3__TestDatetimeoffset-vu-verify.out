@@ -300,7 +300,7 @@ select CAST(CAST('2079-06-06 23:59:29.998 -9:30' AS datetimeoffset) AS datetime)
 go
 ~~START~~
 datetime
-2079-06-06 23:29:29.997
+2079-06-06 23:59:29.997
 ~~END~~
 
 select CAST(CAST('1920-05-25 00:59:29.99' AS datetime2) AS datetimeoffset);
