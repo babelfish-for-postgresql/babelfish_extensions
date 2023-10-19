@@ -1202,7 +1202,6 @@ define_custom_variables(void)
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
-
 }
 
 int			escape_hatch_storage_options = EH_IGNORE;
