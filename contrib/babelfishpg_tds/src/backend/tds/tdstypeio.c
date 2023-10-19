@@ -1456,6 +1456,7 @@ Datum
 TdsTypeSpatialToDatum(StringInfo buf)
 {
 	bytea	   *result;
+	int32	   geomType = 0;
 	int		   nbytes,
 			   npoints;
 	StringInfo  destBuf = makeStringInfo();
@@ -1475,15 +1476,17 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
 	if (buf->data[buf->cursor + 4] == 1 && buf->data[buf->cursor + 5] == 12)
 	{
-		appendStringInfoChar(destBuf, POINTTYPE & 0xFF);
-		appendStringInfoChar(destBuf, (POINTTYPE >> 8)  & 0xFF);
-		appendStringInfoChar(destBuf, (POINTTYPE >> 16)  & 0xFF);
-		appendStringInfoChar(destBuf, (POINTTYPE >> 24)  & 0xFF);
+		geomType = (int32) POINTTYPE;
 
-		appendStringInfoChar(destBuf, npoints & 0xFF);
-		appendStringInfoChar(destBuf, (npoints >> 8)  & 0xFF);
-		appendStringInfoChar(destBuf, (npoints >> 16)  & 0xFF);
-		appendStringInfoChar(destBuf, (npoints >> 24)  & 0xFF);
+		enlargeStringInfo(destBuf, sizeof(uint32_t));
+		memcpy(destBuf->data + destBuf->len, (char *) &geomType, sizeof(uint32_t));
+		destBuf->len += sizeof(uint32_t);
+		destBuf->data[destBuf->len] = '\0';
+
+		enlargeStringInfo(destBuf, sizeof(uint32_t));
+		memcpy(destBuf->data + destBuf->len, (char *) &npoints, sizeof(uint32_t));
+		destBuf->len += sizeof(uint32_t);
+		destBuf->data[destBuf->len] = '\0';
 	}
 	else
 	{
@@ -4238,7 +4241,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
 	/* TODO: Will need to introduce for Different Geometry Data Types */
 	switch (*((uint32_t*)gser->data))
 	{
-		case 1:
+		case POINTTYPE:
 			*itr = 1;
 			itr++;
 			*itr = 12;
