@@ -1,0 +1,32 @@
+SELECT * FROM babel_3696_1
+GO
+
+SELECT * FROM babel_3696_2
+GO
+
+SELECT * FROM babel_3696_3
+GO
+
+SELECT * FROM babel_3696_4
+GO
+
+SELECT * FROM babel_3696_5
+GO
+
+SELECT * FROM babel_3696_6
+GO
+
+SELECT * FROM babel_3696_7
+GO
+
+SELECT * FROM babel_3696_8
+GO
+
+SELECT * FROM babel_3696_9
+GO
+
+EXEC babel_3696_10
+GO
+
+EXEC babel_3696_11
+GO
