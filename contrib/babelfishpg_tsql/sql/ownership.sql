@@ -90,7 +90,7 @@ select
   , base.nspowner as principal_id
 from pg_catalog.pg_namespace base INNER JOIN sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
 where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys', 'public')
-and ext.dbid = sys.db_id();
+and ext.dbid = cast(sys.db_id() as oid);
 GRANT SELECT ON sys.schemas TO PUBLIC;
 CREATE SEQUENCE sys.babelfish_db_seq MAXVALUE 32767 CYCLE;
 

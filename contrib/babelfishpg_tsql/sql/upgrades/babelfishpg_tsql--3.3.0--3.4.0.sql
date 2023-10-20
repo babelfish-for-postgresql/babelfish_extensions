@@ -1261,65 +1261,6 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE VIEW sys.sp_statistics_view AS
-SELECT
-CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
-CAST(NULL AS smallint) AS NON_UNIQUE,
-CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
-CAST(NULL AS sys.sysname) AS INDEX_NAME,
-CAST(0 AS smallint) AS TYPE,
-CAST(NULL AS smallint) AS SEQ_IN_INDEX,
-CAST(NULL AS sys.sysname) AS COLUMN_NAME,
-CAST(NULL AS sys.varchar(1)) AS COLLATION,
-CAST(t1.reltuples AS int) AS CARDINALITY,
-CAST(t1.relpages AS int) AS PAGES,
-CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
-FROM pg_catalog.pg_class t1
-    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" COLLATE C AND s1.name = t3."TABLE_SCHEMA")
-    , generate_series(0,31) seq -- SQL server has max 32 columns per index
-UNION
-SELECT
-CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
-CASE
-WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
-ELSE CAST(1 AS smallint)
-END AS NON_UNIQUE,
-CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
--- the index name created by CREATE INDEX is re-mapped, find it (by checking
--- the ones not in pg_constraint) and restoring it back before display
-CASE 
-WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
-END AS INDEX_NAME,
-CASE
-WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
-ELSE CAST(3 AS smallint)
-END AS TYPE,
-CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
-CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
-CAST('A' AS sys.varchar(1)) AS COLLATION,
-CAST(t7.n_distinct AS int) AS CARDINALITY,
-CAST(0 AS int) AS PAGES, --not supported
-CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
-FROM pg_catalog.pg_class t1
-    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE C AND s1.name = t4."TABLE_SCHEMA")
-	JOIN (pg_catalog.pg_index t5 JOIN
-		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
-	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
-	LEFT JOIN pg_catalog.pg_stats t7 ON (t1.relname = t7.tablename AND t7.schemaname = nsp.nspname)
-	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
-    , generate_series(0,31) seq -- SQL server has max 32 columns per index
-WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
-    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
-GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
-
 create or replace view sys.all_objects as
 select 
     name collate sys.database_default
@@ -1720,23 +1661,6 @@ from sys.table_types tt
 left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || '_' || tt.type_table_object_id)::name and nis.schemaid = tt.schema_id and nis.type = 'TT'
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
-
-create or replace view sys.table_types_internal as
-SELECT pt.typrelid
-    FROM pg_catalog.pg_type pt
-    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
-    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
-
-create or replace view sys.schemas as
-select
-  CAST(ext.orig_name as sys.SYSNAME) as name
-  , base.oid as schema_id
-  , base.nspowner as principal_id
-from pg_catalog.pg_namespace base INNER JOIN sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
-where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys', 'public')
-and ext.dbid = sys.db_id();
-GRANT SELECT ON sys.schemas TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT

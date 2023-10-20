@@ -7,6 +7,7 @@
 create or replace view sys.table_types_internal as
 SELECT pt.typrelid
     FROM pg_catalog.pg_type pt
+    INNER join sys.schemas sch on pt.typnamespace = sch.schema_id
     INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
     INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
     WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
@@ -1982,7 +1983,6 @@ SELECT
       ELSE 0
       END
     AS sys.bit) as null_on_null_input
-  -- , sys.null_on_null_input(ao.object_id, ao.type) as null_on_null_input
   , null::integer as execute_as_principal_id
   , CAST(0 as sys.bit) as uses_native_compilation
   , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
