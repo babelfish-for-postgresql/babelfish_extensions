@@ -5,8 +5,6 @@ drop table babel_datatype_sqlvariant_vu_prepare_t2;
 go
 drop table babel_datatype_sqlvariant_vu_prepare_t3;
 go
-drop table babel_datatype_sqlvariant_vu_prepare_t4;
-go
 drop table babel_datatype_sqlvariant_vu_prepare_t5;
 go
 drop table babel_datatype_sqlvariant_vu_prepare_t6;

@@ -5,8 +5,6 @@ drop table babel_datatype_sqlvariant_vu_prepare_t2;
 go
 drop table babel_datatype_sqlvariant_vu_prepare_t3;
 go
-drop table babel_datatype_sqlvariant_vu_prepare_t4;
-go
 drop table babel_datatype_sqlvariant_vu_prepare_t5;
 go
 drop table babel_datatype_sqlvariant_vu_prepare_t6;
@@ -27,5 +25,9 @@ drop sequence babel_datatype_sqlvariant_vu_prepare_t2_sec;
 go
 drop sequence babel_datatype_sqlvariant_vu_prepare_t4_sec;
 go
+~~ERROR (Code: 3732)~~
+
+~~ERROR (Message: cannot drop sequence babel_datatype_sqlvariant_vu_prepare_t4_sec because other objects depend on it)~~
+
 drop sequence babel_datatype_sqlvariant_vu_prepare_t5_sec;
 go
