@@ -1338,8 +1338,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
 		int			alias_len = 0;
-		const char *colname_start;
+		const char *colname_start = NULL;
 		const char *identifier_name = NULL;
+		int		open_square_bracket = 0;
+		int			double_quotes = 0;
+		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
@@ -1349,14 +1352,73 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/*
 			 * If no alias is specified on a ColumnRef, then get the length of
 			 * the name from the ColumnRef and copy the column name from the
-			 * sourcetext.
+			 * sourcetext. To prevent the server crash, res->location for queries
+			 * with join statement should not be zero.
 			 */
-			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String))
+			if (res->location != 0 && (list_length(cref->fields) == 1 &&
+				IsA(linitial(cref->fields), String)))
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
+			}
+			/*
+			 * This condition will preserve the case of column name when there are more than
+			 * one cref->fields. For instance, Queries like 
+			 * 1. select [database].[schema].[table].[column] from table.
+			 * 2. select [schema].[table].[column] from table.
+			 * 3. select [t].[column] from table as t
+			 * Case 1: Handle the cases when column name is passed with no delimiters
+			 * For example, select ABC from table
+			 * Case 2: Handle the cases when column name is delimited with dq.
+			 * In such cases, we are checking if no. of dq are even or not. When dq are odd,
+			 * we are not tracing number of sqb and sq within dq.
+			 * For instance, Queries like select "AF bjs'vs] " from table.
+			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
+			 * are zero, it means we are out of sqb.
+			 */
+			else if(res->location != 0 && (list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String)))
+			{
+				identifier_name = strVal(llast(cref->fields));
+				alias_len = strlen(identifier_name);
+				colname_start = pstate->p_sourcetext + res->location;
+				last_dot = colname_start;
+				while(true)
+				{	
+					if(open_square_bracket == 0 && *colname_start == '"')
+					{
+						double_quotes++;
+					}
+					/* To check how many open sqb are present in sourcetext. */
+					else if(double_quotes % 2 == 0 && *colname_start == '[')
+					{
+						open_square_bracket++;
+					}
+					else if(double_quotes % 2 == 0 && *colname_start == ']')
+					{
+						open_square_bracket--;
+					}
+					/*
+					 * last_dot pointer is to trace the last dot in the sourcetext,
+					 * as last dot indicates the starting of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '.')
+					{
+						last_dot = colname_start;
+					}
+					/* 
+					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
+					 * space or comma, it means colname_start is at the end of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					{
+						last_dot++;
+						colname_start = last_dot;
+						break;
+					}
+					colname_start++;
+				}
 			}
 		}
 		else if (res->name != NULL && res->name_location != -1)
