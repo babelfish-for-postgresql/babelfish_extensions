@@ -1028,3 +1028,103 @@ GO
 
 ~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
 
+
+-- The instead of trigger is on and there'll no rows will be inserted
+insert into babel_3326_t1 values ('1');
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+DISABLE trigger babel_3326_t1_trigger on babel_3326_t1
+GO
+
+insert into babel_3326_t1 values ('1');
+GO
+~~ROW COUNT: 1~~
+
+
+-- The instead of trigger is disabled and new rows are inserted into the table
+select * from babel_3326_t1;
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+delete from babel_3326_t2;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t2;
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DISABLE trigger babel_3326_t2_trigger on babel_3326_t2
+GO
+
+delete from babel_3326_t2;
+GO
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t2;
+GO
+~~START~~
+varchar
+~~END~~
+
+
+update babel_3326_t3 set a = '3';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t3;
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+
+DISABLE trigger babel_3326_t3_trigger on babel_3326_t3
+GO
+
+update babel_3326_t3 set a = '3';
+GO
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t3;
+GO
+~~START~~
+varchar
+3
+~~END~~
+
