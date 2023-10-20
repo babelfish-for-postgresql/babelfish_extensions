@@ -87,12 +87,12 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
 			IF Geomtype = 'ST_Point' THEN
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported';
+					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN geom;
 				END IF;
 			ELSE
-				RAISE EXCEPTION '% is currently not supported', Geomtype;
+				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
@@ -128,7 +128,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
         varBin := $1;
         len := LENGTH(varBin);
         IF len >= 22 THEN
-			-- We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (currently for Point Type)
+			-- We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (for 2-D Point Type)
 			-- Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geometry Type)
 			srid := (get_byte(varBin, 3) << 24) | (get_byte(varBin, 2) << 16) | (get_byte(varBin, 1) << 8) | get_byte(varBin, 0);
 			WHILE byte_position < len LOOP
@@ -145,7 +145,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
 				IF encode(geomType, 'hex') = encode(E'\\x010c', 'hex') THEN
 					newVarBin := E'\\x0101000020' || varBin;
 				ELSE
-					RAISE EXCEPTION 'Currently only Point Type(without Z and M flags) is Supported';
+					RAISE EXCEPTION 'Unsupported geometry type';
 				END IF;
 			ELSE
 				RAISE EXCEPTION 'Error converting data type varbinary to geometry.';
@@ -229,12 +229,12 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
 			IF Geomtype = 'ST_Point' THEN
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported';
+					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN geom;
 				END IF;
 			ELSE
-				RAISE EXCEPTION '% is currently not supported', Geomtype;
+				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
@@ -396,7 +396,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
         varBin := $1;
         len := LENGTH(varBin);
         IF len >= 22 THEN
-			-- General Logic: We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (currently for Point Type) Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geography Type). It is expected by the driver
+			-- General Logic: We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (for 2-D Point Type) Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geography Type). It is expected by the driver
 			-- Here we are calculating SRID which is initially in little endian order
 			srid := (get_byte(varBin, 3) << 24) | (get_byte(varBin, 2) << 16) | (get_byte(varBin, 1) << 8) | get_byte(varBin, 0);
 			-- Here we are calculating value of latitude which is initially in little endian order to check if it lies in the range [-90, 90]
@@ -423,7 +423,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
 						RAISE EXCEPTION 'Error converting data type varbinary to geography.';
 					END IF;
 				ELSE
-					RAISE EXCEPTION 'Currently only Point Type(without Z and M flags) is Supported';
+					RAISE EXCEPTION 'Unsupported geometry type';
 				END IF;
 			ELSE
 				RAISE EXCEPTION 'Error converting data type varbinary to geography.';
@@ -505,7 +505,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 				-- Call the underlying function after preprocessing
 				-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported';
+					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
 				END IF;
@@ -515,7 +515,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 				RAISE EXCEPTION 'Inavalid SRID';
 			END IF;
 		ELSE
-			RAISE EXCEPTION '% is currently not supported', Geomtype;
+			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -590,7 +590,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 				-- Call the underlying function after preprocessing
 				-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported';
+					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
 				END IF;
@@ -600,7 +600,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 				RAISE EXCEPTION 'Inavalid SRID';
 			END IF;
 		ELSE
-			RAISE EXCEPTION '% is currently not supported', Geomtype;
+			RAISE EXCEPTION '% is not supported', Geomtype;
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

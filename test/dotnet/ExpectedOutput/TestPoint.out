@@ -3,16 +3,16 @@
 #Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
 #Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
 #Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
-#E#Currently Only 2-D Point Type is Supported in BabelFish!
+#E#Unsupported geometry type
 #Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
-#E#Currently Only 2-D Point Type is Supported in BabelFish!
+#E#Unsupported geometry type
 #Q#CREATE TABLE POINTGEOG_dt(location GEOGRAPHY);
 #Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
 #Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
 #Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
-#E#Currently Only 2-D Point Type is Supported in BabelFish!
+#E#Unsupported geometry type
 #Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
-#E#Currently Only 2-D Point Type is Supported in BabelFish!
+#E#Unsupported geometry type
 #Q#CREATE TABLE POINT_dt(geom GEOMETRY, geog GEOGRAPHY);
 #Q#INSERT INTO POINT_dt(geom) values(@geom) 
 #Q#INSERT INTO POINT_dt(geog) values(@geog) 

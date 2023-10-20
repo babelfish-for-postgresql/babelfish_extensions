@@ -83,12 +83,12 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
 			IF Geomtype = 'ST_Point' THEN
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported';
+					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN geom;
 				END IF;
 			ELSE
-				RAISE EXCEPTION '% is currently not supported', Geomtype;
+				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
@@ -124,7 +124,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
         varBin := $1;
         len := LENGTH(varBin);
         IF len >= 22 THEN
-			-- We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (currently for Point Type)
+			-- We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (for 2-D Point Type)
 			-- Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geometry Type)
 			srid := (get_byte(varBin, 3) << 24) | (get_byte(varBin, 2) << 16) | (get_byte(varBin, 1) << 8) | get_byte(varBin, 0);
 			WHILE byte_position < len LOOP
@@ -141,7 +141,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
 				IF encode(geomType, 'hex') = encode(E'\\x010c', 'hex') THEN
 					newVarBin := E'\\x0101000020' || varBin;
 				ELSE
-					RAISE EXCEPTION 'Currently only Point Type(without Z and M flags) is Supported';
+					RAISE EXCEPTION 'Unsupported geometry type';
 				END IF;
 			ELSE
 				RAISE EXCEPTION 'Error converting data type varbinary to geometry.';
@@ -225,12 +225,12 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
 			IF Geomtype = 'ST_Point' THEN
 				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
-					RAISE EXCEPTION 'Z and M flags are currently not supported';
+					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN geom;
 				END IF;
 			ELSE
-				RAISE EXCEPTION '% is currently not supported', Geomtype;
+				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
 		ELSE
 			RAISE EXCEPTION 'SRID value should be between 0 and 999999';

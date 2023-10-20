@@ -1492,7 +1492,7 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("Currently Only 2-D Point Type is Supported in BabelFish!")));
+				 errmsg("Unsupported geometry type")));
 	}
 
 	/* We are copying the remaining bytes (16 Bytes)*npoints from buf */
@@ -4248,7 +4248,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
 			itr++;
 			break;
 		default:
-			elog(ERROR, "Currently only 2-D point datatype is supported in babelfish!");
+			elog(ERROR, "Unsupported geometry type");
 	}
 
     /* Data part of the Row has length 16 * (No. of Points) */

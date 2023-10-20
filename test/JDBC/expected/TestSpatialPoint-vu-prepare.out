@@ -114,12 +114,12 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 #Negative Test for STGeomFromText when invalid type is provided
 prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
@@ -129,7 +129,7 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 #Negative Test for STGeomFromText when Null geometry is provided
 prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
@@ -139,7 +139,7 @@ prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 
 CREATE VIEW TextFromGeom AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt;
@@ -312,12 +312,12 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 #Negative Test for STGeomFromText when invalid type is provided
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
@@ -327,7 +327,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 #Negative Test for STGeomFromText when Null geography is provided
 prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
@@ -337,7 +337,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
 
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point Type(without Z and M flags) is Supported)~~
+~~ERROR (Message: Unsupported geometry type)~~
 
 
 CREATE VIEW TextFromGeog AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt;
