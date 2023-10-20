@@ -1285,9 +1285,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			{
 				HOLD_INTERRUPTS();
 				elog(DEBUG1, "TSQL TXN PG semantics : Rollback internal savepoint");
-				RESUME_INTERRUPTS();
 				RollbackAndReleaseCurrentSubTransaction();
 				MemoryContextSwitchTo(cur_ctxt);
+				RESUME_INTERRUPTS();
 				CurrentResourceOwner = oldowner;
 			}
 			else if (!IsTransactionBlockActive())
@@ -1296,13 +1296,13 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 				{
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
-					RESUME_INTERRUPTS();
 					HoldPinnedPortals();
 					SPI_setCurrentInternalTxnMode(true);
 					AbortCurrentTransaction();
 					StartTransactionCommand();
 					SPI_setCurrentInternalTxnMode(false);
 					MemoryContextSwitchTo(cur_ctxt);
+					RESUME_INTERRUPTS();
 				}
 			}
 			else
@@ -1339,10 +1339,10 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback internal savepoint");
-			RESUME_INTERRUPTS();
 			/* Rollback internal savepoint if it is current savepoint */
 			RollbackAndReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 			CurrentResourceOwner = oldowner;
 		}
 		else if (!IsTransactionBlockActive())
@@ -1353,12 +1353,12 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 */
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
-			RESUME_INTERRUPTS();
 			/* Hold portals to make sure that cursors work */
 			HoldPinnedPortals();
 			AbortCurrentTransaction();
 			StartTransactionCommand();
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 		}
 		else if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
 		{
@@ -1368,11 +1368,11 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 */
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback internal transaction");
-			RESUME_INTERRUPTS();
 			HoldPinnedPortals();
 			pltsql_rollback_txn();
 			estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 		}
 
 
@@ -1389,9 +1389,9 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback implicit transaction");
-			RESUME_INTERRUPTS();
 			pltsql_rollback_txn();
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 		}
 
 		estate->impl_txn_type = PLTSQL_IMPL_TRAN_OFF;
