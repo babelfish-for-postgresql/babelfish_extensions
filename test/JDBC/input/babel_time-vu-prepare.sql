@@ -1,10 +1,7 @@
 create table babel_time_vu_prepare_t1(a time)
 GO
 
-insert into babel_time_vu_prepare_t1 values ('2012-02-23')
-GO
-
-create view babel_time_vu_prepare_v1 as select CAST('2012-02-23' AS time) as val
+insert into babel_time_vu_prepare_t1 values ('2:3:2')
 GO
 
 create procedure babel_time_vu_prepare_p1 as select CAST('2012-02-23' AS time) as val

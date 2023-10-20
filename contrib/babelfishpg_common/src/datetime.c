@@ -1015,10 +1015,10 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 					 * where hh should definitely be 2 digit.
 					 */
 					if (i-1 == 1 && field[1] && pg_strcasecmp(field[1], "t") == 0)
-						pattern = "^([0-1][0-9]|2[0-3])(:[0-5]?[0-9]:[0-5]?[0-9]?.[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9])?$";
+						pattern = "^([0-1][0-9]|2[0-3])(:[0-5]?[0-9]:[0-5]?[0-9]?.[0-9]{1,9})?$";
 					/* For all other time fields check if <TIME> is in hh:mm[:ss][.nnn] format */
 					else
-						pattern = "^([0-1]?[0-9]|2[0-3])(:[0-5]?[0-9])(:[0-5]?[0-9]?.[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9]?[0-9])?$";
+						pattern = "^([0-1]?[0-9]|2[0-3]|[0-9])(:[0-5]?[0-9])(:[0-5]?[0-9]|:[0-5]?[0-9]?.[0-9]{1,9})?$";
 
 					if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
 						ereport(ERROR,

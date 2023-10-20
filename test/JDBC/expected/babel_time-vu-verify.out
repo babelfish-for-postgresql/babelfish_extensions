@@ -13,6 +13,14 @@ GO
 -- if only date is given as input
 -- accepted formats are `mm{-/.}dd{-/.}yyyy`, `yyyy{-/.}mm{-/.}dd`
 -- If text month is given then acceptable formats are `dd{-/.}Mon{-/.}yyyy`, `yyyy{-/.}Mon{-/.}dd`, `Mon yyyy dd`, `Mon dd yyyy`, `dd yyyy Mon`, `dd Mon yyyy`, `yyyy Mon dd`, `yyyy dd Mon`
+create view babel_time_vu_prepare_v1 as select CAST('2012-02-23' AS time) as val
+GO
+
+insert into babel_time_vu_prepare_t1 values ('2012-02-23')
+GO
+~~ROW COUNT: 1~~
+
+
 insert into babel_time_vu_prepare_t1 values ('2012   -    02-23')
 GO
 ~~ROW COUNT: 1~~
@@ -1384,6 +1392,7 @@ SELECT * from babel_TIME_vu_prepare_t1
 GO
 ~~START~~
 time
+02:03:02.0000000
 00:00:00.0000000
 00:00:00.0000000
 00:00:00.0000000
@@ -1394,6 +1403,7 @@ SELECT CAST(a as time) from babel_TIME_vu_prepare_t1
 GO
 ~~START~~
 time
+02:03:02.0000000
 00:00:00.0000000
 00:00:00.0000000
 00:00:00.0000000
