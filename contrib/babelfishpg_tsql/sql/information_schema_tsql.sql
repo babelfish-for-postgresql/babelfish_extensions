@@ -327,7 +327,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
-		AND ext.dbid = cast(sys.db_id() as oid);
+		AND ext.dbid =sys.db_id();
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
@@ -395,7 +395,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 		WHERE (pg_has_role(t.typowner, 'USAGE')
 			OR has_type_privilege(t.oid, 'USAGE'))
 		AND (t.typtype = 'd' OR is_tbl_type)
-		AND ext.dbid = cast(sys.db_id() as oid);
+		AND ext.dbid = sys.db_id();
 
 GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
 
@@ -425,7 +425,7 @@ CREATE VIEW information_schema_tsql.tables AS
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-		AND ext.dbid = cast(sys.db_id() as oid)
+		AND ext.dbid = sys.db_id()
 		AND (NOT c.relname = 'sysdatabases');
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
@@ -463,7 +463,7 @@ CREATE VIEW information_schema_tsql.table_constraints AS
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-		  AND  extc.dbid = cast(sys.db_id() as oid);
+		  AND  extc.dbid = sys.db_id();
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
@@ -498,7 +498,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-		AND ext.dbid = cast(sys.db_id() as oid);
+		AND ext.dbid = sys.db_id();
 
 GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 
@@ -524,7 +524,7 @@ CREATE VIEW information_schema_tsql.check_constraints AS
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
-		  AND  extc.dbid = cast(sys.db_id() as oid);
+		  AND  extc.dbid = sys.db_id();
 
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
@@ -712,7 +712,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             AND has_function_privilege(p.oid, 'EXECUTE')
             AND (pg_has_role(t.typowner, 'USAGE')
             OR has_type_privilege(t.oid, 'USAGE'))
-            AND ext.dbid = cast(sys.db_id() as oid)
+            AND ext.dbid = sys.db_id()
 	    AND p.prolang = l.oid
             AND p.prorettype = t.oid
             AND p.pronamespace = nc.oid
@@ -744,7 +744,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
             pg_sequence s join pg_class r on s.seqrelid = r.oid join pg_type t on s.seqtypid=t.oid,
             sys.translate_pg_type_to_tsql(s.seqtypid) AS tsql_type_name
         WHERE nc.oid = r.relnamespace
-        AND extc.dbid = cast(sys.db_id() as oid)
+        AND extc.dbid = sys.db_id()
             AND r.relkind = 'S'
             AND (NOT pg_is_other_temp_schema(nc.oid))
             AND (pg_has_role(r.relowner, 'USAGE')
@@ -775,7 +775,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.schemata AS
 	CAST(null AS sys.sysname) AS "DEFAULT_CHARACTER_SET_NAME"
 	FROM ((pg_catalog.pg_namespace np LEFT JOIN sys.pg_namespace_ext nc on np.nspname = nc.nspname)
 		LEFT JOIN pg_catalog.pg_roles r on r.oid = nc.nspowner) LEFT JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
-	WHERE (ext.dbid = cast(sys.db_id() as oid) OR np.nspname in ('sys', 'information_schema_tsql')) AND
+	WHERE (ext.dbid = sys.db_id() OR np.nspname in ('sys', 'information_schema_tsql')) AND
 	      (pg_has_role(np.nspowner, 'USAGE') OR has_schema_privilege(np.oid, 'CREATE, USAGE'))
 	ORDER BY nc.nspname, np.nspname;
 
