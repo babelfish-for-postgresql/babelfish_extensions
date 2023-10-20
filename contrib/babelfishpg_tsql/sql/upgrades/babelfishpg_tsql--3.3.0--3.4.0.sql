@@ -1341,6 +1341,15 @@ DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
+    SELECT * 
+    FROM pg_catalog.pg_settings 
+    WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
+          name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+          name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
+          name collate "C" = 'babelfishpg_tsql.repeatable_read_isolation' OR
+          name collate "C" = 'babelfishpg_tsql.serializable_isolation';
+GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
