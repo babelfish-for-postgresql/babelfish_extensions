@@ -1606,7 +1606,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
 		int			alias_len = 0;
-		const char *colname_start;
+		const char *colname_start = NULL;
 		const char *identifier_name = NULL;
 		int			open_square_bracket = 0;
 		int			double_quotes = 0;
