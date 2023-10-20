@@ -2136,8 +2136,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	new_record = palloc0(sizeof(Datum) * BBF_DOMAIN_MAPPING_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * BBF_DOMAIN_MAPPING_NUM_COLS);
 
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-
 	new_record[0] = PG_GETARG_DATUM(0);
 	new_record[1] = PG_GETARG_DATUM(1);
 

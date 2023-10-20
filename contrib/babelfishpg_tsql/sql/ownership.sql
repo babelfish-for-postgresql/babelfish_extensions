@@ -88,9 +88,9 @@ select
   CAST(ext.orig_name as sys.SYSNAME) as name
   , base.oid as schema_id
   , base.nspowner as principal_id
-from pg_catalog.pg_namespace base INNER JOIN sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
-where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys', 'public')
-and ext.dbid = cast(sys.db_id() as oid);
+from pg_catalog.pg_namespace base 
+inner join sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
+where ext.dbid = sys.db_id();
 GRANT SELECT ON sys.schemas TO PUBLIC;
 CREATE SEQUENCE sys.babelfish_db_seq MAXVALUE 32767 CYCLE;
 
@@ -333,10 +333,10 @@ CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
-    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
     WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
     WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
-    ELSE NULL 
+    ELSE NULL
   END
   AS NVARCHAR(60)) AS type_desc,
 CAST(Ext.is_disabled AS INT) AS is_disabled,
@@ -347,7 +347,10 @@ CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
-FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
