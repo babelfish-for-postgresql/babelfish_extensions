@@ -1277,7 +1277,7 @@ select
   , cast (is_schema_published as sys.bit)
 from
 (
--- details of user defined and system tables
+-- details of system tables
 select
     t.relname::sys.sysname as name
   , t.oid as object_id
@@ -1303,7 +1303,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
  
 union all
- 
+-- details of user defined tables
 select
     t.relname::sys.sysname as name
   , t.oid as object_id
@@ -1330,7 +1330,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
  
 union all
--- details of user defined and system views
+-- details of system views
 select
     t.relname::sys.sysname as name
   , t.oid as object_id
@@ -1350,9 +1350,13 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.sch
 where t.relkind = 'v'
 and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
 and has_schema_privilege(s.oid, 'USAGE')
-and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
--- details of user defined and system views
+-- Details of user defined views
+
+-- Currently for pg_class, pg_proc UNIONs, we separated user defined objects and system objects because the 
+-- optimiser will be able to make a better estimation of number of rows(in case the query contains a filter on 
+-- is_ms_shipped column) and in turn chooses a better query plan. 
 select
     t.relname::sys.sysname as name
   , t.oid as object_id
@@ -1373,7 +1377,7 @@ where t.relkind = 'v'
 and s.nspname <> 'sys' and nis.name is null
 and ext.nspname is not null
 and has_schema_privilege(s.oid, 'USAGE')
-and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
 select
@@ -1421,7 +1425,7 @@ where has_schema_privilege(s.oid, 'USAGE')
 and c.contype = 'p'
 and (s.nspname = 'sys' or ext.nspname is not null)
 union all
--- details of user defined and system defined procedures
+-- details of system defined procedures
 select
     p.proname::sys.sysname as name 
   , p.oid as object_id
@@ -1495,7 +1499,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
  
 union all
- 
+-- details of user defined procedures
 select
     p.proname::sys.sysname as name 
   , p.oid as object_id
