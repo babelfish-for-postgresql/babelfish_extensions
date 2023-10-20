@@ -1188,6 +1188,27 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
+LANGUAGE plpgsql
+AS $$ 
+DECLARE 
+	babelfish_catalog RECORD;
+	schema_name varchar = 'sys';
+BEGIN
+	FOR babelfish_catalog IN (
+		SELECT relname as name from pg_class t 
+		INNER JOIN pg_namespace n on n.oid = t.relnamespace
+		WHERE t.relkind = 'r' and n.nspname = schema_name
+		)
+	LOOP
+	EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+	END LOOP;
+EXCEPTION 
+	WHEN OTHERS THEN
+	-- ignore all exceptions and return control to calling block
+		NULL;
+END
+$$;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema
 -- for the guest users in the already existing databases
@@ -1205,17 +1226,11 @@ DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+-- Always run analyze after upgrade for all babelfish catalog.
+-- It will not block upgrade in case of any failure.
+CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
--- Run ANALYZE for BABELFISH catalogs
-ANALYZE sys.babelfish_sysdatabases;
-ANALYZE sys.babelfish_schema_permissions;
-ANALYZE sys.babelfish_function_ext;
-ANALYZE sys.babelfish_authid_login_ext;
-ANALYZE sys.babelfish_authid_user_ext;
-ANALYZE sys.babelfish_domain_mapping;
-ANALYZE sys.babelfish_extended_properties;
-ANALYZE sys.babelfish_namespace_ext;
 
