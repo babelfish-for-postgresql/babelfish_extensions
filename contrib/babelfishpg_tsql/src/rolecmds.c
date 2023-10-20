@@ -2156,7 +2156,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 		MemoryContext ectx;
 		ErrorData  *edata;
 
-		HOLD_INTERRUPTS();
 		ectx = MemoryContextSwitchTo(ccxt);
 		table_close(bbf_domain_mapping_rel, RowExclusiveLock);
 		heap_freetuple(tuple);
@@ -2166,7 +2165,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 		FlushErrorState();
 		MemoryContextSwitchTo(ectx);
 
-		RESUME_INTERRUPTS();
 		ereport(ERROR,
 				(errcode(edata->sqlerrcode),
 				 errmsg("Domain mapping entry could not be added due to following reason: %s",
