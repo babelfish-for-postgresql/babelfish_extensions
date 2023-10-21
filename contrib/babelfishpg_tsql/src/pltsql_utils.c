@@ -1721,7 +1721,7 @@ Oid get_sys_varcharoid(void)
 
 Oid get_sysadmin_oid(void)
 {
-	if(!OidIsValid(sysadmin_oid))
+	if (!OidIsValid(sysadmin_oid))
 		sysadmin_oid = get_role_oid("sysadmin", true);
 	
 	return sysadmin_oid;
