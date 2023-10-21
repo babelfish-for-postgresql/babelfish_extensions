@@ -4343,7 +4343,8 @@ tsql_IsolationLevelStr:
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						$$ = "repeatable read";	
 					}
-					else{
+					else
+					{
 						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
@@ -4364,7 +4365,8 @@ tsql_IsolationLevelStr:
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
 						$$ = "serializable";
 					}
-					else{
+					else
+					{
 						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
