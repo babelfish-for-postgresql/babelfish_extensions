@@ -150,12 +150,15 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
+PG_FUNCTION_INFO_V1(babelfish_datepart_internal);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
+int			custom_date_part(const char* field, time_t timestamp);
+int			custom_right(const char* source, int length);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 static int64 get_identity_next_value(void);
@@ -254,6 +257,120 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_TEXT_P(new_text);
+}
+
+int
+custom_date_part(const char* field, time_t timestamp)
+{
+    struct tm *tm;
+    // Convert time_t to tm structure
+    tm = localtime(&timestamp);
+    if (strcmp(field, "year") == 0)
+        return tm->tm_year + 1900;
+    else if (strcmp(field, "quarter") == 0)
+        return (tm->tm_mon / 3) + 1;
+    else if (strcmp(field, "month") == 0)
+        return tm->tm_mon + 1;
+    else if (strcmp(field, "day") == 0)
+        return tm->tm_mday;
+    else if (strcmp(field, "hour") == 0)
+        return tm->tm_hour;
+    else if (strcmp(field, "minute") == 0)
+        return tm->tm_min;
+    else if (strcmp(field, "second") == 0)
+        return tm->tm_sec;
+    else if (strcmp(field, "dow") == 0)
+        return tm->tm_wday;
+    else if (strcmp(field, "doy") == 0)
+        return tm->tm_yday + 1;
+    else if (strcmp(field, "week") == 0) {
+        int day_of_year = tm->tm_yday + 1;
+        int jan1_weekday = (tm->tm_wday - day_of_year + 1 + 7) % 7;
+        int week_number = (day_of_year + jan1_weekday - 1) / 7;
+        if (jan1_weekday == 0 || jan1_weekday > 4) // Adjust if Jan 1 is Sun or Fri-Sat
+            week_number += 1;
+        return week_number;
+    }
+    else {
+        // printf("Unsupported date part\n");
+        return -1;
+    }
+}
+int
+custom_right(const char* source, int length) {
+    int source_length = strlen(source);
+    if (length >= source_length) {
+        return atoi(source);
+    }
+    return atoi(source + source_length - length);
+}
+Datum
+babelfish_datepart_internal(PG_FUNCTION_ARGS)
+{
+    char        *field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+    Timestamp   timestamp = PG_GETARG_TIMESTAMP(1);
+    int         df_tz = PG_GETARG_INT32(2);
+    int         tsql_datefirst = (int)atoi(GetConfigOption("babelfishpg_tds.datefirst", true, true));
+    int         result, first_day, temp, first_week_end, day;
+    if(strcasecmp(field , "dow") == 0)
+    {
+        result = (custom_date_part(field, timestamp) - tsql_datefirst + 7) % 7 +1;
+    }
+    else if(strcasecmp(field , "tsql_week") == 0)
+    {
+        temp = custom_date_part("year", timestamp);
+        first_day = DirectFunctionCall3(make_date,temp ,1 ,1);
+        first_week_end = 8 - DirectFunctionCall3(babelfish_datepart_internal,PointerGetDatum(cstring_to_text("dow")) ,first_day ,0);
+        day = custom_date_part("doy", timestamp);
+        if(day <= first_week_end)
+        {
+            result = -1;
+        }
+        else
+        {
+            result = 2 + (day - first_week_end - 1) / 7;
+        }
+    }
+    else if(strcasecmp(field , "second") == 0)
+    {
+        result = DirectFunctionCall1(timestamp_trunc, custom_date_part(field, timestamp));
+    }
+    else if(strcasecmp(field , "millisecond") == 0)
+    {
+        int datePartValue = custom_date_part(field, timestamp);
+        char *buffer = (char *) palloc(20);
+        sprintf(buffer, "%d", datePartValue);
+        result = custom_right(buffer, 3);
+        pfree(buffer);
+        // result = (int)(custom_right((char *)custom_date_part(field, timestamp), 3));
+    }
+    else if(strcasecmp(field , "microsecond") == 0)
+    {
+        int datePartValue = custom_date_part(field, timestamp);
+        char *buffer = (char *) palloc(20);
+        sprintf(buffer, "%d", datePartValue);
+        result = custom_right(buffer, 6);
+        pfree(buffer);
+        // result = (int)(custom_right((char *)custom_date_part(field, timestamp), 6));
+    }
+    else if(strcasecmp(field , "nanosecond") == 0)
+    {
+        int datePartValue = custom_date_part(field, timestamp);
+        char *buffer = (char *) palloc(20);
+        sprintf(buffer, "%d", datePartValue);
+        result = custom_right(buffer, 6) * 1000;
+        pfree(buffer);
+        // result = (int)(custom_right((char *)custom_date_part("microsecond", timestamp), 6)) * 1000;
+    }
+    else if(strcasecmp(field , "nanosecond") == 0)
+    {
+        result = df_tz;
+    }
+    else
+    {
+        result = custom_date_part(field, timestamp);
+    }
+    PG_RETURN_INT32(result);
 }
 
 Datum

@@ -129,6 +129,11 @@ RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_datepart_internal(field text, datapart_date timestamp ,df_tz INTEGER) 
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'babelfish_datepart_internal'
+LANGUAGE C STABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.tsql_get_functiondef(IN function_id OID DEFAULT NULL)
 RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_functiondef'
@@ -1754,65 +1759,67 @@ DECLARE
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
-    datapart_date sys.DATETIME;
+    datapart_date timestamp;
 BEGIN
     IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
      'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
-        datapart_date = CAST(arg AS sys.DATETIME);
+        datapart_date = CAST(arg AS timestamp);
         CASE datepart
-        WHEN 'dow' THEN
-            result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
-        WHEN 'tsql_week' THEN
-            first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
-            first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
-            day = date_part('doy', datapart_date)::INTEGER;
-            IF day <= first_week_end THEN
-                result = 1;
-            ELSE
-                result = 2 + (day - first_week_end - 1) / 7;
-            END IF;
-        WHEN 'second' THEN
-            result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
-        WHEN 'millisecond' THEN
-            result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
-        WHEN 'microsecond' THEN
-            result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
-        WHEN 'nanosecond' THEN
-            -- Best we can do - Postgres does not support nanosecond precision
-            result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
-        ELSE
-            result = date_part(datepart, datapart_date)::INTEGER;
-        END CASE;
-        RETURN result;
+
+        RETURN sys.babelfish_datepart_internal(datepart, datapart_date, df_tz);
+        -- WHEN 'dow' THEN
+        --     result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+        -- WHEN 'tsql_week' THEN
+        --     first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
+        --     first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
+        --     day = date_part('doy', datapart_date)::INTEGER;
+        --     IF day <= first_week_end THEN
+        --         result = 1;
+        --     ELSE
+        --         result = 2 + (day - first_week_end - 1) / 7;
+        --     END IF;
+        -- WHEN 'second' THEN
+        --     result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
+        -- WHEN 'millisecond' THEN
+        --     result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
+        -- WHEN 'microsecond' THEN
+        --     result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
+        -- WHEN 'nanosecond' THEN
+        --     -- Best we can do - Postgres does not support nanosecond precision
+        --     result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
+        -- ELSE
+        --     result = date_part(datepart, datapart_date)::INTEGER;
+        -- END CASE;
+        -- RETURN result;
     END IF;
-	CASE datepart
-	WHEN 'dow' THEN
-		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
-	WHEN 'tsql_week' THEN
-		first_day = make_date(date_part('year', arg)::INTEGER, 1, 1);
-		first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
-		day = date_part('doy', arg)::INTEGER;
-		IF day <= first_week_end THEN
-			result = 1;
-		ELSE
-			result = 2 + (day - first_week_end - 1) / 7;
-		END IF;
-	WHEN 'second' THEN
-		result = TRUNC(date_part(datepart, arg))::INTEGER;
-	WHEN 'millisecond' THEN
-		result = right(date_part(datepart, arg)::TEXT, 3)::INTEGER;
-	WHEN 'microsecond' THEN
-		result = right(date_part(datepart, arg)::TEXT, 6)::INTEGER;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		result = right(date_part('microsecond', arg)::TEXT, 6)::INTEGER * 1000;
-	WHEN 'tzoffset' THEN
-		-- timezone for datetimeoffset
-		result = df_tz;
-	ELSE
-		result = date_part(datepart, arg)::INTEGER;
-	END CASE;
-	RETURN result;
+	-- CASE datepart
+	-- WHEN 'dow' THEN
+	-- 	result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
+	-- WHEN 'tsql_week' THEN
+	-- 	first_day = make_date(date_part('year', arg)::INTEGER, 1, 1);
+	-- 	first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
+	-- 	day = date_part('doy', arg)::INTEGER;
+	-- 	IF day <= first_week_end THEN
+	-- 		result = 1;
+	-- 	ELSE
+	-- 		result = 2 + (day - first_week_end - 1) / 7;
+	-- 	END IF;
+	-- WHEN 'second' THEN
+	-- 	result = TRUNC(date_part(datepart, arg))::INTEGER;
+	-- WHEN 'millisecond' THEN
+	-- 	result = right(date_part(datepart, arg)::TEXT, 3)::INTEGER;
+	-- WHEN 'microsecond' THEN
+	-- 	result = right(date_part(datepart, arg)::TEXT, 6)::INTEGER;
+	-- WHEN 'nanosecond' THEN
+	-- 	-- Best we can do - Postgres does not support nanosecond precision
+	-- 	result = right(date_part('microsecond', arg)::TEXT, 6)::INTEGER * 1000;
+	-- WHEN 'tzoffset' THEN
+	-- 	-- timezone for datetimeoffset
+	-- 	result = df_tz;
+	-- ELSE
+	-- 	result = date_part(datepart, arg)::INTEGER;
+	-- END CASE;
+	-- RETURN result;
 EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
     -- date_part() throws an exception when trying to get day/month/year etc. from
 	-- TIME, so we just need to catch the exception in this case
