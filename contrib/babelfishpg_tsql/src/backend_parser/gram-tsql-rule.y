@@ -4338,7 +4338,7 @@ tsql_IsolationLevelStr:
 				}
 			| REPEATABLE READ
 				{
-					if(strcmp(pltsql_repeatable_read_isolation, "pg_isolation") == 0)
+					if (strcmp(pltsql_repeatable_read_isolation, "pg_isolation") == 0)
 					{
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						$$ = "repeatable read";	
@@ -4359,7 +4359,7 @@ tsql_IsolationLevelStr:
 				}
 			| SERIALIZABLE
 				{
-					if(strcmp(pltsql_serializable_isolation, "pg_isolation") == 0)
+					if (strcmp(pltsql_serializable_isolation, "pg_isolation") == 0)
 					{
 						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
 						$$ = "serializable";

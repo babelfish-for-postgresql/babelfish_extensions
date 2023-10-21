@@ -395,7 +395,7 @@ static bool
 check_bbf_isolation_type(char **newval, void **extra, GucSource source)
 {
 	if (pg_strcasecmp(*newval, "pg_isolation") != 0 &&
-			pg_strcasecmp(*newval, "default") != 0)
+		pg_strcasecmp(*newval, "default") != 0)
 		return false;
 
 	return true;
@@ -818,23 +818,22 @@ define_custom_variables(void)
 							   NULL, NULL, NULL);
 	
 	DefineCustomStringVariable("babelfishpg_tsql.repeatable_read_isolation",
-							 gettext_noop("Select mapping for isolation level reapeatable read"),
-							 NULL,
-							 &pltsql_repeatable_read_isolation,
-							 "default",
-							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 check_bbf_isolation_type, NULL, NULL);
+							   gettext_noop("Select mapping for isolation level reapeatable read"),
+							   NULL,
+							   &pltsql_repeatable_read_isolation,
+							   "default",
+							   PGC_USERSET,
+							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							   check_bbf_isolation_type, NULL, NULL);
 	
 	DefineCustomStringVariable("babelfishpg_tsql.serializable_isolation",
-							 gettext_noop("Select mapping for isolation level serializable"),
-							 NULL,
-							 &pltsql_serializable_isolation,
-							 "default",
-							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 check_bbf_isolation_type, NULL, NULL);
-
+							   gettext_noop("Select mapping for isolation level serializable"),
+							   NULL,
+							   &pltsql_serializable_isolation,
+							   "default",
+							   PGC_USERSET,
+							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							   check_bbf_isolation_type, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
 							gettext_noop("Sets the first day of the week to a number from 1 through 7."),
