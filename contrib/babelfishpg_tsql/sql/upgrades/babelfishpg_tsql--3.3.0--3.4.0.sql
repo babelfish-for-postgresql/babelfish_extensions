@@ -39,581 +39,6 @@ LANGUAGE plpgsql;
  */
 
 
-ALTER VIEW sys.types RENAME TO types_deprecated_3_4_0;
-
-create or replace view sys.types As
-with RECURSIVE type_code_list as
-(
-    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
-    from sys.babelfish_typecode_list()
-),
-tt_internal as MATERIALIZED
-(
-  Select * from sys.table_types_internal
-)
--- For System types
-select 
-  ti.tsql_type_name as name
-  , t.oid as system_type_id
-  , t.oid as user_type_id
-  , s.oid as schema_id
-  , cast(NULL as INT) as principal_id
-  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
-  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
-  , CASE c.collname
-    WHEN 'default' THEN default_collation_name
-    ELSE  c.collname
-    END as collation_name
-  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
-  , 0 as is_user_defined
-  , 0 as is_assembly_type
-  , 0 as default_object_id
-  , 0 as rule_object_id
-  , 0 as is_table_type
-from pg_type t
-inner join pg_namespace s on s.oid = t.typnamespace
-inner join type_code_list ti on t.typname = ti.pg_type_name
-left join pg_collation c on c.oid = t.typcollation
-,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
-where
-ti.tsql_type_name IS NOT NULL  
-and pg_type_is_visible(t.oid)
-and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
-union all 
--- For User Defined Types
-select cast(t.typname as text) as name
-  , t.typbasetype as system_type_id
-  , t.oid as user_type_id
-  , t.typnamespace as schema_id
-  , null::integer as principal_id
-  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
-  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
-  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
-  , CASE c.collname
-    WHEN 'default' THEN default_collation_name
-    ELSE  c.collname 
-    END as collation_name
-  , case when tt.typrelid is not null then cast(0 as sys.bit)
-         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
-    end
-    as is_nullable
-  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
-  , 1 as is_user_defined
-  , 0 as is_assembly_type
-  , 0 as default_object_id
-  , 0 as rule_object_id
-  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
-from pg_type t
-join sys.schemas sch on t.typnamespace = sch.schema_id
-left join type_code_list ti on t.typname = ti.pg_type_name
-left join pg_collation c on c.oid = t.typcollation
-left join tt_internal tt on t.typrelid = tt.typrelid
-, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
-, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
--- we want to show details of user defined datatypes created under babelfish database
-where 
- ti.tsql_type_name IS NULL
-and
-  (
-    -- show all user defined datatypes created under babelfish database except table types
-    t.typtype = 'd'
-    or
-    -- only for table types
-    tt.typrelid is not null  
-  );
-GRANT SELECT ON sys.types TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
-
-
-ALTER VIEW sys.table_types RENAME TO table_types_deprecated_3_4_0;
-create or replace view sys.table_types as
-select st.*
-  , pt.typrelid::int as type_table_object_id
-  , 0::sys.bit as is_memory_optimized -- return 0 until we support in-memory tables
-from sys.types st
-inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
-where is_table_type = 1;
-GRANT SELECT ON sys.table_types TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');
-
-
-ALTER VIEW sys.sp_special_columns_view RENAME TO sp_special_columns_view_3_4_0;
-CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
-SELECT
-CAST(1 AS SMALLINT) AS SCOPE,
-CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
-CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
-
-CASE -- cases for when they are of type identity. 
-    WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
-    THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
-    WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
-    THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
-    ELSE CAST(t1.name AS sys.sysname)
-END AS TYPE_NAME,
-
-CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
-CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
-CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
-CAST(1 AS smallint) AS PSEUDO_COLUMN,
-CASE
-    WHEN a.attnotnull
-    THEN CAST(0 AS INT)
-    ELSE CAST(1 AS INT) END
-AS IS_NULLABLE,
-CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(C.relname AS sys.sysname) AS TABLE_NAME,
-
-CASE 
-    WHEN X.indisprimary
-    THEN CAST('p' AS sys.sysname)
-    ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
-END AS CONSTRAINT_TYPE,
-CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
-CAST(X.indexrelid AS int) AS INDEX_ID
-
-FROM( pg_index X
-JOIN pg_class C ON X.indrelid = C.oid
-JOIN pg_class I ON I.oid = X.indexrelid
-CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
-        LEFT JOIN pg_attribute a
-                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
-)
-LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
-LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
-LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
-LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
-LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
-LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
-, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
-, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
-WHERE has_schema_privilege(s1.schema_id, 'USAGE')
-AND X.indislive ;
-
-GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_special_columns_view_3_4_0');
-
-
-ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_3_4_0;
-CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
-AS
-SELECT
-CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
-, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
-, CAST(
-CASE
-  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
-  ELSE CONCAT(ss.proname, ';0')
-END
-AS sys.nvarchar(134)) AS PROCEDURE_NAME
-, CAST(
-CASE 
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
-    ELSE '@RETURN_VALUE'
-  END 
-ELSE COALESCE(ss.proargnames[n], '')
-END
-AS sys.SYSNAME) AS COLUMN_NAME
-, CAST(
-CASE
-WHEN ss.n IS NULL THEN
-  CASE 
-    WHEN ss.proretset THEN 3
-    ELSE 5
-  END
-WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
-ELSE 1
-END
-AS smallint) AS COLUMN_TYPE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
-    WHEN ss.proretset THEN NULL
-    ELSE sdit.data_type 
-    END
-  WHEN st.is_table_type = 1 THEN -153
-  ELSE sdit.data_type 
-END
-AS smallint) AS DATA_TYPE
-, CAST(
-CASE 
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset THEN 'table' 
-      WHEN ss.prokind = 'p' THEN 'int'
-      ELSE st.name
-    END
-  ELSE st.name
-END
-AS sys.sysname) AS TYPE_NAME
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset THEN 0 
-    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
-    ELSE st.precision
-  END
-  WHEN st.is_table_type = 1 THEN 0
-  ELSE st.precision 
-END 
-AS sys.int) AS PRECISION
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN 0
-    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
-    ELSE st.max_length
-  END
-  WHEN st.is_table_type = 1 THEN 2147483647
-  ELSE st.max_length 
-END
-AS sys.int) AS LENGTH
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN 
-    CASE
-      WHEN ss.proretset THEN 0 
-      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
-      ELSE st.scale
-    END
-  WHEN st.is_table_type = 1 THEN NULL
-  ELSE st.scale
-END
-AS smallint) AS SCALE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN 0
-    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-    ELSE sdit.num_prec_radix
-  END
-  WHEN st.is_table_type = 1 THEN NULL
-  ELSE sdit.num_prec_radix
-END
-AS smallint) AS RADIX
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
-      ELSE sdit.nullable 
-    END
-  WHEN st.is_table_type = 1 THEN 1
-  ELSE sdit.nullable 
-END
-AS smallint) AS NULLABLE
-, CAST(
-CASE 
-  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
-  ELSE NULL
-END
-AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
-, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN NULL
-      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-      ELSE sdit.sql_data_type
-    END
-  WHEN st.is_table_type = 1 THEN -153
-  ELSE sdit.sql_data_type 
-END
-AS smallint) AS SQL_DATA_TYPE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE 
-      WHEN ss.proretset THEN 0
-      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-      ELSE sdit.sql_datetime_sub
-    END
-  ELSE sdit.sql_datetime_sub 
-END 
-AS smallint) AS SQL_DATETIME_SUB
-, CAST(
-CASE
-  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
-  ELSE NULL
-END
-AS sys.int) AS CHAR_OCTET_LENGTH
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN 0
-  ELSE n 
-END 
-AS sys.int) AS ORDINAL_POSITION
-, CAST(
-CASE
-  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
-  WHEN st.is_table_type = 1 THEN 'YES'
-  WHEN sdit.nullable = 1 THEN 'YES'
-  ELSE 'NO'
-END
-AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
-, CAST(
-CASE
-  WHEN ss.n IS NULL THEN
-    CASE
-      WHEN ss.proretset THEN 0
-      WHEN ss.prokind = 'p' THEN 56
-      ELSE sdit.ss_data_type
-    END
-  WHEN st.is_table_type = 1 THEN 0
-  ELSE sdit.ss_data_type
-END
-AS sys.tinyint) AS SS_DATA_TYPE
-, CAST(ss.proname AS sys.sysname) AS original_procedure_name
-FROM 
-( 
-  -- CTE to query procedures related to bbf
-  WITH bbf_proc AS (
-    SELECT
-      p.proname as proname,
-      p.proargnames as proargnames,
-      p.proargmodes as proargmodes,
-      p.prokind as prokind,
-      p.proretset as proretset,
-      p.prorettype as prorettype,
-      p.proallargtypes as proallargtypes,
-      p.proargtypes as proargtypes,
-      s.name as schema_name
-    FROM 
-      pg_proc p
-    INNER JOIN (
-      SELECT name as name, schema_id as id  FROM sys.schemas 
-      UNION ALL 
-      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
-        from pg_namespace WHERE nspname in ('sys', 'information_schema')
-    ) as s ON p.pronamespace = s.id
-    WHERE (
-      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-      AND (s.name != 'sys' 
-        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
-        OR p.proname like 'xp\_%'
-        OR p.proname like 'dm\_%'
-        OR p.proname like 'fn\_%'))
-  )
-
-  SELECT *
-  FROM ( 
-    SELECT -- Selects all parameters (input and output), but NOT return values
-    p.proname as proname,
-    p.proargnames as proargnames,
-    p.proargmodes as proargmodes,
-    p.prokind as prokind,
-    p.proretset as proretset,
-    p.prorettype as prorettype,
-    p.schema_name as schema_name,
-    (information_schema._pg_expandarray(
-    COALESCE(p.proallargtypes,
-      CASE 
-        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
-        ELSE CAST(p.proargtypes AS oid[])
-      END
-    ))).x AS x,
-    (information_schema._pg_expandarray(
-    COALESCE(p.proallargtypes,
-      CASE 
-        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
-        ELSE CAST(p.proargtypes AS oid[])
-      END
-    ))).n AS n
-    FROM bbf_proc p) AS t
-  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
-
-  UNION ALL
-
-  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
-  p.proname as proname,
-  p.proargnames as proargnames,
-  p.proargmodes as proargmodes,
-  p.prokind as prokind,
-  p.proretset as proretset,
-  p.prorettype as prorettype,
-  p.schema_name as schema_name,
-  p.prorettype AS x, 
-  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
-  FROM bbf_proc p
-) ss
-LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return type of table-valued functions may not have an entry in sys.types
--- Because spt_datatype_info_table does contain user-defind types and their names,
--- the join below allows us to retrieve the name of the base type of the user-defined type
-LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
-GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_3_4_0');
-
-
-
-ALTER VIEW sys.assembly_types RENAME TO assembly_types_3_4_0;
-CREATE OR REPLACE VIEW sys.assembly_types
-AS
-SELECT
-   CAST(t.name as sys.sysname) AS name,
-   -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
-   -- This is because the IDs of generated SQL Server system type values generated by B
-   -- Babelfish installation will exceed the size of TINYINT.
-   CAST(t.system_type_id as int) AS system_type_id,
-   CAST(t.user_type_id as int) AS user_type_id,
-   CAST(t.schema_id as int) AS schema_id,
-   CAST(t.principal_id as int) AS principal_id,
-   CAST(t.max_length as smallint) AS max_length,
-   CAST(t.precision as sys.tinyint) AS precision,
-   CAST(t.scale as sys.tinyint) AS scale,
-   CAST(t.collation_name as sys.sysname) AS collation_name,
-   CAST(t.is_nullable as sys.bit) AS is_nullable,
-   CAST(t.is_user_defined as sys.bit) AS is_user_defined,
-   CAST(t.is_assembly_type as sys.bit) AS is_assembly_type,
-   CAST(t.default_object_id as int) AS default_object_id,
-   CAST(t.rule_object_id as int) AS rule_object_id,
-   CAST(NULL as int) AS assembly_id,
-   CAST(NULL as sys.sysname) AS assembly_class,
-   CAST(NULL as sys.bit) AS is_binary_ordered,
-   CAST(NULL as sys.bit) AS is_fixed_length,
-   CAST(NULL as sys.nvarchar(40)) AS prog_id,
-   CAST(NULL as sys.nvarchar(4000)) AS assembly_qualified_name,
-   CAST(t.is_table_type as sys.bit) AS is_table_type
-FROM sys.types t
-WHERE t.is_assembly_type = 1;
-GRANT SELECT ON sys.assembly_types TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'assembly_types_3_4_0');
-
-
-
-ALTER VIEW sys.all_parameters RENAME TO all_parameters_3_4_0;
-CREATE OR REPLACE VIEW sys.all_parameters
-AS
-SELECT
-    CAST(ss.p_oid AS INT) AS object_id
-  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
-  , CAST(
-      CASE 
-        WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
-        ELSE (ss.x).n
-      END 
-    AS INT) AS parameter_id
-  -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
-  -- This is because the IDs of system type values generated by
-  -- Babelfish installation will exceed the size of TINYINT
-  , CAST(st.system_type_id AS INT) AS system_type_id
-  , CAST(st.user_type_id AS INT) AS user_type_id
-  , CAST( 
-      CASE
-        WHEN st.is_table_type = 1 THEN -1 -- TVP case
-        WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
-        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
-      END
-    AS smallint) AS max_length
-  , CAST(
-      CASE
-        WHEN st.is_table_type = 1 THEN 0 -- TVP case
-        WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
-        ELSE sys.tsql_type_precision_helper(st.name, typmod)
-      END
-    AS sys.tinyint) AS precision
-  , CAST(
-      CASE 
-        WHEN st.is_table_type = 1 THEN 0 -- TVP case
-        WHEN st.is_user_defined = 1  THEN st.scale
-        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
-      END
-    AS sys.tinyint) AS scale
-  , CAST(
-      CASE
-        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
-        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
-        ELSE 0
-      END 
-    AS sys.bit) AS is_output
-  , CAST(0 AS sys.bit) AS is_cursor_ref
-  , CAST(0 AS sys.bit) AS has_default_value
-  , CAST(0 AS sys.bit) AS is_xml_document
-  , CAST(NULL AS sys.sql_variant) AS default_value
-  , CAST(0 AS int) AS xml_collection_id
-  , CAST(0 AS sys.bit) AS is_readonly
-  , CAST(1 AS sys.bit) AS is_nullable
-  , CAST(NULL AS int) AS encryption_type
-  , CAST(NULL AS sys.nvarchar(64)) AS encryption_type_desc
-  , CAST(NULL AS sys.sysname) AS encryption_algorithm_name
-  , CAST(NULL AS int) AS column_encryption_key_id
-  , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
-FROM pg_type t
-  INNER JOIN sys.types st ON st.user_type_id = t.oid
-  INNER JOIN 
-  (
-    SELECT
-      p.oid AS p_oid,
-      p.proargnames,
-      p.proargmodes,
-      p.prokind,
-      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
-      information_schema._pg_expandarray(
-      COALESCE(p.proallargtypes,
-        CASE 
-          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
-          ELSE CAST(p.proargtypes AS oid[])
-        END
-      )) AS x
-    FROM pg_proc p
-    WHERE (
-      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
-      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
-  ) ss ON t.oid = (ss.x).x,
-  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
-  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
-  CAST(
-    CASE
-      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
-      ELSE 0
-    END 
-  AS INT) AS is_out_scalar
-WHERE ( -- If it is a Table function, we only want the inputs
-      return_type NOT LIKE 'TABLE(%' OR 
-      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
-GRANT SELECT ON sys.all_parameters TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_parameters_3_4_0');
-
-
-ALTER VIEW sys.systypes RENAME TO systypes_3_4_0;
-CREATE OR REPLACE VIEW sys.systypes AS
-SELECT CAST(name as sys.sysname) as name
-  , CAST(system_type_id as int) as xtype
-  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
-  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
-  , max_length as length
-  , CAST(precision as sys.tinyint) as xprec
-  , CAST(scale as sys.tinyint) as xscale
-  , CAST(default_object_id as int) as tdefault
-  , CAST(rule_object_id as int) as domain
-  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
-  , CAST(0 as smallint) as reserved
-  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
-  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
-  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
-            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
-          else 0 end) as sys.bit) as variable
-  , CAST(is_nullable as sys.bit) as allownulls
-  , CAST(system_type_id as int) as type
-  , CAST(null as sys.varchar(255)) as printfmt
-  , (case when precision <> 0::smallint then precision 
-      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
-  , CAST(scale as sys.tinyint) as scale
-  , CAST(collation_name as sys.sysname) as collation
-FROM sys.types;
-GRANT SELECT ON sys.systypes TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_3_4_0');
-
 
 CREATE OR REPLACE VIEW sys.asymmetric_keys
 AS
@@ -1922,6 +1347,581 @@ LANGUAGE C
 AS 'babelfishpg_tsql', 'update_user_catalog_for_guest_schema';
 
 CALL sys.babelfish_update_user_catalog_for_guest_schema();
+
+ALTER VIEW sys.types RENAME TO types_deprecated_3_4_0;
+
+create or replace view sys.types As
+with RECURSIVE type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  Select * from sys.table_types_internal
+)
+-- For System types
+select 
+  ti.tsql_type_name as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  c.collname
+    END as collation_name
+  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
+  , 0 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+where
+ti.tsql_type_name IS NOT NULL  
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as text) as name
+  , t.typbasetype as system_type_id
+  , t.oid as user_type_id
+  , t.typnamespace as schema_id
+  , null::integer as principal_id
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  c.collname 
+    END as collation_name
+  , case when tt.typrelid is not null then cast(0 as sys.bit)
+         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , 1 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
+from pg_type t
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+left join tt_internal tt on t.typrelid = tt.typrelid
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+-- we want to show details of user defined datatypes created under babelfish database
+where 
+ ti.tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    tt.typrelid is not null  
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
+
+
+ALTER VIEW sys.table_types RENAME TO table_types_deprecated_3_4_0;
+create or replace view sys.table_types as
+select st.*
+  , pt.typrelid::int as type_table_object_id
+  , 0::sys.bit as is_memory_optimized -- return 0 until we support in-memory tables
+from sys.types st
+inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
+where is_table_type = 1;
+GRANT SELECT ON sys.table_types TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');
+
+
+ALTER VIEW sys.sp_special_columns_view RENAME TO sp_special_columns_view_3_4_0;
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT
+CAST(1 AS SMALLINT) AS SCOPE,
+CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+    WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
+    THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
+    WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
+    THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+    ELSE CAST(t1.name AS sys.sysname)
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CASE
+    WHEN a.attnotnull
+    THEN CAST(0 AS INT)
+    ELSE CAST(1 AS INT) END
+AS IS_NULLABLE,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+    WHEN X.indisprimary
+    THEN CAST('p' AS sys.sysname)
+    ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+END AS CONSTRAINT_TYPE,
+CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
+CAST(X.indexrelid AS int) AS INDEX_ID
+
+FROM( pg_index X
+JOIN pg_class C ON X.indrelid = C.oid
+JOIN pg_class I ON I.oid = X.indexrelid
+CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
+        LEFT JOIN pg_attribute a
+                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
+)
+LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
+LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
+LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
+LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
+LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
+LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+AND X.indislive ;
+
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_special_columns_view_3_4_0');
+
+
+ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_3_4_0;
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
+AS
+SELECT
+CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
+, CAST(
+CASE
+  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
+  ELSE CONCAT(ss.proname, ';0')
+END
+AS sys.nvarchar(134)) AS PROCEDURE_NAME
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+    ELSE '@RETURN_VALUE'
+  END 
+ELSE COALESCE(ss.proargnames[n], '')
+END
+AS sys.SYSNAME) AS COLUMN_NAME
+, CAST(
+CASE
+WHEN ss.n IS NULL THEN
+  CASE 
+    WHEN ss.proretset THEN 3
+    ELSE 5
+  END
+WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
+ELSE 1
+END
+AS smallint) AS COLUMN_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+    WHEN ss.proretset THEN NULL
+    ELSE sdit.data_type 
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.data_type 
+END
+AS smallint) AS DATA_TYPE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 'table' 
+      WHEN ss.prokind = 'p' THEN 'int'
+      ELSE st.name
+    END
+  ELSE st.name
+END
+AS sys.sysname) AS TYPE_NAME
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0 
+    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+    ELSE st.precision
+  END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE st.precision 
+END 
+AS sys.int) AS PRECISION
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+    ELSE st.max_length
+  END
+  WHEN st.is_table_type = 1 THEN 2147483647
+  ELSE st.max_length 
+END
+AS sys.int) AS LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 
+    CASE
+      WHEN ss.proretset THEN 0 
+      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+      ELSE st.scale
+    END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE st.scale
+END
+AS smallint) AS SCALE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+    ELSE sdit.num_prec_radix
+  END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE sdit.num_prec_radix
+END
+AS smallint) AS RADIX
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
+      ELSE sdit.nullable 
+    END
+  WHEN st.is_table_type = 1 THEN 1
+  ELSE sdit.nullable 
+END
+AS smallint) AS NULLABLE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+  ELSE NULL
+END
+AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
+, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN NULL
+      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_data_type
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.sql_data_type 
+END
+AS smallint) AS SQL_DATA_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_datetime_sub
+    END
+  ELSE sdit.sql_datetime_sub 
+END 
+AS smallint) AS SQL_DATETIME_SUB
+, CAST(
+CASE
+  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  ELSE NULL
+END
+AS sys.int) AS CHAR_OCTET_LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 0
+  ELSE n 
+END 
+AS sys.int) AS ORDINAL_POSITION
+, CAST(
+CASE
+  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
+  WHEN st.is_table_type = 1 THEN 'YES'
+  WHEN sdit.nullable = 1 THEN 'YES'
+  ELSE 'NO'
+END
+AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN 56
+      ELSE sdit.ss_data_type
+    END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE sdit.ss_data_type
+END
+AS sys.tinyint) AS SS_DATA_TYPE
+, CAST(ss.proname AS sys.sysname) AS original_procedure_name
+FROM 
+( 
+  -- CTE to query procedures related to bbf
+  WITH bbf_proc AS (
+    SELECT
+      p.proname as proname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.proallargtypes as proallargtypes,
+      p.proargtypes as proargtypes,
+      s.name as schema_name
+    FROM 
+      pg_proc p
+    INNER JOIN (
+      SELECT name as name, schema_id as id  FROM sys.schemas 
+      UNION ALL 
+      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
+    ) as s ON p.pronamespace = s.id
+    WHERE (
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
+  )
+
+  SELECT *
+  FROM ( 
+    SELECT -- Selects all parameters (input and output), but NOT return values
+    p.proname as proname,
+    p.proargnames as proargnames,
+    p.proargmodes as proargmodes,
+    p.prokind as prokind,
+    p.proretset as proretset,
+    p.prorettype as prorettype,
+    p.schema_name as schema_name,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).x AS x,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).n AS n
+    FROM bbf_proc p) AS t
+  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
+
+  UNION ALL
+
+  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
+  p.proname as proname,
+  p.proargnames as proargnames,
+  p.proargmodes as proargmodes,
+  p.prokind as prokind,
+  p.proretset as proretset,
+  p.prorettype as prorettype,
+  p.schema_name as schema_name,
+  p.prorettype AS x, 
+  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
+  FROM bbf_proc p
+) ss
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return type of table-valued functions may not have an entry in sys.types
+-- Because spt_datatype_info_table does contain user-defind types and their names,
+-- the join below allows us to retrieve the name of the base type of the user-defined type
+LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_3_4_0');
+
+
+
+ALTER VIEW sys.assembly_types RENAME TO assembly_types_3_4_0;
+CREATE OR REPLACE VIEW sys.assembly_types
+AS
+SELECT
+   CAST(t.name as sys.sysname) AS name,
+   -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+   -- This is because the IDs of generated SQL Server system type values generated by B
+   -- Babelfish installation will exceed the size of TINYINT.
+   CAST(t.system_type_id as int) AS system_type_id,
+   CAST(t.user_type_id as int) AS user_type_id,
+   CAST(t.schema_id as int) AS schema_id,
+   CAST(t.principal_id as int) AS principal_id,
+   CAST(t.max_length as smallint) AS max_length,
+   CAST(t.precision as sys.tinyint) AS precision,
+   CAST(t.scale as sys.tinyint) AS scale,
+   CAST(t.collation_name as sys.sysname) AS collation_name,
+   CAST(t.is_nullable as sys.bit) AS is_nullable,
+   CAST(t.is_user_defined as sys.bit) AS is_user_defined,
+   CAST(t.is_assembly_type as sys.bit) AS is_assembly_type,
+   CAST(t.default_object_id as int) AS default_object_id,
+   CAST(t.rule_object_id as int) AS rule_object_id,
+   CAST(NULL as int) AS assembly_id,
+   CAST(NULL as sys.sysname) AS assembly_class,
+   CAST(NULL as sys.bit) AS is_binary_ordered,
+   CAST(NULL as sys.bit) AS is_fixed_length,
+   CAST(NULL as sys.nvarchar(40)) AS prog_id,
+   CAST(NULL as sys.nvarchar(4000)) AS assembly_qualified_name,
+   CAST(t.is_table_type as sys.bit) AS is_table_type
+FROM sys.types t
+WHERE t.is_assembly_type = 1;
+GRANT SELECT ON sys.assembly_types TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'assembly_types_3_4_0');
+
+
+
+ALTER VIEW sys.all_parameters RENAME TO all_parameters_3_4_0;
+CREATE OR REPLACE VIEW sys.all_parameters
+AS
+SELECT
+    CAST(ss.p_oid AS INT) AS object_id
+  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
+  , CAST(
+      CASE 
+        WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
+        ELSE (ss.x).n
+      END 
+    AS INT) AS parameter_id
+  -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+  -- This is because the IDs of system type values generated by
+  -- Babelfish installation will exceed the size of TINYINT
+  , CAST(st.system_type_id AS INT) AS system_type_id
+  , CAST(st.user_type_id AS INT) AS user_type_id
+  , CAST( 
+      CASE
+        WHEN st.is_table_type = 1 THEN -1 -- TVP case
+        WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
+        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
+      END
+    AS smallint) AS max_length
+  , CAST(
+      CASE
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
+        ELSE sys.tsql_type_precision_helper(st.name, typmod)
+      END
+    AS sys.tinyint) AS precision
+  , CAST(
+      CASE 
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.scale
+        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
+      END
+    AS sys.tinyint) AS scale
+  , CAST(
+      CASE
+        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
+        ELSE 0
+      END 
+    AS sys.bit) AS is_output
+  , CAST(0 AS sys.bit) AS is_cursor_ref
+  , CAST(0 AS sys.bit) AS has_default_value
+  , CAST(0 AS sys.bit) AS is_xml_document
+  , CAST(NULL AS sys.sql_variant) AS default_value
+  , CAST(0 AS int) AS xml_collection_id
+  , CAST(0 AS sys.bit) AS is_readonly
+  , CAST(1 AS sys.bit) AS is_nullable
+  , CAST(NULL AS int) AS encryption_type
+  , CAST(NULL AS sys.nvarchar(64)) AS encryption_type_desc
+  , CAST(NULL AS sys.sysname) AS encryption_algorithm_name
+  , CAST(NULL AS int) AS column_encryption_key_id
+  , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
+FROM pg_type t
+  INNER JOIN sys.types st ON st.user_type_id = t.oid
+  INNER JOIN 
+  (
+    SELECT
+      p.oid AS p_oid,
+      p.proargnames,
+      p.proargmodes,
+      p.prokind,
+      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
+      information_schema._pg_expandarray(
+      COALESCE(p.proallargtypes,
+        CASE 
+          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
+          ELSE CAST(p.proargtypes AS oid[])
+        END
+      )) AS x
+    FROM pg_proc p
+    WHERE (
+      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
+  ) ss ON t.oid = (ss.x).x,
+  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
+  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
+  CAST(
+    CASE
+      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
+      ELSE 0
+    END 
+  AS INT) AS is_out_scalar
+WHERE ( -- If it is a Table function, we only want the inputs
+      return_type NOT LIKE 'TABLE(%' OR 
+      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
+GRANT SELECT ON sys.all_parameters TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_parameters_3_4_0');
+
+
+ALTER VIEW sys.systypes RENAME TO systypes_3_4_0;
+CREATE OR REPLACE VIEW sys.systypes AS
+SELECT CAST(name as sys.sysname) as name
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
+  , CAST(precision as sys.tinyint) as xprec
+  , CAST(scale as sys.tinyint) as xscale
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
+  , CAST(0 as smallint) as reserved
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
+  , CAST(null as sys.varchar(255)) as printfmt
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , CAST(collation_name as sys.sysname) as collation
+FROM sys.types;
+GRANT SELECT ON sys.systypes TO PUBLIC;
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_3_4_0');
 
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
