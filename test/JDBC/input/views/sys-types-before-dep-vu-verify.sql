@@ -12,3 +12,9 @@ GO
 
 EXEC sys_types_dep_vu_prepare_p2
 GO
+
+SELECT * FROM sys_types_dep_vu_prepare_v2
+GO
+
+SELECT * FROM sys_types_dep_vu_prepare_f2()
+GO

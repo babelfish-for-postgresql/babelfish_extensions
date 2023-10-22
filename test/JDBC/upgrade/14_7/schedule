@@ -349,7 +349,7 @@ sys-trigger_nestlevel
 sys-triggers
 sys-triggers-dep
 sys-types
-sys-types-dep
+sys-types-before-dep
 sys-userid-dep
 sys-views
 sys-views-dep

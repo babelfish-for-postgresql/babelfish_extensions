@@ -227,7 +227,7 @@ sys-schemas-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep
 sys-tables-dep
-sys-types-dep
+sys-types-before-dep
 sys-views-dep
 sys-check_constraints-dep
 sys-computed_columns-dep

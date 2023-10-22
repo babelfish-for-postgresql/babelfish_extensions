@@ -370,7 +370,7 @@ sys-trigger_nestlevel
 sys-triggers
 sys-triggers-dep
 sys-types
-sys-types-dep
+sys-types-before-dep
 sys-userid
 sys-views
 sys-views-dep

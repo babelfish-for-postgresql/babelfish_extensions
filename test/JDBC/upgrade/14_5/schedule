@@ -298,7 +298,7 @@ sys-trigger_events
 sys-trigger_nestlevel
 sys-triggers
 sys-triggers-dep
-sys-types-dep
+sys-types-before-dep
 sys-userid-dep
 sys-views
 sys-views-dep
