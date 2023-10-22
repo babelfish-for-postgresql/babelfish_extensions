@@ -36,6 +36,9 @@ ignore#!#BABEL-3655-vu-verify
 ignore#!#GRANT_SCHEMA-vu-prepare
 ignore#!#GRANT_SCHEMA-vu-verify
 ignore#!#GRANT_SCHEMA-vu-cleanup
+ignore#!#sys-types-before-dep-vu-prepare
+ignore#!#sys-types-before-dep-vu-verify
+ignore#!#sys-types-before-dep-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
