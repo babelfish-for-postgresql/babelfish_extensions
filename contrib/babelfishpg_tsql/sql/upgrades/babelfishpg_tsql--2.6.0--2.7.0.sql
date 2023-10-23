@@ -713,7 +713,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.domains AS
 
 GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
 
-CREATE VIEW information_schema_tsql.tables AS
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
@@ -741,7 +741,7 @@ CREATE VIEW information_schema_tsql.tables AS
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
 
-CREATE VIEW information_schema_tsql.table_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -806,7 +806,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 
 GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 
-CREATE VIEW information_schema_tsql.check_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -1080,7 +1080,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
-CREATE VIEW sys.sp_databases_view AS
+CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	SELECT CAST(database_name AS sys.SYSNAME),
 	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
 	CASE WHEN (sum(table_size)::NUMERIC/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
