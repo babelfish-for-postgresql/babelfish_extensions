@@ -1,0 +1,56 @@
+
+starting permutation : { s1dbcc_noreseed s2i s2s s1c s2c }
+step s1dbcc_noreseed: dbcc checkident(dbcc_test_locks, NORESEED)
+step s2i: INSERT INTO dbcc_test_locks VALUES (9);
+~~ROW COUNT: 1~~
+
+step s2s: SELECT * from dbcc_test_locks;
+~~START~~
+int#!#int
+1#!#5
+2#!#7
+3#!#9
+~~END~~
+
+step s1c: COMMIT;
+step s2c: COMMIT;
+
+starting permutation : { s1dbcc_reseed_without_new_reseed_value s2i s2s s1c s2c }
+step s1dbcc_reseed_without_new_reseed_value: dbcc checkident(dbcc_test_locks, RESEED)
+step s2i: INSERT INTO dbcc_test_locks VALUES (9);
+~~ROW COUNT: 1~~
+
+step s2s: SELECT * from dbcc_test_locks;
+~~START~~
+int#!#int
+1#!#5
+2#!#7
+3#!#9
+~~END~~
+
+step s1c: COMMIT;
+step s2c: COMMIT;
+
+starting permutation : { s1dbcc_reseed_with_new_value s2s s1c s2i s2s s2c }
+step s1dbcc_reseed_with_new_value: dbcc checkident(dbcc_test_locks, RESEED, 10)
+step s2s: SELECT * from dbcc_test_locks; <waiting ...>
+step s1c: COMMIT;
+step s2s: <... completed>
+~~START~~
+int#!#int
+1#!#5
+2#!#7
+~~END~~
+
+step s2i: INSERT INTO dbcc_test_locks VALUES (9);
+~~ROW COUNT: 1~~
+
+step s2s: SELECT * from dbcc_test_locks;
+~~START~~
+int#!#int
+1#!#5
+2#!#7
+11#!#9
+~~END~~
+
+step s2c: COMMIT;
