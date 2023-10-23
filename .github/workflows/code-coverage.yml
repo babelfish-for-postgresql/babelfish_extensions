@@ -229,8 +229,8 @@ jobs:
       - name: Drop database and data directory
         if: always() && steps.configure-python-environment.outcome == 'success'
         run: |
-          sudo rm -rf ~/psql/data/
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo rm -rf ~/psql/data/
 
       - name: Re-Install Extensions
         id: re-install-extension
