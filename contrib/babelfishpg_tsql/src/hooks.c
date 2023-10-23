@@ -798,12 +798,10 @@ pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
 			{
 				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+				ReleaseSysCache(proctup);
 			}
-
-			ReleaseSysCache(proctup);
 		}
 	}
-
 }
 
 static Node *
