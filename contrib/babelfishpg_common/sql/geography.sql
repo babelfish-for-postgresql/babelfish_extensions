@@ -152,8 +152,16 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
 
 CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
 	RETURNS bytea
-	AS '$libdir/postgis-3','LWGEOM_to_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+        byte bytea;
+	BEGIN
+		byte := (SELECT sys.bytea_helper($1));
+		byte := substring(byte from 6);
+		byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
+		RETURN byte;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary)
 	RETURNS sys.GEOGRAPHY
@@ -169,27 +177,100 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary)
 
 CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY)
 	RETURNS sys.bbf_varbinary
-	AS '$libdir/postgis-3','LWGEOM_to_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+        byte bytea;
+	BEGIN
+		byte := (SELECT CAST ($1 AS bytea));
+		RETURN (SELECT CAST (byte AS sys.bbf_varbinary)); 
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (bytea AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(bytea) AS IMPLICIT;
-CREATE CAST (sys.GEOGRAPHY AS bytea) WITH FUNCTION sys.bytea(sys.GEOGRAPHY) AS IMPLICIT;
-CREATE CAST (sys.bbf_varbinary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary) AS IMPLICIT;
-CREATE CAST (sys.GEOGRAPHY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY) AS IMPLICIT;
-
-CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.GEOMETRY)
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_binary)
 	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3','geography_from_geometry'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	DECLARE
+        varBin sys.bbf_varbinary;
+	BEGIN
+		varBin := (SELECT CAST (CAST ($1 AS sys.VARCHAR) AS sys.bbf_varbinary));
+		-- Call the underlying function after preprocessing
+		RETURN (SELECT CAST (varBin AS GEOGRAPHY)); 
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.GEOMETRY AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.GEOMETRY) AS ASSIGNMENT;
+CREATE OR REPLACE FUNCTION sys.text(sys.GEOGRAPHY)
+	RETURNS text
+	AS $$
+	BEGIN
+		RAISE EXCEPTION 'Conversion from data type Geography to Text is not allowed.';
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.GEOGRAPHY)
-	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','geometry_from_geography'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(text)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	BEGIN
+		RAISE EXCEPTION 'Conversion from data type Text to Geography is not allowed.';
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (sys.GEOGRAPHY AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.GEOGRAPHY) AS ASSIGNMENT;
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
+	RETURNS sys.bpchar
+	AS $$
+	BEGIN
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		RETURN CAST ((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))) AS sys.bpchar);
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		geog sys.GEOGRAPHY;
+	BEGIN
+		geog := (SELECT sys.bpcharToGeography_helper($1));
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
+	RETURNS sys.varchar
+	AS $$
+	BEGIN
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		RETURN CAST ((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))) AS sys.varchar);
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		geog sys.GEOGRAPHY;
+	BEGIN
+		geog := (SELECT sys.varcharToGeography_helper($1));
+		-- Call the underlying function after preprocessing
+		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (text AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(text) AS IMPLICIT;
+CREATE CAST (sys.GEOGRAPHY AS text) WITH FUNCTION sys.text(sys.GEOGRAPHY);
+CREATE CAST (sys.bpchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bpchar) AS IMPLICIT;
+CREATE CAST (sys.GEOGRAPHY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOGRAPHY);
+CREATE CAST (sys.varchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.varchar) AS IMPLICIT;
+CREATE CAST (sys.GEOGRAPHY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOGRAPHY);
+CREATE CAST (sys.bbf_binary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_binary) AS IMPLICIT;
+CREATE CAST (bytea AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(bytea) AS IMPLICIT;
+CREATE CAST (sys.GEOGRAPHY AS bytea) WITH FUNCTION sys.bytea(sys.GEOGRAPHY);
+CREATE CAST (sys.bbf_varbinary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary) AS IMPLICIT;
+CREATE CAST (sys.GEOGRAPHY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY);
 
 -- This Function Flips the Coordinates of the Point (x, y) -> (y, x)
 CREATE OR REPLACE FUNCTION sys.Geography__STFlipCoordinates(sys.GEOGRAPHY)
@@ -329,6 +410,37 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.ST_Equals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
+	RETURNS boolean
+	AS '$libdir/postgis-3', 'ST_Equals'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.= (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.ST_Equals,
+    COMMUTATOR = =,
+    RESTRICT = eqsel
+);
+
+CREATE FUNCTION sys.ST_NotEquals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
+	RETURNS boolean
+	AS $$
+	DECLARE
+		isEqual boolean;
+	BEGIN
+		isEqual := sys.ST_Equals(leftarg, rightarg);
+		RETURN NOT isEqual;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.<> (
+    LEFTARG = sys.GEOGRAPHY,
+    RIGHTARG = sys.GEOGRAPHY,
+    FUNCTION = sys.ST_NotEquals,
+    COMMUTATOR = <>
+);
+
 -- Minimum distance
 CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAPHY)
 	RETURNS float8
@@ -384,5 +496,20 @@ CREATE OR REPLACE FUNCTION sys.STDistance_helper(geog1 sys.GEOGRAPHY, geog2 sys.
 CREATE OR REPLACE FUNCTION sys.GEOGRAPHY_helper(bytea)
 	RETURNS sys.GEOGRAPHY
 	AS '$libdir/postgis-3','geography_from_binary'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS '$libdir/postgis-3','parse_WKT_lwgeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varcharToGeography_helper(sys.varchar)
+	RETURNS sys.GEOGRAPHY
+	AS '$libdir/postgis-3','parse_WKT_lwgeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOGRAPHY)
+	RETURNS bytea
+	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
