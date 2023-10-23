@@ -66,8 +66,6 @@ bool		pltsql_enable_create_alter_view_from_pg = false;
 char	   *pltsql_host_destribution = NULL;
 char	   *pltsql_host_release = NULL;
 char	   *pltsql_host_service_pack_level = NULL;
-char	   *pltsql_repeatable_read_isolation = NULL;
-char 	   *pltsql_serializable_isolation = NULL;
 
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
@@ -127,6 +125,12 @@ static const struct config_enum_entry escape_hatch_options[] = {
 	{"strict", EH_STRICT, false},
 	{"ignore", EH_IGNORE, false},
 	{NULL, EH_NULL, false},
+};
+
+static const struct config_enum_entry bbf_isolation_options[] = {
+	{"default", DEFAULT_ISOLATION, false},
+	{"pg_isolation", PG_ISOLATION, false},
+	{NULL, DEFAULT_ISOLATION, false},
 };
 
 static bool
@@ -387,16 +391,6 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	if (pg_strcasecmp(*newval, "default") != 0)
 		ereport(WARNING,
 				(errmsg("Product version setting by babelfishpg_tds.product_version GUC will have no effect on @@VERSION")));
-
-	return true;
-}
-
-static bool
-check_bbf_isolation_type(char **newval, void **extra, GucSource source)
-{
-	if (pg_strcasecmp(*newval, "pg_isolation") != 0 &&
-		pg_strcasecmp(*newval, "default") != 0)
-		return false;
 
 	return true;
 }
@@ -816,24 +810,6 @@ define_custom_variables(void)
 							   PGC_USERSET,
 							   GUC_NOT_IN_SAMPLE | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							   NULL, NULL, NULL);
-	
-	DefineCustomStringVariable("babelfishpg_tsql.repeatable_read_isolation",
-							   gettext_noop("Select mapping for isolation level reapeatable read"),
-							   NULL,
-							   &pltsql_repeatable_read_isolation,
-							   "default",
-							   PGC_USERSET,
-							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							   check_bbf_isolation_type, NULL, NULL);
-	
-	DefineCustomStringVariable("babelfishpg_tsql.serializable_isolation",
-							   gettext_noop("Select mapping for isolation level serializable"),
-							   NULL,
-							   &pltsql_serializable_isolation,
-							   "default",
-							   PGC_USERSET,
-							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							   check_bbf_isolation_type, NULL, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.datefirst",
 							gettext_noop("Sets the first day of the week to a number from 1 through 7."),
@@ -1236,6 +1212,8 @@ int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
 int			escape_hatch_checkpoint = EH_IGNORE;
 int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
+int			pltsql_isolation_repeatable_read = DEFAULT_ISOLATION;
+int 		pltsql_isolation_serializable = DEFAULT_ISOLATION;
 
 void
 define_escape_hatch_variables(void)
@@ -1583,6 +1561,28 @@ define_escape_hatch_variables(void)
 							 &escape_hatch_set_transaction_isolation_level,
 							 EH_STRICT,
 							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* REPEATABLE READ MAPPING */
+	DefineCustomEnumVariable("babelfishpg_tsql.isolation_repeatable_read",
+							 gettext_noop("Select mapping for isolation level reapeatable read"),
+							 NULL,
+							 &pltsql_isolation_repeatable_read,
+							 DEFAULT_ISOLATION,
+							 bbf_isolation_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
+	/* SERIALIZABLE MAPPING */
+	DefineCustomEnumVariable("babelfishpg_tsql.isolation_serializable",
+							 gettext_noop("Select mapping for isolation level serializable"),
+							 NULL,
+							 &pltsql_isolation_serializable,
+							 DEFAULT_ISOLATION,
+							 bbf_isolation_options,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
