@@ -226,7 +226,8 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
           pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
 
-      - name: Drop and recreate babelfish
+      - name: Drop and re-create Babelfish database
+        id: re-install-extension
         if: always() && steps.configure-python-environment.outcome == 'success'
         run: |
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
