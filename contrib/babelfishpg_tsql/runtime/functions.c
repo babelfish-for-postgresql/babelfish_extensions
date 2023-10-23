@@ -3777,6 +3777,8 @@ get_crosstab_tuplestore(RawStmt *sql,
 		 * "rowname", and are copied into the result tuple from the first time
 		 * we encounter a particular rowname.
 		 */
+
+		// TODO: change the number from 3 to 2, and corresponding error msg 
 		if (ncols < 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -3798,6 +3800,8 @@ get_crosstab_tuplestore(RawStmt *sql,
 		/* allocate space and make sure it's clear */
 		values = (char **) palloc0(result_ncols * sizeof(char *));
 
+		// TODO: write a 2 column case handling code here
+		// if 2 column, then 2 column logic, else execute the for loop below
 		for (i = 0; i < proc; i++)
 		{
 			HeapTuple	spi_tuple;

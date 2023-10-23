@@ -1531,7 +1531,7 @@ simple_select:
 					ColumnRef  		*a_star;
 					ResTarget		*a_star_restarget;
 					RangeFunction	*funCallNode;
-					SelectStmt 	*s_sql;
+					SelectStmt 	*src_sql;
 					SelectStmt 	*pivot_sl;
 					SortBy 		*s;
 
@@ -1558,10 +1558,10 @@ simple_select:
 					a_star_restarget->location = -1;
 
 					/* prepare source sql for babelfish_pivot function */
-					s_sql = makeNode(SelectStmt);
-					s_sql->targetList = list_make1(a_star_restarget);
-					s_sql->fromClause = $5;
-					s_sql->sortClause = list_make1(s);
+					src_sql = makeNode(SelectStmt);
+					src_sql->targetList = list_make1(a_star_restarget);
+					src_sql->fromClause = $5;
+					src_sql->sortClause = list_make1(s);
 
 					/* create a function call node for the fromClause */
 					pivotCall = makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
@@ -1575,7 +1575,7 @@ simple_select:
 					pivot_sl->targetList = $3;
 					pivot_sl->fromClause = list_make1(funCallNode);
 					pivot_sl->isPivot = true;
-					pivot_sl->srcSql = s_sql;
+					pivot_sl->srcSql = src_sql;
 					pivot_sl->catSql = list_nth((List *)$6, 2);
 					pivot_sl->pivotCol = pivot_colstr;
 					pivot_sl->aggFunc = aggFunc;
@@ -1596,6 +1596,7 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 					List    *value_col_strlist = NULL;
 					List	*subsel_valuelists = NULL;
 					
+					SelectStmt 	*category_sql = makeNode(SelectStmt);
 					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
 					ResTarget	*restarget_aggfunc = makeNode(ResTarget);
 
@@ -1654,11 +1655,11 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 					s->useOp = NIL;
 					s->location = -1;
 
-					cat_sql->targetList = list_make1(a_star_restarget);
-					cat_sql->fromClause = list_make1(range_sub_select);
-					cat_sql->sortClause = list_make1(s);
+					category_sql->targetList = list_make1(a_star_restarget);
+					category_sql->fromClause = list_make1(range_sub_select);
+					category_sql->sortClause = list_make1(s);
 
-					ret = list_make4(pstrdup($5), restarget_aggfunc, cat_sql, value_col_strlist);
+					ret = list_make4(pstrdup($5), restarget_aggfunc, category_sql, value_col_strlist);
 					$$ = (Node*) ret; 
 				} 
 			;
