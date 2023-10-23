@@ -233,6 +233,7 @@ AS $$
 DECLARE 
 	babelfish_catalog RECORD;
 	schema_name varchar = 'sys';
+	error_msg text;
 BEGIN
 	FOR babelfish_catalog IN (
 		SELECT relname as name from pg_class t 
@@ -243,7 +244,8 @@ BEGIN
 		BEGIN
 			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
 		EXCEPTION WHEN OTHERS THEN
-			RAISE E'ANALYZE failed for babelfish catalog %.%.', schema_name, babelfish_catalog.name;
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'ANALYZE for babelfish catalog %.% failed with error: %s', schema_name, babelfish_catalog.name, error_msg;
 		END;
 	END LOOP;
 END;
