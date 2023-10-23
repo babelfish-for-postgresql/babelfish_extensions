@@ -129,6 +129,7 @@ static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelati
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
+static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
 
 static inline void
 SendPendingDone(bool more)
@@ -402,8 +403,8 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	}
 }
 
-static Node *
-FindVarFromOutertree(Plan *plan, AttrNumber attno)
+static int32
+resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 {
 	TargetEntry *tle;
 	Plan		*outerplan = outerPlan(plan);
@@ -415,15 +416,15 @@ FindVarFromOutertree(Plan *plan, AttrNumber attno)
 		Var *var = (Var *)tle->expr;
 		if (var->varno == OUTER_VAR)
 		{
-			return FindVarFromOutertree(outerplan, var->varattno);
+			return resolve_numeric_typmod_outer_var(outerplan, var->varattno);
 		}
 	}
-	return (Node *)tle->expr;
+	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
 }
 
 /* look for a typmod to return from a numeric expression */
 static int32
-resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
+resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
 	if (expr == NULL)
 		return -1;
@@ -457,9 +458,8 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
 				if (var->varno == OUTER_VAR)
 				{
-					Assert(plannedstmt);
-					return (resolve_numeric_typmod_from_exp(plannedstmt,
-							 FindVarFromOutertree(plannedstmt->planTree, var->varattno)));
+					Assert(plan);
+					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
 				}
 				return var->vartypmod;
 			}
@@ -491,8 +491,8 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				{
 					arg1 = linitial(op->args);
 					arg2 = lsecond(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plannedstmt, arg1);
-					typmod2 = resolve_numeric_typmod_from_exp(plannedstmt, arg2);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
+					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2);
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
@@ -501,7 +501,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				else if (list_length(op->args) == 1)
 				{
 					arg1 = linitial(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(plannedstmt, arg1);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = 0;
@@ -680,7 +680,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				Assert(nullif->args != NIL);
 
 				arg1 = linitial(nullif->args);
-				return resolve_numeric_typmod_from_exp(plannedstmt, arg1);
+				return resolve_numeric_typmod_from_exp(plan, arg1);
 			}
 		case T_CoalesceExpr:
 			{
@@ -703,7 +703,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				foreach(lc, coale->args)
 				{
 					arg = lfirst(lc);
-					arg_typmod = resolve_numeric_typmod_from_exp(plannedstmt, arg);
+					arg_typmod = resolve_numeric_typmod_from_exp(plan, arg);
 					/* return -1 if we fail to resolve one of the arg's typmod */
 					if (arg_typmod == -1)
 						return -1;
@@ -744,7 +744,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				{
 					casewhen = lfirst(lc);
 					casewhen_result = (Node *) casewhen->result;
-					typmod = resolve_numeric_typmod_from_exp(plannedstmt, casewhen_result);
+					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result);
 
 					/*
 					 * return -1 if we fail to resolve one of the result's
@@ -779,7 +779,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				Assert(aggref->args != NIL);
 
 				te = (TargetEntry *) linitial(aggref->args);
-				typmod = resolve_numeric_typmod_from_exp(plannedstmt, (Node *) te->expr);
+				typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr);
 				aggFuncName = get_func_name(aggref->aggfnoid);
 
 				scale = (typmod - VARHDRSZ) & 0xffff;
@@ -825,7 +825,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
 
-				return resolve_numeric_typmod_from_exp(plannedstmt, (Node *) phv->phexpr);
+				return resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr);
 			}
 		case T_RelabelType:
 			{
@@ -834,7 +834,7 @@ resolve_numeric_typmod_from_exp(PlannedStmt *plannedstmt, Node *expr)
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
 				else
-					return resolve_numeric_typmod_from_exp(plannedstmt, (Node *) rlt->arg);
+					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
 			}
 			/* TODO handle more Expr types if needed */
 		default:
@@ -1809,7 +1809,9 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					 * than -1.
 					 */
 					if (atttypmod == -1 && tle != NULL)
-						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt, (Node *) tle->expr);
+						atttypmod = plannedstmt ? 
+									resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr) :
+									resolve_numeric_typmod_from_exp(NULL, (Node *) tle->expr);
 
 					/*
 					 * Get the precision and scale out of the typmod value if
