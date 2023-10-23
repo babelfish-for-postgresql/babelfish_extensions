@@ -307,8 +307,16 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOMETRY)
 
 CREATE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
-	AS '$libdir/postgis-3', 'ST_Equals'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    AS $$
+    DECLARE
+        leftvarBin sys.bbf_varbinary;
+		rightvarBin sys.bbf_varbinary;
+    BEGIN
+        leftvarBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
+        rightvarBin := (SELECT CAST ($2 AS sys.bbf_varbinary));
+        RETURN (SELECT sys.varbinary_eq(leftvarBin, rightvarBin));
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.= (
     LEFTARG = sys.GEOMETRY,
@@ -321,13 +329,15 @@ CREATE OPERATOR sys.= (
 CREATE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
 	RETURNS boolean
 	AS $$
-	DECLARE
-		isEqual boolean;
-	BEGIN
-		isEqual := sys.ST_Equals(leftarg, rightarg);
-		RETURN NOT isEqual;
-	END;
-	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+    DECLARE
+        leftvarBin sys.bbf_varbinary;
+		rightvarBin sys.bbf_varbinary;
+    BEGIN
+        leftvarBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
+        rightvarBin := (SELECT CAST ($2 AS sys.bbf_varbinary));
+        RETURN (SELECT sys.varbinary_neq(leftvarBin, rightvarBin));
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.<> (
     LEFTARG = sys.GEOMETRY,

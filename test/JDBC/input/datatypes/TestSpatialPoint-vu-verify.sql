@@ -127,7 +127,7 @@ Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS geometry)
 GO
 
 -- UnSupported CASTs which are currently supported for geometry
--- This is because we have created -> CREATE DOMAIN sys.IMAGE AS sys.BBF_VARBINARY;
+-- This is because Image type is created as -> CREATE DOMAIN sys.IMAGE AS sys.BBF_VARBINARY; so it is always converted to it's baseType i.e. varbinary
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS image)
 GO
 Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS image) as geometry)
@@ -256,7 +256,7 @@ Select CAST(CAST ('<head>point(1 2)</head>' AS xml) as geography)
 GO
 
 -- UnSupported CASTs which are currently supported for geography
--- This is because we have created -> CREATE DOMAIN sys.IMAGE AS sys.BBF_VARBINARY;
+-- This is because Image type is created as -> CREATE DOMAIN sys.IMAGE AS sys.BBF_VARBINARY; so it is always converted to it's baseType i.e. varbinary
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS image)
 GO
 Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS image) as geography)
