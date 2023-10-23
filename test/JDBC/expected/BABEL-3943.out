@@ -16,7 +16,6 @@ GO
 
 
 -- tsql
--- TODO: Fix BABEL-4359
 SELECT avg([owner_amounts].[tax]) FROM [owner_amounts] WHERE moment_id = 862 and ISNULL([owner_amounts].[active], 0) = 1 AND   [owner_amounts].[tax] is not null
 GO
 ~~START~~
@@ -25,7 +24,6 @@ numeric
 ~~END~~
 
 
--- TODO: Fix BABEL-4359
 SELECT avg([owner_amounts].[tax]) FROM [owner_amounts] WHERE moment_id = 862 and cast([owner_amounts].[active] as smallint) = 1 AND   [owner_amounts].[tax] is not null
 GO
 ~~START~~
@@ -34,7 +32,6 @@ numeric
 ~~END~~
 
 
--- TODO: Fix BABEL-4359
 SELECT TOP 1 [owner_amounts].[tax] FROM [owner_amounts] WHERE moment_id = 862 and cast([owner_amounts].[active] as smallint) = 1
 GO
 ~~START~~
@@ -43,16 +40,14 @@ numeric
 ~~END~~
 
 
--- TODO: Fix BABEL-4359
 SELECT avg([owner_amounts].[tax]) FROM [owner_amounts] WHERE moment_id = 862 and cast([owner_amounts].[active] as int) = 1 AND   [owner_amounts].[tax] is not null
 GO
 ~~START~~
 numeric
-0E-8
+0.000000
 ~~END~~
 
 
--- TODO: Fix BABEL-4359
 SELECT TOP 1 [owner_amounts].[tax] FROM [owner_amounts] WHERE moment_id = 862 and cast([owner_amounts].[active] as int) = 1
 GO
 ~~START~~
