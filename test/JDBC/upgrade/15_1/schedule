@@ -321,7 +321,7 @@ sys-system_sql_modules-dep
 sys-tables
 sys-tables-dep
 sys-table_types
-sys-table_types-dep
+sys-table_types-before-dep
 sys-table_types_internal
 sys-table_types_internal-dep
 SYSTEM_USER

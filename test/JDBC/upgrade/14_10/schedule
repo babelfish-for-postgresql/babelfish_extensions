@@ -237,7 +237,7 @@ sys-sp_databases-dep
 sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
-sys-table_types-dep
+sys-table_types-before-dep
 sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-system_sql_modules-dep
