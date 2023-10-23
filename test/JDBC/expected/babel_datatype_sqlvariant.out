@@ -456,7 +456,7 @@ select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_varia
 go
 ~~START~~
 datetime2
-2020-10-05 18:00:00.0000000
+2020-10-05 09:00:00.0000000
 ~~END~~
 
 -- datetime2 2 datetimeoffset

@@ -149,22 +149,22 @@ smalldatetime
 
 ~~START~~
 smalldatetime
-1980-07-08 15:59:00.0
+1980-07-08 23:59:00.0
 ~~END~~
 
 ~~START~~
 smalldatetime
-2010-07-08 15:59:00.0
+2010-07-08 23:59:00.0
 ~~END~~
 
 ~~START~~
 smalldatetime
-1980-07-09 07:59:00.0
+1980-07-08 23:59:00.0
 ~~END~~
 
 ~~START~~
 smalldatetime
-2010-07-09 07:59:00.0
+2010-07-08 23:59:00.0
 ~~END~~
 
 -- Cast from smalldatetime
@@ -287,11 +287,6 @@ smalldatetime
 ~~START~~
 smalldatetime
 1900-01-01 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2079-06-06 23:00:00.0
 ~~END~~
 
 ~~ERROR (Code: 33557097)~~
