@@ -2557,13 +2557,13 @@ BEGIN
 		WHERE t.relkind = 'r' and n.nspname = schema_name
 		)
 	LOOP
-	EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		BEGIN
+			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			RAISE E'ANALYZE failed for babelfish catalog %.%.', schema_name, babelfish_catalog.name;
+		END;
 	END LOOP;
-EXCEPTION 
-	WHEN OTHERS THEN
-	-- ignore all exceptions and return control to calling block
-		NULL;
-END
+END;
 $$;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema
@@ -2582,8 +2582,7 @@ DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
--- Always run analyze after upgrade for all babelfish catalog.
--- It will not block upgrade in case of any failure.
+-- Always run analyze after upgrade for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
