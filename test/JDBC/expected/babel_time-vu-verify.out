@@ -404,6 +404,22 @@ GO
 
 -- If numeric is specified
 -- If `am` or `pm` is specified
+SELECT CAST('' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('     ' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
 SELECT CAST('1' AS TIME)
 GO
 ~~ERROR (Code: 33557097)~~
@@ -446,6 +462,29 @@ GO
 time
 00:00:00.0000000
 ~~END~~
+
+
+SELECT CAST('191212' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('191223' AS TIME)
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+
+SELECT CAST('192312' AS TIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 SELECT CAST('1010101' AS TIME)
@@ -690,6 +729,67 @@ GO
 time
 14:23:05.0000000
 ~~END~~
+
+
+SELECT CAST('1998-02-23T14:23:5' AS time)
+GO
+~~START~~
+time
+14:23:05.0000000
+~~END~~
+
+
+SELECT CAST('1998-02-23T14:3:05' AS time)
+GO
+~~START~~
+time
+14:03:05.0000000
+~~END~~
+
+
+SELECT CAST('1998-02-23T14:23:5Z' AS time)
+GO
+~~START~~
+time
+14:23:05.0000000
+~~END~~
+
+
+SELECT CAST('1998-02-23T14:23:05Z' AS time)
+GO
+~~START~~
+time
+14:23:05.0000000
+~~END~~
+
+
+SELECT CAST('1998-02-23T14:23:05.2Z' AS time)
+GO
+~~START~~
+time
+14:23:05.2000000
+~~END~~
+
+
+SELECT CAST('1998-02-23T14:23:05.2 Z' AS time)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('1998-02-23T14:23:05.2z' AS time)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
+SELECT CAST('1998-02-23T14:23:05.2Zec' AS time)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
 SELECT CAST('1998-02-23 T14:23:05' AS time)
