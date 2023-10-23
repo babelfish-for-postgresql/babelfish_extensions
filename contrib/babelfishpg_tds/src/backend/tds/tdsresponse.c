@@ -130,6 +130,7 @@ static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
 static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
+static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 
 static inline void
 SendPendingDone(bool more)
@@ -404,11 +405,69 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 }
 
 static int32
+resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
+{
+	ListCell	*lc;
+	uint8_t		max_precision = 0,
+				max_scale = 0,
+				precision = 0,
+				scale = 0,
+				integralDigitCount = 0;
+	int32		typmod = -1,
+				result_typmod = -1;
+	List		*planlist = NIL;
+	if (IsA(plan, Append))
+	{
+		planlist = ((Append *) plan)->appendplans;
+	}
+	else if(IsA(plan, MergeAppend))
+	{
+		planlist = ((MergeAppend *) plan)->mergeplans; 
+	}
+
+	Assert(planlist != NIL);
+	foreach(lc, ((Append *) plan)->appendplans)
+	{
+		Plan *outerplan = (Plan *) lfirst(lc);
+		TargetEntry *tle = get_tle_by_resno(outerplan->targetlist, attno);
+		if (IsA(tle->expr, Var))
+		{
+			Var *var = (Var *)tle->expr;
+			if (var->varno == OUTER_VAR)
+			{
+				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
+			}
+		}
+		typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+		if (typmod == -1)
+			continue;
+		scale = (typmod - VARHDRSZ) & 0xffff;
+		precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+		integralDigitCount = Max(precision - scale, max_precision - max_scale);
+		max_scale = Max(max_scale, scale);
+		max_precision = integralDigitCount + max_scale;
+		result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+	}
+	/* If max_precision is still default then use tds specific defaults */
+	if (result_typmod == -1)
+	{
+		result_typmod = ((tds_default_numeric_precision << 16) | tds_default_numeric_scale) + VARHDRSZ;
+	}
+	return result_typmod;
+}
+
+static int32
 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 {
-	TargetEntry *tle;
-	Plan		*outerplan = outerPlan(plan);
-	/* Lefttree must not be NULL */
+	TargetEntry	*tle;
+	Plan		*outerplan = NULL;
+
+	if (IsA(plan, Append) || IsA(plan, MergeAppend))
+		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
+	else
+		outerplan = outerPlan(plan);
+
+	/* outerplan must not be NULL */
 	Assert(outerplan);
 	tle = get_tle_by_resno(outerplan->targetlist, attno);
 	if (IsA(tle->expr, Var))
