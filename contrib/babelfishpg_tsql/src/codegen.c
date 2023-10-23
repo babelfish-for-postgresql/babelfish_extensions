@@ -302,6 +302,7 @@ stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_GRANTDB:
 		case PLTSQL_STMT_GRANTSCHEMA:
 		case PLTSQL_STMT_INSERT_BULK:
+		case PLTSQL_STMT_DBCC:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			/* TSQL-only executable node */
 		case PLTSQL_STMT_SAVE_CTX:

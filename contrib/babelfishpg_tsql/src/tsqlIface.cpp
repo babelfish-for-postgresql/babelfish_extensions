@@ -112,6 +112,7 @@ std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
 PLtsql_stmt *makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type);
 PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
+PLtsql_stmt *makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx);
 PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
@@ -2116,6 +2117,19 @@ public:
 		graft(makeCfl(ctx, *this), peekContainer());
 
 		clear_rewritten_query_fragment();
+	}
+
+	void enterDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
+	{
+		if (ctx->CHECKIDENT())
+        		graft(makeDbccCheckidentStatement(ctx), peekContainer());
+
+		clear_rewritten_query_fragment();
+	}
+
+	void exitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
+	{
+		// TO-DO
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -5089,7 +5103,6 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 			}
 		}
 	}
-
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 	return (PLtsql_stmt *) stmt;
 }
@@ -5868,6 +5881,108 @@ makeExecuteProcedure(ParserRuleContext *ctx, std::string call_type)
 	result->expr = makeTsqlExpr(expr_query, false);
 
 	return (PLtsql_stmt *) result;
+}
+
+PLtsql_stmt*
+makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
+{
+	PLtsql_stmt_dbcc *stmt = (PLtsql_stmt_dbcc *) palloc0(sizeof(*stmt));
+
+	std::string	new_reseed_value;
+	std::string	input_str;
+	int	i;
+	char	*db_name = NULL;
+	char	*schema_name = NULL;
+	char	*table_name = NULL;
+	char	*input_str_to_split;
+	char	**splited_object_name;
+	bool	is_reseed = true;
+	bool	no_infomsgs = false;
+
+	stmt->cmd_type = PLTSQL_STMT_DBCC;
+	stmt->dbcc_stmt_type = PLTSQL_DBCC_CHECKIDENT;
+
+	if (ctx->table_name_string())
+	{
+		if(ctx->table_name_string()->table)
+		{
+			input_str = stripQuoteFromId(ctx->table_name_string()->table);
+		}
+		if (ctx->table_name_string()->char_string())
+		{
+			input_str = ctx->table_name_string()->char_string()->STRING()->getSymbol()->getText();
+			if (input_str.length() <= 2)
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE,
+					       	"Parameter 1 is incorrect for this DBCC statement",
+					       	getLineAndPos(ctx->table_name_string()));
+			input_str = input_str.substr(1, input_str.length()-2);
+		}
+		if (ctx->RESEED())
+		{
+			if (ctx->new_value)
+			{
+				if(ctx->MINUS())
+					stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText().insert(0,"-")).c_str());
+				else
+					stmt->dbcc_stmt_data.dbcc_checkident.new_reseed_value = pstrdup((ctx->new_value->getText()).c_str());
+			}
+		}
+		else if (ctx->NORESEED())
+		{
+			is_reseed = false;
+		}
+
+		if(ctx->dbcc_options())
+		{
+			if (pg_strcasecmp(::getFullText(ctx->dbcc_options()).c_str(), "NO_INFOMSGS") == 0)
+			{
+				no_infomsgs = true;
+			}
+			else
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+					format_errmsg("\'%s\' is not a recognized option",
+						::getFullText(ctx->dbcc_options()).c_str()),
+							getLineAndPos(ctx->dbcc_options()));
+			}
+		}
+	}
+
+	input_str_to_split = pstrdup(input_str.c_str());
+
+	/* strip trailing whitespace from input string */
+	i = strlen(input_str_to_split);
+	while (i > 0 && isspace((unsigned char) input_str_to_split[i - 1]))
+		input_str_to_split[--i] = '\0';
+
+	splited_object_name = split_object_name(input_str_to_split);
+	db_name = !strcmp(splited_object_name[1], "")? NULL : splited_object_name[1];
+	schema_name = !strcmp(splited_object_name[2], "")? NULL : splited_object_name[2];
+	table_name = !strcmp(splited_object_name[3], "")? NULL : splited_object_name[3];
+
+	if(db_name)
+	{
+		stmt->dbcc_stmt_data.dbcc_checkident.db_name = pstrdup(downcase_truncate_identifier(db_name, strlen(db_name), true));
+		pfree(db_name);
+	}
+	if(schema_name)
+	{
+		stmt->dbcc_stmt_data.dbcc_checkident.schema_name = pstrdup(downcase_truncate_identifier(schema_name, strlen(schema_name), true));
+		pfree(schema_name);
+	}
+	if(table_name)
+	{
+		stmt->dbcc_stmt_data.dbcc_checkident.table_name = pstrdup(downcase_truncate_identifier(table_name, strlen(table_name), true));
+		pfree(table_name);
+	}
+	stmt->dbcc_stmt_data.dbcc_checkident.is_reseed = is_reseed;
+	stmt->dbcc_stmt_data.dbcc_checkident.no_infomsgs = no_infomsgs;
+
+	pfree(splited_object_name);
+	pfree(input_str_to_split);
+	
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
 }
 
 // helper function to create target row
