@@ -1282,6 +1282,10 @@ select
   , cast (is_schema_published as sys.bit)
 from
 (
+-- Currently for pg_class, pg_proc UNIONs, we separated user defined objects and system objects because the 
+-- optimiser will be able to make a better estimation of number of rows(in case the query contains a filter on 
+-- is_ms_shipped column) and in turn chooses a better query plan. 
+
 -- details of system tables
 select
     t.relname::sys.sysname as name
@@ -1358,10 +1362,6 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- Details of user defined views
-
--- Currently for pg_class, pg_proc UNIONs, we separated user defined objects and system objects because the 
--- optimiser will be able to make a better estimation of number of rows(in case the query contains a filter on 
--- is_ms_shipped column) and in turn chooses a better query plan. 
 select
     t.relname::sys.sysname as name
   , t.oid as object_id
