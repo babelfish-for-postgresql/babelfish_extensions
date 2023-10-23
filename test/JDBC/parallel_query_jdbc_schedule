@@ -316,11 +316,6 @@ ignore#!#babel_money
 # BABEL-4423
 ignore#!#BABEL-IDENTITY
 
-# BABEL-4424
-ignore#!#TestDecimal
-ignore#!#TestNumeric
-ignore#!#numericOverflow
-
 # BABEL-4425 - Taking too much time to run.
 ignore#!#getdate-vu-prepare
 ignore#!#getdate-vu-verify
