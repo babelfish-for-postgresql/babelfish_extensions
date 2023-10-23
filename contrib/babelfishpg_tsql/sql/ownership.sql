@@ -240,13 +240,13 @@ BEGIN
 		WHERE t.relkind = 'r' and n.nspname = schema_name
 		)
 	LOOP
-	EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		BEGIN
+			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			RAISE E'ANALYZE failed for babelfish catalog %.%.', schema_name, babelfish_catalog.name;
+		END;
 	END LOOP;
-EXCEPTION 
-	WHEN OTHERS THEN
-	-- ignore all exceptions and return control to calling block
-		NULL;
-END
+END;
 $$;
 
 CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
@@ -288,7 +288,7 @@ BEGIN
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
-	-- run analyze for all the babelfish catalogs
+	-- run analyze for all babelfish catalog
 	CALL sys.analyze_babelfish_catalogs();
 END
 $$;
