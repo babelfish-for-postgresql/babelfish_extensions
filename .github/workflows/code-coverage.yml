@@ -226,18 +226,12 @@ jobs:
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
           pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
 
-      - name: Drop database and data directory
+      - name: Drop and recreate babelfish
         if: always() && steps.configure-python-environment.outcome == 'success'
         run: |
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
-          sudo rm -rf ~/psql/data/
-
-      - name: Re-Install Extensions
-        id: re-install-extension
-        if: always() && steps.configure-python-environment.outcome == 'success'
-        uses: ./.github/composite-actions/install-extensions
-        with:
-          install_dir: 'psql'
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single_db" -f .github/scripts/create_extension.sql
+          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
       - name: Run Python Tests
         if: always() && steps.re-install-extension.outcome == 'success'
