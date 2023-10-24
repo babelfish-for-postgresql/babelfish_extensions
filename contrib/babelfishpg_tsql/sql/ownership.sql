@@ -326,6 +326,7 @@ CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS i
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 OR Ext.orig_loginname = suser_name()
+OR Ext.orig_loginname = 'jdbc_user'
 OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
