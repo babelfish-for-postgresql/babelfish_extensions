@@ -340,3 +340,6 @@ ignore#!#TestSimpleErrors
 ignore#!#ISC-Views
 ignore#!#TestSimpleErrorsWithXactAbort
 ignore#!#BABEL-2513
+ignore#!#Test-sp_rename-dep-vu-prepare
+ignore#!#Test-sp_rename-dep-vu-verify
+ignore#!#Test-sp_rename-dep-vu-cleanup
