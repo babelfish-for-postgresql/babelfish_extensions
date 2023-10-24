@@ -474,4 +474,4 @@ sys_certificates
 sys_database_permissions
 BABEL-4279
 BABEL-4484
-AUTO_ANALYZE
+#AUTO_ANALYZE #uncomment this test when preparing for new minor version
