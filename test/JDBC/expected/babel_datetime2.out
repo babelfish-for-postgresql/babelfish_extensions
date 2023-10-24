@@ -423,35 +423,35 @@ select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime2
 go
 ~~START~~
 datetime2
-2079-06-06 15:59:29.9980000
+2079-06-06 23:59:29.9980000
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 -9:30' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-2079-06-07 09:29:29.9980000
+2079-06-06 23:59:29.9980000
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-2079-06-07 09:29:12.3456780
+2079-06-06 23:59:12.3456780
 ~~END~~
 
 select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-0001-06-07 09:29:12.3456780
+0001-06-06 23:59:12.3456780
 ~~END~~
 
 select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2(5));
 go
 ~~START~~
 datetime2
-0001-06-07 09:29:12.34568
+0001-06-06 23:59:12.34568
 ~~END~~
 
 

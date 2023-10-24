@@ -516,7 +516,7 @@ datetimeoffset_smalldatetime(PG_FUNCTION_ARGS)
 	tsql_datetimeoffset *df = PG_GETARG_DATETIMEOFFSET(0);
 	Timestamp	result;
 
-	datetimeoffset_timestamp_internal(df, &result);
+	result = df->tsql_ts;
 	CheckSmalldatetimeRange(result);
 	AdjustTimestampForSmallDatetime(&result);
 
@@ -549,7 +549,7 @@ datetimeoffset_datetime(PG_FUNCTION_ARGS)
 	tsql_datetimeoffset *df = PG_GETARG_DATETIMEOFFSET(0);
 	Timestamp	result;
 
-	datetimeoffset_timestamp_internal(df, &result);
+	result = df->tsql_ts;
 	CheckDatetimeRange(result);
 
 	PG_RETURN_TIMESTAMP(result);
@@ -581,7 +581,7 @@ datetimeoffset_datetime2(PG_FUNCTION_ARGS)
 	tsql_datetimeoffset *df = PG_GETARG_DATETIMEOFFSET(0);
 	Timestamp	result;
 
-	datetimeoffset_timestamp_internal(df, &result);
+	result = df->tsql_ts;
 	CheckDatetime2Range(result);
 
 	PG_RETURN_TIMESTAMP(result);
@@ -648,7 +648,7 @@ datetimeoffset_date(PG_FUNCTION_ARGS)
 	fsec_t		fsec;
 	DateADT		result;
 
-	datetimeoffset_timestamp_internal(df, &time);
+	time = df->tsql_ts;
 	if (timestamp2tm(time, NULL, tm, &fsec, NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -669,7 +669,7 @@ datetimeoffset_time(PG_FUNCTION_ARGS)
 	Timestamp	time;
 	TimeADT		result;
 
-	datetimeoffset_timestamp_internal(df, &time);
+	time = df->tsql_ts;
 	if (time < 0)
 		result = time - (time / USECS_PER_DAY * USECS_PER_DAY) + USECS_PER_DAY;
 	else
