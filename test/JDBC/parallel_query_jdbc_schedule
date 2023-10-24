@@ -28,18 +28,7 @@ ignore#!#BABEL-3512
 ignore#!#BABEL-3592
 ignore#!#BABEL-4294-vu-verify
 
-# Group 4: Incorrect precision BABEL-4396
-ignore#!#BABEL-3943
-ignore#!#BABEL-785
-ignore#!#TestDecimal-vu-verify
-ignore#!#TestNumeric-vu-verify
-ignore#!#babel_613
-ignore#!#babel_datatype
-ignore#!#babel_isnull
-ignore#!#BABEL-3006
-ignore#!#BABEL-3147-vu-verify
-
-# Group 5: Need ORDER BY
+# Group 4: Need ORDER BY
 ignore#!#BABEL-2514
 ignore#!#BABEL-2998
 ignore#!#BABEL-328-vu-verify
