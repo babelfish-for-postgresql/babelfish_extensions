@@ -53,9 +53,9 @@ jobs:
           sudo apt-get install wget
           wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
           tar -xvzf postgis-3.4.0.tar.gz
-          wget https://download.osgeo.org/proj/proj-9.1.0.tar.gz
-          tar -xvzf proj-9.1.0.tar.gz
-          cd proj-9.1.0
+          wget https://download.osgeo.org/proj/proj-6.1.0.tar.gz
+          tar -xvzf proj-6.1.0.tar.gz
+          cd proj-6.1.0
           if [ ! -d "build" ]; then
             mkdir build
           fi
