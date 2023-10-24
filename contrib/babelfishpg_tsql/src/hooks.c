@@ -219,6 +219,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
+static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -375,6 +376,9 @@ InstallExtendedHooks(void)
 
 	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
 	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
+
+	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
+	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 }
 
 void
@@ -435,6 +439,7 @@ UninstallExtendedHooks(void)
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
+	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 }
 
 /*****************************************
@@ -798,12 +803,10 @@ pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
 			{
 				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+				ReleaseSysCache(proctup);
 			}
-
-			ReleaseSysCache(proctup);
 		}
 	}
-
 }
 
 static Node *
@@ -1606,7 +1609,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
 		int			alias_len = 0;
-		const char *colname_start;
+		const char *colname_start = NULL;
 		const char *identifier_name = NULL;
 		int			open_square_bracket = 0;
 		int			double_quotes = 0;
@@ -1620,10 +1623,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/*
 			 * If no alias is specified on a ColumnRef, then get the length of
 			 * the name from the ColumnRef and copy the column name from the
-			 * sourcetext
+			 * sourcetext. To prevent the server crash, res->location for queries
+			 * with join statement should not be zero.
 			 */
-			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String)) 
+			if (res->location != 0 && (list_length(cref->fields) == 1 &&
+				IsA(linitial(cref->fields), String)))
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
@@ -1644,13 +1648,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
 			 * are zero, it means we are out of sqb.
 			 */
-			if(list_length(cref->fields) > 1 &&
-				IsA(llast(cref->fields), String))
+			else if(res->location != 0 && (list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String)))
 			{
 				identifier_name = strVal(llast(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
-				while(true)
+				last_dot = colname_start;
+				while(*colname_start != '\0')
 				{	
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
@@ -1721,7 +1726,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int actual_alias_len = 0;
 
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || scanner_isspace(*colname_start))
+			while(*colname_start != '\0' && (*colname_start == '(' || scanner_isspace(*colname_start)))
 			{
 				colname_start++;
 			}

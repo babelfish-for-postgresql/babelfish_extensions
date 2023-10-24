@@ -73,21 +73,3 @@ CREATE TRIGGER babel_1654_vu_prepare_trig_t on babel_1654_vu_prepare_t after upd
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ENABLE TRIGGER [babel_1654_vu_prepare_trig_t]
 GO
 
-CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_employeedata_id_seq] 
- AS [int]
- START WITH 1
- INCREMENT BY 1
- MINVALUE 1
- MAXVALUE 2147483647
- NO CACHE 
-GO
-
-CREATE SEQUENCE [dbo].[babel_1654_vu_prepare_t_id_seq] 
- AS [int]
- START WITH 1
- INCREMENT BY 1
- MINVALUE 1
- MAXVALUE 2147483647
- NO CACHE 
-GO
-

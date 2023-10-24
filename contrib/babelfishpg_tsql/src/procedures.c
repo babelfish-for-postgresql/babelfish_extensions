@@ -396,7 +396,7 @@ sp_describe_first_result_set_query(char *viewName)
 				 "AND (t3.\"TABLE_NAME\" = t1.table_name collate sys.database_default AND t3.\"TABLE_SCHEMA\" = ext.orig_name collate sys.database_default) "
 				 "AND t5.relname = t1.table_name collate sys.database_default "
 				 "AND (t5.oid = t4.object_id AND t3.\"ORDINAL_POSITION\" = t4.column_id) "
-				 "AND ext.dbid = cast(sys.db_id() as oid) "
+				 "AND ext.dbid = sys.db_id() "
 				 "AND t1.dtd_identifier::int = t3.\"ORDINAL_POSITION\";", viewName);
 }
 

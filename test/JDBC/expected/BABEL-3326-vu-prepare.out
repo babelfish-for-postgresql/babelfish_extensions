@@ -118,3 +118,41 @@ FOR INSERT
 AS
     SELECT 'Trigger db.TR_ins Invoked'
 GO
+
+create table babel_3326_t1 (a varchar)
+GO
+
+create trigger babel_3326_t1_trigger on babel_3326_t1 instead of insert as 
+begin
+    select count(*) from inserted;
+end;
+GO
+
+create table babel_3326_t2 (a varchar)
+GO
+
+insert into babel_3326_t2 values ('1');
+GO
+~~ROW COUNT: 1~~
+
+
+create trigger babel_3326_t2_trigger on babel_3326_t2 instead of delete as 
+begin
+    select count(*) from deleted;
+end;
+GO
+
+create table babel_3326_t3 (a varchar)
+GO
+
+insert into babel_3326_t3 values ('2');
+GO
+~~ROW COUNT: 1~~
+
+
+create trigger babel_3326_t3_trigger on babel_3326_t3 instead of update as 
+begin
+    select count(*) from deleted;
+    select count(*) from inserted;
+end;
+GO
