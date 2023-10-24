@@ -226,7 +226,7 @@ jobs:
           pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
 
       - name: Drop and re-create Babelfish database
-        id: re-install-extension
+        id: re-install-extensions
         if: always() && steps.configure-python-environment.outcome == 'success'
         run: |
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
@@ -234,7 +234,7 @@ jobs:
           sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
       - name: Run Python Tests
-        if: always() && steps.re-install-extension.outcome == 'success'
+        if: always() && steps.re-install-extensions.outcome == 'success'
         run: | 
           cd test/python
           compareWithFile=true \
