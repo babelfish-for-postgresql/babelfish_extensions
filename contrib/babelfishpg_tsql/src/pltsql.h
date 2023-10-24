@@ -2080,6 +2080,7 @@ extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
+extern Oid get_sysadmin_oid(void);
 
 typedef struct
 {
