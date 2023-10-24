@@ -20,6 +20,24 @@ GO
 DROP TABLE babel_3326_Employees
 GO
 
+drop trigger babel_3326_t1_trigger
+GO
+
+drop trigger babel_3326_t2_trigger
+GO
+
+drop trigger babel_3326_t3_trigger
+GO
+
+drop table babel_3326_t1;
+GO
+
+drop table babel_3326_t2;
+GO
+
+drop table babel_3326_t3;
+GO
+
 DROP USER babel_3326_u1
 GO
 

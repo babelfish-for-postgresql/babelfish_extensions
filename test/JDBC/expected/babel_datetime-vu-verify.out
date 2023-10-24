@@ -194,21 +194,21 @@ select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime)
 go
 ~~START~~
 datetime
-2079-06-06 15:59:29.997
+2079-06-06 23:59:29.997
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 -9:30' AS datetimeoffset) AS datetime)
 go
 ~~START~~
 datetime
-2079-06-07 09:29:29.997
+2079-06-06 23:59:29.997
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime)
 go
 ~~START~~
 datetime
-2079-06-07 09:29:12.347
+2079-06-06 23:59:12.347
 ~~END~~
 
 -- out of range
