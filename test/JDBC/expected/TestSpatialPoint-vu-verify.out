@@ -346,13 +346,13 @@ Select CAST(CAST ('POINT(1 2)' AS text) as geometry)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion from data type Text to Geometry is not allowed.)~~
+~~ERROR (Message: Explicit Conversion from data type Text to sys.Geometry is not allowed.)~~
 
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS text)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion from data type Geometry to Text is not allowed.)~~
+~~ERROR (Message: Explicit Conversion from data type sys.Geometry to Text is not allowed.)~~
 
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS sql_variant)
 GO
@@ -780,13 +780,13 @@ Select CAST(CAST ('POINT(1 2)' AS text) as geography)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion from data type Text to Geography is not allowed.)~~
+~~ERROR (Message: Explicit Conversion from data type Text to sys.Geography is not allowed.)~~
 
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS text)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Conversion from data type Geography to Text is not allowed.)~~
+~~ERROR (Message: Explicit Conversion from data type sys.Geography to Text is not allowed.)~~
 
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS sql_variant)
 GO

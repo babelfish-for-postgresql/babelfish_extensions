@@ -106,7 +106,7 @@ CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 	RETURNS text
 	AS $$
 	BEGIN
-		RAISE EXCEPTION 'Conversion from data type Geometry to Text is not allowed.';
+		RAISE EXCEPTION 'Explicit Conversion from data type sys.Geometry to Text is not allowed.';
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -225,15 +225,19 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GEOMETRY(text)
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(text, integer, boolean)
 	RETURNS sys.GEOMETRY
 	AS $$
 	BEGIN
-		RAISE EXCEPTION 'Conversion from data type Text to Geometry is not allowed.';
+		IF $3 = true THEN
+			RAISE EXCEPTION 'Explicit Conversion from data type Text to sys.Geometry is not allowed.';
+		ELSE
+			RAISE EXCEPTION 'Implicit Conversion from data type Text to sys.Geometry is not allowed.';
+		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text) AS IMPLICIT;
+CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY);
 CREATE CAST (sys.bpchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bpchar) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOMETRY);

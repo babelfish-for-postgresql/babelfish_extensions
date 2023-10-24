@@ -110,7 +110,7 @@ CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 	RETURNS text
 	AS $$
 	BEGIN
-		RAISE EXCEPTION 'Conversion from data type Geometry to Text is not allowed.';
+		RAISE EXCEPTION 'Explicit Conversion from data type sys.Geometry to Text is not allowed.';
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -229,15 +229,19 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GEOMETRY(text)
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(text, integer, boolean)
 	RETURNS sys.GEOMETRY
 	AS $$
 	BEGIN
-		RAISE EXCEPTION 'Conversion from data type Text to Geometry is not allowed.';
+		IF $3 = true THEN
+			RAISE EXCEPTION 'Explicit Conversion from data type Text to sys.Geometry is not allowed.';
+		ELSE
+			RAISE EXCEPTION 'Implicit Conversion from data type Text to sys.Geometry is not allowed.';
+		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text) AS IMPLICIT;
+CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY);
 CREATE CAST (sys.bpchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bpchar) AS IMPLICIT;
 CREATE CAST (sys.GEOMETRY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOMETRY);
@@ -545,9 +549,15 @@ CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
 	DECLARE
         byte bytea;
 	BEGIN
+		-- Here the received bytes are -> 1 byte (endianness) + 4 bytes (type) + 4 bytes (SRID) + 16 bytes * npoints
 		byte := (SELECT sys.bytea_helper($1));
-		byte := substring(byte from 6);
-		byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
+		-- Checking the Geometry type currently we support only POINT type -> type = 1 (01000020 [here last byte represents presence of SRID]) 
+		IF encode(substring(byte from 2 for 4), 'hex') = encode(E'\\x01000020', 'hex') THEN
+			-- Here we are taking bytes from SRID only for driver expected format -> 4 bytes (SRID) + 16 bytes * npoints
+			byte := substring(byte from 6);
+			-- The drivers expected format is 4 bytes (SRID) + 2 bytes (type -> 010C for point) + 16 bytes * npoints
+			byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
+		END IF;
 		RETURN byte;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -591,15 +601,19 @@ CREATE OR REPLACE FUNCTION sys.text(sys.GEOGRAPHY)
 	RETURNS text
 	AS $$
 	BEGIN
-		RAISE EXCEPTION 'Conversion from data type Geography to Text is not allowed.';
+		RAISE EXCEPTION 'Explicit Conversion from data type sys.Geography to Text is not allowed.';
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(text)
+CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(text, integer, boolean)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	BEGIN
-		RAISE EXCEPTION 'Conversion from data type Text to Geography is not allowed.';
+		IF $3 = true THEN
+			RAISE EXCEPTION 'Explicit Conversion from data type Text to sys.Geography is not allowed.';
+		ELSE
+			RAISE EXCEPTION 'Implicit Conversion from data type Text to sys.Geography is not allowed.';
+		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -649,7 +663,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (text AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(text) AS IMPLICIT;
+CREATE CAST (text AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(text, integer, boolean) AS IMPLICIT;
 CREATE CAST (sys.GEOGRAPHY AS text) WITH FUNCTION sys.text(sys.GEOGRAPHY);
 CREATE CAST (sys.bpchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bpchar) AS IMPLICIT;
 CREATE CAST (sys.GEOGRAPHY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOGRAPHY);
