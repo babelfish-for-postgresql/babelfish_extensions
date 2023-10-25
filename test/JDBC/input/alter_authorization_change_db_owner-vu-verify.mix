@@ -5,11 +5,9 @@ create login new_owner_login with password='12345678'
 go
 create login new_owner_login2 with password='12345678'
 go
-
 alter server role sysadmin add member dba_login
 go
-
--- end prep
+-- end preparation
 
 -- tsql user=dba_login password=12345678
 select suser_name(), db_name()
@@ -19,6 +17,21 @@ go
 alter authorization on database::no_such_db_chgownerdb to new_owner_login
 go
 alter authorization on database::change_owner_db to no_such_login_chgownerdb
+go
+
+-- system databases not allowed
+alter authorization on database::master to new_owner_login
+go
+alter authorization on database::tempdb to new_owner_login
+go
+-- allowed for msdb
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+alter authorization on database::msdb to new_owner_login
+go
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+alter authorization on database::msdb to jdbc_user
 go
 
 -- before owner change:
