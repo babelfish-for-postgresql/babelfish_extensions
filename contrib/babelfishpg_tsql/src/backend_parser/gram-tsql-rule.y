@@ -1391,7 +1391,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						tsql_update_delete_stmt_from_clause_alias(n->relation,
 						$8);
 						n->targetList = $7;
-						if ($8 != NULL && IsA(linitial($8), JoinExpr))
+						if ($9 != NULL && IsA(linitial($9), JoinExpr))
 						{
 							n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
 												(Node*)n, $9, $10, $3, $4,
@@ -1399,9 +1399,9 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						}
 						else
 						{
-							n->fromClause = $8;
-							n->whereClause = tsql_update_delete_stmt_with_top($3,
-												$4, $10, yyscanner);
+							n->limitCount = $3;
+							n->fromClause = $9;
+							n->whereClause = $10;
 						}
 						tsql_check_update_output_transformation($8);
 						n->returningList = $8;
@@ -3263,9 +3263,9 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 					}
 					else
 					{
+						n->limitCount = $3;
 						n->usingClause = $8;
-						n->whereClause = tsql_update_delete_stmt_with_top($3,
-											$5, $9, yyscanner);
+						n->whereClause = $9;
 					}
 					n->returningList = $7;
 					n->withClause = $1;
