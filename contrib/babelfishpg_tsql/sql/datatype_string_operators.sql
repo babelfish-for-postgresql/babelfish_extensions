@@ -58,7 +58,7 @@ AS 'babelfishpg_tsql', 'formatmessage' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.formatmessage(IN VARCHAR, VARIADIC "any") TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
