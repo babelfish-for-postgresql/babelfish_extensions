@@ -1347,7 +1347,7 @@ CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
     WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
           name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
           name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
-          name collate "C" like 'babelfishpg_tsql.isolation_%';
+          name collate "C" like 'babelfishpg_tsql.isolation_level_%';
 GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts

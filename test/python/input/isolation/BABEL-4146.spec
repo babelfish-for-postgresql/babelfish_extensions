@@ -21,7 +21,7 @@ teardown
 }
 
 session s1
-setup     { SELECT set_config('babelfishpg_tsql.isolation_repeatable_read','pg_isolation',false);
+setup     { SELECT set_config('babelfishpg_tsql.isolation_level_repeatable_read','pg_isolation',false);
   set transaction isolation level repeatable read; BEGIN TRAN; SET lock_timeout '500'; }
 step s1s  { SELECT * from child; }
 step s1i  { INSERT INTO child VALUES (1, 1); }

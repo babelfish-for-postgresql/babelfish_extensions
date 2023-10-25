@@ -12,7 +12,7 @@ typedef enum EscapeHatchOption
 
 typedef enum IsolationOptions
 {
-	DEFAULT_ISOLATION, PG_ISOLATION
+	ISOLATION_OFF, PG_ISOLATION
 } IsolationOptions;
 
 extern bool pltsql_fmtonly;
@@ -20,8 +20,8 @@ extern bool pltsql_enable_create_alter_view_from_pg;
 extern bool pltsql_enable_linked_servers;
 extern bool pltsql_allow_windows_login;
 extern char *pltsql_psql_logical_babelfish_db_name;
-extern int  pltsql_isolation_repeatable_read;
-extern int  pltsql_isolation_serializable;
+extern int  pltsql_isolation_level_repeatable_read;
+extern int  pltsql_isolation_level_serializable;
 
 extern void define_custom_variables(void);
 extern void pltsql_validate_set_config_function(char *name, char *value);

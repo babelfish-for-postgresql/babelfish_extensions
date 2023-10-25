@@ -1,71 +1,71 @@
 -- tsql
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'default', 'server'
-EXEC sp_babelfish_configure 'isolation_serializable', 'default', 'server'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'off', 'server'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'off', 'server'
 GO
 -- terminate-tsql-conn
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
-default
+off
 ~~END~~
 
 ~~START~~
 text
-default
+off
 ~~END~~
 
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'pg_isolatin'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'pg_isolatin'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.isolation_repeatable_read": "pg_isolatin")~~
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.isolation_level_repeatable_read": "pg_isolatin")~~
 
-EXEC sp_babelfish_configure 'isolation_serializable', 'defult'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'of'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.isolation_serializable": "defult")~~
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.isolation_level_serializable": "of")~~
 
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
-default
+off
 ~~END~~
 
 ~~START~~
 text
-default
+off
 ~~END~~
 
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'DeFaUlT'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'oFf'
 GO
-EXEC sp_babelfish_configure 'isolation_serializable', 'dEfAulT'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'OfF'
 GO
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
-default
+off
 ~~END~~
 
 ~~START~~
 text
-default
+off
 ~~END~~
 
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'Pg_ISOLaTiOn'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'Pg_ISOLaTiOn'
 GO
-EXEC sp_babelfish_configure 'isolation_serializable', 'pG_isolaTION'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'pG_isolaTION'
 GO
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
@@ -80,17 +80,17 @@ pg_isolation
 -- terminate-tsql-conn
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
-default
+off
 ~~END~~
 
 ~~START~~
 text
-default
+off
 ~~END~~
 
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
@@ -115,7 +115,7 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Repeatable read is not supported by default, set configuration parameter 'isolation_repeatable_read' to get PG repeatable read)~~
+~~ERROR (Message: ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_ repeatable_read’ to get PG repeatable read.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
@@ -137,7 +137,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Serializable is not supported by default, set configuration parameter 'isolation_serializable' to get PG serializable)~~
+~~ERROR (Message: ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ to get PG serializable.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
@@ -149,14 +149,14 @@ repeatable read
 -- terminate-tsql-conn
 
 -- tsql
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'pg_isolation', 'server'
-EXEC sp_babelfish_configure 'isolation_serializable', 'default', 'server'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'pg_isolation', 'server'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'off', 'server'
 GO
 -- terminate-tsql-conn
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
@@ -165,7 +165,7 @@ pg_isolation
 
 ~~START~~
 text
-default
+off
 ~~END~~
 
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
@@ -208,7 +208,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Serializable is not supported by default, set configuration parameter 'isolation_serializable' to get PG serializable)~~
+~~ERROR (Message: ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ to get PG serializable.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
@@ -220,18 +220,18 @@ repeatable read
 -- terminate-tsql-conn
 
 -- tsql
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'default', 'server'
-EXEC sp_babelfish_configure 'isolation_serializable', 'pg_isolation', 'server'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'off', 'server'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'pg_isolation', 'server'
 GO
 -- terminate-tsql-conn
 
 -- tsql
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
 GO
 ~~START~~
 text
-default
+off
 ~~END~~
 
 ~~START~~
@@ -261,80 +261,13 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Repeatable read is not supported by default, set configuration parameter 'isolation_repeatable_read' to get PG repeatable read)~~
+~~ERROR (Message: ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_ repeatable_read’ to get PG repeatable read.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
 ~~START~~
 text
 read committed
-~~END~~
-
-SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
-GO
-SELECT current_setting('transaction_isolation');
-GO
-~~START~~
-text
-repeatable read
-~~END~~
-
-SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
-GO
-SELECT current_setting('transaction_isolation');
-GO
-~~START~~
-text
-serializable
-~~END~~
-
--- terminate-tsql-conn
-
--- tsql
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'pg_isolation', 'server'
-EXEC sp_babelfish_configure 'isolation_serializable', 'pg_isolation', 'server'
-GO
--- terminate-tsql-conn
-
--- tsql
-SELECT current_setting('babelfishpg_tsql.isolation_repeatable_read');
-SELECT current_setting('babelfishpg_tsql.isolation_serializable');
-GO
-~~START~~
-text
-pg_isolation
-~~END~~
-
-~~START~~
-text
-pg_isolation
-~~END~~
-
-SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
-GO
-SELECT current_setting('transaction_isolation');
-GO
-~~START~~
-text
-read uncommitted
-~~END~~
-
-SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
-GO
-SELECT current_setting('transaction_isolation');
-GO
-~~START~~
-text
-read committed
-~~END~~
-
-SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-GO
-SELECT current_setting('transaction_isolation');
-GO
-~~START~~
-text
-repeatable read
 ~~END~~
 
 SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
@@ -358,7 +291,74 @@ serializable
 -- terminate-tsql-conn
 
 -- tsql
-EXEC sp_babelfish_configure 'isolation_repeatable_read', 'default', 'server'
-EXEC sp_babelfish_configure 'isolation_serializable', 'default', 'server'
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'pg_isolation', 'server'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'pg_isolation', 'server'
+GO
+-- terminate-tsql-conn
+
+-- tsql
+SELECT current_setting('babelfishpg_tsql.isolation_level_repeatable_read');
+SELECT current_setting('babelfishpg_tsql.isolation_level_serializable');
+GO
+~~START~~
+text
+pg_isolation
+~~END~~
+
+~~START~~
+text
+pg_isolation
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+read uncommitted
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+read committed
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+repeatable read
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+repeatable read
+~~END~~
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+SELECT current_setting('transaction_isolation');
+GO
+~~START~~
+text
+serializable
+~~END~~
+
+-- terminate-tsql-conn
+
+-- tsql
+EXEC sp_babelfish_configure 'isolation_level_repeatable_read', 'off', 'server'
+EXEC sp_babelfish_configure 'isolation_level_serializable', 'off', 'server'
 GO
 -- terminate-tsql-conn

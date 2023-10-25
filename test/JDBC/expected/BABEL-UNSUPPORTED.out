@@ -2035,8 +2035,8 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.isolation_repeatable_read#!#default#!#Select mapping for isolation level reapeatable read
-babelfishpg_tsql.isolation_serializable#!#default#!#Select mapping for isolation level serializable
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2103,8 +2103,8 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.isolation_repeatable_read#!#default#!#Select mapping for isolation level reapeatable read
-babelfishpg_tsql.isolation_serializable#!#default#!#Select mapping for isolation level serializable
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2152,8 +2152,8 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.isolation_repeatable_read#!#default#!#Select mapping for isolation level reapeatable read
-babelfishpg_tsql.isolation_serializable#!#default#!#Select mapping for isolation level serializable
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
