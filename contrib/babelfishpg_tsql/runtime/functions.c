@@ -1746,7 +1746,7 @@ type_id(PG_FUNCTION_ARGS)
                *object_name;
     char       *physical_schema_name;
     char       *input;
-    char      **splited_object_name;
+    char      **splitted_object_name;
     Oid         schema_oid;
     Oid         user_id = GetUserId();
     Oid result = InvalidOid;
@@ -1768,17 +1768,17 @@ type_id(PG_FUNCTION_ARGS)
                  errmsg("input value is too long for object name")));
 
     /* resolve the two part name */
-    splited_object_name = split_object_name(input);
+    splitted_object_name = split_object_name(input);
     /* If three part name(db_name also included in input) then return null */
-    if(strcmp(splited_object_name[1], ""))
+    if(strcmp(splitted_object_name[1], ""))
     {
         pfree(input);
-        pfree(splited_object_name);
+        pfree(splitted_object_name);
         PG_RETURN_NULL();
     }
     db_name = get_cur_db_name();
-    schema_name = splited_object_name[2];
-    object_name = splited_object_name[3];
+    schema_name = splitted_object_name[2];
+    object_name = splitted_object_name[3];
 
     /* downcase identifier if needed */
     if (pltsql_case_insensitive_identifiers)
@@ -1787,13 +1787,13 @@ type_id(PG_FUNCTION_ARGS)
         schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
         object_name = downcase_identifier(object_name, strlen(object_name), false, false);
         for (int i = 0; i < 4; i++)
-            pfree(splited_object_name[i]);
+            pfree(splitted_object_name[i]);
     }
     else
-        pfree(splited_object_name[0]);
+        pfree(splitted_object_name[0]);
 
     pfree(input);
-    pfree(splited_object_name);
+    pfree(splitted_object_name);
 
     /* truncate identifiers if needed */
     truncate_tsql_identifier(db_name);
