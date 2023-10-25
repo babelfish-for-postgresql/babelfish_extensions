@@ -1384,7 +1384,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
 				last_dot = colname_start;
-				while(true)
+				while(*colname_start != '\0')
 				{	
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
@@ -1445,7 +1445,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int		actual_alias_len = 0;
 			
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || scanner_isspace(*colname_start))
+			while(*colname_start != '\0' && (*colname_start == '(' || scanner_isspace(*colname_start)))
 			{
 				colname_start++;
 			}
