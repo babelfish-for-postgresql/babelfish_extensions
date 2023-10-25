@@ -2,6 +2,8 @@ package com.sqlsamples;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
+import com.microsoft.sqlserver.jdbc.Geometry;
+import com.microsoft.sqlserver.jdbc.Geography;
 import microsoft.sql.DateTimeOffset;
 import org.apache.logging.log4j.Logger;
 
@@ -185,6 +187,30 @@ public class JDBCPreparedStatement {
                     SQLServerPreparedStatement ssPstmt = (SQLServerPreparedStatement) pstmt;
                     ssPstmt.setStructured(j - 1, parameter[1], sourceDataTable);
                     pstmt = ssPstmt;
+                } else if (parameter[0].equalsIgnoreCase("geometry")) {
+                    String[] arguments = parameter[2].split(":", 2);
+                    String geoWKT = arguments[0];
+                    int srid = -1;
+                    try{
+                        srid = Integer.parseInt(arguments[1]);
+                    } finally {
+                        Geometry geomWKT = Geometry.STGeomFromText(geoWKT, srid);
+                        SQLServerPreparedStatement ssPstmt = (SQLServerPreparedStatement) pstmt;
+                        ssPstmt.setGeometry(j - 1, geomWKT);
+                        pstmt = ssPstmt;
+                    }
+                } else if (parameter[0].equalsIgnoreCase("geography")) {
+                    String[] arguments = parameter[2].split(":", 2);
+                    String geoWKT = arguments[0];
+                    int srid = -1;
+                    try{
+                        srid = Integer.parseInt(arguments[1]);
+                    } finally {
+                        Geography geogWKT = Geography.STGeomFromText(geoWKT, srid);
+                        SQLServerPreparedStatement ssPstmt = (SQLServerPreparedStatement) pstmt;
+                        ssPstmt.setGeography(j - 1, geogWKT);
+                        pstmt = ssPstmt;
+                    }
                 }
             } catch (SQLException se) {
                 handleSQLExceptionWithFile(se, bw, logger);
@@ -194,6 +220,8 @@ public class JDBCPreparedStatement {
                 logger.error("IO Exception: " + e.getMessage(), e);
             } catch (ParseException e) {
                 logger.error("Parse Exception: " + e.getMessage(), e);
+            } catch (NumberFormatException e) {
+                logger.error("Number Format Exception: " + e.getMessage(), e);
             }
         }
     }

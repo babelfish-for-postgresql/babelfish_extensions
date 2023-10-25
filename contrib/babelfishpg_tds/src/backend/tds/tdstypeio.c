@@ -51,6 +51,8 @@
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
 #define VARCHAR_MAX 2147483647
+/* TODO: need to add for other geometry types when introduced */
+#define POINTTYPE 1
 
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
@@ -128,6 +130,7 @@ Datum		TdsTypeSmallMoneyToDatum(StringInfo buf);
 Datum		TdsTypeXMLToDatum(StringInfo buf);
 Datum		TdsTypeUIDToDatum(StringInfo buf);
 Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
+Datum		TdsTypeSpatialToDatum(StringInfo buf);
 
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
@@ -1448,6 +1451,59 @@ TdsTypeUIDToDatum(StringInfo buf)
 	PG_RETURN_POINTER(uuid);
 }
 
+/* Helper Function to convert Spatial Type values into Datum. */
+Datum
+TdsTypeSpatialToDatum(StringInfo buf)
+{
+	bytea	   *result;
+	int32	   geomType = 0;
+	int		   nbytes,
+			   npoints;
+	StringInfo  destBuf = makeStringInfo();
+
+	/*
+	 * Here the incoming buf format is -> 4 Byte SRID + 2 Byte Geometry Type + (16 Bytes)*npoints
+	 * But Driver expects -> 4 Byte SRID + 4 Byte Type + 4 Byte npoints + (16 Bytes)*npoints
+	 */
+	/* We are copying first 4 Byte SRID from buf */
+	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, 4);
+	
+	npoints = (buf->len - buf->cursor - 6)/16;
+	nbytes = buf->len - buf->cursor + 6;
+	result = (bytea *) palloc0(nbytes + VARHDRSZ);
+	SET_VARSIZE(result, nbytes + VARHDRSZ);
+
+	/* Here we are handling the 8 bytes (4 Byte Type + 4 Byte npoints) which driver expects for 2-D point */
+	if (buf->data[buf->cursor + 4] == 1 && buf->data[buf->cursor + 5] == 12)
+	{
+		geomType = (int32) POINTTYPE;
+
+		enlargeStringInfo(destBuf, sizeof(uint32_t));
+		memcpy(destBuf->data + destBuf->len, (char *) &geomType, sizeof(uint32_t));
+		destBuf->len += sizeof(uint32_t);
+		destBuf->data[destBuf->len] = '\0';
+
+		enlargeStringInfo(destBuf, sizeof(uint32_t));
+		memcpy(destBuf->data + destBuf->len, (char *) &npoints, sizeof(uint32_t));
+		destBuf->len += sizeof(uint32_t);
+		destBuf->data[destBuf->len] = '\0';
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported geometry type")));
+	}
+
+	/* We are copying the remaining bytes (16 Bytes)*npoints from buf */
+	appendBinaryStringInfo(destBuf, buf->data + buf->cursor + 6, buf->len - 6);
+
+	memcpy(VARDATA(result), &destBuf->data[0], nbytes);
+	buf->cursor += nbytes - 6;
+
+	PG_RETURN_BYTEA_P(result);
+}
+
 StringInfo
 TdsGetPlpStringInfoBufferFromToken(const char *message, const ParameterToken token)
 {
@@ -2007,24 +2063,15 @@ TdsRecvTypeDatetime2(const char *message, const ParameterToken token)
  * Geometry data type
  * --------------------------------
  */
-/*
- * It is a Placeholder Function for now
- * TODO: Will need to address it in subsequent Code Changes
-*/
 Datum
 TdsRecvTypeGeometry(const char *message, const ParameterToken token)
 {
-	Datum result = 0;
+	Datum		result;
+	StringInfo	buf = TdsGetPlpStringInfoBufferFromToken(message, token);
 
-	/* Decode binary and convert if needed */
-	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+	result = TdsTypeSpatialToDatum(buf);
 
-	/* Return in Datum val */
-
-	ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("Prepared Queries for Geometry DataType Currently not Supported in BabelFish")));
-
+	pfree(buf->data);
 	pfree(buf);
 	return result;
 }
@@ -2033,25 +2080,16 @@ TdsRecvTypeGeometry(const char *message, const ParameterToken token)
  * TdsRecvTypeGeography - converts external binary format to
  * Geography data type
  * --------------------------------
- */
-/*
- * It is a Placeholder Function for now
- * TODO: Will need to address it in subsequent Code Changes
-*/
+ */ 
 Datum
 TdsRecvTypeGeography(const char *message, const ParameterToken token)
 {
-	Datum result = 0;
+	Datum		result;
+	StringInfo	buf = TdsGetPlpStringInfoBufferFromToken(message, token);
 
-	/* Decode binary and convert if needed */
-	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
+	result = TdsTypeSpatialToDatum(buf);
 
-	/* Return in Datum val */
-
-	ereport(ERROR,
-							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-							 errmsg("Prepared Queries for Geography DataType Currently not Supported in BabelFish")));
-
+	pfree(buf->data);
 	pfree(buf);
 	return result;
 }
@@ -2426,8 +2464,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 						case TDS_TYPE_SQLVARIANT:
 							values[i] = TdsTypeSqlVariantToDatum(temp);
 							break;
-						case TDS_TYPE_SPATIAL:
-							break;
+						case TDS_TYPE_CLRUDT:
+							values[i] = TdsTypeSpatialToDatum(temp);
+							break; 
 					}
 				/* Build a string for bind parameters. */
 				if (colMetaData[currentColumn].columnTdsType != TDS_TYPE_NVARCHAR || row->isNull[currentColumn] == 'n')
@@ -4187,7 +4226,7 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
      * Row chunck length expected by the driver is:
      * 16 * (No. of Points) + 6
      * 16 -> 2 8-Byte float coordinates (TODO: Need to change when Z and M flags are defined for N-dimension Points)
-     * 6 -> 4 Byte SRID + 2 Byte (01 0C)
+     * 6 -> 4 Byte SRID + 2 Byte Geometry Type (01 0C -> for Point Type)
     */
     len = npoints*16 + 6;
     buf = (char *) palloc0(len);
@@ -4198,12 +4237,19 @@ TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr
     *((int32_t*)buf) = srid;
     itr = buf + 4;
 
-    /* Driver Expects 01 0C as 2 constant Bytes */
-    /* TODO: Will need to verify for Different Geometry Data Types */
-    *itr = 1;
-    itr++;
-    *itr = 12;
-    itr++;
+	/* Driver Expects 01 0C for 2-D Point Type as 2 constant Bytes to identify the Geometry Type */
+	/* TODO: Will need to introduce for Different Geometry Data Types */
+	switch (*((uint32_t*)gser->data))
+	{
+		case POINTTYPE:
+			*itr = 1;
+			itr++;
+			*itr = 12;
+			itr++;
+			break;
+		default:
+			elog(ERROR, "Unsupported geometry type");
+	}
 
     /* Data part of the Row has length 16 * (No. of Points) */
     /*

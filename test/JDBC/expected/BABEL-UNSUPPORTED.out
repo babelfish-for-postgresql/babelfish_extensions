@@ -2537,7 +2537,7 @@ DBCC CLONEDATABASE (d12608, d12608_clone);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DBCC' is not currently supported in Babelfish)~~
+~~ERROR (Message: DBCC CLONEDATABASE is not yet supported in Babelfish)~~
 
 DROP DATABASE d12608;
 GO

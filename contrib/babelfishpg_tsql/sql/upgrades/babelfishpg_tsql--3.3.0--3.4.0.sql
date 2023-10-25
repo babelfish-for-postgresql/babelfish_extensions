@@ -1338,6 +1338,7 @@ INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Auth2.rolname = Ext2.rolnam
 WHERE Ext1.type = 'R';
 
 GRANT SELECT ON sys.server_role_members TO PUBLIC;
+
 create or replace view sys.schemas as
 select
   CAST(ext.orig_name as sys.SYSNAME) as name

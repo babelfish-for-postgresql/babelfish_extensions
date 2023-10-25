@@ -10,6 +10,7 @@
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
+#include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "pltsql_bulkcopy.h"
 #include "table_variable_mvcc.h"
@@ -53,6 +54,7 @@ static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
+static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char *dynstmt);
@@ -91,7 +93,7 @@ extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 int			execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 Oid			get_role_oid(const char *rolename, bool missing_ok);
 bool		is_member_of_role(Oid member, Oid role);
-
+void		exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt);
 extern PLtsql_function *find_cached_batch(int handle);
 
 extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_exec *stmt, bool keepplan);
@@ -235,6 +237,9 @@ exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_es
 			rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
 			break;
 
+		case PLTSQL_STMT_DBCC:
+			rc = exec_stmt_dbcc(estate, (PLtsql_stmt_dbcc *) stmt);
+			break;
 		default:
 			estate->err_stmt = save_estmt;
 			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
@@ -3112,6 +3117,370 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 	}
 	return PLTSQL_RC_OK;
 }
+
+
+int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
+{
+	switch (stmt->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			exec_stmt_dbcc_checkident(stmt);
+			break;
+		default:
+			Assert(0);
+	}
+	return PLTSQL_RC_OK;
+}
+
+
+void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
+{
+	struct	dbcc_checkident dbcc_stmt = stmt->dbcc_stmt_data.dbcc_checkident;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	char	*db_name = NULL;
+	char	*max_identity_value_str = NULL;
+	char	*query = NULL;
+	char	*attname;
+	char	*token;
+	const char	*schema_name;
+	const char	*nsp_name;
+	const char	*user;
+	const char	*guest_role_name;
+	const char	*dbo_role_name;
+	const char	*login;
+	int64	max_identity_value = 0;
+	int64	cur_identity_value = 0;
+	int	attnum;
+	int	rc = 0;
+	int64	reseed_value = 0;
+	Oid	nsp_oid;
+	Oid 	table_oid;
+	Oid	seqid = InvalidOid;
+	Oid	current_user_id = GetUserId();
+	volatile bool cur_value_is_null = true;
+	bool	login_is_db_owner;
+	StringInfoData msg;
+	bool	is_float_value;
+	bool    is_cross_db = false;
+
+
+	if(dbcc_stmt.new_reseed_value)
+	{
+		/* If float value is passed as reseed_value, only part before decimal is considered */
+		is_float_value = strchr(dbcc_stmt.new_reseed_value, '.') != NULL;
+
+		if (is_float_value)
+		{
+			if (dbcc_stmt.new_reseed_value[0] == '.' || 
+				(dbcc_stmt.new_reseed_value[0] == '-' && dbcc_stmt.new_reseed_value[1] == '.'))
+				reseed_value = 0;
+			else
+			{
+				token = strtok(dbcc_stmt.new_reseed_value, ".");
+				reseed_value = pg_strtoint64(token);
+				pfree(token);
+			}
+		}
+		else
+			reseed_value = pg_strtoint64(dbcc_stmt.new_reseed_value);
+	}
+	
+	db_name = get_cur_db_name();
+	if (dbcc_stmt.db_name)
+	{
+		if (!DbidIsValid(get_db_id(dbcc_stmt.db_name)))
+		{
+			ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_DATABASE),
+				errmsg("database \"%s\" does not exist", dbcc_stmt.db_name)));
+		}
+		if (pg_strncasecmp(db_name, dbcc_stmt.db_name, NAMEDATALEN) != 0)
+		{
+			is_cross_db = true;
+			pfree(db_name);
+			db_name = pstrdup(dbcc_stmt.db_name);
+		}
+	}
+
+	user = get_user_for_database(db_name);
+	login_is_db_owner = 0 == strncmp(GetUserNameFromId(GetSessionUserId(), false),
+										get_owner_of_db(db_name), NAMEDATALEN);
+
+	/* Raise an error if the login does not have access to the database */
+	if(is_cross_db)
+	{
+		if (user)
+			SetCurrentRoleId(GetSessionUserId(), false);
+		else
+		{
+			login = GetUserNameFromId(GetSessionUserId(), false);
+			pfree(db_name);
+			ereport(ERROR,
+                    	(errcode(ERRCODE_UNDEFINED_DATABASE),
+                    		errmsg("The server principal \"%s\" is not able to access "
+                            	"the database \"%s\" under the current security context",
+                           	 login, dbcc_stmt.db_name)));
+		}
+	}
+
+	/* get physical schema name from logical schema name */
+	if (dbcc_stmt.schema_name)
+	{
+		schema_name = dbcc_stmt.schema_name;
+		nsp_name = get_physical_schema_name(db_name, dbcc_stmt.schema_name);
+	}
+	else
+	{
+		/* 
+		 * If schema_name is not provided, find default schema for current user
+		 * and get physical schema name
+		 */
+		guest_role_name = get_guest_role_name(db_name);
+		dbo_role_name = get_dbo_role_name(db_name);
+		
+		/* user will never be null here as cross-db calls are already handled */
+		Assert(user != NULL);
+
+		schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+		if ((dbo_role_name && strcmp(user, dbo_role_name) == 0))
+		{
+			nsp_name = get_dbo_schema_name(db_name);
+		}
+		else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+		{
+			nsp_name = get_guest_schema_name(db_name);
+		}
+		else
+		{
+			nsp_name = get_physical_schema_name(db_name, schema_name);
+		}
+	}
+	pfree(db_name);
+
+	/*
+	 * get schema oid from physical schema name, it will return InvalidOid if
+	 * user don't have lookup access
+	 */
+	nsp_oid = get_namespace_oid(nsp_name, false);
+
+	if(!OidIsValid(nsp_oid))
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_SCHEMA),
+			errmsg("schema \"%s\" does not exist", schema_name)));
+	}
+
+	/* Permission check */
+	if (!(pg_namespace_ownercheck(nsp_oid, GetUserId()) ||
+			has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) ||
+				login_is_db_owner))
+		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
+
+	table_oid = get_relname_relid(dbcc_stmt.table_name, nsp_oid);
+	if(!OidIsValid(table_oid))
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_TABLE),
+			errmsg("relation \"%s\" does not exist", dbcc_stmt.table_name)));
+	}
+
+	rel = RelationIdGetRelation(table_oid);
+	tupdesc = RelationGetDescr(rel);
+
+	/* Find Identity column in table and associated sequence */
+	for (attnum = 0; attnum < tupdesc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(tupdesc, attnum);
+
+		if (attr->attidentity)
+		{
+			attname = NameStr(attr->attname);
+			seqid = getIdentitySequence(table_oid, attnum + 1, false);
+			break;
+		}
+	}
+
+	RelationClose(rel);
+
+	if (!OidIsValid(seqid))
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_UNDEFINED_COLUMN),
+			errmsg("'%s.%s' does not contain an identity column.",
+				nsp_name, dbcc_stmt.table_name)));
+	}
+
+	PG_TRY();
+	{
+		cur_identity_value = DirectFunctionCall1(pg_sequence_last_value,
+									ObjectIdGetDatum(seqid));
+		cur_value_is_null = false;
+	}
+	PG_CATCH();
+	{
+		FlushErrorState();
+	}
+	PG_END_TRY();
+
+	if (!dbcc_stmt.no_infomsgs)
+		initStringInfo(&msg);
+
+	PG_TRY();
+	{
+		/*
+		 * Acquiring an AccessExclusiveLock on the table is essential when
+		 * reseeding the identity current value to new_ressed_value to
+		 * ensure concurrency control.
+		 */
+		if(dbcc_stmt.new_reseed_value)
+		{
+			LockRelationOid(table_oid, AccessExclusiveLock);
+		}
+		else
+		{
+			LockRelationOid(table_oid, ShareLock);
+		}
+
+		/* 
+		 * If cur_value_is_null is true, then the function pg_sequence_last_value
+		 * has returned a NULL value, which means either no rows have been 
+		 * inserted into the table yet, or TRUNCATE TABLE command has been used
+		 * to delete all rows. In this case, after DBCC CHECKIDENT the next
+		 * row inserted will have new_reseed_value as the identity value.
+		 */
+		if (cur_value_is_null)
+		{
+			if (dbcc_stmt.new_reseed_value)
+			{
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL'.\n");
+				DirectFunctionCall3(setval3_oid,
+					ObjectIdGetDatum(seqid),
+					Int64GetDatum(reseed_value),
+					BoolGetDatum(false));
+			}
+			else
+			{
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
+			}
+		}
+
+		else
+		{
+			if (dbcc_stmt.new_reseed_value)
+			{
+				/* 
+				* Print informational messages if NO_INFOMSGS is not passed as a
+				* DBCC command option.
+				*/
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
+
+				DirectFunctionCall2(setval_oid,
+					ObjectIdGetDatum(seqid),
+					Int64GetDatum(reseed_value));
+			}
+			else
+			{	
+				SPI_connect();
+				query = psprintf("SELECT MAX(%s) FROM %s.%s", attname,
+								schema_name, dbcc_stmt.table_name);
+				rc = SPI_execute(query, true, 0);
+
+				if (rc != SPI_OK_SELECT)
+					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+				max_identity_value_str = SPI_getvalue(SPI_tuptable->vals[0],
+										SPI_tuptable->tupdesc, 1);
+				
+				SPI_freetuptable(SPI_tuptable);
+				
+				if(max_identity_value_str)
+					max_identity_value = pg_strtoint64(max_identity_value_str);
+
+				if (!dbcc_stmt.no_infomsgs)
+				{
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld', current column value '%s'.\n",
+														cur_identity_value,
+														max_identity_value_str ? max_identity_value_str : "NULL");
+				}
+
+				/*
+				* RESEED option only resets the identity column value if the 
+				* current identity value for a table is less than the maximum 
+				* identity value stored in the identity column.
+				*/
+				if (dbcc_stmt.is_reseed && max_identity_value_str &&
+					cur_identity_value < max_identity_value)
+				{
+					DirectFunctionCall2(setval_oid,
+						ObjectIdGetDatum(seqid),
+						Int64GetDatum(max_identity_value));
+				}
+			}
+		}
+		
+		if (is_cross_db)
+            		SetCurrentRoleId(current_user_id, false);
+	}
+	PG_CATCH();
+	{
+		if (is_cross_db)
+           		 SetCurrentRoleId(current_user_id, false);
+		
+		if(query)
+			pfree(query);
+		if (max_identity_value_str)
+			pfree(max_identity_value_str);
+
+		if(rc != 0)
+		{ 
+			SPI_finish();
+			/* running 'SELECT MAX' query above holds a AccessShareLock on table, we want to unlock that as well */
+			UnlockRelationOid(table_oid, AccessShareLock);
+		}
+		if(!dbcc_stmt.new_reseed_value)
+		{
+			UnlockRelationOid(table_oid, ShareLock);
+		}
+		if(msg.data)
+		{
+			pfree(msg.data);
+		}
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	
+	if(query)
+		pfree(query);
+	if (max_identity_value_str)
+		pfree(max_identity_value_str);
+	if(rc != 0)
+	{
+		SPI_finish();
+		/* running 'SELECT MAX' query above holds a AccessShareLock on table, we want to unlock that as well */
+		UnlockRelationOid(table_oid, AccessShareLock);
+	}
+	
+	if(!dbcc_stmt.new_reseed_value)
+	{
+		UnlockRelationOid(table_oid, ShareLock);
+	}
+
+	if (!dbcc_stmt.no_infomsgs)
+	{
+		appendStringInfo(&msg, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
+		/* send message to user */
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg.data, 0);
+		pfree(msg.data);
+	}
+
+}
+
 
 uint64
 execute_bulk_load_insert(int ncol, int nrow,
