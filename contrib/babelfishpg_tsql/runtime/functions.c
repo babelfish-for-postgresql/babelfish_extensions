@@ -1754,7 +1754,7 @@ type_id(PG_FUNCTION_ARGS)
 
     if (PG_ARGISNULL(0))
         PG_RETURN_NULL();
-    input = text_to_cstring(PG_GETARG_TEXT_P(0));
+    input = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
     /* strip trailing whitespace from input */
     i = pg_mbstrlen(input);
@@ -1897,7 +1897,7 @@ type_name(PG_FUNCTION_ARGS)
     if (type_id < 0)
         PG_RETURN_NULL();
     
-    InitFunctionCallInfoData(*fcinfo1, NULL, 0, InvalidOid, NULL, NULL);
+    InitFunctionCallInfoData(*fcinfo1, NULL, 1, InvalidOid, NULL, NULL);
     fcinfo1->args[0].value = type_id;
     fcinfo1->args[0].isnull = false;
     // Search in typecode list, it will return type name if system datatype, else will return null.
