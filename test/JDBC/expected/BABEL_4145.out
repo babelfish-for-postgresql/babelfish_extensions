@@ -115,7 +115,7 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_ repeatable_read’ to get PG repeatable read isolation level.)~~
+~~ERROR (Message: Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_repeatable_read’ config option to get PG repeatable read isolation level.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
@@ -137,7 +137,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ to get PG serializable isolation level.)~~
+~~ERROR (Message: Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ config option to get PG serializable isolation level.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
@@ -208,7 +208,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ to get PG serializable isolation level.)~~
+~~ERROR (Message: Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ config option to get PG serializable isolation level.)~~
 
 SELECT current_setting('transaction_isolation');
 GO
@@ -261,7 +261,7 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_ repeatable_read’ to get PG repeatable read isolation level.)~~
+~~ERROR (Message: Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_repeatable_read’ config option to get PG repeatable read isolation level.)~~
 
 SELECT current_setting('transaction_isolation');
 GO

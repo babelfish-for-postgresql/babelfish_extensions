@@ -4348,7 +4348,7 @@ tsql_IsolationLevelStr:
 						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_ repeatable_read’ to get PG repeatable read isolation level."),
+							errmsg("Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_repeatable_read’ config option to get PG repeatable read isolation level."),
 							parser_errposition(@1)));
 					}
 
@@ -4370,7 +4370,7 @@ tsql_IsolationLevelStr:
 						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ to get PG serializable isolation level."),
+							errmsg("Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ config option to get PG serializable isolation level."),
 							parser_errposition(@1)));
 					}
 				}
