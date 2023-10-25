@@ -332,9 +332,6 @@ ignore#!#babel_table_type
 # BABEL-4422
 ignore#!#babel_money
 
-# BABEL-4423
-ignore#!#BABEL-IDENTITY
-
 # BABEL-4424
 ignore#!#TestDecimal
 ignore#!#TestNumeric
