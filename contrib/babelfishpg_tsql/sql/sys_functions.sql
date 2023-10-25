@@ -3713,7 +3713,7 @@ CREATE OR REPLACE FUNCTION sys.is_rolemember_internal(
 	IN database_principal sys.SYSNAME
 )
 RETURNS INT AS 'babelfishpg_tsql', 'is_rolemember'
-LANGUAGE C STABLE PARALLEL SAFE;
+LANGUAGE C STABLE PARALLEL UNSAFE;
 
 CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
 RETURNS INT AS
@@ -3727,7 +3727,7 @@ RETURNS INT AS
 $$
 	SELECT sys.is_rolemember_internal(role, NULL);
 $$
-LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+LANGUAGE SQL STRICT STABLE PARALLEL UNSAFE;
 
 CREATE OR REPLACE FUNCTION sys.is_rolemember(
 	IN role sys.SYSNAME, 
@@ -3737,7 +3737,7 @@ RETURNS INT AS
 $$
 	SELECT sys.is_rolemember_internal(role, database_principal);
 $$
-LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+LANGUAGE SQL STRICT STABLE PARALLEL UNSAFE;
 
 CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
 $body$
