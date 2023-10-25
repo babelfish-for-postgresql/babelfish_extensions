@@ -1776,8 +1776,6 @@ type_id(PG_FUNCTION_ARGS)
     if(pg_mbstrlen(splitted_object_name[1]) != 0)
     {
         pfree(input);
-        for (int i = 0; i < 4; i++)
-            pfree(splitted_object_name[i]);
         pfree(splitted_object_name);
         PG_RETURN_NULL();
     }
