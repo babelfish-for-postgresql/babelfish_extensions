@@ -56,6 +56,7 @@
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
+#define TYPE_NAME_MAX_LENGTH 4000
 
 typedef enum
 {
@@ -1764,7 +1765,7 @@ type_id(PG_FUNCTION_ARGS)
 		input[i] = '\0';
 
     /* length should be restricted to 4000 */
-    if (i > 4000)
+    if (i > TYPE_NAME_MAX_LENGTH)
         ereport(ERROR,
                 (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
                  errmsg("input value is too long for object name")));
