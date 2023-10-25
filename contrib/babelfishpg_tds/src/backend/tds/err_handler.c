@@ -309,7 +309,9 @@ emit_tds_log(ErrorData *edata)
 
 	if (edata->elevel < ERROR)
 	{
+		HOLD_INTERRUPTS();
 		elog(DEBUG5, "suppressing informational client message < ERROR");
+		RESUME_INTERRUPTS();
 
 		/* reset the flag */
 		tds_disable_error_log_hook = false;
