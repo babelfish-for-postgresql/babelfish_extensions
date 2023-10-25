@@ -1568,12 +1568,12 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 					"sys.tsql_type_max_length_helper(type, a.attlen, t.typtypmod) "
 			"END  AS INT ) "
 		"END "					/* AS "suggested_tds_length" */
-		"FROM sys.types T2, pg_attribute a, pg_type t "
+		"FROM sys.types AS T2 "
+		"JOIN pg_attribute AS a ON a.atttypid = T2.user_type_id "
+		"JOIN pg_type AS t ON T2.user_type_id = t.oid "
 		", sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name "
 		", coalesce(T2.name, tsql_base_type_name) AS type "
         "WHERE a.attrelid = %d "
-		"AND T2.user_type_id = t.oid "
-        "AND a.atttypid = T2.user_type_id " 
         "AND T2.system_type_id = T2.user_type_id "
 		"AND a.attname = \'%s\' COLLATE sys.database_default ";
 
