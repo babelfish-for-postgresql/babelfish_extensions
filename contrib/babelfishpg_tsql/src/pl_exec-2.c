@@ -3759,6 +3759,8 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 static int
 exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
 {
+	bool granting_to_self = false;
+	
 	/* Verify target database exists. */
 	if (!DbidIsValid(get_db_id(stmt->db_name)))
 	{
@@ -3774,7 +3776,6 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	}
 	
 	/* SQL Server allows granting ownership to yourself when you are owner already, even without having sysadmin role. */
-	bool granting_to_self = false;
 	if (get_role_oid(stmt->new_owner_name, true) == GetSessionUserId())  // Granting ownership to myself?
 	{
 		/* Is the current login already DB owner? */
