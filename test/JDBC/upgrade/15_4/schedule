@@ -332,7 +332,7 @@ sys-schema-name
 sys-schemas
 sys-schemas-dep
 sys-selective_xml_index_paths
-sys-server_principals-before-15_5
+sys-server_principals
 sys_server_principals_dep
 sys-sid_binary
 sys-spatial_indexes
