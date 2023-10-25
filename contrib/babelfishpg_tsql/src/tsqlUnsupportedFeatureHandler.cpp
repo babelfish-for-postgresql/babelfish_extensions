@@ -1403,16 +1403,16 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAggregate_windowed_functio
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDefault_expr(TSqlParser::Default_exprContext *ctx)
 {
-	TSqlParser::Expression_listContext *pctx = dynamic_cast<TSqlParser::Expression_listContext *>(ctx->parent);
-	if (!pctx || dynamic_cast<TSqlParser::Table_value_constructorContext *>(pctx->parent) == nullptr) /* if DEFAULT expression is used for VALUES ..., accept it */
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
+	// TSqlParser::Expression_listContext *pctx = dynamic_cast<TSqlParser::Expression_listContext *>(ctx->parent);
+	// if (!pctx || dynamic_cast<TSqlParser::Table_value_constructorContext *>(pctx->parent) == nullptr) /* if DEFAULT expression is used for VALUES ..., accept it */
+	// 	handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx)
 {
-	if (ctx->DEFAULT())
-		handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_PARAMETER_DEFAULT, ctx->DEFAULT());
+	// if (ctx->DEFAULT())
+	// 	handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_PARAMETER_DEFAULT, ctx->DEFAULT());
 	return visitChildren(ctx);
 }
 
