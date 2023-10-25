@@ -3122,7 +3122,7 @@ BEGIN
             RETURN NULL;
         ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
                 WHERE ext.orig_name = bbf_schema_name 
-                    AND CAST(ext.dbid AS oid) = CAST(sys.db_id() AS oid)) != 1 THEN
+                    AND ext.dbid = sys.db_id()) != 1 THEN
             RETURN 0;
         END IF;
     END IF;
@@ -4050,7 +4050,7 @@ BEGIN
         column_length := 256;
     ELSIF column_data_type IS NULL THEN
 
-        -- Check if it's a user-defined data type
+        -- Check if it ia user-defined data type
         SELECT sys.translate_pg_type_to_tsql(typbasetype), typlen, typtypmod 
         INTO column_data_type, typelen, typemod
         FROM pg_type
