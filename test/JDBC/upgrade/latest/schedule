@@ -455,6 +455,7 @@ todatetimeoffset-dep
 triggers_with_transaction
 unquoted_string
 doublequoted_string
+alter_authorization_change_db_owner
 datetimeoffset-timezone
 BABEL-4046
 host_id

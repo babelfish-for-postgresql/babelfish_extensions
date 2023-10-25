@@ -1,0 +1,20 @@
+-- tsql
+create login dba_login with password='12345678'
+go
+alter server role sysadmin add member dba_login
+go
+create login new_owner_login with password='12345678'
+go
+create login new_owner_login2 with password='12345678'
+go
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dba_login#!#master
+~~END~~
+
+create database change_owner_db
+go

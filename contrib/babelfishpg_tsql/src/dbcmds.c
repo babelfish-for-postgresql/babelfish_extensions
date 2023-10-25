@@ -874,7 +874,7 @@ drop_all_dbs(PG_FUNCTION_ARGS)
 
 			while (HeapTupleIsValid(tuple) && i < DROP_DB_BATCH_SIZE)
 			{
-				Datum		name = heap_getattr(tuple, Anum_sysdatabaese_name,
+				Datum		name = heap_getattr(tuple, Anum_sysdatabases_name,
 												sysdatabase_rel->rd_att, &is_null);
 
 				dbnames[i] = TextDatumGetCString(name);
