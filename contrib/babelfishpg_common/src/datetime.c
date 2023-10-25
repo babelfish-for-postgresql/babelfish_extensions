@@ -708,7 +708,7 @@ calculateDaysFromDefaultDatetime(Timestamp timestamp_left)
 	timestamp_right = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0, 0);
 	result_interval = (Interval *) DirectFunctionCall2(timestamp_mi, timestamp_left, timestamp_right);
 	interval2itm(*result_interval, itm);
-	result = (float8) (result_interval->day*USECS_PER_DAY + itm->tm_hour * USECS_PER_HOUR + itm->tm_min * USECS_PER_MINUTE + itm->tm_sec * USECS_PER_SEC + itm->tm_usec)/(float8) USECS_PER_DAY;
+	result = result_interval->day + (float8) (itm->tm_hour * USECS_PER_HOUR + itm->tm_min * USECS_PER_MINUTE + itm->tm_sec * USECS_PER_SEC + itm->tm_usec)/(float8) USECS_PER_DAY;
 	return result;
 }
 
