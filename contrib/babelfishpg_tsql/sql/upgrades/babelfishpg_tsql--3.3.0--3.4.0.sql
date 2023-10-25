@@ -2913,6 +2913,30 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     permission sys.SYSNAME, 
     sub_securable sys.SYSNAME,
     sub_securable_class sys.nvarchar(60)) TO PUBLIC;
+    
+CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
+LANGUAGE plpgsql
+AS $$ 
+DECLARE 
+	babelfish_catalog RECORD;
+	schema_name varchar = 'sys';
+	error_msg text;
+BEGIN
+	FOR babelfish_catalog IN (
+		SELECT relname as name from pg_class t 
+		INNER JOIN pg_namespace n on n.oid = t.relnamespace
+		WHERE t.relkind = 'r' and n.nspname = schema_name
+		)
+	LOOP
+		BEGIN
+			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'ANALYZE for babelfish catalog %.% failed with error: %s', schema_name, babelfish_catalog.name, error_msg;
+		END;
+	END LOOP;
+END;
+$$;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema
 -- for the guest users in the already existing databases
@@ -2999,6 +3023,10 @@ GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO 
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+

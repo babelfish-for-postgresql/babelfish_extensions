@@ -227,6 +227,30 @@ BEGIN
 END
 $$;
 
+CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
+LANGUAGE plpgsql
+AS $$ 
+DECLARE 
+	babelfish_catalog RECORD;
+	schema_name varchar = 'sys';
+	error_msg text;
+BEGIN
+	FOR babelfish_catalog IN (
+		SELECT relname as name from pg_class t 
+		INNER JOIN pg_namespace n on n.oid = t.relnamespace
+		WHERE t.relkind = 'r' and n.nspname = schema_name
+		)
+	LOOP
+		BEGIN
+			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'ANALYZE for babelfish catalog %.% failed with error: %s', schema_name, babelfish_catalog.name, error_msg;
+		END;
+	END LOOP;
+END;
+$$;
+
 CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$
@@ -266,6 +290,8 @@ BEGIN
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
+	-- run analyze for all babelfish catalog
+	CALL sys.analyze_babelfish_catalogs();
 END
 $$;
 
