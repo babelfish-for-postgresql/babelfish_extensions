@@ -52,7 +52,8 @@ include $(PGXS)
 
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 
-UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
+UPGRADES = $(patsubst sql/upgrades/babelfishpg_common--%.sql,sql/babelfishpg_common--%.sql,$(wildcard sql/upgrades/babelfishpg_common--*.sql))
+GENERATED_UPGRADES = sql/$(EXTENSION)--3.2.0--3.3.0.sql
 
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
@@ -60,7 +61,8 @@ endif
 
 DATA_built = \
     $(EXTENSION).control \
-    sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
+    sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES) \
+    $(GENERATED_UPGRADES)
 
 #include ../Makefile.common
 
@@ -78,7 +80,7 @@ include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
-all: sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql sql/upgrades/babelfishpg_upgrades.in
+all: $(GENERATED_UPGRADES)
 endif
 
 $(EXTENSION).control: $(EXTENSION).control.in
@@ -96,18 +98,18 @@ ifeq (,$(filter $(FLAG_TO_CHECK),$(PG_CPPFLAGS)))
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
 		cpp $< | sed 's/^# /-- /g' > $@
 
-    sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+    sql/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D PREV_VERSION=3.2.0 -D CUR_VERSION=3.3.0 $< | sed 's/^# /-- /g' > $@
 else
 # The flag is present build the .in file including the spatial type files
     sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
 		cpp -D ENABLE_SPATIAL_TYPES=1 $< | sed 's/^# /-- /g' > $@
 
-    sql/upgrades/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
+    sql/$(EXTENSION)--3.2.0--3.3.0.sql: sql/upgrades/babelfishpg_upgrades.in
 		cpp -D ENABLE_SPATIAL_TYPES=1 -D PREV_VERSION=3.2.0 -D CUR_VERSION=3.3.0 $< | sed 's/^# /-- /g' > $@
 endif
 
-sql/%.sql: sql/upgrades/%.sql
+sql/babelfishpg_common--%.sql: sql/upgrades/babelfishpg_common--%.sql
 	cp $< $@
 
 

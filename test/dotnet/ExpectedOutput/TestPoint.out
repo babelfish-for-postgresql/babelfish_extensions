@@ -1,0 +1,50 @@
+#Q#CREATE TABLE POINTGEOM_dt(location GEOMETRY);
+#Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
+#Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
+#E#Unsupported geometry type
+#Q#INSERT INTO POINTGEOM_dt(location) values(@location) 
+#E#Unsupported geometry type
+#Q#CREATE TABLE POINTGEOG_dt(location GEOGRAPHY);
+#Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
+#Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
+#E#Unsupported geometry type
+#Q#INSERT INTO POINTGEOG_dt(location) values(@location) 
+#E#Unsupported geometry type
+#Q#CREATE TABLE POINT_dt(geom GEOMETRY, geog GEOGRAPHY);
+#Q#INSERT INTO POINT_dt(geom) values(@geom) 
+#Q#INSERT INTO POINT_dt(geog) values(@geog) 
+#Q#INSERT INTO POINT_dt(geom, geog) values(@geom, @geog) 
+#Q#INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+#Q#INSERT INTO POINTGEOM_dt(location) values(geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
+#Q#INSERT INTO POINTGEOM_dt(location) values(geometry::STPointFromText('Point(47.65100 -22.34900)', 4326))
+#Q#INSERT INTO POINTGEOM_dt(location) values(geometry::Point(47.65100, -22.34900, 4326))
+#Q#INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
+#Q#INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
+#Q#INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
+#Q#SELECT STAsText(location) FROM POINTGEOM_dt;
+#D#text
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+#Q#SELECT STAsText(location) FROM POINTGEOG_dt;
+#D#text
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(47.651 -22.349)
+POINT(47.651 -22.349)
+POINT(-22.349 47.651)
+#Q#SELECT STAsText(geom), STAsText(geog) FROM POINT_dt;
+#D#text#!#text
+POINT(47.651 -22.349)#!#
+#!#POINT(47.651 -22.349)
+POINT(1 2)#!#POINT(1 2)
+#Q#DROP TABLE IF EXISTS POINTGEOM_dt;
+#Q#DROP TABLE IF EXISTS POINTGEOG_dt;
+#Q#DROP TABLE IF EXISTS POINT_dt;
