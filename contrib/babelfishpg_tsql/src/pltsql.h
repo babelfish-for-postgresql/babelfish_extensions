@@ -116,6 +116,12 @@ typedef enum PLtsql_promise_type
 	PLTSQL_PROMISE_TG_TAG
 } PLtsql_promise_type;
 
+
+typedef enum PLtsql_dbcc_stmt_type
+{
+	PLTSQL_DBCC_CHECKIDENT
+} PLtsql_dbcc_stmt_type;
+
 /*
  * Variants distinguished in PLtsql_type structs
  */
@@ -186,6 +192,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
 	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
 
@@ -932,6 +939,34 @@ typedef struct PLtsql_stmt_insert_bulk
 	char	   *rows_per_batch;
 	bool		keep_nulls;
 } PLtsql_stmt_insert_bulk;
+
+/*
+ * DBCC statement type
+ */
+typedef union PLtsql_dbcc_stmt_data
+{
+	struct dbcc_checkident
+	{
+		char	*db_name;
+		char	*schema_name;
+		char	*table_name;
+		bool	is_reseed;
+		char	*new_reseed_value;
+		bool	no_infomsgs;
+	} dbcc_checkident;
+
+} PLtsql_dbcc_stmt_data;
+
+/*
+ * DBCC statement
+ */
+typedef struct PLtsql_stmt_dbcc
+{
+	PLtsql_stmt_type	cmd_type;
+	int	lineno;
+	PLtsql_dbcc_stmt_type	dbcc_stmt_type;
+	PLtsql_dbcc_stmt_data	dbcc_stmt_data;
+} PLtsql_stmt_dbcc;
 
 /*
  * RETURN statement
@@ -2045,6 +2080,7 @@ extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
+extern Oid get_sysadmin_oid(void);
 
 typedef struct
 {

@@ -150,7 +150,7 @@ protected:
 		antlrcpp::Any visitReconfigure_statement(TSqlParser::Reconfigure_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RECONFIGURE, "RECONFIGURE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitShutdown_statement(TSqlParser::Shutdown_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SHUTDOWN, "SHUTDOWN", getLineAndPos(ctx)); return visitChildren(ctx); }
 
-		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override;
 		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override;
@@ -1252,6 +1252,29 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCursor_statement(TSqlParse
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx)
 {
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx)
+{
+
+	if (ctx->dbcc_command())
+	{
+		if (ctx->dbcc_command()->ID())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"Incorrect DBCC statement. Check the documentation for the "
+				"correct DBCC syntax and options.",
+					getLineAndPos(ctx->dbcc_command()));
+		}
+		else
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+				format_errmsg("DBCC %s is not yet supported in Babelfish",
+					::getFullText(ctx->dbcc_command()).c_str()), 
+						getLineAndPos(ctx->dbcc_command()));
+		}
+	}
 	return visitChildren(ctx);
 }
 
