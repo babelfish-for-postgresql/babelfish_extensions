@@ -1,0 +1,54 @@
+-- tsql user=jdbc_user password=12345678
+USE master
+GO
+
+DROP TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+DROP TABLE db.babel_3326_Employees
+GO
+
+DROP SCHEMA db
+GO
+
+REVOKE SELECT,UPDATE,INSERT,DELETE ON dbo.babel_3326_Employees TO babel_3326_non_owner
+GO
+
+DROP TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+DROP TRIGGER TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+GO
+DROP TABLE babel_3326_Employees
+GO
+
+drop trigger babel_3326_t1_trigger
+GO
+
+drop trigger babel_3326_t2_trigger
+GO
+
+drop trigger babel_3326_t3_trigger
+GO
+
+drop table babel_3326_t1;
+GO
+
+drop table babel_3326_t2;
+GO
+
+drop table babel_3326_t3;
+GO
+
+DROP USER babel_3326_u1
+GO
+
+DROP DATABASE babel_3326_db1
+GO
+
+DROP LOGIN babel_3326_u1
+GO
+
+DROP USER babel_3326_non_owner
+GO
+
+DROP LOGIN babel_3326_non_owner
+GO

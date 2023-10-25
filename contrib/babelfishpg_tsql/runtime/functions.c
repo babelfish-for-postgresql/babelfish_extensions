@@ -43,6 +43,7 @@
 #include "../src/multidb.h"
 #include "../src/session.h"
 #include "../src/catalog.h"
+#include "../src/timezone.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
 #include "utils/fmgroids.h"
@@ -87,6 +88,7 @@ typedef enum
 	OBJECT_TYPE_EXTENDED_STORED_PROCEDURE
 } ObjectPropertyType;
 
+
 PG_FUNCTION_INFO_V1(trancount);
 PG_FUNCTION_INFO_V1(version);
 PG_FUNCTION_INFO_V1(error);
@@ -102,6 +104,7 @@ PG_FUNCTION_INFO_V1(servicename);
 PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
+PG_FUNCTION_INFO_V1(timezone_mapping);
 PG_FUNCTION_INFO_V1(is_member);
 PG_FUNCTION_INFO_V1(schema_id);
 PG_FUNCTION_INFO_V1(schema_name);
@@ -145,6 +148,9 @@ PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
 PG_FUNCTION_INFO_V1(objectproperty_internal);
+PG_FUNCTION_INFO_V1(sysutcdatetime);
+PG_FUNCTION_INFO_V1(getutcdate);
+PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -178,6 +184,59 @@ char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
+
+
+Datum
+babelfish_concat_wrapper(PG_FUNCTION_ARGS)
+{
+	text		*arg1, *arg2, *new_text;
+	int32		arg1_size, arg2_size, new_text_size;
+	bool		first_param = PG_ARGISNULL(0);
+	bool		second_param = PG_ARGISNULL(1);
+
+	if (pltsql_concat_null_yields_null)
+	{
+		if(first_param || second_param)
+		{
+			PG_RETURN_NULL(); // If any is NULL, return NULL
+		}
+	}
+	else
+	{
+		if (first_param && second_param)
+		{
+			PG_RETURN_NULL(); // If both are NULL, return NULL
+		}
+		else if (second_param)
+		{
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(0)); // If only the second string is NULL, return the first string
+		}
+		else if (first_param)
+		{
+			PG_RETURN_TEXT_P(PG_GETARG_TEXT_PP(1)); // If only the first string is NULL, return the second string
+		}
+	}
+	arg1 = PG_GETARG_TEXT_PP(0);
+	arg2 = PG_GETARG_TEXT_PP(1);
+	arg1_size = VARSIZE_ANY_EXHDR(arg1);
+	arg2_size = VARSIZE_ANY_EXHDR(arg2);
+
+	new_text_size = arg1_size + arg2_size + VARHDRSZ;
+	new_text = (text *) palloc(new_text_size);
+
+	SET_VARSIZE(new_text, new_text_size);
+
+	if(arg1_size>0)
+	{
+		memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
+	}
+	if(arg2_size>0)
+	{
+		memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+	}
+
+	PG_RETURN_TEXT_P(new_text);
+}
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -235,6 +294,20 @@ version(PG_FUNCTION_ARGS)
 	info = (*common_utility_plugin_ptr->tsql_varchar_input) (temp.data, temp.len, -1);
 	pfree(temp.data);
 	PG_RETURN_VARCHAR_P(info);
+}
+
+Datum sysutcdatetime(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    
+}
+
+Datum getutcdate(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    
 }
 
 void *
@@ -491,6 +564,23 @@ tsql_random(PG_FUNCTION_ARGS)
 	result = drandom(fcinfo1);
 
 	return result;
+}
+
+Datum
+timezone_mapping(PG_FUNCTION_ARGS)
+{
+	char *sqltmz = text_to_cstring(PG_GETARG_TEXT_P(0));
+	VarChar    *result = cstring_to_text("NULL");
+	int len = (sizeof(win32_tzmap) / sizeof(*(win32_tzmap)));
+	for(int i=0;i<len;i++)
+	{
+		if(pg_strcasecmp(win32_tzmap[i].stdname,sqltmz) == 0)
+		{
+			result = cstring_to_text(win32_tzmap[i].pgtzname);
+			break;
+		}
+	}
+	PG_RETURN_VARCHAR_P(result);
 }
 
 Datum
@@ -1484,7 +1574,7 @@ object_name(PG_FUNCTION_ARGS)
 	SysScanDesc tgscan;
 	EphemeralNamedRelation enr;
 	bool		found = false;
-	char	   *result = NULL;
+	text	   *result_text = NULL;
 
 	if (input1 < 0)
 		PG_RETURN_NULL();
@@ -1516,9 +1606,7 @@ object_name(PG_FUNCTION_ARGS)
 	enr = get_ENR_withoid(currentQueryEnv, object_id, ENR_TSQL_TEMP);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
-		result = enr->md.name;
-
-		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
 	}
 
 	/* search in pg_class by object_id */
@@ -1529,8 +1617,7 @@ object_name(PG_FUNCTION_ARGS)
 		if (pg_class_aclcheck(object_id, user_id, ACL_SELECT) == ACLCHECK_OK)
 		{
 			Form_pg_class pg_class = (Form_pg_class) GETSTRUCT(tuple);
-			result = NameStr(pg_class->relname);
-
+			result_text = cstring_to_text(NameStr(pg_class->relname)); // make a copy before releasing syscache
 			schema_id = pg_class->relnamespace;
 		}
 		ReleaseSysCache(tuple);
@@ -1547,8 +1634,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (pg_proc_aclcheck(object_id, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tuple);
-				result = NameStr(procform->proname);
-
+				result_text = cstring_to_text(NameStr(procform->proname));
 				schema_id = procform->pronamespace;
 			}
 			ReleaseSysCache(tuple);
@@ -1566,7 +1652,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (pg_type_aclcheck(object_id, user_id, ACL_USAGE) == ACLCHECK_OK)
 			{
 				Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
-				result = NameStr(pg_type->typname);
+				result_text = cstring_to_text(NameStr(pg_type->typname));
 			}
 			ReleaseSysCache(tuple);
 			found = true;
@@ -1594,8 +1680,7 @@ object_name(PG_FUNCTION_ARGS)
 			if (OidIsValid(pg_trigger->tgrelid) &&
 				pg_class_aclcheck(pg_trigger->tgrelid, user_id, ACL_SELECT) == ACLCHECK_OK)
 			{
-				result = NameStr(pg_trigger->tgname);
-
+				result_text = cstring_to_text(NameStr(pg_trigger->tgname));
 				schema_id = get_rel_namespace(pg_trigger->tgrelid);
 			}
 			found = true;
@@ -1615,8 +1700,7 @@ object_name(PG_FUNCTION_ARGS)
 			/* check if user have right permission on object */
 			if (OidIsValid(con->conrelid) && (pg_class_aclcheck(con->conrelid, user_id, ACL_SELECT) == ACLCHECK_OK))
 			{
-				result = NameStr(con->conname);
-
+				result_text = cstring_to_text(NameStr(con->conname));
 				schema_id = con->connamespace;
 			}
 			ReleaseSysCache(tuple);
@@ -1624,7 +1708,7 @@ object_name(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if (result)
+	if (result_text)
 	{
 		/*
 		 * Check if schema corresponding to found object belongs to specified
@@ -1632,9 +1716,13 @@ object_name(PG_FUNCTION_ARGS)
 		 * "information_schema_tsql". In case of pg_type schema_id will be
 		 * invalid.
 		 */
-		if (!OidIsValid(schema_id) || is_schema_from_db(schema_id, database_id)
-			|| (schema_id == get_namespace_oid("sys", true)) || (schema_id == get_namespace_oid("information_schema_tsql", true)))
-			PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+		if (!OidIsValid(schema_id) ||
+			is_schema_from_db(schema_id, database_id) ||
+			(schema_id == get_namespace_oid("sys", true)) ||
+			(schema_id == get_namespace_oid("information_schema_tsql", true)))
+		{
+			PG_RETURN_VARCHAR_P((VarChar *) result_text);
+		}
 	}
 	PG_RETURN_NULL();
 }

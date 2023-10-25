@@ -176,6 +176,7 @@ rowcount
 schema_resolution_func
 schema_resolution_proc
 schema_resolution_trigger
+select-strip-parens-before-pr1812
 sp_describe_first_result_set
 sp_tablecollations
 sys-all_columns
@@ -337,3 +338,5 @@ BABEL-4046
 BABEL_4330
 BABEL-2619
 BABEL-4410
+GRANT_SCHEMA
+AUTO_ANALYZE-before-15-5-or-14-10

@@ -218,6 +218,7 @@
 							case TSQL_DATE_BUCKET:
 							case TSQL_DATENAME:
 							case TSQL_DATEPART:
+							case TSQL_DATETRUNC:
 							case TSQL_D:
 							case TSQL_DAYOFYEAR:
 							case TSQL_DD:

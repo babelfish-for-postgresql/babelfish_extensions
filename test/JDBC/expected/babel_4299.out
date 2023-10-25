@@ -1,0 +1,309 @@
+select ''+'ps';
+GO
+~~START~~
+varchar
+ps
+~~END~~
+
+
+select 'rs' + '';
+GO
+~~START~~
+varchar
+rs
+~~END~~
+
+
+select '' + '';
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+select '' + NULL;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+select NULL + '';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+set quoted_identifier off
+GO
+select ""+'s';
+GO
+~~START~~
+varchar
+s
+~~END~~
+
+
+set quoted_identifier off
+GO
+select 'rs' + "";
+GO
+~~START~~
+varchar
+rs
+~~END~~
+
+
+set quoted_identifier off
+GO
+select '' + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "" + NULL;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+set quoted_identifier off
+GO
+select NULL + "";
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+set quoted_identifier off
+GO
+select ""+"s";
+GO
+~~START~~
+varchar
+s
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "pr" + "";
+GO
+~~START~~
+varchar
+pr
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "" + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+set quoted_identifier off
+GO
+select "" + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT 'Hello' + NULL + 'World';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT 'Hello' + NULL + 'World';
+GO
+~~START~~
+varchar
+HelloWorld
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT '' + NULL + 'World';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT '' + NULL + 'World';
+GO
+~~START~~
+varchar
+World
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT '' + NULL + '';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT '' + NULL + '';
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT NULL + 'World';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT NULL + 'World';
+GO
+~~START~~
+varchar
+World
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT 'Hello' + NULL;
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT 'Hello' + NULL;
+GO
+~~START~~
+varchar
+Hello
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT "" + NULL + 'World';
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT "" + NULL + 'World';
+GO
+~~START~~
+varchar
+World
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT "" + NULL + "";
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT "" + NULL + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT '' + NULL + "World";
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT '' + NULL + "World";
+GO
+~~START~~
+varchar
+World
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+GO
+SELECT '' + NULL + "";
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL OFF;
+GO
+SELECT '' + NULL + "";
+GO
+~~START~~
+varchar
+
+~~END~~
+

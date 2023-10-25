@@ -18,6 +18,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
   - [IMPORTANT](#important)
 - [Adding the test cases](#adding-the-test-cases)
 - [Reading the console output and diff](#reading-the-console-output-and-diff)
+- [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled)
 
 ## Running the test framework
 
@@ -382,3 +383,34 @@ You will also be provided with the location of the `.diff` file containing the d
 - `mm`   → minutes
 - `ss`   → seconds
 - `SSS`  → milliseconds
+
+
+## Running Tests with Parallel Query Enabled
+
+After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
+1. Create a PostgreSQL database and initialize Babelfish (if you already have a database with Babelfish initialized, you can omit this step or perform the cleanup steps before you initialize) to enable parallel query mode pass -enable_parallel_query flag when running ./init.sh
+
+   ```bash
+    ./init.sh -enable_parallel_query
+    ```
+3. Before running JDBC tests, please take note that currently not all JDBC tests runs sucessfully with parallel query mode on. Certain JDBC tests are encountering issues, such as crashes, failures, or timeouts when executed with parallel query mode enabled. So we need these problematic tests to be excluded from running via jdbc framework. File  `parallel_query_jdbc_schedule` contains test-cases names with prefix `ignore#!#` that are problematic and needs to be avoided from being run. To exclude these problematic tests from running via the JDBC framework, use the `isParallelQueryMode` environment variable. You can set it to `true`:
+
+   ```bash
+    export isParallelQueryMode=true
+    # Verify if isParallelQueryMode is set to true
+    echo $isParallelQueryMode
+   ```
+4. Now Run the tests:
+    ```bash
+    mvn test
+    ```
+5. Cleanup all the objects, users, roles and databases created while running the tests:
+    ```bash
+    ./cleanup.sh
+    ```
+6. Please note that when you have completed testing with parallel query mode enabled, you should unset the `isParallelQueryMode` environment variable that was previously set to `true`. This ensures that all tests run in the normal Babelfish mode (without parallel query):
+
+   ```bash
+    unset isParallelQueryMode
+   ```
+If you encounter failing or crashing tests in the "JDBC tests with parallel query" GitHub workflow, consider adding the names of these problematic test cases to the `parallel_query_jdbc_schedule` file. Prefix these test case names with `ignore#!#`. As we work towards resolving these issues in the future, we will gradually remove these excluded tests from the `parallel_query_jdbc_schedule` scheduling file.

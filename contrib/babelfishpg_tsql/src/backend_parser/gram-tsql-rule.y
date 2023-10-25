@@ -475,6 +475,72 @@ tsql_AlterLoginStmt:
 				}
 		;
 
+tsql_enable_disable_trigger:
+			tsql_enable_disable TRIGGER tsql_trigger_list ON relation_expr
+				{
+					AlterTableCmd *n1;
+					AlterTableStmt *n2 = makeNode(AlterTableStmt);
+					ListCell *lc;
+
+					foreach(lc, $3)
+					{
+						List *lst = lfirst_node(List, lc);
+						n1 = makeNode(AlterTableCmd);
+
+						if ($1)
+						{
+							n1->subtype = AT_EnableTrig;
+						}
+						else
+						{
+							n1->subtype = AT_DisableTrig;
+						}
+						
+						if (list_length(lst) > 1)
+						{
+							n1->schemaname = strVal(list_nth(lst,0));
+							n1->name = strVal(list_nth(lst,1));
+						}
+						else
+						{
+							n1->name = strVal(list_nth(lst,0));
+						}
+						n2->cmds = list_concat(n2->cmds, list_make1((Node *) n1));
+					}
+
+					n2->relation = $5;
+					
+					n2->objtype = OBJECT_TRIGGER;
+					n2->missing_ok = false;
+					$$ = (Node *)n2;
+				}
+			| tsql_enable_disable TRIGGER ALL ON relation_expr
+				{
+					AlterTableCmd *n1 = makeNode(AlterTableCmd);
+					AlterTableStmt *n2 = makeNode(AlterTableStmt);
+
+					if ($1)
+					{
+						n1->subtype = AT_EnableTrigAll;
+					}
+					else
+					{
+						n1->subtype = AT_DisableTrigAll;
+					}
+
+					n2->relation = $5;
+					n2->cmds = list_make1((Node *) n1);
+					n2->objtype = OBJECT_TRIGGER;
+					n2->missing_ok = false;
+					$$ = (Node *)n2;
+				}
+		;
+
+tsql_trigger_list:
+			tsql_triggername								{ $$ = list_make1($1); }
+			| tsql_trigger_list ',' tsql_triggername				{ $$ = lappend($1, $3); }
+		;
+
 tsql_enable_disable:
 			ENABLE_P
 				{
@@ -1870,6 +1936,13 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
+			| TSQL_DATETRUNC '(' datepart_arg ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datetrunc"),
+												list_make2(makeStringConst($3, @3), $5),
+												COERCE_EXPLICIT_CALL,
+												@1);
+				}
 			| TSQL_DATENAME '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datename"),
@@ -2309,6 +2382,7 @@ tsql_stmt :
 			| DropUserMappingStmt
 			| tsql_DropRoleStmt
 			| DropdbStmt
+			| tsql_enable_disable_trigger
 			| tsql_ExecStmt
 			| ExplainStmt
 			| FetchStmt
@@ -4398,6 +4472,7 @@ reserved_keyword:
 			| TSQL_DATE_BUCKET
 			| TSQL_DATENAME
 			| TSQL_DATEPART
+			| TSQL_DATETRUNC
 			| TSQL_IIF
 			| TSQL_OUT
 			| TSQL_OUTER

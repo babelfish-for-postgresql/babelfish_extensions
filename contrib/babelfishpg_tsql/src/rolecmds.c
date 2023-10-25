@@ -797,6 +797,7 @@ get_original_login_name(char *login)
 	HeapTuple	tuple;
 	bool		isnull;
 	Datum		datum;
+	char 		*result = NULL;
 
 	relation = table_open(get_authid_login_ext_oid(), AccessShareLock);
 
@@ -823,10 +824,17 @@ get_original_login_name(char *login)
 	/* original login name should not be NULL. */
 	Assert(!isnull);
 
+	/*
+ 	* datum is a pointer to HeapTuple. On the other hand, HeapTuple
+ 	* is a pointer to a buffer page. We need to make a copy of that
+ 	* datum before closing the scan which releases the buffer.
+ 	*/
+	result = TextDatumGetCString(datum);
+
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
 
-	return TextDatumGetCString(datum);
+	return result;
 }
 
 
@@ -2127,8 +2135,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * BBF_DOMAIN_MAPPING_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * BBF_DOMAIN_MAPPING_NUM_COLS);
-
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
 	new_record[0] = PG_GETARG_DATUM(0);
 	new_record[1] = PG_GETARG_DATUM(1);
