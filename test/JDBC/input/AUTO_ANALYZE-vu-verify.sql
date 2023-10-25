@@ -1,11 +1,10 @@
 
--- list all the babelfish catalogs that has not been analyzed manually after upgrade
--- will return null 
-SELECT * FROM auto_analyze_vu_prepare_catalogs_have_not_been_analyzed()
+-- list all the babel catalogs that has not been analyzed manually during extension upgrade
+-- will return NULL in this case
+SELECT relname FROM pg_stat_all_tables WHERE schemaname = 'sys' and last_analyze IS NULL order by relname
 GO
 
-DROP FUNCTION auto_analyze_vu_prepare_catalogs_have_not_been_analyzed
-GO
 
-DROP FUNCTION auto_analyze_vu_prepare_catalogs_have_been_analyzed
-GO
+-- list all the babel catalogs that has been analyzed manually during extension upgrade
+SELECT relname FROM pg_stat_all_tables WHERE schemaname = 'sys' and last_analyze IS NOT NULL order by relname
+Go
