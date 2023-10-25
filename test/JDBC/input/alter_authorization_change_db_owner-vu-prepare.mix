@@ -1,8 +1,0 @@
--- tsql
-create login dba_login with password='12345678'
-go
-create login new_owner_login with password='12345678'
-go
-create login new_owner_login2 with password='12345678'
-go
-
