@@ -33,11 +33,6 @@ ignore#!#sys-eomonth-vu-verify
 ignore#!#babel_datetime2
 ignore#!#babel_collation
 
-# Group 2: cannot start subtransactions during a parallel operation BABEL-4394
-ignore#!#babel_format_standard_date_time
-ignore#!#babel_format_standard_numeric
-ignore#!#format-vu-verify
-
 # Group 3: “could not access file "pg_hint_plan": No such file or directory" BABEL-4395
 ignore#!#BABEL-3291
 ignore#!#BABEL-3292
