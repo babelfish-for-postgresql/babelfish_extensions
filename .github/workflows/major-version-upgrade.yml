@@ -63,7 +63,7 @@ jobs:
           cmake ..
           cmake --build .
           sudo cmake --build . --target install
-          sudo cp /home/runner/work/babelfish_extensions/proj-9.1.0/build/lib/* /usr/lib64/
+          sudo cp /home/runner/work/babelfish_extensions/proj-9.1.0/build/lib/* /usr/lib/
           cd ../../postgis-3.4.0
           ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/psql_source/bin/pg_config
           make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config
