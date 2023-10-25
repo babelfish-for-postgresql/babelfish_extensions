@@ -1759,7 +1759,9 @@ type_id(PG_FUNCTION_ARGS)
     /* strip trailing whitespace from input */
     i = pg_mbstrlen(input);
     while (i > 0 && isspace((unsigned char) input[i - 1]))
-        input[--i] = '\0';
+        i--;
+    if(i < pg_mbstrlen(input))
+		input[i] = '\0';
 
     /* length should be restricted to 4000 */
     if (i > 4000)
