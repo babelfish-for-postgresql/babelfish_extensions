@@ -1747,11 +1747,11 @@ type_id(PG_FUNCTION_ARGS)
                *object_name;
     char       *physical_schema_name;
     char       *input;
-    char      **splitted_object_name;
-    Oid         schema_oid;
-    Oid         user_id = GetUserId();
-    Oid result = InvalidOid;
-    int         i;
+    char       **splitted_object_name;
+    Oid        schema_oid;
+    Oid        user_id = GetUserId();
+	Oid        result = InvalidOid;
+    int        i;
 
     if (PG_ARGISNULL(0))
         PG_RETURN_NULL();
@@ -1891,7 +1891,7 @@ type_name(PG_FUNCTION_ARGS)
     Datum       tsql_typename;
     HeapTuple   tuple;
     Oid         user_id = GetUserId();
-    char       *result = NULL;
+    char        *result = NULL;
 
     LOCAL_FCINFO(fcinfo1, 1);
 
