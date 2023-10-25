@@ -1757,7 +1757,7 @@ type_id(PG_FUNCTION_ARGS)
     input = text_to_cstring(PG_GETARG_TEXT_P(0));
 
     /* strip trailing whitespace from input */
-    i = strlen(input);
+    i = pg_mbstrlen(input);
     while (i > 0 && isspace((unsigned char) input[i - 1]))
         input[--i] = '\0';
 
@@ -1770,7 +1770,7 @@ type_id(PG_FUNCTION_ARGS)
     /* resolve the two part name */
     splitted_object_name = split_object_name(input);
     /* If three part name(db_name also included in input) then return null */
-    if(strcmp(splitted_object_name[1], ""))
+    if(pg_mbstrlen(splitted_object_name[1]) != 0)
     {
         pfree(input);
         pfree(splitted_object_name);
