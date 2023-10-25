@@ -1282,12 +1282,11 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SY
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
-CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+CAST(CASE WHEN Ext.type = 'R' AND Ext.is_fixed_role = 1 THEN 1 ELSE 0 END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE pg_has_role(suser_name()::TEXT, 'sysadmin'::TEXT, 'MEMBER')
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 OR Ext.orig_loginname = suser_name()
-OR Ext.orig_loginname = 'jdbc_user'
-OR Ext.type = 'R';
+OR Ext.is_fixed_role = 1;
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
