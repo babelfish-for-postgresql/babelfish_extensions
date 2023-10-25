@@ -3759,7 +3759,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 static int
 exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
 {
-	bool granting_to_self = false;
+	char *new_owner_is_user;
 	
 	/* Verify target database exists. */
 	if (!DbidIsValid(get_db_id(stmt->db_name)))
@@ -3775,50 +3775,45 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
 	}
 	
-	/* SQL Server allows granting ownership to yourself when you are owner already, even without having sysadmin role. */
+	/* T-SQL allows granting ownership to yourself when you are owner already, even without having sysadmin role. */
 	if (get_role_oid(stmt->new_owner_name, true) == GetSessionUserId())  // Granting ownership to myself?
 	{
 		/* Is the current login already DB owner? */
 		if (get_role_oid(get_owner_of_db(stmt->db_name), true) == GetSessionUserId())
 		{
-			granting_to_self = true;		
+			/* Current login is DB owner, so perform the update */
+			update_db_owner(stmt->new_owner_name, stmt->db_name);	
+			return PLTSQL_RC_OK;	
 		}			
 	}		
-	
-	/* If the current owner is not granting to themselves, additional validations are required. */
-	if (!granting_to_self) 
+
+	/* 
+	 * The executing login must have sysadmin role: even when the current session is the owner, but has no sysadmin role, 
+	 * T-SQL does not allow the owner to grant ownership to another login -- not even to 'sa'.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
 	{
-		char *new_owner_is_user;
-		
-		/* 
-		 * The executing login must have sysadmin role: even when the current session is the owner, but has no sysadmin role, 
-		 * SQL Server does not allow the owner to grant ownership to another login -- not even to 'sa'.
-		 */
-		if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
-		{
-			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
-		}			
-		
-		/* The new owner cannot be a user in the database already (but 'guest' user is fine). */
-		new_owner_is_user = get_authid_user_ext_physical_name(stmt->db_name, stmt->new_owner_name);
-		if (!new_owner_is_user) 
-		{
-			// OK to proceed
-		}
-		else if (new_owner_is_user && pg_strcasecmp(new_owner_is_user, "guest") == 0)
-		{
-			// OK to proceed		
-		}
-		else
-		{
-			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							errmsg("The proposed new database owner is already a user or aliased in the database.")));				
-		}
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
+	}			
+	
+	/* The new owner cannot be a user in the database already (but 'guest' user is fine). */
+	new_owner_is_user = get_authid_user_ext_physical_name(stmt->db_name, stmt->new_owner_name);
+	if (!new_owner_is_user) 
+	{
+		// OK to proceed
+	}
+	else if (new_owner_is_user && pg_strcasecmp(new_owner_is_user, "guest") == 0)
+	{
+		// OK to proceed		
+	}
+	else
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
 	}
 					
 	/* All validations done, perform the actual update */
-	update_db_owner(stmt->new_owner_name, stmt->db_name);
-	
+	update_db_owner(stmt->new_owner_name, stmt->db_name);	
 	return PLTSQL_RC_OK;
 }

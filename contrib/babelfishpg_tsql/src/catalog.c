@@ -3268,7 +3268,7 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	bool		replaces[SYSDATABASES_NUM_COLS];
 
 	/* Do not allow changes to system databases. */
-	/* Note: SQL Server allows changing ownership of msdb. */
+	/* Note: T-SQL allows changing ownership of msdb. */
 	if ( (strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
 		 (strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0))
 	    )

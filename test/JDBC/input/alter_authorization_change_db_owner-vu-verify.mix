@@ -1,4 +1,12 @@
+-- tsql
+alter server role sysadmin add member dba_login
+go
+
 -- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+create database change_owner_db
+go
 alter authorization on database::no_such_db_chgownerdb to new_owner_login
 go
 alter authorization on database::change_owner_db to no_such_login_chgownerdb
