@@ -2994,6 +2994,31 @@ $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
 
+-- Role member functions
+CREATE OR REPLACE FUNCTION sys.is_rolemember_internal(
+	IN role sys.SYSNAME,
+	IN database_principal sys.SYSNAME
+)
+RETURNS INT AS 'babelfishpg_tsql', 'is_rolemember'
+LANGUAGE C STABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.is_rolemember(IN role sys.SYSNAME)
+RETURNS INT AS
+$$
+	SELECT sys.is_rolemember_internal(role, NULL);
+$$
+LANGUAGE SQL STRICT STABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.is_rolemember(
+	IN role sys.SYSNAME, 
+	IN database_principal sys.SYSNAME
+)
+RETURNS INT AS
+$$
+	SELECT sys.is_rolemember_internal(role, database_principal);
+$$
+LANGUAGE SQL STRICT STABLE PARALLEL RESTRICTED;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
