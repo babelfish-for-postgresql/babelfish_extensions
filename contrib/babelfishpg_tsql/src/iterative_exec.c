@@ -1111,7 +1111,9 @@ handle_error(PLtsql_execstate *estate,
 	/* Mark transaction for termination */
 	if (IsTransactionBlockActive() && (last_error_mapping_failed || abort_transaction(estate, edata, override_flag)))
 	{
+		HOLD_INTERRUPTS();
 		elog(DEBUG1, "TSQL TXN Mark transaction for rollback error mapping failed : %d", last_error_mapping_failed);
+		RESUME_INTERRUPTS();
 		AbortCurTransaction = true;
 	}
 
@@ -1124,7 +1126,9 @@ handle_error(PLtsql_execstate *estate,
 	/* In case of errors which terminate execution, let outer layer handle it */
 	if (last_error_mapping_failed || abort_execution(estate, edata, terminate_batch, override_flag) || ro_func)
 	{
+		HOLD_INTERRUPTS();
 		elog(DEBUG1, "TSQL TXN Stop execution error mapping failed : %d current batch status : %d read only function : %d", last_error_mapping_failed, *terminate_batch, ro_func);
+		RESUME_INTERRUPTS();
 		FreeErrorData(edata);
 		PG_RE_THROW();
 	}
@@ -1255,15 +1259,18 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			if (internal_sp_started)
 			{
+				HOLD_INTERRUPTS();
 				elog(DEBUG1, "TSQL TXN PG semantics : Rollback internal savepoint");
 				RollbackAndReleaseCurrentSubTransaction();
 				MemoryContextSwitchTo(cur_ctxt);
+				RESUME_INTERRUPTS();
 				CurrentResourceOwner = oldowner;
 			}
 			else if (!IsTransactionBlockActive())
 			{
 				if (is_part_of_pltsql_trycatch_block(estate))
 				{
+					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
 					HoldPinnedPortals();
 					SPI_setCurrentInternalTxnMode(true);
@@ -1271,11 +1278,14 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 					StartTransactionCommand();
 					SPI_setCurrentInternalTxnMode(false);
 					MemoryContextSwitchTo(cur_ctxt);
+					RESUME_INTERRUPTS();
 				}
 			}
 			else
 			{
+				HOLD_INTERRUPTS();
 				elog(DEBUG1, "TSQL TXN PG semantics : Mark transaction for rollback");
+				RESUME_INTERRUPTS();
 				AbortCurTransaction = true;
 			}
 			/* Recreate evaluation context in case needed */
@@ -1303,10 +1313,12 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			before_lxid == MyProc->lxid &&
 			before_subtxn_id == GetCurrentSubTransactionId())
 		{
+			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback internal savepoint");
 			/* Rollback internal savepoint if it is current savepoint */
 			RollbackAndReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 			CurrentResourceOwner = oldowner;
 		}
 		else if (!IsTransactionBlockActive())
@@ -1315,13 +1327,14 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 * In case of no transaction, rollback the whole transaction to
 			 * match auto commit behavior
 			 */
-
+			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
 			/* Hold portals to make sure that cursors work */
 			HoldPinnedPortals();
 			AbortCurrentTransaction();
 			StartTransactionCommand();
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 		}
 		else if (estate->tsql_trigger_flags & TSQL_TRAN_STARTED)
 		{
@@ -1329,11 +1342,13 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 * Trigger must run inside an explicit transaction In case of
 			 * error, rollback the transaction
 			 */
+			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback internal transaction");
 			HoldPinnedPortals();
 			pltsql_rollback_txn();
 			estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 		}
 
 
@@ -1348,9 +1363,11 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		if (pltsql_implicit_transactions &&
 			IsTransactionBlockActive() && (estate->impl_txn_type == PLTSQL_IMPL_TRAN_START))
 		{
+			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback implicit transaction");
 			pltsql_rollback_txn();
 			MemoryContextSwitchTo(cur_ctxt);
+			RESUME_INTERRUPTS();
 		}
 
 		estate->impl_txn_type = PLTSQL_IMPL_TRAN_OFF;
