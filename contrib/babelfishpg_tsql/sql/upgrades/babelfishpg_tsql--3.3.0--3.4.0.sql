@@ -2520,6 +2520,71 @@ CALL sys.babelfish_update_user_catalog_for_guest_schema();
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 
+CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
+GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR, IN INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern NVARCHAR, IN p_culture VARCHAR default 'en-us')
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    arg_type regtype;
+    v_temp_integer INTEGER;
+BEGIN
+    arg_type := pg_typeof(arg);
+
+    CASE
+        WHEN arg_type IN ('time'::regtype ) THEN
+            RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
+
+        WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
+            RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
+
+        WHEN arg_type IN ('sys.tinyint'::regtype) THEN
+            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+
+        WHEN arg_type IN ('smallint'::regtype) THEN
+            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+
+        WHEN arg_type IN ('integer'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+
+         WHEN arg_type IN ('bigint'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'bigint');
+
+        WHEN arg_type IN ('numeric'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
+
+        WHEN arg_type IN ('sys.decimal'::regtype) THEN
+            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+
+        WHEN arg_type IN ('real'::regtype) THEN
+            IF(p_format_pattern LIKE 'R%') THEN
+                v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
+            ELSE v_temp_integer:= -1;
+            END IF;
+
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
+
+        WHEN arg_type IN ('float'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
+
+        WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
+            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+        ELSE
+            RAISE datatype_mismatch;
+        END CASE;
+EXCEPTION
+	WHEN datatype_mismatch THEN
+		RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
+					DETAIL := 'Invalid datatype.',
+					HINT := 'Convert it to valid datatype and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
+GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
