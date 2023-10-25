@@ -149,6 +149,9 @@ ignore#!#select-strip-parens-before-pr1812-vu-cleanup
 ignore#!#select-strip-parens-before-15_5-vu-prepare
 ignore#!#select-strip-parens-before-15_5-vu-verify
 ignore#!#select-strip-parens-before-15_5-vu-cleanup
+ignore#!#sys-server_principals-before-15_5-vu-prepare
+ignore#!#sys-server_principals-before-15_5-vu-verify
+ignore#!#sys-server_principals-before-15_5-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
