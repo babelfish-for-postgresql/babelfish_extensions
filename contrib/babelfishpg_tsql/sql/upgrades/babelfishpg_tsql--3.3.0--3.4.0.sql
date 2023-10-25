@@ -967,6 +967,78 @@ create or replace function sys.getutcdate() returns sys.datetime
 AS 'babelfishpg_tsql', 'getutcdate'
 LANGUAGE C STABLE;
 
+-- Cast functions from datettime to numeric types
+CREATE OR REPLACE FUNCTION sys.datetime_to_bit(IN arg sys.DATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'datetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int2(IN arg sys.DATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'datetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int4(IN arg sys.DATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'datetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int8(IN arg sys.DATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'datetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float4(IN arg sys.DATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'datetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float8(IN arg sys.DATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'datetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_numeric(IN arg sys.DATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'datetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Cast functions from smalldatetoime to numeric types
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_bit(IN arg sys.SMALLDATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'smalldatetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int2(IN arg sys.SMALLDATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'smalldatetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int4(IN arg sys.SMALLDATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'smalldatetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int8(IN arg sys.SMALLDATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'smalldatetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float4(IN arg sys.SMALLDATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'smalldatetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float8(IN arg sys.SMALLDATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'smalldatetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_numeric(IN arg sys.SMALLDATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'smalldatetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- internal helper function for date_bucket().
 CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
 AS 
