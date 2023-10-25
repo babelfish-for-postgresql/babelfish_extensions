@@ -3160,7 +3160,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	Oid	current_user_id = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
-	char	message[200];
+	StringInfoData msg;
 	bool	is_float_value;
 	bool    is_cross_db = false;
 
@@ -3323,6 +3323,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	}
 	PG_END_TRY();
 
+	if (!dbcc_stmt.no_infomsgs)
+		initStringInfo(&msg);
+
 	PG_TRY();
 	{
 		/*
@@ -3350,8 +3353,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			if (dbcc_stmt.new_reseed_value)
 			{
-				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL'.\n");
-
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL'.\n");
 				DirectFunctionCall3(setval3_oid,
 					ObjectIdGetDatum(seqid),
 					Int64GetDatum(reseed_value),
@@ -3359,7 +3362,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			}
 			else
 			{
-				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
 			}
 		}
 
@@ -3372,7 +3376,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				* DBCC command option.
 				*/
 				if (!dbcc_stmt.no_infomsgs)
-					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
 
 				DirectFunctionCall2(setval_oid,
 					ObjectIdGetDatum(seqid),
@@ -3397,9 +3401,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 					max_identity_value = pg_strtoint64(max_identity_value_str);
 
 				if (!dbcc_stmt.no_infomsgs)
-					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
-														cur_identity_value, 
+				{
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld', current column value '%s'.\n",
+														cur_identity_value,
 														max_identity_value_str ? max_identity_value_str : "NULL");
+				}
 
 				/*
 				* RESEED option only resets the identity column value if the 
@@ -3439,6 +3445,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			UnlockRelationOid(table_oid, ShareLock);
 		}
+		if(msg.data)
+		{
+			pfree(msg.data);
+		}
 
 		PG_RE_THROW();
 	}
@@ -3462,10 +3472,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	if (!dbcc_stmt.no_infomsgs)
 	{
-		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
+		appendStringInfo(&msg, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
 		/* send message to user */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg.data, 0);
+		pfree(msg.data);
 	}
 
 }
