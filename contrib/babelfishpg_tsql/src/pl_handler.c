@@ -2616,7 +2616,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							stmt->options = list_concat(stmt->options,
 														login_options);
-							create_bbf_authid_login_ext(stmt, false);
+							create_bbf_authid_login_ext(stmt);
 						}
 						PG_CATCH();
 						{

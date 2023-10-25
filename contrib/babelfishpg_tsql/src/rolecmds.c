@@ -76,7 +76,7 @@ static void validateNetBIOS(char *netbios);
 static void validateFQDN(char *fqdn);
 
 void
-create_bbf_authid_login_ext(CreateRoleStmt *stmt, bool is_fixed_role)
+create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 {
 	Relation	bbf_authid_login_ext_rel;
 	TupleDesc	bbf_authid_login_ext_dsc;
@@ -146,14 +146,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt, bool is_fixed_role)
 
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1);	/* placeholder */
 	new_record_login_ext[LOGIN_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1);	/* placeholder */
-	if (is_fixed_role)
-	{
-		new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(1);
-	}
-	else
-	{
-		new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
-	}
+	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
 	new_record_login_ext[LOGIN_EXT_CREATE_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
 	new_record_login_ext[LOGIN_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
 	new_record_login_ext[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(default_database);
@@ -672,7 +665,7 @@ initialize_logins(PG_FUNCTION_ARGS)
 	stmt->stmt_type = ROLESTMT_USER;
 	stmt->role = login;
 
-	create_bbf_authid_login_ext(stmt, true);
+	create_bbf_authid_login_ext(stmt);
 	PG_RETURN_INT32(0);
 }
 
