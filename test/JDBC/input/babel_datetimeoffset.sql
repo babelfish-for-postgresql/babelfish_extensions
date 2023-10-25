@@ -337,10 +337,49 @@ DECLARE @dto datetimeoffset = CAST('1930-05-06 13:39:29.123456 +0:00' AS datetim
 exec cmp_datetimeoffset @dto;
 go
 
+DECLARE @lvDateEastern DATETIME, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+
+DECLARE @lvDateEastern DATETIME2, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+
+DECLARE @lvDateEastern SMALLDATETIME, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+
+DECLARE @lvDateEastern DATE, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+
+DECLARE @lvDateEastern TIME, @lvDateUTC DATETIME
+SET @lvDateUTC = '2021-01-01'
+SET @lvDateEastern = @lvDateUTC AT TIME ZONE  'UTC' AT TIME ZONE 'US Eastern Standard Time'
+SELECT @lvDateUTC, @lvDateEastern
+go
+
+Create table implicit_cast ( a datetime)
+go
+insert into implicit_cast values (cast('1900-05-06 13:59:29.998 -8:00' as datetimeoffset))
+go
+Select * from implicit_cast
+go
+
 -- Clean up
 drop table datetimeoffset_testing;
 go
 drop table t1;
+go
+drop table implicit_cast;
 go
 drop procedure cast_datetimeoffset;
 go
