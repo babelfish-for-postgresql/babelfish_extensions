@@ -30,6 +30,7 @@
 extern Timestamp initializeToDefaultDatetime(void);
 /** Utility function to calculate days from '1900-01-01 00:00:00' */
 extern double calculateDaysFromDefaultDatetime(Timestamp timestamp_left); 
+extern int roundFractionalSeconds(int fractseconds); 
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
