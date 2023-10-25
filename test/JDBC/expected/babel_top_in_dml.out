@@ -1159,6 +1159,73 @@ go
 ~~ROW COUNT: 2~~
 
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+text
+Query Text: UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+Update on top_with_output_tbl
+  ->  Limit
+        ->  Nested Loop
+              ->  Seq Scan on top_with_output_tbl
+                    Filter: (no_w_id = 'foo'::"varchar")
+              ->  Tid Scan on top_with_output_tbl deleted
+                    TID Cond: (ctid = top_with_output_tbl.ctid)
+~~END~~
+
+
+DELETE TOP (1)
+FROM top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+text
+Query Text: DELETE TOP (1)
+FROM top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+Delete on top_with_output_tbl
+  ->  Limit
+        ->  Seq Scan on top_with_output_tbl
+              Filter: (no_w_id = 'foo'::"varchar")
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+
 
 
 declare @t_out table (no_o_id int);
