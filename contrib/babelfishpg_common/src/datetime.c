@@ -697,18 +697,18 @@ datetime_mi_datetime(PG_FUNCTION_ARGS)
 * Common Utility function to calculate days elapsed from 1900-01-01 00:00:00 (default datetime)
 * Days will contains whole as well as fractional part
 */
-double
+float8
 calculateDaysFromDefaultDatetime(Timestamp timestamp_left)
 {
 	Timestamp timestamp_right;
 	Interval   *result_interval;
 	struct pg_itm tt, *itm = &tt;
-	double result;
+	float8 result;
 
 	timestamp_right = DirectFunctionCall6(make_timestamp, 1900, 1, 1, 0, 0, 0);
 	result_interval = (Interval *) DirectFunctionCall2(timestamp_mi, timestamp_left, timestamp_right);
 	interval2itm(*result_interval, itm);
-	result = result_interval->day + (itm->tm_hour * SECS_PER_HOUR + itm->tm_min * SECS_PER_MINUTE + itm->tm_sec)/(double) SECS_PER_DAY;
+	result = (float8) (result_interval->day*USECS_PER_DAY + itm->tm_hour * USECS_PER_HOUR + itm->tm_min * USECS_PER_MINUTE + itm->tm_sec * USECS_PER_SEC + itm->tm_usec)/(float8) USECS_PER_DAY;
 	return result;
 }
 
@@ -716,7 +716,7 @@ Datum
 datetime_to_bit(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_BOOL((bool)result);
 }
 
@@ -724,7 +724,7 @@ Datum
 datetime_to_int2(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT16((int16)round(result));
 }
 
@@ -733,7 +733,7 @@ Datum
 datetime_to_int4(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT32((int32)round(result));
 }
 
@@ -741,7 +741,7 @@ Datum
 datetime_to_int8(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT64((int64)round(result));
 }
 
@@ -749,7 +749,7 @@ Datum
 datetime_to_float4(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_FLOAT4((float4)result);
 }
 
@@ -757,7 +757,7 @@ Datum
 datetime_to_float8(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_FLOAT8((float8)result);
 }
 
@@ -765,6 +765,6 @@ Datum
 datetime_to_numeric(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_NUMERIC(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }

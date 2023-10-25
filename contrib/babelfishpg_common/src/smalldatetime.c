@@ -681,7 +681,7 @@ Datum
 smalldatetime_to_bit(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_BOOL((bool)result);
 }
 
@@ -689,7 +689,7 @@ Datum
 smalldatetime_to_int2(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT16((int16)round(result));
 }
 
@@ -698,7 +698,7 @@ Datum
 smalldatetime_to_int4(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT32((int32)round(result));
 }
 
@@ -706,7 +706,7 @@ Datum
 smalldatetime_to_int8(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_INT64((int64)round(result));
 }
 
@@ -714,7 +714,7 @@ Datum
 smalldatetime_to_float4(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_FLOAT4((float4)result);
 }
 
@@ -722,7 +722,7 @@ Datum
 smalldatetime_to_float8(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_FLOAT8((float8)result);
 }
 
@@ -730,6 +730,6 @@ Datum
 smalldatetime_to_numeric(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
-	double result = calculateDaysFromDefaultDatetime(timestamp_left);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_NUMERIC(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }
