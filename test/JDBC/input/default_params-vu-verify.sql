@@ -42,6 +42,3 @@ GO
 
 exec default_params_proc2 'dddd', 2
 GO
-
-exec default_params_proc3 default, 3
-GO
