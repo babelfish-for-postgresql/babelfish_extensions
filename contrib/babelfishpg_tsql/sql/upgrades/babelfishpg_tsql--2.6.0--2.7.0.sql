@@ -73,6 +73,1615 @@ GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'information_schema_tsql', 'tables_deprecated_in_2_7_0');
 
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+
+    -- Check if arguments are out of range
+    ELSIF ((p_year NOT BETWEEN 0001 AND 9999) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR
+        (p_seconds NOT BETWEEN 0 AND 59) OR
+        (p_hour_offset NOT BETWEEN -14 AND 14) OR
+        (p_minute_offset NOT BETWEEN -59 AND 59) OR
+        (p_hour_offset * p_minute_offset < 0) OR
+        (p_hour_offset = 14 AND p_minute_offset != 0) OR
+        (p_hour_offset = -14 AND p_minute_offset != 0) OR
+        (p_fractions != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+    v_calc_seconds := format('%s.%s',
+                             p_seconds,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    v_resdatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    v_calc_seconds);
+    v_sign := (
+        SELECT CASE
+            WHEN (p_hour_offset) > 0
+                THEN '+'
+            WHEN (p_hour_offset) = 0 AND (p_minute_offset) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+                                                          abs(p_minute_offset)::SMALLINT::text);
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE invalid_datetime_format;
+    END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';    
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+    str_hr TEXT;
+    str_mi TEXT;
+    precision_str TEXT;
+    sign_flag INTEGER;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    v_precision INTEGER;
+    input_expr_datetime2 datetime2;
+BEGIN
+
+    BEGIN
+    input_expr_datetime2 := cast(input_expr as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;   
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi ::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := v_hr * sign_flag;
+
+    v_string := CONCAT(input_expr_datetime2::pg_catalog.text , tz_offset);
+
+    BEGIN
+    RETURN cast(v_string as sys.datetimeoffset);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.TODATETIMEOFFSET(IN input_expr PG_CATALOG.TEXT , IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+    hr INTEGER;
+    mi INTEGER;
+    tz_sign INTEGER;
+    tz_offset_smallint INTEGER;
+    input_expr_datetime2 datetime2;
+BEGIN
+
+        BEGIN
+        input_expr_datetime2:= cast(input_expr as sys.datetime2);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+        END;
+
+
+        IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
+            'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype ,'varbinary'::regtype) THEN
+            RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+        END IF;
+
+        BEGIN
+        IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+            tz_offset := FLOOR(tz_offset);
+        END IF;
+        tz_offset_smallint := cast(tz_offset AS smallint);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+        END;
+
+        IF input_expr IS NULL THEN 
+            RETURN NULL;
+        END IF;
+    
+        IF tz_offset_smallint < 0 THEN
+            tz_sign := 1;
+        ELSE 
+            tz_sign := 0;
+        END IF;
+
+        IF tz_offset_smallint > 840 or tz_offset_smallint < -840  THEN
+            RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+        END IF;
+
+        hr := tz_offset_smallint / 60;
+        mi := tz_offset_smallint % 60;
+
+        v_sign := (
+        SELECT CASE
+            WHEN (tz_sign) = 1
+                THEN '-'
+            WHEN (tz_sign) = 0
+                THEN '+'    
+        END
+    );
+
+    
+        v_string := CONCAT(input_expr_datetime2::pg_catalog.text,v_sign,abs(hr)::SMALLINT::text,':',
+                                                          abs(mi)::SMALLINT::text);
+
+        BEGIN
+        RETURN cast(v_string as sys.datetimeoffset);
+        exception
+            WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+        END;
+    
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+ALTER FUNCTION sys.power(IN arg1 BIGINT, IN arg2 NUMERIC) STRICT;
+
+ALTER FUNCTION sys.power(IN arg1 INT, IN arg2 NUMERIC) STRICT;
+
+ALTER FUNCTION sys.power(IN arg1 SMALLINT, IN arg2 NUMERIC) STRICT;
+
+ALTER FUNCTION sys.power(IN arg1 TINYINT, IN arg2 NUMERIC) STRICT;
+
+-- Update data-type of information_schema_tsql.TABLE_TYPE to sys.varchar if it's data-type is pg_catalog.varchar
+DO
+$$
+BEGIN  
+
+    IF EXISTS(
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema='information_schema_tsql'
+            AND table_name='tables'
+            AND column_name='TABLE_TYPE'
+            AND udt_schema='pg_catalog'
+            AND udt_name='varchar'
+    ) THEN
+        ALTER VIEW information_schema_tsql.tables RENAME TO tables_deprecated_in_3_4_0;
+
+        CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+            SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+                CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+                CAST(
+                    CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
+                        ELSE c.relname END
+                    AS sys._ci_sysname) AS "TABLE_NAME",
+
+                CAST(
+                    CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+                        WHEN c.relkind = 'v' THEN 'VIEW'
+                        ELSE null END
+                    AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
+
+            FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+                LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+
+            WHERE c.relkind IN ('r', 'v', 'p')
+                AND (NOT pg_is_other_temp_schema(nc.oid))
+                AND (pg_has_role(c.relowner, 'USAGE')
+                    OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+                    OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+                AND ext.dbid = cast(sys.db_id() as oid)
+                AND (NOT c.relname = 'sysdatabases');
+
+        GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
+
+        CALL sys.babelfish_drop_deprecated_object('view', 'information_schema_tsql', 'tables_deprecated_in_3_4_0');
+    END IF;
+END
+$$
+LANGUAGE plpgsql;
+
+
+-- Matches and returns column length of the corresponding column of the given table
+CREATE OR REPLACE FUNCTION sys.COL_LENGTH(IN object_name TEXT, IN column_name TEXT)
+RETURNS SMALLINT AS $BODY$
+DECLARE
+    col_name TEXT;
+    object_id oid;
+    column_id INT;
+    column_length SMALLINT;
+    column_data_type TEXT;
+    typeid oid;
+    typelen INT;
+    typemod INT;
+BEGIN
+    -- Get the object ID for the provided object_name
+    object_id := sys.OBJECT_ID(object_name, 'U');
+    IF object_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Truncate and normalize the column name
+    col_name := sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(lower(column_name)));
+
+    -- Get the column ID, typeid, length, and typmod for the provided column_name
+    SELECT attnum, a.atttypid, a.attlen, a.atttypmod
+    INTO column_id, typeid, typelen, typemod
+    FROM pg_attribute a
+    WHERE attrelid = object_id AND lower(attname) = col_name COLLATE sys.database_default;
+
+    IF column_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Get the correct data type
+    column_data_type := sys.translate_pg_type_to_tsql(typeid);
+
+    IF column_data_type = 'sysname' THEN
+        column_length := 256;
+    ELSIF column_data_type IS NULL THEN
+
+        -- Check if it's a user-defined data type
+        SELECT sys.translate_pg_type_to_tsql(typbasetype), typlen, typtypmod 
+        INTO column_data_type, typelen, typemod
+        FROM pg_type
+        WHERE oid = typeid;
+
+        IF column_data_type = 'sysname' THEN
+            column_length := 256;
+        ELSE 
+            -- Calculate column length based on base type information
+            column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
+        END IF;
+    ELSE
+        -- Calculate column length based on base type information
+        column_length := sys.tsql_type_max_length_helper(column_data_type, typelen, typemod);
+    END IF;
+
+    RETURN column_length;
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+STRICT;
+
+-- Matches and returns column name of the corresponding table
+CREATE OR REPLACE FUNCTION sys.COL_NAME(IN table_id INT, IN column_id INT)
+RETURNS sys.SYSNAME AS $$
+    DECLARE
+        column_name TEXT;
+    BEGIN
+        SELECT attname INTO STRICT column_name 
+        FROM pg_attribute 
+        WHERE attrelid = table_id AND attnum = column_id AND attnum > 0;
+        
+        RETURN column_name::sys.SYSNAME;
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+    END; 
+$$
+LANGUAGE plpgsql IMMUTABLE
+STRICT;
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string pg_catalog.text;
+    isoverflow pg_catalog.text;
+BEGIN
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END; 
+
+    IF input_expr IS NULL or tz_offset IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+
+    IF tz_offset LIKE '+__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := 1;
+    ELSIF tz_offset LIKE '-__:__' THEN
+        str_hr := SUBSTRING(tz_offset,2,2);
+        str_mi := SUBSTRING(tz_offset,5,2);
+        sign_flag := -1;
+    ELSE
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    
+
+    BEGIN
+    v_hr := str_hr::INTEGER;
+    v_mi := str_mi::INTEGER;
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END;
+
+    if v_hr > 14 or (v_hr = 14 and v_mi > 0) THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    tzfm := sign_flag*((v_hr*60)+v_mi);
+
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
+
+
+    f_tzoffset := p_tzoffset + tzfm;
+
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,tz_offset);
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+    
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
+                                                               IN tz_offset anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    p_year INTEGER;
+    p_month INTEGER;
+    p_day INTEGER;
+    p_hour INTEGER;
+    p_minute INTEGER;
+    p_seconds INTEGER;
+    p_nanosecond PG_CATALOG.TEXT;
+    p_tzoffset INTEGER;
+    f_tzoffset INTEGER;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    offset_str PG_CATALOG.TEXT;
+    v_resdatetimeupdated TIMESTAMP WITHOUT TIME ZONE;
+    tzfm INTEGER;
+    str_hr PG_CATALOG.TEXT;
+    str_mi PG_CATALOG.TEXT;
+    v_hr INTEGER;
+    v_mi INTEGER;
+    sign_flag INTEGER;
+    v_string pg_catalog.text;
+    v_sign PG_CATALOG.TEXT;
+    tz_offset_smallint smallint;
+    isoverflow pg_catalog.text;
+BEGIN
+
+    IF pg_typeof(tz_offset) NOT IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
+    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype,'varbinary'::regtype ) THEN
+        RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF;
+
+    BEGIN
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    
+
+    if p_year <1 or p_year > 9999 THEN
+    RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END IF;
+
+    BEGIN
+    input_expr:= cast(input_expr AS datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+    BEGIN
+    IF pg_typeof(tz_offset) NOT IN ('varbinary'::regtype) THEN
+        tz_offset := FLOOR(tz_offset);
+    END IF;
+    tz_offset_smallint := cast(tz_offset AS smallint);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Arithmetic overflow error converting expression to data type smallint.';
+    END;  
+
+    IF input_expr IS NULL THEN 
+    RETURN NULL;
+    END IF;
+
+    if tz_offset_smallint > 840 or tz_offset_smallint < -840 THEN
+       RAISE EXCEPTION 'The timezone provided to builtin function todatetimeoffset is invalid.';
+    END IF; 
+
+    v_hr := tz_offset_smallint/60;
+    v_mi := tz_offset_smallint%60;
+    
+
+    p_year := date_part('year',input_expr::TIMESTAMP);
+    p_month := date_part('month',input_expr::TIMESTAMP);
+    p_day := date_part('day',input_expr::TIMESTAMP);
+    p_hour := date_part('hour',input_expr::TIMESTAMP);
+    p_minute := date_part('minute',input_expr::TIMESTAMP);
+    p_seconds := TRUNC(date_part('second', input_expr::TIMESTAMP))::INTEGER;
+    p_tzoffset := -1*sys.babelfish_get_datetimeoffset_tzoffset(cast(input_expr as sys.datetimeoffset))::integer;
+
+    v_sign := (
+        SELECT CASE
+            WHEN (tz_offset_smallint) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+
+    p_nanosecond := split_part(input_expr COLLATE "C",'.',2);
+    p_nanosecond := split_part(p_nanosecond COLLATE "C",' ',1);
+
+    f_tzoffset := p_tzoffset + tz_offset_smallint;
+    v_resdatetime := make_timestamp(p_year,p_month,p_day,p_hour,p_minute,p_seconds);
+    v_resdatetimeupdated := v_resdatetime + make_interval(mins => f_tzoffset);
+
+    isoverflow := split_part(v_resdatetimeupdated::TEXT COLLATE "C",' ',3);
+
+    v_string := CONCAT(v_resdatetimeupdated::pg_catalog.text,'.',p_nanosecond::text,v_sign,abs(v_hr)::TEXT,':',abs(v_mi)::TEXT);
+
+    p_year := split_part(v_string COLLATE "C",'-',1)::INTEGER;
+
+    if p_year <1 or p_year > 9999 or isoverflow = 'BC' THEN
+    RAISE USING MESSAGE := 'The timezone provided to builtin function switchoffset would cause the datetimeoffset to overflow the range of valid date range in either UTC or local time.';
+    END IF;
+    
+
+    BEGIN
+    RETURN cast(v_string AS sys.datetimeoffset);
+    exception
+        WHEN others THEN
+            RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
+$body$
+DECLARE
+    days_offset INT;
+    v_day INT;
+    result_date timestamp;
+    input_expr_timestamp timestamp;
+    date_arg_datatype regtype;
+    offset_string PG_CATALOG.TEXT;
+    datefirst_value INT;
+BEGIN
+    BEGIN
+        /* perform input validation */
+        date_arg_datatype := pg_typeof(date);
+        IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                            'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+        ELSIF date_arg_datatype NOT IN ('date'::regtype, 'time'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype,
+                                        'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type ''%'' is invalid for argument 2 of datetrunc function.', date_arg_datatype;
+        ELSIF datepart IN ('nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''%''.',datepart, date_arg_datatype;
+        ELSIF datepart IN ('dow') THEN
+            RAISE EXCEPTION 'The datepart ''weekday'' is not supported by date function datetrunc for data type ''%''.', date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'datetime'::regtype AND datepart IN ('microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''datetime''.', datepart;
+        ELSIF date_arg_datatype = 'smalldatetime'::regtype AND datepart IN ('millisecond', 'microsecond') THEN
+            RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''smalldatetime''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype THEN
+            IF datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'tsql_week') THEN
+                RAISE EXCEPTION 'The datepart ''%'' is not supported by date function datetrunc for data type ''time''.', datepart;
+            END IF;
+            -- Limitation in determining if the specified fractional scale (if provided any) for time datatype is 
+            -- insufficient to support provided datepart (millisecond, microsecond) value
+        ELSIF date_arg_datatype IN ('datetime2'::regtype, 'datetimeoffset'::regtype) THEN
+            -- Limitation in determining if the specified fractional scale (if provided any) for the above datatype is
+            -- insufficient to support for provided datepart (millisecond, microsecond) value
+        END IF;
+
+        /* input validation is complete, proceed with result calculation. */
+        IF date_arg_datatype = 'time'::regtype THEN
+            RETURN date_trunc(datepart, date);
+        ELSE
+            input_expr_timestamp = date::timestamp;
+            -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                offset_string = RIGHT(date::PG_CATALOG.TEXT, 6);
+                input_expr_timestamp := LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
+            END IF;
+            CASE
+                WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN
+                    result_date := date_trunc(datepart, input_expr_timestamp);
+                WHEN datepart IN ('doy', 'day') THEN
+                    result_date := date_trunc('day', input_expr_timestamp);
+                WHEN datepart IN ('tsql_week') THEN
+                -- sql server datepart 'iso_week' is similar to postgres 'week' datepart
+                -- handle sql server datepart 'week' here based on the value of set variable 'DATEFIRST'
+                    v_day := EXTRACT(dow from input_expr_timestamp)::INT;
+                    datefirst_value := current_setting('babelfishpg_tsql.datefirst')::INT;
+                    IF v_day = 0 THEN
+                        v_day := 7;
+                    END IF;
+                    result_date := date_trunc('day', input_expr_timestamp);
+                    days_offset := (7 + v_day - datefirst_value)%7;
+                    result_date := result_date - make_interval(days => days_offset);
+            END CASE;
+            -- concat offset_string to result_date in case of datetimeoffset before converting it to datetimeoffset datatype.
+            IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+            ELSE
+                RETURN result_date;
+            END IF;
+        END IF;
+    END;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
+
+-- another definition of datetrunc as anyelement can not handle unknown type.
+CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date PG_CATALOG.TEXT) RETURNS SYS.DATETIME2 AS
+$body$
+DECLARE
+    input_expr_datetime2 sys.datetime2;
+BEGIN
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'tsql_week', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 
+                        'doy', 'day', 'nanosecond', 'tzoffset') THEN
+            RAISE EXCEPTION '''%'' is not a recognized datetrunc option.', datepart;
+    END IF;
+    BEGIN
+    input_expr_datetime2 := cast(date as sys.datetime2);
+    exception
+        WHEN others THEN
+                RAISE USING MESSAGE := 'Conversion failed when converting date and/or time from character string.';
+    END;
+    IF input_expr_datetime2 IS NULL THEN
+        RETURN NULL;
+    ELSE
+        -- input string literal is valid, call the datetrunc function with datetime2 datatype. 
+        RETURN sys.DATETRUNC(datepart, input_expr_datetime2);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql STABLE;
+
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name NAME NOT NULL,
+  object_name NAME NOT NULL,
+  permission NAME NOT NULL,
+  grantee NAME NOT NULL,
+  object_type NAME,
+  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+);
+
+create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
+AS 'babelfishpg_tsql', 'timezone_mapping'
+LANGUAGE C IMMUTABLE ;
+
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT ,  IN input_expr PG_CATALOG.TEXT)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+BEGIN
+    IF input_expr = 'NULL' THEN
+        RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.';
+    END IF;
+
+    IF input_expr IS NULL OR tzzone IS NULL THEN 
+        RETURN NULL;
+    END IF;
+
+    RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.timezone(IN tzzone PG_CATALOG.TEXT , IN input_expr anyelement)
+RETURNS sys.datetimeoffset
+AS
+$BODY$
+DECLARE
+    tz_offset PG_CATALOG.TEXT;
+    tz_name PG_CATALOG.TEXT;
+    lower_tzn PG_CATALOG.TEXT;
+    prev_res PG_CATALOG.TEXT;
+    result PG_CATALOG.TEXT;
+    is_dstt bool;
+    tz_diff PG_CATALOG.TEXT;
+    input_expr_tx PG_CATALOG.TEXT;
+    input_expr_tmz TIMESTAMPTZ;
+BEGIN
+    IF input_expr IS NULL OR tzzone IS NULL THEN 
+        RETURN NULL;
+    END IF;
+
+    lower_tzn := lower(tzzone);
+    IF lower_tzn <> 'utc' THEN
+        tz_name := sys.babelfish_timezone_mapping(lower_tzn);
+    ELSE
+        tz_name := 'utc';
+    END IF;
+
+    IF tz_name = 'NULL' THEN
+        RAISE USING MESSAGE := format('Argument data type or the parameter %s provided to AT TIME ZONE clause is invalid.', tzzone);
+    END IF;
+
+    IF pg_typeof(input_expr) IN ('sys.smalldatetime'::regtype, 'sys.datetime'::regtype, 'sys.datetime2'::regtype) THEN
+        input_expr_tx := input_expr::TEXT;
+        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+
+        result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
+        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        if LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := concat('+',tz_diff);
+        END IF;
+        tz_offset := left(tz_diff,6);
+        input_expr_tx := concat(input_expr_tx,tz_offset);
+        return cast(input_expr_tx as sys.datetimeoffset);
+    ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
+        input_expr_tx := input_expr::TEXT;
+        input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
+        result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
+        tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
+        if LEFT(tz_diff,1) <> '-' THEN
+        tz_diff := concat('+',tz_diff);
+        END IF;
+        tz_offset := left(tz_diff,6);
+        result := concat(result,tz_offset);
+        return cast(result as sys.datetimeoffset);
+    ELSE
+        RAISE USING MESSAGE := 'Argument data type varchar is invalid for argument 1 of AT TIME ZONE function.'; 
+    END IF;
+       
+END;
+$BODY$
+LANGUAGE 'plpgsql' STABLE;
+
+CREATE OR REPLACE FUNCTION sys.sysutcdatetime() returns sys.datetime2
+AS 'babelfishpg_tsql', 'sysutcdatetime'
+LANGUAGE C STABLE;
+
+create or replace function sys.getutcdate() returns sys.datetime
+AS 'babelfishpg_tsql', 'getutcdate'
+LANGUAGE C STABLE;
+
+-- Cast functions from datettime to numeric types
+CREATE OR REPLACE FUNCTION sys.datetime_to_bit(IN arg sys.DATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'datetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int2(IN arg sys.DATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'datetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int4(IN arg sys.DATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'datetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int8(IN arg sys.DATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'datetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float4(IN arg sys.DATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'datetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float8(IN arg sys.DATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'datetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_numeric(IN arg sys.DATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'datetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Cast functions from smalldatetoime to numeric types
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_bit(IN arg sys.SMALLDATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'smalldatetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int2(IN arg sys.SMALLDATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'smalldatetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int4(IN arg sys.SMALLDATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'smalldatetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int8(IN arg sys.SMALLDATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'smalldatetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float4(IN arg sys.SMALLDATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'smalldatetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float8(IN arg sys.SMALLDATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'smalldatetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_numeric(IN arg sys.SMALLDATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'smalldatetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- internal helper function for date_bucket().
+CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
+AS 
+$body$
+DECLARE
+    date_arg_datatype regtype;
+BEGIN
+    date_arg_datatype := pg_typeof(date);
+    IF datepart NOT IN ('year', 'quarter', 'month', 'week', 'doy', 'day', 'hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION '% is not a recognized date_bucket option.', datepart;
+
+    -- Check for NULL value of number argument
+    ELSIF number IS NULL THEN
+        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 2 of date_bucket function.';
+
+    ELSIF check_date IS NULL THEN
+        RAISE EXCEPTION 'Argument data type NULL is invalid for argument 3 of date_bucket function.';
+
+    ELSIF check_date IS false THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+    
+    ELSIF check_date IS true THEN
+        IF date_arg_datatype NOT IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
+            RAISE EXCEPTION 'Argument data type % is invalid for argument 3 of date_bucket function.', date_arg_datatype;
+        ELSIF datepart IN ('doy', 'microsecond', 'nanosecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type %.', datepart, date_arg_datatype;
+        ELSIF date_arg_datatype = 'date'::regtype AND datepart IN ('hour', 'minute', 'second', 'millisecond') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''date''.', datepart;
+        ELSIF date_arg_datatype = 'time'::regtype AND datepart IN ('year', 'quarter', 'month', 'day', 'week') THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function date_bucket for data type ''time''.', datepart;
+        ELSIF origin IS false THEN
+            RAISE EXCEPTION 'Argument data type varchar is invalid for argument 4 of date_bucket function.';
+        ELSIF number <= 0 THEN
+            RAISE EXCEPTION 'Invalid bucket width value passed to date_bucket function. Only positive values are allowed.';
+        END IF;
+        RETURN true;
+    ELSE
+        RAISE EXCEPTION 'Argument data type varchar is invalid for argument 3 of date_bucket function.';
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Another definition of date_bucket() with arg PG_CATALOG.TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date PG_CATALOG.TEXT, IN origin PG_CATALOG.TEXT default NULL) RETURNS PG_CATALOG.TEXT 
+AS 
+$body$
+DECLARE
+BEGIN
+    IF date IS NULL THEN
+        -- check_date is NULL when date is NULL
+        -- check_date is false when we are sure that date can not be a valid datatype.
+        -- check_date is true when date might be valid datatype so check is required. 
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, false, 'NULL'::text);
+    ELSE
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, NULL, date);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Another definition of date_bucket() with arg date of type ANYELEMENT and origin of type TEXT.
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin PG_CATALOG.TEXT) RETURNS ANYELEMENT 
+AS 
+$body$
+DECLARE
+BEGIN
+    IF date IS NULL THEN
+        RETURN sys.date_bucket_internal_helper(datepart, number, NULL, NULL, 'NULL'::text);
+    ELSIF pg_typeof(date) IN ('sys.datetime'::regtype, 'sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype, 'sys.smalldatetime'::regtype, 'date'::regtype, 'time'::regtype) THEN
+            IF origin IS NULL THEN
+                RETURN sys.date_bucket(datepart, number, date);
+            ELSE
+                RETURN sys.date_bucket_internal_helper(datepart, number, true, false, date);
+            END IF;
+    ELSE
+        RETURN sys.date_bucket_internal_helper(datepart, number, false, NULL, date);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.date_bucket(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN date ANYELEMENT, IN origin ANYELEMENT default NULL) RETURNS ANYELEMENT 
+AS 
+$body$
+DECLARE
+    required_bucket INT;
+    years_diff INT;
+    quarters_diff INT;
+    months_diff INT;
+    hours_diff INT;
+    minutes_diff INT;
+    seconds_diff INT;
+    milliseconds_diff INT;
+    timezone INT;
+    result_time time;
+    result_date timestamp;
+    offset_string PG_CATALOG.text;
+    date_difference_interval INTERVAL;
+    millisec_trunc_diff_interval INTERVAL;
+    date_arg_datatype regtype;
+    is_valid boolean;
+BEGIN
+    BEGIN
+        date_arg_datatype := pg_typeof(date);
+        is_valid := sys.date_bucket_internal_helper(datepart, number, true, true, date);
+
+        -- If optional argument origin's value is not provided by user then set it's default value of valid datatype.
+        IF origin IS NULL THEN
+                IF date_arg_datatype = 'sys.datetime'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime);
+                ELSIF date_arg_datatype = 'sys.datetime2'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetime2);
+                ELSIF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.datetimeoffset);
+                ELSIF date_arg_datatype = 'sys.smalldatetime'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS sys.smalldatetime);
+                ELSIF date_arg_datatype = 'date'::regtype THEN
+                    origin := CAST('1900-01-01 00:00:00.000' AS pg_catalog.date);
+                ELSIF date_arg_datatype = 'time'::regtype THEN
+                    origin := CAST('00:00:00.000' AS pg_catalog.time);
+                END IF;
+        END IF;
+    END;
+
+    /* support of date_bucket() for different kinds of date datatype starts here */
+    -- support of date_bucket() when date is of 'time' datatype
+    IF date_arg_datatype = 'time'::regtype THEN
+        -- Find interval between date and origin and extract hour, minute, second, millisecond from the interval
+        date_difference_interval := date_trunc('millisecond', date) - date_trunc('millisecond', origin);
+        hours_diff := EXTRACT('hour' from date_difference_interval)::INT;
+        minutes_diff := EXTRACT('minute' from date_difference_interval)::INT;
+        seconds_diff := FLOOR(EXTRACT('second' from date_difference_interval))::INT;
+        milliseconds_diff := FLOOR(EXTRACT('millisecond' from date_difference_interval))::INT;
+        CASE datepart
+            WHEN 'hour' THEN
+                -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                -- For Ex. 'date_bucket(hour, 2, '01:00:00', '08:00:00')' hence check if the result_time is greater then date
+                -- For comparision we are trunceting the result_time to milliseconds
+                required_bucket := hours_diff/number;
+                result_time := origin + make_interval(hours => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(hours => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'minute' THEN
+                required_bucket := (hours_diff * 60 + minutes_diff)/number;
+                result_time := origin + make_interval(mins => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(mins => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'second' THEN
+                required_bucket := ((hours_diff * 60 + minutes_diff) * 60 + seconds_diff)/number;
+                result_time := origin + make_interval(secs => required_bucket * number);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => number);
+                END IF;
+                RETURN result_time;
+
+            WHEN 'millisecond' THEN
+                required_bucket := (((hours_diff * 60 + minutes_diff) * 60) * 1000 + milliseconds_diff)/number;
+                result_time := origin + make_interval(secs => ((required_bucket * number)::numeric) * 0.001);
+                IF date_trunc('millisecond', result_time) > date THEN
+                    RETURN result_time - make_interval(secs => (number::numeric) * 0.001);
+                END IF;
+                RETURN result_time;
+        END CASE;
+
+    -- support of date_bucket() when date is of {'datetime2', 'datetimeoffset'} datatype
+    -- handling separately because both the datatypes have precision in milliseconds
+    ELSIF date_arg_datatype IN ('sys.datetime2'::regtype, 'sys.datetimeoffset'::regtype) THEN
+        -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
+        IF datepart IN ('year', 'quarter', 'month') THEN
+            date_difference_interval := AGE(date_trunc('day', date::timestamp), date_trunc('day', origin::timestamp));
+            years_diff := EXTRACT('Year' from date_difference_interval)::INT;
+            months_diff := EXTRACT('Month' from date_difference_interval)::INT;
+            CASE datepart
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Ex. date_bucket(year, 2, '2010-01-01', '2019-01-01')) hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
+
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
+
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number*3);
+                    END IF;
+            END CASE;  
+        
+        -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function. 
+        ELSE
+            -- trunceting origin to millisecond before passing it to date_bin() function. 
+            -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
+            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            millisec_trunc_diff_interval := (origin::timestamp - date_trunc('millisecond', origin::timestamp))::interval;
+            result_date = date_bin(date_difference_interval, date::timestamp, date_trunc('millisecond', origin::timestamp)) + millisec_trunc_diff_interval;
+
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result.
+            IF result_date + date_difference_interval <= date::timestamp THEN
+                result_date = result_date + date_difference_interval;
+            END IF;
+        END IF;
+
+        -- All the above operations are performed by converting every date datatype into TIMESTAMPS. 
+        -- datetimeoffset is typecasted into TIMESTAMPS that changes the value. 
+        -- Ex. '2023-02-23 09:19:21.23 +10:12'::sys.datetimeoffset::timestamp => '2023-02-22 23:07:21.23'
+        -- The output of date_bucket() for datetimeoffset datatype will always be in the same time-zone as of provided date argument. 
+        -- Here, converting TIMESTAMP into datetimeoffset datatype with the same timezone as of date argument.
+        IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
+            timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
+            offset_string = right(date::PG_CATALOG.TEXT, 6);
+            result_date = result_date + make_interval(mins => timezone);
+            RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
+        ELSE
+            RETURN result_date;
+        END IF;
+
+    -- support of date_bucket() when date is of {'date', 'datetime', 'smalldatetime'} datatype
+    ELSE
+        -- Round datetime to fixed bins (e.g. .000, .003, .007)
+        IF date_arg_datatype = 'sys.datetime'::regtype THEN
+            date := sys.babelfish_conv_string_to_datetime('DATETIME', date::TEXT)::sys.datetime;
+            origin := sys.babelfish_conv_string_to_datetime('DATETIME', origin::TEXT)::sys.datetime;
+        END IF;
+        -- when datepart is {year, quarter, month} make use of AGE() function to find number of buckets
+        IF datepart IN ('year', 'quarter', 'month') THEN
+            date_difference_interval := AGE(date_trunc('day', date::timestamp), date_trunc('day', origin::timestamp));
+            years_diff := EXTRACT('Year' from date_difference_interval)::INT;
+            months_diff := EXTRACT('Month' from date_difference_interval)::INT;
+            CASE datepart
+                WHEN 'year' THEN
+                    -- Here we are finding how many buckets we have to add in the origin so that we can reach to a bucket in which date belongs.
+                    -- For cases where origin > date, we might end up in a bucket which exceeds date by 1 bucket. 
+                    -- For Example. date_bucket(year, 2, '2010-01-01', '2019-01-01') hence check if the result_time is greater then date.
+                    -- For comparision we are trunceting the result_time to milliseconds
+                    required_bucket := years_diff/number;
+                    result_date := origin::timestamp + make_interval(years => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(years => number);
+                    END IF;
+
+                WHEN 'month' THEN
+                    required_bucket := (12 * years_diff + months_diff)/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number);
+                    END IF;
+
+                WHEN 'quarter' THEN
+                    quarters_diff := (12 * years_diff + months_diff)/3;
+                    required_bucket := quarters_diff/number;
+                    result_date := origin::timestamp + make_interval(months => required_bucket * number * 3);
+                    IF result_date > date::timestamp THEN
+                        result_date = result_date - make_interval(months => number * 3);
+                    END IF;
+            END CASE;
+            RETURN result_date;
+        
+        -- when datepart is {week, day, hour, minute, second, millisecond} make use of built-in date_bin() postgresql function.
+        ELSE
+            -- trunceting origin to millisecond before passing it to date_bin() function. 
+            -- store the difference between origin and trunceted origin to add it in the result of date_bin() function
+            date_difference_interval := concat(number, ' ', datepart)::INTERVAL;
+            result_date = date_bin(date_difference_interval, date::TIMESTAMP, origin::TIMESTAMP);
+            -- Filetering cases where the required bucket ends at date then date_bin() gives start point of this bucket as result. 
+            IF result_date + date_difference_interval <= date::TIMESTAMP THEN
+                result_date = result_date + date_difference_interval;
+            END IF;
+            RETURN result_date;
+        END IF;
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+create or replace view sys.all_objects as
+select 
+    name collate sys.database_default
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , type collate sys.database_default
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
+-- details of system tables
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U'::char(2) as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and tt.typrelid is null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+ 
+union all
+-- details of user defined tables
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U'::char(2) as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and tt.typrelid is null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+ 
+union all
+-- details of system views
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::char(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
+where t.relkind = 'v'
+and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- Details of user defined views
+
+-- Currently for pg_class, pg_proc UNIONs, we separated user defined objects and system objects because the 
+-- optimiser will be able to make a better estimation of number of rows(in case the query contains a filter on 
+-- is_ms_shipped column) and in turn chooses a better query plan. 
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::char(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
+where t.relkind = 'v'
+and s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system foreign key constraints
+select
+    c.conname::sys.sysname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F'::char(2) as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'F'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of user defined and system primary key constraints
+select
+    c.conname::sys.sysname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK'::char(2) as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'PK'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of system defined procedures
+select
+    p.proname::sys.sysname as name 
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
+and nis.type = (case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end)
+where (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+ 
+union all
+-- details of user defined procedures
+select
+    p.proname::sys.sysname as name 
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
+and nis.type = (case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end)
+where s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+ 
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::sys.sysname as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::sys.sysname
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , s.oid as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'C'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of user defined and system defined sequence objects
+select
+  p.relname::sys.sysname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'SO'::char(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join pg_namespace s on s.oid = p.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.relname and nis.schemaid = s.oid and nis.type = 'SO'
+where p.relkind = 'S'
+and (s.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::sys.sysname as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::char(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt
+left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || '_' || tt.type_table_object_id)::name and nis.schemaid = tt.schema_id and nis.type = 'TT'
+) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.rolname = suser_name() collate sys.database_default
+OR Ext.rolname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+OR Ext.type = 'R';
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
 
 create or replace view sys.schemas as
 select
