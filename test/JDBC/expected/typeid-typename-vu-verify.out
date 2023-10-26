@@ -361,19 +361,19 @@ int
 ~~END~~
 
 
-SELECT TYPE_NAME(TYPE_ID('dbo.varchar'));
+SELECT TYPE_NAME(TYPE_ID('dbo.bigint'));
 GO
 ~~START~~
 nvarchar
-varchar
+bigint
 ~~END~~
 
 
-SELECT TYPE_NAME(TYPE_ID('varchar'));
+SELECT TYPE_NAME(TYPE_ID('bigint'));
 GO
 ~~START~~
 nvarchar
-varchar
+bigint
 ~~END~~
 
 

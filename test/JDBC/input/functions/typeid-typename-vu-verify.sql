@@ -143,10 +143,10 @@ GO
 SELECT TYPE_NAME(TYPE_ID('int'));
 GO
 
-SELECT TYPE_NAME(TYPE_ID('dbo.varchar'));
+SELECT TYPE_NAME(TYPE_ID('dbo.bigint'));
 GO
 
-SELECT TYPE_NAME(TYPE_ID('varchar'));
+SELECT TYPE_NAME(TYPE_ID('bigint'));
 GO
 
 SELECT TYPE_NAME(TYPE_ID('myint'));
