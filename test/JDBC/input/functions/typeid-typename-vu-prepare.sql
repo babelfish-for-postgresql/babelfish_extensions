@@ -64,9 +64,6 @@ GO
 CREATE TYPE αΒβΓγΔδΕε from int;
 GO
 
-CREATE TYPE dbo.int from int;
-GO
-
 CREATE TYPE dbo.myint from int;
 GO
 

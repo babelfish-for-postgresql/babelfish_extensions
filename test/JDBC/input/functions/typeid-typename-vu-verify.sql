@@ -137,9 +137,6 @@ GO
 SELECT TYPE_ID('master.dbo.typeid_typename_vu_prepare_t1');
 GO
 
-SELECT TYPE_NAME(TYPE_ID('dbo.int'));
-GO
-
 SELECT TYPE_NAME(TYPE_ID('int'));
 GO
 
