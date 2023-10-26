@@ -50,6 +50,7 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	instr_time	parseStart;
 	instr_time	parseEnd;
 
+	printf("**** raw parser: [%s]\n", str);
 	/*
 	 * parse identifiers case-insensitively if the database collation is CI_AS
 	 */

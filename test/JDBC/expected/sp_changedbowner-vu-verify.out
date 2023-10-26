@@ -1,0 +1,425 @@
+
+-- tsql
+-- sp_changedbowner: this is a subset of the tests for C:\Babelfish\code\work\chgdbowner\alter_authorization_change_db_owner
+use master
+go
+create login new_OWNER_login with password='12345678'
+go
+create login new_OWNER_login2 with password='12345678'
+go
+create login [new_OWNER_login3] with password='12345678'
+go
+create login [new_OWNER_login 4] with password='12345678'
+go
+set quoted_identifier on
+go
+create login "new_OWNER_login5" with password='12345678'
+go
+create login "new_OWNER_login 6" with password='12345678'
+go
+set quoted_identifier off
+go
+
+-- system database ownership cannot be changed
+use master
+go
+execute sp_changedbowner 'new_owner_login'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot change the owner of the master, model, tempdb or distribution database.)~~
+
+use tempdb
+go
+execute sp_changedbowner 'new_owner_login'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot change the owner of the master, model, tempdb or distribution database.)~~
+
+
+-- except for msdb
+use msdb
+go
+declare @orig_owner sysname 
+select @orig_owner = suser_sname(sid) from sysdatabases where name = 'msdb'
+execute sp_changedbowner new_owner_login
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+execute sp_changedbowner @orig_owner
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+~~START~~
+text#!#nvarchar
+msdb#!#new_OWNER_login
+~~END~~
+
+~~START~~
+text#!#nvarchar
+msdb#!#jdbc_user
+~~END~~
+
+
+
+create database change_OWNER_db_sp
+go
+use change_owner_DB_SP
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#jdbc_user
+~~END~~
+
+execute sp_changedbowner 'no_such_login'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'no_such_login', because it does not exist or you do not have permission.)~~
+
+
+-- new owner cannot be a user in the DB already
+create user new_owner_login
+go
+execute sp_changedbowner new_owner_login
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The proposed new database owner is already a user or aliased in the database.)~~
+
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#jdbc_user
+~~END~~
+
+drop user new_owner_login
+go
+execute sp_changedbowner new_owner_LOGIN
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+
+-- tsql user=new_owner_LOGIN password=12345678
+use CHANGE_OWNER_DB_SP
+go
+select user_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#change_owner_db_sp
+~~END~~
+
+use master
+go
+
+-- tsql 
+-- second argument is ignored
+use change_owner_db_sp
+go
+execute sp_changedbowner NEW_owner_login2, null
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login2
+~~END~~
+
+execute sp_changedbowner [new_owner_LOGIN3], 12345
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login3
+~~END~~
+
+execute sp_changedbowner [NEW_owner_login3], 'abcde'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login3
+~~END~~
+
+execute sp_changedbowner [new_owner_LOGIN 4], 'abcdefgh'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login 4
+~~END~~
+
+execute sp_changedbowner "NEW_owner_login5"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login5
+~~END~~
+
+execute sp_changedbowner @loginame = "new_owner_LOGIN 6", @map = 'some-string'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login 6
+~~END~~
+
+
+use change_owner_db_sp
+go
+execute sp_changedbowner "new_owner_login"
+go
+use master
+go
+
+-- tsql user=new_owner_LOGIN password=12345678
+-- change owner to yourself
+use change_owner_db_sp
+go
+select user_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#change_owner_db_sp
+~~END~~
+
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+execute sp_changedbowner "new_owner_login"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+execute sp_changedbowner "NEW_OWNER_LOGIN"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+execute sp_changedbowner [NEW_owner_login]
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+use master
+go
+
+-- tsql 
+-- roll back owner change in transaction
+use change_owner_db_sp
+go
+begin tran
+go
+select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+varchar#!#text#!#nvarchar
+before owner change#!#change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+execute sp_changedbowner NEW_owner_login2
+go
+select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+varchar#!#text#!#nvarchar
+after owner change#!#change_owner_db_sp#!#new_OWNER_login2
+~~END~~
+
+rollback
+go
+select 'after rollback', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+varchar#!#text#!#nvarchar
+after rollback#!#change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+
+
+-- NULL as new owner is a no-op
+execute sp_changedbowner NULL
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+execute sp_changedbowner @loginame=NULL
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login
+~~END~~
+
+
+-- non-existing logins
+execute sp_changedbowner ''
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal '', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner ' '
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner @loginame=' '
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner [ ]
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner @loginame=[ ]
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+use master
+go
+drop database change_owner_db_sp
+go
+
+-- tests for long names and mixed case
+create login    LOGIN63long_345678901234567890123456789012345678901234567890123 with password = '12345678'
+go
+create database DB63long_012345678901234567890123456789012345678901234567890123
+go
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+execute sp_changedbowner LOGIN63long_345678901234567890123456789012345678901234567890123
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+~~START~~
+text#!#nvarchar
+db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+~~END~~
+
+use master
+go
+
+-- tsql user=LOGIN63long_345678901234567890123456789012345678901234567890123 password=12345678
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+select user_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#db63long_012345678901234567890123456789012345678901234567890123
+~~END~~
+
+use master
+go
+drop database DB63long_012345678901234567890123456789012345678901234567890123
+go
+
+-- tsql
+create login    LOGIN64long_3456789012345678901234567890123456789012345678901234 with password = '12345678'
+go
+create database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+use DB64long_0123456789012345678901234567890123456789012345678901234
+go
+-- this returns 'principal not found' due to a bug in SUSER_ID() for names > 63 chars
+execute sp_changedbowner "LOGIN64long_3456789012345678901234567890123456789012345678901234"
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'LOGIN64long_3456789012345678901234567890123456789012345678901234', because it does not exist or you do not have permission.)~~
+
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+~~START~~
+text#!#nvarchar
+db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#jdbc_user
+~~END~~
+
+use master
+go
+drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+
+use master
+go
+set nocount on
+go
+-- kill remaining sessions
+create table #killed(killed int)
+go
+declare @spid int, @cmd varchar(30)
+while (1=1)
+begin 
+select @spid = spid from sys.sysprocesses where spid <> @@spid and spid not in (select killed from #killed)
+if @@rowcount = 0 break
+insert #killed values(@spid)
+set @cmd = 'kill ' + convert(varchar, @spid)
+execute(@cmd)
+end
+go
+
+-- cleanup
+use master
+go
+drop login new_owner_login 
+go
+drop login new_owner_login2 
+go
+drop login [new_owner_login3] 
+go
+drop login [new_owner_login 4] 
+go
+set quoted_identifier on
+go
+drop login "new_owner_login5" 
+go
+drop login "new_owner_login 6" 
+go
+set quoted_identifier off
+go
+drop login LOGIN64long_3456789012345678901234567890123456789012345678901234 
+go
+drop login LOGIN63long_345678901234567890123456789012345678901234567890123 
+go

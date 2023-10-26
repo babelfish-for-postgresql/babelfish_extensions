@@ -3617,3 +3617,40 @@ BEGIN
 END	
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
+
+-- Change the owner of the current database.
+-- This is a wrapper around ALTER AUTHORIZATION ON DATABASE::
+CREATE OR REPLACE PROCEDURE sys.sp_changedbowner(
+	IN "@loginame" sys.sysname,
+	IN "@map"      sys.VARCHAR(5) DEFAULT NULL) -- this parameter is ignored in T-SQL
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	DECLARE @cmd sys.NVARCHAR(300)
+	DECLARE @db  sys.sysname = DB_NAME()
+
+	-- For a NULL login name, do nothing
+	IF @loginame IS NULL
+	BEGIN
+		RETURN
+	END
+
+	IF (@db = 'master') OR (@db = 'tempdb')
+	BEGIN
+		RAISERROR('Cannot change the owner of the master, model, tempdb or distribution database.', 16, 1)
+		RETURN
+	END
+
+	IF SUSER_ID(@loginame) IS NULL
+	BEGIN
+		RAISERROR('Cannot find the principal ''%s'', because it does not exist or you do not have permission.', 16, 1, @loginame)
+		RETURN
+	END
+
+	-- Compose the ALTER ATHORIZATION statement
+	SET @cmd = 'ALTER AUTHORIZATION ON DATABASE::[' + @db + '] TO [' + SUSER_NAME(SUSER_ID(@loginame)) + ']'
+	EXECUTE(@cmd)
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
+
