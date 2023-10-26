@@ -74,6 +74,8 @@ ignore#!#forjson-subquery-before-14_10-or-15_5-vu-cleanup
 ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-prepare
 ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-verify
 ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-cleanup
+ignore#!#AUTO_ANALYZE-before-15-5-or-14-10-vu-prepare
+ignore#!#AUTO_ANALYZE-before-15-5-or-14-10-vu-verify
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
