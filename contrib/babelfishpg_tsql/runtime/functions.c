@@ -346,21 +346,23 @@ datepart_internal(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp = 0;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
 	int			tsql_datefirst = (int)pltsql_datefirst;
 	int			result, first_day, temp, first_week_end, day;
+	DateADT		date_arg;
 
 	PG_TRY();
 	{
-		// if(argtypeoid == TIMESTAMPOID)   //arg is of type timestamp
-		// {
+		if(argtypeoid == TIMESTAMPOID || argtypeoid == 17453)   //arg is of type timestamp
+		{
 			timestamp = PG_GETARG_TIMESTAMP(1);
-		// }
-		// else if(argtypeoid == 17453)    //arg is of type datetime
-		// {
-		// 	datetime_int = DirectFunctionCall(datetime_to_int8, PG_GETARG_DATETIMEOFFSET(1));
-		// }
+		}
+		else if(argtypeoid == 1082)    //arg is of type date
+		{
+			date_arg = PG_GETARG_DATEADT(1);
+			timestamp = DirectFunctionCall1(date_timestamp, date_arg);
+		}
 	
 		if(strcasecmp(field , "tsql_week") == 0)
 		{
