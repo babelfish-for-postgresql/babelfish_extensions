@@ -61,3 +61,9 @@ GO
 DROP TYPE αΒβΓγΔδΕε
 GO
 
+DROP TYPE dbo.int
+GO
+
+DROP TYPE dbo.myint
+GO
+

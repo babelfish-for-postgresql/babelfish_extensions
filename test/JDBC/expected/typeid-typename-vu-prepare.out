@@ -64,6 +64,12 @@ GO
 CREATE TYPE αΒβΓγΔδΕε from int;
 GO
 
+CREATE TYPE dbo.int from int;
+GO
+
+CREATE TYPE dbo.myint from int;
+GO
+
 CREATE TYPE typeid_typename_vu_prepare_s1.myint from int;
 GO
 
