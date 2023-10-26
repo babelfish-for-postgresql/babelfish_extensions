@@ -361,6 +361,14 @@ int
 ~~END~~
 
 
+SELECT TYPE_NAME(TYPE_ID('dbo.int'));
+GO
+~~START~~
+nvarchar
+int
+~~END~~
+
+
 SELECT TYPE_NAME(TYPE_ID('myint'));
 GO
 ~~START~~

@@ -143,6 +143,9 @@ GO
 SELECT TYPE_NAME(TYPE_ID('int'));
 GO
 
+SELECT TYPE_NAME(TYPE_ID('dbo.int'));
+GO
+
 SELECT TYPE_NAME(TYPE_ID('myint'));
 GO
 
