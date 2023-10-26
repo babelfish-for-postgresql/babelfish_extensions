@@ -319,7 +319,7 @@ custom_date_part(const char* field, Timestamp timestamp)
 	{
 		ereport(ERROR,
         	(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-         	errmsg("is not a recognized datepart option")));
+         	errmsg("%s is not a recognized datepart option",field)));
 		return -1;
 	}
 }
@@ -382,7 +382,7 @@ datepart_internal(PG_FUNCTION_ARGS)
 			result = custom_right(buffer, 6);
 			pfree(buffer);
 		}
-		else if(strcasecmp(field , "nanosecond") == 0)
+		else if(strcasecmp(field , "nanosecond") == 0 && df_tz!=0)
 		{
 			int datePartValue = custom_date_part(field, timestamp);
 			char *buffer = (char *) palloc(20);
