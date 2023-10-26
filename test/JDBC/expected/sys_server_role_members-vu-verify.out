@@ -57,6 +57,7 @@ SELECT * FROM sys_server_role_members_vu_prepare_view;
 GO
 ~~START~~
 varchar#!#varchar
+sysadmin#!#jdbc_user
 ~~END~~
 
 
@@ -64,6 +65,7 @@ EXEC sys_server_role_members_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#varchar
+sysadmin#!#jdbc_user
 ~~END~~
 
 
@@ -71,6 +73,7 @@ SELECT * FROM sys_server_role_members_vu_prepare_func();
 GO
 ~~START~~
 varchar#!#varchar
+sysadmin#!#jdbc_user
 ~~END~~
 
 
