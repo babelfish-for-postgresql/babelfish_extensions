@@ -352,6 +352,7 @@ CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS i
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 OR Ext.orig_loginname = suser_name()
+OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
 OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
@@ -505,6 +506,20 @@ AND Ext1.type = 'R'
 AND Ext2.orig_username != 'db_owner';
 
 GRANT SELECT ON sys.database_role_members TO PUBLIC;
+
+--SERVER_ROLE_MEMBER
+CREATE OR REPLACE VIEW sys.server_role_members AS
+SELECT
+CAST(Authmbr.roleid AS INT) AS role_principal_id,
+CAST(Authmbr.member AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.type = 'R';
+
+GRANT SELECT ON sys.server_role_members TO PUBLIC;
 
 -- internal table function for sp_helpdb with no arguments
 CREATE OR REPLACE FUNCTION sys.babelfish_helpdb()

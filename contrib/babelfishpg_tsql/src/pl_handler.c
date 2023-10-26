@@ -5907,7 +5907,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			logicalschema = get_logical_schema_name(schema_name, true);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5978,7 +5979,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			logicalschema = get_logical_schema_name(schema_name, true);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{

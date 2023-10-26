@@ -784,6 +784,8 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 			n_d->usingClause = from_clause;
 			n_d->whereClause = where_clause;
 			n_d->limitCount = top_clause;
+			n_d->whereClause = where_clause;
+			n_d->limitCount = top_clause;
 			return (Node *) n_d;
 		}
 		else
