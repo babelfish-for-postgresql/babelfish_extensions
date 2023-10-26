@@ -1,0 +1,77 @@
+-- tsql
+SELECT * from sys_server_role_members_vu_prepare_view;
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER sys_server_role_members_vu_prepare_login1;
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER sys_server_role_members_vu_prepare_login2;
+GO
+
+SELECT * from sys_server_role_members_vu_prepare_view;
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER sys_server_role_members_vu_prepare_login3;
+GO
+
+SELECT * from sys_server_role_members_vu_prepare_view;
+GO
+
+--granting access to user
+GRANT SELECT ON sys_server_role_members_vu_prepare_view TO sys_server_role_members_vu_prepare_without_sa;
+GO
+
+GRANT EXECUTE ON sys_server_role_members_vu_prepare_proc TO sys_server_role_members_vu_prepare_without_sa;
+GO
+
+GRANT EXECUTE ON sys_server_role_members_vu_prepare_func TO sys_server_role_members_vu_prepare_without_sa;
+GO
+
+-- reset the login password
+ALTER LOGIN sys_server_role_members_vu_prepare_without_sa WITH PASSWORD = '123';
+GO
+
+-- tsql user=sys_server_role_members_vu_prepare_without_sa  password=123
+
+SELECT * FROM sys_server_role_members_vu_prepare_view;
+GO
+
+EXEC sys_server_role_members_vu_prepare_proc
+GO
+
+SELECT * FROM sys_server_role_members_vu_prepare_func();
+GO
+
+-- psql
+ALTER USER sys_server_role_members_vu_prepare_login1 PASSWORD '123';
+GO
+
+-- tsql user=sys_server_role_members_vu_prepare_login1 password=123
+SELECT * from sys_server_role_members_vu_prepare_view;
+GO
+
+EXEC sys_server_role_members_vu_prepare_proc
+GO
+
+SELECT * FROM sys_server_role_members_vu_prepare_func();
+GO
+
+-- tsql
+ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login1;
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login2;
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login3;
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER sys_server_role_members_vu_prepare_login4;
+GO
+
+EXEC sys_server_role_members_vu_prepare_proc
+GO
+
+SELECT * FROM sys_server_role_members_vu_prepare_func();
+GO
+
