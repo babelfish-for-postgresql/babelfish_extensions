@@ -408,12 +408,12 @@ static int32
 resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 {
 	ListCell	*lc;
-	uint8_t		max_precision = 0,
+	int32		max_precision = 0,
 				max_scale = 0,
 				precision = 0,
 				scale = 0,
-				integralDigitCount = 0;
-	int32		typmod = -1,
+				integralDigitCount = 0,
+				typmod = -1,
 				result_typmod = -1;
 	List		*planlist = NIL;
 	if (IsA(plan, Append))
@@ -428,8 +428,14 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 	Assert(planlist != NIL);
 	foreach(lc, ((Append *) plan)->appendplans)
 	{
-		Plan *outerplan = (Plan *) lfirst(lc);
-		TargetEntry *tle = get_tle_by_resno(outerplan->targetlist, attno);
+		TargetEntry *tle;
+		Plan 		*outerplan = (Plan *) lfirst(lc);
+
+		/* if outerplan is SubqueryScan then use actual subplan */
+		if (IsA(outerplan, SubqueryScan))
+			outerplan = ((SubqueryScan *)outerplan)->subplan;
+
+		tle = get_tle_by_resno(outerplan->targetlist, attno);
 		if (IsA(tle->expr, Var))
 		{
 			Var *var = (Var *)tle->expr;
@@ -466,6 +472,10 @@ resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
 		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
 	else
 		outerplan = outerPlan(plan);
+
+	/* if outerplan is SubqueryScan then use actual subplan */
+	if (IsA(outerplan, SubqueryScan))
+		outerplan = ((SubqueryScan *)outerplan)->subplan;
 
 	/* outerplan must not be NULL */
 	Assert(outerplan);
