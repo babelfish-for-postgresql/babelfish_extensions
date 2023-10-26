@@ -1,0 +1,76 @@
+SELECT CONVERT(VARCHAR(10), 0x123456789)
+GO
+
+SELECT CONVERT(VARCHAR(10), 0x80)
+GO
+
+SELECT CONVERT(VARCHAR(10), 0xaaa)
+GO
+
+SELECT CONVERT(VARCHAR(10), 0x330033)
+GO
+
+SELECT CONVERT(VARBINARY(10), 'ｳ')
+GO
+
+SELECT CONVERT(VARBINARY(10), 'ﾊﾟ')
+GO
+
+SELECT CONVERT(VARBINARY(10), 'A')
+GO
+
+SELECT CONVERT(VARBINARY(10), 'ア')
+GO
+
+SELECT CONVERT(VARBINARY(10), 0x81)
+GO
+
+SELECT CONVERT(VARBINARY(10), 0x330033)
+GO
+
+DECLARE @key varchar(20) = 'part1'
+DECLARE @email varchar(20) = 'part2'
+SELECT CONVERT(VARCHAR(10), HASHBYTES('SHA1', @key + LOWER(@email)))
+GO
+
+
+CREATE TABLE babel_1940_t1 (a VARBINARY(9))
+GO
+
+INSERT INTO babel_1940_t1 VALUES(0x80)
+INSERT INTO babel_1940_t1 VALUES(0xaaa)
+INSERT INTO babel_1940_t1 VALUES(0x123456789)
+GO
+
+SELECT * FROM babel_1940_t1
+GO
+
+SELECT CONVERT(VARCHAR(9), a) FROM babel_1940_t1
+GO
+
+SELECT CAST(a as VARCHAR(9)) FROM babel_1940_t1
+GO
+
+SELECT CAST(a as VARCHAR(10)) FROM babel_1940_t1
+GO
+
+
+CREATE TABLE babel_1940_t2(a varchar(10) collate japanese_cs_as);
+GO
+
+insert into babel_1940_t2 values ('ｳ'), ('C'), ('ﾊﾟ'), ('３'), ('c'), ('ｲ'), ('Ｃ'),('ﾊ'),('1'), 
+('ｱ'),('パ'), ('b'), ('2'), ('B'),('１'), ('Ａ'),('ア'),('A'), ('a'),('AbC'), ('aBc');
+GO
+
+SELECT CONVERT(VARBINARY(10), a) FROM babel_1940_t2
+GO
+
+SELECT CONVERT(VARBINARY(10), CONVERT(VARCHAR(10), CONVERT(VARCHAR(10), a))) FROM babel_1940_t2
+GO
+
+
+DROP TABLE babel_1940_t2
+GO
+
+DROP TABLE babel_1940_t1
+GO

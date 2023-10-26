@@ -1,0 +1,217 @@
+SELECT CONVERT(VARCHAR(10), 0x123456789)
+GO
+~~START~~
+varchar
+#Eg‰
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(10), 0x80)
+GO
+~~START~~
+varchar
+€
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(10), 0xaaa)
+GO
+~~START~~
+varchar
+<newline>ª
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(10), 0x330033)
+GO
+~~START~~
+varchar
+3
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'ｳ')
+GO
+~~START~~
+varbinary
+3F
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'ﾊﾟ')
+GO
+~~START~~
+varbinary
+3F3F
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'A')
+GO
+~~START~~
+varbinary
+41
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'ア')
+GO
+~~START~~
+varbinary
+3F
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 0x81)
+GO
+~~START~~
+varbinary
+81
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 0x330033)
+GO
+~~START~~
+varbinary
+330033
+~~END~~
+
+
+DECLARE @key varchar(20) = 'part1'
+DECLARE @email varchar(20) = 'part2'
+SELECT CONVERT(VARCHAR(10), HASHBYTES('SHA1', @key + LOWER(@email)))
+GO
+~~START~~
+varchar
+æ/fact¢+Ó
+~~END~~
+
+
+
+CREATE TABLE babel_1940_t1 (a VARBINARY(9))
+GO
+
+INSERT INTO babel_1940_t1 VALUES(0x80)
+INSERT INTO babel_1940_t1 VALUES(0xaaa)
+INSERT INTO babel_1940_t1 VALUES(0x123456789)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_1940_t1
+GO
+~~START~~
+varbinary
+80
+0AAA
+0123456789
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(9), a) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+SELECT CAST(a as VARCHAR(9)) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+SELECT CAST(a as VARCHAR(10)) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+
+CREATE TABLE babel_1940_t2(a varchar(10) collate japanese_cs_as);
+GO
+
+insert into babel_1940_t2 values ('ｳ'), ('C'), ('ﾊﾟ'), ('３'), ('c'), ('ｲ'), ('Ｃ'),('ﾊ'),('1'), 
+('ｱ'),('パ'), ('b'), ('2'), ('B'),('１'), ('Ａ'),('ア'),('A'), ('a'),('AbC'), ('aBc');
+GO
+~~ROW COUNT: 21~~
+
+
+SELECT CONVERT(VARBINARY(10), a) FROM babel_1940_t2
+GO
+~~START~~
+varbinary
+3F
+43
+3F3F
+3F
+63
+3F
+3F
+3F
+31
+3F
+3F
+62
+32
+42
+3F
+3F
+3F
+41
+61
+416243
+614263
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), CONVERT(VARCHAR(10), CONVERT(VARCHAR(10), a))) FROM babel_1940_t2
+GO
+~~START~~
+varbinary
+3F
+43
+3F3F
+3F
+63
+3F
+3F
+3F
+31
+3F
+3F
+62
+32
+42
+3F
+3F
+3F
+41
+61
+416243
+614263
+~~END~~
+
+
+
+DROP TABLE babel_1940_t2
+GO
+
+DROP TABLE babel_1940_t1
+GO
