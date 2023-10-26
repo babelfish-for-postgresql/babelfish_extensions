@@ -644,10 +644,10 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
 
-   /* 
-	* If typmod is -1 (or invalid), use the actual length
-	* Length should be checked after encoding into server enc
-	*/
+	/* 
+	 * If typmod is -1 (or invalid), use the actual length
+	 * Length should be checked after encoding into server enc
+	 */
 	if (typmod < (int32) VARHDRSZ)
 		maxlen = encodedByteLen;
 	else
