@@ -429,6 +429,8 @@ GO
 
 -- escape hatch: fulltext
 -- 'strict' is default
+CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
+GO
 
 CREATE TABLE t_unsupported_ft (a text);
 GO
@@ -439,24 +441,46 @@ GO
 DROP TABLE t_unsupported_ft;
 GO
 
-CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
+SELECT set_config('role', 'jdbc_user', false);
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-CREATE TABLE t_unsupported_ft (a text);
-GO
-
-CREATE FULLTEXT INDEX ON t_unsupported_ft(a) KEY INDEX ix_unsupported_ft;
-GO
-
-DROP TABLE t_unsupported_ft;
-GO
-
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
+
 DROP DATABASE db_unsupported_ft;
+GO
+
+CREATE SCHEMA t_unsupported_s_ft;
+GO
+
+CREATE TABLE t_unsupported_s_ft.t_unsupported_ft1 (a text);
+GO
+
+CREATE FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1(a) KEY INDEX ix_unsupported_ft1;
+GO
+
+DROP FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1;
+GO
+
+DROP TABLE t_unsupported_s_ft.t_unsupported_ft1;
+GO
+
+DROP SCHEMA t_unsupported_s_ft;
+GO
+
+CREATE TABLE t_unsupported_ft2 (a text);
+GO
+
+CREATE FULLTEXT INDEX ON t_unsupported_ft2(a) KEY INDEX ix_unsupported_ft2;
+GO
+
+DROP FULLTEXT INDEX on t_unsupported_ft2;
+GO
+
+DROP TABLE t_unsupported_ft2;
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')

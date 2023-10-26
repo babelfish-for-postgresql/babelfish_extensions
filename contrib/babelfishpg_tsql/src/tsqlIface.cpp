@@ -116,6 +116,8 @@ PLtsql_stmt *makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
+PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
+PLtsql_stmt* makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char* repl, ParserRuleContext *baseCtx);
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
@@ -1761,13 +1763,19 @@ public:
 		{
 			stmt = makeChangeDbOwnerStatement(ctx->alter_authorization());
 		}
-		else 
+		else if (ctx->create_fulltext_index())
+		{
+			stmt = makeCreateFulltextIndexStmt(ctx->create_fulltext_index());
+		}
+		else if (ctx->drop_fulltext_index())
+		{
+			stmt = makeDropFulltextIndexStmt(ctx->drop_fulltext_index());
+		}
+		else
 		{
 			stmt = makeSQL(ctx);
 		}
 		graft(stmt, peekContainer());
-
-		// clean up object_name positions maps before entering
 		clear_rewritten_query_fragment();
 	}
 
@@ -1779,6 +1787,16 @@ public:
 			return;
 		}
 		
+		if (ctx->create_fulltext_index())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
+		if (ctx->drop_fulltext_index())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		// record that the stmt is ddl
@@ -1802,13 +1820,11 @@ public:
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
 		else if (ctx->create_type())
 			nop = post_process_create_type(ctx->create_type(), stmt, ctx);
-		else if (ctx->create_fulltext_index() ||
-		         ctx->alter_fulltext_index() ||
-		         ctx->drop_fulltext_index())
+		else if (ctx->alter_fulltext_index())
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("FULLTEXT related statements will be ignored.")));
+					 errmsg("ALTER CREATE FULLTEXT INDEX statement will be ignored.")));
 			nop = true;
 		}
 
@@ -6578,6 +6594,106 @@ post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsq
 	}
 
 	return false;
+}
+
+PLtsql_stmt*
+makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
+{
+	PLtsql_stmt_createfulltextindex *stmt = (PLtsql_stmt_createfulltextindex *) palloc0(sizeof(PLtsql_stmt_createfulltextindex));
+	stmt->cmd_type = PLTSQL_STMT_CREATEFULLTEXTINDEX;
+	stmt->lineno = getLineNo(ctx);
+
+	if (ctx->table_name())
+	{
+		std::string table_info = ::getFullText(ctx->table_name());
+		std::string table_name = "";
+		std::string schema_name = "";
+		size_t pos = table_info.find(".");
+		if (pos != std::string::npos) {
+			// Extract the schema name before the "."
+			schema_name = table_info.substr(0, pos);
+			// Extract the table name after the "."
+			table_name = table_info.substr(pos + 1);
+		} else {
+			// No "." character found, set first to the entire string
+			table_name = table_info;
+		}
+		stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+		stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	}
+	List *column_name_list = NIL;
+    if (ctx->fulltext_index_column().size() > 0)
+    {
+        for (auto column : ctx->fulltext_index_column())
+        {
+			if (column->TYPE() && column->COLUMN())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "TYPE COLUMN option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(column->TYPE()));
+			else if (column->LANGUAGE())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "LANGUAGE option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(column->LANGUAGE()));
+			else if (column->STATISTICAL_SEMANTICS())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "STATISTICAL_SEMANTICS option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(column->STATISTICAL_SEMANTICS()));
+			else
+			{
+				std::string column_name_str = ::getFullText(column->full_column_name());
+				char *column_name = pstrdup(downcase_truncate_identifier(column_name_str.c_str(), column_name_str.length(), true));
+				column_name_list = lappend(column_name_list, column_name);
+			}
+
+        }
+		stmt->column_name = column_name_list;
+    }
+	if (ctx->catalog_filegroup_option()) {
+		auto catalog_filegroup_option = ctx->catalog_filegroup_option();
+		if (catalog_filegroup_option->FILEGROUP() || catalog_filegroup_option->catalog_name || catalog_filegroup_option->filegroup_name)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "FILEGROUP/CATALOG option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(ctx));
+	}
+	if (ctx->fulltext_with_option().size() > 0) {
+		for (auto option : ctx->fulltext_with_option()) {
+			if (option->CHANGE_TRACKING())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "CHANGE_TRACKING option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->CHANGE_TRACKING()));
+			else if (option->POPULATION())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "POPULATION option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->POPULATION()));
+			else if (option->STOPLIST()) 
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "STOPLIST option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->STOPLIST()));
+			else if (option->SEARCH()) 
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "SEARCH PROPERTY LIST option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->SEARCH()));
+		}
+	}
+	if (ctx->id())
+	{
+		std::string index_name = ::getFullText(ctx->id());
+		stmt->index_name = pstrdup(downcase_truncate_identifier(index_name.c_str(), index_name.length(), true));
+	}
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+    return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt*
+makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
+{
+	PLtsql_stmt_dropfulltextindex *stmt = (PLtsql_stmt_dropfulltextindex *) palloc0(sizeof(PLtsql_stmt_dropfulltextindex));
+	stmt->cmd_type = PLTSQL_STMT_DROPFULLTEXTINDEX;
+	stmt->lineno = getLineNo(ctx);
+	if (ctx->table_name())
+	{
+		std::string table_info = ::getFullText(ctx->table_name());
+		std::string table_name = "";
+		std::string schema_name = "";
+		size_t pos = table_info.find(".");
+		if (pos != std::string::npos) {
+			// Extract the schema name before the "."
+			schema_name = table_info.substr(0, pos);
+			// Extract the table name after the "."
+			table_name = table_info.substr(pos + 1);
+		} else {
+			// No "." character found, set first to the entire string
+			table_name = table_info;
+		}
+		stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+		stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	}
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
 }
 
 static bool

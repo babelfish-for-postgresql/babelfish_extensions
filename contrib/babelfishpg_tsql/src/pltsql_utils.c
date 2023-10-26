@@ -1791,3 +1791,78 @@ List
 
 	return stmt_list;
 }
+
+/*
+ * get_index_name
+ *		Get the index name of a relation specified by OID
+ */
+char
+*get_index_name(Oid relid)
+{
+	Relation		relation;
+	List			*indexoidlist;
+	Oid				indexOid;
+	char			*index_name;
+
+	relation = RelationIdGetRelation(relid);
+	indexoidlist = RelationGetIndexList(relation);
+	if (list_length(indexoidlist) == 0)
+	{
+		RelationClose(relation);
+		list_free(indexoidlist);
+		return NULL;
+	}
+	indexOid = linitial_oid(indexoidlist);
+	index_name = get_rel_name(indexOid);
+	RelationClose(relation);
+	list_free(indexoidlist);
+	return index_name;
+}
+
+char
+*gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name)
+{
+	StringInfoData query;
+	initStringInfo(&query);
+
+	/*
+	 * We prepare the following query to create a fulltext index.
+	 *
+	 * CREATE INDEX <index_name> ON <table_name> 
+	 * USING gin(to_tsvector('fts_contains_simple', <column_name>));
+	 *
+	 */
+	appendStringInfo(&query, "CREATE INDEX \"%s\" ON ", index_name);
+	if (schema_name == NULL || strlen(schema_name) == 0 || *schema_name == '\0')
+		appendStringInfo(&query, "\"%s\"", table_name);
+	else
+		appendStringInfo(&query, "\"%s\".\"%s\"", schema_name, table_name);
+
+	appendStringInfo(&query, "USING GIN(");
+	for (int i = 0; i < list_length(column_name); i++)
+	{
+		char *col_name = (char *) list_nth(column_name, i);
+		// Add column name
+		appendStringInfo(&query, "to_tsvector('fts_contains_simple', \"%s\")", col_name);
+		if (i != list_length(column_name) - 1)
+			appendStringInfo(&query, ", ");
+	}
+	appendStringInfo(&query, ")");
+
+	return query.data;
+}
+
+char
+*gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name) 
+{
+	StringInfoData query;
+	initStringInfo(&query);
+	/*
+	 * We prepare the following query to drop a fulltext index.
+	 *
+	 * DROP INDEX <index_name>
+	 *
+	 */
+	appendStringInfo(&query, "DROP INDEX \"%s\".\"%s\"", schema_name, index_name);
+	return query.data;
+}

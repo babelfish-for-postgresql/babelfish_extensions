@@ -1336,13 +1336,13 @@ define_escape_hatch_variables(void)
 
 	/* fulltext */
 	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_fulltext",
-							 gettext_noop("escape hatch for fulltext"),
+							 gettext_noop("escape hatch for fulltext search"),
 							 NULL,
 							 &escape_hatch_fulltext,
 							 EH_STRICT,
 							 escape_hatch_options,
-							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
 	/* schemabinding */

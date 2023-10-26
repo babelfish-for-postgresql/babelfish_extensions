@@ -1,0 +1,182 @@
+-- enable FULLTEXT
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+USE fti_test_db;
+GO
+
+-- Fetching index details to check if index is created correctly
+SELECT * FROM fti_prepare_v1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+dbo#!#fti_table_t1#!#ix_t1_a#!#<NULL>#!#CREATE INDEX ix_t1_a ON dbo.fti_table_t1 USING gin (to_tsvector('fts_contains_simple'::regconfig, a))
+~~END~~
+
+
+EXEC fti_prepare_p1;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+dbo#!#fti_table_t2#!#ix_t2_b#!#<NULL>#!#CREATE INDEX ix_t2_b ON dbo.fti_table_t2 USING gin (to_tsvector('fts_contains_simple'::regconfig, (b)::text))
+~~END~~
+
+
+SELECT fti_prepare_f1();
+GO
+~~START~~
+nvarchar
+ix_t3_c
+~~END~~
+
+
+SELECT * FROM pg_indexes WHERE tablename='fti_table_t4';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+dbo#!#fti_table_t4#!#ix_t4_d#!#<NULL>#!#CREATE INDEX ix_t4_d ON dbo.fti_table_t4 USING gin (to_tsvector('fts_contains_simple'::regconfig, (d)::text))
+~~END~~
+
+
+SELECT * FROM pg_indexes WHERE tablename='fti_table_t5';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+dbo#!#fti_table_t5#!#ix_t5_e#!#<NULL>#!#CREATE INDEX ix_t5_e ON dbo.fti_table_t5 USING gin (to_tsvector('fts_contains_simple'::regconfig, (e)::text))
+~~END~~
+
+
+SELECT * FROM pg_indexes WHERE tablename='fti_table_t6';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+dbo#!#fti_table_t6#!#ix_t6_f#!#<NULL>#!#CREATE INDEX ix_t6_f ON dbo.fti_table_t6 USING gin (to_tsvector('fts_contains_simple'::regconfig, (f)::text))
+~~END~~
+
+
+SELECT * FROM pg_indexes WHERE tablename='fti_table_t7';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+dbo#!#fti_table_t7#!#ix_t7_a1b1c1#!#<NULL>#!#CREATE INDEX ix_t7_a1b1c1 ON dbo.fti_table_t7 USING gin (to_tsvector('fts_contains_simple'::regconfig, a1), to_tsvector('fts_contains_simple'::regconfig, (b1)::text), to_tsvector('fts_contains_simple'::regconfig, (c1)::text))
+~~END~~
+
+
+SELECT * FROM pg_indexes WHERE tablename='fti_table_t8';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#text
+fti_schema_s1#!#fti_table_t8#!#ix_s1_t8_a#!#<NULL>#!#CREATE INDEX ix_s1_t8_a ON fti_schema_s1.fti_table_t8 USING gin (to_tsvector('fts_contains_simple'::regconfig, a))
+fti_schema_s2#!#fti_table_t8#!#ix_s2_t8_a#!#<NULL>#!#CREATE INDEX ix_s2_t8_a ON fti_schema_s2.fti_table_t8 USING gin (to_tsvector('fts_contains_simple'::regconfig, a))
+~~END~~
+
+
+-- Creating more than 1 fulltext index in a table, should throw error
+CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(b) KEY INDEX IX_s1_t8_b;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: A full-text index for table or indexed view "fti_table_t8" has already been created.)~~
+
+
+-- Creating index in a non existent table of a schema, should throw error
+CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t9(a) KEY INDEX IX_s1_t9_a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "fti_table_t9" does not exist)~~
+
+
+-- Creating index in a table of a non existent schema, should throw error
+CREATE FULLTEXT INDEX ON fti_schema_s3.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "fti_schema_s3" does not exist)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a TYPE COLUMN a) KEY INDEX ix_unsupported_fti;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: TYPE COLUMN option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a LANGUAGE 1033) KEY INDEX ix_unsupported_fti;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: LANGUAGE option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a STATISTICAL_SEMANTICS) KEY INDEX ix_unsupported_fti;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: STATISTICAL_SEMANTICS option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti ON t_unsupported_catalog;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: FILEGROUP/CATALOG option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti WITH CHANGE_TRACKING OFF;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: CHANGE_TRACKING option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti WITH STOPLIST = SYSTEM;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: STOPLIST option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- should throw unsupported error
+CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti WITH SEARCH PROPERTY LIST = DocumentPropertyList;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: SEARCH PROPERTY LIST option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+
+
+-- disable FULLTEXT
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+

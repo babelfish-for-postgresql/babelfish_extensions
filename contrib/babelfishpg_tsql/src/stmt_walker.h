@@ -90,6 +90,8 @@ typedef bool (*Stmt_grantdb_act) ACTION_SIGNITURE(grantdb);
 typedef bool (*Stmt_change_dbowner_act) ACTION_SIGNITURE(change_dbowner);
 typedef bool (*Stmt_dbcc_act) ACTION_SIGNITURE(dbcc);
 typedef bool (*Stmt_grantschema_act) ACTION_SIGNITURE(grantschema);
+typedef bool (*Stmt_createfulltextindex_act) ACTION_SIGNITURE(createfulltextindex);
+typedef bool (*Stmt_dropfulltextindex_act) ACTION_SIGNITURE(dropfulltextindex);
 
  /* TSQL-only executable node */
 typedef bool (*Stmt_save_ctx) ACTION_SIGNITURE(save_ctx);
@@ -143,6 +145,8 @@ typedef struct Walker_context
 	Stmt_change_dbowner_act change_dbowner_act;
 	Stmt_dbcc_act dbcc_act;
 	Stmt_grantschema_act grantschema_act;
+	Stmt_createfulltextindex_act createfulltextindex_act;
+	Stmt_dropfulltextindex_act dropfulltextindex_act;
 
 	/* TSQL-only executable node */
 	Stmt_save_ctx save_ctx_act;
