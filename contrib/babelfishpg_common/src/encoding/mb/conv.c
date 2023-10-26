@@ -401,10 +401,6 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 		unsigned char b3 = 0;
 		unsigned char b4 = 0;
 
-		/* "break" cases all represent errors */
-		if (*iso == '\0')
-			break;
-
 		if (!IS_HIGHBIT_SET(*iso))
 		{
 			/* ASCII case is easy, assume it's one-to-one conversion */
