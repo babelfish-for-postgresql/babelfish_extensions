@@ -150,15 +150,12 @@ static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
+static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-static void declare_parameter_unquoted_string(Node *paramDft, ObjectType objtype);
-static void declare_parameter_unquoted_string_reset(Node *paramDft);
-
-static Node* call_argument_unquoted_string(Node *arg);
-static void call_argument_unquoted_string_reset(Node *colref_arg);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -201,6 +198,7 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
+static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -211,10 +209,6 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
-static declare_parameter_unquoted_string_hook_type prev_declare_parameter_unquoted_string_hook = NULL;
-static declare_parameter_unquoted_string_reset_hook_type prev_declare_parameter_unquoted_string_reset_hook = NULL;
-static call_argument_unquoted_string_hook_type prev_call_argument_unquoted_string_hook = NULL;
-static call_argument_unquoted_string_reset_hook_type prev_call_argument_unquoted_string_reset_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
 static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
@@ -224,6 +218,8 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
+static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -314,6 +310,9 @@ InstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 
+	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
+	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger; 
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -341,16 +340,6 @@ InstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
-
-	prev_declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string_hook;
-	declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string;
-	prev_declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset_hook;
-	declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset;
-
-	prev_call_argument_unquoted_string_hook = call_argument_unquoted_string_hook;
-	call_argument_unquoted_string_hook = call_argument_unquoted_string;
-	prev_call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset_hook;
-	call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset;
 
 	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
 	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
@@ -384,6 +373,12 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
+	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
+
+	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
+	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 }
 
 void
@@ -421,6 +416,7 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -431,10 +427,6 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
-	declare_parameter_unquoted_string_hook = prev_declare_parameter_unquoted_string_hook;
-	declare_parameter_unquoted_string_reset_hook = prev_declare_parameter_unquoted_string_reset_hook;
-	call_argument_unquoted_string_hook = prev_call_argument_unquoted_string_hook;
-	call_argument_unquoted_string_reset_hook = prev_call_argument_unquoted_string_reset_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
 	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
@@ -446,6 +438,8 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
+	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 }
 
 /*****************************************
@@ -699,6 +693,38 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 	return false;
 }
 
+/**
+ * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
+ * Checks if view have an INSTEAD OF trigger at statement level
+ * If it does, we don't want to treat it as auto-updatable. 
+ * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
+*/
+static bool
+pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
+{
+	TriggerDesc *trigDesc = view->trigdesc;
+
+	switch (event)
+	{
+		case CMD_INSERT:
+			if(trigDesc && trigDesc->trig_insert_instead_statement)
+				return true;
+			break;
+		case CMD_UPDATE:
+			if (trigDesc && trigDesc->trig_update_instead_statement)
+				return true;
+			break;
+		case CMD_DELETE:
+			if (trigDesc && trigDesc->trig_delete_instead_statement)
+				return true;
+			break;
+		default:
+			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			break;
+	}
+	return false;
+}
+
 /*
  * Wrapper function that calls the initilization function.
  * Calls the pre function call hook on the procname 
@@ -777,12 +803,10 @@ pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
 			{
 				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+				ReleaseSysCache(proctup);
 			}
-
-			ReleaseSysCache(proctup);
 		}
 	}
-
 }
 
 static Node *
@@ -1161,12 +1185,11 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
-	while (i < 258)
+	while (true)
 	{
 		char		c = start[i];
 
@@ -1590,8 +1613,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
 		int			alias_len = 0;
-		const char *colname_start;
+		const char *colname_start = NULL;
 		const char *identifier_name = NULL;
+		int			open_square_bracket = 0;
+		int			double_quotes = 0;
+		const char *last_dot;
 
 		if (res->name == NULL && res->location != -1 &&
 			IsA(res->val, ColumnRef))
@@ -1601,14 +1627,73 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/*
 			 * If no alias is specified on a ColumnRef, then get the length of
 			 * the name from the ColumnRef and copy the column name from the
-			 * sourcetext
+			 * sourcetext. To prevent the server crash, res->location for queries
+			 * with join statement should not be zero.
 			 */
-			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String))
+			if (res->location != 0 && (list_length(cref->fields) == 1 &&
+				IsA(linitial(cref->fields), String)))
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
+			}
+			/*
+			 * This condition will preserve the case of column name when there are more than
+			 * one cref->fields. For instance, Queries like 
+			 * 1. select [database].[schema].[table].[column] from table.
+			 * 2. select [schema].[table].[column] from table.
+			 * 3. select [t].[column] from table as t
+			 * Case 1: Handle the cases when column name is passed with no delimiters
+			 * For example, select ABC from table
+			 * Case 2: Handle the cases when column name is delimited with dq.
+			 * In such cases, we are checking if no. of dq are even or not. When dq are odd,
+			 * we are not tracing number of sqb and sq within dq.
+			 * For instance, Queries like select "AF bjs'vs] " from table.
+			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
+			 * are zero, it means we are out of sqb.
+			 */
+			else if(res->location != 0 && (list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String)))
+			{
+				identifier_name = strVal(llast(cref->fields));
+				alias_len = strlen(identifier_name);
+				colname_start = pstate->p_sourcetext + res->location;
+				last_dot = colname_start;
+				while(*colname_start != '\0')
+				{	
+					if(open_square_bracket == 0 && *colname_start == '"')
+					{
+						double_quotes++;
+					}
+					/* To check how many open sqb are present in sourcetext. */
+					else if(double_quotes % 2 == 0 && *colname_start == '[')
+					{
+						open_square_bracket++;
+					}
+					else if(double_quotes % 2 == 0 && *colname_start == ']')
+					{
+						open_square_bracket--;
+					}
+					/*
+					 * last_dot pointer is to trace the last dot in the sourcetext,
+					 * as last dot indicates the starting of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && *colname_start == '.')
+					{
+						last_dot = colname_start;
+					}
+					/* 
+					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
+					 * space or comma, it means colname_start is at the end of column name.
+					 */
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					{
+						last_dot++;
+						colname_start = last_dot;
+						break;
+					}
+					colname_start++;
+				}
 			}
 		}
 		else if (res->name != NULL && res->name_location != -1)
@@ -1645,7 +1730,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int actual_alias_len = 0;
 
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || *colname_start == ' ')
+			while(*colname_start != '\0' && (*colname_start == '(' || scanner_isspace(*colname_start)))
 			{
 				colname_start++;
 			}
@@ -1660,17 +1745,18 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			if(actual_alias_len > alias_len)
 			{
 				/* First 32 characters of original_name are assigned to alias. */
-				memcpy(alias, original_name, (alias_len - 32) );
+				memcpy(alias, original_name, (alias_len - 32));
+
 				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
-				memcpy(alias + (alias_len) - 32,
-				identifier_name + (alias_len) - 32, 
-				32);
-				alias[alias_len+1] = '\0';
+				memcpy(alias + (alias_len - 32),
+					   identifier_name + (alias_len - 32), 
+	   				   32);
+
+				alias[alias_len] = '\0';
 			}
-			/* Identifier is not truncated. */
-			else
+			else	/* Identifier is not truncated. */
 			{
-				memcpy(alias, original_name, alias_len);
+				memcpy(alias, original_name, actual_alias_len);
 			}
 			res->name = alias;
 		}
@@ -2537,7 +2623,13 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 		if (att->attnum > 0)
 		{
-			col->name = NameStr(att->attname);
+			/*
+ 			* Do a deep copy of attname because tuple is a pointer 
+ 			* to a shared_buffer page which is released when scan
+ 			* is ended.
+ 			*/
+			col->name = pstrdup(NameStr(att->attname));
+
 			col->indirection = NIL;
 			col->val = NULL;
 			col->location = 1;
@@ -2811,8 +2903,15 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	 * added to total_digit_count
 	 */
 	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
-		total_digit_count += (partially_filled_numeric_block > 0) ?
-			log10(partially_filled_numeric_block) + 1 : 1;
+	{
+		if (partially_filled_numeric_block > 0)
+		{
+			int log_10 = (int) log10(partially_filled_numeric_block); // keep compiler happy
+			total_digit_count += log_10 + 1;
+		}
+		else
+			total_digit_count += 1;
+	}
 
 	/*
 	 * calculating exact #digits in last block if decimal point exists If
@@ -4036,117 +4135,29 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 	}	
 }
 
-
-/*  
- * Hook functions for handling unquoted string defaults in parameter definitions
- * for T-SQL CREATE PROCEDURE/CREATE FUNCTION.
- */
-static void declare_parameter_unquoted_string (Node *paramDft, ObjectType objtype)
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL && 
-       (objtype == OBJECT_PROCEDURE || objtype == OBJECT_FUNCTION) && 
-	   nodeTag(paramDft) == T_ColumnRef)
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	const char  	*func_dbo_schema,
+					*cur_dbname = get_cur_db_name();
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
 	{
-		/* 
-		 * The node could be for a variable, which should not be treated as a 
-		 * an unquoted string, so verify it does not start with '@'.
-		 * This will cause parameter defaults with local variables to 
-		 * fail rather than to return the local variable name as a string,
-		 * which is identical to Babelfish behaviour before the fix
-		 * for unquoted string parameter.
-		 */
-		ColumnRef *colref = (ColumnRef *) paramDft;
-		Node *colnameField = (Node *) linitial(colref->fields);			
-		char *colname = strVal(colnameField);
-		if (colname[0] != '@') 
-		{
-			paramDft->type = T_TSQL_UnquotedString;
-		}		
-	}	
-	return;
-}			
+		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
+		func_dbo_schema = get_dbo_schema_name(cur_dbname);
 
-static void declare_parameter_unquoted_string_reset (Node *paramDft)
-{
-	/*
-	 * In the case of an unquoted string, restore the original node type
-	 * or we may run into an unknown node type downstream. 
-	 */
-	if (nodeTag(paramDft) == T_ColumnRef)
-	{	
-		paramDft->type = T_ColumnRef;
-	}	
-	return;	
-}	
-
-/*  
- * Hook functions for handling unquoted string arguments in
- * for T-SQL procedure calls.
- */
-static Node* call_argument_unquoted_string (Node *arg)
-{
-	/*
-	 * Intercept unquoted string arguments in T-SQL procedure calls.
-	 * These arrive here as nodetype=T_ColumnRef. Temporarily change
-	 * the node type to T_TSQL_UnquotedString, which is picked up and 
-	 * handled in transformExprRecurse().
-	 */
-	Node *colref_arg = NULL; /* Points to temporarily modified node, if any. */
-	if (sql_dialect == SQL_DIALECT_TSQL) 
-	{
-		if (nodeTag(arg) == T_ColumnRef)
-		{
-			/* 
-			 * We get here for unnamed argument syntax, i.e. 
-			 * exec myproc mystring 
-			 * */
-			colref_arg = arg;
-		}
-		else if (nodeTag(arg) == T_NamedArgExpr)
-		{
-			/* 
-			 * We get here for named argument syntax, i.e. 
-			 * exec myproc @p=mystring 
-			 */
-			NamedArgExpr *na = (NamedArgExpr *) arg;
-			Assert(na->arg);
-			if (nodeTag((Node *) na->arg) == T_ColumnRef) 
-			{
-				colref_arg = (Node *) na->arg;
-			}
-		}
-		/* 
-		 * The argument could be a variable, which should not be treated
-		 * as an unquoted string, so verify it does not start with '@'.
-		 */
-		if (colref_arg) 					
-		{
-			ColumnRef *colref = (ColumnRef *) colref_arg;
-			Node *colnameField = (Node *) linitial(colref->fields);			
-			char *colname = strVal(colnameField);
-			if (colname[0] != '@') 
-			{
-				colref_arg->type = T_TSQL_UnquotedString;
-			}
-		}		
+		if(strcmp(func_schema_name, func_dbo_schema) != 0
+			&& strcmp(func_schema_name, "sys") != 0)
+			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+										quote_identifier(func_schema_name),
+										quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
 	}
-	return colref_arg;
+	return new_search_path;
 }
-
-
-static void call_argument_unquoted_string_reset (Node *colref_arg)
-{
-	/*
-	 * In case of an unquoted string, restore original node type
-	 * or we may run into an unknown node type downstream.
-	 */
-	if (colref_arg) 
-	{
-		if (nodeTag(colref_arg) == T_TSQL_UnquotedString)
-		{
-			colref_arg->type = T_ColumnRef;
-		}
-	}
-	return;
-}
-

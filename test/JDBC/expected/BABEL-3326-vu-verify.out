@@ -1,0 +1,1130 @@
+-- tsql user=jdbc_user password=12345678
+
+-- Verification
+-- Check support for following syntax 
+-- ALTER TABLE { database_name.schema_name.table_name | schema_name.table_name | table_name }
+--  { ENABLE | DISABLE } TRIGGER
+--      { ALL | trigger_name [ ,...n ] }
+USE master;
+GO
+
+-- triggers should be enabled by default
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary ) 
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE [babel_3326_Employees] DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE dbo.babel_3326_Employees DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE [dbo].[babel_3326_Employees] ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE [master].[dbo].[babel_3326_Employees] DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE master.dbo.babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled by default
+UPDATE master.dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE babel_3326_Employees DISABLE TRIGGER ALL
+GO
+
+-- All triggers on table babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE [babel_3326_Employees] ENABLE TRIGGER ALL
+GO
+
+-- All triggers on table babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE [babel_3326_Employees] DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+ALTER TABLE babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+
+
+-- Check support for following syntax
+-- { ENABLE | DISABLE } TRIGGER { [ schema_name . ] trigger_name [ ,...n ] | ALL }  
+-- ON { table_name } [ ; ]
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON babel_3326_Employees
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON babel_3326_Employees
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+
+DISABLE TRIGGER ALL ON babel_3326_Employees
+GO
+
+-- All triggers on table babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+ENABLE TRIGGER ALL ON [babel_3326_Employees]
+GO
+
+-- All triggers on table babel_3326_Employees  should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON babel_3326_Employees
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~START~~
+varchar
+Trigger dbo.TR_temp Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+
+-- Test cases to check dropping of a disabled trigger
+DISABLE TRIGGER TR_temp_babel_3326_Employees ON babel_3326_Employees
+GO
+
+DROP TRIGGER TR_temp_babel_3326_Employees
+GO
+
+
+-- tsql user=babel_3326_non_owner password=12345678
+-- Test case to check if non-owner user of the table has select/insert/update/delete access but should not be allowed to enable/disable a trigger
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled 
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Should throw error as babel_3326_non_owner cannot enable/disable trigger
+ALTER TABLE master.dbo.babel_3326_Employees DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees should not be disabled 
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Should throw error as babel_3326_non_owner cannot enable/disable trigger
+ALTER TABLE master.dbo.babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+-- Should throw error as babel_3326_non_owner cannot enable/disable trigger
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON master.dbo.babel_3326_Employees
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees should not be disabled 
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Should throw error as babel_3326_non_owner cannot enable/disable trigger
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON master.dbo.babel_3326_Employees
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+
+-- tsql user=jdbc_user password=12345678
+-- Cross database enabling/disabling of trigger
+USE babel_3326_db1
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- should throw error as, currently babelfish doesn't support alter table cross db referencing
+ALTER TABLE [master].[dbo].[babel_3326_Employees] DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees should not be disabled
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- should throw error as, currently babelfish doesn't support alter table cross db referencing
+ALTER TABLE master.dbo.babel_3326_Employees ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table babel_3326_employees)~~
+
+
+-- should throw error as { ENABLE | DISABLE } TRIGGER syntax doesn't support cross db reference
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON master.dbo.babel_3326_Employees
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot disable trigger on 'master.dbo.babel_3326_employees' as the target is not in the current database.)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees should not be disabled
+INSERT INTO master.dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- should throw error as { ENABLE | DISABLE } TRIGGER syntax doesn't support cross db reference
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON master.dbo.babel_3326_Employees
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot enable trigger on 'master.dbo.babel_3326_employees' as the target is not in the current database.)~~
+
+
+USE master
+GO
+
+
+-- Test cases if user tries to enable/disable nonexistent trigger
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled by default
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary ) 
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees SET MonthSalary = 3333 WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Should throw error and none of the triggers should be disabled
+ALTER TABLE [babel_3326_Employees] DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_trig_does_not_exist, [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees]
+GO
+~~ERROR (Code: 4920)~~
+
+~~ERROR (Message: trigger "tr_trig_does_not_exist" for table "babel_3326_employees" does not exist)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should not be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Disable triggers TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- Should throw error and none of the triggers should be enabled
+ALTER TABLE [babel_3326_Employees] ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_trig_does_not_exist, [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees]
+GO
+~~ERROR (Code: 4920)~~
+
+~~ERROR (Message: trigger "tr_trig_does_not_exist" for table "babel_3326_employees" does not exist)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should not be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Enable triggers TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- Should throw error and none of the triggers should be enabled
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_trig_does_not_exist, [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+~~ERROR (Code: 4920)~~
+
+~~ERROR (Message: trigger "tr_trig_does_not_exist" for table "babel_3326_employees" does not exist)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should not be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Disable triggers TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- Should throw error and none of the triggers should be enabled
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_trig_does_not_exist, TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON babel_3326_Employees
+GO
+~~ERROR (Code: 4920)~~
+
+~~ERROR (Message: trigger "tr_trig_does_not_exist" for table "babel_3326_employees" does not exist)~~
+
+
+-- TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should not be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+-- Enable triggers TR_ins_안녕하세요_babel_3326_Employees and TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+
+-- psql
+-- Test cases if user tries to enable/disable trigger <schema-1>.<trigger-1> on table <schema-2>.<table-1> 
+-- if both schemas have tables with same name and each table have trigger with same trigger name
+ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_babel_3326_u1;
+GO
+ALTER TABLE master_db.babel_3326_Employees OWNER TO master_babel_3326_u1;
+GO
+
+-- tsql user=babel_3326_u1 password=12345678
+
+-- will work; as default schema is dbo, relation dbo.babel_3326_Employees will be used below
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+
+-- will work; as default schema is dbo, relation dbo.babel_3326_Employees will be used below
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+
+-- will not work, throw error; as default schema is dbo, relation dbo.babel_3326_Employees will be used below
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger db.tr_ins_안녕하세요_babel_3326_employees on table dbo.babel_3326_employees does not exists or table dbo.babel_3326_employees does not exists)~~
+
+
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger db.tr_ins_안녕하세요_babel_3326_employees on table dbo.babel_3326_employees does not exists or table dbo.babel_3326_employees does not exists)~~
+
+
+
+ALTER USER babel_3326_u1 WITH DEFAULT_SCHEMA=db
+GO
+
+-- will work; as default schema is db, relation db.babel_3326_Employees will be used below
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+
+-- will not work, throw error; as default schema is db, relation db.babel_3326_Employees will be used below
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger dbo.tr_ins_안녕하세요_babel_3326_employees on table db.babel_3326_employees does not exists or table db.babel_3326_employees does not exists)~~
+
+
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger dbo.tr_ins_안녕하세요_babel_3326_employees on table db.babel_3326_employees does not exists or table db.babel_3326_employees does not exists)~~
+
+
+
+-- will work; as default schema is db, relation db.babel_3326_Employees will be used below
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+
+ALTER USER babel_3326_u1 WITH DEFAULT_SCHEMA=dbo
+GO
+
+-- will work;
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+GO
+
+
+-- will work
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+GO
+
+
+-- will work
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+GO
+
+
+-- will not work, throw error
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger dbo.tr_ins_안녕하세요_babel_3326_employees on table db.babel_3326_employees does not exists or table db.babel_3326_employees does not exists)~~
+
+
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger dbo.tr_ins_안녕하세요_babel_3326_employees on table db.babel_3326_employees does not exists or table db.babel_3326_employees does not exists)~~
+
+
+
+-- will not work, throw error
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger db.tr_ins_안녕하세요_babel_3326_employees on table dbo.babel_3326_employees does not exists or table dbo.babel_3326_employees does not exists)~~
+
+
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Trigger db.tr_ins_안녕하세요_babel_3326_employees on table dbo.babel_3326_employees does not exists or table dbo.babel_3326_employees does not exists)~~
+
+
+
+-- will work
+ENABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+GO
+
+DISABLE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+GO
+
+-- psql
+ALTER TABLE master_dbo.babel_3326_Employees OWNER TO master_dbo;
+GO
+ALTER TABLE master_db.babel_3326_Employees OWNER TO master_dbo;
+GO
+
+
+-- tsql user=jdbc_user password=12345678
+
+-- Test cases for behaviour of enable/disable of trigger in transactions
+ENABLE TRIGGER TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~ROW COUNT: 1~~
+
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN babel_3326_transaction1
+GO
+
+-- Enable trigger TR_ins_안녕하세요_babel_3326_Employees
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- Disable trigger TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees
+DISABLE TRIGGER [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [babel_3326_Employees]
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be enabled
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~START~~
+varchar
+Trigger dbo.TR_ins Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be disabled
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+ROLLBACK TRAN babel_3326_transaction1
+GO
+
+-- TR_ins_안녕하세요_babel_3326_Employees should be disabled as rollback of transaction will also revert the effect of statements in the transaction
+INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary )
+VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
+GO
+~~ROW COUNT: 1~~
+
+
+-- TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees should be enabled
+-- as rollback of transaction will also revert the effect of statements in the transaction
+UPDATE dbo.babel_3326_Employees
+SET MonthSalary = 3333
+WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger dbo.TR_upd Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+DISABLE TRIGGER TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON [babel_3326_Employees]
+GO
+
+
+-- Test cases for not-supported variants 
+-- Statements with following syntax throw error as DDL triggers are not supported in babelfish
+-- { ENABLE | DISABLE } TRIGGER { [ schema_name . ] trigger_name [ ,...n ] | ALL }  
+-- ON { DATABASE | ALL SERVER } [ ; ]  
+USE master
+GO
+
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON DATABASE
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees] ON ALL SERVER
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+DISABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON DATABASE
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+ENABLE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON ALL SERVER
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+DISABLE TRIGGER ALL ON ALL SERVER
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+ENABLE TRIGGER ALL ON DATABASE
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+DISABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], [TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON DATABASE
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+ENABLE TRIGGER [TR_ins_안녕하세요_babel_3326_Employees], TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees ON ALL SERVER
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DDL trigger' is not currently supported in Babelfish.)~~
+
+
+-- The instead of trigger is on and there'll no rows will be inserted
+insert into babel_3326_t1 values ('1');
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+DISABLE trigger babel_3326_t1_trigger on babel_3326_t1
+GO
+
+insert into babel_3326_t1 values ('1');
+GO
+~~ROW COUNT: 1~~
+
+
+-- The instead of trigger is disabled and new rows are inserted into the table
+select * from babel_3326_t1;
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+delete from babel_3326_t2;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t2;
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+
+DISABLE trigger babel_3326_t2_trigger on babel_3326_t2
+GO
+
+delete from babel_3326_t2;
+GO
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t2;
+GO
+~~START~~
+varchar
+~~END~~
+
+
+update babel_3326_t3 set a = '3';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t3;
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+
+DISABLE trigger babel_3326_t3_trigger on babel_3326_t3
+GO
+
+update babel_3326_t3 set a = '3';
+GO
+~~ROW COUNT: 1~~
+
+
+select * from babel_3326_t3;
+GO
+~~START~~
+varchar
+3
+~~END~~
+

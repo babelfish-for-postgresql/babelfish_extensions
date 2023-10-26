@@ -174,3 +174,99 @@ SELECT
     END AS ColumnStatus;
 GO
 
+-- Test Cases for User-Defined Data Types
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customchar');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarchar');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custombinary');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarbinary');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnchar');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnvarchar');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customtext');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customimage');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customntext');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsysname');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsqlvariant');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customxml');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarcharmax');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnvarcharmax');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customvarbinarymax');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custombit');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customtinyint');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custombigint');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsmallint');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsmallmoney');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_custommoney');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customsmalldatetime');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customreal');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customfloat');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customtime');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdatetime');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdatetime2');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdatetimeoffset');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customuniqueidentifier');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdate');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customdecimal');
+GO
+
+SELECT * FROM sys.COL_LENGTH('udd_test_table', 'col_customnumeric');
+GO

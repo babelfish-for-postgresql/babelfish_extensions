@@ -1,0 +1,180 @@
+CREATE TABLE SPATIALPOINTGEOM_dt (location geometry)
+
+#Geometry Test Cases
+
+#Positive Test for STGeomFromText with SRID 4326
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326) )
+
+#Positive Test for STGeomFromText with SRID 0
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) )
+
+#Negative Test for STGeomFromText when SRID is not provided
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)') )
+
+#Negative Test for STGeomFromText when SRID >= 10^6
+#SRID should be between 0 to 999999
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
+
+#Negative Test for STGeomFromText with SRID < 0
+#SRID should be between 0 to 999999
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', -1) )
+
+#Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
+
+#Negative Test for STGeomFromText when invalid type is provided
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText('Pnt', 4326) )
+
+#Test for STGeomFromText when null Point is Given -> Returns NBCRow
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STGeomFromText(null, 4326) )
+
+#Negative Test for STGeomFromText when Incorrect cast is provided
+#INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+#Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::STPointFromText('Point(1.0 2.0)', 4326) )
+
+
+#Positive Test for Point with SRID 4326
+INSERT INTO SPATIALPOINTGEOM_dt (location) VALUES ( geometry::Point(47.65100, -22.34900, 4326) )
+
+#Tests for Geometry type Prepared Statements
+prepst#!#INSERT INTO SPATIALPOINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+#Negative Test for STGeomFromText when SRID >= 10^6
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
+#Negative Test for STGeomFromText with SRID < 0
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):-1
+#Negative Test for STGeomFromText when SRID is NULL
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):<NULL>
+#Negative Test for STGeomFromText when a coordinate is missing
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
+#Negative Test when an unsupported feature in queried
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+#Negative Test for STGeomFromText when invalid type is provided
+prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
+#Negative Test for STGeomFromText when Null geometry is provided
+prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
+
+CREATE VIEW TextFromGeom AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt;
+
+CREATE VIEW BinaryFromGeom AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOM_dt;
+
+CREATE VIEW CoordsFromGeom AS SELECT STX(location), STY(location)  AS Coordinates FROM SPATIALPOINTGEOM_dt;
+
+CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
+
+CREATE TABLE SPATIALPOINTGEOG_dt (location geography)
+
+#Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
+#TODO: Make it similar to T-SQL
+CREATE TYPE geom FROM geometry NOT NULL ;
+
+CREATE TABLE TypeTable(ID INT PRIMARY KEY, Shape geom)
+
+INSERT INTO TypeTable(ID, Shape) VALUES(1, geometry::Point(1, 2, 4326));
+
+#Geography Test Cases
+
+#Positive Test for STGeomFromText with SRID 4326
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) )
+
+#Negative Test for STGeomFromText for Geography with SRID 0
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
+
+#Negative Test for STGeomFromText for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -122.34900)', 4326) )
+
+#Negative Test for STGeomFromText when SRID is not provided
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)') )
+
+#Negative Test for STGeomFromText when cast is not provided
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+#Negative Test for STGeomFromText when incorrect cast is provided
+#INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+#Negative Test for STGeomFromText when SRID >= 10^6
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
+
+#Negative Test for STGeomFromText with SRID < 0
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
+
+#Negative Test for STGeomFromText when a coordinate is missing
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
+
+#Negative Test for STGeomFromText when invalid type is provided
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText('Pnt', 4326) )
+
+#Test for STGeomFromText when null Point is Given -> Returns NBCRow
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STGeomFromText(null, 4326) )
+
+#Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(1.0 2.0)', 4326) )
+
+#Negative Test for STPointFromText for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::STPointFromText('Point(47.65100 122.34900)', 4326) )
+
+#Positive Test for Point with SRID 4326
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(47.65100, -22.34900, 4326) )
+
+#Negative Test for Point for Geography when lat > 90 or < -90
+INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(147.65100, -22.34900, 4326) )
+
+#Tests for Geography type Prepared Statements
+prepst#!#INSERT INTO SPATIALPOINTGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+#Negative Test for STGeomFromText for Geography with SRID 0
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
+#Negative Test for STGeomFromText for Geography when lat > 90 or < -90
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -122.34900):4326
+#Negative Test for STGeomFromText when SRID >= 10^6
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):1000000000
+#Negative Test for STGeomFromText with SRID < 0
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):-1
+#Negative Test for STGeomFromText with SRID is NULL
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):<NULL>
+#Negative Test for STGeomFromText when a coordinate is missing
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
+#Negative Test when an unsupported feature in queried
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+#Negative Test for STGeomFromText when invalid type is provided
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
+#Negative Test for STGeomFromText when Null geography is provided
+prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
+
+CREATE VIEW TextFromGeog AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt;
+
+CREATE VIEW BinaryFromGeog AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOG_dt;
+
+CREATE VIEW CoordsFromGeog AS SELECT long(location), lat(location)  AS Coordinates FROM SPATIALPOINTGEOG_dt;
+
+
+CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified_points FROM SPATIALPOINTGEOG_dt;
+
+CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location;
+
+CREATE TABLE SPATIALPOINT_dt (PrimaryKey int, GeomColumn geometry, GeogColumn geography)
+
+INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn) VALUES ( 1, geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeogColumn) VALUES ( 2, geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
+
+INSERT INTO SPATIALPOINT_dt (PrimaryKey, GeomColumn, GeogColumn) VALUES ( 3, geometry::STGeomFromText('Point(1.0 2.0)', 4326), geography::STGeomFromText('Point(1.0 2.0)', 4326) )
+
+
+#Tests for Spatial type Prepared Statements
+prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn) values(@PrimaryKey, @GeomColumn) #!#int|-|PrimaryKey|-|4#!#GEOMETRY|-|GeomColumn|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeogColumn) values(@PrimaryKey, @GeogColumn) #!#int|-|PrimaryKey|-|5#!#GEOGRAPHY|-|GeogColumn|-|Point(47.65100 -22.34900):4326
+prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn, GeogColumn) values(@PrimaryKey, @GeomColumn, @GeogColumn) #!#int|-|PrimaryKey|-|6#!#GEOMETRY|-|GeomColumn|-|Point(1.0 2.0):4326#!#GEOGRAPHY|-|GeogColumn|-|Point(1.0 2.0):4326

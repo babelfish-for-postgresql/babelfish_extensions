@@ -95,7 +95,7 @@ TdsLCIDToEncodingMap TdsLCIDToEncodingMap_data[] =
 	{0x043e, PG_WIN1252}, //Malay:Malaysia
 	/* {0x044e, 0},// Marathi: India */
 	{0x0450, PG_WIN1251}, //Mongolian:Mongolia
-	{0x0414, PG_WIN1252}, //Norwegian:Norway(BokmÃ ¥ l)
+	{0x0414, PG_WIN1252}, //Norwegian:Norway(BokmÃƒ Â¥ l)
 	{0x0814, PG_WIN1252}, //Norwegian:Norway(Nynorsk)
 	{0x0415, PG_WIN1250}, //Polish:Poland
 	{0x0416, PG_WIN1252}, //Portuguese:Brazil
@@ -182,6 +182,8 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
 	{"sys", "fixeddecimal", TDS_TYPE_MONEYN, 8, 1, TDS_SEND_MONEY, TDS_RECV_INVALID},
 	{"sys", "rowversion", TDS_TYPE_BINARY, 8, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
 	{"sys", "timestamp", TDS_TYPE_BINARY, 8, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
+	{"sys", "geometry", TDS_TYPE_GEOMETRY, -1, 2, TDS_SEND_GEOMETRY, TDS_RECV_GEOMETRY}, 
+	{"sys", "geography", TDS_TYPE_GEOGRAPHY, -1, 2, TDS_SEND_GEOGRAPHY, TDS_RECV_GEOGRAPHY},
 
 	/* Mapping TDS listener sender to basic Postgres datatypes. */
 	{"pg_catalog", "oid", TDS_TYPE_INTEGER, 4, 1, TDS_SEND_INTEGER, TDS_RECV_INVALID},

@@ -776,6 +776,29 @@ go
 insert into top_with_output_tbl VALUES (-1, 'foo'), (2, 'foo');
 go
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
+set babelfish_showplan_all on
+go
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+DELETE TOP (1)
+FROM top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+set babelfish_showplan_all off
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+
 declare @t_out table (no_o_id int);
 
 UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 10

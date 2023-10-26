@@ -14,6 +14,17 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name NAME NOT NULL,
+  object_name NAME NOT NULL,
+  permission NAME NOT NULL,
+  grantee NAME NOT NULL,
+  object_type NAME,
+  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+);
+
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
@@ -77,9 +88,9 @@ select
   CAST(ext.orig_name as sys.SYSNAME) as name
   , base.oid as schema_id
   , base.nspowner as principal_id
-from pg_catalog.pg_namespace base INNER JOIN sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
-where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys', 'public')
-and ext.dbid = cast(sys.db_id() as oid);
+from pg_catalog.pg_namespace base 
+inner join sys.babelfish_namespace_ext ext on base.nspname = ext.nspname
+where ext.dbid = sys.db_id();
 GRANT SELECT ON sys.schemas TO PUBLIC;
 CREATE SEQUENCE sys.babelfish_db_seq MAXVALUE 32767 CYCLE;
 
@@ -216,6 +227,30 @@ BEGIN
 END
 $$;
 
+CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
+LANGUAGE plpgsql
+AS $$ 
+DECLARE 
+	babelfish_catalog RECORD;
+	schema_name varchar = 'sys';
+	error_msg text;
+BEGIN
+	FOR babelfish_catalog IN (
+		SELECT relname as name from pg_class t 
+		INNER JOIN pg_namespace n on n.oid = t.relnamespace
+		WHERE t.relkind = 'r' and n.nspname = schema_name
+		)
+	LOOP
+		BEGIN
+			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'ANALYZE for babelfish catalog %.% failed with error: %s', schema_name, babelfish_catalog.name, error_msg;
+		END;
+	END LOOP;
+END;
+$$;
+
 CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$
@@ -255,6 +290,8 @@ BEGIN
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
+	-- run analyze for all babelfish catalog
+	CALL sys.analyze_babelfish_catalogs();
 END
 $$;
 
@@ -298,10 +335,10 @@ CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
 CAST(
   CASE
-    WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
     WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
     WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
-    ELSE NULL 
+    ELSE NULL
   END
   AS NVARCHAR(60)) AS type_desc,
 CAST(Ext.is_disabled AS INT) AS is_disabled,
@@ -312,7 +349,10 @@ CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
 CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
-FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 

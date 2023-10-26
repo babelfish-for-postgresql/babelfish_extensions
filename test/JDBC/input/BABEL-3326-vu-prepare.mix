@@ -1,0 +1,150 @@
+-- tsql user=jdbc_user password=12345678
+-- Preparation
+USE master
+GO
+
+CREATE LOGIN babel_3326_non_owner WITH PASSWORD = '12345678'
+GO
+
+CREATE USER babel_3326_non_owner
+GO
+
+CREATE LOGIN babel_3326_u1 WITH PASSWORD = '12345678'
+GO
+
+CREATE DATABASE babel_3326_db1
+GO
+
+CREATE USER babel_3326_u1 FOR LOGIN babel_3326_u1
+GO
+
+CREATE TABLE babel_3326_Employees(
+    EmployeeID      INT IDENTITY(1,1) PRIMARY KEY,
+    EmployeeName    VARCHAR(50) NOT NULL,
+    EmployeeAddress VARCHAR(50) NOT NULL,
+    MonthSalary     NUMERIC(10,2) NOT NULL
+)
+GO
+ 
+INSERT INTO dbo.babel_3326_Employees
+(
+    EmployeeName,
+    EmployeeAddress,
+    MonthSalary
+)
+VALUES
+(   'Temp Name1',
+    'Temp Address 1',
+    10000
+    ),
+(   'Temp Name2',
+    'Temp Address 2',
+    10000
+),
+(   'Temp Name3',
+    'Temp Address 3',
+    30000
+),
+(   'Temp Name4',
+    'Temp Address 4',
+    10000
+)
+GO
+
+CREATE TRIGGER [dbo].[TR_ins_안녕하세요_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+FOR INSERT
+AS
+    SELECT 'Trigger dbo.TR_ins Invoked'
+GO
+
+CREATE TRIGGER [dbo].[TR_upd_abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+FOR UPDATE
+AS
+    SELECT 'Trigger dbo.TR_upd Invoked'
+GO
+
+CREATE TRIGGER [dbo].[TR_temp_babel_3326_Employees] ON [dbo].[babel_3326_Employees]
+FOR INSERT
+AS
+    SELECT 'Trigger dbo.TR_temp Invoked'
+GO
+
+GRANT SELECT,UPDATE,INSERT,DELETE ON dbo.babel_3326_Employees TO babel_3326_non_owner
+GO
+
+-- creating another table in different schema with same table name
+CREATE SCHEMA db
+GO
+
+CREATE TABLE db.babel_3326_Employees(
+    EmployeeID      INT IDENTITY(1,1) PRIMARY KEY,
+    EmployeeName    VARCHAR(50) NOT NULL,
+    EmployeeAddress VARCHAR(50) NOT NULL,
+    MonthSalary     NUMERIC(10,2) NOT NULL
+)
+GO
+ 
+INSERT INTO db.babel_3326_Employees
+(
+    EmployeeName,
+    EmployeeAddress,
+    MonthSalary
+)
+VALUES
+(   'Temp Name1',
+    'Temp Address 1',
+    10000
+    ),
+(   'Temp Name2',
+    'Temp Address 2',
+    10000
+),
+(   'Temp Name3',
+    'Temp Address 3',
+    30000
+),
+(   'Temp Name4',
+    'Temp Address 4',
+    10000
+)
+GO
+
+CREATE TRIGGER [db].[TR_ins_안녕하세요_babel_3326_Employees] ON [db].[babel_3326_Employees]
+FOR INSERT
+AS
+    SELECT 'Trigger db.TR_ins Invoked'
+GO
+
+create table babel_3326_t1 (a varchar)
+GO
+
+create trigger babel_3326_t1_trigger on babel_3326_t1 instead of insert as 
+begin
+    select count(*) from inserted;
+end;
+GO
+
+create table babel_3326_t2 (a varchar)
+GO
+
+insert into babel_3326_t2 values ('1');
+GO
+
+create trigger babel_3326_t2_trigger on babel_3326_t2 instead of delete as 
+begin
+    select count(*) from deleted;
+end;
+GO
+
+create table babel_3326_t3 (a varchar)
+GO
+
+insert into babel_3326_t3 values ('2');
+GO
+
+create trigger babel_3326_t3_trigger on babel_3326_t3 instead of update as 
+begin
+    select count(*) from deleted;
+    select count(*) from inserted;
+end;
+GO
