@@ -2375,7 +2375,7 @@ ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ALTER AUTHORIZATION ON' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'ALTER AUTHORIZATION on object types other than DATABASE::' is not currently supported in Babelfish)~~
 
 
 -- alter view (BABEL-2017)

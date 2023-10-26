@@ -1,0 +1,407 @@
+-- tsql
+create login dba_login with password='12345678'
+go
+create login new_OWNER_login with password='12345678'
+go
+create login new_owner_login2 with password='12345678'
+go
+alter server role sysadmin add member dba_login
+go
+-- end preparation
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+create database change_owner_db
+go
+alter authorization on database::no_such_db_chgownerdb to new_owner_login
+go
+alter authorization on database::change_owner_db to no_such_login_chgownerdb
+go
+
+-- system databases not allowed
+alter authorization on database::master to new_owner_login
+go
+alter authorization on database::tempdb to new_owner_login
+go
+-- allowed for msdb
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+alter authorization on database::msdb to new_owner_login
+go
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+alter authorization on database::msdb to jdbc_user
+go
+
+-- before owner change:
+select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+ALTER authorization on database::change_owner_db to new_owner_login
+go
+-- after owner change:
+select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+
+-- change back to current user
+alter AUTHORIZATION on database::change_owner_db to dba_login
+go
+select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+
+-- grant ownership to new owner and verify access
+-- grant multiple times
+alter authorization on DATABASE::change_owner_db to new_owner_LOGIN
+go
+alter authorization on database::change_owner_db TO new_owner_login
+go
+alter authorization on database::change_owner_db to new_owner_login
+go
+
+-- tsql user=new_owner_login password=12345678
+select suser_name(), db_name()
+go
+use change_owner_db
+go
+select user_name()
+go
+create table t(a int)
+insert t values(123)
+go
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+alter authorization on database::change_owner_db to dba_login
+go
+
+-- tsql user=new_owner_login password=12345678
+-- previous owner is still in the DB and should still have access despite no longer being the owner
+select suser_name(), db_name()
+go
+select * from t
+go
+create table t2(a int)
+go
+
+-- but previous owner should loose access after moving out of the DB 
+use master
+go
+use change_owner_db
+go
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+-- when new owner has guest access before change, granting ownership is allowed
+use master
+go
+drop database change_owner_db
+go
+create database CHANGE_OWNER_DB
+go
+use change_OWNER_db
+go
+grant connect to guest
+go
+alter authorization on database::CHANGE_owner_db to NEW_owner_login
+go
+select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+
+-- tsql user=new_owner_login password=12345678
+select suser_name(), db_name()
+go
+use change_owner_db
+go
+select user_name()
+go
+create table t(a int)
+go
+use master
+go
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+-- when new owner is already a DB user, granting ownership is not allowed
+use master
+go
+drop database change_owner_db
+go
+create database change_owner_db
+go
+use change_owner_db
+go
+create user new_owner_login
+go
+create user another_user for login new_owner_login2
+go
+
+-- should raise error
+alter authorization on database::change_owner_db to new_owner_login
+go
+select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+
+-- should raise error
+alter authorization on database::change_owner_db to new_owner_login2
+go
+select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+use master
+go
+drop database change_owner_db
+go
+create database change_owner_db
+go
+create procedure p_change_db_owner_1
+as
+begin
+	select 'p_change_db_owner_1: before owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'	
+	alter authorization on database::change_owner_db to new_owner_login
+	select 'p_change_db_owner_1: after owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'	  
+end	
+go
+exec p_change_db_owner_1
+go
+
+-- tsql user=dba_login password=12345678
+select suser_name(), db_name()
+go
+use master
+go
+alter authorization on database::change_owner_db to dba_login
+go
+create procedure p_change_db_owner_2
+@dbname nvarchar(50),
+@owner nvarchar(50)
+as
+begin
+	declare @cmd nvarchar(100) 
+	set @cmd = 'alter authorization on database::' + @dbname + ' to ' + @owner
+	select @cmd
+	select 'p_change_db_owner_2: before owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'	
+	execute(@cmd)
+	select 'p_change_db_owner_2: after owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'	  
+end	
+go
+exec p_change_db_owner_2 change_owner_db, new_owner_login
+go
+
+-- tsql user=new_owner_login password=12345678
+select suser_name(), db_name()
+go
+use change_owner_db
+go
+select user_name(), suser_name()
+go
+
+-- can grant to yourself when you're owner already (but it's a noop)
+alter authorization on database::change_owner_db to new_owner_login
+go
+
+-- cannot grant to another owner without sysadmin role, even when you're the owner already
+alter authorization on database::change_owner_db to new_owner_login2
+go
+
+-- ... not even to a sysadmin role login
+alter authorization on database::change_owner_db to dba_login
+go
+
+use master
+go
+
+-- cannot rename the database without sysadmin role, even when you're the owner already
+-- ALTER DATABASE is not yet supported in Babelfish:
+alter database change_owner_db modify name = change_owner_db_renamed
+go
+
+-- cannot rename the database without sysadmin role, even when you're the owner already
+-- sp_rename not yet supported for 'database' type in Babelfish:
+sp_rename 'change_owner_db', 'change_owner_db_renamed', 'database'
+go
+
+-- tsql user=dba_login password=12345678
+-- roll back owner change in transaction
+use master
+go
+alter authorization on database::change_owner_db to dba_login
+go
+begin tran
+go
+select 'before owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+alter authorization on database::change_owner_db to new_owner_login
+go
+select 'after owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+rollback
+go
+select 'after rollback', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
+go
+
+use master
+go
+-- non-sysadmin owner can drop database
+drop database change_owner_db
+go
+-- should return NULL
+select db_id('change_owner_db')
+go
+
+-- tests for long names and mixed case
+create database DB63long_012345678901234567890123456789012345678901234567890123
+go
+create login    LOGIN63long_345678901234567890123456789012345678901234567890123 with password = '12345678'
+go
+alter authorization on database::DB63long_012345678901234567890123456789012345678901234567890123 to LOGIN63long_345678901234567890123456789012345678901234567890123
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+alter authorization on database::[DB63long_012345678901234567890123456789012345678901234567890123] to dba_login
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+alter authorization on database::[DB63long_012345678901234567890123456789012345678901234567890123] to [LOGIN63long_345678901234567890123456789012345678901234567890123]
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+set quoted_identifier on
+go
+alter authorization on database::"DB63long_012345678901234567890123456789012345678901234567890123" to dba_login
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+alter authorization on database::"DB63long_012345678901234567890123456789012345678901234567890123" to "LOGIN63long_345678901234567890123456789012345678901234567890123"
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+set quoted_identifier off
+go
+
+-- tsql user=LOGIN63long_345678901234567890123456789012345678901234567890123 password=12345678
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+select user_name(), db_name()
+go
+use master
+go
+drop database DB63long_012345678901234567890123456789012345678901234567890123
+go
+
+-- tsql user=dba_login password=12345678
+create database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+create login    LOGIN64long_3456789012345678901234567890123456789012345678901234 with password = '12345678'
+go
+alter authorization on database::DB64long_0123456789012345678901234567890123456789012345678901234 to LOGIN64long_3456789012345678901234567890123456789012345678901234
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+alter authorization on database::[DB64long_0123456789012345678901234567890123456789012345678901234] to dba_login
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+alter authorization on database::[DB64long_0123456789012345678901234567890123456789012345678901234] to [LOGIN64long_3456789012345678901234567890123456789012345678901234]
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+set quoted_identifier on
+go
+alter authorization on database::"DB64long_0123456789012345678901234567890123456789012345678901234" to dba_login
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+alter authorization on DATABASE::"DB64long_0123456789012345678901234567890123456789012345678901234" to "LOGIN64long_3456789012345678901234567890123456789012345678901234"
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+set quoted_identifier off
+go
+
+-- this connection will fail as it is currently not possible to connect to Babelfish with a login name longer than 63 characters
+-- commented out this test since the error message in the Github JDBC tests is different from that in the locally executed JDBC tests
+-- commented out: tsql user=LOGIN64long_3456789012345678901234567890123456789012345678901234 password=12345678
+-- error msg in local JDBC tests: ~~ERROR (Code: 33557097)~~, -~~ERROR (Message: role "login64long_345678901234567890123456789012345678901234567890123" does not exist )~~
+-- error msg in Github JDBC tests: ~~ERROR (Code: 18456)~~, ~~ERROR (Message: Login failed for user "login64long_3456789012345678901234567890123456789012345678901234" )~~
+-- use DB64long_0123456789012345678901234567890123456789012345678901234
+-- go
+-- select user_name(), db_name()
+-- go
+-- use master
+-- go
+
+-- tsql
+use master
+go
+drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+
+-- other ALTER AUTHORIZATION variants, not supported
+alter authorization on database::mydb TO public
+go
+alter authorization on database::mydb to schema owner
+go
+alter AUTHORIZATION on mydb to dba_login
+go
+alter AUTHORIZATION on table::mydb to dba_login
+go
+ALTER authorization on database::my.data.base to dba_login
+go
+create procedure p_change_db_owner_3
+as
+  alter authorization on database::mydb to schema owner
+go
+declare @cmd varchar(100) = 'alter authorization on database::mydb to schema owner'
+execute(@cmd)
+go
+
+-- cleanup
+
+-- tsql
+use master
+go
+set nocount on
+go
+-- kill remaining sessions
+create table #killed(killed int)
+go
+declare @spid int, @cmd varchar(30)
+while (1=1)
+begin 
+select @spid = spid from sys.sysprocesses where spid <> @@spid and spid not in (select killed from #killed)
+if @@rowcount = 0 break
+insert #killed values(@spid)
+set @cmd = 'kill ' + convert(varchar, @spid)
+execute(@cmd)
+end
+go
+
+use master
+go
+-- database is expected to have been dropped by the owner, so expecting an error msg here:
+drop database change_owner_db
+go
+drop login dba_login
+go
+drop login new_owner_login
+go
+drop login new_owner_login2
+go
+drop login LOGIN63long_345678901234567890123456789012345678901234567890123
+go
+drop login LOGIN64long_3456789012345678901234567890123456789012345678901234
+go
+drop procedure p_change_db_owner_1
+go
+drop procedure p_change_db_owner_2
+go
+-- should raise error as procedure was not created:
+drop procedure p_change_db_owner_3
+go
+

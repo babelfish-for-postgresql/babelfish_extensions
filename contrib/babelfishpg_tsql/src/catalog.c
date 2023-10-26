@@ -114,7 +114,7 @@ static struct cachedesc my_cacheinfo[] = {
 		-1,
 		1,
 		{
-			Anum_sysdatabaese_oid,
+			Anum_sysdatabases_oid,
 			0,
 			0,
 			0
@@ -125,7 +125,7 @@ static struct cachedesc my_cacheinfo[] = {
 		-1,
 		1,
 		{
-			Anum_sysdatabaese_name,
+			Anum_sysdatabases_name,
 			0,
 			0,
 			0
@@ -302,7 +302,7 @@ get_db_name(int16 dbid)
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
 
-	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_name, &isNull);
+	name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabases_name, &isNull);
 	name = TextDatumGetCString(name_datum);
 	ReleaseSysCache(tuple);
 
@@ -326,7 +326,7 @@ get_one_user_db_name(void)
 	{
 		char	   *db_name;
 
-		Datum		name = heap_getattr(tuple, Anum_sysdatabaese_name,
+		Datum		name = heap_getattr(tuple, Anum_sysdatabases_name,
 										rel->rd_att, &is_null);
 
 		db_name = TextDatumGetCString(name);
@@ -433,7 +433,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("The database '%s' does not exist. Supply a valid database name. To see available databases, use sys.databases.", dbname)));
 		ScanKeyInit(&scanKey,
-					Anum_sysdatabaese_name,
+					Anum_sysdatabases_name,
 					BTEqualStrategyNumber, F_TEXTEQ,
 					CStringGetTextDatum(dbname_lower));
 		scan = systable_beginscan(rel, sysdatabaese_idx_name_oid, true,
@@ -463,7 +463,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 
 		MemSet(nulls, 0, sizeof(nulls));
 
-		db_name_entry = TextDatumGetCString(heap_getattr(tuple, Anum_sysdatabaese_name,
+		db_name_entry = TextDatumGetCString(heap_getattr(tuple, Anum_sysdatabases_name,
 														 RelationGetDescr(rel), &isNull));
 
 		values[0] = CStringGetTextDatum(db_name_entry);
@@ -481,7 +481,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 		else
 			values[3] = sysdb->dbid;
 
-		tmstmp = DatumGetTimestamp(heap_getattr(tuple, Anum_sysdatabaese_crdate,
+		tmstmp = DatumGetTimestamp(heap_getattr(tuple, Anum_sysdatabases_crdate,
 												RelationGetDescr(rel), &isNull));
 
 		tmstmp_str = OidOutputFunctionCall(datetime_output_func, tmstmp);
@@ -1592,7 +1592,7 @@ static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
  *****************************************/
 RelData		catalog_data[] =
 {
-	{"babelfish_sysdatabases", InvalidOid, InvalidOid, true, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
+	{"babelfish_sysdatabases", InvalidOid, InvalidOid, true, InvalidOid, Anum_sysdatabases_name, F_TEXTEQ},
 	{"babelfish_namespace_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
 	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
 	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
@@ -2237,7 +2237,7 @@ init_catalog_data(void)
 		{
 			catalog_data[i].tbl_oid = sysdatabases_oid;
 			catalog_data[i].idx_oid = sysdatabaese_idx_name_oid;
-			catalog_data[i].atttype = get_atttype(sysdatabases_oid, Anum_sysdatabaese_name);
+			catalog_data[i].atttype = get_atttype(sysdatabases_oid, Anum_sysdatabases_name);
 		}
 		else if (strcmp(catalog_data[i].tblname, "babelfish_namespace_ext") == 0)
 		{
@@ -2430,7 +2430,7 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
 												 db_rel->rd_att, &is_null);
 		const char *db_name = TextDatumGetCString(db_name_datum);
 
@@ -3183,7 +3183,7 @@ update_user_catalog_for_guest_schema(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+		Datum		db_name_datum = heap_getattr(tuple, Anum_sysdatabases_name,
 												 db_rel->rd_att, &is_null);
 		const char *db_name = TextDatumGetCString(db_name_datum);
 
@@ -3249,4 +3249,77 @@ alter_guest_schema_for_db (const char *dbname)
 
 	table_endscan(tblscan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+}
+
+/*
+ * Update the owner of a database in the catalog.
+ */
+void
+update_db_owner(const char *new_owner_name, const char *db_name)
+{
+	volatile 		Relation sysdatabases_rel;
+	TupleDesc		sysdatabases_rel_descr;
+	ScanKeyData		key;
+	HeapTuple		tuple, db_found;
+	TableScanDesc	tblscan;
+		
+	Datum		values[SYSDATABASES_NUM_COLS];
+	bool		nulls[SYSDATABASES_NUM_COLS];
+	bool		replaces[SYSDATABASES_NUM_COLS];
+
+	/* Do not allow changes to system databases. */
+	/* Note: T-SQL allows changing ownership of msdb. */
+	if ( (strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
+		 (strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0))
+	    )
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Cannot change the owner of the master, model, tempdb or distribution database.")));
+	}
+
+	/* Find the database */
+	sysdatabases_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+	sysdatabases_rel_descr = RelationGetDescr(sysdatabases_rel);	
+
+	ScanKeyInit(&key,
+				Anum_sysdatabases_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+				
+	tblscan = table_beginscan_catalog(sysdatabases_rel, 1, &key);
+	
+	db_found = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!db_found)
+	{
+		/* Database should have been verified to exist, but if not, exit politely */
+		table_close(sysdatabases_rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", db_name)));
+	}
+	
+	/* Build a tuple */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+		
+	/* Set up the new owner. */
+	values[Anum_sysdatabases_owner - 1]   = CStringGetDatum(new_owner_name);
+	replaces[Anum_sysdatabases_owner - 1] = true;	
+								  
+	tuple = heap_modify_tuple(db_found,
+							  sysdatabases_rel_descr,
+							  values,
+							  nulls,
+							  replaces);							  
+
+	/* Perform the actual catalog update. */
+	CatalogTupleUpdate(sysdatabases_rel, &tuple->t_self, tuple);
+	
+	/* Cleanup. */
+	heap_freetuple(tuple);
+	table_endscan(tblscan);	
+	table_close(sysdatabases_rel, RowExclusiveLock);	
 }
