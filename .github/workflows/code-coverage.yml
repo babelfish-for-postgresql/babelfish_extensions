@@ -84,13 +84,6 @@ jobs:
         with:
           install_dir: 'psql'
 
-      - name: Install Extensions
-        id: install-extensions
-        if: always() && steps.build-extensions.outcome == 'success'
-        uses: ./.github/composite-actions/install-extensions
-        with:
-          install_dir: 'psql'
-
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
         if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-extensions.outcome == 'success') }}
@@ -100,6 +93,13 @@ jobs:
         id: build-postgis-extension
         if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-tds_fdw-extension.outcome == 'success') }}
         uses: ./.github/composite-actions/build-postgis-extension
+
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+        with:
+          install_dir: 'psql'
 
       - name: Run JDBC Tests
         id: jdbc
@@ -224,9 +224,17 @@ jobs:
           cd ../
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
           pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
+
+      - name: Drop and re-create Babelfish database
+        id: re-install-extensions
+        if: always() && steps.configure-python-environment.outcome == 'success'
+        run: |
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single_db" -f .github/scripts/create_extension.sql
+          sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
       - name: Run Python Tests
-        if: always() && steps.configure-python-environment.outcome == 'success'
+        if: always() && steps.re-install-extensions.outcome == 'success'
         run: | 
           cd test/python
           compareWithFile=true \

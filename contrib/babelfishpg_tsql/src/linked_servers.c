@@ -864,7 +864,9 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		LINKED_SERVER_DEBUG("LINKED SERVER: Failed to establish connection to remote server due to error");
+		RESUME_INTERRUPTS();
 
 		PG_RE_THROW();
 	}

@@ -118,6 +118,7 @@ BABEL-404
 BABEL-405
 BABEL-4078
 BABEL-4098
+BABEL-4214
 babel_417
 BABEL-493
 BABEL_539
@@ -474,3 +475,4 @@ sys_certificates
 sys_database_permissions
 BABEL-4279
 BABEL-4484
+#AUTO_ANALYZE #uncomment this test when preparing for new minor version

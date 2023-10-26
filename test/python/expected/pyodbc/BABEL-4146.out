@@ -1,0 +1,148 @@
+
+starting permutation : { s1i s2i s1c s2c }
+step s1i: INSERT INTO child VALUES (1, 1);
+~~ROW COUNT: 1~~
+
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s1c: COMMIT;
+step s2c: COMMIT;
+
+starting permutation : { s1i s2i s2c s1c }
+step s1i: INSERT INTO child VALUES (1, 1);
+~~ROW COUNT: 1~~
+
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s2c: COMMIT;
+step s1c: COMMIT;
+
+starting permutation : { s2i s1i s1c s2c }
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s1i: INSERT INTO child VALUES (1, 1);
+~~ROW COUNT: 1~~
+
+step s1c: COMMIT;
+step s2c: COMMIT;
+
+starting permutation : { s2i s1i s2c s1c }
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s1i: INSERT INTO child VALUES (1, 1);
+~~ROW COUNT: 1~~
+
+step s2c: COMMIT;
+step s1c: COMMIT;
+
+starting permutation : { s1i s2i s2c s1s s1c }
+step s1i: INSERT INTO child VALUES (1, 1);
+~~ROW COUNT: 1~~
+
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s2c: COMMIT;
+step s1s: SELECT * from child;
+~~START~~
+int#!#int
+3#!#1
+1#!#1
+~~END~~
+
+step s1c: COMMIT;
+
+starting permutation : { s1u s2u s1c s2c }
+step s1u: UPDATE parent SET aux = 'bar';
+~~ROW COUNT: 1~~
+
+step s2u: UPDATE parent SET aux = 'baz'; <waiting ...>
+step s1c: COMMIT;
+step s2u: <... completed>
+~~ROW COUNT: 1~~
+
+step s2c: COMMIT;
+
+starting permutation : { s2u s1u s2r s1c }
+step s2u: UPDATE parent SET aux = 'baz';
+~~ROW COUNT: 1~~
+
+step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
+step s2r: ROLLBACK;
+step s1u: <... completed>
+~~ROW COUNT: 1~~
+
+step s1c: COMMIT;
+
+starting permutation : { s2u s1u s1c s2c }
+step s2u: UPDATE parent SET aux = 'baz';
+~~ROW COUNT: 1~~
+
+step s1u: UPDATE parent SET aux = 'bar'; <waiting ...>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]canceling statement due to lock timeout (33557097) (SQLExecDirectW))~~
+
+step s1u: <... completed>
+~~ERROR (Code: 3902)~~
+~~ERROR (Message: [25000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]COMMIT can only be used in transaction blocks (3902) (SQLExecDirectW))~~
+
+step s1c: COMMIT;
+step s2c: COMMIT;
+
+starting permutation : { s1d s2d s1c s2c }
+step s1d: DELETE FROM child WHERE child_key = 3;
+~~ROW COUNT: 1~~
+
+step s2d: DELETE FROM child WHERE child_key = 3; <waiting ...>
+step s1c: COMMIT;
+step s2d: <... completed>
+step s2c: COMMIT;
+
+starting permutation : { s2d s1d s1c s2c }
+step s2d: DELETE FROM child WHERE child_key = 3;
+~~ROW COUNT: 1~~
+
+step s1d: DELETE FROM child WHERE child_key = 3; <waiting ...>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]canceling statement due to lock timeout (33557097) (SQLExecDirectW))~~
+
+step s1d: <... completed>
+~~ERROR (Code: 3902)~~
+~~ERROR (Message: [25000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]COMMIT can only be used in transaction blocks (3902) (SQLExecDirectW))~~
+
+step s1c: COMMIT;
+step s2c: COMMIT;
+
+starting permutation : { s2d s1d s2r s1c }
+step s2d: DELETE FROM child WHERE child_key = 3;
+~~ROW COUNT: 1~~
+
+step s1d: DELETE FROM child WHERE child_key = 3; <waiting ...>
+step s2r: ROLLBACK;
+step s1d: <... completed>
+~~ROW COUNT: 1~~
+
+step s1c: COMMIT;
+
+starting permutation : { s1s s2i s2c s1s s1c }
+step s1s: SELECT * from child;
+~~START~~
+int#!#int
+3#!#1
+~~END~~
+
+step s2i: INSERT INTO child VALUES (2, 1);
+~~ROW COUNT: 1~~
+
+step s2c: COMMIT;
+step s1s: SELECT * from child;
+~~START~~
+int#!#int
+3#!#1
+~~END~~
+
+step s1c: COMMIT;

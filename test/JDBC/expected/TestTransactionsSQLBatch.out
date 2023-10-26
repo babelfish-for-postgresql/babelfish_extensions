@@ -108,7 +108,7 @@ int
 set transaction isolation level repeatable read;
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: REPEATABLE READ isolation level is not supported)~~
+~~ERROR (Message: Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_repeatable_read’ config option to get PG repeatable read isolation level.)~~
 
 #show transaction_isolation;
 #show default_transaction_isolation;
@@ -374,7 +374,7 @@ int
 set transaction isolation level serializable;
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SERIALIZABLE isolation level is not supported)~~
+~~ERROR (Message: Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ config option to get PG serializable isolation level.)~~
 
 #show transaction_isolation;
 #show default_transaction_isolation;
