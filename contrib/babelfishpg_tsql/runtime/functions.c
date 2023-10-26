@@ -151,12 +151,15 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
+PG_FUNCTION_INFO_V1(datepart_internal);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
+int     custom_date_part(const char* field, time_t timestamp);
+int     custom_right(const char* source, int length);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 static int64 get_identity_next_value(void);
@@ -237,6 +240,198 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(new_text);
 }
+
+int
+custom_date_part(const char* field, Timestamp timestamp)
+{	fsec_t   fsec1;
+	struct   pg_tm tt1, *tm = &tt1;
+	int     tz1, doy = 0, res = 0, K, J, year, month, day;
+	int     daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+	{
+	ereport(ERROR,
+		(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+		errmsg("timestamp out of range")));
+	}
+	if (strcmp(field, "year") == 0)
+		return tm->tm_year;
+	else if (strcmp(field, "quarter") == 0)
+		return (tm->tm_mon / 3) + 1;
+	else if (strcmp(field, "month") == 0)
+		return tm->tm_mon;
+	else if (strcmp(field, "day") == 0)
+		return tm->tm_mday;
+	else if (strcmp(field, "hour") == 0)
+		return tm->tm_hour;
+	else if (strcmp(field, "minute") == 0)
+		return tm->tm_min;
+	else if (strcmp(field, "second") == 0)
+		return tm->tm_sec;
+	else if (strcmp(field, "doy") == 0)
+	{
+		// checking for leap year
+		doy = tm->tm_mday;
+		if (((tm->tm_year % 4 == 0 && tm->tm_year % 100 != 0) || tm->tm_year % 400 == 0) && tm->tm_mon > 2)
+		{
+			doy++;
+		}
+		for (int i = 1; i < tm->tm_mon; i++)
+		{
+			doy += daysInMonth[i];
+		}
+		return doy;
+	}
+	else if (strcmp(field, "dow") == 0)
+	{
+		year = tm->tm_year;
+		month = tm->tm_mon;
+		if (tm->tm_mon < 3)
+		{
+			month += 12;
+			year -= 1;
+		}
+		//dow calculated using Zeller's Congruence
+		day = tm->tm_mday;
+		K = year % 100;
+		J = month / 100;
+		res = day + ((13*(month+1))/5) + K + (K/4) + (J/4) - 2*J;
+		if(res < 0)
+		{
+			res+= 7;
+		}
+		return (res % 7);
+	}
+	else if (strcmp(field, "week") == 0)
+	{
+		doy = tm->tm_mday;
+		if (((tm->tm_year % 4 == 0 && tm->tm_year % 100 != 0) || tm->tm_year % 400 == 0) && tm->tm_mon > 2)
+		{
+			doy += 1;
+		}
+		for (int i = 1; i < tm->tm_mon; i++)
+		{
+			doy += daysInMonth[i];
+		}
+		return (doy + 6) / 7;
+	}
+	else
+	{
+		ereport(ERROR,
+        	(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+         	errmsg("is not a recognized datepart option")));
+		return -1;
+	}
+}
+int
+custom_right(const char* source, int length) {
+	int source_length = strlen(source);
+	if (length >= source_length)
+	{
+		return atoi(source);
+	}
+	return atoi(source + source_length - length);
+}
+
+Datum
+datepart_internal(PG_FUNCTION_ARGS)
+{
+	char    *field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp  timestamp = 0;
+	Oid     argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int     df_tz = PG_GETARG_INT32(2);
+	const char *data_str;
+	int     tsql_datefirst = (int)pltsql_datefirst;
+	int     result, first_day, temp, first_week_end, day;
+
+	PG_TRY();
+	{
+		if(argtypeoid == TIMESTAMPOID)   //arg is of type timestamp
+		{
+			timestamp = PG_GETARG_TIMESTAMP(1);
+		}
+	
+		if(strcasecmp(field , "tsql_week") == 0)
+		{
+			temp = custom_date_part("year", timestamp);
+			first_day = DirectFunctionCall3(make_date,temp ,1 ,1);
+			first_week_end = 8 - DirectFunctionCall3(datepart_internal,PointerGetDatum(cstring_to_text("dow")) ,first_day ,0);
+			day = custom_date_part("doy", timestamp);
+			if(day <= first_week_end)
+			{
+				result = -1;
+			}
+			else
+			{
+				result = 2 + (day - first_week_end - 1) / 7;
+			}
+		}
+		else if(strcasecmp(field , "millisecond") == 0)
+		{
+			int datePartValue = custom_date_part(field, timestamp);
+			char *buffer = (char *) palloc(20);
+			sprintf(buffer, "%d", datePartValue);
+			result = custom_right(buffer, 3);
+			pfree(buffer);
+		}
+		else if(strcasecmp(field , "microsecond") == 0)
+		{
+			int datePartValue = custom_date_part(field, timestamp);
+			char *buffer = (char *) palloc(20);
+			sprintf(buffer, "%d", datePartValue);
+			result = custom_right(buffer, 6);
+			pfree(buffer);
+		}
+		else if(strcasecmp(field , "nanosecond") == 0)
+		{
+			int datePartValue = custom_date_part(field, timestamp);
+			char *buffer = (char *) palloc(20);
+			sprintf(buffer, "%d", datePartValue);
+			result = custom_right(buffer, 6) * 1000;
+			pfree(buffer);
+		}
+		else if(strcasecmp(field , "nanosecond") == 0)
+		{
+			result = df_tz;
+		}
+		else
+		{
+			result = custom_date_part(field, timestamp);
+		}
+	}
+	PG_CATCH();
+	{
+		if(strcasecmp(field , "year") == 0)
+		result = 1900;
+		else if(strcasecmp(field , "quarter") == 0)
+		result = 1;
+		else if(strcasecmp(field , "month") == 0)
+		result = 1;
+		else if(strcasecmp(field , "day") == 0)
+		result = 1;
+		else if(strcasecmp(field , "doy") == 0)
+		result = 1;
+		else if(strcasecmp(field , "y") == 0)
+		result = 1;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		result = 1;
+		else if(strcasecmp(field , "week") == 0)
+		result = 1;
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+		result = ((1 - tsql_datefirst+ 7) % 7 + 1);
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("not a recognized datepart option")));
+			result = -1;
+		}
+	}
+	PG_END_TRY();
+	PG_RETURN_INT32(result);
+}
+
 
 Datum
 trancount(PG_FUNCTION_ARGS)
