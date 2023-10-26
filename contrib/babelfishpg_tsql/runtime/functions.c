@@ -245,8 +245,9 @@ int
 custom_date_part(const char* field, Timestamp timestamp)
 {	
 	fsec_t		fsec1;
+	int64 		microseconds;
 	struct		pg_tm tt1, *tm = &tt1;
-	int			tz1, doy = 0, res = 0, K, J, year, month, day;
+	int			tz1, doy = 0, res = 0, K, J, year, month, day, milliseconds;
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
@@ -264,6 +265,12 @@ custom_date_part(const char* field, Timestamp timestamp)
 		return tm->tm_mday;
 	else if (strcmp(field, "hour") == 0)
 		return tm->tm_hour;
+	else if (strcmp(field, "millisecond") == 0)
+	{
+		microseconds = timestamp;
+		milliseconds = (microseconds / 1000) % 1000;
+		return milliseconds;
+	}
 	else if (strcmp(field, "minute") == 0)
 		return tm->tm_min;
 	else if (strcmp(field, "second") == 0)
@@ -319,7 +326,7 @@ custom_date_part(const char* field, Timestamp timestamp)
 	{
 		ereport(ERROR,
         	(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-         	errmsg("%s is not a recognized datepart option",field)));
+         	errmsg("'%s' is not a recognized datepart option",field)));
 		return -1;
 	}
 }
@@ -429,7 +436,7 @@ datepart_internal(PG_FUNCTION_ARGS)
 		{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("%s is not a recognized datepart option", field)));
+			errmsg("'%s' is not a recognized datepart option", field)));
 			result = -1;
 		}
 	}
