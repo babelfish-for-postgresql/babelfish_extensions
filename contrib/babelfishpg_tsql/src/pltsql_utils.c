@@ -46,6 +46,7 @@ extern bool restore_tsql_tabletype;
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
+static Oid sysadmin_oid = InvalidOid;
 
 /*
  * Following the rule for locktag fields of advisory locks:
@@ -1716,6 +1717,14 @@ Oid get_sys_varcharoid(void)
 				 errmsg("Oid corresponding to sys.varchar datatype could not be found.")));
 	}
 	return sys_varcharoid;
+}
+
+Oid get_sysadmin_oid(void)
+{
+	if (!OidIsValid(sysadmin_oid))
+		sysadmin_oid = get_role_oid("sysadmin", true);
+	
+	return sysadmin_oid;
 }
 
 List

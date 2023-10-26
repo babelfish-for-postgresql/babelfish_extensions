@@ -192,6 +192,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
 	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
@@ -1035,6 +1036,17 @@ typedef struct PLtsql_stmt_grantdb
 	bool		is_grant;
 	List	   *grantees;		/* list of users */
 } PLtsql_stmt_grantdb;
+
+/*
+ *	ALTER AUTHORIZATION ON DATABASE::<dbname> TO <login>
+ */
+typedef struct PLtsql_stmt_change_dbowner
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *db_name;
+	char	   *new_owner_name;  /* Login name for new owner */
+} PLtsql_stmt_change_dbowner;
 
 /*
  *	Grant on schema stmt
@@ -2080,6 +2092,7 @@ extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
+extern Oid get_sysadmin_oid(void);
 
 typedef struct
 {

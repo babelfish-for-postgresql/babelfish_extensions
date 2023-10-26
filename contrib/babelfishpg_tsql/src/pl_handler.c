@@ -4321,6 +4321,8 @@ terminate_batch(bool send_error, bool compile_error)
 	bool		error_mapping_failed = false;
 	int			rc;
 
+	HOLD_INTERRUPTS();
+
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
 
 	/*
@@ -4392,9 +4394,12 @@ terminate_batch(bool send_error, bool compile_error)
 			AbortCurTransaction = false;
 
 			if (!send_error)
+			{
+				RESUME_INTERRUPTS();
 				ereport(ERROR,
 						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 						 errmsg("Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.")));
+			}
 		}
 		else if (send_error && !IsTransactionBlockActive())
 		{
@@ -4409,6 +4414,8 @@ terminate_batch(bool send_error, bool compile_error)
 			MemoryContextSwitchTo(oldcontext);
 		}
 	}
+
+	RESUME_INTERRUPTS();
 	if (send_error)
 	{
 		PG_RE_THROW();
@@ -5900,7 +5907,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			logicalschema = get_logical_schema_name(schema_name, true);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5971,7 +5979,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			logicalschema = get_logical_schema_name(schema_name, true);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{

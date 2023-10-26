@@ -219,6 +219,7 @@ static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_v
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
+static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -375,6 +376,9 @@ InstallExtendedHooks(void)
 
 	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
 	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
+
+	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
+	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
 }
 
 void
@@ -435,6 +439,7 @@ UninstallExtendedHooks(void)
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
 	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
+	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 }
 
 /*****************************************

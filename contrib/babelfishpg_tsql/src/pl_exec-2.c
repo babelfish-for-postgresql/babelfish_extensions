@@ -3160,7 +3160,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	Oid	current_user_id = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
-	char	message[200];
+	StringInfoData msg;
 	bool	is_float_value;
 	bool    is_cross_db = false;
 
@@ -3323,6 +3323,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	}
 	PG_END_TRY();
 
+	if (!dbcc_stmt.no_infomsgs)
+		initStringInfo(&msg);
+
 	PG_TRY();
 	{
 		/*
@@ -3350,8 +3353,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			if (dbcc_stmt.new_reseed_value)
 			{
-				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL'.\n");
-
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL'.\n");
 				DirectFunctionCall3(setval3_oid,
 					ObjectIdGetDatum(seqid),
 					Int64GetDatum(reseed_value),
@@ -3359,7 +3362,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			}
 			else
 			{
-				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
 			}
 		}
 
@@ -3372,7 +3376,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				* DBCC command option.
 				*/
 				if (!dbcc_stmt.no_infomsgs)
-					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
 
 				DirectFunctionCall2(setval_oid,
 					ObjectIdGetDatum(seqid),
@@ -3397,9 +3401,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 					max_identity_value = pg_strtoint64(max_identity_value_str);
 
 				if (!dbcc_stmt.no_infomsgs)
-					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
-														cur_identity_value, 
+				{
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld', current column value '%s'.\n",
+														cur_identity_value,
 														max_identity_value_str ? max_identity_value_str : "NULL");
+				}
 
 				/*
 				* RESEED option only resets the identity column value if the 
@@ -3439,6 +3445,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			UnlockRelationOid(table_oid, ShareLock);
 		}
+		if(msg.data)
+		{
+			pfree(msg.data);
+		}
 
 		PG_RE_THROW();
 	}
@@ -3462,10 +3472,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	if (!dbcc_stmt.no_infomsgs)
 	{
-		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
+		appendStringInfo(&msg, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
 		/* send message to user */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg.data, 0);
+		pfree(msg.data);
 	}
 
 }
@@ -3739,5 +3750,70 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			}
 		}
 	}
+	return PLTSQL_RC_OK;
+}
+
+/*
+ * ALTER AUTHORIZATION ON DATABASE::dbname TO loginname
+ */
+static int
+exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
+{
+	char *new_owner_is_user;
+	
+	/* Verify target database exists. */
+	if (!DbidIsValid(get_db_id(stmt->db_name)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_UNDEFINED_DATABASE),	
+						errmsg("Cannot find the database '%s', because it does not exist or you do not have permission.", stmt->db_name)));
+	}
+
+	/* Verify new owner exists as a login. */
+	if (get_role_oid(stmt->new_owner_name, true) == InvalidOid)
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
+	}
+	
+	/* T-SQL allows granting ownership to yourself when you are owner already, even without having sysadmin role. */
+	if (get_role_oid(stmt->new_owner_name, true) == GetSessionUserId())  // Granting ownership to myself?
+	{
+		/* Is the current login already DB owner? */
+		if (get_role_oid(get_owner_of_db(stmt->db_name), true) == GetSessionUserId())
+		{
+			/* Current login is DB owner, so perform the update */
+			update_db_owner(stmt->new_owner_name, stmt->db_name);	
+			return PLTSQL_RC_OK;	
+		}			
+	}		
+
+	/* 
+	 * The executing login must have sysadmin role: even when the current session is the owner, but has no sysadmin role, 
+	 * T-SQL does not allow the owner to grant ownership to another login -- not even to 'sa'.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
+	}			
+	
+	/* The new owner cannot be a user in the database already (but 'guest' user is fine). */
+	new_owner_is_user = get_authid_user_ext_physical_name(stmt->db_name, stmt->new_owner_name);
+	if (!new_owner_is_user) 
+	{
+		// OK to proceed
+	}
+	else if (new_owner_is_user && pg_strcasecmp(new_owner_is_user, "guest") == 0)
+	{
+		// OK to proceed		
+	}
+	else
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
+	}
+					
+	/* All validations done, perform the actual update */
+	update_db_owner(stmt->new_owner_name, stmt->db_name);	
 	return PLTSQL_RC_OK;
 }
