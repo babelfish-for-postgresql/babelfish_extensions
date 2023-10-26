@@ -344,7 +344,7 @@ int
 ~~END~~
 
 
-SELECT TYPE_NAME(TYPE_ID('int'));
+SELECT TYPE_NAME(TYPE_ID('dbo.int'));
 GO
 ~~START~~
 nvarchar
@@ -352,19 +352,11 @@ int
 ~~END~~
 
 
-SELECT TYPE_NAME(TYPE_ID('myint'));
+SELECT TYPE_NAME(TYPE_ID('int'));
 GO
 ~~START~~
 nvarchar
-myint
-~~END~~
-
-
-SELECT TYPE_NAME(TYPE_ID('dbo.myint'));
-GO
-~~START~~
-nvarchar
-myint
+int
 ~~END~~
 
 

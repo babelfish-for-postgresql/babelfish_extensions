@@ -137,13 +137,10 @@ GO
 SELECT TYPE_ID('master.dbo.typeid_typename_vu_prepare_t1');
 GO
 
+SELECT TYPE_NAME(TYPE_ID('dbo.int'));
+GO
+
 SELECT TYPE_NAME(TYPE_ID('int'));
-GO
-
-SELECT TYPE_NAME(TYPE_ID('myint'));
-GO
-
-SELECT TYPE_NAME(TYPE_ID('dbo.myint'));
 GO
 
 SELECT TYPE_NAME(TYPE_ID('typeid_typename_vu_prepare_s1.myint'));
