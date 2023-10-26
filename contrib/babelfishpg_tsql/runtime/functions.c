@@ -339,17 +339,21 @@ datepart_internal(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp = 0;
-	Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
 	int			tsql_datefirst = (int)pltsql_datefirst;
 	int			result, first_day, temp, first_week_end, day;
 
 	PG_TRY();
 	{
-		if(argtypeoid == TIMESTAMPOID)   //arg is of type timestamp
-		{
+		// if(argtypeoid == TIMESTAMPOID)   //arg is of type timestamp
+		// {
 			timestamp = PG_GETARG_TIMESTAMP(1);
-		}
+		// }
+		// else if(argtypeoid == 17453)    //arg is of type datetime
+		// {
+		// 	datetime_int = DirectFunctionCall(datetime_to_int8, PG_GETARG_DATETIMEOFFSET(1));
+		// }
 	
 		if(strcasecmp(field , "tsql_week") == 0)
 		{
@@ -382,7 +386,7 @@ datepart_internal(PG_FUNCTION_ARGS)
 			result = custom_right(buffer, 6);
 			pfree(buffer);
 		}
-		else if(strcasecmp(field , "nanosecond") == 0 && df_tz!=0)
+		else if(strcasecmp(field , "nanosecond") == 0 && df_tz==0)
 		{
 			int datePartValue = custom_date_part(field, timestamp);
 			char *buffer = (char *) palloc(20);
@@ -425,7 +429,7 @@ datepart_internal(PG_FUNCTION_ARGS)
 		{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("not a recognized datepart option")));
+			errmsg("%s is not a recognized datepart option", field)));
 			result = -1;
 		}
 	}
