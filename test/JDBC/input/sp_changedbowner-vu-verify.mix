@@ -3,19 +3,19 @@
 -- tsql
 use master
 go
-alter login new_OWNER_login with password='12345678'
+alter login new_OWNER_login_sp with password='12345678'
 go
-alter login new_OWNER_login2 with password='12345678'
+alter login new_OWNER_login_sp2 with password='12345678'
 go
-alter login [new_OWNER_login3] with password='12345678'
+alter login [new_OWNER_login_sp3] with password='12345678'
 go
-alter login [new_OWNER_login 4] with password='12345678'
+alter login [new_OWNER_login_sp 4] with password='12345678'
 go
 set quoted_identifier on
 go
-alter login "new_OWNER_login5" with password='12345678'
+alter login "new_OWNER_login_sp5" with password='12345678'
 go
-alter login "new_OWNER_login 6" with password='12345678'
+alter login "new_OWNER_login_sp 6" with password='12345678'
 go
 set quoted_identifier off
 go
@@ -23,11 +23,11 @@ go
 -- system database ownership cannot be changed
 use master
 go
-execute sp_changedbowner 'new_owner_login'
+execute sp_changedbowner 'new_owner_login_sp'
 go
 use tempdb
 go
-execute sp_changedbowner 'new_owner_login'
+execute sp_changedbowner 'new_owner_login_sp'
 go
 
 -- except for msdb
@@ -35,7 +35,7 @@ use msdb
 go
 declare @orig_owner sysname 
 select @orig_owner = suser_sname(sid) from sysdatabases where name = 'msdb'
-execute sp_changedbowner new_owner_login
+execute sp_changedbowner new_owner_login_sp
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 execute sp_changedbowner @orig_owner
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
@@ -48,24 +48,24 @@ use change_owner_DB_SP
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner 'no_such_login'
+execute sp_changedbowner 'no_such_login_sp'
 go
 
 -- new owner cannot be a user in the DB already
-create user new_owner_login
+create user new_owner_login_sp
 go
-execute sp_changedbowner new_owner_login
+execute sp_changedbowner new_owner_login_sp
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-drop user new_owner_login
+drop user new_owner_login_sp
 go
-execute sp_changedbowner new_owner_LOGIN
+execute sp_changedbowner new_owner_LOGIN_SP
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 
--- tsql user=new_owner_LOGIN password=12345678
+-- tsql user=new_owner_LOGIN_SP password=12345678
 use CHANGE_OWNER_DB_SP
 go
 select user_name(), db_name()
@@ -77,55 +77,55 @@ go
 -- second argument is ignored
 use change_owner_db_sp
 go
-execute sp_changedbowner NEW_owner_login2, null
+execute sp_changedbowner NEW_owner_login_sp2, null
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner [new_owner_LOGIN3], 12345
+execute sp_changedbowner [new_owner_LOGIN_SP3], 12345
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner [NEW_owner_login3], 'abcde'
+execute sp_changedbowner [NEW_owner_login_sp3], 'abcde'
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner [new_owner_LOGIN 4], 'abcdefgh'
+execute sp_changedbowner [new_owner_LOGIN_SP 4], 'abcdefgh'
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner "NEW_owner_login5"
+execute sp_changedbowner "NEW_owner_login_sp5"
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner @loginame = "new_owner_LOGIN 6", @map = 'some-string'
+execute sp_changedbowner @loginame = "new_owner_LOGIN_SP 6", @map = 'some-string'
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 
 use change_owner_db_sp
 go
-execute sp_changedbowner "new_owner_login"
+execute sp_changedbowner "new_owner_login_sp"
 go
 use master
 go
 
 -- change owner to yourself
--- tsql user=new_owner_LOGIN password=12345678
+-- tsql user=new_owner_LOGIN_SP password=12345678
 use change_owner_db_sp
 go
 select user_name(), db_name()
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner "new_owner_login"
+execute sp_changedbowner "new_owner_login_sp"
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner "NEW_OWNER_LOGIN"
+execute sp_changedbowner "NEW_OWNER_LOGIN_SP"
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner [NEW_owner_login]
+execute sp_changedbowner [NEW_owner_login_sp]
 go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
@@ -140,7 +140,7 @@ begin tran
 go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
-execute sp_changedbowner NEW_owner_login2
+execute sp_changedbowner NEW_owner_login_sp2
 go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go

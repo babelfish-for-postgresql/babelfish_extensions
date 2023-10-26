@@ -1,19 +1,19 @@
 -- cleanup
 use master
 go
-drop login new_owner_login 
+drop login new_OWNER_login_sp 
 go
-drop login new_owner_login2 
+drop login new_OWNER_login_sp2 
 go
-drop login [new_owner_login3] 
+drop login [new_OWNER_login_sp3] 
 go
-drop login [new_owner_login 4] 
+drop login [new_OWNER_login_sp 4] 
 go
 set quoted_identifier on
 go
-drop login "new_owner_login5" 
+drop login "new_OWNER_login_sp5" 
 go
-drop login "new_owner_login 6" 
+drop login "new_OWNER_login_sp 6" 
 go
 set quoted_identifier off
 go
