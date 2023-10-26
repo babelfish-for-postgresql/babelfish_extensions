@@ -121,6 +121,7 @@ protected:
 
 		// for unsupported DDLs. we'll manage whitelist
 		antlrcpp::Any visitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override;
+		antlrcpp::Any visitAlter_authorization(TSqlParser::Alter_authorizationContext *ctx) override;
 
 		// DML
 		antlrcpp::Any visitSelect_statement(TSqlParser::Select_statementContext *ctx) override;
@@ -150,7 +151,7 @@ protected:
 		antlrcpp::Any visitReconfigure_statement(TSqlParser::Reconfigure_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RECONFIGURE, "RECONFIGURE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitShutdown_statement(TSqlParser::Shutdown_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SHUTDOWN, "SHUTDOWN", getLineAndPos(ctx)); return visitChildren(ctx); }
 
-		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override;
 		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override;
@@ -1024,6 +1025,25 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_authorization(TSqlParser::Alter_authorizationContext *ctx)
+{	
+	if (!ctx->object_type()) 
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION on object types other than DATABASE::", getLineAndPos(ctx));		
+	else {
+		std::string object_type = ::getFullText(ctx->object_type());
+		if (pg_strcasecmp("DATABASE", object_type.c_str()) != 0) 
+			handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION on object types other than DATABASE::", getLineAndPos(ctx));	
+	}
+	
+	if (ctx->authorization_grantee()->SCHEMA()) 
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION TO SCHEMA OWNER", getLineAndPos(ctx));
+		
+	if (ctx->entity_name()->DOT().size() > 0) 
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION with multi-part database name", getLineAndPos(ctx));	
+				
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::Ddl_statementContext *ctx)
 {
 	if (ctx->create_user())
@@ -1043,7 +1063,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 * manage the whitelist here.
 	 * Please keep the order in grammar file.
 	 */
-	if (ctx->alter_database()
+	if (ctx->alter_authorization()
+	 || ctx->alter_database()
 	 || ctx->alter_db_role()
 	 || ctx->alter_fulltext_index()
 	 || ctx->alter_index()
@@ -1252,6 +1273,29 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCursor_statement(TSqlParse
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx)
 {
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx)
+{
+
+	if (ctx->dbcc_command())
+	{
+		if (ctx->dbcc_command()->ID())
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR,
+				"Incorrect DBCC statement. Check the documentation for the "
+				"correct DBCC syntax and options.",
+					getLineAndPos(ctx->dbcc_command()));
+		}
+		else
+		{
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
+				format_errmsg("DBCC %s is not yet supported in Babelfish",
+					::getFullText(ctx->dbcc_command()).c_str()), 
+						getLineAndPos(ctx->dbcc_command()));
+		}
+	}
 	return visitChildren(ctx);
 }
 

@@ -483,6 +483,7 @@ free_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 		case PLTSQL_STMT_INSERT_BULK:
 		case PLTSQL_STMT_GRANTDB:
+		case PLTSQL_STMT_CHANGE_DBOWNER:
 		case PLTSQL_STMT_GRANTSCHEMA:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			{
@@ -513,6 +514,11 @@ free_stmt2(PLtsql_stmt *stmt)
 			{
 				break;
 			}
+		case PLTSQL_STMT_DBCC:
+		{
+			/* Nothing to free */
+			break;
+		}
 		default:
 			elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
 			break;
@@ -536,11 +542,13 @@ void		dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
 void		dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
 void		dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
 void		dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb);
+void		dump_stmt_change_dbowner(PLtsql_stmt_change_dbowner *stmt_change_dbowner);
 void		dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
 void		dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void		dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
 void		dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
 void		get_grantees_names(List *grantees, StringInfo grantees_names);
+void		dump_stmt_dbcc(PLtsql_stmt_dbcc *stmt_dbcc);
 
 void
 dump_stmt_print(PLtsql_stmt_print *stmt_print)
@@ -674,9 +682,31 @@ dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb)
 }
 
 void
+dump_stmt_change_dbowner(PLtsql_stmt_change_dbowner *stmt_change_dbowner)
+{
+	printf("ALTER AUTHORIZATION ON DATABASE::%s TO %s\n", stmt_change_dbowner->db_name, stmt_change_dbowner->new_owner_name);		
+}
+
+void
 dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
 {
 	printf("INSERT BULK %s\n", stmt_insert_bulk->table_name);
+}
+
+void
+dump_stmt_dbcc(PLtsql_stmt_dbcc *stmt_dbcc)
+{
+	printf("DBCC ");
+	switch (stmt_dbcc->dbcc_stmt_type)
+	{
+		case PLTSQL_DBCC_CHECKIDENT:
+			printf("CHECKIDENT");
+			break;
+		default:
+			elog(ERROR, "unrecognized dbcc statement type: %d", stmt_dbcc->dbcc_stmt_type);
+			break;
+	}
+	printf(" STATEMENT\n");
 }
 
 void
@@ -806,9 +836,19 @@ dump_stmt2(PLtsql_stmt *stmt)
 				dump_stmt_grantdb((PLtsql_stmt_grantdb *) stmt);
 				break;
 			}
+		case PLTSQL_STMT_CHANGE_DBOWNER:
+			{
+				dump_stmt_change_dbowner((PLtsql_stmt_change_dbowner *) stmt);
+				break;
+			}				
 		case PLTSQL_STMT_INSERT_BULK:
 			{
 				dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_DBCC:
+			{
+				dump_stmt_dbcc((PLtsql_stmt_dbcc *) stmt);
 				break;
 			}
 		default:

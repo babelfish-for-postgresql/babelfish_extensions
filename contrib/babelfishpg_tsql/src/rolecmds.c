@@ -507,7 +507,7 @@ grant_guests_to_login(const char *login)
 	while (HeapTupleIsValid(tuple))
 	{
 		Datum		db_name_datum = heap_getattr(tuple,
-												 Anum_sysdatabaese_name,
+												 Anum_sysdatabases_name,
 												 db_rel->rd_att,
 												 &is_null);
 
@@ -1231,7 +1231,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		RoleSpec   *rolspec;
 
 		db_name_datum = heap_getattr(tuple,
-									 Anum_sysdatabaese_name,
+									 Anum_sysdatabases_name,
 									 db_rel->rd_att,
 									 &is_null);
 
@@ -2135,8 +2135,6 @@ babelfish_add_domain_mapping_entry_internal(PG_FUNCTION_ARGS)
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * BBF_DOMAIN_MAPPING_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * BBF_DOMAIN_MAPPING_NUM_COLS);
-
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
 	new_record[0] = PG_GETARG_DATUM(0);
 	new_record[1] = PG_GETARG_DATUM(1);

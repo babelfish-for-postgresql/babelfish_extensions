@@ -44,7 +44,7 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: REPEATABLE READ isolation level is not supported)~~
+~~ERROR (Message: Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_repeatable_read’ config option to get PG repeatable read isolation level.)~~
 
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
@@ -65,7 +65,7 @@ SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SERIALIZABLE isolation level is not supported)~~
+~~ERROR (Message: Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ config option to get PG serializable isolation level.)~~
 
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
@@ -84,6 +84,95 @@ smallint
 -- Isolation level internally mapped to PG repeatable read so
 -- current_setting will show "repeatable read" but
 -- dm_exec_sessions will show code for snapshot isolation
+SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+~~START~~
+varchar
+repeatable read
+~~END~~
+
+~~START~~
+smallint
+5
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.isolation_level_repeatable_read','pg_isolation',false);
+SELECT set_config('babelfishpg_tsql.isolation_level_serializable','pg_isolation',false);
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+~~START~~
+text
+pg_isolation
+~~END~~
+
+~~START~~
+text
+pg_isolation
+~~END~~
+
+~~START~~
+varchar
+read uncommitted
+~~END~~
+
+~~START~~
+smallint
+1
+~~END~~
+
+
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+~~START~~
+varchar
+read committed
+~~END~~
+
+~~START~~
+smallint
+2
+~~END~~
+
+
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+GO
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+~~START~~
+varchar
+repeatable read
+~~END~~
+
+~~START~~
+smallint
+5
+~~END~~
+
+
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+GO
+SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
+SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;
+GO
+~~START~~
+varchar
+serializable
+~~END~~
+
+~~START~~
+smallint
+4
+~~END~~
+
+
 SET TRANSACTION ISOLATION LEVEL SNAPSHOT;
 SELECT CAST(current_setting('transaction_isolation') AS VARCHAR);
 SELECT transaction_isolation_level from sys.dm_exec_sessions WHERE session_id = @@SPID;

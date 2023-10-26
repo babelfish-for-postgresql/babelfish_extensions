@@ -3094,18 +3094,52 @@ shutdown_statement
     ;
 
 dbcc_statement
-    : DBCC name=dbcc_command ( LR_BRACKET expression_list RR_BRACKET )? (WITH dbcc_options)? SEMI?
+    : DBCC CHECKIDENT ( LR_BRACKET table_name_string ( (COMMA NORESEED) | (COMMA RESEED (COMMA MINUS? new_value=(DECIMAL | FLOAT))?) )? RR_BRACKET ) (WITH dbcc_options)? SEMI?
+    | DBCC name=dbcc_command ( LR_BRACKET expression_list RR_BRACKET )? (WITH dbcc_options)? SEMI?
     //These are dbcc commands with strange syntax that doesn't fit the regular dbcc syntax
     | DBCC SHRINKLOG ( LR_BRACKET SIZE  EQUAL   (constant_expression| id | DEFAULT) (KB | MB | GB | TB)? RR_BRACKET )? (WITH dbcc_options)? SEMI?
-    ; 
+    ;
 
 dbcc_command
-    : ID | keyword
+    : ID
+    | CHECKDB
+    | CHECKFILEGROUP
+    | CHECKTABLE
+    | CLEANTABLE
+    | CLONEDATABASE
+    | DBREINDEX
+    | DROPCLEANBUFFERS
+    | FREEPROCCACHE
+    | FREESESSIONCACHE
+    | FREESYSTEMCACHE
+    | HELP
+    | INDEXDEFRAG
+    | INPUTBUFFER
+    | OPENTRAN
+    | OUTPUTBUFFER
+    | PROCCACHE
+    | SHOW_STATISTICS
+    | SHOWCONTIG
+    | SHRINKDATABASE
+    | SHRINKFILE
+    | SQLPERF
+    | TRACEOFF
+    | TRACEON
+    | TRACESTATUS
+    | UPDATEUSAGE
+    | USEROPTIONS
     ;
 
 dbcc_options
     :  ID (COMMA ID)?
     ;
+
+
+table_name_string
+    : table = id
+    | char_string
+    ;
+
 
 execute_as_clause
     : (EXECUTE|EXEC) AS (CALLER | SELF | OWNER | char_string)
@@ -4271,15 +4305,20 @@ keyword
     | CHANGETABLE
     | CHANGE_RETENTION
     | CHANGE_TRACKING
+    | CHECKDB
+    | CHECKFILEGROUP
     | CHECKSUM
     | CHECKSUM_AGG
+    | CHECKTABLE
     | CHECK_EXPIRATION
     | CHECK_POLICY
     | CLASSIFIER
     | CLASSIFIER_FUNCTION
+    | CLEANTABLE
     | CLEANUP
     | CLEANUP_POLICY
-    | CLEAR    
+    | CLEAR
+    | CLONEDATABASE 
     | CLUSTER
     | COALESCE
     | COLLECTION
@@ -4338,10 +4377,12 @@ keyword
     | DATE_FORMAT
     | DATENAME
     | DATEPART
+    | DATETRUNC
     | DATE_CORRELATION_OPTIMIZATION
     | DATE_FORMAT
     | DAY
     | DAYS
+    | DBREINDEX
     | DB_CHAINING
     | DB_FAILOVER
     | DDL    
@@ -4375,6 +4416,7 @@ keyword
     | DISTRIBUTED_AGG
     | DISTRIBUTION
     | DOCUMENT
+    | DROPCLEANBUFFERS
     | DTC_SUPPORT
     | DYNAMIC
     | EDGE
@@ -4448,6 +4490,9 @@ keyword
     | FORMAT_OPTIONS
     | FORMAT_TYPE
     | FORWARD_ONLY
+    | FREEPROCCACHE
+    | FREESESSIONCACHE
+    | FREESYSTEMCACHE
     | FULLSCAN
     | FULLTEXT
     | GB
@@ -4476,6 +4521,7 @@ keyword
     | HASHED
     | HEALTHCHECKTIMEOUT
     | HEALTH_CHECK_TIMEOUT
+    | HELP
     | HIDDEN_RENAMED
     | HIGH
     | HINT
@@ -4498,10 +4544,12 @@ keyword
     | INCLUDE_NULL_VALUES
     | INCREMENT
     | INCREMENTAL
+    | INDEXDEFRAG
     | INFINITE
     | INIT
     | INITIATOR
     | INPUT
+    | INPUTBUFFER
     | INSENSITIVE
     | INSERTED
     | INSTEAD
@@ -4667,6 +4715,7 @@ keyword
     | ONLY
     | ON_FAILURE
     | OPENJSON
+    | OPENTRAN
     | OPEN_EXISTING
     | OPERATIONS
     | OPERATION_MODE
@@ -4674,6 +4723,7 @@ keyword
     | OPTIMIZE
     | OUT
     | OUTPUT
+    | OUTPUTBUFFER
     | OVERRIDE
     | OWNER
     | OWNERSHIP
@@ -4721,6 +4771,7 @@ keyword
     | PRIVATE
     | PRIVATE_KEY
     | PRIVILEGES
+    | PROCCACHE
     | PROCEDURE_CACHE
     | PROCEDURE_NAME
     | PROCESS
@@ -4849,10 +4900,14 @@ keyword
     | SETS
     | SETTINGS
     | SHARE
+    | SHOWCONTIG
     | SHOWPLAN
     | SHOWPLAN_ALL
     | SHOWPLAN_TEXT
     | SHOWPLAN_XML
+    | SHOW_STATISTICS
+    | SHRINKDATABASE
+    | SHRINKFILE
     | SHRINKLOG
     | SID
     | SIGNATURE
@@ -4875,6 +4930,7 @@ keyword
     | SQLDUMPERFLAGS
     | SQLDUMPERPATH
     | SQLDUMPERTIMEOUT
+    | SQLPERF
     | STALE_CAPTURE_POLICY_THRESHOLD
     | STALE_QUERY_THRESHOLD_DAYS
     | STANDBY
@@ -4936,6 +4992,9 @@ keyword
     | TOTAL_COMPILE_CPU_TIME_MS
     | TOTAL_EXECUTION_CPU_TIME_MS
     | TRACE
+    | TRACEOFF
+    | TRACEON
+    | TRACESTATUS
     | TRACKING
     | TRACK_CAUSALITY
     | TRACK_COLUMNS_UPDATED 
@@ -4965,8 +5024,10 @@ keyword
     | UNMASK    
     | UNSAFE
     | UOW
+    | UPDATEUSAGE
     | URL
     | USED
+    | USEROPTIONS
     | USE_TYPE_DEFAULT        
     | USING
     | VALIDATION
@@ -5102,8 +5163,8 @@ id
     | DOUBLE_QUOTE_ID    // this is a double-quoted identifier in case of SET QUOTED_IDENTIFIER ON
     | SQUARE_BRACKET_ID
     | keyword
-    | DOLLAR_IDENTITY                                                           
-    | DOLLAR_ROWGUID														 
+    | DOLLAR_IDENTITY                        
+    | DOLLAR_ROWGUID								 
     | id colon_colon id
     ;
 
