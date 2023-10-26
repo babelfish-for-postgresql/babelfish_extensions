@@ -3,19 +3,19 @@
 -- tsql
 use master
 go
-create login new_OWNER_login with password='12345678'
+alter login new_OWNER_login with password='12345678'
 go
-create login new_OWNER_login2 with password='12345678'
+alter login new_OWNER_login2 with password='12345678'
 go
-create login [new_OWNER_login3] with password='12345678'
+alter login [new_OWNER_login3] with password='12345678'
 go
-create login [new_OWNER_login 4] with password='12345678'
+alter login [new_OWNER_login 4] with password='12345678'
 go
 set quoted_identifier on
 go
-create login "new_OWNER_login5" with password='12345678'
+alter login "new_OWNER_login5" with password='12345678'
 go
-create login "new_OWNER_login 6" with password='12345678'
+alter login "new_OWNER_login 6" with password='12345678'
 go
 set quoted_identifier off
 go
@@ -233,28 +233,4 @@ insert #killed values(@spid)
 set @cmd = 'kill ' + convert(varchar, @spid)
 execute(@cmd)
 end
-go
-
--- cleanup
-use master
-go
-drop login new_owner_login 
-go
-drop login new_owner_login2 
-go
-drop login [new_owner_login3] 
-go
-drop login [new_owner_login 4] 
-go
-set quoted_identifier on
-go
-drop login "new_owner_login5" 
-go
-drop login "new_owner_login 6" 
-go
-set quoted_identifier off
-go
-drop login LOGIN64long_3456789012345678901234567890123456789012345678901234 
-go
-drop login LOGIN63long_345678901234567890123456789012345678901234567890123 
 go
