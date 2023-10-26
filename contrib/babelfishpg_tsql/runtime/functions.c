@@ -1750,7 +1750,7 @@ type_id(PG_FUNCTION_ARGS)
     char       **splitted_object_name;
     Oid        schema_oid;
     Oid        user_id = GetUserId();
-	Oid        result = InvalidOid;
+    Oid        result = InvalidOid;
     int        i;
 
     if (PG_ARGISNULL(0))
@@ -1762,7 +1762,7 @@ type_id(PG_FUNCTION_ARGS)
     while (i > 0 && isspace((unsigned char) input[i - 1]))
         i--;
     if(i < pg_mbstrlen(input))
-		input[i] = '\0';
+        input[i] = '\0';
 
     /* length should be restricted to 4000 */
     if (i > TYPE_NAME_MAX_LENGTH)
