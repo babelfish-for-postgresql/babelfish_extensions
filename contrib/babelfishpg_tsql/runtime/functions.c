@@ -243,10 +243,11 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 
 int
 custom_date_part(const char* field, Timestamp timestamp)
-{	fsec_t   fsec1;
-	struct   pg_tm tt1, *tm = &tt1;
-	int     tz1, doy = 0, res = 0, K, J, year, month, day;
-	int     daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+{	
+	fsec_t		fsec1;
+	struct		pg_tm tt1, *tm = &tt1;
+	int			tz1, doy = 0, res = 0, K, J, year, month, day;
+	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
 	ereport(ERROR,
@@ -323,8 +324,9 @@ custom_date_part(const char* field, Timestamp timestamp)
 	}
 }
 int
-custom_right(const char* source, int length) {
-	int source_length = strlen(source);
+custom_right(const char* source, int length)
+{
+	int		source_length = strlen(source);
 	if (length >= source_length)
 	{
 		return atoi(source);
@@ -335,13 +337,12 @@ custom_right(const char* source, int length) {
 Datum
 datepart_internal(PG_FUNCTION_ARGS)
 {
-	char    *field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Timestamp  timestamp = 0;
-	Oid     argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
-	int     df_tz = PG_GETARG_INT32(2);
-	const char *data_str;
-	int     tsql_datefirst = (int)pltsql_datefirst;
-	int     result, first_day, temp, first_week_end, day;
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp = 0;
+	Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	int			tsql_datefirst = (int)pltsql_datefirst;
+	int			result, first_day, temp, first_week_end, day;
 
 	PG_TRY();
 	{
