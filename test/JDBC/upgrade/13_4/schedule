@@ -78,7 +78,7 @@ babelfish_cast_floor
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
-babel_function_string
+babel_function_string-before-15-5-or-14-10
 BABEL_GRANT_CONNECT
 babel_isnumeric
 BABEL-LOGIN
