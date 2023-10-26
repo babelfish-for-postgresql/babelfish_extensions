@@ -361,11 +361,19 @@ int
 ~~END~~
 
 
-SELECT TYPE_NAME(TYPE_ID('dbo.int'));
+SELECT TYPE_NAME(TYPE_ID('dbo.varchar'));
 GO
 ~~START~~
 nvarchar
-int
+varchar
+~~END~~
+
+
+SELECT TYPE_NAME(TYPE_ID('varchar'));
+GO
+~~START~~
+nvarchar
+varchar
 ~~END~~
 
 
