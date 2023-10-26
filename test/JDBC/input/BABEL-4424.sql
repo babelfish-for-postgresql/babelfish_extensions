@@ -28,8 +28,8 @@ go
 
 select * from
 	(
-		select avg(a) as col from t1 union all
-		select avg(b) as col from t1
+		select avg(a) as col from babel_4359_t1 union all
+		select avg(b) as col from babel_4359_t1
 	) dummy
 order by col
 
