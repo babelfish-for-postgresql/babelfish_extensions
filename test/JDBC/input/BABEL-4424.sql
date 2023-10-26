@@ -74,5 +74,31 @@ select * from
 order by col
 go
 
+create table events (event_id numeric(6,3) primary key);
+create table other_events (event_id numeric(6,5) primary key);
+create table other_events_2 (event_id numeric);
+go
+
+insert into events values (100.123), (10.12);
+insert into other_events values (1.123456);
+insert into other_events_2 values (111111111111111111), (NULL);
+go
+
+-- merge append node
+select  event_id
+ from ((select event_id from events order by event_id)
+       union all
+       (select event_id from other_events order by event_id)
+	   union all
+	   (select event_id from other_events_2 order by event_id)) ss
+order by event_id;
+go
+
 drop table babel_4359_t1
+go
+drop table events;
+go
+drop table other_events;
+go
+drop table other_events_2;
 go
