@@ -1,7 +1,7 @@
 -- tsql
 create login dba_login with password='12345678'
 go
-create login new_owner_login with password='12345678'
+create login new_OWNER_login with password='12345678'
 go
 create login new_owner_login2 with password='12345678'
 go
@@ -51,7 +51,7 @@ go
 
 -- grant ownership to new owner and verify access
 -- grant multiple times
-alter authorization on DATABASE::change_owner_db to new_owner_login
+alter authorization on DATABASE::change_owner_db to new_owner_LOGIN
 go
 alter authorization on database::change_owner_db TO new_owner_login
 go
@@ -98,13 +98,13 @@ use master
 go
 drop database change_owner_db
 go
-create database change_owner_db
+create database CHANGE_OWNER_DB
 go
-use change_owner_db
+use change_OWNER_db
 go
 grant connect to guest
 go
-alter authorization on database::change_owner_db to new_owner_login
+alter authorization on database::CHANGE_owner_db to NEW_owner_login
 go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
