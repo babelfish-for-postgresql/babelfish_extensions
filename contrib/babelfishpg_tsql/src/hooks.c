@@ -4307,6 +4307,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*new_src_sql_targetist;
 	List		*new_pivot_aliaslist;
 	List		*src_sql_groupbylist;
+	List		*src_sql_sortbylist;
 	char		*pivot_colstr;
 	char		*value_colstr;
 	ColumnRef	*value_col;
@@ -4319,6 +4320,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	new_src_sql_targetist = NULL;
 	new_pivot_aliaslist = NULL;
 	src_sql_groupbylist = NULL;
+	src_sql_sortbylist = NULL;
 
 	/* transform temporary src_sql */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
@@ -4371,17 +4373,31 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	/* complete src_sql's groupby*/
 	for (int i = 0; i < new_src_sql_targetist->length - 1; i++)
 	{
-		A_Const	   *tempAConst = makeNode(A_Const);
+		A_Const		*tempAConst = makeNode(A_Const);
+		SortBy 		*tempSortby = makeNode(SortBy);
 		tempAConst->val.ival.type = T_Integer;
 		tempAConst->val.ival.ival = i+1;
 		tempAConst->location = -1;
 
+		tempSortby->node = (Node* )copyObject(tempAConst);
+		tempSortby->sortby_dir = 0;
+		tempSortby->sortby_nulls = 0;
+		tempSortby->useOp = NIL;
+		tempSortby->location = -1;
+
 		if (src_sql_groupbylist == NULL)
+		{
 			src_sql_groupbylist = list_make1(tempAConst);
+			src_sql_sortbylist = list_make1(tempSortby);
+		}
 		else
+		{
 			src_sql_groupbylist = lappend(src_sql_groupbylist, tempAConst);
+			src_sql_sortbylist = lappend(src_sql_sortbylist, tempSortby);
+		}
 	}
 	((SelectStmt *)stmt->srcSql)->groupClause = src_sql_groupbylist;
+	((SelectStmt *)stmt->srcSql)->sortClause = src_sql_sortbylist;
 
 	/* Transform the new src_sql & get the output type of that agg function*/
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,

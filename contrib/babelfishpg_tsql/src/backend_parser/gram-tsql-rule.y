@@ -1523,65 +1523,30 @@ simple_select:
 					n->isPivot = false;
 					$$ = (Node *)n;
 				}
+			| SELECT opt_all_clause tsql_top_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+				}
+			| SELECT distinct_clause tsql_top_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+				}	
 			| SELECT opt_all_clause opt_target_list
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					FuncCall   	*pivotCall;
-					ColumnRef  		*a_star;
-					ResTarget		*a_star_restarget;
-					RangeFunction	*funCallNode;
-					SelectStmt 	*src_sql;
-					SelectStmt 	*pivot_sl;
-					SortBy 		*s;
-
-					char 		*pivot_colstr = (char *)list_nth((List *)$6, 0);
-					Node 		*aggFunc = (Node *) list_nth((List *)$6, 1);
-					
-					/* prepare SortBy node for source sql */
-					s = makeNode(SortBy);
-					s->node = makeIntConst(1, -1);
-					s->sortby_dir = 0;
-					s->sortby_nulls = 0;     
-					s->useOp = NIL;
-					s->location = -1;
-
-					/* transform to select * from funcCall as newtable(a type1, b type2 ...) */
-					a_star = makeNode(ColumnRef);
-					a_star->fields = list_make1(makeNode(A_Star));
-					a_star->location = -1;
-					a_star_restarget = makeNode(ResTarget);
-					a_star_restarget->name = NULL;
-					a_star_restarget->name_location = -1;
-					a_star_restarget->indirection = NIL;
-					a_star_restarget->val = (Node *) a_star;
-					a_star_restarget->location = -1;
-
-					/* prepare source sql for babelfish_pivot function */
-					src_sql = makeNode(SelectStmt);
-					src_sql->targetList = list_make1(a_star_restarget);
-					src_sql->fromClause = $5;
-					src_sql->sortClause = list_make1(s);
-
-					/* create a function call node for the fromClause */
-					pivotCall = makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
-					funCallNode = makeNode(RangeFunction);
-					funCallNode->lateral = false;
-					funCallNode->is_rowsfrom = false;
-					funCallNode->functions = list_make1(list_make2((Node *) pivotCall, NIL));
-					funCallNode->alias = $7;
-					
-					pivot_sl = makeNode(SelectStmt);
-					pivot_sl->targetList = $3;
-					pivot_sl->fromClause = list_make1(funCallNode);
-					pivot_sl->isPivot = true;
-					pivot_sl->srcSql = src_sql;
-					pivot_sl->catSql = list_nth((List *)$6, 2);
-					pivot_sl->pivotCol = pivot_colstr;
-					pivot_sl->aggFunc = aggFunc;
-					pivot_sl->value_col_strlist = (List *) list_nth((List *)$6, 3);
-					$$ = (Node *)pivot_sl;
-				}	
+					$$ = tsql_pivot_select_transformation($3, $4, $5, (List *)$6, $7, $8, $9, $10, $11);
+				}
+			| SELECT distinct_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					$$ = tsql_pivot_select_transformation($3, $4, $5, (List *)$6, $7, $8, $9, $10, $11);
+				}
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
@@ -2187,6 +2152,18 @@ tsql_output_simple_select:
 					n->windowClause = $10;
 					n->isPivot = false;
 					$$ = (Node *)n;
+				}
+			| SELECT opt_all_clause opt_top_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+				}
+			| SELECT distinct_clause opt_top_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
 				}
 			| tsql_values_clause							{ $$ = $1; }
 			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select

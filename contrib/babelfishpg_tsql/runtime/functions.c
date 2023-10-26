@@ -161,8 +161,8 @@ void	   *get_language(void);
 void	   *get_host_id(void);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
 static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
-static Tuplestorestate *get_crosstab_tuplestore(RawStmt *sql,
-										HTAB *crosstab_hash,
+static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
+										HTAB *bbf_pivot_hash,
 										TupleDesc tupdesc,
 										bool randomAccess);
 extern bool canCommitTransaction(void);
@@ -198,26 +198,26 @@ char	   *bbf_language = "us_english";
 #define MAX_CATNAME_LEN			NAMEDATALEN
 #define INIT_CATS				64
 
-/* stored info for a crosstab category */
-typedef struct crosstab_cat_desc
+/* stored info for a bbf_pivot category */
+typedef struct bbf_pivot_cat_desc
 {
 	char	   *catname;		/* full category name */
 	uint64		attidx;			/* zero based */
-} crosstab_cat_desc;
+} bbf_pivot_cat_desc;
 
-typedef struct crosstab_hashent
+typedef struct bbf_pivot_hashent
 {
 	char		internal_catname[MAX_CATNAME_LEN];
-	crosstab_cat_desc *catdesc;
-} crosstab_HashEnt;
+	bbf_pivot_cat_desc *catdesc;
+} bbf_pivot_HashEnt;
 
-#define crosstab_HashTableLookup(HASHTAB, CATNAME, CATDESC) \
+#define bbf_pivot_HashTableLookup(HASHTAB, CATNAME, CATDESC) \
 do { \
-	crosstab_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
+	bbf_pivot_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_CATNAME_LEN); \
 	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
-	hentry = (crosstab_HashEnt*) hash_search(HASHTAB, \
+	hentry = (bbf_pivot_HashEnt*) hash_search(HASHTAB, \
 										 key, HASH_FIND, NULL); \
 	if (hentry) \
 		CATDESC = hentry->catdesc; \
@@ -225,13 +225,13 @@ do { \
 		CATDESC = NULL; \
 } while(0)
 
-#define crosstab_HashTableInsert(HASHTAB, CATDESC) \
+#define bbf_pivot_HashTableInsert(HASHTAB, CATDESC) \
 do { \
-	crosstab_HashEnt *hentry; bool found; char key[MAX_CATNAME_LEN]; \
+	bbf_pivot_HashEnt *hentry; bool found; char key[MAX_CATNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_CATNAME_LEN); \
 	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATDESC->catname); \
-	hentry = (crosstab_HashEnt*) hash_search(HASHTAB, \
+	hentry = (bbf_pivot_HashEnt*) hash_search(HASHTAB, \
 										 key, HASH_ENTER, &found); \
 	if (found) \
 		ereport(ERROR, \
@@ -3569,7 +3569,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	TupleDesc		tupdesc;
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
-	HTAB	   	   *crosstab_hash;
+	HTAB	   	   *bbf_pivot_hash;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -3599,17 +3599,17 @@ bbf_pivot(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("query-specified return tuple and " \
-						"crosstab function are not compatible")));
+						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	crosstab_hash = load_categories_hash(bbf_pivot_sql2, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_sql2, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
-	rsinfo->setResult = get_crosstab_tuplestore(bbf_pivot_sql1,
-												crosstab_hash,
+	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_sql1,
+												bbf_pivot_hash,
 												tupdesc,
 												rsinfo->allowedModes & SFRM_Materialize_Random);
 
@@ -3632,7 +3632,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 static HTAB *
 load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 {
-	HTAB	   *crosstab_hash;
+	HTAB	   *bbf_pivot_hash;
 	HASHCTL		ctl;
 	int			ret;
 	uint64		proc;
@@ -3640,14 +3640,14 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 
 	/* initialize the category hash table */
 	ctl.keysize = MAX_CATNAME_LEN;
-	ctl.entrysize = sizeof(crosstab_HashEnt);
+	ctl.entrysize = sizeof(bbf_pivot_HashEnt);
 	ctl.hcxt = per_query_ctx;
 
 	/*
 	 * use INIT_CATS, defined above as a guess of how many hash table entries
 	 * to create, initially
 	 */
-	crosstab_hash = hash_create("crosstab hash",
+	bbf_pivot_hash = hash_create("bbf_pivot hash",
 								INIT_CATS,
 								&ctl,
 								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
@@ -3680,7 +3680,7 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 
 		for (i = 0; i < proc; i++)
 		{
-			crosstab_cat_desc *catdesc;
+			bbf_pivot_cat_desc *catdesc;
 			char	   *catname;
 			HeapTuple	spi_tuple;
 
@@ -3696,11 +3696,11 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 								"not return NULL values")));
 			
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
-			catdesc = (crosstab_cat_desc *) palloc(sizeof(crosstab_cat_desc));
+			catdesc = (bbf_pivot_cat_desc *) palloc(sizeof(bbf_pivot_cat_desc));
 			catdesc->catname = catname;
 			catdesc->attidx = i;
 			/* Add the proc description block to the hashtable */
-			crosstab_HashTableInsert(crosstab_hash, catdesc);
+			bbf_pivot_HashTableInsert(bbf_pivot_hash, catdesc);
 
 			MemoryContextSwitchTo(SPIcontext);
 		}
@@ -3710,20 +3710,22 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 		/* internal error */
 		elog(ERROR, "load_categories_hash: SPI_finish() failed");
 
-	return crosstab_hash;
+	return bbf_pivot_hash;
 }
 
+
+
 /*
- * create and populate the crosstab tuplestore using the provided source query
+ * create and populate the bbf_pivot tuplestore
  */
 static Tuplestorestate *
-get_crosstab_tuplestore(RawStmt *sql,
-						HTAB *crosstab_hash,
+get_bbf_pivot_tuplestore(RawStmt *sql,
+						HTAB *bbf_pivot_hash,
 						TupleDesc tupdesc,
 						bool randomAccess)
 {
 	Tuplestorestate *tupstore;
-	int			num_categories = hash_get_num_entries(crosstab_hash);
+	int			num_categories = hash_get_num_entries(bbf_pivot_hash);
 	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	char	  **values;
 	HeapTuple	tuple;
@@ -3736,9 +3738,9 @@ get_crosstab_tuplestore(RawStmt *sql,
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
 		/* internal error */
-		elog(ERROR, "get_crosstab_tuplestore: SPI_connect returned %d", ret);
+		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
-	/* Now retrieve the crosstab source rows */
+	/* Now retrieve the bbf_pivot source rows */
 	ret = SPI_execute_raw_parsetree(sql, true, 0);
 	proc = SPI_processed;
 
@@ -3748,8 +3750,8 @@ get_crosstab_tuplestore(RawStmt *sql,
 		SPITupleTable *spi_tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
 		int			ncols = spi_tupdesc->natts;
-		char	   *rowid;
-		char	   *lastrowid = NULL;
+		char	   **columngroup;
+		char	   **lastcolumngroup = NULL;
 		bool		firstpass = true;
 		uint64		i;
 		int			j;
@@ -3764,27 +3766,12 @@ get_crosstab_tuplestore(RawStmt *sql,
 							"return 1 column of at least one row")));
 		}
 
-		/*
-		 * The provided SQL query must always return at least three columns:
-		 *
-		 * 1. rowname	the label for each row - column 1 in the final result
-		 * 2. category	the label for each value-column in the final result 3.
-		 * value	 the values used to populate the value-columns
-		 *
-		 * If there are more than three columns, the last two are taken as
-		 * "category" and "values". The first column is taken as "rowname".
-		 * Additional columns (2 thru N-2) are assumed the same for the same
-		 * "rowname", and are copied into the result tuple from the first time
-		 * we encounter a particular rowname.
-		 */
-
-		// TODO: change the number from 3 to 2, and corresponding error msg 
-		if (ncols < 3)
+		if (ncols < 2)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("invalid source data SQL statement"),
-					 errdetail("The provided SQL must return 3 " \
-							   " columns; rowid, category, and values.")));
+					 errdetail("The provided SQL must return 2 " \
+							   " columns; category, and values.")));
 
 		result_ncols = (ncols - 2) + num_categories;
 
@@ -3794,53 +3781,77 @@ get_crosstab_tuplestore(RawStmt *sql,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid return type"),
 					 errdetail("Query-specified return " \
-							   "tuple has %d columns but crosstab " \
+							   "tuple has %d columns but bbf_pivot " \
 							   "returns %d.", tupdesc->natts, result_ncols)));
 
 		/* allocate space and make sure it's clear */
 		values = (char **) palloc0(result_ncols * sizeof(char *));
+		columngroup = (char **) palloc0((ncols - 2) * sizeof(char *));
+		lastcolumngroup = (char **) palloc0((ncols - 2) * sizeof(char *));
 
-		// TODO: write a 2 column case handling code here
-		// if 2 column, then 2 column logic, else execute the for loop below
 		for (i = 0; i < proc; i++)
 		{
 			HeapTuple	spi_tuple;
-			crosstab_cat_desc *catdesc;
+			bbf_pivot_cat_desc *catdesc;
 			char	   *catname;
+			bool 	   	is_new_row = false;
 
 			/* get the next sql result tuple */
 			spi_tuple = spi_tuptable->vals[i];
 
-			/* get the rowid from the current sql result tuple */
-			rowid = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
-
-			/*
-			 * if we're on a new output row, grab the column values up to
-			 * column N-2 now
-			 */
-			if (firstpass || !xstreq(lastrowid, rowid))
+			if (ncols > 2)
 			{
-				/*
-				 * a new row means we need to flush the old one first, unless
-				 * we're on the very first row
-				 */
-				if (!firstpass)
-				{
-					/* rowid changed, flush the previous output row */
-					tuple = BuildTupleFromCStrings(attinmeta, values);
-
-					tuplestore_puttuple(tupstore, tuple);
-
-					for (j = 0; j < result_ncols; j++)
-						xpfree(values[j]);
+				/* get the non-pivot column group from the current sql result tuple */
+				for (j = 0; j < ncols - 2; j++)
+				{	
+					columngroup[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j+1);
 				}
 
-				values[0] = rowid;
-				for (j = 1; j < ncols - 2; j++)
-					values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
+				/*
+				* if we're on a new output row, grab the column values up to
+				* column N-2 now
+				*/
 
-				/* we're no longer on the first pass */
-				firstpass = false;
+				if (!firstpass)
+				{
+					for (j = 0; j < ncols - 2; j++)
+					{	
+						if (!xstreq(columngroup[j], lastcolumngroup[j]))
+						{
+							is_new_row = true;
+							break;
+						}
+					}
+				}
+
+				if (firstpass || is_new_row)
+				{
+					/*
+					* a new row means we need to flush the old one first, unless
+					* we're on the very first row
+					*/
+					if (!firstpass)
+					{
+						for (j = 0; j < result_ncols; j++)
+						{
+							if (values[j] == NULL)
+								values[j] = pstrdup("0");
+						}
+						/* rowid changed, flush the previous output row */
+						tuple = BuildTupleFromCStrings(attinmeta, values);
+
+						tuplestore_puttuple(tupstore, tuple);
+
+						for (j = 0; j < result_ncols; j++)
+							xpfree(values[j]);
+					}
+
+					for (j = 0; j < ncols - 2; j++)
+						values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
+
+					/* we're no longer on the first pass */
+					firstpass = false;
+				}
 			}
 
 			/* look up the category and fill in the appropriate column */
@@ -3848,26 +3859,36 @@ get_crosstab_tuplestore(RawStmt *sql,
 
 			if (catname != NULL)
 			{
-				crosstab_HashTableLookup(crosstab_hash, catname, catdesc);
+				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname, catdesc);
 
 				if (catdesc)
 					values[catdesc->attidx + ncols - 2] =
 						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
 			}
 
-			xpfree(lastrowid);
-			xpstrdup(lastrowid, rowid);
+			if (ncols > 2)
+			{
+				for (j = 0; j < ncols - 2; j++)
+				{	
+					xpfree(lastcolumngroup[j]);
+					xpstrdup(lastcolumngroup[j], columngroup[j]);
+				}
+			}
 		}
 
 		/* flush the last output row */
+		for (i = 0; i < result_ncols; i++)
+		{
+			if (values[i] == NULL)
+				values[i] = pstrdup("0");
+		}
 		tuple = BuildTupleFromCStrings(attinmeta, values);
-
 		tuplestore_puttuple(tupstore, tuple);
 	}
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		/* internal error */
-		elog(ERROR, "get_crosstab_tuplestore: SPI_finish() failed");
+		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
 
 	return tupstore;
 }

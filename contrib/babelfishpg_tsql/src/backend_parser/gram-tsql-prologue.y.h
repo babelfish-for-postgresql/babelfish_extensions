@@ -51,6 +51,9 @@ static void tsql_check_param_readonly(const char *paramname, TypeName *typename,
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
 static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause);
 static RangeSubselect *TsqlForClauseSubselect(Node *selectstmt);
+static Node *tsql_pivot_select_transformation(List *target_list, IntoClause *into_clause, List *from_clause, 
+											  List *pivot_clause, Alias *alias_clause, Node *where_clause, 
+											  GroupClause *group_clause, Node *having_clause, List *window_clause);
 
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node *jsonExpr, Node *path);
 static Node *TsqlOpenJSONWithMakeFuncCall(Node *jsonExpr, Node *path, List *cols, Alias *alias);
