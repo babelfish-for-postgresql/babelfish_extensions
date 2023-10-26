@@ -16,7 +16,9 @@
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "collation.h"
 #include "common/int.h"
+#include "encoding/encoding.h"
 #include "lib/hyperloglog.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -621,13 +623,16 @@ Datum
 varcharvarbinary(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
-	char	   *data = VARDATA_ANY(source);
+	char	   *data = VARDATA_ANY(source);		/* Source string is UTF-8 */
+	char	   *encoded_data;
 	char	   *rp;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	int32		maxlen;
 	bytea	   *result;
+	coll_info	collInfo;
+	int			encodedByteLen;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -636,20 +641,26 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
-	/* If typmod is -1 (or invalid), use the actual length */
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+	encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+
+   /* 
+	* If typmod is -1 (or invalid), use the actual length
+	* Length should be checked after encoding into server enc
+	*/
 	if (typmod < (int32) VARHDRSZ)
-		maxlen = len;
+		maxlen = encodedByteLen;
 	else
 		maxlen = typmod - VARHDRSZ;
 
-	if (len > maxlen)
-		len = maxlen;
+	if (encodedByteLen > maxlen)
+		encodedByteLen = maxlen;
 
-	result = (bytea *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
+	result = (bytea *) palloc(encodedByteLen + VARHDRSZ);
+	SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
 
 	rp = VARDATA(result);
-	memcpy(rp, data, len);
+	memcpy(rp, encoded_data, encodedByteLen);
 
 	PG_RETURN_BYTEA_P(result);
 }
@@ -697,21 +708,29 @@ Datum
 varbinaryvarchar(PG_FUNCTION_ARGS)
 {
 	bytea	   *source = PG_GETARG_BYTEA_PP(0);
-	char	   *data = VARDATA_ANY(source);
+	char	   *data = VARDATA_ANY(source);		/* Source data is server encoded */
+	VarChar    *result;
+	char 	   *encoded_result;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
 	int32		typmod = PG_GETARG_INT32(1);
 	int32		maxlen = typmod - VARHDRSZ;
-	VarChar    *result;
+	coll_info	collInfo;
+	int			encodedByteLen;
+
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 
 	/*
 	 * Cast the entire input binary data if maxlen is invalid or supplied data
 	 * fits it
 	 */
 	if (maxlen < 0 || len <= maxlen)
-		result = (VarChar *) cstring_to_text_with_len(data, len);
+		encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
 	/* Else truncate it */
 	else
-		result = (VarChar *) cstring_to_text_with_len(data, maxlen);
+		encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+
+	result = (VarChar *) cstring_to_text_with_len(encoded_result, encodedByteLen);
+
 	PG_RETURN_VARCHAR_P(result);
 }
 
