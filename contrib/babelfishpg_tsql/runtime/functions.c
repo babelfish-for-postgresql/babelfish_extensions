@@ -242,7 +242,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 }
 
 int
-custom_date_part(const char* field, Timestamp timestamp)
+custom_date_part(const char* field, TimestampTz timestamp)
 {	
 	fsec_t		fsec1;
 	int64 		microseconds;
@@ -345,7 +345,7 @@ Datum
 datepart_internal(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Timestamp	timestamp = 0;
+	TimestampTz	timestamp = 0;
 	Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
 	int			tsql_datefirst = (int)pltsql_datefirst;
@@ -354,14 +354,14 @@ datepart_internal(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		if(argtypeoid == TIMESTAMPOID || argtypeoid == 17453)   //arg is of type timestamp
+		if(argtypeoid == TIMESTAMPOID || argtypeoid == 17453 || argtypeoid == 17565)   //arg is of type timestamp,datetime,datetime2
 		{
-			timestamp = PG_GETARG_TIMESTAMP(1);
+			timestamp = PG_GETARG_TIMESTAMPTZ(1);
 		}
 		else if(argtypeoid == 1082)    //arg is of type date
 		{
 			date_arg = PG_GETARG_DATEADT(1);
-			timestamp = DirectFunctionCall1(date_timestamp, date_arg);
+			timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
 		}
 	
 		if(strcasecmp(field , "tsql_week") == 0)
