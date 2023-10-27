@@ -2676,14 +2676,14 @@ select func1(DEFAULT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function func1(void) does not exist)~~
+~~ERROR (Message: function func1(unknown) does not exist)~~
 
 
 EXEC proc1 DEFAULT;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure proc1(void) does not exist)~~
+~~ERROR (Message: procedure proc1(unknown) does not exist)~~
 
 
 -- NATIONAL/VARYING (BABEL-2360/2361)
