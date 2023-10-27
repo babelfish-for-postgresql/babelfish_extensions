@@ -1270,7 +1270,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser:
 		else
 		{
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
-				format_errmsg("DBCC %s is not yet supported in Babelfish",
+				format_errmsg("DBCC %s is not currently supported in Babelfish",
 					::getFullText(ctx->dbcc_command()).c_str()), 
 						getLineAndPos(ctx->dbcc_command()));
 		}
