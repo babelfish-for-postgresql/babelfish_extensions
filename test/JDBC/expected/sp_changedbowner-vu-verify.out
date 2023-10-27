@@ -400,5 +400,5 @@ set @cmd = 'kill ' + convert(varchar, @spid)
 execute(@cmd)
 end
 go
-waitfor delay '00:00:03'
+exec pg_sleep 3
 go
