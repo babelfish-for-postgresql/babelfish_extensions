@@ -12,3 +12,6 @@ GO
 
 drop procedure default_params_proc2;
 GO
+
+drop procedure default_params_proc3
+Go

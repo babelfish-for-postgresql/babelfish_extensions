@@ -117,3 +117,19 @@ varchar#!#int
 dddd#!#2
 ~~END~~
 
+
+exec default_params_proc3 default, 2
+GO
+~~START~~
+varchar#!#int
+a#!#2
+~~END~~
+
+
+exec default_params_proc3 'dddd', 3
+GO
+~~START~~
+varchar#!#int
+d#!#3
+~~END~~
+
