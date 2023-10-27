@@ -883,6 +883,13 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation, RangeVar *r
 	}
 }
 
+/*
+ * Resets the state of two global vars used for UPDATE and DELETE queries
+ * 
+ * In some cases, an erroring UPDATE query can exit without resetting these
+ * globals. This function is called before UPDATE and DELETE statements that
+ * use these globals to ensure that they are cleared.
+ */
 static void
 tsql_reset_update_delete_globals()
 {
