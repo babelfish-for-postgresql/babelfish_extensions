@@ -2,8 +2,5 @@
 DROP LOGIN sys_server_principals_vu_login_without_sa
 GO
 
-ALTER ROLE sysadmin drop member sys_server_principals_vu_login_with_sa
-GO
-
 DROP LOGIN sys_server_principals_vu_login_with_sa
 GO
