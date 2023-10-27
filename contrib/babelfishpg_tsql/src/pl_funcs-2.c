@@ -483,6 +483,7 @@ free_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 		case PLTSQL_STMT_INSERT_BULK:
 		case PLTSQL_STMT_GRANTDB:
+		case PLTSQL_STMT_CHANGE_DBOWNER:
 		case PLTSQL_STMT_GRANTSCHEMA:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			{
@@ -541,6 +542,7 @@ void		dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
 void		dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
 void		dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
 void		dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb);
+void		dump_stmt_change_dbowner(PLtsql_stmt_change_dbowner *stmt_change_dbowner);
 void		dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
 void		dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void		dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
@@ -677,6 +679,12 @@ dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb)
 	else
 		printf("REVOKE CONNECT FROM %s\n", grantees_names.data);
 	resetStringInfo(&grantees_names);
+}
+
+void
+dump_stmt_change_dbowner(PLtsql_stmt_change_dbowner *stmt_change_dbowner)
+{
+	printf("ALTER AUTHORIZATION ON DATABASE::%s TO %s\n", stmt_change_dbowner->db_name, stmt_change_dbowner->new_owner_name);		
 }
 
 void
@@ -828,6 +836,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 				dump_stmt_grantdb((PLtsql_stmt_grantdb *) stmt);
 				break;
 			}
+		case PLTSQL_STMT_CHANGE_DBOWNER:
+			{
+				dump_stmt_change_dbowner((PLtsql_stmt_change_dbowner *) stmt);
+				break;
+			}				
 		case PLTSQL_STMT_INSERT_BULK:
 			{
 				dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);

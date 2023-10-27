@@ -741,3 +741,100 @@ GO
 DROP TABLE babel_1139_t1;
 DROP TABLE babel_1139_t2;
 GO
+
+-- TOP with OUTPUT & OUTPUT INTO w/out JOIN
+create table top_with_output_tbl(no_o_id int, no_w_id VARCHAR(20))
+go
+
+insert into top_with_output_tbl VALUES (-1, 'foo'), (2, 'foo');
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
+set babelfish_showplan_all on
+go
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+DELETE TOP (1)
+FROM top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+set babelfish_showplan_all off
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+
+declare @t_out table (no_o_id int);
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 10
+OUTPUT deleted.no_o_id INTO @t_out
+WHERE top_with_output_tbl.no_w_id = 'foo'
+
+select * from @t_out;
+GO
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+declare @t_out table (no_o_id int);
+
+DELETE TOP (1)
+FROM dbo.top_with_output_tbl
+OUTPUT deleted.no_o_id INTO @t_out
+WHERE top_with_output_tbl.no_w_id = 'foo'
+
+select * from @t_out;
+GO
+
+DELETE TOP (1)
+FROM dbo.top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+
+drop table top_with_output_tbl;
+go
+
+-- BABEL-2007
+CREATE TABLE babel2007_t1(c1PK INT PRIMARY KEY, c2INT INT, c4COMMENT VARCHAR(100))
+CREATE TABLE babel2007_t2(c1PK INT PRIMARY KEY, c2INT INT, c4COMMENT VARCHAR(100))
+GO
+
+INSERT INTO babel2007_t1 VALUES( 1, 10, 'insert' )
+        , ( 2, 20, 'insert' )
+        , ( 3, 30, 'insert' )
+        , ( 4, 40, 'insert' )
+GO
+
+INSERT INTO babel2007_t2 VALUES( 1, 10, 'insert' )
+        , ( 2, 20, 'insert' )
+        , ( 3, 30, 'insert' )
+        , ( 4, 40, 'insert' )
+GO
+
+UPDATE top(2) babel2007_t1 
+SET c4COMMENT = 'updated: TOP (2), output to client'
+OUTPUT INSERTED.*, DELETED.*
+FROM babel2007_t1 INNER JOIN babel2007_t2 ON ( babel2007_t1.c2INT = babel2007_t2.c2INT )
+WHERE babel2007_t2.c1PK <= 5
+GO
+
+DELETE top(2) babel2007_t1
+OUTPUT DELETED.*
+FROM babel2007_t1 INNER JOIN babel2007_t2 ON ( babel2007_t1.c2INT = babel2007_t2.c2INT )
+WHERE babel2007_t2.c1PK <= 5
+GO
+
+DROP TABLE babel2007_t1
+DROP TABLE babel2007_t2
+GO

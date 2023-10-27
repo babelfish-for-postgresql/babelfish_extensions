@@ -96,6 +96,7 @@ ignore#!#sys-sp_statistics_100-vu-verify
 ignore#!#sys-sp_statistics_100-vu-cleanup
 ignore#!#sys-sp_statistics_100-dep-vu-verify
 ignore#!#BABEL-4264
+ignore#!#BABEL_4145
 
 # Test failures caused by babel_extra_join_test_cases_northwind failure
 ignore#!#babelfish_sysdatabases-vu-prepare

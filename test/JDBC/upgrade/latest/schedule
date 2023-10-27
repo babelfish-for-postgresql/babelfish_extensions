@@ -118,6 +118,7 @@ BABEL-404
 BABEL-405
 BABEL-4078
 BABEL-4098
+BABEL-4214
 babel_417
 BABEL-493
 BABEL_539
@@ -343,6 +344,7 @@ sys-schemas
 sys-schemas-dep
 sys-selective_xml_index_paths
 sys-server_principals
+sys_server_role_members
 sys_server_principals_dep
 sys-sid_binary
 sys-spatial_indexes
@@ -455,6 +457,7 @@ todatetimeoffset-dep
 triggers_with_transaction
 unquoted_string
 doublequoted_string
+alter_authorization_change_db_owner
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -473,3 +476,4 @@ sys_certificates
 sys_database_permissions
 BABEL-4279
 BABEL-4484
+#AUTO_ANALYZE #uncomment this test when preparing for new minor version
