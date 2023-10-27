@@ -73,9 +73,6 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
-/* TODO: (pivot) Remove these later*/
-RawStmt	   *bbf_pivot_sql1;
-RawStmt	   *bbf_pivot_sql2;
 
 /*****************************************
  * 			Catalog Hooks
@@ -4315,7 +4312,10 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	RangeFunction	*pivot_from_function;
 	RawStmt	*s_sql;
 	RawStmt	*c_sql;
-	MemoryContext oldContext;
+	MemoryContext 	oldContext;
+	MemoryContext 	tsql_outmost_context;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	int				nestlevel;
 
 	new_src_sql_targetist = NULL;
 	new_pivot_aliaslist = NULL;
@@ -4428,9 +4428,16 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	pivot_from_function->coldeflist = new_pivot_aliaslist;
+
 	/* put the correct src_sql raw parse tree into the memory context for later use */
-	oldContext = CurrentMemoryContext;
-	MemoryContextSwitchTo(TopMemoryContext);
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	if (!tsql_outmost_context)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot outer context not found")));
+
+	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
 	/* save rewrited sqls to global variable for later retrive */
 	s_sql = makeNode(RawStmt);
 	c_sql = makeNode(RawStmt);
@@ -4442,8 +4449,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
 
-	bbf_pivot_sql1 = copyObject(s_sql);
-	bbf_pivot_sql2 = copyObject(c_sql);
-
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make2(copyObject(s_sql), copyObject(c_sql)));
+	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
 }

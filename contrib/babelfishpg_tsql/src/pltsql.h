@@ -1473,6 +1473,9 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
+	int		    pivot_number;
+	List	   *pivot_parsetree_list;
+
 	List	   *explain_infos;
 	char	   *schema_name;
 	const char *db_name;
@@ -1894,8 +1897,6 @@ extern int	insert_bulk_rows_per_batch;
 extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 
-extern RawStmt	   *bbf_pivot_sql1;
-extern RawStmt	   *bbf_pivot_sql2;
 
 /**********************************************************************
  * Function declarations

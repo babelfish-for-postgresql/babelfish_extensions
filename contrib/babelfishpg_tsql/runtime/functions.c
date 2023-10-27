@@ -187,8 +187,7 @@ extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
 extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
-extern RawStmt	   *bbf_pivot_sql1;
-extern RawStmt	   *bbf_pivot_sql2;
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -3569,7 +3568,15 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	TupleDesc		tupdesc;
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
-	HTAB	   	   *bbf_pivot_hash;
+	HTAB	   	   	*bbf_pivot_hash;
+
+	MemoryContext 	tsql_outmost_context;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	RawStmt	   		*bbf_pivot_src_sql;
+	RawStmt	   		*bbf_pivot_cat_sql;
+	int				nestlevel;
+	List			*per_pivot_list;
+	
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -3581,6 +3588,24 @@ bbf_pivot(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	if (!tsql_outmost_context)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot outer context not found")));
+
+	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
+	per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+	bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
+	bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
+	MemoryContextSwitchTo(oldcontext);
+
+	if (!per_pivot_list)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot parsetree list not found")));
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -3602,13 +3627,13 @@ bbf_pivot(PG_FUNCTION_ARGS)
 						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	bbf_pivot_hash = load_categories_hash(bbf_pivot_sql2, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
-	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_sql1,
+	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
 												bbf_pivot_hash,
 												tupdesc,
 												rsinfo->allowedModes & SFRM_Materialize_Random);
@@ -3623,6 +3648,11 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	rsinfo->setDesc = tupdesc;
 	MemoryContextSwitchTo(oldcontext);
 
+	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
+	/* TODO: do we need to free the list */
+	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+	tsql_outmost_estat->pivot_number--;
+	MemoryContextSwitchTo(oldcontext);
 	return (Datum) 0;
 }
 
