@@ -2,10 +2,8 @@
 DROP LOGIN sys_server_principals_vu_login_without_sa
 GO
 
--- psql
-ALTER USER sys_server_principals_vu_login_with_sa WITH NOSUPERUSER
+ALTER ROLE sysadmin drop member sys_server_principals_vu_login_with_sa
 GO
 
--- tsql
 DROP LOGIN sys_server_principals_vu_login_with_sa
 GO
