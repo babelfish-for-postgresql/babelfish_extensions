@@ -883,6 +883,20 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation, RangeVar *r
 	}
 }
 
+/*
+ * Resets the state of two global vars used for UPDATE and DELETE queries
+ * 
+ * In some cases, an erroring UPDATE query can exit without resetting these
+ * globals. This function is called before UPDATE and DELETE statements that
+ * use these globals to ensure that they are cleared.
+ */
+static void
+tsql_reset_update_delete_globals()
+{
+	output_update_transformation = false;
+	update_delete_target_alias = NULL;
+}
+
 static void
 tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 {
@@ -1074,6 +1088,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
 
+	tsql_reset_update_delete_globals();
+
 	/* PreparableStmt inside CTE */
 	d->relation = relation_expr_opt_alias;
 	tsql_update_delete_stmt_from_clause_alias(d->relation, from_clause);
@@ -1082,15 +1098,12 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		d = (DeleteStmt *) tsql_update_delete_stmt_with_join(
 															 (Node *) d, from_clause, where_or_current_clause, opt_top_clause,
 															 relation_expr_opt_alias, yyscanner);
-		output_update_transformation = true;
 	}
 	else
 	{
 		d->usingClause = from_clause;
 		d->whereClause = where_or_current_clause;
 		d->limitCount = opt_top_clause;
-		if (from_clause != NULL && (IsA(linitial(from_clause), RangeSubselect) || IsA(linitial(from_clause), RangeVar)))
-			output_update_transformation = true;
 	}
 	d->returningList = get_transformed_output_list(tsql_output_clause);
 	d->withClause = opt_with_clause;
@@ -1243,6 +1256,8 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
+
+	tsql_reset_update_delete_globals();
 
 	/* PreparableStmt inside CTE */
 	u->relation = relation_expr_opt_alias;
