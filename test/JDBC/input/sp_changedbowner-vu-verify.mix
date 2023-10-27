@@ -227,7 +227,8 @@ go
 declare @spid int, @cmd varchar(30)
 while (1=1)
 begin 
-select @spid = spid from sys.sysprocesses where spid <> @@spid and spid not in (select killed from #killed) and hostprocess is not null
+select @spid = spid from sys.sysprocesses where spid <> @@spid and spid not in (select killed from #killed)
+and lower(loginname) like 'new_login%' or lower(loginname) like 'login6%' 
 if @@rowcount = 0 break
 insert #killed values(@spid)
 set @cmd = 'kill ' + convert(varchar, @spid)
