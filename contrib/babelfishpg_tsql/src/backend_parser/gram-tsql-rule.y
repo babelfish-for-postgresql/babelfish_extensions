@@ -1527,25 +1527,67 @@ simple_select:
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					if ($3 != NULL && $4 == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Target list missing from TOP clause"),
+								 errhint("For example, TOP n COLUMNS ..."),
+								 parser_errposition(@3)));
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}
 			| SELECT distinct_clause tsql_top_clause target_list
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					if ($3 != NULL && $4 == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Target list missing from TOP clause"),
+								 errhint("For example, TOP n COLUMNS ..."),
+								 parser_errposition(@3)));
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}	
 			| SELECT opt_all_clause opt_target_list
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause 
 				{
-					$$ = tsql_pivot_select_transformation($3, $4, $5, (List *)$6, $7, $8, $9, $10, $11);
+					SelectStmt *n = makeNode(SelectStmt);
+					n->intoClause = $4;
+					n->whereClause = $8;
+					n->groupClause = ($9)->list;
+					n->groupDistinct = ($9)->distinct;
+					n->havingClause = $10;
+					n->windowClause = $11;
+					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
 				}
 			| SELECT distinct_clause target_list
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause
 				{
-					$$ = tsql_pivot_select_transformation($3, $4, $5, (List *)$6, $7, $8, $9, $10, $11);
+					SelectStmt *n = makeNode(SelectStmt);
+					n->intoClause = $4;
+					n->whereClause = $8;
+					n->groupClause = ($9)->list;
+					n->groupDistinct = ($9)->distinct;
+					n->havingClause = $10;
+					n->windowClause = $11;
+					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
 				}
 			| tsql_values_clause							{ $$ = $1; }
 			;
@@ -2157,13 +2199,30 @@ tsql_output_simple_select:
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause
 				{
-					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}
 			| SELECT distinct_clause opt_top_clause target_list
 			into_clause from_clause tsql_pivot_expr alias_clause where_clause
 			group_clause having_clause window_clause
 				{
-					$$ = tsql_pivot_select_transformation($4, $5, $6, (List *)$7, $8, $9, $10, $11, $12);
+					SelectStmt *n = makeNode(SelectStmt);
+					n->distinctClause = $2;
+					n->limitCount = $3;
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}
 			| tsql_values_clause							{ $$ = $1; }
 			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select

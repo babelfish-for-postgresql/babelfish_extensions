@@ -1726,17 +1726,13 @@ TsqlForClauseSubselect(Node *selectstmt)
 
 /* pivot select transformation*/
 static Node *
-tsql_pivot_select_transformation(List *target_list, IntoClause *into_clause, List *from_clause, 
-								List *pivot_clause, Alias *alias_clause, Node *where_clause, 
-								GroupClause *group_clause, Node *having_clause, List *window_clause)
+tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl)
 {
 	FuncCall   	*pivotCall;
 	ColumnRef  		*a_star;
 	ResTarget		*a_star_restarget;
 	RangeFunction	*funCallNode;
 	SelectStmt 	*src_sql;
-	SelectStmt 	*pivot_sl;
-	/* TODO: remove SortBy node here */
 	SortBy 		*s;
 
 	char 		*pivot_colstr = (char *)list_nth(pivot_clause, 0);
@@ -1775,8 +1771,6 @@ tsql_pivot_select_transformation(List *target_list, IntoClause *into_clause, Lis
 	funCallNode->functions = list_make1(list_make2((Node *) pivotCall, NIL));
 	funCallNode->alias = alias_clause;
 	
-	pivot_sl = makeNode(SelectStmt);
-	pivot_sl->intoClause = into_clause;
 	pivot_sl->targetList = target_list;
 	pivot_sl->fromClause = list_make1(funCallNode);
 	pivot_sl->isPivot = true;
