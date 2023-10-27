@@ -48,3 +48,6 @@ GO
 
 exec default_params_proc3 'dddd', 3
 GO
+
+exec default_params_proc4 1,2,default
+GO

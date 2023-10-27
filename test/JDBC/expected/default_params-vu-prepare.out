@@ -16,3 +16,6 @@ GO
 
 create proc default_params_proc3 (@p1 varchar = 'abc', @p2 int) as select @p1, @p2
 GO
+
+create proc default_params_proc4 @p1 int=1, @p2 int=2, @p3 varchar(20)='dbb' as select @p1, @p2, @p3
+GO

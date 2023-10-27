@@ -10,7 +10,7 @@ select default_params_func1(10, default);
 GO
 ~~START~~
 int
-11
+12
 ~~END~~
 
 
@@ -82,7 +82,7 @@ exec default_params_proc1 111, default, 333
 GO
 ~~START~~
 int#!#int#!#int
-111#!#1#!#333
+111#!#2#!#333
 ~~END~~
 
 
@@ -131,5 +131,13 @@ GO
 ~~START~~
 varchar#!#int
 d#!#3
+~~END~~
+
+
+exec default_params_proc4 1,2,default
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#2#!#dbb
 ~~END~~
 
