@@ -1495,6 +1495,7 @@ simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause tsql_top_clause target_list
@@ -1519,9 +1520,155 @@ simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
+			| SELECT opt_all_clause tsql_top_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					if ($3 != NULL && $4 == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Target list missing from TOP clause"),
+								 errhint("For example, TOP n COLUMNS ..."),
+								 parser_errposition(@3)));
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
+				}
+			| SELECT distinct_clause tsql_top_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					if ($3 != NULL && $4 == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Target list missing from TOP clause"),
+								 errhint("For example, TOP n COLUMNS ..."),
+								 parser_errposition(@3)));
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
+				}	
+			| SELECT opt_all_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->intoClause = $4;
+					n->whereClause = $8;
+					n->groupClause = ($9)->list;
+					n->groupDistinct = ($9)->distinct;
+					n->havingClause = $10;
+					n->windowClause = $11;
+					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
+				}
+			| SELECT distinct_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->intoClause = $4;
+					n->whereClause = $8;
+					n->groupClause = ($9)->list;
+					n->groupDistinct = ($9)->distinct;
+					n->havingClause = $10;
+					n->windowClause = $11;
+					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
+				}
 			| tsql_values_clause							{ $$ = $1; }
+			;
+
+tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
+				{						
+					ColumnRef 		*a_star;
+					ResTarget 		*a_star_restarget;
+					RangeSubselect 	*range_sub_select;
+					Alias 			*temptable_alias;
+					SortBy 			*s;
+					List    *ret;
+					List    *value_col_strlist = NULL;
+					List	*subsel_valuelists = NULL;
+					
+					SelectStmt 	*category_sql = makeNode(SelectStmt);
+					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
+					ResTarget	*restarget_aggfunc = makeNode(ResTarget);
+
+					a_star = makeNode(ColumnRef);
+					a_star->fields = list_make1(makeNode(A_Star));
+					a_star->location = -1;
+					a_star_restarget = makeNode(ResTarget);
+					a_star_restarget->name = NULL;
+					a_star_restarget->name_location = -1;
+					a_star_restarget->indirection = NIL;
+					a_star_restarget->val = (Node *) a_star;
+					a_star_restarget->location = -1;
+					
+
+					/* prepare aggregation function for pivot source sql */
+					restarget_aggfunc->name = NULL;
+					restarget_aggfunc->name_location = -1;
+					restarget_aggfunc->indirection = NIL;
+					restarget_aggfunc->val = (Node *) $3;
+					restarget_aggfunc->location = -1;
+					
+					if (IsA((List *)$7, List))
+					{
+						for (int i = 0; i < ((List *)$7)->length; i++)
+						{
+							ColumnRef	*tempRef = list_nth((List *)$7, i);
+							String		*s = list_nth(tempRef->fields, 0);
+							Node		*n = makeStringConst(s->sval, -1);
+							List 		*l = list_make1(copyObject(n));
+							if (value_col_strlist == NULL || subsel_valuelists == NULL)
+							{
+								value_col_strlist = list_make1(s->sval);
+								subsel_valuelists = list_make1(l);
+							}else
+							{
+								value_col_strlist = lappend(value_col_strlist, s->sval);
+								subsel_valuelists = lappend(subsel_valuelists, l);
+							}
+						}
+					}
+
+					temptable_alias = makeNode(Alias);
+					temptable_alias->aliasname = "pivotTempTable";
+					temptable_alias->colnames = list_make1(makeString(pstrdup($5)));
+					
+					valuelists_sql->valuesLists = subsel_valuelists;
+
+					range_sub_select = makeNode(RangeSubselect);
+					range_sub_select->subquery = (Node *) valuelists_sql;
+					range_sub_select->alias = temptable_alias;
+
+					s = makeNode(SortBy);
+					s->node = makeIntConst(1, -1);
+					s->sortby_dir = 0;
+					s->sortby_nulls = 0;     
+					s->useOp = NIL;
+					s->location = -1;
+
+					category_sql->targetList = list_make1(a_star_restarget);
+					category_sql->fromClause = list_make1(range_sub_select);
+					category_sql->sortClause = list_make1(s);
+
+					ret = list_make4(pstrdup($5), restarget_aggfunc, category_sql, value_col_strlist);
+					$$ = (Node*) ret; 
+				} 
 			;
 
 table_ref:	relation_expr tsql_table_hint_expr
@@ -2027,6 +2174,7 @@ tsql_output_simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause opt_top_clause target_list
@@ -2044,7 +2192,37 @@ tsql_output_simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
+				}
+			| SELECT opt_all_clause opt_top_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
+				}
+			| SELECT distinct_clause opt_top_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->distinctClause = $2;
+					n->limitCount = $3;
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}
 			| tsql_values_clause							{ $$ = $1; }
 			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select
