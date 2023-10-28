@@ -30,4 +30,6 @@ runs:
         ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
+        ldd /home/runner/psql/lib/postgresql/postgis-3.so
+        export LD_LIBRARY_PATH=/home/runner/psql/lib/postgresql:$LD_LIBRARY_PATH
       shell: bash
