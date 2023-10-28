@@ -24,6 +24,21 @@ exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x where x.a = 2;
 go
 
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.a
+from babel_2020_delete_t1 x where x.a = 2;
+go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.a
+from babel_2020_delete_t1 where a = 2;
+go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.a
+from babel_2020_delete_t1 where babel_2020_delete_t1.a = 2;
+go
+
 -- multiple tables in FROM clause
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x, babel_2020_delete_t2 y;
@@ -39,6 +54,11 @@ go
 
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x, babel_2020_delete_t2 y where x.a = y.a;
+go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output y.*
+from babel_2020_delete_t1 x, babel_2020_delete_t2 y where x.a = y.a;
 go
 
 -- JOIN clause
@@ -57,6 +77,12 @@ go
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x join babel_2020_delete_t2 y on x.a = y.a;
 go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.a, y.a
+from babel_2020_delete_t1 x join babel_2020_delete_t2 y on x.a = y.a;
+go
+
 
 -- subqueries
 exec babel_2020_delete_ct;
@@ -91,6 +117,12 @@ go
 -- outer joins
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x left outer join babel_2020_delete_t2 on babel_2020_delete_t2.a = x.a;
+go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.*, babel_2020_delete_t2.*
+from babel_2020_delete_t1 x left outer join babel_2020_delete_t2 
+on babel_2020_delete_t2.a = x.a;
 go
 
 -- will be tracked in BABEL-3910
@@ -154,6 +186,12 @@ select a from t1_3910;
 go
 
 exec babel_3910_init_tables
+delete t1_3910 output deleted.*
+from (t2_3910 left join t1_3910 on t1_3910.a = t2_3910.a) 
+    join t3_3910 on t2_3910.a = t3_3910.a;
+go
+
+exec babel_3910_init_tables
 delete t1_3910
 from    
         (t3_3910 left join 
@@ -192,6 +230,12 @@ delete t1 from t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a
 where 0 < t1.a OR t1.a < 10;
 go
 
+exec babel_3910_init_tables;
+delete t1 output t2.*
+from t2_3910 t2 left outer join t1_3910 t1 on t2.a = t1.a
+where 0 < t1.a OR t1.a < 10;
+go
+
 select a from t1_3910;
 go
 
@@ -227,6 +271,11 @@ exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on x.a is null;
 go
 
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output babel_2020_delete_t2.*
+from babel_2020_delete_t2 left outer join babel_2020_delete_t1 x on x.a is null;
+go
+
 -- updatable views
 drop view if exists babel_2020_delete_v1;
 go
@@ -254,6 +303,12 @@ go
 
 exec babel_2020_delete_ct;
 delete babel_2020_delete_t1 from babel_2020_delete_t1 x where exists (select a from babel_2020_delete_t1 y where y.a + 1 = x.a);
+go
+
+exec babel_2020_delete_ct;
+delete babel_2020_delete_t1 output deleted.*
+from babel_2020_delete_t1 x where exists 
+(select a from babel_2020_delete_t1 y where y.a + 1 = x.a);
 go
 
 drop procedure if exists babel_2020_delete_ct;
@@ -296,9 +351,25 @@ SELECT * FROM babel_delete_tbl1
 ROLLBACK
 GO
 
+BEGIN TRAN
+DELETE t1 OUTPUT deleted.*
+FROM babel_delete_tbl1 t1
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+GO
+
 -- alias + subquery
 BEGIN TRAN
 DELETE t1
+FROM babel_delete_tbl1 t1
+INNER JOIN (SELECT * FROM babel_delete_tbl1) t2
+ON t1.b = t2.b
+SELECT * FROM babel_delete_tbl1
+ROLLBACK
+GO
+
+BEGIN TRAN
+DELETE t1 OUTPUT t2.b
 FROM babel_delete_tbl1 t1
 INNER JOIN (SELECT * FROM babel_delete_tbl1) t2
 ON t1.b = t2.b
@@ -346,6 +417,14 @@ SELECT * FROM babel_delete_tbl3
 ROLLBACK
 go
 
+BEGIN TRAN
+DELETE t1 output deleted.*
+FROM babel_delete_tbl1 t2, babel_delete_tbl3 t1
+WHERE c > 1
+SELECT * FROM babel_delete_tbl3
+ROLLBACK
+go
+
 -- alias + outer join
 BEGIN TRAN
 DELETE t1
@@ -383,6 +462,13 @@ go
 -- alias + table ref with schema
 BEGIN TRAN
 DELETE t1
+FROM babel_delete_schema.babel_delete_tbl1 t1
+SELECT * fROM babel_delete_schema.babel_delete_tbl1
+ROLLBACK
+GO
+
+BEGIN TRAN
+DELETE t1 output deleted.*
 FROM babel_delete_schema.babel_delete_tbl1 t1
 SELECT * fROM babel_delete_schema.babel_delete_tbl1
 ROLLBACK

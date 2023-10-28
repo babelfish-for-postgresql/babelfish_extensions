@@ -50,10 +50,12 @@ use master
 go
 
 -- tsql
-use master
+use msdb
 go
 declare @v varchar(30) = suser_name()
 execute sp_changedbowner @v
+go
+use master
 go
 
 -- tsql user=dba_login_sp password=12345678

@@ -4346,7 +4346,10 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
 						   strcmp(func->fn_signature, "inline_code_block") == 0)
 		&& rsi;
-
+	
+	estate->pivot_number = 0;
+	estate->pivot_parsetree_list = NIL;
+	
 	estate->explain_infos = NIL;
 
 	/*

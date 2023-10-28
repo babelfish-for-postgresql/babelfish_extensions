@@ -3637,7 +3637,7 @@ BEGIN
 
 	IF (@db = 'master') OR (@db = 'tempdb')
 	BEGIN
-		RAISERROR('Cannot change the owner of the master or model database.', 16, 1)
+		RAISERROR('Cannot change the owner of the master or tempdb database.', 16, 1)
 		RETURN
 	END
 

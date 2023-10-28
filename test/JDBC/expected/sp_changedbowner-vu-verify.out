@@ -68,14 +68,13 @@ use master
 go
 
 -- tsql
-use master
+use msdb
 go
 declare @v varchar(30) = suser_name()
 execute sp_changedbowner @v
 go
-~~ERROR (Code: 50000)~~
-
-~~ERROR (Message: Cannot change the owner of the master or model database.)~~
+use master
+go
 
 
 -- tsql user=dba_login_sp password=12345678
