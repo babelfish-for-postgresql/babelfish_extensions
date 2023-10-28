@@ -112,6 +112,9 @@ static int	find_attr_by_name_from_relation(Relation rd, const char *attname, boo
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
 static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
+static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition);
+static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs);
+
 
 /*****************************************
  * 			Commands Hooks
@@ -202,6 +205,7 @@ static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
+static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -322,6 +326,9 @@ InstallExtendedHooks(void)
 	prev_insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults_hook;
 	insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults;
 
+	prev_replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults_hook;
+	replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults;
+
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
 
@@ -420,6 +427,7 @@ UninstallExtendedHooks(void)
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
+	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -3530,6 +3538,105 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	Assert(ap == pronargs);		/* processed all function parameters */
 
 	return true;
+}
+
+static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition)
+{
+	int currPosition = intVal((Node *) lfirst(def_idx));
+	while (currPosition != argPosition)
+	{
+		def_idx = lnext(default_positions, def_idx);
+		if (def_idx == NULL)
+		{
+			elog(ERROR, "not enough default arguments");
+			return -1;
+		}
+		currPosition = intVal((Node *) lfirst(def_idx));
+	}
+	return list_cell_number(default_positions, def_idx);
+}
+
+/**
+ * @brief farg position default should get the corresponding default position value
+ * 
+ * @param func_tuple 
+ * @param defaults 
+ * @param fargs 
+ * @return List* 
+ */
+static List*
+replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs)
+
+{
+	HeapTuple	bbffunctuple;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return fargs;
+
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(func_tuple);
+
+	if (HeapTupleIsValid(bbffunctuple)){
+		Datum		arg_default_positions;
+		bool		isnull;
+		char	   *str;
+		List	   *default_positions = NIL, *ret = NIL;
+		ListCell   *def_idx;
+		ListCell   *lc;
+		int		   position,i,j;
+
+		/* Fetch default positions */
+		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_default_positions,
+												&isnull);
+
+		if (isnull)
+			elog(ERROR, "not enough default arguments");
+
+		str =TextDatumGetCString(arg_default_positions);
+		default_positions = castNode(List, stringToNode(str));
+		pfree(str);
+
+		def_idx = list_head(default_positions);
+		i = 0;
+
+		foreach(lc, fargs)
+		{
+			if (nodeTag((Node*)lfirst(lc)) == T_RelabelType &&
+				nodeTag(((RelabelType*)lfirst(lc))->arg) == T_SetToDefault)
+			{
+				position = getDefaultPosition(default_positions, def_idx, i);
+				ret = lappend(ret, list_nth(defaults, position));
+			}
+			else if (nodeTag((Node*)lfirst(lc)) == T_FuncExpr)
+			{
+				if(((FuncExpr*)lfirst(lc))->funcformat == COERCE_IMPLICIT_CAST &&
+					nodeTag(linitial(((FuncExpr*)lfirst(lc))->args)) == T_SetToDefault)
+				{
+				// We'll keep the implicit cast function when it needs implicit cast
+					FuncExpr *funcExpr = (FuncExpr*)lfirst(lc);
+					List *newArgs = NIL;
+					position = getDefaultPosition(default_positions, def_idx, i);
+					newArgs = lappend(newArgs, list_nth(defaults, position));
+					for (j = 1; j < list_length(funcExpr->args); ++j)
+						newArgs = lappend(newArgs, list_nth(funcExpr->args, j));
+					funcExpr->args = newArgs;
+					ret = lappend(ret, funcExpr);
+				}
+			}
+			else ret = lappend(ret, lfirst(lc));
+			++i;
+		}
+		return ret;
+
+		ReleaseSysCache(bbffunctuple);
+	}
+	else
+	{
+		elog(ERROR, "Can't use default in this function or procedure");
+	}
+	
+	return fargs;	
 }
 
 /*

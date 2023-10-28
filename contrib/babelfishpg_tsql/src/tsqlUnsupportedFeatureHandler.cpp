@@ -192,11 +192,9 @@ protected:
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function", getLineAndPos(ctx)); return visitChildren(ctx); }
 
-		antlrcpp::Any visitDefault_expr(TSqlParser::Default_exprContext *ctx) override;
 		antlrcpp::Any visitHierarchyid_coloncolon(TSqlParser::Hierarchyid_coloncolonContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_literal_expr(TSqlParser::Odbc_literal_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitDollar_action_expr(TSqlParser::Dollar_action_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx) override;
 
 		antlrcpp::Any visitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override;
@@ -1398,21 +1396,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAggregate_windowed_functio
 	if (ctx->GROUPING_ID())
 		handle(INSTR_UNSUPPORTED_TSQL_GROUPING_FUNCTION, ctx->GROUPING());
 
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDefault_expr(TSqlParser::Default_exprContext *ctx)
-{
-	TSqlParser::Expression_listContext *pctx = dynamic_cast<TSqlParser::Expression_listContext *>(ctx->parent);
-	if (!pctx || dynamic_cast<TSqlParser::Table_value_constructorContext *>(pctx->parent) == nullptr) /* if DEFAULT expression is used for VALUES ..., accept it */
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx)
-{
-	if (ctx->DEFAULT())
-		handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_PARAMETER_DEFAULT, ctx->DEFAULT());
 	return visitChildren(ctx);
 }
 
