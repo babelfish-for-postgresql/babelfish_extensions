@@ -32,7 +32,7 @@ execute sp_changedbowner 'new_owner_login_sp'
 go
 ~~ERROR (Code: 50000)~~
 
-~~ERROR (Message: Cannot change the owner of the master or model database.)~~
+~~ERROR (Message: Cannot change the owner of the master or tempdb database.)~~
 
 use tempdb
 go
@@ -40,7 +40,7 @@ execute sp_changedbowner 'new_owner_login_sp'
 go
 ~~ERROR (Code: 50000)~~
 
-~~ERROR (Message: Cannot change the owner of the master or model database.)~~
+~~ERROR (Message: Cannot change the owner of the master or tempdb database.)~~
 
 
 -- except for msdb
@@ -75,7 +75,6 @@ execute sp_changedbowner @v
 go
 use master
 go
-
 
 -- tsql user=dba_login_sp password=12345678
 use master
