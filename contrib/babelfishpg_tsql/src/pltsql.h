@@ -1897,7 +1897,6 @@ extern int	insert_bulk_rows_per_batch;
 extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 
-
 /**********************************************************************
  * Function declarations
  **********************************************************************/

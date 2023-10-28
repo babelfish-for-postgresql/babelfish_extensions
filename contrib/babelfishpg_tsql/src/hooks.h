@@ -10,10 +10,6 @@ extern IsExtendedCatalogHookType PrevIsExtendedCatalogHook;
 extern IsToastRelationHookType PrevIsToastRelationHook;
 extern IsToastClassHookType PrevIsToastClassHook;
 
-/* TODO: (pivot) Remove these later*/
-extern RawStmt	   *bbf_pivot_sql1;
-extern RawStmt	   *bbf_pivot_sql2;
-
 extern void InstallExtendedHooks(void);
 extern void UninstallExtendedHooks(void);
 

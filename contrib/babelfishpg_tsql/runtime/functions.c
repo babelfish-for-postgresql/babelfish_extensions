@@ -3511,6 +3511,12 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+/*
+* We transformed tsql pivot stmt to 3 parsetree. The outer parsetree is a wrapper stmt
+* while the other two are helper stmts. Since postgres does not natively support execute
+* raw parsetree, and we can only get raw parsetree after the analyzer, we created this 
+* SPI function to help execute raw parsetree.
+*/
 int 
 SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
 {
@@ -3551,11 +3557,16 @@ SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
 	plancache_list = lappend(plancache_list, plansource);
 	plan.plancache_list = plancache_list;
 	plan.oneshot = true;
-
-	ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
-
-	/* reset sql_dialect */
-	sql_dialect = prev_sql_dialect;
+	PG_TRY();
+	{
+		ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
+	}
+	PG_FINALLY();
+	{
+		/* reset sql_dialect */
+		sql_dialect = prev_sql_dialect;
+	}
+	PG_END_TRY();
 
 	return ret;
 }
@@ -3589,23 +3600,30 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 
+	/* 
+	* Previously we saved two raw parsetrees in tsql outermost context
+	* here we are retrieve those raw parsetree for pivot execution
+	*/
 	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
 	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
 	if (!tsql_outmost_context)
 		ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("pivot outer context not found")));
-
+	
 	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
-	per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
-	bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
-	bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
-	MemoryContextSwitchTo(oldcontext);
-
-	if (!per_pivot_list)
-		ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("pivot parsetree list not found")));
+	PG_TRY();
+	{
+		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+		Assert(list_length(per_pivot_list) >= 2);
+		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
+		bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
+	}
+	PG_FINALLY();
+	{
+		MemoryContextSwitchTo(oldcontext);
+	}
+	PG_END_TRY();
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -3649,7 +3667,6 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
-	/* TODO: do we need to free the list */
 	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
 	tsql_outmost_estat->pivot_number--;
 	MemoryContextSwitchTo(oldcontext);
@@ -3785,6 +3802,7 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 		bool		firstpass = true;
 		uint64		i;
 		int			j;
+		int			non_pivot_columns;
 		int			result_ncols;
 
 		if (num_categories == 0)
@@ -3803,7 +3821,13 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 					 errdetail("The provided SQL must return 2 " \
 							   " columns; category, and values.")));
 
-		result_ncols = (ncols - 2) + num_categories;
+		/* 
+		* The last 2 columns of the results are category column and value column
+		* that will be used for later pivot operation. The remaining columns are 
+		* non_pivot columns;
+		*/
+		non_pivot_columns = ncols - 2;
+		result_ncols = non_pivot_columns + num_categories;
 
 		/* Recheck to make sure we tuple descriptor still looks reasonable */
 		if (tupdesc->natts != result_ncols)
@@ -3816,8 +3840,8 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 
 		/* allocate space and make sure it's clear */
 		values = (char **) palloc0(result_ncols * sizeof(char *));
-		columngroup = (char **) palloc0((ncols - 2) * sizeof(char *));
-		lastcolumngroup = (char **) palloc0((ncols - 2) * sizeof(char *));
+		columngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
+		lastcolumngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
 
 		for (i = 0; i < proc; i++)
 		{
@@ -3832,7 +3856,7 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 			if (ncols > 2)
 			{
 				/* get the non-pivot column group from the current sql result tuple */
-				for (j = 0; j < ncols - 2; j++)
+				for (j = 0; j < non_pivot_columns; j++)
 				{	
 					columngroup[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j+1);
 				}
@@ -3844,7 +3868,7 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 
 				if (!firstpass)
 				{
-					for (j = 0; j < ncols - 2; j++)
+					for (j = 0; j < non_pivot_columns; j++)
 					{	
 						if (!xstreq(columngroup[j], lastcolumngroup[j]))
 						{
@@ -3876,7 +3900,7 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 							xpfree(values[j]);
 					}
 
-					for (j = 0; j < ncols - 2; j++)
+					for (j = 0; j < non_pivot_columns; j++)
 						values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
 
 					/* we're no longer on the first pass */
@@ -3892,13 +3916,13 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname, catdesc);
 
 				if (catdesc)
-					values[catdesc->attidx + ncols - 2] =
+					values[catdesc->attidx + non_pivot_columns] =
 						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
 			}
 
 			if (ncols > 2)
 			{
-				for (j = 0; j < ncols - 2; j++)
+				for (j = 0; j < non_pivot_columns; j++)
 				{	
 					xpfree(lastcolumngroup[j]);
 					xpstrdup(lastcolumngroup[j], columngroup[j]);
