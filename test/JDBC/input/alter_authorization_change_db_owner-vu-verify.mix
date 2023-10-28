@@ -25,15 +25,18 @@ go
 alter authorization on database::tempdb to new_owner_login
 go
 -- allowed for msdb
-select name, suser_sname(sid) from sysdatabases where name = 'msdb'
-go
 alter authorization on database::msdb to new_owner_login
 go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
-alter authorization on database::msdb to jdbc_user
+
+-- tsql
+use master
+go
+execute('alter authorization on database::msdb to ' + suser_name())
 go
 
+-- tsql user=dba_login password=12345678
 -- before owner change:
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go

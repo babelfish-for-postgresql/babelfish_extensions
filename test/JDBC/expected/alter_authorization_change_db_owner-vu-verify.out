@@ -46,13 +46,6 @@ go
 ~~ERROR (Message: Cannot change the owner of the master, model, tempdb or distribution database.)~~
 
 -- allowed for msdb
-select name, suser_sname(sid) from sysdatabases where name = 'msdb'
-go
-~~START~~
-text#!#nvarchar
-msdb#!#jdbc_user
-~~END~~
-
 alter authorization on database::msdb to new_owner_login
 go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
@@ -62,9 +55,18 @@ text#!#nvarchar
 msdb#!#new_OWNER_login
 ~~END~~
 
-alter authorization on database::msdb to jdbc_user
-go
 
+-- tsql
+use master
+go
+execute('alter authorization on database::msdb to ' + suser_name())
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'suser_name' at line 1 and character position 54)~~
+
+
+-- tsql user=dba_login password=12345678
 -- before owner change:
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go

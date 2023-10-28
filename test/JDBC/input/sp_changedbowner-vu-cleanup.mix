@@ -1,5 +1,8 @@
 -- cleanup
+-- tsql
 use master
+go
+drop login dba_login_sp 
 go
 drop login new_OWNER_login_sp 
 go

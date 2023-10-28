@@ -1,6 +1,8 @@
 -- tsql
 use master
 go
+create login dba_login_sp with password='12345678'
+go
 create login new_OWNER_login_sp with password='12345678'
 go
 create login new_OWNER_login_sp2 with password='12345678'
