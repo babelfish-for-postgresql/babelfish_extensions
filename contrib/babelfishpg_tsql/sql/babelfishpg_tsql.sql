@@ -3647,7 +3647,7 @@ BEGIN
 		RETURN
 	END
 
-	-- Compose the ALTER ATHORIZATION statement
+	-- Compose the ALTER ATHORIZATION statement:
 	SET @cmd = 'ALTER AUTHORIZATION ON DATABASE::[' + @db + '] TO [' + SUSER_NAME(SUSER_ID(@loginame)) + ']'
 	EXECUTE(@cmd)
 END
