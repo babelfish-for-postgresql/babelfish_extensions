@@ -1,0 +1,143 @@
+select default_params_func1(default, default);
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+select default_params_func1(10, default);
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+select default_params_func1(10);
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+select default_params_func1();
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+select default_params_func1(default);
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+select default_params_func2(10,default,20);
+GO
+~~START~~
+int
+32
+~~END~~
+
+
+select default_params_func2(10,20,30);
+GO
+~~START~~
+int
+60
+~~END~~
+
+
+select default_params_func3(default);
+go
+~~START~~
+varchar
+a
+~~END~~
+
+
+select default_params_func3();
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+
+select default_params_func3('dddd');
+GO
+~~START~~
+varchar
+d
+~~END~~
+
+
+exec default_params_proc1 111, default, 333
+GO
+~~START~~
+int#!#int#!#int
+111#!#2#!#333
+~~END~~
+
+
+exec default_params_proc1 default, default, default
+GO
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+~~END~~
+
+
+exec default_params_proc1 default
+GO
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+~~END~~
+
+
+exec default_params_proc2 default, 2
+GO
+~~START~~
+varchar#!#int
+abc#!#2
+~~END~~
+
+
+exec default_params_proc2 'dddd', 2
+GO
+~~START~~
+varchar#!#int
+dddd#!#2
+~~END~~
+
+
+exec default_params_proc3 default, 2
+GO
+~~START~~
+varchar#!#int
+a#!#2
+~~END~~
+
+
+exec default_params_proc3 'dddd', 3
+GO
+~~START~~
+varchar#!#int
+d#!#3
+~~END~~
+
+
+exec default_params_proc4 1,2,default
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#2#!#dbb
+~~END~~
+
