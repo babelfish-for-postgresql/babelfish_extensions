@@ -33,7 +33,9 @@ go
 -- tsql
 use master
 go
-execute('alter authorization on database::msdb to ' + suser_name())
+declare @cmd varchar(100)
+set @cmd = 'alter authorization on database::msdb to ' + suser_name()
+execute(@cmd)
 go
 
 -- tsql user=dba_login password=12345678
@@ -410,4 +412,3 @@ go
 -- should raise error as procedure was not created:
 drop procedure p_change_db_owner_3
 go
-

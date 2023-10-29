@@ -59,12 +59,10 @@ msdb#!#new_OWNER_login
 -- tsql
 use master
 go
-execute('alter authorization on database::msdb to ' + suser_name())
+declare @cmd varchar(100)
+set @cmd = 'alter authorization on database::msdb to ' + suser_name()
+execute(@cmd)
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'suser_name' at line 1 and character position 54)~~
-
 
 -- tsql user=dba_login password=12345678
 -- before owner change:
@@ -700,5 +698,4 @@ go
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "p_change_db_owner_3")~~
-
 
