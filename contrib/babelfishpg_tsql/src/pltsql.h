@@ -1473,6 +1473,9 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
+	int		    pivot_number;
+	List	   *pivot_parsetree_list;
+
 	List	   *explain_infos;
 	char	   *schema_name;
 	const char *db_name;

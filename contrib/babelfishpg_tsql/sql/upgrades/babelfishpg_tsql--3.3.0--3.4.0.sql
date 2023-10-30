@@ -3105,6 +3105,10 @@ $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.bbf_pivot()
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
