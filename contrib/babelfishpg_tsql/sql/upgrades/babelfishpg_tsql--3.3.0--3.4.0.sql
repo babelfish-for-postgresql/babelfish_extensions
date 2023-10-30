@@ -2607,7 +2607,6 @@ and
     tt.typrelid is not null  
   );
 GRANT SELECT ON sys.types TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
 
 
 ALTER VIEW sys.table_types RENAME TO table_types_deprecated_3_4_0;
@@ -2619,10 +2618,9 @@ from sys.types st
 inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
 where is_table_type = 1;
 GRANT SELECT ON sys.table_types TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');
 
 
-ALTER VIEW sys.sp_special_columns_view RENAME TO sp_special_columns_view_3_4_0;
+
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT
 CAST(1 AS SMALLINT) AS SCOPE,
@@ -2677,10 +2675,8 @@ WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 AND X.indislive ;
 
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC; 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_special_columns_view_3_4_0');
 
 
-ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_3_4_0;
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
 SELECT
@@ -2935,7 +2931,6 @@ LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return t
 -- the join below allows us to retrieve the name of the base type of the user-defined type
 LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_3_4_0');
 
 
 
@@ -2970,11 +2965,10 @@ SELECT
 FROM sys.types t
 WHERE t.is_assembly_type = 1;
 GRANT SELECT ON sys.assembly_types TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'assembly_types_3_4_0');
 
 
 
-ALTER VIEW sys.all_parameters RENAME TO all_parameters_3_4_0;
+
 CREATE OR REPLACE VIEW sys.all_parameters
 AS
 SELECT
@@ -3066,7 +3060,6 @@ WHERE ( -- If it is a Table function, we only want the inputs
       return_type NOT LIKE 'TABLE(%' OR 
       (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_parameters_3_4_0');
 
 
 ALTER VIEW sys.systypes RENAME TO systypes_3_4_0;
@@ -3096,9 +3089,7 @@ SELECT CAST(name as sys.sysname) as name
   , CAST(collation_name as sys.sysname) as collation
 FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_3_4_0');
 
-ALTER VIEW sys.all_objects RENAME TO all_objects_3_4_0;
 create or replace view sys.all_objects as
 select 
     cast (name as sys.sysname) collate sys.database_default
@@ -3335,10 +3326,9 @@ select
 from sys.table_types tt
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_objects_3_4_0');
 
 
-ALTER VIEW sys.objects RENAME TO objects_3_4_0;
+
 create or replace view sys.objects as
 select
       CAST(t.name as sys.sysname) as name 
@@ -3508,7 +3498,11 @@ select
 from sys.table_types tt
 inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'objects_3_4_0');
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'assembly_types_3_4_0');
 
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
