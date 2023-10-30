@@ -1611,7 +1611,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_approlepassword",
 	"sp_audit_write",
 	"sp_change_users_login",
-	"sp_changedbowner",
 	"sp_changeobjectowner",
 	"sp_control_dbmasterkey_password",
 	"sp_dbfixedrolepermission",

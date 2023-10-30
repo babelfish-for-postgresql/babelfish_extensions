@@ -458,6 +458,7 @@ triggers_with_transaction
 unquoted_string
 doublequoted_string
 alter_authorization_change_db_owner
+sp_changedbowner
 datetimeoffset-timezone
 BABEL-4046
 host_id

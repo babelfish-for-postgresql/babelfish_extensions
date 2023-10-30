@@ -25,15 +25,20 @@ go
 alter authorization on database::tempdb to new_owner_login
 go
 -- allowed for msdb
-select name, suser_sname(sid) from sysdatabases where name = 'msdb'
-go
 alter authorization on database::msdb to new_owner_login
 go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
-alter authorization on database::msdb to jdbc_user
+
+-- tsql
+use master
+go
+declare @cmd varchar(100)
+set @cmd = 'alter authorization on database::msdb to ' + suser_name()
+execute(@cmd)
 go
 
+-- tsql user=dba_login password=12345678
 -- before owner change:
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
@@ -375,11 +380,14 @@ declare @spid int, @cmd varchar(30)
 while (1=1)
 begin 
 select @spid = spid from sys.sysprocesses where spid <> @@spid and spid not in (select killed from #killed)
+and (lower(loginname) like 'new_owner_login%' or lower(loginname) like 'login6%'  or lower(loginname) = 'dba_login')
 if @@rowcount = 0 break
 insert #killed values(@spid)
 set @cmd = 'kill ' + convert(varchar, @spid)
 execute(@cmd)
 end
+go
+exec pg_sleep 3
 go
 
 use master
@@ -404,4 +412,3 @@ go
 -- should raise error as procedure was not created:
 drop procedure p_change_db_owner_3
 go
-

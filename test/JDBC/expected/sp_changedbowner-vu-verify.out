@@ -1,0 +1,424 @@
+
+-- tsql
+-- sp_changedbowner: this is a subset of the tests for C:\Babelfish\code\work\chgdbowner\alter_authorization_change_db_owner
+use master
+go
+alter login dba_login_sp with password='12345678'
+go
+alter server role sysadmin add member dba_login_sp
+go
+alter login new_OWNER_login_sp with password='12345678'
+go
+alter login new_OWNER_login_sp2 with password='12345678'
+go
+alter login [new_OWNER_login_sp3] with password='12345678'
+go
+alter login [new_OWNER_login_sp 4] with password='12345678'
+go
+set quoted_identifier on
+go
+alter login "new_OWNER_login_sp5" with password='12345678'
+go
+alter login "new_OWNER_login_sp 6" with password='12345678'
+go
+set quoted_identifier off
+go
+
+-- tsql user=dba_login_sp password=12345678
+-- system database ownership cannot be changed
+use master
+go
+execute sp_changedbowner 'new_owner_login_sp'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot change the owner of the master or tempdb database.)~~
+
+use tempdb
+go
+execute sp_changedbowner 'new_owner_login_sp'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot change the owner of the master or tempdb database.)~~
+
+
+-- except for msdb
+use msdb
+go
+execute sp_changedbowner new_owner_login_sp
+go
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+~~START~~
+text#!#nvarchar
+msdb#!#new_OWNER_login_sp
+~~END~~
+
+execute sp_changedbowner dba_login_sp
+go
+select name, suser_sname(sid) from sysdatabases where name = 'msdb'
+go
+~~START~~
+text#!#nvarchar
+msdb#!#dba_login_sp
+~~END~~
+
+use master
+go
+
+-- tsql
+use msdb
+go
+declare @v varchar(30) = suser_name()
+execute sp_changedbowner @v
+go
+use master
+go
+
+-- tsql user=dba_login_sp password=12345678
+use master
+go
+create database change_OWNER_db_sp
+go
+use change_owner_DB_SP
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#dba_login_sp
+~~END~~
+
+execute sp_changedbowner 'no_such_login_sp'
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'no_such_login_sp', because it does not exist or you do not have permission.)~~
+
+
+-- new owner cannot be a user in the DB already
+create user new_owner_login_sp
+go
+execute sp_changedbowner new_owner_login_sp
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The proposed new database owner is already a user or aliased in the database.)~~
+
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#dba_login_sp
+~~END~~
+
+drop user new_owner_login_sp
+go
+execute sp_changedbowner new_owner_LOGIN_SP
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+
+-- tsql user=new_owner_LOGIN_SP password=12345678
+use CHANGE_OWNER_DB_SP
+go
+select user_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#change_owner_db_sp
+~~END~~
+
+use master
+go
+
+-- tsql user=dba_login_sp password=12345678
+-- second argument is ignored
+use change_owner_db_sp
+go
+execute sp_changedbowner NEW_owner_login_sp2, null
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp2
+~~END~~
+
+execute sp_changedbowner [new_owner_LOGIN_SP3], 12345
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp3
+~~END~~
+
+execute sp_changedbowner [NEW_owner_login_sp3], 'abcde'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp3
+~~END~~
+
+execute sp_changedbowner [new_owner_LOGIN_SP 4], 'abcdefgh'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp 4
+~~END~~
+
+execute sp_changedbowner "NEW_owner_login_sp5"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp5
+~~END~~
+
+execute sp_changedbowner @loginame = "new_owner_LOGIN_SP 6", @map = 'some-string'
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp 6
+~~END~~
+
+
+use change_owner_db_sp
+go
+execute sp_changedbowner "new_owner_login_sp"
+go
+use master
+go
+
+-- tsql user=new_owner_LOGIN_SP password=12345678
+-- change owner to yourself
+use change_owner_db_sp
+go
+select user_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#change_owner_db_sp
+~~END~~
+
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+execute sp_changedbowner "new_owner_login_sp"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+execute sp_changedbowner "NEW_OWNER_LOGIN_SP"
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+execute sp_changedbowner [NEW_owner_login_sp]
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+use master
+go
+
+-- tsql user=dba_login_sp password=12345678
+-- roll back owner change in transaction
+use change_owner_db_sp
+go
+begin tran
+go
+select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+varchar#!#text#!#nvarchar
+before owner change#!#change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+execute sp_changedbowner NEW_owner_login_sp2
+go
+select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+varchar#!#text#!#nvarchar
+after owner change#!#change_owner_db_sp#!#new_OWNER_login_sp2
+~~END~~
+
+rollback
+go
+select 'after rollback', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+varchar#!#text#!#nvarchar
+after rollback#!#change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+
+
+-- NULL as new owner is a no-op
+execute sp_changedbowner NULL
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+execute sp_changedbowner @loginame=NULL
+go
+select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
+go
+~~START~~
+text#!#nvarchar
+change_owner_db_sp#!#new_OWNER_login_sp
+~~END~~
+
+
+-- non-existing logins
+execute sp_changedbowner ''
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal '', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner ' '
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner @loginame=' '
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner [ ]
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+execute sp_changedbowner @loginame=[ ]
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal ' ', because it does not exist or you do not have permission.)~~
+
+use master
+go
+drop database change_owner_db_sp
+go
+
+-- tests for long names and mixed case
+create login    LOGIN63long_345678901234567890123456789012345678901234567890123 with password = '12345678'
+go
+create database DB63long_012345678901234567890123456789012345678901234567890123
+go
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+execute sp_changedbowner LOGIN63long_345678901234567890123456789012345678901234567890123
+go
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
+go
+~~START~~
+text#!#nvarchar
+db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
+~~END~~
+
+use master
+go
+
+-- tsql user=LOGIN63long_345678901234567890123456789012345678901234567890123 password=12345678
+use DB63long_012345678901234567890123456789012345678901234567890123
+go
+select user_name(), db_name()
+go
+~~START~~
+nvarchar#!#nvarchar
+dbo#!#db63long_012345678901234567890123456789012345678901234567890123
+~~END~~
+
+use master
+go
+drop database DB63long_012345678901234567890123456789012345678901234567890123
+go
+
+-- tsql user=dba_login_sp password=12345678
+create login    LOGIN64long_3456789012345678901234567890123456789012345678901234 with password = '12345678'
+go
+create database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+use DB64long_0123456789012345678901234567890123456789012345678901234
+go
+-- this returns 'principal not found' due to a bug in SUSER_ID() for names > 63 chars
+execute sp_changedbowner "LOGIN64long_3456789012345678901234567890123456789012345678901234"
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Cannot find the principal 'LOGIN64long_3456789012345678901234567890123456789012345678901234', because it does not exist or you do not have permission.)~~
+
+select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
+go
+~~START~~
+text#!#nvarchar
+db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login_sp
+~~END~~
+
+use master
+go
+drop database DB64long_0123456789012345678901234567890123456789012345678901234
+go
+
+-- tsql
+use master
+go
+set nocount on
+go
+-- kill remaining sessions
+create table #killed(killed int)
+go
+declare @spid int, @cmd varchar(30)
+while (1=1)
+begin 
+select @spid = spid from sys.sysprocesses where spid <> @@spid and spid not in (select killed from #killed)
+and (lower(loginname) like 'new_owner_login%' or lower(loginname) like 'login6%' or lower(loginname) = 'dba_login_sp') 
+if @@rowcount = 0 break
+insert #killed values(@spid)
+set @cmd = 'kill ' + convert(varchar, @spid)
+execute(@cmd)
+end
+go
+exec pg_sleep 3
+go
