@@ -5667,17 +5667,15 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 {
 	List *result;
 	ListCell *elements;
-	CreateSeqStmt *seqstmt;
-	AlterSeqStmt *altseqstmt;
-	List *attnamelist;
+	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
-
+	List *modifiedTargetList;
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
-	seqstmt = NULL;
-	altseqstmt = NULL;
+	altstmt = NULL;
+	modifiedTargetList = NIL;
 
 	if (n && n->type == T_Query)
 	{
@@ -5690,9 +5688,6 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
 			{
 				FuncExpr *funcexpr;
-				Oid snamespaceid;
-				char *snamespace;
-				char *sname;
 				List *seqoptions = NIL;
 				ListCell *arg;
 				int typeoid = 0;
@@ -5702,6 +5697,9 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 				int64 seedvalue = 0;
 				int64 incrementvalue = 0;
 				int argnum;
+				AlterTableCmd *lcmd;
+				ColumnDef *def;
+				Constraint *constraint;
 
 				if (seen_identity)
 					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
@@ -5722,7 +5720,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 						typeoid = get_identity_into_args(farg_node);
 						type = get_oid_type_string(typeoid);
 						typename = typeStringToTypeName(type);
-						seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						// seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
 						break;
 					case 2:
 						seedvalue = get_identity_into_args(farg_node);
@@ -5742,34 +5740,40 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 						break;
 					}
 				}
+		
+				altstmt = makeNode(AlterTableStmt);
+				altstmt->relation  = into->rel;
+				altstmt->cmds = NIL;
+		
+				constraint = makeNode(Constraint);
+				constraint->contype = CONSTR_IDENTITY;
+				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
+				constraint->options = seqoptions;
 
-				into->identityName = tle->resname;
-				into->identityType = TypeNameToString(typename);
-				seen_identity = true;
+				def = makeNode(ColumnDef);
+				def->colname = tle->resname;
+				def->typeName = typename;
+				def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
+				def->is_not_null = true;
+				def->constraints = lappend(def->constraints, constraint);
 
-				snamespaceid = RangeVarGetCreationNamespace(into->rel);
-				snamespace = get_namespace_name(snamespaceid);
-				sname = ChooseRelationName(into->rel->relname, tle->resname, "seq", snamespaceid, false);
-				seqstmt = makeNode(CreateSeqStmt);
-				seqstmt->for_identity = true;
-				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				seqstmt->sequence->relpersistence = into->rel->relpersistence;
-				seqstmt->options = seqoptions;
-
-				altseqstmt = makeNode(AlterSeqStmt);
-				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname), makeString(tle->resname));
-				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *)attnamelist, -1));
-				altseqstmt->for_identity = true;
+				lcmd = makeNode(AlterTableCmd);
+				lcmd->subtype = AT_AddColumn;
+				lcmd->missing_ok = false;
+				lcmd->def = (Node *)def;
+				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
+			else
+			{
+             	modifiedTargetList = lappend(modifiedTargetList, tle);
+            }
 		}
+		q->targetList = modifiedTargetList;
 	}
 
-	if (seqstmt)
-		result = lappend(result, seqstmt);
 	result = lappend(result, stmt);
-	if (altseqstmt)
-		result = lappend(result, altseqstmt);
+	if (altstmt)
+		result = lappend(result, altstmt);
 
 	return result;
 }
