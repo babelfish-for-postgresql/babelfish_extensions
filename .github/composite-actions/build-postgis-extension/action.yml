@@ -26,7 +26,7 @@ runs:
         cmake --build .
         sudo cmake --build . --target install
         cd ../../postgis-3.4.0
-        ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
+        ./configure --without-protobuf --without-raster --with-projdir=$HOME/work/babelfish_extensions --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
       shell: bash
