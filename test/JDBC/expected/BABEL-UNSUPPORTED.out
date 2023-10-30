@@ -2035,6 +2035,8 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2101,6 +2103,8 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2148,6 +2152,8 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
+babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
+babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2369,7 +2375,7 @@ ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ALTER AUTHORIZATION ON' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'ALTER AUTHORIZATION on object types other than DATABASE::' is not currently supported in Babelfish)~~
 
 
 -- alter view (BABEL-2017)
@@ -2440,29 +2446,6 @@ GO
 DROP TABLE t4919;
 GO
 
-
--- PIVOT (265, 488)
-CREATE TABLE t265 (c1 VARCHAR(50), c2 VARCHAR(50));
-GO
-SELECT * FROM (SELECT c1, c2 FROM t265) AS p PIVOT (COUNT(c1) FOR c2 IN (c1)) AS pv;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'PIVOT' is not currently supported in Babelfish)~~
-
-DROP TABLE t265;
-GO
-
-CREATE TABLE t488(id text);
-GO
-SELECT * FROM (SELECT id from t488) p PIVOT( sum(id)FOR id in (["HI"])) s;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'PIVOT' is not currently supported in Babelfish)~~
-
-DROP TABLE t488;
-GO
 
 
 -- CREATE DATBASE COLLATE (448)
@@ -2670,14 +2653,14 @@ select func1(DEFAULT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DEFAULT' is not currently supported in Babelfish)~~
+~~ERROR (Message: function func1(unknown) does not exist)~~
 
 
 EXEC proc1 DEFAULT;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DEFAULT' is not currently supported in Babelfish)~~
+~~ERROR (Message: procedure proc1(unknown) does not exist)~~
 
 
 -- NATIONAL/VARYING (BABEL-2360/2361)

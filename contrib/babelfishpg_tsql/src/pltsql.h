@@ -192,6 +192,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
 	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
@@ -1037,6 +1038,17 @@ typedef struct PLtsql_stmt_grantdb
 } PLtsql_stmt_grantdb;
 
 /*
+ *	ALTER AUTHORIZATION ON DATABASE::<dbname> TO <login>
+ */
+typedef struct PLtsql_stmt_change_dbowner
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *db_name;
+	char	   *new_owner_name;  /* Login name for new owner */
+} PLtsql_stmt_change_dbowner;
+
+/*
  *	Grant on schema stmt
  */
 typedef struct PLtsql_stmt_grantschema
@@ -1460,6 +1472,9 @@ typedef struct PLtsql_execstate
 	 * EXECUTE, and can behave differently.
 	 */
 	bool		insert_exec;
+
+	int		    pivot_number;
+	List	   *pivot_parsetree_list;
 
 	List	   *explain_infos;
 	char	   *schema_name;

@@ -128,6 +128,12 @@ static const struct config_enum_entry escape_hatch_options[] = {
 	{NULL, EH_NULL, false},
 };
 
+static const struct config_enum_entry bbf_isolation_options[] = {
+	{"off", ISOLATION_OFF, false},
+	{"pg_isolation", PG_ISOLATION, false},
+	{NULL, ISOLATION_OFF, false},
+};
+
 static bool
 check_ansi_null_dflt_on(bool *newval, void **extra, GucSource source)
 {
@@ -1207,6 +1213,8 @@ int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
 int			escape_hatch_checkpoint = EH_IGNORE;
 int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
+int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
+int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 
 void
 define_escape_hatch_variables(void)
@@ -1554,6 +1562,28 @@ define_escape_hatch_variables(void)
 							 &escape_hatch_set_transaction_isolation_level,
 							 EH_STRICT,
 							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* REPEATABLE READ MAPPING */
+	DefineCustomEnumVariable("babelfishpg_tsql.isolation_level_repeatable_read",
+							 gettext_noop("Select mapping for isolation level reapeatable read"),
+							 NULL,
+							 &pltsql_isolation_level_repeatable_read,
+							 ISOLATION_OFF,
+							 bbf_isolation_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
+	/* SERIALIZABLE MAPPING */
+	DefineCustomEnumVariable("babelfishpg_tsql.isolation_level_serializable",
+							 gettext_noop("Select mapping for isolation level serializable"),
+							 NULL,
+							 &pltsql_isolation_level_serializable,
+							 ISOLATION_OFF,
+							 bbf_isolation_options,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);

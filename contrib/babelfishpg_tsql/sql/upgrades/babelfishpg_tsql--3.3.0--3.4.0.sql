@@ -967,6 +967,78 @@ create or replace function sys.getutcdate() returns sys.datetime
 AS 'babelfishpg_tsql', 'getutcdate'
 LANGUAGE C STABLE;
 
+-- Cast functions from datettime to numeric types
+CREATE OR REPLACE FUNCTION sys.datetime_to_bit(IN arg sys.DATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'datetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int2(IN arg sys.DATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'datetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int4(IN arg sys.DATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'datetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int8(IN arg sys.DATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'datetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float4(IN arg sys.DATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'datetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float8(IN arg sys.DATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'datetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_numeric(IN arg sys.DATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'datetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Cast functions from smalldatetoime to numeric types
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_bit(IN arg sys.SMALLDATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'smalldatetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int2(IN arg sys.SMALLDATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'smalldatetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int4(IN arg sys.SMALLDATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'smalldatetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int8(IN arg sys.SMALLDATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'smalldatetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float4(IN arg sys.SMALLDATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'smalldatetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float8(IN arg sys.SMALLDATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'smalldatetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_numeric(IN arg sys.SMALLDATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'smalldatetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- internal helper function for date_bucket().
 CREATE OR REPLACE FUNCTION sys.date_bucket_internal_helper(IN datepart PG_CATALOG.TEXT, IN number INTEGER, IN check_date boolean, IN origin boolean, IN date ANYELEMENT default NULL) RETURNS boolean 
 AS 
@@ -1689,11 +1761,26 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS cr
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE pg_has_role(suser_name()::TEXT, 'sysadmin'::TEXT, 'MEMBER')
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 OR Ext.orig_loginname = suser_name()
+OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
 OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+--SERVER_ROLE_MEMBER
+CREATE OR REPLACE VIEW sys.server_role_members AS
+SELECT
+CAST(Authmbr.roleid AS INT) AS role_principal_id,
+CAST(Authmbr.member AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.type = 'R';
+
+GRANT SELECT ON sys.server_role_members TO PUBLIC;
 
 create or replace view sys.schemas as
 select
@@ -2913,6 +3000,30 @@ GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     permission sys.SYSNAME, 
     sub_securable sys.SYSNAME,
     sub_securable_class sys.nvarchar(60)) TO PUBLIC;
+    
+CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
+LANGUAGE plpgsql
+AS $$ 
+DECLARE 
+	babelfish_catalog RECORD;
+	schema_name varchar = 'sys';
+	error_msg text;
+BEGIN
+	FOR babelfish_catalog IN (
+		SELECT relname as name from pg_class t 
+		INNER JOIN pg_namespace n on n.oid = t.relnamespace
+		WHERE t.relkind = 'r' and n.nspname = schema_name
+		)
+	LOOP
+		BEGIN
+			EXECUTE format('ANALYZE %I.%I', schema_name, babelfish_catalog.name);
+		EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'ANALYZE for babelfish catalog %.% failed with error: %s', schema_name, babelfish_catalog.name, error_msg;
+		END;
+	END LOOP;
+END;
+$$;
 
 -- This is a temporary procedure which is called during upgrade to update guest schema
 -- for the guest users in the already existing databases
@@ -2994,11 +3105,29 @@ $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.bbf_pivot()
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 
+CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
+    SELECT * 
+    FROM pg_catalog.pg_settings 
+    WHERE name collate "C" like 'babelfishpg_tsql.explain_%' OR
+          name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+          name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
+          name collate "C" like 'babelfishpg_tsql.isolation_level_%';
+GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
+
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+

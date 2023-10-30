@@ -1,0 +1,48 @@
+#Q#SELECT set_config('babelfishpg_tsql.isolation_level_repeatable_read','pg_isolation',false)
+#D#text
+pg_isolation
+#Q#SELECT set_config('babelfishpg_tsql.isolation_level_serializable','off',false)
+#D#text
+off
+#Q#select @@trancount;
+#D#int
+1
+#Q#select current_setting('transaction_isolation')
+#D#text
+repeatable read
+#Q#select current_setting('default_transaction_isolation')
+#D#text
+repeatable read
+#Q#select @@trancount;
+#D#int
+0
+#Q#select current_setting('transaction_isolation')
+#D#text
+read committed
+#Q#select current_setting('default_transaction_isolation')
+#D#text
+read committed
+#Q#SELECT set_config('babelfishpg_tsql.isolation_level_repeatable_read','off',false)
+#D#text
+off
+#Q#SELECT set_config('babelfishpg_tsql.isolation_level_serializable','pg_isolation',false)
+#D#text
+pg_isolation
+#Q#select @@trancount;
+#D#int
+0
+#Q#select current_setting('transaction_isolation')
+#D#text
+read committed
+#Q#select current_setting('default_transaction_isolation')
+#D#text
+read committed
+#Q#select @@trancount;
+#D#int
+1
+#Q#select current_setting('transaction_isolation')
+#D#text
+serializable
+#Q#select current_setting('default_transaction_isolation')
+#D#text
+serializable
