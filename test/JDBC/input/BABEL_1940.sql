@@ -1,10 +1,25 @@
+-- Test is only valid when default server encoding is WIN1252
+
 SELECT CONVERT(VARCHAR(10), 0x123456789)
+GO
+
+SELECT CONVERT(VARBINARY(10), '#Eg‰')
+GO
+
+SELECT CONVERT(VARCHAR(1), 0x99)
+GO
+
+SELECT CONVERT(VARCHAR(2), 0x999999)
+GO
+
+SELECT CONVERT(VARBINARY(1), '™')
 GO
 
 SELECT CONVERT(VARCHAR(10), 0x80)
 GO
 
-SELECT CONVERT(VARCHAR(10), 0xaaa)
+-- 0x81 does not exist is empty in some encodings
+SELECT CONVERT(VARCHAR(10), 0x81)
 GO
 
 SELECT CONVERT(VARCHAR(10), 0x330033)
@@ -58,16 +73,12 @@ GO
 CREATE TABLE babel_1940_t2(a varchar(10) collate japanese_cs_as);
 GO
 
-insert into babel_1940_t2 values ('ｳ'), ('C'), ('ﾊﾟ'), ('３'), ('c'), ('ｲ'), ('Ｃ'),('ﾊ'),('1'), 
-('ｱ'),('パ'), ('b'), ('2'), ('B'),('１'), ('Ａ'),('ア'),('A'), ('a'),('AbC'), ('aBc');
+INSERT INTO babel_1940_t2 VALUES ('a'), ('b'), ('™'), ('ƀ'), ('ä');
 GO
 
+-- Characters with no mapping transform to Ox3F or ?
 SELECT CONVERT(VARBINARY(10), a) FROM babel_1940_t2
 GO
-
-SELECT CONVERT(VARBINARY(10), CONVERT(VARCHAR(10), CONVERT(VARCHAR(10), a))) FROM babel_1940_t2
-GO
-
 
 DROP TABLE babel_1940_t2
 GO
