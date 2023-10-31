@@ -59,12 +59,12 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: database1
+    logical-database: database_1
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: database1
+    logical-database: database_1
   }
 ]]
