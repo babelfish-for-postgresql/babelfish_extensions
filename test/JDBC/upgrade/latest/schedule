@@ -472,6 +472,7 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+typeproperty-dep
 sys_asymmetric_keys
 sys_certificates
 sys_database_permissions

@@ -30,19 +30,3 @@ bit
 0
 ~~END~~
 
-
-select * from sys_table_types_dep_vu_prepare_v2
-GO
-~~START~~
-bit
-0
-~~END~~
-
-
-select * from sys_table_types_dep_vu_prepare_f2()
-GO
-~~START~~
-bit
-0
-~~END~~
-
