@@ -57,15 +57,15 @@ CREATE OR REPLACE FUNCTION sys.formatmessage(IN message_str VARCHAR, VARIADIC "a
 AS 'babelfishpg_tsql', 'formatmessage' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.formatmessage(IN VARCHAR, VARIADIC "any") TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
+CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR, IN INT) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR, IN INT) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern NVARCHAR, IN p_culture VARCHAR default 'en-us')
+CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern sys.NVARCHAR, IN p_culture sys.VARCHAR default 'en-us')
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -124,7 +124,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.STR(IN float_expression NUMERIC, IN length INTEGER DEFAULT 10, IN decimal_point INTEGER DEFAULT 0) RETURNS VARCHAR 
 AS
