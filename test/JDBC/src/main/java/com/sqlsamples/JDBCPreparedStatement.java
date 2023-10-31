@@ -155,7 +155,7 @@ public class JDBCPreparedStatement {
                     sqlxml.setString(parameter[2]);
                     pstmt.setSQLXML(j - 1, sqlxml);
                 } else if (parameter[0].equalsIgnoreCase("tvp")) {
-                    FileInputStream fstream = new FileInputStream(System.getProperty("user.dir") + "/" + parameter[2]);
+                    FileInputStream fstream = new FileInputStream(parameter[2]);
                     DataInputStream in = new DataInputStream(fstream);
                     BufferedReader br = new BufferedReader(new InputStreamReader(in));
 
