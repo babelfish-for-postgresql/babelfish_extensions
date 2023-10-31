@@ -2934,7 +2934,6 @@ GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 
 
-ALTER VIEW sys.assembly_types RENAME TO assembly_types_3_4_0;
 CREATE OR REPLACE VIEW sys.assembly_types
 AS
 SELECT
@@ -3062,7 +3061,6 @@ WHERE ( -- If it is a Table function, we only want the inputs
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
 
 
-ALTER VIEW sys.systypes RENAME TO systypes_3_4_0;
 CREATE OR REPLACE VIEW sys.systypes AS
 SELECT CAST(name as sys.sysname) as name
   , CAST(system_type_id as int) as xtype
@@ -3501,8 +3499,6 @@ GRANT SELECT ON sys.objects TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_3_4_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'assembly_types_3_4_0');
 
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
