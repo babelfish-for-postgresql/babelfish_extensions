@@ -102,3 +102,111 @@ drop table other_events;
 go
 drop table other_events_2;
 go
+
+create table babel_4424_t1 (a numeric(38,0));
+go
+
+create table babel_4424_t2 (a numeric(6,4));
+go
+
+insert into babel_4424_t1 values (9999999999999999999999999999999999999);
+insert into babel_4424_t2 values (99.9999);
+go
+
+select * from
+	(
+	  select a col from babel_4424_t1
+	  union all
+	  select a col from babel_4424_t2
+	)dummy
+order by col;
+go
+
+select * from
+	( select a + a from babel_4424_t1 ) dummy
+go
+
+select * from
+	(
+	  select a col from babel_4424_t1
+	  union all
+	  select a + a col from babel_4424_t1
+	)dummy
+order by col;
+go
+
+select * from
+	(
+	  select a + a col from babel_4424_t1
+	  union all
+	  select a col from babel_4424_t2
+	)dummy
+order by col;
+go
+
+create table babel_4424_t3 (a numeric(37,1));
+GO
+
+create table babel_4424_t4 (a numeric(38,1));
+GO
+
+insert into babel_4424_t3 values (999999999999999999999999999999999999.9);
+go
+
+insert into babel_4424_t4 values (9999999999999999999999999999999999999.9);
+go
+
+select * from (select a + a from babel_4424_t3) dummy;
+go
+
+select * from
+	(
+		select a col from babel_4424_t3
+		union all
+		select a col from babel_4424_t2
+	) dummy
+order by col;
+GO
+
+select * from
+	(
+		select a col from babel_4424_t3
+		union all
+		select a col from babel_4424_t4
+	) dummy
+order by col;
+GO
+
+DROP TABLE babel_4424_t1;
+go
+DROP TABLE babel_4424_t2;
+go
+DROP TABLE babel_4424_t3;
+go
+DROP TABLE babel_4424_t4;
+go
+
+create table babel_4424_t1 (a numeric(38,0) primary key);
+go
+
+create table babel_4424_t2(a numeric(6,3) primary key);
+go
+
+insert into babel_4424_t1 values (99999999999999999999999999999999999999);
+insert into babel_4424_t2 values (99.9999);
+GO
+
+-- index scan + append
+select * from
+	(
+		select a col from babel_4424_t1 where a = 1
+		union all
+		select a col from babel_4424_t2 where a = 1
+	) dummy
+order by col;
+go
+
+DROP TABLE babel_4424_t1;
+go
+DROP TABLE babel_4424_t2;
+go

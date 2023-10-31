@@ -452,6 +452,15 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		integralDigitCount = Max(precision - scale, max_precision - max_scale);
 		max_scale = Max(max_scale, scale);
 		max_precision = integralDigitCount + max_scale;
+		/*
+		 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
+		 * to TDS_MAX_NUM_PRECISION at the cost of scale.
+		 */
+		if (max_precision > TDS_MAX_NUM_PRECISION)
+		{
+			max_scale = Max(0, scale - (max_precision - TDS_MAX_NUM_PRECISION));
+			max_precision = TDS_MAX_NUM_PRECISION;
+		}
 		result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
 	}
 	/* If max_precision is still default then use tds specific defaults */
@@ -641,10 +650,13 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
 
 						/*
-						 * precisionn adjustment to TDS_MAX_NUM_PRECISION
+						 * precision adjustment to TDS_MAX_NUM_PRECISION
 						 */
 						if (precision > TDS_MAX_NUM_PRECISION)
+						{
+							scale = Max(0, scale - (precision - TDS_MAX_NUM_PRECISION));
 							precision = TDS_MAX_NUM_PRECISION;
+						}
 						break;
 					case NUMERIC_MUL_OID:
 						scale = scale1 + scale2;
@@ -656,7 +668,10 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						 * function
 						 */
 						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
+						{
+							scale = Max(0, scale - (precision - TDS_MAX_NUM_PRECISION));
 							precision = TDS_MAX_NUM_PRECISION;
+						}
 						break;
 					case NUMERIC_DIV_OID:
 						scale = Max(6, scale1 + precision2 + 1);

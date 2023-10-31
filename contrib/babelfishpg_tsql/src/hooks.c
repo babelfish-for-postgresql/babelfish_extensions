@@ -2902,8 +2902,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
 
-	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
-		((weight + 1) * numeric_base);
+	total_digit_count = weight * numeric_base;
 
 	/*
 	 * calculating exact #digits in the first partially filled numeric block,
