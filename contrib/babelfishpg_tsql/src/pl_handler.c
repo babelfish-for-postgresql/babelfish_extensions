@@ -5681,6 +5681,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		AttrNumber resno = 0;
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
@@ -5765,6 +5766,8 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 			}
 			else
 			{
+				resno +=1;
+				tle->resno = resno;
              	modifiedTargetList = lappend(modifiedTargetList, tle);
             }
 		}
