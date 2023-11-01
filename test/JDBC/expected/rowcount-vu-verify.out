@@ -1,4 +1,6 @@
-exec rowcountinsert;
+
+-- test "SET ROWCOUNT value"
+exec rowcount_vu_prepare_insert_proc;
 GO
 ~~ROW COUNT: 1~~
 
@@ -13,7 +15,7 @@ GO
 ~~ROW COUNT: 5~~
 
 
-exec rowcountselect;
+exec rowcount_vu_prepare_select_proc;
 GO
 ~~START~~
 int
@@ -26,7 +28,7 @@ int
 ~~END~~
 
 
-exec rowcountupdate;
+exec rowcount_vu_prepare_update_proc;
 GO
 ~~START~~
 int
@@ -41,7 +43,7 @@ int
 ~~END~~
 
 
-exec rowcountdelete;
+exec rowcount_vu_prepare_delete_proc;
 GO
 ~~START~~
 int
@@ -56,9 +58,85 @@ int
 ~~END~~
 
 
+
+--  test "SET ROWCOUNT @variable"
+exec rowcount_vu_prepare_insert_proc_var;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 5~~
+
+
+exec rowcount_vu_prepare_select_proc_var;
+GO
+~~START~~
+int
+13
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec rowcount_vu_prepare_update_proc_var;
+GO
+~~START~~
+int
+13
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+exec rowcount_vu_prepare_delete_proc_var;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+5
+~~END~~
+
+
+
 set rowcount -1
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: -1 is outside the valid range for parameter "babelfishpg_tsql.rowcount" (0 .. 2147483647))~~
+
+
+set rowcount NULL
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'NULL' at line 1 and character position 13)~~
+
+
+declare @v smallint = NULL
+set rowcount @v
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: null value cannot be assigned to variable "babelfishpg_tsql.rowcount" declared NOT NULL)~~
 

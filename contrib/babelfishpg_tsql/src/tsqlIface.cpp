@@ -4724,6 +4724,20 @@ static bool is_valid_set_option(std::string val)
 		(pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0);
 }
 
+static PLtsql_variable * build_babelfish_guc_variable(const char* val)
+{
+	int type = InvalidOid;
+	if (pg_strcasecmp("ROWCOUNT", val) == 0)
+		type = INT4OID;
+
+	if (type == InvalidOid)
+		return NULL;
+	
+	PLtsql_variable *var = pltsql_build_variable(psprintf("babelfishpg_tsql.%s", val), 0, pltsql_build_datatype(type, -1, InvalidOid, NULL), false);
+	var->notnull = true;
+	return var;
+}
+
 PLtsql_stmt *
 makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 {
@@ -4970,6 +4984,21 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->is_set_tran_isolation = true;
 			return (PLtsql_stmt *) stmt;
 		}			
+		else if (set_special_ctx->ROWCOUNT() && set_special_ctx->LOCAL_ID())
+		{
+			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
+			PLtsql_variable *target_var = build_babelfish_guc_variable(getFullText(set_special_ctx->ROWCOUNT()).c_str());
+			/* build expression with the input variable */
+			auto expr = makeTsqlExpr(getFullText(set_special_ctx->LOCAL_ID()), true);
+			
+			/* assign expression to target */
+			PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+			result->cmd_type = PLTSQL_STMT_ASSIGN;
+			result->lineno   = getLineNo(ctx);
+			result->varno    = target_var->dno;
+			result->expr     = expr;
+			return (PLtsql_stmt *) result;
+		}
 		else
 			return makeSQL(ctx);
 	}

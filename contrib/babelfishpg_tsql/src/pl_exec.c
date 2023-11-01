@@ -6416,6 +6416,20 @@ exec_assign_value(PLtsql_execstate *estate,
 							 errmsg("null value cannot be assigned to variable \"%s\" declared NOT NULL",
 									var->refname)));
 
+				/* Special handling when target variable is babelfish GUC */
+				if(pg_strncasecmp("babelfishpg_tsql", var->refname, 16) == 0)
+				{
+					set_config_option(var->refname,
+											psprintf("%ld", newvalue),
+											PGC_USERSET,
+											PGC_S_SESSION,
+											GUC_ACTION_SET,
+											true,
+											0,
+											false);
+					break;
+				}
+
 				/*
 				 * If type is by-reference, copy the new value (which is
 				 * probably in the eval_mcontext) into the procedure's main
