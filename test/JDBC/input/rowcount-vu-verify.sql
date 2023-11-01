@@ -36,3 +36,25 @@ go
 declare @v smallint = NULL
 set rowcount @v
 GO
+
+-- invalid set should throw error
+DECLARE @value date = '2006-01-02'
+SET ROWCOUNT @value
+GO
+
+DECLARE @value varchar(10) = 'abc'
+SET ROWCOUNT @value
+GO
+
+-- set int/bigint/smallint
+DECLARE @value int = 2147483647
+SET ROWCOUNT @value
+GO
+
+DECLARE @value bigint = 922337203685477580
+SET ROWCOUNT @value
+GO
+
+DECLARE @value smallint = 3276
+SET ROWCOUNT @value
+GO

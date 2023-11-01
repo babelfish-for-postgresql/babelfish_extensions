@@ -140,3 +140,37 @@ GO
 
 ~~ERROR (Message: null value cannot be assigned to variable "babelfishpg_tsql.rowcount" declared NOT NULL)~~
 
+
+-- invalid set should throw error
+DECLARE @value date = '2006-01-02'
+SET ROWCOUNT @value
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "2006-01-02")~~
+
+
+DECLARE @value varchar(10) = 'abc'
+SET ROWCOUNT @value
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc")~~
+
+
+-- set int/bigint/smallint
+DECLARE @value int = 2147483647
+SET ROWCOUNT @value
+GO
+
+DECLARE @value bigint = 922337203685477580
+SET ROWCOUNT @value
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+DECLARE @value smallint = 3276
+SET ROWCOUNT @value
+GO
