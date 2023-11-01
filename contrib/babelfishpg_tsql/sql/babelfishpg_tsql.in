@@ -3,6 +3,7 @@
  */
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+ALTER DEFAULT PRIVILEGES REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
 #include "collation.sql"
 #include "datatype.sql"
@@ -28,5 +29,6 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
  * Notice schema sys will be automatically added to implicitly-searched namespaces by
  * recomputeNamespacePath() in tsql dialect
  */
+ALTER DEFAULT PRIVILEGES GRANT EXECUTE ON FUNCTIONS TO PUBLIC;
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 RESET client_min_messages;
