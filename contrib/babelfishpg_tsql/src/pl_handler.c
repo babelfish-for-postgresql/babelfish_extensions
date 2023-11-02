@@ -5598,7 +5598,9 @@ pltsql_revert_guc(int nest_level)
 
 }
 
-static char *get_oid_type_string(int type_oid){
+static char *
+get_oid_type_string(int type_oid)
+{
 	char *type_string = NULL;
 	if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype) (type_oid))
 	{
@@ -5628,7 +5630,8 @@ static char *get_oid_type_string(int type_oid){
 	return type_string;
 }
 
-static int64 get_identity_into_args(Node *node)
+static int64 
+get_identity_into_args(Node *node)
 {
 	int64 val = 0;
 	Const *con = NULL;
@@ -5663,7 +5666,8 @@ static int64 get_identity_into_args(Node *node)
 	return val;
 }
 
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
+static List *
+transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
 {
 	List *result;
 	ListCell *elements;
@@ -5797,13 +5801,6 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		if (IsA(stmt, CreateTableAsStmt))
 		{
 			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
-			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
-		}
-		else if (IsA(stmt, CreateSeqStmt))
-		{
-			address = DefineSequence(pstate, (CreateSeqStmt *)stmt);
-			Assert(address.objectId != InvalidOid);
-			tsql_select_into_seq_oid = address.objectId;
 			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
 		}
 		else

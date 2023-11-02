@@ -73,6 +73,53 @@ GO
 DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
+-- Self Join
+SELECT IDENTITY(int,1,1) AS id_num, ltable.col1 AS col1, ltable.name AS name INTO #babel_539NewTable1 
+FROM babel_539OldTable AS ltable JOIN babel_539OldTable AS rtable ON ltable.col1 <> rtable.col1 ORDER BY ltable.col1;
+GO
+
+SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT IDENTITY(bigint, 9223372036854775807, -1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT IDENTITY(numeric, -9223372036854775806, +1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT IDENTITY(numeric(19,0), 9223372036854775807, -1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+SELECT id_num, col1, name FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT IDENTITY(numeric(19,0), 1, 1) as id_num, * into #babel_539NewTable1 from babel_539OldTable where 1=1;
+GO
+
+SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
 SELECT IDENTITY(int, -10, 1+1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
