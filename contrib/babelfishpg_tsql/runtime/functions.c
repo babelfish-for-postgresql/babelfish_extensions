@@ -847,49 +847,100 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	// Timestamp	timestamp;
 	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
-	Timestamp	result;
-	struct		tm input_tm;
+	int			result;
+	// struct		tm input_tm;
 
 	Interval*	interval = PG_GETARG_INTERVAL_P(1);
 	// Timestamp	result;
 
-	int64	time = interval->time;
-	int32	days = interval->day;
-	int32	month = interval->month;
 
-	memset(&input_tm, 0, sizeof(struct tm));
-	input_tm.tm_year = month/12;
-	input_tm.tm_mon = month%12;
-	input_tm.tm_mday = days;
-	input_tm.tm_hour = (time / 3600000) % 24;
-	input_tm.tm_min = (time / 60000) % 60;     // Minutes
-	input_tm.tm_sec = (time / 1000) % 60;      // Seconds
-	result = DatumGetTimestamp(DirectFunctionCall6(make_timestamp,
-														Int32GetDatum(input_tm.tm_year + 1900),
-														Int32GetDatum(input_tm.tm_mon + 1),
-														Int32GetDatum(input_tm.tm_mday),
-														Int32GetDatum(input_tm.tm_hour),
-														Int32GetDatum(input_tm.tm_min),
-														Int32GetDatum(input_tm.tm_sec)));
+	int64	interval_time = interval->time + (int64) df_tz * 60 * 1000000L;
+
+	int32	interval_days,interval_month;
+	int		year,month,days,hours,minutes,sec,millisec,microsec,nanosec;
+	interval_days = interval->day;
+	interval_month = interval->month;
+
+	// memset(&input_tm, 0, sizeof(struct tm));
+	year = interval_month/12;
+	month = interval_month%12;
+	days = interval_days;
+	hours = (interval_time / 3600000000) % 24;
+	minutes = (interval_time / 60000000) % 60;
+	sec = (interval_time / 1000000) % 60;
+	millisec = ((interval_time/1000  * 1L)*1L ) ;
+	microsec = (interval_time  * 1L)*1L  ;
+	nanosec = ((interval_time  * 1L)*1L) *1000 ;
+
+	PG_TRY();
+	{
+		if(strcasecmp(field , "year") == 0)
+		result = year;
+		else if(strcasecmp(field , "quarter") == 0)
+		result = year/4;
+		else if(strcasecmp(field , "month") == 0)
+		result = month;
+		else if(strcasecmp(field , "day") == 0)
+		result = days;
+		else if(strcasecmp(field , "y") == 0)
+		result = year;
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "minute") == 0)
+		result = minutes;
+		else if(strcasecmp(field , "nanosecond") == 0)
+		result = nanosec;
+		else if(strcasecmp(field , "second") == 0)
+		result = sec;
+		else if(strcasecmp(field , "millisecond") == 0)
+		result = millisec;
+		else if(strcasecmp(field , "microsecond") == 0)
+		result = microsec;
+		else if(strcasecmp(field , "hour") == 0)
+		result = hours;
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	}
+	PG_CATCH();
+	{
+		if(strcasecmp(field , "year") == 0)
+		result = 1900;
+		else if(strcasecmp(field , "quarter") == 0)
+		result = 1;
+		else if(strcasecmp(field , "month") == 0)
+		result = 1;
+		else if(strcasecmp(field , "day") == 0)
+		result = 1;
+		else if(strcasecmp(field , "doy") == 0)
+		result = 1;
+		else if(strcasecmp(field , "y") == 0)
+		result = 1;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		result = 1;
+		else if(strcasecmp(field , "week") == 0)
+		result = 1;
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+	}
+	PG_END_TRY();
+	PG_RETURN_INT32(result);
 
 
-	// 	/* Convert the input date to a TimestampTz */
-	// if (interval->month != 0 || interval->day != 0) {
-	// 		ereport(ERROR,
-	// 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-	// 			errmsg("Not a time-based interval")));
-	// 	PG_RETURN_NULL();
-	// }
-	// current_time = GetCurrentTransactionStartTimestamp();
-	// result = timestamptz_timestamp(current_time);
-	// result = timestamp_mi_interval(result, interval);
-	PG_RETURN_INT32(datepart_internal(field, result, df_tz));
-
-	//interval to datetimeofffset
 	
-
 }
-
 
 
 Datum
