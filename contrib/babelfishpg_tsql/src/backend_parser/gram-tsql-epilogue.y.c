@@ -703,7 +703,7 @@ is_json_query(List *name)
 * Parse T-SQL CONTAINS predicate. Currently only supports 
 * ... CONTAINS(column_name, '<contains_search_condition>') ...
 * This function transform it into a Postgres AST that stands for
-* to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_contains_rewrite('<contains_search_condition>'))
+* to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
 * where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
 */
 static Node *
@@ -739,7 +739,7 @@ makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
     return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
 }
 
-/* Transfrom '<contains_search_condition>' into to_tsquery(pgconfig, babelfish_fts_contains_rewrite('<contains_search_condition>')) */
+/* Transfrom '<contains_search_condition>' into to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')) */
 static Node *
 makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
 {
@@ -748,7 +748,7 @@ makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
     List		*args_rewrite;
 
     args_rewrite = list_make1(search_expr);
-    result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+    result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
 
 
     args = list_make2(pgconfig, result_rewrite);
