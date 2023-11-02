@@ -28,6 +28,7 @@ runs:
         cmake -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_PREFIX="/usr" ..
         cmake --build .
         sudo cmake --build . --target install
+        sudo cp /usr/lib/libproj* /usr/lib/x86_64-linux-gnu/
         cd ../../postgis-3.4.0
         ./configure --without-protobuf --without-raster --with-projdir=/usr --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
