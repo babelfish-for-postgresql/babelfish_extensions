@@ -16,10 +16,10 @@ GO
 insert into t1_BABEL2999 exec('Select ''hello''');
 GO
 
-insert into t1 exec('SELECT ''helloworld''');
+insert into t1_BABEL2999 exec('SELECT ''helloworld''');
 GO
 
-insert into t1 exec('SELECT ''helloworldhello''');
+insert into t1_BABEL2999 exec('SELECT ''helloworldhello''');
 GO
 
 select b from t1_BABEL2999 order by b;

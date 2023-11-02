@@ -24,18 +24,16 @@ GO
 ~~ROW COUNT: 1~~
 
 
-insert into t1 exec('SELECT ''helloworld''');
+insert into t1_BABEL2999 exec('SELECT ''helloworld''');
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "t1" does not exist)~~
+~~ROW COUNT: 1~~
 
 
-insert into t1 exec('SELECT ''helloworldhello''');
+insert into t1_BABEL2999 exec('SELECT ''helloworldhello''');
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 8152)~~
 
-~~ERROR (Message: relation "t1" does not exist)~~
+~~ERROR (Message: value too long for type character varying(10))~~
 
 
 select b from t1_BABEL2999 order by b;
@@ -46,6 +44,7 @@ varchar
 5
 5
 hello
+helloworld
 ~~END~~
 
 
@@ -225,7 +224,7 @@ exec dbo.test_hhit_outer @testvar=200
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: could not open relation with OID 19501)~~
+~~ERROR (Message: could not open relation with OID 19610)~~
 
 
 drop procedure test_hhit_inner
