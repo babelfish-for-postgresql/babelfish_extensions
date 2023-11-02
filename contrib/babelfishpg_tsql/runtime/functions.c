@@ -3,6 +3,20 @@
 #include "funcapi.h"
 #include "pgstat.h"
 
+#include "postgres.h"
+#include "access/hash.h"
+#include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "libpq/pqformat.h"
+#include "utils/timestamp.h"
+
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "../../babelfishpg_common/src/datetimeoffset.h"
+#include "../../babelfishpg_common/src/datetime.h"
+#include "../../babelfishpg_common/src/datetime2.h"
+
 #include "access/detoast.h"
 #include "access/htup_details.h"
 #include "access/table.h"
@@ -151,15 +165,22 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
-PG_FUNCTION_INFO_V1(datepart_internal);
+// PG_FUNCTION_INFO_V1(datepart_internal);
+PG_FUNCTION_INFO_V1(datepart_internal_date);
+PG_FUNCTION_INFO_V1(datepart_internal_datetime);
+PG_FUNCTION_INFO_V1(datepart_internal_smalldatetime);
+PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
+PG_FUNCTION_INFO_V1(datepart_internal_time);
+PG_FUNCTION_INFO_V1(datepart_internal_interval);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
-int     custom_date_part(const char* field, time_t timestamp);
-int     custom_right(const char* source, int length);
+int			custom_date_part(const char* field, Timestamp timestamp);
+int			custom_right(const char* source, int length);
+int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 static int64 get_identity_next_value(void);
@@ -242,12 +263,22 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 }
 
 int
-custom_date_part(const char* field, TimestampTz timestamp)
+custom_date_part(const char* field, Timestamp timestamp)
 {	
 	fsec_t		fsec1;
 	int64 		microseconds;
+	// struct		tm timeinfo = {0};
+	// time_t		time = mktime(&timeinfo);
 	struct		pg_tm tt1, *tm = &tt1;
-	int			tz1, doy = 0, res = 0, K, J, year, month, day, milliseconds;
+	// struct		tm *tmdow;
+	// struct		tm* result = localtime(&time);
+
+	int			first_day;
+	int			first_week_end;
+	// int			jan4Month = tm->tm_mon;
+	// int			jan4DayOfYear, weekNumber;
+	int			tz1, doy = 0, year, month, day, milliseconds;
+	int			K, J, res = 0;
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
@@ -302,31 +333,75 @@ custom_date_part(const char* field, TimestampTz timestamp)
 		day = tm->tm_mday;
 		K = year % 100;
 		J = month / 100;
-		res = day + ((13*(month+1))/5) + K + (K/4) + (J/4) - 2*J;
-		if(res < 0)
-		{
-			res+= 7;
-		}
-		return (res % 7);
+		res = (day + ((13*(month+1))/5) + K + (K/4) + (J/4) + 5*J ) %7;
+		// res = ((13*(month+1))/5) + K + (K/4) + (J/4) - 2*J;
+		// if(res <= 0)
+		// {
+		// 	res+= 7;
+		// }
+		return (((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
+		// return ( res + 7 ) % 7;
+		// return (res % 7);
+		// tmdow = pg_localtime(&timestamp2, log_timezone);
+		// return tmdow->tm_wday;
+
+		// return ((day += month < 3 ? year-- : year - 2, 23*month/9 + day + 4 + year/4- year/100 + year/400)+1)%7; 
+
+
+			// m1 = (rulep->r_mon + 9) % 12 + 1;
+			// yy0 = (rulep->r_mon <= 2) ? (year - 1) : year;
+			// yy1 = yy0 / 100;
+			// yy2 = yy0 % 100;
+			// dow = ((26 * m1 - 2) / 10 +
+			// 	   1 + yy2 + yy2 / 4 + yy1 / 4 - 2 * yy1) % 7;
+			// if (dow < 0)
+			// 	dow += DAYSPERWEEK;
+
 	}
-	else if (strcmp(field, "week") == 0)
+	else if (strcmp(field, "week") == 0 || strcasecmp(field , "tsql_week") == 0)
 	{
-		doy = tm->tm_mday;
-		if (((tm->tm_year % 4 == 0 && tm->tm_year % 100 != 0) || tm->tm_year % 400 == 0) && tm->tm_mon > 2)
-		{
-			doy += 1;
-		}
-		for (int i = 1; i < tm->tm_mon; i++)
-		{
-			doy += daysInMonth[i];
-		}
-		return (doy + 6) / 7;
+		// year = tm->tm_year;
+		// month = tm->tm_mon;
+		// day = tm->tm_mday;
+
+		// timeinfo.tm_year = year - 1900; // Years since 1900
+		// timeinfo.tm_mon = month - 1;    // Month (0-11)
+		// timeinfo.tm_mday = day;         // Day of the month (1-31)
+	
+		// if (jan4Weekday == 0) {
+		// 	// Sunday is considered the last day of the previous week.
+		// 	jan4Day -= 3;
+		// } else {
+		// 	// Calculate the day of the week for January 4th.
+		// 	jan4Day += 4 - jan4Weekday;
+		// }
+		// // Calculate the day of the year for January 4th.
+		// jan4DayOfYear = 1 + (jan4Day - 1) + 30 * (jan4Month) + (jan4Month / 2);
+		// // Calculate the ISO week number.
+		// weekNumber = (tm->tm_yday - jan4DayOfYear + 10) / 7;
+		// return weekNumber;
+		
+		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
+		first_week_end = 8 - datepart_internal("doy", first_day, 0);
+		day = custom_date_part("doy",timestamp);
+		if(day <= first_week_end) return 1;
+		else return 2+(day-first_week_end-1)/7;
+
+		// if (((tm->tm_year % 4 == 0 && tm->tm_year % 100 != 0) || tm->tm_year % 400 == 0) && tm->tm_mon > 2)
+		// {
+		// 	doy += 1;
+		// }
+		// for (int i = 1; i < tm->tm_mon; i++)
+		// {
+		// 	doy += daysInMonth[i];
+		// }
+		// return (doy + 6) / 7;
 	}
 	else
 	{
 		ereport(ERROR,
-        	(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-         	errmsg("'%s' is not a recognized datepart option",field)));
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option",field)));
 		return -1;
 	}
 }
@@ -341,45 +416,86 @@ custom_right(const char* source, int length)
 	return atoi(source + source_length - length);
 }
 
-Datum
-datepart_internal(PG_FUNCTION_ARGS)
+int
+datepart_internal(char *field , Timestamp timestamp , int df_tz)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	TimestampTz	timestamp = 0;
-	Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
-	int			df_tz = PG_GETARG_INT32(2);
+	// char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	// Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	// int			df_tz = PG_GETARG_INT32(2);
+	// Datum		arg = PG_GETARG_DATUM(1);
 	int			tsql_datefirst = (int)pltsql_datefirst;
-	int			result, first_day, temp, first_week_end, day;
-	DateADT		date_arg;
+	int			result ; //, first_day, temp, first_week_end, day;
+	// DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	// tsql_datetimeoffset	*datetime;
 
 	PG_TRY();
+
+	// convert anyelement into datetime, keep eveything in datetime
+	// make use of datetime_in_str
 	{
-		if(argtypeoid == TIMESTAMPOID || argtypeoid == 17453 || argtypeoid == 17565)   //arg is of type timestamp,datetime,datetime2
-		{
-			timestamp = PG_GETARG_TIMESTAMPTZ(1);
-		}
-		else if(argtypeoid == 1082)    //arg is of type date
-		{
-			date_arg = PG_GETARG_DATEADT(1);
-			timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
-		}
-	
-		if(strcasecmp(field , "tsql_week") == 0)
-		{
-			temp = custom_date_part("year", timestamp);
-			first_day = DirectFunctionCall3(make_date,temp ,1 ,1);
-			first_week_end = 8 - DirectFunctionCall3(datepart_internal,PointerGetDatum(cstring_to_text("dow")) ,first_day ,0);
-			day = custom_date_part("doy", timestamp);
-			if(day <= first_week_end)
-			{
-				result = -1;
-			}
-			else
-			{
-				result = 2 + (day - first_week_end - 1) / 7;
-			}
-		}
-		else if(strcasecmp(field , "millisecond") == 0)
+		// if(argtypeoid == TIMESTAMPOID || argtypeoid == 17453 || argtypeoid == 17565)   //arg is of type timestamp,datetime,datetime2
+		// {
+		// 	getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+		// 	argStr = OidOutputFunctionCall(outputfunc, arg);
+
+		// 	if(strcasestr(argStr , "+"))
+		// 	{
+		// 		datetime = DatumGetDatetimeoffset(datetime_in_str(argStr));
+			
+		// 		timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+
+		// 	}
+		// 	// make seperate functins for the 6 args of anyarg
+		// 	else
+		// 	{
+		// 		timestamp = PG_GETARG_TIMESTAMPTZ(1);
+		// 	}
+		// 	// timestamp = timestamptz_to_time_t(timestamptz);
+		// 	// datetime = DirectFunctionCall1(timestamp_datetime,timestamp);
+		// }
+		// else if(argtypeoid == 1082)    //arg is of type date
+		// {
+		// 	date_arg = PG_GETARG_DATEADT(1);
+		// 	timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
+		// 	// datetime = DirectFunctionCall1(timestamp_datetime,timestamp);
+		// 	// timestamp = timestamptz_to_time_t(timestamptz);
+		// }
+		// // else // if datetime with offset
+		// // {
+		// // 	getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+		// // 	argStr = OidOutputFunctionCall(outputfunc, arg);
+		// // 	// argText = cstring_to_text(argStr);
+
+		// // 	datetime = PG_GETARG_DATETIMEOFFSET(datetime_in_str(argStr));
+			
+		// // 	timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+		// // }
+		
+		// if(strcasecmp(field , "tsql_week") == 0)
+		// {
+		// 	temp = custom_date_part("year", timestamp);
+		// 	first_day = DirectFunctionCall3(make_date,temp ,1 ,1);
+		// 	first_week_end = 8 - (datepart_internal(("dow") ,first_day ,df_tz));
+		// 	day = custom_date_part("doy", timestamp);
+		// 	if(day <= first_week_end)
+		// 	{
+		// 		result = -1;
+		// 	}
+		// 	else
+		// 	{
+		// 		result = 2 + (day - first_week_end - 1) / 7;
+		// 	}
+		// }
+		// else 
+		if(strcasecmp(field , "millisecond") == 0)
 		{
 			int datePartValue = custom_date_part(field, timestamp);
 			char *buffer = (char *) palloc(20);
@@ -433,7 +549,7 @@ datepart_internal(PG_FUNCTION_ARGS)
 		else if(strcasecmp(field , "tzoffset") == 0)
 		result = 0;
 		else if(strcasecmp(field , "dow") == 0)
-		result = ((1 - tsql_datefirst+ 7) % 7 + 1);
+		result = ((1 - tsql_datefirst + 7) % 7 + 1);
 		else
 		{
 		ereport(ERROR,
@@ -443,8 +559,262 @@ datepart_internal(PG_FUNCTION_ARGS)
 		}
 	}
 	PG_END_TRY();
-	PG_RETURN_INT32(result);
+	return (result);
 }
+
+Datum
+datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	// Datum		arg = PG_GETARG_DATUM(1);
+	// int			tsql_datefirst = (int)pltsql_datefirst;
+	// int			result, first_day, temp, first_week_end, day;
+	// DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	tsql_datetimeoffset	*datetime;
+
+	// PG_TRY();
+
+	
+
+	// convert anyelement into datetime, keep eveything in datetime
+	// make use of datetime_in_str
+	// {
+		// else // if datetime with offset
+		// {
+			// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+			// argStr = OidOutputFunctionCall(outputfunc, arg);
+			// argText = cstring_to_text(argStr);
+
+			datetime = PG_GETARG_DATETIMEOFFSET(1);
+			
+			timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
+
+			if (!IS_VALID_DATETIME2(timestamp))
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime2")));
+			}
+		// }
+
+		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+Datum
+datepart_internal_date(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	// Datum		arg = PG_GETARG_DATUM(1);
+	// int			tsql_datefirst = (int)pltsql_datefirst;
+	// int			result, first_day, temp, first_week_end, day;
+	DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	// tsql_datetimeoffset	*datetime;
+
+	// PG_TRY();
+
+	date_arg = PG_GETARG_DATEADT(1);
+	timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
+
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+Datum
+datepart_internal_datetime(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	// Datum		arg = PG_GETARG_DATUM(1);
+	// int			tsql_datefirst = (int)pltsql_datefirst;
+	// int			result, first_day, temp, first_week_end, day;
+	// DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	// tsql_datetimeoffset	*datetime;
+
+	// PG_TRY();
+
+	// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+	// argStr = OidOutputFunctionCall(outputfunc, arg);
+
+	timestamp = PG_GETARG_TIMESTAMPTZ(1);
+
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+Datum
+datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	// Datum		arg = PG_GETARG_DATUM(1);
+	// int			tsql_datefirst = (int)pltsql_datefirst;
+	// int			result, first_day, temp, first_week_end, day;
+	// DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	// tsql_datetimeoffset	*datetime;
+
+	// datetime = PG_GETARG_DATETIMEOFFSET(DirectFunctionCall1(smalldatetime_datetimeoffset , PG_GETARG_DATUM(1) ));
+
+	// timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
+
+	timestamp = PG_GETARG_TIMESTAMP(1);
+
+			if (!IS_VALID_DATETIME2(timestamp))
+			{
+				ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime2")));
+			}
+
+	// PG_TRY();
+
+	// convert anyelement into datetime, keep eveything in datetime
+	// make use of datetime_in_str
+	// {
+		// else // if datetime with offset
+		// {
+			// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+			// argStr = OidOutputFunctionCall(outputfunc, arg);
+			// argText = cstring_to_text(argStr);
+
+		// 	datetime = PG_GETARG_DATETIMEOFFSET(1);
+			
+		// 	timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+		// // }
+
+		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+Datum
+datepart_internal_time(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	// time_t	time;
+	// Datum		arg = PG_GETARG_DATUM(1);
+	// int			tsql_datefirst = (int)pltsql_datefirst;
+	// int			result, first_day, temp, first_week_end, day;
+	// DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	// tsql_datetimeoffset	*datetime;
+
+	// PG_TRY();
+
+	// convert anyelement into datetime, keep eveything in datetime
+	// make use of datetime_in_str
+	// {
+		// else // if datetime with offset
+		// {
+			// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+			// argStr = OidOutputFunctionCall(outputfunc, arg);
+			// argText = cstring_to_text(argStr);
+
+			// datetime = PG_GETARG_DATETIMEOFFSET(1);
+			
+			// timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * 60 * 1000000L;
+		// }
+		if (PG_ARGISNULL(1))
+		{
+			PG_RETURN_NULL();
+		}
+
+		// time = PG_GETARG_TIME(0);
+		// timestamp = DirectFunctionCall2(timestamp, TimeADTGetTimeADT(time), PG_GETARG_DATUM(1));
+
+		timestamp  = PG_GETARG_TIMESTAMP(1);
+
+
+		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+Datum
+datepart_internal_interval(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	// Timestamp	timestamp;
+	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
+	int			df_tz = PG_GETARG_INT32(2);
+	Timestamp	result;
+	struct		tm input_tm;
+
+	Interval*	interval = PG_GETARG_INTERVAL_P(1);
+	// Timestamp	result;
+
+	int64	time = interval->time;
+	int32	days = interval->day;
+	int32	month = interval->month;
+
+	memset(&input_tm, 0, sizeof(struct tm));
+	input_tm.tm_year = month/12;
+	input_tm.tm_mon = month%12;
+	input_tm.tm_mday = days;
+	input_tm.tm_hour = (time / 3600000) % 24;
+	input_tm.tm_min = (time / 60000) % 60;     // Minutes
+	input_tm.tm_sec = (time / 1000) % 60;      // Seconds
+	result = DatumGetTimestamp(DirectFunctionCall6(make_timestamp,
+														Int32GetDatum(input_tm.tm_year + 1900),
+														Int32GetDatum(input_tm.tm_mon + 1),
+														Int32GetDatum(input_tm.tm_mday),
+														Int32GetDatum(input_tm.tm_hour),
+														Int32GetDatum(input_tm.tm_min),
+														Int32GetDatum(input_tm.tm_sec)));
+
+
+	// 	/* Convert the input date to a TimestampTz */
+	// if (interval->month != 0 || interval->day != 0) {
+	// 		ereport(ERROR,
+	// 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+	// 			errmsg("Not a time-based interval")));
+	// 	PG_RETURN_NULL();
+	// }
+	// current_time = GetCurrentTransactionStartTimestamp();
+	// result = timestamptz_timestamp(current_time);
+	// result = timestamp_mi_interval(result, interval);
+	PG_RETURN_INT32(datepart_internal(field, result, df_tz));
+
+	//interval to datetimeofffset
+	
+
+}
+
 
 
 Datum

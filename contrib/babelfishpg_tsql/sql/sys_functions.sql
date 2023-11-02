@@ -159,10 +159,45 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'suser_name'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
 
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date anyelement ,df_tz INTEGER DEFAULT 0)
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date date ,df_tz INTEGER DEFAULT 0)
 RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal'
+AS 'babelfishpg_tsql', 'datepart_internal_date'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date datetime ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetime'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date datetime2 ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetime'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date smalldatetime ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_smalldatetime'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date DATETIMEOFFSET ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetimeoffset'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date time ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_time'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date INTERVAL ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_interval'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date anyelement ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128) AS $$
