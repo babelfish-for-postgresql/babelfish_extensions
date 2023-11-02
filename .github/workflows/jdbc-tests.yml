@@ -45,6 +45,13 @@ jobs:
         if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
+      - name: Setup upterm session
+        if: always() && steps.install-extensions.outcome == 'failure'
+        uses: lhotari/action-upterm@v1
+        timeout-minutes: 60
+        with:
+          limit-access-to-actor: true
+
       - name: Run JDBC Tests
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
