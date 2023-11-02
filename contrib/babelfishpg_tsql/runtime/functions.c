@@ -3839,17 +3839,18 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
 	PG_TRY();
 	{
+		Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
 		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
 		Assert(list_length(per_pivot_list) >= 2);
 		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
 		bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
 	}
-	PG_FINALLY();
+	PG_CATCH();
 	{
-		MemoryContextSwitchTo(oldcontext);
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
+	MemoryContextSwitchTo(oldcontext);
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -3950,6 +3951,7 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 					 errmsg("provided \"categories\" SQL must " \
 							"return 1 column of at least one row")));
 
+		Assert(spi_tuptable->numvals >= proc);
 		for (i = 0; i < proc; i++)
 		{
 			bbf_pivot_cat_desc *catdesc;
@@ -3969,7 +3971,7 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 			
 			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
 			catdesc = (bbf_pivot_cat_desc *) palloc(sizeof(bbf_pivot_cat_desc));
-			catdesc->catname = catname;
+			catdesc->catname = pstrdup(catname);
 			catdesc->attidx = i;
 			/* Add the proc description block to the hashtable */
 			bbf_pivot_HashTableInsert(bbf_pivot_hash, catdesc);
@@ -4046,6 +4048,7 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 					 errdetail("The provided SQL must return 2 " \
 							   " columns; category, and values.")));
 
+		Assert(spi_tuptable->numvals >= proc);
 		/* 
 		* The last 2 columns of the results are category column and value column
 		* that will be used for later pivot operation. The remaining columns are 

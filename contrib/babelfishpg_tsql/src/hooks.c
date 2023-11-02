@@ -120,7 +120,7 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
 static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs);
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
-static ResTarget* make_restarget_from_colname(char * colName);
+static ResTarget* make_restarget_from_cstr_list(List * l);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 
 /*****************************************
@@ -4376,7 +4376,7 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 }
 
 static ResTarget *
-make_restarget_from_colname(char * colName)
+make_restarget_from_cstr_list(List * l)
 {
 	ResTarget 	*tempResTarget;
 	ColumnRef	*tempColRef;
@@ -4384,7 +4384,7 @@ make_restarget_from_colname(char * colName)
 	tempResTarget = makeNode(ResTarget);
 	tempColRef = makeNode(ColumnRef);
 	tempColRef->location = -1;
-	tempColRef->fields = list_make1(makeString(colName));
+	tempColRef->fields = l;
 	tempResTarget->name = NULL;
 	tempResTarget->name_location = -1;
 	tempResTarget->indirection = NIL;
@@ -4429,7 +4429,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	temp_src_targetlist = temp_src_query->targetList;
 
 	/* Get pivot column str & value column str from parser result */
-	pivot_colstr = stmt->pivotCol;
+	pivot_colstr = ((String *) llast(stmt->pivotCol->fields))->sval;
 	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
 	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
 
@@ -4445,7 +4445,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		if (strcasecmp(colName, pivot_colstr) == 0 || strcasecmp(colName, value_colstr) == 0)
 			continue;
 		/* prepare src_sql's targetList */
-		tempResTarget = make_restarget_from_colname(colName);
+		tempResTarget = make_restarget_from_cstr_list(list_make1(makeString(colName)));
 
 		if (new_src_sql_targetist == NULL)
 			new_src_sql_targetist = list_make1(tempResTarget);
@@ -4465,8 +4465,8 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
 	/* source_sql: non-pivot column + pivot colunm+ agg(value_col) */
-	/* complete src_sql's targetList*/
-	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_colname(pivot_colstr));
+	/* complete src_sql's targetList*/	
+	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_cstr_list(stmt->pivotCol->fields));
 	new_src_sql_targetist = lappend(new_src_sql_targetist, (ResTarget *)stmt->aggFunc);
 	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
 
