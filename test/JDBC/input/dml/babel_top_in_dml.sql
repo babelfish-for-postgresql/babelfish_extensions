@@ -354,6 +354,14 @@ FROM babel_update_tbl1 t1
 ROLLBACK
 GO
 
+-- Should fail
+BEGIN TRAN
+UPDATE top(1) t1 SET a = t1.a + 1
+OUTPUT deleted.*
+FROM non_existant_tbl t1
+ROLLBACK
+GO
+
 -- alias + subquery
 -- BABEL-1875
 BEGIN TRAN
@@ -377,6 +385,15 @@ go
 -- BABEL-1330
 BEGIN TRAN
 UPDATE top(1) t1 SET t1.a = t1.a + 1
+FROM babel_update_tbl1 t1 
+INNER JOIN babel_update_tbl1 t2
+ON t1.b = t2.b
+ROLLBACK
+go
+
+BEGIN TRAN
+UPDATE top(1) t1 SET t1.a = t1.a + 1
+OUTPUT inserted.*
 FROM babel_update_tbl1 t1 
 INNER JOIN babel_update_tbl1 t2
 ON t1.b = t2.b
@@ -480,6 +497,11 @@ exec babel_2020_delete_ct;
 delete top(2) babel_2020_delete_t1 from babel_2020_delete_t1 x join babel_2020_delete_t2 y on y.a = 2;
 go
 
+exec babel_2020_delete_ct;
+delete top(2) babel_2020_delete_t1 output deleted.*
+from babel_2020_delete_t1 x join babel_2020_delete_t2 y on y.a = 2;
+go
+
 -- subqueries
 exec babel_2020_delete_ct;
 delete top(1) babel_2020_delete_t1 from (select * from babel_2020_delete_t1) x;
@@ -493,6 +515,11 @@ go
 -- outer joins
 exec babel_2020_delete_ct;
 delete top(1) babel_2020_delete_t1 from babel_2020_delete_t1 x left outer join babel_2020_delete_t2 on babel_2020_delete_t2.a = x.a;
+go
+
+exec babel_2020_delete_ct;
+delete top(1) babel_2020_delete_t1 output deleted.*
+from babel_2020_delete_t1 x left outer join babel_2020_delete_t2 on babel_2020_delete_t2.a = x.a;
 go
 
 -- semi joins

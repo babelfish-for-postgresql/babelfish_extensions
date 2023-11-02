@@ -197,6 +197,15 @@ BEGIN
 END;
 GO
 
+CREATE TYPE [dbo].[@myrettable_routines_fc7] AS TABLE(
+	[a] [int] NOT NULL,
+	PRIMARY KEY NONCLUSTERED 
+(
+	[a]
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+GO
+
 ALTER TABLE [dbo].[routines_customers] ADD  CONSTRAINT [customers_pkroutines_customers248e85dd01b015e3396e8567c240879b] PRIMARY KEY NONCLUSTERED 
 (
 	[customer_id]

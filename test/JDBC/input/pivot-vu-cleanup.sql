@@ -1,0 +1,23 @@
+use pivot_test
+GO
+
+drop table pivot_insert_into;
+GO
+
+drop table pivot_select_into;
+GO
+
+drop procedure top_n_pivot;
+GO
+
+drop function test_table_valued_function;
+GO
+
+drop table StoreReceipt;
+GO
+
+use master
+GO
+
+drop database pivot_test
+GO

@@ -1106,6 +1106,18 @@ END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
 
+CREATE OR REPLACE FUNCTION sys.typeproperty(
+    typename sys.VARCHAR,
+    property sys.VARCHAR
+    )
+RETURNS INT
+AS $$
+DECLARE
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
@@ -4429,3 +4441,8 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_pivot()
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;

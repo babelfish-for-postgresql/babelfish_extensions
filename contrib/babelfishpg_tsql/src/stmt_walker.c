@@ -107,6 +107,7 @@ stmt_walker(PLtsql_stmt *stmt, WalkerFunc walker, void *context)
 		case PLTSQL_STMT_INSERT_BULK:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 		case PLTSQL_STMT_GRANTDB:
+		case PLTSQL_STMT_CHANGE_DBOWNER:
 		case PLTSQL_STMT_GRANTSCHEMA:
 		case PLTSQL_STMT_DBCC:
 			break;
@@ -207,6 +208,7 @@ general_walker_func(PLtsql_stmt *stmt, void *context)
 				DISPATCH(INSERT_BULK, insert_bulk)
 				DISPATCH(SET_EXPLAIN_MODE, set_explain_mode)
 				DISPATCH(GRANTDB, grantdb)
+				DISPATCH(CHANGE_DBOWNER, change_dbowner)
 				DISPATCH(DBCC, dbcc)
 				DISPATCH(GRANTSCHEMA, grantschema)
 

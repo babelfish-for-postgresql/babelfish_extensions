@@ -30,6 +30,8 @@
 #include "commands/dbcommands.h"
 #include "commands/extension.h"
 #include "common/md5.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
@@ -181,6 +183,12 @@ void	   *get_host_id(void);
 int			custom_date_part(const char* field, Timestamp timestamp);
 int			custom_right(const char* source, int length);
 int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
+int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
+static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
+static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
+										HTAB *bbf_pivot_hash,
+										TupleDesc tupdesc,
+										bool randomAccess);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 static int64 get_identity_next_value(void);
@@ -203,11 +211,78 @@ extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
 extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
+
+#define MAX_CATNAME_LEN			NAMEDATALEN
+#define INIT_CATS				64
+
+/* stored info for a bbf_pivot category */
+typedef struct bbf_pivot_cat_desc
+{
+	char	   *catname;		/* full category name */
+	uint64		attidx;			/* zero based */
+} bbf_pivot_cat_desc;
+
+typedef struct bbf_pivot_hashent
+{
+	char		internal_catname[MAX_CATNAME_LEN];
+	bbf_pivot_cat_desc *catdesc;
+} bbf_pivot_HashEnt;
+
+#define bbf_pivot_HashTableLookup(HASHTAB, CATNAME, CATDESC) \
+do { \
+	bbf_pivot_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
+	hentry = (bbf_pivot_HashEnt*) hash_search(HASHTAB, \
+										 key, HASH_FIND, NULL); \
+	if (hentry) \
+		CATDESC = hentry->catdesc; \
+	else \
+		CATDESC = NULL; \
+} while(0)
+
+#define bbf_pivot_HashTableInsert(HASHTAB, CATDESC) \
+do { \
+	bbf_pivot_HashEnt *hentry; bool found; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATDESC->catname); \
+	hentry = (bbf_pivot_HashEnt*) hash_search(HASHTAB, \
+										 key, HASH_ENTER, &found); \
+	if (found) \
+		ereport(ERROR, \
+				(errcode(ERRCODE_DUPLICATE_OBJECT), \
+				 errmsg("duplicate category name"))); \
+	hentry->catdesc = CATDESC; \
+} while(0)
+
+#define xpfree(var_) \
+	do { \
+		if (var_ != NULL) \
+		{ \
+			pfree(var_); \
+			var_ = NULL; \
+		} \
+	} while (0)
+
+#define xpstrdup(tgtvar_, srcvar_) \
+	do { \
+		if (srcvar_) \
+			tgtvar_ = pstrdup(srcvar_); \
+		else \
+			tgtvar_ = NULL; \
+	} while (0)
+
+#define xstreq(tgtvar_, srcvar_) \
+	(((tgtvar_ == NULL) && (srcvar_ == NULL)) || \
+	 ((tgtvar_ != NULL) && (srcvar_ != NULL) && (strcmp(tgtvar_, srcvar_) == 0)))
 
 
 Datum
@@ -4013,4 +4088,440 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		pfree(property);
 
 	PG_RETURN_NULL();
+}
+
+/*
+* We transformed tsql pivot stmt to 3 parsetree. The outer parsetree is a wrapper stmt
+* while the other two are helper stmts. Since postgres does not natively support execute
+* raw parsetree, and we can only get raw parsetree after the analyzer, we created this 
+* SPI function to help execute raw parsetree.
+*/
+int 
+SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
+{
+	_SPI_plan			plan;
+	int					ret;
+	List				*plancache_list;
+	CachedPlanSource	*plansource;
+	int					prev_sql_dialect;
+
+	if (parsetree == NULL || tcount < 0)
+		return SPI_ERROR_ARGUMENT;
+	
+	/*
+	 * set sql_dialect to tsql, which is needed for raw parsetree parsing 
+	 * and processing
+	 */
+	prev_sql_dialect = sql_dialect;
+	sql_dialect = SQL_DIALECT_TSQL;
+	
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
+	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
+
+	/*
+	 * Construct plancache entries, but don't do parse analysis yet.
+	 */
+	plancache_list = NIL;
+
+	/* 
+	 * src sql can be optained from pstate->p_sourcetext, but
+	 * it is not important here
+	 */
+	plansource = CreateOneShotCachedPlan(parsetree,
+										"SQL NOT AVAILABLE",
+										CreateCommandTag(parsetree->stmt));
+
+	plancache_list = lappend(plancache_list, plansource);
+	plan.plancache_list = plancache_list;
+	plan.oneshot = true;
+	PG_TRY();
+	{
+		ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
+	}
+	PG_FINALLY();
+	{
+		/* reset sql_dialect */
+		sql_dialect = prev_sql_dialect;
+	}
+	PG_END_TRY();
+
+	return ret;
+}
+
+PG_FUNCTION_INFO_V1(bbf_pivot);
+Datum
+bbf_pivot(PG_FUNCTION_ARGS)
+{	
+	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc		tupdesc;
+	MemoryContext 	per_query_ctx;
+	MemoryContext 	oldcontext;
+	HTAB	   	   	*bbf_pivot_hash;
+
+	MemoryContext 	tsql_outmost_context;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	RawStmt	   		*bbf_pivot_src_sql;
+	RawStmt	   		*bbf_pivot_cat_sql;
+	int				nestlevel;
+	List			*per_pivot_list;
+	
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize) ||
+		rsinfo->expectedDesc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* 
+	* Previously we saved two raw parsetrees in tsql outermost context
+	* here we are retrieve those raw parsetree for pivot execution
+	*/
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	if (!tsql_outmost_context)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot outer context not found")));
+	
+	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
+	PG_TRY();
+	{
+		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+		Assert(list_length(per_pivot_list) >= 2);
+		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
+		bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
+	}
+	PG_FINALLY();
+	{
+		MemoryContextSwitchTo(oldcontext);
+	}
+	PG_END_TRY();
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/* get the requested return tuple description */
+	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+
+	/*
+	 * Check to make sure we have a reasonable tuple descriptor
+	 *
+	 * Note we will attempt to coerce the values into whatever the return
+	 * attribute type is and depend on the "in" function to complain if
+	 * needed.
+	 */
+	if (tupdesc->natts < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query-specified return tuple and " \
+						"bbf_pivot function are not compatible")));
+
+	/* load up the categories hash table */
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, per_query_ctx);
+
+	/* let the caller know we're sending back a tuplestore */
+	rsinfo->returnMode = SFRM_Materialize;
+
+	/* now go build it */
+	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
+												bbf_pivot_hash,
+												tupdesc,
+												rsinfo->allowedModes & SFRM_Materialize_Random);
+
+	/*
+	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
+	 */
+	rsinfo->setDesc = tupdesc;
+	MemoryContextSwitchTo(oldcontext);
+
+	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
+	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+	tsql_outmost_estat->pivot_number--;
+	MemoryContextSwitchTo(oldcontext);
+	return (Datum) 0;
+}
+
+/*
+ * load up the categories hash table
+ */
+static HTAB *
+load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
+{
+	HTAB	   *bbf_pivot_hash;
+	HASHCTL		ctl;
+	int			ret;
+	uint64		proc;
+	MemoryContext SPIcontext;
+
+	/* initialize the category hash table */
+	ctl.keysize = MAX_CATNAME_LEN;
+	ctl.entrysize = sizeof(bbf_pivot_HashEnt);
+	ctl.hcxt = per_query_ctx;
+
+	/*
+	 * use INIT_CATS, defined above as a guess of how many hash table entries
+	 * to create, initially
+	 */
+	bbf_pivot_hash = hash_create("bbf_pivot hash",
+								INIT_CATS,
+								&ctl,
+								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		/* internal error */
+		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
+
+	/* Retrieve the category name rows */
+	ret = SPI_execute_raw_parsetree(cats_sql, true, 0);
+	proc = SPI_processed;
+
+	/* Check for qualifying tuples */
+	if ((ret == SPI_OK_SELECT) && (proc > 0))
+	{
+		SPITupleTable *spi_tuptable = SPI_tuptable;
+		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
+		uint64		i;
+
+		/*
+		 * The provided categories SQL query must always return one column:
+		 * category - the label or identifier for each column
+		 */
+		if (spi_tupdesc->natts != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("provided \"categories\" SQL must " \
+							"return 1 column of at least one row")));
+
+		for (i = 0; i < proc; i++)
+		{
+			bbf_pivot_cat_desc *catdesc;
+			char	   *catname;
+			HeapTuple	spi_tuple;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			/* get the category from the current sql result tuple */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			if (catname == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("provided \"categories\" SQL must " \
+								"not return NULL values")));
+			
+			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
+			catdesc = (bbf_pivot_cat_desc *) palloc(sizeof(bbf_pivot_cat_desc));
+			catdesc->catname = catname;
+			catdesc->attidx = i;
+			/* Add the proc description block to the hashtable */
+			bbf_pivot_HashTableInsert(bbf_pivot_hash, catdesc);
+
+			MemoryContextSwitchTo(SPIcontext);
+		}
+	}
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
+		elog(ERROR, "load_categories_hash: SPI_finish() failed");
+
+	return bbf_pivot_hash;
+}
+
+
+
+/*
+ * create and populate the bbf_pivot tuplestore
+ */
+static Tuplestorestate *
+get_bbf_pivot_tuplestore(RawStmt *sql,
+						HTAB *bbf_pivot_hash,
+						TupleDesc tupdesc,
+						bool randomAccess)
+{
+	Tuplestorestate *tupstore;
+	int			num_categories = hash_get_num_entries(bbf_pivot_hash);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	char	  **values;
+	HeapTuple	tuple;
+	int			ret;
+	uint64		proc;
+
+	/* initialize our tuplestore (while still in query context!) */
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		/* internal error */
+		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
+
+	/* Now retrieve the bbf_pivot source rows */
+	ret = SPI_execute_raw_parsetree(sql, true, 0);
+	proc = SPI_processed;
+
+	/* Check for qualifying tuples */
+	if ((ret == SPI_OK_SELECT) && (proc > 0))
+	{
+		SPITupleTable *spi_tuptable = SPI_tuptable;
+		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
+		int			ncols = spi_tupdesc->natts;
+		char	   **columngroup;
+		char	   **lastcolumngroup = NULL;
+		bool		firstpass = true;
+		uint64		i;
+		int			j;
+		int			non_pivot_columns;
+		int			result_ncols;
+
+		if (num_categories == 0)
+		{
+			/* no qualifying category tuples */
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("provided \"categories\" SQL must " \
+							"return 1 column of at least one row")));
+		}
+
+		if (ncols < 2)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid source data SQL statement"),
+					 errdetail("The provided SQL must return 2 " \
+							   " columns; category, and values.")));
+
+		/* 
+		* The last 2 columns of the results are category column and value column
+		* that will be used for later pivot operation. The remaining columns are 
+		* non_pivot columns;
+		*/
+		non_pivot_columns = ncols - 2;
+		result_ncols = non_pivot_columns + num_categories;
+
+		/* Recheck to make sure we tuple descriptor still looks reasonable */
+		if (tupdesc->natts != result_ncols)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid return type"),
+					 errdetail("Query-specified return " \
+							   "tuple has %d columns but bbf_pivot " \
+							   "returns %d.", tupdesc->natts, result_ncols)));
+
+		/* allocate space and make sure it's clear */
+		values = (char **) palloc0(result_ncols * sizeof(char *));
+		columngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
+		lastcolumngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
+
+		for (i = 0; i < proc; i++)
+		{
+			HeapTuple	spi_tuple;
+			bbf_pivot_cat_desc *catdesc;
+			char	   *catname;
+			bool 	   	is_new_row = false;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			if (ncols > 2)
+			{
+				/* get the non-pivot column group from the current sql result tuple */
+				for (j = 0; j < non_pivot_columns; j++)
+				{	
+					columngroup[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j+1);
+				}
+
+				/*
+				* if we're on a new output row, grab the column values up to
+				* column N-2 now
+				*/
+
+				if (!firstpass)
+				{
+					for (j = 0; j < non_pivot_columns; j++)
+					{	
+						if (!xstreq(columngroup[j], lastcolumngroup[j]))
+						{
+							is_new_row = true;
+							break;
+						}
+					}
+				}
+
+				if (firstpass || is_new_row)
+				{
+					/*
+					* a new row means we need to flush the old one first, unless
+					* we're on the very first row
+					*/
+					if (!firstpass)
+					{
+						for (j = 0; j < result_ncols; j++)
+						{
+							if (values[j] == NULL)
+								values[j] = pstrdup("0");
+						}
+						/* rowid changed, flush the previous output row */
+						tuple = BuildTupleFromCStrings(attinmeta, values);
+
+						tuplestore_puttuple(tupstore, tuple);
+
+						for (j = 0; j < result_ncols; j++)
+							xpfree(values[j]);
+					}
+
+					for (j = 0; j < non_pivot_columns; j++)
+						values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
+
+					/* we're no longer on the first pass */
+					firstpass = false;
+				}
+			}
+
+			/* look up the category and fill in the appropriate column */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
+
+			if (catname != NULL)
+			{
+				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname, catdesc);
+
+				if (catdesc)
+					values[catdesc->attidx + non_pivot_columns] =
+						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
+			}
+
+			if (ncols > 2)
+			{
+				for (j = 0; j < non_pivot_columns; j++)
+				{	
+					xpfree(lastcolumngroup[j]);
+					xpstrdup(lastcolumngroup[j], columngroup[j]);
+				}
+			}
+		}
+
+		/* flush the last output row */
+		for (i = 0; i < result_ncols; i++)
+		{
+			if (values[i] == NULL)
+				values[i] = pstrdup("0");
+		}
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+		tuplestore_puttuple(tupstore, tuple);
+	}
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
+		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
+
+	return tupstore;
 }
