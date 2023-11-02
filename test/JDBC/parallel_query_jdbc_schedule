@@ -13,6 +13,7 @@ ignore#!#Test-sp_addrolemember-vu-cleanup
 ignore#!#Test-sp_droprolemember-vu-prepare
 ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
+ignore#!#babel_datatype_sqlvariant-vu-verify
 
 # Group 3: “could not access file "pg_hint_plan": No such file or directory" BABEL-4395
 ignore#!#BABEL-3291
