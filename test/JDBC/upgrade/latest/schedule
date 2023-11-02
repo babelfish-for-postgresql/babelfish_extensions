@@ -143,6 +143,7 @@ BABEL-937
 forjson
 forjson-subquery
 forjson-datatypes
+forjson-nesting
 forxml
 forxml-subquery
 BABEL-PROCID
@@ -412,3 +413,8 @@ smalldatetimefromparts-dep
 BABEL_4330
 Test_ISNULL
 BABEL-4410
+#AUTO_ANALYZE #uncomment this test when preparing for new minor version
+BABEL-4231
+sys_asymmetric_keys
+sys_certificates
+sys_database_permissions

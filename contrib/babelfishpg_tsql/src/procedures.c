@@ -357,7 +357,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 	"AND (t3.\"TABLE_NAME\" = t1.table_name collate sys.database_default AND t3.\"TABLE_SCHEMA\" = ext.orig_name collate sys.database_default) "
 	"AND t5.relname = t1.table_name collate sys.database_default "
 	"AND (t5.oid = t4.object_id AND t3.\"ORDINAL_POSITION\" = t4.column_id) "
-	"AND ext.dbid = cast(sys.db_id() as oid) "
+	"AND ext.dbid = sys.db_id() "
 	"AND t1.dtd_identifier::int = t3.\"ORDINAL_POSITION\";", viewName);
 }
 
@@ -451,13 +451,18 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			PG_CATCH();
 			{
 				query = psprintf("DROP VIEW %s", sp_describe_first_result_set_view_name);
+				HOLD_INTERRUPTS();
 
 				if ((rc = SPI_execute(query, false, 1)) < 0)
+				{
+					RESUME_INTERRUPTS();
 					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+				}
 
 				pfree(query);
 				pfree(sp_describe_first_result_set_view_name);
 				SPI_finish();
+				RESUME_INTERRUPTS();
 				PG_RE_THROW();
 			}
 			PG_END_TRY();

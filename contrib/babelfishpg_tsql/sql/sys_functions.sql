@@ -2533,7 +2533,7 @@ BEGIN
             RETURN NULL;
         ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
                 WHERE ext.orig_name = bbf_schema_name 
-                    AND CAST(ext.dbid AS oid) = CAST(sys.db_id() AS oid)) != 1 THEN
+                    AND ext.dbid = sys.db_id()) != 1 THEN
             RETURN 0;
         END IF;
     END IF;

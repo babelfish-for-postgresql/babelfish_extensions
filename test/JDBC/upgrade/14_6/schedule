@@ -135,8 +135,8 @@ BABEL-3748-before-14_7
 BABEL-383
 BABEL-405
 BABEL-937
-forjson
-forjson-datatypes
+forjson-before-14_10-or-15_5
+forjson-datatypes-before-14_10-or-15_5
 forxml
 BABEL-PROCID
 babel_trigger
@@ -364,3 +364,4 @@ BABEL-3215
 orderby-before-14_8-or-15_3
 getdate
 BABEL_4330
+AUTO_ANALYZE-before-15-5-or-14-10

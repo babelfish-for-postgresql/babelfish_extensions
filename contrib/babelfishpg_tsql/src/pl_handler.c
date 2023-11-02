@@ -3172,7 +3172,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							Constraint *con;
 
 							con = get_rowversion_default_constraint(makeTypeNameFromOid(attr->atttypid, attr->atttypmod));
-							rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+							rawEnt = (RawColumnDefault *) palloc0(sizeof(RawColumnDefault));
 							rawEnt->attnum = attr_num + 1;
 							rawEnt->raw_default = (Node *) con->raw_expr;
 							AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
@@ -3726,6 +3726,8 @@ terminate_batch(bool send_error, bool compile_error)
 	bool		error_mapping_failed = false;
 	int			rc;
 
+	HOLD_INTERRUPTS();
+
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
 
 	/*
@@ -3797,9 +3799,12 @@ terminate_batch(bool send_error, bool compile_error)
 			AbortCurTransaction = false;
 
 			if (!send_error)
+			{
+				RESUME_INTERRUPTS();
 				ereport(ERROR,
 						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 						 errmsg("Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.")));
+			}
 		}
 		else if (send_error && !IsTransactionBlockActive())
 		{
@@ -3814,6 +3819,8 @@ terminate_batch(bool send_error, bool compile_error)
 			MemoryContextSwitchTo(oldcontext);
 		}
 	}
+
+	RESUME_INTERRUPTS();
 	if (send_error)
 	{
 		PG_RE_THROW();
