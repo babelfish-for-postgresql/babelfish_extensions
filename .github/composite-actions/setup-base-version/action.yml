@@ -62,6 +62,9 @@ runs:
     - name: Build PostGIS Extension
       run: |
         cd ..
+        export CC='ccache gcc'
+        export CMAKE_C_COMPILER_LAUNCHER=ccache
+        export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
         sudo apt-get install wget
         wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
         tar -xvzf postgis-3.4.0.tar.gz
