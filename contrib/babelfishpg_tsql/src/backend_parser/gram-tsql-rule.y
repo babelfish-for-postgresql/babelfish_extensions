@@ -1284,38 +1284,7 @@ DeleteStmt: opt_with_clause DELETE_P FROM relation_expr_opt_alias
 				}
 		;
 
-tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
-			SET set_clause_list
-			from_clause
-			where_or_current_clause
-			returning_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $3;
-					n->targetList = $5;
-					n->fromClause = $6;
-					n->whereClause = $7;
-					n->returningList = $8;
-					n->withClause = $1;
-					$$ = (Node *)n;
-				}
-			| opt_with_clause UPDATE relation_expr_opt_alias
-			tsql_table_hint_expr
-			SET set_clause_list
-			from_clause
-			where_or_current_clause
-			returning_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $3;
-					n->targetList = $6;
-					n->fromClause = $7;
-					n->whereClause = $8;
-					n->returningList = $9;
-					n->withClause = $1;
-					$$ = (Node *)n;
-				}
-			| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+tsql_UpdateStmt: opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 			tsql_opt_table_hint_expr
 			SET set_clause_list
 			from_clause
@@ -1323,63 +1292,18 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $4;
+					tsql_reset_update_delete_globals();
+					n->withClause = $1;
 					n->limitCount = $3;
+					n->relation = $4;
 					n->targetList = $7;
 					n->fromClause = $8;
 					n->whereClause = $9;
 					n->returningList = $10;
-					n->withClause = $1;
 					$$ = (Node *)n;
 				}
 			/* OUTPUT syntax */
-			| opt_with_clause UPDATE relation_expr_opt_alias
-			SET set_clause_list
-			tsql_output_clause
-			from_clause
-			where_or_current_clause
-				{
-					UpdateStmt *n = makeNode(UpdateStmt);
-					n->relation = $3;
-					tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
-					n->targetList = $5;
-					if ($7 != NULL && IsA(linitial($7), JoinExpr))
-					{
-						n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
-											(Node*)n, $7, $8, NULL, $3,
-											yyscanner);
-
-					}
-					else
-					{
-						n->fromClause = $7;
-						n->whereClause = $8;
-					}
-					tsql_check_update_output_transformation($6);
-					n->returningList = $6;
-					n->withClause = $1;
-					$$ = (Node *)n;
-				}
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				tsql_table_hint_expr
-				SET set_clause_list
-				tsql_output_clause
-				from_clause
-				where_or_current_clause
-					{
-						UpdateStmt *n = makeNode(UpdateStmt);
-						n->relation = $3;
-						tsql_update_delete_stmt_from_clause_alias(n->relation,
-						$8);
-						n->targetList = $6;
-						n->fromClause = $8;
-						n->whereClause = $9;
-						tsql_check_update_output_transformation($7);
-						n->returningList = $7;
-						n->withClause = $1;
-						$$ = (Node *)n;
-					}
-				| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+				| opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				tsql_opt_table_hint_expr
 				SET set_clause_list
 				tsql_output_clause
@@ -1387,11 +1311,11 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				where_or_current_clause
 					{
 						UpdateStmt *n = makeNode(UpdateStmt);
+						tsql_reset_update_delete_globals();
 						n->relation = $4;
-						tsql_update_delete_stmt_from_clause_alias(n->relation,
-						$8);
+						tsql_update_delete_stmt_from_clause_alias(n->relation, $9);
 						n->targetList = $7;
-						if ($8 != NULL && IsA(linitial($8), JoinExpr))
+						if ($9 != NULL && IsA(linitial($9), JoinExpr))
 						{
 							n = (UpdateStmt*)tsql_update_delete_stmt_with_join(
 												(Node*)n, $9, $10, $3, $4,
@@ -1399,9 +1323,9 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						}
 						else
 						{
-							n->fromClause = $8;
-							n->whereClause = tsql_update_delete_stmt_with_top($3,
-												$4, $10, yyscanner);
+							n->limitCount = $3;
+							n->fromClause = $9;
+							n->whereClause = $10;
 						}
 						tsql_check_update_output_transformation($8);
 						n->returningList = $8;
@@ -1409,26 +1333,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 						$$ = (Node *)n;
 					}
 				/* OUTPUT INTO syntax with OUTPUT target column list */
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				SET set_clause_list
-				tsql_output_clause INTO insert_target tsql_output_into_target_columns
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $5, $6, $8, 
-																		$9, $10, $11, yyscanner);
-					}
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				tsql_table_hint_expr
-				SET set_clause_list
-				tsql_output_clause INTO insert_target tsql_output_into_target_columns
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $6, $7, $9, 
-																	$10, $11, $12, yyscanner);
-					}
-				| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+				| opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				tsql_opt_table_hint_expr
 				SET set_clause_list
 				tsql_output_clause INTO insert_target tsql_output_into_target_columns
@@ -1439,26 +1344,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 																	$11, $12, $13, yyscanner);
 					}
 				/* Without OUTPUT target column list */
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				SET set_clause_list
-				tsql_output_clause INTO insert_target
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $5, $6, $8, 
-																		NIL, $9, $10, yyscanner);
-					}
-				| opt_with_clause UPDATE relation_expr_opt_alias
-				tsql_table_hint_expr
-				SET set_clause_list
-				tsql_output_clause INTO insert_target
-				from_clause
-				where_or_current_clause
-					{
-						$$ = tsql_update_output_into_cte_transformation($1, NULL, $3, $6, $7, $9, 
-																	NIL, $10, $11, yyscanner);
-					}
-				| opt_with_clause UPDATE tsql_top_clause relation_expr_opt_alias
+				| opt_with_clause UPDATE opt_top_clause relation_expr_opt_alias
 				tsql_opt_table_hint_expr
 				SET set_clause_list
 				tsql_output_clause INTO insert_target
@@ -1609,6 +1495,7 @@ simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause tsql_top_clause target_list
@@ -1633,9 +1520,155 @@ simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
+			| SELECT opt_all_clause tsql_top_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					if ($3 != NULL && $4 == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Target list missing from TOP clause"),
+								 errhint("For example, TOP n COLUMNS ..."),
+								 parser_errposition(@3)));
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
+				}
+			| SELECT distinct_clause tsql_top_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					if ($3 != NULL && $4 == NULL)
+						ereport(ERROR,
+								(errcode(ERRCODE_SYNTAX_ERROR),
+								 errmsg("Target list missing from TOP clause"),
+								 errhint("For example, TOP n COLUMNS ..."),
+								 parser_errposition(@3)));
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
+				}	
+			| SELECT opt_all_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause 
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->intoClause = $4;
+					n->whereClause = $8;
+					n->groupClause = ($9)->list;
+					n->groupDistinct = ($9)->distinct;
+					n->havingClause = $10;
+					n->windowClause = $11;
+					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
+				}
+			| SELECT distinct_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->intoClause = $4;
+					n->whereClause = $8;
+					n->groupClause = ($9)->list;
+					n->groupDistinct = ($9)->distinct;
+					n->havingClause = $10;
+					n->windowClause = $11;
+					$$ = tsql_pivot_select_transformation($3, $5, (List *)$6, $7, n);
+				}
 			| tsql_values_clause							{ $$ = $1; }
+			;
+
+tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
+				{						
+					ColumnRef 		*a_star;
+					ResTarget 		*a_star_restarget;
+					RangeSubselect 	*range_sub_select;
+					Alias 			*temptable_alias;
+					SortBy 			*s;
+					List    *ret;
+					List    *value_col_strlist = NULL;
+					List	*subsel_valuelists = NULL;
+					
+					SelectStmt 	*category_sql = makeNode(SelectStmt);
+					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
+					ResTarget	*restarget_aggfunc = makeNode(ResTarget);
+
+					a_star = makeNode(ColumnRef);
+					a_star->fields = list_make1(makeNode(A_Star));
+					a_star->location = -1;
+					a_star_restarget = makeNode(ResTarget);
+					a_star_restarget->name = NULL;
+					a_star_restarget->name_location = -1;
+					a_star_restarget->indirection = NIL;
+					a_star_restarget->val = (Node *) a_star;
+					a_star_restarget->location = -1;
+					
+
+					/* prepare aggregation function for pivot source sql */
+					restarget_aggfunc->name = NULL;
+					restarget_aggfunc->name_location = -1;
+					restarget_aggfunc->indirection = NIL;
+					restarget_aggfunc->val = (Node *) $3;
+					restarget_aggfunc->location = -1;
+					
+					if (IsA((List *)$7, List))
+					{
+						for (int i = 0; i < ((List *)$7)->length; i++)
+						{
+							ColumnRef	*tempRef = list_nth((List *)$7, i);
+							String		*s = list_nth(tempRef->fields, 0);
+							Node		*n = makeStringConst(s->sval, -1);
+							List 		*l = list_make1(copyObject(n));
+							if (value_col_strlist == NULL || subsel_valuelists == NULL)
+							{
+								value_col_strlist = list_make1(s->sval);
+								subsel_valuelists = list_make1(l);
+							}else
+							{
+								value_col_strlist = lappend(value_col_strlist, s->sval);
+								subsel_valuelists = lappend(subsel_valuelists, l);
+							}
+						}
+					}
+
+					temptable_alias = makeNode(Alias);
+					temptable_alias->aliasname = "pivotTempTable";
+					temptable_alias->colnames = list_make1(makeString(pstrdup($5)));
+					
+					valuelists_sql->valuesLists = subsel_valuelists;
+
+					range_sub_select = makeNode(RangeSubselect);
+					range_sub_select->subquery = (Node *) valuelists_sql;
+					range_sub_select->alias = temptable_alias;
+
+					s = makeNode(SortBy);
+					s->node = makeIntConst(1, -1);
+					s->sortby_dir = 0;
+					s->sortby_nulls = 0;     
+					s->useOp = NIL;
+					s->location = -1;
+
+					category_sql->targetList = list_make1(a_star_restarget);
+					category_sql->fromClause = list_make1(range_sub_select);
+					category_sql->sortClause = list_make1(s);
+
+					ret = list_make4(pstrdup($5), restarget_aggfunc, category_sql, value_col_strlist);
+					$$ = (Node*) ret; 
+				} 
 			;
 
 table_ref:	relation_expr tsql_table_hint_expr
@@ -1936,6 +1969,13 @@ func_expr_common_subexpr:
 											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
+			| TSQL_DATETRUNC '(' datepart_arg ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datetrunc"),
+												list_make2(makeStringConst($3, @3), $5),
+												COERCE_EXPLICIT_CALL,
+												@1);
+				}
 			| TSQL_DATENAME '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datename"),
@@ -2145,6 +2185,7 @@ tsql_output_simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
 				}
 			| SELECT distinct_clause opt_top_clause target_list
@@ -2162,7 +2203,37 @@ tsql_output_simple_select:
 					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
+					n->isPivot = false;
 					$$ = (Node *)n;
+				}
+			| SELECT opt_all_clause opt_top_clause opt_target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->limitCount = $3;
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
+				}
+			| SELECT distinct_clause opt_top_clause target_list
+			into_clause from_clause tsql_pivot_expr alias_clause where_clause
+			group_clause having_clause window_clause
+				{
+					SelectStmt *n = makeNode(SelectStmt);
+					n->distinctClause = $2;
+					n->limitCount = $3;
+					n->intoClause = $5;
+					n->whereClause = $9;
+					n->groupClause = ($10)->list;
+					n->groupDistinct = ($10)->distinct;
+					n->havingClause = $11;
+					n->windowClause = $12;
+					$$ = tsql_pivot_select_transformation($4, $6, (List *)$7, $8, n);
 				}
 			| tsql_values_clause							{ $$ = $1; }
 			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select
@@ -3257,20 +3328,11 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 			tsql_opt_table_hint_expr tsql_output_clause from_clause where_or_current_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
+					tsql_reset_update_delete_globals();
 					n->relation = $5;
-					tsql_update_delete_stmt_from_clause_alias(n->relation, $8);
-					if ($8 != NULL && IsA(linitial($8), JoinExpr))
-					{
-						n = (DeleteStmt*)tsql_update_delete_stmt_with_join(
-											(Node*)n, $8, $9, $3, $5,
-											yyscanner);
-					}
-					else
-					{
-						n->usingClause = $8;
-						n->whereClause = tsql_update_delete_stmt_with_top($3,
-											$5, $9, yyscanner);
-					}
+					n->limitCount = $3;
+					n->usingClause = $8;
+					n->whereClause = $9;
 					n->returningList = $7;
 					n->withClause = $1;
 					$$ = (Node *)n;
@@ -4342,11 +4404,20 @@ tsql_IsolationLevelStr:
 				}
 			| REPEATABLE READ
 				{
-					TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
-					ereport(ERROR,
+					if (pltsql_isolation_level_repeatable_read)
+					{
+						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
+						$$ = "repeatable read";	
+					}
+					else
+					{
+						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_REPEATABLE_READ);
+						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("REPEATABLE READ isolation level is not supported"),
+							errmsg("Isolation level ‘REPEATABLE READ’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_repeatable_read’ config option to get PG repeatable read isolation level."),
 							parser_errposition(@1)));
+					}
+
 				}
 			| SNAPSHOT
 				{
@@ -4355,11 +4426,19 @@ tsql_IsolationLevelStr:
 				}
 			| SERIALIZABLE
 				{
-					TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
-					ereport(ERROR,
+					if (pltsql_isolation_level_serializable)
+					{
+						TSQLInstrumentation(INSTR_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
+						$$ = "serializable";
+					}
+					else
+					{
+						TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_ISOLATION_LEVEL_SERIALIZABLE);
+						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("SERIALIZABLE isolation level is not supported"),
+							errmsg("Isolation level ‘SERIALIZABLE’ is not currently supported in Babelfish. Please use ‘babelfishpg_tsql.isolation_level_serializable’ config option to get PG serializable isolation level."),
 							parser_errposition(@1)));
+					}
 				}
 		;
 
@@ -4476,6 +4555,7 @@ reserved_keyword:
 			| TSQL_DATE_BUCKET
 			| TSQL_DATENAME
 			| TSQL_DATEPART
+			| TSQL_DATETRUNC
 			| TSQL_IIF
 			| TSQL_OUT
 			| TSQL_OUTER

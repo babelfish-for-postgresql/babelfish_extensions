@@ -1,0 +1,813 @@
+DBCC CHECKIDENT(babel_3201_t_int, NORESEED);
+GO
+
+-- test with mixed case in table name
+DBCC CHECKIDENT(BABEL_3201_t_iNt, NORESEED);
+GO
+DBCC CHECKIDENT(BABEL_3201_T_INT, NORESEED);
+GO
+
+-- test with table in quotes (+mixed cases)
+DBCC CHECKIDENT('babel_3201_t_int', NORESEED);
+GO
+DBCC CHECKIDENT('baBEl_3201_T_inT', NORESEED);
+GO
+
+-- test with table in brackets (+mixed case)
+DBCC CHECKIDENT([babel_3201_t_int], NORESEED);
+GO
+DBCC CHECKIDENT([baBEL_3201_t_InT], NORESEED);
+GO
+
+-- test with table in brackets with quotes (+mixed case)
+DBCC CHECKIDENT('[babel_3201_t_int]', NORESEED);
+GO
+DBCC CHECKIDENT('[BABEL_3201_t_int]', NORESEED);
+GO
+
+-- test when trailing space - should work
+DBCC CHECKIDENT('babel_3201_t_int      ', NORESEED);
+GO
+DBCC CHECKIDENT('babel_3201_T_INT      ', NORESEED);
+GO
+
+-- test when leading space - should throw error
+DBCC CHECKIDENT('   babel_3201_t_int  ', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "   babel_3201_t_int" does not exist)~~
+
+
+-- test when table name is empty in quotes
+DBCC CHECKIDENT('', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Parameter 1 is incorrect for this DBCC statement)~~
+
+
+-- same as DBCC CHECKIDENT(<table_name>, RESEED), identity value is not changed
+-- if current identity value for a table is less than the maximum identity value
+-- stored in the identity column
+DBCC CHECKIDENT(babel_3201_t_int);
+GO
+
+
+DBCC CHECKIDENT(babel_3201_t_int, RESEED);
+GO
+
+INSERT INTO babel_3201_t_int VALUES (8);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_3201_t_int;
+GO
+~~START~~
+int#!#int
+1#!#5
+2#!#6
+3#!#7
+4#!#8
+~~END~~
+
+
+DBCC CHECKIDENT('babel_3201_sch1.babel_3201_t2');
+GO
+
+-- Set identity value to 5 which is less than the maximum value(which is 9) of the identity
+-- column, using RESEED option in this case should will reset the identity value
+-- to maximum value of the identity column. Value inserted in next insert will
+-- be (max_identity_col_value + increament).
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 5);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (8);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * from babel_3201_t_bigint;
+GO
+~~START~~
+bigint#!#int
+3#!#5
+6#!#6
+9#!#6
+8#!#8
+~~END~~
+
+
+-- This will reset the current identity value(currently 8) to the maximum value of the identity column (currently 9)
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (9);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * from babel_3201_t_bigint;
+GO
+~~START~~
+bigint#!#int
+3#!#5
+6#!#6
+9#!#6
+8#!#8
+12#!#9
+~~END~~
+
+
+-- no rows have been inserted in the table; both current identity value current
+-- column value should be NULL (TO-DO)
+BEGIN TRAN;
+DBCC CHECKIDENT(babel_3201_t1, NORESEED);
+SELECT * FROM babel_3201_t1;
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value 'NULL', current column value 'NULL'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+~~END~~
+
+
+BEGIN TRAN;
+DBCC CHECKIDENT(babel_3201_t1, RESEED);
+SELECT * FROM babel_3201_t1;
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value 'NULL', current column value 'NULL'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+~~END~~
+
+
+-- current identity value should be NULL (TO-DO), identity value inserted in
+-- next INSERT operation should be new_reseed_value.
+BEGIN TRAN;
+DBCC CHECKIDENT(babel_3201_t1, RESEED, 5);
+INSERT INTO babel_3201_t1 VALUES (50);
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value 'NULL'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+BEGIN TRAN;
+DBCC CHECKIDENT(babel_3201_t1, NORESEED);
+select * from babel_3201_t1;
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '5', current column value '5'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+5#!#50
+~~END~~
+
+
+-- Remove all rows in table using TRUNCATE TABLE, Identity value will become NULL
+-- next insert operation should be default identity value if no new_reseed_value is provided.
+TRUNCATE TABLE babel_3201_t_int;
+GO
+dbcc checkident(babel_3201_t_int, NORESEED);
+GO
+INSERT INTO babel_3201_t_int values(15);
+GO
+~~ROW COUNT: 1~~
+
+
+select * from babel_3201_t_int;
+-- Remove all rows in table using TRUNCATE TABLE, identity value inserted in
+-- next INSERT operation should be new_reseed_value.
+TRUNCATE TABLE babel_3201_t_int;
+GO
+~~START~~
+int#!#int
+1#!#15
+~~END~~
+
+DBCC CHECKIDENT(babel_3201_t_int, RESEED, 10);
+GO
+INSERT INTO babel_3201_t_int VALUES (5);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_3201_t_int;
+GO
+~~START~~
+int#!#int
+10#!#5
+~~END~~
+
+
+
+-- Remove all rows in table using DELETE TABLE, identity value inserted in next
+-- INSERT operation should be (new_reseed_value + increment).
+DELETE FROM babel_3201_t_bigint;
+GO
+~~ROW COUNT: 5~~
+
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 10);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (5);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_3201_t_bigint;
+GO
+~~START~~
+bigint#!#int
+13#!#5
+~~END~~
+
+
+-- Remove all rows in table using DELETE TABLE current identity will not become default identity value, 
+-- identity value inserted in next operation should use (default identity value + increament) if no new_reseed_value is provided.
+DELETE FROM babel_3201_t_bigint;
+GO
+~~ROW COUNT: 1~~
+
+dbcc checkident(babel_3201_t_bigint, NORESEED);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (5);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_3201_t_bigint;
+GO
+~~START~~
+bigint#!#int
+16#!#5
+~~END~~
+
+
+-- If some rows are present already in the table, identity value inserted in next 
+-- INSERT operation should be (new_reseed_value + increament)
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 27);
+GO
+INSERT INTO babel_3201_t_bigint VALUES (32);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_3201_t_bigint;
+GO
+~~START~~
+bigint#!#int
+16#!#5
+30#!#32
+~~END~~
+
+
+-- Incorrect DBCC command option
+DBCC CHECKIDENT(babel_3201_t1) WITH NO_INFO;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NO_INFO' is not a recognized option)~~
+
+
+-- Invalid parameter 1
+DBCC CHECKIDENT(5);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '5' at line 2 and character position 16)~~
+
+
+DBCC CHECKIDENT(babel_3201_t_int, RESEED, ) WITH NO_INFOMSGS;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ')' at line 1 and character position 42)~~
+
+
+-- Invalid keyword
+DBCC CHECKIDENT(babel_3201_t1, RESEE);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'RESEE' at line 2 and character position 31)~~
+
+
+-- Invalid datatype
+DBCC CHECKIDENT(babel_3201_t1, RESEED, 1313abc);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'abc' at line 2 and character position 43)~~
+
+
+-- Unsupported DBCC command
+DBCC CHECKTABLE(babel_3201_t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: DBCC CHECKTABLE is not currently supported in Babelfish)~~
+
+
+-- Invalid DBCC command
+DBCC FAKE_COMMAND(t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect DBCC statement. Check the documentation for the correct DBCC syntax and options.)~~
+
+
+-- Database undefined
+DBCC CHECKIDENT('fake_db.dbo.babel_3201_t1', NORESEED);
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "fake_db" does not exist)~~
+
+
+-- Schema undefined
+DBCC CHECKIDENT('fake_schema.babel_3201_t1', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_fake_schema" does not exist)~~
+
+
+-- Table undefined
+DBCC CHECKIDENT(fake_babel_3201_t1, RESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "fake_babel_3201_t1" does not exist)~~
+
+
+-- Table does not have identity column
+DBCC CHECKIDENT(babel_3201_t2, RESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'master_dbo.babel_3201_t2' does not contain an identity column.)~~
+
+
+-- new_reseed_value as expression is not allowed
+DBCC CHECKIDENT(babel_3201_t2, RESEED, 4+5);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '+' at line 2 and character position 40)~~
+
+
+-- new_reseed_value is out of tinyint datatype range
+DBCC CHECKIDENT(babel_3201_t_tinyint, RESEED, 256);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 256 is out of bounds for sequence "babel_3201_t_tinyint_a_seq" (5..255))~~
+
+
+DBCC CHECKIDENT(babel_3201_t_tinyint, RESEED, -1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value -1 is out of bounds for sequence "babel_3201_t_tinyint_a_seq" (5..255))~~
+
+
+-- new_reseed_value is out of smallint datatype range
+DBCC CHECKIDENT(babel_3201_t_smallint, RESEED, 32768);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 32768 is out of bounds for sequence "babel_3201_t_smallint_a_seq" (10..32767))~~
+
+
+DBCC CHECKIDENT(babel_3201_t_smallint, RESEED, -32769);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value -32769 is out of bounds for sequence "babel_3201_t_smallint_a_seq" (10..32767))~~
+
+
+
+-- new_reseed_value is out of int datatype range
+DBCC CHECKIDENT(babel_3201_t_int, RESEED, 2147483648);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 2147483648 is out of bounds for sequence "babel_3201_t_int_a_seq" (1..2147483647))~~
+
+
+DBCC CHECKIDENT(babel_3201_t_int, RESEED, -2147483649);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value -2147483649 is out of bounds for sequence "babel_3201_t_int_a_seq" (1..2147483647))~~
+
+
+-- new_reseed_value is out of bigint datatype range
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, 9223372036854775808);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "9223372036854775808" is out of range for type bigint)~~
+
+
+DBCC CHECKIDENT(babel_3201_t_bigint, RESEED, -9223372036854775809);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-9223372036854775809" is out of range for type bigint)~~
+
+
+-- numeric/decimal datatypes are internally converted to bigint, so allowed
+-- range is same as that of bigint
+DBCC CHECKIDENT(babel_3201_t_numeric, RESEED, 9223372036854775808);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "9223372036854775808" is out of range for type bigint)~~
+
+
+-- When new_reseed_value is a float value, only value before the decimal is used
+DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 15.65);
+GO
+
+-- When reseed_value is negative and zero, bbf currently does not support reseed to negative/zero value
+dbcc checkident(babel_3201_t_decimal, reseed, -10) 
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value -10 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, 0)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 0 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, .123)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 0 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, -.123)
+Go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 0 is out of bounds for sequence "babel_3201_t_decimal_a_seq" (7..9223372036854775807))~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, .)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 46)~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, -)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ')' at line 1 and character position 47)~~
+
+dbcc checkident(babel_3201_t_decimal, reseed, .-);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 46)~~
+
+
+SELECT * FROM babel_3201_t_decimal;
+GO
+~~START~~
+bigint#!#int
+7#!#5
+10#!#6
+13#!#7
+~~END~~
+
+
+begin tran;
+DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 10);
+INSERT INTO babel_3201_t_decimal VALUES (9);
+commit;
+go
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '15'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_3201_t_decimal;
+GO
+~~START~~
+bigint#!#int
+7#!#5
+10#!#6
+13#!#7
+13#!#9
+~~END~~
+
+
+BEGIN TRAN;
+    DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 133ac);
+    INSERT INTO babel_3201_t_decimal VALUES (10);
+COMMIT;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'ac' at line 2 and character position 53)~~
+
+
+SELECT * FROM babel_3201_t_decimal;
+GO
+~~START~~
+bigint#!#int
+7#!#5
+10#!#6
+13#!#7
+13#!#9
+~~END~~
+
+
+BEGIN TRAN;
+    DBCC CHECKIDENT(babel_3201_t_decimal, RESEED, 20);
+    INSERT INTO babel_3201_t_decimal VALUES (11);
+ROLLBACK;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '13'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~ROW COUNT: 1~~
+
+
+-- Check current_identity value after tran rollback 
+-- babelfish does not support rolling-back dbcc changes after transection rollback. 
+-- Current identity value will be = reseed_value inside the rollbacked transection + increament = 20+3=23
+BEGIN TRAN;
+dbcc checkident(babel_3201_t_decimal, noreseed);
+SELECT * FROM babel_3201_t_decimal;
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '23', current column value '13'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~START~~
+bigint#!#int
+7#!#5
+10#!#6
+13#!#7
+13#!#9
+~~END~~
+
+
+EXEC babel_3201_proc1;
+GO
+
+INSERT INTO babel_3201_t_tinyint VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_3201_t_tinyint;
+GO
+~~START~~
+smallint#!#int
+5#!#5
+6#!#6
+7#!#7
+31#!#10
+~~END~~
+
+
+EXEC babel_3201_proc2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: setval: value 257 is out of bounds for sequence "babel_3201_t_tinyint_a_seq" (5..255))~~
+
+
+-- testing different scenarios of 3-part name
+DBCC CHECKIDENT('dbo.babel_dbcc_check_t1')
+GO
+
+DBCC CHECKIDENT('..babel_dbcc_check_t1')
+GO
+
+DBCC CHECKIDENT('master.dbo.babel_dbcc_check_t1')
+GO
+
+DBCC CHECKIDENT('[master]."dbo".[babel_dbcc_check_t1]')
+GO
+
+DBCC CHECKIDENT('"master".[dbo]."babel_dbcc_check_t1"')
+GO
+
+DBCC CHECKIDENT('master..babel_dbcc_check_t1')
+GO
+
+-- with mixed case names of db, schema, and table.
+DBCC CHECKIDENT('dbo.BABEL_DBCC_check_t1')
+GO
+DBCC CHECKIDENT('master.DBO.BABEL_dbcc_check_t1')
+GO
+DBCC CHECKIDENT('[MASTER]."dBo".[babel_dbcc_CHECK_t1]')
+GO
+
+-- schema and object name containing spaces and dots
+DBCC CHECKIDENT('[babel_dbcc_check_t2 .with .dot_an_spaces]');
+GO
+
+DBCC CHECKIDENT('master.."babel_dbcc_check_t2 .with .dot_an_spaces"');
+GO
+
+DBCC CHECKIDENT('[babel_dbcc_check_schema .with .dot_and_spaces]."babel_dbcc_check_t3 .with .dot_and_spaces"');
+GO
+
+-- schema and object name containing spaces and dots + mixed case
+DBCC CHECKIDENT('[BABEL_DBCC_CHECK_T2 .with .dOT_AN_SPACES]');
+GO
+
+DBCC CHECKIDENT('MASTer.."babel_dbcc_CHECK_T2 .with .dot_an_SPACES"');
+GO
+
+DBCC CHECKIDENT('[babel_DBCC_CHECK_schema .with .DOT_and_spaces]."babel_dbcc_CHECK_T3 .with .dot_and_spaces"');
+GO
+
+-- db name longer then 63 and doing cross db call
+CREATE DATABASE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+GO
+
+USE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+GO
+
+CREATE TABLE babel_3201_longer__name_db_table (a int identity, b int);
+GO
+
+USE master;
+go
+
+DBCC CHECKIDENT('babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.dbo.babel_3201_longer__name_db_table', noreseed);
+GO
+
+-- db name longer and mixed case as well. 
+DBCC CHECKIDENT('bAbEl_dBcC_ChEcKiDeNt_dAtAbAsE_LoNgEr_tHaN_63_0AbCdEfGiJ1AbCdEfGiJ2AbCdEfGiJ3AbCdEfGiJ4AbCdEfGiJ5AbCdEfGiJ6AbCdEfGiJ7AbCdEfGiJ8AbCdEfGhIj9aBcDeFgHiJ.dbo.babel_3201_longer__name_db_table', noreseed);
+GO
+
+-- drop this db because of single_db mode
+DROP DATABASE babel_dbcc_checkident_database_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+GO
+
+-- create database to test cross db behavior.
+CREATE DATABASE babel_3201_db1;
+GO
+
+USE babel_3201_db1
+GO
+
+CREATE TABLE babel_3201_db1_database_table1(a int identity, b int);
+GO
+
+CREATE USER babel_3201_db1_log1_usr1 FOR LOGIN babel_3201_log1
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+-- Should throw - must be owner of schema dbo
+DBCC CHECKIDENT('babel_3201_db1..babel_3201_db1_database_table1', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of schema dbo)~~
+
+
+-- tsql
+USE babel_3201_db1
+GO
+DROP USER babel_3201_db1_log1_usr1
+GO
+
+
+-- tsql user=babel_3201_log1 password=12345678
+-- Should throw - The server principal "babel_3201_log1" is not able to access the database "babel_3201_db1" under the current security context
+DBCC CHECKIDENT('babel_3201_db1..babel_3201_db1_database_table1', NORESEED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_3201_log1" is not able to access the database "babel_3201_db1" under the current security context)~~
+
+
+-- tsql
+USE babel_3201_db1
+GO
+GRANT CONNECT TO GUEST;
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+-- Permission Check
+USE babel_3201_db1;
+GO
+
+-- should throw error - must be owner of schema master_dbo
+DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of schema master_dbo)~~
+
+
+-- tsql
+USE master;
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3201_log1;
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+USE babel_3201_db1;
+GO
+
+-- This should work correctly
+DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
+GO
+
+-- tsql
+-- test locks in two connections transaction. 
+BEGIN TRAN
+DBCC CHECKIDENT('babel_3201_test_locks', noreseed)
+GO
+
+
+-- tsql user=babel_3201_test_locks password=123456
+-- This reseed the identity values while the other transaction is not yet completed.
+BEGIN TRAN
+DBCC CHECKIDENT('babel_3201_test_locks', reseed, 101);
+SELECT * FROM babel_3201_test_locks;
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '1'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+-- tsql
+-- This will show the changed values of ident
+DBCC CHECKIDENT('babel_3201_test_locks', noreseed);
+SELECT * FROM babel_3201_test_locks;
+COMMIT;
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: Checking identity information: current identity value '101', current column value '1'.
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.  Server SQLState: S0001)~~
+
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+-- tsql
+-- test with user name longer then 64 chars.
+USE MASTER
+GO
+CREATE USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh FOR LOGIN babel_3201_log1
+GO
+
+-- tsql user=babel_3201_log1 password=12345678
+USE babel_3201_db1;
+GO
+CREATE SCHEMA [babel_3201_user_schema]
+GO
+CREATE TABLE [babel_3201_db1].[babel_3201_user_schema].[babel_3201_user_table] (a int identity, b int);
+GO
+-- This should work correctly
+DBCC CHECKIDENT('[babel_3201_db1].[babel_3201_user_schema].[babel_3201_user_table]', NORESEED);
+GO
+DBCC CHECKIDENT('master.dbo.babel_3201_t_tinyint', RESEED, 10)
+GO
+
+-- tsql
+USE master;
+GO
+DROP USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh
+GO

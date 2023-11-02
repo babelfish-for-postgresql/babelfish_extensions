@@ -1923,10 +1923,10 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				}
 				break;
 			case TDS_SEND_GEOMETRY:
-				SetColMetadataForGeometryType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT, "", "geometry");
+				SetColMetadataForGeometryType(col, TDS_TYPE_CLRUDT, TDS_MAXLEN_POINT, "", "geometry");
 				break;
 			case TDS_SEND_GEOGRAPHY:
-				SetColMetadataForGeographyType(col, TDS_TYPE_SPATIAL, TDS_MAXLEN_POINT, "", "geography");
+				SetColMetadataForGeographyType(col, TDS_TYPE_CLRUDT, TDS_MAXLEN_POINT, "", "geography");
 				break;
 			default:
 

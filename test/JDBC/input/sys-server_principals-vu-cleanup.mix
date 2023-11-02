@@ -1,0 +1,6 @@
+-- tsql
+DROP LOGIN sys_server_principals_vu_login_without_sa
+GO
+
+DROP LOGIN sys_server_principals_vu_login_with_sa
+GO

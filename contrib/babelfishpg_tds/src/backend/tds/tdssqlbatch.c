@@ -94,9 +94,13 @@ ExecuteSQLBatch(char *query)
 	PG_CATCH();
 	{
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+		{
+			HOLD_INTERRUPTS();
 			ereport(LOG,
 					(errmsg("sql_batch statement: %s", query),
 					 errhidestmt(true)));
+			RESUME_INTERRUPTS();
+		}
 
 		PG_RE_THROW();
 	}

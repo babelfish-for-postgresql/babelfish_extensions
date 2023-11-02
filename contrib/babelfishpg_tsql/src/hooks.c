@@ -73,6 +73,7 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
+
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
@@ -112,6 +113,11 @@ static int	find_attr_by_name_from_relation(Relation rd, const char *attname, boo
 static void pre_transform_insert(ParseState *pstate, InsertStmt *stmt, Query *query);
 static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDesc *tupdesc);
 static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
+static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition);
+static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs);
+
+static ResTarget* make_restarget_from_colname(char * colName);
+static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 
 /*****************************************
  * 			Commands Hooks
@@ -155,11 +161,7 @@ static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
-static void declare_parameter_unquoted_string(Node *paramDft, ObjectType objtype);
-static void declare_parameter_unquoted_string_reset(Node *paramDft);
-
-static Node* call_argument_unquoted_string(Node *arg);
-static void call_argument_unquoted_string_reset(Node *colref_arg);
+static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
 
 /*****************************************
  * 			Replication Hooks
@@ -206,6 +208,7 @@ static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
+static replace_pltsql_function_defaults_hook_type prev_replace_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
@@ -213,10 +216,6 @@ static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_ho
 static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_copyfrom_hook = NULL;
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
-static declare_parameter_unquoted_string_hook_type prev_declare_parameter_unquoted_string_hook = NULL;
-static declare_parameter_unquoted_string_reset_hook_type prev_declare_parameter_unquoted_string_reset_hook = NULL;
-static call_argument_unquoted_string_hook_type prev_call_argument_unquoted_string_hook = NULL;
-static call_argument_unquoted_string_reset_hook_type prev_call_argument_unquoted_string_reset_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
 static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
@@ -226,6 +225,10 @@ static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_u
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
 static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_satisfies_vacuum_horizon = NULL;
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
+static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
+static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
+/* TODO: do we need to use variable to store hook value before transfrom pivot? No other function uses the same hook, should be redundant */
+static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -328,6 +331,9 @@ InstallExtendedHooks(void)
 	prev_insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults_hook;
 	insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults;
 
+	prev_replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults_hook;
+	replace_pltsql_function_defaults_hook = replace_pltsql_function_defaults;
+
 	prev_print_pltsql_function_arguments_hook = print_pltsql_function_arguments_hook;
 	print_pltsql_function_arguments_hook = print_pltsql_function_arguments;
 
@@ -346,16 +352,6 @@ InstallExtendedHooks(void)
 	fill_missing_values_in_copyfrom_hook = fill_missing_values_in_copyfrom;
 	prev_check_rowcount_hook = check_rowcount_hook;
 	check_rowcount_hook = bbf_check_rowcount_hook;
-
-	prev_declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string_hook;
-	declare_parameter_unquoted_string_hook = declare_parameter_unquoted_string;
-	prev_declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset_hook;
-	declare_parameter_unquoted_string_reset_hook = declare_parameter_unquoted_string_reset;
-
-	prev_call_argument_unquoted_string_hook = call_argument_unquoted_string_hook;
-	call_argument_unquoted_string_hook = call_argument_unquoted_string;
-	prev_call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset_hook;
-	call_argument_unquoted_string_reset_hook = call_argument_unquoted_string_reset;
 
 	prev_bbfCustomProcessUtility_hook = bbfCustomProcessUtility_hook;
 	bbfCustomProcessUtility_hook = pltsql_bbfCustomProcessUtility;
@@ -389,6 +385,15 @@ InstallExtendedHooks(void)
 
 	prev_drop_relation_refcnt_hook = drop_relation_refcnt_hook;
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
+
+	prev_set_local_schema_for_func_hook = set_local_schema_for_func_hook;
+	set_local_schema_for_func_hook = get_local_schema_for_bbf_functions;
+
+	prev_bbf_get_sysadmin_oid_hook = bbf_get_sysadmin_oid_hook;
+	bbf_get_sysadmin_oid_hook = get_sysadmin_oid;
+
+	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
+	transform_pivot_clause_hook = transform_pivot_clause;
 }
 
 void
@@ -430,6 +435,7 @@ UninstallExtendedHooks(void)
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
+	replace_pltsql_function_defaults_hook = prev_replace_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
@@ -437,10 +443,6 @@ UninstallExtendedHooks(void)
 	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 	fill_missing_values_in_copyfrom_hook = prev_fill_missing_values_in_copyfrom_hook;
 	check_rowcount_hook = prev_check_rowcount_hook;
-	declare_parameter_unquoted_string_hook = prev_declare_parameter_unquoted_string_hook;
-	declare_parameter_unquoted_string_reset_hook = prev_declare_parameter_unquoted_string_reset_hook;
-	call_argument_unquoted_string_hook = prev_call_argument_unquoted_string_hook;
-	call_argument_unquoted_string_reset_hook = prev_call_argument_unquoted_string_reset_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
 	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
@@ -452,6 +454,9 @@ UninstallExtendedHooks(void)
 	IsToastRelationHook = PrevIsToastRelationHook;
 	IsToastClassHook = PrevIsToastClassHook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
+	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
+	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 }
 
 /*****************************************
@@ -815,12 +820,10 @@ pgstat_init_function_usage_wrapper(FunctionCallInfo fcinfo,
 			{
 				Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 				pre_wrapper_pgstat_init_function_usage(NameStr(proc->proname));
+				ReleaseSysCache(proctup);
 			}
-
-			ReleaseSysCache(proctup);
 		}
 	}
-
 }
 
 static Node *
@@ -1009,9 +1012,13 @@ handle_returning_qualifiers(Query *query, List *returningList, ParseState *pstat
 						field1 = (Node *) linitial(cref->fields);
 						qualifier = strVal(field1);
 
-						if ((command == CMD_INSERT && !strcmp(qualifier, "inserted"))
-							|| (command == CMD_DELETE && !strcmp(qualifier, "deleted")))
+						if (command == CMD_INSERT && !strcmp(qualifier, "inserted"))
 							cref->fields = list_delete_first(cref->fields);
+						else if (command == CMD_DELETE && !strcmp(qualifier, "deleted"))
+						{
+							Assert(pstate->p_target_nsitem->p_names->aliasname);
+							linitial(cref->fields) = makeString(pstate->p_target_nsitem->p_names->aliasname);
+						}
 					}
 				}
 				else if (IsA(node, A_Expr))
@@ -1195,12 +1202,11 @@ extract_identifier(const char *start)
 								 * greater than 1 */
 
 	/*
-	 * valid identifier cannot be longer than 258 (2*128+2) bytes. SQL server
-	 * allows up to 128 bascially. And escape character can take additional
-	 * one byte for each character in worst case. And additional 2 byes for
-	 * delimiter
+	 * Reaching here implies of valid identifier. It means we can reach
+	 * identifier's end in both the cases of single and multibyte characters.
+	 * If the identifier is not valid, the scanner should have already reported a syntax error.
 	 */
-	while (i < 258)
+	while (true)
 	{
 		char		c = start[i];
 
@@ -1624,7 +1630,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 	if (exprKind == EXPR_KIND_SELECT_TARGET)
 	{
 		int			alias_len = 0;
-		const char *colname_start;
+		const char *colname_start = NULL;
 		const char *identifier_name = NULL;
 		int			open_square_bracket = 0;
 		int			double_quotes = 0;
@@ -1638,10 +1644,11 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			/*
 			 * If no alias is specified on a ColumnRef, then get the length of
 			 * the name from the ColumnRef and copy the column name from the
-			 * sourcetext
+			 * sourcetext. To prevent the server crash, res->location for queries
+			 * with join statement should not be zero.
 			 */
-			if (list_length(cref->fields) == 1 &&
-				IsA(linitial(cref->fields), String)) 
+			if (res->location != 0 && (list_length(cref->fields) == 1 &&
+				IsA(linitial(cref->fields), String)))
 			{
 				identifier_name = strVal(linitial(cref->fields));
 				alias_len = strlen(identifier_name);
@@ -1662,13 +1669,14 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			 * Case 3: Handle the case when column name is delimited with sqb. When number of sqb
 			 * are zero, it means we are out of sqb.
 			 */
-			if(list_length(cref->fields) > 1 &&
-				IsA(llast(cref->fields), String))
+			else if(res->location != 0 && (list_length(cref->fields) > 1 &&
+				IsA(llast(cref->fields), String)))
 			{
 				identifier_name = strVal(llast(cref->fields));
 				alias_len = strlen(identifier_name);
 				colname_start = pstate->p_sourcetext + res->location;
-				while(true)
+				last_dot = colname_start;
+				while(*colname_start != '\0')
 				{	
 					if(open_square_bracket == 0 && *colname_start == '"')
 					{
@@ -1739,7 +1747,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			int actual_alias_len = 0;
 
 			/* To handle queries like SELECT ((<column_name>)) from <table_name> */
-			while(*colname_start == '(' || scanner_isspace(*colname_start))
+			while(*colname_start != '\0' && (*colname_start == '(' || scanner_isspace(*colname_start)))
 			{
 				colname_start++;
 			}
@@ -1754,15 +1762,16 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			if(actual_alias_len > alias_len)
 			{
 				/* First 32 characters of original_name are assigned to alias. */
-				memcpy(alias, original_name, (alias_len - 32) );
+				memcpy(alias, original_name, (alias_len - 32));
+
 				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
-				memcpy(alias + (alias_len) - 32,
-				identifier_name + (alias_len) - 32, 
-				32);
-				alias[alias_len+1] = '\0';
+				memcpy(alias + (alias_len - 32),
+					   identifier_name + (alias_len - 32), 
+	   				   32);
+
+				alias[alias_len] = '\0';
 			}
-			/* Identifier is not truncated. */
-			else
+			else	/* Identifier is not truncated. */
 			{
 				memcpy(alias, original_name, actual_alias_len);
 			}
@@ -2631,7 +2640,13 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 		if (att->attnum > 0)
 		{
-			col->name = NameStr(att->attname);
+			/*
+ 			* Do a deep copy of attname because tuple is a pointer 
+ 			* to a shared_buffer page which is released when scan
+ 			* is ended.
+ 			*/
+			col->name = pstrdup(NameStr(att->attname));
+
 			col->indirection = NIL;
 			col->val = NULL;
 			col->location = 1;
@@ -3534,6 +3549,105 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	return true;
 }
 
+static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition)
+{
+	int currPosition = intVal((Node *) lfirst(def_idx));
+	while (currPosition != argPosition)
+	{
+		def_idx = lnext(default_positions, def_idx);
+		if (def_idx == NULL)
+		{
+			elog(ERROR, "not enough default arguments");
+			return -1;
+		}
+		currPosition = intVal((Node *) lfirst(def_idx));
+	}
+	return list_cell_number(default_positions, def_idx);
+}
+
+/**
+ * @brief farg position default should get the corresponding default position value
+ * 
+ * @param func_tuple 
+ * @param defaults 
+ * @param fargs 
+ * @return List* 
+ */
+static List*
+replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs)
+
+{
+	HeapTuple	bbffunctuple;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return fargs;
+
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(func_tuple);
+
+	if (HeapTupleIsValid(bbffunctuple)){
+		Datum		arg_default_positions;
+		bool		isnull;
+		char	   *str;
+		List	   *default_positions = NIL, *ret = NIL;
+		ListCell   *def_idx;
+		ListCell   *lc;
+		int		   position,i,j;
+
+		/* Fetch default positions */
+		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_default_positions,
+												&isnull);
+
+		if (isnull)
+			elog(ERROR, "not enough default arguments");
+
+		str =TextDatumGetCString(arg_default_positions);
+		default_positions = castNode(List, stringToNode(str));
+		pfree(str);
+
+		def_idx = list_head(default_positions);
+		i = 0;
+
+		foreach(lc, fargs)
+		{
+			if (nodeTag((Node*)lfirst(lc)) == T_RelabelType &&
+				nodeTag(((RelabelType*)lfirst(lc))->arg) == T_SetToDefault)
+			{
+				position = getDefaultPosition(default_positions, def_idx, i);
+				ret = lappend(ret, list_nth(defaults, position));
+			}
+			else if (nodeTag((Node*)lfirst(lc)) == T_FuncExpr)
+			{
+				if(((FuncExpr*)lfirst(lc))->funcformat == COERCE_IMPLICIT_CAST &&
+					nodeTag(linitial(((FuncExpr*)lfirst(lc))->args)) == T_SetToDefault)
+				{
+				// We'll keep the implicit cast function when it needs implicit cast
+					FuncExpr *funcExpr = (FuncExpr*)lfirst(lc);
+					List *newArgs = NIL;
+					position = getDefaultPosition(default_positions, def_idx, i);
+					newArgs = lappend(newArgs, list_nth(defaults, position));
+					for (j = 1; j < list_length(funcExpr->args); ++j)
+						newArgs = lappend(newArgs, list_nth(funcExpr->args, j));
+					funcExpr->args = newArgs;
+					ret = lappend(ret, funcExpr);
+				}
+			}
+			else ret = lappend(ret, lfirst(lc));
+			++i;
+		}
+		return ret;
+
+		ReleaseSysCache(bbffunctuple);
+	}
+	else
+	{
+		elog(ERROR, "Can't use default in this function or procedure");
+	}
+	
+	return fargs;	
+}
+
 /*
  * insert_pltsql_function_defaults
  *		Given a pg_proc heap tuple of a PL/tsql function and list of defaults,
@@ -4137,117 +4251,205 @@ static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
 	}	
 }
 
-
-/*  
- * Hook functions for handling unquoted string defaults in parameter definitions
- * for T-SQL CREATE PROCEDURE/CREATE FUNCTION.
- */
-static void declare_parameter_unquoted_string (Node *paramDft, ObjectType objtype)
+static char *
+get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL && 
-       (objtype == OBJECT_PROCEDURE || objtype == OBJECT_FUNCTION) && 
-	   nodeTag(paramDft) == T_ColumnRef)
+	HeapTuple 	 	tuple;
+	char 			*func_schema_name = NULL,
+					*new_search_path = NULL;
+	const char  	*func_dbo_schema,
+					*cur_dbname = get_cur_db_name();
+	
+	tuple = SearchSysCache1(NAMESPACEOID,
+						ObjectIdGetDatum(proc_nsp_oid));
+	if(HeapTupleIsValid(tuple))
 	{
-		/* 
-		 * The node could be for a variable, which should not be treated as a 
-		 * an unquoted string, so verify it does not start with '@'.
-		 * This will cause parameter defaults with local variables to 
-		 * fail rather than to return the local variable name as a string,
-		 * which is identical to Babelfish behaviour before the fix
-		 * for unquoted string parameter.
-		 */
-		ColumnRef *colref = (ColumnRef *) paramDft;
-		Node *colnameField = (Node *) linitial(colref->fields);			
-		char *colname = strVal(colnameField);
-		if (colname[0] != '@') 
-		{
-			paramDft->type = T_TSQL_UnquotedString;
-		}		
-	}	
-	return;
-}			
+		func_schema_name = NameStr(((Form_pg_namespace) GETSTRUCT(tuple))->nspname);
+		func_dbo_schema = get_dbo_schema_name(cur_dbname);
 
-static void declare_parameter_unquoted_string_reset (Node *paramDft)
-{
-	/*
-	 * In the case of an unquoted string, restore the original node type
-	 * or we may run into an unknown node type downstream. 
-	 */
-	if (nodeTag(paramDft) == T_ColumnRef)
-	{	
-		paramDft->type = T_ColumnRef;
-	}	
-	return;	
-}	
-
-/*  
- * Hook functions for handling unquoted string arguments in
- * for T-SQL procedure calls.
- */
-static Node* call_argument_unquoted_string (Node *arg)
-{
-	/*
-	 * Intercept unquoted string arguments in T-SQL procedure calls.
-	 * These arrive here as nodetype=T_ColumnRef. Temporarily change
-	 * the node type to T_TSQL_UnquotedString, which is picked up and 
-	 * handled in transformExprRecurse().
-	 */
-	Node *colref_arg = NULL; /* Points to temporarily modified node, if any. */
-	if (sql_dialect == SQL_DIALECT_TSQL) 
-	{
-		if (nodeTag(arg) == T_ColumnRef)
-		{
-			/* 
-			 * We get here for unnamed argument syntax, i.e. 
-			 * exec myproc mystring 
-			 * */
-			colref_arg = arg;
-		}
-		else if (nodeTag(arg) == T_NamedArgExpr)
-		{
-			/* 
-			 * We get here for named argument syntax, i.e. 
-			 * exec myproc @p=mystring 
-			 */
-			NamedArgExpr *na = (NamedArgExpr *) arg;
-			Assert(na->arg);
-			if (nodeTag((Node *) na->arg) == T_ColumnRef) 
-			{
-				colref_arg = (Node *) na->arg;
-			}
-		}
-		/* 
-		 * The argument could be a variable, which should not be treated
-		 * as an unquoted string, so verify it does not start with '@'.
-		 */
-		if (colref_arg) 					
-		{
-			ColumnRef *colref = (ColumnRef *) colref_arg;
-			Node *colnameField = (Node *) linitial(colref->fields);			
-			char *colname = strVal(colnameField);
-			if (colname[0] != '@') 
-			{
-				colref_arg->type = T_TSQL_UnquotedString;
-			}
-		}		
+		if(strcmp(func_schema_name, func_dbo_schema) != 0
+			&& strcmp(func_schema_name, "sys") != 0)
+			new_search_path = psprintf("%s, %s, \"$user\", sys, pg_catalog",
+										quote_identifier(func_schema_name),
+										quote_identifier(func_dbo_schema));
+		
+		ReleaseSysCache(tuple);
 	}
-	return colref_arg;
+	return new_search_path;
 }
 
-
-static void call_argument_unquoted_string_reset (Node *colref_arg)
+static ResTarget *
+make_restarget_from_colname(char * colName)
 {
-	/*
-	 * In case of an unquoted string, restore original node type
-	 * or we may run into an unknown node type downstream.
-	 */
-	if (colref_arg) 
-	{
-		if (nodeTag(colref_arg) == T_TSQL_UnquotedString)
-		{
-			colref_arg->type = T_ColumnRef;
-		}
-	}
-	return;
+	ResTarget 	*tempResTarget;
+	ColumnRef	*tempColRef;
+
+	tempResTarget = makeNode(ResTarget);
+	tempColRef = makeNode(ColumnRef);
+	tempColRef->location = -1;
+	tempColRef->fields = list_make1(makeString(colName));
+	tempResTarget->name = NULL;
+	tempResTarget->name_location = -1;
+	tempResTarget->indirection = NIL;
+	tempResTarget->val = (Node *) tempColRef;
+	tempResTarget->location = -1;
+	return tempResTarget;
 }
 
+static void 
+transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
+{
+	Query		*temp_src_query;
+	List		*temp_src_targetlist;
+	List		*new_src_sql_targetist;
+	List		*new_pivot_aliaslist;
+	List		*src_sql_groupbylist;
+	List		*src_sql_sortbylist;
+	char		*pivot_colstr;
+	char		*value_colstr;
+	ColumnRef	*value_col;
+	TargetEntry	*aggfunc_te;
+	RangeFunction	*pivot_from_function;
+	RawStmt	*s_sql;
+	RawStmt	*c_sql;
+	MemoryContext 	oldContext;
+	MemoryContext 	tsql_outmost_context;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	int				nestlevel;
+
+	new_src_sql_targetist = NULL;
+	new_pivot_aliaslist = NULL;
+	src_sql_groupbylist = NULL;
+	src_sql_sortbylist = NULL;
+
+	/* transform temporary src_sql */
+	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
+										false,
+										false);
+	temp_src_targetlist = temp_src_query->targetList;
+
+	/* Get pivot column str & value column str from parser result */
+	pivot_colstr = stmt->pivotCol;
+	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
+	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
+
+	/* Get the targetList of the src table */
+	for (int i = 0; i < temp_src_targetlist->length; i++)
+	{
+		ResTarget 	*tempResTarget;
+		ColumnDef	*tempColDef;
+		TargetEntry	*tempEntry = list_nth_node(TargetEntry, temp_src_targetlist, i);
+
+		char *colName = tempEntry->resname;
+
+		if (strcasecmp(colName, pivot_colstr) == 0 || strcasecmp(colName, value_colstr) == 0)
+			continue;
+		/* prepare src_sql's targetList */
+		tempResTarget = make_restarget_from_colname(colName);
+
+		if (new_src_sql_targetist == NULL)
+			new_src_sql_targetist = list_make1(tempResTarget);
+		else
+			new_src_sql_targetist = lappend(new_src_sql_targetist, tempResTarget);
+		
+		/* prepare pivot sql's alias_clause */
+		tempColDef = makeColumnDef(colName,
+								((Var *)tempEntry->expr)->vartype, 
+								((Var *)tempEntry->expr)->vartypmod,
+								((Var *)tempEntry->expr)->varcollid
+								);
+
+		if (new_pivot_aliaslist == NULL)
+			new_pivot_aliaslist = list_make1(tempColDef);
+		else
+			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
+	}
+	/* source_sql: non-pivot column + pivot colunm+ agg(value_col) */
+	/* complete src_sql's targetList*/
+	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_colname(pivot_colstr));
+	new_src_sql_targetist = lappend(new_src_sql_targetist, (ResTarget *)stmt->aggFunc);
+	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
+
+	/* complete src_sql's groupby*/
+	for (int i = 0; i < new_src_sql_targetist->length - 1; i++)
+	{
+		A_Const		*tempAConst = makeNode(A_Const);
+		SortBy 		*tempSortby = makeNode(SortBy);
+		tempAConst->val.ival.type = T_Integer;
+		tempAConst->val.ival.ival = i+1;
+		tempAConst->location = -1;
+
+		tempSortby->node = (Node* )copyObject(tempAConst);
+		tempSortby->sortby_dir = 0;
+		tempSortby->sortby_nulls = 0;
+		tempSortby->useOp = NIL;
+		tempSortby->location = -1;
+
+		if (src_sql_groupbylist == NULL)
+		{
+			src_sql_groupbylist = list_make1(tempAConst);
+			src_sql_sortbylist = list_make1(tempSortby);
+		}
+		else
+		{
+			src_sql_groupbylist = lappend(src_sql_groupbylist, tempAConst);
+			src_sql_sortbylist = lappend(src_sql_sortbylist, tempSortby);
+		}
+	}
+	((SelectStmt *)stmt->srcSql)->groupClause = src_sql_groupbylist;
+	((SelectStmt *)stmt->srcSql)->sortClause = src_sql_sortbylist;
+
+	/* Transform the new src_sql & get the output type of that agg function*/
+	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
+									false,
+									false);
+	temp_src_targetlist = temp_src_query->targetList;
+
+	/* asClause: non-pivot columns + value columns) */
+	/* we can get the output data type of the aggregation function for later pivot columns */
+	aggfunc_te = list_nth_node(TargetEntry, temp_src_targetlist, temp_src_targetlist->length - 1);
+
+	/* complete pivo sql's alias_clause */
+	/* Rewrite the fromClause in the outer select to have correct alias column name and datatype */
+	pivot_from_function = list_nth_node(RangeFunction, stmt->fromClause, 0);
+	for(int i = 0; i < stmt->value_col_strlist->length; i++)
+	{
+		ColumnDef	*tempColDef;
+		tempColDef = makeColumnDef((char *) list_nth(stmt->value_col_strlist, i),
+									((Aggref *)aggfunc_te->expr)->aggtype, 
+									-1,
+									((Aggref *)aggfunc_te->expr)->aggcollid
+									);
+				
+		if (new_pivot_aliaslist == NULL)
+			new_pivot_aliaslist = list_make1(tempColDef);
+		else
+			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
+	}
+
+	pivot_from_function->coldeflist = new_pivot_aliaslist;
+
+	/* put the correct src_sql raw parse tree into the memory context for later use */
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	if (!tsql_outmost_context)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot outer context not found")));
+
+	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
+	/* save rewrited sqls to global variable for later retrive */
+	s_sql = makeNode(RawStmt);
+	c_sql = makeNode(RawStmt);
+	s_sql->stmt = (Node *) stmt->srcSql;
+	s_sql->stmt_location = 0;
+	s_sql->stmt_len = 0;
+
+	c_sql->stmt = (Node *) stmt->catSql;
+	c_sql->stmt_location = 0;
+	c_sql->stmt_len = 0;
+
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make2(copyObject(s_sql), copyObject(c_sql)));
+	tsql_outmost_estat->pivot_number++;	
+	MemoryContextSwitchTo(oldContext);
+}

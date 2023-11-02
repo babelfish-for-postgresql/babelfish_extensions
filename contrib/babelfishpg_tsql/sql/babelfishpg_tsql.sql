@@ -377,7 +377,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
      , sys.spt_datatype_info_table AS t5
   WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
-    AND ext.dbid = cast(sys.db_id() as oid);
+    AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
@@ -1128,7 +1128,7 @@ FROM pg_catalog.pg_class t1
 WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
-  AND ext.dbid = cast(sys.db_id() as oid);
+  AND ext.dbid = sys.db_id();
 
 GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 
@@ -1199,7 +1199,7 @@ CAST(t1.relpages AS int) AS PAGES,
 CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" COLLATE sys.database_default AND s1.name = t3."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns t3 ON (lower(t1.relname) = lower(t3."TABLE_NAME") COLLATE C AND s1.name = t3."TABLE_SCHEMA")
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 UNION
 SELECT
@@ -1230,7 +1230,7 @@ CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND s1.name = t4."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns t4 ON (lower(t1.relname) = lower(t4."TABLE_NAME") COLLATE C AND s1.name = t4."TABLE_SCHEMA")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
@@ -3180,7 +3180,7 @@ BEGIN
 					IF @currtype = 'TR' OR @currtype = 'TA'
 						BEGIN
 							DECLARE @physical_schema_name sys.nvarchar(776) = '';
-							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = cast(sys.db_id() as oid) AND orig_name = @schemaname;
+							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = sys.db_id() AND orig_name = @schemaname;
 							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
 							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
 						END
@@ -3617,3 +3617,40 @@ BEGIN
 END	
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
+
+-- Change the owner of the current database.
+-- This is a wrapper around ALTER AUTHORIZATION ON DATABASE::
+CREATE OR REPLACE PROCEDURE sys.sp_changedbowner(
+	IN "@loginame" sys.sysname,
+	IN "@map"      sys.VARCHAR(5) DEFAULT NULL) -- this parameter is ignored in T-SQL
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	DECLARE @cmd sys.NVARCHAR(300)
+	DECLARE @db  sys.sysname = DB_NAME()
+
+	-- For a NULL login name, do nothing
+	IF @loginame IS NULL
+	BEGIN
+		RETURN
+	END
+
+	IF (@db = 'master') OR (@db = 'tempdb')
+	BEGIN
+		RAISERROR('Cannot change the owner of the master or tempdb database.', 16, 1)
+		RETURN
+	END
+
+	IF SUSER_ID(@loginame) IS NULL
+	BEGIN
+		RAISERROR('Cannot find the principal ''%s'', because it does not exist or you do not have permission.', 16, 1, @loginame)
+		RETURN
+	END
+
+	-- Compose the ALTER ATHORIZATION statement:
+	SET @cmd = 'ALTER AUTHORIZATION ON DATABASE::[' + @db + '] TO [' + SUSER_NAME(SUSER_ID(@loginame)) + ']'
+	EXECUTE(@cmd)
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
+

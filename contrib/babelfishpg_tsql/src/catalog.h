@@ -40,9 +40,10 @@ extern Oid	sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
 #define SYSDATABASES_NUM_COLS 8
-#define Anum_sysdatabaese_oid 1
-#define Anum_sysdatabaese_name 6
-#define Anum_sysdatabaese_crdate 7
+#define Anum_sysdatabases_oid 1
+#define Anum_sysdatabases_owner 4
+#define Anum_sysdatabases_name 6
+#define Anum_sysdatabases_crdate 7
 
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
@@ -148,6 +149,7 @@ extern List *get_authid_user_ext_db_users(const char *db_name);
 extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
 extern bool guest_role_exists_for_db(const char *dbname);
+extern void update_db_owner(const char *new_owner_name, const char *db_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext
@@ -277,6 +279,71 @@ typedef struct FormData_bbf_function_ext
 } FormData_bbf_function_ext;
 
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;
+
+/*****************************************
+ *			SCHEMA_PERMISSIONS
+ *****************************************/
+#define BBF_SCHEMA_PERMS_TABLE_NAME "babelfish_schema_permissions"
+#define BBF_SCHEMA_PERMS_IDX_NAME "babelfish_schema_permissions_pkey"
+#define BBF_SCHEMA_PERMS_NUM_OF_COLS 6
+#define BBF_SCHEMA_PERMS_DBID 0
+#define BBF_SCHEMA_PERMS_SCHEMA_NAME 1
+#define BBF_SCHEMA_PERMS_OBJECT_NAME 2
+#define BBF_SCHEMA_PERMS_PERMISSION 3
+#define BBF_SCHEMA_PERMS_GRANTEE 4
+#define BBF_SCHEMA_PERMS_OBJECT_TYPE 5
+#define Anum_bbf_schema_perms_dbid 1
+#define Anum_bbf_schema_perms_schema_name 2
+#define Anum_bbf_schema_perms_object_name 3
+#define Anum_bbf_schema_perms_permission 4
+#define Anum_bbf_schema_perms_grantee 5
+#define Anum_bbf_schema_perms_object_type 6
+
+extern Oid bbf_schema_perms_oid;
+extern Oid bbf_schema_perms_idx_oid;
+
+extern Oid get_bbf_schema_perms_oid(void);
+extern Oid get_bbf_schema_perms_idx_oid(void);
+
+typedef struct FormData_bbf_schema_perms
+{
+	int16		dbid;
+	NameData	schema_name;
+	NameData	object_name;
+	NameData	permission;
+	NameData	grantee;
+	NameData	object_type;
+} FormData_bbf_schema_perms;
+
+typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
+
+extern void add_entry_to_bbf_schema(const char *schema_name,
+				  const char *object_name,
+				  const char *permission,
+				  const char *grantee,
+				  const char *object_type);
+
+extern bool check_bbf_schema_for_entry(const char *schema_name,
+									   const char *object_name,
+									   const char *permission,
+									   const char *grantee);
+
+extern void del_from_bbf_schema(const char *schema_name,
+					  const char *object_name,
+					  const char *permission,
+					  const char *grantee);
+
+extern bool check_bbf_schema_for_schema(const char *schema_name,
+									   const char *object_name,
+									   const char *permission);
+
+extern void clean_up_bbf_schema(const char *schema_name,
+								const char *object_name,
+								bool is_schema);
+
+extern void grant_perms_to_objects_in_schema(const char *schema_name,
+				  const char *permission,
+				  const char *grantee);
 
 /*****************************************
  *			DOMAIN MAPPING

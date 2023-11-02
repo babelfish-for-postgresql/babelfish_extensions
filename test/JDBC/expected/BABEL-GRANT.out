@@ -20,6 +20,10 @@ GO
 ---
 ---  Prepare Objects
 ---
+---- SCHEMA
+CREATE SCHEMA scm;
+GO
+
 ---- TABLE
 CREATE TABLE t1 ( a int, b int);
 GO
@@ -57,7 +61,25 @@ GO
 ---
 ---  Basic Grant / Revoke
 ---
+GRANT SELECT ON SCHEMA::scm TO guest;
+GO
+
+GRANT SELECT ON SCHEMA::scm TO PUBLIC;
+GO
+
+REVOKE SELECT ON SCHEMA::scm FROM PUBLIC;
+GO
+
+GRANT INSERT ON SCHEMA::scm TO guest;
+GO
+
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION;
+GO
+
+GRANT ALL ON OBJECT::t1 TO PUBLIC;
+GO
+
+REVOKE ALL ON OBJECT::t1 FROM PUBLIC;
 GO
 
 GRANT ALL ON OBJECT::seq_tinyint TO guest WITH GRANT OPTION;
@@ -67,6 +89,12 @@ GRANT ALL ON OBJECT::my_view TO guest WITH GRANT OPTION;
 GO
 
 GRANT ALL ON OBJECT::my_func TO guest WITH GRANT OPTION;
+GO
+
+GRANT EXECUTE ON OBJECT::my_func TO PUBLIC;
+GO
+
+REVOKE EXECUTE ON OBJECT::my_func FROM PUBLIC;
 GO
 
 GRANT ALL ON OBJECT::my_proc TO guest WITH GRANT OPTION;
@@ -143,6 +171,9 @@ GO
 ~~ERROR (Message: 'REVOKE ALL on Database' is not currently supported in Babelfish)~~
 
 
+REVOKE SELECT ON SCHEMA::scm FROM guest;
+GO
+
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 ~~ERROR (Code: 33557097)~~
@@ -161,14 +192,14 @@ GRANT ALL ON SCHEMA::scm TO guest;  -- unsupported class
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GRANT ON SCHEMA' is not currently supported in Babelfish)~~
+~~ERROR (Message: The all permission has been deprecated and is not available for this class of entity.)~~
 
 
 REVOKE ALL ON SCHEMA::scm TO guest; -- unsupported class
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'REVOKE ON SCHEMA' is not currently supported in Babelfish)~~
+~~ERROR (Message: The all permission has been deprecated and is not available for this class of entity.)~~
 
 
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION AS superuser;
@@ -177,6 +208,18 @@ GO
 
 ~~ERROR (Message: 'GRANT AS' is not currently supported in Babelfish)~~
 
+
+GRANT SELECT ON t1 TO PUBLIC;
+GO
+
+REVOKE SELECT ON t1 FROM PUBLIC;
+GO
+
+GRANT EXECUTE ON my_func TO PUBLIC;
+GO
+
+REVOKE EXECUTE ON my_func FROM PUBLIC;
+GO
 
 REVOKE ALL ON OBJECT::t1 TO guest AS superuser;
 GO
@@ -189,6 +232,9 @@ GO
 ---
 ---  Clean Up
 ---
+DROP SCHEMA scm;
+GO
+
 DROP VIEW IF EXISTS my_view;
 GO
 

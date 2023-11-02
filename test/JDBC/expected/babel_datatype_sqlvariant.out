@@ -443,6 +443,14 @@ date
 2020-10-20
 ~~END~~
 
+-- datetime to float
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
+go
+~~START~~
+float
+44122.375
+~~END~~
+
 -- date to datetime2
 select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
 go
@@ -456,7 +464,7 @@ select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_varia
 go
 ~~START~~
 datetime2
-2020-10-05 18:00:00.0000000
+2020-10-05 09:00:00.0000000
 ~~END~~
 
 -- datetime2 2 datetimeoffset
@@ -533,15 +541,6 @@ abc
 
 
 -- CAST examples not supported yet
--- datetime to float
-select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
-go
-~~START~~
-float
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unable to cast from internal type datetime to double precision)~~
-
 -- time to datetime
 select cast(cast(cast('09:00:00' as time) as sql_variant) as datetime);
 go

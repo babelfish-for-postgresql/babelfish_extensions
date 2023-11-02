@@ -51,6 +51,7 @@ static void tsql_check_param_readonly(const char *paramname, TypeName *typename,
 static ResTarget *TsqlForXMLMakeFuncCall(TSQL_ForClause *forclause);
 static ResTarget *TsqlForJSONMakeFuncCall(TSQL_ForClause *forclause);
 static RangeSubselect *TsqlForClauseSubselect(Node *selectstmt);
+static Node *tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl);
 
 static Node *TsqlOpenJSONSimpleMakeFuncCall(Node *jsonExpr, Node *path);
 static Node *TsqlOpenJSONWithMakeFuncCall(Node *jsonExpr, Node *path, List *cols, Alias *alias);
@@ -71,8 +72,7 @@ char	   *construct_unique_index_name(char *index_name, char *relation_name);
 
 static Node *tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause, Node *top_clause, RangeVar *relation,
 											   core_yyscan_t yyscanner);
-static Node *tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar
-											  *relation, Node *where_clause, core_yyscan_t yyscanner);
+static void tsql_reset_update_delete_globals(void);
 static void tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause);
 static Node *tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, Node *opt_top_clause, RangeVar *insert_target,
 														List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns,

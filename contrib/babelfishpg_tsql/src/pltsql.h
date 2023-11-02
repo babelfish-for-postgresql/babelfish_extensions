@@ -116,6 +116,12 @@ typedef enum PLtsql_promise_type
 	PLTSQL_PROMISE_TG_TAG
 } PLtsql_promise_type;
 
+
+typedef enum PLtsql_dbcc_stmt_type
+{
+	PLTSQL_DBCC_CHECKIDENT
+} PLtsql_dbcc_stmt_type;
+
 /*
  * Variants distinguished in PLtsql_type structs
  */
@@ -185,7 +191,10 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_FULL,
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
-	PLTSQL_STMT_GRANTDB
+	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_CHANGE_DBOWNER,
+	PLTSQL_STMT_DBCC,
+	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
 
 /*
@@ -933,6 +942,34 @@ typedef struct PLtsql_stmt_insert_bulk
 } PLtsql_stmt_insert_bulk;
 
 /*
+ * DBCC statement type
+ */
+typedef union PLtsql_dbcc_stmt_data
+{
+	struct dbcc_checkident
+	{
+		char	*db_name;
+		char	*schema_name;
+		char	*table_name;
+		bool	is_reseed;
+		char	*new_reseed_value;
+		bool	no_infomsgs;
+	} dbcc_checkident;
+
+} PLtsql_dbcc_stmt_data;
+
+/*
+ * DBCC statement
+ */
+typedef struct PLtsql_stmt_dbcc
+{
+	PLtsql_stmt_type	cmd_type;
+	int	lineno;
+	PLtsql_dbcc_stmt_type	dbcc_stmt_type;
+	PLtsql_dbcc_stmt_data	dbcc_stmt_data;
+} PLtsql_stmt_dbcc;
+
+/*
  * RETURN statement
  */
 typedef struct PLtsql_stmt_return
@@ -999,6 +1036,31 @@ typedef struct PLtsql_stmt_grantdb
 	bool		is_grant;
 	List	   *grantees;		/* list of users */
 } PLtsql_stmt_grantdb;
+
+/*
+ *	ALTER AUTHORIZATION ON DATABASE::<dbname> TO <login>
+ */
+typedef struct PLtsql_stmt_change_dbowner
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *db_name;
+	char	   *new_owner_name;  /* Login name for new owner */
+} PLtsql_stmt_change_dbowner;
+
+/*
+ *	Grant on schema stmt
+ */
+typedef struct PLtsql_stmt_grantschema
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	bool		is_grant;
+	List		*privileges;		/* list of privileges */
+	List		*grantees;		/* list of users */
+	bool 		with_grant_option;
+	char		*schema_name;	/* schema name */
+} PLtsql_stmt_grantschema;
 
 /*
  * ASSERT statement
@@ -1410,6 +1472,9 @@ typedef struct PLtsql_execstate
 	 * EXECUTE, and can behave differently.
 	 */
 	bool		insert_exec;
+
+	int		    pivot_number;
+	List	   *pivot_parsetree_list;
 
 	List	   *explain_infos;
 	char	   *schema_name;
@@ -1966,6 +2031,7 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
+extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2004,7 +2070,8 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
-extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee);
+extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
+extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
@@ -2028,6 +2095,7 @@ extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
+extern Oid get_sysadmin_oid(void);
 
 typedef struct
 {

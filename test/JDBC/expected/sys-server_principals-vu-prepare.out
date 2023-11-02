@@ -1,0 +1,6 @@
+-- tsql
+CREATE LOGIN sys_server_principals_vu_login_without_sa with password = '123'
+GO
+
+CREATE LOGIN sys_server_principals_vu_login_with_sa with password = '123'
+GO
