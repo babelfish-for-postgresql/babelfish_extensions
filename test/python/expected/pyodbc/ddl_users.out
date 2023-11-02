@@ -1,0 +1,9 @@
+CREATE USER [test_usr1] FOR LOGIN [test_pwd1] WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+CREATE USER [test_usr2] FOR LOGIN [test_pwd2] WITH DEFAULT_SCHEMA=[dbo]
+GO
+
+CREATE USER [test_usr3] FOR LOGIN [test_pwd3] WITH DEFAULT_SCHEMA=[dbo]
+GO
+
