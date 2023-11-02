@@ -458,6 +458,7 @@ triggers_with_transaction
 unquoted_string
 doublequoted_string
 alter_authorization_change_db_owner
+sp_changedbowner
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -471,6 +472,7 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+typeproperty-dep
 sys_asymmetric_keys
 sys_certificates
 sys_database_permissions

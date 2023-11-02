@@ -103,7 +103,7 @@ jobs:
 
       - name: Run JDBC Tests
         id: jdbc
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
         run: |
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
@@ -113,7 +113,7 @@ jobs:
         
       - name: Install MSSQL Tools
         id: install-mssql-tools
-        if: always() && steps.install-mssql-tools.outcome == 'success'
+        if: always() && steps.install-extensions.outcome == 'success'
         run: |
           curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
