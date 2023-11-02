@@ -782,15 +782,15 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 		if (n_d)
 		{
 			n_d->usingClause = from_clause;
-			n_d->whereClause = tsql_update_delete_stmt_with_top(top_clause,
-																relation, where_clause, yyscanner);
+			n_d->whereClause = where_clause;
+			n_d->limitCount = top_clause;
 			return (Node *) n_d;
 		}
 		else
 		{
 			n_u->fromClause = from_clause;
-			n_u->whereClause = tsql_update_delete_stmt_with_top(top_clause,
-																relation, where_clause, yyscanner);
+			n_u->whereClause = where_clause;
+			n_u->limitCount = top_clause;
 			return (Node *) n_u;
 		}
 	}
@@ -840,64 +840,6 @@ tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause
 }
 
 /*
- * Similar to JOIN, we rewrite TOP clause into a subquery, while attaching the
- * TOP as a LIMIT in the subquery, for UPDATE/DELETE.
- *
- * original query:
- * UPDATE/DELETE <top_clause> <table>
- *
- * rewritten query:
- * UPDATE/DELETE <table> WHERE ctid IN (SELECT ctid FROM <table> <limit_count>)
- */
-static Node *
-tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar *relation, Node
-								 *where_clause, core_yyscan_t yyscanner)
-{
-	SubLink    *link;
-	List	   *indirect;
-	SelectStmt *selectstmt;
-	ResTarget  *resTarget;
-
-	if (top_clause == NULL)
-		return where_clause;
-
-	/* construct select statment->target */
-	resTarget = makeNode(ResTarget);
-	resTarget->name = NULL;
-	resTarget->indirection = NIL;
-	indirect = list_make1((Node *) makeString("ctid"));
-	if (relation->alias)
-	{
-		resTarget->val = makeColumnRef(relation->alias->aliasname,
-									   indirect, -1, yyscanner);
-	}
-	else
-	{
-		resTarget->val = makeColumnRef(relation->relname,
-									   indirect, -1, yyscanner);
-	}
-
-	/* construct select statement */
-	selectstmt = makeNode(SelectStmt);
-	selectstmt->targetList = list_make1(resTarget);
-	selectstmt->fromClause = list_make1(relation);
-	selectstmt->whereClause = where_clause;
-	selectstmt->limitCount = top_clause;
-
-	/* construct where_clause(subLink) */
-	link = makeNode(SubLink);
-	link->subselect = (Node *) selectstmt;
-	link->subLinkType = ANY_SUBLINK;
-	link->subLinkId = 0;
-	link->testexpr = (Node *) makeColumnRef(pstrdup("ctid"),
-											NIL, -1, yyscanner);;
-	link->operName = NIL;		/* show it's IN not = ANY */
-	link->location = -1;
-
-	return (Node *) link;
-}
-
-/*
  * helper function to update relation info in
  * tsql_update_delete_stmt_from_clause_alias
  */
@@ -939,6 +881,20 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation, RangeVar *r
 		 */
 		rv->alias = NULL;
 	}
+}
+
+/*
+ * Resets the state of two global vars used for UPDATE and DELETE queries
+ * 
+ * In some cases, an erroring UPDATE query can exit without resetting these
+ * globals. This function is called before UPDATE and DELETE statements that
+ * use these globals to ensure that they are cleared.
+ */
+static void
+tsql_reset_update_delete_globals()
+{
+	output_update_transformation = false;
+	update_delete_target_alias = NULL;
 }
 
 static void
@@ -1132,6 +1088,8 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
 
+	tsql_reset_update_delete_globals();
+
 	/* PreparableStmt inside CTE */
 	d->relation = relation_expr_opt_alias;
 	tsql_update_delete_stmt_from_clause_alias(d->relation, from_clause);
@@ -1140,15 +1098,12 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		d = (DeleteStmt *) tsql_update_delete_stmt_with_join(
 															 (Node *) d, from_clause, where_or_current_clause, opt_top_clause,
 															 relation_expr_opt_alias, yyscanner);
-		output_update_transformation = true;
 	}
 	else
 	{
 		d->usingClause = from_clause;
-		d->whereClause = tsql_update_delete_stmt_with_top(opt_top_clause,
-														  relation_expr_opt_alias, where_or_current_clause, yyscanner);
-		if (from_clause != NULL && (IsA(linitial(from_clause), RangeSubselect) || IsA(linitial(from_clause), RangeVar)))
-			output_update_transformation = true;
+		d->whereClause = where_or_current_clause;
+		d->limitCount = opt_top_clause;
 	}
 	d->returningList = get_transformed_output_list(tsql_output_clause);
 	d->withClause = opt_with_clause;
@@ -1302,6 +1257,8 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void *) i);
 	internal_ctename = pstrdup(ctename);
 
+	tsql_reset_update_delete_globals();
+
 	/* PreparableStmt inside CTE */
 	u->relation = relation_expr_opt_alias;
 	tsql_update_delete_stmt_from_clause_alias(u->relation, from_clause);
@@ -1316,6 +1273,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	{
 		u->fromClause = from_clause;
 		u->whereClause = where_or_current_clause;
+		u->limitCount = opt_top_clause;
 	}
 	u->returningList = get_transformed_output_list(tsql_output_clause);
 	u->withClause = opt_with_clause;
@@ -1764,4 +1722,63 @@ TsqlForClauseSubselect(Node *selectstmt)
 	rss->subquery = selectstmt;
 	rss->alias = makeAlias(construct_unique_index_name("rows", "tsql_for"), NIL);
 	return rss;
+}
+
+/* pivot select transformation*/
+static Node *
+tsql_pivot_select_transformation(List *target_list, List *from_clause, List *pivot_clause, Alias *alias_clause, SelectStmt *pivot_sl)
+{
+	FuncCall   	*pivotCall;
+	ColumnRef  		*a_star;
+	ResTarget		*a_star_restarget;
+	RangeFunction	*funCallNode;
+	SelectStmt 	*src_sql;
+	SortBy 		*s;
+
+	char 		*pivot_colstr = (char *)list_nth(pivot_clause, 0);
+	Node 		*aggFunc = (Node *) list_nth(pivot_clause, 1);
+	
+	/* prepare SortBy node for source sql */
+	s = makeNode(SortBy);
+	s->node = makeIntConst(1, -1);
+	s->sortby_dir = 0;
+	s->sortby_nulls = 0;     
+	s->useOp = NIL;
+	s->location = -1;
+
+	/* transform to select * from funcCall as newtable(a type1, b type2 ...) */
+	a_star = makeNode(ColumnRef);
+	a_star->fields = list_make1(makeNode(A_Star));
+	a_star->location = -1;
+	a_star_restarget = makeNode(ResTarget);
+	a_star_restarget->name = NULL;
+	a_star_restarget->name_location = -1;
+	a_star_restarget->indirection = NIL;
+	a_star_restarget->val = (Node *) a_star;
+	a_star_restarget->location = -1;
+
+	/* prepare source sql for babelfish_pivot function */
+	src_sql = makeNode(SelectStmt);
+	src_sql->targetList = list_make1(a_star_restarget);
+	src_sql->fromClause = from_clause;
+	src_sql->sortClause = list_make1(s);
+
+	/* create a function call node for the fromClause */
+	pivotCall = makeFuncCall(TsqlSystemFuncName2("bbf_pivot"),NIL, COERCE_EXPLICIT_CALL, -1);
+	funCallNode = makeNode(RangeFunction);
+	funCallNode->lateral = false;
+	funCallNode->is_rowsfrom = false;
+	funCallNode->functions = list_make1(list_make2((Node *) pivotCall, NIL));
+	funCallNode->alias = alias_clause;
+	
+	pivot_sl->targetList = target_list;
+	pivot_sl->fromClause = list_make1(funCallNode);
+	pivot_sl->isPivot = true;
+	pivot_sl->srcSql = src_sql;
+	pivot_sl->catSql = list_nth((List *)pivot_clause, 2);
+	pivot_sl->pivotCol = pivot_colstr;
+	pivot_sl->aggFunc = aggFunc;
+	pivot_sl->value_col_strlist = (List *) list_nth((List *)pivot_clause, 3);
+
+	return (Node *)pivot_sl;
 }

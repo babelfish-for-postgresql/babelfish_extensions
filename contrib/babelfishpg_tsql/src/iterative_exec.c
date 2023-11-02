@@ -800,6 +800,15 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			}
 			exec_stmt_grantdb(estate, (PLtsql_stmt_grantdb *) stmt);
 			break;
+		case PLTSQL_STMT_CHANGE_DBOWNER:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for ALTER AUTHORIZATION statement is not yet supported")));
+			}
+			exec_stmt_change_dbowner(estate, (PLtsql_stmt_change_dbowner *) stmt);
+			break;				
 		case PLTSQL_STMT_GRANTSCHEMA:
 			if (pltsql_explain_only)
 			{
