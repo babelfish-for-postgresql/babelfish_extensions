@@ -1124,7 +1124,8 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 			 * when explicit cast is called
 			 */
 
-			TypeName 	*varcharTypeName = makeTypeName("varchar");
+			TypeName 	*varcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"),
+																	makeString("varchar")));
 			Node 		*result;
 			Const 		*tempcon;
 
@@ -1132,7 +1133,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 			baseType = typeidType(baseTypeId);
 			pfree(varcharTypeName);
 
-			tempcon = makeConst(TEXTOID, -1,
+			tempcon = makeConst(varcharTypeName->typeOid, -1,
 								tsql_get_server_collation_oid_internal(false),
 								-1, PointerGetDatum(cstring_to_text(value)),
 								false, false);
