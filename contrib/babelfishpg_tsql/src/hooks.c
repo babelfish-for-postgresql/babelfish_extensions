@@ -749,13 +749,6 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			{
 				return false; /** Direct recursive trigger case*/
 			}
-			else if (list_member_oid(triggerOids, current_tgoid))
-			{
-				/** Indirect recursive trigger case*/
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
-			}
 		}
 	}
 

@@ -31,7 +31,7 @@ GO
 UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
 GO
 
-SELECT EmployeeID,EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID = 2 ORDER BY EmployeeID;
+SELECT EmployeeID,EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID = 2;
 GO
 
 BEGIN TRANSACTION
@@ -254,75 +254,24 @@ DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_delete;
 GO
 
 -- Recursive Trigger test Direct Recursion Trigger calling itself trigger 1 -> trigger 1
-DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_insert;
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
 GO
 
-CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employees_view
-INSTEAD OF INSERT
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
 AS
 BEGIN
-    INSERT INTO babel_2170_vu_employees_view VALUES(3, 'adam', '1st Street', '3000');
+    UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
 END
 GO
 
-INSERT INTO babel_2170_vu_employees_view VALUES(3, 'adam', '1st Street', '3000');
+UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
 GO
 
-SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees;
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view WHERE EmployeeID = 2;
 GO
 
-SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees_view;
-GO
-
--- Recursive Trigger test Indirect Recursion trigger 1 -> trigger 2 -> trigger 1
-
-CREATE TABLE babel_2170_vu_employees_rec
-(
-    EmployeeID      int NOT NULL,
-    EmployeeName    VARCHAR(50),
-    EmployeeAddress VARCHAR(50),
-    MonthSalary     NUMERIC(10, 2)
-)
-GO
-
-CREATE VIEW babel_2170_vu_employees_view_rec AS
-SELECT EmployeeID,
-       EmployeeName,
-       EmployeeAddress,
-       MonthSalary
-FROM babel_2170_vu_employees_rec
-WHERE EmployeeName LIKE 'a%';
-GO
-
-CREATE TRIGGER babel_2170_vu_employees_view_iot_rec ON babel_2170_vu_employees_view
-INSTEAD OF INSERT
-AS
-BEGIN
-    INSERT INTO babel_2170_vu_employees_view_rec VALUES(4, 'adam', '1st Street', '4000');
-END
-GO
-
-CREATE TRIGGER babel_2170_vu_employees_view_iot_rec2 ON babel_2170_vu_employees_view_rec
-INSTEAD OF INSERT
-AS
-BEGIN
-    INSERT INTO babel_2170_vu_employees_view VALUES(4, 'adam', '1st Street', '4000');
-END
-GO
-
-INSERT INTO babel_2170_vu_employees_view VALUES(4, 'adam', '1st Street', '4000');
-GO
-
-DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_rec;
-GO
-
-DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_rec2;
-GO
-
-DROP VIEW IF EXISTS babel_2170_vu_employees_view_rec;
-GO
-
-DROP TABLE IF EXISTS babel_2170_vu_employees_rec;
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
 GO
 
 -- test multi-db mode
