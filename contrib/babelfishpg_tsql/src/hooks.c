@@ -401,6 +401,7 @@ InstallExtendedHooks(void)
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
+
 }
 
 void
