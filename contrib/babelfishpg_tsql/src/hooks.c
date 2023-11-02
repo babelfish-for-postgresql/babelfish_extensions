@@ -2930,13 +2930,10 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	}
 
 	/*
-	 * calculating exact #digits in last block if decimal point exists If
-	 * dscale is an exact multiple of numeric_base, last block is not
-	 * partially filled, then, ignore as those digits are already added to
-	 * total_digit_count Else, add the remainder digits
+	 * Add dscale or display scale, the nominal precision expressed as number
+	 * of digits after the decimal point.
 	 */
-	if (dscale > 0)
-		total_digit_count += (dscale % numeric_base);
+	total_digit_count += dscale;
 
 	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 }

@@ -177,6 +177,28 @@ select * from
 order by col;
 GO
 
+create table babel_4424_t5 (a numeric(38, 37));
+GO
+
+create table babel_4424_t6 (a numeric(10, 10));
+GO
+
+insert into babel_4424_t5 values (9.99999999999999999999999999999999999);
+insert into babel_4424_t6 values (0.9999999999);
+GO
+
+select * from ( select a +a from babel_4424_t5) dummy;
+GO
+
+select * from 
+	(
+		select a + a col from babel_4424_t5
+		union all
+		select a + a col from babel_4424_t6
+	) dummy
+order by col;
+GO
+
 DROP TABLE babel_4424_t1;
 go
 DROP TABLE babel_4424_t2;
@@ -184,6 +206,10 @@ go
 DROP TABLE babel_4424_t3;
 go
 DROP TABLE babel_4424_t4;
+go
+DROP TABLE babel_4424_t5;
+go
+DROP TABLE babel_4424_t6;
 go
 
 create table babel_4424_t1 (a numeric(38,0) primary key);
