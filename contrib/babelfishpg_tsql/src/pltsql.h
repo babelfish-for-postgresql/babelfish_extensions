@@ -401,6 +401,9 @@ typedef struct PLtsql_var
 	int			cursor_explicit_argrow;
 	int			cursor_options;
 
+	/* to identify if variable is getting used for babelfish GUC */
+	bool is_babelfish_guc;
+
 	/* Fields below here can change at runtime */
 
 	Datum		value;

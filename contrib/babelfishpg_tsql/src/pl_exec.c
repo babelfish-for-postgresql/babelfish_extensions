@@ -6417,10 +6417,17 @@ exec_assign_value(PLtsql_execstate *estate,
 									var->refname)));
 
 				/* Special handling when target variable is babelfish GUC */
-				if(pg_strncasecmp("babelfishpg_tsql", var->refname, 16) == 0)
-				{
+				if(var->is_babelfish_guc)
+				{	
+					StringInfoData buf;
+					initStringInfo(&buf);
+					if(var->datatype->typoid == INT4OID)
+						appendStringInfo(&buf, "%d", DatumGetInt32(newvalue));
+					else
+						appendStringInfoString(&buf, TextDatumGetCString(newvalue));
+
 					set_config_option(var->refname,
-											psprintf("%ld", newvalue),
+											buf.data,
 											PGC_USERSET,
 											PGC_S_SESSION,
 											GUC_ACTION_SET,

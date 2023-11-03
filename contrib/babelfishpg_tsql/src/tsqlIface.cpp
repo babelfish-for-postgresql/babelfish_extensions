@@ -4724,17 +4724,22 @@ static bool is_valid_set_option(std::string val)
 		(pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0);
 }
 
-static PLtsql_variable * build_babelfish_guc_variable(const char* val)
+static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Set_babelfish_gucContext *guc_ctx)
 {
-	int type = InvalidOid;
-	if (pg_strcasecmp("ROWCOUNT", val) == 0)
+	PLtsql_var *var;
+	int type;
+	if (guc_ctx->ROWCOUNT() || guc_ctx->DATEFIRST())
 		type = INT4OID;
+	else 
+		type = TEXTOID;
 
-	if (type == InvalidOid)
-		return NULL;
-	
-	PLtsql_variable *var = pltsql_build_variable(psprintf("babelfishpg_tsql.%s", val), 0, pltsql_build_datatype(type, -1, InvalidOid, NULL), false);
+	var = (PLtsql_var *) pltsql_build_variable(
+												psprintf("babelfishpg_tsql.%s", getFullText(guc_ctx).c_str()), 
+												0, 
+												pltsql_build_datatype(type, -1, InvalidOid, NULL), 
+												false);
 	var->notnull = true;
+	var->is_babelfish_guc = true;
 	return var;
 }
 
@@ -4984,19 +4989,19 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->is_set_tran_isolation = true;
 			return (PLtsql_stmt *) stmt;
 		}			
-		else if (set_special_ctx->ROWCOUNT() && set_special_ctx->LOCAL_ID())
+		else if(set_special_ctx->set_babelfish_guc())
 		{
-			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
-			PLtsql_variable *target_var = build_babelfish_guc_variable(getFullText(set_special_ctx->ROWCOUNT()).c_str());
+			TSqlParser::Set_babelfish_gucContext *guc_ctx = static_cast<TSqlParser::Set_babelfish_gucContext*> (set_special_ctx->set_babelfish_guc());
 			/* build expression with the input variable */
-			auto expr = makeTsqlExpr(getFullText(set_special_ctx->LOCAL_ID()), true);
-			
+			PLtsql_expr* input_expr = makeTsqlExpr(getFullText(set_special_ctx->LOCAL_ID()), true);
+			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
+			PLtsql_var *target_var = build_babelfish_guc_variable(guc_ctx);
 			/* assign expression to target */
 			PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
 			result->cmd_type = PLTSQL_STMT_ASSIGN;
 			result->lineno   = getLineNo(ctx);
 			result->varno    = target_var->dno;
-			result->expr     = expr;
+			result->expr     = input_expr;
 			return (PLtsql_stmt *) result;
 		}
 		else

@@ -3351,8 +3351,9 @@ set_special
     : SET set_on_off_option (COMMA set_on_off_option)* on_off 
     | SET STATISTICS set_statistics_keyword (COMMA set_statistics_keyword)* on_off
     | SET OFFSETS set_offsets_keyword (COMMA set_offsets_keyword)* on_off
+    | SET set_babelfish_guc LOCAL_ID
     | SET id_set=id (id_val=id | constant_LOCAL_ID | on_off) 
-    | SET ROWCOUNT (LOCAL_ID | MINUS? DECIMAL) 
+    | SET ROWCOUNT (MINUS? DECIMAL)
     // https://msdn.microsoft.com/en-us/library/ms173763.aspx
     | SET (TRAN | TRANSACTION) ISOLATION LEVEL (READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SNAPSHOT | SERIALIZABLE | DECIMAL) 
     // https://msdn.microsoft.com/en-us/library/ms188059.aspx
@@ -3361,6 +3362,12 @@ set_special
     | SET xml_modify_method    
     | SET BABELFISH_STATISTICS PROFILE on_off
     ;    
+
+set_babelfish_guc
+    : DATEFIRST
+    | ROWCOUNT
+    | LANGUAGE
+    ;
 
 set_on_off_option
     : ANSI_DEFAULTS
