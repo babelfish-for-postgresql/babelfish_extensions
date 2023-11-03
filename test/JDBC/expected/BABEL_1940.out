@@ -40,6 +40,22 @@ varbinary
 ~~END~~
 
 
+SELECT CAST('™' AS VARBINARY)
+GO
+~~START~~
+varbinary
+99
+~~END~~
+
+
+SELECT CAST('™™™' AS VARBINARY(2))
+GO
+~~START~~
+varbinary
+9999
+~~END~~
+
+
 SELECT CONVERT(VARCHAR(10), 0x80)
 GO
 ~~START~~
