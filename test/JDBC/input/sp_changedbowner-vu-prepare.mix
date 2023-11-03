@@ -1,0 +1,21 @@
+-- tsql
+use master
+go
+create login dba_login_sp with password='12345678'
+go
+create login new_OWNER_login_sp with password='12345678'
+go
+create login new_OWNER_login_sp2 with password='12345678'
+go
+create login [new_OWNER_login_sp3] with password='12345678'
+go
+create login [new_OWNER_login_sp 4] with password='12345678'
+go
+set quoted_identifier on
+go
+create login "new_OWNER_login_sp5" with password='12345678'
+go
+create login "new_OWNER_login_sp 6" with password='12345678'
+go
+set quoted_identifier off
+go

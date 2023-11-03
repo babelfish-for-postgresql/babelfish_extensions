@@ -1,0 +1,23 @@
+-- tsql
+create type sys_table_types_dep_vu_prepare_tt as table(sys_table_types_vu_prepare_tt_a int, sys_table_types_vu_prepare_tt_b char);
+GO
+
+create procedure sys_table_types_dep_vu_prepare_p1 as
+    select count(*) from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt'
+GO
+
+create function sys_table_types_dep_vu_prepare_f1()
+returns int
+as
+begin
+    return (select count(*) from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt')
+end
+GO
+
+create view sys_table_types_dep_vu_prepare_v1 as
+    select count(*) from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt'
+GO
+
+create procedure sys_table_types_dep_vu_prepare_p2 as
+    select is_nullable from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt'
+GO
