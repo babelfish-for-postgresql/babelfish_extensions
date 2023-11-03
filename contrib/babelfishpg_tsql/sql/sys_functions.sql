@@ -159,6 +159,27 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'suser_name'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
 
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date BIT ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date SMALLMONEY ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date TINYINT ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date SMALLINT ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date date ,df_tz INTEGER DEFAULT 0)
 RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_date'
@@ -174,10 +195,10 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_datetime'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date smalldatetime ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_smalldatetime'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date smalldatetime ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_smalldatetime'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date DATETIMEOFFSET ,df_tz INTEGER DEFAULT 0)
 RETURNS INTEGER
@@ -193,6 +214,50 @@ CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date INTER
 RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_interval'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date DECIMAL ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date REAL ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date NUMERIC ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date FLOAT ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date INT ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date BIGINT ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date MONEY ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date REAL ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_time'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+
 
 -- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date anyelement ,df_tz INTEGER DEFAULT 0)
 -- RETURNS INTEGER
