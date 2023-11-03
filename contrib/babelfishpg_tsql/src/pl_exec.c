@@ -6426,14 +6426,9 @@ exec_assign_value(PLtsql_execstate *estate,
 					else
 						appendStringInfoString(&buf, TextDatumGetCString(newvalue));
 
-					set_config_option(var->refname,
-											buf.data,
-											PGC_USERSET,
-											PGC_S_SESSION,
-											GUC_ACTION_SET,
-											true,
-											0,
-											false);
+					set_config_option(var->refname, buf.data,
+							 PGC_USERSET, PGC_S_SESSION, GUC_ACTION_SET,
+							 true, 0, false);
 					break;
 				}
 

@@ -4733,11 +4733,10 @@ static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Set_babelfish_gucCo
 	else 
 		type = TEXTOID;
 
-	var = (PLtsql_var *) pltsql_build_variable(
-												psprintf("babelfishpg_tsql.%s", getFullText(guc_ctx).c_str()), 
-												0, 
-												pltsql_build_datatype(type, -1, InvalidOid, NULL), 
-												false);
+	var = (PLtsql_var *) pltsql_build_variable(psprintf("babelfishpg_tsql.%s", getFullText(guc_ctx).c_str()), 
+						  0, 
+						  pltsql_build_datatype(type, -1, InvalidOid, NULL), 
+						  false);
 	var->notnull = true;
 	var->is_babelfish_guc = true;
 	return var;
