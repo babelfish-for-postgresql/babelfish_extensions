@@ -8,6 +8,13 @@
 USE master;
 GO
 
+-- reset password
+ALTER LOGIN babel_3326_non_owner WITH PASSWORD = '12345678'
+GO
+
+ALTER LOGIN babel_3326_u1 WITH PASSWORD = '12345678'
+GO
+
 -- triggers should be enabled by default
 INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary ) 
 VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
