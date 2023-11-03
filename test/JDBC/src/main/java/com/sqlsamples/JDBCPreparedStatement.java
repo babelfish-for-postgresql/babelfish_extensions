@@ -16,6 +16,7 @@ import java.text.ParseException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.nio.file.Paths;
 
 import static com.sqlsamples.HandleException.handleSQLExceptionWithFile;
 
@@ -148,7 +149,7 @@ public class JDBCPreparedStatement {
                     sqlxml.setString(parameter[2]);
                     pstmt.setSQLXML(j - 1, sqlxml);
                 } else if (parameter[0].equalsIgnoreCase("tvp")) {
-                    FileInputStream fstream = new FileInputStream(parameter[2]);
+                    FileInputStream fstream = new FileInputStream(Paths.get(Paths.get("").toAbsolutePath().toString(), parameter[2]).toString());
                     DataInputStream in = new DataInputStream(fstream);
                     BufferedReader br = new BufferedReader(new InputStreamReader(in));
 
