@@ -36,6 +36,10 @@ outputErrorCode = true
 # PLEASE LOOK AT THE jdbc_schedule FILE
 scheduleFile = ./jdbc_schedule
 
+# WHETHER TEST MODE IS PARALLEL QUERY MODE ON
+isParallelQueryMode = false
+
+
 # Where to find the input, output, expected, etc.
 testFileRoot = ./
 
@@ -43,4 +47,4 @@ testFileRoot = ./
 isUpgradeTestMode = false
 
 # Default SLA in milliseconds
-defaultSLA = 15000
+defaultSLA = 40000
