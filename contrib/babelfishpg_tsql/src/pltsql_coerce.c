@@ -1130,8 +1130,6 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 			Const 		*tempcon;
 
 			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
-			baseType = typeidType(baseTypeId);
-			pfree(varcharTypeName);
 
 			tempcon = makeConst(varcharTypeName->typeOid, -1,
 								tsql_get_server_collation_oid_internal(false),
@@ -1143,6 +1141,10 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 										   COERCION_EXPLICIT,
 										   COERCE_EXPLICIT_CAST,
 										   location);
+			
+			pfree(varcharTypeName);
+			ReleaseSysCache(baseType);
+			
 			return result;
 		}
 		else
