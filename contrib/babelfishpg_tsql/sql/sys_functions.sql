@@ -252,10 +252,10 @@ LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 -- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date REAL ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_time'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+-- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date REAL ,df_tz INTEGER DEFAULT 0)
+-- RETURNS INTEGER
+-- AS 'babelfishpg_tsql', 'datepart_internal_time'
+-- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 
 
