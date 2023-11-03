@@ -653,10 +653,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						 * precision adjustment to TDS_MAX_NUM_PRECISION
 						 */
 						if (precision > TDS_MAX_NUM_PRECISION)
-						{
-							scale = Max(0, scale - (precision - TDS_MAX_NUM_PRECISION));
 							precision = TDS_MAX_NUM_PRECISION;
-						}
 						break;
 					case NUMERIC_MUL_OID:
 						scale = scale1 + scale2;

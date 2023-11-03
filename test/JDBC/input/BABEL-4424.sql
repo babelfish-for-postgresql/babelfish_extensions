@@ -187,14 +187,17 @@ insert into babel_4424_t5 values (9.99999999999999999999999999999999999);
 insert into babel_4424_t6 values (0.9999999999);
 GO
 
-select * from ( select a +a from babel_4424_t5) dummy;
+select * from ( select a + a from babel_4424_t5) dummy;
+GO
+
+select * from ( select a + a from babel_4424_t6) dummy;
 GO
 
 select * from 
 	(
-		select a + a col from babel_4424_t5
+		select a col from babel_4424_t5
 		union all
-		select a + a col from babel_4424_t6
+		select a col from babel_4424_t6
 	) dummy
 order by col;
 GO

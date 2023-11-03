@@ -366,26 +366,35 @@ GO
 ~~ROW COUNT: 1~~
 
 
-select * from ( select a +a from babel_4424_t5) dummy;
+select * from ( select a + a from babel_4424_t5) dummy;
 GO
 ~~START~~
 numeric
-19.999999999999999999999999999999999980
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+select * from ( select a + a from babel_4424_t6) dummy;
+GO
+~~START~~
+numeric
+1.9999999998
 ~~END~~
 
 
 select * from 
 	(
-		select a + a col from babel_4424_t5
+		select a col from babel_4424_t5
 		union all
-		select a + a col from babel_4424_t6
+		select a col from babel_4424_t6
 	) dummy
 order by col;
 GO
 ~~START~~
 numeric
-1.999999999800000000000000000000000000
-19.999999999999999999999999999999999980
+0.9999999999000000000000000000000000000
+9.9999999999999999999999999999999999900
 ~~END~~
 
 
