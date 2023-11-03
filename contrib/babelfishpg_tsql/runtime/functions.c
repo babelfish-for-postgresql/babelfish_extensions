@@ -679,6 +679,11 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for datetime2")));
 			}
+
+			if(df_tz && (strcasecmp(field , "week") == 0 || strcasecmp(field , "dow") == 0 || strcasecmp(field , "tsql_week") == 0) )
+			{
+				PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz) + 1);
+			}
 		// }
 
 		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
