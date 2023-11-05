@@ -61,9 +61,6 @@ bool		pltsql_DumpExecTree = false;
 bool		pltsql_check_syntax = false;
 
 PLtsql_function *pltsql_curr_compile;
-int			pltsql_curr_compile_body_lineno;	/* lineno of
-												 * function/procedure body in
-												 * CREATE */
 
 /* A context appropriate for short-term allocs during compilation */
 MemoryContext pltsql_compile_tmp_cxt;
