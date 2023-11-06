@@ -4207,10 +4207,6 @@ RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
     SELECT * 
     FROM pg_catalog.pg_settings 
@@ -4263,7 +4259,11 @@ $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
 -- === DROP deprecated functions (if exists)
-CALL sys.babelfish_drop_deprecated_function('sys', 'format_datetime_deprecated_3_3');
-CALL sys.babelfish_drop_deprecated_function('sys', 'format_numeric_deprecated_3_3');
-CALL sys.babelfish_drop_deprecated_function('sys', 'format_deprecated_3_3');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_3');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_3');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_3');
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
