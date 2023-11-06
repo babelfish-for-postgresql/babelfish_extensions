@@ -1,4 +1,7 @@
 -- enable CONTAINS
+SELECT set_config('role', 'jdbc_user', false);
+GO
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
@@ -3032,5 +3035,8 @@ INSERT INTO fts_contains_vu_t VALUES (1000, 'Last month , scientists from the He
 GO
 
 -- disable CONTAINS
+SELECT set_config('role', 'jdbc_user', false);
+GO
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

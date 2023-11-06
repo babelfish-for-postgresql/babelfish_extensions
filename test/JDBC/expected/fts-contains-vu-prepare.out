@@ -1,4 +1,12 @@
 -- enable CONTAINS
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 ~~START~~
@@ -5037,6 +5045,14 @@ GO
 
 
 -- disable CONTAINS
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
 ~~START~~
