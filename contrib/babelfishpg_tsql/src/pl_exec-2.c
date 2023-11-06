@@ -2845,7 +2845,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	 * Same as set_session_properties() but skips checks as they were done
 	 * before locking
 	 */
-	set_cur_user_db_and_path(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name, false);
 
 	top_es_entry = exec_state_call_stack->next;
 	while (top_es_entry != NULL)
@@ -2940,7 +2940,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 						"\"%s\" is probably undergoing DDL statements in another session.",
 						stmt->db_name, stmt->db_name)));
 
-	set_cur_user_db_and_path(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name, false);
 
 	return PLTSQL_RC_OK;
 }

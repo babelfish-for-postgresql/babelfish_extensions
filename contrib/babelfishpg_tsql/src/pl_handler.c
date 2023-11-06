@@ -267,11 +267,94 @@ make_fn_arguments_from_stored_proc_probin_hook_type make_fn_arguments_from_store
 pltsql_nextval_hook_type prev_pltsql_nextval_hook = NULL;
 pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
 pltsql_setval_hook_type prev_pltsql_setval_hook = NULL;
+char *current_db_name_guc = NULL;
 
 static void
 set_procid(Oid oid)
 {
 	procid_var = oid;
+}
+
+/*
+ * Not that check for babelfishpg_tsql.current_database should only be called
+ * in parallel worker.
+ */
+static bool
+check_current_database_name(char **newval, void **extra, GucSource source)
+{
+	int16		new_db_id;
+
+	/* Special case for boot value. */
+	if (*newval == NULL)
+	{
+		Assert(source == PGC_S_DEFAULT);
+		return true;
+	}
+
+	/* We should perform this extra checks only if backend is parallel worker */
+	if(IsParallelWorker())
+	{
+		new_db_id = get_db_id(*newval);
+		if (!DbidIsValid(new_db_id))
+			return false;
+
+		PG_TRY();
+		{
+			/* 
+			* check_session_db_access may raise an error if the login does not 
+			* have access to the database
+			*/
+			check_session_db_access(*newval);
+		}
+		PG_CATCH();
+		{
+			return false;
+		}
+		PG_END_TRY();
+		/*
+		*  Try to get a session-level shared lock on the new logical db we are 
+		* about to use.
+		*/
+		if (!TryLockLogicalDatabaseForSession(new_db_id, ShareLock))
+		{
+			ereport(WARNING,
+					(errmsg("Cannot use database \"%s\", failed to obtain lock. "
+							"\"%s\" is probably undergoing DDL statements in another session.",
+							*newval, *newval)));
+			return false;
+		}
+	}
+	else
+	{
+		Assert(source == PGC_S_CLIENT);
+	}
+	return true;
+}
+
+/*
+ * set babelfishpg_tsql.current_database should only be set in the context
+ * of the parallel worker. 
+ */
+static void
+assign_current_database_name(const char *newval, void *extra)
+{
+	/* Special case for boot value */
+	if (newval == NULL)
+	{
+		return;
+	}
+
+	/* We should perform this set operation only if backend is parallel worker */
+	if (IsParallelWorker())
+	{
+		/* 
+		* We have already checked IsParallelWorker during check_current_database_name
+		* so its better to use Assert here instead of throwing error. Anyway assign_hook
+		* should not throw any error.
+		*/
+		Assert(IsParallelWorker());
+		set_cur_user_db_and_path(newval, true);
+	}
 }
 
 static void
@@ -4032,6 +4115,15 @@ _PG_init(void)
 	init_and_check_common_utility();
 
 	pg_bindtextdomain(TEXTDOMAIN);
+
+	DefineCustomStringVariable("babelfishpg_tsql.current_database",
+								gettext_noop("Current logical database of the session"),
+								NULL,
+								&current_db_name_guc,
+								NULL,
+								PGC_INTERNAL,
+								GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE | GUC_IS_NAME,
+								check_current_database_name, assign_current_database_name, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.debug_parser",
 							 gettext_noop("Write PL/tsql parser messages to server log (for debugging)."),
