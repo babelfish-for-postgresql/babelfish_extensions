@@ -244,12 +244,14 @@ translate_pg_type_to_tsql(PG_FUNCTION_ARGS)
 Oid
 get_tsql_datatype_oid(char *type_name)
 {    
-    for (int i = 0; i < TOTAL_TYPECODE_COUNT; i++)
-    {
-        if (!strcmp(type_infos[i].tsql_typname, type_name)) {
-            return type_infos[i].oid;
-        }
-    }
+	if(type_name != NULL){
+		for (int i = 0; i < TOTAL_TYPECODE_COUNT; i++)
+		{
+			if (!strcmp(type_infos[i].tsql_typname, type_name)) {
+				return type_infos[i].oid;
+			}
+		}
+	}
     return InvalidOid;
 }
 

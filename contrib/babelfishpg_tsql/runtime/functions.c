@@ -58,7 +58,7 @@
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
-#define TYPE_NAME_MAX_LENGTH 4000
+#define SYSVARCHAR_MAX_LENGTH 4000
 
 typedef enum
 {
@@ -1823,24 +1823,26 @@ type_id(PG_FUNCTION_ARGS)
     char       *physical_schema_name;
     char       *input;
     char       **splitted_object_name;
-    Oid        schema_oid;
+    Oid        schema_oid = InvalidOid;
     Oid        user_id = GetUserId();
     Oid        result = InvalidOid;
     int        i;
+	int        len;
 
     if (PG_ARGISNULL(0))
         PG_RETURN_NULL();
     input = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
     /* strip trailing whitespace from input */
-    i = pg_mbstrlen(input);
-    while (i > 0 && isspace((unsigned char) input[i - 1]))
+    len = pg_mbstrlen(input);
+    i = len;
+	while (i > 0 && isspace((unsigned char) input[i - 1]))
         i--;
-    if(i < pg_mbstrlen(input))
+    if(i < len)
         input[i] = '\0';
 
     /* length should be restricted to 4000 */
-    if (i > TYPE_NAME_MAX_LENGTH)
+    if (i > SYSVARCHAR_MAX_LENGTH)
         ereport(ERROR,
                 (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
                  errmsg("input value is too long for object name")));
@@ -1920,36 +1922,46 @@ type_id(PG_FUNCTION_ARGS)
     }
     else
     {
-        physical_schema_name = get_physical_schema_name(db_name, schema_name);
+		// If schema is 'sys' or 'pg_catalog' then search in typecode list.
+		if(!strcmp(schema_name, "sys") || !strcmp(schema_name, "pg_catalog"))
+		{
+			result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
+			pfree(db_name);
+			pfree(schema_name);
+			pfree(object_name);
+			if (OidIsValid(result))
+				PG_RETURN_INT32(result);
+			else
+				PG_RETURN_NULL();
+		}
+		else
+		{
+			physical_schema_name = get_physical_schema_name(db_name, schema_name);
+		}
     }
 
     /* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
-    schema_oid = get_namespace_oid(physical_schema_name, true);
+    if (physical_schema_name != NULL && pg_mbstrlen(physical_schema_name) != 0)
+		schema_oid = get_namespace_oid(physical_schema_name, true);
+	
+	pfree(schema_name);
     pfree(db_name);
     pfree(physical_schema_name);
 
-    if (!OidIsValid(schema_oid) || pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) != ACLCHECK_OK)
-    {
-        pfree(schema_name);
-        pfree(object_name);
-        PG_RETURN_NULL();
-    }
-    // If schema is 'sys' or 'pg_catalog' then search in typecode list, else in pg_type.
-    if(!strcmp(schema_name, "sys") || !strcmp(schema_name, "pg_catalog"))
-    {
-        result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
-    }
-    else
-    {
-        result = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-                                    CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
-    }
-    pfree(schema_name);
-    pfree(object_name);
-    if (OidIsValid(result) && pg_type_aclcheck(result, user_id, ACL_USAGE) == ACLCHECK_OK)
-        PG_RETURN_INT32(result);
-    else
-        PG_RETURN_NULL();
+	// Check if user has permission to access schema
+	if (OidIsValid(schema_oid) && pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) == ACLCHECK_OK)
+	{
+		// Search in pg_type.
+		result = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
+										CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
+		if (OidIsValid(result) && pg_type_aclcheck(result, user_id, ACL_USAGE) == ACLCHECK_OK)
+		{
+			pfree(object_name);
+			PG_RETURN_INT32(result);
+		}
+	}
+	pfree(object_name);
+	PG_RETURN_NULL();
 }
 
 /*
@@ -1980,7 +1992,7 @@ type_name(PG_FUNCTION_ARGS)
     tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo1);
     if (tsql_typename)
     {
-        PG_RETURN_VARCHAR_P(tsql_typename);
+        PG_RETURN_TEXT_P(tsql_typename);
     }
     else
     {   
