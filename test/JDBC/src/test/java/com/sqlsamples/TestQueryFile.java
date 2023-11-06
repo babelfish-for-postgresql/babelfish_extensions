@@ -428,7 +428,7 @@ public class TestQueryFile {
             sla = defaultSLA*1000000L;
         }
         File expectedFile;
-        if (checkParallelQueryExpected)
+        if (isParallelQueryMode && checkParallelQueryExpected)
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
         else
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
