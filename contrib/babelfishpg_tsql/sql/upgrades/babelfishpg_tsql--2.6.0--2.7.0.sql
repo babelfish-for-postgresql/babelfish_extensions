@@ -1691,6 +1691,30 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Base.rolname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.rolname = suser_name() collate sys.database_default
+OR Ext.type = 'R';
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.asymmetric_keys
 AS
 SELECT 
