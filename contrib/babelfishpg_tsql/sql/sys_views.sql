@@ -1068,7 +1068,7 @@ select
     WHEN 'default' THEN default_collation_name
     ELSE  c.collname
     END as collation_name
-  , case when typnotnull then 0 else 1 end as is_nullable
+  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , 0 as is_user_defined
   , 0 as is_assembly_type
   , 0 as default_object_id
@@ -1097,8 +1097,8 @@ select cast(t.typname as text) as name
     WHEN 'default' THEN default_collation_name
     ELSE  c.collname 
     END as collation_name
-  , case when tt.typrelid is not null then 0
-         else case when typnotnull then 0 else 1 end
+  , case when tt.typrelid is not null then cast(0 as sys.bit)
+         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
     end
     as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel

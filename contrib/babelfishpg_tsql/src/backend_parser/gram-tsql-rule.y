@@ -2027,6 +2027,17 @@ func_expr_common_subexpr:
 				{
 					$$ = TsqlFunctionIdentityInto($3, (Node *)makeIntConst(1, -1), (Node *)makeIntConst(1, -1), @1);
 				}
+			| TSQL_CONTAINS '(' ColId ',' tsql_contains_search_condition ')'
+				{
+					$$ = TsqlExpressionContains($3, $5, yyscanner);
+				}
+		;
+
+tsql_contains_search_condition:
+			a_expr
+				{
+					$$ = $1;
+				}
 		;
 
 target_el:
@@ -4557,6 +4568,10 @@ reserved_keyword:
 			| TSQL_TRY_CONVERT
 			| TSQL_TRY_PARSE
 			| TSQL_EXEC
+		;
+
+bare_label_keyword:
+			  TSQL_CONTAINS
 		;
 
 privilege:
