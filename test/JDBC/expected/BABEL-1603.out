@@ -33,6 +33,27 @@ int
 ~~END~~
 
 
+
+DECLARE @rc INT = 3;
+SET DATEFIRST @rc;
+GO
+
+SELECT @@DATEFIRST;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT DATEPART(weekday, CAST( '2021-12-31' as DATE));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
 -- reset it to 7
 SET DATEFIRST 7
 GO
@@ -66,6 +87,38 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+
+SET DATEFIRST NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "NULL")~~
+
+
+DECLARE @rc INT = 0;
+SET DATEFIRST @rc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.DATEFIRST" (1 .. 7))~~
+
+
+DECLARE @rc INT = 8;
+SET DATEFIRST @rc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.DATEFIRST" (1 .. 7))~~
+
+
+
+DECLARE @rc INT = NULL;
+SET DATEFIRST @rc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid argument for SET DATEFIRST. Must be a non-null value.)~~
 
 
 SELECT @@DATEFIRST;

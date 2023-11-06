@@ -35,3 +35,7 @@ GO
 
 drop table rowcount_vu_prepare_testing2
 GO
+
+
+drop table rowcount_vu_prepare_testing3
+go

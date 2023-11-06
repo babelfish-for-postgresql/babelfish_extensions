@@ -26,6 +26,11 @@ GO
 exec rowcount_vu_prepare_delete_proc_var;
 GO
 
+
+-- check value 
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+
 -- nested proc
 exec rowcount_vu_prepare_select_nested_proc_var
 go
@@ -38,13 +43,13 @@ set rowcount NULL
 go
 
 -- should throw error
-declare @v smallint = NULL
+declare @v smallint = -1
 set rowcount @v
 GO
 
--- check value 
-select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
-go
+declare @v smallint = NULL
+SET ROWCOUNT @v
+GO
 
 -- invalid set should throw error
 DECLARE @value date = '2006-01-02'
@@ -56,6 +61,7 @@ DECLARE @value varchar(10) = 'abc'
 SET ROWCOUNT @value
 GO
 
+-- check value
 select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
 go
 
@@ -75,7 +81,6 @@ GO
 select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
 go
 
-
 -- overflow should throw error
 DECLARE @value bigint = 922337203685477580
 SET ROWCOUNT @value
@@ -92,4 +97,19 @@ SET ROWCOUNT @value
 GO
 
 select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+
+-- while loop
+DECLARE @value smallint = 1
+set rowcount @value
+go
+
+while 1=1
+begin
+    SELECT * from rowcount_vu_prepare_testing3 where k = 1;
+    UPDATE rowcount_vu_prepare_testing3 SET k = 2 where k = 1;
+    SELECT * from rowcount_vu_prepare_testing3 where k = 2;
+    DELETE rowcount_vu_prepare_testing3 where k = 2;
+    if @@rowcount = 0 break
+end
 go

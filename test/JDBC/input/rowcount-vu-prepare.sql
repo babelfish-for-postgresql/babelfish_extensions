@@ -4,6 +4,11 @@ GO
 create table rowcount_vu_prepare_testing2 (a int);
 go
 
+create table rowcount_vu_prepare_testing3(k int, value int)
+go
+
+insert into rowcount_vu_prepare_testing3 values(1,1), (1,2), (1,3);
+go
 
 -- procedures to test "SET ROWCOUNT value"
 create procedure rowcount_vu_prepare_insert_proc as
