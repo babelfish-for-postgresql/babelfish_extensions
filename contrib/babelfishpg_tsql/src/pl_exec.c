@@ -6410,27 +6410,33 @@ exec_assign_value(PLtsql_execstate *estate,
 										   var->datatype->typoid,
 										   var->datatype->atttypmod);
 
-				if (isNull && var->notnull)
-					ereport(ERROR,
-							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							 errmsg("null value cannot be assigned to variable \"%s\" declared NOT NULL",
-									var->refname)));
-
 				/* Special handling when target variable is babelfish GUC */
 				if(var->is_babelfish_guc)
 				{	
 					StringInfoData buf;
+					if (isNull)
+						ereport(ERROR,
+								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+								errmsg("Invalid argument for SET %s. Must be a non-null value.",
+										var->refname)));
+
 					initStringInfo(&buf);
 					if(var->datatype->typoid == INT4OID)
 						appendStringInfo(&buf, "%d", DatumGetInt32(newvalue));
 					else
 						appendStringInfoString(&buf, TextDatumGetCString(newvalue));
 
-					set_config_option(var->refname, buf.data,
-							 PGC_USERSET, PGC_S_SESSION, GUC_ACTION_SET,
-							 true, 0, false);
+					set_config_option(psprintf("babelfishpg_tsql.%s", var->refname), buf.data,
+								PGC_USERSET, PGC_S_SESSION, GUC_ACTION_SET,
+								true, 0, false);
 					break;
 				}
+
+				if (isNull && var->notnull)
+					ereport(ERROR,
+							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							 errmsg("null value cannot be assigned to variable \"%s\" declared NOT NULL",
+									var->refname)));
 
 				/*
 				 * If type is by-reference, copy the new value (which is

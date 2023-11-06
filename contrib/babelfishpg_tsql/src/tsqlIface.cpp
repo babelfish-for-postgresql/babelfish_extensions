@@ -4724,7 +4724,7 @@ static bool is_valid_set_option(std::string val)
 		(pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0);
 }
 
-static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Set_babelfish_gucContext *guc_ctx)
+static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Special_variableContext *guc_ctx)
 {
 	PLtsql_var *var;
 	int type;
@@ -4733,11 +4733,10 @@ static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Set_babelfish_gucCo
 	else 
 		type = TEXTOID;
 
-	var = (PLtsql_var *) pltsql_build_variable(psprintf("babelfishpg_tsql.%s", getFullText(guc_ctx).c_str()), 
+	var = (PLtsql_var *) pltsql_build_variable(getFullText(guc_ctx).c_str(), 
 						  0, 
 						  pltsql_build_datatype(type, -1, InvalidOid, NULL), 
 						  false);
-	var->notnull = true;
 	var->is_babelfish_guc = true;
 	return var;
 }
@@ -4988,9 +4987,9 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->is_set_tran_isolation = true;
 			return (PLtsql_stmt *) stmt;
 		}			
-		else if(set_special_ctx->set_babelfish_guc())
+		else if(set_special_ctx->special_variable())
 		{
-			TSqlParser::Set_babelfish_gucContext *guc_ctx = static_cast<TSqlParser::Set_babelfish_gucContext*> (set_special_ctx->set_babelfish_guc());
+			TSqlParser::Special_variableContext *guc_ctx = static_cast<TSqlParser::Special_variableContext*> (set_special_ctx->special_variable());
 			/* build expression with the input variable */
 			PLtsql_expr* input_expr = makeTsqlExpr(getFullText(set_special_ctx->LOCAL_ID()), true);
 			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
