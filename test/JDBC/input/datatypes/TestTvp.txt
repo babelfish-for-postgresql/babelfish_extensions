@@ -1,0 +1,8 @@
+create type tableType as table (a int, b smallint)
+create type table_variable_vu_type as table (a text not null, b int primary key, c int, d int)
+create proc table_variable_vu_proc1 (@x table_variable_vu_type readonly) as begin	select tvp.b from @x tvp end
+prepst#!#Select * from @a #!#tvp|-|tableType|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
+declare @var1 table_variable_vu_type insert into @var1 values ('1', 2, 3, 4) exec sp_executesql N'EXEC table_variable_vu_proc1 @x = @p0', N'@p0 table_variable_vu_type readonly', @p0=@var1
+drop procedure table_variable_vu_proc1;
+drop type table_variable_vu_type;
+drop type tableType;

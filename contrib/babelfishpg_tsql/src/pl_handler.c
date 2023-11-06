@@ -670,7 +670,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
 				}
 
-				if(atstmt->relation->schemaname == NULL)
+				if(atstmt->relation->schemaname == NULL && rel_schema)
 				{
 					pfree((char *) rel_schema);
 				}

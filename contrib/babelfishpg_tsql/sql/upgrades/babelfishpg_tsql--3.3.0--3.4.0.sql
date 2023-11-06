@@ -4019,6 +4019,115 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated
 -- Drop this procedure after it gets executed once.
 DROP PROCEDURE sys.babelfish_update_user_catalog_for_guest_schema();
 
+-- tsql full-text search configurations for Babelfish
+-- Since currently we only support one language - American English, 
+-- the configurations are for American English only
+
+-- create a configuration fts_contains_simple for simple terms search
+CREATE TEXT SEARCH DICTIONARY fts_contains_simple_dict (
+    TEMPLATE = simple,
+    STOPWORDS = tsql_contains
+);
+
+COMMENT ON TEXT SEARCH DICTIONARY fts_contains_simple_dict IS 'Babelfish T-SQL full text search CONTAINS dictionary (currently we only support American English)';
+
+CREATE TEXT SEARCH CONFIGURATION fts_contains_simple ( COPY = simple );
+
+COMMENT ON TEXT SEARCH CONFIGURATION fts_contains_simple IS 'Babelfish T-SQL full text search CONTAINS configuration (currently we only support American English)';
+
+ALTER TEXT SEARCH CONFIGURATION fts_contains_simple
+    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart,
+                      word, hword, hword_part
+    WITH fts_contains_simple_dict;
+
+
+
+-- Create a configuration english_inflectional_babel for inflectional search
+-- first english_inflectional_babel is created as a copy of the build-in Postgres english configuration
+CREATE TEXT SEARCH DICTIONARY english_stem_babel
+	(TEMPLATE = snowball, Language = english , StopWords=tsql_contains);
+
+COMMENT ON TEXT SEARCH DICTIONARY english_stem_babel IS 'snowball stemmer for english_inflectional_babel language';
+
+CREATE TEXT SEARCH CONFIGURATION english_inflectional_babel
+	(PARSER = default);
+
+COMMENT ON TEXT SEARCH CONFIGURATION english_inflectional_babel IS 'configuration for english_inflectional_babel language';
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
+	FOR email, url, url_path, host, file, version,
+	    sfloat, float, int, uint,
+	    numword, hword_numpart, numhword
+	WITH simple;
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
+    FOR asciiword, hword_asciipart, asciihword
+	WITH english_stem_babel;
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel ADD MAPPING
+    FOR word, hword_part, hword
+	WITH english_stem_babel;
+
+-- then we add irregular verbs as synonym files to english_inflectional_babel for inflectional search
+CREATE TEXT SEARCH DICTIONARY irregular_verbs (
+    TEMPLATE = synonym,
+    SYNONYMS = irregular_verbs
+);
+
+ALTER TEXT SEARCH CONFIGURATION english_inflectional_babel
+    ALTER MAPPING FOR asciiword
+    WITH irregular_verbs, english_stem_babel;
+
+-- Given the query string, determine the Postgres full text configuration to use
+-- Currently we only support simple terms and prefix terms
+-- For simple terms, we use the 'fts_contains_simple' configuration
+-- For prefix terms, we use the 'simple' configuration
+-- They are the configurations that provide closest matching according to our experiments
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_contains_pgconfig(IN phrase text)
+  RETURNS regconfig AS
+$$
+DECLARE
+  joined_text text;
+  word text;
+BEGIN
+  -- Prefix term (Examples: '"word1*"', '"word1 word2*"') if 
+  -- (1) search term is surrounded by double quotes (Counter example: 'word1*', as it doesn't have double quotes)
+  -- (2) last word in the search term ends with a star (Counter example: '"word1* word2"', as last word doesn't end with star)
+  -- (3) last word is NOT a single star (Counter example: '"*"', '"word1 word2 *"', as last word is a single star)
+  IF (phrase COLLATE C) SIMILAR TO ('[ ]*"%\*"[ ]*' COLLATE C) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"% \*"[ ]*' COLLATE C)) AND (NOT (phrase COLLATE C) SIMILAR TO ('[ ]*"\*"[ ]*' COLLATE C)) THEN
+    RETURN 'simple'::regconfig;
+  END IF;
+
+  -- Generation term, inflectional (Examples: 'FORMSOF(INFLECTIONAL, love)', 'FORMSOF(INFLECTIONAL, "move forward")', 'FORMSOF(INFLECTIONAL, play, "plan to")')
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(INFLECTIONAL,%\)[ ]*' COLLATE C) THEN
+    RETURN 'english_inflectional_babel'::regconfig;
+  END IF;
+
+  -- Generation term, thesaurus (Examples: 'FORMSOF(THESAURUS, love)', 'FORMSOF(THESAURUS, "move forward")', 'FORMSOF(THESAURUS, play, "plan to")')
+  -- By default, SQL Server thesaurus search does not use any thesaurus files so behavior is identical to simple terms
+  IF UPPER(phrase COLLATE C) SIMILAR TO ('[ ]*FORMSOF\(THESAURUS,%\)[ ]*' COLLATE C) THEN
+    RETURN 'fts_contains_simple'::regconfig;
+  END IF;
+
+  -- Simple term
+  RETURN 'fts_contains_simple'::regconfig;
+END;
+$$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE; 
+
+-- This function performs string rewriting for the full text search CONTAINS predicate
+-- in Babelfish
+-- For example, a T-SQL query 
+-- SELECT * FROM t WHERE CONTAINS(txt, '"good old days"')
+-- is rewritten into a Postgres query 
+-- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
+-- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
+-- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+-- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEXT AS 
+'babelfishpg_tsql', 'babelfish_fts_rewrite'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
@@ -4096,7 +4205,6 @@ LANGUAGE C STABLE;
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 
 CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
     SELECT * 
