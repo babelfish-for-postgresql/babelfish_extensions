@@ -18,11 +18,13 @@ import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
+import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class TestQueryFile {
     
     static String timestamp = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss.SSS").format(new Date());
     static String generatedFilesDirectoryPath = testFileRoot + "/expected/";
+    static String parallelQueryGeneratedFilesDirectoryPath = testFileRoot + "/expected/parallel_query/";
     static String sqlServerGeneratedFilesDirectoryPath = testFileRoot + "/sql_expected/";
     static String outputFilesDirectoryPath = testFileRoot + "/output/";
     static Logger summaryLogger = LogManager.getLogger("testSummaryLogger");    //logger to write summary of tests executed
@@ -419,12 +421,18 @@ public class TestQueryFile {
         FileWriter fw = new FileWriter(outputFile);
         BufferedWriter bw = new BufferedWriter(fw);
         curr_exec_time = 0L;
+        checkParallelQueryExpected = false;
         batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         bw.close();
         if(sla == 0){
             sla = defaultSLA*1000000L;
         }
-        File expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
+        File expectedFile;
+        if (checkParallelQueryExpected)
+            expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
+        else
+            expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
+
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
         if(curr_exec_time <= sla){
