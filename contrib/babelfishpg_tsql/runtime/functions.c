@@ -167,13 +167,18 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
-// PG_FUNCTION_INFO_V1(datepart_internal);
+PG_FUNCTION_INFO_V1(datepart_internal_numeric);
+PG_FUNCTION_INFO_V1(datepart_internal_double);
 PG_FUNCTION_INFO_V1(datepart_internal_date);
 PG_FUNCTION_INFO_V1(datepart_internal_datetime);
 PG_FUNCTION_INFO_V1(datepart_internal_smalldatetime);
 PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
 PG_FUNCTION_INFO_V1(datepart_internal_time);
 PG_FUNCTION_INFO_V1(datepart_internal_interval);
+PG_FUNCTION_INFO_V1(datepart_internal_decimal);
+PG_FUNCTION_INFO_V1(datepart_internal_num);
+PG_FUNCTION_INFO_V1(datepart_internal_float);
+PG_FUNCTION_INFO_V1(datepart_internal_real);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -744,13 +749,480 @@ datepart_internal_datetime(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
+
+Datum
+datepart_internal_numeric(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// TimestampTz	timestamptz = 0;
+	int64		num = PG_GETARG_INT64(1);
+	// int			df_tz = PG_GETARG_INT32(2);
+	// Datum		arg = PG_GETARG_DATUM(1);
+	// int			tsql_datefirst = (int)pltsql_datefirst;
+	int			result;//, first_day, temp, first_week_end, day;
+	// DateADT		date_arg;
+	// Oid			outputfunc;
+	// bool		flag;
+	// char		*argStr;
+	// text		*argText;
+	// tsql_datetimeoffset	*datetime;
+		if(strcasecmp(field , "year") == 0)
+		{
+			if(num>365)
+			result = 1900 + num/365;
+			else
+			result = 1900;
+		}
+		else if(strcasecmp(field , "quarter") == 0)
+		{
+			if(num>91)
+			result = num/91;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "month") == 0)
+		{
+			if(num>=31)
+			result = num/31 + 1;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "day") == 0)
+		{
+			while(num<0)
+			{
+				num = num +31;
+			}
+			result = num%30 + 1;
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		result = num;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+			result = num%7 +2 ;
+		
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	// PG_TRY();
+
+	// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
+
+	// argStr = OidOutputFunctionCall(outputfunc, arg);
+
+	// timestamp = PG_GETARG_TIMESTAMPTZ(1);
+
+
+	PG_RETURN_INT32(result);
+}
+
+
+Datum
+datepart_internal_double(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	double		arg = PG_GETARG_FLOAT8(1);
+	int			result;//, first_day, temp, first_week_end, day;
+	int			num = (int)ceil(arg);
+		if(strcasecmp(field , "year") == 0)
+		{
+			if(num>365)
+			result = 1900 + num/365;
+			else
+			result = 1900;
+		}
+		else if(strcasecmp(field , "quarter") == 0)
+		{
+			if(num>91)
+			result = num/91;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "month") == 0)
+		{
+			if(num>=31)
+			result = num/31 + 1;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "day") == 0)
+		{
+			while(num<0)
+			{
+				num = num +31;
+			}
+			result = num%30 + 1;
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		result = num;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+			result = num%7 +2 ;
+		
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	PG_RETURN_INT32(result - 1);
+}
+
+Datum
+datepart_internal_decimal(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Numeric		arg = PG_GETARG_NUMERIC(1);
+	int			result, num;//, first_day, temp, first_week_end, day;
+	int		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
+	
+	num = (int)ceil(argument);
+
+		if(strcasecmp(field , "year") == 0)
+		{
+			if(num>365)
+			result = 1900 + num/365;
+			else
+			result = 1900;
+		}
+		else if(strcasecmp(field , "quarter") == 0)
+		{
+			if(num>91)
+			result = num/91;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "month") == 0)
+		{
+			if(num>=31)
+			result = num/31 + 1;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "day") == 0)
+		{
+			while(num<0)
+			{
+				num = num +31;
+			}
+			result = num%30 + 1;
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		result = num;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+			result = num%7 +2 ;
+		
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	PG_RETURN_INT32(result);
+}
+
+Datum
+datepart_internal_num(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Numeric		arg = PG_GETARG_NUMERIC(1);
+	int			result, num;//, first_day, temp, first_week_end, day;
+	int		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
+	
+	if(argument >= 0)
+	{
+		num = (int)ceil(argument) -1;
+	}
+	else 
+	{
+		num = (int)ceil(argument);
+	}
+
+		if(strcasecmp(field , "year") == 0)
+		{
+			if(num>365)
+			result = 1900 + num/365;
+			else
+			result = 1900;
+		}
+		else if(strcasecmp(field , "quarter") == 0)
+		{
+			if(num>91)
+			result = num/91;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "month") == 0)
+		{
+			if(num>=31)
+			result = num/31 + 1;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "day") == 0)
+		{
+			while(num<0)
+			{
+				num = num +31;
+			}
+			result = num%30 + 1;
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		result = num;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+			result = num%7 +2 ;
+		
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	PG_RETURN_INT32(result);
+}
+
+Datum
+datepart_internal_float(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	float8		arg = PG_GETARG_FLOAT8(1);
+	// float4		arg = PG_GETARG_FLOAT4(1);
+	int			result;
+	int 		num;//, first_day, temp, first_week_end, day;
+	// float4		argument = DatumGetInt64(DirectFunctionCall1(numeric_float4, NumericGetDatum(arg)));
+	
+	if(arg >= 0)
+	{
+		num = (int)ceil(arg) -1;
+	}
+	else 
+	{
+		num = (int)ceil(arg) - 1;
+	}
+
+		if(strcasecmp(field , "year") == 0)
+		{
+			if(num>365)
+			result = 1900 + num/365;
+			else
+			result = 1900;
+		}
+		else if(strcasecmp(field , "quarter") == 0)
+		{
+			if(num>91)
+			result = num/91;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "month") == 0)
+		{
+			if(num>=31)
+			result = num/31 + 1;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "day") == 0)
+		{
+			while(num<0)
+			{
+				num = num +31;
+			}
+			result = num%30 + 1;
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		result = num;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+			result = num%7 +2 ;
+		
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	PG_RETURN_INT32(result);
+}
+
+Datum
+datepart_internal_real(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	// float8		arg = PG_GETARG_FLOAT8(1);
+	float4		arg = PG_GETARG_FLOAT4(1);
+	int			result;
+	int 		num;//, first_day, temp, first_week_end, day;
+	// float4		argument = DatumGetInt64(DirectFunctionCall1(numeric_float4, NumericGetDatum(arg)));
+	
+	if(arg >= 0)
+	{
+		num = (int)ceil(arg) -1;
+	}
+	else 
+	{
+		num = (int)ceil(arg) - 1;
+	}
+
+		if(strcasecmp(field , "year") == 0)
+		{
+			if(num>365)
+			result = 1900 + num/365;
+			else
+			result = 1900;
+		}
+		else if(strcasecmp(field , "quarter") == 0)
+		{
+			if(num>91)
+			result = num/91;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "month") == 0)
+		{
+			if(num>=31)
+			result = num/31 + 1;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "day") == 0)
+		{
+			while(num<0)
+			{
+				num = num +31;
+			}
+			result = num%30 + 1;
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		result = num;
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			if(num>=6)
+			result = num/6 +1 ;
+			else
+			result = 1;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
+		result = 0;
+		else if(strcasecmp(field , "dow") == 0)
+			result = num%7 +2 ;
+		
+		else
+		{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			result = -1;
+		}
+
+	PG_RETURN_INT32(result);
+}
+
+
+
+
 Datum
 datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
+
 	Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
 	// Datum		arg = PG_GETARG_DATUM(1);
 	// int			tsql_datefirst = (int)pltsql_datefirst;
