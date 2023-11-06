@@ -507,7 +507,7 @@ grant_guests_to_login(const char *login)
 	while (HeapTupleIsValid(tuple))
 	{
 		Datum		db_name_datum = heap_getattr(tuple,
-												 Anum_sysdatabaese_name,
+												 Anum_sysdatabases_name,
 												 db_rel->rd_att,
 												 &is_null);
 
@@ -1231,7 +1231,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		RoleSpec   *rolspec;
 
 		db_name_datum = heap_getattr(tuple,
-									 Anum_sysdatabaese_name,
+									 Anum_sysdatabases_name,
 									 db_rel->rd_att,
 									 &is_null);
 

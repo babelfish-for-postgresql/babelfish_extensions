@@ -1,0 +1,26 @@
+-- tsql
+-- cleanup
+use master
+go
+drop login dba_login_sp 
+go
+drop login new_OWNER_login_sp 
+go
+drop login new_OWNER_login_sp2 
+go
+drop login [new_OWNER_login_sp3] 
+go
+drop login [new_OWNER_login_sp 4] 
+go
+set quoted_identifier on
+go
+drop login "new_OWNER_login_sp5" 
+go
+drop login "new_OWNER_login_sp 6" 
+go
+set quoted_identifier off
+go
+drop login LOGIN64long_3456789012345678901234567890123456789012345678901234 
+go
+drop login LOGIN63long_345678901234567890123456789012345678901234567890123 
+go

@@ -78,6 +78,7 @@ BABEL-3249
 BABEL-3268
 BABEL-328
 BABEL-3314
+BABEL-3326
 BABEL-3347
 BABEL-3358
 BABEL-3360
@@ -118,6 +119,7 @@ BABEL-404
 BABEL-405
 BABEL-4078
 BABEL-4098
+BABEL-4214
 babel_417
 BABEL-493
 BABEL_539
@@ -216,6 +218,7 @@ format
 forxml
 forxml-subquery
 fulltextserviceproperty
+fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -343,6 +346,7 @@ sys-schemas
 sys-schemas-dep
 sys-selective_xml_index_paths
 sys-server_principals
+sys_server_role_members
 sys_server_principals_dep
 sys-sid_binary
 sys-spatial_indexes
@@ -457,6 +461,8 @@ typeid-typename
 typeid-typename-dep
 unquoted_string
 doublequoted_string
+alter_authorization_change_db_owner
+sp_changedbowner
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -470,8 +476,11 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+typeproperty-dep
 sys_asymmetric_keys
 sys_certificates
 sys_database_permissions
 BABEL-4279
 BABEL-4484
+pivot
+#AUTO_ANALYZE #uncomment this test when preparing for new minor version

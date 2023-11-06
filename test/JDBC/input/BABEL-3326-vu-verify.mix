@@ -8,6 +8,13 @@
 USE master;
 GO
 
+-- reset password
+ALTER LOGIN babel_3326_non_owner WITH PASSWORD = '12345678'
+GO
+
+ALTER LOGIN babel_3326_u1 WITH PASSWORD = '12345678'
+GO
+
 -- triggers should be enabled by default
 INSERT INTO dbo.babel_3326_Employees ( EmployeeName, EmployeeAddress, MonthSalary ) 
 VALUES ( 'Temp Name5' , 'Address Name 5', 4000)
@@ -625,3 +632,29 @@ GO
 
 select * from babel_3326_t3;
 GO
+
+-- BABEL-4523
+USE babel_3326_db1
+go
+
+CREATE TABLE testdb_t1(TransactionID int NOT NULL)
+GO
+
+-- should error out because trigger does not exist:
+ALTER TABLE testdb_t1 DISABLE TRIGGER testdb_t1_trigger
+go
+
+CREATE PROCEDURE testdb_proc1
+AS
+BEGIN
+	ALTER TABLE testdb_t1 DISABLE TRIGGER testdb_t1_trigger
+END
+GO
+
+-- should not crash
+EXECUTE testdb_proc1
+go
+
+USE master
+GO
+

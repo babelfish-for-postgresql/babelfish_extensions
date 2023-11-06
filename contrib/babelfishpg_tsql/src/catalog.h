@@ -40,9 +40,10 @@ extern Oid	sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
 #define SYSDATABASES_NUM_COLS 8
-#define Anum_sysdatabaese_oid 1
-#define Anum_sysdatabaese_name 6
-#define Anum_sysdatabaese_crdate 7
+#define Anum_sysdatabases_oid 1
+#define Anum_sysdatabases_owner 4
+#define Anum_sysdatabases_name 6
+#define Anum_sysdatabases_crdate 7
 
 /* MUST comply with babelfish_sysdatabases table */
 typedef struct FormData_sysdatabases
@@ -148,6 +149,7 @@ extern List *get_authid_user_ext_db_users(const char *db_name);
 extern char *get_user_for_database(const char *db_name);
 extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
 extern bool guest_role_exists_for_db(const char *dbname);
+extern void update_db_owner(const char *new_owner_name, const char *db_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

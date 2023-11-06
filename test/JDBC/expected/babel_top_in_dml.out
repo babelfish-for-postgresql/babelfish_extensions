@@ -563,6 +563,18 @@ GO
 ~~ROW COUNT: 1~~
 
 
+-- Should fail
+BEGIN TRAN
+UPDATE top(1) t1 SET a = t1.a + 1
+OUTPUT deleted.*
+FROM non_existant_tbl t1
+ROLLBACK
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "non_existant_tbl" does not exist)~~
+
+
 -- alias + subquery
 -- BABEL-1875
 BEGIN TRAN
@@ -596,6 +608,20 @@ ON t1.b = t2.b
 ROLLBACK
 go
 ~~ROW COUNT: 1~~
+
+
+BEGIN TRAN
+UPDATE top(1) t1 SET t1.a = t1.a + 1
+OUTPUT inserted.*
+FROM babel_update_tbl1 t1 
+INNER JOIN babel_update_tbl1 t2
+ON t1.b = t2.b
+ROLLBACK
+go
+~~START~~
+int#!#varchar
+2#!#left
+~~END~~
 
 
 -- alias + inner join
@@ -727,6 +753,21 @@ go
 ~~ROW COUNT: 2~~
 
 
+exec babel_2020_delete_ct;
+delete top(2) babel_2020_delete_t1 output deleted.*
+from babel_2020_delete_t1 x join babel_2020_delete_t2 y on y.a = 2;
+go
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+
 -- subqueries
 exec babel_2020_delete_ct;
 delete top(1) babel_2020_delete_t1 from (select * from babel_2020_delete_t1) x;
@@ -758,6 +799,20 @@ go
 ~~ROW COUNT: 3~~
 
 ~~ROW COUNT: 1~~
+
+
+exec babel_2020_delete_ct;
+delete top(1) babel_2020_delete_t1 output deleted.*
+from babel_2020_delete_t1 x left outer join babel_2020_delete_t2 on babel_2020_delete_t2.a = x.a;
+go
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+1
+~~END~~
 
 
 -- semi joins
@@ -1148,4 +1203,187 @@ int
 
 DROP TABLE babel_1139_t1;
 DROP TABLE babel_1139_t2;
+GO
+
+-- TOP with OUTPUT & OUTPUT INTO w/out JOIN
+create table top_with_output_tbl(no_o_id int, no_w_id VARCHAR(20))
+go
+
+insert into top_with_output_tbl VALUES (-1, 'foo'), (2, 'foo');
+go
+~~ROW COUNT: 2~~
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+text
+Query Text: UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+Update on top_with_output_tbl
+  ->  Limit
+        ->  Nested Loop
+              ->  Seq Scan on top_with_output_tbl
+                    Filter: (no_w_id = 'foo'::"varchar")
+              ->  Tid Scan on top_with_output_tbl deleted
+                    TID Cond: (ctid = top_with_output_tbl.ctid)
+~~END~~
+
+
+DELETE TOP (1)
+FROM top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+text
+Query Text: DELETE TOP (1)
+FROM top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+Delete on top_with_output_tbl
+  ->  Limit
+        ->  Seq Scan on top_with_output_tbl
+              Filter: (no_w_id = 'foo'::"varchar")
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+
+
+
+declare @t_out table (no_o_id int);
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 10
+OUTPUT deleted.no_o_id INTO @t_out
+WHERE top_with_output_tbl.no_w_id = 'foo'
+select * from @t_out;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+-1
+~~END~~
+
+
+UPDATE TOP (1) dbo.top_with_output_tbl SET no_o_id = 100
+OUTPUT deleted.no_o_id, inserted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+~~START~~
+int#!#int
+2#!#100
+~~END~~
+
+
+
+
+declare @t_out table (no_o_id int);
+DELETE TOP (1)
+FROM dbo.top_with_output_tbl
+OUTPUT deleted.no_o_id INTO @t_out
+WHERE top_with_output_tbl.no_w_id = 'foo'
+select * from @t_out;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+10
+~~END~~
+
+
+DELETE TOP (1)
+FROM dbo.top_with_output_tbl
+OUTPUT deleted.no_o_id
+WHERE top_with_output_tbl.no_w_id = 'foo'
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+drop table top_with_output_tbl;
+go
+
+-- BABEL-2007
+CREATE TABLE babel2007_t1(c1PK INT PRIMARY KEY, c2INT INT, c4COMMENT VARCHAR(100))
+CREATE TABLE babel2007_t2(c1PK INT PRIMARY KEY, c2INT INT, c4COMMENT VARCHAR(100))
+GO
+
+INSERT INTO babel2007_t1 VALUES( 1, 10, 'insert' )
+        , ( 2, 20, 'insert' )
+        , ( 3, 30, 'insert' )
+        , ( 4, 40, 'insert' )
+GO
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel2007_t2 VALUES( 1, 10, 'insert' )
+        , ( 2, 20, 'insert' )
+        , ( 3, 30, 'insert' )
+        , ( 4, 40, 'insert' )
+GO
+~~ROW COUNT: 4~~
+
+
+UPDATE top(2) babel2007_t1 
+SET c4COMMENT = 'updated: TOP (2), output to client'
+OUTPUT INSERTED.*, DELETED.*
+FROM babel2007_t1 INNER JOIN babel2007_t2 ON ( babel2007_t1.c2INT = babel2007_t2.c2INT )
+WHERE babel2007_t2.c1PK <= 5
+GO
+~~START~~
+int#!#int#!#varchar#!#int#!#int#!#varchar
+1#!#10#!#updated: TOP (2), output to client#!#1#!#10#!#insert
+2#!#20#!#updated: TOP (2), output to client#!#2#!#20#!#insert
+~~END~~
+
+
+DELETE top(2) babel2007_t1
+OUTPUT DELETED.*
+FROM babel2007_t1 INNER JOIN babel2007_t2 ON ( babel2007_t1.c2INT = babel2007_t2.c2INT )
+WHERE babel2007_t2.c1PK <= 5
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#10#!#updated: TOP (2), output to client
+2#!#20#!#updated: TOP (2), output to client
+~~END~~
+
+
+DROP TABLE babel2007_t1
+DROP TABLE babel2007_t2
 GO

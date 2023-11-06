@@ -53,4 +53,18 @@ dump-restore-version: [[
     dump-format: directory,
     logical-database: master
   }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: copy,
+    dump-format: plain,
+    logical-database: database_1
+  },
+  {
+    version: target.latest,
+    dump-data-as: copy,
+    dump-format: plain,
+    logical-database: database_1
+  }
 ]]

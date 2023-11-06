@@ -207,6 +207,9 @@ go
 -- datetime to date
 select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as date);
 go
+-- datetime to float
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
+go
 -- date to datetime2
 select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
 go
@@ -242,9 +245,6 @@ select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as varchar(3));
 go
 
 -- CAST examples not supported yet
--- datetime to float
-select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
-go
 -- time to datetime
 select cast(cast(cast('09:00:00' as time) as sql_variant) as datetime);
 go

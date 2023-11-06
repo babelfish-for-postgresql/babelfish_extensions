@@ -213,12 +213,12 @@ sys-system_sql_modules
 sys-tables
 sys-tables-dep
 sys-table_types
-sys-table_types-dep
+sys-table_types-before-dep
 sys-table_types_internal
 SYSTEM_USER
 sys-trigger_nestlevel
 sys-types
-sys-types-dep
+sys-types-before-dep
 sys-userid-dep
 sys-views
 sys-views-dep
@@ -269,3 +269,4 @@ timefromparts
 triggers_with_transaction
 BABEL-4046
 getdate
+AUTO_ANALYZE-before-15-5-or-14-10
