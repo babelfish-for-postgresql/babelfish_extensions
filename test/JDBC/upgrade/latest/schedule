@@ -482,3 +482,4 @@ BABEL-4279
 BABEL-4484
 pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
+cast_eliminate
