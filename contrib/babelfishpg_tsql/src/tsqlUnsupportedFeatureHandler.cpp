@@ -1321,9 +1321,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser:
 		}
 		else
 		{
+			std::string dbcc_cmd = ::getFullText(ctx->dbcc_command());
+			std::transform(dbcc_cmd.begin(), dbcc_cmd.end(), dbcc_cmd.begin(), ::toupper);
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
 				format_errmsg("DBCC %s is not currently supported in Babelfish",
-					::getFullText(ctx->dbcc_command()).c_str()), 
+					dbcc_cmd.c_str()), 
 						getLineAndPos(ctx->dbcc_command()));
 		}
 	}
