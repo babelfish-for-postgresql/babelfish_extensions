@@ -102,3 +102,24 @@ begin
     set rowcount 0;
 end
 GO
+
+create procedure rowcount_vu_prepare_select as
+begin
+    select * from rowcount_vu_prepare_testing2;
+end
+go
+
+
+
+create procedure rowcount_vu_prepare_select_nested_proc_var as
+begin
+    declare @v smallint = 1;
+    set rowcount @v;
+    select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+    exec rowcount_vu_prepare_select;
+    declare @x int = 0;
+    set rowcount @x;
+    select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+    exec rowcount_vu_prepare_select;
+end
+GO

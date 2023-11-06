@@ -118,12 +118,47 @@ int
 ~~END~~
 
 
+-- nested proc
+exec rowcount_vu_prepare_select_nested_proc_var
+go
+~~START~~
+text
+1
+~~END~~
 
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+text
+0
+~~END~~
+
+~~START~~
+int
+2
+2
+1
+1
+2
+2
+1
+1
+2
+2
+1
+10
+~~END~~
+
+
+-- should throw syntax error
 set rowcount -1
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near '-' at line 1 and character position 13)~~
+~~ERROR (Message: syntax error near '-' at line 2 and character position 13)~~
 
 
 set rowcount NULL
@@ -133,12 +168,22 @@ go
 ~~ERROR (Message: syntax error near 'NULL' at line 1 and character position 13)~~
 
 
+-- should throw error
 declare @v smallint = NULL
 set rowcount @v
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Invalid argument for SET rowcount. Must be a non-null value.)~~
+
+
+-- check value 
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+~~START~~
+text
+2147483647
+~~END~~
 
 
 -- invalid set should throw error
@@ -150,6 +195,7 @@ GO
 ~~ERROR (Message: invalid input syntax for type integer: "2006-01-02")~~
 
 
+-- invalid set should throw error
 DECLARE @value varchar(10) = 'abc'
 SET ROWCOUNT @value
 GO
@@ -158,11 +204,42 @@ GO
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
 
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+~~START~~
+text
+2147483647
+~~END~~
+
+
+-- implicit cast is allowed
+DECLARE @value varchar(10) = '123'
+SET ROWCOUNT @value
+GO
+
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+~~START~~
+text
+123
+~~END~~
+
+
 -- set int/bigint/smallint
 DECLARE @value int = 2147483647
 SET ROWCOUNT @value
 GO
 
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+~~START~~
+text
+2147483647
+~~END~~
+
+
+
+-- overflow should throw error
 DECLARE @value bigint = 922337203685477580
 SET ROWCOUNT @value
 GO
@@ -171,6 +248,29 @@ GO
 ~~ERROR (Message: integer out of range)~~
 
 
+SET ROWCOUNT 2147483649
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.rowcount": "2147483649")~~
+
+
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+~~START~~
+text
+2147483647
+~~END~~
+
+
 DECLARE @value smallint = 3276
 SET ROWCOUNT @value
 GO
+
+select setting from pg_settings where name = 'babelfishpg_tsql.rowcount';
+go
+~~START~~
+text
+3276
+~~END~~
+
