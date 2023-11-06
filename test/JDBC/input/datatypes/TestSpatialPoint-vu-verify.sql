@@ -35,6 +35,9 @@ GO
 SELECT * FROM CoordsFromGeom;
 GO
 
+SELECT * FROM equal_geom;
+GO
+
 SELECT * FROM point_distances_geom;
 GO
 
@@ -171,6 +174,9 @@ SELECT * FROM CoordsFromGeog;
 GO
 
 SELECT * FROM TransformFromGeog;
+GO
+
+SELECT * FROM equal_geog;
 GO
 
 SELECT * FROM point_distances_geog;

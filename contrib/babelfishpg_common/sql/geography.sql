@@ -177,7 +177,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary)
 	BEGIN
 		varBin := (SELECT CAST ($1 AS bytea));
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT CAST (varBin AS GEOGRAPHY));
+		RETURN (SELECT sys.GEOGRAPHY(varBin));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -187,7 +187,7 @@ CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY)
 	DECLARE
         byte bytea;
 	BEGIN
-		byte := (SELECT CAST ($1 AS bytea));
+		byte := (SELECT sys.bytea($1));
 		RETURN (SELECT CAST (byte AS sys.bbf_varbinary)); 
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -200,7 +200,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bbf_binary)
 	BEGIN
 		varBin := (SELECT CAST (CAST ($1 AS sys.VARCHAR) AS sys.bbf_varbinary));
 		-- Call the underlying function after preprocessing
-		RETURN (SELECT CAST (varBin AS GEOGRAPHY)); 
+		RETURN (SELECT sys.GEOGRAPHY(varBin)); 
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -230,7 +230,7 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
 	BEGIN
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
-		RETURN CAST ((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))) AS sys.bpchar);
+		RETURN sys.bpchar((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -253,7 +253,7 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
 	BEGIN
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
-		RETURN CAST ((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))) AS sys.varchar);
+		RETURN sys.varchar((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -421,14 +421,14 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOGRAPHY)
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE FUNCTION sys.ST_Equals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
-	RETURNS boolean
+    RETURNS boolean
     AS $$
     DECLARE
         leftvarBin sys.bbf_varbinary;
-		rightvarBin sys.bbf_varbinary;
+        rightvarBin sys.bbf_varbinary;
     BEGIN
-        leftvarBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
-        rightvarBin := (SELECT CAST ($2 AS sys.bbf_varbinary));
+        leftvarBin := (SELECT sys.bbf_varbinary($1));
+        rightvarBin := (SELECT sys.bbf_varbinary($2));
         RETURN (SELECT sys.varbinary_eq(leftvarBin, rightvarBin));
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -448,8 +448,8 @@ CREATE FUNCTION sys.ST_NotEquals(leftarg sys.GEOGRAPHY, rightarg sys.GEOGRAPHY)
         leftvarBin sys.bbf_varbinary;
 		rightvarBin sys.bbf_varbinary;
     BEGIN
-        leftvarBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
-        rightvarBin := (SELECT CAST ($2 AS sys.bbf_varbinary));
+        leftvarBin := (SELECT sys.bbf_varbinary($1));
+        rightvarBin := (SELECT sys.bbf_varbinary($2));
         RETURN (SELECT sys.varbinary_neq(leftvarBin, rightvarBin));
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

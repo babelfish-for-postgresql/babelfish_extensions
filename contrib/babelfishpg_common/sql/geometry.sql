@@ -198,7 +198,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_varbinary)
     BEGIN
         varBin := (SELECT CAST ($1 AS bytea));
         -- Call the underlying function after preprocessing
-        RETURN (SELECT CAST (varBin AS GEOMETRY)); 
+        RETURN (SELECT sys.GEOMETRY(varBin)); 
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -208,7 +208,7 @@ CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY)
     DECLARE
         byte bytea;
     BEGIN
-        byte := (SELECT CAST ($1 AS bytea));
+        byte := (SELECT sys.bytea($1));
         RETURN (SELECT CAST (byte AS sys.bbf_varbinary)); 
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -221,7 +221,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
     BEGIN
         varBin := (SELECT CAST (CAST ($1 AS sys.VARCHAR) AS sys.bbf_varbinary));
         -- Call the underlying function after preprocessing
-        RETURN (SELECT CAST (varBin AS GEOMETRY)); 
+        RETURN (SELECT sys.GEOMETRY(varBin)); 
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -316,8 +316,8 @@ CREATE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
         leftvarBin sys.bbf_varbinary;
 		rightvarBin sys.bbf_varbinary;
     BEGIN
-        leftvarBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
-        rightvarBin := (SELECT CAST ($2 AS sys.bbf_varbinary));
+        leftvarBin := (SELECT sys.bbf_varbinary($1));
+        rightvarBin := (SELECT sys.bbf_varbinary($2));
         RETURN (SELECT sys.varbinary_eq(leftvarBin, rightvarBin));
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -337,8 +337,8 @@ CREATE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
         leftvarBin sys.bbf_varbinary;
 		rightvarBin sys.bbf_varbinary;
     BEGIN
-        leftvarBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
-        rightvarBin := (SELECT CAST ($2 AS sys.bbf_varbinary));
+        leftvarBin := (SELECT sys.bbf_varbinary($1));
+        rightvarBin := (SELECT sys.bbf_varbinary($2));
         RETURN (SELECT sys.varbinary_neq(leftvarBin, rightvarBin));
     END;
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

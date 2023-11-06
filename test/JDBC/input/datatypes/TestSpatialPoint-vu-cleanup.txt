@@ -4,6 +4,8 @@ DROP VIEW IF EXISTS BinaryFromGeom
 
 DROP VIEW IF EXISTS CoordsFromGeom
 
+DROP VIEW IF EXISTS equal_geom
+
 DROP VIEW IF EXISTS point_distances_geom
 
 DROP VIEW IF EXISTS TextFromGeog
@@ -13,6 +15,8 @@ DROP VIEW IF EXISTS BinaryFromGeog
 DROP VIEW IF EXISTS CoordsFromGeog
 
 DROP VIEW IF EXISTS TransformFromGeog
+
+DROP VIEW IF EXISTS equal_geog
 
 DROP VIEW IF EXISTS point_distances_geog
 

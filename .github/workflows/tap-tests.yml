@@ -69,12 +69,11 @@ jobs:
             mkdir build
           fi
           cd build
-          cmake -DCMAKE_INSTALL_LIBDIR="lib" -DCMAKE_INSTALL_PREFIX="/usr" ..
+          cmake -DCMAKE_INSTALL_LIBDIR="lib/x86_64-linux-gnu" -DCMAKE_INSTALL_PREFIX="/usr" ..
           cmake --build .
           sudo cmake --build . --target install
-          sudo cp /usr/lib/libproj* /usr/lib/x86_64-linux-gnu/
           cd ../../postgis-3.4.0
-          ./configure --without-protobuf --without-raster --with-projdir=/usr --with-pgconfig=$HOME/psql_source/bin/pg_config
+          ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/psql_source/bin/pg_config
           make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config
           sudo make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config install
         shell: bash
