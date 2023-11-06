@@ -4497,6 +4497,7 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 		Form_pg_operator form;
 		HeapTuple	tuple;
 		Node* node = optimize_explicit_cast(pstate, linitial(opExpr->args));
+		Node* result = NULL;
 		if (node != linitial(opExpr->args))
 		{
 			char	   *opname;
@@ -4509,8 +4510,11 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 			opname = NameStr(form->oprname);
 			if (strcmp(opname, "=") == 0)
 			{
-				return (Node*)make_op(pstate, list_make1(makeString(opname)), node, lsecond(opExpr->args), pstate->p_last_srf, -1);
+				result =(Node*)make_op(pstate, list_make1(makeString(opname)), node, lsecond(opExpr->args), pstate->p_last_srf, -1);
 			}
+			ReleaseSysCache(tuple);
+			if (result)
+				return result;
 		}
 	}
 	return node;
