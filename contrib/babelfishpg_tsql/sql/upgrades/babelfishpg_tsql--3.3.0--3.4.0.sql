@@ -4130,7 +4130,7 @@ LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Rename function for dependencies
 ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_3;
-ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_numeric_deprecated_3_3;
+ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_3;
 ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_3;
 
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
