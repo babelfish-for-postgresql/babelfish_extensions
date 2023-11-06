@@ -1703,7 +1703,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
 					 * space or comma, it means colname_start is at the end of column name.
 					 */
-					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (scanner_isspace(*colname_start) || *colname_start == ','))
 					{
 						last_dot++;
 						colname_start = last_dot;
