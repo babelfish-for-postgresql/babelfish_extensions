@@ -179,6 +179,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_decimal);
 PG_FUNCTION_INFO_V1(datepart_internal_num);
 PG_FUNCTION_INFO_V1(datepart_internal_float);
 PG_FUNCTION_INFO_V1(datepart_internal_real);
+PG_FUNCTION_INFO_V1(datepart_internal_money);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -188,6 +189,7 @@ void	   *get_host_id(void);
 int			custom_date_part(const char* field, Timestamp timestamp);
 int			custom_right(const char* source, int length);
 int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
+int			datepart_internal_datatypes(char *field, int num);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
 static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
@@ -347,16 +349,10 @@ custom_date_part(const char* field, Timestamp timestamp)
 {	
 	fsec_t		fsec1;
 	int64 		microseconds;
-	// struct		tm timeinfo = {0};
-	// time_t		time = mktime(&timeinfo);
 	struct		pg_tm tt1, *tm = &tt1;
-	// struct		tm *tmdow;
-	// struct		tm* result = localtime(&time);
 
 	int			first_day;
 	int			first_week_end;
-	// int			jan4Month = tm->tm_mon;
-	// int			jan4DayOfYear, weekNumber;
 	int			tz1, doy = 0, year, month, day, milliseconds;
 	int			K, J, res = 0;
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -414,68 +410,18 @@ custom_date_part(const char* field, Timestamp timestamp)
 		K = year % 100;
 		J = month / 100;
 		res = (day + ((13*(month+1))/5) + K + (K/4) + (J/4) + 5*J ) %7;
-		// res = ((13*(month+1))/5) + K + (K/4) + (J/4) - 2*J;
-		// if(res <= 0)
-		// {
-		// 	res+= 7;
-		// }
+		
 		return (((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
-		// return ( res + 7 ) % 7;
-		// return (res % 7);
-		// tmdow = pg_localtime(&timestamp2, log_timezone);
-		// return tmdow->tm_wday;
-
-		// return ((day += month < 3 ? year-- : year - 2, 23*month/9 + day + 4 + year/4- year/100 + year/400)+1)%7; 
-
-
-			// m1 = (rulep->r_mon + 9) % 12 + 1;
-			// yy0 = (rulep->r_mon <= 2) ? (year - 1) : year;
-			// yy1 = yy0 / 100;
-			// yy2 = yy0 % 100;
-			// dow = ((26 * m1 - 2) / 10 +
-			// 	   1 + yy2 + yy2 / 4 + yy1 / 4 - 2 * yy1) % 7;
-			// if (dow < 0)
-			// 	dow += DAYSPERWEEK;
 
 	}
 	else if (strcmp(field, "week") == 0 || strcasecmp(field , "tsql_week") == 0)
 	{
-		// year = tm->tm_year;
-		// month = tm->tm_mon;
-		// day = tm->tm_mday;
-
-		// timeinfo.tm_year = year - 1900; // Years since 1900
-		// timeinfo.tm_mon = month - 1;    // Month (0-11)
-		// timeinfo.tm_mday = day;         // Day of the month (1-31)
-	
-		// if (jan4Weekday == 0) {
-		// 	// Sunday is considered the last day of the previous week.
-		// 	jan4Day -= 3;
-		// } else {
-		// 	// Calculate the day of the week for January 4th.
-		// 	jan4Day += 4 - jan4Weekday;
-		// }
-		// // Calculate the day of the year for January 4th.
-		// jan4DayOfYear = 1 + (jan4Day - 1) + 30 * (jan4Month) + (jan4Month / 2);
-		// // Calculate the ISO week number.
-		// weekNumber = (tm->tm_yday - jan4DayOfYear + 10) / 7;
-		// return weekNumber;
 		
 		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
 		first_week_end = 8 - datepart_internal("doy", first_day, 0);
 		day = custom_date_part("doy",timestamp);
 		if(day <= first_week_end) return 1;
 		else return 2+(day-first_week_end-1)/7;
-
-		// if (((tm->tm_year % 4 == 0 && tm->tm_year % 100 != 0) || tm->tm_year % 400 == 0) && tm->tm_mon > 2)
-		// {
-		// 	doy += 1;
-		// }
-		// for (int i = 1; i < tm->tm_mon; i++)
-		// {
-		// 	doy += daysInMonth[i];
-		// }
-		// return (doy + 6) / 7;
 	}
 	else
 	{
@@ -499,82 +445,12 @@ custom_right(const char* source, int length)
 int
 datepart_internal(char *field , Timestamp timestamp , int df_tz)
 {
-	// char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
-	// Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
-	// int			df_tz = PG_GETARG_INT32(2);
-	// Datum		arg = PG_GETARG_DATUM(1);
 	int			tsql_datefirst = (int)pltsql_datefirst;
-	int			result ; //, first_day, temp, first_week_end, day;
-	// DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
-	// tsql_datetimeoffset	*datetime;
+	int			result;
 
 	PG_TRY();
 
-	// convert anyelement into datetime, keep eveything in datetime
-	// make use of datetime_in_str
 	{
-		// if(argtypeoid == TIMESTAMPOID || argtypeoid == 17453 || argtypeoid == 17565)   //arg is of type timestamp,datetime,datetime2
-		// {
-		// 	getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-		// 	argStr = OidOutputFunctionCall(outputfunc, arg);
-
-		// 	if(strcasestr(argStr , "+"))
-		// 	{
-		// 		datetime = DatumGetDatetimeoffset(datetime_in_str(argStr));
-			
-		// 		timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * SECS_PER_MINUTE * USECS_PER_SEC;
-
-		// 	}
-		// 	// make seperate functins for the 6 args of anyarg
-		// 	else
-		// 	{
-		// 		timestamp = PG_GETARG_TIMESTAMPTZ(1);
-		// 	}
-		// 	// timestamp = timestamptz_to_time_t(timestamptz);
-		// 	// datetime = DirectFunctionCall1(timestamp_datetime,timestamp);
-		// }
-		// else if(argtypeoid == 1082)    //arg is of type date
-		// {
-		// 	date_arg = PG_GETARG_DATEADT(1);
-		// 	timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
-		// 	// datetime = DirectFunctionCall1(timestamp_datetime,timestamp);
-		// 	// timestamp = timestamptz_to_time_t(timestamptz);
-		// }
-		// // else // if datetime with offset
-		// // {
-		// // 	getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-		// // 	argStr = OidOutputFunctionCall(outputfunc, arg);
-		// // 	// argText = cstring_to_text(argStr);
-
-		// // 	datetime = PG_GETARG_DATETIMEOFFSET(datetime_in_str(argStr));
-			
-		// // 	timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * SECS_PER_MINUTE * USECS_PER_SEC;
-		// // }
-		
-		// if(strcasecmp(field , "tsql_week") == 0)
-		// {
-		// 	temp = custom_date_part("year", timestamp);
-		// 	first_day = DirectFunctionCall3(make_date,temp ,1 ,1);
-		// 	first_week_end = 8 - (datepart_internal(("dow") ,first_day ,df_tz));
-		// 	day = custom_date_part("doy", timestamp);
-		// 	if(day <= first_week_end)
-		// 	{
-		// 		result = -1;
-		// 	}
-		// 	else
-		// 	{
-		// 		result = 2 + (day - first_week_end - 1) / 7;
-		// 	}
-		// }
-		// else 
 		if(strcasecmp(field , "millisecond") == 0)
 		{
 			int datePartValue = custom_date_part(field, timestamp);
@@ -646,74 +522,36 @@ Datum
 datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
 	Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
-	// Datum		arg = PG_GETARG_DATUM(1);
-	// int			tsql_datefirst = (int)pltsql_datefirst;
-	// int			result, first_day, temp, first_week_end, day;
-	// DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
 	tsql_datetimeoffset	*datetime;
 
-	// PG_TRY();
-
-	
-
-	// convert anyelement into datetime, keep eveything in datetime
-	// make use of datetime_in_str
-	// {
-		// else // if datetime with offset
-		// {
-			// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-			// argStr = OidOutputFunctionCall(outputfunc, arg);
-			// argText = cstring_to_text(argStr);
-
-			datetime = PG_GETARG_DATETIMEOFFSET(1);
+	datetime = PG_GETARG_DATETIMEOFFSET(1);
 			
-			timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
+	timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
 
-			if (!IS_VALID_DATETIME2(timestamp))
-			{
-				ereport(ERROR,
+	if (!IS_VALID_DATETIME2(timestamp))
+	{
+		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for datetime2")));
-			}
+	}
 
-			if(df_tz && (strcasecmp(field , "week") == 0 || strcasecmp(field , "dow") == 0 || strcasecmp(field , "tsql_week") == 0) )
-			{
-				PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz) + 1);
-			}
-		// }
-
-		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+	if(df_tz && (strcasecmp(field , "week") == 0 || strcasecmp(field , "dow") == 0 || strcasecmp(field , "tsql_week") == 0) )
+	{
+		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz) + 1);
+	}
+	
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
 Datum
 datepart_internal_date(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
 	Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
-	// Datum		arg = PG_GETARG_DATUM(1);
-	// int			tsql_datefirst = (int)pltsql_datefirst;
-	// int			result, first_day, temp, first_week_end, day;
 	DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
-	// tsql_datetimeoffset	*datetime;
-
-	// PG_TRY();
-
 	date_arg = PG_GETARG_DATEADT(1);
 	timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
 
@@ -724,26 +562,9 @@ Datum
 datepart_internal_datetime(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
 	Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
-	// Datum		arg = PG_GETARG_DATUM(1);
-	// int			tsql_datefirst = (int)pltsql_datefirst;
-	// int			result, first_day, temp, first_week_end, day;
-	// DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
-	// tsql_datetimeoffset	*datetime;
-
-	// PG_TRY();
-
-	// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-	// argStr = OidOutputFunctionCall(outputfunc, arg);
-
+	
 	timestamp = PG_GETARG_TIMESTAMPTZ(1);
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
@@ -754,86 +575,27 @@ Datum
 datepart_internal_numeric(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
 	int64		num = PG_GETARG_INT64(1);
-	// int			df_tz = PG_GETARG_INT32(2);
-	// Datum		arg = PG_GETARG_DATUM(1);
-	// int			tsql_datefirst = (int)pltsql_datefirst;
-	int			result;//, first_day, temp, first_week_end, day;
-	// DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
-	// tsql_datetimeoffset	*datetime;
-		if(strcasecmp(field , "year") == 0)
-		{
-			if(num>365)
-			result = 1900 + num/365;
-			else
-			result = 1900;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			if(num>91)
-			result = num/91;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			if(num>=31)
-			result = num/31 + 1;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			while(num<0)
-			{
-				num = num +31;
-			}
-			result = num%30 + 1;
-		}
-		else if(strcasecmp(field , "doy") == 0)
-		result = num;
-		else if(strcasecmp(field , "tsql_week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
-		else if(strcasecmp(field , "dow") == 0)
-			result = num%7 +2 ;
-		
-		else
-		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
-		}
+	int			result;
 
-	// PG_TRY();
-
-	// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-	// argStr = OidOutputFunctionCall(outputfunc, arg);
-
-	// timestamp = PG_GETARG_TIMESTAMPTZ(1);
-
+	result = datepart_internal_datatypes(field, num);
 
 	PG_RETURN_INT32(result);
+}
+
+Datum
+datepart_internal_money(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+	int			result;
+
+	result = datepart_internal_datatypes(field, num/10000);
+
+	if(num >= 0)
+	PG_RETURN_INT32(result);
+	else
+	PG_RETURN_INT32(result-1);
 }
 
 
@@ -842,65 +604,10 @@ datepart_internal_double(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	double		arg = PG_GETARG_FLOAT8(1);
-	int			result;//, first_day, temp, first_week_end, day;
+	int			result;
 	int			num = (int)ceil(arg);
-		if(strcasecmp(field , "year") == 0)
-		{
-			if(num>365)
-			result = 1900 + num/365;
-			else
-			result = 1900;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			if(num>91)
-			result = num/91;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			if(num>=31)
-			result = num/31 + 1;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			while(num<0)
-			{
-				num = num +31;
-			}
-			result = num%30 + 1;
-		}
-		else if(strcasecmp(field , "doy") == 0)
-		result = num;
-		else if(strcasecmp(field , "tsql_week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
-		else if(strcasecmp(field , "dow") == 0)
-			result = num%7 +2 ;
-		
-		else
-		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
-		}
+	
+	result = datepart_internal_datatypes(field, num);
 
 	PG_RETURN_INT32(result - 1);
 }
@@ -910,68 +617,12 @@ datepart_internal_decimal(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		arg = PG_GETARG_NUMERIC(1);
-	int			result, num;//, first_day, temp, first_week_end, day;
+	int			result, num;
 	int		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
 	
 	num = (int)ceil(argument);
 
-		if(strcasecmp(field , "year") == 0)
-		{
-			if(num>365)
-			result = 1900 + num/365;
-			else
-			result = 1900;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			if(num>91)
-			result = num/91;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			if(num>=31)
-			result = num/31 + 1;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			while(num<0)
-			{
-				num = num +31;
-			}
-			result = num%30 + 1;
-		}
-		else if(strcasecmp(field , "doy") == 0)
-		result = num;
-		else if(strcasecmp(field , "tsql_week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
-		else if(strcasecmp(field , "dow") == 0)
-			result = num%7 +2 ;
-		
-		else
-		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
-		}
+	result = datepart_internal_datatypes(field, num);
 
 	PG_RETURN_INT32(result);
 }
@@ -981,7 +632,7 @@ datepart_internal_num(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		arg = PG_GETARG_NUMERIC(1);
-	int			result, num;//, first_day, temp, first_week_end, day;
+	int			result, num;
 	int		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
 	
 	if(argument >= 0)
@@ -993,64 +644,7 @@ datepart_internal_num(PG_FUNCTION_ARGS)
 		num = (int)ceil(argument);
 	}
 
-		if(strcasecmp(field , "year") == 0)
-		{
-			if(num>365)
-			result = 1900 + num/365;
-			else
-			result = 1900;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			if(num>91)
-			result = num/91;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			if(num>=31)
-			result = num/31 + 1;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			while(num<0)
-			{
-				num = num +31;
-			}
-			result = num%30 + 1;
-		}
-		else if(strcasecmp(field , "doy") == 0)
-		result = num;
-		else if(strcasecmp(field , "tsql_week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
-		else if(strcasecmp(field , "dow") == 0)
-			result = num%7 +2 ;
-		
-		else
-		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
-		}
-
+	result = datepart_internal_datatypes(field, num);
 	PG_RETURN_INT32(result);
 }
 
@@ -1059,10 +653,8 @@ datepart_internal_float(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	float8		arg = PG_GETARG_FLOAT8(1);
-	// float4		arg = PG_GETARG_FLOAT4(1);
 	int			result;
-	int 		num;//, first_day, temp, first_week_end, day;
-	// float4		argument = DatumGetInt64(DirectFunctionCall1(numeric_float4, NumericGetDatum(arg)));
+	int 		num;
 	
 	if(arg >= 0)
 	{
@@ -1073,63 +665,7 @@ datepart_internal_float(PG_FUNCTION_ARGS)
 		num = (int)ceil(arg) - 1;
 	}
 
-		if(strcasecmp(field , "year") == 0)
-		{
-			if(num>365)
-			result = 1900 + num/365;
-			else
-			result = 1900;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			if(num>91)
-			result = num/91;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			if(num>=31)
-			result = num/31 + 1;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			while(num<0)
-			{
-				num = num +31;
-			}
-			result = num%30 + 1;
-		}
-		else if(strcasecmp(field , "doy") == 0)
-		result = num;
-		else if(strcasecmp(field , "tsql_week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
-		else if(strcasecmp(field , "dow") == 0)
-			result = num%7 +2 ;
-		
-		else
-		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
-		}
+	result = datepart_internal_datatypes(field, num);
 
 	PG_RETURN_INT32(result);
 }
@@ -1138,11 +674,9 @@ Datum
 datepart_internal_real(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// float8		arg = PG_GETARG_FLOAT8(1);
 	float4		arg = PG_GETARG_FLOAT4(1);
 	int			result;
-	int 		num;//, first_day, temp, first_week_end, day;
-	// float4		argument = DatumGetInt64(DirectFunctionCall1(numeric_float4, NumericGetDatum(arg)));
+	int 		num;
 	
 	if(arg >= 0)
 	{
@@ -1153,68 +687,76 @@ datepart_internal_real(PG_FUNCTION_ARGS)
 		num = (int)ceil(arg) - 1;
 	}
 
-		if(strcasecmp(field , "year") == 0)
-		{
-			if(num>365)
-			result = 1900 + num/365;
-			else
-			result = 1900;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			if(num>91)
-			result = num/91;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			if(num>=31)
-			result = num/31 + 1;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			while(num<0)
-			{
-				num = num +31;
-			}
-			result = num%30 + 1;
-		}
-		else if(strcasecmp(field , "doy") == 0)
-		result = num;
-		else if(strcasecmp(field , "tsql_week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "week") == 0)
-		{
-			if(num>=6)
-			result = num/6 +1 ;
-			else
-			result = 1;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
-		else if(strcasecmp(field , "dow") == 0)
-			result = num%7 +2 ;
-		
-		else
-		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
-		}
+	result = datepart_internal_datatypes(field, num);
 
 	PG_RETURN_INT32(result);
 }
 
+int
+datepart_internal_datatypes(char *field, int num)
+{
+	int	result;
 
+	if(strcasecmp(field , "year") == 0)
+	{
+		if(num>365)
+		result = 1900 + num/365;
+		else
+		result = 1900;
+	}
+	else if(strcasecmp(field , "quarter") == 0)
+	{
+		if(num>91)
+		result = num/91;
+		else
+		result = 1;
+	}
+	else if(strcasecmp(field , "month") == 0)
+	{
+		if(num>=31)
+		result = num/31 + 1;
+		else
+		result = 1;
+	}
+	else if(strcasecmp(field , "day") == 0)
+	{
+		while(num<0)
+		{
+			num = num +31;
+		}
+		result = num%30 + 1;
+	}
+	else if(strcasecmp(field , "doy") == 0)
+	result = num;
+	else if(strcasecmp(field , "tsql_week") == 0)
+	{
+		if(num>=6)
+		result = num/6 +1 ;
+		else
+		result = 1;
+	}
+	else if(strcasecmp(field , "week") == 0)
+	{
+		if(num>=6)
+		result = num/6 +1 ;
+		else
+		result = 1;
+	}
+	else if(strcasecmp(field , "tzoffset") == 0)
+	result = 0;
+	else if(strcasecmp(field , "dow") == 0)
+		result = num%7 +2 ;
+		
+	else
+	{
+	ereport(ERROR,
+		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		errmsg("'%s' is not a recognized datepart option", field)));
+	result = -1;
+	}
+
+	return result;
+}
 
 
 Datum
@@ -1224,112 +766,46 @@ datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
 
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
-	// Datum		arg = PG_GETARG_DATUM(1);
-	// int			tsql_datefirst = (int)pltsql_datefirst;
-	// int			result, first_day, temp, first_week_end, day;
-	// DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
-	// tsql_datetimeoffset	*datetime;
-
-	// datetime = PG_GETARG_DATETIMEOFFSET(DirectFunctionCall1(smalldatetime_datetimeoffset , PG_GETARG_DATUM(1) ));
-
-	// timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
 
 	timestamp = PG_GETARG_TIMESTAMP(1);
 
-			if (!IS_VALID_DATETIME2(timestamp))
-			{
-				ereport(ERROR,
+	if (!IS_VALID_DATETIME2(timestamp))
+	{
+		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for datetime2")));
-			}
+	}
 
-	// PG_TRY();
 
-	// convert anyelement into datetime, keep eveything in datetime
-	// make use of datetime_in_str
-	// {
-		// else // if datetime with offset
-		// {
-			// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-			// argStr = OidOutputFunctionCall(outputfunc, arg);
-			// argText = cstring_to_text(argStr);
-
-		// 	datetime = PG_GETARG_DATETIMEOFFSET(1);
-			
-		// 	timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * SECS_PER_MINUTE * USECS_PER_SEC;
-		// // }
-
-		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
 Datum
 datepart_internal_time(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
 	Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
-	// time_t	time;
-	// Datum		arg = PG_GETARG_DATUM(1);
-	// int			tsql_datefirst = (int)pltsql_datefirst;
-	// int			result, first_day, temp, first_week_end, day;
-	// DateADT		date_arg;
-	// Oid			outputfunc;
-	// bool		flag;
-	// char		*argStr;
-	// text		*argText;
-	// tsql_datetimeoffset	*datetime;
 
-	// PG_TRY();
+	if (PG_ARGISNULL(1))
+	{
+		PG_RETURN_NULL();
+	}
 
-	// convert anyelement into datetime, keep eveything in datetime
-	// make use of datetime_in_str
-	// {
-		// else // if datetime with offset
-		// {
-			// getTypeOutputInfo(argtypeoid, &outputfunc, &flag);
-
-			// argStr = OidOutputFunctionCall(outputfunc, arg);
-			// argText = cstring_to_text(argStr);
-
-			// datetime = PG_GETARG_DATETIMEOFFSET(1);
-			
-			// timestamp = datetime->tsql_ts + (int64) datetime->tsql_tz * 60 * 1000000L;
-		// }
-		if (PG_ARGISNULL(1))
-		{
-			PG_RETURN_NULL();
-		}
-
-		// time = PG_GETARG_TIME(0);
-		// timestamp = DirectFunctionCall2(timestamp, TimeADTGetTimeADT(time), PG_GETARG_DATUM(1));
-
-		timestamp  = PG_GETARG_TIMESTAMP(1);
+	timestamp  = PG_GETARG_TIMESTAMP(1);
 
 
-		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
 Datum
 datepart_internal_interval(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	// TimestampTz	timestamptz = 0;
-	// Timestamp	timestamp;
-	// Oid			argtypeoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	int			df_tz = PG_GETARG_INT32(2);
 	int			result;
-	// struct		tm input_tm;
 
 	Interval*	interval = PG_GETARG_INTERVAL_P(1);
-	// Timestamp	result;
-
 
 	int64	interval_time = interval->time + (int64) df_tz * 60 * 1000000L;
 
@@ -1338,7 +814,6 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	interval_days = interval->day;
 	interval_month = interval->month;
 
-	// memset(&input_tm, 0, sizeof(struct tm));
 	year = interval_month/12;
 	month = interval_month%12;
 	days = interval_days;
@@ -1415,8 +890,6 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	PG_END_TRY();
 	PG_RETURN_INT32(result);
 
-
-	
 }
 
 
