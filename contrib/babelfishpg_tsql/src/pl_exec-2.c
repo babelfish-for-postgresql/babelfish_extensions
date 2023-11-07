@@ -52,8 +52,7 @@ static int	exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
-static int	exec_stmt_createfulltextindex(PLtsql_execstate *estate, PLtsql_stmt_createfulltextindex *stmt);
-static int	exec_stmt_dropfulltextindex(PLtsql_execstate *estate, PLtsql_stmt_dropfulltextindex *stmt);
+static int  exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -61,7 +60,7 @@ extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char *dynstmt);
 static char *next_word(char *dyntext);
-static const char *gen_schema_name_for_fulltext_index(char *schema_name);
+static const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 static bool is_next_temptbl(char *dyntext);
 static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
@@ -3662,7 +3661,7 @@ get_insert_bulk_kilobytes_per_batch()
 }
 
 static const char 
-*gen_schema_name_for_fulltext_index(char *schema_name)
+*gen_schema_name_for_fulltext_index(const char *schema_name)
 {
 	char *dbname = get_cur_db_name();
 	if (strlen(schema_name) == 0)
@@ -3832,103 +3831,70 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 }
 
 static int
-exec_stmt_createfulltextindex(PLtsql_execstate *estate, PLtsql_stmt_createfulltextindex *stmt)
+exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt)
 {
 	char        *table_name;
 	char		*index_name;
-	bool		index_exists = true;
 	char		*query_str;
-	const char		*schema_name;
+	char		*old_index_name;	// existing fulltext index name
+	const char	*schema_name;
 	Oid 		schemaOid;
 	Oid			relid;
 	List		*column_name;
+	bool		is_create;
 
 	schema_name = gen_schema_name_for_fulltext_index((char *)stmt->schema_name);
 	schemaOid = LookupExplicitNamespace(schema_name, true);						
 	table_name = stmt->table_name;
-	column_name = stmt->column_name;
-	index_name = stmt->index_name;
+	is_create = stmt->is_create;
+
+	if (schema_name == NULL || strlen(schema_name) == 0 || *schema_name == '\0')
+		ereport(ERROR,
+			(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("schema of table \"%s\" is null",
+					table_name)));
 
 	// check if schema exists
 	if (!OidIsValid(schemaOid))
-			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					errmsg("schema \"%s\" does not exist",
-						stmt->schema_name)));
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				errmsg("schema \"%s\" does not exist",
+					stmt->schema_name)));
 
 	relid = get_relname_relid((const char *) table_name, schemaOid);
 
 	// check if table exists
 	if (!OidIsValid(relid))
-			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-					errmsg("relation \"%s\" does not exist",
-						table_name)));
-
-	// check if fulltext index already exists in the table
-	if (!get_index_name(relid))
-		index_exists = false;
-
-	if (!index_exists)
-		query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, index_name);
-	else
 		ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("A full-text index for table or indexed view \"%s\" has already been created."
-					 , table_name))); 
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" does not exist",
+					table_name)));
 
-	/* The above query will be
-	 * executed using ProcessUtility()
-	 */
-	exec_utility_cmd_helper(query_str);
+	// Get the existing fulltext index name
+	old_index_name = get_fulltext_index_name(relid);
 
-	return PLTSQL_RC_OK;
-}
-
-static int	
-exec_stmt_dropfulltextindex(PLtsql_execstate *estate, PLtsql_stmt_dropfulltextindex *stmt)
-{
-	const char		*schema_name;
-	Oid 		schemaOid;
-	Oid			relid;
-	char		*index_name;
-	char		*table_name;
-	char		*query_str;
-	bool		index_exists = true;
-
-	table_name = stmt->table_name;
-	schema_name = gen_schema_name_for_fulltext_index((char *)stmt->schema_name);
-	schemaOid = LookupExplicitNamespace(schema_name, true);
-
-	// check if schema exists
-	if (!OidIsValid(schemaOid))
+	if (is_create)
+	{
+		column_name = stmt->column_name;
+		index_name = stmt->index_name;
+		if (old_index_name)
 			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					errmsg("schema \"%s\" does not exist",
-						stmt->schema_name)));
-
-	relid = get_relname_relid((const char *) table_name, schemaOid);
-
-	// check if table exists
-	if (!OidIsValid(relid))
-			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-					errmsg("relation \"%s\" does not exist",
-						table_name)));
-				
-	index_name = get_index_name(relid);
-
-	// check if fulltext index exists in the table
-	if (!index_name)
-		index_exists = false;
-
-	if (index_exists)						
-		query_str = gen_dropfulltextindex_cmds(index_name, schema_name);
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					errmsg("A full-text index \"%s\" for table or indexed view \"%s\" has already been created.",
+						old_index_name, table_name)));
+		else
+			query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, index_name);
+	}
 	else
-		ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("Table or indexed view \"%s\" does not have a full-text index or user does not have permission to perform this action."
-					 , table_name))); 
+	{
+		if (old_index_name)					
+			query_str = gen_dropfulltextindex_cmds(old_index_name, schema_name);
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Table or indexed view \"%s\" does not have a full-text index or user does not have permission to perform this action.",
+						table_name))); 
+	}
 
 	/* The above query will be
 	 * executed using ProcessUtility()

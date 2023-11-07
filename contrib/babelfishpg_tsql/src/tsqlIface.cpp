@@ -118,6 +118,7 @@ PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
 PLtsql_stmt* makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
+std::pair<std::string, std::string> getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char* repl, ParserRuleContext *baseCtx);
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
@@ -1824,7 +1825,7 @@ public:
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("ALTER CREATE FULLTEXT INDEX statement will be ignored.")));
+					 errmsg("ALTER FULLTEXT INDEX statement will be ignored.")));
 			nop = true;
 		}
 
@@ -6596,30 +6597,38 @@ post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsq
 	return false;
 }
 
-PLtsql_stmt*
-makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
+std::pair<std::string, std::string> 
+getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx)
 {
-	PLtsql_stmt_createfulltextindex *stmt = (PLtsql_stmt_createfulltextindex *) palloc0(sizeof(PLtsql_stmt_createfulltextindex));
-	stmt->cmd_type = PLTSQL_STMT_CREATEFULLTEXTINDEX;
+    std::string table_info = ::getFullText(ctx);
+    std::string table_name = "";
+    std::string schema_name = "";
+    size_t pos = table_info.find(".");
+    if (pos != std::string::npos) {
+        // Extract the schema name before the "."
+        schema_name = table_info.substr(0, pos);
+        // Extract the table name after the "."
+        table_name = table_info.substr(pos + 1);
+    } else {
+        // No "." character found, set first to the entire string
+        table_name = table_info;
+    }
+    return std::make_pair(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true),
+                           downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+}
+
+PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
+{
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
+	stmt->is_create = true;
 
 	if (ctx->table_name())
-	{
-		std::string table_info = ::getFullText(ctx->table_name());
-		std::string table_name = "";
-		std::string schema_name = "";
-		size_t pos = table_info.find(".");
-		if (pos != std::string::npos) {
-			// Extract the schema name before the "."
-			schema_name = table_info.substr(0, pos);
-			// Extract the table name after the "."
-			table_name = table_info.substr(pos + 1);
-		} else {
-			// No "." character found, set first to the entire string
-			table_name = table_info;
-		}
-		stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-		stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	{ 
+		auto table_info = getTableNameAndSchemaName(ctx->table_name());
+        stmt->table_name = pstrdup(table_info.first.c_str());
+        stmt->schema_name = pstrdup(table_info.second.c_str());
 	}
 	List *column_name_list = NIL;
     if (ctx->fulltext_index_column().size() > 0)
@@ -6668,29 +6677,17 @@ makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
     return (PLtsql_stmt *) stmt;
 }
 
-PLtsql_stmt*
-makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
+PLtsql_stmt* makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
-	PLtsql_stmt_dropfulltextindex *stmt = (PLtsql_stmt_dropfulltextindex *) palloc0(sizeof(PLtsql_stmt_dropfulltextindex));
-	stmt->cmd_type = PLTSQL_STMT_DROPFULLTEXTINDEX;
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
+	stmt->is_create = false;
 	if (ctx->table_name())
 	{
-		std::string table_info = ::getFullText(ctx->table_name());
-		std::string table_name = "";
-		std::string schema_name = "";
-		size_t pos = table_info.find(".");
-		if (pos != std::string::npos) {
-			// Extract the schema name before the "."
-			schema_name = table_info.substr(0, pos);
-			// Extract the table name after the "."
-			table_name = table_info.substr(pos + 1);
-		} else {
-			// No "." character found, set first to the entire string
-			table_name = table_info;
-		}
-		stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-		stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		auto table_info = getTableNameAndSchemaName(ctx->table_name());
+        stmt->table_name = pstrdup(table_info.first.c_str());
+        stmt->schema_name = pstrdup(table_info.second.c_str());
 	}
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 	return (PLtsql_stmt *) stmt;

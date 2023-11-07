@@ -109,8 +109,7 @@ stmt_walker(PLtsql_stmt *stmt, WalkerFunc walker, void *context)
 		case PLTSQL_STMT_GRANTDB:
 		case PLTSQL_STMT_CHANGE_DBOWNER:
 		case PLTSQL_STMT_GRANTSCHEMA:
-		case PLTSQL_STMT_CREATEFULLTEXTINDEX:
-		case PLTSQL_STMT_DROPFULLTEXTINDEX:
+		case PLTSQL_STMT_FULLTEXTINDEX:
 		case PLTSQL_STMT_DBCC:
 			break;
 			/* TSQL-only executable node */
@@ -213,8 +212,7 @@ general_walker_func(PLtsql_stmt *stmt, void *context)
 				DISPATCH(CHANGE_DBOWNER, change_dbowner)
 				DISPATCH(DBCC, dbcc)
 				DISPATCH(GRANTSCHEMA, grantschema)
-				DISPATCH(CREATEFULLTEXTINDEX, createfulltextindex)
-				DISPATCH(DROPFULLTEXTINDEX, dropfulltextindex)
+				DISPATCH(FULLTEXTINDEX, fulltextindex)
 
 			/* TSQL-only executable node */
 				DISPATCH(SAVE_CTX, save_ctx)

@@ -818,23 +818,14 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			}
 			exec_stmt_grantschema(estate, (PLtsql_stmt_grantschema *) stmt);
 			break;
-		case PLTSQL_STMT_CREATEFULLTEXTINDEX:
+		case PLTSQL_STMT_FULLTEXTINDEX:
 			if (pltsql_explain_only)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Showing Estimated Execution Plan for CREATE FULLTEXT INDEX statment is not yet supported")));
+						 errmsg("Showing Estimated Execution Plan for FULLTEXT INDEX statment is not yet supported")));
 			}
-			exec_stmt_createfulltextindex(estate, (PLtsql_stmt_createfulltextindex *) stmt);
-			break;
-		case PLTSQL_STMT_DROPFULLTEXTINDEX:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Showing Estimated Execution Plan for DROP FULLTEXT INDEX statment is not yet supported")));
-			}
-			exec_stmt_dropfulltextindex(estate, (PLtsql_stmt_dropfulltextindex *) stmt);
+			exec_stmt_fulltextindex(estate, (PLtsql_stmt_fulltextindex *) stmt);
 			break;
 		case PLTSQL_STMT_INSERT_BULK:
 			if (pltsql_explain_only)

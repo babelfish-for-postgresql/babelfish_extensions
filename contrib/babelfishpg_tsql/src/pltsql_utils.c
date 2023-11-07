@@ -1793,11 +1793,11 @@ List
 }
 
 /*
- * get_index_name
- *		Get the index name of a relation specified by OID
+ * get_fulltext_index_name
+ *		Get the fulltext index name of a relation specified by OID
  */
 char
-*get_index_name(Oid relid)
+*get_fulltext_index_name(Oid relid)
 {
 	Relation		relation;
 	List			*indexoidlist;
@@ -1863,6 +1863,11 @@ char
 	 * DROP INDEX <index_name>
 	 *
 	 */
-	appendStringInfo(&query, "DROP INDEX \"%s\".\"%s\"", schema_name, index_name);
+	appendStringInfo(&query, "DROP INDEX ");
+
+	if (schema_name == NULL || strlen(schema_name) == 0 || *schema_name == '\0')
+		appendStringInfo(&query, "\"%s\"", index_name);
+	else
+		appendStringInfo(&query, "\"%s\".\"%s\"", schema_name, index_name);
 	return query.data;
 }

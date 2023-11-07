@@ -195,8 +195,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_GRANTSCHEMA,
-	PLTSQL_STMT_CREATEFULLTEXTINDEX,
-	PLTSQL_STMT_DROPFULLTEXTINDEX,
+	PLTSQL_STMT_FULLTEXTINDEX,
 } PLtsql_stmt_type;
 
 /*
@@ -1065,29 +1064,18 @@ typedef struct PLtsql_stmt_grantschema
 } PLtsql_stmt_grantschema;
 
 /*
- *	Create Fulltext Index stmt
+ *	Fulltext Index stmt
  */
-typedef struct PLtsql_stmt_createfulltextindex
+typedef struct PLtsql_stmt_fulltextindex
 {
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	char        *table_name;   /* table name */
 	List		*column_name;  /* column name */
 	char		*index_name;   /* index name */
-	char		*schema_name;	/* schema name */
-} PLtsql_stmt_createfulltextindex;
-
-
-/*
- *	Drop Fulltext Index stmt
- */
-typedef struct PLtsql_stmt_dropfulltextindex
-{
-	PLtsql_stmt_type cmd_type;
-	int			lineno;
-	char        *table_name;   /* table name */
-	char		*schema_name;	/* schema name */
-} PLtsql_stmt_dropfulltextindex;
+	char		*schema_name;  /* schema name */
+	bool		is_create;     /* flag for create index */		
+} PLtsql_stmt_fulltextindex;
 
 /*
  * ASSERT statement
@@ -2061,7 +2049,7 @@ extern int	pltsql_yyparse(void);
 extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
-extern char *get_index_name(Oid relid);
+extern char *get_fulltext_index_name(Oid relid);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);

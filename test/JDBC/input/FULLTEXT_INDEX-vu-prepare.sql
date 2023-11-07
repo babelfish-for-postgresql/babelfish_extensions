@@ -15,6 +15,10 @@ GO
 CREATE TABLE fti_table_t1(a text);
 GO
 
+-- should throw syntax error for NULL index name
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX NULL;
+GO
+
 CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX IX_t1_a;
 GO
 
@@ -56,10 +60,10 @@ CREATE FULLTEXT INDEX ON fti_table_t7(a1, b1, c1) KEY INDEX IX_t7_a1b1c1;
 GO
 
 -- checking if the indexes are created correctly
-CREATE VIEW fti_prepare_v1 AS (SELECT * FROM pg_indexes WHERE tablename='fti_table_t1');
+CREATE VIEW fti_prepare_v1 AS (SELECT indexname FROM pg_indexes WHERE tablename='fti_table_t1');
 GO
 
-CREATE PROCEDURE fti_prepare_p1 AS (SELECT * FROM pg_indexes WHERE tablename='fti_table_t2');
+CREATE PROCEDURE fti_prepare_p1 AS (SELECT indexname FROM pg_indexes WHERE tablename='fti_table_t2');
 GO
 
 CREATE FUNCTION fti_prepare_f1()

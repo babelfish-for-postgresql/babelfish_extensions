@@ -22,16 +22,16 @@ GO
 SELECT * FROM fti_prepare_v1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-dbo#!#fti_table_t1#!#ix_t1_a#!#<NULL>#!#CREATE INDEX ix_t1_a ON dbo.fti_table_t1 USING gin (to_tsvector('fts_contains_simple'::regconfig, a))
+varchar
+ix_t1_a
 ~~END~~
 
 
 EXEC fti_prepare_p1;
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-dbo#!#fti_table_t2#!#ix_t2_b#!#<NULL>#!#CREATE INDEX ix_t2_b ON dbo.fti_table_t2 USING gin (to_tsvector('fts_contains_simple'::regconfig, (b)::text))
+varchar
+ix_t2_b
 ~~END~~
 
 
@@ -43,44 +43,44 @@ ix_t3_c
 ~~END~~
 
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t4';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t4';
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-dbo#!#fti_table_t4#!#ix_t4_d#!#<NULL>#!#CREATE INDEX ix_t4_d ON dbo.fti_table_t4 USING gin (to_tsvector('fts_contains_simple'::regconfig, (d)::text))
+varchar#!#varchar
+fti_table_t4#!#ix_t4_d
 ~~END~~
 
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t5';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t5';
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-dbo#!#fti_table_t5#!#ix_t5_e#!#<NULL>#!#CREATE INDEX ix_t5_e ON dbo.fti_table_t5 USING gin (to_tsvector('fts_contains_simple'::regconfig, (e)::text))
+varchar#!#varchar
+fti_table_t5#!#ix_t5_e
 ~~END~~
 
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t6';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t6';
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-dbo#!#fti_table_t6#!#ix_t6_f#!#<NULL>#!#CREATE INDEX ix_t6_f ON dbo.fti_table_t6 USING gin (to_tsvector('fts_contains_simple'::regconfig, (f)::text))
+varchar#!#varchar
+fti_table_t6#!#ix_t6_f
 ~~END~~
 
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t7';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t7';
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-dbo#!#fti_table_t7#!#ix_t7_a1b1c1#!#<NULL>#!#CREATE INDEX ix_t7_a1b1c1 ON dbo.fti_table_t7 USING gin (to_tsvector('fts_contains_simple'::regconfig, a1), to_tsvector('fts_contains_simple'::regconfig, (b1)::text), to_tsvector('fts_contains_simple'::regconfig, (c1)::text))
+varchar#!#varchar
+fti_table_t7#!#ix_t7_a1b1c1
 ~~END~~
 
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t8';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t8';
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#text
-fti_schema_s1#!#fti_table_t8#!#ix_s1_t8_a#!#<NULL>#!#CREATE INDEX ix_s1_t8_a ON fti_schema_s1.fti_table_t8 USING gin (to_tsvector('fts_contains_simple'::regconfig, a))
-fti_schema_s2#!#fti_table_t8#!#ix_s2_t8_a#!#<NULL>#!#CREATE INDEX ix_s2_t8_a ON fti_schema_s2.fti_table_t8 USING gin (to_tsvector('fts_contains_simple'::regconfig, a))
+varchar#!#varchar
+fti_table_t8#!#ix_s1_t8_a
+fti_table_t8#!#ix_s2_t8_a
 ~~END~~
 
 
@@ -89,7 +89,7 @@ CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(b) KEY INDEX IX_s1_t8_b;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: A full-text index for table or indexed view "fti_table_t8" has already been created.)~~
+~~ERROR (Message: A full-text index "ix_s1_t8_a" for table or indexed view "fti_table_t8" has already been created.)~~
 
 
 -- Creating index in a non existent table of a schema, should throw error

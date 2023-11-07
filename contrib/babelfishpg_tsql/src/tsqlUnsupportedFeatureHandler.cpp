@@ -1057,38 +1057,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		if (create_user->WITHOUT())
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
 	}
-	if(ctx->create_fulltext_index())
-	{
-		auto create_fulltext_index = ctx->create_fulltext_index();
-		if (create_fulltext_index->fulltext_index_column().size() > 0) {
-			for (auto column : create_fulltext_index->fulltext_index_column()) {
-				if (column->TYPE() && column->COLUMN())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX (TYPE COLUMN)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-				else if (column->LANGUAGE())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX (LANGUAGE)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-				else if (column->STATISTICAL_SEMANTICS())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX (STATISTICAL_SEMANTICS)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-			}
-		}
-		if (create_fulltext_index->catalog_filegroup_option()) {
-			auto catalog_filegroup_option = create_fulltext_index->catalog_filegroup_option();
-			if (catalog_filegroup_option->FILEGROUP() || catalog_filegroup_option->catalog_name || catalog_filegroup_option->filegroup_name) {
-				handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX ON FILEGROUP", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-			}
-		}
-		if (create_fulltext_index->fulltext_with_option().size() > 0) {
-			for (auto option : create_fulltext_index->fulltext_with_option()) {
-				if (option->CHANGE_TRACKING())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX WITH (CHANGE_TRACKING)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-				else if (option->POPULATION())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX WITH (POPULATION)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-				else if (option->STOPLIST())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX WITH (STOPLIST)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-				else if (option->SEARCH())
-					handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE FULLTEXT INDEX WITH (SEARCH PROPERTY LIST)", &st_escape_hatch_fulltext, getLineAndPos(ctx));
-			}
-		}
-	}
 	/*
 	 * We have more than 100 DDLs but support a few of them.
 	 * manage the whitelist here.

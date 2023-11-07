@@ -18,19 +18,19 @@ GO
 SELECT fti_prepare_f1();
 GO
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t4';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t4';
 GO
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t5';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t5';
 GO
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t6';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t6';
 GO
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t7';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t7';
 GO
 
-SELECT * FROM pg_indexes WHERE tablename='fti_table_t8';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t8';
 GO
 
 -- Creating more than 1 fulltext index in a table, should throw error
