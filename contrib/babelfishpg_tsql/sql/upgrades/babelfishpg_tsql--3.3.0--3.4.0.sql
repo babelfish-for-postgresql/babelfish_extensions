@@ -531,6 +531,16 @@ $$
 LANGUAGE plpgsql IMMUTABLE
 STRICT;
 
+CREATE OR REPLACE FUNCTION SYS.TYPE_NAME(IN type_id INT)
+RETURNS SYS.NVARCHAR(128) AS
+'babelfishpg_tsql', 'type_name'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN type_name SYS.NVARCHAR)
+RETURNS INT AS
+'babelfishpg_tsql', 'type_id'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
                                                                IN tz_offset PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset

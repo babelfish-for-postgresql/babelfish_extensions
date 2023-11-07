@@ -191,6 +191,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
 		common_utility_plugin_var.tinyint2sqlvariant = &tinyint2sqlvariant;
 		common_utility_plugin_var.translate_pg_type_to_tsql = &translate_pg_type_to_tsql;
+		common_utility_plugin_var.get_tsql_datatype_oid = &get_tsql_datatype_oid;
 		common_utility_plugin_var.TdsGetPGbaseType = &TdsGetPGbaseType;
 		common_utility_plugin_var.TdsSetMetaData = &TdsSetMetaData;
 		common_utility_plugin_var.TdsPGbaseType = &TdsPGbaseType;
