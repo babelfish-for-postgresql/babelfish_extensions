@@ -15,7 +15,7 @@ ignore
 ~~END~~
 
 
-USE fti_test_db;
+USE master;
 GO
 
 -- Fetching index details to check if index is created correctly

@@ -5,7 +5,7 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-USE fti_test_db;
+USE master;
 GO
 
 DROP FULLTEXT INDEX ON fti_table_t1;
@@ -76,12 +76,6 @@ DROP TABLE IF EXISTS fti_table_no_ix;
 GO
 
 DROP TABLE IF EXISTS fti_table_unsupported;
-GO
-
-USE master;
-GO
-
-DROP DATABASE IF EXISTS fti_test_db;
 GO
 
 DROP VIEW IF EXISTS fti_prepare_v1;

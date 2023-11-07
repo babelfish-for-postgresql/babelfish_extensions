@@ -5,10 +5,7 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-CREATE DATABASE fti_test_db;
-GO
-
-USE fti_test_db;
+USE master;
 GO
 
 -- Index creation on different character data type columns

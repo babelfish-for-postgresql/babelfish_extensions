@@ -5,7 +5,7 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-USE fti_test_db;
+USE master;
 GO
 
 -- Fetching index details to check if index is created correctly
