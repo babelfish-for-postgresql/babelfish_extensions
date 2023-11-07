@@ -54,6 +54,11 @@ ignore#!#BABEL-4261
 ignore#!#babel_collection
 ignore#!#binary-index-vu-verify
 ignore#!#pgr_select_into
+<<<<<<< Updated upstream
+=======
+ignore#!#cast_eliminate-vu-verify
+ignore#!#BABEL-4312
+>>>>>>> Stashed changes
 
 # Other or mixed issues
 ignore#!#545_1
