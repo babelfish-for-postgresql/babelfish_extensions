@@ -252,17 +252,16 @@ Result
 
 
 -- Reset
-SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-go
-~~START~~
-text
-Query Text: SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-Result
-~~END~~
-
 SET babelfish_showplan_all OFF
 go
 SELECT set_config('enable_seqscan', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 go
 ~~START~~
 text
