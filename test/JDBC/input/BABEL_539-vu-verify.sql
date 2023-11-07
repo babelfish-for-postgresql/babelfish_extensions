@@ -120,16 +120,73 @@ GO
 DROP TABLE IF EXISTS #babel_539NewTable1;
 GO
 
+SELECT col1, IDENTITY(int, 1, 1) AS id_num, name INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1 DESC;
+GO
+
+SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT DISTINCT IDENTITY(int, 1, 1) AS id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1;
+GO
+
+SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT DISTINCT name, col1, IDENTITY(int, 1, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY name;
+GO
+
+SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY name; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT TOP 2 col1, name, IDENTITY(int, 1, 1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1;
+GO
+
+SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+SELECT TOP 2 IDENTITY(int, 1, 1) AS id_num, col1 INTO #babel_539NewTable1 FROM babel_539OldTable ORDER BY col1, name;
+GO
+
+SELECT col1, name, id_num FROM #babel_539NewTable1 ORDER BY col1; 
+GO
+
+DROP TABLE IF EXISTS #babel_539NewTable1;
+GO
+
+-- Erros cases
 SELECT IDENTITY(int, -10, 1+1) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
 SELECT IDENTITY(int, 1, 1-2) id_num, col1, name INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-SELECT col1, IDENTITY(char, 1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
+-- Non numeric types
+SELECT col1, IDENTITY(char, 1,1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
-SELECT col1, IDENTITY(int, 1,1,1) AS id_num INTO babel_539NewTable1 FROM babel_539OldTable;
+--UDD
+CREATE type test_type_id FROM int;
+GO
+
+SELECT col1, IDENTITY(test_type_id, 1,1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
+GO
+
+DROP type test_type_id;
+GO
+
+SELECT col1, IDENTITY(int, 1,1,1) AS id_num INTO #babel_539NewTable1 FROM babel_539OldTable;
 GO
 
 DROP TABLE IF EXISTS #babel_539NewTable1;

@@ -145,7 +145,7 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -5624,7 +5624,7 @@ get_oid_type_string(int type_oid)
 			break;
 		default:
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
+				errmsg("A user-defined data type for an IDENTITY column is not currently supported")));
 			break;
 	}
 	return type_string;
@@ -5667,48 +5667,48 @@ get_identity_into_args(Node *node)
 }
 
 static List *
-transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
+transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
 	ListCell *elements;
 	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
-	List *modifiedTargetList;
+
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
 	altstmt = NULL;
-	modifiedTargetList = NIL;
 
 	if (n && n->type == T_Query)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
-		AttrNumber resno = 0;
+		AttrNumber current_resno = 0;
+		Index identity_ressortgroupref = 0;
+		List *modifiedTargetList = NIL;
+
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen("identity_into")) == 0)
 			{
 				FuncExpr *funcexpr;
 				List *seqoptions = NIL;
 				ListCell *arg;
 				int typeoid = 0;
-				char *type = NULL;
 
 				TypeName *typename = NULL;
-				int64 seedvalue = 0;
-				int64 incrementvalue = 0;
+				int64 seedvalue = 0, incrementvalue = 0;
 				int argnum;
 				AlterTableCmd *lcmd;
 				ColumnDef *def;
 				Constraint *constraint;
 
 				if (seen_identity)
-					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
 					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
@@ -5723,9 +5723,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
 					{
 					case 1:
 						typeoid = get_identity_into_args(farg_node);
-						type = get_oid_type_string(typeoid);
-						typename = typeStringToTypeName(type);
-						// seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						typename = typeStringToTypeName(get_oid_type_string(typeoid));
 						break;
 					case 2:
 						seedvalue = get_identity_into_args(farg_node);
@@ -5745,11 +5743,15 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
 						break;
 					}
 				}
-		
+
+				seen_identity = true;
+				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
+
+				/** Add alter table add identity node after Select Into statement */
 				altstmt = makeNode(AlterTableStmt);
-				altstmt->relation  = into->rel;
+				altstmt->relation = into->rel;
 				altstmt->cmds = NIL;
-		
+
 				constraint = makeNode(Constraint);
 				constraint->contype = CONSTR_IDENTITY;
 				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
@@ -5770,12 +5772,31 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
 			}
 			else
 			{
-				resno +=1;
-				tle->resno = resno;
-             	modifiedTargetList = lappend(modifiedTargetList, tle);
-            }
+				current_resno += 1;
+				tle->resno = current_resno;
+				modifiedTargetList = lappend(modifiedTargetList, tle);
+			}
 		}
 		q->targetList = modifiedTargetList;
+
+		if (seen_identity)
+		{
+			if (q->sortClause)
+			{
+				List *modifiedSortList = NIL;
+				ListCell *olitem;
+				foreach (olitem, q->sortClause)
+				{
+					SortGroupClause *sortcl = (SortGroupClause *)lfirst(olitem);
+					if (sortcl->tleSortGroupRef != identity_ressortgroupref)
+						modifiedSortList = lappend(modifiedSortList, sortcl);
+				}
+				q->sortClause = modifiedSortList;
+			}
+
+			if (q->distinctClause)
+				q->distinctClause = list_delete_nth_cell(q->distinctClause, identity_ressortgroupref - 1);
+		}
 	}
 
 	result = lappend(result, stmt);
@@ -5793,7 +5814,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, queryString);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);
