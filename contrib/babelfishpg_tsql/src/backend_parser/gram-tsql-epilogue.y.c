@@ -1782,3 +1782,42 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 
 	return (Node *)pivot_sl;
 }
+
+/* 
+ * Adjust index nulls order to match SQL Server behavior.
+ * For ASC (or unspecified) index, default should be NULLS FIRST;
+ * for DESC index, default should be NULLS LAST.
+ */
+static void 
+tsql_index_nulls_order(List *indexParams)
+{
+	ListCell *lc;
+
+	foreach(lc, indexParams)
+	{
+		Node *n = lfirst(lc);
+		IndexElem *indexElem;
+
+		if (!IsA(n, IndexElem))
+			continue;
+
+		indexElem = (IndexElem *) n;
+
+		/* No need to adjust if user already specified the nulls order */
+		if (indexElem->nulls_ordering != SORTBY_NULLS_DEFAULT)
+			continue;
+
+		switch (indexElem->ordering)
+		{
+			case SORTBY_ASC:
+			case SORTBY_DEFAULT:
+				indexElem->nulls_ordering = SORTBY_NULLS_FIRST;
+				break;
+			case SORTBY_DESC:
+				indexElem->nulls_ordering = SORTBY_NULLS_LAST;
+				break;
+			default:
+				break;
+		}
+	}
+}
