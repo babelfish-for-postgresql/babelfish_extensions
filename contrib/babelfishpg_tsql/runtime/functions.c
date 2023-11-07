@@ -1827,7 +1827,7 @@ type_id(PG_FUNCTION_ARGS)
     Oid        user_id = GetUserId();
     Oid        result = InvalidOid;
     int        i;
-	int        len;
+    int        len;
 
     if (PG_ARGISNULL(0))
         PG_RETURN_NULL();
@@ -1836,7 +1836,7 @@ type_id(PG_FUNCTION_ARGS)
     /* strip trailing whitespace from input */
     len = pg_mbstrlen(input);
     i = len;
-	while (i > 0 && isspace((unsigned char) input[i - 1]))
+    while (i > 0 && scanner_isspace((unsigned char) input[i - 1]))
         i--;
     if(i < len)
         input[i] = '\0';
@@ -1922,46 +1922,45 @@ type_id(PG_FUNCTION_ARGS)
     }
     else
     {
-		// If schema is 'sys' or 'pg_catalog' then search in typecode list.
-		if(!strcmp(schema_name, "sys") || !strcmp(schema_name, "pg_catalog"))
-		{
-			result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
-			pfree(db_name);
-			pfree(schema_name);
-			pfree(object_name);
-			if (OidIsValid(result))
-				PG_RETURN_INT32(result);
-			else
-				PG_RETURN_NULL();
-		}
-		else
-		{
-			physical_schema_name = get_physical_schema_name(db_name, schema_name);
-		}
+	// If schema is 'sys' or 'pg_catalog' then search in typecode list.
+	if(!strcmp(schema_name, "sys") || !strcmp(schema_name, "pg_catalog"))
+	{
+	    result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
+	    pfree(db_name);
+	    pfree(schema_name);
+	    pfree(object_name);
+	    if (OidIsValid(result))
+		PG_RETURN_INT32(result);
+	    else
+		PG_RETURN_NULL();
+	}
+	else
+	{
+	    physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	}
     }
 
     /* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
     if (physical_schema_name != NULL && pg_mbstrlen(physical_schema_name) != 0)
-		schema_oid = get_namespace_oid(physical_schema_name, true);
+	schema_oid = get_namespace_oid(physical_schema_name, true);
 	
-	pfree(schema_name);
+    pfree(schema_name);
     pfree(db_name);
     pfree(physical_schema_name);
 
-	// Check if user has permission to access schema
-	if (OidIsValid(schema_oid) && pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) == ACLCHECK_OK)
+    // Check if user has permission to access schema
+    if (OidIsValid(schema_oid) && pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) == ACLCHECK_OK)
+    {
+    	// Search in pg_type.
+	result = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
+	if (OidIsValid(result) && pg_type_aclcheck(result, user_id, ACL_USAGE) == ACLCHECK_OK)
 	{
-		// Search in pg_type.
-		result = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
-										CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
-		if (OidIsValid(result) && pg_type_aclcheck(result, user_id, ACL_USAGE) == ACLCHECK_OK)
-		{
-			pfree(object_name);
-			PG_RETURN_INT32(result);
-		}
+		pfree(object_name);
+		PG_RETURN_INT32(result);
 	}
-	pfree(object_name);
-	PG_RETURN_NULL();
+    }
+    pfree(object_name);
+    PG_RETURN_NULL();
 }
 
 /*
