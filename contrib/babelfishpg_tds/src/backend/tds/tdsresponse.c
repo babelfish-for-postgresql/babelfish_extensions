@@ -458,7 +458,7 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 		 */
 		if (max_precision > TDS_MAX_NUM_PRECISION)
 		{
-			max_scale = Max(0, scale - (max_precision - TDS_MAX_NUM_PRECISION));
+			max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
 			max_precision = TDS_MAX_NUM_PRECISION;
 		}
 		result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
