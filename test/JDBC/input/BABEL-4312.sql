@@ -32,6 +32,8 @@ go
 
 -- Check query plans, all aggregations should be optimized
 -- into LIMIT + index scan.
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
 SELECT set_config('enable_seqscan', 'off', false)
 go
 SET babelfish_showplan_all ON
@@ -103,6 +105,8 @@ go
 SET babelfish_showplan_all OFF
 go
 SELECT set_config('enable_seqscan', 'on', false)
+go
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 go
 
 DROP TABLE babel_4312_tbl

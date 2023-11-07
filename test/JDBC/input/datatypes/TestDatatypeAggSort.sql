@@ -63,22 +63,24 @@ INSERT INTO TestDatatypeAggSort_tbl VALUES (
 );
 go
 
-CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_tbl (char_col)
+CREATE INDEX TestDatatypeAggSort_char_idx ON TestDatatypeAggSort_tbl (char_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_tbl (varchar_col)
+CREATE INDEX TestDatatypeAggSort_varchar_idx ON TestDatatypeAggSort_tbl (varchar_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_tbl (datetime_col)
+CREATE INDEX TestDatatypeAggSort_datetime_idx ON TestDatatypeAggSort_tbl (datetime_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_tbl (datetime2_col)
+CREATE INDEX TestDatatypeAggSort_datetime2_idx ON TestDatatypeAggSort_tbl (datetime2_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_tbl (datetimeoffset_col)
+CREATE INDEX TestDatatypeAggSort_datetimeoffset_idx ON TestDatatypeAggSort_tbl (datetimeoffset_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
+CREATE INDEX TestDatatypeAggSort_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
 go
 
 
 -- Check query plans, all aggregations should be optimized 
 -- into LIMIT + index scan.
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
 SELECT set_config('enable_seqscan', 'off', false)
 go
 SET babelfish_showplan_all ON
@@ -119,6 +121,8 @@ go
 SET babelfish_showplan_all OFF
 go
 SELECT set_config('enable_seqscan', 'on', false)
+go
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 go
 
 DROP TABLE TestDatatypeAggSort_tbl
