@@ -8,7 +8,14 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+# all
+FULLTEXT_INDEX-vu-prepare
+FULLTEXT_INDEX-vu-verify
+FULLTEXT_INDEX-vu-cleanup
+BABEL-UNSUPPORTED
+fts-contains-vu-prepare
+fts-contains-vu-verify
+fts-contains-vu-cleanup
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 

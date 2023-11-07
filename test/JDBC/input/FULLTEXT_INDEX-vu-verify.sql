@@ -34,7 +34,7 @@ SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t8';
 GO
 
 -- Creating more than 1 fulltext index in a table, should throw error
-CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(b) KEY INDEX IX_s1_t8_b;
+CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(b) KEY INDEX IX_s1_t8_a;
 GO
 
 -- Creating index in a non existent table of a schema, should throw error

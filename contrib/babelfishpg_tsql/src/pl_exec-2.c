@@ -89,6 +89,7 @@ extern void enable_sp_cursor_find_param_hook(void);
 extern void disable_sp_cursor_find_param_hook(void);
 extern void add_sp_cursor_param(char *name);
 extern void reset_sp_cursor_params();
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
 
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
@@ -3660,6 +3661,10 @@ get_insert_bulk_kilobytes_per_batch()
 	return insert_bulk_kilobytes_per_batch;
 }
 
+/*
+ *	Generates the schema name for fulltext index statements
+ *	depending on whether it's master schema or not
+ */
 static const char 
 *gen_schema_name_for_fulltext_index(const char *schema_name)
 {
@@ -3834,9 +3839,10 @@ static int
 exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt)
 {
 	char        *table_name;
-	char		*index_name;
+	char		*ft_index_name;
 	char		*query_str;
-	char		*old_index_name;	// existing fulltext index name
+	char		*old_ft_index_name;	// existing fulltext index name
+	char	*uniq_index_name;
 	const char	*schema_name;
 	Oid 		schemaOid;
 	Oid			relid;
@@ -3871,24 +3877,33 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 					table_name)));
 
 	// Get the existing fulltext index name
-	old_index_name = get_fulltext_index_name(relid);
+	old_ft_index_name = get_fulltext_index_name(relid, table_name);
 
 	if (is_create)
 	{
-		column_name = stmt->column_name;
-		index_name = stmt->index_name;
-		if (old_index_name)
+		uniq_index_name = construct_unique_index_name((char *) stmt->index_name, table_name);
+		if(is_unique_index(relid, (const char *) uniq_index_name))
+		{
+			column_name = stmt->column_name;
+			ft_index_name = construct_unique_index_name("ft_index", table_name);
+			if (old_ft_index_name)
+				ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						errmsg("A full-text index for table or indexed view \"%s\" has already been created.",
+							table_name)));
+			else
+				query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, ft_index_name);
+		}
+		else
 			ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					errmsg("A full-text index \"%s\" for table or indexed view \"%s\" has already been created.",
-						old_index_name, table_name)));
-		else
-			query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, index_name);
+					errmsg("'\"%s\"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.",
+						stmt->index_name)));
 	}
 	else
 	{
-		if (old_index_name)					
-			query_str = gen_dropfulltextindex_cmds(old_index_name, schema_name);
+		if (old_ft_index_name)					
+			query_str = gen_dropfulltextindex_cmds(old_ft_index_name, schema_name);
 		else
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3900,6 +3915,5 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	 * executed using ProcessUtility()
 	 */
 	exec_utility_cmd_helper(query_str);
-
 	return PLTSQL_RC_OK;
 }

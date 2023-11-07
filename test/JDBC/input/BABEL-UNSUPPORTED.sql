@@ -456,7 +456,10 @@ GO
 CREATE SCHEMA t_unsupported_s_ft;
 GO
 
-CREATE TABLE t_unsupported_s_ft.t_unsupported_ft1 (a text);
+CREATE TABLE t_unsupported_s_ft.t_unsupported_ft1 (id int not null, a text);
+GO
+
+CREATE UNIQUE INDEX ix_unsupported_ft1 ON t_unsupported_s_ft.t_unsupported_ft1(id);
 GO
 
 CREATE FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1(a) KEY INDEX ix_unsupported_ft1;
@@ -471,13 +474,16 @@ GO
 DROP SCHEMA t_unsupported_s_ft;
 GO
 
-CREATE TABLE t_unsupported_ft2 (a text);
+CREATE TABLE t_unsupported_ft2 (id int not null, a text);
+GO
+
+CREATE UNIQUE INDEX ix_unsupported_ft2 ON t_unsupported_ft2(id);
 GO
 
 CREATE FULLTEXT INDEX ON t_unsupported_ft2(a) KEY INDEX ix_unsupported_ft2;
 GO
 
-DROP FULLTEXT INDEX on t_unsupported_ft2;
+DROP FULLTEXT INDEX ON t_unsupported_ft2;
 GO
 
 DROP TABLE t_unsupported_ft2;

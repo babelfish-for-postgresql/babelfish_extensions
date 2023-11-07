@@ -43,6 +43,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
                           ParamListInfo params);
 
 extern bool restore_tsql_tabletype;
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
@@ -1794,35 +1795,77 @@ List
 
 /*
  * get_fulltext_index_name
- *		Get the fulltext index name of a relation specified by OID
+ * Get the fulltext index name of a relation specified by OID
  */
-char
-*get_fulltext_index_name(Oid relid)
+char *
+get_fulltext_index_name(Oid relid, const char *table_name)
 {
-	Relation		relation;
-	List			*indexoidlist;
-	Oid				indexOid;
-	char			*index_name;
+    Relation        relation = RelationIdGetRelation(relid);
+    List            *indexoidlist = RelationGetIndexList(relation);
+	ListCell		*cell;
+    char            *ft_index_name = NULL;
+	char			*table_name_cpy = palloc(strlen(table_name) + 1);
+    char            *temp_ft_index_name;
 
-	relation = RelationIdGetRelation(relid);
-	indexoidlist = RelationGetIndexList(relation);
-	if (list_length(indexoidlist) == 0)
-	{
-		RelationClose(relation);
-		list_free(indexoidlist);
-		return NULL;
-	}
-	indexOid = linitial_oid(indexoidlist);
-	index_name = get_rel_name(indexOid);
-	RelationClose(relation);
-	list_free(indexoidlist);
-	return index_name;
+	strcpy(table_name_cpy, table_name);
+	temp_ft_index_name = construct_unique_index_name("ft_index", table_name_cpy);
+    foreach(cell, indexoidlist)
+    {
+        Oid indexOid = lfirst_oid(cell);
+        ft_index_name = get_rel_name(indexOid);
+
+        if (strcmp(ft_index_name, temp_ft_index_name) == 0)
+            break;
+
+        ft_index_name = NULL;
+    }
+
+    RelationClose(relation);
+    list_free(indexoidlist);
+	pfree(table_name_cpy);
+    return ft_index_name;
+}
+
+/*
+ * is_unique_index
+ * Check if given index is unique index of a relation specified by OID
+ */
+bool
+is_unique_index(Oid relid, const char *index_name)
+{
+    Relation        relation = RelationIdGetRelation(relid);
+    List            *indexoidlist = RelationGetIndexList(relation);
+	ListCell		*cell;
+    bool            is_unique = false;
+
+    foreach(cell, indexoidlist)
+    {
+        Oid indexOid = lfirst_oid(cell);
+        char *name = get_rel_name(indexOid);
+
+        if (strcmp(name, index_name) == 0)
+        {
+            HeapTuple       indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
+            Form_pg_index   indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+            if (indexForm->indisunique && indexForm->indrelid == relid)
+                is_unique = true;
+
+            ReleaseSysCache(indexTuple);
+            break;
+        }
+    }
+
+    RelationClose(relation);
+    list_free(indexoidlist);
+    return is_unique;
 }
 
 char
 *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name)
 {
 	StringInfoData query;
+
 	initStringInfo(&query);
 
 	/*
