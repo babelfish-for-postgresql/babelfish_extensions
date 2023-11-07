@@ -45,6 +45,7 @@ ignore#!#BABEL-4261
 ignore#!#babel_collection
 ignore#!#binary-index-vu-verify
 ignore#!#pgr_select_into
+ignore#!#cast_eliminate-vu-verify
 
 # Other or mixed issues
 ignore#!#545_1
