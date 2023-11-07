@@ -665,10 +665,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 						 * function
 						 */
 						if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
-						{
-							scale = Max(0, scale - (precision - TDS_MAX_NUM_PRECISION));
 							precision = TDS_MAX_NUM_PRECISION;
-						}
 						break;
 					case NUMERIC_DIV_OID:
 						scale = Max(6, scale1 + precision2 + 1);
