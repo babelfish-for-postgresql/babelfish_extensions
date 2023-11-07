@@ -326,3 +326,4 @@ getdate
 BABEL-4410
 GRANT_SCHEMA
 AUTO_ANALYZE-before-15-5-or-14-10
+TestDatatypeAggSort

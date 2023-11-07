@@ -493,6 +493,7 @@ SPExecuteSQL(TDSRequestSP req)
 	Datum	   *values;
 	bool	   *nulls;
 	char	   *activity;
+	tvp_lookup_list = NIL;
 
 	TdsErrorContext->err_text = "Processing SP_EXECUTESQL Request";
 	if ((req->nTotalParams) > PREPARE_STMT_MAX_ARGS)
@@ -559,6 +560,7 @@ SPExecuteSQL(TDSRequestSP req)
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		RESUME_INTERRUPTS();
+		tvp_lookup_list = NIL;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -586,10 +588,21 @@ SPExecuteSQL(TDSRequestSP req)
 
 		error_context_stack = plerrcontext->previous;
 
-		ereport(LOG,
-				(errmsg("sp_executesql statement: %s", s.data),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("sp_executesql statement: %s", s.data),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("sp_executesql statement: %s", s.data),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
 
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
@@ -600,6 +613,7 @@ SPExecuteSQL(TDSRequestSP req)
 	 */
 	TDSLogDuration(s.data);
 	pfree(codeblock);
+	tvp_lookup_list = NIL;
 }
 
 static void
@@ -787,10 +801,22 @@ SPExecute(TDSRequestSP req)
 
 		error_context_stack = plerrcontext->previous;
 
-		ereport(LOG,
-				(errmsg("sp_execute handle: %d", req->handle),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("sp_execute handle: %d", req->handle),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("sp_execute handle: %d", req->handle),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
@@ -915,11 +941,25 @@ SPPrepExec(TDSRequestSP req)
 		ErrorContextCallback *plerrcontext = error_context_stack;
 
 		error_context_stack = plerrcontext->previous;
-		ereport(LOG,
-				(errmsg("sp_prepexec handle: %d, "
-						"statement: %s", req->handle, s.data),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("sp_prepexec handle: %d, "
+							"statement: %s", req->handle, s.data),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("sp_prepexec handle: %d, "
+							"statement: %s", req->handle, s.data),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
@@ -1152,10 +1192,23 @@ SPCustomType(TDSRequestSP req)
 		ErrorContextCallback *plerrcontext = error_context_stack;
 
 		error_context_stack = plerrcontext->previous;
-		ereport(LOG,
-				(errmsg("stored procedure: %s", req->name.data),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("stored procedure: %s", req->name.data),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("stored procedure: %s", req->name.data),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
