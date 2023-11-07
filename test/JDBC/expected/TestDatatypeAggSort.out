@@ -1,4 +1,6 @@
-CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl (
+-- MAX/MIN functionality already verified in upgrade scripts.
+-- This test mainly focuses on query plans.
+CREATE TABLE TestDatatypeAggSort_tbl (
 	char_col CHAR(10), 
 	varchar_col VARCHAR(10),
 	datetime_col DATETIME,
@@ -8,7 +10,7 @@ CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl (
 );
 go
 
-INSERT INTO TestDatatypeAggSort_vu_prepare_tbl VALUES (
+INSERT INTO TestDatatypeAggSort_tbl VALUES (
 	'abc', 'abc',
 	'1900-01-01 00:00:00.000',
 	'1900-01-01 00:00:00.000',
@@ -63,21 +65,21 @@ go
 ~~ROW COUNT: 9~~
 
 
-CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_vu_prepare_tbl (char_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_tbl (char_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_vu_prepare_tbl (varchar_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_tbl (varchar_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetime_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_tbl (datetime_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetime2_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_tbl (datetime2_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetimeoffset_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_tbl (datetimeoffset_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_vu_prepare_tbl (smalldatetime_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
 go
 
 
--- Check plans of the above queries, all aggregations should be optimized 
+-- Check query plans, all aggregations should be optimized 
 -- into LIMIT + index scan.
 SELECT set_config('enable_seqscan', 'off', false)
 go
@@ -90,154 +92,154 @@ SET babelfish_showplan_all ON
 go
 
 -- This is failing because of BABEL-4332
-SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+SELECT MAX(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
 ~~START~~
 text
-Query Text: SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+Query Text: SELECT MAX(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 Result  (cost=4.20..4.21 rows=1 width=32)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..4.20 rows=1 width=32)
-          ->  Index Scan Backward using testdatatypeaggsort_vu_prepare_dfe0e13041c6c2fe825a6c8e994bab36 on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..12.32 rows=3 width=32)
+          ->  Index Scan Backward using testdatatypeaggsort_vu_prepare_9f6822e2eb25acd99239dfd749f4cfac on testdatatypeaggsort_tbl  (cost=0.14..12.32 rows=3 width=32)
                 Index Cond: (char_col IS NOT NULL)
                 Filter: (varchar_col <= 'xxx'::"varchar")
 ~~END~~
 
-SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+SELECT MIN(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+Query Text: SELECT MIN(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 Result  (cost=4.20..4.21 rows=1 width=32)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..4.20 rows=1 width=32)
-          ->  Index Scan using testdatatypeaggsort_vu_prepare_dfe0e13041c6c2fe825a6c8e994bab36 on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..12.32 rows=3 width=32)
+          ->  Index Scan using testdatatypeaggsort_vu_prepare_9f6822e2eb25acd99239dfd749f4cfac on testdatatypeaggsort_tbl  (cost=0.14..12.32 rows=3 width=32)
                 Index Cond: (char_col IS NOT NULL)
                 Filter: (varchar_col <= 'xxx'::"varchar")
 ~~END~~
 
 
-SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+SELECT MAX(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
 ~~START~~
 text
-Query Text: SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+Query Text: SELECT MAX(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 Result  (cost=2.82..2.83 rows=1 width=32)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=32)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_e5a21ed567824677061b60d520a5f6ef on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=32)
+          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_dff2a180daa5e768372a6667d7a1d8ce on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=32)
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col <= 'xxx'::"varchar"))
 ~~END~~
 
-SELECT MIN(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col > 'xxx'
+SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'xxx'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col > 'xxx'
+Query Text: SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'xxx'
 Result  (cost=2.82..2.83 rows=1 width=32)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=32)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_e5a21ed567824677061b60d520a5f6ef on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=32)
+          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_dff2a180daa5e768372a6667d7a1d8ce on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=32)
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col > 'xxx'::"varchar"))
 ~~END~~
 
 
-SELECT MAX(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
+SELECT MAX(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MAX(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
+Query Text: SELECT MAX(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=8)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_12f48d3e028e99c3619ba6b5547257d6 on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=8)
+          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_53652fadbb7f0d803cf631ae1666db91 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col <= '2020-12-31 23:59:59'::datetime))
 ~~END~~
 
-SELECT MIN(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col > '2020-12-31 23:59:59'
+SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=8)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_12f48d3e028e99c3619ba6b5547257d6 on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=8)
+          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_53652fadbb7f0d803cf631ae1666db91 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col > '2020-12-31 23:59:59'::datetime))
 ~~END~~
 
 
-SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
+SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
+Query Text: SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=8)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_d965d7ac24d7a943b9b1d6f5dffb130b on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=8)
+          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_d78d2b8ac3008da9348dd6b7d05cad53 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col <= '2020-12-31 23:59:59'::datetime2))
 ~~END~~
 
-SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=8)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_d965d7ac24d7a943b9b1d6f5dffb130b on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=8)
+          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_d78d2b8ac3008da9348dd6b7d05cad53 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col > '2020-12-31 23:59:59'::datetime2))
 ~~END~~
 
 
-SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
+SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
+Query Text: SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=10)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=10)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_be5308b9bd2258e4810b06615b0ecf3b on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=10)
+          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_4cb646591fd4a379b5280bdf8de9c3fa on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=10)
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col <= '2020-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
-SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=10)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=10)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_be5308b9bd2258e4810b06615b0ecf3b on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=10)
+          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_4cb646591fd4a379b5280bdf8de9c3fa on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=10)
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col > '2020-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
 
-SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
+SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
+Query Text: SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=8)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_89f665964cdb0b3fa54693cb53718971 on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=8)
+          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_51ce5acea8bb1074b24deac240b40a7f on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col <= '2021-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
-SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
+SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
 Result  (cost=2.82..2.83 rows=1 width=8)
   InitPlan 1 (returns $0)
     ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_89f665964cdb0b3fa54693cb53718971 on testdatatypeaggsort_vu_prepare_tbl  (cost=0.14..8.20 rows=3 width=8)
+          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_51ce5acea8bb1074b24deac240b40a7f on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col > '2021-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
@@ -253,5 +255,5 @@ on
 ~~END~~
 
 
-DROP TABLE TestDatatypeAggSort_vu_prepare_tbl
+DROP TABLE TestDatatypeAggSort_tbl
 go

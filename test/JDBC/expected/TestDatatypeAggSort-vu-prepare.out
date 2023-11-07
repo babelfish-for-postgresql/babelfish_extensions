@@ -123,7 +123,7 @@ CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl2 (
 	char_col CHAR(10), 
 	varchar_col VARCHAR(10),
 	datetime_col DATETIME,
-	datetime2_col DATETIME2,
+	datetime2_col DATETIME2(6),
 	datetimeoffset_col DATETIMEOFFSET,
 	smalldatetime_col SMALLDATETIME,
 );

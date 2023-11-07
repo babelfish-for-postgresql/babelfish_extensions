@@ -1,4 +1,6 @@
-CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl (
+-- MAX/MIN functionality already verified in upgrade scripts.
+-- This test mainly focuses on query plans.
+CREATE TABLE TestDatatypeAggSort_tbl (
 	char_col CHAR(10), 
 	varchar_col VARCHAR(10),
 	datetime_col DATETIME,
@@ -8,7 +10,7 @@ CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl (
 );
 go
 
-INSERT INTO TestDatatypeAggSort_vu_prepare_tbl VALUES (
+INSERT INTO TestDatatypeAggSort_tbl VALUES (
 	'abc', 'abc',
 	'1900-01-01 00:00:00.000',
 	'1900-01-01 00:00:00.000',
@@ -61,21 +63,21 @@ INSERT INTO TestDatatypeAggSort_vu_prepare_tbl VALUES (
 );
 go
 
-CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_vu_prepare_tbl (char_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_tbl (char_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_vu_prepare_tbl (varchar_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_tbl (varchar_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetime_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_tbl (datetime_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetime2_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_tbl (datetime2_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetimeoffset_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_tbl (datetimeoffset_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_vu_prepare_tbl (smalldatetime_col)
+CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
 go
 
 
--- Check plans of the above queries, all aggregations should be optimized 
+-- Check query plans, all aggregations should be optimized 
 -- into LIMIT + index scan.
 SELECT set_config('enable_seqscan', 'off', false)
 go
@@ -83,34 +85,34 @@ SET babelfish_showplan_all ON
 go
 
 -- This is failing because of BABEL-4332
-SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+SELECT MAX(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
-SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
-go
-
-SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
-go
-SELECT MIN(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col > 'xxx'
+SELECT MIN(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
 
-SELECT MAX(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
+SELECT MAX(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
 go
-SELECT MIN(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col > '2020-12-31 23:59:59'
-go
-
-SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
-go
-SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'xxx'
 go
 
-SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
+SELECT MAX(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
 go
-SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2020-12-31 23:59:59'
 go
 
-SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
+SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
 go
-SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
+SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+go
+
+SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
+go
+SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+go
+
+SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
+go
+SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
 go
 
 -- Reset
@@ -119,5 +121,5 @@ go
 SELECT set_config('enable_seqscan', 'on', false)
 go
 
-DROP TABLE TestDatatypeAggSort_vu_prepare_tbl
+DROP TABLE TestDatatypeAggSort_tbl
 go
