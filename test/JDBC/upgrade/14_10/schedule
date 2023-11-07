@@ -414,3 +414,4 @@ GRANT_SCHEMA
 default_params
 BABEL-3326
 cast_eliminate
+TestDatatypeAggSort
