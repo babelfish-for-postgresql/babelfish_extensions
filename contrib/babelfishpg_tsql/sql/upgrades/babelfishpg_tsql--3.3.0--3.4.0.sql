@@ -4202,6 +4202,11 @@ $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
 GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR) TO PUBLIC;
 
+-- === DROP deprecated functions (if exists)
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
+
 CREATE OR REPLACE FUNCTION sys.bbf_pivot()
 RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
@@ -4257,11 +4262,6 @@ BEGIN
 END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
-
--- === DROP deprecated functions (if exists)
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
