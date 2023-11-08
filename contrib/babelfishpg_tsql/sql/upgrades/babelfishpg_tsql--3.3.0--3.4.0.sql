@@ -4268,5 +4268,15 @@ $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
 -- Revoke public execute for specific procedures
+REVOKE EXECUTE ON PROCEDURE sys.babel_datatype_precedence_initializer FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.babel_coercion_initializer FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.babel_catalog_initializer FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.babel_create_builtin_dbs FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.babel_drop_all_dbs FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.babel_initialize_logins FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.babel_drop_all_logins FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.initialize_babel_extras FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.analyze_babelfish_catalogs FROM PUBLIC;
+REVOKE EXECUTE ON PROCEDURE sys.initialize_babelfish FROM PUBLIC;
 REVOKE EXECUTE ON PROCEDURE sys.remove_babelfish FROM PUBLIC;
 

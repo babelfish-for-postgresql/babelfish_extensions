@@ -6,12 +6,52 @@ GO
 -- tsql     user=babel_4503_login password=pass_4503
 SELECT current_user
 GO
-EXEC sys.remove_babelfish
+EXECUTE sys.babel_datatype_precedence_initializer
+GO
+EXECUTE sys.babel_coercion_initializer
+GO
+EXECUTE sys.babel_catalog_initializer
+GO
+EXECUTE sys.babel_create_builtin_dbs 'dummy_value'
+GO
+EXECUTE sys.babel_drop_all_dbs
+GO
+EXECUTE sys.babel_initialize_logins 'dummy_value'
+GO
+EXECUTE sys.babel_drop_all_logins
+GO
+EXECUTE sys.initialize_babel_extras
+GO
+EXECUTE sys.analyze_babelfish_catalogs
+GO
+EXECUTE sys.initialize_babelfish 'dummy_value'
+GO
+EXECUTE sys.remove_babelfish
 GO
 -- terminate-tsql-conn user=babel_4503_login password=pass_4503
 
 -- psql     user=babel_4503_login password=pass_4503
 SELECT current_user
+GO
+CALL sys.babel_datatype_precedence_initializer()
+GO
+CALL sys.babel_coercion_initializer()
+GO
+CALL sys.babel_catalog_initializer()
+GO
+CALL sys.babel_create_builtin_dbs('dummy_value')
+GO
+CALL sys.babel_drop_all_dbs()
+GO
+CALL sys.babel_initialize_logins('dummy_value')
+GO
+CALL sys.babel_drop_all_logins()
+GO
+CALL sys.initialize_babel_extras()
+GO
+CALL sys.analyze_babelfish_catalogs()
+GO
+CALL sys.initialize_babelfish('dummy_value')
 GO
 CALL sys.remove_babelfish()
 GO
@@ -25,12 +65,52 @@ GO
 -- tsql     user=babel_4503_login password=pass_4503
 SELECT current_user
 GO
-EXEC sys.remove_babelfish
+EXECUTE sys.babel_datatype_precedence_initializer
+GO
+EXECUTE sys.babel_coercion_initializer
+GO
+EXECUTE sys.babel_catalog_initializer
+GO
+EXECUTE sys.babel_create_builtin_dbs 'dummy_value'
+GO
+EXECUTE sys.babel_drop_all_dbs
+GO
+EXECUTE sys.babel_initialize_logins 'dummy_value'
+GO
+EXECUTE sys.babel_drop_all_logins
+GO
+EXECUTE sys.initialize_babel_extras
+GO
+EXECUTE sys.analyze_babelfish_catalogs
+GO
+EXECUTE sys.initialize_babelfish 'dummy_value'
+GO
+EXECUTE sys.remove_babelfish
 GO
 -- terminate-tsql-conn user=babel_4503_login password=pass_4503
 
 -- psql     user=babel_4503_login password=pass_4503
 SELECT current_user
+GO
+CALL sys.babel_datatype_precedence_initializer()
+GO
+CALL sys.babel_coercion_initializer()
+GO
+CALL sys.babel_catalog_initializer()
+GO
+CALL sys.babel_create_builtin_dbs('dummy_value')
+GO
+CALL sys.babel_drop_all_dbs()
+GO
+CALL sys.babel_initialize_logins('dummy_value')
+GO
+CALL sys.babel_drop_all_logins()
+GO
+CALL sys.initialize_babel_extras()
+GO
+CALL sys.analyze_babelfish_catalogs()
+GO
+CALL sys.initialize_babelfish('dummy_value')
 GO
 CALL sys.remove_babelfish()
 GO

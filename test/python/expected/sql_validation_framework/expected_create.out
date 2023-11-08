@@ -60,17 +60,6 @@ Could not find tests for function sys.tsql_type_max_length_helper
 Could not find tests for function sys.tsql_type_precision_helper
 Could not find tests for function sys.tsql_type_radix_for_sp_columns_helper
 Could not find tests for function sys.tsql_type_scale_helper
-Could not find tests for procedure babel_catalog_initializer
-Could not find tests for procedure babel_coercion_initializer
-Could not find tests for procedure babel_create_builtin_dbs
-Could not find tests for procedure babel_datatype_precedence_initializer
-Could not find tests for procedure initialize_babel_extras
-Could not find tests for procedure initialize_babelfish
-Could not find tests for procedure remove_babelfish
-Could not find tests for procedure sys.analyze_babelfish_catalogs
-Could not find tests for procedure sys.babel_drop_all_dbs
-Could not find tests for procedure sys.babel_drop_all_logins
-Could not find tests for procedure sys.babel_initialize_logins
 Could not find tests for procedure sys.printarg
 Could not find tests for procedure sys.sp_cursor_list
 Could not find tests for procedure sys.sp_describe_cursor

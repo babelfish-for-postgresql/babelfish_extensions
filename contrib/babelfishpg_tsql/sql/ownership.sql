@@ -99,23 +99,33 @@ CREATE OR REPLACE PROCEDURE babel_catalog_initializer()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'init_catalog';
 
+REVOKE EXECUTE ON PROCEDURE sys.babel_catalog_initializer FROM PUBLIC;
+
 CALL babel_catalog_initializer();
 
 CREATE OR REPLACE PROCEDURE babel_create_builtin_dbs(IN login TEXT)
 LANGUAGE C
 AS 'babelfishpg_tsql', 'create_builtin_dbs';
 
+REVOKE EXECUTE ON PROCEDURE sys.babel_create_builtin_dbs FROM PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.babel_drop_all_dbs()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'drop_all_dbs';
+
+REVOKE EXECUTE ON PROCEDURE sys.babel_drop_all_dbs FROM PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.babel_initialize_logins(IN login TEXT)
 LANGUAGE C
 AS 'babelfishpg_tsql', 'initialize_logins';
 
+REVOKE EXECUTE ON PROCEDURE sys.babel_initialize_logins FROM PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.babel_drop_all_logins()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'drop_all_logins';
+
+REVOKE EXECUTE ON PROCEDURE sys.babel_drop_all_logins FROM PUBLIC;
 
 -- The items in initialize_babel_extras procedure need to be initialized or created 
 -- during babelfish initialization. They depend on the core babelfish to be initialized first.
@@ -227,6 +237,8 @@ BEGIN
 END
 $$;
 
+REVOKE EXECUTE ON PROCEDURE sys.initialize_babel_extras FROM PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.analyze_babelfish_catalogs()
 LANGUAGE plpgsql
 AS $$ 
@@ -250,6 +262,8 @@ BEGIN
 	END LOOP;
 END;
 $$;
+
+REVOKE EXECUTE ON PROCEDURE sys.analyze_babelfish_catalogs FROM PUBLIC;
 
 CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
@@ -294,6 +308,8 @@ BEGIN
 	CALL sys.analyze_babelfish_catalogs();
 END
 $$;
+
+REVOKE EXECUTE ON PROCEDURE sys.initialize_babelfish FROM PUBLIC;
 
 CREATE OR REPLACE PROCEDURE remove_babelfish ()
 LANGUAGE plpgsql
