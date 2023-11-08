@@ -4392,13 +4392,13 @@ RETURNS INT AS
 STRICT
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-ALTER FUNCTION sys.datediff_internal_df RENAME TO datediff_internal_df_deprecated_in_3_4_0;
+ALTER FUNCTION sys.datediff_internal_df(PG_CATALOG.TEXT, anyelement, anyelement) RENAME TO datediff_internal_df_deprecated_in_3_4_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_df_deprecated_in_3_4_0');
 
-ALTER FUNCTION sys.datediff_internal_date RENAME TO datediff_internal_date_deprecated_in_3_4_0;
+ALTER FUNCTION sys.datediff_internal_date(PG_CATALOG.TEXT, PG_CATALOG.date, PG_CATALOG.date) RENAME TO datediff_internal_date_deprecated_in_3_4_0;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_date_deprecated_in_3_4_0');
 
-ALTER FUNCTION sys.datediff_internal RENAME TO datediff_internal_deprecated_in_3_4_0
+ALTER FUNCTION sys.datediff_internal(PG_CATALOG.TEXT, anyelement, anyelement) RENAME TO datediff_internal_deprecated_in_3_4_0
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_deprecated_in_3_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
