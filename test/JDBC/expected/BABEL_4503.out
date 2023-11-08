@@ -11,7 +11,67 @@ varchar
 guest
 ~~END~~
 
-EXEC sys.remove_babelfish
+EXECUTE sys.babel_datatype_precedence_initializer
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_datatype_precedence_initializer)~~
+
+EXECUTE sys.babel_coercion_initializer
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_coercion_initializer)~~
+
+EXECUTE sys.babel_catalog_initializer
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_catalog_initializer)~~
+
+EXECUTE sys.babel_create_builtin_dbs 'dummy_value'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_create_builtin_dbs)~~
+
+EXECUTE sys.babel_drop_all_dbs
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_drop_all_dbs)~~
+
+EXECUTE sys.babel_initialize_logins 'dummy_value'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_initialize_logins)~~
+
+EXECUTE sys.babel_drop_all_logins
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_drop_all_logins)~~
+
+EXECUTE sys.initialize_babel_extras
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure initialize_babel_extras)~~
+
+EXECUTE sys.analyze_babelfish_catalogs
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure analyze_babelfish_catalogs)~~
+
+EXECUTE sys.initialize_babelfish 'dummy_value'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure initialize_babelfish)~~
+
+EXECUTE sys.remove_babelfish
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -26,6 +86,76 @@ GO
 name
 babel_4503_login
 ~~END~~
+
+CALL sys.babel_datatype_precedence_initializer()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_datatype_precedence_initializer
+    Server SQLState: 42501)~~
+
+CALL sys.babel_coercion_initializer()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_coercion_initializer
+    Server SQLState: 42501)~~
+
+CALL sys.babel_catalog_initializer()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_catalog_initializer
+    Server SQLState: 42501)~~
+
+CALL sys.babel_create_builtin_dbs('dummy_value')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_create_builtin_dbs
+    Server SQLState: 42501)~~
+
+CALL sys.babel_drop_all_dbs()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_drop_all_dbs
+    Server SQLState: 42501)~~
+
+CALL sys.babel_initialize_logins('dummy_value')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_initialize_logins
+    Server SQLState: 42501)~~
+
+CALL sys.babel_drop_all_logins()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_drop_all_logins
+    Server SQLState: 42501)~~
+
+CALL sys.initialize_babel_extras()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure initialize_babel_extras
+    Server SQLState: 42501)~~
+
+CALL sys.analyze_babelfish_catalogs()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure analyze_babelfish_catalogs
+    Server SQLState: 42501)~~
+
+CALL sys.initialize_babelfish('dummy_value')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure initialize_babelfish
+    Server SQLState: 42501)~~
 
 CALL sys.remove_babelfish()
 GO
@@ -49,7 +179,67 @@ varchar
 babel_4503_user
 ~~END~~
 
-EXEC sys.remove_babelfish
+EXECUTE sys.babel_datatype_precedence_initializer
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_datatype_precedence_initializer)~~
+
+EXECUTE sys.babel_coercion_initializer
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_coercion_initializer)~~
+
+EXECUTE sys.babel_catalog_initializer
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_catalog_initializer)~~
+
+EXECUTE sys.babel_create_builtin_dbs 'dummy_value'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_create_builtin_dbs)~~
+
+EXECUTE sys.babel_drop_all_dbs
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_drop_all_dbs)~~
+
+EXECUTE sys.babel_initialize_logins 'dummy_value'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_initialize_logins)~~
+
+EXECUTE sys.babel_drop_all_logins
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_drop_all_logins)~~
+
+EXECUTE sys.initialize_babel_extras
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure initialize_babel_extras)~~
+
+EXECUTE sys.analyze_babelfish_catalogs
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure analyze_babelfish_catalogs)~~
+
+EXECUTE sys.initialize_babelfish 'dummy_value'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure initialize_babelfish)~~
+
+EXECUTE sys.remove_babelfish
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -64,6 +254,76 @@ GO
 name
 babel_4503_login
 ~~END~~
+
+CALL sys.babel_datatype_precedence_initializer()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_datatype_precedence_initializer
+    Server SQLState: 42501)~~
+
+CALL sys.babel_coercion_initializer()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_coercion_initializer
+    Server SQLState: 42501)~~
+
+CALL sys.babel_catalog_initializer()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_catalog_initializer
+    Server SQLState: 42501)~~
+
+CALL sys.babel_create_builtin_dbs('dummy_value')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_create_builtin_dbs
+    Server SQLState: 42501)~~
+
+CALL sys.babel_drop_all_dbs()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_drop_all_dbs
+    Server SQLState: 42501)~~
+
+CALL sys.babel_initialize_logins('dummy_value')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_initialize_logins
+    Server SQLState: 42501)~~
+
+CALL sys.babel_drop_all_logins()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure babel_drop_all_logins
+    Server SQLState: 42501)~~
+
+CALL sys.initialize_babel_extras()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure initialize_babel_extras
+    Server SQLState: 42501)~~
+
+CALL sys.analyze_babelfish_catalogs()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure analyze_babelfish_catalogs
+    Server SQLState: 42501)~~
+
+CALL sys.initialize_babelfish('dummy_value')
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure initialize_babelfish
+    Server SQLState: 42501)~~
 
 CALL sys.remove_babelfish()
 GO
