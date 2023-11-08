@@ -641,8 +641,18 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 						"varbinary is not allowed. Use the CONVERT function "
 						"to run this query.")));
 
-	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
-	encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+	PG_TRY();
+	{
+		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+		encoded_data = encoding_conv_util(data, len, PG_UTF8, collInfo.enc, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type varchar to varbinary")));
+	}
+	PG_END_TRY();
 
 	/* 
 	 * If typmod is -1 (or invalid), use the actual length
@@ -723,11 +733,21 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	 * Cast the entire input binary data if maxlen is invalid or supplied data
 	 * fits it
 	 */
-	if (maxlen < 0 || len <= maxlen)
-		encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
-	/* Else truncate it */
-	else
-		encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+	PG_TRY();
+	{
+		if (maxlen < 0 || len <= maxlen)
+			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
+		/* Else truncate it */
+		else
+			encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
+	}
+	PG_CATCH();
+	{
+		ereport(ERROR,
+			   (errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Failed to convert from data type varbinary to varchar")));
+	}
+	PG_END_TRY();
 
 	result = (VarChar *) cstring_to_text_with_len(encoded_result, encodedByteLen);
 
