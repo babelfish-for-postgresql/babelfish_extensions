@@ -1,1380 +1,3475 @@
--- DATEPART with 'day' and different data types
 
+-- DATEPART with 'day' and different data types
 GO
 SELECT DATEPART(day, CAST(100987 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(day, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+20
+~~END~~
+
 
 SELECT DATEPART(day, CAST(6542 AS int));
 GO
+~~START~~
+int
+30
+~~END~~
+
 
 SELECT DATEPART(day, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+17
+~~END~~
+
 
 SELECT DATEPART(day, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+27
+~~END~~
+
 
 SELECT DATEPART(day, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+12
+~~END~~
+
 
 SELECT DATEPART(day, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+21
+~~END~~
+
 
 SELECT DATEPART(day, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+9
+~~END~~
+
 
 SELECT DATEPART(day, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+21
+~~END~~
+
 
 SELECT DATEPART(day, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+4
+~~END~~
+
+
 
 -- DATEPART with 'month' and different data types
-
 GO
 SELECT DATEPART(month, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(month, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(month, CAST(6542 AS int));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(month, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(month, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(month, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(month, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(month, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(month, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(month, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 -- DATEPART with 'week' and different data types
 SELECT DATEPART(week, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(week, CAST(14 AS smallmoney));   
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(week, CAST(6542 AS int));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(week, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(week, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(week, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+7
+~~END~~
+
 
 SELECT DATEPART(week, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+21
+~~END~~
+
 
 SELECT DATEPART(week, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(week, CAST(14 AS numeric));   
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(week, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'year' and different data types
-
 GO
 SELECT DATEPART(year, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(year, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(year, CAST(6542 AS int));
 GO
+~~START~~
+int
+1917
+~~END~~
+
 
 SELECT DATEPART(year, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(year, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+4637
+~~END~~
+
 
 SELECT DATEPART(year, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(year, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(year, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+4604
+~~END~~
+
 
 SELECT DATEPART(year, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+2760
+~~END~~
+
 
 SELECT DATEPART(year, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1900
+~~END~~
+
+
 
 -- DATEPART with 'weekday' and different data types
-
 GO
 SELECT DATEPART(weekday, CAST(100987 AS bit)); 
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(1234 AS smallmoney));    
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(6542 AS int));    
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(1111 AS smallint));    
 GO
+~~START~~
+int
+7
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(999999 AS bigint));    
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(42 AS tinyint));    
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(1234.789 AS decimal));    
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(987654.321 AS real));    
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(314159.432 AS numeric));    
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(3.14159 AS float));    
 GO
+~~START~~
+int
+5
+~~END~~
+
+
 
 -- DATEPART with 'yy' (year without century) and different data types
-
 GO
 SELECT DATEPART(yy, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(6542 AS int));
 GO
+~~START~~
+int
+1917
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+4637
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+4604
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+2760
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1900
+~~END~~
+
+
 
 -- DATEPART with 'yyyy' (year with century) and different data types
-
 GO
 SELECT DATEPART(yyyy, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(6542 AS int));
 GO
+~~START~~
+int
+1917
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+4637
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+1903
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+4604
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+2760
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1900
+~~END~~
+
+
 
 -- DATEPART with 'qq' (quarter) and different data types
-
 GO
 SELECT DATEPART(qq, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(6542 AS int));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'q' (quarter) and different data types
-
 GO
 SELECT DATEPART(q, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(q, CAST(6542 AS int));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(q, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(q, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(q, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'mm' (month) and different data types
-
 GO
 SELECT DATEPART(mm, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(6542 AS int));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'm' (month) and different data types
-
 GO
 SELECT DATEPART(m, CAST(100987 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(m, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(m, CAST(6542 AS int));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(m, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(m, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(m, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(m, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(m, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(m, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(m, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'dy' (day of the year) and different data types
-
 GO
 SELECT DATEPART(dy, CAST(100987 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+140
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(6542 AS int));
 GO
+~~START~~
+int
+334
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+17
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+331
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+43
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+141
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+40
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+52
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+4
+~~END~~
+
+
 
 -- DATEPART with 'y' (day of the year) and different data types
-
 GO
 SELECT DATEPART(y, CAST(100987 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(y, CAST(1234 AS smallmoney));
 GO
+~~START~~
+int
+140
+~~END~~
+
 
 SELECT DATEPART(y, CAST(6542 AS int));
 GO
+~~START~~
+int
+334
+~~END~~
+
 
 SELECT DATEPART(y, CAST(1111 AS smallint));
 GO
+~~START~~
+int
+17
+~~END~~
+
 
 SELECT DATEPART(y, CAST(999999 AS bigint));
 GO
+~~START~~
+int
+331
+~~END~~
+
 
 SELECT DATEPART(y, CAST(42 AS tinyint));
 GO
+~~START~~
+int
+43
+~~END~~
+
 
 SELECT DATEPART(y, CAST(1234.789 AS decimal));
 GO
+~~START~~
+int
+141
+~~END~~
+
 
 SELECT DATEPART(y, CAST(987654.321 AS real));
 GO
+~~START~~
+int
+40
+~~END~~
+
 
 SELECT DATEPART(y, CAST(314159.432 AS numeric));
 GO
+~~START~~
+int
+52
+~~END~~
+
 
 SELECT DATEPART(y, CAST(3.14159 AS float));
 GO
+~~START~~
+int
+4
+~~END~~
+
+
 
 -- DATEPART with 'dd' (day of the month) and different data types
-
 GO
 SELECT DATEPART(dd, CAST(1234 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(7890 AS smallmoney));
 GO
+~~START~~
+int
+9
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(6542 AS int));
 GO
+~~START~~
+int
+30
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+20
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+22
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(321987.654 AS real));
 GO
+~~START~~
+int
+28
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+9
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'd' (day of the month) and different data types
-
 GO
 SELECT DATEPART(d, CAST(1234 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(d, CAST(7890 AS smallmoney));
 GO
+~~START~~
+int
+9
+~~END~~
+
 
 SELECT DATEPART(d, CAST(6542 AS int));
 GO
+~~START~~
+int
+30
+~~END~~
+
 
 SELECT DATEPART(d, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(d, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+20
+~~END~~
+
 
 SELECT DATEPART(d, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(d, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+22
+~~END~~
+
 
 SELECT DATEPART(d, CAST(321987.654 AS real));
 GO
+~~START~~
+int
+28
+~~END~~
+
 
 SELECT DATEPART(d, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+9
+~~END~~
+
 
 SELECT DATEPART(d, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'wk' (week) and different data types
-
 GO
 SELECT DATEPART(wk, CAST(1234 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(7810 AS smallmoney));   
 GO
+~~START~~
+int
+21
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(6542 AS int));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+27
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+34
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(3287.654 AS real));    
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'ww' (week) and different data types
-
 GO
 SELECT DATEPART(ww, CAST(1234 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(780 AS smallmoney));    
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(6542 AS int));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+27
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+34
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(3987.654 AS real));    --incorrrect
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'dw' (weekday) and different data types    
-
 GO
 SELECT DATEPART(dw, CAST(1234 AS bit));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(7890 AS smallmoney));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(6542 AS int));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(321987.654 AS real));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+2
+~~END~~
+
+
 
 -- DATEPART with 'iso_week' (ISO week) and different data types
-
 GO
 SELECT DATEPART(iso_week, CAST(1234 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(7890 AS smallmoney));
 GO
+~~START~~
+int
+32
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(6542 AS int));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+27
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+34
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(197.64 AS real));   
 GO
+~~START~~
+int
+29
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'isowk' (ISO week) and different data types
-
 GO
 SELECT DATEPART(isowk, CAST(1234 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(7890 AS smallmoney));
 GO
+~~START~~
+int
+32
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(6542 AS int));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+27
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+34
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(327.654 AS real));   
 GO
+~~START~~
+int
+47
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'isoww' (ISO week) and different data types
-
 GO
 SELECT DATEPART(isoww, CAST(1234 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(7890 AS smallmoney));
 GO
+~~START~~
+int
+32
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(6542 AS int));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(4567 AS smallint));
 GO
+~~START~~
+int
+27
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(333333 AS bigint));
 GO
+~~START~~
+int
+34
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(24 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(654321.987 AS decimal));
 GO
+~~START~~
+int
+25
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(97.65 AS real));    
 GO
+~~START~~
+int
+14
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(987654.321 AS numeric));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'day' and different data types with negative values
-
 GO
 SELECT DATEPART(day, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+15
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-6542 AS int));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(day, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+23
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+14
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(day, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+28
+~~END~~
+
+
 
 -- DATEPART with 'month' and different data types with negative values
-
 GO
 SELECT DATEPART(month, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-6542 AS int));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+12
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(month, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(month, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+12
+~~END~~
+
+
 
 -- DATEPART with 'week' and different data types with negative values
-
 GO
 SELECT DATEPART(week, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+33
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-6542 AS int));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+51
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(week, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+33
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-123.432 AS numeric));   
 GO
+~~START~~
+int
+35
+~~END~~
+
 
 SELECT DATEPART(week, CAST(-43.14 AS float));   
 GO
+~~START~~
+int
+46
+~~END~~
+
+
 
 -- DATEPART with 'year' and different data types with negative values
-
 GO
 SELECT DATEPART(year, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-6542 AS int));
 GO
+~~START~~
+int
+1882
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1879
+~~END~~
+
 
 SELECT DATEPART(year, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1898
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(year, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+1899
+~~END~~
+
+
 
 -- DATEPART with 'weekday' and different data types with negative values 
-
 GO
 SELECT DATEPART(weekday, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+7
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-6542 AS int));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+7
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(weekday, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+5
+~~END~~
+
+
 
 -- DATEPART with 'yy' (year without century) and different data types with negative values
-
 GO
 SELECT DATEPART(yy, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-6542 AS int));
 GO
+~~START~~
+int
+1882
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1879
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1898
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yy, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+1899
+~~END~~
+
+
 
 -- DATEPART with 'yyyy' (year with century) and different data types with negative values
-
 GO
 SELECT DATEPART(yyyy, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-6542 AS int));
 GO
+~~START~~
+int
+1882
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1879
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1900
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1898
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+1896
+~~END~~
+
 
 SELECT DATEPART(yyyy, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+1899
+~~END~~
+
+
 
 -- DATEPART with 'qq' (quarter) and different data types with negative values
-
 GO
 SELECT DATEPART(qq, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-6542 AS int));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-91 AS smallint));   
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(qq, CAST(-5433.14 AS float));   
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'q' (quarter) and different data types with negative values
-
 GO
 SELECT DATEPART(q, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-6542 AS int));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-311 AS smallint));   
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(q, CAST(-33.149 AS float)); 
 GO
+~~START~~
+int
+4
+~~END~~
+
+
 
 -- DATEPART with 'mm' (month) and different data types with negative values
-
 GO
 SELECT DATEPART(mm, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-6542 AS int));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+12
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(mm, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+12
+~~END~~
+
+
 
 -- DATEPART with 'm' (month) and different data types with negative values
-
 GO
 SELECT DATEPART(m, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-6542 AS int));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+12
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(m, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+8
+~~END~~
+
 
 SELECT DATEPART(m, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+12
+~~END~~
+
+
 
 -- DATEPART with 'dy' (day of the year) and different data types with negative values
-
 GO
 SELECT DATEPART(dy, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+228
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-6542 AS int));
 GO
+~~START~~
+int
+33
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+351
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+23
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+227
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+224
+~~END~~
+
 
 SELECT DATEPART(dy, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+362
+~~END~~
+
+
 
 -- DATEPART with 'y' (day of the year) and different data types with negative values
-
 GO
 SELECT DATEPART(y, CAST(-5432 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-1234 AS smallmoney));
 GO
+~~START~~
+int
+228
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-6542 AS int));
 GO
+~~START~~
+int
+33
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-1111 AS smallint));
 GO
+~~START~~
+int
+351
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-7655 AS bigint));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(y, CAST(22 AS tinyint));
 GO
+~~START~~
+int
+23
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-1234.789 AS decimal));
 GO
+~~START~~
+int
+227
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-729.321 AS real));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-1238.432 AS numeric));
 GO
+~~START~~
+int
+224
+~~END~~
+
 
 SELECT DATEPART(y, CAST(-3.14159 AS float));
 GO
+~~START~~
+int
+362
+~~END~~
+
+
 
 -- DATEPART with 'dd' (day of the month) and different data types with negative values
-
 GO
 SELECT DATEPART(dd, CAST(-1234 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-7890 AS smallmoney));
 GO
+~~START~~
+int
+26
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-6542 AS int));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-4567 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-333 AS bigint));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-6521.987 AS decimal));
 GO
+~~START~~
+int
+22
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-3217.654 AS real));
 GO
+~~START~~
+int
+11
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-94.321 AS numeric));
 GO
+~~START~~
+int
+29
+~~END~~
+
 
 SELECT DATEPART(dd, CAST(-0.12345 AS float));
 GO
+~~START~~
+int
+31
+~~END~~
+
+
 
 -- DATEPART with 'd' (day of the month) and different data types with negative values
-
 GO
 SELECT DATEPART(d, CAST(-1256 AS bit));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-780 AS smallmoney));
 GO
+~~START~~
+int
+12
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-985 AS int));
 GO
+~~START~~
+int
+21
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-4567 AS smallint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-33 AS bigint));
 GO
+~~START~~
+int
+29
+~~END~~
+
 
 SELECT DATEPART(d, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-651.987 AS decimal));
 GO
+~~START~~
+int
+20
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-37.654 AS real));
 GO
+~~START~~
+int
+24
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-954.321 AS numeric));
 GO
+~~START~~
+int
+22
+~~END~~
+
 
 SELECT DATEPART(d, CAST(-0.12345 AS float));
 GO
+~~START~~
+int
+31
+~~END~~
+
+
 
 -- DATEPART with 'wk' (week) and different data types with negative values
-
 GO
 SELECT DATEPART(wk, CAST(-126 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-780 AS smallmoney));
 GO
+~~START~~
+int
+46
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-95 AS int));
 GO
+~~START~~
+int
+39
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-45 AS smallint));   
 GO
+~~START~~
+int
+46
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-333 AS bigint));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-65.987 AS decimal));
 GO
+~~START~~
+int
+43
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-327.654 AS real));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-54.321 AS numeric));
 GO
+~~START~~
+int
+45
+~~END~~
+
 
 SELECT DATEPART(wk, CAST(-40.12 AS float));   
 GO
+~~START~~
+int
+47
+~~END~~
+
+
 
 -- DATEPART with 'ww' (week) and different data types with negative values
-
 GO
 SELECT DATEPART(ww, CAST(-156 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-780 AS smallmoney));
 GO
+~~START~~
+int
+46
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-65 AS int));
 GO
+~~START~~
+int
+43
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-17 AS smallint));   
 GO
+~~START~~
+int
+50
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-33 AS bigint));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-61.9 AS decimal));   
 GO
+~~START~~
+int
+44
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-37.64 AS real));   
 GO
+~~START~~
+int
+47
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-84.321 AS numeric));   
 GO
+~~START~~
+int
+41
+~~END~~
+
 
 SELECT DATEPART(ww, CAST(-220.12345 AS float));   
 GO
+~~START~~
+int
+21
+~~END~~
+
+
 
 -- DATEPART with 'dw' (weekday) and different data types with negative values   
-
 GO
 SELECT DATEPART(dw, CAST(-156 AS bit));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-780 AS smallmoney));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-965 AS int));
 GO
+~~START~~
+int
+3
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-4567 AS smallint));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-33 AS bigint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+4
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-651.987 AS decimal));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-321.654 AS real));
 GO
+~~START~~
+int
+2
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-984.321 AS numeric));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(dw, CAST(-0.12345 AS float));
 GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 -- DATEPART with 'iso_week' (ISO week) and different data types with negative values
-
 GO
 SELECT DATEPART(iso_week, CAST(-156 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-7890 AS smallmoney));
 GO
+~~START~~
+int
+21
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-985 AS int));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-4567 AS smallint));
 GO
+~~START~~
+int
+26
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-333 AS bigint));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-621.987 AS decimal));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-327.654 AS real));
 GO
+~~START~~
+int
+6
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-984.321 AS numeric));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(iso_week, CAST(-10.12 AS float));   
 GO
+~~START~~
+int
+51
+~~END~~
+
+
 
 -- DATEPART with 'isowk' (ISO week) and different data types with negative values
-
 GO
 SELECT DATEPART(isowk, CAST(-1256 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-70 AS smallmoney));   
 GO
+~~START~~
+int
+43
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-965 AS int));
 GO
+~~START~~
+int
+19
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-467 AS smallint));
 GO
+~~START~~
+int
+38
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-33 AS bigint));
 GO
+~~START~~
+int
+48
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(2 AS tinyint));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-51.97 AS decimal));   
 GO
+~~START~~
+int
+45
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-37.65 AS real));   
 GO
+~~START~~
+int
+47
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-96.31 AS numeric));
 GO
+~~START~~
+int
+39
+~~END~~
+
 
 SELECT DATEPART(isowk, CAST(-110.123 AS float));   
 GO
+~~START~~
+int
+37
+~~END~~
+
+
 
 -- DATEPART with 'isoww' (ISO week) and different data types with negative values
-
 GO
 SELECT DATEPART(isoww, CAST(-456 AS bit));
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-70 AS smallmoney));
 GO
+~~START~~
+int
+43
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-965 AS int));
 GO
+~~START~~
+int
+19
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-47 AS smallint));   
 GO
+~~START~~
+int
+46
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-333 AS bigint));
 GO
+~~START~~
+int
+5
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-621.987 AS decimal));
 GO
+~~START~~
+int
+16
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-39.65 AS real));   
 GO
+~~START~~
+int
+47
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-97.321 AS numeric));
 GO
+~~START~~
+int
+39
+~~END~~
+
 
 SELECT DATEPART(isoww, CAST(-11.12345 AS float));   
 GO
+~~START~~
+int
+51
+~~END~~
+

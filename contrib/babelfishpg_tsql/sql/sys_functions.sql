@@ -244,6 +244,10 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_numeric'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.NCHAR ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_char'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.MONEY ,df_tz INTEGER DEFAULT 0)
 RETURNS INTEGER

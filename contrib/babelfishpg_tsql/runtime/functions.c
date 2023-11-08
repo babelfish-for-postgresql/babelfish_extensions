@@ -180,16 +180,17 @@ PG_FUNCTION_INFO_V1(datepart_internal_num);
 PG_FUNCTION_INFO_V1(datepart_internal_float);
 PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
+PG_FUNCTION_INFO_V1(datepart_internal_char);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
-int			custom_date_part(const char* field, Timestamp timestamp);
-int			custom_right(const char* source, int length);
+int			babelfish_date_part(const char* field, Timestamp timestamp);
+int			babelfish_right(const char* source, int length);
 int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
-int			datepart_internal_datatypes(char *field, int num);
+int			datepart_internal_wrapper(char *field, int num);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
 static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
@@ -345,19 +346,13 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 }
 
 int
-custom_date_part(const char* field, Timestamp timestamp)
+babelfish_date_part(const char* field, Timestamp timestamp)
 {	
 	fsec_t		fsec1;
 	int64 		microseconds;
 	struct		pg_tm tt1, *tm = &tt1;
-	// struct 		tm *tm2 = NULL;
-	// char		timebuf[64];
-	// int day_of_year;
-
-	int			first_day;
-	int			first_week_end;
-	int			tz1, doy = 0, year, month, day, milliseconds;
-	int			K, J, res = 0;
+	int			first_day, first_week_end;
+	int			tz1, doy = 0, year, month, day, milliseconds, res = 0;   //for Zeller's Congruence
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
@@ -408,11 +403,10 @@ custom_date_part(const char* field, Timestamp timestamp)
 			month += 12;
 			year -= 1;
 		}
-		//dow calculated using Zeller's Congruence
+	
 		day = tm->tm_mday;
-		K = year % 100;
-		J = month / 100;
-		res = (day + ((13*(month+1))/5) + K + (K/4) + (J/4) + 5*J ) %7;
+
+		res = day + 2*month + ((3*(month+1))/(5)) + year + year/4 - year/100 + year/400 + 2;
 		
 		return (((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
 
@@ -421,7 +415,7 @@ custom_date_part(const char* field, Timestamp timestamp)
 	{
 		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
 		first_week_end = 8 - datepart_internal("doy", first_day, 0);
-		day = custom_date_part("doy",timestamp);
+		day = babelfish_date_part("doy",timestamp);
 		if(day <= first_week_end) return 1;
 		else return (2+(day-first_week_end-1)/7)%52;
 	}
@@ -434,7 +428,7 @@ custom_date_part(const char* field, Timestamp timestamp)
 	}
 }
 int
-custom_right(const char* source, int length)
+babelfish_right(const char* source, int length)
 {
 	int		source_length = strlen(source);
 	if (length >= source_length)
@@ -455,26 +449,26 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 	{
 		if(strcasecmp(field , "millisecond") == 0)
 		{
-			int datePartValue = custom_date_part(field, timestamp);
+			int datePartValue = babelfish_date_part(field, timestamp);
 			char *buffer = (char *) palloc(20);
 			sprintf(buffer, "%d", datePartValue);
-			result = custom_right(buffer, 3);
+			result = babelfish_right(buffer, 3);
 			pfree(buffer);
 		}
 		else if(strcasecmp(field , "microsecond") == 0)
 		{
-			int datePartValue = custom_date_part(field, timestamp);
+			int datePartValue = babelfish_date_part(field, timestamp);
 			char *buffer = (char *) palloc(20);
 			sprintf(buffer, "%d", datePartValue);
-			result = custom_right(buffer, 6);
+			result = babelfish_right(buffer, 6);
 			pfree(buffer);
 		}
 		else if(strcasecmp(field , "nanosecond") == 0 && df_tz==0)
 		{
-			int datePartValue = custom_date_part(field, timestamp);
+			int datePartValue = babelfish_date_part(field, timestamp);
 			char *buffer = (char *) palloc(20);
 			sprintf(buffer, "%d", datePartValue);
-			result = custom_right(buffer, 6) * 1000;
+			result = babelfish_right(buffer, 6) * 1000;
 			pfree(buffer);
 		}
 		else if(strcasecmp(field , "nanosecond") == 0)
@@ -483,7 +477,7 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 		}
 		else
 		{
-			result = custom_date_part(field, timestamp);
+			result = babelfish_date_part(field, timestamp);
 		}
 	}
 	PG_CATCH();
@@ -580,7 +574,7 @@ datepart_internal_numeric(PG_FUNCTION_ARGS)
 	int64		num = PG_GETARG_INT64(1);
 	int			result;
 
-	result = datepart_internal_datatypes(field, num);
+	result = datepart_internal_wrapper(field, num);
 
 	PG_RETURN_INT32(result);
 }
@@ -592,12 +586,33 @@ datepart_internal_money(PG_FUNCTION_ARGS)
 	int64		num = PG_GETARG_INT64(1);
 	int			result;
 
-	result = datepart_internal_datatypes(field, num/10000);
+	result = datepart_internal_wrapper(field, num/10000);
 
-	if(num >= 0)
 	PG_RETURN_INT32(result);
+}
+
+Datum
+datepart_internal_char(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*num = text_to_cstring(PG_GETARG_TEXT_PP(1));
+	int			result, value;
+
+	if (isdigit(*num))
+	{
+		value = atoi(num);
+    }
 	else
-	PG_RETURN_INT32(result-1);
+	{
+		ereport(ERROR,
+		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("'%s' is not a recognized datepart option", field)));
+			PG_RETURN_INT32(-1);
+	}
+
+	result = datepart_internal_wrapper(field, value);
+
+	PG_RETURN_INT32(result);
 }
 
 
@@ -609,7 +624,7 @@ datepart_internal_double(PG_FUNCTION_ARGS)
 	int			result;
 	int			num = (int)ceil(arg);
 	
-	result = datepart_internal_datatypes(field, num);
+	result = datepart_internal_wrapper(field, num);
 
 	PG_RETURN_INT32(result - 1);
 }
@@ -620,11 +635,13 @@ datepart_internal_decimal(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		arg = PG_GETARG_NUMERIC(1);
 	int			result, num;
-	int		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
+	double		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
 	
-	num = (int)ceil(argument);
+	argument = ceil(argument);
 
-	result = datepart_internal_datatypes(field, num);
+	num = (int)argument;
+
+	result = datepart_internal_wrapper(field, num);
 
 	PG_RETURN_INT32(result);
 }
@@ -635,18 +652,11 @@ datepart_internal_num(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		arg = PG_GETARG_NUMERIC(1);
 	int			result, num;
-	int		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
+	double		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
 	
-	if(argument >= 0)
-	{
-		num = (int)ceil(argument) -1;
-	}
-	else 
-	{
-		num = (int)ceil(argument);
-	}
+	num = (int)ceil(argument);
 
-	result = datepart_internal_datatypes(field, num);
+	result = datepart_internal_wrapper(field, num);
 	PG_RETURN_INT32(result);
 }
 
@@ -657,17 +667,10 @@ datepart_internal_float(PG_FUNCTION_ARGS)
 	float8		arg = PG_GETARG_FLOAT8(1);
 	int			result;
 	int 		num;
-	
-	if(arg >= 0)
-	{
-		num = (int)ceil(arg) -1;
-	}
-	else 
-	{
-		num = (int)ceil(arg) - 1;
-	}
 
-	result = datepart_internal_datatypes(field, num);
+	num = (int)ceil(arg) -1;
+
+	result = datepart_internal_wrapper(field, num);
 
 	PG_RETURN_INT32(result);
 }
@@ -676,88 +679,27 @@ Datum
 datepart_internal_real(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	float4		arg = PG_GETARG_FLOAT4(1);
+	double		arg = PG_GETARG_FLOAT4(1);
 	int			result;
 	int 		num;
 	
-	if(arg >= 0)
-	{
-		num = (int)ceil(arg) -1;
-	}
-	else 
-	{
-		num = (int)ceil(arg) - 1;
-	}
+	arg = floor(arg);
+	num = (int)arg;
 
-	result = datepart_internal_datatypes(field, num);
+	result = datepart_internal_wrapper(field, num);
 
 	PG_RETURN_INT32(result);
 }
 
 int
-datepart_internal_datatypes(char *field, int num)
+datepart_internal_wrapper(char *field, int num)
 {
-	int	result;
+	Timestamp		timestamp;
 
-	if(strcasecmp(field , "year") == 0)
-	{
-		if(num>365)
-		result = 1900 + num/365;
-		else
-		result = 1900;
-	}
-	else if(strcasecmp(field , "quarter") == 0)
-	{
-		if(num>91)
-		result = num/91;
-		else
-		result = 1;
-	}
-	else if(strcasecmp(field , "month") == 0)
-	{
-		if(num>=31)
-		result = num/31 + 1;
-		else
-		result = 1;
-	}
-	else if(strcasecmp(field , "day") == 0)
-	{
-		while(num<0)
-		{
-			num = num +31;
-		}
-		result = num%30 + 1;
-	}
-	else if(strcasecmp(field , "doy") == 0)
-	result = num;
-	else if(strcasecmp(field , "tsql_week") == 0)
-	{
-		if(num>=6)
-		result = num/6 +1 ;
-		else
-		result = 1;
-	}
-	else if(strcasecmp(field , "week") == 0)
-	{
-		if(num>=6)
-		result = num/6 +1 ;
-		else
-		result = 1;
-	}
-	else if(strcasecmp(field , "tzoffset") == 0)
-	result = 0;
-	else if(strcasecmp(field , "dow") == 0)
-		result = num%7 +2 ;
-		
-	else
-	{
-	ereport(ERROR,
-		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		errmsg("'%s' is not a recognized datepart option", field)));
-	result = -1;
-	}
+	timestamp = 86400000000*(num)*1L - 3155673600000000;
 
-	return result;
+	PG_RETURN_INT32(datepart_internal(field, timestamp, 0));
+
 }
 
 
@@ -778,7 +720,6 @@ datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
 				 errmsg("data out of range for datetime2")));
 	}
 
-
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
@@ -795,7 +736,6 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 	}
 
 	timestamp  = PG_GETARG_TIMESTAMP(1);
-
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
