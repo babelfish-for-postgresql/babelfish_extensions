@@ -33,8 +33,6 @@ SELECT set_config('enable_seqscan', 'off', false)
 go
 SELECT set_config('enable_bitmapscan', 'off', false)
 go
-SELECT set_config('enable_indexonlyscan', 'off', false)
-go
 SET babelfish_showplan_all ON
 go
 

@@ -208,9 +208,9 @@ Limit
               Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
+
 SET babelfish_showplan_all OFF
 go
-
 SELECT set_config('enable_indexonlyscan', 'off', false)
 go
 ~~START~~
@@ -229,7 +229,7 @@ Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE
 Limit
   ->  Sort
         Sort Key: b DESC NULLS LAST
-        ->  Index Only Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
+        ->  Index Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
               Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
@@ -241,7 +241,7 @@ Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE
 Limit
   ->  Sort
         Sort Key: b NULLS FIRST
-        ->  Index Only Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
+        ->  Index Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
               Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
@@ -253,7 +253,7 @@ Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE
 Limit
   ->  Sort
         Sort Key: a DESC NULLS LAST
-        ->  Index Only Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
+        ->  Index Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
               Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
@@ -265,7 +265,7 @@ Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE
 Limit
   ->  Sort
         Sort Key: a NULLS FIRST
-        ->  Index Only Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
+        ->  Index Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
               Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
