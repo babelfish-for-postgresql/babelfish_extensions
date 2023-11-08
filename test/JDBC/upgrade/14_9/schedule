@@ -227,7 +227,7 @@ sys-schemas-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep
 sys-tables-dep
-sys-types-dep
+sys-types-before-dep
 sys-views-dep
 sys-check_constraints-dep
 sys-computed_columns-dep
@@ -237,7 +237,7 @@ sys-sp_databases-dep
 sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
-sys-table_types-dep
+sys-table_types-before-dep
 sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-system_sql_modules-dep
@@ -410,3 +410,5 @@ BABEL-2619
 BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
+cast_eliminate
+TestDatatypeAggSort

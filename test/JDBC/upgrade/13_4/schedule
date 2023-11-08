@@ -171,7 +171,7 @@ sys-table_types_internal
 SYSTEM_USER
 sys-trigger_nestlevel
 sys-types
-sys-types-dep
+sys-types-before-dep
 sys-userid-dep
 sys-views
 sys-views-dep
@@ -217,3 +217,5 @@ triggers_with_transaction
 BABEL-4046
 getdate
 AUTO_ANALYZE-before-15-5-or-14-10
+cast_eliminate
+TestDatatypeAggSort

@@ -361,7 +361,7 @@ sys_sysusers_dep
 sys-tables
 sys-tables-dep
 sys-table_types
-sys-table_types-dep
+sys-table_types-before-dep
 sys-table_types_internal
 sys-table_types_internal-dep
 SYSTEM_USER
@@ -370,7 +370,7 @@ sys-trigger_nestlevel
 sys-triggers
 sys-triggers-dep
 sys-types
-sys-types-dep
+sys-types-before-dep
 sys-userid
 sys-views
 sys-views-dep
@@ -439,3 +439,5 @@ getdate
 BABEL_4330
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
+cast_eliminate
+TestDatatypeAggSort

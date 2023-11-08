@@ -227,7 +227,7 @@ sys-schemas-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep
 sys-tables-dep
-sys-types-dep
+sys-types-before-dep
 sys-views-dep
 sys-check_constraints-dep
 sys-computed_columns-dep
@@ -237,7 +237,7 @@ sys-sp_databases-dep
 sys-syscolumns-dep
 sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
-sys-table_types-dep
+sys-table_types-before-dep
 sys-all_sql_modules-dep
 sys-sql_modules-dep
 sys-system_sql_modules-dep
@@ -412,3 +412,6 @@ BABEL-4231
 BABEL-4384
 GRANT_SCHEMA
 default_params
+BABEL-3326
+cast_eliminate
+TestDatatypeAggSort
