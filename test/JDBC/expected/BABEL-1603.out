@@ -101,7 +101,7 @@ SET DATEFIRST @rc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.DATEFIRST" (1 .. 7))~~
+~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 
 DECLARE @rc INT = 8;
@@ -109,7 +109,7 @@ SET DATEFIRST @rc;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.DATEFIRST" (1 .. 7))~~
+~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
 
 
 
