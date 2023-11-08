@@ -3586,6 +3586,25 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				GrantStmt *grant = (GrantStmt *) parsetree;
 				char	   *dbname = get_cur_db_name();
 				const char *current_user = GetUserNameFromId(GetUserId(), false);
+				int16 privilege_maskInt = 0;
+				ListCell   *lc1;
+				/* create integer bitmask for permissions*/
+						foreach(lc1, grant->privileges)
+						{
+							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+							if (!strcmp(ap->priv_name,"execute"))
+								privilege_maskInt |= 32;
+							if (!strcmp(ap->priv_name,"select"))
+								privilege_maskInt |= 16;
+							if (!strcmp(ap->priv_name,"insert"))
+								privilege_maskInt |= 8;
+							if (!strcmp(ap->priv_name,"update"))
+								privilege_maskInt |= 4;
+							if (!strcmp(ap->priv_name,"delete"))
+								privilege_maskInt |= 2;
+							if (!strcmp(ap->priv_name,"references"))
+								privilege_maskInt |= 1;
+						}
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;
@@ -3601,7 +3620,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						const char *logical_schema = NULL;
 						char	   *obj = rv->relname;
 						ListCell   *lc;
-						ListCell	*lc1;
 						const char *obj_type = "r";
 						if (rv->schemaname != NULL)
 							logical_schema = get_logical_schema_name(rv->schemaname, true);
@@ -3615,13 +3633,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									int i = 0;
-									char *permissions[] = {"select", "insert", "update", "references", "delete"};
-									for(i = 0; i < 5; i++)
+									if((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj,rol_spec->rolename))
 									{
-										if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
-											add_entry_to_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename, obj_type);
+										add_entry_to_bbf_schema(logical_schema, obj, 31, rol_spec->rolename, obj_type);
 									}
+									else if(rol_spec->rolename != NULL)
+									{
+										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
+										if(old_priv!= 31 || (old_priv|(31)) != old_priv)
+											update_bbf_schema_entry(logical_schema, obj, 31, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
+									}
+									
 								}
 								break;
 							}
@@ -3630,15 +3652,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									int i = 0;
 									bool has_schema_perms = false;
-									char *permissions[] = {"select", "insert", "update", "references", "delete"};
-									for(i = 0; i < 5; i++)
+									if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, "ALL", rol_spec->rolename) && !has_schema_perms)
+										has_schema_perms = true;
+									if((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
 									{
-										if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, "ALL", permissions[i], rol_spec->rolename) && !has_schema_perms)
-											has_schema_perms = true;
-										if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
-											del_from_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename);
+										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
+										if(old_priv!= 31 || ((old_priv)&(~(31))) != old_priv)
+											update_bbf_schema_entry(logical_schema, obj, 31, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
 									}
 									if (has_schema_perms)
 										return;
@@ -3646,52 +3667,59 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								break;
 							}
 						}
-						foreach(lc1, grant->privileges)
+						
+						if (grant->is_grant)
 						{
-							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-							if (grant->is_grant)
-							{
-								/*
-								* 1. Execute the GRANT statement.
-								* 2. Add its corresponding entry in the catalog, if doesn't exist already.
-								* 3. Don't add an entry, if the permission is granted on column list.
-								*/
-								if (prev_ProcessUtility)
-									prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-								else
-									standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-								foreach(lc, grant->grantees)
-								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									if ((ap->cols == NULL) && (rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
-										add_entry_to_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename, obj_type);
-								}
-							}
+							/*
+							* 1. Execute the GRANT statement.
+							* 2. Add its corresponding entry in the catalog, if doesn't exist already.
+							* 3. Don't add an entry, if the permission is granted on column list.
+							*/
+							if (prev_ProcessUtility)
+								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
 							else
+								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+							foreach(lc, grant->grantees)
 							{
-								foreach(lc, grant->grantees)
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
+									add_entry_to_bbf_schema(logical_schema, obj, privilege_maskInt, rol_spec->rolename, obj_type);
+								else if(rol_spec->rolename != NULL)
 								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/*
-									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
-									* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
-									*/
-									if ((logical_schema != NULL) && (rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
-									{
-										if (prev_ProcessUtility)
-											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																queryEnv, dest, qc);
-										else
-											standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																	queryEnv, dest, qc);
-									}
-									if ((ap->cols == NULL) && (rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
-										del_from_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename);
+									int16 old_priv = get_bbf_schema_privilege(logical_schema, obj, rol_spec->rolename);
+									if(old_priv!= privilege_maskInt || ((old_priv)|(privilege_maskInt)) != old_priv)
+										update_bbf_schema_entry(logical_schema, obj, privilege_maskInt, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
 								}
 							}
 						}
+						else
+						{
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/*
+								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
+								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
+								*/
+								if ((logical_schema != NULL) && (rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, "ALL", rol_spec->rolename))
+								{
+									if (prev_ProcessUtility)
+										prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+															queryEnv, dest, qc);
+									else
+										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+																queryEnv, dest, qc);
+								}
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
+									{
+										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
+										if(old_priv!= privilege_maskInt || ((old_priv)&(~(privilege_maskInt))) != old_priv)
+											update_bbf_schema_entry(logical_schema, obj, privilege_maskInt, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
+									}
+							}
+						}					
 						return;
 					}
 				}
@@ -3699,7 +3727,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
 					ListCell   *lc;
-					ListCell	*lc1;
 					const char *logicalschema = NULL;
 					char *funcname = NULL;
 					const char *obj_type = NULL;
@@ -3727,7 +3754,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 */
 					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
 					{
-						if(check_bbf_schema_for_schema(logicalschema, "ALL", "execute"))
+						if(check_bbf_schema_for_schema(logicalschema, "ALL", 32))
 							return;
 						break;
 					}
@@ -3739,8 +3766,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
-									add_entry_to_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename, obj_type);
+								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+									add_entry_to_bbf_schema(logicalschema, funcname, 32, rol_spec->rolename, obj_type);
+								else if (rol_spec->rolename != NULL)
+								{
+									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname, rol_spec->rolename);
+									if(old_priv!= 32 || ((old_priv)|(32)) != old_priv)
+										update_bbf_schema_entry(logicalschema, funcname, 32, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
+								}
 							}
 							break;
 						}
@@ -3750,19 +3783,21 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								bool has_schema_perms = false;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, "ALL", "execute", rol_spec->rolename) && !has_schema_perms)
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename) && !has_schema_perms)
 									has_schema_perms = true;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
-									del_from_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename);
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+								{
+									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname,rol_spec->rolename);
+									if(old_priv!= 32 || ((old_priv)&(~(32))) != old_priv)
+										update_bbf_schema_entry(logicalschema, funcname, 32, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
+								}
 								if (has_schema_perms)
 									return;
 							}
 							break;
 						}
 					}
-					foreach(lc1, grant->privileges)
-					{
-						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+					
 						if (grant->is_grant)
 						{
 							/* Execute the GRANT statement. */
@@ -3777,8 +3812,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Don't store a row in catalog, if permission is granted for column */
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-									add_entry_to_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename, obj_type);
+								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+									add_entry_to_bbf_schema(logicalschema, funcname, privilege_maskInt, rol_spec->rolename, obj_type);
+								else if(rol_spec->rolename != NULL)
+								{
+									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname, rol_spec->rolename);
+									if(old_priv!= privilege_maskInt || ((old_priv)|(privilege_maskInt)) != old_priv)
+										update_bbf_schema_entry(logicalschema, funcname, privilege_maskInt, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
+								}
 							}
 						}
 						else
@@ -3790,7 +3831,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
 								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 								*/
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, "ALL", ap->priv_name, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename))
 								{
 									/* Execute REVOKE statement. */
 									if (prev_ProcessUtility)
@@ -3800,11 +3841,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																queryEnv, dest, qc);
 								}
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-									del_from_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+								{
+									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname, rol_spec->rolename);
+									if(old_priv!= privilege_maskInt || ((old_priv)&(~(privilege_maskInt))) != old_priv)
+										update_bbf_schema_entry(logicalschema, funcname, privilege_maskInt, old_priv, rol_spec->rolename, obj_type, grant->is_grant);
+								}
 							}
 						}
-					}
 					return;
 				}
 			}
