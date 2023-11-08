@@ -164,7 +164,6 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_numeric'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
-
 CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.SMALLMONEY ,df_tz INTEGER DEFAULT 0)
 RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_money'
@@ -251,12 +250,6 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_money'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
-
-
--- CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date anyelement ,df_tz INTEGER DEFAULT 0)
--- RETURNS INTEGER
--- AS 'babelfishpg_tsql', 'datepart_internal'
--- LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128) AS $$

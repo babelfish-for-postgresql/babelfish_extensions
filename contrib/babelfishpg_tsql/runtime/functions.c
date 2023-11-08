@@ -350,6 +350,9 @@ custom_date_part(const char* field, Timestamp timestamp)
 	fsec_t		fsec1;
 	int64 		microseconds;
 	struct		pg_tm tt1, *tm = &tt1;
+	// struct 		tm *tm2 = NULL;
+	// char		timebuf[64];
+	// int day_of_year;
 
 	int			first_day;
 	int			first_week_end;
@@ -416,12 +419,11 @@ custom_date_part(const char* field, Timestamp timestamp)
 	}
 	else if (strcmp(field, "week") == 0 || strcasecmp(field , "tsql_week") == 0)
 	{
-		
 		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
 		first_week_end = 8 - datepart_internal("doy", first_day, 0);
 		day = custom_date_part("doy",timestamp);
 		if(day <= first_week_end) return 1;
-		else return 2+(day-first_week_end-1)/7;
+		else return (2+(day-first_week_end-1)/7)%52;
 	}
 	else
 	{
