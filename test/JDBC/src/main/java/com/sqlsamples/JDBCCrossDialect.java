@@ -201,7 +201,7 @@ public class JDBCCrossDialect {
                 }
             }
 
-            psqlConnectionMap.remove(newUser + newPassword + newDatabase);
+            psqlConnectionMap.remove(newUser + newPassword + newPhysicalDatabase + searchPath);
             resetConnectionAttributes();
         }
     }

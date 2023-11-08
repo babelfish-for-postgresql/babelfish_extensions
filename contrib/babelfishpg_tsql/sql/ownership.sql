@@ -308,6 +308,8 @@ BEGIN
 END
 $$;
 
+REVOKE EXECUTE ON PROCEDURE sys.remove_babelfish FROM PUBLIC;
+
 -- LOGIN EXT
 -- Note: change here requires change in FormData_authid_login_ext too
 CREATE TABLE sys.babelfish_authid_login_ext (
