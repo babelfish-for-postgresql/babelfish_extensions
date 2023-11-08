@@ -121,7 +121,6 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
 static ResTarget* make_restarget_from_colname(char * colName);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
-static void bbf_rewrite_targetlist(List *targetList);
 
 /*****************************************
  * 			Commands Hooks
@@ -232,7 +231,6 @@ static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook =
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 /* TODO: do we need to use variable to store hook value before transfrom pivot? No other function uses the same hook, should be redundant */
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
-static bbf_rewrite_targetlist_hook_type prev_bbf_rewrite_targetlist_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -396,9 +394,6 @@ InstallExtendedHooks(void)
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
 
-	prev_bbf_rewrite_targetlist_hook = bbf_rewrite_targetlist_hook;
-	bbf_rewrite_targetlist_hook = bbf_rewrite_targetlist;
-
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
 }
@@ -463,7 +458,6 @@ UninstallExtendedHooks(void)
 	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
-	bbf_rewrite_targetlist_hook = prev_bbf_rewrite_targetlist_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 }
 
@@ -1729,7 +1723,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		}
 		else if (res->name == NULL && IsA(res->val, FuncCall) ){
 			FuncCall *fc = (FuncCall *) res->val;
-			if (strncasecmp(strVal(llast(fc->funcname)), "identity_into", strlen("identity_into")) == 0)
+			if (strcasecmp(strVal(llast(fc->funcname)), "identity_into_bigint") == 0)
 			{
 				// throw error if Select Into-identity function is called without a column name
 				ereport(ERROR,
@@ -4500,35 +4494,4 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 		}
 	}
 	return node;
-}
-
-static void
-bbf_rewrite_targetlist(List *targetlist)
-{
-	ListCell *o_target;
-	List *modifiedTargetList = NIL;
-	ResTarget *identity_column_res = NULL;
-	bool is_identity_column = false;
-
-	foreach (o_target, targetlist)
-	{
-		ResTarget *res = (ResTarget *)lfirst(o_target);
-		is_identity_column = false;
-		if (IsA(res->val, FuncCall))
-		{
-			FuncCall *fc = (FuncCall *)res->val;
-			if (strncasecmp(strVal(llast(fc->funcname)), "identity_into", strlen("identity_into")) == 0)
-			{
-				is_identity_column = true;
-				identity_column_res = res;
-			}
-		}
-		if (!is_identity_column)
-			modifiedTargetList = lappend(modifiedTargetList, res);
-	}
-
-	if (identity_column_res != NULL)
-		modifiedTargetList = lappend(modifiedTargetList, identity_column_res);
-
-	targetlist = modifiedTargetList;
 }

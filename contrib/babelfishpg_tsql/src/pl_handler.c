@@ -186,7 +186,6 @@ static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
 											 * function */
 static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
 												 * function */
-Oid tsql_select_into_seq_oid = InvalidOid; /* Sequence table oid used by select into*/
 
 PG_MODULE_MAGIC;
 
@@ -5692,7 +5691,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen("identity_into")) == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
 				List *seqoptions = NIL;
@@ -5783,18 +5782,22 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 		{
 			if (q->sortClause)
 			{
-				List *modifiedSortList = NIL;
+				List *modifiedSortClause = NIL;
 				ListCell *olitem;
 				foreach (olitem, q->sortClause)
 				{
-					SortGroupClause *sortcl = (SortGroupClause *)lfirst(olitem);
-					if (sortcl->tleSortGroupRef != identity_ressortgroupref)
-						modifiedSortList = lappend(modifiedSortList, sortcl);
+					Node *sortnode = (Node *)lfirst(olitem);
+					if (IsA(sortnode, SortGroupClause))
+					{
+						SortGroupClause *sortcl = (SortGroupClause *)sortnode;
+						if (sortcl->tleSortGroupRef != identity_ressortgroupref)
+							modifiedSortClause = lappend(modifiedSortClause, sortcl);
+					}
 				}
-				q->sortClause = modifiedSortList;
+				q->sortClause = modifiedSortClause;
 			}
 
-			if (q->distinctClause)
+			if (q->distinctClause && list_length(q->distinctClause) > (identity_ressortgroupref - 1))
 				q->distinctClause = list_delete_nth_cell(q->distinctClause, identity_ressortgroupref - 1);
 		}
 	}

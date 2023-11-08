@@ -2315,7 +2315,7 @@ public:
 					has_identity_function = true;
 				}
 				
-				if (pg_strncasecmp(proc_name.c_str(), "identity_into", strlen("identity_into")) == 0)
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));

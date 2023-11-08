@@ -244,16 +244,13 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 	{
 		case INT2OID:
 			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
-			result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_smallint"), args, COERCE_EXPLICIT_CALL, location);
 			break;
 		case INT4OID:
 			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
-			result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_int"), args, COERCE_EXPLICIT_CALL, location);
 			break;
 		case INT8OID:
 		case NUMERICOID:
 			args = list_make3((Node *)makeIntConst((int)INT8OID, location), seed, increment); /* Used bigint internally for decimal and numeric as well*/
-			result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_bigint"), args, COERCE_EXPLICIT_CALL, location);
 			break;
 		default:
 			ereport(ERROR,
@@ -261,6 +258,7 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 					errmsg("Parameter or variable '' has an invalid data type.")));
 			break;
 	}
+	result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_bigint"), args, COERCE_EXPLICIT_CALL, location);
 	return result;
 }
 
