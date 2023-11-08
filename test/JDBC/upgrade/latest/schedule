@@ -486,4 +486,4 @@ pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
 TestDatatypeAggSort
-babel_index_nulls_order-after-15-4
+babel_index_nulls_order-after-15-5

@@ -1,0 +1,2 @@
+DROP TABLE babel_index_nulls_order_before_15_5_tbl
+go
