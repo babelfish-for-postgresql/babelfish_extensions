@@ -2981,7 +2981,10 @@ fixeddecimalaggstateserialize(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	state = (FixedDecimalAggState *) PG_GETARG_POINTER(0);
+	state = PG_ARGISNULL(0) ? NULL : (FixedDecimalAggState *) PG_GETARG_POINTER(0);
+
+	if (state == NULL)
+		PG_RETURN_NULL();
 
 	pq_begintypsend(&buf);
 
@@ -3006,7 +3009,10 @@ fixeddecimalaggstatedeserialize(PG_FUNCTION_ARGS)
 	if (!AggCheckCallContext(fcinfo, NULL))
 		elog(ERROR, "aggregate function called in non-aggregate context");
 
-	sstate = PG_GETARG_BYTEA_P(0);
+	sstate = PG_ARGISNULL(0) ? NULL : PG_GETARG_BYTEA_P(0);
+
+	if (sstate == NULL)
+		PG_RETURN_NULL();
 
 	/*
 	 * Copy the bytea into a StringInfo so that we can "receive" it using the
