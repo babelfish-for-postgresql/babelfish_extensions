@@ -4129,9 +4129,9 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEX
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Rename function for dependencies
-ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_3;
-ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_3;
-ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_3;
+ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_4_0;
+ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_4_0;
+ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_4_0;
 
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
@@ -4259,9 +4259,9 @@ $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
 -- === DROP deprecated functions (if exists)
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_3');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_3');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_3');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
