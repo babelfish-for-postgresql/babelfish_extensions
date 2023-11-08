@@ -1,25 +1,25 @@
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a DESC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a DESC
 go
 ~~START~~
 int
 5
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a ASC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a ASC
 go
 ~~START~~
 int
 6
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a
 go
 ~~START~~
 int
 1
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a DESC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a DESC
 go
 ~~START~~
 int
@@ -27,28 +27,28 @@ int
 ~~END~~
 
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
 varchar
 pqr
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b
 go
 ~~START~~
 varchar
 stu
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b
 go
 ~~START~~
 varchar
 abc
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
 go
 ~~START~~
 varchar
@@ -56,28 +56,28 @@ xyz
 ~~END~~
 
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
 int#!#varchar
 3#!#ghi
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
 go
 ~~START~~
 int#!#varchar
 3#!#ghi
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
 go
 ~~START~~
 int#!#varchar
 8#!#xyz
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
 go
 ~~START~~
 int#!#varchar
@@ -104,172 +104,172 @@ off
 SET babelfish_showplan_all ON
 go
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a DESC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a DESC
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a DESC
 Limit
   ->  Sort
         Sort Key: a DESC NULLS LAST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (a <= 5)
               ->  Bitmap Index Scan on babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4
                     Index Cond: (a <= 5)
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a ASC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a ASC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a ASC
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a ASC
 Limit
   ->  Sort
         Sort Key: a NULLS FIRST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (a > 5)
               ->  Bitmap Index Scan on babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4
                     Index Cond: (a > 5)
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a
 Limit
   ->  Sort
         Sort Key: a NULLS FIRST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (a <= 5)
               ->  Bitmap Index Scan on babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4
                     Index Cond: (a <= 5)
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a DESC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a DESC
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a DESC
 Limit
   ->  Sort
         Sort Key: a DESC NULLS LAST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (a > 5)
               ->  Bitmap Index Scan on babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4
                     Index Cond: (a > 5)
 ~~END~~
 
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b DESC
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b DESC
 Limit
   ->  Sort
         Sort Key: b DESC NULLS LAST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (b <= 'sss'::"varchar")
               ->  Bitmap Index Scan on babel_index_nulls_order_before_79538668b6d924b4e496d88983740877
                     Index Cond: (b <= 'sss'::"varchar")
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b
 Limit
   ->  Sort
         Sort Key: b NULLS FIRST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (b > 'sss'::"varchar")
               ->  Bitmap Index Scan on babel_index_nulls_order_before_79538668b6d924b4e496d88983740877
                     Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b
 Limit
   ->  Sort
         Sort Key: b NULLS FIRST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (b <= 'sss'::"varchar")
               ->  Bitmap Index Scan on babel_index_nulls_order_before_79538668b6d924b4e496d88983740877
                     Index Cond: (b <= 'sss'::"varchar")
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b DESC
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
 Limit
   ->  Sort
         Sort Key: b DESC NULLS LAST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (b > 'sss'::"varchar")
               ->  Bitmap Index Scan on babel_index_nulls_order_before_79538668b6d924b4e496d88983740877
                     Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
 Limit
   ->  Sort
         Sort Key: b DESC NULLS LAST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
               ->  Bitmap Index Scan on babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4
                     Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
 Limit
   ->  Sort
         Sort Key: b NULLS FIRST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
               ->  Bitmap Index Scan on babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4
                     Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
 Limit
   ->  Sort
         Sort Key: a DESC NULLS LAST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (b = 'xyz'::"varchar")
               Filter: (a > 5)
               ->  Bitmap Index Scan on babel_index_nulls_order_before_79538668b6d924b4e496d88983740877
                     Index Cond: (b = 'xyz'::"varchar")
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
 Limit
   ->  Sort
         Sort Key: a NULLS FIRST
-        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_4_tbl
+        ->  Bitmap Heap Scan on babel_index_nulls_order_before_15_5_tbl
               Recheck Cond: (b = 'xyz'::"varchar")
               Filter: (a > 5)
               ->  Bitmap Index Scan on babel_index_nulls_order_before_79538668b6d924b4e496d88983740877
@@ -289,18 +289,18 @@ on
 
 
 -- Recreate indexes
-DROP INDEX babel_index_nulls_order_before_15_4_asc_idx_a ON babel_index_nulls_order_before_15_4_tbl
+DROP INDEX babel_index_nulls_order_before_15_5_asc_idx_a ON babel_index_nulls_order_before_15_5_tbl
 go
-DROP INDEX babel_index_nulls_order_before_15_4_desc_idx_b ON babel_index_nulls_order_before_15_4_tbl
+DROP INDEX babel_index_nulls_order_before_15_5_desc_idx_b ON babel_index_nulls_order_before_15_5_tbl
 go
-DROP INDEX babel_index_nulls_order_before_15_4_default_idx_ab ON babel_index_nulls_order_before_15_4_tbl
+DROP INDEX babel_index_nulls_order_before_15_5_default_idx_ab ON babel_index_nulls_order_before_15_5_tbl
 go
 
-CREATE INDEX babel_index_nulls_order_before_15_4_asc_idx_a ON babel_index_nulls_order_before_15_4_tbl (a ASC)
+CREATE INDEX babel_index_nulls_order_before_15_5_asc_idx_a ON babel_index_nulls_order_before_15_5_tbl (a ASC)
 go
-CREATE INDEX babel_index_nulls_order_before_15_4_desc_idx_b ON babel_index_nulls_order_before_15_4_tbl (b DESC)
+CREATE INDEX babel_index_nulls_order_before_15_5_desc_idx_b ON babel_index_nulls_order_before_15_5_tbl (b DESC)
 go
-CREATE INDEX babel_index_nulls_order_before_15_4_default_idx_ab ON babel_index_nulls_order_before_15_4_tbl (a, b)
+CREATE INDEX babel_index_nulls_order_before_15_5_default_idx_ab ON babel_index_nulls_order_before_15_5_tbl (a, b)
 go
 
 -- Check query plans, all aggregations should be optimized
@@ -322,125 +322,125 @@ off
 SET babelfish_showplan_all ON
 go
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a DESC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a DESC
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a DESC
 Limit
-  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (a <= 5)
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a ASC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a ASC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a ASC
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a ASC
 Limit
-  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (a > 5)
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a <= 5 ORDER BY a
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a <= 5 ORDER BY a
 Limit
-  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (a <= 5)
 ~~END~~
 
-SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a DESC
+SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 ORDER BY a DESC
+Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 ORDER BY a DESC
 Limit
-  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (a > 5)
 ~~END~~
 
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b DESC
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b DESC
 Limit
-  ->  Index Only Scan using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (b <= 'sss'::"varchar")
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b
 Limit
-  ->  Index Only Scan Backward using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan Backward using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b <= 'sss' ORDER BY b
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b <= 'sss' ORDER BY b
 Limit
-  ->  Index Only Scan Backward using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan Backward using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (b <= 'sss'::"varchar")
 ~~END~~
 
-SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b DESC
+SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_4_tbl WHERE b > 'sss' ORDER BY b DESC
+Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_before_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
 Limit
-  ->  Index Only Scan using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan using babel_index_nulls_order_before_79538668b6d924b4e496d88983740877 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
 Limit
-  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
 Limit
-  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
 Limit
-  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan Backward using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
-SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
+SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
 go
 ~~START~~
 text
-Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_4_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
+Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
 Limit
-  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_4_tbl
+  ->  Index Only Scan using babel_index_nulls_order_before_c2e3f7a2a9c44f061f586b1c57b5c6d4 on babel_index_nulls_order_before_15_5_tbl
         Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
