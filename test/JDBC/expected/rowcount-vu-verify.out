@@ -348,3 +348,23 @@ int#!#int
 int#!#int
 ~~END~~
 
+
+
+-- error message should be in uppercase for stmt
+declare @v int = NULL;
+SET rowCounT @v
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid argument for SET ROWCOUNT. Must be a non-null value.)~~
+
+
+
+-- parameter name should be in lowercase for stmt
+declare @v int = -1;
+SET rowCounT @v
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: -1 is outside the valid range for parameter "babelfishpg_tsql.rowcount" (0 .. 2147483647))~~
+

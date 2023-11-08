@@ -53,6 +53,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
+#include "utils/formatting.h"
 
 #include "pltsql.h"
 #include "access/xact.h"
@@ -6413,22 +6414,24 @@ exec_assign_value(PLtsql_execstate *estate,
 				/* Special handling when target variable is babelfish GUC */
 				if(var->is_babelfish_guc)
 				{	
-					StringInfoData buf;
+					StringInfo buf;
 					if (isNull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-								errmsg("Invalid argument for SET %s. Must be a non-null value.",
-										var->refname)));
+								 errmsg("Invalid argument for SET %s. Must be a non-null value.",
+									asc_toupper(var->refname, strlen(var->refname)))));
 
-					initStringInfo(&buf);
+					buf =  makeStringInfo();
 					if(var->datatype->typoid == INT4OID)
-						appendStringInfo(&buf, "%d", DatumGetInt32(newvalue));
+						appendStringInfo(buf, "%d", DatumGetInt32(newvalue));
 					else
-						appendStringInfoString(&buf, TextDatumGetCString(newvalue));
+						appendStringInfoString(buf, TextDatumGetCString(newvalue));
 
-					set_config_option(psprintf("babelfishpg_tsql.%s", var->refname), buf.data,
+					set_config_option(psprintf("babelfishpg_tsql.%s", var->refname), buf->data,
 								PGC_USERSET, PGC_S_SESSION, GUC_ACTION_SET,
 								true, 0, false);
+					pfree(buf->data);
+					pfree(buf);
 					break;
 				}
 

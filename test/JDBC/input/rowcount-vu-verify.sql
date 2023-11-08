@@ -113,3 +113,15 @@ begin
     if @@rowcount = 0 break
 end
 go
+
+
+-- error message should be in uppercase for stmt
+declare @v int = NULL;
+SET rowCounT @v
+go
+
+
+-- parameter name should be in lowercase for stmt
+declare @v int = -1;
+SET rowCounT @v
+go

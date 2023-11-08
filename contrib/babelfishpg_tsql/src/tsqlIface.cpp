@@ -4728,12 +4728,15 @@ static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Special_variableCon
 {
 	PLtsql_var *var;
 	int type;
+	std::string command = ::getFullText(guc_ctx);
+	std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+
 	if (guc_ctx->ROWCOUNT() || guc_ctx->DATEFIRST())
 		type = INT4OID;
 	else 
 		type = TEXTOID;
 
-	var = (PLtsql_var *) pltsql_build_variable(getFullText(guc_ctx).c_str(), 
+	var = (PLtsql_var *) pltsql_build_variable(command.c_str(), 
 						  0, 
 						  pltsql_build_datatype(type, -1, InvalidOid, NULL), 
 						  false);
