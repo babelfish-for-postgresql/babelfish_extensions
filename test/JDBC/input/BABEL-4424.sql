@@ -239,3 +239,116 @@ DROP TABLE babel_4424_t1;
 go
 DROP TABLE babel_4424_t2;
 go
+
+create table babel_4424_t1 (n3_0 numeric(3,0), n3_1 numeric(3,1), n6_0 numeric(6,0), n10_0 numeric(10,0), n10_9 numeric(10, 9),
+							n15_0 numeric(15,0), n16_15 numeric(16,15), n20_2 numeric(20,2), n25_5 numeric(25,0), n30_10 numeric(30, 10),
+							n30_29 numeric(30,29), n38_37 numeric(38,37));
+
+insert into babel_4424_t1 (n3_0) values (999);
+insert into babel_4424_t1 (n3_1) values (99.9);
+insert into babel_4424_t1 (n6_0) values (999999);
+insert into babel_4424_t1 (n10_0) values (9999999999);
+insert into babel_4424_t1 (n10_9) values (9.999999999);
+insert into babel_4424_t1 (n15_0) values (999999999999999);
+insert into babel_4424_t1 (n16_15) values (9.999999999999999);
+insert into babel_4424_t1 (n20_2) values (999999999999999999.99);
+insert into babel_4424_t1 (n25_5) values (99999999999999999999.99999);
+insert into babel_4424_t1 (n30_10) values (99999999999999999999.9999999999);
+insert into babel_4424_t1 (n30_29) values (9.99999999999999999999999999999);
+insert into babel_4424_t1 (n38_37) values (9.9999999999999999999999999999999999999);
+insert into babel_4424_t1 (n3_0, n3_1, n6_0, n10_0, n10_9, n15_0, n16_15, n20_2, n25_5, n30_10, n30_29, n38_37)
+values (999, 99.9, 999999, 9999999999, 9.999999999, 999999999999999, 9.999999999999999, 999999999999999999.99, 
+99999999999999999999.99999, 99999999999999999999.9999999999, 9.99999999999999999999999999999, 9.9999999999999999999999999999999999999);
+GO
+
+select n38_37 + 100 from babel_4424_t1 where n38_37 is not null;
+GO
+
+select n38_37 + n38_37 from babel_4424_t1 where n38_37 is not null;
+GO
+
+select sum(n38_37) from babel_4424_t1 where n38_37 is not null;
+GO
+
+select avg(n38_37) from babel_4424_t1 where n38_37 is not null;
+GO
+
+select n30_29 * 100 from babel_4424_t1 where n30_29 is not null;
+GO
+
+select n30_29 + n30_29 from babel_4424_t1 where n30_29 is not null;
+GO
+
+select n30_29 + n38_37 from babel_4424_t1 where n30_29 is not null and n38_37 is not null;
+GO
+
+select n3_0 * n3_0 from babel_4424_t1 where n3_0 is not null;
+GO
+
+select n3_0 * n3_1 from babel_4424_t1 where n3_0 is not null and n3_1 is not null;
+GO
+
+select n3_0 + n6_0 from babel_4424_t1 where n3_0 is not null and n6_0 is not null;
+GO
+
+select n6_0 + n10_9 from babel_4424_t1 where n6_0 is not null and n10_9 is not null;
+GO
+
+select n15_0 * n15_0 from babel_4424_t1 where n15_0 is not null;
+GO
+
+select n15_0 + n38_37 from babel_4424_t1 where n15_0 is not null and n38_37 is not null;
+GO
+
+select n15_0 + n16_15 from babel_4424_t1 where n15_0 is not null and n16_15 is not null;
+GO
+
+select avg(n16_15) from babel_4424_t1 where n16_15 is not null;
+GO
+
+select n16_15 * n16_15 from babel_4424_t1 where n16_15 is not null;
+GO
+
+select n15_0 + n16_15 + n30_10 from babel_4424_t1 where n15_0 is not null and n16_15 is not null and n30_10 is not null;
+GO
+
+select n20_2 + n38_37 from babel_4424_t1 where n20_2 is not null and n38_37 is not null;
+GO
+
+select  n25_5 + n30_10 from babel_4424_t1 where n25_5 is not null and n30_10 is not null;
+GO
+
+select n30_29 + n30_10 from babel_4424_t1 where n30_29 is not null and n30_10 is not null;
+GO
+
+select * from
+(
+	select n3_0 col from babel_4424_t1 where n3_0 is not null
+	union all
+	select n3_1 col from babel_4424_t1 where n3_1 is not null
+	union all
+	select n6_0 col from babel_4424_t1 where n6_0 is not null
+	union all
+	select n10_0 col from babel_4424_t1 where n10_0 is not null
+	union all
+	select n10_9 col from babel_4424_t1 where n10_9 is not null
+	union all
+	select n15_0 col from babel_4424_t1 where n15_0 is not null
+	union all
+	select n16_15 col from babel_4424_t1 where n16_15 is not null
+	union all
+	select n20_2 col from babel_4424_t1 where n20_2 is not null
+	union all
+	select n25_5 col from babel_4424_t1 where n25_5 is not null
+	union all
+	select n30_10 col from babel_4424_t1 where n30_10 is not null
+	union all
+	select n30_29 col from babel_4424_t1 where n30_29 is not null
+	union all
+	select n38_37 col from babel_4424_t1 where n38_37 is not null
+) dummy
+order by col;
+GO
+
+DROP table babel_4424_t1;
+GO
