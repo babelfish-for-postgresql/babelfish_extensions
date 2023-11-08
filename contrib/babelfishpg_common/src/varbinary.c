@@ -727,17 +727,23 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	coll_info	collInfo;
 	int			encodedByteLen;
 
-	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
-
 	/*
-	 * Cast the entire input binary data if maxlen is invalid or supplied data
-	 * fits it
+	 * Allow trailing null bytes 
+	 * Its safe since multi byte UTF-8 does not contain 0x00 
+	 */
+	while(len>0 && data[len-1] == '\0')
+		len -= 1;
+	
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+	/*
+	 * Cast the entire input binary data if maxlen is 
+	 * invalid or supplied data fits it
+	 * Else truncate it
 	 */
 	PG_TRY();
 	{
 		if (maxlen < 0 || len <= maxlen)
 			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
-		/* Else truncate it */
 		else
 			encoded_result = encoding_conv_util(data, maxlen, collInfo.enc, PG_UTF8, &encodedByteLen);
 	}

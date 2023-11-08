@@ -86,6 +86,14 @@ GO
 SELECT CONVERT(VARBINARY(10), a) FROM babel_1940_t2
 GO
 
+-- Truncate trailing null bytes
+SELECT CAST(CAST(0x616263 as BINARY(128)) as VARCHAR)
+GO
+
+-- Block intermidiate null byte
+SELECT CAST(CAST(0x610063 as BINARY(128)) as VARCHAR)
+GO
+
 DROP TABLE babel_1940_t2
 GO
 
