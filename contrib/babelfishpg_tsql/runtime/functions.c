@@ -128,6 +128,8 @@ PG_FUNCTION_INFO_V1(type_id);
 PG_FUNCTION_INFO_V1(type_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
+PG_FUNCTION_INFO_V1(identity_into_smallint);
+PG_FUNCTION_INFO_V1(identity_into_int);
 PG_FUNCTION_INFO_V1(identity_into_bigint);
 PG_FUNCTION_INFO_V1(host_name);
 PG_FUNCTION_INFO_V1(host_id);
@@ -2307,6 +2309,18 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 		(*pltsql_protocol_plugin_ptr)->set_context_info(PG_GETARG_BYTEA_P(0));
 
 	PG_RETURN_VOID();
+}
+
+Datum 
+identity_into_smallint(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT16((int16)0);
+}
+
+Datum
+identity_into_int(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT32((int32)0);
 }
 
 Datum 
