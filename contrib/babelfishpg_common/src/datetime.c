@@ -15,7 +15,8 @@
 #include "utils/numeric.h"
 #include "utils/timestamp.h"
 #include "libpq/pqformat.h"
-
+#include "parser/scansup.h"
+#include "common/int.h"
 #include "miscadmin.h"
 #include "datetime.h"
 
@@ -43,6 +44,8 @@ PG_FUNCTION_INFO_V1(float8_mi_datetime);
 
 PG_FUNCTION_INFO_V1(datetime_pl_datetime);
 PG_FUNCTION_INFO_V1(datetime_mi_datetime);
+PG_FUNCTION_INFO_V1(timestamp_diff);
+PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 PG_FUNCTION_INFO_V1(datetime_to_bit);
 PG_FUNCTION_INFO_V1(datetime_to_int2);
@@ -51,9 +54,12 @@ PG_FUNCTION_INFO_V1(datetime_to_int8);
 PG_FUNCTION_INFO_V1(datetime_to_float4);
 PG_FUNCTION_INFO_V1(datetime_to_float8);
 PG_FUNCTION_INFO_V1(datetime_to_numeric);
+PG_FUNCTION_INFO_V1(dateadd_datetime);
 
 void		CheckDatetimeRange(const Timestamp time);
 void		CheckDatetimePrecision(fsec_t fsec);
+
+#define DTK_NANO 32
 
 Datum
 datetime_in_str(char *str)
@@ -797,4 +803,499 @@ datetime_to_numeric(PG_FUNCTION_ARGS)
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
 	PG_RETURN_NUMERIC(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
+}
+
+/*
+ * Returns the difference of two timestamps based on a provided unit
+ * INT64 representation for bigints
+ */
+Datum
+timestamp_diff(PG_FUNCTION_ARGS)
+{
+
+	text        *field     = PG_GETARG_TEXT_PP(0);
+	Timestamp	timestamp1 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	timestamp2 = PG_GETARG_TIMESTAMP(2);
+	int32 diff = -1;
+	int ok1;
+	int ok2;
+	int32 yeardiff;
+	int32 monthdiff;
+	int32 daydiff;
+	int32 hourdiff;
+	int32 minutediff;
+	int32 seconddiff;
+	int32 millisecdiff;
+	int32 microsecdiff;
+	struct pg_tm tt1,
+			   *tm1 = &tt1;
+	fsec_t		fsec1;
+	struct pg_tm tt2,
+			*tm2 = &tt2;
+	fsec_t		fsec2;
+	int			type,
+				val;
+	char	   *lowunits;
+	bool       overflow = false;
+
+	ok1 = timestamp2tm(timestamp1, NULL, tm1, &fsec1, NULL, NULL);
+	ok2 = timestamp2tm(timestamp2, NULL, tm2, &fsec2, NULL, NULL);
+
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
+										VARSIZE_ANY_EXHDR(field),
+										false);
+
+	type = DecodeUnits(0, lowunits, &val);
+
+	// Decode units does not handle doy properly
+	if(strncmp(lowunits, "doy", 3) == 0) {
+		type = UNITS;
+		val = DTK_DOY;
+	}
+
+	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+		type = UNITS;
+		val = DTK_NANO;
+	}
+
+	if(type == UNITS) {
+		if(ok1 == 0 && ok2 == 0) {
+			switch(val) {
+				case DTK_YEAR:
+					diff = tm2->tm_year - tm1->tm_year;
+					break;
+				case DTK_QUARTER:
+					yeardiff = tm2->tm_year - tm1->tm_year;
+					monthdiff = tm2->tm_mon - tm1->tm_mon;
+					diff = (yeardiff * 12 + monthdiff) / 3;
+					break;
+				case DTK_MONTH:
+					yeardiff = tm2->tm_year - tm1->tm_year;
+					monthdiff = tm2->tm_mon - tm1->tm_mon;
+					diff = yeardiff * 12 + monthdiff;
+					break;
+				case DTK_WEEK:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					diff = daydiff / 7;
+					if(daydiff % 7 >= 4)
+						diff++;
+					break;
+				case DTK_DAY:
+				case DTK_DOY:
+					diff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					break;
+				case DTK_HOUR:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					overflow = (overflow || !(int32_multiply_add(daydiff, 24, &hourdiff)));
+					diff = hourdiff;
+					break;
+				case DTK_MINUTE:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					overflow = (overflow || !(int32_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int32_multiply_add(hourdiff, 60, &minutediff)));
+					diff = minutediff;
+					break;
+				case DTK_SECOND:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					overflow = (overflow || !(int32_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int32_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int32_multiply_add(minutediff, 60, &seconddiff)));
+					diff = seconddiff;
+					break;
+				case DTK_MILLISEC:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					millisecdiff = (fsec2 / 1000) - (fsec1 / 1000);
+					overflow = (overflow || !(int32_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int32_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int32_multiply_add(minutediff, 60, &seconddiff)));
+					overflow = (overflow || !(int32_multiply_add(seconddiff, 1000, &millisecdiff)));
+					diff = millisecdiff;
+					break;
+				case DTK_MICROSEC:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					microsecdiff = fsec2 - fsec1;
+					overflow = (overflow || !(int32_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int32_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int32_multiply_add(minutediff, 60, &seconddiff)));
+					overflow = (overflow || !(int32_multiply_add(seconddiff, 1000000, &microsecdiff)));
+					diff = microsecdiff;
+					break;
+				case DTK_NANO:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					microsecdiff = fsec2 - fsec1;
+					overflow = (overflow || !(int32_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int32_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int32_multiply_add(minutediff, 60, &seconddiff)));
+					overflow = (overflow || !(int32_multiply_add(seconddiff, 1000000, &microsecdiff)));
+					overflow = (overflow || (pg_mul_s32_overflow(microsecdiff, 1000, &diff)));
+					break;
+				default:
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date", lowunits);
+					break;
+			}
+		}
+		else {
+			elog(ERROR, "Incorrect datetime format");
+		}
+	} else {
+		elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date", lowunits);
+	}
+
+	if(overflow) {
+		elog(ERROR, "The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart");
+	}
+
+	PG_RETURN_INT64(diff);
+}
+
+/*
+ * Returns the difference of two timestamps based on a provided unit
+ * INT64 representation for bigints
+ */
+Datum
+timestamp_diff_big(PG_FUNCTION_ARGS)
+{
+	text        *field     = PG_GETARG_TEXT_PP(0);
+	Timestamp	timestamp1 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	timestamp2 = PG_GETARG_TIMESTAMP(2);
+	int64 diff = -1;
+	int ok1;
+	int ok2;
+	int64 yeardiff;
+	int64 monthdiff;
+	int64 daydiff;
+	int64 hourdiff;
+	int64 minutediff;
+	int64 seconddiff;
+	int64 millisecdiff;
+	int64 microsecdiff;
+	struct pg_tm tt1,
+			   *tm1 = &tt1;
+	fsec_t		fsec1;
+	struct pg_tm tt2,
+			*tm2 = &tt2;
+	fsec_t		fsec2;
+	int			type,
+				val;
+	char	   *lowunits;
+	bool       overflow = false;
+
+	ok1 = timestamp2tm(timestamp1, NULL, tm1, &fsec1, NULL, NULL);
+	ok2 = timestamp2tm(timestamp2, NULL, tm2, &fsec2, NULL, NULL);
+
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
+										VARSIZE_ANY_EXHDR(field),
+										false);
+
+	type = DecodeUnits(0, lowunits, &val);
+
+	// Decode units does not handle doy or nano properly
+	if(strncmp(lowunits, "doy", 3) == 0) {
+		type = UNITS;
+		val = DTK_DOY;
+	}
+	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+		type = UNITS;
+		val = DTK_NANO;
+	}
+
+	if(type == UNITS) {
+		if(ok1 == 0 && ok2 == 0) {
+			switch(val)
+			{
+				case DTK_YEAR:
+					diff = tm2->tm_year - tm1->tm_year;
+					break;
+				case DTK_QUARTER:
+					yeardiff = tm2->tm_year - tm1->tm_year;
+					monthdiff = tm2->tm_mon - tm1->tm_mon;
+					diff = (yeardiff * 12 + monthdiff) / 3;
+					break;
+				case DTK_MONTH:
+					yeardiff = tm2->tm_year - tm1->tm_year;
+					monthdiff = tm2->tm_mon - tm1->tm_mon;
+					diff = yeardiff * 12 + monthdiff;
+					break;
+				case DTK_WEEK:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					diff = daydiff / 7;
+					if(daydiff % 7 >= 4)
+						diff++;
+					break;
+				case DTK_DAY:
+				case DTK_DOY:
+					diff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					break;
+				case DTK_HOUR:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					overflow = (overflow || !(int64_multiply_add(daydiff, 24, &hourdiff)));
+					diff = hourdiff;
+					break;
+				case DTK_MINUTE:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					overflow = (overflow || !(int64_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int64_multiply_add(hourdiff, 60, &minutediff)));
+					diff = minutediff;
+					break;
+				case DTK_SECOND:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					overflow = (overflow || !(int64_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int64_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int64_multiply_add(minutediff, 60, &seconddiff)));
+					diff = seconddiff;
+					break;
+				case DTK_MILLISEC:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					millisecdiff = (fsec2 / 1000) - (fsec1 / 1000);
+					overflow = (overflow || !(int64_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int64_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int64_multiply_add(minutediff, 60, &seconddiff)));
+					overflow = (overflow || !(int64_multiply_add(seconddiff, 1000, &millisecdiff)));
+					diff = millisecdiff;
+					break;
+				case DTK_MICROSEC:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					microsecdiff = fsec2 - fsec1;
+					overflow = (overflow || !(int64_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int64_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int64_multiply_add(minutediff, 60, &seconddiff)));
+					overflow = (overflow || !(int64_multiply_add(seconddiff, 1000000, &microsecdiff)));
+					diff = microsecdiff;
+					break;
+				case DTK_NANO:
+					daydiff = days_in_date(tm2->tm_mday, tm2->tm_mon, tm2->tm_year) - days_in_date(tm1->tm_mday, tm1->tm_mon, tm1->tm_year);
+					hourdiff = tm2->tm_hour - tm1->tm_hour;
+					minutediff = tm2->tm_min - tm1->tm_min;
+					seconddiff = tm2->tm_sec - tm1->tm_sec;
+					microsecdiff = fsec2 - fsec1;
+					overflow = (overflow || !(int64_multiply_add(daydiff, 24, &hourdiff)));
+					overflow = (overflow || !(int64_multiply_add(hourdiff, 60, &minutediff)));
+					overflow = (overflow || !(int64_multiply_add(minutediff, 60, &seconddiff)));
+					overflow = (overflow || !(int64_multiply_add(seconddiff, 1000000, &microsecdiff)));
+					overflow = (overflow || (pg_mul_s64_overflow(microsecdiff, 1000, &diff)));
+					break;
+				default:
+					elog(ERROR, "the datepart \"%s\" is not supported by function daydiff for datatype", lowunits);
+					break;
+			}
+		}
+		else {
+			elog(ERROR, "Incorrect datetime format");
+		}
+	} else {
+		elog(ERROR, "the datepart \"%s\" is not supported by function daydiff for datatype", lowunits);
+	}
+
+	if(overflow) {
+		elog(ERROR, "The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart");
+	}
+
+	PG_RETURN_INT64(diff);
+}
+
+bool
+int64_multiply_add(int64 val, int64 multiplier, int64 *sum)
+{
+	int64		product;
+
+	if (pg_mul_s64_overflow(val, multiplier, &product) ||
+		pg_add_s64_overflow(*sum, product, sum))
+		return false;
+	return true;
+}
+
+bool
+int32_multiply_add(int32 val, int32 multiplier, int32 *sum)
+{
+	int32		product;
+
+	if (pg_mul_s32_overflow(val, multiplier, &product) ||
+		pg_add_s32_overflow(*sum, product, sum))
+		return false;
+	return true;
+}
+
+int days_in_date(int day, int month, int year) {
+	int n1 = year * 365 + day;
+	for(int i = 0; i < month; i++) {
+		if(i == 1)
+			n1 += 28;
+		else if(i == 3 || i == 5 || i == 8 || i == 10)
+			n1 += 30;
+		else
+			n1 += 31;
+	}
+	if(month <= 2)
+		year -= 1;
+	n1 += (year / 4 - year / 100 + year / 400);
+	return n1;
+}
+
+Datum
+dateadd_datetime(PG_FUNCTION_ARGS) {
+	text    *field     = PG_GETARG_TEXT_PP(0);
+	int      num       = PG_GETARG_INT32(1);
+	enum Datetimetype {
+		TIME,
+		DATE,
+		SMALLDATETIME,
+		DATETIME,
+		DATETIME2
+	};
+	Timestamp timestamp;
+	// 0 = smalldatetime, 1 = datetime or timestamp, 2 = datetime2
+	enum Datetimetype dttype = PG_GETARG_INT32(3);
+
+	char	   *lowunits;
+	int			type,
+				val;
+	Timestamp result;
+	Interval   *interval;
+
+	switch(dttype) {
+		case TIME:
+			timestamp = DirectFunctionCall1(time_datetime, (TimeADT) PG_GETARG_TIMEADT(2));
+			break;
+		case DATE:
+			timestamp = DirectFunctionCall1(date_datetime, (DateADT) PG_GETARG_DATEADT(2));
+			break;
+		default:
+			timestamp = PG_GETARG_TIMESTAMP(2);
+	}
+
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
+									VARSIZE_ANY_EXHDR(field),
+									false);
+
+	type = DecodeUnits(0, lowunits, &val);
+
+	if(strncmp(lowunits, "doy", 3) == 0) {
+		type = UNITS;
+		val = DTK_DOY;
+	}
+	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+		type = UNITS;
+		val = DTK_NANO;
+	}
+
+	if(type == UNITS) {
+		switch(val) {
+			case DTK_YEAR:
+				if(dttype == TIME) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype time",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, num, 0, 0, 0, 0, 0, 0);
+				break;
+			case DTK_QUARTER:
+				if(dttype == TIME) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype time",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num * 3, 0, 0, 0, 0, 0);
+				break;
+			case DTK_MONTH:
+				if(dttype == TIME) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype time",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num, 0, 0, 0, 0, 0);
+				break;
+			case DTK_WEEK:
+				if(dttype == TIME) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype time",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, num, 0, 0, 0, 0);
+				break;
+			case DTK_DAY:
+			case DTK_DOY:
+				if(dttype == TIME) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype time",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, num, 0, 0, 0);
+				break;
+			case DTK_HOUR:
+				if(dttype == DATE) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, num, 0, 0);
+				break;
+			case DTK_MINUTE:
+				if(dttype == DATE) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, num, 0);
+				break;
+			case DTK_SECOND:
+				if(dttype == DATE) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum(num));
+				break;
+			case DTK_MILLISEC:
+				if(dttype == DATE) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.001));
+				break;
+			case DTK_MICROSEC:
+				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype datetime, smalldatetime, and date",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000001));
+				break;
+			case DTK_NANO:
+				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
+					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype datetime and smalldatetime, and date",
+				 	lowunits);
+				}
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
+				break;
+			default:
+				elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date",
+				 	lowunits);
+				break;
+		}
+	} else {
+		elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype datetime", lowunits);
+	}
+
+	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(interval));
+
+	CheckDatetimeRange(result);
+	PG_RETURN_TIMESTAMP(result);
 }
