@@ -1,2 +1,0 @@
-DROP TABLE babel_index_nulls_order_after_15_5_tbl
-go
