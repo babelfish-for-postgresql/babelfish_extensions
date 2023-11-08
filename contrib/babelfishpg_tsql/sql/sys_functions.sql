@@ -1570,7 +1570,6 @@ END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
--- TODO
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
 AS
 $body$

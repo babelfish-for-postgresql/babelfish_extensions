@@ -946,7 +946,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 					overflow = (overflow || (pg_mul_s32_overflow(microsecdiff, 1000, &diff)));
 					break;
 				default:
-					elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date", lowunits);
+					elog(ERROR, "the datepart \"%s\" is not supported by function datediff for datatype date", lowunits);
 					break;
 			}
 		}
@@ -954,7 +954,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 			elog(ERROR, "Incorrect datetime format");
 		}
 	} else {
-		elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype date", lowunits);
+		elog(ERROR, "the datepart \"%s\" is not supported by function datediff for datatype date", lowunits);
 	}
 
 	if(overflow) {
@@ -1145,10 +1145,10 @@ int32_multiply_add(int32 val, int32 multiplier, int32 *sum)
 
 int days_in_date(int day, int month, int year) {
 	int n1 = year * 365 + day;
-	for(int i = 0; i < month; i++) {
-		if(i == 1)
+	for(int i = 1; i < month; i++) {
+		if(i == 2)
 			n1 += 28;
-		else if(i == 3 || i == 5 || i == 8 || i == 10)
+		else if(i == 4 || i == 6 || i == 9 || i == 11)
 			n1 += 30;
 		else
 			n1 += 31;
@@ -1195,7 +1195,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 
 	type = DecodeUnits(0, lowunits, &val);
 
-	if(strncmp(lowunits, "doy", 3) == 0) {
+	if(strncmp(lowunits, "doy", 3) == 0 || strncmp(lowunits, "dayofyear", 9) == 0) {
 		type = UNITS;
 		val = DTK_DOY;
 	}
