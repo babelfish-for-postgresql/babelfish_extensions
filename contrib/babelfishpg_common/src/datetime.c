@@ -44,8 +44,6 @@ PG_FUNCTION_INFO_V1(float8_mi_datetime);
 
 PG_FUNCTION_INFO_V1(datetime_pl_datetime);
 PG_FUNCTION_INFO_V1(datetime_mi_datetime);
-PG_FUNCTION_INFO_V1(timestamp_diff);
-PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 PG_FUNCTION_INFO_V1(datetime_to_bit);
 PG_FUNCTION_INFO_V1(datetime_to_int2);
@@ -54,7 +52,10 @@ PG_FUNCTION_INFO_V1(datetime_to_int8);
 PG_FUNCTION_INFO_V1(datetime_to_float4);
 PG_FUNCTION_INFO_V1(datetime_to_float8);
 PG_FUNCTION_INFO_V1(datetime_to_numeric);
+
 PG_FUNCTION_INFO_V1(dateadd_datetime);
+PG_FUNCTION_INFO_V1(timestamp_diff);
+PG_FUNCTION_INFO_V1(timestamp_diff_big);
 
 void		CheckDatetimeRange(const Timestamp time);
 void		CheckDatetimePrecision(fsec_t fsec);
@@ -1170,9 +1171,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 		DATETIME2
 	};
 	Timestamp timestamp;
-	// 0 = smalldatetime, 1 = datetime or timestamp, 2 = datetime2
 	enum Datetimetype dttype = PG_GETARG_INT32(3);
-
 	char	   *lowunits;
 	int			type,
 				val;
