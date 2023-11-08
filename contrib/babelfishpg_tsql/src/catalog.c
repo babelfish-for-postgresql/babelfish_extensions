@@ -3199,17 +3199,18 @@ clean_up_bbf_schema(const char *schema_name,
 
 void
 grant_perms_to_objects_in_schema(const char *schema_name,
-				  int16 permission,
-				  const char *grantee)
+				int16 priv,
+				const char *grantee)
 {
 	TableScanDesc scan;
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
 	const char	*object_name;
 	const char	*object_type;
-	ScanKeyData scanKey[4];
+	ScanKeyData scanKey[3];
 	int16		dbid = get_cur_db_id();
 	const char *db_name = get_cur_db_name();
+	int16 permission = 0;
 
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
@@ -3223,15 +3224,11 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(schema_name));
 	ScanKeyInit(&scanKey[2],
-				Anum_bbf_schema_perms_permission,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(permission));
-	ScanKeyInit(&scanKey[3],
 				Anum_bbf_schema_perms_grantee,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(grantee));
 
-	scan = table_beginscan_catalog(bbf_schema_rel, 4, scanKey);
+	scan = table_beginscan_catalog(bbf_schema_rel, 3, scanKey);
 	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
 
 	while (HeapTupleIsValid(tuple_bbf_schema))
@@ -3240,7 +3237,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 		schemaform = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
 		object_name = pstrdup(NameStr(schemaform->object_name));
 		object_type = pstrdup(NameStr(schemaform->object_type));
-
+		permission = (priv & (schemaform->permission));
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, "ALL") != 0)
 		{
@@ -3255,20 +3252,20 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 			if((permission & 32) == 32)
 			{
 				if (object_type != NULL && strcmp(object_type, "f") == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", "execute", schema, object_name, grantee);
+					appendStringInfo(&query, "GRANT execute ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 				else
-					appendStringInfo(&query, "GRANT \"%s\" ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", "execute", schema, object_name, grantee);
+					appendStringInfo(&query, "GRANT execute ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 			}
 			if((permission & 16) == 16)
-				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", "select", schema, object_name, grantee);
+				appendStringInfo(&query, "GRANT select ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 			if((permission & 8) == 8)
-				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", "insert", schema, object_name, grantee);
+				appendStringInfo(&query, "GRANT insert ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 			if((permission & 4) == 4)
-				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", "update", schema, object_name, grantee);
+				appendStringInfo(&query, "GRANT update ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 			if((permission & 2) == 2)
-				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", "delete", schema, object_name, grantee);
+				appendStringInfo(&query, "GRANT delete ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 			if((permission & 1) == 1)
-				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", "references", schema, object_name, grantee);
+				appendStringInfo(&query, "GRANT refernces ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
 
 			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 			res_stmt = ((RawStmt *) linitial(res))->stmt;
