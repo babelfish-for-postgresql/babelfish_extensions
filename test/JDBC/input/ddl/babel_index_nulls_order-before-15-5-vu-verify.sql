@@ -31,6 +31,8 @@ SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 SELECT set_config('enable_seqscan', 'off', false)
 go
+SELECT set_config('enable_bitmapscan', 'off', false)
+go
 SET babelfish_showplan_all ON
 go
 
@@ -65,6 +67,8 @@ go
 SET babelfish_showplan_all OFF
 go
 SELECT set_config('enable_seqscan', 'on', false)
+go
+SELECT set_config('enable_bitmapscan', 'on', false)
 go
 
 -- Recreate indexes

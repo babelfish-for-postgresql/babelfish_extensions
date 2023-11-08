@@ -109,12 +109,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a <= 5 ORDER BY a DESC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (a <= 5)
+Limit
+  ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (a <= 5)
 ~~END~~
 
 SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 ORDER BY a ASC
@@ -122,12 +119,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 ORDER BY a ASC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (a > 5)
+Limit
+  ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (a > 5)
 ~~END~~
 
 SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a <= 5 ORDER BY a
@@ -135,12 +129,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a <= 5 ORDER BY a
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (a <= 5)
+Limit
+  ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (a <= 5)
 ~~END~~
 
 SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 ORDER BY a DESC
@@ -148,12 +139,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 ORDER BY a DESC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (a > 5)
+Limit
+  ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (a > 5)
 ~~END~~
 
 
@@ -162,12 +150,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b <= 'sss' ORDER BY b DESC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (b <= 'sss'::"varchar")
+Limit
+  ->  Index Only Scan using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (b <= 'sss'::"varchar")
 ~~END~~
 
 SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b > 'sss' ORDER BY b
@@ -175,12 +160,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b > 'sss' ORDER BY b
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan Backward using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (b > 'sss'::"varchar")
+Limit
+  ->  Index Only Scan Backward using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
 SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b <= 'sss' ORDER BY b
@@ -188,12 +170,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b <= 'sss' ORDER BY b
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan Backward using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (b <= 'sss'::"varchar")
+Limit
+  ->  Index Only Scan Backward using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (b <= 'sss'::"varchar")
 ~~END~~
 
 SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
@@ -201,12 +180,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 b FROM babel_index_nulls_order_after_15_5_tbl WHERE b > 'sss' ORDER BY b DESC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: (b > 'sss'::"varchar")
+Limit
+  ->  Index Only Scan using babel_index_nulls_order_after_109d01e1cb627f33d5e32d580bf3b188b on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
 
@@ -215,12 +191,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
+Limit
+  ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
 SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
@@ -228,12 +201,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
+Limit
+  ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: ((a = 3) AND (b <= 'sss'::"varchar"))
 ~~END~~
 
 SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
@@ -241,12 +211,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a DESC
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
+Limit
+  ->  Index Only Scan Backward using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
 SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
@@ -254,12 +221,9 @@ go
 ~~START~~
 text
 Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_after_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
-Gather
-  Workers Planned: 1
-  Single Copy: true
-  ->  Limit
-        ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
-              Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
+Limit
+  ->  Index Only Scan using babel_index_nulls_order_after_1b8f3e76eb1fb5528620bb8671beec940 on babel_index_nulls_order_after_15_5_tbl
+        Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
 
