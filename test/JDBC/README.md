@@ -404,7 +404,7 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     ```bash
     mvn test
     ```
-5. If the expected output is different when run in parallel query mode and in normal mode, one can add a different expected output specially for parallel query mode in "expected/parallel_query/" folder. Additionally, one needs to add "-- parallel_query_expected" flag in the corresponding input file.
+5. If the expected output is different when run in parallel query mode and in normal mode, one can add a different expected output specially for parallel query mode in `expected/parallel_query/` folder. Additionally, one needs to add `-- parallel_query_expected` flag in the corresponding input file.
 5. Cleanup all the objects, users, roles and databases created while running the tests:
     ```bash
     ./cleanup.sh
