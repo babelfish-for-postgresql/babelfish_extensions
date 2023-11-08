@@ -53,4 +53,8 @@ GO
 CREATE PROCEDURE datediff_p14 as (select datediff(hour, cast('2020-01-01 01:01:20.99 +10:00' as datetimeoffset), cast('2020-01-01 06:01:20.99' as datetimeoffset)));
 GO
 
+CREATE PROCEDURE datediff_p15 as (select datediff(dayofyear, cast('2020-01-01 01:01:20.99 +10:00' as datetimeoffset), cast('2023-01-01 06:01:20.99' as datetimeoffset)));
+GO
 
+CREATE PROCEDURE datediff_p16 as (select sys.datediff_internal_big('week', cast('2005-01-01 01:01:20.99' as datetime), cast('2005-01-01 01:01:20.99' as datetime)));
+GO

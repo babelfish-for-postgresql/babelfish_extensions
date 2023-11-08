@@ -39,3 +39,9 @@ GO
 
 DROP PROCEDURE datediff_p14
 GO
+
+DROP PROCEDURE datediff_p15
+GO
+
+DROP PROCEDURE datediff_p16
+GO

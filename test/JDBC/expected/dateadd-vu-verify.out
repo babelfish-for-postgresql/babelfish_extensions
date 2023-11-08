@@ -67,3 +67,19 @@ datetimeoffset
 2016-12-25 23:20:05.5234560 +08:00
 ~~END~~
 
+
+exec dateadd_p10
+GO
+~~START~~
+datetimeoffset
+2016-12-26 16:30:05.5234560 +08:00
+~~END~~
+
+
+exec dateadd_p11
+GO
+~~START~~
+datetime
+2016-12-27 00:30:05.0
+~~END~~
+

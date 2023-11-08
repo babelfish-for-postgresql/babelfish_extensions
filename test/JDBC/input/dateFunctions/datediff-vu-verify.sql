@@ -53,3 +53,9 @@ GO
 -- 15
 exec datediff_p14
 GO
+
+exec datediff_p15
+GO
+
+exec datediff_p16
+GO

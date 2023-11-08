@@ -24,3 +24,9 @@ GO
 
 CREATE PROCEDURE dateadd_p9 as (select dateadd(minute, -70, cast('2016-12-26 00:30:05.523456+8' as datetimeoffset)));
 GO
+
+CREATE PROCEDURE dateadd_p10 as (select sys.dateadd_internal_dtoff('day', 1, cast('2016-12-26 00:30:05.523456+8' as datetimeoffset)));
+GO
+
+CREATE PROCEDURE dateadd_p11 as (select sys.dateadd_internal_datetime('day', 1, cast('2016-12-26 00:30:05' as datetime), 3));
+GO

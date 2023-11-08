@@ -855,7 +855,7 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 
 	type = DecodeUnits(0, lowunits, &val);
 
-	if(strncmp(lowunits, "doy", 3) == 0) {
+	if(strncmp(lowunits, "doy", 3) == 0 || strncmp(lowunits, "dayofyear", 9) == 0) {
 		type = UNITS;
 		val = DTK_DOY;
 	}

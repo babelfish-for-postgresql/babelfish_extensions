@@ -122,3 +122,19 @@ int
 15
 ~~END~~
 
+
+exec datediff_p15
+GO
+~~START~~
+int
+1097
+~~END~~
+
+
+exec datediff_p16
+GO
+~~START~~
+bigint
+0
+~~END~~
+
