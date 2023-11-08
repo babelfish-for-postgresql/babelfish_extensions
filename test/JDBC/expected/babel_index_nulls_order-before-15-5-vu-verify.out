@@ -108,6 +108,13 @@ text
 off
 ~~END~~
 
+SELECT set_config('enable_indexscan', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
 SET babelfish_showplan_all ON
 go
 
@@ -241,9 +248,8 @@ Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE
 Limit
   ->  Sort
         Sort Key: a DESC NULLS LAST
-        ->  Index Scan using babel_index_nulls_order_before_713975587e1cf6ee0c2fe82e930b89b5 on babel_index_nulls_order_before_15_5_tbl
-              Index Cond: (b = 'xyz'::"varchar")
-              Filter: (a > 5)
+        ->  Index Only Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
+              Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
 SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a > 5 AND b = 'xyz' ORDER BY a
@@ -254,9 +260,8 @@ Query Text: SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE
 Limit
   ->  Sort
         Sort Key: a NULLS FIRST
-        ->  Index Scan using babel_index_nulls_order_before_713975587e1cf6ee0c2fe82e930b89b5 on babel_index_nulls_order_before_15_5_tbl
-              Index Cond: (b = 'xyz'::"varchar")
-              Filter: (a > 5)
+        ->  Index Only Scan using babel_index_nulls_order_before_a61e61121b6bd5392507d3ac38f74f27 on babel_index_nulls_order_before_15_5_tbl
+              Index Cond: ((a > 5) AND (b = 'xyz'::"varchar"))
 ~~END~~
 
 
@@ -270,7 +275,14 @@ text
 on
 ~~END~~
 
-SELECT set_config('enable_seqscan', 'on', false)
+SELECT set_config('enable_bitmapscan', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('enable_indexscan', 'on', false)
 go
 ~~START~~
 text
