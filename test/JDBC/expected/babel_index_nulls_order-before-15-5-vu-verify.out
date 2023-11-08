@@ -108,13 +108,6 @@ text
 off
 ~~END~~
 
-SELECT set_config('enable_indexscan', 'off', false)
-go
-~~START~~
-text
-off
-~~END~~
-
 SET babelfish_showplan_all ON
 go
 
@@ -215,6 +208,18 @@ Limit
               Index Cond: (b > 'sss'::"varchar")
 ~~END~~
 
+SET babelfish_showplan_all OFF
+go
+
+SELECT set_config('enable_indexonlyscan', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+SET babelfish_showplan_all ON
+go
 
 SELECT TOP 1 a, b FROM babel_index_nulls_order_before_15_5_tbl WHERE a = 3 AND b <= 'sss' ORDER BY b DESC
 go
@@ -282,7 +287,7 @@ text
 on
 ~~END~~
 
-SELECT set_config('enable_indexscan', 'on', false)
+SELECT set_config('enable_indexonlyscan', 'on', false)
 go
 ~~START~~
 text
