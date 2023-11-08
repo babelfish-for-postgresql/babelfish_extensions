@@ -443,8 +443,15 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 			{
 				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
 			}
+			else
+			{
+				typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+			}
 		}
-		typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+		else
+		{
+			typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+		}
 		if (typmod == -1)
 			continue;
 		scale = (typmod - VARHDRSZ) & 0xffff;
