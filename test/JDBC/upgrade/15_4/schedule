@@ -453,3 +453,4 @@ GRANT_SCHEMA
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
 cast_eliminate
+TestDatatypeAggSort
