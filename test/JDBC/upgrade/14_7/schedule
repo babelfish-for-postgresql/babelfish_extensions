@@ -410,3 +410,4 @@ BABEL_4330
 BABEL-2619
 AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
+TestDatatypeAggSort
