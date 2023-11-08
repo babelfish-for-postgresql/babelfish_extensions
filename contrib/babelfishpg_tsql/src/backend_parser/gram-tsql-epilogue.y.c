@@ -243,8 +243,6 @@ TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int lo
 	switch (base_oid)
 	{
 		case INT2OID:
-			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
-			break;
 		case INT4OID:
 			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
 			break;

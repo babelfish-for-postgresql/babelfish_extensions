@@ -2311,22 +2311,25 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum 
 identity_into_smallint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT16((int16)0);
+	PG_RETURN_INT16(0);
 }
 
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum
 identity_into_int(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32((int32)0);
+	PG_RETURN_INT32(0);
 }
 
+/** This function is only used for identifying IDENTITY() in SELECT-INTO statement, It is never actually invoked*/
 Datum 
 identity_into_bigint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT64((int64)0);
+	PG_RETURN_INT64(0);
 }
 
 /*
