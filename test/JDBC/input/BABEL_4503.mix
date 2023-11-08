@@ -1,0 +1,44 @@
+-- tsql
+CREATE LOGIN babel_4503_login WITH PASSWORD = 'pass_4503'
+GO
+-- terminate-tsql-conn
+
+-- tsql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+EXEC sys.remove_babelfish
+GO
+-- terminate-tsql-conn user=babel_4503_login password=pass_4503
+
+-- psql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+CALL sys.remove_babelfish()
+GO
+-- terminate-psql-conn user=babel_4503_login password=pass_4503
+
+-- tsql
+CREATE USER babel_4503_user FOR LOGIN babel_4503_login
+GO
+-- terminate-tsql-conn
+
+-- tsql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+EXEC sys.remove_babelfish
+GO
+-- terminate-tsql-conn user=babel_4503_login password=pass_4503
+
+-- psql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+CALL sys.remove_babelfish()
+GO
+-- terminate-psql-conn user=babel_4503_login password=pass_4503
+
+-- tsql
+DROP USER babel_4503_user
+GO
+DROP LOGIN babel_4503_login
+GO
+-- terminate-tsql-conn

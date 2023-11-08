@@ -1,0 +1,82 @@
+-- tsql
+CREATE LOGIN babel_4503_login WITH PASSWORD = 'pass_4503'
+GO
+-- terminate-tsql-conn
+
+-- tsql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+EXEC sys.remove_babelfish
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure remove_babelfish)~~
+
+-- terminate-tsql-conn user=babel_4503_login password=pass_4503
+
+-- psql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+~~START~~
+name
+babel_4503_login
+~~END~~
+
+CALL sys.remove_babelfish()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure remove_babelfish
+    Server SQLState: 42501)~~
+
+-- terminate-psql-conn user=babel_4503_login password=pass_4503
+
+-- tsql
+CREATE USER babel_4503_user FOR LOGIN babel_4503_login
+GO
+-- terminate-tsql-conn
+
+-- tsql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+~~START~~
+varchar
+babel_4503_user
+~~END~~
+
+EXEC sys.remove_babelfish
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure remove_babelfish)~~
+
+-- terminate-tsql-conn user=babel_4503_login password=pass_4503
+
+-- psql     user=babel_4503_login password=pass_4503
+SELECT current_user
+GO
+~~START~~
+name
+babel_4503_login
+~~END~~
+
+CALL sys.remove_babelfish()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure remove_babelfish
+    Server SQLState: 42501)~~
+
+-- terminate-psql-conn user=babel_4503_login password=pass_4503
+
+-- tsql
+DROP USER babel_4503_user
+GO
+DROP LOGIN babel_4503_login
+GO
+-- terminate-tsql-conn
