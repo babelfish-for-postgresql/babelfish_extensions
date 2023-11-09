@@ -307,9 +307,6 @@ ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
 
-# BABEL-4422
-ignore#!#babel_money
-
 # BABEL-4423
 ignore#!#BABEL-IDENTITY
 
