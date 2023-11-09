@@ -219,7 +219,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
     DECLARE
         varBin sys.bbf_varbinary;
     BEGIN
-        varBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
+        varBin := $1;
         -- Call the underlying function after preprocessing
         RETURN (SELECT sys.GEOMETRY(varBin)); 
     END;
