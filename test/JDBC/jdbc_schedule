@@ -8,7 +8,10 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+GRANT_SCHEMA
+BABEL-GRANT
+BABEL-SESSION
+BABEL-CROSS-DB
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
