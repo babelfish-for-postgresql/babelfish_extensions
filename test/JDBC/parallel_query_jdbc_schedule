@@ -65,12 +65,10 @@ ignore#!#BABEL-4264
 # Other or mixed issues
 # database "" does not exists. (calls is_member() functions)
 ignore#!#BABEL-1621
-
 # database "" does not exists. (calls schema_id())
 ignore#!#BABEL-741-vu-verify
 ignore#!#BABEL-2416
 ignore#!#BABEL-2833
-
 # database "" does not exists. (calls IS_ROLEMEMBER())
 ignore#!#BABEL-ROLE-MEMBER-vu-verify
 ignore#!#BABEL-ROLE-MEMBER
@@ -107,24 +105,6 @@ ignore#!#pgr_select_distinct
 # output difference
 ignore#!#sys-sp_pkeys-dep-vu-verify
 ignore#!#BABEL-SP_PKEYS
-
-#ignore#!#pg_stat_statements_tsql
-#ignore#!#sp_statistics_100
-#ignore#!#sys-sp_statistics_100-vu-prepare
-#ignore#!#sys-sp_statistics_100-vu-verify
-#ignore#!#sys-sp_statistics_100-vu-cleanup
-#ignore#!#sys-sp_statistics_100-dep-vu-verify
-#ignore#!#BABEL_4145
-#ignore#!#babel_extra_join_test_cases
-#ignore#!#babelfish_migration_mode-vu-verify
-#ignore#!#bbf_view_def
-#ignore#!#case_insensitive_collation-vu-prepare
-#ignore#!#case_insensitive_collation-vu-verify
-#ignore#!#BABEL-SP_STATISTICS
-#ignore#!#Test-sp_execute_postgresql
-#ignore#!#545_1
-#ignore#!#8107_1
-#ignore#!#8143_1
 
 # Test failures caused by babel_extra_join_test_cases_northwind failure
 ignore#!#babelfish_sysdatabases-vu-prepare
