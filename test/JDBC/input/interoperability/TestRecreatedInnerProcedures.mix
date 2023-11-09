@@ -86,7 +86,6 @@ as
 insert into t1 values (1);
 go
 
--- This has failed since PG14.
 exec psql_outer_proc;
 go
 select * from t1;
@@ -146,7 +145,6 @@ end;
 $$ LANGUAGE PLPGSQL;
 go
 
--- This has failed since PG14.
 call psql_outer_proc();
 go
 select * from t1;

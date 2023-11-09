@@ -806,6 +806,19 @@ CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEG
 'babelfishpg_tsql', 'has_dbaccess'
 LANGUAGE C STABLE STRICT;
 
+-- This function performs string rewriting for the full text search CONTAINS predicate
+-- in Babelfish
+-- For example, a T-SQL query 
+-- SELECT * FROM t WHERE CONTAINS(txt, '"good old days"')
+-- is rewritten into a Postgres query 
+-- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
+-- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
+-- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+-- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEXT AS 
+'babelfishpg_tsql', 'babelfish_fts_rewrite'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
 $BODY$
@@ -3820,14 +3833,6 @@ CREATE OR REPLACE FUNCTION sys.host_id()
 RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
-RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
-RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
 RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
@@ -4398,6 +4403,16 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION SYS.TYPE_NAME(IN type_id INT)
+RETURNS SYS.NVARCHAR(128) AS
+'babelfishpg_tsql', 'type_name'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN type_name SYS.NVARCHAR)
+RETURNS INT AS
+'babelfishpg_tsql', 'type_id'
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
