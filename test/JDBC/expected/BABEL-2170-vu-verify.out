@@ -593,9 +593,13 @@ GO
 ~~ERROR (Message: Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32))~~
 
 
+UPDATE babel_2170_vu_employees_view_rec SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
+GO
+~~ERROR (Code: 33557097)~~
 
--- UPDATE babel_2170_vu_employees_view_rec SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
--- GO
+~~ERROR (Message: Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32))~~
+
+
 DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_rec;
 GO
 
