@@ -122,9 +122,21 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
     parallel = safe
 );
 
--- binary
+CREATE OR REPLACE FUNCTION sys.bbfbinary(sys.BBF_BINARY, integer, boolean)
+RETURNS sys.BBF_BINARY
+AS 'babelfishpg_common', 'binary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- typmod cast for sys.BBF_VARBINARY
+CREATE CAST (sys.BBF_BINARY AS sys.BBF_BINARY)
+WITH FUNCTION sys.bbfbinary(sys.BBF_BINARY, integer, BOOLEAN) AS ASSIGNMENT;
+
+-- binary varbinary cast
 CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
-    WITHOUT FUNCTION AS IMPLICIT;
+WITHOUT FUNCTION AS IMPLICIT;
+
+CREATE CAST (sys.BBF_VARBINARY AS sys.BBF_BINARY)
+WITHOUT FUNCTION AS IMPLICIT;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

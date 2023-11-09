@@ -633,6 +633,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	bytea	   *result;
 	coll_info	collInfo;
 	int			encodedByteLen;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	if (!isExplicit)
 		ereport(ERROR,
@@ -648,9 +649,18 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
 		ereport(ERROR,
 			   (errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Failed to convert from data type varchar to varbinary")));
+				errmsg("Failed to convert from data type varchar to varbinary, %s",
+				errorData->message)));
 	}
 	PG_END_TRY();
 
@@ -726,6 +736,7 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	int32		maxlen = typmod - VARHDRSZ;
 	coll_info	collInfo;
 	int			encodedByteLen;
+	MemoryContext ccxt;
 
 	/*
 	 * Allow trailing null bytes 
@@ -735,6 +746,7 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 		len -= 1;
 	
 	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+	ccxt = CurrentMemoryContext;
 	/*
 	 * Cast the entire input binary data if maxlen is 
 	 * invalid or supplied data fits it
@@ -749,9 +761,18 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
+		MemoryContext ectx;
+		ErrorData    *errorData;
+
+		ectx = MemoryContextSwitchTo(ccxt);
+		errorData = CopyErrorData();
+		FlushErrorState();
+		MemoryContextSwitchTo(ectx);
+
 		ereport(ERROR,
 			   (errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Failed to convert from data type varbinary to varchar")));
+				errmsg("Failed to convert from data type varbinary to varchar, %s",
+				errorData->message)));
 	}
 	PG_END_TRY();
 
