@@ -1045,6 +1045,7 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 		else
 		{
 			tmp->roletype = ROLESPEC_PUBLIC;
+			tmp->rolename = "public";
 		}
 	}
 
