@@ -167,7 +167,7 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
-PG_FUNCTION_INFO_V1(datepart_internal_numeric);
+PG_FUNCTION_INFO_V1(datepart_internal_int);
 PG_FUNCTION_INFO_V1(datepart_internal_double);
 PG_FUNCTION_INFO_V1(datepart_internal_date);
 PG_FUNCTION_INFO_V1(datepart_internal_datetime);
@@ -176,11 +176,10 @@ PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
 PG_FUNCTION_INFO_V1(datepart_internal_time);
 PG_FUNCTION_INFO_V1(datepart_internal_interval);
 PG_FUNCTION_INFO_V1(datepart_internal_decimal);
-PG_FUNCTION_INFO_V1(datepart_internal_num);
+PG_FUNCTION_INFO_V1(datepart_internal_numeric);
 PG_FUNCTION_INFO_V1(datepart_internal_float);
 PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
-PG_FUNCTION_INFO_V1(datepart_internal_char);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -190,7 +189,7 @@ void	   *get_host_id(void);
 int			babelfish_date_part(const char* field, Timestamp timestamp);
 int			babelfish_right(const char* source, int length);
 int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
-int			datepart_internal_wrapper(char *field, int num);
+int			datepart_internal_wrapper(char *field, float8 num);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
 static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
@@ -350,9 +349,10 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 {	
 	fsec_t		fsec1;
 	int64 		microseconds;
+	long int	first_day_ts;
 	struct		pg_tm tt1, *tm = &tt1;
-	int			first_day, first_week_end;
-	int			tz1, doy = 0, year, month, day, milliseconds, res = 0;   //for Zeller's Congruence
+	int32		first_day, first_week_end;
+	int			tz1, doy = 0, year, month, day, milliseconds,res = 0; //for Zeller's Congruence
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
@@ -403,7 +403,7 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 			month += 12;
 			year -= 1;
 		}
-	
+	//dow calculated using Zeller's Congruence
 		day = tm->tm_mday;
 
 		res = day + 2*month + ((3*(month+1))/(5)) + year + year/4 - year/100 + year/400 + 2;
@@ -413,8 +413,10 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 	}
 	else if (strcmp(field, "week") == 0 || strcasecmp(field , "tsql_week") == 0)
 	{
-		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
-		first_week_end = 8 - datepart_internal("doy", first_day, 0);
+		first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; // returns number of days since 1/1/1970 to 1/1/tm_year
+		//convert this first day of tm_year to timestamp into first_day_ts
+		first_day_ts = first_day*86400000000 - 946684800000000;
+		first_week_end = 8 - datepart_internal("dow", first_day_ts, 0);
 		day = babelfish_date_part("doy",timestamp);
 		if(day <= first_week_end) return 1;
 		else return (2+(day-first_week_end-1)/7)%52;
@@ -532,11 +534,6 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for datetime2")));
 	}
-
-	if(df_tz && (strcasecmp(field , "week") == 0 || strcasecmp(field , "dow") == 0 || strcasecmp(field , "tsql_week") == 0) )
-	{
-		PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz) + 1);
-	}
 	
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
@@ -568,7 +565,7 @@ datepart_internal_datetime(PG_FUNCTION_ARGS)
 
 
 Datum
-datepart_internal_numeric(PG_FUNCTION_ARGS)
+datepart_internal_int(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int64		num = PG_GETARG_INT64(1);
@@ -586,35 +583,10 @@ datepart_internal_money(PG_FUNCTION_ARGS)
 	int64		num = PG_GETARG_INT64(1);
 	int			result;
 
-	result = datepart_internal_wrapper(field, num/10000);
+	result = datepart_internal_wrapper(field, (float8)num/10000);
 
 	PG_RETURN_INT32(result);
 }
-
-Datum
-datepart_internal_char(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	char		*num = text_to_cstring(PG_GETARG_TEXT_PP(1));
-	int			result, value;
-
-	if (isdigit(*num))
-	{
-		value = atoi(num);
-    }
-	else
-	{
-		ereport(ERROR,
-		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			PG_RETURN_INT32(-1);
-	}
-
-	result = datepart_internal_wrapper(field, value);
-
-	PG_RETURN_INT32(result);
-}
-
 
 Datum
 datepart_internal_double(PG_FUNCTION_ARGS)
@@ -647,16 +619,19 @@ datepart_internal_decimal(PG_FUNCTION_ARGS)
 }
 
 Datum
-datepart_internal_num(PG_FUNCTION_ARGS)
+datepart_internal_numeric(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		arg = PG_GETARG_NUMERIC(1);
-	int			result, num;
-	double		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
+	int			result;
+	int			scale = DatumGetInt32(DirectFunctionCall1(numeric_scale, NumericGetDatum(arg)));
+	int			argument = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(arg)));
 	
-	num = (int)ceil(argument);
-
-	result = datepart_internal_wrapper(field, num);
+	if(scale>0 && argument>=0)
+	{
+		argument--;
+	}
+	result = datepart_internal_wrapper(field, argument);
 	PG_RETURN_INT32(result);
 }
 
@@ -691,12 +666,43 @@ datepart_internal_real(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+/*
+* Converts the num into proper timestamp with days ahead from 01/01/1970
+* i.e. when num = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00
+*/
+
 int
-datepart_internal_wrapper(char *field, int num)
+datepart_internal_wrapper(char *field, float8 num)
 {
 	Timestamp		timestamp;
 
-	timestamp = 86400000000*(num)*1L - 3155673600000000;
+	timestamp = (long int)(86400000000*(num)*1L - 3155673600000000);
+
+	if (strcmp(field, "dow") == 0)
+	{
+		fsec_t		fsec1;
+		struct		pg_tm tt1, *tm = &tt1;
+		int			tz1, year, month, day, res = 0;
+		if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("timestamp out of range")));
+		}
+		year = tm->tm_year;
+		month = tm->tm_mon;
+		if (tm->tm_mon < 3)
+		{
+			month += 12;
+			year -= 1;
+		}
+	
+		day = tm->tm_mday;
+
+		res = day + 2*month + ((3*(month+1))/(5)) + year + year/4 - year/100 + year/400 + 2;
+		
+		PG_RETURN_INT32((((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 );
+	}
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, 0));
 
