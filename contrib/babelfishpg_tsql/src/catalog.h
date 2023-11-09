@@ -351,6 +351,13 @@ extern void clean_up_bbf_schema(const char *schema_name,
 								const char *object_name,
 								bool is_schema);
 
+extern void grant_perms_to_each_obj(const char *db_name,
+					const char	*object_type,
+					const char *schema_name,
+					const char	*object_name,
+					const char *grantee,
+					const char *permission);
+
 extern void grant_perms_to_objects_in_schema(const char *schema_name,
 				  int16 permission,
 				  const char *grantee);

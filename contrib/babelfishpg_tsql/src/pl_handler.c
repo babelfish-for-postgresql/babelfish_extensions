@@ -3684,6 +3684,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								bool flag = false;
+								foreach(lc1, grant->privileges)
+								{
+									AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+									if(ap->cols != NULL)
+									{
+										flag = true;
+										break;
+									}
+
+								}
+								if(flag)
+									break;
 								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
 									add_entry_to_bbf_schema(logical_schema, obj, privilege_maskInt, rol_spec->rolename, obj_type);
 								else if(rol_spec->rolename != NULL)
@@ -3699,6 +3712,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								bool flag = false;
 								/*
 								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
@@ -3712,6 +3726,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																queryEnv, dest, qc);
 								}
+								foreach(lc1, grant->privileges)
+								{
+									AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+									if(ap->cols != NULL)
+									{
+										flag = true;
+										break;
+									}
+
+								}
+								if(flag)
+									continue;
 								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
 									{
 										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
@@ -3755,7 +3781,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
 					{
 						if(check_bbf_schema_for_schema(logicalschema, "ALL", 32))
+						{
 							return;
+						}
 						break;
 					}
 					/* If ALL PRIVILEGES is granted/revoked. */

@@ -3198,6 +3198,54 @@ clean_up_bbf_schema(const char *schema_name,
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
+void grant_perms_to_each_obj(const char *db_name,
+					const char	*object_type,
+					const char *schema_name,
+					const char	*object_name,
+					const char *grantee,
+					const char *permission)
+{
+	StringInfoData	query;
+			char			*schema;
+			List			*res;
+			Node			*res_stmt;
+			PlannedStmt		*wrapper;
+
+			schema = get_physical_schema_name((char *)db_name, schema_name);
+			initStringInfo(&query);
+			if (strcmp(permission, "execute") != 0)
+				appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+			else
+			{
+				if (object_type != NULL && strcmp(object_type, "f") == 0)
+					appendStringInfo(&query, "GRANT \"%s\" ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+				else
+					appendStringInfo(&query, "GRANT \"%s\" ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", permission, schema, object_name, grantee);
+			}
+			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+			res_stmt = ((RawStmt *) linitial(res))->stmt;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = res_stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 1;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(GRANT STATEMENT )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+}
 
 void
 grant_perms_to_objects_in_schema(const char *schema_name,
@@ -3243,55 +3291,18 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, "ALL") != 0)
 		{
-			StringInfoData	query;
-			char			*schema;
-			List			*res;
-			Node			*res_stmt;
-			PlannedStmt		*wrapper;
-
-			schema = get_physical_schema_name((char *)db_name, schema_name);
-			initStringInfo(&query);
 			if((permission & 32) == 32)
-			{
-				if (object_type != NULL && strcmp(object_type, "f") == 0)
-					appendStringInfo(&query, "GRANT execute ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
-				else
-					appendStringInfo(&query, "GRANT execute ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
-			}
+				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "execute");
 			if((permission & 16) == 16)
-				appendStringInfo(&query, "GRANT select ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
+				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "select");
 			if((permission & 8) == 8)
-				appendStringInfo(&query, "GRANT insert ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
+				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "insert");
 			if((permission & 4) == 4)
-				appendStringInfo(&query, "GRANT update ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
+				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "update");
 			if((permission & 2) == 2)
-				appendStringInfo(&query, "GRANT delete ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
+				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "delete");
 			if((permission & 1) == 1)
-				appendStringInfo(&query, "GRANT refernces ON \"%s\".\"%s\" TO \"%s\"; ", schema, object_name, grantee);
-
-			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-			res_stmt = ((RawStmt *) linitial(res))->stmt;
-
-			/* need to make a wrapper PlannedStmt */
-			wrapper = makeNode(PlannedStmt);
-			wrapper->commandType = CMD_UTILITY;
-			wrapper->canSetTag = false;
-			wrapper->utilityStmt = res_stmt;
-			wrapper->stmt_location = 0;
-			wrapper->stmt_len = 1;
-
-			/* do this step */
-			ProcessUtility(wrapper,
-						"(GRANT STATEMENT )",
-						false,
-						PROCESS_UTILITY_SUBCOMMAND,
-						NULL,
-						NULL,
-						None_Receiver,
-						NULL);
-
-			/* make sure later steps can see the object created here */
-			CommandCounterIncrement();
+				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "references");
 		}
 		tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
 	}
