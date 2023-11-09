@@ -56,6 +56,10 @@ ignore#!#binary-index-vu-verify
 ignore#!#pgr_select_into
 ignore#!#cast_eliminate-vu-verify
 
+# Query plan change (verified)
+# Need to design a way to allow expected parallel mode output to be accepted
+ignore#!#babel_index_nulls_order-vu-verify
+
 # Other or mixed issues
 ignore#!#545_1
 ignore#!#8107_1

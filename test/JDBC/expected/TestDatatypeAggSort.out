@@ -65,22 +65,29 @@ go
 ~~ROW COUNT: 9~~
 
 
-CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_tbl (char_col)
+CREATE INDEX TestDatatypeAggSort_char_idx ON TestDatatypeAggSort_tbl (char_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_tbl (varchar_col)
+CREATE INDEX TestDatatypeAggSort_varchar_idx ON TestDatatypeAggSort_tbl (varchar_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_tbl (datetime_col)
+CREATE INDEX TestDatatypeAggSort_datetime_idx ON TestDatatypeAggSort_tbl (datetime_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_tbl (datetime2_col)
+CREATE INDEX TestDatatypeAggSort_datetime2_idx ON TestDatatypeAggSort_tbl (datetime2_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_tbl (datetimeoffset_col)
+CREATE INDEX TestDatatypeAggSort_datetimeoffset_idx ON TestDatatypeAggSort_tbl (datetimeoffset_col)
 go
-CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
+CREATE INDEX TestDatatypeAggSort_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
 go
 
 
 -- Check query plans, all aggregations should be optimized 
 -- into LIMIT + index scan.
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
 SELECT set_config('enable_seqscan', 'off', false)
 go
 ~~START~~
@@ -97,10 +104,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MAX(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
-Result  (cost=4.20..4.21 rows=1 width=32)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..4.20 rows=1 width=32)
-          ->  Index Scan Backward using testdatatypeaggsort_vu_prepare_9f6822e2eb25acd99239dfd749f4cfac on testdatatypeaggsort_tbl  (cost=0.14..12.32 rows=3 width=32)
+    ->  Limit
+          ->  Index Scan Backward using testdatatypeaggsort_char_idxtesfbaa28928b545e2adef99cfdad96bca2 on testdatatypeaggsort_tbl
                 Index Cond: (char_col IS NOT NULL)
                 Filter: (varchar_col <= 'xxx'::"varchar")
 ~~END~~
@@ -110,10 +117,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MIN(char_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
-Result  (cost=4.20..4.21 rows=1 width=32)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..4.20 rows=1 width=32)
-          ->  Index Scan using testdatatypeaggsort_vu_prepare_9f6822e2eb25acd99239dfd749f4cfac on testdatatypeaggsort_tbl  (cost=0.14..12.32 rows=3 width=32)
+    ->  Limit
+          ->  Index Scan using testdatatypeaggsort_char_idxtesfbaa28928b545e2adef99cfdad96bca2 on testdatatypeaggsort_tbl
                 Index Cond: (char_col IS NOT NULL)
                 Filter: (varchar_col <= 'xxx'::"varchar")
 ~~END~~
@@ -124,10 +131,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MAX(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col <= 'xxx'
-Result  (cost=2.82..2.83 rows=1 width=32)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=32)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_dff2a180daa5e768372a6667d7a1d8ce on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=32)
+    ->  Limit
+          ->  Index Only Scan Backward using testdatatypeaggsort_varchar_idx9ad0e932a2f10239b7debb0a3f366a92 on testdatatypeaggsort_tbl
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col <= 'xxx'::"varchar"))
 ~~END~~
 
@@ -136,10 +143,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'xxx'
-Result  (cost=2.82..2.83 rows=1 width=32)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=32)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_dff2a180daa5e768372a6667d7a1d8ce on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=32)
+    ->  Limit
+          ->  Index Only Scan using testdatatypeaggsort_varchar_idx9ad0e932a2f10239b7debb0a3f366a92 on testdatatypeaggsort_tbl
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col > 'xxx'::"varchar"))
 ~~END~~
 
@@ -149,10 +156,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MAX(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=8)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_53652fadbb7f0d803cf631ae1666db91 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
+    ->  Limit
+          ->  Index Only Scan Backward using testdatatypeaggsort_datetime_id059c1f40bc288b4812242508f8efa093 on testdatatypeaggsort_tbl
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col <= '2020-12-31 23:59:59'::datetime))
 ~~END~~
 
@@ -161,10 +168,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=8)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_53652fadbb7f0d803cf631ae1666db91 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
+    ->  Limit
+          ->  Index Only Scan using testdatatypeaggsort_datetime_id059c1f40bc288b4812242508f8efa093 on testdatatypeaggsort_tbl
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col > '2020-12-31 23:59:59'::datetime))
 ~~END~~
 
@@ -174,10 +181,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=8)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_d78d2b8ac3008da9348dd6b7d05cad53 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
+    ->  Limit
+          ->  Index Only Scan Backward using testdatatypeaggsort_datetime2_i1725d75058c0b3bc1047ac8734b677ec on testdatatypeaggsort_tbl
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col <= '2020-12-31 23:59:59'::datetime2))
 ~~END~~
 
@@ -186,10 +193,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=8)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_d78d2b8ac3008da9348dd6b7d05cad53 on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
+    ->  Limit
+          ->  Index Only Scan using testdatatypeaggsort_datetime2_i1725d75058c0b3bc1047ac8734b677ec on testdatatypeaggsort_tbl
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col > '2020-12-31 23:59:59'::datetime2))
 ~~END~~
 
@@ -199,10 +206,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=10)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=10)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_4cb646591fd4a379b5280bdf8de9c3fa on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=10)
+    ->  Limit
+          ->  Index Only Scan Backward using testdatatypeaggsort_datetimeoffc266914d4bc72ff84892083238ed8c64 on testdatatypeaggsort_tbl
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col <= '2020-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
@@ -211,10 +218,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=10)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=10)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_4cb646591fd4a379b5280bdf8de9c3fa on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=10)
+    ->  Limit
+          ->  Index Only Scan using testdatatypeaggsort_datetimeoffc266914d4bc72ff84892083238ed8c64 on testdatatypeaggsort_tbl
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col > '2020-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
@@ -224,10 +231,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=8)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan Backward using testdatatypeaggsort_vu_prepare_51ce5acea8bb1074b24deac240b40a7f on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
+    ->  Limit
+          ->  Index Only Scan Backward using testdatatypeaggsort_smalldateti2dc63bb7d48110e1d7497e0fb6e1aad7 on testdatatypeaggsort_tbl
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col <= '2021-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
@@ -236,10 +243,10 @@ go
 ~~START~~
 text
 Query Text: SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
-Result  (cost=2.82..2.83 rows=1 width=8)
+Result
   InitPlan 1 (returns $0)
-    ->  Limit  (cost=0.14..2.82 rows=1 width=8)
-          ->  Index Only Scan using testdatatypeaggsort_vu_prepare_51ce5acea8bb1074b24deac240b40a7f on testdatatypeaggsort_tbl  (cost=0.14..8.20 rows=3 width=8)
+    ->  Limit
+          ->  Index Only Scan using testdatatypeaggsort_smalldateti2dc63bb7d48110e1d7497e0fb6e1aad7 on testdatatypeaggsort_tbl
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col > '2021-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
@@ -248,6 +255,13 @@ Result  (cost=2.82..2.83 rows=1 width=8)
 SET babelfish_showplan_all OFF
 go
 SELECT set_config('enable_seqscan', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 go
 ~~START~~
 text

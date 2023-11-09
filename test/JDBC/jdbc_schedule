@@ -163,6 +163,11 @@ ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-verify
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-cleanup
 
+# These tests are meant for upgrade scenario prior to (potential) 15_5 release
+ignore#!#babel_index_nulls_order-before-15-5-vu-prepare
+ignore#!#babel_index_nulls_order-before-15-5-vu-verify
+ignore#!#babel_index_nulls_order-before-15-5-vu-cleanup
+
 # These are bash scripts that should not be executed
 ignore#!#load_aggtest
 ignore#!#load_emp
