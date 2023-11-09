@@ -317,3 +317,6 @@ CREATE OPERATOR sys.= (
 alter OPERATOR family bbf_varbinary_ops USING btree add
     OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
     FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
+
+CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
+    WITHOUT FUNCTION AS IMPLICIT;
