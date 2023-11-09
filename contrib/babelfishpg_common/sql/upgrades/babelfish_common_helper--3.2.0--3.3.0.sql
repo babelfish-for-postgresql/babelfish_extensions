@@ -122,15 +122,6 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
     parallel = safe
 );
 
-CREATE OR REPLACE FUNCTION sys.bbfbinary(sys.BBF_BINARY, integer, boolean)
-RETURNS sys.BBF_BINARY
-AS 'babelfishpg_common', 'binary'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
--- typmod cast for sys.BBF_VARBINARY
-CREATE CAST (sys.BBF_BINARY AS sys.BBF_BINARY)
-WITH FUNCTION sys.bbfbinary(sys.BBF_BINARY, integer, BOOLEAN) AS ASSIGNMENT;
-
 -- binary varbinary cast
 CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
 WITHOUT FUNCTION AS IMPLICIT;

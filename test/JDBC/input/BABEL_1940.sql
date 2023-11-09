@@ -82,6 +82,13 @@ GO
 CREATE TABLE babel_1940_t2(a varchar(10) collate japanese_cs_as);
 GO
 
+-- only null bytes becomes empty string since we remove trailing nulls
+INSERT INTO babel_1940_t2 VALUES (CAST (0x00 AS VARCHAR))
+GO
+
+SELECT * FROM babel_1940_t2 WHERE a = '';
+GO
+
 INSERT INTO babel_1940_t2 VALUES ('a'), ('b'), ('™'), ('ƀ'), ('ä');
 GO
 
@@ -103,29 +110,3 @@ GO
 DROP TABLE babel_1940_t1
 GO
 
--- Tests for typmod binary data type
-SELECT CAST(CAST(0x1234567891234567891234567891234567891234567891234567891234567 AS BINARY) AS VARBINARY)
-GO
-
-SELECT DATALENGTH(CAST(0X6162636465 AS BINARY(3)))
-GO
-
-SELECT DATALENGTH(CAST(0X61 AS BINARY(3)))
-GO
-
-CREATE TABLE babel_1940_t3 (id BINARY(2))
-GO
-
--- Implicit truncation should fail
-INSERT INTO babel_1940_t3 VALUES (CAST(0x61 AS BINARY(3)))
-GO
-
--- Implicit appending should work
-INSERT INTO babel_1940_t3 VALUES (CAST(0x61 AS BINARY(1)))
-GO
-
-SELECT DATALENGTH(id) FROM babel_1940_t3
-GO
-
-DROP TABLE babel_1940_t3
-GO

@@ -46,15 +46,6 @@ CREATE TYPE sys.BBF_BINARY (
     COLLATABLE     = false
 );
 
-CREATE OR REPLACE FUNCTION sys.bbfbinary(sys.BBF_BINARY, integer, boolean)
-RETURNS sys.BBF_BINARY
-AS 'babelfishpg_common', 'binary'
-LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
-
--- typmod cast for sys.BBF_VARBINARY
-CREATE CAST (sys.BBF_BINARY AS sys.BBF_BINARY)
-WITH FUNCTION sys.bbfbinary(sys.BBF_BINARY, integer, BOOLEAN) AS ASSIGNMENT;
-
 CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
 WITHOUT FUNCTION AS IMPLICIT;
 
@@ -332,4 +323,3 @@ CREATE OPERATOR sys.= (
 alter OPERATOR family bbf_varbinary_ops USING btree add
     OPERATOR 3 sys.= (sys.bbf_varbinary, sys.bbf_binary),
     FUNCTION 1 sys.bbf_varbinary_binary_cmp(sys.bbf_varbinary, sys.bbf_binary);
-
