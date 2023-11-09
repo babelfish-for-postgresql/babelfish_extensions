@@ -55,6 +55,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
+#include "../../babelfishpg_common/src/datetimeoffset.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -158,6 +159,7 @@ PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 PG_FUNCTION_INFO_V1(getdate_internal);
 PG_FUNCTION_INFO_V1(sysdatetime);
+PG_FUNCTION_INFO_V1(sysdatetimeoffset);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -399,6 +401,14 @@ Datum getdate_internal(PG_FUNCTION_ARGS)
 Datum sysdatetime(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+}
+
+Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
+{
+	
+
+	PG_RETURN_DATETIMEOFFSET((DirectFunctionCall1(timestamp_datetimeoffset,
+							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }
 
 void *

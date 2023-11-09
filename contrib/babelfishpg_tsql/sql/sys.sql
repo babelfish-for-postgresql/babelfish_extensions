@@ -5,7 +5,7 @@ LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
-AS 'babelfishpg_common', 'sysdatetimeoffset'
+AS 'babelfishpg_tsql', 'sysdatetimeoffset'
 LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
 

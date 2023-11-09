@@ -335,3 +335,5 @@ ignore#!#TestSimpleErrors
 ignore#!#ISC-Views
 ignore#!#TestSimpleErrorsWithXactAbort
 ignore#!#BABEL-2513
+ignore#!#TestDatetime-numeric-representation-vu-prepare
+ignore#!#TestDatetime-numeric-representation-vu-verify
