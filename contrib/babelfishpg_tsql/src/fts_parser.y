@@ -74,13 +74,13 @@ simple_term:
 
 prefix_term:
     PREFIX_TERM_TOKEN {
-        fts_yyerror(NULL, "Prefix term not supported");
+        fts_yyerror(NULL, "Prefix term is not currently supported in Babelfish");
     }
     ;
 
 generation_term:
     FORMSOF_TOKEN O_PAREN_TOKEN generation_type COMMA_TOKEN simple_term_list C_PAREN_TOKEN {
-        fts_yyerror(NULL, "Generation term not supported");
+        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
     }
     ;
 

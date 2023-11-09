@@ -85,6 +85,7 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
+	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 
 	extern int escape_hatch_showplan_all;
 }
@@ -116,8 +117,8 @@ PLtsql_stmt *makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
-PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
-PLtsql_stmt* makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
+PLtsql_stmt	*makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
+PLtsql_stmt	*makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
 std::pair<std::string, std::string> getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char* repl, ParserRuleContext *baseCtx);
@@ -127,6 +128,7 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx);
 void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name);
 std::string extractTableName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Table_source_itemContext *tctx);
+std::string extractSchemaName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Table_source_itemContext *tctx);
 void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name);
 void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_names);
 void extractJoinHintFromOption(TSqlParser::OptionContext *option);
@@ -141,9 +143,10 @@ static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate = false);
 static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static void post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx);
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -2804,6 +2807,10 @@ static void process_query_specification(
 		}
 	}
 
+	bool is_freetext_predicate = false;
+	if(qctx->where)
+		is_freetext_predicate = check_freetext_predicate(qctx->where);
+
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
 
@@ -2811,7 +2818,7 @@ static void process_query_specification(
 	if (qctx->table_sources())
 	{
 		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-			post_process_table_source(tctx, expr, baseCtx);
+			post_process_table_source(tctx, expr, baseCtx, is_freetext_predicate);
 	}
 
 	/* handle special alias syntax and quote alias */
@@ -4019,6 +4026,22 @@ void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string ta
 		for (auto table_hint: tctx->table_hint())
 			extractTableHint(table_hint, table_name);
 	}
+}
+
+std::string extractSchemaName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
+{
+	std::string schema_name = "";
+	if (dctx == nullptr)
+	{
+		if (tctx->full_object_name() && tctx->full_object_name()->schema)
+			schema_name = stripQuoteFromId(tctx->full_object_name()->schema);
+	}
+	else
+	{
+		if (dctx->full_object_name() && dctx->full_object_name()->schema)
+			schema_name = stripQuoteFromId(dctx->full_object_name()->schema);
+	}
+	return schema_name;
 }
 
 std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
@@ -6248,10 +6271,27 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	}
 }
 
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx)
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx)
+{
+    if (ctx && ctx->predicate_br().size() > 0)
+	{
+        for (auto pred : ctx->predicate_br())
+		{
+            if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
+                return true;
+            if (pred && pred->search_condition()) {
+                if (check_freetext_predicate(pred->search_condition()))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate)
 {
 	for (auto cctx : ctx->table_source_item())
-		post_process_table_source(cctx, expr, baseCtx);
+		post_process_table_source(cctx, expr, baseCtx, is_freetext_predicate);
 
 	std::string table_name = extractTableName(nullptr, ctx);
 
@@ -6296,6 +6336,19 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 			extractJoinHint(ctx->join_hint(), table_names);
 		}
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
+	}
+
+	// check for freetext predicate CONTAINS()
+	if(is_freetext_predicate)
+	{
+		std::string schema_name = extractSchemaName(nullptr, ctx);
+		
+		const char * t_name = downcase_truncate_identifier(table_name.c_str(), table_name.length(), true);
+		const char * s_name = downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true);
+		
+		// check if full-text index exist for the table, if not throw error
+		if(!check_fulltext_exist(const_cast <char *>(s_name), const_cast <char *>(t_name)))
+			throw PGErrorWrapperException(ERROR, ERRCODE_RAISE_EXCEPTION, format_errmsg("Cannot use a CONTAINS or FREETEXT predicate on table or indexed view '%s' because it is not full-text indexed.", table_name.c_str()), getLineAndPos(ctx));
 	}
 }
 
@@ -6617,7 +6670,8 @@ getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx)
                            downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 }
 
-PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
+PLtsql_stmt *
+makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 {
 	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
@@ -6636,11 +6690,11 @@ PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContex
         for (auto column : ctx->fulltext_index_column())
         {
 			if (column->TYPE() && column->COLUMN())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "TYPE COLUMN option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(column->TYPE()));
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'TYPE COLUMN' option is not currently supported in Babelfish", getLineAndPos(column->TYPE()));
 			else if (column->LANGUAGE())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "LANGUAGE option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(column->LANGUAGE()));
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'LANGUAGE' option is not currently supported in Babelfish", getLineAndPos(column->LANGUAGE()));
 			else if (column->STATISTICAL_SEMANTICS())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "STATISTICAL_SEMANTICS option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(column->STATISTICAL_SEMANTICS()));
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'STATISTICAL_SEMANTICS' option is not currently supported in Babelfish", getLineAndPos(column->STATISTICAL_SEMANTICS()));
 			else
 			{
 				std::string column_name_str = ::getFullText(column->full_column_name());
@@ -6651,23 +6705,10 @@ PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContex
         }
 		stmt->column_name = column_name_list;
     }
-	if (ctx->catalog_filegroup_option()) {
-		auto catalog_filegroup_option = ctx->catalog_filegroup_option();
-		if (catalog_filegroup_option->FILEGROUP() || catalog_filegroup_option->catalog_name || catalog_filegroup_option->filegroup_name)
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "FILEGROUP/CATALOG option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(ctx));
-	}
-	if (ctx->fulltext_with_option().size() > 0) {
-		for (auto option : ctx->fulltext_with_option()) {
-			if (option->CHANGE_TRACKING())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "CHANGE_TRACKING option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->CHANGE_TRACKING()));
-			else if (option->POPULATION())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "POPULATION option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->POPULATION()));
-			else if (option->STOPLIST()) 
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "STOPLIST option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->STOPLIST()));
-			else if (option->SEARCH()) 
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "SEARCH PROPERTY LIST option is not supported yet for CREATE FULLTEXT INDEX statement", getLineAndPos(option->SEARCH()));
-		}
-	}
+	if (ctx->catalog_filegroup_option())
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'CATALOG FILEGROUP OPTION' is not currently supported in Babelfish", getLineAndPos(ctx));
+	if (ctx->fulltext_with_option().size() > 0)
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'WITH OPTION' is not currently supported in Babelfish", getLineAndPos(ctx));
 	if (ctx->id())
 	{
 		std::string index_name = ::getFullText(ctx->id());
@@ -6677,7 +6718,8 @@ PLtsql_stmt* makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContex
     return (PLtsql_stmt *) stmt;
 }
 
-PLtsql_stmt* makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
+PLtsql_stmt *
+makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
 	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;

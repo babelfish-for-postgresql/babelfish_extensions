@@ -52,7 +52,7 @@ static int	exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
-static int  exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
+static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -60,7 +60,6 @@ extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char *dynstmt);
 static char *next_word(char *dyntext);
-static const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 static bool is_next_temptbl(char *dyntext);
 static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
@@ -90,6 +89,7 @@ extern void disable_sp_cursor_find_param_hook(void);
 extern void add_sp_cursor_param(char *name);
 extern void reset_sp_cursor_params();
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
+extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
@@ -3661,20 +3661,6 @@ get_insert_bulk_kilobytes_per_batch()
 	return insert_bulk_kilobytes_per_batch;
 }
 
-/*
- *	Generates the schema name for fulltext index statements
- *	depending on whether it's master schema or not
- */
-static const char 
-*gen_schema_name_for_fulltext_index(const char *schema_name)
-{
-	char *dbname = get_cur_db_name();
-	if (strlen(schema_name) == 0)
-		return get_dbo_schema_name(dbname);
-	else
-		return get_physical_schema_name(dbname, schema_name);
-}
-
 static int
 exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 {
@@ -3838,38 +3824,53 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 static int
 exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt)
 {
-	char        *table_name;
+	char		*table_name;
 	char		*ft_index_name;
 	char		*query_str;
 	char		*old_ft_index_name;	// existing fulltext index name
-	char	*uniq_index_name;
+	char		*uniq_index_name;
 	const char	*schema_name;
-	Oid 		schemaOid;
+	Oid			schemaOid;
 	Oid			relid;
 	List		*column_name;
+	char	    *dbname = get_cur_db_name();
+	char		*login = GetUserNameFromId(GetSessionUserId(), false);
+	Oid			datdba;
+	bool		login_is_db_owner;
 	bool		is_create;
 
+	Assert(stmt->schema_name != NULL);
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin or login is not the schema owner, then it doesn't have the permission to CREATE/DROP FULLTEXT INDEX.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	datdba = get_role_oid("sysadmin", false);
 	schema_name = gen_schema_name_for_fulltext_index((char *)stmt->schema_name);
 	schemaOid = LookupExplicitNamespace(schema_name, true);						
 	table_name = stmt->table_name;
 	is_create = stmt->is_create;
 
-	if (schema_name == NULL || strlen(schema_name) == 0 || *schema_name == '\0')
-		ereport(ERROR,
-			(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				errmsg("schema of table \"%s\" is null",
-					table_name)));
-
-	// check if schema exists
+	// Check if schema exists
 	if (!OidIsValid(schemaOid))
 		ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_SCHEMA),
 				errmsg("schema \"%s\" does not exist",
 					stmt->schema_name)));
 
+	// Check if the user has necessary permissions for CREATE/DROP FULLTEXT INDEX
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+	{
+		const char *error_msg = is_create ? "A default full-text catalog does not exist in the database or user does not have permission to perform this action" : "Cannot drop the full-text index, because it does not exist or you do not have permission";
+    	ereport(ERROR, 
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+				errmsg("%s", error_msg)));	
+	}
+
 	relid = get_relname_relid((const char *) table_name, schemaOid);
 
-	// check if table exists
+	// Check if table exists
 	if (!OidIsValid(relid))
 		ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_TABLE),

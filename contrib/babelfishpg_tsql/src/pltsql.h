@@ -2050,6 +2050,8 @@ extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bo
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
 extern char *get_fulltext_index_name(Oid relid, const char *table_name);
+extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
+extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 extern bool is_unique_index(Oid relid, const char *index_name);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);

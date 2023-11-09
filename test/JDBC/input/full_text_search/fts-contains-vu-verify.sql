@@ -1,7 +1,4 @@
 -- enable CONTAINS
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
@@ -95,8 +92,5 @@ EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
 GO
 
 -- disable CONTAINS
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

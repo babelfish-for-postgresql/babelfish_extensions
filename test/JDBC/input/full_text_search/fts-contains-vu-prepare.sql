@@ -1,12 +1,19 @@
 -- enable CONTAINS
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
 -- Create table for full text search CONTAINS predicate
-CREATE TABLE fts_contains_vu_t (id int PRIMARY KEY, txt text)
+CREATE TABLE fts_contains_vu_t (id int NOT NULL, txt text)
+GO
+
+-- Should throw error because there exist no full-text index for the table
+SELECT * FROM fts_contains_vu_t WHERE CONTAINS(txt, 'run');
+GO
+
+CREATE UNIQUE INDEX fts_contains_vu_t_id_idx ON fts_contains_vu_t(id);
+GO
+
+CREATE FULLTEXT INDEX ON fts_contains_vu_t(txt) KEY INDEX fts_contains_vu_t_id_idx;
 GO
 
 -- Full text search @query_string using CONTAINS
@@ -3035,8 +3042,5 @@ INSERT INTO fts_contains_vu_t VALUES (1000, 'Last month , scientists from the He
 GO
 
 -- disable CONTAINS
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

@@ -1,19 +1,46 @@
 -- enable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+CREATE LOGIN testLogin WITH PASSWORD = '123';
 GO
 
 USE master;
 GO
 
+CREATE SCHEMA fti_schema_s3;
+GO
+
+CREATE TABLE fti_schema_s3.fti_table_t9(id int NOT NULL, a text);
+GO
+
+CREATE UNIQUE INDEX IX_t9_a ON fti_schema_s3.fti_table_t9(id);
+GO
+
+-- tsql user=testLogin password=123
+-- Create new login with insufficient permissions
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
+-- should throw error as new login has insufficient permissions to CREATE FULLTEXT INDEX
+CREATE FULLTEXT INDEX ON fti_schema_s3.fti_table_t9(a) KEY INDEX IX_t9_a;
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- Reset to super user
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+
 -- Index creation on different character data type columns
-CREATE TABLE fti_table_t1(id int not null, a text);
+CREATE TABLE fti_table_t1(id int NOT NULL, a text);
 GO
 
 -- should throw syntax error for NULL index name
 CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX NULL;
+GO
+
+-- should throw error for no unique index on the table
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX IX_t1_a;
 GO
 
 CREATE UNIQUE INDEX IX_t1_a ON fti_table_t1(id);
@@ -109,17 +136,17 @@ GO
 CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(a) KEY INDEX IX_s1_t8_a;
 GO
 
-CREATE SCHEMA fti_schema_s2;
+CREATE SCHEMA FTI_schema_s2;
 GO
 
-CREATE TABLE fti_schema_s2.fti_table_t8(id int not null, a text, b text);
+CREATE TABLE FTI_schema_s2.FTI_table_t8(Id int not null, a text, b text);
 GO
 
-CREATE UNIQUE INDEX IX_s2_t8_a ON fti_schema_s2.fti_table_t8(id);
+CREATE UNIQUE INDEX IX_s2_t8_a ON FTI_schema_s2.FTI_table_t8(Id);
 GO
 
 -- Case for same table name on different schemas
-CREATE FULLTEXT INDEX ON fti_schema_s2.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
+CREATE FULLTEXT INDEX ON FTI_schema_s2.FTI_table_t8(a) KEY INDEX IX_s2_t8_a;
 GO
 
 -- Table for testing dropping non-existent index, should throw error on dropping
@@ -134,8 +161,5 @@ CREATE UNIQUE INDEX ix_unsupported_fti ON fti_table_unsupported(id);
 GO
 
 -- disable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

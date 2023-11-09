@@ -43,7 +43,10 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
                           ParamListInfo params);
 
 extern bool restore_tsql_tabletype;
-extern char *construct_unique_index_name(char *index_name, char *relation_name);
+extern char *get_cur_db_name(void);
+extern char *construct_unique_index_name(char *index_name, char *relation_name); 
+extern char *get_physical_schema_name(char *db_name, const char *schema_name);
+extern const char *get_dbo_schema_name(const char *dbname);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
@@ -1794,11 +1797,61 @@ List
 }
 
 /*
+ *	Generates the schema name for fulltext index statements
+ *	depending on whether it's master schema or not
+ */
+const char *
+gen_schema_name_for_fulltext_index(const char *schema_name)
+{
+	char *dbname = get_cur_db_name();
+	if (strlen(schema_name) == 0)
+		return get_dbo_schema_name(dbname);
+	else
+		return get_physical_schema_name(dbname, schema_name);
+}
+
+/*
+ * check_fulltext_exist
+ * Check if the fulltext index exist for the given table and schema 
+ * during execution of CONTAINS() statement
+ */
+bool
+check_fulltext_exist(const char *schema_name, const char *table_name)
+{
+	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
+	char		*ft_index_name;
+	Oid			schemaOid;
+	Oid			relid;
+
+	schemaOid = LookupExplicitNamespace(gen_schema_name, true);
+
+	// Check if schema exists
+	if (!OidIsValid(schemaOid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				errmsg("schema \"%s\" does not exist",
+					schema_name)));	
+
+	relid = get_relname_relid((const char *) table_name, schemaOid);
+
+
+	// Check if table exists
+	if (!OidIsValid(relid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" does not exist",
+					table_name)));
+	
+	ft_index_name = get_fulltext_index_name(relid, table_name);
+	return ft_index_name != NULL;
+}
+
+/*
  * get_fulltext_index_name
  * Get the fulltext index name of a relation specified by OID
  */
-char *
-get_fulltext_index_name(Oid relid, const char *table_name)
+char
+*get_fulltext_index_name(Oid relid, const char *table_name)
 {
     Relation        relation = RelationIdGetRelation(relid);
     List            *indexoidlist = RelationGetIndexList(relation);
@@ -1837,6 +1890,7 @@ is_unique_index(Oid relid, const char *index_name)
     List            *indexoidlist = RelationGetIndexList(relation);
 	ListCell		*cell;
     bool            is_unique = false;
+	int				unique_key_count = 0;
 
     foreach(cell, indexoidlist)
     {
@@ -1848,8 +1902,36 @@ is_unique_index(Oid relid, const char *index_name)
             HeapTuple       indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
             Form_pg_index   indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
-            if (indexForm->indisunique && indexForm->indrelid == relid)
-                is_unique = true;
+			/* Check if the key column is unique and is of single-key */
+            if (indexForm->indisunique && indexForm->indrelid == relid && indexForm->indnkeyatts == 1)
+            {
+				/* Check if the key column is non-nullable */
+                for (int i = 0; i < indexForm->indnatts; i++)
+                {
+					AttrNumber attnum = indexForm->indkey.values[i];
+                    if (attnum != 0)
+                    {
+                        HeapTuple attTuple = SearchSysCache2(ATTNUM,
+												ObjectIdGetDatum(relid),
+                                                Int16GetDatum(attnum));
+						if(HeapTupleIsValid(attTuple))
+						{
+							Form_pg_attribute attForm = (Form_pg_attribute) GETSTRUCT(attTuple);
+
+							if (attForm->attnotnull)
+							{
+								unique_key_count++;
+								if (unique_key_count > 1)
+									break;
+							}
+						}
+                        ReleaseSysCache(attTuple);
+                    }
+                }
+
+                if (unique_key_count == 1)
+					is_unique = true;
+			}
 
             ReleaseSysCache(indexTuple);
             break;

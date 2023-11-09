@@ -1,7 +1,4 @@
 -- enable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
@@ -42,7 +39,7 @@ CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t9(a) KEY INDEX IX_s1_t9_a;
 GO
 
 -- Creating index in a table of a non existent schema, should throw error
-CREATE FULLTEXT INDEX ON fti_schema_s3.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
+CREATE FULLTEXT INDEX ON fti_schema_s4.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
 GO
 
 -- should throw unsupported error
@@ -74,8 +71,5 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 
 -- disable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

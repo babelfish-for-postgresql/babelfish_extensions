@@ -1,12 +1,4 @@
 -- enable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 ~~START~~
@@ -109,11 +101,11 @@ GO
 
 
 -- Creating index in a table of a non existent schema, should throw error
-CREATE FULLTEXT INDEX ON fti_schema_s3.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
+CREATE FULLTEXT INDEX ON fti_schema_s4.fti_table_t8(a) KEY INDEX IX_s2_t8_a;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: schema "fti_schema_s3" does not exist)~~
+~~ERROR (Message: schema "fti_schema_s4" does not exist)~~
 
 
 -- should throw unsupported error
@@ -121,7 +113,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a TYPE COLUMN a) KEY INDEX ix_uns
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TYPE COLUMN option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'TYPE COLUMN' option is not currently supported in Babelfish)~~
 
 
 -- should throw unsupported error
@@ -129,7 +121,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a LANGUAGE 1033) KEY INDEX ix_uns
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: LANGUAGE option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'LANGUAGE' option is not currently supported in Babelfish)~~
 
 
 -- should throw unsupported error
@@ -137,7 +129,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a STATISTICAL_SEMANTICS) KEY INDE
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: STATISTICAL_SEMANTICS option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'STATISTICAL_SEMANTICS' option is not currently supported in Babelfish)~~
 
 
 -- should throw unsupported error
@@ -145,7 +137,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti O
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: FILEGROUP/CATALOG option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'CATALOG FILEGROUP OPTION' is not currently supported in Babelfish)~~
 
 
 -- should throw unsupported error
@@ -153,7 +145,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: CHANGE_TRACKING option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
 
 
 -- should throw unsupported error
@@ -161,7 +153,7 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: STOPLIST option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
 
 
 -- should throw unsupported error
@@ -169,18 +161,10 @@ CREATE FULLTEXT INDEX ON fti_table_unsupported(a) KEY INDEX ix_unsupported_fti W
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: SEARCH PROPERTY LIST option is not supported yet for CREATE FULLTEXT INDEX statement)~~
+~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
 
 
 -- disable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
-GO
-~~START~~
-text
-jdbc_user
-~~END~~
-
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
 ~~START~~

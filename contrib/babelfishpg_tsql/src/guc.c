@@ -1341,7 +1341,7 @@ define_escape_hatch_variables(void)
 							 &escape_hatch_fulltext,
 							 EH_STRICT,
 							 escape_hatch_options,
-							 PGC_SUSET,
+							 PGC_USERSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 

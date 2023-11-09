@@ -1,11 +1,18 @@
--- enable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
+-- tsql user=testLogin password=123
+USE master;
 GO
 
+-- enable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-USE master;
+-- should throw error because login doesn't have sufficient permissions to DROP FULLTEXT INDEX
+DROP FULLTEXT INDEX ON fti_table_t1;
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- enable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
 DROP FULLTEXT INDEX ON fti_table_t1;
@@ -87,9 +94,19 @@ GO
 DROP FUNCTION IF EXISTS fti_prepare_f1;
 GO
 
--- disable FULLTEXT
-SELECT set_config('role', 'jdbc_user', false);
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'testLogin' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
 GO
 
+-- tsql
+DROP LOGIN testLogin;
+GO
+
+-- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
