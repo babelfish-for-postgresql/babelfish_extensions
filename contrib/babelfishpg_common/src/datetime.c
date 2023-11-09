@@ -1167,20 +1167,28 @@ int days_in_date(int day, int month, int year) {
 	return n1;
 }
 
-char* datetypeName(int num) {
+char *datetypeName(int num) {
+	char* ret;
 	switch(num) {
 		case 0:
-			return "time";
+			ret = "time";
+			break;
 		case 1:
-			return "date";
+			ret = "date";
+			break;
 		case 2:
-			return "smalldatetime";
+			ret = "smalldatetime";
+			break;
 		case 3:
-			return "datetime";
+			ret = "datetime";
+			break;
 		case 4:
-			return "datetime2";
+			ret = "datetime2";
+			break;
+		default:
+			ret = "unknown";
 	}
-	return "unknown";
+	return ret;
 }
 
 Datum
@@ -1329,7 +1337,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for %s"), datetypeName(dttype)));
+					errmsg("data out of range for %s", datetypeName(dttype))));
 	}
 	PG_RETURN_TIMESTAMP(result);
 }
