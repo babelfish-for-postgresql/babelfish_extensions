@@ -55,7 +55,6 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_constraint.h"
-#include "../../babelfishpg_common/src/datetimeoffset.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -407,7 +406,7 @@ Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 {
 	
 
-	PG_RETURN_DATETIMEOFFSET((DirectFunctionCall1(timestamp_datetimeoffset,
+	PG_RETURN_POINTER((DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
 							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }
 
