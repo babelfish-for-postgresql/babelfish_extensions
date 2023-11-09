@@ -156,6 +156,8 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
+PG_FUNCTION_INFO_V1(getdate_internal);
+PG_FUNCTION_INFO_V1(sysdatetime);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -385,6 +387,18 @@ Datum getutcdate(PG_FUNCTION_ARGS)
     PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
                                                             PointerGetDatum(GetCurrentStatementStartTimestamp()))));
     
+}
+
+Datum getdate_internal(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
+											PointerGetDatum(GetCurrentStatementStartTimestamp())));
+	
+}
+
+Datum sysdatetime(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
 }
 
 void *

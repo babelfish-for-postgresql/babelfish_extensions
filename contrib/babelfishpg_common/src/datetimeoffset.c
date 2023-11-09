@@ -15,6 +15,7 @@
 #include "utils/timestamp.h"
 
 #include "fmgr.h"
+#include "access/xact.h"
 #include "miscadmin.h"
 #include "datetimeoffset.h"
 #include "datetime.h"
@@ -61,6 +62,7 @@ PG_FUNCTION_INFO_V1(datetimeoffset_datetime);
 PG_FUNCTION_INFO_V1(datetime2_datetimeoffset);
 PG_FUNCTION_INFO_V1(datetimeoffset_datetime2);
 PG_FUNCTION_INFO_V1(datetimeoffset_scale);
+PG_FUNCTION_INFO_V1(sysdatetimeoffset);
 
 PG_FUNCTION_INFO_V1(get_datetimeoffset_tzoffset_internal);
 
@@ -831,4 +833,13 @@ EncodeDatetimeoffsetTimezone(char *str, int tz, int style)
 	tmp = pg_ultostr_zeropad(tmp, min, 2);
 
 	*tmp = '\0';
+}
+
+
+Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
+{
+	
+
+	PG_RETURN_DATETIMEOFFSET((DirectFunctionCall1(timestamp_datetimeoffset,
+													PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }
