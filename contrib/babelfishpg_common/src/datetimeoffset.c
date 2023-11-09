@@ -841,5 +841,5 @@ Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 	
 
 	PG_RETURN_DATETIMEOFFSET((DirectFunctionCall1(timestamp_datetimeoffset,
-													PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }

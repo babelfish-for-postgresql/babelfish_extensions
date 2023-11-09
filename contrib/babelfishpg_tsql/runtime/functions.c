@@ -392,7 +392,7 @@ Datum getutcdate(PG_FUNCTION_ARGS)
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
-											PointerGetDatum(GetCurrentStatementStartTimestamp())));
+						PointerGetDatum(GetCurrentStatementStartTimestamp())));
 	
 }
 

@@ -4273,3 +4273,17 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+AS 'babelfishpg_tsql', 'getdate_internal'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
+AS 'babelfishpg_tsql', 'sysdatetime'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+AS 'babelfishpg_common', 'sysdatetimeoffset'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
