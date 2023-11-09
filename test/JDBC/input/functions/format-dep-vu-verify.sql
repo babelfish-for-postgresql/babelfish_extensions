@@ -45,6 +45,9 @@ go
 select * from format_datetime_dep_view_time
 go
 
+select * from format_datetime_dep_view_time2
+go
+
 exec format_dep_proc_time
 GO
 

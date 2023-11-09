@@ -157,6 +157,17 @@ nvarchar
 ~~END~~
 
 
+select * from format_datetime_dep_view_time2
+go
+~~START~~
+nvarchar
+00:00:00.123450
+03:53:59
+15:05:45
+23:59:59.123450
+~~END~~
+
+
 exec format_dep_proc_time
 GO
 ~~START~~

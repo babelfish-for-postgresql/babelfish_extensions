@@ -432,6 +432,10 @@ CREATE VIEW format_datetime_dep_view_time AS
 select format_datetime(ti, 'd','en-us', 'time') from format_dep_time_testing;
 GO
 
+CREATE VIEW format_datetime_dep_view_time2 AS
+select format_datetime(ti, 'c','en-us', 'time') from format_dep_time_testing;
+GO
+
 CREATE PROC format_dep_proc_time AS
 select FORMAT(ti, 'D','en-us') from format_dep_time_testing;
 GO
