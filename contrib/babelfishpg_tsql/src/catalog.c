@@ -3059,10 +3059,10 @@ check_bbf_schema_for_schema(const char *schema_name,
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
-	ScanKeyData key[4];
+	ScanKeyData key[3];
 	TableScanDesc scan;
-	bool		catalog_entry_exists = false;
 	int16	dbid = get_cur_db_id();
+	int16 priv = 0;
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									AccessShareLock);
@@ -3078,20 +3078,22 @@ check_bbf_schema_for_schema(const char *schema_name,
 				Anum_bbf_schema_perms_object_name,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(object_name));
-	ScanKeyInit(&key[3],
-				Anum_bbf_schema_perms_permission,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(permission));
 
-	scan = table_beginscan_catalog(bbf_schema_rel, 4, key);
+	scan = table_beginscan_catalog(bbf_schema_rel, 3, key);
 
 	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
-	if (HeapTupleIsValid(tuple_bbf_schema))
-		catalog_entry_exists = true;
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		Form_bbf_schema_perms schemaform;
+		schemaform = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
+		priv = schemaform->permission;
 
+		if((permission & priv) == permission)
+			return true;
+	}
 	table_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
-	return catalog_entry_exists;
+	return false;
 }
 
 void
