@@ -48,7 +48,7 @@ BABEL-2787
 BABEL-2787-2
 BABEL-2795
 BABEL-2805
-BABEL-2812
+BABEL-2812-before-15_5
 BABEL-2819
 BABEL-2845
 BABEL-2877
@@ -197,7 +197,7 @@ collation_tests_polish
 column_domain_usage
 constraint_column_usage
 dateadd_internal_df
-datediff_big
+datediff_big-before-15_5
 datediff_internal_date-before-14_10-or-15_5
 datepart
 datetime2fromparts-after-15-2

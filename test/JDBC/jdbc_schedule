@@ -141,6 +141,14 @@ ignore#!#datetime2fromparts-vu-prepare
 ignore#!#datetime2fromparts-vu-verify
 ignore#!#datetime2fromparts-vu-cleanup
 
+ignore#!#BABEL-2812-before-15_5-vu-prepare
+ignore#!#BABEL-2812-before-15_5-vu-verify
+ignore#!#BABEL-2812-before-15_5-vu-cleanup
+ignore#!#babel_smalldatetime_before_15-5
+ignore#!#datediff_big-before-15_5-vu-prepare
+ignore#!#datediff_big-before-15_5-vu-verify
+ignore#!#datediff_big-before-15_5-vu-cleanup
+
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare
 ignore#!#openquery_upgrd-vu-verify

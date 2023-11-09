@@ -15,49 +15,6 @@ INSERT INTO smalldatetime_testing VALUES('1999-12-31 23:59:29.999');
 INSERT INTO smalldatetime_testing VALUES('1999-12-31 23:59:29.998');
 select * from smalldatetime_testing;
 go
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~START~~
-smalldatetime
-1900-01-01 23:40:00.0
-1992-05-23 23:40:00.0
-1992-05-23 23:40:00.0
-1992-05-23 23:41:00.0
-1992-05-23 23:41:00.0
-2002-05-23 23:41:00.0
-2002-05-23 23:42:00.0
-2002-05-23 23:42:00.0
-2000-01-01 00:00:00.0
-2000-01-01 00:01:00.0
-2000-01-01 00:00:00.0
-2000-01-01 00:00:00.0
-1999-12-31 23:59:00.0
-~~END~~
-
 
 -- Test comparision with datetime/smalldatetime/date
 select * from smalldatetime_testing where sm >= cast('2000-01-01 00:00:59' as smalldatetime);
@@ -65,50 +22,12 @@ select * from smalldatetime_testing where sm >= cast('1992-05-23 23:40:00' as da
                     and sm < cast('1992-05-23 23:41:00' as datetime);
 select * from smalldatetime_testing where sm < cast(cast('1992-05-24' as date) as smalldatetime);
 go
-~~START~~
-smalldatetime
-2002-05-23 23:41:00.0
-2002-05-23 23:42:00.0
-2002-05-23 23:42:00.0
-2000-01-01 00:01:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1992-05-23 23:40:00.0
-1992-05-23 23:40:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1900-01-01 23:40:00.0
-1992-05-23 23:40:00.0
-1992-05-23 23:40:00.0
-1992-05-23 23:41:00.0
-1992-05-23 23:41:00.0
-~~END~~
-
 
 -- Test rounding for 23:59:59
 SELECT CAST('1992-05-09 23:59:59' AS SMALLDATETIME);
 SELECT CAST('2002-05-09 23:59:59' AS SMALLDATETIME);
 SELECT CAST('1999-12-31 23:59:59' AS SMALLDATETIME);
 go
-~~START~~
-smalldatetime
-1992-05-10 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2002-05-10 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2000-01-01 00:00:00.0
-~~END~~
-
 
 -- Test type cast to/from other time formats
 -- Cast to smalldatetime
@@ -122,51 +41,6 @@ select CAST(CAST('2010-07-08 23:59:29.123456 +8:00' AS datetimeoffset) AS smalld
 select CAST(CAST('1980-07-08 23:59:29.123456 -8:00' AS datetimeoffset) AS smalldatetime);
 select CAST(CAST('2010-07-08 23:59:29.123456 -8:00' AS datetimeoffset) AS smalldatetime);
 go
-~~START~~
-smalldatetime
-1900-01-01 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1900-01-01 01:02:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2020-03-15 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2020-03-15 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2010-07-08 23:59:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1980-07-08 23:59:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2010-07-08 23:59:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1980-07-08 23:59:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2010-07-08 23:59:00.0
-~~END~~
-
 -- Cast from smalldatetime
 select CAST(CAST('2010-07-08' AS smalldatetime) AS time);
 select CAST(CAST('2010-07-08 23:59:29.998' AS smalldatetime) AS time);
@@ -181,66 +55,6 @@ select CAST(CAST('1992-07-08 23:59:29.998' AS smalldatetime) AS datetime);
 select CAST(CAST('2010-07-08 23:59:29.998' AS smalldatetime) AS datetimeoffset);
 select CAST(CAST('1990-07-08 23:59:29.998' AS smalldatetime) AS datetimeoffset);
 go
-~~START~~
-time
-00:00:00.0000000
-~~END~~
-
-~~START~~
-time
-23:59:00.0000000
-~~END~~
-
-~~START~~
-time
-00:00:00.0000000
-~~END~~
-
-~~START~~
-time
-23:59:00.0000000
-~~END~~
-
-~~START~~
-time
-00:00:00.0000000
-~~END~~
-
-~~START~~
-date
-2020-03-15
-~~END~~
-
-~~START~~
-date
-2010-07-08
-~~END~~
-
-~~START~~
-date
-2010-07-09
-~~END~~
-
-~~START~~
-datetime
-2010-07-08 23:59:00.0
-~~END~~
-
-~~START~~
-datetime
-1992-07-08 23:59:00.0
-~~END~~
-
-~~START~~
-datetimeoffset
-2010-07-08 23:59:00.0000000 +00:00
-~~END~~
-
-~~START~~
-datetimeoffset
-1990-07-08 23:59:00.0000000 +00:00
-~~END~~
-
 
 -- Test smalldatetime value ranges
 select cast('1900-01-01' as smalldatetime);
@@ -259,53 +73,12 @@ select CAST(CAST('2099-03-15 23:59:29.998' AS datetime) AS smalldatetime);-- out
 select CAST(CAST('1899-12-31 23:59:30.000 +1:00' AS datetimeoffset) AS smalldatetime);-- out of range
 select CAST(CAST('2099-03-15 23:59:29.998 +6:00' AS datetimeoffset) AS smalldatetime);-- out of range
 go
-~~START~~
-smalldatetime
-1900-01-01 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2079-06-06 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1900-01-01 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2079-06-06 23:59:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1900-01-01 00:00:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-1900-01-01 00:00:00.0
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data out of range for smalldatetime)~~
-
 
 -- Test smalldatetime default value
 create table t1 (a smalldatetime, b int);
 insert into t1 (b) values (1);
 select a from t1 where b = 1;
 go
-~~ROW COUNT: 1~~
-
-~~START~~
-smalldatetime
-<NULL>
-~~END~~
-
 
 -- Test smalldatetime as parameter for time related functions
 select day(cast('2002-05-23 23:41:29.998' as smalldatetime));
@@ -322,71 +95,6 @@ select dateadd(second, 56, cast('2016-12-26 23:29:29' as smalldatetime));
 select dateadd(minute, 56, cast('2016-12-26 23:29:29' as smalldatetime));
 select dateadd(year, 150, cast('2016-12-26 23:29:29' as smalldatetime)); -- Expect error
 go
-~~START~~
-int
-23
-~~END~~
-
-~~START~~
-int
-5
-~~END~~
-
-~~START~~
-int
-2002
-~~END~~
-
-~~START~~
-int
-2
-~~END~~
-
-~~START~~
-int
-23
-~~END~~
-
-~~START~~
-int
-143
-~~END~~
-
-~~START~~
-int
-0
-~~END~~
-
-~~START~~
-text
-2002
-~~END~~
-
-~~START~~
-text
-Thursday
-~~END~~
-
-~~START~~
-text
-May
-~~END~~
-
-
-~~START~~
-smalldatetime
-2016-12-26 23:30:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2016-12-27 00:25:00.0
-~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: data out of range for smalldatetime)~~
-
 
 -- Clean up
 drop table smalldatetime_testing;
