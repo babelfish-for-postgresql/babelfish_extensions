@@ -48,6 +48,7 @@ PG_FUNCTION_INFO_V1(datetimeoffset_mi);
 PG_FUNCTION_INFO_V1(datetimeoffset_hash);
 PG_FUNCTION_INFO_V1(datetimeoffset_hash_extended);
 
+PG_FUNCTION_INFO_V1(timestamp_datetimeoffset);
 PG_FUNCTION_INFO_V1(datetimeoffset_timestamp);
 PG_FUNCTION_INFO_V1(date_datetimeoffset);
 PG_FUNCTION_INFO_V1(datetimeoffset_date);
