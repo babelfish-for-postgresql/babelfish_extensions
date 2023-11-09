@@ -3842,11 +3842,11 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	 * The executing login must have sysadmin role: even when the current session is the owner, but has no sysadmin role, 
 	 * T-SQL does not allow the owner to grant ownership to another login -- not even to 'sa'.
 	 */
-	// if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
-	// {
-	// 	ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-	// 					errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
-	// }			
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
+	}			
 	
 	/* The new owner cannot be a user in the database already (but 'guest' user is fine). */
 	new_owner_is_user = get_authid_user_ext_physical_name(stmt->db_name, stmt->new_owner_name);
