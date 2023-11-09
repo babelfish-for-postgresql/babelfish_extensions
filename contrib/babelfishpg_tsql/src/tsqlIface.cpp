@@ -5485,6 +5485,11 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 						char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
+					else
+					{
+						char *grantee_name = (char *)"PUBLIC";
+						grantee_list = lappend(grantee_list, grantee_name);
+					}
 				}
 				result->grantees = grantee_list;
 				return (PLtsql_stmt *) result;
@@ -5570,6 +5575,11 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				{
 					std::string id_str = ::getFullText(prin->id());
 					char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
+					grantee_list = lappend(grantee_list, grantee_name);
+				}
+				else
+				{
+					char *grantee_name = (char *)"PUBLIC";
 					grantee_list = lappend(grantee_list, grantee_name);
 				}
 			}
