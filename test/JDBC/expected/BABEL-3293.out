@@ -704,7 +704,7 @@ Hash Join
         Merge Cond: (babel_3293_t1.b1 = babel_3293_t3.b3)
         ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
         ->  Sort
-              Sort Key: babel_3293_t3.b3
+              Sort Key: babel_3293_t3.b3 NULLS FIRST
               ->  Seq Scan on babel_3293_t3
   ->  Hash
         ->  Seq Scan on babel_3293_t2
@@ -1003,7 +1003,7 @@ Merge Left Join
         ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
               Index Cond: (a2 = t1.a1)
   ->  Sort
-        Sort Key: babel_3293_t3.b3
+        Sort Key: babel_3293_t3.b3 NULLS FIRST
         ->  Seq Scan on babel_3293_t3
 ~~END~~
 
