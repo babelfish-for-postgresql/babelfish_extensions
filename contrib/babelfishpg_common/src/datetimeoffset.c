@@ -864,6 +864,10 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 		type = UNITS;
 		val = DTK_NANO;
 	}
+	if(strncmp(lowunits, "weekday", 7) == 0) {
+		type = UNITS;
+		val = DTK_DAY;
+	}
 
 	if(type == UNITS) {
 		switch(val) {
@@ -902,12 +906,12 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
-				elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype datetimeoffset",
+				elog(ERROR, "the datepart %s is not supported by function dateadd for datatype datetimeoffset",
 				 	lowunits);
 				break;
 		}
 	} else {
-		elog(ERROR, "the datepart \"%s\" is not supported by function dateadd for datatype datetimeoffset", lowunits);
+		elog(ERROR, "the datepart %s is not supported by function dateadd for datatype datetimeoffset", lowunits);
 	}
 
 	result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(d), PointerGetDatum(interval));

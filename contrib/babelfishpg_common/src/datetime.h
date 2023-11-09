@@ -33,6 +33,7 @@ extern double calculateDaysFromDefaultDatetime(Timestamp timestamp_left);
 extern int roundFractionalSeconds(int fractseconds); 
 
 extern int days_in_date(int day, int month, int year);
+extern char* datetypeName(int num);
 
 extern bool int64_multiply_add(int64 val, int64 multiplier, int64 *sum);
 extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
