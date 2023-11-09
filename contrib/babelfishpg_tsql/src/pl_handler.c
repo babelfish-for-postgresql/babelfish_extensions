@@ -276,8 +276,24 @@ set_procid(Oid oid)
 static void
 assign_identity_insert(const char *newval, void *extra)
 {
+	/*
+	 * Workers synchronize the parameter at the beginning of each parallel 
+	 * operation. Avoid performing parameter assignment uring parallel operation.
+	 */
 	if (IsParallelWorker())
-		return;
+	{
+		if (InitializingParallelWorker)
+			return;
+
+        /*
+         * A change other than during startup, for example due to a SET clause
+         * attached to a function definition, should be rejected, as there is
+         * nothing we can do inside the worker to make it take effect.
+         */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot change identity_insert during a parallel operation")));
+	}
 
 	if (strcmp(newval, "") != 0)
 	{
