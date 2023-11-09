@@ -6,5 +6,5 @@ GO
 
 CREATE PROC babel_539_prepare_proc
 AS
-SELECT col1, name, IDENTITY(int, 1,2) AS id_num INTO babel_539NewTable_proc FROM babel_539OldTable order by id_num;
+SELECT col1, name, IDENTITY(int, 1,2) AS id_num INTO babel_539NewTable_proc FROM babel_539OldTable order by col1;
 GO

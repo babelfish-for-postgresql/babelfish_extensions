@@ -411,3 +411,5 @@ BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
 cast_eliminate
+TestDatatypeAggSort
+babel_index_nulls_order-before-15-5

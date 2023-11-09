@@ -50,20 +50,23 @@ jobs:
         if: always() && steps.compile-antlr.outcome == 'success'
         run: |
           cd ..
+          export CC='ccache gcc'
+          export CMAKE_C_COMPILER_LAUNCHER=ccache
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
           sudo apt-get install wget
-          wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
-          tar -xvzf postgis-3.3.3dev.tar.gz
-          wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
-          tar -xvzf proj-4.9.1.tar.gz
-          cd proj-4.9.1
+          wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
+          tar -xvzf postgis-3.4.0.tar.gz
+          wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz
+          tar -xvzf proj-9.2.1.tar.gz
+          cd proj-9.2.1
           if [ ! -d "build" ]; then
             mkdir build
           fi
           cd build
-          cmake ..
+          cmake -DCMAKE_INSTALL_LIBDIR="lib/x86_64-linux-gnu" -DCMAKE_INSTALL_PREFIX="/usr" ..
           cmake --build .
           sudo cmake --build . --target install
-          cd ../../postgis-3.3.3dev
+          cd ../../postgis-3.4.0
           ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/psql_source/bin/pg_config
           make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config
           sudo make USE_PGXS=1 PG_CONFIG=~/psql_source/bin/pg_config install

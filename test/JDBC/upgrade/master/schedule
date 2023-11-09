@@ -333,9 +333,12 @@ TestVariableDataLength
 TestXML
 timefromparts
 triggers_with_transaction
+typeid-typename
 BABEL-4217
 datetimeoffset-timezone
 BABEL-4046
 host_id
 BABEL-4175
 BABEL_4330
+TestDatatypeAggSort
+babel_index_nulls_order

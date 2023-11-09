@@ -240,6 +240,7 @@ CREATE OR REPLACE AGGREGATE sys.max(sys.VARCHAR)
   sfunc = sys.varchar_larger,
   stype = sys.varchar,
   combinefunc = sys.varchar_larger,
+  sortop = >,
   parallel = safe
 );
 
@@ -248,6 +249,7 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.VARCHAR)
   sfunc = sys.varchar_smaller,
   stype = sys.varchar,
   combinefunc = sys.varchar_smaller,
+  sortop = <,
   parallel = safe
 );
 
