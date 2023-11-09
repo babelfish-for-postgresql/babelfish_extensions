@@ -215,6 +215,7 @@ forjson-datatypes
 forjson-subquery
 forjson-nesting
 format
+format-dep
 forxml
 forxml-subquery
 fulltextserviceproperty
