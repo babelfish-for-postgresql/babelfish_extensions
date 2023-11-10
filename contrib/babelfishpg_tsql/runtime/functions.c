@@ -416,12 +416,24 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 		return (((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
 
 	}
-	else if (strcmp(field, "week") == 0 || strcasecmp(field , "tsql_week") == 0)
+	else if (strcasecmp(field , "tsql_week") == 0)   //tsql_week - SQLServer week
+	// iso_week in tsql -> week
+	// week in tsql -> tsql_week
 	{
 		first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; // returns number of days since 1/1/1970 to 1/1/tm_year
 		//convert this first day of tm_year to timestamp into first_day_ts
 		first_day_ts = first_day*86400000000 - 946684800000000;
 		first_week_end = 8 - datepart_internal("dow", first_day_ts, 0);
+		day = babelfish_date_part("doy",timestamp);
+		if(day <= first_week_end) return 1;
+		else return (2+(day-first_week_end-1)/7)%52;
+	}
+	else if (strcasecmp(field , "week") == 0) 
+	{
+		//return bb_date_Part(week, timestamp);
+		//date_part('week', timestamp) of postgres
+		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
+		first_week_end = 8 - datepart_internal("doy", first_day, 0);
 		day = babelfish_date_part("doy",timestamp);
 		if(day <= first_week_end) return 1;
 		else return (2+(day-first_week_end-1)/7)%52;
