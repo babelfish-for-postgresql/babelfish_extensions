@@ -308,7 +308,6 @@ WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a1
 SET babelfish_showplan_all ON
 GO
 
--- the purpose of babel_3512_t2_cte is to check the behavior for invalid hint 
 EXEC babel_3512_proc_6
 GO
 ~~START~~
