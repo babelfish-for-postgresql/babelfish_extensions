@@ -177,6 +177,7 @@ datetime2fromparts
 forjson
 forjson-datatypes
 format
+format-dep
 forxml
 fulltextserviceproperty
 get_tds_id

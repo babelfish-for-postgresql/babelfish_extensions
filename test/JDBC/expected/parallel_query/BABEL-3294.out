@@ -1,4 +1,3 @@
--- parallel_query_expected
 drop table if exists babel_3294_t1
 go
 
@@ -11,18 +10,43 @@ go
 -- Encourage use of parallel plans
 select set_config('force_parallel_mode', '1', false)
 go
+~~START~~
+text
+on
+~~END~~
+
 
 select set_config('parallel_setup_cost', '0', false)
 go
+~~START~~
+text
+0
+~~END~~
+
 
 select set_config('parallel_tuple_cost', '0', false)
 go
+~~START~~
+text
+0
+~~END~~
+
 
 select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
+~~START~~
+text
+on
+~~END~~
+
 
 select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
+~~START~~
+text
+off
+~~END~~
+
 
 set babelfish_showplan_all on
 go
@@ -33,6 +57,15 @@ go
  */
 select * from babel_3294_t1 t1 where a1 = 1
 go
+~~START~~
+text
+Query Text: select * from babel_3294_t1 t1 where a1 = 1
+Gather
+  Workers Planned: 4
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 /*
  * The MAXDOP hint should be handled specially the hint value is 0
@@ -42,24 +75,78 @@ go
  */
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 0)
 go
+~~START~~
+text
+Query Text: select/*+ set(max_parallel_workers_per_gather 64) */ * from babel_3294_t1 t1 where a1 = 1                 
+Gather
+  Workers Planned: 16
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 /*
  * Run SELECT queries and give the MAXDOP hint with different values to verify the hint is actually getting mapped
  */
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 1)
 go
+~~START~~
+text
+Query Text: select/*+ set(max_parallel_workers_per_gather 1) */ * from babel_3294_t1 t1 where a1 = 1                 
+Gather
+  Workers Planned: 1
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 2)
 go
+~~START~~
+text
+Query Text: select/*+ set(max_parallel_workers_per_gather 2) */ * from babel_3294_t1 t1 where a1 = 1                 
+Gather
+  Workers Planned: 2
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 4)
 go
+~~START~~
+text
+Query Text: select/*+ set(max_parallel_workers_per_gather 4) */ * from babel_3294_t1 t1 where a1 = 1                 
+Gather
+  Workers Planned: 4
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 8)
 go
+~~START~~
+text
+Query Text: select/*+ set(max_parallel_workers_per_gather 8) */ * from babel_3294_t1 t1 where a1 = 1                 
+Gather
+  Workers Planned: 8
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 16)
 go
+~~START~~
+text
+Query Text: select/*+ set(max_parallel_workers_per_gather 16) */ * from babel_3294_t1 t1 where a1 = 1                  
+Gather
+  Workers Planned: 16
+  ->  Parallel Seq Scan on babel_3294_t1 t1
+        Filter: (a1 = 1)
+~~END~~
+
 
 set babelfish_showplan_all off
 go

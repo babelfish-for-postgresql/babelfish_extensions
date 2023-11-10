@@ -14,16 +14,7 @@ ignore#!#Test-sp_droprolemember-vu-prepare
 ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
 
-# Group 3: “could not access file "pg_hint_plan": No such file or directory" BABEL-4395
-ignore#!#BABEL-3291
-ignore#!#BABEL-3292
-ignore#!#BABEL-3293
-ignore#!#BABEL-3294
-ignore#!#BABEL-3512
-ignore#!#BABEL-3592
-ignore#!#BABEL-4294-vu-verify
-
-# Group 4: Incorrect precision BABEL-4396
+# Group 2: Incorrect precision BABEL-4396
 ignore#!#BABEL-3943
 ignore#!#BABEL-785
 ignore#!#TestDecimal-vu-verify
@@ -34,7 +25,7 @@ ignore#!#babel_isnull
 ignore#!#BABEL-3006
 ignore#!#BABEL-3147-vu-verify
 
-# Group 5: Need ORDER BY
+# Group 3: Need ORDER BY
 ignore#!#BABEL-2514
 ignore#!#BABEL-2998
 ignore#!#BABEL-328-vu-verify
@@ -59,32 +50,32 @@ ignore#!#cast_eliminate-vu-verify
 # Query plan change (verified)
 # Need to design a way to allow expected parallel mode output to be accepted
 ignore#!#babel_index_nulls_order-vu-verify
+# Query Plan changed. (verified)
+ignore#!#BABEL-4264
 
-# Other or mixed issues
-ignore#!#545_1
-ignore#!#8107_1
-ignore#!#8143_1
-ignore#!#BABEL-741-vu-verify
-ignore#!#BABEL-1444
+# Other or mixed issues - JIRA-BABEL-4538
+# database "" does not exists. (calls is_member() functions)
 ignore#!#BABEL-1621
+# database "" does not exists. (calls schema_id())
+ignore#!#BABEL-741-vu-verify
 ignore#!#BABEL-2416
-ignore#!#BABEL-2812-vu-verify
 ignore#!#BABEL-2833
+# database "" does not exists. (calls IS_ROLEMEMBER())
+ignore#!#BABEL-ROLE-MEMBER-vu-verify
+ignore#!#BABEL-ROLE-MEMBER
+
+# current_setting('role') returns NULL.
+ignore#!#BABEL-1444
+
+# ERROR CODE DIFFERENCE.  JIRA-4539
+ignore#!#babel_datetime-vu-verify
+ignore#!#babel_datetime
+ignore#!#BABEL-2812-vu-verify
+
+# "tds_fdw" does not exist - JIRA-4540
 ignore#!#BABEL-4168-vu-prepare
 ignore#!#BABEL-4168-vu-verify
 ignore#!#BABEL-4168-vu-cleanup
-ignore#!#BABEL-ROLE-MEMBER-vu-verify
-ignore#!#BABEL-ROLE-MEMBER
-ignore#!#BABEL-SP_PKEYS
-ignore#!#BABEL-SP_STATISTICS
-ignore#!#Test-sp_execute_postgresql
-ignore#!#babel_datetime-vu-verify
-ignore#!#babel_datetime
-ignore#!#babel_extra_join_test_cases
-ignore#!#babelfish_migration_mode-vu-verify
-ignore#!#bbf_view_def
-ignore#!#case_insensitive_collation-vu-prepare
-ignore#!#case_insensitive_collation-vu-verify
 ignore#!#four-part-names-vu-prepare
 ignore#!#four-part-names-vu-verify
 ignore#!#four-part-names-vu-cleanup
@@ -97,17 +88,14 @@ ignore#!#linked_srv_4229-vu-cleanup
 ignore#!#openquery-vu-prepare
 ignore#!#openquery-vu-verify
 ignore#!#openquery-vu-cleanup
-ignore#!#pg_stat_statements_tsql
+
+# relation "onek" does not exist: JIRA-4541
 ignore#!#pgr_select
 ignore#!#pgr_select_distinct
-ignore#!#sp_statistics_100
+
+# output difference: JIRA-4542
 ignore#!#sys-sp_pkeys-dep-vu-verify
-ignore#!#sys-sp_statistics_100-vu-prepare
-ignore#!#sys-sp_statistics_100-vu-verify
-ignore#!#sys-sp_statistics_100-vu-cleanup
-ignore#!#sys-sp_statistics_100-dep-vu-verify
-ignore#!#BABEL-4264
-ignore#!#BABEL_4145
+ignore#!#BABEL-SP_PKEYS
 
 # Test failures caused by babel_extra_join_test_cases_northwind failure
 ignore#!#babelfish_sysdatabases-vu-prepare

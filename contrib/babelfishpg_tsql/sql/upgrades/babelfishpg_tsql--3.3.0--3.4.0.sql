@@ -4144,15 +4144,20 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEX
 'babelfishpg_tsql', 'babelfish_fts_rewrite'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
+-- Rename function for dependencies
+ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_4_0;
+ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_4_0;
+ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_4_0;
+
+CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR, IN INT) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR, IN INT) TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern NVARCHAR, IN p_culture VARCHAR default 'en-us')
+CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern sys.NVARCHAR, IN p_culture sys.VARCHAR default 'en-us')
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -4211,7 +4216,12 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR) TO PUBLIC;
+
+-- === DROP deprecated functions (if exists)
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
 
 CREATE OR REPLACE FUNCTION sys.bbf_pivot()
 RETURNS setof record
@@ -4226,8 +4236,6 @@ CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
           name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
           name collate "C" like 'babelfishpg_tsql.isolation_level_%';
 GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
-
-
 
 -- Change the owner of the current database.
 -- This is a wrapper around ALTER AUTHORIZATION ON DATABASE::
