@@ -37,5 +37,12 @@ CREATE OPERATOR sys./ (
 END IF;
 END $$;
 
+-- binary varbinary cast
+CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
+WITHOUT FUNCTION AS IMPLICIT;
+
+CREATE CAST (sys.BBF_VARBINARY AS sys.BBF_BINARY)
+WITHOUT FUNCTION AS IMPLICIT;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

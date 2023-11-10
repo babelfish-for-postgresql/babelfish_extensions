@@ -192,7 +192,7 @@ Test-Computed-Columns
 babel_char
 BABEL-SQUARE
 BABEL-728
-babel_function_string
+babel_function_string-before-15-5-or-14-10
 BABEL-2701
 BABEL-1566
 babel_isnumeric

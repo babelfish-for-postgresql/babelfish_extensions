@@ -16,6 +16,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_namespace.h"
+#include "collation.h"
 #include "executor/spi.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
@@ -33,6 +34,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "pltsql_instr.h"
+#include "parser/parse_target.h"
 
 
 #include <math.h>
@@ -941,7 +943,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 		if (ccontext != COERCION_EXPLICIT)
 		{
 			/*
-			 * T-SQL may forbid casting from string literal to certain
+			 * T-SQL forbids implicit casting from string literal to certain
 			 * datatypes (i.e. binary, varbinary)
 			 */
 			if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId))
@@ -1068,6 +1070,37 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 				default:
 					newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
 			}
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_binary_datatype) (baseTypeId) ||
+				 (*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (baseTypeId))
+		{
+			/*
+			 * binary datatype should be passed in client encoding
+			 * when explicit cast is called
+			 */
+
+			TypeName 	*varcharTypeName = makeTypeNameFromNameList(list_make2(makeString("sys"),
+																	makeString("varchar")));
+			Node 		*result;
+			Const 		*tempcon;
+
+			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
+
+			tempcon = makeConst(varcharTypeName->typeOid, -1,
+								tsql_get_server_collation_oid_internal(false),
+								-1, PointerGetDatum(cstring_to_text(value)),
+								false, false);
+
+			result = coerce_to_target_type(NULL, (Node *) tempcon, baseTypeId,
+										   targetTypeId, targetTypeMod,
+										   COERCION_EXPLICIT,
+										   COERCE_EXPLICIT_CAST,
+										   location);
+			
+			pfree(varcharTypeName);
+			ReleaseSysCache(baseType);
+			
+			return result;
 		}
 		else
 		{
