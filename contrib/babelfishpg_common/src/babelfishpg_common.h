@@ -55,6 +55,7 @@ typedef struct common_utility_plugin
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
 	Datum		(*tinyint2sqlvariant) (PG_FUNCTION_ARGS);
 	Datum		(*translate_pg_type_to_tsql) (PG_FUNCTION_ARGS);
+	Oid		(*get_tsql_datatype_oid) (char *type_name);
 	void		(*TdsGetPGbaseType) (uint8 variantBaseType, int *pgBaseType, int tempLen,
 									 int *dataLen, int *variantHeaderLen);
 	void		(*TdsSetMetaData) (bytea *result, int pgBaseType, int scale,

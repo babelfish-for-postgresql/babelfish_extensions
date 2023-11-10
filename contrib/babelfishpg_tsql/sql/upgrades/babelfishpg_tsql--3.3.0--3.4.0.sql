@@ -531,6 +531,16 @@ $$
 LANGUAGE plpgsql IMMUTABLE
 STRICT;
 
+CREATE OR REPLACE FUNCTION SYS.TYPE_NAME(IN type_id INT)
+RETURNS SYS.NVARCHAR(128) AS
+'babelfishpg_tsql', 'type_name'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN type_name SYS.NVARCHAR)
+RETURNS INT AS
+'babelfishpg_tsql', 'type_id'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
                                                                IN tz_offset PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset
@@ -4012,6 +4022,12 @@ select
 from sys.table_types tt
 inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
+
+ALTER FUNCTION sys.identity_into_int(INT, INT, INT) RENAME TO identity_into_int_deprecated_in_3_4_0;
+ALTER FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) RENAME TO identity_into_smallint_deprecated_in_3_4_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'identity_into_int_deprecated_in_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'identity_into_smallint_deprecated_in_3_4_0');
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');

@@ -152,6 +152,7 @@ CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIME)
     sfunc = sys.datetime_larger,
     stype = sys.datetime,
     combinefunc = sys.datetime_larger,
+    sortop = >,
     parallel = safe
 );
 
@@ -160,6 +161,7 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME)
     sfunc = sys.datetime_smaller,
     stype = sys.datetime,
     combinefunc = sys.datetime_smaller,
+    sortop = <,
     parallel = safe
 );
 

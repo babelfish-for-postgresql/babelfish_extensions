@@ -58,6 +58,7 @@
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
+#define SYSVARCHAR_MAX_LENGTH 4000
 
 typedef enum
 {
@@ -123,6 +124,8 @@ PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
+PG_FUNCTION_INFO_V1(type_id);
+PG_FUNCTION_INFO_V1(type_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(identity_into_smallint);
@@ -167,7 +170,6 @@ static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
 										bool randomAccess);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
-static int64 get_identity_next_value(void);
 
 extern int	pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -1802,6 +1804,215 @@ object_name(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+/*
+ * type_id
+ * Returns the object ID with type name as input.
+ * Returns NULL
+ *  if input is NULL
+ *  if there is no such type
+ *  if user don't have right permission
+ *  if any error occured
+ */
+Datum
+type_id(PG_FUNCTION_ARGS)
+{
+    char       *db_name,
+               *schema_name,
+               *object_name;
+    char       *physical_schema_name;
+    char       *input;
+    char       **splitted_object_name;
+    Oid        schema_oid = InvalidOid;
+    Oid        user_id = GetUserId();
+    Oid        result = InvalidOid;
+    int        i;
+    int        len;
+
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+    input = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+    /* strip trailing whitespace from input */
+    len = pg_mbstrlen(input);
+    i = len;
+    while (i > 0 && scanner_isspace((unsigned char) input[i - 1]))
+        i--;
+    if(i < len)
+        input[i] = '\0';
+
+    /* length should be restricted to 4000 */
+    if (i > SYSVARCHAR_MAX_LENGTH)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+                 errmsg("input value is too long for object name")));
+
+    /* resolve the two part name */
+    splitted_object_name = split_object_name(input);
+    /* If three part name(db_name also included in input) then return null */
+    if(pg_mbstrlen(splitted_object_name[1]) != 0)
+    {
+        pfree(input);
+        for (int i = 0; i < 4; i++)
+            pfree(splitted_object_name[i]);
+        pfree(splitted_object_name);
+        PG_RETURN_NULL();
+    }
+    db_name = get_cur_db_name();
+    schema_name = splitted_object_name[2];
+    object_name = splitted_object_name[3];
+
+    /* downcase identifier if needed */
+    if (pltsql_case_insensitive_identifiers)
+    {
+        db_name = downcase_identifier(db_name, strlen(db_name), false, false);
+        schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
+        object_name = downcase_identifier(object_name, strlen(object_name), false, false);
+        for (int i = 0; i < 4; i++)
+            pfree(splitted_object_name[i]);
+    }
+    else
+        pfree(splitted_object_name[0]);
+
+    pfree(input);
+    pfree(splitted_object_name);
+
+    /* truncate identifiers if needed */
+    truncate_tsql_identifier(db_name);
+    truncate_tsql_identifier(schema_name);
+    truncate_tsql_identifier(object_name);
+
+    if (!strcmp(schema_name, ""))
+    {
+        // To check if it is a system datatype, search in typecode list and it will give result oid, else if not it will return null.
+        result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
+
+        // If null result, then it is not system datatype and now search with default schema in pg_type
+        if (!OidIsValid(result))
+        {
+            /* find the default schema for current user and get physical schema name */
+            const char *user = get_user_for_database(db_name);
+            const char *guest_role_name = get_guest_role_name(db_name);
+
+            if (!user)
+            {
+                pfree(db_name);
+                pfree(schema_name);
+                pfree(object_name);
+                PG_RETURN_NULL();
+            }
+            else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+            {
+                physical_schema_name = pstrdup(get_guest_schema_name(db_name));
+            }
+            else
+            {
+                pfree(schema_name);
+                schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+                physical_schema_name = get_physical_schema_name(db_name, schema_name);
+            }
+        }
+        else
+        {
+            pfree(db_name);
+            pfree(schema_name);
+            pfree(object_name);
+            PG_RETURN_INT32(result);
+        }
+    }
+    else
+    {
+	// If schema is 'sys' or 'pg_catalog' then search in typecode list.
+	if(!strcmp(schema_name, "sys") || !strcmp(schema_name, "pg_catalog"))
+	{
+	    result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
+	    pfree(db_name);
+	    pfree(schema_name);
+	    pfree(object_name);
+	    if (OidIsValid(result))
+		PG_RETURN_INT32(result);
+	    else
+		PG_RETURN_NULL();
+	}
+	else
+	{
+	    physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	}
+    }
+
+    /* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
+    if (physical_schema_name != NULL && pg_mbstrlen(physical_schema_name) != 0)
+	schema_oid = get_namespace_oid(physical_schema_name, true);
+	
+    pfree(schema_name);
+    pfree(db_name);
+    pfree(physical_schema_name);
+
+    // Check if user has permission to access schema
+    if (OidIsValid(schema_oid) && pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) == ACLCHECK_OK)
+    {
+    	// Search in pg_type.
+	result = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
+	if (OidIsValid(result) && pg_type_aclcheck(result, user_id, ACL_USAGE) == ACLCHECK_OK)
+	{
+		pfree(object_name);
+		PG_RETURN_INT32(result);
+	}
+    }
+    pfree(object_name);
+    PG_RETURN_NULL();
+}
+
+/*
+ * type_name
+ *      returns the type name with type id as input
+ * Returns NULL
+ *      if there is no such type
+ *      if user don't have right permission
+ */
+Datum
+type_name(PG_FUNCTION_ARGS)
+{
+    Datum       type_id = PG_GETARG_DATUM(0);
+    Datum       tsql_typename;
+    HeapTuple   tuple;
+    Oid         user_id = GetUserId();
+    char        *result = NULL;
+
+    LOCAL_FCINFO(fcinfo1, 1);
+
+    if (type_id < 0)
+        PG_RETURN_NULL();
+    
+    InitFunctionCallInfoData(*fcinfo1, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo1->args[0].value = type_id;
+    fcinfo1->args[0].isnull = false;
+    // Search in typecode list, it will return type name if system datatype, else will return null.
+    tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo1);
+    if (tsql_typename)
+    {
+        PG_RETURN_TEXT_P(tsql_typename);
+    }
+    else
+    {   
+        // Search in pg_type catalog
+        tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
+        if (HeapTupleIsValid(tuple))
+        {
+            if (pg_type_aclcheck(type_id, user_id, ACL_USAGE) == ACLCHECK_OK)
+            {
+                Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+                result = NameStr(pg_type->typname);
+            }
+            ReleaseSysCache(tuple);
+        }
+        if (result)
+        {
+            PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+        }
+    }
+    PG_RETURN_NULL();
+}
+
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
 {
@@ -2100,34 +2311,25 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/**
- * Common function to get next value of sequence for Identity function in Select Into
- */
-static int64 
-get_identity_next_value(void)
-{
-	int64 result;
-	Assert(tsql_select_into_seq_oid != InvalidOid);
-	result = nextval_internal(tsql_select_into_seq_oid, false);
-	return result;
-}
-
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum 
 identity_into_smallint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT16((int16)get_identity_next_value());
+	PG_RETURN_INT16(0);
 }
 
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum
 identity_into_int(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32((int32)get_identity_next_value());
+	PG_RETURN_INT32(0);
 }
 
+/** This function is only used for identifying IDENTITY() in SELECT-INTO statement, It is never actually invoked*/
 Datum 
 identity_into_bigint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT64((int64)get_identity_next_value());
+	PG_RETURN_INT64(0);
 }
 
 /*

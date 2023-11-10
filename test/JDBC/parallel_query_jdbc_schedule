@@ -50,6 +50,10 @@ ignore#!#binary-index-vu-verify
 ignore#!#pgr_select_into
 ignore#!#cast_eliminate-vu-verify
 
+# Query plan change (verified)
+# Need to design a way to allow expected parallel mode output to be accepted
+ignore#!#babel_index_nulls_order-vu-verify
+
 # Other or mixed issues
 ignore#!#545_1
 ignore#!#8107_1
@@ -288,24 +292,10 @@ ignore#!#test_windows_login-vu-prepare
 ignore#!#test_windows_login-vu-verify
 ignore#!#test_windows_login-vu-cleanup
 
-# JIRA - BABEL-4419
-ignore#!#BABEL-1056
-ignore#!#BABEL-GUC-PLAN
-ignore#!#BABEL-3092
-ignore#!#BABEL-COLUMN-CONSTRAINT
-ignore#!#BABEL-1251-vu-verify
-ignore#!#BABEL-1251
-
 # JIRA - BABEL-4421
 ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
-
-# BABEL-4422
-ignore#!#babel_money
-
-# BABEL-4423
-ignore#!#BABEL-IDENTITY
 
 # BABEL-4425 - Taking too much time to run.
 ignore#!#getdate-vu-prepare
