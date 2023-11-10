@@ -458,6 +458,8 @@ TestXML
 timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
+typeid-typename
+typeid-typename-dep
 unquoted_string
 doublequoted_string
 alter_authorization_change_db_owner
@@ -483,3 +485,6 @@ BABEL-4279
 BABEL-4484
 pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
+cast_eliminate
+TestDatatypeAggSort
+babel_index_nulls_order

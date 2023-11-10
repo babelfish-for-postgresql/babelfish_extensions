@@ -531,6 +531,16 @@ $$
 LANGUAGE plpgsql IMMUTABLE
 STRICT;
 
+CREATE OR REPLACE FUNCTION SYS.TYPE_NAME(IN type_id INT)
+RETURNS SYS.NVARCHAR(128) AS
+'babelfishpg_tsql', 'type_name'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN type_name SYS.NVARCHAR)
+RETURNS INT AS
+'babelfishpg_tsql', 'type_id'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
                                                                IN tz_offset PG_CATALOG.TEXT)
 RETURNS sys.datetimeoffset
@@ -4013,6 +4023,12 @@ from sys.table_types tt
 inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
+ALTER FUNCTION sys.identity_into_int(INT, INT, INT) RENAME TO identity_into_int_deprecated_in_3_4_0;
+ALTER FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) RENAME TO identity_into_smallint_deprecated_in_3_4_0;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'identity_into_int_deprecated_in_3_4_0');
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'identity_into_smallint_deprecated_in_3_4_0');
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4_0');
 
@@ -4202,10 +4218,6 @@ RETURNS setof record
 AS 'babelfishpg_tsql', 'bbf_pivot'
 LANGUAGE C STABLE;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
 CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
     SELECT * 
     FROM pg_catalog.pg_settings 
@@ -4215,11 +4227,7 @@ CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
           name collate "C" like 'babelfishpg_tsql.isolation_level_%';
 GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
 
--- After upgrade, always run analyze for all babelfish catalogs.
-CALL sys.analyze_babelfish_catalogs();
 
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
 -- Change the owner of the current database.
 -- This is a wrapper around ALTER AUTHORIZATION ON DATABASE::
@@ -4257,3 +4265,27 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+AS 'babelfishpg_tsql', 'getdate_internal'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
+AS 'babelfishpg_tsql', 'sysdatetime'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
+AS 'babelfishpg_tsql', 'sysdatetimeoffset'
+LANGUAGE C STABLE;
+GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- After upgrade, always run analyze for all babelfish catalogs.
+CALL sys.analyze_babelfish_catalogs();
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

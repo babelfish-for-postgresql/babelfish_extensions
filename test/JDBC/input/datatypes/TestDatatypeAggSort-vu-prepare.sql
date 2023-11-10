@@ -1,0 +1,163 @@
+CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl (
+	char_col CHAR(10), 
+	varchar_col VARCHAR(10),
+	datetime_col DATETIME,
+	datetime2_col DATETIME2,
+	datetimeoffset_col DATETIMEOFFSET,
+	smalldatetime_col SMALLDATETIME,
+);
+go
+
+INSERT INTO TestDatatypeAggSort_vu_prepare_tbl VALUES (
+	'abc', 'abc',
+	'1900-01-01 00:00:00.000',
+	'1900-01-01 00:00:00.000',
+	'1900-01-01 00:00:00.000 +0:00',
+	'1900-01-01 00:00:00.000'
+), (
+	'def', 'def',
+	'1950-01-01 00:00:00.000',
+	'1950-01-01 00:00:00.000',
+	'1950-01-01 00:00:00.000 +0:00',
+	'1950-01-01 00:00:00.000'
+), (
+	'ghi', 'ghi',
+	'2000-01-01 00:00:00.000',
+	'2000-01-01 00:00:00.000',
+	'2000-01-01 00:00:00.000 +0:00',
+	'2000-01-01 00:00:00.000'
+), (
+	'jkl', 'jkl',
+	'2005-01-01 00:00:00.000',
+	'2005-01-01 00:00:00.000',
+	'2005-01-01 00:00:00.000 +0:00',
+	'2005-01-01 00:00:00.000'
+), (
+	'mno', 'mno',
+	'2010-01-01 00:00:00.000',
+	'2010-01-01 00:00:00.000',
+	'2010-01-01 00:00:00.000 +0:00',
+	'2010-01-01 00:00:00.000'
+), (
+	'pqr', 'pqr',
+	'2015-01-01 00:00:00.000',
+	'2015-01-01 00:00:00.000',
+	'2015-01-01 00:00:00.000 +0:00',
+	'2015-01-01 00:00:00.000'
+), (
+	'stu', 'stu',
+	'2020-01-01 00:00:00.000',
+	'2020-01-01 00:00:00.000',
+	'2020-01-01 00:00:00.000 +0:00',
+	'2020-01-01 00:00:00.000'
+), (
+	'xyz', 'xyz',
+	'2023-11-06 00:00:00.000',
+	'2023-11-06 00:00:00.000',
+	'2023-11-06 00:00:00.000 +0:00',
+	'2023-11-06 00:00:00.000'
+), (
+	NULL, NULL, NULL, NULL, NULL, NULL
+);
+go
+
+CREATE INDEX TestDatatypeAggSort_vu_prepare_char_idx ON TestDatatypeAggSort_vu_prepare_tbl (char_col)
+go
+CREATE INDEX TestDatatypeAggSort_vu_prepare_varchar_idx ON TestDatatypeAggSort_vu_prepare_tbl (varchar_col)
+go
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetime_col)
+go
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetime2_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetime2_col)
+go
+CREATE INDEX TestDatatypeAggSort_vu_prepare_datetimeoffset_idx ON TestDatatypeAggSort_vu_prepare_tbl (datetimeoffset_col)
+go
+CREATE INDEX TestDatatypeAggSort_vu_prepare_smalldatetime_idx ON TestDatatypeAggSort_vu_prepare_tbl (smalldatetime_col)
+go
+
+CREATE VIEW TestDatatypeAggSort_vu_prepare_char_view_max AS
+SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+CREATE VIEW TestDatatypeAggSort_vu_prepare_char_view_min AS
+SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+
+CREATE VIEW TestDatatypeAggSort_vu_prepare_varchar_view_max AS
+SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+CREATE VIEW TestDatatypeAggSort_vu_prepare_varchar_view_min AS
+SELECT MIN(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+
+CREATE VIEW TestDatatypeAggSort_vu_prepare_datetime_view_max AS
+SELECT MAX(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+CREATE VIEW TestDatatypeAggSort_vu_prepare_datetime_view_min AS
+SELECT MIN(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+
+CREATE VIEW TestDatatypeAggSort_vu_prepare_datetime2_view_max AS
+SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+CREATE VIEW TestDatatypeAggSort_vu_prepare_datetime2_view_min AS
+SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+
+CREATE VIEW TestDatatypeAggSort_vu_prepare_datetimeoffset_view_max AS
+SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+CREATE VIEW TestDatatypeAggSort_vu_prepare_datetimeoffset_view_min AS
+SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+
+CREATE VIEW TestDatatypeAggSort_vu_prepare_smalldatetime_view_max AS
+SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+CREATE VIEW TestDatatypeAggSort_vu_prepare_smalldatetime_view_min AS
+SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl
+go
+
+CREATE TABLE TestDatatypeAggSort_vu_prepare_tbl2 (
+	max_min VARCHAR(3),
+	char_col CHAR(10), 
+	varchar_col VARCHAR(10),
+	datetime_col DATETIME,
+	datetime2_col DATETIME2(6),
+	datetimeoffset_col DATETIMEOFFSET,
+	smalldatetime_col SMALLDATETIME,
+);
+go
+
+CREATE PROCEDURE TestDatatypeAggSort_vu_prepare_proc AS
+BEGIN
+	DECLARE @char_val CHAR(10)
+	DECLARE @varchar_val VARCHAR(10)
+	DECLARE @datetime_val DATETIME
+	DECLARE @datetime2_val DATETIME2
+	DECLARE @datetimeoffset_val DATETIMEOFFSET
+	DECLARE @smalldatetime_val SMALLDATETIME
+
+	SET @char_val = (SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @varchar_val = (SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @datetime_val = (SELECT MAX(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @datetime2_val = (SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @datetimeoffset_val = (SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @smalldatetime_val = (SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+
+	INSERT INTO TestDatatypeAggSort_vu_prepare_tbl2 VALUES (
+		'max', @char_val, @varchar_val, @datetime_val, @datetime2_val,
+		@datetimeoffset_val, @smalldatetime_val
+	)
+
+	SET @char_val = (SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @varchar_val = (SELECT MIN(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @datetime_val = (SELECT MIN(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @datetime2_val = (SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @datetimeoffset_val = (SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+	SET @smalldatetime_val = (SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl)
+
+	INSERT INTO TestDatatypeAggSort_vu_prepare_tbl2 VALUES (
+		'min', @char_val, @varchar_val, @datetime_val, @datetime2_val,
+		@datetimeoffset_val, @smalldatetime_val
+	)
+END
+go

@@ -2335,7 +2335,7 @@ public:
 					has_identity_function = true;
 				}
 				
-				if (pg_strncasecmp(proc_name.c_str(), "identity_into", strlen("identity_into")) == 0)
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
@@ -4764,6 +4764,26 @@ static bool is_valid_set_option(std::string val)
 		(pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0);
 }
 
+static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Special_variableContext *guc_ctx)
+{
+	PLtsql_var *var;
+	int type;
+	std::string command = ::getFullText(guc_ctx);
+	std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+
+	if (guc_ctx->ROWCOUNT() || guc_ctx->DATEFIRST())
+		type = INT4OID;
+	else 
+		type = TEXTOID;
+
+	var = (PLtsql_var *) pltsql_build_variable(command.c_str(), 
+						  0, 
+						  pltsql_build_datatype(type, -1, InvalidOid, NULL), 
+						  false);
+	var->is_babelfish_guc = true;
+	return var;
+}
+
 PLtsql_stmt *
 makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 {
@@ -5010,6 +5030,21 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->is_set_tran_isolation = true;
 			return (PLtsql_stmt *) stmt;
 		}			
+		else if(set_special_ctx->special_variable())
+		{
+			TSqlParser::Special_variableContext *guc_ctx = static_cast<TSqlParser::Special_variableContext*> (set_special_ctx->special_variable());
+			/* build expression with the input variable */
+			PLtsql_expr* input_expr = makeTsqlExpr(getFullText(set_special_ctx->LOCAL_ID()), true);
+			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
+			PLtsql_var *target_var = build_babelfish_guc_variable(guc_ctx);
+			/* assign expression to target */
+			PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+			result->cmd_type = PLTSQL_STMT_ASSIGN;
+			result->lineno   = getLineNo(ctx);
+			result->varno    = target_var->dno;
+			result->expr     = input_expr;
+			return (PLtsql_stmt *) result;
+		}
 		else
 			return makeSQL(ctx);
 	}

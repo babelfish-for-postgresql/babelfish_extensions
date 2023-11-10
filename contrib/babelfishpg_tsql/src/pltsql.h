@@ -402,6 +402,9 @@ typedef struct PLtsql_var
 	int			cursor_explicit_argrow;
 	int			cursor_options;
 
+	/* to identify if variable is getting used for babelfish GUC */
+	bool is_babelfish_guc;
+
 	/* Fields below here can change at runtime */
 
 	Datum		value;
@@ -1863,7 +1866,6 @@ extern int	fetch_status_var;
 extern int	pltsql_proc_return_code;
 
 extern char *pltsql_version;
-extern Oid tsql_select_into_seq_oid;
 
 typedef struct PLtsqlErrorData
 {
