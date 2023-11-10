@@ -15,16 +15,7 @@ ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
 ignore#!#babel_datatype_sqlvariant-vu-verify
 
-# Group 3: “could not access file "pg_hint_plan": No such file or directory" BABEL-4395
-ignore#!#BABEL-3291
-ignore#!#BABEL-3292
-ignore#!#BABEL-3293
-ignore#!#BABEL-3294
-ignore#!#BABEL-3512
-ignore#!#BABEL-3592
-ignore#!#BABEL-4294-vu-verify
-
-# Group 4: Incorrect precision BABEL-4396
+# Group 2: Incorrect precision BABEL-4396
 ignore#!#BABEL-3943
 ignore#!#BABEL-785
 ignore#!#TestDecimal-vu-verify
@@ -35,7 +26,7 @@ ignore#!#babel_isnull
 ignore#!#BABEL-3006
 ignore#!#BABEL-3147-vu-verify
 
-# Group 5: Need ORDER BY
+# Group 3: Need ORDER BY
 ignore#!#BABEL-2514
 ignore#!#BABEL-2998
 ignore#!#BABEL-328-vu-verify

@@ -1,0 +1,974 @@
+drop table if exists babel_3292_t1
+go
+
+drop table if exists babel_3292_t2
+go
+
+create table babel_3292_t1(a1 int PRIMARY KEY, b1 int, c1 int)
+go
+
+create index index_babel_3292_t1_b1 on babel_3292_t1(b1)
+go
+
+create index inDex_BABEL_3292_T1_c1 on babel_3292_t1(c1)
+go
+
+create table babel_3292_t2(a2 int PRIMARY KEY, b2 int, c2 int)
+go
+
+create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+
+-- Test SELECT queries with and without hints
+/*
+ * Run a SELECT query without any hints to ensure that un-hinted queries still work.
+ * This also ensures that when the SELECT query is not hinted it produces a different plan(bitmap heap scan and bitmap index scan)
+ * than the index scan that we're hinting in the queries below. This verifies that the next set of tests are actually valid.
+ * If the planner was going to choose a index scan anyway, the next test wouldn't actually prove that hints were working.
+ */
+select * from babel_3292_t1 where b1 = 1
+go
+~~START~~
+text
+Query Text: select * from babel_3292_t1 where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: (b1 = 1)
+        ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+              Index Cond: (b1 = 1)
+~~END~~
+
+
+/*
+ * Run SELECT queries and give the hint to follow a index scan using different syntaxes.
+ * The query plan should now use a idex scan instead of the bitmap heap and bitmap index scan it uses in the un-hinted test above.
+ */
+select * from babel_3292_t1 (index(index_babel_3292_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                 where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 (index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                     where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1                                    where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1                                    where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 as t1                                    where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 where b1=1                                                                 
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 t1 where b1=1                                                      
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+-- Test with multiple index hints
+select * from babel_3292_t1 where b1 = 1 and c1 = 1
+go
+~~START~~
+text
+Query Text: select * from babel_3292_t1 where b1 = 1 and c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: ((c1 = 1) AND (b1 = 1))
+        ->  BitmapAnd
+              ->  Bitmap Index Scan on index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c
+                    Index Cond: (c1 = 1)
+              ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+                    Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)) where b1 = 1 and c1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from babel_3292_t1                                                                    where b1 = 1 and c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
+        Index Cond: (c1 = 1)
+        Filter: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 where b1 = 1 and c1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from babel_3292_t1 where b1 = 1 and c1 = 1                                                                                                
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
+        Index Cond: (c1 = 1)
+        Filter: (b1 = 1)
+~~END~~
+
+
+select * from BABEL_3292_t1 where b1 = 1 and c1 = 1 option(table hint(Babel_3292_t1, index(IndeX_BABEL_3292_t1_b1), index(Index_baBel_3292_t1_C1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ * from BABEL_3292_t1 where b1 = 1 and c1 = 1                                                                                                
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1
+        Index Cond: (c1 = 1)
+        Filter: (b1 = 1)
+~~END~~
+
+
+-- Test with multiple tables
+select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Bitmap Heap Scan on babel_3292_t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+                    Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Bitmap Heap Scan on babel_3292_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)), babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                    , babel_3292_t2                                     where b1 = 1 and b2 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                   , babel_3292_t2                                    where b1 = 1 and b2 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1                                                                                                                           
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 t1                                   , babel_3292_t2 t2                                    where b1 = 1 and b2 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                     
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+-- Test INSERT queries with and without hints
+insert into babel_3292_t2 select * from babel_3292_t1 where b1 = 1
+go
+~~START~~
+text
+Query Text: insert into babel_3292_t2 select * from babel_3292_t1 where b1 = 1
+Insert on babel_3292_t2
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: (b1 = 1)
+        ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+              Index Cond: (b1 = 1)
+~~END~~
+
+
+insert into babel_3292_t2 select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: insert/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ into babel_3292_t2 select * from babel_3292_t1                                     where b1 = 1
+Insert on babel_3292_t2
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+insert into babel_3292_t2 select * from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: insert/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ into babel_3292_t2 select * from babel_3292_t1 where b1 = 1                                                                 
+Insert on babel_3292_t2
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+-- Test UPDATE queries with and without hints
+update babel_3292_t1 set a1 = 1 where b1 = 1
+go
+~~START~~
+text
+Query Text: update babel_3292_t1 set a1 = 1 where b1 = 1
+Update on babel_3292_t1
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: (b1 = 1)
+        ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+              Index Cond: (b1 = 1)
+~~END~~
+
+
+update babel_3292_t1 with(index(index_babel_3292_t1_b1)) set a1 = 1 where b1 = 1
+go
+~~START~~
+text
+Query Text: update/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1                                     set a1 = 1 where b1 = 1
+Update on babel_3292_t1
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+update babel_3292_t1 set a1 = 1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: update/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1 set a1 = 1 where b1 = 1                                                                 
+Update on babel_3292_t1
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+-- Test DELETE queries with and without hints
+delete from babel_3292_t1 where b1 = 1
+go
+~~START~~
+text
+Query Text: delete from babel_3292_t1 where b1 = 1
+Delete on babel_3292_t1
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: (b1 = 1)
+        ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+              Index Cond: (b1 = 1)
+~~END~~
+
+
+delete from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: delete/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ from babel_3292_t1                                     where b1 = 1
+Delete on babel_3292_t1
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+delete from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: delete/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ from babel_3292_t1 where b1 = 1                                                                 
+Delete on babel_3292_t1
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+-- Test UNION queries with and without hints
+select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 -- None of the queries have a hint
+go
+~~START~~
+text
+Query Text: select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1
+HashAggregate
+  Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Bitmap Heap Scan on babel_3292_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+                          Index Cond: (b1 = 1)
+              ->  Parallel Bitmap Heap Scan on babel_3292_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1 -- Only one query has a hint
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2                                    where b2 = 1
+HashAggregate
+  Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Bitmap Heap Scan on babel_3292_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+                          Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1))) -- Only one query has a hint
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1                                                                 
+HashAggregate
+  Group Key: babel_3292_t2.a2, babel_3292_t2.b2, babel_3292_t2.c2
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Bitmap Heap Scan on babel_3292_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434
+                          Index Cond: (b2 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+                    Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1 UNION select * from babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1 -- Both queries have a hint
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1                                    where b1 = 1 UNION select * from babel_3292_t2                                    where b2 = 1
+HashAggregate
+  Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+                    Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1                                                                                                                           
+HashAggregate
+  Group Key: babel_3292_t1.a1, babel_3292_t1.b1, babel_3292_t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+                    Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+-- Test CTE queries with and without hints
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+go
+~~START~~
+text
+Query Text: with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: ((c1 = 1) AND (b1 = 1))
+        ->  BitmapAnd
+              ->  Bitmap Index Scan on index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c
+                    Index Cond: (c1 = 1)
+              ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+                    Index Cond: (b1 = 1)
+~~END~~
+
+
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+go
+~~START~~
+text
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+        Filter: (c1 = 1)
+~~END~~
+
+
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1                                                                 
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+        Filter: (c1 = 1)
+~~END~~
+
+
+with BaBeL_3292_T1_CTE (a1, b1, c1) as (select * from BABEL_3292_t1 with(index=INDEX_BABEL_3292_T1_B1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+go
+~~START~~
+text
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ BaBeL_3292_T1_CTE (a1, b1, c1) as (select * from BABEL_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+        Filter: (c1 = 1)
+~~END~~
+
+
+-- Limitation: Hint given on a CTE is not applied
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte with(index=index_babel_3292_t1_c1) where c1 = 1
+go
+~~START~~
+text
+Query Text: with/*+ indexscan(babel_3292_t1_cte index_babel_3292_t1_c1babel_32961b5cc4ed008f5c7776c7f58f0abe80b) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte                                    where c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Bitmap Heap Scan on babel_3292_t1
+        Recheck Cond: ((c1 = 1) AND (b1 = 1))
+        ->  BitmapAnd
+              ->  Bitmap Index Scan on index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c
+                    Index Cond: (c1 = 1)
+              ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
+                    Index Cond: (b1 = 1)
+~~END~~
+
+
+-- Only the hint given on an existing table will be applied
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1) select * from babel_3292_t1_cte with(index=index_babel_3292_t1_c1) where c1 = 1
+go
+~~START~~
+text
+Query Text: with/*+ indexscan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) indexscan(babel_3292_t1_cte index_babel_3292_t1_c1babel_32961b5cc4ed008f5c7776c7f58f0abe80b) */ babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1                                    where b1 = 1) select * from babel_3292_t1_cte                                    where c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+        Index Cond: (b1 = 1)
+        Filter: (c1 = 1)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+-- cleanup
+drop table babel_3292_t1
+go
+
+drop table babel_3292_t2
+go
+
+
+-- Test all queries by specifying a database and schema name
+use tempdb
+go
+
+drop table if exists babel_3292_schema.t1
+go
+
+drop table if exists babel_3292_t2
+go
+
+drop schema if exists babel_3292_schema
+go
+
+create schema babel_3292_schema
+go
+
+create table babel_3292_schema.t1(a1 int PRIMARY KEY, b1 int, c1 int)
+go
+
+create index index_babel_3292_schema_t1_b1 on babel_3292_schema.t1(b1)
+go
+
+create index index_babel_3292_schema_t1_c1 on babel_3292_schema.t1(c1)
+go
+
+create table babel_3292_t2(a2 int PRIMARY KEY, b2 int, c2 int)
+go
+
+create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
+go
+
+set babelfish_showplan_all on
+go
+
+select * from tempdb.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1                                        where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1                                        where b1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 where b1=1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 where b1=1                                                                                      
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ * from tempdb.babel_3292_schema.t1 t1 where b1=1                                                             
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)) where b1 = 1 and c1 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t1 index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0) */ * from tempdb.babel_3292_schema.t1                                                                                  where b1 = 1 and c1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0 on t1
+        Index Cond: (c1 = 1)
+        Filter: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t1 index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0) */ * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1                                                                                                                            
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using index_babel_3292_schema_t1_c1t1185ec046d5c38219c998001d0ae030d0 on t1
+        Index Cond: (c1 = 1)
+        Filter: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1                                           , tempdb.dbo.babel_3292_t2                                     where b1 = 1 and b2 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1                                           , tempdb.dbo.babel_3292_t2 t2                                     where b1 = 1 and b2 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1                                                                                                                                                           
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                            
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+              Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: insert/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1                                            where b1 = 1
+Insert on babel_3292_t2
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+~~START~~
+text
+Query Text: insert/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 where b1 = 1                                                                                      
+Insert on babel_3292_t2
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+update tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) set a1 = 1 where b1 = 1
+go
+~~START~~
+text
+Query Text: update/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ tempdb.babel_3292_schema.t1                                            set a1 = 1 where b1 = 1
+Update on t1
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+update tempdb.babel_3292_schema.t1 set a1 = 1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+~~START~~
+text
+Query Text: update/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ tempdb.babel_3292_schema.t1 set a1 = 1 where b1 = 1                                                                                      
+Update on t1
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+delete from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: delete/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ from tempdb.babel_3292_schema.t1                                            where b1 = 1
+Delete on t1
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+delete from tempdb.babel_3292_schema.t1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+~~START~~
+text
+Query Text: delete/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ from tempdb.babel_3292_schema.t1 where b1 = 1                                                                                      
+Delete on t1
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2                                    where b2 = 1
+HashAggregate
+  Group Key: t1.a1, t1.b1, t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+                    Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2                                    where b2 = 1
+HashAggregate
+  Group Key: t1.a1, t1.b1, t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+                    Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1                                                                                                                                                           
+HashAggregate
+  Group Key: t1.a1, t1.b1, t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+                    Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+~~START~~
+text
+Query Text: select/*+ indexscan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) indexscan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1                                                                                                            
+HashAggregate
+  Group Key: t1.a1, t1.b1, t1.c1
+  ->  Gather
+        Workers Planned: 2
+        ->  Parallel Append
+              ->  Parallel Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+                    Index Cond: (b1 = 1)
+              ->  Parallel Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+-- cleanup
+drop table babel_3292_schema.t1 
+go
+
+drop table babel_3292_t2
+go
+
+drop schema babel_3292_schema
+go
