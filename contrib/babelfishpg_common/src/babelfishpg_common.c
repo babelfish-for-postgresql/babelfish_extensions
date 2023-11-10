@@ -18,6 +18,7 @@
 #include "sqlvariant.h"
 #include "typecode.h"
 #include "varchar.h"
+#include "datetimeoffset.h"
 
 common_utility_plugin common_utility_plugin_var = {NULL};
 static common_utility_plugin *get_common_utility_plugin(void);
@@ -189,6 +190,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.is_tsql_rowversion_or_timestamp_datatype = &is_tsql_rowversion_or_timestamp_datatype;
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
+		common_utility_plugin_var.timestamp_datetimeoffset = &timestamp_datetimeoffset;
 		common_utility_plugin_var.tinyint2sqlvariant = &tinyint2sqlvariant;
 		common_utility_plugin_var.translate_pg_type_to_tsql = &translate_pg_type_to_tsql;
 		common_utility_plugin_var.get_tsql_datatype_oid = &get_tsql_datatype_oid;

@@ -298,34 +298,15 @@ ignore#!#test_windows_login-vu-prepare
 ignore#!#test_windows_login-vu-verify
 ignore#!#test_windows_login-vu-cleanup
 
-# JIRA - BABEL-4419
-ignore#!#BABEL-1056
-ignore#!#BABEL-GUC-PLAN
-ignore#!#BABEL-3092
-ignore#!#BABEL-COLUMN-CONSTRAINT
-ignore#!#BABEL-1251-vu-verify
-ignore#!#BABEL-1251
-
 # JIRA - BABEL-4421
 ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
 
-# BABEL-4423
-ignore#!#BABEL-IDENTITY
-
 # BABEL-4424
 ignore#!#TestDecimal
 ignore#!#TestNumeric
 ignore#!#numericOverflow
-
-# BABEL-4425 - Taking too much time to run.
-ignore#!#getdate-vu-prepare
-ignore#!#getdate-vu-verify
-ignore#!#getdate-vu-cleanup
-ignore#!#getdatetest
-ignore#!#TestDatetime-numeric-representation-vu-prepare
-ignore#!#TestDatetime-numeric-representation-vu-verify
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
@@ -343,3 +324,5 @@ ignore#!#TestSimpleErrors
 ignore#!#ISC-Views
 ignore#!#TestSimpleErrorsWithXactAbort
 ignore#!#BABEL-2513
+ignore#!#TestDatetime-numeric-representation-vu-prepare
+ignore#!#TestDatetime-numeric-representation-vu-verify
