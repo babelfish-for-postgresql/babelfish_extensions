@@ -5454,7 +5454,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 					}
 					else
 					{
-						char *grantee_name = (char *)"PUBLIC";
+						char *grantee_name = (char *)"public";
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
@@ -5487,7 +5487,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 					}
 					else
 					{
-						char *grantee_name = (char *)"PUBLIC";
+						char *grantee_name = (char *)"public";
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
@@ -5522,7 +5522,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				}
 				else
 					{
-						char *grantee_name = (char *)"PUBLIC";
+						char *grantee_name = (char *)"public";
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 			}
@@ -5579,7 +5579,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				}
 				else
 					{
-						char *grantee_name = (char *)"PUBLIC";
+						char *grantee_name = (char *)"public";
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 
