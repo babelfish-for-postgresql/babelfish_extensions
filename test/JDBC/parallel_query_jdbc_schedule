@@ -62,7 +62,7 @@ ignore#!#babel_index_nulls_order-vu-verify
 # Query Plan changed. (verified)
 ignore#!#BABEL-4264
 
-# Other or mixed issues
+# Other or mixed issues - JIRA-BABEL-4538
 # database "" does not exists. (calls is_member() functions)
 ignore#!#BABEL-1621
 # database "" does not exists. (calls schema_id())
@@ -76,12 +76,12 @@ ignore#!#BABEL-ROLE-MEMBER
 # current_setting('role') returns NULL.
 ignore#!#BABEL-1444
 
-# ERROR CODE DIFFERENCE. 
+# ERROR CODE DIFFERENCE.  JIRA-4539
 ignore#!#babel_datetime-vu-verify
 ignore#!#babel_datetime
 ignore#!#BABEL-2812-vu-verify
 
-# "tds_fdw" does not exist
+# "tds_fdw" does not exist - JIRA-4540
 ignore#!#BABEL-4168-vu-prepare
 ignore#!#BABEL-4168-vu-verify
 ignore#!#BABEL-4168-vu-cleanup
@@ -98,11 +98,11 @@ ignore#!#openquery-vu-prepare
 ignore#!#openquery-vu-verify
 ignore#!#openquery-vu-cleanup
 
-# relation "onek" does not exist
+# relation "onek" does not exist: JIRA-4541
 ignore#!#pgr_select
 ignore#!#pgr_select_distinct
 
-# output difference
+# output difference: JIRA-4542
 ignore#!#sys-sp_pkeys-dep-vu-verify
 ignore#!#BABEL-SP_PKEYS
 
