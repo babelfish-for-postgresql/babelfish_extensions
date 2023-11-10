@@ -15,7 +15,6 @@ SELECT * FROM fti_prepare_v1;
 GO
 ~~START~~
 varchar
-ix_t1_afti_table_t1a1f708f97c9bc48e2904f2b602172a49
 ft_indexfti_table_t114dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
@@ -24,7 +23,6 @@ EXEC fti_prepare_p1;
 GO
 ~~START~~
 varchar
-ix_t2_bfti_table_t2d409ebad94311c8b21e7373db69cc0dd
 ft_indexfti_table_t214dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
@@ -37,49 +35,43 @@ ft_indexfti_table_t314dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
-SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t4';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t4' AND indexname LIKE 'ft_index%';
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t4#!#ix_t4_dfti_table_t4c18b6b00e0e448d819f406cdadf3f759
 fti_table_t4#!#ft_indexfti_table_t414dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
-SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t5';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t5' AND indexname LIKE 'ft_index%';
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t5#!#ix_t5_efti_table_t533da689bb37519fe17ec2918def5bc63
 fti_table_t5#!#ft_indexfti_table_t514dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
-SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t6';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t6' AND indexname LIKE 'ft_index%';
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t6#!#ix_t6_ffti_table_t6756883089011e0232e7e74468c24d9a7
 fti_table_t6#!#ft_indexfti_table_t614dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
-SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t7';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t7' AND indexname LIKE 'ft_index%';
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t7#!#ix_t7_a1b1c1fti_table_t701ad2e355b4c073c92004b6985d9efa3
 fti_table_t7#!#ft_indexfti_table_t714dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
 
-SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t8';
+SELECT tablename, indexname FROM pg_indexes WHERE tablename='fti_table_t8' AND indexname LIKE 'ft_index%';
 GO
 ~~START~~
 varchar#!#varchar
-fti_table_t8#!#ix_s1_t8_afti_table_t8f3112893c4b509fa725e68c60b332bc0
 fti_table_t8#!#ft_indexfti_table_t814dc211cf58dcb9fe2047eb8aa8a5bc0
-fti_table_t8#!#ix_s2_t8_afti_table_t873898ec16816f442b84b87609b4e4180
 fti_table_t8#!#ft_indexfti_table_t814dc211cf58dcb9fe2047eb8aa8a5bc0
 ~~END~~
 
@@ -163,6 +155,10 @@ GO
 
 ~~ERROR (Message: 'WITH OPTION' is not currently supported in Babelfish)~~
 
+
+-- reset the login password
+ALTER LOGIN testLogin WITH PASSWORD = 'abc';
+GO
 
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')

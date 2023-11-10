@@ -1,4 +1,4 @@
--- tsql user=testLogin password=123
+-- tsql user=testLogin password=abc
 USE master;
 GO
 
