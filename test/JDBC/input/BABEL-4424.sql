@@ -387,13 +387,13 @@ go
 select a + a from babel_4424_t1;
 GO
 
-truncate table test;
+truncate table babel_4424_t1;
 GO
 
-insert into test values (0.99999999999999999999999999999999999999)
+insert into babel_4424_t1 values (0.99999999999999999999999999999999999999)
 GO
 
-select a + a from test;
+select a + a from babel_4424_t1;
 GO
 
 DROP table babel_4424_t1;
