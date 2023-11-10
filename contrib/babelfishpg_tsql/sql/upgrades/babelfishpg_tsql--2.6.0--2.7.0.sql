@@ -1711,6 +1711,7 @@ CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS i
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
 WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 OR Ext.rolname = suser_name() collate sys.database_default
+OR Ext.rolname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
 OR Ext.type = 'R';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;

@@ -51,7 +51,7 @@ ignore#!#BABEL-3248
 ignore#!#BABEL-3295
 ignore#!#BABEL-3513-vu-prepare
 ignore#!#BABEL-3513-vu-verify
-ignore#!#BABEL-4261
+ignore#!#BABEL-4281
 ignore#!#babel_collection
 ignore#!#binary-index-vu-verify
 ignore#!#pgr_select_into
@@ -417,3 +417,8 @@ ignore#!#TestSimpleErrorsWithImplicitTran
 ignore#!#babel_cursor
 ignore#!#TestDatetime-numeric-representation-vu-prepare
 ignore#!#TestDatetime-numeric-representation-vu-verify
+
+#crashing
+ignore#!#sys-server_principals-vu-prepare
+ignore#!#sys-server_principals-vu-verify
+ignore#!#sys-server_principals-vu-cleanup
