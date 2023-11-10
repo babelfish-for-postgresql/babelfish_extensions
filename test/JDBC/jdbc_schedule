@@ -8,8 +8,8 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-# all
-BABEL_4302
+all
+# BABEL_4302
 
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.

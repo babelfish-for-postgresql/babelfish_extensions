@@ -349,6 +349,12 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(new_text);
 }
 
+/*
+ * babelfish_date_part is function similar to postgres date_part
+ * reimplemented in c for a faster execution
+ * different implementations of week and tsql_week are done 
+ */
+
 int
 babelfish_date_part(const char* field, Timestamp timestamp)
 {	
@@ -359,12 +365,15 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 	int32		first_day, first_week_end;
 	int			tz1, doy = 0, year, month, day, milliseconds,res = 0; //for Zeller's Congruence
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+	//Getting the date back from the timestamp to the tm struct 
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
-	ereport(ERROR,
-		(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-		errmsg("timestamp out of range")));
+		ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("timestamp out of range")));
 	}
+
 	if (strcmp(field, "year") == 0)
 		return tm->tm_year;
 	else if (strcmp(field, "quarter") == 0)
@@ -416,9 +425,7 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 		return (((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
 
 	}
-	else if (strcasecmp(field , "tsql_week") == 0)   //tsql_week - SQLServer week
-	// iso_week in tsql -> week
-	// week in tsql -> tsql_week
+	else if (strcasecmp(field , "tsql_week") == 0)
 	{
 		first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; // returns number of days since 1/1/1970 to 1/1/tm_year
 		//convert this first day of tm_year to timestamp into first_day_ts
@@ -430,8 +437,6 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 	}
 	else if (strcasecmp(field , "week") == 0) 
 	{
-		//return bb_date_Part(week, timestamp);
-		//date_part('week', timestamp) of postgres
 		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
 		first_week_end = 8 - datepart_internal("doy", first_day, 0);
 		day = babelfish_date_part("doy",timestamp);
@@ -442,10 +447,17 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option",field)));
+			errmsg("\'%s\' is not a recognized datepart option",field)));
+		
 		return -1;
 	}
 }
+
+/*
+ * babelfish_right is function similar to postgres right
+ * reimplemented in c for a faster execution
+ */
+
 int
 babelfish_right(const char* source, int length)
 {
@@ -457,6 +469,10 @@ babelfish_right(const char* source, int length)
 	return atoi(source + source_length - length);
 }
 
+/*
+ * datepart_internal is reimplemented in c
+ * for faster execution as before in SQL
+ */
 int
 datepart_internal(char *field , Timestamp timestamp , int df_tz)
 {
@@ -523,164 +539,11 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 		result = ((1 - tsql_datefirst + 7) % 7 + 1);
 		else
 		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
+			PG_RE_THROW();
 		}
 	}
 	PG_END_TRY();
 	return (result);
-}
-
-Datum
-datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Timestamp	timestamp;
-	int			df_tz = PG_GETARG_INT32(2);
-	tsql_datetimeoffset	*datetime;
-
-	datetime = PG_GETARG_DATETIMEOFFSET(1);
-			
-	timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
-
-	if (!IS_VALID_DATETIME2(timestamp))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for datetime2")));
-	}
-	
-	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
-}
-
-Datum
-datepart_internal_date(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Timestamp	timestamp;
-	int			df_tz = PG_GETARG_INT32(2);
-	DateADT		date_arg;
-	date_arg = PG_GETARG_DATEADT(1);
-	timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
-
-	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
-}
-
-Datum
-datepart_internal_datetime(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Timestamp	timestamp;
-	int			df_tz = PG_GETARG_INT32(2);
-	
-	timestamp = PG_GETARG_TIMESTAMPTZ(1);
-
-	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
-}
-
-
-Datum
-datepart_internal_int(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int64		num = PG_GETARG_INT64(1);
-	int			result;
-
-	result = datepart_internal_wrapper(field, num);
-
-	PG_RETURN_INT32(result);
-}
-
-Datum
-datepart_internal_money(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int64		num = PG_GETARG_INT64(1);
-	int			result;
-
-	result = datepart_internal_wrapper(field, (float8)num/10000);
-
-	PG_RETURN_INT32(result);
-}
-
-Datum
-datepart_internal_double(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	double		arg = PG_GETARG_FLOAT8(1);
-	int			result;
-	int			num = (int)ceil(arg);
-	
-	result = datepart_internal_wrapper(field, num);
-
-	PG_RETURN_INT32(result - 1);
-}
-
-Datum
-datepart_internal_decimal(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Numeric		arg = PG_GETARG_NUMERIC(1);
-	int			result, num;
-	double		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
-	
-	argument = ceil(argument);
-
-	num = (int)argument;
-
-	result = datepart_internal_wrapper(field, num);
-
-	PG_RETURN_INT32(result);
-}
-
-Datum
-datepart_internal_numeric(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	Numeric		arg = PG_GETARG_NUMERIC(1);
-	int			result;
-	int			scale = DatumGetInt32(DirectFunctionCall1(numeric_scale, NumericGetDatum(arg)));
-	int			argument = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(arg)));
-	
-	if(scale>0 && argument>=0)
-	{
-		argument--;
-	}
-	result = datepart_internal_wrapper(field, argument);
-	PG_RETURN_INT32(result);
-}
-
-Datum
-datepart_internal_float(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	float8		arg = PG_GETARG_FLOAT8(1);
-	int			result;
-	int 		num;
-
-	num = (int)ceil(arg) -1;
-
-	result = datepart_internal_wrapper(field, num);
-
-	PG_RETURN_INT32(result);
-}
-
-Datum
-datepart_internal_real(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	double		arg = PG_GETARG_FLOAT4(1);
-	int			result;
-	int 		num;
-	
-	arg = floor(arg);
-	num = (int)arg;
-
-	result = datepart_internal_wrapper(field, num);
-
-	PG_RETURN_INT32(result);
 }
 
 /*
@@ -692,7 +555,8 @@ int
 datepart_internal_wrapper(char *field, float8 num)
 {
 	Timestamp		timestamp;
-
+	
+	//Converting the num into the appopriate timestamp that is ahead of 01/01/1970 by num days (and hours)
 	timestamp = (long int)(86400000000*(num)*1L - 3155673600000000);
 
 	if (strcmp(field, "dow") == 0)
@@ -725,6 +589,212 @@ datepart_internal_wrapper(char *field, float8 num)
 
 }
 
+/*
+ * datepart_internal_datetimeoffset takes datetimeoffset and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	tsql_datetimeoffset	*datetime;
+
+	datetime = PG_GETARG_DATETIMEOFFSET(1);
+			
+	//Converting the datetime offset into the timestamp
+	timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
+
+	//Validating 
+	if (!IS_VALID_DATETIME2(timestamp))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("data out of range for datetime2")));
+	}
+	
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+/*
+ * datepart_internal_date takes date and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_date(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	DateADT		date_arg;
+	date_arg = PG_GETARG_DATEADT(1);
+	timestamp = DirectFunctionCall1(date_timestamptz, date_arg);
+
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+/*
+ * datepart_internal_datetime takes datetime and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_datetime(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	
+	timestamp = PG_GETARG_TIMESTAMPTZ(1);
+
+	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
+}
+
+/*
+ * datepart_internal_int takes int and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_int(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+	int			result;
+
+	result = datepart_internal_wrapper(field, num);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_money takes money and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_money(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+	int			result;
+
+	result = datepart_internal_wrapper(field, (float8)num/10000);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_double takes double and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_double(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	double		arg = PG_GETARG_FLOAT8(1);
+	int			result;
+	int			num = (int)ceil(arg);
+	
+	result = datepart_internal_wrapper(field, num);
+
+	PG_RETURN_INT32(result - 1);
+}
+
+/*
+ * datepart_internal_decimal takes decimal and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_decimal(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Numeric		arg = PG_GETARG_NUMERIC(1);
+	int			result, num;
+	double		argument = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(arg)));
+	
+	argument = ceil(argument);
+
+	num = (int)argument;
+
+	result = datepart_internal_wrapper(field, num);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_numeric takes numeric and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_numeric(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Numeric		arg = PG_GETARG_NUMERIC(1);
+	int			result;
+	int			scale = DatumGetInt32(DirectFunctionCall1(numeric_scale, NumericGetDatum(arg)));
+	int			argument = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(arg)));
+	
+	if(scale>0 && argument>=0)
+	{
+		argument--;
+	}
+	result = datepart_internal_wrapper(field, argument);
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_float takes float and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_float(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	float8		arg = PG_GETARG_FLOAT8(1);
+	int			result;
+	int 		num;
+
+	num = (int)ceil(arg) -1;
+
+	result = datepart_internal_wrapper(field, num);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_real takes real value and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_real(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	double		arg = PG_GETARG_FLOAT4(1);
+	int			result;
+	int 		num;
+	
+	arg = floor(arg);
+	num = (int)arg;
+
+	result = datepart_internal_wrapper(field, num);
+
+	PG_RETURN_INT32(result);
+}
+
+
+/*
+ * datepart_internal_smalldatetime takes timestamp and calls datepart_internal 
+ */
+
 
 Datum
 datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
@@ -746,6 +816,10 @@ datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
+/*
+ * datepart_internal_time takes timestamp and calls datepart_internal 
+ */
+
 Datum
 datepart_internal_time(PG_FUNCTION_ARGS)
 {
@@ -762,6 +836,10 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
+
+/*
+ * datepart_internal_interval takes interval 
+ */
 
 Datum
 datepart_internal_interval(PG_FUNCTION_ARGS)
@@ -817,9 +895,10 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 		result = hours;
 		else
 		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("\'%s\' is not a recognized datepart option", field)));
+			
 			result = -1;
 		}
 
@@ -846,10 +925,7 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 		result = 0;
 		else
 		{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("'%s' is not a recognized datepart option", field)));
-			result = -1;
+			PG_RE_THROW();
 		}
 	}
 	PG_END_TRY();
