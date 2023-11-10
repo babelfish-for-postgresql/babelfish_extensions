@@ -298,21 +298,10 @@ ignore#!#test_windows_login-vu-prepare
 ignore#!#test_windows_login-vu-verify
 ignore#!#test_windows_login-vu-cleanup
 
-# JIRA - BABEL-4419
-ignore#!#BABEL-1056
-ignore#!#BABEL-GUC-PLAN
-ignore#!#BABEL-3092
-ignore#!#BABEL-COLUMN-CONSTRAINT
-ignore#!#BABEL-1251-vu-verify
-ignore#!#BABEL-1251
-
 # JIRA - BABEL-4421
 ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
-
-# BABEL-4423
-ignore#!#BABEL-IDENTITY
 
 # BABEL-4424
 ignore#!#TestDecimal
