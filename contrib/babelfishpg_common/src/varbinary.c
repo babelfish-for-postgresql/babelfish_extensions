@@ -666,7 +666,7 @@ varcharvarbinary(PG_FUNCTION_ARGS)
 
 	/* 
 	 * If typmod is -1 (or invalid), use the actual length
-	 * Length should be checked after encoding into server enc
+	 * Length should be checked after encoding into server encoding
 	 */
 	if (typmod < (int32) VARHDRSZ)
 		maxlen = encodedByteLen;
@@ -736,7 +736,7 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	int32		maxlen = typmod - VARHDRSZ;
 	coll_info	collInfo;
 	int			encodedByteLen;
-	MemoryContext ccxt;
+	MemoryContext ccxt = CurrentMemoryContext;
 
 	/*
 	 * Allow trailing null bytes 
@@ -749,8 +749,6 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	while(len>0 && data[len-1] == '\0')
 		len -= 1;
 	
-	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
-	ccxt = CurrentMemoryContext;
 	/*
 	 * Cast the entire input binary data if maxlen is 
 	 * invalid or supplied data fits it
@@ -758,6 +756,7 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	 */
 	PG_TRY();
 	{
+		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 		if (maxlen < 0 || len <= maxlen)
 			encoded_result = encoding_conv_util(data, len, collInfo.enc, PG_UTF8, &encodedByteLen);
 		else
