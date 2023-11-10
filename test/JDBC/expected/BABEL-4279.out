@@ -192,3 +192,46 @@ GO
 
 DROP TABLE test_babel_4279_t4;
 GO
+
+CREATE TABLE t2(c int)
+GO
+
+CREATE TABLE t1(c int)
+GO
+
+-- should not crash when column followed by '\n'|'\t' etc.
+CREATE VIEW v
+AS
+SELECT t1.c
+FROM	dbo.t2 INNER JOIN t1  
+ON t2.c = t1.c
+GO
+
+DROP VIEW v
+GO
+
+DROP TABLE t2
+GO
+
+DROP TABLE t1
+GO
+
+CREATE TABLE t3(RecordEntryId bigint NOT NULL)	
+GO
+
+CREATE FUNCTION tvf_t3(@UserId BIGINT)
+RETURNS TABLE
+AS
+RETURN 
+(
+select	rp.RecordEntryId
+from	dbo.t3 rp
+)
+GO
+
+DROP FUNCTION tvf_t3
+GO
+
+DROP TABLE t3
+GO
+
