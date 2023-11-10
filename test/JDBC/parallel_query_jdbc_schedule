@@ -420,8 +420,3 @@ ignore#!#Test-sp_rename-dep-vu-cleanup
 # TIME-OUT
 ignore#!#TestSimpleErrorsWithImplicitTran
 ignore#!#babel_cursor
-
-# Crashing
-ignore#!#sys-server_principals-vu-prepare
-ignore#!#sys-server_principals-vu-verify
-ignore#!#sys-server_principals-vu-cleanup
