@@ -123,13 +123,25 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
 );
 
 -- binary varbinary cast
-DROP CAST IF EXISTS (sys.BBF_BINARY AS sys.BBF_VARBINARY);
-CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
-WITHOUT FUNCTION AS IMPLICIT;
-
-DROP CAST IF EXISTS (sys.BBF_VARBINARY AS sys.BBF_BINARY);
-CREATE CAST (sys.BBF_VARBINARY AS sys.BBF_BINARY)
-WITHOUT FUNCTION AS IMPLICIT;
+DO $$
+DECLARE 
+    sys_oid Oid;
+    bbf_binary_oid Oid;
+    bbf_varbinary_oid Oid;
+BEGIN
+  sys_oid := (SELECT oid FROM pg_namespace WHERE pg_namespace.nspname ='sys');
+  bbf_binary_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='bbf_binary' AND typnamespace = sys_oid);
+  bbf_varbinary_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='bbf_varbinary' AND typnamespace = sys_oid);  
+  IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = bbf_binary_oid AND pg_cast.castsource = bbf_varbinary_oid) = 1 THEN
+      CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
+      WITHOUT FUNCTION AS IMPLICIT;
+  END IF;
+  IF (SELECT COUNT(*) FROM pg_cast.pg_cast WHERE castsource = bbf_binary_oid AND pg_cast.castsource = bbf_varbinary_oid) = 1 THEN
+      CREATE CAST (sys.BBF_VARBINARY AS sys.BBF_BINARY)
+      WITHOUT FUNCTION AS IMPLICIT;
+  END IF;
+END $$;
+DO
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
