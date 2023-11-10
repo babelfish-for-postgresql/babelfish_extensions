@@ -18,6 +18,9 @@ GO
 select set_config('babelfishpg_tsql.explain_summary', 'off', false);
 GO
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+
 SET BABELFISH_STATISTICS PROFILE ON
 GO
 
@@ -33,6 +36,9 @@ select set_config('babelfishpg_tsql.explain_timing', 'on', false);
 GO
 
 select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false);
 GO
 
 -- Commiting sets parallel_setup_cost, parallel_tuple_cost, min_parallel_table_scan_size back to default
