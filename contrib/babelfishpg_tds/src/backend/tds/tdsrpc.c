@@ -2342,7 +2342,7 @@ SendCursorResponse(TDSRequestSP req)
 	if (portal->strategy != PORTAL_MULTI_QUERY)
 	{
 		targetList = FetchStatementTargetList((Node *) plannedStmt);
-	} 
+	}
 
 	/*
 	 * If we are in aborted transaction state, we can't run

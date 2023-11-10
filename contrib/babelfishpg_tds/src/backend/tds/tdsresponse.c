@@ -426,7 +426,7 @@ resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
 	}
 
 	Assert(planlist != NIL);
-	foreach(lc, ((Append *) plan)->appendplans)
+	foreach(lc, planlist)
 	{
 		TargetEntry *tle;
 		Plan 		*outerplan = (Plan *) lfirst(lc);
