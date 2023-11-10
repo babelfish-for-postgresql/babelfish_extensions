@@ -441,9 +441,6 @@ GO
 DROP TABLE t_unsupported_ft;
 GO
 
-SELECT set_config('role', 'jdbc_user', false);
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
