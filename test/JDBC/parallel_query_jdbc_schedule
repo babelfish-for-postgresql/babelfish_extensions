@@ -318,14 +318,6 @@ ignore#!#TestDecimal
 ignore#!#TestNumeric
 ignore#!#numericOverflow
 
-# BABEL-4425 - Taking too much time to run.
-ignore#!#getdate-vu-prepare
-ignore#!#getdate-vu-verify
-ignore#!#getdate-vu-cleanup
-ignore#!#getdatetest
-ignore#!#TestDatetime-numeric-representation-vu-prepare
-ignore#!#TestDatetime-numeric-representation-vu-verify
-
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
 ignore#!#BABEL-SP_COLUMNS_MANAGED-dep-vu-verify
@@ -423,6 +415,8 @@ ignore#!#Test-sp_rename-dep-vu-cleanup
 # TIME-OUT
 ignore#!#TestSimpleErrorsWithImplicitTran
 ignore#!#babel_cursor
+ignore#!#TestDatetime-numeric-representation-vu-prepare
+ignore#!#TestDatetime-numeric-representation-vu-verify
 
 #crashing
 ignore#!#sys-server_principals-vu-prepare
