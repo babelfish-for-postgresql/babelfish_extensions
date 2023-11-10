@@ -318,6 +318,12 @@ GO
 
 ~~ERROR (Message: DBCC CHECKTABLE is not currently supported in Babelfish)~~
 
+DBCC checktable(babel_3201_t1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: DBCC CHECKTABLE is not currently supported in Babelfish)~~
+
 
 -- Invalid DBCC command
 DBCC FAKE_COMMAND(t1);

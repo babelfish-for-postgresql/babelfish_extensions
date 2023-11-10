@@ -17,6 +17,7 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_operator.h"
 #include "commands/copy.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
@@ -38,6 +39,7 @@
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "parser/parse_oper.h"
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
@@ -115,6 +117,7 @@ static void modify_RangeTblFunction_tupdesc(char *funcname, Node *expr, TupleDes
 static void sort_nulls_first(SortGroupClause * sortcl, bool reverse);
 static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition);
 static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs);
+static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
 static ResTarget* make_restarget_from_colname(char * colName);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
@@ -145,7 +148,6 @@ static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  const char *queryString,
 									  ProcessUtilityContext context,
 									  ParamListInfo params, QueryCompletion *qc);
-static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into,  List *tableElts);
 extern void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, 
 					QueryEnvironment *queryEnv, ParamListInfo params, QueryCompletion *qc);
 
@@ -218,8 +220,8 @@ static fill_missing_values_in_copyfrom_hook_type prev_fill_missing_values_in_cop
 static check_rowcount_hook_type prev_check_rowcount_hook = NULL;
 static bbfCustomProcessUtility_hook_type prev_bbfCustomProcessUtility_hook = NULL;
 static bbfSelectIntoUtility_hook_type prev_bbfSelectIntoUtility_hook = NULL;
-static bbfSelectIntoAddIdentity_hook_type prev_bbfSelectIntoAddIdentity_hook = NULL;
 static sortby_nulls_hook_type prev_sortby_nulls_hook = NULL;
+static optimize_explicit_cast_hook_type prev_optimize_explicit_cast_hook = NULL;
 static table_variable_satisfies_visibility_hook_type prev_table_variable_satisfies_visibility = NULL;
 static table_variable_satisfies_update_hook_type prev_table_variable_satisfies_update = NULL;
 static table_variable_satisfies_vacuum_hook_type prev_table_variable_satisfies_vacuum = NULL;
@@ -359,9 +361,6 @@ InstallExtendedHooks(void)
 	prev_bbfSelectIntoUtility_hook = bbfSelectIntoUtility_hook;
 	bbfSelectIntoUtility_hook = pltsql_bbfSelectIntoUtility; 
 
-	prev_bbfSelectIntoAddIdentity_hook = bbfSelectIntoAddIdentity_hook;
-	bbfSelectIntoAddIdentity_hook = pltsql_bbfSelectIntoAddIdentity; 
-
 	prev_sortby_nulls_hook = sortby_nulls_hook;
 	sortby_nulls_hook = sort_nulls_first;
 
@@ -394,6 +393,9 @@ InstallExtendedHooks(void)
 
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
+
+	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
+	optimize_explicit_cast_hook = optimize_explicit_cast;
 }
 
 void
@@ -445,7 +447,6 @@ UninstallExtendedHooks(void)
 	check_rowcount_hook = prev_check_rowcount_hook;
 	bbfCustomProcessUtility_hook = prev_bbfCustomProcessUtility_hook;
 	bbfSelectIntoUtility_hook = prev_bbfSelectIntoUtility_hook;
-	bbfSelectIntoAddIdentity_hook = prev_bbfSelectIntoAddIdentity_hook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 	table_variable_satisfies_visibility_hook = prev_table_variable_satisfies_visibility;
 	table_variable_satisfies_update_hook = prev_table_variable_satisfies_update;
@@ -457,6 +458,7 @@ UninstallExtendedHooks(void)
 	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
+	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 }
 
 /*****************************************
@@ -1703,7 +1705,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 					 * If there is no open sqb, there are even no. of sq or dq and colname_start is at
 					 * space or comma, it means colname_start is at the end of column name.
 					 */
-					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (*colname_start == ' ' || *colname_start == ','))
+					else if(open_square_bracket == 0 && double_quotes % 2 == 0 && (scanner_isspace(*colname_start) || *colname_start == ','))
 					{
 						last_dot++;
 						colname_start = last_dot;
@@ -1721,7 +1723,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 		}
 		else if (res->name == NULL && IsA(res->val, FuncCall) ){
 			FuncCall *fc = (FuncCall *) res->val;
-			if (strncasecmp(strVal(llast(fc->funcname)), "identity_into", strlen("identity_into")) == 0)
+			if (strcasecmp(strVal(llast(fc->funcname)), "identity_into_bigint") == 0)
 			{
 				// throw error if Select Into-identity function is called without a column name
 				ereport(ERROR,
@@ -4232,24 +4234,6 @@ sort_nulls_first(SortGroupClause * sortcl, bool reverse)
 	}
 }
 
-static void pltsql_bbfSelectIntoAddIdentity(IntoClause *into, List *tableElts)
-{
-	ListCell   *elements;
-	foreach(elements, tableElts)
-	{
-		Node *element = lfirst(elements);
-		if (nodeTag(element) == T_ColumnDef)
-		{
-			ColumnDef *column = (ColumnDef *) element;
-			if(strcasecmp(column->colname, into->identityName) ==0){
-				column->identity = ATTRIBUTE_IDENTITY_ALWAYS;
-				column->is_not_null = true;
-				column->typeName = typeStringToTypeName(into->identityType);
-				break;
-			}
-		}
-	}	
-}
 
 static char *
 get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
@@ -4316,6 +4300,9 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	MemoryContext 	tsql_outmost_context;
 	PLtsql_execstate 	*tsql_outmost_estat;
 	int				nestlevel;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
 
 	new_src_sql_targetist = NULL;
 	new_pivot_aliaslist = NULL;
@@ -4452,4 +4439,59 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make2(copyObject(s_sql), copyObject(c_sql)));
 	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
+}
+
+static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return node;
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *f = (FuncExpr *) node;
+		if (f->funcformat == COERCE_EXPLICIT_CAST){
+			Node* arg = (Node*)linitial(f->args);
+			if (nodeTag(arg) == T_Var && 
+			   ((Var*) arg)->vartype == INT4OID && 
+			   f->funcresulttype == INT8OID)
+				return optimize_explicit_cast(pstate, linitial(f->args));
+		}
+	}
+	else if (IsA(node, BoolExpr))
+	{
+		BoolExpr *r = (BoolExpr *) node;
+		ListCell *l;
+		foreach (l , r->args)
+		{
+			optimize_explicit_cast(pstate, (Node*)lfirst(l));
+		}
+	}
+	else if (IsA(node, OpExpr))
+	{
+		OpExpr *opExpr = (OpExpr*) node;
+		Form_pg_operator form;
+		HeapTuple	tuple;
+		Node* node = optimize_explicit_cast(pstate, linitial(opExpr->args));
+		Node* result = NULL;
+		if (node != linitial(opExpr->args))
+		{
+			char	   *opname;
+
+			tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(opExpr->opno));
+			if (!HeapTupleIsValid(tuple))
+				return node; // no need to error out in here, stop transform and quite, keep the original node
+			form = (Form_pg_operator) GETSTRUCT(tuple);
+
+			opname = NameStr(form->oprname);
+			if (strcmp(opname, "=") == 0)
+			{
+				result =(Node*)make_op(pstate, list_make1(makeString(opname)), node, lsecond(opExpr->args), pstate->p_last_srf, -1);
+			}
+			ReleaseSysCache(tuple);
+			if (result)
+				return result;
+		}
+	}
+	return node;
 }

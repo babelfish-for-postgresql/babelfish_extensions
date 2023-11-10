@@ -233,8 +233,31 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 Node *
 TsqlFunctionIdentityInto(TypeName *typename, Node *seed, Node *increment, int location)
 {
-	ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("IDENTITY() function in SELECT INTO is not supported.")));
-	// Temporarily throw Syntax error instaed of reverting code until Select into identity function with order by is fixed 
+	Node *result;
+	List *args;
+	int32 typmod;
+	Oid type_oid;
+	Oid base_oid;
+	typenameTypeIdAndMod(NULL, typename, &type_oid, &typmod);
+	base_oid = getBaseType(type_oid);
+	switch (base_oid)
+	{
+		case INT2OID:
+		case INT4OID:
+			args = list_make3((Node *)makeIntConst((int)type_oid, location), seed, increment);
+			break;
+		case INT8OID:
+		case NUMERICOID:
+			args = list_make3((Node *)makeIntConst((int)INT8OID, location), seed, increment); /* Used bigint internally for decimal and numeric as well*/
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("Parameter or variable '' has an invalid data type.")));
+			break;
+	}
+	result = (Node *)makeFuncCall(TsqlSystemFuncName("identity_into_bigint"), args, COERCE_EXPLICIT_CALL, location);
+	return result;
 }
 
 /* TsqlFunctionParse -- Implements the PARSE and TRY_PARSE functions.
@@ -698,6 +721,63 @@ is_json_query(List *name)
 			return false;
 	}
 }
+
+/*
+* Parse T-SQL CONTAINS predicate. Currently only supports 
+* ... CONTAINS(column_name, '<contains_search_condition>') ...
+* This function transform it into a Postgres AST that stands for
+* to_tsvector(pgconfig, column_name) @@ to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>'))
+* where pgconfig = babelfish_fts_contains_pgconfig('<contains_search_condition>')
+*/
+static Node *
+TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
+{
+    A_Expr *fts;
+    Node *to_tsvector_call, *to_tsquery_call;
+    Node *result_pgconfig;
+    List *args_pgconfig;
+
+    args_pgconfig = list_make1(search_expr);
+    result_pgconfig = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_contains_pgconfig"), args_pgconfig, COERCE_EXPLICIT_CALL, -1);
+
+    to_tsvector_call = makeToTSVectorFuncCall(colId, yyscanner, result_pgconfig);
+    to_tsquery_call = makeToTSQueryFuncCall(search_expr, result_pgconfig);
+    
+    fts = makeA_Expr(AEXPR_OP, list_make1(makeString("@@")), to_tsvector_call, to_tsquery_call, -1);
+
+    return (Node *)fts;
+}
+
+/* Transform column_name into to_tsvector(pgconfig, column_name) */
+static Node *
+makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
+{
+    Node *col;
+    List *args;
+
+    col = makeColumnRef(colId, NIL, -1, yyscanner);
+
+    args = list_make2(pgconfig, col);
+
+    return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
+}
+
+/* Transfrom '<contains_search_condition>' into to_tsquery(pgconfig, babelfish_fts_rewrite('<contains_search_condition>')) */
+static Node *
+makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
+{
+    List		*args;
+    Node		*result_rewrite;
+    List		*args_rewrite;
+
+    args_rewrite = list_make1(search_expr);
+    result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
+
+
+    args = list_make2(pgconfig, result_rewrite);
+    return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);
+}
+
 
 /*
  * helper macro to compare relname in
@@ -1781,4 +1861,43 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	pivot_sl->value_col_strlist = (List *) list_nth((List *)pivot_clause, 3);
 
 	return (Node *)pivot_sl;
+}
+
+/* 
+ * Adjust index nulls order to match SQL Server behavior.
+ * For ASC (or unspecified) index, default should be NULLS FIRST;
+ * for DESC index, default should be NULLS LAST.
+ */
+static void 
+tsql_index_nulls_order(List *indexParams)
+{
+	ListCell *lc;
+
+	foreach(lc, indexParams)
+	{
+		Node *n = lfirst(lc);
+		IndexElem *indexElem;
+
+		if (!IsA(n, IndexElem))
+			continue;
+
+		indexElem = (IndexElem *) n;
+
+		/* No need to adjust if user already specified the nulls order */
+		if (indexElem->nulls_ordering != SORTBY_NULLS_DEFAULT)
+			continue;
+
+		switch (indexElem->ordering)
+		{
+			case SORTBY_ASC:
+			case SORTBY_DEFAULT:
+				indexElem->nulls_ordering = SORTBY_NULLS_FIRST;
+				break;
+			case SORTBY_DESC:
+				indexElem->nulls_ordering = SORTBY_NULLS_LAST;
+				break;
+			default:
+				break;
+		}
+	}
 }

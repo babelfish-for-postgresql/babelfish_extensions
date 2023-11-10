@@ -64,6 +64,10 @@ static bool isNVarCharType(char *typenameStr);
 static Node *TsqlJsonModifyMakeFuncCall(Node *expr, Node *path, Node *newValue);
 static bool is_json_query(List *name);
 
+static Node *TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner);
+static Node *makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig);
+static Node *makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig);
+
 char	   *construct_unique_index_name(char *index_name, char *relation_name);
 
 static Node *tsql_update_delete_stmt_with_join(Node *n, List *from_clause, Node *where_clause, Node *top_clause, RangeVar *relation,
@@ -84,3 +88,4 @@ static Node *tsql_update_output_into_cte_transformation(WithClause *opt_with_cla
 														List *from_clause, Node *where_or_current_clause, core_yyscan_t yyscanner);
 static List *get_transformed_output_list(List *tsql_output_clause);
 static bool returning_list_has_column_name(List *existing_colnames, char *current_colname);
+static void tsql_index_nulls_order(List *indexParams);

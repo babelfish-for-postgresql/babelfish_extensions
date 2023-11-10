@@ -145,7 +145,7 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -186,7 +186,6 @@ static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
 											 * function */
 static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
 												 * function */
-Oid tsql_select_into_seq_oid = InvalidOid; /* Sequence table oid used by select into*/
 
 PG_MODULE_MAGIC;
 
@@ -277,8 +276,24 @@ set_procid(Oid oid)
 static void
 assign_identity_insert(const char *newval, void *extra)
 {
+	/*
+	 * Workers synchronize the parameter at the beginning of each parallel 
+	 * operation. Avoid performing parameter assignment uring parallel operation.
+	 */
 	if (IsParallelWorker())
-		return;
+	{
+		if (InitializingParallelWorker)
+			return;
+
+        /*
+         * A change other than during startup, for example due to a SET clause
+         * attached to a function definition, should be rejected, as there is
+         * nothing we can do inside the worker to make it take effect.
+         */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot change identity_insert during a parallel operation")));
+	}
 
 	if (strcmp(newval, "") != 0)
 	{
@@ -670,7 +685,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
 				}
 
-				if(atstmt->relation->schemaname == NULL)
+				if(atstmt->relation->schemaname == NULL && rel_schema)
 				{
 					pfree((char *) rel_schema);
 				}
@@ -5598,7 +5613,9 @@ pltsql_revert_guc(int nest_level)
 
 }
 
-static char *get_oid_type_string(int type_oid){
+static char *
+get_oid_type_string(int type_oid)
+{
 	char *type_string = NULL;
 	if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype) (type_oid))
 	{
@@ -5622,13 +5639,14 @@ static char *get_oid_type_string(int type_oid){
 			break;
 		default:
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
+				errmsg("A user-defined data type for an IDENTITY column is not currently supported")));
 			break;
 	}
 	return type_string;
 }
 
-static int64 get_identity_into_args(Node *node)
+static int64 
+get_identity_into_args(Node *node)
 {
 	int64 val = 0;
 	Const *con = NULL;
@@ -5663,49 +5681,49 @@ static int64 get_identity_into_args(Node *node)
 	return val;
 }
 
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
+static List *
+transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
 	ListCell *elements;
-	CreateSeqStmt *seqstmt;
-	AlterSeqStmt *altseqstmt;
-	List *attnamelist;
+	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
 
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
-	seqstmt = NULL;
-	altseqstmt = NULL;
+	altstmt = NULL;
 
 	if (n && n->type == T_Query)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		AttrNumber current_resno = 0;
+		Index identity_ressortgroupref = 0;
+		List *modifiedTargetList = NIL;
+
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
-				Oid snamespaceid;
-				char *snamespace;
-				char *sname;
 				List *seqoptions = NIL;
 				ListCell *arg;
 				int typeoid = 0;
-				char *type = NULL;
 
 				TypeName *typename = NULL;
-				int64 seedvalue = 0;
-				int64 incrementvalue = 0;
+				int64 seedvalue = 0, incrementvalue = 0;
 				int argnum;
+				AlterTableCmd *lcmd;
+				ColumnDef *def;
+				Constraint *constraint;
 
 				if (seen_identity)
-					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
 					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
@@ -5720,9 +5738,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 					{
 					case 1:
 						typeoid = get_identity_into_args(farg_node);
-						type = get_oid_type_string(typeoid);
-						typename = typeStringToTypeName(type);
-						seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						typename = typeStringToTypeName(get_oid_type_string(typeoid));
 						break;
 					case 2:
 						seedvalue = get_identity_into_args(farg_node);
@@ -5743,33 +5759,68 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 					}
 				}
 
-				into->identityName = tle->resname;
-				into->identityType = TypeNameToString(typename);
 				seen_identity = true;
+				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
-				snamespaceid = RangeVarGetCreationNamespace(into->rel);
-				snamespace = get_namespace_name(snamespaceid);
-				sname = ChooseRelationName(into->rel->relname, tle->resname, "seq", snamespaceid, false);
-				seqstmt = makeNode(CreateSeqStmt);
-				seqstmt->for_identity = true;
-				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				seqstmt->sequence->relpersistence = into->rel->relpersistence;
-				seqstmt->options = seqoptions;
+				/** Add alter table add identity node after Select Into statement */
+				altstmt = makeNode(AlterTableStmt);
+				altstmt->relation = into->rel;
+				altstmt->cmds = NIL;
 
-				altseqstmt = makeNode(AlterSeqStmt);
-				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname), makeString(tle->resname));
-				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *)attnamelist, -1));
-				altseqstmt->for_identity = true;
+				constraint = makeNode(Constraint);
+				constraint->contype = CONSTR_IDENTITY;
+				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
+				constraint->options = seqoptions;
+
+				def = makeNode(ColumnDef);
+				def->colname = tle->resname;
+				def->typeName = typename;
+				def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
+				def->is_not_null = true;
+				def->constraints = lappend(def->constraints, constraint);
+
+				lcmd = makeNode(AlterTableCmd);
+				lcmd->subtype = AT_AddColumn;
+				lcmd->missing_ok = false;
+				lcmd->def = (Node *)def;
+				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
+			else
+			{
+				current_resno += 1;
+				tle->resno = current_resno;
+				modifiedTargetList = lappend(modifiedTargetList, tle);
+			}
+		}
+		q->targetList = modifiedTargetList;
+
+		if (seen_identity)
+		{
+			if (q->sortClause)
+			{
+				List *modifiedSortClause = NIL;
+				ListCell *olitem;
+				foreach (olitem, q->sortClause)
+				{
+					Node *sortnode = (Node *)lfirst(olitem);
+					if (IsA(sortnode, SortGroupClause))
+					{
+						SortGroupClause *sortcl = (SortGroupClause *)sortnode;
+						if (sortcl->tleSortGroupRef != identity_ressortgroupref)
+							modifiedSortClause = lappend(modifiedSortClause, sortcl);
+					}
+				}
+				q->sortClause = modifiedSortClause;
+			}
+
+			if (q->distinctClause && list_length(q->distinctClause) > (identity_ressortgroupref - 1))
+				q->distinctClause = list_delete_nth_cell(q->distinctClause, identity_ressortgroupref - 1);
 		}
 	}
 
-	if (seqstmt)
-		result = lappend(result, seqstmt);
 	result = lappend(result, stmt);
-	if (altseqstmt)
-		result = lappend(result, altseqstmt);
+	if (altstmt)
+		result = lappend(result, altstmt);
 
 	return result;
 }
@@ -5782,7 +5833,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, queryString);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);
@@ -5790,13 +5841,6 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		if (IsA(stmt, CreateTableAsStmt))
 		{
 			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
-			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
-		}
-		else if (IsA(stmt, CreateSeqStmt))
-		{
-			address = DefineSequence(pstate, (CreateSeqStmt *)stmt);
-			Assert(address.objectId != InvalidOid);
-			tsql_select_into_seq_oid = address.objectId;
 			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
 		}
 		else
