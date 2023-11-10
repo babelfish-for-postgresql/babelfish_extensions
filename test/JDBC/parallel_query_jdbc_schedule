@@ -8,14 +8,6 @@
 
 ignore#!#table-variable-vu-verify
 
-# JIRA - BABEL-4419
-ignore#!#BABEL-1056
-ignore#!#BABEL-GUC-PLAN
-ignore#!#BABEL-3092
-ignore#!#BABEL-COLUMN-CONSTRAINT
-ignore#!#BABEL-1251-vu-verify
-ignore#!#BABEL-1251
-
 # These test should not get run in parallel query
 ignore#!#BABEL-1363
 
