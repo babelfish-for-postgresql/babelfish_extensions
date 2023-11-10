@@ -2907,7 +2907,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	if (weight < 0)
 	{
 		/* weight < 0 means the integral part of the number is 0 */
-		total_digit_count = 1 + dscale;
+		total_digit_count = dscale;
 		return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 	}
 	total_digit_count = weight * numeric_base;
@@ -2933,8 +2933,6 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 			int log_10 = (int) log10(partially_filled_numeric_block); // keep compiler happy
 			total_digit_count += log_10 + 1;
 		}
-		else
-			total_digit_count += 1;
 	}
 
 	/*

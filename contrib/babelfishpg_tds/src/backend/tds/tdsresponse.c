@@ -1894,9 +1894,15 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					 * than -1.
 					 */
 					if (atttypmod == -1 && tle != NULL)
-						atttypmod = plannedstmt ? 
-									resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr) :
-									resolve_numeric_typmod_from_exp(NULL, (Node *) tle->expr);
+					{
+						if (!plannedstmt)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("Internal error detected while calculating the precision of numeric expression")));
+						}
+						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr);
+					}
 
 					/*
 					 * Get the precision and scale out of the typmod value if

@@ -845,3 +845,39 @@ numeric
 
 DROP table babel_4424_t1;
 GO
+
+create table babel_4424_t1 (a numeric(38,38));
+GO
+
+insert into babel_4424_t1 values (0.1111111111111111111111111111111111111111);
+go
+~~ROW COUNT: 1~~
+
+
+select a + a from babel_4424_t1;
+GO
+~~START~~
+numeric
+0.22222222222222222222222222222222222222
+~~END~~
+
+
+truncate table test;
+GO
+
+insert into test values (0.99999999999999999999999999999999999999)
+GO
+~~ROW COUNT: 1~~
+
+
+select a + a from test;
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+DROP table babel_4424_t1;
+GO
