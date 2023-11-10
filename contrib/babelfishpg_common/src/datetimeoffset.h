@@ -23,6 +23,7 @@ extern void AdjustTimestampForSmallDatetime(Timestamp *time);
 extern void CheckSmalldatetimeRange(const Timestamp time);
 extern void CheckDatetimeRange(const Timestamp time);
 extern void CheckDatetime2Range(const Timestamp time);
+extern Datum timestamp_datetimeoffset(PG_FUNCTION_ARGS);
 typedef struct tsql_datetimeoffset
 {
 	int64		tsql_ts;
