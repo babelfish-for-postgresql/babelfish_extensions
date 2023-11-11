@@ -99,6 +99,7 @@ extern bool pltsql_nocount;
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
 
+static bool check_identity_insert(char **newal, void **extra, GucSource source);
 static void assign_identity_insert(const char *newval, void *extra);
 static void assign_textsize(int newval, void *extra);
 extern Datum init_collid_trans_tab(PG_FUNCTION_ARGS);
@@ -273,18 +274,15 @@ set_procid(Oid oid)
 	procid_var = oid;
 }
 
-static void
-assign_identity_insert(const char *newval, void *extra)
+static bool
+check_identity_insert(char** newval, void **extra, GucSource source)
 {
 	/*
 	 * Workers synchronize the parameter at the beginning of each parallel 
 	 * operation. Avoid performing parameter assignment uring parallel operation.
 	 */
-	if (IsParallelWorker())
+	if (IsParallelWorker() && !InitializingParallelWorker)
 	{
-		if (InitializingParallelWorker)
-			return;
-
         /*
          * A change other than during startup, for example due to a SET clause
          * attached to a function definition, should be rejected, as there is
@@ -294,6 +292,15 @@ assign_identity_insert(const char *newval, void *extra)
 				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
 				 errmsg("cannot change identity_insert during a parallel operation")));
 	}
+
+	return true;
+}
+
+static void
+assign_identity_insert(const char *newval, void *extra)
+{
+	if (IsParallelWorker())
+		return;
 
 	if (strcmp(newval, "") != 0)
 	{
@@ -4084,7 +4091,7 @@ _PG_init(void)
 							   "",
 							   PGC_USERSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							   NULL,
+							   check_identity_insert,
 							   assign_identity_insert,
 							   NULL);
 
