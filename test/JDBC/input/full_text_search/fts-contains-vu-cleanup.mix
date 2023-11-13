@@ -1,3 +1,4 @@
+-- tsql user=jdbc_user password=12345678
 -- enable CONTAINS
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
@@ -17,3 +18,8 @@ GO
 -- disable CONTAINS
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltest_parser = off;
+SELECT pg_reload_config();
+

@@ -110,3 +110,7 @@ GO
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltest_parser = off;
+SELECT pg_reload_config();
