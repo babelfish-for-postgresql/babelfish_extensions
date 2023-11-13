@@ -8,7 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-all
+TestRecreatedInnerProcedures
 
 ignore#!#BABEL-2999
 
