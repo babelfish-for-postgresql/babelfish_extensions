@@ -3264,7 +3264,7 @@ static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleCastMap *tupleCastMap)
 
 		outisnull[i] = inisnull[j];
 		outvalues[i] = exec_cast_value(get_current_tsql_estate(),
-				invalues[j], &outisnull[j],
+				invalues[j], &outisnull[i],
 				intypeid, inttypemod,
 				outtypeid, outtypemod
 		);
