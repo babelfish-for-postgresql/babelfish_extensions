@@ -12,6 +12,7 @@ import static com.sqlsamples.Config.*;
 import static com.sqlsamples.Statistics.exec_times;
 import static com.sqlsamples.Statistics.curr_exec_time;
 import static com.sqlsamples.Statistics.sla;
+import static com.sqlsamples.Config.checkParallelQueryExpected;
 
 public class batch_run {
 
@@ -276,6 +277,11 @@ public class batch_run {
                         String[] tokens=strLine.split(" ");  
                         sla = Long.parseLong(tokens[2]);
                         sla = sla*(1000000L);
+                        continue;
+                    }
+
+                    if (strLine.toLowerCase().startsWith("-- parallel_query_expected")){
+                        checkParallelQueryExpected = true;
                         continue;
                     }
                     // execute statement as a normal SQL statement

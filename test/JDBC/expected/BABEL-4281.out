@@ -1,0 +1,119 @@
+BEGIN TRAN BABEL4281_T1; 
+GO
+
+CREATE TABLE t_babel4281 (a int, b int);
+GO
+
+-- The third parameter is true to set config back to default after transaction is committed
+select set_config('parallel_setup_cost', 0, true);
+select set_config('parallel_tuple_cost', 0, true);
+select set_config('min_parallel_table_scan_size', 0, true);
+GO
+~~START~~
+text
+0
+~~END~~
+
+~~START~~
+text
+0
+~~END~~
+
+~~START~~
+text
+0
+~~END~~
+
+
+
+-- show explicitly this is a parallel query plan
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_STATISTICS PROFILE ON
+GO
+
+select a, count(*) from t_babel4281 group by a order by 2; -- should not crash
+GO
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+text
+Query Text: select a, count(*) from t_babel4281 group by a order by 2
+Sort (actual rows=0 loops=1)
+  Sort Key: (count(*)) NULLS FIRST
+  Sort Method: quicksort  Memory: 25kB
+  ->  Finalize HashAggregate (actual rows=0 loops=1)
+        Group Key: a
+        Batches: 1  Memory Usage: 40kB
+        ->  Gather (actual rows=0 loops=1)
+              Workers Planned: 2
+              Workers Launched: 2
+              ->  Partial HashAggregate (actual rows=0 loops=3)
+                    Group Key: a
+                    Batches: 1  Memory Usage: 40kB
+                    Worker 0:  Batches: 1  Memory Usage: 40kB
+                    Worker 1:  Batches: 1  Memory Usage: 40kB
+                    ->  Parallel Seq Scan on t_babel4281 (actual rows=0 loops=3)
+~~END~~
+
+
+
+-- set configurations back
+SET BABELFISH_STATISTICS PROFILE OFF
+GO
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+-- Commiting sets parallel_setup_cost, parallel_tuple_cost, min_parallel_table_scan_size back to default
+COMMIT TRAN BABEL4281_T1;
+GO
+
+
+DROP TABLE t_babel4281;
+GO
