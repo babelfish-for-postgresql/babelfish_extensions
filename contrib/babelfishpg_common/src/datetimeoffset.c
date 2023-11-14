@@ -841,13 +841,16 @@ Datum
 dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 	text    *field     = PG_GETARG_TEXT_PP(0);
 	int      num       = PG_GETARG_INT32(1);
-	tsql_datetimeoffset *d = PG_GETARG_DATETIMEOFFSET(2);
+	tsql_datetimeoffset *init_startdate = PG_GETARG_DATETIMEOFFSET(2);
 
 	char	   *lowunits;
 	int			type,
 				val;
 	tsql_datetimeoffset *result;
 	Interval   *interval;
+	int timezone = DirectFunctionCall1(get_datetimeoffset_tzoffset_internal, DatetimeoffsetGetDatum(init_startdate)) * 2;
+	tsql_datetimeoffset *startdate = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(init_startdate), DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, timezone, 0));
+
 
 	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
 									VARSIZE_ANY_EXHDR(field),
@@ -906,15 +909,15 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
-				elog(ERROR, "the datepart %s is not supported by function dateadd for datatype datetimeoffset",
+				elog(ERROR, "the datepart %s is not supported by function dateadd for datatype datetimeoffset.",
 				 	lowunits);
 				break;
 		}
 	} else {
-		elog(ERROR, "the datepart %s is not supported by function dateadd for datatype datetimeoffset", lowunits);
+		elog(ERROR, "the datepart %s is not a recognized datediff option.", lowunits);
 	}
 
-	result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(d), PointerGetDatum(interval));
+	result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(startdate), PointerGetDatum(interval));
 
 	CheckDatetimeoffsetRange(result);
 	PG_RETURN_DATETIMEOFFSET(result);

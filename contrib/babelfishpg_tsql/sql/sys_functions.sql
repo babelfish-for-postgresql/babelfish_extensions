@@ -1601,7 +1601,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return sys.datediff_internal(datepart, startdate, enddate);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1883,19 +1883,7 @@ LANGUAGE plpgsql IMMUTABLE;
     but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
     but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
 */
-CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
-DECLARE
-	timezone INTEGER;
-BEGIN
-	timezone = sys.babelfish_get_datetimeoffset_tzoffset(startdate)::INTEGER * 2;
-	startdate = startdate OPERATOR(sys.+) make_interval(mins => timezone);
-    return sys.dateadd_internal_dtoff(datepart, num, startdate);
-END;
-$$
-STRICT
-LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.dateadd_internal_dtoff(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT)
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset)
 RETURNS datetimeoffset AS
 'babelfishpg_common', 'dateadd_datetimeoffset'
 STRICT
