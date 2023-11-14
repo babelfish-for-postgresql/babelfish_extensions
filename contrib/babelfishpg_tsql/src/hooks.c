@@ -234,7 +234,6 @@ static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_sat
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
-/* TODO: do we need to use variable to store hook value before transfrom pivot? No other function uses the same hook, should be redundant */
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -4429,7 +4428,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	temp_src_targetlist = temp_src_query->targetList;
 
 	/* Get pivot column str & value column str from parser result */
-	pivot_colstr = ((String *) llast(stmt->pivotCol->fields))->sval;
+	pivot_colstr = ((String *) llast(((ColumnRef *)stmt->pivotCol)->fields))->sval;
 	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
 	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
 

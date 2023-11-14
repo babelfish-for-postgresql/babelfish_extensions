@@ -3840,7 +3840,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
-		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, 0);
 		Assert(list_length(per_pivot_list) >= 2);
 		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
 		bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
@@ -3893,7 +3893,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
-	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
+	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, 0);
 	tsql_outmost_estat->pivot_number--;
 	MemoryContextSwitchTo(oldcontext);
 	return (Datum) 0;

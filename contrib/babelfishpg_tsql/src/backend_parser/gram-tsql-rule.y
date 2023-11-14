@@ -1648,7 +1648,7 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 
 					temptable_alias = makeNode(Alias);
 					temptable_alias->aliasname = "pivotTempTable";
-					/*TODO: get the column name from the columnref*/
+					/* get the column name from the columnref*/
 					pivot_colstr = llast(((ColumnRef *)$5)->fields);
 					temptable_alias->colnames = list_make1(copyObject(pivot_colstr));
 					
