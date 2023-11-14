@@ -27,6 +27,3 @@ GO
 
 DROP PROCEDURE dateadd_p10
 GO
-
-DROP PROCEDURE dateadd_p11
-GO

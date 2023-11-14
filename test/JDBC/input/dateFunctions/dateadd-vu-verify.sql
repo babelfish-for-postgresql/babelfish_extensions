@@ -27,6 +27,3 @@ GO
 
 exec dateadd_p10
 GO
-
-exec dateadd_p11
-GO

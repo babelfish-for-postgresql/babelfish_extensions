@@ -909,12 +909,12 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
-				elog(ERROR, "the datepart %s is not supported by function dateadd for datatype datetimeoffset.",
+				elog(ERROR, "The datepart %s is not supported by function dateadd for datatype datetimeoffset.",
 				 	lowunits);
 				break;
 		}
 	} else {
-		elog(ERROR, "the datepart %s is not a recognized datediff option.", lowunits);
+		elog(ERROR, "\'%s\' is not a recognized dateadd option.", lowunits);
 	}
 
 	result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(startdate), PointerGetDatum(interval));

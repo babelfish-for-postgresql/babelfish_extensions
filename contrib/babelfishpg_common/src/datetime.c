@@ -950,7 +950,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 					overflow = (overflow || (pg_mul_s32_overflow(microsecdiff, 1000, &diff)));
 					break;
 				default:
-					elog(ERROR, "the datepart %s is not a recognized datediff option.", lowunits);
+					elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
 					break;
 			}
 		}
@@ -960,7 +960,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 		}
 	} else {
-		elog(ERROR, "the datepart %s is not a recognized datediff option.", lowunits);
+		elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
 	}
 
 	if(overflow) {
@@ -1113,7 +1113,7 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 					overflow = (overflow || (pg_mul_s64_overflow(microsecdiff, 1000, &diff)));
 					break;
 				default:
-					elog(ERROR, "the datepart %s is not a recognized datediff option.", lowunits);
+					elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
 					break;
 			}
 		}
@@ -1123,7 +1123,7 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 		}
 	} else {
-		elog(ERROR, "the datepart %s is not a recognized datediff option.", lowunits);
+		elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
 	}
 
 	if(overflow) {
@@ -1249,28 +1249,28 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 		switch(val) {
 			case DTK_YEAR:
 				if(dttype == TIME) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type time.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type time.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, num, 0, 0, 0, 0, 0, 0);
 				break;
 			case DTK_QUARTER:
 				if(dttype == TIME) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type time.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type time.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num * 3, 0, 0, 0, 0, 0);
 				break;
 			case DTK_MONTH:
 				if(dttype == TIME) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type time.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type time.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num, 0, 0, 0, 0, 0);
 				break;
 			case DTK_WEEK:
 				if(dttype == TIME) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type time.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type time.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, num, 0, 0, 0, 0);
@@ -1278,60 +1278,60 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 			case DTK_DAY:
 			case DTK_DOY:
 				if(dttype == TIME) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type time.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type time.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, num, 0, 0, 0);
 				break;
 			case DTK_HOUR:
 				if(dttype == DATE) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type date.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type date.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, num, 0, 0);
 				break;
 			case DTK_MINUTE:
 				if(dttype == DATE) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type date.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type date.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, num, 0);
 				break;
 			case DTK_SECOND:
 				if(dttype == DATE) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type date.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type date.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum(num));
 				break;
 			case DTK_MILLISEC:
 				if(dttype == DATE) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type date.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type date.",
 				 	lowunits);
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.001));
 				break;
 			case DTK_MICROSEC:
 				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type %s.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type %s.",
 				 	lowunits, datetypeName(dttype));
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000001));
 				break;
 			case DTK_NANO:
 				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
-					elog(ERROR, "the datepart %s is not supported by date function dateadd for data type %s.",
+					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type %s.",
 				 	lowunits, datetypeName(dttype));
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
-				elog(ERROR, "the datepart %s is not supported by date function dateadd for data type %s.",
+				elog(ERROR, "The datepart %s is not supported by date function dateadd for data type %s.",
 				 	lowunits, datetypeName(dttype));
 				break;
 		}
 	} else {
-		elog(ERROR, "the datepart %s is not a recognized datadd option.", lowunits);
+		elog(ERROR, "The datepart %s is not a recognized datadd option.", lowunits);
 	}
 
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(interval));
