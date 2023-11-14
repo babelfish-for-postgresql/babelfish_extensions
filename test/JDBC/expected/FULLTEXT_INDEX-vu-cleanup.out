@@ -112,6 +112,12 @@ GO
 DROP FUNCTION IF EXISTS fti_prepare_f1;
 GO
 
+DROP TABLE IF EXISTS fti_schema_s3.fti_table_t9;
+GO
+
+DROP SCHEMA IF EXISTS fti_schema_s3;
+GO
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
@@ -141,5 +147,15 @@ GO
 ~~START~~
 text
 strict
+~~END~~
+
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
 ~~END~~
 

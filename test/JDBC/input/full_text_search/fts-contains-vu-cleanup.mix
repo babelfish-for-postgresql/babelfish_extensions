@@ -20,6 +20,6 @@ SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
 
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.allow_fulltest_parser = off;
-SELECT pg_reload_config();
-
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
+SELECT pg_reload_conf();
+GO

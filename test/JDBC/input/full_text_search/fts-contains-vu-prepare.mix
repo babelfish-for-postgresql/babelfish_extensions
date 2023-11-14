@@ -1,7 +1,7 @@
 -- enable CONTAINS
 -- psql
-ALTER SYSTEM SET babelfishpg_tsql.allow_fulltest_parser = on;
-SELECT pg_reload_config();
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
+SELECT pg_reload_conf();
 GO
 
 -- tsql user=jdbc_user password=12345678
