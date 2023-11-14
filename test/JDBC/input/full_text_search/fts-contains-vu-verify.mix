@@ -1,3 +1,9 @@
+-- enable CONTAINS
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
+SELECT pg_reload_conf();
+GO
+
 -- tsql user=jdbc_user password=12345678
 -- enable CONTAINS
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
