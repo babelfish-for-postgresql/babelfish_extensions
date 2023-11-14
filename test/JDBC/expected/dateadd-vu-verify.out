@@ -50,14 +50,14 @@ exec dateadd_p7
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: the datepart day is not supported by date function dateadd for data type time.)~~
+~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
 
 
 exec dateadd_p8
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: the datepart hour is not supported by date function dateadd for data type date.)~~
+~~ERROR (Message: The datepart hour is not supported by date function dateadd for data type date.)~~
 
 
 exec dateadd_p9

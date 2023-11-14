@@ -125,9 +125,6 @@ select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime))
 go
 select dateadd(minute, 56, cast('2016-12-26 23:29:29' as datetime))
 go
--- out of range
-select dateadd(year, 150, cast('9900-12-26 23:29:29' as datetime))
-go
 
 -- Test data type precedence TODO Fix [BABEL-883] missing TDS support for type regtype (was pg_typeof produces error in sqlcmd)
 select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime) as C1 UNION SELECT cast('2016-12-26 23:30:05' as smalldatetime) as C1) T

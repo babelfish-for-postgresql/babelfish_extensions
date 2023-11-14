@@ -1323,6 +1323,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 					elog(ERROR, "The datepart %s is not supported by date function dateadd for data type %s.",
 				 	lowunits, datetypeName(dttype));
 				}
+				num = num / 1000 * 1000; // Floors the number to avoid incorrect rounding
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
