@@ -2,6 +2,7 @@
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.allow_fulltest_parser = on;
 SELECT pg_reload_config();
+GO
 
 -- tsql user=jdbc_user password=12345678
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
