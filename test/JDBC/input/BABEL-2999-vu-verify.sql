@@ -67,10 +67,10 @@ GO
 select * from t3_BABEL2999_2;
 GO
 
-insert into t3_BABEL_2999_2 exec('select ''123''');
+insert into t3_BABEL2999_2 exec('select ''123''');
 GO
 
-insert into t3_BABEL_2999_2 exec('select 123, 123');
+insert into t3_BABEL2999_2 exec('select 123, 123');
 GO
 
 insert into t4_BABEL2999 exec('select 123, 123, 123, 123, 123')
@@ -101,4 +101,7 @@ insert into t6_BABEL2999 exec('select ''1'',''2'',''3''')
 GO
 
 insert into t6_BABEL2999 exec('select c,b,a from t6_BABEL2999')
+GO
+
+select * from t6_BABEL2999
 GO
