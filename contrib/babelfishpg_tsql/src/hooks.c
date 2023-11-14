@@ -164,6 +164,7 @@ static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
 
 static char *get_local_schema_for_bbf_functions(Oid proc_nsp_oid);
+extern bool called_from_tsql_insert_exec();
 
 /*****************************************
  * 			Replication Hooks
@@ -231,6 +232,7 @@ static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook =
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 /* TODO: do we need to use variable to store hook value before transfrom pivot? No other function uses the same hook, should be redundant */
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
+static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -396,6 +398,9 @@ InstallExtendedHooks(void)
 
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
+
+	pre_called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec_hook;
+	called_from_tsql_insert_exec_hook = called_from_tsql_insert_exec;
 }
 
 void
@@ -459,6 +464,7 @@ UninstallExtendedHooks(void)
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
+	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 }
 
 /*****************************************

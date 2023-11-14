@@ -26,17 +26,6 @@
 PLtsql_execstate *get_current_tsql_estate(void);
 PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
-typedef struct TupleCastMap
-{
-	TupleDesc	indesc;			/* tupdesc for source rowtype */
-	TupleDesc	outdesc;		/* tupdesc for result rowtype */
-	AttrMap    *attrMap;		/* indexes of input fields, or 0 for null */
-	Datum	   *invalues;		/* workspace for deconstructing source */
-	bool	   *inisnull;
-	Datum	   *outvalues;		/* workspace for constructing result */
-	bool	   *outisnull;
-} TupleCastMap;
-
 /*
  * NOTE:
  *	A SET...(SELECT) statement that returns more than one row will raise an error
@@ -77,6 +66,7 @@ static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
 
 void		read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
+bool  		called_from_tsql_insert_exec(void);
 void		cache_inline_args(PLtsql_function *func, InlineCodeBlockArgs *args);
 InlineCodeBlockArgs *create_args(int numargs);
 InlineCodeBlockArgs *clone_inline_args(InlineCodeBlockArgs *args);
@@ -114,6 +104,7 @@ extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 extern int	sp_prepare_count;
 
 BulkCopyStmt *cstmt = NULL;
+bool		called_from_tsql_insert_execute = false;
 
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
@@ -125,16 +116,8 @@ static bool prev_insert_bulk_keep_nulls = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
-
-static TupleCastMap *cast_tuples_by_position(TupleDesc indesc,
-						   TupleDesc outdesc,
-						   const char *msg);
-static AttrMap* build_typecast_attrmap_by_position(TupleDesc indesc, TupleDesc outdesc, const char *msg);
-static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleCastMap *tupleCastMap);
-static bool
-check_attrmap_match(TupleDesc indesc,
-					TupleDesc outdesc,
-					AttrMap *attrMap);
+static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleConversionMap *tupleCastMap);
+ 
 /*
  * The pltsql_proc_return_code global variable is used to record the
  * return code (RETURN 41 + 1) of the most recently completed procedure
@@ -3006,6 +2989,13 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	return PLTSQL_RC_OK;
 }
 
+bool called_from_tsql_insert_exec()
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+	return called_from_tsql_insert_execute;
+}
+
 /*
  * For naked SELECT stmt in INSERT ... EXECUTE, instead of pushing the result to
  * the client, we accumulate the result in estate->tuple_store (similar to
@@ -3017,7 +3007,7 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 {
 	Portal		portal;
 	uint64		processed = 0;
-	TupleCastMap *tupmap;
+	TupleConversionMap *tupmap;
 	MemoryContext oldcontext;
 
 	if (estate->tuple_store == NULL)
@@ -3029,10 +3019,11 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 	/* Use eval_mcontext for tuple conversion work */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 
-	tupmap = cast_tuples_by_position(portal->tupDesc,
+	called_from_tsql_insert_execute = true;
+	tupmap = convert_tuples_by_position(portal->tupDesc,
 										estate->tuple_store_desc,
 										gettext_noop("structure of query does not match function result type"));
-
+	called_from_tsql_insert_execute = false;
 	while (true)
 	{
 		uint64		i;
@@ -3069,165 +3060,7 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 	return PLTSQL_RC_OK;
 }
 
-static AttrMap* build_typecast_attrmap_by_position(TupleDesc indesc, TupleDesc outdesc, const char *msg)
-{
-	AttrMap    *attrMap;
-	int			nincols;
-	int			noutcols;
-	int			n;
-	int			i;
-	int			j;
-	bool		same;
-
-	/*
-	 * The length is computed as the number of attributes of the expected
-	 * rowtype as it includes dropped attributes in its count.
-	 */
-	n = outdesc->natts;
-	attrMap = make_attrmap(n);
-
-	j = 0;						/* j is next physical input attribute */
-	nincols = noutcols = 0;		/* these count non-dropped attributes */
-	same = true;
-	for (i = 0; i < n; i++)
-	{
-		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
-
-		if (outatt->attisdropped)
-			continue;			/* attrMap->attnums[i] is already 0 */
-		noutcols++;
-		for (; j < indesc->natts; j++)
-		{
-			Form_pg_attribute inatt = TupleDescAttr(outdesc, j);
-			if (inatt->attisdropped)
-				continue;
-			nincols++;
-
-			attrMap->attnums[i] = (AttrNumber) (j + 1);
-			j++;
-			break;
-		}
-		if (attrMap->attnums[i] == 0)
-			same = false;		/* we'll complain below */
-	}
-
-	/* Check for unused input columns */
-	for (; j < indesc->natts; j++)
-	{
-		if (TupleDescAttr(indesc, j)->attisdropped)
-			continue;
-		nincols++;
-		same = false;			/* we'll complain below */
-	}
-
-	/* Report column count mismatch using the non-dropped-column counts */
-	if (!same)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg_internal("%s", _(msg)),
-				 errdetail("Number of returned columns (%d) does not match "
-						   "expected column count (%d).",
-						   nincols, noutcols)));
-
-	/* Check if the map has a one-to-one match */
-	if (check_attrmap_match(indesc, outdesc, attrMap))
-	{
-		/* Runtime conversion is not needed */
-		free_attrmap(attrMap);
-		return NULL;
-	}
-
-	return attrMap;
-}
-
-/*
- * check_attrmap_match
- *
- * Check to see if the map is a one-to-one match, in which case we need
- * not to do a tuple conversion, and the attribute map is not necessary.
- */
-static bool
-check_attrmap_match(TupleDesc indesc,
-					TupleDesc outdesc,
-					AttrMap *attrMap)
-{
-	int			i;
-
-	/* no match if attribute numbers are not the same */
-	if (indesc->natts != outdesc->natts)
-		return false;
-
-	for (i = 0; i < attrMap->maplen; i++)
-	{
-		Form_pg_attribute inatt = TupleDescAttr(indesc, i);
-		Form_pg_attribute outatt = TupleDescAttr(outdesc, i);
-
-		/*
-		 * If the input column has a missing attribute, we need a conversion.
-		 */
-		if (inatt->atthasmissing)
-			return false;
-
-		if (inatt->atttypid != outatt->atttypid ||
-		inatt->atttypmod != outatt->atttypmod)
-			return false; 
-
-		if (attrMap->attnums[i] == (i + 1))
-			continue;
-
-		/*
-		 * If it's a dropped column and the corresponding input column is also
-		 * dropped, we don't need a conversion.  However, attlen and attalign
-		 * must agree.
-		 */
-		if (attrMap->attnums[i] == 0 &&
-			inatt->attisdropped &&
-			inatt->attlen == outatt->attlen &&
-			inatt->attalign == outatt->attalign)
-			continue;
-
-		return false;
-	}
-
-	return true;
-}
-
-static TupleCastMap *cast_tuples_by_position(TupleDesc indesc,
-						   TupleDesc outdesc,
-						   const char *msg)
-{
-	TupleCastMap *map;
-	int			n;
-	AttrMap    *attrMap;
-
-	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_typecast_attrmap_by_position(indesc, outdesc, msg);
-
-	if (attrMap == NULL)
-	{
-		/* runtime cast is not needed */
-		return NULL;
-	}
-
-	/* Prepare the map structure */
-	map = (TupleCastMap *) palloc(sizeof(TupleCastMap));
-	map->indesc = indesc;
-	map->outdesc = outdesc;
-	map->attrMap = attrMap;
-	/* preallocate workspace for Datum arrays */
-	n = outdesc->natts + 1;		/* +1 for NULL */
-	map->outvalues = (Datum *) palloc(n * sizeof(Datum));
-	map->outisnull = (bool *) palloc(n * sizeof(bool));
-	n = indesc->natts + 1;		/* +1 for NULL */
-	map->invalues = (Datum *) palloc(n * sizeof(Datum));
-	map->inisnull = (bool *) palloc(n * sizeof(bool));
-	map->invalues[0] = (Datum) 0;	/* set up the NULL entry */
-	map->inisnull[0] = true;
-
-	return map;
-}
-
-static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleCastMap *tupleCastMap)
+static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleConversionMap *tupleCastMap)
 {
 	AttrMap    *attrMap = tupleCastMap->attrMap;
 	Oid        intypeid;
