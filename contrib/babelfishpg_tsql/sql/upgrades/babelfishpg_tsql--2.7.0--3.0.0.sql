@@ -6,6 +6,26 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 
 -- please add your SQL here
 
+CREATE OR REPLACE FUNCTION sys.babelfish_update_server_collation_name() RETURNS VOID
+LANGUAGE C
+AS 'babelfishpg_common', 'babelfish_update_server_collation_name';
+
+SELECT sys.babelfish_update_server_collation_name();
+
+DROP FUNCTION sys.babelfish_update_server_collation_name();
+
+-- reset babelfishpg_tsql.restored_server_collation_name GUC
+do
+language plpgsql
+$$
+    declare
+        query text;
+    begin
+        query := pg_catalog.format('alter database %s reset babelfishpg_tsql.restored_server_collation_name', CURRENT_DATABASE());
+        execute query;
+    end;
+$$;
+
 CREATE OR REPLACE FUNCTION sys.datepart_internal(IN datepart PG_CATALOG.TEXT, IN arg anyelement,IN df_tz INTEGER DEFAULT 0) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
