@@ -1,3 +1,9 @@
+-- enable CONTAINS
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
+SELECT pg_reload_conf();
+GO
+
 -- enable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
@@ -76,4 +82,9 @@ GO
 
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
+SELECT pg_reload_conf();
 GO

@@ -206,3 +206,12 @@ text
 strict
 ~~END~~
 
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
