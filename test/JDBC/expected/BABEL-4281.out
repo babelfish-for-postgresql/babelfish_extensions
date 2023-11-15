@@ -51,40 +51,37 @@ off
 ~~END~~
 
 
-SET BABELFISH_STATISTICS PROFILE ON
+SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
+select a, count(*) from t_babel4281 group by a order by 2; -- should not crash
+GO
+~~START~~
+text
+Query Text: select a, count(*) from t_babel4281 group by a order by 2
+Sort
+  Sort Key: (count(*)) NULLS FIRST
+  ->  Finalize HashAggregate
+        Group Key: a
+        ->  Gather
+              Workers Planned: 2
+              ->  Partial HashAggregate
+                    Group Key: a
+                    ->  Parallel Seq Scan on t_babel4281
+~~END~~
+
+
+-- set configurations back
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+-- Verify Output
 select a, count(*) from t_babel4281 group by a order by 2; -- should not crash
 GO
 ~~START~~
 int#!#int
 ~~END~~
 
-~~START~~
-text
-Query Text: select a, count(*) from t_babel4281 group by a order by 2
-Sort (actual rows=0 loops=1)
-  Sort Key: (count(*)) NULLS FIRST
-  Sort Method: quicksort  Memory: 25kB
-  ->  Finalize HashAggregate (actual rows=0 loops=1)
-        Group Key: a
-        Batches: 1  Memory Usage: 40kB
-        ->  Gather (actual rows=0 loops=1)
-              Workers Planned: 2
-              Workers Launched: 2
-              ->  Partial HashAggregate (actual rows=0 loops=3)
-                    Group Key: a
-                    Batches: 1  Memory Usage: 40kB
-                    Worker 0:  Batches: 1  Memory Usage: 40kB
-                    Worker 1:  Batches: 1  Memory Usage: 40kB
-                    ->  Parallel Seq Scan on t_babel4281 (actual rows=0 loops=3)
-~~END~~
-
-
-
--- set configurations back
-SET BABELFISH_STATISTICS PROFILE OFF
-GO
 
 select set_config('babelfishpg_tsql.explain_timing', 'on', false);
 GO
