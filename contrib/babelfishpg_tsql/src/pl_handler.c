@@ -3611,22 +3611,22 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				int16 privilege_maskInt = 0;
 				ListCell   *lc1;
 				/* create integer bitmask for permissions*/
-						foreach(lc1, grant->privileges)
-						{
-							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-							if (!strcmp(ap->priv_name,"execute"))
-								privilege_maskInt |= 32;
-							if (!strcmp(ap->priv_name,"select"))
-								privilege_maskInt |= 16;
-							if (!strcmp(ap->priv_name,"insert"))
-								privilege_maskInt |= 8;
-							if (!strcmp(ap->priv_name,"update"))
-								privilege_maskInt |= 4;
-							if (!strcmp(ap->priv_name,"delete"))
-								privilege_maskInt |= 2;
-							if (!strcmp(ap->priv_name,"references"))
-								privilege_maskInt |= 1;
-						}
+				foreach(lc1, grant->privileges)
+				{
+					AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+					if (!strcmp(ap->priv_name,"execute"))
+						privilege_maskInt |= 32;
+					if (!strcmp(ap->priv_name,"select"))
+						privilege_maskInt |= 16;
+					if (!strcmp(ap->priv_name,"insert"))
+						privilege_maskInt |= 8;
+					if (!strcmp(ap->priv_name,"update"))
+						privilege_maskInt |= 4;
+					if (!strcmp(ap->priv_name,"delete"))
+						privilege_maskInt |= 2;
+					if (!strcmp(ap->priv_name,"references"))
+						privilege_maskInt |= 1;
+				}
 				/* Ignore when GRANT statement has no specific named object. */
 				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
 					break;
@@ -3655,11 +3655,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									if((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj,rol_spec->rolename))
+									if((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && !check_bbf_schema_for_entry(logical_schema, obj,rol_spec->rolename))
 									{
 										add_entry_to_bbf_schema(logical_schema, obj, 31, rol_spec->rolename, obj_type);
 									}
-									else if(rol_spec->rolename != NULL)
+									else if(rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, "public") != 0))
 									{
 										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
 										if(old_priv!= 31 || (old_priv|(31)) != old_priv)
@@ -3675,9 +3675,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									bool has_schema_perms = false;
-									if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, "ALL", rol_spec->rolename) && !has_schema_perms)
+									if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && check_bbf_schema_for_entry(logical_schema, "ALL", rol_spec->rolename) && !has_schema_perms)
 										has_schema_perms = true;
-									if((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
+									if((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
 									{
 										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
 										if(old_priv!= 31 || ((old_priv)&(~(31))) != old_priv)
@@ -3715,13 +3715,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										flag = true;
 										break;
 									}
-
 								}
 								if(flag)
 									break;
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && !check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
 									add_entry_to_bbf_schema(logical_schema, obj, privilege_maskInt, rol_spec->rolename, obj_type);
-								else if(rol_spec->rolename != NULL)
+								else if((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0))
 								{
 									int16 old_priv = get_bbf_schema_privilege(logical_schema, obj, rol_spec->rolename);
 									if(old_priv!= privilege_maskInt || ((old_priv)|(privilege_maskInt)) != old_priv)
@@ -3739,7 +3738,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 								*/
-								if ((logical_schema != NULL) && (rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, "ALL", rol_spec->rolename))
+								if ((logical_schema != NULL) && (rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && !check_bbf_schema_for_entry(logical_schema, "ALL", rol_spec->rolename))
 								{
 									if (prev_ProcessUtility)
 										prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3756,11 +3755,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										flag = true;
 										break;
 									}
-
 								}
 								if(flag)
 									continue;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && check_bbf_schema_for_entry(logical_schema, obj, rol_spec->rolename))
 									{
 										int16 old_priv = get_bbf_schema_privilege(logical_schema, obj,rol_spec->rolename);
 										if(old_priv!= privilege_maskInt || ((old_priv)&(~(privilege_maskInt))) != old_priv)
@@ -3816,9 +3814,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) &&  !check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
 									add_entry_to_bbf_schema(logicalschema, funcname, 32, rol_spec->rolename, obj_type);
-								else if (rol_spec->rolename != NULL)
+								else if (rol_spec->rolename != NULL && (strcmp(rol_spec->rolename, "public") != 0))
 								{
 									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname, rol_spec->rolename);
 									if(old_priv!= 32 || ((old_priv)|(32)) != old_priv)
@@ -3833,9 +3831,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								bool has_schema_perms = false;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename) && !has_schema_perms)
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename) && !has_schema_perms)
 									has_schema_perms = true;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
 								{
 									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname,rol_spec->rolename);
 									if(old_priv!= 32 || ((old_priv)&(~(32))) != old_priv)
@@ -3862,9 +3860,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* Don't store a row in catalog, if permission is granted for column */
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && !check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
 									add_entry_to_bbf_schema(logicalschema, funcname, privilege_maskInt, rol_spec->rolename, obj_type);
-								else if(rol_spec->rolename != NULL)
+								else if((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0))
 								{
 									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname, rol_spec->rolename);
 									if(old_priv!= privilege_maskInt || ((old_priv)|(privilege_maskInt)) != old_priv)
@@ -3881,7 +3879,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
 								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 								*/
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && !check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename))
 								{
 									/* Execute REVOKE statement. */
 									if (prev_ProcessUtility)
@@ -3891,7 +3889,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																queryEnv, dest, qc);
 								}
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
+								if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0) && check_bbf_schema_for_entry(logicalschema, funcname, rol_spec->rolename))
 								{
 									int16 old_priv = get_bbf_schema_privilege(logicalschema, funcname, rol_spec->rolename);
 									if(old_priv!= privilege_maskInt || ((old_priv)&(~(privilege_maskInt))) != old_priv)

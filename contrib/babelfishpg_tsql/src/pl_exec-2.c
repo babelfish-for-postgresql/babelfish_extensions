@@ -3757,10 +3757,13 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		char	*user = GetUserNameFromId(GetUserId(), false);
 		Oid	role_oid;
 		int16 old_priv = 0;
-		rolname	= get_physical_user_name(dbname, grantee_name);
+		if(strcmp(grantee_name, "public") != 0)
+			rolname	= get_physical_user_name(dbname, grantee_name);
+		else
+			rolname = "public";
 		role_oid = get_role_oid(rolname, true);
 
-		if (role_oid == InvalidOid)
+		if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
 			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
 

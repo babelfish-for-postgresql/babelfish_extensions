@@ -1037,6 +1037,10 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	if (grantee && stmt->grantees)
 	{
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
+		if (strcmp(grantee, "public") == 0)
+		{
+			tmp->roletype = ROLESPEC_PUBLIC;
+		}
 		tmp->rolename = pstrdup(grantee);
 	}
 
