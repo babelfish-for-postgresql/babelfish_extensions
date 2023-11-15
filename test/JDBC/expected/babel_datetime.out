@@ -418,7 +418,7 @@ datetime
 -- out of range
 select dateadd(year, 150, cast('9900-12-26 23:29:29' as datetime))
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 517)~~
 
 ~~ERROR (Message: data out of range for datetime)~~
 
