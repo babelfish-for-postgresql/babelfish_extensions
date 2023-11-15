@@ -818,8 +818,8 @@ timestamp_diff(PG_FUNCTION_ARGS)
 	Timestamp	timestamp1 = PG_GETARG_TIMESTAMP(1);
 	Timestamp	timestamp2 = PG_GETARG_TIMESTAMP(2);
 	int32 diff = -1;
-	int ok1;
-	int ok2;
+	int tm1Valid;
+	int tm2Valid;
 	int32 yeardiff;
 	int32 monthdiff;
 	int32 daydiff;
@@ -838,9 +838,10 @@ timestamp_diff(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	bool       overflow = false;
+	bool	   validDateDiff = true;
 
-	ok1 = timestamp2tm(timestamp1, NULL, tm1, &fsec1, NULL, NULL);
-	ok2 = timestamp2tm(timestamp2, NULL, tm2, &fsec2, NULL, NULL);
+	tm1Valid = timestamp2tm(timestamp1, NULL, tm1, &fsec1, NULL, NULL);
+	tm2Valid = timestamp2tm(timestamp2, NULL, tm2, &fsec2, NULL, NULL);
 
 	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
 										VARSIZE_ANY_EXHDR(field),
@@ -864,7 +865,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 	}
 
 	if(type == UNITS) {
-		if(ok1 == 0 && ok2 == 0) {
+		if(tm1Valid == 0 && tm2Valid == 0) {
 			switch(val) {
 				case DTK_YEAR:
 					diff = tm2->tm_year - tm1->tm_year;
@@ -950,7 +951,7 @@ timestamp_diff(PG_FUNCTION_ARGS)
 					overflow = (overflow || (pg_mul_s32_overflow(microsecdiff, 1000, &diff)));
 					break;
 				default:
-					elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
+					validDateDiff = false;
 					break;
 			}
 		}
@@ -960,14 +961,17 @@ timestamp_diff(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 		}
 	} else {
-		elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
+		validDateDiff = false;
 	}
 
+	if(!validDateDiff) {
+		elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
+	}
 	if(overflow) {
 		elog(ERROR, "The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart");
 	}
 
-	PG_RETURN_INT64(diff);
+	PG_RETURN_INT32(diff);
 }
 
 /*
@@ -981,8 +985,8 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 	Timestamp	timestamp1 = PG_GETARG_TIMESTAMP(1);
 	Timestamp	timestamp2 = PG_GETARG_TIMESTAMP(2);
 	int64 diff = -1;
-	int ok1;
-	int ok2;
+	int tm1Valid;
+	int tm2Valid;
 	int64 yeardiff;
 	int64 monthdiff;
 	int64 daydiff;
@@ -1001,9 +1005,10 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	bool       overflow = false;
+	bool	   validDateDiff = true;
 
-	ok1 = timestamp2tm(timestamp1, NULL, tm1, &fsec1, NULL, NULL);
-	ok2 = timestamp2tm(timestamp2, NULL, tm2, &fsec2, NULL, NULL);
+	tm1Valid = timestamp2tm(timestamp1, NULL, tm1, &fsec1, NULL, NULL);
+	tm2Valid = timestamp2tm(timestamp2, NULL, tm2, &fsec2, NULL, NULL);
 
 	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
 										VARSIZE_ANY_EXHDR(field),
@@ -1026,7 +1031,7 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 	}
 
 	if(type == UNITS) {
-		if(ok1 == 0 && ok2 == 0) {
+		if(tm1Valid == 0 && tm2Valid == 0) {
 			switch(val)
 			{
 				case DTK_YEAR:
@@ -1113,8 +1118,7 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 					overflow = (overflow || (pg_mul_s64_overflow(microsecdiff, 1000, &diff)));
 					break;
 				default:
-					elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
-					break;
+					validDateDiff = false;
 			}
 		}
 		else {
@@ -1123,9 +1127,12 @@ timestamp_diff_big(PG_FUNCTION_ARGS)
 				 errmsg("timestamp out of range")));
 		}
 	} else {
-		elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
+		validDateDiff = false;
 	}
 
+	if(!validDateDiff) {
+		elog(ERROR, "The datepart %s is not a recognized datediff option.", lowunits);
+	}
 	if(overflow) {
 		elog(ERROR, "The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart");
 	}
