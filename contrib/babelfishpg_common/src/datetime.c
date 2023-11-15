@@ -1336,12 +1336,5 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 	}
 
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(interval));
-
-	if (!IS_VALID_DATETIME(result))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					errmsg("data out of range for %s", datetypeName(dttype))));
-	}
 	PG_RETURN_TIMESTAMP(result);
 }
