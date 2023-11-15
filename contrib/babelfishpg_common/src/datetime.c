@@ -1220,6 +1220,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 				val;
 	Timestamp result;
 	Interval   *interval;
+	bool validDateAdd = true;
 
 	switch(dttype) {
 		case TIME:
@@ -1334,11 +1335,14 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
-				elog(ERROR, "The datepart %s is not supported by date function dateadd for data type %s.",
-				 	lowunits, datetypeName(dttype));
+				validDateAdd = false;
 				break;
 		}
 	} else {
+		validDateAdd = false;
+	}
+
+	if(!validDateAdd) {
 		elog(ERROR, "The datepart %s is not a recognized datadd option.", lowunits);
 	}
 

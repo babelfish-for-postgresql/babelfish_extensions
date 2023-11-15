@@ -842,7 +842,7 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 	text    *field     = PG_GETARG_TEXT_PP(0);
 	int      num       = PG_GETARG_INT32(1);
 	tsql_datetimeoffset *init_startdate = PG_GETARG_DATETIMEOFFSET(2);
-
+	bool validDateAdd = true;
 	char	   *lowunits;
 	int			type,
 				val;
@@ -909,13 +909,15 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
 				break;
 			default:
-				elog(ERROR, "The datepart %s is not supported by function dateadd for datatype datetimeoffset.",
-				 	lowunits);
+				validDateAdd = false;
 				break;
 		}
 	} else {
-		elog(ERROR, "\'%s\' is not a recognized dateadd option.", lowunits);
+		validDateAdd = false;
 	}
+
+	if(!validDateAdd)
+		elog(ERROR, "\'%s\' is not a recognized dateadd option.", lowunits);
 
 	result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(startdate), PointerGetDatum(interval));
 
