@@ -104,7 +104,30 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.text(sys.GEOMETRY)
 	RETURNS text
-	AS '$libdir/postgis-3','LWGEOM_to_text'
+	AS $$
+	BEGIN
+		RAISE EXCEPTION 'Explicit Conversion from data type sys.Geometry to Text is not allowed.';
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
+	RETURNS sys.bpchar
+	AS '$libdir/postgis-3','LWGEOM_asText'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS '$libdir/postgis-3','parse_WKT_lwgeom'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
+	RETURNS sys.varchar
+	AS '$libdir/postgis-3','LWGEOM_asText'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
+	RETURNS sys.GEOMETRY
+	AS '$libdir/postgis-3','parse_WKT_lwgeom'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
@@ -155,38 +178,76 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
     $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOMETRY)
-	RETURNS bytea
-	AS '$libdir/postgis-3','LWGEOM_to_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    RETURNS bytea
+    AS $$
+    DECLARE
+        byte bytea;
+    BEGIN
+        byte := (SELECT sys.bytea_helper($1));
+        byte := substring(byte from 6);
+        byte := substring(byte from 1 for 4) || E'\\x010c' || substring(byte from 5);
+        RETURN byte;
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_varbinary)
+    RETURNS sys.GEOMETRY
+    AS $$
+    DECLARE
+        varBin bytea;
+    BEGIN
+        varBin := (SELECT CAST ($1 AS bytea));
+        -- Call the underlying function after preprocessing
+        RETURN (SELECT sys.GEOMETRY(varBin)); 
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY)
+    RETURNS sys.bbf_varbinary
+    AS $$
+    DECLARE
+        byte bytea;
+    BEGIN
+        byte := (SELECT sys.bytea($1));
+        RETURN (SELECT CAST (byte AS sys.bbf_varbinary)); 
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bbf_binary)
+    RETURNS sys.GEOMETRY
+    AS $$
+    DECLARE
+        varBin sys.bbf_varbinary;
+    BEGIN
+        varBin := (SELECT CAST ($1 AS sys.bbf_varbinary));
+        -- Call the underlying function after preprocessing
+        RETURN (SELECT sys.GEOMETRY(varBin)); 
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.GEOMETRY(text, integer, boolean)
 	RETURNS sys.GEOMETRY
 	AS $$
-	DECLARE
-        varBin bytea;
 	BEGIN
-		varBin := (SELECT CAST ($1 AS bytea));
-		-- Call the underlying function after preprocessing
-		RETURN (SELECT CAST (varBin AS GEOMETRY)); 
+		IF $3 = true THEN
+			RAISE EXCEPTION 'Explicit Conversion from data type Text to sys.Geometry is not allowed.';
+		ELSE
+			RAISE EXCEPTION 'Implicit Conversion from data type Text to sys.Geometry is not allowed.';
+		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bbf_varbinary(sys.GEOMETRY)
-	RETURNS sys.bbf_varbinary
-	AS '$libdir/postgis-3','LWGEOM_to_bytea'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.GEOMETRY(text)
-	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text) AS IMPLICIT;
-CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY) AS IMPLICIT;
+CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text, integer, boolean) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY);
+CREATE CAST (sys.bpchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bpchar) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOMETRY);
+CREATE CAST (sys.varchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.varchar) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOMETRY);
 CREATE CAST (bytea AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(bytea) AS IMPLICIT;
-CREATE CAST (sys.GEOMETRY AS bytea) WITH FUNCTION sys.bytea(sys.GEOMETRY) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS bytea) WITH FUNCTION sys.bytea(sys.GEOMETRY);
 CREATE CAST (sys.bbf_varbinary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_varbinary) AS IMPLICIT;
-CREATE CAST (sys.GEOMETRY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOMETRY) AS IMPLICIT;
+CREATE CAST (sys.GEOMETRY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOMETRY);
+CREATE CAST (sys.bbf_binary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_binary) AS IMPLICIT;
 
 -- Availability: 3.2.0 current supported in APG
 CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
@@ -248,6 +309,47 @@ CREATE OR REPLACE FUNCTION sys.ST_zmflag(sys.GEOMETRY)
 	AS '$libdir/postgis-3', 'LWGEOM_zmflag'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.ST_Equals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
+	RETURNS boolean
+    AS $$
+    DECLARE
+        leftvarBin sys.bbf_varbinary;
+		rightvarBin sys.bbf_varbinary;
+    BEGIN
+        leftvarBin := (SELECT sys.bbf_varbinary($1));
+        rightvarBin := (SELECT sys.bbf_varbinary($2));
+        RETURN (SELECT sys.varbinary_eq(leftvarBin, rightvarBin));
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.= (
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.ST_Equals,
+    COMMUTATOR = =,
+    RESTRICT = eqsel
+);
+
+CREATE FUNCTION sys.ST_NotEquals(leftarg sys.GEOMETRY, rightarg sys.GEOMETRY)
+	RETURNS boolean
+	AS $$
+    DECLARE
+        leftvarBin sys.bbf_varbinary;
+		rightvarBin sys.bbf_varbinary;
+    BEGIN
+        leftvarBin := (SELECT sys.bbf_varbinary($1));
+        rightvarBin := (SELECT sys.bbf_varbinary($2));
+        RETURN (SELECT sys.varbinary_neq(leftvarBin, rightvarBin));
+    END;
+    $$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.<> (
+    LEFTARG = sys.GEOMETRY,
+    RIGHTARG = sys.GEOMETRY,
+    FUNCTION = sys.ST_NotEquals,
+    COMMUTATOR = <>
+);
+
 -- Minimum distance. 2D only.
 CREATE OR REPLACE FUNCTION sys.STDistance(geom1 sys.GEOMETRY, geom2 sys.GEOMETRY)
 	RETURNS float8
@@ -278,5 +380,10 @@ CREATE OR REPLACE FUNCTION sys.GeomPoint_helper(float8, float8, srid integer)
 CREATE OR REPLACE FUNCTION sys.GEOMETRY_helper(bytea)
 	RETURNS sys.GEOMETRY
 	AS '$libdir/postgis-3','LWGEOM_from_bytea'
+	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOMETRY)
+	RETURNS bytea
+	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 

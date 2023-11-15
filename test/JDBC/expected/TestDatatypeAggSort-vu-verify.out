@@ -1,0 +1,192 @@
+SELECT * FROM TestDatatypeAggSort_vu_prepare_char_view_max
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_char_view_min
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_varchar_view_max
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_varchar_view_min
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_datetime_view_max
+go
+~~START~~
+datetime
+2023-11-06 00:00:00.0
+~~END~~
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_datetime_view_min
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_datetime2_view_max
+go
+~~START~~
+datetime2
+2023-11-06 00:00:00.0000000
+~~END~~
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_datetime2_view_min
+go
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000000
+~~END~~
+
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_datetimeoffset_view_max
+go
+~~START~~
+datetimeoffset
+2023-11-06 00:00:00.0000000 +00:00
+~~END~~
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_datetimeoffset_view_min
+go
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_smalldatetime_view_max
+go
+~~START~~
+smalldatetime
+2023-11-06 00:00:00.0
+~~END~~
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_smalldatetime_view_min
+go
+~~START~~
+smalldatetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+EXEC TestDatatypeAggSort_vu_prepare_proc
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM TestDatatypeAggSort_vu_prepare_tbl2 ORDER BY max_min
+go
+~~START~~
+varchar#!#char#!#varchar#!#datetime#!#datetime2#!#datetimeoffset#!#smalldatetime
+max#!#xyz       #!#xyz#!#2023-11-06 00:00:00.0#!#2023-11-06 00:00:00.000000#!#2023-11-06 00:00:00.0000000 +00:00#!#2023-11-06 00:00:00.0
+min#!#abc       #!#abc#!#1900-01-01 00:00:00.0#!#1900-01-01 00:00:00.000000#!#1900-01-01 00:00:00.0000000 +00:00#!#1900-01-01 00:00:00.0
+~~END~~
+
+
+-- This is failing because of BABEL-4332
+SELECT MAX(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+SELECT MIN(char_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT MAX(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col <= 'xxx'
+go
+~~START~~
+varchar
+stu
+~~END~~
+
+SELECT MIN(varchar_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE varchar_col > 'xxx'
+go
+~~START~~
+varchar
+xyz
+~~END~~
+
+
+SELECT MAX(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col <= '2020-12-31 23:59:59'
+go
+~~START~~
+datetime
+2020-01-01 00:00:00.0
+~~END~~
+
+SELECT MIN(datetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime_col > '2020-12-31 23:59:59'
+go
+~~START~~
+datetime
+2023-11-06 00:00:00.0
+~~END~~
+
+
+SELECT MAX(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col <= '2020-12-31 23:59:59'
+go
+~~START~~
+datetime2
+2020-01-01 00:00:00.0000000
+~~END~~
+
+SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+go
+~~START~~
+datetime2
+2023-11-06 00:00:00.0000000
+~~END~~
+
+
+SELECT MAX(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col <= '2020-12-31 23:59:59'
+go
+~~START~~
+datetimeoffset
+2020-01-01 00:00:00.0000000 +00:00
+~~END~~
+
+SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+go
+~~START~~
+datetimeoffset
+2023-11-06 00:00:00.0000000 +00:00
+~~END~~
+
+
+SELECT MAX(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col <= '2020-12-31 23:59:59'
+go
+~~START~~
+smalldatetime
+2020-01-01 00:00:00.0
+~~END~~
+
+SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_vu_prepare_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
+go
+~~START~~
+smalldatetime
+2023-11-06 00:00:00.0
+~~END~~
+

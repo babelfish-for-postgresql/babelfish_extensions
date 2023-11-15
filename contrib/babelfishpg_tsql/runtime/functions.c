@@ -156,6 +156,9 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
+PG_FUNCTION_INFO_V1(getdate_internal);
+PG_FUNCTION_INFO_V1(sysdatetime);
+PG_FUNCTION_INFO_V1(sysdatetimeoffset);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -170,7 +173,6 @@ static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
 										bool randomAccess);
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
-static int64 get_identity_next_value(void);
 
 extern int	pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -386,6 +388,26 @@ Datum getutcdate(PG_FUNCTION_ARGS)
     PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
                                                             PointerGetDatum(GetCurrentStatementStartTimestamp()))));
     
+}
+
+Datum getdate_internal(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
+						PointerGetDatum(GetCurrentStatementStartTimestamp())));
+	
+}
+
+Datum sysdatetime(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+}
+
+Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
+{
+	
+
+	PG_RETURN_POINTER((DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }
 
 void *
@@ -2312,34 +2334,25 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/**
- * Common function to get next value of sequence for Identity function in Select Into
- */
-static int64 
-get_identity_next_value(void)
-{
-	int64 result;
-	Assert(tsql_select_into_seq_oid != InvalidOid);
-	result = nextval_internal(tsql_select_into_seq_oid, false);
-	return result;
-}
-
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum 
 identity_into_smallint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT16((int16)get_identity_next_value());
+	PG_RETURN_INT16(0);
 }
 
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum
 identity_into_int(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32((int32)get_identity_next_value());
+	PG_RETURN_INT32(0);
 }
 
+/** This function is only used for identifying IDENTITY() in SELECT-INTO statement, It is never actually invoked*/
 Datum 
 identity_into_bigint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT64((int64)get_identity_next_value());
+	PG_RETURN_INT64(0);
 }
 
 /*

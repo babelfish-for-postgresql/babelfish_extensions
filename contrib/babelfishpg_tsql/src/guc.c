@@ -101,6 +101,7 @@ static bool check_noexec(bool *newval, void **extra, GucSource source);
 static bool check_showplan_all(bool *newval, void **extra, GucSource source);
 static bool check_showplan_text(bool *newval, void **extra, GucSource source);
 static bool check_showplan_xml(bool *newval, void **extra, GucSource source);
+static bool check_enable_pg_hint(bool *newval, void **extra, GucSource source);
 static void assign_transform_null_equals(bool newval, void *extra);
 static void assign_ansi_defaults(bool newval, void *extra);
 static void assign_quoted_identifier(bool newval, void *extra);
@@ -396,23 +397,15 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	return true;
 }
 
-static void
-assign_enable_pg_hint(bool newval, void *extra)
+static bool
+check_enable_pg_hint(bool *newval, void **extra, GucSource source)
 {
 	/*
      * Parallel workers send data to the leader, not the client. They always
      * send data using pg_hint_plan.enable_hint_plan.
      */
-    if (IsParallelWorker())
+    if (IsParallelWorker() && !InitializingParallelWorker)
     {
-        /*
-         * During parallel worker startup, we want to accept the leader's
-         * hint_plan setting so that anyone who looks at the value in
-         * the worker sees the same value that they would see in the leader.
-         */
-        if (InitializingParallelWorker)
-            return;
-
         /*
          * A change other than during startup, for example due to a SET clause
          * attached to a function definition, should be rejected, as there is
@@ -423,6 +416,16 @@ assign_enable_pg_hint(bool newval, void *extra)
                  errmsg("cannot change enable_hint_plan during a parallel operation")));
     }
 
+	return true;
+}
+
+
+static void
+assign_enable_pg_hint(bool newval, void *extra)
+{
+    if (IsParallelWorker())
+		return;
+    
 	if (newval)
 	{
 		/* Will throw an error if pg_hint_plan is not installed */
@@ -1141,7 +1144,7 @@ define_custom_variables(void)
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, assign_enable_pg_hint, NULL);
+							 check_enable_pg_hint, assign_enable_pg_hint, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_rows_per_batch",
 							gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),

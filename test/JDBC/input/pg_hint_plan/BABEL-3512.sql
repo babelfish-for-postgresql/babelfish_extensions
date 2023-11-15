@@ -1,3 +1,4 @@
+-- parallel_query_expected
 /*
  * Test stored procs WITH hints. All tests examine the query plan AND the 
  * pg_proc table to ensure that subsequent connections will be using the correct

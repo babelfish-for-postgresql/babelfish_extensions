@@ -3763,7 +3763,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			rolname	= get_physical_user_name(dbname, grantee_name);
 			role_oid = get_role_oid(rolname, true);
 			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
-	
+
+
+			if (role_oid == InvalidOid)
+				ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
+
 			if (pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba) || grantee_is_db_owner)
 				ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
