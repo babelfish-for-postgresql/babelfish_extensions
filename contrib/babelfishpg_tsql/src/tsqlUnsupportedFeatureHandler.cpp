@@ -1057,6 +1057,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		if (create_user->WITHOUT())
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
 	}
+	if(ctx->alter_fulltext_index())
+	{
+		handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER FULLTEXT INDEX",  getLineAndPos(ctx));
+	}
 	/*
 	 * We have more than 100 DDLs but support a few of them.
 	 * manage the whitelist here.

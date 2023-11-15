@@ -21,9 +21,9 @@ static YY_BUFFER_STATE scanbufhandle;
 
 %%
 
-"AND"           { yylval = "AND"; return AND_TOKEN; }
-"AND NOT"       { yylval = "AND NOT"; return AND_NOT_TOKEN; }
-"OR"            { yylval = "OR"; return OR_TOKEN; }
+"AND"           { yylval = "AND"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return AND_TOKEN; }
+"AND NOT"       { yylval = "AND NOT"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return AND_NOT_TOKEN; }
+"OR"            { yylval = "OR"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return OR_TOKEN; }
 "INFLECTIONAL"  { yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
 "THESAURUS"     { yylval = "THESAURUS"; return THESAURUS_TOKEN; }
 "FORMSOF"       { yylval = "FORMSOF"; return FORMSOF_TOKEN; }
