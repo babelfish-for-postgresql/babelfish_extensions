@@ -25,6 +25,7 @@
 #include "parser/gramparse.h"
 #include "hooks.h"
 #include "tcop/utility.h"
+#include "session.h"
 
 #include "multidb.h"
 
@@ -1036,7 +1037,6 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	if (grantee && stmt->grantees)
 	{
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
-
 		tmp->rolename = pstrdup(grantee);
 	}
 

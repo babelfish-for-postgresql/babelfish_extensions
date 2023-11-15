@@ -890,14 +890,14 @@ $body$
 LANGUAGE plpgsql STABLE;
 
 -- BABELFISH_SCHEMA_PERMISSIONS
-CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+CREATE TABLE sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
-  schema_name NAME NOT NULL,
-  object_name NAME NOT NULL,
-  permission NAME NOT NULL,
-  grantee NAME NOT NULL,
-  object_type NAME,
-  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+  schema_name NAME NOT NULL COLLATE sys.database_default,
+  object_name NAME NOT NULL COLLATE sys.database_default,
+  permission SMALLINT,
+  grantee NAME NOT NULL COLLATE sys.database_default,
+  object_type NAME COLLATE sys.database_default,
+  PRIMARY KEY(dbid, schema_name, object_name, grantee)
 );
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text

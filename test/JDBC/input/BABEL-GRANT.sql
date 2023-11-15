@@ -164,16 +164,28 @@ GO
 REVOKE SELECT ON SCHEMA::scm FROM guest;
 GO
 
-GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
+GRANT showplan ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 
-REVOKE SHOWPLAN ON OBJECT::t2 TO alogin;  -- unsupported permission
+REVOKE showplan ON OBJECT::t2 TO alogin;  -- unsupported permission
 GO
 
-GRANT ALL ON SCHEMA::scm TO guest;  -- unsupported class
+GRANT create table ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 
-REVOKE ALL ON SCHEMA::scm TO guest; -- unsupported class
+REVOKE create table ON OBJECT::t2 TO alogin;  -- unsupported permission
+GO
+
+GRANT SELECT ON table::t1 TO guest; -- unsupported object
+GO
+
+REVOKE SELECT ON table::t1 FROM guest; -- unsupported object
+GO
+
+GRANT ALL ON SCHEMA::scm TO guest;
+GO
+
+REVOKE ALL ON SCHEMA::scm TO guest;
 GO
 
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION AS superuser;
