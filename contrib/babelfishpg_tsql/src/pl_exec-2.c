@@ -116,7 +116,6 @@ static bool prev_insert_bulk_keep_nulls = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
-static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleConversionMap *tupleCastMap);
  
 /*
  * The pltsql_proc_return_code global variable is used to record the
@@ -3041,7 +3040,11 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 			HeapTuple	tuple = SPI_tuptable->vals[i];
 
 			if (tupmap)
-				tuple = exec_cast_tuple(tuple, tupmap);
+			{
+				called_from_tsql_insert_execute = true;
+				tuple = execute_attr_map_tuple(tuple, tupmap);
+				called_from_tsql_insert_execute = false;
+			}
 			tuplestore_puttuple(estate->tuple_store, tuple);
 			if (tupmap)
 				heap_freetuple(tuple);
@@ -3058,52 +3061,6 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 	exec_eval_cleanup(estate);
 
 	return PLTSQL_RC_OK;
-}
-
-static HeapTuple exec_cast_tuple(HeapTuple tuple, TupleConversionMap *tupleCastMap)
-{
-	AttrMap    *attrMap = tupleCastMap->attrMap;
-	Oid        intypeid;
-	Oid        outtypeid;
-	int        inttypemod;
-	int        outtypemod;
-	Datum	   *invalues = tupleCastMap->invalues;
-	bool	   *inisnull = tupleCastMap->inisnull;
-	Datum	   *outvalues = tupleCastMap->outvalues;
-	bool	   *outisnull = tupleCastMap->outisnull;
-	int			i;
-
-	/*
-	 * Extract all the values of the old tuple, offsetting the arrays so that
-	 * invalues[0] is left NULL and invalues[1] is the first source attribute;
-	 * this exactly matches the numbering convention in attrMap.
-	 */
-	heap_deform_tuple(tuple, tupleCastMap->indesc, invalues + 1, inisnull + 1);
-
-	/*
-	 * Transpose into proper fields of the new tuple.
-	 */
-	Assert(attrMap->maplen == tupleCastMap->outdesc->natts);
-	for (i = 0; i < attrMap->maplen; i++)
-	{
-		int			j = attrMap->attnums[i];
-		Form_pg_attribute outatt = TupleDescAttr(tupleCastMap->outdesc, i);
-		Form_pg_attribute inatt = TupleDescAttr(tupleCastMap->indesc, i);
-
-		outtypeid = outatt->atttypid;
-		outtypemod = outatt->atttypmod;
-		intypeid = inatt->atttypid;
-		inttypemod = inatt->atttypmod;
-
-		outisnull[i] = inisnull[j];
-		outvalues[i] = exec_cast_value(get_current_tsql_estate(),
-				invalues[j], &outisnull[i],
-				intypeid, inttypemod,
-				outtypeid, outtypemod
-		);
-	}
-	// now form the new tuple
-	return heap_form_tuple(tupleCastMap->outdesc, outvalues, outisnull);
 }
 
 int

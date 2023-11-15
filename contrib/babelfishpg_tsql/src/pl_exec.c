@@ -429,6 +429,9 @@ static Datum exec_cast_value(PLtsql_execstate *estate,
 							 Datum value, bool *isnull,
 							 Oid valtype, int32 valtypmod,
 							 Oid reqtype, int32 reqtypmod);
+Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod);
 static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
 												Oid srctype, int32 srctypmod,
 												Oid dsttype, int32 dsttypmod);
@@ -10383,4 +10386,14 @@ char *
 get_original_query_string(void)
 {
 	return original_query_string;
+}
+
+Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod)
+{
+	return exec_cast_value(get_current_tsql_estate(), 
+					value, isnull,
+					valtype, valtypmod,
+					reqtype, reqtypmod);
 }
