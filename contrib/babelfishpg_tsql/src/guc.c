@@ -46,6 +46,7 @@ char	   *pltsql_psql_logical_babelfish_db_name = NULL;
 int			pltsql_lock_timeout = -1;
 bool		pltsql_enable_linked_servers = true;
 bool		pltsql_allow_windows_login = true;
+bool		pltsql_allow_fulltext_parser = false;
 
 bool		pltsql_xact_abort = false;
 bool		pltsql_implicit_transactions = false;
@@ -675,6 +676,16 @@ define_custom_variables(void)
 							 true,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* GUC for enabling or disabling full text search features */
+	DefineCustomBoolVariable("babelfishpg_tsql.allow_fulltext_parser",
+							 gettext_noop("GUC for enabling or disabling full text search features"),
+							 NULL,
+							 &pltsql_allow_fulltext_parser,
+							 false,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
 
 	/* ISO standard settings */
@@ -1339,7 +1350,7 @@ define_escape_hatch_variables(void)
 
 	/* fulltext */
 	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_fulltext",
-							 gettext_noop("escape hatch for fulltext"),
+							 gettext_noop("escape hatch for fulltext search"),
 							 NULL,
 							 &escape_hatch_fulltext,
 							 EH_STRICT,
