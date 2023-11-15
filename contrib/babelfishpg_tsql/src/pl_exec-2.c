@@ -3709,7 +3709,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	int16 privilege_maskInt = 0;
 	Oid 		schemaOid;
 
-
 	/* create integer bitmask for permissions*/
 	foreach(lc, stmt->privileges)
 	{
@@ -3743,7 +3742,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	{
 		ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema name defined as "" or [] are not allowed. Change the schema name to a valid name.")));
+					 errmsg("An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as \"\" or [] are not allowed. Change the alias to a valid name.")));
 	}
 
 	if (!OidIsValid(schemaOid))
@@ -3751,64 +3750,62 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("schema \"%s\" does not exist",
 							schema_name)));
-	
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
-		ereport(ERROR,
+
+	foreach(lc, stmt->grantees)
+	{
+		char		*grantee_name = (char *) lfirst(lc);
+		char	*user = GetUserNameFromId(GetUserId(), false);
+		Oid	role_oid;
+		int16 old_priv = 0;
+		rolname	= get_physical_user_name(dbname, grantee_name);
+		role_oid = get_role_oid(rolname, true);
+
+		if (role_oid == InvalidOid)
+			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
+
+		if ((strcmp(rolname, user) == 0) || pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba))
+			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
+					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
-		foreach(lc, stmt->grantees)
+		if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
+
+		if((privilege_maskInt & 32) == 32)
+			exec_gen_grantschema(schema_name, rolname, stmt, "execute");
+		if((privilege_maskInt & 16) == 16)
+			exec_gen_grantschema(schema_name, rolname, stmt, "select");
+		if((privilege_maskInt & 8) == 8)
+			exec_gen_grantschema(schema_name, rolname, stmt, "insert");
+		if((privilege_maskInt & 4) == 4)
+			exec_gen_grantschema(schema_name, rolname, stmt, "update");
+		if((privilege_maskInt & 2) == 2)
+			exec_gen_grantschema(schema_name, rolname, stmt, "delete");
+		if((privilege_maskInt & 1) == 1)
+			exec_gen_grantschema(schema_name, rolname, stmt, "references");
+
+		/* Add entry for each grant statement. */
+		if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
+			add_entry_to_bbf_schema(stmt->schema_name, "ALL",  privilege_maskInt, rolname, NULL);
+		else if(stmt->is_grant)
 		{
-			char	   *grantee_name = (char *) lfirst(lc);
-			Oid	role_oid;
-			bool		grantee_is_db_owner;
-			int16 old_priv = 0;
-			rolname	= get_physical_user_name(dbname, grantee_name);
-			role_oid = get_role_oid(rolname, true);
-			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
-
-
-			if (role_oid == InvalidOid)
-				ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
-
-			if (pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba) || grantee_is_db_owner)
-				ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
-			
-			if((privilege_maskInt & 32) == 32)
-				exec_gen_grantschema(schema_name, rolname, stmt, "execute");
-			if((privilege_maskInt & 16) == 16)
-				exec_gen_grantschema(schema_name, rolname, stmt, "select");
-			if((privilege_maskInt & 8) == 8)
-				exec_gen_grantschema(schema_name, rolname, stmt, "insert");
-			if((privilege_maskInt & 4) == 4)
-				exec_gen_grantschema(schema_name, rolname, stmt, "update");
-			if((privilege_maskInt & 2) == 2)
-				exec_gen_grantschema(schema_name, rolname, stmt, "delete");
-			if((privilege_maskInt & 1) == 1)
-				exec_gen_grantschema(schema_name, rolname, stmt, "references");
-
-			/* Add entry for each grant statement. */
-			if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
-				add_entry_to_bbf_schema(stmt->schema_name, "ALL",  privilege_maskInt, rolname, NULL);
-			else if(stmt->is_grant)
-			{
-				int16 old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
-				if(old_priv!= privilege_maskInt || ((old_priv|privilege_maskInt) != old_priv))
-					update_bbf_schema_entry(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
-			}
-			/* Remove entry for each revoke statement. */
-			if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
-			{
-				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
-				grant_perms_to_objects_in_schema(stmt->schema_name, privilege_maskInt, rolname);
-				old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
-				if(old_priv!= privilege_maskInt || ((old_priv)&(~privilege_maskInt)) != old_priv)
-					update_bbf_schema_entry(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
-			}
+			int16 old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
+			if(old_priv!= privilege_maskInt || ((old_priv|privilege_maskInt) != old_priv))
+				update_bbf_schema_entry(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
 		}
+		/* Remove entry for each revoke statement. */
+		if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
+		{
+			/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
+			grant_perms_to_objects_in_schema(stmt->schema_name, privilege_maskInt, rolname);
+			old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
+			if(old_priv!= privilege_maskInt || ((old_priv)&(~privilege_maskInt)) != old_priv)
+				update_bbf_schema_entry(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
+		}
+	}
 	return PLTSQL_RC_OK;
 }
 
