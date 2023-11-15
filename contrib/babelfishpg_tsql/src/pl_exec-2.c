@@ -53,6 +53,7 @@ static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static void exec_gen_grantschema(char *schema_name, char *rolname,  PLtsql_stmt_grantschema *stmt, char *priv_name);
+static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -88,6 +89,8 @@ extern void enable_sp_cursor_find_param_hook(void);
 extern void disable_sp_cursor_find_param_hook(void);
 extern void add_sp_cursor_param(char *name);
 extern void reset_sp_cursor_params();
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
+extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
@@ -3871,5 +3874,103 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 					
 	/* All validations done, perform the actual update */
 	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt)
+{
+	char		*table_name;
+	char		*ft_index_name;
+	char		*query_str;
+	char		*old_ft_index_name;	// existing fulltext index name
+	char		*uniq_index_name;
+	const char	*schema_name;
+	Oid			schemaOid;
+	Oid			relid;
+	List		*column_name;
+	char	    *dbname = get_cur_db_name();
+	char		*login = GetUserNameFromId(GetSessionUserId(), false);
+	Oid			datdba;
+	bool		login_is_db_owner;
+	bool		is_create;
+
+	Assert(stmt->schema_name != NULL);
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin or login is not the schema owner, then it doesn't have the permission to CREATE/DROP FULLTEXT INDEX.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	datdba = get_role_oid("sysadmin", false);
+	schema_name = gen_schema_name_for_fulltext_index((char *)stmt->schema_name);
+	schemaOid = LookupExplicitNamespace(schema_name, true);						
+	table_name = stmt->table_name;
+	is_create = stmt->is_create;
+
+	// Check if schema exists
+	if (!OidIsValid(schemaOid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				errmsg("schema \"%s\" does not exist",
+					stmt->schema_name)));
+
+	// Check if the user has necessary permissions for CREATE/DROP FULLTEXT INDEX
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+	{
+		const char *error_msg = is_create ? "A default full-text catalog does not exist in the database or user does not have permission to perform this action" : "Cannot drop the full-text index, because it does not exist or you do not have permission";
+    	ereport(ERROR, 
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+				errmsg("%s", error_msg)));	
+	}
+
+	relid = get_relname_relid((const char *) table_name, schemaOid);
+
+	// Check if table exists
+	if (!OidIsValid(relid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" does not exist",
+					table_name)));
+
+	// Get the existing fulltext index name
+	old_ft_index_name = get_fulltext_index_name(relid, table_name);
+
+	if (is_create)
+	{
+		uniq_index_name = construct_unique_index_name((char *) stmt->index_name, table_name);
+		if(is_unique_index(relid, (const char *) uniq_index_name))
+		{
+			column_name = stmt->column_name;
+			ft_index_name = construct_unique_index_name("ft_index", table_name);
+			if (old_ft_index_name)
+				ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						errmsg("A full-text index for table or indexed view \"%s\" has already been created.",
+							table_name)));
+			else
+				query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, ft_index_name);
+		}
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					errmsg("'\"%s\"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.",
+						stmt->index_name)));
+	}
+	else
+	{
+		if (old_ft_index_name)					
+			query_str = gen_dropfulltextindex_cmds(old_ft_index_name, schema_name);
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Table or indexed view \"%s\" does not have a full-text index or user does not have permission to perform this action.",
+						table_name))); 
+	}
+
+	/* The above query will be
+	 * executed using ProcessUtility()
+	 */
+	exec_utility_cmd_helper(query_str);
 	return PLTSQL_RC_OK;
 }

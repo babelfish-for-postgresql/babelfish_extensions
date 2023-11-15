@@ -3191,7 +3191,7 @@ tsql_IndexStmt:
 					n->transformed = false;
 					n->if_not_exists = false;
 
-					tsql_index_nulls_order(n->indexParams);
+					tsql_index_nulls_order(n->indexParams, n->accessMethod);
 					$$ = (Node *)n;
 				}
 		;
