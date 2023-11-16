@@ -1277,12 +1277,6 @@ get_physical_schema_name_by_mode(char *db_name, const char *schema_name, Migrati
 
 			snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, name);
 		}
-		else if (!DbidIsValid(get_db_id(db_name)))
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("database \"%s\" does not exist. Make sure that the name is entered correctly.", db_name)));
-		}
 		else
 		{
 			/* all schema names are not prepended with db name on single-db */

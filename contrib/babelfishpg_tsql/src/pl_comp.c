@@ -27,6 +27,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
@@ -44,6 +45,8 @@
 #include "codegen.h"
 #include "iterative_exec.h"
 #include "multidb.h"
+#include "session.h"
+#include "catalog.h"
 
 /* ----------
  * Our own local and global variables
@@ -104,6 +107,8 @@ static const ExceptionLabelMap exception_label_map[] = {
 
 static int	cur_handle_id = 1;
 
+static bool isGeospatialFunction = false;
+
 /* ----------
  * static prototypes
  * ----------
@@ -142,6 +147,8 @@ static void pltsql_HashTableInsert(PLtsql_function *function,
 								   PLtsql_func_hashkey *func_key);
 static void pltsql_HashTableDelete(PLtsql_function *function);
 static void delete_function(PLtsql_function *func);
+static Node *resolve_geospatial_func_ref(ParseState *pstate, ColumnRef *cref);
+static char *resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
@@ -1507,6 +1514,7 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 {
 	PLtsql_expr *expr = (PLtsql_expr *) pstate->p_ref_hook_state;
 	Node	   *myvar;
+	Node       *geovar;
 
 	if (expr->func->resolve_option == PLTSQL_RESOLVE_VARIABLE)
 		return NULL;			/* we already found there's no match */
@@ -1524,6 +1532,10 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	 * a conflict with a table name this could still be less than the most
 	 * helpful error message possible.)
 	 */
+
+	if ((geovar = resolve_geospatial_func_ref(pstate, cref)) != NULL)
+	    return geovar;
+
 	myvar = resolve_column_ref(pstate, expr, cref, (var == NULL));
 
 	if (myvar != NULL && var != NULL)
@@ -1640,6 +1652,103 @@ pltsql_param_ref(ParseState *pstate, ParamRef *pref)
 		return NULL;			/* name not known to pltsql */
 
 	return make_datum_param(expr, nse->itemno, pref->location);
+}
+
+static char *
+resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode)
+{
+
+	if (SINGLE_DB == mode)
+	{
+		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
+			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
+			(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
+		{
+			return schema_name + strlen(db_name) + 1;
+		}
+		else
+		{
+			/* all schema names are not prepended with db name on single-db */
+			return schema_name;
+		}
+	}
+	else
+	{
+		return schema_name + strlen(db_name) + 1;
+	}
+
+	return schema_name;
+}
+
+static Node *
+resolve_geospatial_func_ref(ParseState *pstate, ColumnRef *cref)
+{
+	Node       *last_field;
+	Node       *col;
+
+	if (list_length(cref->fields) <= 1){
+		isGeospatialFunction = false;
+		return NULL;
+	}
+
+	last_field = (Node *) llast(cref->fields);
+	if (IsA(last_field, String) && !isGeospatialFunction &&
+		(pg_strcasecmp(strVal(last_field), "stx") == 0 ||
+		pg_strcasecmp(strVal(last_field), "sty") == 0 ||
+		pg_strcasecmp(strVal(last_field), "lat") == 0 ||
+		pg_strcasecmp(strVal(last_field), "long") == 0))
+	{
+		FuncExpr   *funcexpr = makeNode(FuncExpr);
+		char *name = strVal(last_field);
+		Oid funcid;
+		Oid dataTypeId;
+		ColumnRef *colref = makeNode(ColumnRef);
+
+		isGeospatialFunction = true;
+		if(list_length(cref->fields) == 3)
+		{
+			Node	   *schema = (Node *) linitial(cref->fields);
+			char	   *cur_db = get_cur_db_name();
+			String	   *new_schema;
+
+			if (!is_shared_schema(strVal(schema)))
+			{
+				new_schema = makeString(resolve_schema_name(cur_db, strVal(schema), get_migration_mode()));
+				cref->fields = list_delete_first(cref->fields);
+				cref->fields = lcons(new_schema, cref->fields);
+			}
+		}
+		colref->fields = list_copy(cref->fields);
+		colref->fields = list_delete_last(colref->fields);
+		PG_TRY();
+		{
+			col = transformExpr(pstate, (Node *) colref, pstate->p_expr_kind);
+		}
+		PG_CATCH();
+		{
+			isGeospatialFunction = false;
+			return NULL;
+		}
+		PG_END_TRY();
+		
+		dataTypeId = ((Var *)col)->vartype;
+
+		funcid = LookupFuncName(list_make2(makeString("sys"), makeString(name)), 1, &dataTypeId, false);
+		funcexpr->funcid = funcid;
+		funcexpr->funcresulttype = get_func_rettype(funcid);
+		funcexpr->funcretset = false;
+		funcexpr->funcvariadic = false;
+		funcexpr->funcformat = COERCE_EXPLICIT_CALL;
+		funcexpr->args = list_make1(col);
+		funcexpr->location = cref->location;
+		isGeospatialFunction = false;
+
+		return (Node *) funcexpr;
+	}
+
+	isGeospatialFunction = false;
+
+	return NULL;
 }
 
 /*

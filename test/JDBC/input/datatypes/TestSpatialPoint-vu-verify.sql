@@ -10,14 +10,14 @@ Go
 
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT stx(@point);
-SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT stx(@point);
-SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
 
 DECLARE @point1 geometry, @point2 geometry;
@@ -148,14 +148,14 @@ Go
 
 DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT long(@point);
-SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT long(@point);
-SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
 
 DECLARE @point1 geography, @point2 geography;

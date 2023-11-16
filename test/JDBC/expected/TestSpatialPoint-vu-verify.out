@@ -20,8 +20,8 @@ POINT(22.349 -47.651)
 
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT stx(@point);
-SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
 ~~START~~
 float
@@ -36,8 +36,8 @@ float
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT stx(@point);
-SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
 ~~START~~
 float
@@ -466,8 +466,8 @@ POINT(-47.651 22.349)
 
 DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT long(@point);
-SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
 ~~START~~
 float
@@ -482,8 +482,8 @@ float
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT long(@point);
-SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
 ~~START~~
 float
