@@ -4144,27 +4144,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEX
 'babelfishpg_tsql', 'babelfish_fts_rewrite'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-<<<<<<< HEAD
--- Rename function for dependencies
-ALTER FUNCTION sys.format_datetime RENAME TO format_datetime_deprecated_3_4_0;
-ALTER FUNCTION sys.format_numeric RENAME TO format_numeric_deprecated_3_4_0;
-ALTER FUNCTION sys.FORMAT RENAME TO format_deprecated_3_4_0;
-
-CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR, IN INT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern sys.NVARCHAR, IN p_culture sys.VARCHAR default 'en-us')
-RETURNS sys.NVARCHAR
-AS
-$BODY$
-=======
 DO $$
->>>>>>> BABEL_3_X_DEV
 DECLARE
     exception_message text;
 BEGIN
