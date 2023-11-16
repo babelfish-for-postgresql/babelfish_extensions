@@ -323,7 +323,7 @@ int
 -- should overflow
 SELECT * FROM babel_2812_vu_v38
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 535)~~
 
 ~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
@@ -338,7 +338,7 @@ int
 -- should overflow
 SELECT * FROM babel_2812_vu_v40
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 535)~~
 
 ~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
