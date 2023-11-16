@@ -1899,7 +1899,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_INTERNAL_ERROR),
-									 errmsg("Internal error detected while calculating the precision of numeric expression")));
+									 errmsg("Internal error detected while calculating the precision of numeric expression"),
+									 errhint("plannedstmt is NULL while calculating the precision of numeric expression when it contains outer var")));
 						}
 						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr);
 					}
