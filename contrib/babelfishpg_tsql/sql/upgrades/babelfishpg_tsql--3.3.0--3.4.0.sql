@@ -4145,9 +4145,9 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEX
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Rename function for dependencies
-ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_4_0;
-ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_4_0;
-ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_4_0;
+ALTER FUNCTION sys.format_datetime RENAME TO format_datetime_deprecated_3_4_0;
+ALTER FUNCTION sys.format_numeric RENAME TO format_numeric_deprecated_3_4_0;
+ALTER FUNCTION sys.FORMAT RENAME TO format_deprecated_3_4_0;
 
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
