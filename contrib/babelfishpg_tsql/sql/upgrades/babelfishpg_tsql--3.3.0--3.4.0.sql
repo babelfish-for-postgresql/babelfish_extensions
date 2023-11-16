@@ -4144,84 +4144,95 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEX
 'babelfishpg_tsql', 'babelfish_fts_rewrite'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
--- Rename function for dependencies
-ALTER FUNCTION sys.format_datetime RENAME TO format_datetime_deprecated_3_4_0;
-ALTER FUNCTION sys.format_numeric RENAME TO format_numeric_deprecated_3_4_0;
-ALTER FUNCTION sys.FORMAT RENAME TO format_deprecated_3_4_0;
-
-CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR, IN INT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern sys.NVARCHAR, IN p_culture sys.VARCHAR default 'en-us')
-RETURNS sys.NVARCHAR
-AS
-$BODY$
+DO $$
 DECLARE
-    arg_type regtype;
-    v_temp_integer INTEGER;
+    exception_message text;
 BEGIN
-    arg_type := pg_typeof(arg);
+    -- Rename function for dependencies
+    ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_4_0;
+    ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_4_0;
+    ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_4_0;
 
-    CASE
-        WHEN arg_type IN ('time'::regtype ) THEN
-            RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
+    CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
+    AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
+    GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
 
-        WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
-            RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
+    CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+    AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
+    GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR, IN INT) TO PUBLIC;
 
-        WHEN arg_type IN ('sys.tinyint'::regtype) THEN
-            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+    CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern sys.NVARCHAR, IN p_culture sys.VARCHAR default 'en-us')
+    RETURNS sys.NVARCHAR
+    AS
+    $BODY$
+    DECLARE
+        arg_type regtype;
+        v_temp_integer INTEGER;
+    BEGIN
+        arg_type := pg_typeof(arg);
 
-        WHEN arg_type IN ('smallint'::regtype) THEN
-            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+        CASE
+            WHEN arg_type IN ('time'::regtype ) THEN
+                RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
 
-        WHEN arg_type IN ('integer'::regtype) THEN
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+            WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
+                RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
 
-         WHEN arg_type IN ('bigint'::regtype) THEN
+            WHEN arg_type IN ('sys.tinyint'::regtype) THEN
+                RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+
+            WHEN arg_type IN ('smallint'::regtype) THEN
+                RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+
+            WHEN arg_type IN ('integer'::regtype) THEN
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+
+            WHEN arg_type IN ('bigint'::regtype) THEN
             RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'bigint');
 
-        WHEN arg_type IN ('numeric'::regtype) THEN
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
+            WHEN arg_type IN ('numeric'::regtype) THEN
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
 
-        WHEN arg_type IN ('sys.decimal'::regtype) THEN
-            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+            WHEN arg_type IN ('sys.decimal'::regtype) THEN
+                RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
 
-        WHEN arg_type IN ('real'::regtype) THEN
-            IF(p_format_pattern LIKE 'R%') THEN
-                v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
-            ELSE v_temp_integer:= -1;
-            END IF;
+            WHEN arg_type IN ('real'::regtype) THEN
+                IF(p_format_pattern LIKE 'R%') THEN
+                    v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
+                ELSE v_temp_integer:= -1;
+                END IF;
 
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
 
-        WHEN arg_type IN ('float'::regtype) THEN
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
+            WHEN arg_type IN ('float'::regtype) THEN
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
 
-        WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
-            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
-        ELSE
-            RAISE datatype_mismatch;
-        END CASE;
-EXCEPTION
-	WHEN datatype_mismatch THEN
-		RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
-					DETAIL := 'Invalid datatype.',
-					HINT := 'Convert it to valid datatype and try again.';
+            WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
+                RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+            ELSE
+                RAISE datatype_mismatch;
+            END CASE;
+    EXCEPTION
+	    WHEN datatype_mismatch THEN
+		    RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
+					    DETAIL := 'Invalid datatype.',
+					    HINT := 'Convert it to valid datatype and try again.';
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
+    GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR) TO PUBLIC;
+
+    -- === DROP deprecated functions (if exists)
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
 END;
-$BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR) TO PUBLIC;
-
--- === DROP deprecated functions (if exists)
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
+$$;
 
 CREATE OR REPLACE FUNCTION sys.bbf_pivot()
 RETURNS setof record
