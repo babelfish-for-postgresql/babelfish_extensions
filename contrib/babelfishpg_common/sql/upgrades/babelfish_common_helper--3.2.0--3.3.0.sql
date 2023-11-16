@@ -122,5 +122,25 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
     parallel = safe
 );
 
+-- binary varbinary cast
+DO $$
+DECLARE 
+    sys_oid Oid;
+    bbf_binary_oid Oid;
+    bbf_varbinary_oid Oid;
+BEGIN
+  sys_oid := (SELECT oid FROM pg_namespace WHERE pg_namespace.nspname ='sys');
+  bbf_binary_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='bbf_binary' AND pg_type.typnamespace = sys_oid);
+  bbf_varbinary_oid := (SELECT oid FROM pg_type WHERE pg_type.typname ='bbf_varbinary' AND pg_type.typnamespace = sys_oid);  
+  IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = bbf_binary_oid AND pg_cast.casttarget = bbf_varbinary_oid) = 0 THEN
+      CREATE CAST (sys.BBF_BINARY AS sys.BBF_VARBINARY)
+      WITHOUT FUNCTION AS IMPLICIT;
+  END IF;
+  IF (SELECT COUNT(*) FROM pg_cast WHERE pg_cast.castsource = bbf_binary_oid AND pg_cast.casttarget = bbf_varbinary_oid) = 0 THEN
+      CREATE CAST (sys.BBF_VARBINARY AS sys.BBF_BINARY)
+      WITHOUT FUNCTION AS IMPLICIT;
+  END IF;
+END $$;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

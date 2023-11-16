@@ -2202,9 +2202,10 @@ binary
 -- BABEL-1030
 select cast(cast(cast('a' AS nvarchar(10)) as binary(2)) as nvarchar(2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid Unicode code point 0x0)~~
+~~START~~
+nvarchar
+a
+~~END~~
 
 select cast(cast('ab' AS nvarchar(10)) as binary(2));
 GO

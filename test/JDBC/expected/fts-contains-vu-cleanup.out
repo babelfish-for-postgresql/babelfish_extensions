@@ -1,3 +1,4 @@
+-- tsql user=jdbc_user password=12345678
 -- enable CONTAINS
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
@@ -8,6 +9,9 @@ ignore
 
 
 DROP PROCEDURE fts_contains_vu_prepare_p1;
+GO
+
+DROP FULLTEXT INDEX ON fts_contains_vu_t;
 GO
 
 DROP TABLE fts_contains_vu_t;
@@ -22,5 +26,15 @@ GO
 ~~START~~
 text
 strict
+~~END~~
+
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
 ~~END~~
 

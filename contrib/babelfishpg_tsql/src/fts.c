@@ -3,6 +3,7 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "fts_data.h"
+#include "guc.h"
 
 PG_FUNCTION_INFO_V1(babelfish_fts_rewrite);
 
@@ -13,6 +14,13 @@ babelfish_fts_rewrite(PG_FUNCTION_ARGS)
     char* input_str = text_to_cstring(input_text);
     char* translated_query;
     text* result_text = NULL; // Initialize result_text to NULL
+
+    if (!pltsql_allow_fulltext_parser)
+    {
+        ereport(ERROR,
+                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                errmsg("Full Text Search is not yet supported.")));
+    }
     
     PG_TRY();
     {
