@@ -916,11 +916,24 @@ dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
 		validDateAdd = false;
 	}
 
-	if(!validDateAdd)
-		elog(ERROR, "\'%s\' is not a recognized dateadd option.", lowunits);
+	if(!validDateAdd) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\'%s\' is not a recognized %s option", lowunits, "dateadd")));
+	}
 
-	result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(startdate), PointerGetDatum(interval));
+	PG_TRY();
+	{
+		result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(startdate), PointerGetDatum(interval));
 
-	CheckDatetimeoffsetRange(result);
+	}
+	PG_CATCH();
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Adding a value to a \'%s\' column caused an overflow.", "datetimeoffset")));
+	}
+	PG_END_TRY();
+
 	PG_RETURN_DATETIMEOFFSET(result);
 }

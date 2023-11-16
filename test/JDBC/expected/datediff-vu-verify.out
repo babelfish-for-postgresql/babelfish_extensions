@@ -100,7 +100,7 @@ int
 -- overflow
 exec datediff_p12
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 535)~~
 
 ~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
@@ -138,3 +138,45 @@ bigint
 0
 ~~END~~
 
+
+begin transaction
+go
+
+SELECT DATEDIFF(fakeoption, cast('2023-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+~~ERROR (Code: 155)~~
+
+~~ERROR (Message: 'fakeoption' is not a recognized datediff option)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEDIFF(nanosecond, cast('1900-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+~~ERROR (Code: 535)~~
+
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO

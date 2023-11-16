@@ -59,3 +59,27 @@ GO
 
 exec datediff_p16
 GO
+
+begin transaction
+go
+
+SELECT DATEDIFF(fakeoption, cast('2023-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEDIFF(nanosecond, cast('1900-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+
+if (@@trancount > 0) rollback tran
+GO
