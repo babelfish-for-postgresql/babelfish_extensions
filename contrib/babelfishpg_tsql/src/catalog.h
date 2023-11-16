@@ -327,7 +327,7 @@ extern int16 get_bbf_schema_privilege(const char *schema_name,
  							const char *object_name,
 							const char *grantee);
 
-extern void update_bbf_schema_entry(const char *schema_name,
+extern void update_bbf_schema_privilege(const char *schema_name,
 							const char *object_name,
 							int16 new_priv,
 							int16 old_priv,

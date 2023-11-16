@@ -104,19 +104,19 @@ GO
 REVOKE ALL ON OBJECT::t1 TO guest;
 GO
 
-REVOKE ALL ON OBJECT::seq_tinyint FROM guest;
+REVOKE ALL ON OBJECT::seq_tinyint TO guest;
 GO
 
-REVOKE ALL ON OBJECT::my_view FROM guest;
+REVOKE ALL ON OBJECT::my_view TO guest;
 GO
 
-REVOKE ALL ON OBJECT::my_func FROM guest;
+REVOKE ALL ON OBJECT::my_func TO guest;
 GO
 
-REVOKE ALL ON OBJECT::my_proc FROM guest;
+REVOKE ALL ON OBJECT::my_proc TO guest;
 GO
 
-REVOKE ALL ON OBJECT::type_int FROM guest;
+REVOKE ALL ON OBJECT::type_int TO guest;
 GO
 
 REVOKE ALL ON OBJECT::my_func FROM PUBLIC;
@@ -131,7 +131,7 @@ GO
 GRANT SELECT ON t1 (a) TO guest;
 GO
 
-REVOKE SELECT ON t1 (a) FROM guest;
+REVOKE SELECT ON t1 (a) TO guest;
 GO
 
 GRANT SELECT (a) ON t1 TO guest WITH GRANT OPTION;
@@ -143,7 +143,7 @@ GO
 GRANT UPDATE ON t1 (a) TO guest;
 GO
 
-REVOKE UPDATE ON t1 (a) FROM guest;
+REVOKE UPDATE ON t1 (a) TO guest;
 GO
 
 GRANT UPDATE (a) ON t1 TO guest WITH GRANT OPTION;
@@ -167,7 +167,7 @@ GO
 GRANT showplan ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 
-REVOKE showplan ON OBJECT::t2 FROM alogin;  -- unsupported permission
+REVOKE showplan ON OBJECT::t2 TO alogin;  -- unsupported permission
 GO
 
 GRANT create table ON OBJECT::t1 TO guest;  -- unsupported permission
@@ -203,7 +203,7 @@ GO
 REVOKE EXECUTE ON my_func FROM PUBLIC;
 GO
 
-REVOKE ALL ON OBJECT::t1 FROM guest AS superuser;
+REVOKE ALL ON OBJECT::t1 TO guest AS superuser;
 GO
 
 ---

@@ -53,7 +53,7 @@ static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
-static void exec_gen_grantschema(char *schema_name, char *rolname,  PLtsql_stmt_grantschema *stmt, char *priv_name);
+static void	exec_gen_grantschema(char *schema_name, char *rolname,  PLtsql_stmt_grantschema *stmt, char *priv_name);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -3662,77 +3662,58 @@ get_insert_bulk_kilobytes_per_batch()
 	return insert_bulk_kilobytes_per_batch;
 }
 
-void exec_gen_grantschema(char *schema_name, char *rolname,  PLtsql_stmt_grantschema *stmt, char *priv_name)
+static void
+exec_gen_grantschema(char *schema_name, char *rolname,  PLtsql_stmt_grantschema *stmt, char *priv_name)
 {
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);
-				/* Run all subcommands */
-				foreach(parsetree_item, parsetree_list)
-				{
-					Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-					PlannedStmt *wrapper;
+	/* Run all subcommands */
+	foreach(parsetree_item, parsetree_list)
+	{
+		Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;
 
-					/* need to make a wrapper PlannedStmt */
-					wrapper = makeNode(PlannedStmt);
-					wrapper->commandType = CMD_UTILITY;
-					wrapper->canSetTag = false;
-					wrapper->utilityStmt = stmt;
-					wrapper->stmt_location = 0;
-					wrapper->stmt_len = 0;
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
 
-					/* do this step */
-					ProcessUtility(wrapper,
-								"(GRANT SCHEMA )",
-								false,
-								PROCESS_UTILITY_SUBCOMMAND,
-								NULL,
-								NULL,
-								None_Receiver,
-								NULL);
+		/* do this step */
+		ProcessUtility(wrapper,
+					"(GRANT SCHEMA )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
 
-					/* make sure later steps can see the object created here */
-					CommandCounterIncrement();
-				}
+		/* make sure later steps can see the object created here */
+		CommandCounterIncrement();
+	}
 }
 
 static int
 exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 {
-	char	   *dbname = get_cur_db_name();
-	char	   *login = GetUserNameFromId(GetSessionUserId(), false);
+	char		*dbname = get_cur_db_name();
+	char		*login = GetUserNameFromId(GetSessionUserId(), false);
 	bool		login_is_db_owner;
-	Oid			datdba;
 	char		*rolname;
 	char		*schema_name;
-	ListCell   *lc;
-	int16 privilege_maskInt = 0;
-	Oid 		schemaOid;
-
-	/* create integer bitmask for permissions*/
-	foreach(lc, stmt->privileges)
-	{
-		char	*priv_name = (char *) lfirst(lc);
-		if (!strcmp(priv_name,"execute"))
-			privilege_maskInt |= 32;
-		if (!strcmp(priv_name,"select"))
-			privilege_maskInt |= 16;
-		if (!strcmp(priv_name,"insert"))
-			privilege_maskInt |= 8;
-		if (!strcmp(priv_name,"update"))
-			privilege_maskInt |= 4;
-		if (!strcmp(priv_name,"delete"))
-			privilege_maskInt |= 2;
-		if (!strcmp(priv_name,"references"))
-			privilege_maskInt |= 1;
-	}
+	ListCell	*lc;
+	Oid			schemaOid;
+	int16		privilege_maskInt = create_privilege_bitmask(stmt->privileges, true);
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
 	 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
-	datdba = get_role_oid("sysadmin", false);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
 	if(schema_name)
 	{
@@ -3753,41 +3734,41 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 
 	foreach(lc, stmt->grantees)
 	{
-		char		*grantee_name = (char *) lfirst(lc);
+		char	*grantee_name = (char *) lfirst(lc);
 		char	*user = GetUserNameFromId(GetUserId(), false);
-		Oid	role_oid;
-		int16 old_priv = 0;
+		Oid		role_oid;
+		int16	old_priv = 0;
 		if(strcmp(grantee_name, "public") != 0)
 			rolname	= get_physical_user_name(dbname, grantee_name);
 		else
-			rolname = "public";
+			rolname = pstrdup("public");
 		role_oid = get_role_oid(rolname, true);
 
 		if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
 			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
 
-		if ((strcmp(rolname, user) == 0) || pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba))
+		if ((strcmp(rolname, user) == 0) || pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, get_sysadmin_oid()))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
-		if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
-		if((privilege_maskInt & 32) == 32)
+		if((privilege_maskInt & PRIVILEGE_EXECUTE) == PRIVILEGE_EXECUTE)
 			exec_gen_grantschema(schema_name, rolname, stmt, "execute");
-		if((privilege_maskInt & 16) == 16)
+		if((privilege_maskInt & PRIVILEGE_SELECT) == PRIVILEGE_SELECT)
 			exec_gen_grantschema(schema_name, rolname, stmt, "select");
-		if((privilege_maskInt & 8) == 8)
+		if((privilege_maskInt & PRIVILEGE_INSERT) == PRIVILEGE_INSERT)
 			exec_gen_grantschema(schema_name, rolname, stmt, "insert");
-		if((privilege_maskInt & 4) == 4)
+		if((privilege_maskInt & PRIVILEGE_UPDATE) == PRIVILEGE_UPDATE)
 			exec_gen_grantschema(schema_name, rolname, stmt, "update");
-		if((privilege_maskInt & 2) == 2)
+		if((privilege_maskInt & PRIVILEGE_DELETE) == PRIVILEGE_DELETE)
 			exec_gen_grantschema(schema_name, rolname, stmt, "delete");
-		if((privilege_maskInt & 1) == 1)
+		if((privilege_maskInt & PRIVILEGE_REFERENCES) == PRIVILEGE_REFERENCES)
 			exec_gen_grantschema(schema_name, rolname, stmt, "references");
 
 		/* Add entry for each grant statement. */
@@ -3797,16 +3778,16 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		{
 			int16 old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
 			if(old_priv!= privilege_maskInt || ((old_priv|privilege_maskInt) != old_priv))
-				update_bbf_schema_entry(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
+				update_bbf_schema_privilege(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
 		}
 		/* Remove entry for each revoke statement. */
-		if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
+		else if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
 		{
 			/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
 			grant_perms_to_objects_in_schema(stmt->schema_name, privilege_maskInt, rolname);
 			old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
 			if(old_priv!= privilege_maskInt || ((old_priv)&(~privilege_maskInt)) != old_priv)
-				update_bbf_schema_entry(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
+				update_bbf_schema_privilege(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
 		}
 	}
 	return PLTSQL_RC_OK;
