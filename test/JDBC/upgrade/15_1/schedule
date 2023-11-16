@@ -122,7 +122,7 @@ babelfish_integrity_checker
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
-babel_function_string
+babel_function_string-before-15-5-or-14-10
 BABEL_GRANT_CONNECT
 babel_isnumeric
 BABEL-LOGIN
@@ -177,6 +177,7 @@ datetime2fromparts
 forjson
 forjson-datatypes
 format
+format-dep
 forxml
 fulltextserviceproperty
 get_tds_id
@@ -390,3 +391,4 @@ default_params
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+BABEL-2999

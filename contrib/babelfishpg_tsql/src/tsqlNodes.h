@@ -52,6 +52,7 @@ typedef enum pltsql_stmt_type
 	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_GRANTSCHEMA
+	PLTSQL_STMT_FULLTEXTINDEX
 } PLtsql_stmt_type;
 
 typedef struct PLtsql_expr

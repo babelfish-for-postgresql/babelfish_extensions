@@ -270,6 +270,7 @@ BABEL-3000-dep
 Test-sp_helprole-dep
 Test-sp_helprolemember-dep
 format
+format-dep
 msdb-dbo-syspolicy_system_health_state
 dateadd_internal_df
 sys-all_columns
@@ -416,3 +417,4 @@ BABEL-3326
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+BABEL-2999

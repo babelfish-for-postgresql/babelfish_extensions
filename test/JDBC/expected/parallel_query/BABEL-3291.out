@@ -1,0 +1,66 @@
+drop table if exists babel_3291_t1
+go
+
+create table babel_3291_t1(a1 int PRIMARY KEY, b1 int)
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+
+set babelfish_showplan_all on
+go
+
+/*
+ * Run a SELECT query without any hints to ensure that un-hinted queries still work.
+ * This also ensures that when the SELECT query is not hinted it produces a different plan(index scan)
+ * than the sequential scan that we're hinting in the query below. This verifies that the next test is actually valid.
+ * If the planner was going to choose a sequential scan anyway, the next test wouldn't actually prove that hints were working.
+ */
+select * from babel_3291_t1 where a1 = 1
+go
+~~START~~
+text
+Query Text: select * from babel_3291_t1 where a1 = 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Index Scan using babel_3291_t1_pkey on babel_3291_t1
+        Index Cond: (a1 = 1)
+~~END~~
+
+
+/*
+ * Run a SELECT query and give the hint to follow a sequential scan. 
+ * The query plan should now use a sequential scan instead of the index scan it uses in the un-hinted test above.
+ */
+select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
+go
+~~START~~
+text
+Query Text: select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_3291_t1
+        Filter: (a1 = 1)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+-- cleanup
+drop table babel_3291_t1
+go

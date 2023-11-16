@@ -4,7 +4,9 @@
 #include "funcapi.h"
 
 #include "access/table.h"
+#include "access/attmap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
 #include "commands/proclang.h"
 #include "executor/tstoreReceiver.h"
@@ -52,6 +54,7 @@ static int	exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
+static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -64,6 +67,7 @@ static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
 
 void		read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
+bool  		called_from_tsql_insert_exec(void);
 void		cache_inline_args(PLtsql_function *func, InlineCodeBlockArgs *args);
 InlineCodeBlockArgs *create_args(int numargs);
 InlineCodeBlockArgs *clone_inline_args(InlineCodeBlockArgs *args);
@@ -87,6 +91,8 @@ extern void enable_sp_cursor_find_param_hook(void);
 extern void disable_sp_cursor_find_param_hook(void);
 extern void add_sp_cursor_param(char *name);
 extern void reset_sp_cursor_params();
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
+extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
@@ -101,6 +107,7 @@ extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 extern int	sp_prepare_count;
 
 BulkCopyStmt *cstmt = NULL;
+bool		called_from_tsql_insert_execute = false;
 
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
@@ -112,7 +119,7 @@ static bool prev_insert_bulk_keep_nulls = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
-
+ 
 /*
  * The pltsql_proc_return_code global variable is used to record the
  * return code (RETURN 41 + 1) of the most recently completed procedure
@@ -2984,6 +2991,13 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	return PLTSQL_RC_OK;
 }
 
+bool called_from_tsql_insert_exec()
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+	return called_from_tsql_insert_execute;
+}
+
 /*
  * For naked SELECT stmt in INSERT ... EXECUTE, instead of pushing the result to
  * the client, we accumulate the result in estate->tuple_store (similar to
@@ -3007,10 +3021,11 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 	/* Use eval_mcontext for tuple conversion work */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 
+	called_from_tsql_insert_execute = true;
 	tupmap = convert_tuples_by_position(portal->tupDesc,
 										estate->tuple_store_desc,
 										gettext_noop("structure of query does not match function result type"));
-
+	called_from_tsql_insert_execute = false;
 	while (true)
 	{
 		uint64		i;
@@ -3028,7 +3043,11 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 			HeapTuple	tuple = SPI_tuptable->vals[i];
 
 			if (tupmap)
+			{
+				called_from_tsql_insert_execute = true;
 				tuple = execute_attr_map_tuple(tuple, tupmap);
+				called_from_tsql_insert_execute = false;
+			}
 			tuplestore_puttuple(estate->tuple_store, tuple);
 			if (tupmap)
 				heap_freetuple(tuple);
@@ -3118,7 +3137,6 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 	return PLTSQL_RC_OK;
 }
 
-
 int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 {
 	switch (stmt->dbcc_stmt_type)
@@ -3131,7 +3149,6 @@ int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 	}
 	return PLTSQL_RC_OK;
 }
-
 
 void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 {
@@ -3820,5 +3837,103 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 					
 	/* All validations done, perform the actual update */
 	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt)
+{
+	char		*table_name;
+	char		*ft_index_name;
+	char		*query_str;
+	char		*old_ft_index_name;	// existing fulltext index name
+	char		*uniq_index_name;
+	const char	*schema_name;
+	Oid			schemaOid;
+	Oid			relid;
+	List		*column_name;
+	char	    *dbname = get_cur_db_name();
+	char		*login = GetUserNameFromId(GetSessionUserId(), false);
+	Oid			datdba;
+	bool		login_is_db_owner;
+	bool		is_create;
+
+	Assert(stmt->schema_name != NULL);
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin or login is not the schema owner, then it doesn't have the permission to CREATE/DROP FULLTEXT INDEX.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	datdba = get_role_oid("sysadmin", false);
+	schema_name = gen_schema_name_for_fulltext_index((char *)stmt->schema_name);
+	schemaOid = LookupExplicitNamespace(schema_name, true);						
+	table_name = stmt->table_name;
+	is_create = stmt->is_create;
+
+	// Check if schema exists
+	if (!OidIsValid(schemaOid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				errmsg("schema \"%s\" does not exist",
+					stmt->schema_name)));
+
+	// Check if the user has necessary permissions for CREATE/DROP FULLTEXT INDEX
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+	{
+		const char *error_msg = is_create ? "A default full-text catalog does not exist in the database or user does not have permission to perform this action" : "Cannot drop the full-text index, because it does not exist or you do not have permission";
+    	ereport(ERROR, 
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+				errmsg("%s", error_msg)));	
+	}
+
+	relid = get_relname_relid((const char *) table_name, schemaOid);
+
+	// Check if table exists
+	if (!OidIsValid(relid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" does not exist",
+					table_name)));
+
+	// Get the existing fulltext index name
+	old_ft_index_name = get_fulltext_index_name(relid, table_name);
+
+	if (is_create)
+	{
+		uniq_index_name = construct_unique_index_name((char *) stmt->index_name, table_name);
+		if(is_unique_index(relid, (const char *) uniq_index_name))
+		{
+			column_name = stmt->column_name;
+			ft_index_name = construct_unique_index_name("ft_index", table_name);
+			if (old_ft_index_name)
+				ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						errmsg("A full-text index for table or indexed view \"%s\" has already been created.",
+							table_name)));
+			else
+				query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, ft_index_name);
+		}
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					errmsg("'\"%s\"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.",
+						stmt->index_name)));
+	}
+	else
+	{
+		if (old_ft_index_name)					
+			query_str = gen_dropfulltextindex_cmds(old_ft_index_name, schema_name);
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Table or indexed view \"%s\" does not have a full-text index or user does not have permission to perform this action.",
+						table_name))); 
+	}
+
+	/* The above query will be
+	 * executed using ProcessUtility()
+	 */
+	exec_utility_cmd_helper(query_str);
 	return PLTSQL_RC_OK;
 }

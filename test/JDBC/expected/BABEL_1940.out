@@ -1,0 +1,297 @@
+
+-- Test is only valid when default server encoding is WIN1252
+SELECT CONVERT(VARCHAR(MAX), 0x123456789)
+GO
+~~START~~
+varchar
+#Eg‰
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(10), 0x123456789)
+GO
+~~START~~
+varchar
+#Eg‰
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), '#Eg‰')
+GO
+~~START~~
+varbinary
+0123456789
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(1), 0x99)
+GO
+~~START~~
+varchar
+™
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(2), 0x999999)
+GO
+~~START~~
+varchar
+™™
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(1), '™')
+GO
+~~START~~
+varbinary
+99
+~~END~~
+
+
+SELECT CAST('™' AS VARBINARY)
+GO
+~~START~~
+varbinary
+99
+~~END~~
+
+
+SELECT CAST('™™™' AS VARBINARY(2))
+GO
+~~START~~
+varbinary
+9999
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(10), 0x80)
+GO
+~~START~~
+varchar
+€
+~~END~~
+
+
+-- 0x81 does not exist is empty in some encodings
+SELECT CONVERT(VARCHAR(10), 0x81)
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, character with byte sequence 0x81 in encoding "WIN1252" has no equivalent in encoding "UTF8")~~
+
+
+SELECT CONVERT(VARCHAR(10), 0x330033)
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
+
+
+SELECT CONVERT(VARBINARY(10), 'ｳ')
+GO
+~~START~~
+varbinary
+3F
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'ﾊﾟ')
+GO
+~~START~~
+varbinary
+3F3F
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'A')
+GO
+~~START~~
+varbinary
+41
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 'ア')
+GO
+~~START~~
+varbinary
+3F
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 0x81)
+GO
+~~START~~
+varbinary
+81
+~~END~~
+
+
+SELECT CONVERT(VARBINARY(10), 0x330033)
+GO
+~~START~~
+varbinary
+330033
+~~END~~
+
+
+DECLARE @key varchar(20) = 'part1'
+DECLARE @email varchar(20) = 'part2'
+SELECT CONVERT(VARCHAR(10), HASHBYTES('SHA1', @key + LOWER(@email)))
+GO
+~~START~~
+varchar
+æ/fact¢+Ó
+~~END~~
+
+
+
+CREATE TABLE babel_1940_t1 (a VARBINARY(9))
+GO
+
+INSERT INTO babel_1940_t1 VALUES(0x80)
+INSERT INTO babel_1940_t1 VALUES(0xaaa)
+INSERT INTO babel_1940_t1 VALUES(0x123456789)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_1940_t1
+GO
+~~START~~
+varbinary
+80
+0AAA
+0123456789
+~~END~~
+
+
+SELECT CONVERT(VARCHAR(9), a) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+SELECT CAST(a as VARCHAR(9)) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+SELECT CAST(a as VARCHAR(10)) FROM babel_1940_t1
+GO
+~~START~~
+varchar
+€
+<newline>ª
+#Eg‰
+~~END~~
+
+
+
+CREATE TABLE babel_1940_t2(a varchar(10) collate japanese_cs_as);
+GO
+
+-- only null bytes becomes empty string since we remove trailing nulls
+INSERT INTO babel_1940_t2 VALUES (CAST (0x00 AS VARCHAR))
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_1940_t2 WHERE a = '';
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+INSERT INTO babel_1940_t2 VALUES ('a'), ('b'), ('™'), ('ƀ'), ('ä');
+GO
+~~ROW COUNT: 5~~
+
+
+-- Characters with no mapping transform to Ox3F or ?
+SELECT CONVERT(VARBINARY(10), a) FROM babel_1940_t2
+GO
+~~START~~
+varbinary
+
+61
+62
+99
+3F
+E4
+~~END~~
+
+
+-- Truncate trailing null bytes
+SELECT CAST(CAST(0x616263 as BINARY(128)) as VARCHAR)
+GO
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- Block intermidiate null byte
+SELECT CAST(CAST(0x610063 as BINARY(128)) as VARCHAR)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
+
+
+DROP TABLE babel_1940_t2
+GO
+
+DROP TABLE babel_1940_t1
+GO
+
+SELECT CAST(CAST(0x61 AS VARBINARY) AS BINARY(3))
+GO
+~~START~~
+binary
+610000
+~~END~~
+
+
+SELECT CAST(CAST(0x61 AS BINARY(3)) AS VARBINARY(2))
+GO
+~~START~~
+varbinary
+61
+~~END~~
+
+
+SELECT CAST(CAST(0x6161616161 AS BINARY(3)) AS VARBINARY(2))
+GO
+~~START~~
+varbinary
+6161
+~~END~~
+
+
+SELECT CAST(CAST(0x616263646566 AS VARBINARY(5)) AS BINARY(3))
+GO
+~~START~~
+binary
+616263
+~~END~~
+
