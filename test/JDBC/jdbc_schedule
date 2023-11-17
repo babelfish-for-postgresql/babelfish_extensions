@@ -9,21 +9,21 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 # all
-ignore#!#BABEL-4168-vu-prepare
-ignore#!#BABEL-4168-vu-verify
-ignore#!#BABEL-4168-vu-cleanup
-ignore#!#four-part-names-vu-prepare
-ignore#!#four-part-names-vu-verify
-ignore#!#four-part-names-vu-cleanup
-ignore#!#linked_servers-vu-prepare
-ignore#!#linked_servers-vu-verify
-ignore#!#linked_servers-vu-cleanup
-ignore#!#linked_srv_4229-vu-prepare
-ignore#!#linked_srv_4229-vu-verify
-ignore#!#linked_srv_4229-vu-cleanup
-ignore#!#openquery-vu-prepare
-ignore#!#openquery-vu-verify
-ignore#!#openquery-vu-cleanup
+BABEL-4168-vu-prepare
+BABEL-4168-vu-verify
+BABEL-4168-vu-cleanup
+four-part-names-vu-prepare
+four-part-names-vu-verify
+four-part-names-vu-cleanup
+linked_servers-vu-prepare
+linked_servers-vu-verify
+linked_servers-vu-cleanup
+linked_srv_4229-vu-prepare
+linked_srv_4229-vu-verify
+linked_srv_4229-vu-cleanup
+openquery-vu-prepare
+openquery-vu-verify
+openquery-vu-cleanup
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
