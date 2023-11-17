@@ -51,6 +51,27 @@ go
 CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
 go
 
+grant select on schema::babel_4344_s1 to public;
+go
+
+-- tsql user=babel_4344_l1 password=12345678 
+use babel_4344_d1;
+go
+
+-- User has select privileges, tables and views be accessible
+select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+use master;
+go
+
+-- tsql
+use babel_4344_d1;
+go
+revoke select on schema::babel_4344_s1 from public;
+go
+
 -- tsql user=babel_4344_l1 password=12345678 
 use babel_4344_d1;
 go
@@ -99,7 +120,8 @@ grant execute on babel_4344_p1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_p1 to babel_4344_u1;
 go
-grant execute on babel_4344_f1 to babel_4344_u1;
+-- Mixed case
+grant Execute on Babel_4344_F1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
 go
@@ -109,6 +131,10 @@ go
 grant select on schema::babel_4344_s2 to jdbc_user; -- should fail
 go
 grant select on schema::babel_4344_s2 to guest; -- should pass 
+go
+grant select on schema::"" to guest; -- should fail 
+go
+grant select on schema::[] to guest; -- should fail 
 go
 
 -- tsql user=babel_4344_l1 password=12345678

@@ -3683,7 +3683,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	char	   *dbname = get_cur_db_name();
 	char	   *login = GetUserNameFromId(GetSessionUserId(), false);
 	bool		login_is_db_owner;
-	Oid			datdba;
 	char		*rolname;
 	char		*schema_name;
 	ListCell   *lc;
@@ -3695,20 +3694,24 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
-	datdba = get_role_oid("sysadmin", false);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
-	schemaOid = LookupExplicitNamespace(schema_name, true);
+
+	if(schema_name)
+	{
+		schemaOid = LookupExplicitNamespace(schema_name, true);
+	}
+	else
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as \"\" or [] are not allowed. Change the alias to a valid name.")));
+	}
 
 	if (!OidIsValid(schemaOid))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("schema \"%s\" does not exist",
 							schema_name)));
-	
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
 	foreach(lc1, stmt->privileges)
 	{
@@ -3716,21 +3719,29 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		foreach(lc, stmt->grantees)
 		{
 			char	   *grantee_name = (char *) lfirst(lc);
+			char	*user = GetUserNameFromId(GetUserId(), false);
 			Oid	role_oid;
 			bool		grantee_is_db_owner;
-			rolname	= get_physical_user_name(dbname, grantee_name);
+			if (strcmp(grantee_name, "public") != 0)
+				rolname	= get_physical_user_name(dbname, grantee_name);
+			else
+				rolname = pstrdup("public");
 			role_oid = get_role_oid(rolname, true);
 			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
 
-
-			if (role_oid == InvalidOid)
+			if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
 				ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
 
-			if (pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba) || grantee_is_db_owner)
+			if ((strcmp(rolname, user) == 0) || pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, get_sysadmin_oid()) || grantee_is_db_owner)
 				ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
+
+			if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
 			parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);
 			/* Run all subcommands */
