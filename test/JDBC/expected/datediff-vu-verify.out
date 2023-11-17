@@ -1,0 +1,182 @@
+-- 123
+exec datediff_p1
+GO
+~~START~~
+int
+123
+~~END~~
+
+
+-- -30
+exec datediff_p2
+GO
+~~START~~
+int
+-30
+~~END~~
+
+
+-- -120
+exec datediff_p3
+GO
+~~START~~
+int
+-120
+~~END~~
+
+
+-- 24
+exec datediff_p4
+GO
+~~START~~
+int
+24
+~~END~~
+
+
+-- 105
+exec datediff_p5
+GO
+~~START~~
+int
+105
+~~END~~
+
+
+-- -10957
+exec datediff_p6
+GO
+~~START~~
+int
+-10957
+~~END~~
+
+
+-- -262963
+exec datediff_p7
+GO
+~~START~~
+int
+-262963
+~~END~~
+
+
+-- -15777780
+exec datediff_p8
+GO
+~~START~~
+int
+-15777780
+~~END~~
+
+
+-- 157885200
+exec datediff_p9
+GO
+~~START~~
+int
+157885200
+~~END~~
+
+
+-- 32400000
+exec datediff_p10
+GO
+~~START~~
+int
+32400000
+~~END~~
+
+
+-- 1200000000
+exec datediff_p11
+GO
+~~START~~
+int
+1200000000
+~~END~~
+
+
+-- overflow
+exec datediff_p12
+GO
+~~ERROR (Code: 535)~~
+
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
+
+
+-- 1200000000000
+exec datediff_p13
+GO
+~~START~~
+bigint
+1200000000000
+~~END~~
+
+
+-- 15
+exec datediff_p14
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+exec datediff_p15
+GO
+~~START~~
+int
+1097
+~~END~~
+
+
+exec datediff_p16
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+begin transaction
+go
+
+SELECT DATEDIFF(fakeoption, cast('2023-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+~~ERROR (Code: 155)~~
+
+~~ERROR (Message: 'fakeoption' is not a recognized datediff option)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEDIFF(nanosecond, cast('1900-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+~~ERROR (Code: 535)~~
+
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
