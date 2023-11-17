@@ -51,7 +51,7 @@ go
 CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
 go
 
-grant select on schema::babel_4344_s1 to public;
+grant SELECT on schema::babel_4344_S1 to public;
 go
 
 -- tsql user=babel_4344_l1 password=12345678 
@@ -102,9 +102,9 @@ go
 -- GRANT OBJECT privilege
 use babel_4344_d1;
 go
-grant select on babel_4344_t1 to babel_4344_u1;
+grant SELECT on babel_4344_t1 to BABEL_4344_U1;
 go
-grant select on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
+grant SELECT on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
 go
 grant all on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
 go
@@ -130,7 +130,7 @@ grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
 go
 grant select on schema::babel_4344_s2 to jdbc_user; -- should fail
 go
-grant select on schema::babel_4344_s2 to guest; -- should pass 
+grant SELECT on schema::babel_4344_s2 to guest; -- should pass 
 go
 grant select on schema::"" to guest; -- should fail 
 go
