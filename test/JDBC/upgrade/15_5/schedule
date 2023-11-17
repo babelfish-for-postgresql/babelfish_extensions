@@ -50,7 +50,6 @@ BABEL-2787
 BABEL-2787-2
 BABEL-2795
 BABEL-2805
-BABEL-2812
 BABEL-2819
 BABEL-2845
 BABEL-2877
@@ -87,7 +86,6 @@ BABEL-3370
 BABEL-3380
 BABEL-3392
 BABEL-3402
-BABEL-3474
 BABEL-3478
 BABEL-3486
 BABEL-3513
@@ -137,7 +135,6 @@ BABEL-CHECK-CONSTRAINT
 babel_context_info
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
-babel_datetime
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
 BABEL-EXTENDEDPROPERTY
@@ -206,8 +203,6 @@ collation_tests_polish
 column_domain_usage
 constraint_column_usage
 dateadd_internal_df
-datediff_big
-datediff_internal_date
 datepart
 datetime2fromparts-after-15-2
 forjson
