@@ -4862,6 +4862,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		rsinfo.isDone = ExprSingleResult;
 		rsinfo.setResult = NULL;
 		rsinfo.setDesc = NULL;
+		ReleaseTupleDesc(reldesc);
 	}
 
 	/* And run the function */
@@ -4928,6 +4929,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 			dest->receiveSlot(slot, dest);
 			ExecClearTuple(slot);
 		}
+		ReleaseTupleDesc(rsinfo.expectedDesc);
 		ExecDropSingleTupleTableSlot(slot);
 	}
 
