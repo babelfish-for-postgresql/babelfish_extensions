@@ -105,6 +105,12 @@ runs:
           sudo echo "host    all             all             0.0.0.0/0                md5"
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
+        
+        DB_PARAMETERS=${{ matrix.upgrade-path.db_parameters }}
+        for DB_PARAMETER in ${DB_PARAMETERS[@]}; do
+          sudo echo $DB_PARAMETER >> postgresql.conf
+        done
+
         ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
