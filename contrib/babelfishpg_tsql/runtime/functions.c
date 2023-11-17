@@ -165,9 +165,10 @@ void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
-int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
-static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
+int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount);
+static HTAB *load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
+										const char * sourcetext,
 										HTAB *bbf_pivot_hash,
 										TupleDesc tupdesc,
 										bool randomAccess);
@@ -3743,7 +3744,7 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 * SPI function to help execute raw parsetree.
 */
 int 
-SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
+SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount)
 {
 	_SPI_plan			plan;
 	int					ret;
@@ -3776,7 +3777,7 @@ SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount)
 	 * it is not important here
 	 */
 	plansource = CreateOneShotCachedPlan(parsetree,
-										"SQL NOT AVAILABLE",
+										sourcetext,
 										CreateCommandTag(parsetree->stmt));
 
 	plancache_list = lappend(plancache_list, plansource);
@@ -3812,7 +3813,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	RawStmt	   		*bbf_pivot_cat_sql;
 	int				nestlevel;
 	List			*per_pivot_list;
-	
+	char			*query_string;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -3844,6 +3845,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
 		Assert(list_length(per_pivot_list) >= 2);
 		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
 		bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
+		query_string = list_nth(per_pivot_list, 2);
 	}
 	PG_CATCH();
 	{
@@ -3871,13 +3873,14 @@ bbf_pivot(PG_FUNCTION_ARGS)
 						"bbf_pivot function are not compatible")));
 
 	/* load up the categories hash table */
-	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, per_query_ctx);
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, per_query_ctx);
 
 	/* let the caller know we're sending back a tuplestore */
 	rsinfo->returnMode = SFRM_Materialize;
 
 	/* now go build it */
 	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
+												query_string,
 												bbf_pivot_hash,
 												tupdesc,
 												rsinfo->allowedModes & SFRM_Materialize_Random);
@@ -3903,7 +3906,7 @@ bbf_pivot(PG_FUNCTION_ARGS)
  * load up the categories hash table
  */
 static HTAB *
-load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
+load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext per_query_ctx)
 {
 	HTAB	   *bbf_pivot_hash;
 	HASHCTL		ctl;
@@ -3931,7 +3934,7 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
 	/* Retrieve the category name rows */
-	ret = SPI_execute_raw_parsetree(cats_sql, true, 0);
+	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
 	proc = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -3994,6 +3997,7 @@ load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx)
  */
 static Tuplestorestate *
 get_bbf_pivot_tuplestore(RawStmt *sql,
+						const char * sourcetext,
 						HTAB *bbf_pivot_hash,
 						TupleDesc tupdesc,
 						bool randomAccess)
@@ -4015,7 +4019,7 @@ get_bbf_pivot_tuplestore(RawStmt *sql,
 		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
 
 	/* Now retrieve the bbf_pivot source rows */
-	ret = SPI_execute_raw_parsetree(sql, true, 0);
+	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
 	proc = SPI_processed;
 
 	/* Check for qualifying tuples */

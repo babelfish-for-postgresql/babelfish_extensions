@@ -212,13 +212,17 @@ PIVOT (
 GO
 
 -- procedure test
--- Cannot execute twice (BUG)
 exec top_n_pivot 10
 GO
 
+exec top_n_pivot 5
+GO
+
 -- function test
--- Cannot execute twice (BUG)
 select * from test_table_valued_function(12);
+GO
+
+select * from test_table_valued_function(2);
 GO
 
 -- explain pivot

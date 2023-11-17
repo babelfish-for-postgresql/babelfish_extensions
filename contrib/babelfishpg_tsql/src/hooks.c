@@ -4401,17 +4401,20 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*new_pivot_aliaslist;
 	List		*src_sql_groupbylist;
 	List		*src_sql_sortbylist;
+	List		*src_sql_fromClause_copy;
 	char		*pivot_colstr;
 	char		*value_colstr;
 	ColumnRef	*value_col;
 	TargetEntry	*aggfunc_te;
 	RangeFunction	*pivot_from_function;
+	SelectStmt 		*pivot_src_sql;
 	RawStmt	*s_sql;
 	RawStmt	*c_sql;
 	MemoryContext 	oldContext;
 	MemoryContext 	tsql_outmost_context;
 	PLtsql_execstate 	*tsql_outmost_estat;
 	int				nestlevel;
+	char			*sourcetext;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4421,6 +4424,9 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	src_sql_groupbylist = NULL;
 	src_sql_sortbylist = NULL;
 
+	pivot_src_sql =  makeNode(SelectStmt);
+	pivot_src_sql->fromClause = copyObject(stmt->srcSql->fromClause);
+	src_sql_fromClause_copy = copyObject(stmt->srcSql->fromClause);
 	/* transform temporary src_sql */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 										false,
@@ -4468,7 +4474,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_cstr_list(stmt->pivotCol->fields));
 	new_src_sql_targetist = lappend(new_src_sql_targetist, (ResTarget *)stmt->aggFunc);
 	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
-
+	pivot_src_sql->targetList = copyObject(new_src_sql_targetist);
 	/* complete src_sql's groupby*/
 	for (int i = 0; i < new_src_sql_targetist->length - 1; i++)
 	{
@@ -4497,18 +4503,24 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	}
 	((SelectStmt *)stmt->srcSql)->groupClause = src_sql_groupbylist;
 	((SelectStmt *)stmt->srcSql)->sortClause = src_sql_sortbylist;
-
+	pivot_src_sql->groupClause = copyObject(src_sql_groupbylist);
+	pivot_src_sql->sortClause = copyObject(src_sql_sortbylist);
+	
+	/* use the copy of the orgininal fromClause to prevent double analyzing fromClause */
+	((SelectStmt *)stmt->srcSql)->fromClause = src_sql_fromClause_copy;
 	/* Transform the new src_sql & get the output type of that agg function*/
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 									false,
 									false);
-	temp_src_targetlist = temp_src_query->targetList;
 
-	/* asClause: non-pivot columns + value columns) */
-	/* we can get the output data type of the aggregation function for later pivot columns */
+	/* 
+	 * complete pivot outer wrapper sql's alias_clause
+	 * asClause: non-pivot columns + value columns) 
+	 * we can get the output data type of the aggregation function for later pivot columns 
+	 */
+	temp_src_targetlist = temp_src_query->targetList;
 	aggfunc_te = list_nth_node(TargetEntry, temp_src_targetlist, temp_src_targetlist->length - 1);
 
-	/* complete pivo sql's alias_clause */
 	/* Rewrite the fromClause in the outer select to have correct alias column name and datatype */
 	pivot_from_function = list_nth_node(RangeFunction, stmt->fromClause, 0);
 	for(int i = 0; i < stmt->value_col_strlist->length; i++)
@@ -4519,7 +4531,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 									-1,
 									((Aggref *)aggfunc_te->expr)->aggcollid
 									);
-				
+
 		if (new_pivot_aliaslist == NULL)
 			new_pivot_aliaslist = list_make1(tempColDef);
 		else
@@ -4540,15 +4552,16 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	/* save rewrited sqls to global variable for later retrive */
 	s_sql = makeNode(RawStmt);
 	c_sql = makeNode(RawStmt);
-	s_sql->stmt = (Node *) stmt->srcSql;
+	s_sql->stmt = (Node *) pivot_src_sql;
 	s_sql->stmt_location = 0;
 	s_sql->stmt_len = 0;
 
 	c_sql->stmt = (Node *) stmt->catSql;
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
+	sourcetext = pstrdup(pstate->p_sourcetext);
 
-	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make2(copyObject(s_sql), copyObject(c_sql)));
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make3(copyObject(s_sql), copyObject(c_sql), sourcetext));
 	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
 }
