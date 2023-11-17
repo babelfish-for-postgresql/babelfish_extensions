@@ -12,7 +12,16 @@ go
 create user babel_4344_u1 for login babel_4344_l1;
 go
 
+create login αιώνια with password = '12345678'
+go
+
+create user αιώνια for login αιώνια;
+go
+
 create schema babel_4344_s1;
+go
+
+create schema αγάπη;
 go
 
 create schema babel_4344_s2 authorization babel_4344_u1;
@@ -25,6 +34,9 @@ create table babel_4344_s1.babel_4344_t1(a int);
 go
 
 create table babel_4344_s2.babel_4344_t1(a int);
+go
+
+create table αγάπη.abc(a int);
 go
 
 create table babel_4344_t3(a int, b int);
@@ -52,6 +64,19 @@ CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELEC
 go
 
 grant SELECT on schema::babel_4344_S1 to public;
+go
+
+grant select on schema::αγάπη to αιώνια;
+go
+
+-- tsql user=αιώνια password=12345678 
+use babel_4344_d1;
+go
+
+select * from αγάπη.abc;
+go
+
+use master;
 go
 
 -- tsql user=babel_4344_l1 password=12345678 
@@ -388,7 +413,16 @@ go
 drop schema babel_4344_s2;
 go
 
+drop table αγάπη.abc;
+go
+
+drop schema αγάπη;
+go
+
 drop user babel_4344_u1;
+go
+
+drop user αιώνια;
 go
 
 use master;
@@ -409,4 +443,18 @@ go
 
 -- tsql
 drop login babel_4344_l1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'αιώνια' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login αιώνια;
 go
