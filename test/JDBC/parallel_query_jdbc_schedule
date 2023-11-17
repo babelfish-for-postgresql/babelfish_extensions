@@ -90,8 +90,8 @@ ignore#!#openquery-vu-verify
 ignore#!#openquery-vu-cleanup
 
 # relation "onek" does not exist: JIRA-4541
-ignore#!#pgr_select
-ignore#!#pgr_select_distinct
+# ignore#!#pgr_select
+# ignore#!#pgr_select_distinct
 
 # output difference: JIRA-4542
 ignore#!#sys-sp_pkeys-dep-vu-verify
