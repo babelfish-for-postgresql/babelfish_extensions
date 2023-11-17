@@ -14,7 +14,7 @@ jobs:
         id: generate-upgrade-path
         run: |
           config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)'"
-          config=$($(echo $config | sed "s/\"/\\\\\"/g") | sed "s/\'/\\\\\"/g")
+          config=$(echo $config | sed "s/[\"']/\\\\\"/g")
           UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")), db_parameters: itm['db-parameters'] ? (\"(\" + itm['db-parameters'].map(dbp => '\"' + dbp + '\"').toString().replace(/[,]/g, \" \") + \")\") : \"()\", diff_conn: itm['diff-conn'] ? itm['diff-conn'] : false, title: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm['upgrade-path'][itm['upgrade-path'].length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
           echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
 
