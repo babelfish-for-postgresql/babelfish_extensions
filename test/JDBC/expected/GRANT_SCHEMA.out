@@ -328,6 +328,19 @@ go
 use master;
 go
 
+-- psql
+-- GRANT statement add an entry to the catalog
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+where schema_name = 'babel_4344_s1' collate "C" and object_name = 'ALL' collate "C" order by permission;
+go
+~~START~~
+name#!#name#!#name#!#name
+babel_4344_s1#!#ALL#!#execute#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#ALL#!#insert#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#ALL#!#select#!#babel_4344_d1_babel_4344_u1
+~~END~~
+
+
 -- tsql user=babel_4344_l1 password=12345678
 -- User has OBJECT and SCHEMA privileges, should be accessible.
 use babel_4344_d1;
@@ -569,6 +582,15 @@ revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
 go
 use master;
 go
+
+-- psql
+-- REVOKE on schema removes the entry from the catalog
+select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
+go
+~~START~~
+int2#!#name#!#name#!#name#!#name#!#name
+~~END~~
+
 
 -- tsql user=babel_4344_l1 password=12345678
 -- User has no privileges, shouldn't be accessible.
