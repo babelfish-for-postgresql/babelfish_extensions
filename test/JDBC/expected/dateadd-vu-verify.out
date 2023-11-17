@@ -1,0 +1,185 @@
+exec dateadd_p1
+GO
+~~START~~
+date
+1900-01-03
+~~END~~
+
+
+exec dateadd_p2
+GO
+~~START~~
+time
+03:01:21.0000000
+~~END~~
+
+
+exec dateadd_p3
+GO
+~~START~~
+datetimeoffset
+1900-01-01 06:01:21.0000000 +10:00
+~~END~~
+
+
+exec dateadd_p4
+GO
+~~START~~
+datetime
+2000-01-01 00:00:00.0
+~~END~~
+
+
+exec dateadd_p5
+GO
+~~START~~
+datetime
+1999-12-31 23:59:59.0
+~~END~~
+
+
+exec dateadd_p6
+GO
+~~START~~
+datetime2
+1999-12-31 23:59:59.0010000
+~~END~~
+
+
+exec dateadd_p7
+GO
+~~ERROR (Code: 9810)~~
+
+~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
+
+
+exec dateadd_p8
+GO
+~~ERROR (Code: 9810)~~
+
+~~ERROR (Message: The datepart hour is not supported by date function dateadd for data type date.)~~
+
+
+exec dateadd_p9
+GO
+~~START~~
+datetimeoffset
+2016-12-25 23:20:05.5234560 +08:00
+~~END~~
+
+
+exec dateadd_p10
+GO
+~~START~~
+datetime
+2016-12-27 00:30:05.0
+~~END~~
+
+
+begin transaction
+go
+
+SELECT dateadd(fakeoption, 2, cast('1900-01-01' as date));
+go
+~~ERROR (Code: 155)~~
+
+~~ERROR (Message: 'fakeoption' is not a recognized dateadd option)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT dateadd(day, 2, cast('01:01:21' as time));
+go
+~~ERROR (Code: 9810)~~
+
+~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEADD(YY,-300,getdate());
+go
+~~START~~
+datetime
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: Adding a value to a 'datetime' column caused an overflow.)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEADD(YY,-30000000, cast('1900-01-01' as datetime));
+go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: Adding a value to a 'datetime' column caused an overflow.)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEADD(year,-300000000,cast('1900-01-01' as datetime));
+go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: Adding a value to a 'datetime' column caused an overflow.)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
