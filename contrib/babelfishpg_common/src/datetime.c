@@ -1229,6 +1229,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 	Timestamp result;
 	Interval   *interval;
 	bool validDateAdd = true;
+	bool incompatibleDatePart = false;
 
 	switch(dttype) {
 		case TIME:
@@ -1265,90 +1266,79 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 		switch(val) {
 			case DTK_YEAR:
 				if(dttype == TIME) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "time")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, num, 0, 0, 0, 0, 0, 0);
 				break;
 			case DTK_QUARTER:
 				if(dttype == TIME) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "time")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num * 3, 0, 0, 0, 0, 0);
 				break;
 			case DTK_MONTH:
 				if(dttype == TIME) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "time")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num, 0, 0, 0, 0, 0);
 				break;
 			case DTK_WEEK:
 				if(dttype == TIME) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "time")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, num, 0, 0, 0, 0);
 				break;
 			case DTK_DAY:
 			case DTK_DOY:
 				if(dttype == TIME) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "time")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, num, 0, 0, 0);
 				break;
 			case DTK_HOUR:
 				if(dttype == DATE) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "date")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, num, 0, 0);
 				break;
 			case DTK_MINUTE:
 				if(dttype == DATE) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "date")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, num, 0);
 				break;
 			case DTK_SECOND:
 				if(dttype == DATE) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "date")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum(num));
 				break;
 			case DTK_MILLISEC:
 				if(dttype == DATE) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", "date")));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.001));
 				break;
 			case DTK_MICROSEC:
 				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", datetypeName(dttype))));
+					incompatibleDatePart = true;
+					break;
 				}
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000001));
 				break;
 			case DTK_NANO:
 				if(dttype == SMALLDATETIME || dttype == DATETIME || dttype == DATE) {
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", datetypeName(dttype))));
+					incompatibleDatePart = true;
+					break;
 				}
 				num = num / 1000 * 1000; // Floors the number to avoid incorrect rounding
 				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
@@ -1361,6 +1351,12 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 		validDateAdd = false;
 	}
 
+	if(incompatibleDatePart) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("The datepart %s is not supported by date function %s for data type %s.", lowunits, "dateadd", datetypeName(dttype))));
+	}
+
 	if(!validDateAdd) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1370,17 +1366,7 @@ dateadd_datetime(PG_FUNCTION_ARGS) {
 	PG_TRY();
 	{
 		result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(interval));
-	}
-	PG_CATCH();
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				errmsg("Adding a value to a \'%s\' column caused an overflow.", datetypeName(dttype))));
-	}
-	PG_END_TRY();
 
-	PG_TRY();
-	{
 		/*
 		 * This check is required because the range of valid timestamps
 		 * is greater than the range of valid datetimes
