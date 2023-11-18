@@ -1,11 +1,11 @@
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geometry;
@@ -23,7 +23,7 @@ Go
 DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
 Go
 
 SELECT * FROM TextFromGeom;
@@ -138,12 +138,12 @@ GO
 
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geography;
@@ -161,7 +161,7 @@ Go
 DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
 Go
 
 SELECT * FROM TextFromGeog;

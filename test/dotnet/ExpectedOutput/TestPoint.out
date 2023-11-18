@@ -24,7 +24,7 @@
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
-#Q#SELECT STAsText(location) FROM POINTGEOM_dt;
+#Q#SELECT location.STAsText() FROM POINTGEOM_dt;
 #D#text
 POINT(47.651 -22.349)
 POINT(1 2)
@@ -33,14 +33,14 @@ POINT(47.651 -22.349)
 POINT(47.651 -22.349)
 POINT(47.651 -22.349)
 POINT(47.651 -22.349)
-#Q#SELECT STAsText(location) FROM POINTGEOG_dt;
+#Q#SELECT location.STAsText() FROM POINTGEOG_dt;
 #D#text
 POINT(47.651 -22.349)
 POINT(1 2)
 POINT(47.651 -22.349)
 POINT(47.651 -22.349)
 POINT(-22.349 47.651)
-#Q#SELECT STAsText(geom), STAsText(geog) FROM POINT_dt;
+#Q#SELECT geom.STAsText(), geog.STAsText() FROM POINT_dt;
 #D#text#!#text
 POINT(47.651 -22.349)#!#
 #!#POINT(47.651 -22.349)

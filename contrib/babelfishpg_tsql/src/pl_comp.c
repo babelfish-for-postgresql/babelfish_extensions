@@ -124,6 +124,7 @@ static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
+static List *pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs);
 static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
@@ -148,6 +149,7 @@ static void pltsql_HashTableInsert(PLtsql_function *function,
 static void pltsql_HashTableDelete(PLtsql_function *function);
 static void delete_function(PLtsql_function *func);
 static Node *resolve_geospatial_func_ref(ParseState *pstate, ColumnRef *cref);
+static List *resolve_geospatial_func_ref_2(ParseState *pstate, FuncCall *fn, List *fargs);
 static char *resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode);
 
 extern Portal ActivePortal;
@@ -1486,6 +1488,7 @@ pltsql_parser_setup(struct ParseState *pstate, PLtsql_expr *expr)
 {
 	pstate->p_pre_columnref_hook = pltsql_pre_column_ref;
 	pstate->p_post_columnref_hook = pltsql_post_column_ref;
+	pstate->p_post_funcref_hook = pltsql_post_func_ref;
 	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
 	pstate->p_paramref_hook = pltsql_param_ref;
 	/* no need to use p_coerce_param_hook */
@@ -1654,6 +1657,18 @@ pltsql_param_ref(ParseState *pstate, ParamRef *pref)
 	return make_datum_param(expr, nse->itemno, pref->location);
 }
 
+static List *
+pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
+{
+	List *ret = resolve_geospatial_func_ref_2(pstate, fn, fargs);
+	if (ret)
+	{
+		elog(WARNING, "got some rets %d", ret->length);
+		return ret;
+	}
+	return fargs;
+}
+
 static char *
 resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode)
 {
@@ -1749,6 +1764,66 @@ resolve_geospatial_func_ref(ParseState *pstate, ColumnRef *cref)
 	isGeospatialFunction = false;
 
 	return NULL;
+}
+
+static List *resolve_geospatial_func_ref_2(ParseState *pstate, FuncCall *fn, List *fargs)
+{
+    Node *fname;
+
+    if(list_length(fn->funcname) > 1 && list_length(fn->args) <= 1 && fn->agg_order == NULL && fn->agg_filter == NULL 
+        && !fn->agg_within_group && !fn->agg_star && !fn->agg_distinct && !fn->func_variadic)
+    {
+        Node *col;
+        bool flag = true;
+        fname = (Node *) llast(fn->funcname);
+
+        if (IsA(fname, String) && !isGeospatialFunction &&
+                ((pg_strcasecmp(strVal(fname), "stdistance") == 0 && list_length(fn->args) == 1) ||
+                (pg_strcasecmp(strVal(fname), "stastext") == 0 && list_length(fn->args) == 0) || 
+                (pg_strcasecmp(strVal(fname), "stasbinary") == 0 && list_length(fn->args) == 0)))
+        {
+            ColumnRef *cref = makeNode(ColumnRef);
+            cref->fields = list_copy(fn->funcname);
+            cref->fields = list_delete_last(cref->fields);
+
+            isGeospatialFunction = true;
+            if(list_length(cref->fields) == 1)
+            {
+                Node       *schema = (Node *) linitial(cref->fields); // a for wrong, master_a for right
+                char       *cur_db = get_cur_db_name(); //master
+                String     *new_schema;
+
+                if (!is_shared_schema(strVal(schema)))
+                {
+                    new_schema = makeString(resolve_schema_name(cur_db, strVal(schema), get_migration_mode()));
+                    cref->fields = list_delete_first(cref->fields);
+                    cref->fields = lcons(new_schema, cref->fields);
+                }
+            }
+
+            PG_TRY();
+            {
+                col = transformExpr(pstate, (Node *) cref, pstate->p_expr_kind);
+            }
+            PG_CATCH();
+            {
+                flag = false;
+            }
+            PG_END_TRY();
+
+            if(flag)
+            {
+                fn->args = lcons(cref, fn->args);
+                fargs = lcons(col, fargs);
+                fn->funcname = list_delete_first(fn->funcname);
+                isGeospatialFunction = false;
+                return fargs;
+            }
+        }
+    }
+    isGeospatialFunction = false;
+
+    return NULL;
 }
 
 /*
