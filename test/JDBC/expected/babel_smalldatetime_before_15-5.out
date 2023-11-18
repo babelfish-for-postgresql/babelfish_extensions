@@ -372,19 +372,9 @@ text
 May
 ~~END~~
 
-~~START~~
-smalldatetime
-2016-12-26 23:30:00.0
-~~END~~
-
-~~START~~
-smalldatetime
-2016-12-27 00:25:00.0
-~~END~~
-
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: data out of range for smalldatetime)~~
+~~ERROR (Message: operator is not unique: smalldatetime + interval)~~
 
 
 -- Clean up

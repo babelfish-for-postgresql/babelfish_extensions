@@ -30,7 +30,7 @@ GO
 
 SELECT * FROM BABEL_3474_vu_prepare_v4
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type datetime.)~~
 
@@ -39,7 +39,7 @@ GO
 
 SELECT * FROM BABEL_3474_vu_prepare_v5
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type smalldatetime.)~~
 
@@ -78,7 +78,7 @@ GO
 
 SELECT * FROM BABEL_3474_vu_prepare_v9
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type datetime.)~~
 
@@ -87,7 +87,7 @@ GO
 
 SELECT * FROM BABEL_3474_vu_prepare_v10
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type smalldatetime.)~~
 
@@ -96,7 +96,7 @@ GO
 
 SELECT * FROM BABEL_3474_vu_prepare_v11
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
 
@@ -105,7 +105,7 @@ GO
 
 SELECT * FROM BABEL_3474_vu_prepare_v12
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart second is not supported by date function dateadd for data type date.)~~
 
@@ -164,7 +164,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p4
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type datetime.)~~
 
@@ -173,7 +173,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p5
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type smalldatetime.)~~
 
@@ -212,7 +212,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p9
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type datetime.)~~
 
@@ -221,7 +221,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p10
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type smalldatetime.)~~
 
@@ -230,7 +230,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p11
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
 
@@ -239,7 +239,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p12
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart second is not supported by date function dateadd for data type date.)~~
 
@@ -300,7 +300,7 @@ SELECT BABEL_3474_vu_prepare_f4()
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type datetime.)~~
 
@@ -311,7 +311,7 @@ SELECT BABEL_3474_vu_prepare_f5()
 GO
 ~~START~~
 smalldatetime
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type smalldatetime.)~~
 
@@ -352,7 +352,7 @@ SELECT BABEL_3474_vu_prepare_f9()
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type datetime.)~~
 
@@ -363,7 +363,7 @@ SELECT BABEL_3474_vu_prepare_f10()
 GO
 ~~START~~
 smalldatetime
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart nanosecond is not supported by date function dateadd for data type smalldatetime.)~~
 
@@ -374,7 +374,7 @@ SELECT BABEL_3474_vu_prepare_f11()
 GO
 ~~START~~
 time
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart day is not supported by date function dateadd for data type time.)~~
 
@@ -385,7 +385,7 @@ SELECT BABEL_3474_vu_prepare_f12()
 GO
 ~~START~~
 date
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 9810)~~
 
 ~~ERROR (Message: The datepart second is not supported by date function dateadd for data type date.)~~
 

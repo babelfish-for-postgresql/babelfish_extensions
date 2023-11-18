@@ -195,7 +195,7 @@ column_domain_usage
 constraint_column_usage
 dateadd_internal_df
 datediff_big
-datediff_internal_date
+datediff_internal_date-before-14_10-or-15_5
 datepart
 datetime2fromparts-after-15-2
 forjson
