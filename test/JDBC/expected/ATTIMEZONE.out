@@ -456,7 +456,7 @@ Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE
 GO
 ~~START~~
 datetimeoffset
-2023-09-15 19:01:00.0000000 -06:00
+2023-09-15 20:01:00.0000000 -05:00
 ~~END~~
 
 	
@@ -552,7 +552,7 @@ Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE
 GO
 ~~START~~
 datetimeoffset
-2023-09-16 04:01:00.0000000 +03:00
+2023-09-16 03:01:00.0000000 +02:00
 ~~END~~
 
 	
@@ -648,7 +648,7 @@ Select convert(datetimeoffset,'2023-09-15 20:01:00.0000000 -05:00') AT TIME ZONE
 GO
 ~~START~~
 datetimeoffset
-2023-09-16 04:31:00.0000000 +03:30
+2023-09-16 05:31:00.0000000 +04:30
 ~~END~~
 
 	
