@@ -1725,14 +1725,22 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 												att->attcollation, (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_VARCHAR:
+				if (atttypmod == TSQLMaxTypmod)
+					atttypmod = -1
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4));
 				break;
 			case TDS_SEND_NVARCHAR:
+				if (atttypmod == TSQLMaxTypmod)
+					atttypmod = -1
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4) * 2);
+				// if(atttypmod < 0)
+				// {
+				// 	col->metaEntry.type2.maxSize = 2 * 0xFFFF;
+				// }
 				break;
 			case TDS_SEND_MONEY:
 				if (col->attNotNull)
