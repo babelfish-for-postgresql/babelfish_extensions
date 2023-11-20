@@ -1895,7 +1895,7 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					 */
 					if (atttypmod == -1 && tle != NULL)
 					{
-						if (!plannedstmt)
+						if (!plannedstmt || !plannedstmt->planTree)
 						{
 							ereport(ERROR,
 									(errcode(ERRCODE_INTERNAL_ERROR),
