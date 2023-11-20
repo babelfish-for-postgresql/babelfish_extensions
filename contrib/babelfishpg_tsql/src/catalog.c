@@ -2843,6 +2843,10 @@ add_entry_to_bbf_schema(const char *schema_name,
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
 
+	/* Immediately return, if grantee is NULL or PUBLIC. */
+	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+		return;
+
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
@@ -2889,6 +2893,10 @@ check_bbf_schema_for_entry(const char *schema_name,
 	SysScanDesc	scan;
 	bool	catalog_entry_exists = false;
 	int16	dbid = get_cur_db_id();
+
+	/* Immediately return false, if grantee is NULL or PUBLIC. */
+	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+		return false;
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									AccessShareLock);
@@ -3004,6 +3012,10 @@ del_from_bbf_schema(const char *schema_name,
 	ScanKeyData scanKey[5];
 	SysScanDesc scan;
 	int16	dbid = get_cur_db_id();
+
+	/* Immediately return, if grantee is NULL or PUBLIC. */
+	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+		return;
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
@@ -3122,11 +3134,13 @@ clean_up_bbf_schema(const char *schema_name,
 }
 
 /*
+ * CONTEXT
  * REVOKE on SCHEMA: Revokes permission from all the objects belonging to that schema,
  * but objects which has explicit OBJECT level permission should be accessible.
  *
+ * grant_perms_to_objects_in_schema:
  * For all objects belonging to that schema which has OBJECT level permission,
- * we need to grant the permission explicitly after REVOKE has been executed.
+ * It grants the permission explicitly after REVOKE has been executed.
  */
 
 void
