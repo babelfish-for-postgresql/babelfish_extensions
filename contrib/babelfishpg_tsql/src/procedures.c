@@ -1484,7 +1484,6 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
                                      undeclaredparams->reloid,
                                      undeclaredparams->targetcolnames[undeclaredparams->paramindexes[call_cntr]]);
 
-		int			rc = SPI_execute(query, true, 1);
 
 		int rc = SPI_execute(query, true, 1);
 		if (rc != SPI_OK_SELECT)
