@@ -57,13 +57,16 @@ go
 create proc babel_4344_s1.babel_4344_p1 as select 2;
 go
 
+create proc babel_4344_s1.babel_4344_p3 as select 3;
+go
+
 CREATE FUNCTION babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.tables) END
 go
 
 CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
 go
 
-grant SELECT on schema::babel_4344_S1 to public;
+grant SELECT on schema::babel_4344_S1 to public, αιώνια;
 go
 
 grant select on schema::αγάπη to αιώνια;
@@ -74,6 +77,13 @@ use babel_4344_d1;
 go
 
 select * from αγάπη.abc;
+go
+~~START~~
+int
+~~END~~
+
+
+select * from babel_4344_S1.babel_4344_t1;
 go
 ~~START~~
 int
@@ -107,7 +117,7 @@ go
 -- tsql
 use babel_4344_d1;
 go
-revoke select on schema::babel_4344_s1 from public;
+revoke select on schema::babel_4344_s1 from public, αιώνια;
 go
 
 -- tsql user=babel_4344_l1 password=12345678 
@@ -194,6 +204,12 @@ grant execute on babel_4344_p1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_p1 to babel_4344_u1;
 go
+-- inside a transaction, permission will not be granted since it is rolled back
+begin transaction;
+exec sp_executesql N'grant execute on babel_4344_s1.babel_4344_p3 to babel_4344_u1;';
+rollback transaction;
+go
+
 -- Mixed case
 grant Execute on Babel_4344_F1 to babel_4344_u1;
 go
@@ -220,11 +236,27 @@ go
 
 ~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
 
-grant select on schema::[] to guest; -- should fail 
+grant select on schema::non_existing_schema to guest; -- should fail 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "non_existing_schema" does not exist)~~
+
+-- grant statement via a procedure
+create procedure grant_perm_proc as begin exec('grant select on schema::[] to guest') end;
+go
+exec grant_perm_proc; -- should fail
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as "" or [] are not allowed. Change the alias to a valid name.)~~
+
+-- non-existing role
+grant SELECT on schema::dbo to guest, babel_4344_u3; -- should fail
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot find the principal 'babel_4344_u3', because it does not exist or you do not have permission.)~~
 
 
 -- tsql user=babel_4344_l1 password=12345678
@@ -286,6 +318,12 @@ go
 int
 2
 ~~END~~
+
+exec babel_4344_s1.babel_4344_p3; -- should fail, grant statement was rolled back
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure babel_4344_p3)~~
 
 select * from babel_4344_f1();
 go
@@ -380,7 +418,7 @@ select * from babel_4344_s1.babel_4344_f1();
 go
 ~~START~~
 int
-10
+11
 ~~END~~
 
 use master;
@@ -424,14 +462,14 @@ int
 2
 ~~END~~
 
-exec babel_4344_s1.babel_4344_p1; -- TODO: should be  accessible
+exec babel_4344_s1.babel_4344_p1;
 go
 ~~START~~
 int
 2
 ~~END~~
 
-select * from babel_4344_s1.babel_4344_f1(); -- TODO: should be  accessible
+select * from babel_4344_s1.babel_4344_f1();
 go
 ~~START~~
 int
@@ -497,7 +535,7 @@ select * from babel_4344_s1.babel_4344_f2();
 go
 ~~START~~
 int
-14
+15
 ~~END~~
 
 use master;
@@ -562,7 +600,7 @@ select * from babel_4344_s1.babel_4344_f1();
 go
 ~~START~~
 int
-14
+15
 ~~END~~
 
 select * from babel_4344_s2.babel_4344_t1;
@@ -635,6 +673,54 @@ go
 use master;
 go
 
+-- psql
+-- grant object permission
+grant select on babel_4344_s1.babel_4344_t1 to babel_4344_d1_babel_4344_u1;
+go
+
+-- tsql
+-- grant schema permission
+use babel_4344_d1;
+go
+grant select on schema::babel_4344_s1 to babel_4344_u1;
+go
+use master
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1; -- accessible
+go
+~~START~~
+int
+2
+3
+3
+4
+5
+~~END~~
+
+use master
+go
+
+-- psql
+-- revoke schema permission
+revoke select on all tables in schema babel_4344_s1 from babel_4344_d1_babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1; -- not accessible
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_4344_t1)~~
+
+use master
+go
+
 -- tsql
 -- Drop objects
 use babel_4344_d1;
@@ -671,6 +757,9 @@ drop proc babel_4344_s1.babel_4344_p1;
 go
 
 drop proc babel_4344_s1.babel_4344_p2;
+go
+
+drop proc babel_4344_s1.babel_4344_p3;
 go
 
 drop function babel_4344_f1;
