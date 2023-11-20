@@ -2937,6 +2937,9 @@ check_bbf_schema_for_entry(const char *schema_name,
 	return catalog_entry_exists;
 }
 
+/*
+ * Checks if a particular schema has any SCHEMA level permission granted to any user.
+ */
 bool
 check_bbf_schema_for_schema(const char *schema_name,
 							const char *object_name,
@@ -3047,8 +3050,6 @@ del_from_bbf_schema(const char *schema_name,
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
-
-	CommandCounterIncrement();
 }
 
 void
@@ -3119,6 +3120,14 @@ clean_up_bbf_schema(const char *schema_name,
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
+
+/*
+ * REVOKE on SCHEMA: Revokes permission from all the objects belonging to that schema,
+ * but objects which has explicit OBJECT level permission should be accessible.
+ *
+ * For all objects belonging to that schema which has OBJECT level permission,
+ * we need to grant the permission explicitly after REVOKE has been executed.
+ */
 
 void
 grant_perms_to_objects_in_schema(const char *schema_name,

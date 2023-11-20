@@ -3638,10 +3638,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									int i = 0;
+									bool rol_is_not_public = false;
 									char *permissions[] = {"select", "insert", "update", "references", "delete"};
-									for(i = 0; i < 5; i++)
+									if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0))
+										rol_is_not_public = true;
+									if (rol_is_not_public)
 									{
-										if ((rol_spec->rolename != NULL) && (strcmp(rol_spec->rolename, "public") != 0))
+										for(i = 0; i < 5; i++)
 										{
 											/*
 											 * If object permission doesn't exist already, add an entry to the catalog.
@@ -3774,19 +3777,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						logicalschema = get_logical_schema_name(schemaname, true);
 						funcname = strVal(func);
 					}
-					/* 
-					 * Case: When ALL PRIVILEGES is revoked internally during create function.
-					 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
-					 */
-					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
-					{
-						if(check_bbf_schema_for_schema(logicalschema, "ALL", "execute"))
-							return;
-						break;
-					}
+
 					/* If ALL PRIVILEGES is granted/revoked. */
 					if (list_length(grant->privileges) == 0)
 					{
+						/*
+						 * Case: When ALL PRIVILEGES is revoked internally during create function.
+						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+						 */
+						if (pstmt->stmt_len == 0)
+						{
+							if(check_bbf_schema_for_schema(logicalschema, "ALL", "execute"))
+								return;
+						}
+
 						if (grant->is_grant)
 						{
 							foreach(lc, grant->grantees)
@@ -3798,7 +3802,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										add_entry_to_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename, obj_type);
 								}
 							}
-							break;
 						}
 						else
 						{
@@ -3816,8 +3819,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (has_schema_perms)
 									return;
 							}
-							break;
 						}
+						break;
 					}
 					foreach(lc1, grant->privileges)
 					{

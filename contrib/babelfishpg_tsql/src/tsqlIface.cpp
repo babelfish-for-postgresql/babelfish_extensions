@@ -5529,7 +5529,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 					}
 					if (prin->PUBLIC())
 					{
-						char *grantee_name = pstrdup("public");//(char *)"public";
+						char *grantee_name = pstrdup("public");
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}

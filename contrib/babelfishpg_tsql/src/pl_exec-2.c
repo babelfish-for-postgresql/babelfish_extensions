@@ -3688,6 +3688,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	ListCell   *lc;
 	ListCell	*lc1;
 	Oid 		schemaOid;
+	char	*user = GetUserNameFromId(GetUserId(), false);
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
@@ -3719,7 +3720,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		foreach(lc, stmt->grantees)
 		{
 			char	   *grantee_name = (char *) lfirst(lc);
-			char	*user = GetUserNameFromId(GetUserId(), false);
 			Oid	role_oid;
 			bool		grantee_is_db_owner;
 			if (strcmp(grantee_name, "public") != 0)
@@ -3781,8 +3781,13 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 				grant_perms_to_objects_in_schema(stmt->schema_name, priv_name, rolname);
 				del_from_bbf_schema(stmt->schema_name, "ALL", priv_name, rolname);
 			}
+			pfree(rolname);
 		}
 	}
+	pfree(user);
+	pfree(schema_name);
+	pfree(dbname);
+	pfree(login);
 	return PLTSQL_RC_OK;
 }
 
