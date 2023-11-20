@@ -2980,9 +2980,9 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 	else
 	{
-		// /* We can store upto 2GB (2^31 - 1 bytes) for the nvarchar(max). */
-		// if (unlikely(buf.len > VARCHAR_MAX))
-		// 	elog(ERROR, "Number of bytes required for the field of nvarchar(max) exeeds 2GB");
+		/* We can store upto 2GB (2^31 - 1 bytes) for the nvarchar(max). */
+		if (unlikely(buf.len > VARCHAR_MAX))
+			elog(ERROR, "Number of bytes required for the field of nvarchar(max) exeeds 2GB");
 		TDSInstrumentation(INSTR_TDS_DATATYPE_NVARCHAR_MAX);
 
 		rc = TdsSendPlpDataHelper(buf.data, buf.len);

@@ -1726,14 +1726,14 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				break;
 			case TDS_SEND_VARCHAR:
 				if (atttypmod == TSQLMaxTypmod)
-					atttypmod = -1
+					atttypmod = -1;
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4));
 				break;
 			case TDS_SEND_NVARCHAR:
 				if (atttypmod == TSQLMaxTypmod)
-					atttypmod = -1
+					atttypmod = -1;
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4) * 2);
