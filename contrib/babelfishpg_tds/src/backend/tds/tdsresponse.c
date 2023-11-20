@@ -1737,10 +1737,6 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4) * 2);
-				// if(atttypmod < 0)
-				// {
-				// 	col->metaEntry.type2.maxSize = 2 * 0xFFFF;
-				// }
 				break;
 			case TDS_SEND_MONEY:
 				if (col->attNotNull)
