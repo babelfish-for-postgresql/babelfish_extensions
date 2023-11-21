@@ -325,3 +325,40 @@ EmployeeData AS
 SELECT *
 FROM EmployeeData;
 GO
+
+-- Join stmts inside PIVOT statment (BABEL-4558)
+SELECT *
+FROM (SELECT OSTable.Oid, STable.Scode, STable.Type
+        FROM OSTable
+        INNER JOIN STable
+        ON OSTable.Sid = STable.Id
+        ) AS SourceTable
+PIVOT ( MAX(Scode) FOR [Type] IN ([1], [2], [3]))
+        AS os_pivot
+GO
+
+-- view usage in PIVOT data source
+SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
+FROM
+(
+    SELECT EmployeeID, ItemID, StoreID
+    FROM StoreReceipt_view
+)AS srctable
+PIVOT (
+    COUNT (ItemID)
+    FOR StoreID IN ([2], [3], [4], [5], [6])
+) AS pvt
+GO
+
+-- aggregate string value, when no row is selected, should output NULL
+SELECT [seatings], [LEFT], [RIGHT] 
+FROM
+(
+    SELECT [seatings], left_right 
+    FROM seating_tbl
+) AS p1
+PIVOT (
+    MAX(left_right) 
+    FOR left_right IN ([LEFT], [RIGHT]) 
+) AS p2
+GO

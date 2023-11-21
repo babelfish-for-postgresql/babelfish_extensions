@@ -1598,7 +1598,6 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 					ResTarget 		*a_star_restarget;
 					RangeSubselect 	*range_sub_select;
 					Alias 			*temptable_alias;
-					SortBy 			*s;
 					List    *ret;
 					List    *value_col_strlist = NULL;
 					List	*subsel_valuelists = NULL;
@@ -1658,16 +1657,8 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 					range_sub_select->subquery = (Node *) valuelists_sql;
 					range_sub_select->alias = temptable_alias;
 
-					s = makeNode(SortBy);
-					s->node = makeIntConst(1, -1);
-					s->sortby_dir = 0;
-					s->sortby_nulls = 0;     
-					s->useOp = NIL;
-					s->location = -1;
-
 					category_sql->targetList = list_make1(a_star_restarget);
 					category_sql->fromClause = list_make1(range_sub_select);
-					category_sql->sortClause = list_make1(s);
 
 					ret = list_make4($5, restarget_aggfunc, category_sql, value_col_strlist);
 					$$ = (Node*) ret; 

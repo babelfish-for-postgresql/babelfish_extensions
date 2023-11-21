@@ -4404,6 +4404,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*src_sql_fromClause_copy;
 	char		*pivot_colstr;
 	char		*value_colstr;
+	String		*funcName;
 	ColumnRef	*value_col;
 	TargetEntry	*aggfunc_te;
 	RangeFunction	*pivot_from_function;
@@ -4436,6 +4437,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	/* Get pivot column str & value column str from parser result */
 	pivot_colstr = ((String *) llast(((ColumnRef *)stmt->pivotCol)->fields))->sval;
 	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
+	funcName = list_nth_node(String, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->funcname, 0);
 	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
 
 	/* Get the targetList of the src table */
@@ -4561,7 +4563,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_len = 0;
 	sourcetext = pstrdup(pstate->p_sourcetext);
 
-	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make3(copyObject(s_sql), copyObject(c_sql), sourcetext));
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make4(copyObject(s_sql), copyObject(c_sql), sourcetext, copyObject(funcName)));
 	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
 }

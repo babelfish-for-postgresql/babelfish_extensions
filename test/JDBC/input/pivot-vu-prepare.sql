@@ -455,3 +455,90 @@ RETURN
         FOR StoreID in ([2], [3], [4], [5], [6])
     ) AS pvt2
 GO
+
+CREATE VIEW StoreReceipt_view
+AS
+SELECT * FROM StoreReceipt;
+GO
+
+-- BABEL-4558 
+CREATE TABLE OSTable(
+    [Oid] [int] NOT NULL,
+    [Sid] [int] NOT NULL
+)
+GO
+
+
+CREATE TABLE STable(
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Scode] [varchar](10) NOT NULL,
+    [Type] [smallint] NOT NULL
+)
+GO
+
+insert into OSTable (Oid, Sid) values (1, 2);
+GO
+insert into OSTable (Oid, Sid) values (2, 8);
+GO
+insert into OSTable (Oid, Sid) values (3, 5);
+GO
+insert into OSTable (Oid, Sid) values (4, 11);
+GO
+insert into OSTable (Oid, Sid) values (5, 12);
+GO
+insert into OSTable (Oid, Sid) values (6, 8);
+GO
+insert into OSTable (Oid, Sid) values (7, 5);
+GO
+insert into OSTable (Oid, Sid) values (8, 2);
+GO
+insert into OSTable (Oid, Sid) values (9, 15);
+GO
+insert into OSTable (Oid, Sid) values (10, 1);
+GO
+
+insert into STable (Scode, Type) values ('vestibulum', 11);
+GO
+insert into STable (Scode, Type) values ('eget', 15);
+GO
+insert into STable (Scode, Type) values ('pharetra', 13);
+GO
+insert into STable (Scode, Type) values ('nam', 15);
+GO
+insert into STable (Scode, Type) values ('fermentum', 13);
+GO
+insert into STable (Scode, Type) values ('hac', 12);
+GO
+insert into STable (Scode, Type) values ('molestie', 10);
+GO
+insert into STable (Scode, Type) values ('justo', 11);
+GO
+insert into STable (Scode, Type) values ('lobortis', 7);
+GO
+insert into STable (Scode, Type) values ('at', 3);
+GO
+insert into STable (Scode, Type) values ('augue', 9);
+GO
+insert into STable (Scode, Type) values ('luctus', 2);
+GO
+insert into STable (Scode, Type) values ('nisi', 9);
+GO
+insert into STable (Scode, Type) values ('sociis', 1);
+GO
+insert into STable (Scode, Type) values ('ultrices', 14);
+GO
+
+-- table for aggregate with string value
+CREATE TABLE seating_tbl (
+    seatings VARCHAR(20) NOT NULL,
+    left_right VARCHAR(20) NOT NULL
+);
+go
+
+INSERT INTO seating_tbl (seatings, left_right)
+VALUES ('SEAT1', 'LEFT'),
+       ('SEAT1', 'RIGHT'),
+       ('SEAT2', 'LEFT'),
+       ('SEAT3', 'LEFT'),
+       ('SEAT3', 'RIGHT');
+go

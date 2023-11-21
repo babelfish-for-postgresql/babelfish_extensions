@@ -1096,3 +1096,70 @@ GO
 
 ~~ERROR (Message: WITH CTE stmt with usage of PIVOT operator is not currently supported)~~
 
+
+-- Join stmts inside PIVOT statment (BABEL-4558)
+SELECT *
+FROM (SELECT OSTable.Oid, STable.Scode, STable.Type
+        FROM OSTable
+        INNER JOIN STable
+        ON OSTable.Sid = STable.Id
+        ) AS SourceTable
+PIVOT ( MAX(Scode) FOR [Type] IN ([1], [2], [3]))
+        AS os_pivot
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+1#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#<NULL>#!#<NULL>#!#<NULL>
+3#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#<NULL>#!#<NULL>#!#<NULL>
+5#!#<NULL>#!#luctus#!#<NULL>
+6#!#<NULL>#!#<NULL>#!#<NULL>
+7#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#<NULL>#!#<NULL>#!#<NULL>
+9#!#<NULL>#!#<NULL>#!#<NULL>
+10#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- view usage in PIVOT data source
+SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
+FROM
+(
+    SELECT EmployeeID, ItemID, StoreID
+    FROM StoreReceipt_view
+)AS srctable
+PIVOT (
+    COUNT (ItemID)
+    FOR StoreID IN ([2], [3], [4], [5], [6])
+) AS pvt
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+200#!#0#!#0#!#2#!#0#!#0
+201#!#0#!#0#!#0#!#0#!#0
+202#!#1#!#0#!#0#!#0#!#0
+203#!#0#!#0#!#0#!#1#!#0
+204#!#0#!#1#!#0#!#0#!#1
+~~END~~
+
+
+-- aggregate string value, when no row is selected, should output NULL
+SELECT [seatings], [LEFT], [RIGHT] 
+FROM
+(
+    SELECT [seatings], left_right 
+    FROM seating_tbl
+) AS p1
+PIVOT (
+    MAX(left_right) 
+    FOR left_right IN ([LEFT], [RIGHT]) 
+) AS p2
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+SEAT1#!#LEFT#!#RIGHT
+SEAT2#!#LEFT#!#<NULL>
+SEAT3#!#LEFT#!#RIGHT
+~~END~~
+
