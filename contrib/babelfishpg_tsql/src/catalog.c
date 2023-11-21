@@ -3042,8 +3042,6 @@ update_bbf_schema_privilege(const char *schema_name,
 
 	table_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
-
-	CommandCounterIncrement();
 }
 
 /* Check if the catalog entry exists. */
@@ -3113,10 +3111,11 @@ check_bbf_schema_for_schema(const char *schema_name,
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
-	ScanKeyData key[3];
-	SysScanDesc scan;
-	int16	dbid = get_cur_db_id();
-	int16 priv = 0;
+	ScanKeyData	key[3];
+	SysScanDesc	scan;
+	int16		dbid = get_cur_db_id();
+	int16		priv = 0;
+	bool		permission_exists_on_schema = false;
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									AccessShareLock);
@@ -3144,19 +3143,19 @@ check_bbf_schema_for_schema(const char *schema_name,
 				true, NULL, 3, key);
 
 	tuple_bbf_schema = systable_getnext(scan);
-	while (HeapTupleIsValid(tuple_bbf_schema))
+	if (HeapTupleIsValid(tuple_bbf_schema))
 	{
 		Form_bbf_schema_perms schemaform;
 		schemaform = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
 		priv = schemaform->permission;
 
 		if((permission & priv) == permission)
-			return true;
+			permission_exists_on_schema = true;
 	}
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
-	return false;
+	return permission_exists_on_schema;
 }
 
 void

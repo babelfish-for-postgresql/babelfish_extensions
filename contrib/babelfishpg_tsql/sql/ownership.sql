@@ -19,7 +19,7 @@ CREATE TABLE sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
   schema_name NAME NOT NULL COLLATE sys.database_default,
   object_name NAME NOT NULL COLLATE sys.database_default,
-  permission SMALLINT,
+  permission SMALLINT NOT NULL,
   grantee NAME NOT NULL COLLATE sys.database_default,
   object_type NAME COLLATE sys.database_default,
   PRIMARY KEY(dbid, schema_name, object_name, grantee)
