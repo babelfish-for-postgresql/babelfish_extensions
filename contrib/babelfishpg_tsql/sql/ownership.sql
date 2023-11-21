@@ -19,10 +19,10 @@ CREATE TABLE sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
   schema_name NAME NOT NULL COLLATE sys.database_default,
   object_name NAME NOT NULL COLLATE sys.database_default,
-  permission NAME NOT NULL COLLATE sys.database_default,
+  permission SMALLINT,
   grantee NAME NOT NULL COLLATE sys.database_default,
   object_type NAME COLLATE sys.database_default,
-  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+  PRIMARY KEY(dbid, schema_name, object_name, grantee)
 );
 
 -- BABELFISH_FUNCTION_EXT
