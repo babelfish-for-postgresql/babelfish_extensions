@@ -372,10 +372,8 @@ select schema_name, object_name, permission, grantee from sys.babelfish_schema_p
 where schema_name = 'babel_4344_s1' collate "C" and object_name = 'ALL' collate "C" order by permission;
 go
 ~~START~~
-name#!#name#!#name#!#name
-babel_4344_s1#!#ALL#!#execute#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#ALL#!#insert#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#ALL#!#select#!#babel_4344_d1_babel_4344_u1
+name#!#name#!#int2#!#name
+babel_4344_s1#!#ALL#!#56#!#babel_4344_d1_babel_4344_u1
 ~~END~~
 
 
@@ -626,7 +624,7 @@ go
 select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
 go
 ~~START~~
-int2#!#name#!#name#!#name#!#name#!#name
+int2#!#name#!#name#!#int2#!#name#!#name
 ~~END~~
 
 

@@ -3722,7 +3722,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	ListCell	*lc;
 	Oid			schemaOid;
 	int16		privilege_maskInt = create_privilege_bitmask(stmt->privileges, true);
-	char	*user = GetUserNameFromId(GetUserId(), false);
+	char		*user = GetUserNameFromId(GetUserId(), false);
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
@@ -3751,14 +3751,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	foreach(lc, stmt->grantees)
 	{
 		char	*grantee_name = (char *) lfirst(lc);
-		char	*user = GetUserNameFromId(GetUserId(), false);
 		Oid	role_oid;
 		int16 old_priv = 0;
 		if (strcmp(grantee_name, "public") != 0)
 			rolname	= get_physical_user_name(dbname, grantee_name);
 		else
 			rolname = pstrdup("public");
-		//rolname	= get_physical_user_name(dbname, grantee_name);
 		role_oid = get_role_oid(rolname, true);
 
 		if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
