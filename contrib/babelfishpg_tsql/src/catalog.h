@@ -299,7 +299,7 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantee 5
 #define Anum_bbf_schema_perms_object_type 6
 
-#define SCHEMA_PERMISSION_EXISTS "ALL"
+#define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
 
 extern Oid bbf_schema_perms_oid;
 extern Oid bbf_schema_perms_idx_oid;

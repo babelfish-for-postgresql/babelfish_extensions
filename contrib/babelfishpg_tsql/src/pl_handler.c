@@ -3666,7 +3666,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										 * 3. If both schema and object permission exist, don't revoke any permission but delete object
 										 *    entry from the catalog.
 										 */
-										if (check_bbf_schema_for_entry(logical_schema, SCHEMA_PERMISSION_EXISTS, permissions[i], rol_spec->rolename) && !has_schema_perms)
+										if (check_bbf_schema_for_entry(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, permissions[i], rol_spec->rolename) && !has_schema_perms)
 											has_schema_perms = true;
 										del_from_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename);
 									}
@@ -3713,7 +3713,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 									* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 									*/
-									if ((logical_schema != NULL) && !check_bbf_schema_for_entry(logical_schema, SCHEMA_PERMISSION_EXISTS, ap->priv_name, rol_spec->rolename))
+									if ((logical_schema != NULL) && !check_bbf_schema_for_entry(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, ap->priv_name, rol_spec->rolename))
 									{
 										if (prev_ProcessUtility)
 											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3770,7 +3770,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 */
 						if (pstmt->stmt_len == 0)
 						{
-							if(check_bbf_schema_for_schema(logicalschema, SCHEMA_PERMISSION_EXISTS, "execute"))
+							if(check_bbf_schema_for_schema(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, "execute"))
 								return;
 						}
 
@@ -3789,7 +3789,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								bool has_schema_perms = false;
-								if (check_bbf_schema_for_entry(logicalschema, SCHEMA_PERMISSION_EXISTS, "execute", rol_spec->rolename) && !has_schema_perms)
+								if (check_bbf_schema_for_entry(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, "execute", rol_spec->rolename) && !has_schema_perms)
 									has_schema_perms = true;
 								del_from_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename);
 								if (has_schema_perms)
@@ -3830,7 +3830,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
 								 * 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 								 */
-								if (!check_bbf_schema_for_entry(logicalschema, SCHEMA_PERMISSION_EXISTS, ap->priv_name, rol_spec->rolename))
+								if (!check_bbf_schema_for_entry(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, ap->priv_name, rol_spec->rolename))
 								{
 									/* Execute REVOKE statement. */
 									if (prev_ProcessUtility)
