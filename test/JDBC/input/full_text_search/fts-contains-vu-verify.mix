@@ -50,6 +50,9 @@ GO
 EXEC fts_contains_vu_prepare_p1 '"come back"'
 GO
 
+EXEC fts_contains_vu_prepare_p1 '"come       back"'
+GO
+
 EXEC fts_contains_vu_prepare_p1 '"much of the"'
 GO
 

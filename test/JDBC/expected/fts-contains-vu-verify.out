@@ -167,6 +167,24 @@ int#!#text
 ~~END~~
 
 
+EXEC fts_contains_vu_prepare_p1 '"come       back"'
+GO
+~~START~~
+int#!#text
+6#!#Walter Hill , the director of The Warriors , strove to give a comic-book depiction of the gang 's flight from the Bronx back to their Coney Island turf 
+8#!# After making their way through rival gangs ' turf in Manhattan and then back to Coney Island , the Warriors defeat the gang responsible for Cyrus ' death 
+158#!# What were the largest or most active homegrown companies back in the late ' 80s -- Portland Rep , New Rose , Storefront Portland Civic Theater -- long ago folded 
+174#!#" Back then , there was this grittier , shoestring quality that imbued almost every company , " Mulligan says 
+176#!# But when I look back at that earlier renaissance of the ' 80s , the truth was the talent pool of the city needed to step up 
+290#!# I ca n't wait to get back in the ring with Michael 
+325#!#Judge Linnane , who adjourned the hearing briefly until the terms of settlement were lodged in the court file , put the summary judgment application back for mention on March 6 next 
+362#!#FRENKEL : Saher says that she never thought she would become a refugee , and it scares her to think about what 's happening back in her hometown of Daraa 
+416#!# At Mission Dolores , CyArk worked hard to get behind the very ornately carved reredos , a false wall in back of the altar that was made in Mexico and shipped to the Mission by boat in 1796 
+720#!#The Australopithecus boisei skull was one of several important discoveries Leakey made in her career -- all made despite the fact that she had nearly @ @ @ @ @ @ @ @ @ @ She got thrown out of school very early on and never wanted to go back , and became hugely interested in archaeology , " Richard Leakey , her son , told Archaeology magazine
+889#!# In her book Lots of Candles , Plenty of Cake , Anna Quindlen , the 60-year-old novelist and journalist who famously chronicled thirtysomething life back in the 1980s , wrote that she started using Botox for her frown lines in her mid-50s because she did n't want to look cross when she was n't 
+~~END~~
+
+
 EXEC fts_contains_vu_prepare_p1 '"much of the"'
 GO
 ~~START~~

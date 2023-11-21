@@ -114,7 +114,6 @@ simple_term_list:
  */
 static
 char* translate_simple_term(const char* inputStr) {
-
     int inputLength;
     int outputSize;
     char* output;
@@ -127,20 +126,30 @@ char* translate_simple_term(const char* inputStr) {
         return NULL;
     }
 
-    trimmedInputStr = (char*)palloc(strlen(inputStr) + 1);
-    strcpy(trimmedInputStr, inputStr);
+    trimmedInputStr = pstrdup(inputStr);
 
     // removing trailing and leading spaces
     trim(trimmedInputStr);
     inputLength = strlen(trimmedInputStr);
-    
+
     // Check if the input is a phrase enclosed in double quotes
     if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
         trimInsideQuotes(trimmedInputStr);
         inputLength = strlen(trimmedInputStr);
-        outputSize = inputLength - 2; // Exclude both quotes
+
+        // Calculate the maximum possible size of output
+        outputSize = inputLength * 3;
+
+        // Check for potential overflow and adjust the output size
+        if (outputSize < inputLength || outputSize < 0) {
+            pfree(trimmedInputStr);
+            return NULL; // Potential overflow
+        }
+
+        // Allocate the output buffer with the adjusted size
         output = (char*)palloc(outputSize + 1); // +1 for the null terminator
-        if (output == NULL) {   
+        if (output == NULL) {
+            pfree(trimmedInputStr);
             return NULL;
         }
 
@@ -151,21 +160,37 @@ char* translate_simple_term(const char* inputStr) {
         while (*inputPtr != '\0') {
             if (*inputPtr == ' ') {
                 // Replace space with "<->"
+                while (*(inputPtr + 1) == ' ') {
+                    // Handle multiples spaces between words and skip over additional spaces
+                    inputPtr++;
+                }
+                if (outputPtr - output + 3 > outputSize) {
+                    // Output buffer overflow
+                    pfree(trimmedInputStr);
+                    pfree(output);
+                    return NULL;
+                }
                 *outputPtr++ = '<';
                 *outputPtr++ = '-';
                 *outputPtr++ = '>';
             } else {
                 // Copy the character
+                if (outputPtr - output + 1 > outputSize) {
+                    // Output buffer overflow
+                    pfree(trimmedInputStr);
+                    pfree(output);
+                    return NULL;
+                }
                 *outputPtr++ = *inputPtr;
             }
             inputPtr++;
         }
-        *outputPtr = '\0';
 
+        pfree(trimmedInputStr);
         return output;
     } else {
         // It's a single word, so no transformation needed
-        return strdup(trimmedInputStr);
+        return trimmedInputStr;
     }
 }
 
@@ -176,13 +201,11 @@ static char *trim(char *s) {
     size_t end;
     size_t newLength;
 
-    if (s == NULL) {
-        return NULL;
-    }
-
     length = strlen(s);
-    if (length == 0) {
-        return s; // Empty string, nothing to trim
+    
+    // Empty string, nothing to trim
+    if (s == NULL || length == 0) {
+        return s;
     }
 
     start = 0;
@@ -219,13 +242,11 @@ static char *trimInsideQuotes(char *s) {
     size_t newLength;
     bool insideQuotes;
 
-    if (s == NULL) {
-        return NULL;
-    }
-
     length = strlen(s);
-    if (length == 0) {
-        return s; // Empty string, nothing to trim
+
+    // Empty string, nothing to trim
+    if (s == NULL || length == 0) {
+        return s;
     }
 
     insideQuotes = false;
