@@ -37,6 +37,10 @@ runs:
         cd ~/work/babelfish_extensions/babelfish_extensions/
         ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile14 start
         
+        # Just for testing
+        echo "Before extension installation"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "select a.attname as attname, c.relname as relname, col.collname as collation from pg_attribute as a JOIN pg_class as c ON c.oid = a.attrelid JOIN pg_collation col ON col.oid = a.attcollation where a.attname='name' and c.relname='spt_tablecollations_view';"
+
         if [ "${{ inputs.diff_conn }}" = "true" ]; then
           sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE;" 
           sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_tsql UPDATE;"
@@ -51,4 +55,8 @@ runs:
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
+
+        # Just for testing
+        echo "After extension installation"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "select a.attname as attname, c.relname as relname, col.collname as collation from pg_attribute as a JOIN pg_class as c ON c.oid = a.attrelid JOIN pg_collation col ON col.oid = a.attcollation where a.attname='name' and c.relname='spt_tablecollations_view';"
       shell: bash
