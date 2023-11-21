@@ -333,7 +333,7 @@ SetTvpRowData(ParameterToken temp, const StringInfo message, uint64_t *offset)
 						*offset += rowData->columnValues[i].len;
 					}
 					break;
-				case TDS_TYPE_CLRUDT:
+				case TDS_TYPE_SPATIAL:
 					{
 						retStatus = ReadPlp(temp, message, offset);
 						CheckPLPStatusNotOKForTVP(temp, retStatus);
@@ -651,7 +651,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 					memcpy(&colmetadata[i].maxLen, &messageData[*offset], sizeof(uint32_t));
 					*offset += sizeof(uint32_t);
 					break;
-				case TDS_TYPE_CLRUDT:
+				case TDS_TYPE_SPATIAL:
 					colmetadata[i].maxLen = messageData[(*offset)++];
 					break;
 				default:

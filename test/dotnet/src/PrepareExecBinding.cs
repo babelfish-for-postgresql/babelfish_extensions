@@ -5,7 +5,6 @@ using System.Data.Common;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
-using Microsoft.SqlServer.Types;
 using System.IO;
 using System.Text;
 
@@ -113,42 +112,6 @@ namespace BabelfishDotnetFramework
 								var temp = testUtils.FetchTvpValueUsingSqlDataRecord(param[3].Trim());
 								((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).SqlValue = temp;
 								sqlCmd.Parameters[param[1].Trim()].Size = 1000;
-							}
-								break;
-							case "geometry":
-							{
-								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
-								{
-									testUtils.PrintToLogsOrConsole("GEOMETRY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;
-								}
-								string[] arguments = param[2].Split(':', 2);
-								string geoWKT = arguments[0];
-								int srid = (int)GetSqlDbValue("int", arguments[1]);
-								
-								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
-								((SqlParameter) sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "Geometry";
-
-								sqlCmd.Parameters[param[1].Trim()].Value = SqlGeometry.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
-								sqlCmd.Parameters[param[1].Trim()].Size = 65535;
-							}
-								break;
-							case "geography":
-							{
-								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
-								{
-									testUtils.PrintToLogsOrConsole("GEOGRAPHY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;
-								}
-								string[] arguments = param[2].Split(':', 2);
-								string geoWKT = arguments[0];
-								int srid = (int)GetSqlDbValue("int", arguments[1]);
-														
-								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).SqlDbType = SqlDbType.Udt;
-								((SqlParameter)sqlCmd.Parameters[param[1].Trim()]).UdtTypeName = "Geography";
-
-								sqlCmd.Parameters[param[1].Trim()].Value = SqlGeography.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
-								sqlCmd.Parameters[param[1].Trim()].Size = 65535;
 							}
 								break;
 							default:
@@ -268,42 +231,6 @@ namespace BabelfishDotnetFramework
 								var temp = testUtils.FetchTvpValueUsingSqlDataRecord(param[3].Trim());
 								((SqlParameter) parameter).SqlValue = temp;
 								parameter.Size = 1000;
-							}
-								break;
-							case "geometry":
-							{
-								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
-								{
-									testUtils.PrintToLogsOrConsole("GEOMETRY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;	
-								}
-								string[] arguments = param[2].Split(':', 2);
-								string geoWKT = arguments[0];
-								int srid = (int)GetSqlDbValue("int", arguments[1]);;
-
-								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
-								((SqlParameter)parameter).UdtTypeName = "Geometry";
-
-								parameter.Value = SqlGeometry.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
-								parameter.Size = 65535;
-							}
-								break;
-							case "geography":
-							{
-								if (ConfigSetup.Database.Equals("oledb", StringComparison.InvariantCulture))
-								{
-									testUtils.PrintToLogsOrConsole("GEOGRAPHY NOT SUPPORTED BY OLEDB", logger, "error");
-									break;	
-								}
-								string[] arguments = param[2].Split(':', 2);
-								string geoWKT = arguments[0];
-								int srid = (int)GetSqlDbValue("int", arguments[1]);
-
-								((SqlParameter)parameter).SqlDbType = SqlDbType.Udt;
-								((SqlParameter)parameter).UdtTypeName = "Geography";
-
-								parameter.Value = SqlGeography.STGeomFromText(new SqlChars(new SqlString(geoWKT)), srid);
-								parameter.Size = 65535;
 							}
 								break;
 							default:
@@ -449,10 +376,6 @@ namespace BabelfishDotnetFramework
 				case "tvp":
 					return SqlDbType.Structured;
 				case "udt":
-					return SqlDbType.Udt;
-				case "geometry":
-					return SqlDbType.Udt;
-				case "geography":
 					return SqlDbType.Udt;
 				default:
 					throw new Exception("DATA TYPE NOT SUPPORTED " + type);

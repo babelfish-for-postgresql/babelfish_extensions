@@ -117,9 +117,7 @@
 #define TDS_TYPE_SQLVARIANT		98	/* 0x62 */
 #define TDS_TYPE_DATETIMEOFFSET		43	/* 0x2B */
 #define TDS_TYPE_SMALLDATETIME          58	/* 0x3A */
-#define TDS_TYPE_CLRUDT         240 /* 0xF0 */
-#define TDS_TYPE_GEOMETRY       254 /* 0xFE */
-#define TDS_TYPE_GEOGRAPHY      255 /* 0xFF */
+#define TDS_TYPE_SPATIAL		240	/* 0xF0 */
 
 /*
  * macros for supporting sqlvariant datatype on TDS side

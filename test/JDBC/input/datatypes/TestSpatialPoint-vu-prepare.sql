@@ -1,104 +1,70 @@
 CREATE TABLE SPATIALPOINTGEOM_dt (location geometry)
 GO
 
-
 -- Geometry Test Cases
+
 -- Positive Test for STGeomFromText with SRID 4326
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Positive Test for STGeomFromText with SRID 0
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 0) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Negative Test for STGeomFromText when SRID is not provided
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)') )
 GO
-~~ERROR (Code: 8146)~~
-
-~~ERROR (Message: function geometry__stgeomfromtext has no parameters and arguments were supplied.)~~
-
 
 -- Negative Test for STGeomFromText when SRID >= 10^6
 -- SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SRID value should be between 0 and 999999)~~
-
 
 -- Negative Test for STGeomFromText with SRID < 0
 -- SRID should be between 0 to 999999
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', -1) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: SRID value should be between 0 and 999999)~~
-
 
 -- Negative Test for STGeomFromText when a coordinate is missing
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Point(1.0 )', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
-
 
 -- Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText('Pnt', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
-
 
 -- Test for STGeomFromText when null Point is Given -> Returns NBCRow
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STGeomFromText(null, 4326) )
 GO
-~~ROW COUNT: 1~~
-
-
 
 -- -- Negative Test for STGeomFromText when Incorrect cast is provided
 -- INSERT INTO SPATIALPOINTGEOM_dt (location)
 -- VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 -- GO
+
 -- Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STPointFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::STPointFromText('Point(1.0 2.0)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Positive Test for Point with SRID 4326
 INSERT INTO SPATIALPOINTGEOM_dt (location)
 VALUES ( geometry::Point(47.65100, -22.34900, 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 CREATE VIEW TextFromGeom AS
 SELECT STAsText(location) AS TextRepresentation
@@ -143,143 +109,89 @@ GO
 INSERT INTO TypeTable(ID, Shape)
 VALUES(1, geometry::Point(1, 2, 4326));
 GO
-~~ROW COUNT: 1~~
-
-
 
 -- Geography Test Cases
+
 -- Positive Test for STGeomFromText with SRID 4326
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(1.0 2.0)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Negative Test for STGeomFromText for Geography with SRID 0
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 0) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Inavalid SRID)~~
-
 
 -- Negative Test for STGeomFromText for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -122.34900)', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 
 -- Negative Test for STGeomFromText when SRID is not provided
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)') )
 GO
-~~ERROR (Code: 8146)~~
-
-~~ERROR (Message: function geography__stgeomfromtext has no parameters and arguments were supplied.)~~
-
 
 -- Negative Test for STGeomFromText when cast is not provided
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function stgeomfromtext(unknown, integer) does not exist)~~
-
-
 
 -- -- Negative Test for STGeomFromText when incorrect cast is provided
 -- INSERT INTO SPATIALPOINTGEOG_dt (location)
 -- VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 -- GO
+
 -- Negative Test for STGeomFromText when SRID >= 10^6
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 1000000000 ) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Inavalid SRID)~~
-
 
 -- Negative Test for STGeomFromText with SRID < 0
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', -1) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Inavalid SRID)~~
-
 
 -- Negative Test for STGeomFromText when a coordinate is missing
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Point(1.0 )', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
-
 
 -- Negative Test for STGeomFromText when invalid type is provided
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText('Pnt', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: parse error - invalid geometry)~~
-
 
 -- Test for STGeomFromText when null Point is Given -> Returns NBCRow
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STGeomFromText(null, 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Positive Test for STPointFromText with SRID 4326. Rest are same as STGeomFromText
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STPointFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STPointFromText('Point(1.0 2.0)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Negative Test for STPointFromText for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::STPointFromText('Point(47.65100 122.34900)', 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 
 -- Positive Test for Point with SRID 4326
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::Point(47.65100, -22.34900, 4326) )
 GO
-~~ROW COUNT: 1~~
-
 
 -- Negative Test for Point for Geography when lat > 90 or < -90
 INSERT INTO SPATIALPOINTGEOG_dt (location)
 VALUES ( geography::Point(147.65100, -22.34900, 4326) )
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Latitude values must be between -90 and 90 degrees)~~
-
 
 CREATE VIEW TextFromGeog AS
 SELECT STAsText(location) AS TextRepresentation
@@ -320,15 +232,9 @@ GO
 INSERT INTO SPATIALPOINT_dt (GeomColumn)
 VALUES ( geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO SPATIALPOINT_dt (GeogColumn)
 VALUES ( geography::STGeomFromText('Point(47.65100 -22.34900)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
 INSERT INTO SPATIALPOINT_dt (GeomColumn, GeogColumn)
 VALUES ( geometry::STGeomFromText('Point(1.0 2.0)', 4326), geography::STGeomFromText('Point(1.0 2.0)', 4326) )
 GO
-~~ROW COUNT: 1~~
-
