@@ -28,6 +28,10 @@ GO
 select default_params_func3('dddd');
 GO
 
+-- it'll use default 
+select default_params_func4(default);
+GO
+
 exec default_params_proc1 111, default, 333
 GO
 
@@ -35,6 +39,15 @@ exec default_params_proc1 default, default, default
 GO
 
 exec default_params_proc1 default
+GO
+
+exec default_params_proc1 @p1=default, @p2=default,@p3=300
+GO
+
+exec default_params_proc1 @p1=300, @p2=default,@p3=default
+GO
+
+exec default_params_proc1 @p1=default, @p2=300,@p3=default
 GO
 
 exec default_params_proc2 default, 2
@@ -47,6 +60,14 @@ exec default_params_proc3 default, 2
 GO
 
 exec default_params_proc3 'dddd', 3
+GO
+
+-- verify the error message
+exec default_params_proc3 default, default
+GO
+
+-- verify the error message
+exec default_params_proc3 'ddd', default
 GO
 
 exec default_params_proc4 1,2,default

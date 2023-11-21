@@ -7,6 +7,9 @@ GO
 drop function default_params_func3;
 GO
 
+drop function default_params_func4;
+GO
+
 drop procedure default_params_proc1;
 GO
 
