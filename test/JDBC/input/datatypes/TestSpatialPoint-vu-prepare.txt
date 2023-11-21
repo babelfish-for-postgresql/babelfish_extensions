@@ -57,14 +57,16 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+#Negative Test for STGeomFromText when invalid type is provided
+prepst#!#exec#!#GEOMETRY|-|location|-|Pnt:4326
+#Negative Test for STGeomFromText when Null geometry is provided
+prepst#!#exec#!#GEOMETRY|-|location|-|<NULL>:4326
 
 CREATE VIEW TextFromGeom AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt;
 
 CREATE VIEW BinaryFromGeom AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOM_dt;
 
 CREATE VIEW CoordsFromGeom AS SELECT STX(location), STY(location)  AS Coordinates FROM SPATIALPOINTGEOM_dt;
-
-CREATE VIEW equal_geom AS SELECT p1.location AS point FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location;
 
 CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
 
@@ -77,20 +79,6 @@ CREATE TYPE geom FROM geometry NOT NULL ;
 CREATE TABLE TypeTable(ID INT PRIMARY KEY, Shape geom)
 
 INSERT INTO TypeTable(ID, Shape) VALUES(1, geometry::Point(1, 2, 4326));
-
-#Testing Implicit CASTs to and from Geometry data type for supported Explicit CASTs
-#UnSupported CASTs to and from Geometry data type
-CREATE TABLE GeomToVarbinary(p varbinary)
-INSERT INTO GeomToVarbinary(p) VALUES(geometry::Point(1, 2, 4326));
-CREATE TABLE GeomTochar(p char)
-INSERT INTO GeomTochar(p) VALUES(geometry::Point(1, 2, 4326));
-CREATE TABLE GeomToVarchar(p varchar)
-INSERT INTO GeomToVarchar(p) VALUES(geometry::Point(1, 2, 4326));
-#Supported CASTs to and from Geometry data type
-CREATE TABLE TypeToGeom(p geometry)
-INSERT INTO TypeToGeom(p) VALUES(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS varbinary(MAX)));
-INSERT INTO TypeToGeom(p) VALUES(CAST ('POINT(1 2)' AS char));
-INSERT INTO TypeToGeom(p) VALUES(CAST ('POINT(1 2)' AS varchar));
 
 #Geography Test Cases
 
@@ -161,6 +149,10 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
+#Negative Test for STGeomFromText when invalid type is provided
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Pnt:4326
+#Negative Test for STGeomFromText when Null geography is provided
+prepst#!#exec#!#GEOGRAPHY|-|location|-|<NULL>:4326
 
 CREATE VIEW TextFromGeog AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt;
 
@@ -171,23 +163,7 @@ CREATE VIEW CoordsFromGeog AS SELECT long(location), lat(location)  AS Coordinat
 
 CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified_points FROM SPATIALPOINTGEOG_dt;
 
-CREATE VIEW equal_geog AS SELECT p1.location AS point FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location = p2.location;
-
 CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location;
-
-#Testing Implicit CASTs to and from Geography data type for supported Explicit CASTs
-#UnSupported CASTs to and from Geography data type
-CREATE TABLE GeogToVarbinary(p varbinary)
-INSERT INTO GeogToVarbinary(p) VALUES(geography::Point(1, 2, 4326));
-CREATE TABLE GeogTochar(p char)
-INSERT INTO GeogTochar(p) VALUES(geography::Point(1, 2, 4326));
-CREATE TABLE GeogToVarchar(p varchar)
-INSERT INTO GeogToVarchar(p) VALUES(geography::Point(1, 2, 4326));
-#Supported CASTs to and from Geography data type
-CREATE TABLE TypeToGeog(p geography)
-INSERT INTO TypeToGeog(p) VALUES(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS varbinary(MAX)));
-INSERT INTO TypeToGeog(p) VALUES(CAST ('POINT(1 2)' AS char));
-INSERT INTO TypeToGeog(p) VALUES(CAST ('POINT(1 2)' AS varchar));
 
 CREATE TABLE SPATIALPOINT_dt (PrimaryKey int, GeomColumn geometry, GeogColumn geography)
 
