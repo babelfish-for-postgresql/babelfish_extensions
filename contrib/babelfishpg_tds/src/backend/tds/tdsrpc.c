@@ -2334,10 +2334,15 @@ static void
 SendCursorResponse(TDSRequestSP req)
 {
 	int			cmd_type = TDS_CMD_UNKNOWN;
-	Portal		portal;
-
 	/* fetch the portal */
-	portal = GetPortalFromCursorHandle(req->cursorHandle, false);
+	Portal		portal = GetPortalFromCursorHandle(req->cursorHandle, false);
+	PlannedStmt *plannedStmt = PortalGetPrimaryStmt(portal);
+	List 		*targetList = NIL;
+
+	if (portal->strategy != PORTAL_MULTI_QUERY)
+	{
+		targetList = FetchStatementTargetList((Node *) plannedStmt);
+	}
 
 	/*
 	 * If we are in aborted transaction state, we can't run
@@ -2366,7 +2371,7 @@ SendCursorResponse(TDSRequestSP req)
 	 * break the protocol.  We also need to fetch the primary keys for dynamic
 	 * and keyset cursors (XXX: these cursors are not yet implemented).
 	 */
-	PrepareRowDescription(portal->tupDesc, FetchPortalTargetList(portal),
+	PrepareRowDescription(portal->tupDesc, plannedStmt, targetList,
 						  portal->formats, true,
 						  (req->scrollopt & (SP_CURSOR_SCROLLOPT_DYNAMIC | SP_CURSOR_SCROLLOPT_KEYSET)));
 
