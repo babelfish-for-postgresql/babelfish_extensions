@@ -60,6 +60,13 @@ TdsPrinttupStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
 {
 	DR_printtup *myState = (DR_printtup *) self;
 	Portal		portal = myState->portal;
+	PlannedStmt *plannedStmt = PortalGetPrimaryStmt(portal);
+	List 		*targetList = NIL;
+
+	if (portal->strategy != PORTAL_MULTI_QUERY)
+	{
+		targetList = FetchStatementTargetList((Node *) plannedStmt);
+	}
 
 	/*
 	 * Create I/O buffer to be used for all messages.  This cannot be inside
@@ -78,7 +85,8 @@ TdsPrinttupStartup(DestReceiver *self, int operation, TupleDesc typeinfo)
 												ALLOCSET_DEFAULT_SIZES);
 
 	TdsSendRowDescription(typeinfo,
-						  FetchPortalTargetList(portal),
+						  plannedStmt,
+						  targetList,
 						  portal->formats);
 	return;
 }

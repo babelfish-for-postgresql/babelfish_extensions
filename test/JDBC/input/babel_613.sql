@@ -60,8 +60,12 @@ select coalesce(a, b) from t1;
 go
 
 -- test Union All
-select a from t1 Union All
-select b from t1;
+select * from 
+	(
+		select a as col from t1 Union All
+		select b as col from t1
+	) dummy
+order by col
 go
 
 -- test overflow from multiplication of columns
