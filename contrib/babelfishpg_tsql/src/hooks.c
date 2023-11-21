@@ -2917,8 +2917,13 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
 
-	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
-		((weight + 1) * numeric_base);
+	if (weight < 0)
+	{
+		/* weight < 0 means the integral part of the number is 0 */
+		total_digit_count = dscale;
+		return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
+	}
+	total_digit_count = weight * numeric_base;
 
 	/*
 	 * calculating exact #digits in the first partially filled numeric block,
@@ -2931,7 +2936,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 
 	/*
 	 * check if the first numeric block is partially filled If yes, add those
-	 * digit count Else if fully filled, Ignore as those digits are already
+	 * digit count Else if fully filled, Ignore as those digits might be already
 	 * added to total_digit_count
 	 */
 	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
@@ -2941,18 +2946,13 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 			int log_10 = (int) log10(partially_filled_numeric_block); // keep compiler happy
 			total_digit_count += log_10 + 1;
 		}
-		else
-			total_digit_count += 1;
 	}
 
 	/*
-	 * calculating exact #digits in last block if decimal point exists If
-	 * dscale is an exact multiple of numeric_base, last block is not
-	 * partially filled, then, ignore as those digits are already added to
-	 * total_digit_count Else, add the remainder digits
+	 * Add dscale or display scale, the nominal precision expressed as number
+	 * of digits after the decimal point.
 	 */
-	if (dscale > 0)
-		total_digit_count += (dscale % numeric_base);
+	total_digit_count += dscale;
 
 	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 }
