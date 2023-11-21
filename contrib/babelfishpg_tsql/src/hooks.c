@@ -3729,9 +3729,9 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 			}
 			++i;
 		}
-		return ret;
-
 		ReleaseSysCache(bbffunctuple);
+
+		return ret;
 	}
 	else
 	{

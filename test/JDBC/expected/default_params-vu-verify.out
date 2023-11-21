@@ -170,7 +170,7 @@ d#!#3
 -- verify the error message
 exec default_params_proc3 default, default
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 201)~~
 
 ~~ERROR (Message: Procedure or function 'default_params_proc3' expects parameter '@p2', which was not supplied.)~~
 
@@ -178,7 +178,7 @@ GO
 -- verify the error message
 exec default_params_proc3 'ddd', default
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 201)~~
 
 ~~ERROR (Message: Procedure or function 'default_params_proc3' expects parameter '@p2', which was not supplied.)~~
 
