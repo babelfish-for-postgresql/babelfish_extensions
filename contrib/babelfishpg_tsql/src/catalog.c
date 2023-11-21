@@ -2843,6 +2843,10 @@ add_entry_to_bbf_schema(const char *schema_name,
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
 
+	/* Immediately return, if grantee is NULL or PUBLIC. */
+	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+		return;
+
 	/* Fetch the relation */
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
@@ -2885,45 +2889,65 @@ check_bbf_schema_for_entry(const char *schema_name,
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
-	ScanKeyData	key[5];
-	TableScanDesc	scan;
+	ScanKeyData	scanKey[5];
+	SysScanDesc	scan;
 	bool	catalog_entry_exists = false;
 	int16	dbid = get_cur_db_id();
 
+	/* Immediately return false, if grantee is NULL or PUBLIC. */
+	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+		return false;
+
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									AccessShareLock);
-	ScanKeyInit(&key[0],
+	ScanKeyInit(&scanKey[0],
 				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
-	ScanKeyInit(&key[1],
+	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_schema_perms_schema_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(schema_name));
-	ScanKeyInit(&key[2],
+	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(object_name));
-	ScanKeyInit(&key[3],
+	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_permission,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(permission));
-	ScanKeyInit(&key[4],
+	ScanKeyEntryInitialize(&scanKey[4], 0,
 				Anum_bbf_schema_perms_grantee,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(grantee));
+	scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_idx_oid(),
+				true, NULL, 5, scanKey);
 
-	scan = table_beginscan_catalog(bbf_schema_rel, 5, key);
-
-	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+	tuple_bbf_schema = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_bbf_schema))
 		catalog_entry_exists = true;
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
 	return catalog_entry_exists;
 }
 
+/*
+ * Checks if a particular schema has any SCHEMA level permission granted to any user.
+ */
 bool
 check_bbf_schema_for_schema(const char *schema_name,
 							const char *object_name,
@@ -2932,7 +2956,7 @@ check_bbf_schema_for_schema(const char *schema_name,
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
 	ScanKeyData key[4];
-	TableScanDesc scan;
+	SysScanDesc scan;
 	bool		catalog_entry_exists = false;
 	int16	dbid = get_cur_db_id();
 
@@ -2942,26 +2966,37 @@ check_bbf_schema_for_schema(const char *schema_name,
 				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
-	ScanKeyInit(&key[1],
+	ScanKeyEntryInitialize(&key[1], 0,
 				Anum_bbf_schema_perms_schema_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(schema_name));
-	ScanKeyInit(&key[2],
+	ScanKeyEntryInitialize(&key[2], 0,
 				Anum_bbf_schema_perms_object_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(object_name));
-	ScanKeyInit(&key[3],
+	ScanKeyEntryInitialize(&key[3], 0,
 				Anum_bbf_schema_perms_permission,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(permission));
 
-	scan = table_beginscan_catalog(bbf_schema_rel, 4, key);
+	scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_idx_oid(),
+				true, NULL, 4, key);
 
-	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+	tuple_bbf_schema = systable_getnext(scan);
 	if (HeapTupleIsValid(tuple_bbf_schema))
 		catalog_entry_exists = true;
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
 	return catalog_entry_exists;
 }
@@ -2974,44 +3009,59 @@ del_from_bbf_schema(const char *schema_name,
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
-	ScanKeyData key[5];
-	TableScanDesc scan;
+	ScanKeyData scanKey[5];
+	SysScanDesc scan;
 	int16	dbid = get_cur_db_id();
+
+	/* Immediately return, if grantee is NULL or PUBLIC. */
+	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+		return;
 
 	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
 									RowExclusiveLock);
-	ScanKeyInit(&key[0],
+	ScanKeyInit(&scanKey[0],
 				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
-	ScanKeyInit(&key[1],
+	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_schema_perms_schema_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(schema_name));
-	ScanKeyInit(&key[2],
+	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_object_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(object_name));
-	ScanKeyInit(&key[3],
+	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_permission,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(permission));
-	ScanKeyInit(&key[4],
+	ScanKeyEntryInitialize(&scanKey[4], 0,
 				Anum_bbf_schema_perms_grantee,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(grantee));
+	scan = systable_beginscan(bbf_schema_rel,
+				get_bbf_schema_perms_idx_oid(),
+				true, NULL, 5, scanKey);
 
-	scan = table_beginscan_catalog(bbf_schema_rel, 5, key);
-
-	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+	tuple_bbf_schema = systable_getnext(scan);
 
 	if (HeapTupleIsValid(tuple_bbf_schema))
 		CatalogTupleDelete(bbf_schema_rel, &tuple_bbf_schema->t_self);
 
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
-
-	CommandCounterIncrement();
 }
 
 void
@@ -3035,9 +3085,12 @@ clean_up_bbf_schema(const char *schema_name,
 					Anum_bbf_schema_perms_dbid,
 					BTEqualStrategyNumber, F_INT2EQ,
 					Int16GetDatum(dbid));
-		ScanKeyInit(&scanKey[1],
+		ScanKeyEntryInitialize(&scanKey[1], 0,
 					Anum_bbf_schema_perms_schema_name,
-					BTEqualStrategyNumber, F_NAMEEQ,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_NAMEEQ,
 					CStringGetDatum(schema_name));
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
@@ -3050,13 +3103,19 @@ clean_up_bbf_schema(const char *schema_name,
 					Anum_bbf_schema_perms_dbid,
 					BTEqualStrategyNumber, F_INT2EQ,
 					Int16GetDatum(dbid));
-		ScanKeyInit(&scanKey[1],
+		ScanKeyEntryInitialize(&scanKey[1], 0,
 					Anum_bbf_schema_perms_schema_name,
-					BTEqualStrategyNumber, F_NAMEEQ,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_NAMEEQ,
 					CStringGetDatum(schema_name));
-		ScanKeyInit(&scanKey[2],
+		ScanKeyEntryInitialize(&scanKey[2], 0,
 					Anum_bbf_schema_perms_object_name,
-					BTEqualStrategyNumber, F_NAMEEQ,
+					BTEqualStrategyNumber,
+					InvalidOid,
+					tsql_get_server_collation_oid_internal(false),
+					F_NAMEEQ,
 					CStringGetDatum(object_name));
 		scan = systable_beginscan(bbf_schema_rel,
 					get_bbf_schema_perms_idx_oid(),
@@ -3074,12 +3133,18 @@ clean_up_bbf_schema(const char *schema_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
+/*
+ * For all objects belonging to a schema which has OBJECT level permission,
+ * It grants the permission explicitly when REVOKE has been executed on that
+ * specific schema.
+ */
+
 void
 grant_perms_to_objects_in_schema(const char *schema_name,
 				  const char *permission,
 				  const char *grantee)
 {
-	TableScanDesc scan;
+	SysScanDesc scan;
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
 	const char	*object_name;
@@ -3095,21 +3160,31 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 				Anum_bbf_schema_perms_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
-	ScanKeyInit(&scanKey[1],
+	ScanKeyEntryInitialize(&scanKey[1], 0,
 				Anum_bbf_schema_perms_schema_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(schema_name));
-	ScanKeyInit(&scanKey[2],
+	ScanKeyEntryInitialize(&scanKey[2], 0,
 				Anum_bbf_schema_perms_permission,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(permission));
-	ScanKeyInit(&scanKey[3],
+	ScanKeyEntryInitialize(&scanKey[3], 0,
 				Anum_bbf_schema_perms_grantee,
-				BTEqualStrategyNumber, F_NAMEEQ,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_NAMEEQ,
 				CStringGetDatum(grantee));
 
-	scan = table_beginscan_catalog(bbf_schema_rel, 4, scanKey);
-	tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
+							true, NULL, 4, scanKey);
+	tuple_bbf_schema = systable_getnext(scan);
 
 	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
@@ -3162,9 +3237,9 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
-		tuple_bbf_schema = heap_getnext(scan, ForwardScanDirection);
+		tuple_bbf_schema = systable_getnext(scan);
 	}
-	table_endscan(scan);
+	systable_endscan(scan);
 	table_close(bbf_schema_rel, AccessShareLock);
 }
 
