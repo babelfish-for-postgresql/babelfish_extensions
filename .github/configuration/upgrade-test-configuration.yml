@@ -123,6 +123,7 @@ upgrade-version: [{
   ]
 },
 {
+  title: "upgrade with non-default server collation",
   upgrade-path: [
     {
       version: 14.6,
