@@ -894,10 +894,10 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
   schema_name NAME NOT NULL,
   object_name NAME NOT NULL,
-  permission NAME NOT NULL,
+  permission SMALLINT,
   grantee NAME NOT NULL,
   object_type NAME,
-  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
+  PRIMARY KEY(dbid, schema_name, object_name, grantee)
 );
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text

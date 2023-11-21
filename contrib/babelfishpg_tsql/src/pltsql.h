@@ -1914,6 +1914,14 @@ extern int	insert_bulk_rows_per_batch;
 extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 
+/* Privilege Bits for GRANT SCHEMA */
+#define PRIVILEGE_EXECUTE 32
+#define PRIVILEGE_SELECT 16
+#define PRIVILEGE_INSERT 8
+#define PRIVILEGE_UPDATE 4
+#define PRIVILEGE_DELETE 2
+#define PRIVILEGE_REFERENCES 1
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/
@@ -2119,6 +2127,7 @@ extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
 extern Oid get_sysadmin_oid(void);
+extern int16 create_privilege_bitmask(const List *l, bool grant_schema_stmt);
 
 typedef struct
 {
