@@ -3283,12 +3283,6 @@ clean_up_bbf_schema(const char *schema_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
-/*
- * For all objects belonging to a schema which has OBJECT level permission,
- * It grants the permission explicitly when REVOKE has been executed on that
- * specific schema.
- */
-
 void
 grant_perms_to_each_obj(const char *db_name,
 					const char	*object_type,
@@ -3340,6 +3334,13 @@ grant_perms_to_each_obj(const char *db_name,
 	pfree(query.data);
 }
 
+
+/*
+ * For all objects belonging to a schema which has OBJECT level permission,
+ * It grants the permission explicitly when REVOKE has been executed on that
+ * specific schema.
+ */
+
 void
 grant_perms_to_objects_in_schema(const char *schema_name,
 				int16 priv,
@@ -3389,7 +3390,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 		object_type = pstrdup(NameStr(schemaform->object_type));
 		permission = (priv & (schemaform->permission));
 		/* For each object, grant the permission explicitly. */
-		if (strcmp(object_name, "ALL") != 0)
+		if (strcmp(object_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA) != 0)
 		{
 			if((permission & PRIVILEGE_BIT_FOR_EXECUTE) == PRIVILEGE_BIT_FOR_EXECUTE)
 				grant_perms_to_each_obj(db_name, object_type, schema_name, object_name, grantee, "execute");
