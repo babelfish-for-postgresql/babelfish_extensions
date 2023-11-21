@@ -1704,7 +1704,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 				continue;
 			else
 			{
-				unsupported_feature = "GRANT PERMISSION " + perm->getText();
+				unsupported_feature = "GRANT PERMISSION " + ::getFullText(single_perm);
+				std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
 		}
@@ -1719,6 +1720,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "GRANT ON " + obj_type->getText();
+			std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
 		}
 	}
@@ -1798,7 +1800,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 				continue;
 			else
 			{
-				unsupported_feature = "REVOKE PERMISSION " + perm->getText();
+				unsupported_feature = "REVOKE PERMISSION " + ::getFullText(single_perm);
+				std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
 		}
@@ -1813,6 +1816,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "REVOKE ON " + obj_type->getText();
+			std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
 		}
 	}

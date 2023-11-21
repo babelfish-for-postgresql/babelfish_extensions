@@ -3785,21 +3785,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						logicalschema = get_logical_schema_name(schemaname, true);
 						funcname = strVal(func);
 					}
-					/* 
-					 * Case: When ALL PRIVILEGES is revoked internally during create function.
-					 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
-					 */
-					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
-					{
-						if(check_bbf_schema_for_schema(logicalschema, "ALL", PRIVILEGE_EXECUTE))
-						{
-							return;
-						}
-						break;
-					}
 					/* If ALL PRIVILEGES is granted/revoked. */
 					if (list_length(grant->privileges) == 0)
 					{
+						/*
+						 * Case: When ALL PRIVILEGES is revoked internally during create function.
+						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+						 */
+						if (pstmt->stmt_len == 0)
+						{
+							if(check_bbf_schema_for_schema(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, PRIVILEGE_BIT_FOR_EXECUTE))
+								return;
+						}
+
 						if (grant->is_grant)
 						{
 							foreach(lc, grant->grantees)
@@ -3817,7 +3815,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									}
 								}
 							}
-							break;
 						}
 						else
 						{
@@ -3840,8 +3837,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								if (has_schema_perms)
 									return;
 							}
-							break;
 						}
+						break;
 					}
 					
 					if (grant->is_grant)
@@ -3882,7 +3879,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							 */
 							if ((rol_spec->rolename != NULL))
 							{
-								if (!check_bbf_schema_for_entry(logicalschema, "ALL", rol_spec->rolename))
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								/* 
+								 * 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
+								 * 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
+								 */
+								if (!check_bbf_schema_for_entry(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 								{
 									/* Execute REVOKE statement. */
 									if (prev_ProcessUtility)

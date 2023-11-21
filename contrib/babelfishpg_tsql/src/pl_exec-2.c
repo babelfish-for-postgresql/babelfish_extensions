@@ -3722,6 +3722,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	ListCell	*lc;
 	Oid			schemaOid;
 	int16		privilege_maskInt = create_privilege_bitmask(stmt->privileges, true);
+	char	*user = GetUserNameFromId(GetUserId(), false);
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
@@ -3729,6 +3730,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
+
 	if(schema_name)
 	{
 		schemaOid = LookupExplicitNamespace(schema_name, true);
@@ -3752,10 +3754,14 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		char	*user = GetUserNameFromId(GetUserId(), false);
 		Oid	role_oid;
 		int16 old_priv = 0;
-		rolname	= get_physical_user_name(dbname, grantee_name);
+		if (strcmp(grantee_name, "public") != 0)
+			rolname	= get_physical_user_name(dbname, grantee_name);
+		else
+			rolname = pstrdup("public");
+		//rolname	= get_physical_user_name(dbname, grantee_name);
 		role_oid = get_role_oid(rolname, true);
 
-		if (role_oid == InvalidOid)
+		if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
 			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
 
@@ -3767,19 +3773,19 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
+					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
-		if((privilege_maskInt & PRIVILEGE_EXECUTE) == PRIVILEGE_EXECUTE)
+		if((privilege_maskInt & PRIVILEGE_BIT_FOR_EXECUTE) == PRIVILEGE_BIT_FOR_EXECUTE)
 			exec_gen_grantschema(schema_name, rolname, stmt, "execute");
-		if((privilege_maskInt & PRIVILEGE_SELECT) == PRIVILEGE_SELECT)
+		if((privilege_maskInt & PRIVILEGE_BIT_FOR_SELECT) == PRIVILEGE_BIT_FOR_SELECT)
 			exec_gen_grantschema(schema_name, rolname, stmt, "select");
-		if((privilege_maskInt & PRIVILEGE_INSERT) == PRIVILEGE_INSERT)
+		if((privilege_maskInt & PRIVILEGE_BIT_FOR_INSERT) == PRIVILEGE_BIT_FOR_INSERT)
 			exec_gen_grantschema(schema_name, rolname, stmt, "insert");
-		if((privilege_maskInt & PRIVILEGE_UPDATE) == PRIVILEGE_UPDATE)
+		if((privilege_maskInt & PRIVILEGE_BIT_FOR_UPDATE) == PRIVILEGE_BIT_FOR_UPDATE)
 			exec_gen_grantschema(schema_name, rolname, stmt, "update");
-		if((privilege_maskInt & PRIVILEGE_DELETE) == PRIVILEGE_DELETE)
+		if((privilege_maskInt & PRIVILEGE_BIT_FOR_DELETE) == PRIVILEGE_BIT_FOR_DELETE)
 			exec_gen_grantschema(schema_name, rolname, stmt, "delete");
-		if((privilege_maskInt & PRIVILEGE_REFERENCES) == PRIVILEGE_REFERENCES)
+		if((privilege_maskInt & PRIVILEGE_BIT_FOR_REFERENCES) == PRIVILEGE_BIT_FOR_REFERENCES)
 			exec_gen_grantschema(schema_name, rolname, stmt, "references");
 
 		/* Add entry for each grant statement. */
@@ -3800,7 +3806,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			if(old_priv!= privilege_maskInt || ((old_priv)&(~privilege_maskInt)) != old_priv)
 				update_bbf_schema_privilege(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
 		}
+		pfree(rolname);
 	}
+	pfree(user);
+	pfree(schema_name);
+	pfree(dbname);
+	pfree(login);
 	return PLTSQL_RC_OK;
 }
 

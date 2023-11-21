@@ -1036,6 +1036,10 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	if (grantee && stmt->grantees)
 	{
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
+		if (strcmp(grantee, "public") == 0)
+		{
+			tmp->roletype = ROLESPEC_PUBLIC;
+		}
 		tmp->rolename = pstrdup(grantee);
 	}
 
@@ -2013,17 +2017,17 @@ create_privilege_bitmask(const List *l, bool grant_schema_stmt)
 			priv_name = ap->priv_name;
 		}
 		if (!strcmp(priv_name,"execute"))
-			privilege_maskInt |= PRIVILEGE_EXECUTE;
+			privilege_maskInt |= PRIVILEGE_BIT_FOR_EXECUTE;
 		else if (!strcmp(priv_name,"select"))
-			privilege_maskInt |= PRIVILEGE_SELECT;
+			privilege_maskInt |= PRIVILEGE_BIT_FOR_SELECT;
 		else if (!strcmp(priv_name,"insert"))
-			privilege_maskInt |= PRIVILEGE_INSERT;
+			privilege_maskInt |= PRIVILEGE_BIT_FOR_INSERT;
 		else if (!strcmp(priv_name,"update"))
-			privilege_maskInt |= PRIVILEGE_UPDATE;
+			privilege_maskInt |= PRIVILEGE_BIT_FOR_UPDATE;
 		else if (!strcmp(priv_name,"delete"))
-			privilege_maskInt |= PRIVILEGE_DELETE;
+			privilege_maskInt |= PRIVILEGE_BIT_FOR_DELETE;
 		else if (!strcmp(priv_name,"references"))
-			privilege_maskInt |= PRIVILEGE_REFERENCES;
+			privilege_maskInt |= PRIVILEGE_BIT_FOR_REFERENCES;
 	}
 	return privilege_maskInt;
 }

@@ -1915,12 +1915,12 @@ extern int	insert_bulk_kilobytes_per_batch;
 extern bool insert_bulk_keep_nulls;
 
 /* Privilege Bits for GRANT SCHEMA */
-#define PRIVILEGE_EXECUTE 32
-#define PRIVILEGE_SELECT 16
-#define PRIVILEGE_INSERT 8
-#define PRIVILEGE_UPDATE 4
-#define PRIVILEGE_DELETE 2
-#define PRIVILEGE_REFERENCES 1
+#define PRIVILEGE_BIT_FOR_EXECUTE 32
+#define PRIVILEGE_BIT_FOR_SELECT 16
+#define PRIVILEGE_BIT_FOR_INSERT 8
+#define PRIVILEGE_BIT_FOR_UPDATE 4
+#define PRIVILEGE_BIT_FOR_DELETE 2
+#define PRIVILEGE_BIT_FOR_REFERENCES 1
 
 /**********************************************************************
  * Function declarations
