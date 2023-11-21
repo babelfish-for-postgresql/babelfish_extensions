@@ -10,6 +10,9 @@ GO
 create function default_params_func4 (@p1 int) returns int as begin return @p1 end;
 GO
 
+create function default_params_func5 (@p1 varchar(20)) returns varchar as begin return @p1 end;
+GO
+
 create proc default_params_proc1 @p1 int=1, @p2 int=2, @p3 int=3 as select @p1, @p2, @p3
 GO
 

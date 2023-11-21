@@ -3702,7 +3702,7 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 					ret = lappend(ret, funcExpr);
 					has_default = true;
 				}
-				else
+				else if (proc_form->prokind == PROKIND_FUNCTION)
 				{
 					newArgs = lappend(newArgs, makeNullConst(proc_form->proargtypes.values[i], -1, InvalidOid));
 					for (j = 1; j < list_length(funcExpr->args); ++j)

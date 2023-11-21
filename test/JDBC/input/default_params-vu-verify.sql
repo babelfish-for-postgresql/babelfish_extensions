@@ -32,6 +32,9 @@ GO
 select default_params_func4(default);
 GO
 
+select default_params_func5(default);
+GO
+
 exec default_params_proc1 111, default, 333
 GO
 
@@ -70,5 +73,9 @@ GO
 exec default_params_proc3 'ddd', default
 GO
 
+-- verify the type cast
 exec default_params_proc4 1,2,default
+GO
+
+exec default_params_proc4 1,2, @p3=default
 GO

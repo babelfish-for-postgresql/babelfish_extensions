@@ -21,3 +21,6 @@ GO
 
 drop procedure default_params_proc4
 GO
+
+drop function default_params_func5;
+GO

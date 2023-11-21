@@ -87,6 +87,14 @@ int
 ~~END~~
 
 
+select default_params_func5(default);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 exec default_params_proc1 111, default, 333
 GO
 ~~START~~
@@ -183,7 +191,16 @@ GO
 ~~ERROR (Message: Procedure or function 'default_params_proc3' expects parameter '@p2', which was not supplied.)~~
 
 
+-- verify the type cast
 exec default_params_proc4 1,2,default
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#2#!#dbb
+~~END~~
+
+
+exec default_params_proc4 1,2, @p3=default
 GO
 ~~START~~
 int#!#int#!#varchar
