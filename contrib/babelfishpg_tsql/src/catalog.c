@@ -3182,7 +3182,7 @@ del_from_bbf_schema(const char *schema_name,
 				CStringGetDatum(grantee));
 	scan = systable_beginscan(bbf_schema_rel,
 				get_bbf_schema_perms_idx_oid(),
-				true, NULL, 5, scanKey);
+				true, NULL, 4, scanKey);
 
 	tuple_bbf_schema = systable_getnext(scan);
 

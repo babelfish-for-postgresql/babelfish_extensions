@@ -3789,22 +3789,22 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			exec_gen_grantschema(schema_name, rolname, stmt, "references");
 
 		/* Add entry for each grant statement. */
-		if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
-			add_entry_to_bbf_schema(stmt->schema_name, "ALL",  privilege_maskInt, rolname, NULL);
+		if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname))
+			add_entry_to_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA,  privilege_maskInt, rolname, NULL);
 		else if(stmt->is_grant)
 		{
-			int16 old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
+			int16 old_priv = get_bbf_schema_privilege(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname);
 			if(old_priv!= privilege_maskInt || ((old_priv|privilege_maskInt) != old_priv))
-				update_bbf_schema_privilege(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
+				update_bbf_schema_privilege(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
 		}
 		/* Remove entry for each revoke statement. */
-		else if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", rolname))
+		else if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname))
 		{
 			/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
 			grant_perms_to_objects_in_schema(stmt->schema_name, privilege_maskInt, rolname);
-			old_priv = get_bbf_schema_privilege(stmt->schema_name, "ALL", rolname);
+			old_priv = get_bbf_schema_privilege(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname);
 			if(old_priv!= privilege_maskInt || ((old_priv)&(~privilege_maskInt)) != old_priv)
-				update_bbf_schema_privilege(stmt->schema_name, "ALL", privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
+				update_bbf_schema_privilege(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, privilege_maskInt, old_priv, rolname, NULL, stmt->is_grant);
 		}
 		pfree(rolname);
 	}

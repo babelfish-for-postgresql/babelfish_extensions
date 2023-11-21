@@ -1916,6 +1916,7 @@ extern bool insert_bulk_keep_nulls;
 
 /* Privilege Bits for GRANT SCHEMA */
 #define PRIVILEGE_BIT_FOR_EXECUTE 32
+#define ALL_PRIVILEGE_EXCEPT_EXECUTE 31
 #define PRIVILEGE_BIT_FOR_SELECT 16
 #define PRIVILEGE_BIT_FOR_INSERT 8
 #define PRIVILEGE_BIT_FOR_UPDATE 4
