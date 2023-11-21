@@ -3675,6 +3675,122 @@ get_insert_bulk_kilobytes_per_batch()
 	return insert_bulk_kilobytes_per_batch;
 }
 
+static int
+exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
+{
+	List	   *parsetree_list;
+	ListCell   *parsetree_item;
+	char	   *dbname = get_cur_db_name();
+	char	   *login = GetUserNameFromId(GetSessionUserId(), false);
+	bool		login_is_db_owner;
+	char		*rolname;
+	char		*schema_name;
+	ListCell   *lc;
+	ListCell	*lc1;
+	Oid 		schemaOid;
+	char	*user = GetUserNameFromId(GetUserId(), false);
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
+
+	if(schema_name)
+	{
+		schemaOid = LookupExplicitNamespace(schema_name, true);
+	}
+	else
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as \"\" or [] are not allowed. Change the alias to a valid name.")));
+	}
+
+	if (!OidIsValid(schemaOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist",
+							schema_name)));
+
+	foreach(lc1, stmt->privileges)
+	{
+		char	*priv_name = (char *) lfirst(lc1);
+		foreach(lc, stmt->grantees)
+		{
+			char	   *grantee_name = (char *) lfirst(lc);
+			Oid	role_oid;
+			bool		grantee_is_db_owner;
+			if (strcmp(grantee_name, "public") != 0)
+				rolname	= get_physical_user_name(dbname, grantee_name);
+			else
+				rolname = pstrdup("public");
+			role_oid = get_role_oid(rolname, true);
+			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
+
+			if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
+				ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
+
+			if ((strcmp(rolname, user) == 0) || pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, get_sysadmin_oid()) || grantee_is_db_owner)
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
+
+			if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
+
+			parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);
+			/* Run all subcommands */
+			foreach(parsetree_item, parsetree_list)
+			{
+				Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+				PlannedStmt *wrapper;
+
+				/* need to make a wrapper PlannedStmt */
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = stmt;
+				wrapper->stmt_location = 0;
+				wrapper->stmt_len = 0;
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							"(GRANT SCHEMA )",
+							false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+			}
+			/* Add entry for each grant statement. */
+			if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, priv_name, rolname))
+				add_entry_to_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, priv_name, rolname, NULL);
+			/* Remove entry for each revoke statement. */
+			if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, priv_name, rolname))
+			{
+				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
+				grant_perms_to_objects_in_schema(stmt->schema_name, priv_name, rolname);
+				del_from_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, priv_name, rolname);
+			}
+			pfree(rolname);
+		}
+	}
+	pfree(user);
+	pfree(schema_name);
+	pfree(dbname);
+	pfree(login);
+	return PLTSQL_RC_OK;
+}
+
 /*
  * ALTER AUTHORIZATION ON DATABASE::dbname TO loginname
  */
