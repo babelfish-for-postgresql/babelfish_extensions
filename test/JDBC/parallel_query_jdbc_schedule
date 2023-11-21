@@ -15,18 +15,7 @@ ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
 ignore#!#babel_datatype_sqlvariant-vu-verify
 
-# Group 2: Incorrect precision BABEL-4396
-ignore#!#BABEL-3943
-ignore#!#BABEL-785
-ignore#!#TestDecimal-vu-verify
-ignore#!#TestNumeric-vu-verify
-ignore#!#babel_613
-ignore#!#babel_datatype
-ignore#!#babel_isnull
-ignore#!#BABEL-3006
-ignore#!#BABEL-3147-vu-verify
-
-# Group 3: Need ORDER BY
+# Group 2: Need ORDER BY
 ignore#!#BABEL-2514
 ignore#!#BABEL-2998
 ignore#!#BABEL-328-vu-verify
@@ -297,14 +286,6 @@ ignore#!#BABEL-1251
 ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
-
-# BABEL-4423
-ignore#!#BABEL-IDENTITY
-
-# BABEL-4424
-ignore#!#TestDecimal
-ignore#!#TestNumeric
-ignore#!#numericOverflow
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
