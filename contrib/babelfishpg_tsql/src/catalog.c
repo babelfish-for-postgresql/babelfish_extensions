@@ -3134,13 +3134,9 @@ clean_up_bbf_schema(const char *schema_name,
 }
 
 /*
- * CONTEXT
- * REVOKE on SCHEMA: Revokes permission from all the objects belonging to that schema,
- * but objects which has explicit OBJECT level permission should be accessible.
- *
- * grant_perms_to_objects_in_schema:
- * For all objects belonging to that schema which has OBJECT level permission,
- * It grants the permission explicitly after REVOKE has been executed.
+ * For all objects belonging to a schema which has OBJECT level permission,
+ * It grants the permission explicitly when REVOKE has been executed on that
+ * specific schema.
  */
 
 void
