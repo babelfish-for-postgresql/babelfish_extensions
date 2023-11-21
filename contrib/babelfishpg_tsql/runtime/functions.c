@@ -169,7 +169,7 @@ int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool
 static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
 												const char 	*sourcetext,
-												String 		*funcName,
+												const char 	*funcName,
 												HTAB 		*bbf_pivot_hash,
 												TupleDesc 	tupdesc,
 												bool 		randomAccess);
@@ -3807,15 +3807,14 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
 	HTAB	   	   	*bbf_pivot_hash;
-
-	MemoryContext 	tsql_outmost_context;
+	MemoryContext 		tsql_outmost_context;
 	PLtsql_execstate 	*tsql_outmost_estat;
-	RawStmt	   		*bbf_pivot_src_sql;
-	RawStmt	   		*bbf_pivot_cat_sql;
-	int				nestlevel;
-	List			*per_pivot_list;
-	char			*query_string;
-	String			*funcName;
+	RawStmt	   			*bbf_pivot_src_sql;
+	RawStmt	   			*bbf_pivot_cat_sql;
+	int					nestlevel;
+	tsql_pivot_fields	*per_pivot_fields;
+	char				*query_string;
+	char				*funcName;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -3843,12 +3842,11 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
-		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, 0);
-		Assert(list_length(per_pivot_list) >= 2);
-		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);
-		bbf_pivot_cat_sql = list_nth_node(RawStmt, per_pivot_list, 1);
-		query_string = list_nth(per_pivot_list, 2);
-		funcName = list_nth(per_pivot_list, 3);
+		per_pivot_fields = (tsql_pivot_fields *) list_nth(tsql_outmost_estat->pivot_parsetree_list, 0);
+		bbf_pivot_src_sql = per_pivot_fields->s_sql;
+		bbf_pivot_cat_sql = per_pivot_fields->c_sql;
+		query_string = per_pivot_fields->sourcetext;
+		funcName = per_pivot_fields->funcName;
 	}
 	PG_CATCH();
 	{
@@ -4005,7 +4003,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 static Tuplestorestate *
 get_bbf_pivot_tuplestore(RawStmt 	*sql,
 						const char 	*sourcetext,
-						String		*funcName,
+						const char	*funcName,
 						HTAB 		*bbf_pivot_hash,
 						TupleDesc 	tupdesc,
 						bool 		randomAccess)
@@ -4044,7 +4042,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		int			non_pivot_columns;
 		int			result_ncols;
 		/* only COUNT will output 0 when no row is selected */
-		bool		output_zero = !strcmp(funcName->sval, "count");
+		bool		output_zero = !strcmp(funcName, "count");
 
 		if (num_categories == 0)
 		{

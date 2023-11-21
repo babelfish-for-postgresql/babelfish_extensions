@@ -4409,13 +4409,13 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	TargetEntry	*aggfunc_te;
 	RangeFunction	*pivot_from_function;
 	SelectStmt 		*pivot_src_sql;
-	RawStmt	*s_sql;
-	RawStmt	*c_sql;
-	MemoryContext 	oldContext;
-	MemoryContext 	tsql_outmost_context;
+	RawStmt			*s_sql;
+	RawStmt			*c_sql;
+	tsql_pivot_fields	*pivot_fields;
+	MemoryContext 		oldContext;
+	MemoryContext 		tsql_outmost_context;
 	PLtsql_execstate 	*tsql_outmost_estat;
-	int				nestlevel;
-	char			*sourcetext;
+	int					nestlevel;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4550,8 +4550,6 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 			(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("pivot outer context not found")));
 
-	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
-	/* save rewrited sqls to global variable for later retrive */
 	s_sql = makeNode(RawStmt);
 	c_sql = makeNode(RawStmt);
 	s_sql->stmt = (Node *) pivot_src_sql;
@@ -4561,9 +4559,15 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt = (Node *) stmt->catSql;
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
-	sourcetext = pstrdup(pstate->p_sourcetext);
 
-	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make4(copyObject(s_sql), copyObject(c_sql), sourcetext, copyObject(funcName)));
+	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
+	/* save rewrited sqls to global variable for later retrive */
+	pivot_fields = (tsql_pivot_fields *) palloc(sizeof(tsql_pivot_fields));
+	pivot_fields->s_sql = copyObject(s_sql);
+	pivot_fields->c_sql = copyObject(c_sql);
+	pivot_fields->sourcetext = pstrdup(pstate->p_sourcetext);
+	pivot_fields->funcName = pstrdup(funcName->sval);
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, pivot_fields);
 	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
 }
