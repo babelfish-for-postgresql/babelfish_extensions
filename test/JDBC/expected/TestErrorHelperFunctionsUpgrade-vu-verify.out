@@ -211,6 +211,7 @@ int
 306
 306
 201
+201
 8146
 8144
 8145
@@ -381,6 +382,7 @@ int
 306
 306
 201
+201
 8146
 8144
 8145
@@ -490,6 +492,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-163
+164
 ~~END~~
 
