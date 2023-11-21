@@ -180,13 +180,6 @@ typedef struct TdsColumnMetaData
 	pg_enc		encoding;
 
 	/*
-	 * Following information is needed when we need to send Meta Column for Spatial Data Types
-	 */
-	char	   *assemblyName;
-	bool		isSpatialType;
-	char	   *typeName;
-
-	/*
 	 * Following information are only needed if we need to send TABNAME and
 	 * COLINFO tokens.
 	 */
@@ -438,9 +431,6 @@ extern int	TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData);
 extern int	TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData);
-extern int  TdsSendSpatialHelper(FmgrInfo *finfo, Datum value, void *vMetaData, int TdsInstr);
-extern int  TdsSendTypeGeometry(FmgrInfo *finfo, Datum value, void *vMetaData); 
-extern int  TdsSendTypeGeography(FmgrInfo *finfo, Datum value, void *vMetaData);
 
 extern Datum TdsRecvTypeBit(const char *, const ParameterToken);
 extern Datum TdsRecvTypeTinyInt(const char *, const ParameterToken);
@@ -471,8 +461,6 @@ extern Datum TdsRecvTypeXml(const char *, const ParameterToken);
 extern Datum TdsRecvTypeTable(const char *, const ParameterToken);
 extern Datum TdsRecvTypeSqlvariant(const char *message, const ParameterToken);
 extern Datum TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken);
-extern Datum TdsRecvTypeGeometry(const char *message, const ParameterToken token); 
-extern Datum TdsRecvTypeGeography(const char *message, const ParameterToken token);
 
 extern Datum TdsTypeBitToDatum(StringInfo buf);
 extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);

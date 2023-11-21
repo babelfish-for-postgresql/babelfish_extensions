@@ -35,33 +35,9 @@ jobs:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_FROM}}
 
-      - name: Build PostGIS Extension using ${{env.EXTENSION_VER_FROM}}
-        id: build-postgis-extension-old
-        if: always() && steps.compile-antlr.outcome == 'success'
-        run: |
-          cd ..
-          sudo apt-get install wget
-          wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
-          tar -xvzf postgis-3.3.3dev.tar.gz
-          wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
-          tar -xvzf proj-4.9.1.tar.gz
-          cd proj-4.9.1
-          if [ ! -d "build" ]; then
-            mkdir build
-          fi
-          cd build
-          cmake ..
-          cmake --build .
-          sudo cmake --build . --target install
-          cd ../../postgis-3.3.3dev
-          ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/psql/bin/pg_config
-          make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
-          sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
-        shell: bash
-
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_FROM}}
         id: build-extensions-older
-        if: always() && steps.build-postgis-extension-old.outcome == 'success'
+        if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
 
       - name: Build tds_fdw Extension
@@ -94,13 +70,8 @@ jobs:
         id: build-extensions-newer
         uses: ./.github/composite-actions/build-extensions
 
-      - name: Build PostGIS Extension
-        id: build-postgis-extension
-        if: always() && steps.build-extensions-newer.outcome == 'success'
-        uses: ./.github/composite-actions/build-postgis-extension
-
       - name: Update extensions
-        if: always() && steps.build-postgis-extension.outcome == 'success'
+        if: always() && steps.build-extensions-newer.outcome == 'success'
         run: |
           cd ~
           ~/psql/bin/pg_ctl -D ~/psql/data/ -l logfile restart

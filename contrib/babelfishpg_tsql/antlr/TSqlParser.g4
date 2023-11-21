@@ -3438,7 +3438,6 @@ expression
     | DEFAULT                                                                   #default_expr
     | case_expression                                                           #case_expr
     | hierarchyid_coloncolon_methods                                            #hierarchyid_coloncolon
-    | spatial_coloncolon_methods                                                #spatial_coloncolon
     | over_clause                                                               #over_clause_expr
     | odbc_literal                                                              #odbc_literal_expr
     | DOLLAR_ACTION                                                             #dollar_action_expr
@@ -3855,10 +3854,6 @@ hierarchyid_methods
 
 hierarchyid_coloncolon_methods
     : id colon_colon  method=(GETROOT | PARSE) LR_BRACKET expression? RR_BRACKET
-    ;
-
-spatial_coloncolon_methods
-    : data_type colon_colon function_call
     ;
 
 // this is no longer used:

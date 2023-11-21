@@ -1037,26 +1037,6 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 		}
 
-		#ifdef ENABLE_SPATIAL_TYPES
-		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
-		{
-			TSqlParser::IdContext *idctx = ctx->id()[0];
-			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
-			{
-				std::string idText = ::getFullText(idctx->id()[0]);
-				transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
-				size_t start = idText.find_first_not_of(" \n\r\t\f\v");
-				idText = (start == std::string::npos) ? "" : idText.substr(start);
-				size_t end = idText.find_last_not_of(" \n\r\t\f\v");
-				idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
-				if(idText == "geography" || idText == "geometry"){
-					rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), idText))); 
-					rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "__")));		
-				}
-			}
-		}
-		#endif
-		
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
 
@@ -2484,29 +2464,6 @@ public:
 
 	TSqlParser::IdContext *proc = ctx->procedure;
 
-	#ifdef ENABLE_SPATIAL_TYPES
-	if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
-	{
-		TSqlParser::IdContext *idctx = ctx->id()[0];
-		if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
-		{
-			std::string idText = idctx->id()[0]->getText();
-			transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
-			size_t start = idText.find_first_not_of(" \n\r\t\f\v");
-    		idText = (start == std::string::npos) ? "" : idText.substr(start);
-			size_t end = idText.find_last_not_of(" \n\r\t\f\v");
-    		idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
-			if(idText == "geography" || idText == "geometry"){
-				// Replace colon_colon with underscores of the same length
-				std::string colonText = idctx->colon_colon()->getText();
-				std::string underScores(colonText.size(), '_');
-
-				stream.setText(idctx->colon_colon()->start->getStartIndex(), underScores.c_str());
-			}
-		}
-	}
-	#endif
-	
 	// if the func name contains colon_colon, it must begin with it. see grammar
     if (ctx->colon_colon())
     {
