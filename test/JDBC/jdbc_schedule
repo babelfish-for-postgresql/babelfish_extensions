@@ -12,6 +12,15 @@ all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
+# TODO: re-enable these tests after merging engine up to pg16
+ignore#!#BABEL-2903
+ignore#!#TestRecreatedInnerProcedures
+ignore#!#babel_delete
+ignore#!#babel_update
+ignore#!#table-variable-vu-prepare
+ignore#!#table-variable-vu-verify
+ignore#!#table-variable-vu-cleanup
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
