@@ -78,6 +78,23 @@ d
 ~~END~~
 
 
+-- it'll use default 
+select default_params_func4(default);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+select default_params_func5(default);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
 exec default_params_proc1 111, default, 333
 GO
 ~~START~~
@@ -99,6 +116,30 @@ GO
 ~~START~~
 int#!#int#!#int
 1#!#2#!#3
+~~END~~
+
+
+exec default_params_proc1 @p1=default, @p2=default,@p3=300
+GO
+~~START~~
+int#!#int#!#int
+1#!#2#!#300
+~~END~~
+
+
+exec default_params_proc1 @p1=300, @p2=default,@p3=default
+GO
+~~START~~
+int#!#int#!#int
+300#!#2#!#3
+~~END~~
+
+
+exec default_params_proc1 @p1=default, @p2=300,@p3=default
+GO
+~~START~~
+int#!#int#!#int
+1#!#300#!#3
 ~~END~~
 
 
@@ -134,7 +175,32 @@ d#!#3
 ~~END~~
 
 
+-- verify the error message
+exec default_params_proc3 default, default
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: Procedure or function 'default_params_proc3' expects parameter '@p2', which was not supplied.)~~
+
+
+-- verify the error message
+exec default_params_proc3 'ddd', default
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: Procedure or function 'default_params_proc3' expects parameter '@p2', which was not supplied.)~~
+
+
+-- verify the type cast
 exec default_params_proc4 1,2,default
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#2#!#dbb
+~~END~~
+
+
+exec default_params_proc4 1,2, @p3=default
 GO
 ~~START~~
 int#!#int#!#varchar
