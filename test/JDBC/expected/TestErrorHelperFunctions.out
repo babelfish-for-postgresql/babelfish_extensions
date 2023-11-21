@@ -104,6 +104,7 @@ XX000#!#CREATE FUNCTION failed because a column name is not specified for column
 42883#!#could not identify an equality operator for type %s#!##!#306
 42883#!#could not identify an ordering operator for type %s#!##!#306
 42883#!#%s %s expects parameter "%s", which was not supplied.#!##!#201
+42883#!#Procedure or function '%s' expects parameter '%s', which was not supplied.#!##!#201
 42883#!#%s %s has no parameters and arguments were supplied.#!##!#8146
 42883#!#%s %s has too many arguments specified.#!##!#8144
 42883#!#"%s" is not an parameter for %s %s.#!##!#8145
