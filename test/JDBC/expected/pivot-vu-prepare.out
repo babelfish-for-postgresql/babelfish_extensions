@@ -855,21 +855,3 @@ RETURN
         FOR StoreID in ([2], [3], [4], [5], [6])
     ) AS pvt2
 GO
-
--- Cannot create view (Bug)
-create view pivot_view as
-SELECT top 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)as srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID in ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: a column definition list is required for functions returning "record")~~
-
