@@ -17,7 +17,7 @@ jobs:
           echo $config
           config=$(echo $config | sed "s/\"/\\\\\"/g")
           echo $config
-          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")), db_parameters: itm['db-parameters'] ? (\"(\" + itm['db-parameters'].map(dbp => '\"' + dbp + '\"').toString().replace(/[ ]/g, \"\").replace(/[,]/g, \" \") + \")\") : \"()\", diff_conn: itm['diff-conn'] ? itm['diff-conn'] : false, title: itm['title'] ? itm['title'] : itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm['upgrade-path'][itm['upgrade-path'].length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
+          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")), db_parameters: itm['db-parameters'] ? (\"(\" + itm['db-parameters'].map(dbp => '\"' + dbp + '\"').toString().replace(/[ ]/g, \"\").replace(/[,]/g, \" \") + \")\") : \"()\", diff_conn: itm['diff-conn'] ? itm['diff-conn'] : false, title: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm['upgrade-path'][itm['upgrade-path'].length - 1].version.toString().replace(/[.]/g, \"_\"), description: itm['description'] ? itm['description'] : false })); console.log(JSON.stringify(p));")
           echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
 
   run-version-upgrade-test:
@@ -30,6 +30,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
+
+      - name: "Upgrade Description"
+        run: | 
+          echo "Upgrade path:${{ matrix.upgrade-path.title }}"  
+          if [ "${{ matrix.upgrade-path.description }}" = "false" ]; then
+            echo "No Description available"
+          else
+            echo "Description: ${{ matrix.upgrade-path.description }}"
+          fi
 
       - name: Install yq - yaml parser
         id: install-yq

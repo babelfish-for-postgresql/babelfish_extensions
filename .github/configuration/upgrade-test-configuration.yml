@@ -123,7 +123,6 @@ upgrade-version: [{
   ]
 },
 {
-  title: "upgrade with non-default server collation",
   upgrade-path: [
     {
       version: 14.6,
@@ -137,6 +136,7 @@ upgrade-version: [{
   db-parameters: [
     "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
   ],
-  diff-conn: true
+  diff-conn: true,
+  description: "Upgrade with non-default server collation in the base version and updating extensions in different connections",
 }
 ]
