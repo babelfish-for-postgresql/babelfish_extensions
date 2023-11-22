@@ -713,6 +713,60 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 	return false;
 }
 
+/**
+ * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
+ * Checks if view have an INSTEAD OF trigger at statement level
+ * If it does, we don't want to treat it as auto-updatable. 
+ * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
+*/
+static bool
+pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
+{
+	TriggerDesc *trigDesc = view->trigdesc;
+	if (triggerOids)
+	{
+		int i;
+		for (i = 0; i < trigDesc->numtriggers; i++)
+		{
+			Trigger *trigger = &trigDesc->triggers[i];
+			Oid current_tgoid = trigger->tgoid;
+			Oid prev_tgoid = InvalidOid;
+			prev_tgoid = lfirst_oid(list_tail(triggerOids));
+			if (prev_tgoid == current_tgoid)
+			{
+				return false; /** Direct recursive trigger case*/
+			}
+			else if (list_member_oid(triggerOids, current_tgoid))
+            {
+                /** Indirect recursive trigger case*/
+                ereport(ERROR,
+                        (errcode(ERRCODE_SYNTAX_ERROR),
+                         errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
+            }
+		}
+	}
+
+	switch (event)
+	{
+		case CMD_INSERT:
+			if(trigDesc && trigDesc->trig_insert_instead_statement)
+				return true;
+			break;
+		case CMD_UPDATE:
+			if (trigDesc && trigDesc->trig_update_instead_statement)
+				return true;
+			break;
+		case CMD_DELETE:
+			if (trigDesc && trigDesc->trig_delete_instead_statement)
+				return true;
+			break;
+		default:
+			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			break;
+	}
+	return false;
+}
+
 /*
  * Wrapper function that calls the initilization function.
  * Calls the pre function call hook on the procname 
