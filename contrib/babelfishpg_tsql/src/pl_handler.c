@@ -3641,7 +3641,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char *permissions[] = {"select", "insert", "update", "references", "delete"};
 									for(i = 0; i < 5; i++)
 									{
-										if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
+										/*
+										 * If object permission doesn't exist already, add an entry to the catalog.
+										 */
+										if (!check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
 											add_entry_to_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename, obj_type);
 									}
 								}
@@ -3657,10 +3660,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									char *permissions[] = {"select", "insert", "update", "references", "delete"};
 									for(i = 0; i < 5; i++)
 									{
-										if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, "ALL", permissions[i], rol_spec->rolename) && !has_schema_perms)
+										/*
+										 * 1. If only schema permission exists, don't revoke any permission.
+										 * 2. If only object permission exists, delete entry from the catalog and revoke permission.
+										 * 3. If both schema and object permission exist, don't revoke any permission but delete object
+										 *    entry from the catalog.
+										 */
+										if (check_bbf_schema_for_entry(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, permissions[i], rol_spec->rolename) && !has_schema_perms)
 											has_schema_perms = true;
-										if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
-											del_from_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename);
+										del_from_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename);
 									}
 									if (has_schema_perms)
 										return;
@@ -3687,7 +3695,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								foreach(lc, grant->grantees)
 								{
 									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									if ((ap->cols == NULL) && (rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
+									/*
+									 * Don't add an entry, if the permission is granted on column list.
+									 */
+									if (ap->cols != NULL)
+										break;
+									if (!check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
 										add_entry_to_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename, obj_type);
 								}
 							}
@@ -3700,7 +3713,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
 									* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
 									*/
-									if ((logical_schema != NULL) && (rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
+									if ((logical_schema != NULL) && !check_bbf_schema_for_entry(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, ap->priv_name, rol_spec->rolename))
 									{
 										if (prev_ProcessUtility)
 											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3709,8 +3722,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 											standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																	queryEnv, dest, qc);
 									}
-									if ((ap->cols == NULL) && (rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
-										del_from_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename);
+									/*
+									 * Don't remove an entry, if the permission is revoked on column list.
+									 */
+									if (ap->cols != NULL)
+										break;
+									del_from_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename);
 								}
 							}
 						}
@@ -3743,28 +3760,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						logicalschema = get_logical_schema_name(schemaname, true);
 						funcname = strVal(func);
 					}
-					/* 
-					 * Case: When ALL PRIVILEGES is revoked internally during create function.
-					 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
-					 */
-					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
-					{
-						if(check_bbf_schema_for_schema(logicalschema, "ALL", "execute"))
-							return;
-						break;
-					}
+
 					/* If ALL PRIVILEGES is granted/revoked. */
 					if (list_length(grant->privileges) == 0)
 					{
+						/*
+						 * Case: When ALL PRIVILEGES is revoked internally during create function.
+						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+						 */
+						if (pstmt->stmt_len == 0)
+						{
+							if(check_bbf_schema_for_schema(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, "execute"))
+								return;
+						}
+
 						if (grant->is_grant)
 						{
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
+								if (!check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
 									add_entry_to_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename, obj_type);
 							}
-							break;
 						}
 						else
 						{
@@ -3772,15 +3789,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								bool has_schema_perms = false;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, "ALL", "execute", rol_spec->rolename) && !has_schema_perms)
+								if (check_bbf_schema_for_entry(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, "execute", rol_spec->rolename) && !has_schema_perms)
 									has_schema_perms = true;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
-									del_from_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename);
+								del_from_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename);
 								if (has_schema_perms)
 									return;
 							}
-							break;
 						}
+						break;
 					}
 					foreach(lc1, grant->privileges)
 					{
@@ -3798,9 +3814,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								/* Don't store a row in catalog, if permission is granted for column */
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
+								/* Add an entry to the catalog, if an entry doesn't exist already. */
+								if (!check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
+								{
 									add_entry_to_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename, obj_type);
+								}
 							}
 						}
 						else
@@ -3809,10 +3827,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/* 
-								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
-								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
-								*/
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, "ALL", ap->priv_name, rol_spec->rolename))
+								 * 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
+								 * 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
+								 */
+								if (!check_bbf_schema_for_entry(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, ap->priv_name, rol_spec->rolename))
 								{
 									/* Execute REVOKE statement. */
 									if (prev_ProcessUtility)
@@ -3822,8 +3840,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 																queryEnv, dest, qc);
 								}
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-									del_from_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename);
+								/* Remove an entry from the catalog, if it exists. */
+								del_from_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename);
 							}
 						}
 					}
