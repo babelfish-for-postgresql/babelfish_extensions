@@ -49,6 +49,22 @@ GO
 ~~ERROR (Message: Null or empty full-text predicate.)~~
 
 
+-- Test for empty string input, should throw error
+EXEC fts_contains_vu_prepare_p1 '            '
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Null or empty full-text predicate.)~~
+
+
+-- Test for empty string input, should throw error
+EXEC fts_contains_vu_prepare_p1 NULL
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Incorrect syntax near the keyword 'null')~~
+
+
 EXEC fts_contains_vu_prepare_p1 'other'
 GO
 ~~START~~

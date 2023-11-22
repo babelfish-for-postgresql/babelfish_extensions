@@ -68,7 +68,7 @@ fts_scanner_init(const char *str)
 	/*
 	 * Check for empty input
 	 */
-	if (!str || !*str) {
+	if (!str || !*str || (strspn(str, " \t\n\r") == slen)) {
 		yyerror(NULL, "Null or empty full-text predicate.");
 	}
 
