@@ -301,7 +301,6 @@ stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 		case PLTSQL_STMT_GRANTDB:
 		case PLTSQL_STMT_CHANGE_DBOWNER:
-		case PLTSQL_STMT_GRANTSCHEMA:
 		case PLTSQL_STMT_FULLTEXTINDEX:
 		case PLTSQL_STMT_INSERT_BULK:
 		case PLTSQL_STMT_DBCC:
