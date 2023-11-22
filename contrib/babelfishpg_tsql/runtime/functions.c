@@ -3835,28 +3835,20 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	*/
 	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
 	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	
 	if (!tsql_outmost_context)
 		ereport(ERROR,
 			(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("pivot outer context not found")));
 	
-	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
-	PG_TRY();
-	{
-		Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
-		per_pivot_fields = (tsql_pivot_fields *) list_nth(tsql_outmost_estat->pivot_parsetree_list, 0);
-		bbf_pivot_src_sql = per_pivot_fields->s_sql;
-		bbf_pivot_cat_sql = per_pivot_fields->c_sql;
-		query_string = per_pivot_fields->sourcetext;
-		funcName = per_pivot_fields->funcName;
-	}
-	PG_CATCH();
-	{
-		MemoryContextSwitchTo(oldcontext);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-	MemoryContextSwitchTo(oldcontext);
+	Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
+
+	per_pivot_fields = (tsql_pivot_fields *) list_nth(tsql_outmost_estat->pivot_parsetree_list, 0);
+	bbf_pivot_src_sql = per_pivot_fields->s_sql;
+	bbf_pivot_cat_sql = per_pivot_fields->c_sql;
+	query_string = per_pivot_fields->sourcetext;
+	funcName = per_pivot_fields->funcName;
+
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
@@ -3898,7 +3890,6 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	 * expecting.
 	 */
 	rsinfo->setDesc = tupdesc;
-	MemoryContextSwitchTo(oldcontext);
 
 	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
 	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, 0);
@@ -3917,7 +3908,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 	HASHCTL		ctl;
 	int			ret;
 	uint64		tuple_processed;
-	MemoryContext SPIcontext;
+	MemoryContext oldcontext;
 
 	/* initialize the category hash table */
 	ctl.keysize = MAX_CATNAME_LEN;
@@ -3978,15 +3969,16 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("provided \"categories\" SQL must " \
 								"not return NULL values")));
-			
-			SPIcontext = MemoryContextSwitchTo(per_query_ctx);
+
+			oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
 			catdesc = (bbf_pivot_cat_desc *) palloc(sizeof(bbf_pivot_cat_desc));
 			catdesc->catname = pstrdup(catname_lower);
 			catdesc->attidx = i;
 			/* Add the tuple description block to the hashtable */
 			bbf_pivot_HashTableInsert(bbf_pivot_hash, catdesc);
 
-			MemoryContextSwitchTo(SPIcontext);
+			MemoryContextSwitchTo(oldcontext);
 		}
 	}
 
