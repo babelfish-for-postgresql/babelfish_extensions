@@ -194,7 +194,6 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_GRANTDB,
 	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
-	PLTSQL_STMT_GRANTSCHEMA,
 	PLTSQL_STMT_FULLTEXTINDEX,
 } PLtsql_stmt_type;
 
@@ -1051,20 +1050,6 @@ typedef struct PLtsql_stmt_change_dbowner
 	char	   *db_name;
 	char	   *new_owner_name;  /* Login name for new owner */
 } PLtsql_stmt_change_dbowner;
-
-/*
- *	Grant on schema stmt
- */
-typedef struct PLtsql_stmt_grantschema
-{
-	PLtsql_stmt_type cmd_type;
-	int			lineno;
-	bool		is_grant;
-	List		*privileges;		/* list of privileges */
-	List		*grantees;		/* list of users */
-	bool 		with_grant_option;
-	char		*schema_name;	/* schema name */
-} PLtsql_stmt_grantschema;
 
 /*
  *	Fulltext Index stmt
@@ -2048,7 +2033,6 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
-extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
 extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
 extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
 extern char *get_fulltext_index_name(Oid relid, const char *table_name);
@@ -2093,8 +2077,7 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
-extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
-extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv);
+extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
