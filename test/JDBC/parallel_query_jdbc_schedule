@@ -14,18 +14,7 @@ ignore#!#Test-sp_droprolemember-vu-prepare
 ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
 
-# Group 2: Incorrect precision BABEL-4396
-ignore#!#BABEL-3943
-ignore#!#BABEL-785
-ignore#!#TestDecimal-vu-verify
-ignore#!#TestNumeric-vu-verify
-ignore#!#babel_613
-ignore#!#babel_datatype
-ignore#!#babel_isnull
-ignore#!#BABEL-3006
-ignore#!#BABEL-3147-vu-verify
-
-# Group 3: Need ORDER BY
+# Group 2: Need ORDER BY
 ignore#!#BABEL-2514
 ignore#!#BABEL-2998
 ignore#!#BABEL-328-vu-verify
@@ -71,23 +60,6 @@ ignore#!#BABEL-1444
 ignore#!#babel_datetime-vu-verify
 ignore#!#babel_datetime
 ignore#!#BABEL-2812-vu-verify
-
-# "tds_fdw" does not exist - JIRA-4540
-ignore#!#BABEL-4168-vu-prepare
-ignore#!#BABEL-4168-vu-verify
-ignore#!#BABEL-4168-vu-cleanup
-ignore#!#four-part-names-vu-prepare
-ignore#!#four-part-names-vu-verify
-ignore#!#four-part-names-vu-cleanup
-ignore#!#linked_servers-vu-prepare
-ignore#!#linked_servers-vu-verify
-ignore#!#linked_servers-vu-cleanup
-ignore#!#linked_srv_4229-vu-prepare
-ignore#!#linked_srv_4229-vu-verify
-ignore#!#linked_srv_4229-vu-cleanup
-ignore#!#openquery-vu-prepare
-ignore#!#openquery-vu-verify
-ignore#!#openquery-vu-cleanup
 
 # relation "onek" does not exist: JIRA-4541
 ignore#!#pgr_select
@@ -291,11 +263,6 @@ ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
 
-# BABEL-4424
-ignore#!#TestDecimal
-ignore#!#TestNumeric
-ignore#!#numericOverflow
-
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
 ignore#!#BABEL-SP_COLUMNS_MANAGED-dep-vu-verify
@@ -314,3 +281,4 @@ ignore#!#TestSimpleErrorsWithXactAbort
 ignore#!#BABEL-2513
 ignore#!#TestDatetime-numeric-representation-vu-prepare
 ignore#!#TestDatetime-numeric-representation-vu-verify
+ignore#!#four-part-names-vu-verify

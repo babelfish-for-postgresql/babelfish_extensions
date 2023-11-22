@@ -94,6 +94,7 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input);
 Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input);
 static Node *transform_like_in_add_constraint(Node *node);
+static char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -2917,8 +2918,13 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return false;
 
-	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
-		((weight + 1) * numeric_base);
+	if (weight < 0)
+	{
+		/* weight < 0 means the integral part of the number is 0 */
+		total_digit_count = dscale;
+		return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
+	}
+	total_digit_count = weight * numeric_base;
 
 	/*
 	 * calculating exact #digits in the first partially filled numeric block,
@@ -2931,7 +2937,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 
 	/*
 	 * check if the first numeric block is partially filled If yes, add those
-	 * digit count Else if fully filled, Ignore as those digits are already
+	 * digit count Else if fully filled, Ignore as those digits might be already
 	 * added to total_digit_count
 	 */
 	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
@@ -2941,18 +2947,13 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 			int log_10 = (int) log10(partially_filled_numeric_block); // keep compiler happy
 			total_digit_count += log_10 + 1;
 		}
-		else
-			total_digit_count += 1;
 	}
 
 	/*
-	 * calculating exact #digits in last block if decimal point exists If
-	 * dscale is an exact multiple of numeric_base, last block is not
-	 * partially filled, then, ignore as those digits are already added to
-	 * total_digit_count Else, add the remainder digits
+	 * Add dscale or display scale, the nominal precision expressed as number
+	 * of digits after the decimal point.
 	 */
-	if (dscale > 0)
-		total_digit_count += (dscale % numeric_base);
+	total_digit_count += dscale;
 
 	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 }
@@ -3566,13 +3567,15 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 
 static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition)
 {
-	int currPosition = intVal((Node *) lfirst(def_idx));
+	int currPosition;
+	if (default_positions == NIL || def_idx == NULL)
+		return -1;
+	currPosition = intVal((Node *) lfirst(def_idx));
 	while (currPosition != argPosition)
 	{
 		def_idx = lnext(default_positions, def_idx);
 		if (def_idx == NULL)
 		{
-			elog(ERROR, "not enough default arguments");
 			return -1;
 		}
 		currPosition = intVal((Node *) lfirst(def_idx));
@@ -3581,10 +3584,40 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
 }
 
 /**
+ * @brief fetch the func input arg names
+ * 
+ * @param func_tuple or proc_tuple
+ * @return char** list of input arg names
+ */
+static char** fetch_func_input_arg_names(HeapTuple func_tuple)
+{
+	Datum proargnames;
+	Datum		proargmodes;
+	char**		arg_names;
+	bool 		isnull;
+
+	proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
+					Anum_pg_proc_proargnames,
+					&isnull);
+
+	proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
+					Anum_pg_proc_proargmodes,
+					&isnull);
+
+	if (isnull)
+		proargmodes = PointerGetDatum(NULL);	/* just to be sure */
+
+	get_func_input_arg_names(proargnames,
+									proargmodes,
+									&arg_names);
+	return arg_names;
+}
+
+/**
  * @brief farg position default should get the corresponding default position value
  * 
  * @param func_tuple 
- * @param defaults 
+ * @param defaults can be NIL
  * @param fargs 
  * @return List* 
  */
@@ -3593,19 +3626,24 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 
 {
 	HeapTuple	bbffunctuple;
+	Form_pg_proc proc_form;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return fargs;
 
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(func_tuple);
+	proc_form = (Form_pg_proc) GETSTRUCT(func_tuple);
 
-	if (HeapTupleIsValid(bbffunctuple)){
+	if (HeapTupleIsValid(bbffunctuple))
+	{
 		Datum		arg_default_positions;
 		bool		isnull;
 		char	   *str;
 		List	   *default_positions = NIL, *ret = NIL;
 		ListCell   *def_idx;
 		ListCell   *lc;
+		char	  **arg_names;
+
 		int		   position,i,j;
 
 		/* Fetch default positions */
@@ -3614,46 +3652,86 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
 
-		if (isnull)
-			elog(ERROR, "not enough default arguments");
+		if (!isnull)
+		{
+			str =TextDatumGetCString(arg_default_positions);
+			default_positions = castNode(List, stringToNode(str));
+			pfree(str);
 
-		str =TextDatumGetCString(arg_default_positions);
-		default_positions = castNode(List, stringToNode(str));
-		pfree(str);
-
-		def_idx = list_head(default_positions);
+			def_idx = list_head(default_positions);
+		}
+		else
+		{
+			default_positions = NIL;
+			def_idx = NULL;
+		}
 		i = 0;
 
 		foreach(lc, fargs)
 		{
+			bool has_default = false;
 			if (nodeTag((Node*)lfirst(lc)) == T_RelabelType &&
 				nodeTag(((RelabelType*)lfirst(lc))->arg) == T_SetToDefault)
 			{
 				position = getDefaultPosition(default_positions, def_idx, i);
-				ret = lappend(ret, list_nth(defaults, position));
-			}
-			else if (nodeTag((Node*)lfirst(lc)) == T_FuncExpr)
-			{
-				if(((FuncExpr*)lfirst(lc))->funcformat == COERCE_IMPLICIT_CAST &&
-					nodeTag(linitial(((FuncExpr*)lfirst(lc))->args)) == T_SetToDefault)
+				if (position >= 0)
 				{
+					ret = lappend(ret, list_nth(defaults, position));
+					has_default = true;
+				}
+				else if (proc_form->prokind == PROKIND_FUNCTION)
+				{
+					ret = lappend(ret, makeNullConst(proc_form->proargtypes.values[i], -1, InvalidOid));
+					has_default = true;
+				}
+			}
+			else if (nodeTag((Node*)lfirst(lc)) == T_FuncExpr && 
+			((FuncExpr*)lfirst(lc))->funcformat == COERCE_IMPLICIT_CAST &&
+					nodeTag(linitial(((FuncExpr*)lfirst(lc))->args)) == T_SetToDefault)
+			{
 				// We'll keep the implicit cast function when it needs implicit cast
-					FuncExpr *funcExpr = (FuncExpr*)lfirst(lc);
-					List *newArgs = NIL;
-					position = getDefaultPosition(default_positions, def_idx, i);
+				FuncExpr *funcExpr = (FuncExpr*)lfirst(lc);
+				List *newArgs = NIL;
+				position = getDefaultPosition(default_positions, def_idx, i);
+				if (position >= 0)
+				{
 					newArgs = lappend(newArgs, list_nth(defaults, position));
 					for (j = 1; j < list_length(funcExpr->args); ++j)
 						newArgs = lappend(newArgs, list_nth(funcExpr->args, j));
 					funcExpr->args = newArgs;
 					ret = lappend(ret, funcExpr);
+					has_default = true;
+				}
+				else if (proc_form->prokind == PROKIND_FUNCTION)
+				{
+					newArgs = lappend(newArgs, makeNullConst(proc_form->proargtypes.values[i], -1, InvalidOid));
+					for (j = 1; j < list_length(funcExpr->args); ++j)
+						newArgs = lappend(newArgs, list_nth(funcExpr->args, j));
+					funcExpr->args = newArgs;
+					ret = lappend(ret, funcExpr);
+					has_default = true;
 				}
 			}
-			else ret = lappend(ret, lfirst(lc));
+			else 
+			{
+				ret = lappend(ret, lfirst(lc));	
+				has_default = true;
+			}
+			if (!has_default)
+			{
+				arg_names = fetch_func_input_arg_names(func_tuple);
+				
+				if (proc_form->prokind == PROKIND_PROCEDURE)
+					ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("Procedure or function \'%s\' expects parameter \'%s\', which was not supplied.",
+							NameStr(proc_form->proname), arg_names[i])));
+			}
 			++i;
 		}
-		return ret;
-
 		ReleaseSysCache(bbffunctuple);
+
+		return ret;
 	}
 	else
 	{
