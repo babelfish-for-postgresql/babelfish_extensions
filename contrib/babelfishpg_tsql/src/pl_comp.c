@@ -1536,9 +1536,6 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	 * helpful error message possible.)
 	 */
 
-	if ((geovar = resolve_geospatial_func_ref(pstate, cref)) != NULL)
-	    return geovar;
-
 	myvar = resolve_column_ref(pstate, expr, cref, (var == NULL));
 
 	if (myvar != NULL && var != NULL)
@@ -1553,6 +1550,11 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 						NameListToString(cref->fields)),
 				 errdetail("It could refer to either a PL/tsql variable or a table column."),
 				 parser_errposition(pstate, cref->location)));
+	}
+	else if (var == NULL)
+	{
+		if ((geovar = resolve_geospatial_func_ref(pstate, cref)) != NULL)
+	    	return geovar;
 	}
 
 	return myvar;
