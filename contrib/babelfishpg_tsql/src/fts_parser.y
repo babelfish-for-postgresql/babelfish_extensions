@@ -122,7 +122,7 @@ char* translate_simple_term(const char* inputStr) {
     char* trimmedInputStr;
 
     // Check for empty input
-    if (inputStr == NULL) {
+    if (!inputStr || !(inputLength = strlen(inputStr))) {
         return NULL;
     }
 
@@ -185,7 +185,7 @@ char* translate_simple_term(const char* inputStr) {
             }
             inputPtr++;
         }
-
+        *outputPtr = '\0';
         pfree(trimmedInputStr);
         return output;
     } else {
@@ -200,11 +200,9 @@ static char *trim(char *s) {
     size_t start;
     size_t end;
     size_t newLength;
-
-    length = strlen(s);
     
     // Empty string, nothing to trim
-    if (s == NULL || length == 0) {
+    if (!s || !(length = strlen(s))) {
         return s;
     }
 
@@ -242,10 +240,8 @@ static char *trimInsideQuotes(char *s) {
     size_t newLength;
     bool insideQuotes;
 
-    length = strlen(s);
-
-    // Empty string, nothing to trim
-    if (s == NULL || length == 0) {
+     // Empty string, nothing to trim
+    if (!s || !(length = strlen(s))) {
         return s;
     }
 
