@@ -3773,9 +3773,11 @@ SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read
 	 */
 	plancache_list = NIL;
 
-	/* 
-	 * src sql can be optained from pstate->p_sourcetext, but
-	 * it is not important here
+	/*
+	 * there are some parsetree node copied from the orginial parsetree,
+	 * and the node's location is fixed with the sourcetext. So we are 
+	 * passing the orginal sourcetext to the following function to prevent
+	 * analyzing error.
 	 */
 	plansource = CreateOneShotCachedPlan(parsetree,
 										sourcetext,
@@ -3914,7 +3916,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 	HTAB	   *bbf_pivot_hash;
 	HASHCTL		ctl;
 	int			ret;
-	uint64		proc;
+	uint64		tuple_processed;
 	MemoryContext SPIcontext;
 
 	/* initialize the category hash table */
@@ -3938,10 +3940,10 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 
 	/* Retrieve the category name rows */
 	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
-	proc = SPI_processed;
+	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
-	if ((ret == SPI_OK_SELECT) && (proc > 0))
+	if ((ret == SPI_OK_SELECT) && (tuple_processed > 0))
 	{
 		SPITupleTable *spi_tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
@@ -3957,8 +3959,8 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 					 errmsg("provided \"categories\" SQL must " \
 							"return 1 column of at least one row")));
 
-		Assert(spi_tuptable->numvals >= proc);
-		for (i = 0; i < proc; i++)
+		Assert(spi_tuptable->numvals >= tuple_processed);
+		for (i = 0; i < tuple_processed; i++)
 		{
 			bbf_pivot_cat_desc *catdesc;
 			char	   *catname;
@@ -3981,7 +3983,7 @@ load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext p
 			catdesc = (bbf_pivot_cat_desc *) palloc(sizeof(bbf_pivot_cat_desc));
 			catdesc->catname = pstrdup(catname_lower);
 			catdesc->attidx = i;
-			/* Add the proc description block to the hashtable */
+			/* Add the tuple description block to the hashtable */
 			bbf_pivot_HashTableInsert(bbf_pivot_hash, catdesc);
 
 			MemoryContextSwitchTo(SPIcontext);
@@ -4014,7 +4016,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 	char	  **values;
 	HeapTuple	tuple;
 	int			ret;
-	uint64		proc;
+	uint64		tuple_processed;
 
 	/* initialize our tuplestore (while still in query context!) */
 	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
@@ -4026,10 +4028,10 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 
 	/* Now retrieve the bbf_pivot source rows */
 	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
-	proc = SPI_processed;
+	tuple_processed = SPI_processed;
 
 	/* Check for qualifying tuples */
-	if ((ret == SPI_OK_SELECT) && (proc > 0))
+	if ((ret == SPI_OK_SELECT) && (tuple_processed > 0))
 	{
 		SPITupleTable *spi_tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
@@ -4041,8 +4043,11 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		int			j;
 		int			non_pivot_columns;
 		int			result_ncols;
-		/* only COUNT will output 0 when no row is selected */
-		bool		output_zero = !strcmp(funcName, "count");
+		/* 
+		 * only COUNT will output 0 when no row is selected
+		 * https://www.postgresql.org/docs/12/functions-aggregate.html 
+		 */
+		bool		output_zero = !strcasecmp(funcName, "count");
 
 		if (num_categories == 0)
 		{
@@ -4060,7 +4065,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 					 errdetail("The provided SQL must return 2 " \
 							   " columns; category, and values.")));
 
-		Assert(spi_tuptable->numvals >= proc);
+		Assert(spi_tuptable->numvals >= tuple_processed);
 		/* 
 		* The last 2 columns of the results are category column and value column
 		* that will be used for later pivot operation. The remaining columns are 
@@ -4083,7 +4088,7 @@ get_bbf_pivot_tuplestore(RawStmt 	*sql,
 		columngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
 		lastcolumngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
 
-		for (i = 0; i < proc; i++)
+		for (i = 0; i < tuple_processed; i++)
 		{
 			HeapTuple	spi_tuple;
 			bbf_pivot_cat_desc *catdesc;
