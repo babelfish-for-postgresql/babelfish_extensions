@@ -143,14 +143,18 @@ char* translate_simple_term(const char* inputStr) {
         // Check for potential overflow and adjust the output size
         if (outputSize < inputLength || outputSize < 0) {
             pfree(trimmedInputStr);
-            return NULL; // Potential overflow
+            ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+                    errmsg("Memory allocation failed"))); // Potential overflow
         }
 
         // Allocate the output buffer with the adjusted size
         output = (char*)palloc(outputSize + 1); // +1 for the null terminator
         if (output == NULL) {
             pfree(trimmedInputStr);
-            return NULL;
+            ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+                    errmsg("Memory allocation failed")));
         }
 
         // Initialize pointers for input and output
@@ -168,7 +172,9 @@ char* translate_simple_term(const char* inputStr) {
                     // Output buffer overflow
                     pfree(trimmedInputStr);
                     pfree(output);
-                    return NULL;
+                    ereport(ERROR,
+                        (errcode(ERRCODE_OUT_OF_MEMORY),
+                            errmsg("Memory allocation failed"))); // Potential overflow
                 }
                 *outputPtr++ = '<';
                 *outputPtr++ = '-';
@@ -179,7 +185,9 @@ char* translate_simple_term(const char* inputStr) {
                     // Output buffer overflow
                     pfree(trimmedInputStr);
                     pfree(output);
-                    return NULL;
+                    ereport(ERROR,
+                        (errcode(ERRCODE_OUT_OF_MEMORY),
+                            errmsg("Memory allocation failed"))); // Potential overflow
                 }
                 *outputPtr++ = *inputPtr;
             }

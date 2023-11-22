@@ -20,6 +20,10 @@ GO
 EXEC fts_contains_vu_prepare_p1 'love'
 GO
 
+-- Test for empty string input, should throw error
+EXEC fts_contains_vu_prepare_p1 ''
+GO
+
 EXEC fts_contains_vu_prepare_p1 'other'
 GO
 

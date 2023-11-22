@@ -64,6 +64,14 @@ fts_scanner_init(const char *str)
 	if (YY_CURRENT_BUFFER)
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 
+	
+	/*
+	 * Check for empty input
+	 */
+	if (!str || !*str) {
+		yyerror(NULL, "Null or empty full-text predicate.");
+	}
+
 	/*
 	 * Make a scan buffer with special termination needed by flex.
 	 */
@@ -72,7 +80,7 @@ fts_scanner_init(const char *str)
 	memcpy(scanbuf, str, slen);
 	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
 	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
-
+		
 	BEGIN(INITIAL);
 }
 
