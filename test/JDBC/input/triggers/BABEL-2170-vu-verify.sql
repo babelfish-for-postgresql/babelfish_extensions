@@ -337,8 +337,8 @@ GO
 UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
 GO
 
-UPDATE babel_2170_vu_employees_view_rec SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
-GO
+-- UPDATE babel_2170_vu_employees_view_rec SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
+-- GO
 
 DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_rec;
 GO
