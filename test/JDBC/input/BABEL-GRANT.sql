@@ -145,9 +145,6 @@ GO
 REVOKE ALL TO alogin; -- database permission
 GO
 
-REVOKE SELECT ON SCHEMA::scm FROM guest;
-GO
-
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 
