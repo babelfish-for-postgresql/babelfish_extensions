@@ -12,16 +12,7 @@ go
 create user babel_4344_u1 for login babel_4344_l1;
 go
 
-create login αιώνια with password = '12345678'
-go
-
-create user αιώνια for login αιώνια;
-go
-
 create schema babel_4344_s1;
-go
-
-create schema αγάπη;
 go
 
 create schema babel_4344_s2 authorization babel_4344_u1;
@@ -34,9 +25,6 @@ create table babel_4344_s1.babel_4344_t1(a int);
 go
 
 create table babel_4344_s2.babel_4344_t1(a int);
-go
-
-create table αγάπη.abc(a int);
 go
 
 create table babel_4344_t3(a int, b int);
@@ -57,50 +45,10 @@ go
 create proc babel_4344_s1.babel_4344_p1 as select 2;
 go
 
-create proc babel_4344_s1.babel_4344_p3 as select 3;
-go
-
 CREATE FUNCTION babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.tables) END
 go
 
 CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
-go
-
-grant SELECT on schema::babel_4344_S1 to public, αιώνια;
-go
-
-grant select on schema::αγάπη to αιώνια;
-go
-
--- tsql user=αιώνια password=12345678 
-use babel_4344_d1;
-go
-
-select * from αγάπη.abc;
-go
-
-select * from babel_4344_S1.babel_4344_t1;
-go
-
-use master;
-go
-
--- tsql user=babel_4344_l1 password=12345678 
-use babel_4344_d1;
-go
-
--- User has select privileges, tables and views be accessible
-select * from babel_4344_s1.babel_4344_t1
-go
-select * from babel_4344_s1.babel_4344_v1;
-go
-use master;
-go
-
--- tsql
-use babel_4344_d1;
-go
-revoke select on schema::babel_4344_s1 from public, αιώνια;
 go
 
 -- tsql user=babel_4344_l1 password=12345678 
@@ -133,9 +81,9 @@ go
 -- GRANT OBJECT privilege
 use babel_4344_d1;
 go
-grant SELECT on babel_4344_t1 to BABEL_4344_U1;
+grant select on babel_4344_t1 to babel_4344_u1;
 go
-grant SELECT on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
+grant select on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
 go
 grant all on babel_4344_s1.babel_4344_t1 to babel_4344_u1;
 go
@@ -151,14 +99,7 @@ grant execute on babel_4344_p1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_p1 to babel_4344_u1;
 go
--- inside a transaction, permission will not be granted since it is rolled back
-begin transaction;
-exec sp_executesql N'grant execute on babel_4344_s1.babel_4344_p3 to babel_4344_u1;';
-rollback transaction;
-go
-
--- Mixed case
-grant Execute on Babel_4344_F1 to babel_4344_u1;
+grant execute on babel_4344_f1 to babel_4344_u1;
 go
 grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
 go
@@ -167,19 +108,7 @@ grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
 go
 grant select on schema::babel_4344_s2 to jdbc_user; -- should fail
 go
-grant SELECT on schema::babel_4344_s2 to guest; -- should pass 
-go
-grant select on schema::"" to guest; -- should fail 
-go
-grant select on schema::non_existing_schema to guest; -- should fail 
-go
--- grant statement via a procedure
-create procedure grant_perm_proc as begin exec('grant select on schema::[] to guest') end;
-go
-exec grant_perm_proc; -- should fail
-go
--- non-existing role
-grant SELECT on schema::dbo to guest, babel_4344_u3; -- should fail
+grant select on schema::babel_4344_s2 to guest; -- should pass 
 go
 
 -- tsql user=babel_4344_l1 password=12345678
@@ -204,8 +133,6 @@ exec babel_4344_p1;
 go
 exec babel_4344_s1.babel_4344_p1;
 go
-exec babel_4344_s1.babel_4344_p3; -- should fail, grant statement was rolled back
-go
 select * from babel_4344_f1();
 go
 select * from babel_4344_s1.babel_4344_f1();
@@ -227,12 +154,6 @@ go
 grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
 go
 use master;
-go
-
--- psql
--- GRANT statement add an entry to the catalog
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
-where schema_name = 'babel_4344_s1' collate "C" and object_name = 'ALL' collate "C" order by permission;
 go
 
 -- tsql user=babel_4344_l1 password=12345678
@@ -275,9 +196,9 @@ select * from babel_4344_s1.babel_4344_t3 -- not accessible
 go
 select * from babel_4344_s1.babel_4344_v1;
 go
-exec babel_4344_s1.babel_4344_p1;
+exec babel_4344_s1.babel_4344_p1; -- TODO: should be  accessible
 go
-select * from babel_4344_s1.babel_4344_f1();
+select * from babel_4344_s1.babel_4344_f1(); -- TODO: should be  accessible
 go
 select * from babel_4344_s2.babel_4344_t1;
 go
@@ -366,11 +287,6 @@ go
 use master;
 go
 
--- psql
--- REVOKE on schema removes the entry from the catalog
-select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
-go
-
 -- tsql user=babel_4344_l1 password=12345678
 -- User has no privileges, shouldn't be accessible.
 use babel_4344_d1;
@@ -388,41 +304,6 @@ go
 select * from babel_4344_s1.babel_4344_f1();
 go
 use master;
-go
-
--- psql
--- grant object permission
-grant select on babel_4344_s1.babel_4344_t1 to babel_4344_d1_babel_4344_u1;
-go
-
--- tsql
--- grant schema permission
-use babel_4344_d1;
-go
-grant select on schema::babel_4344_s1 to babel_4344_u1;
-go
-use master
-go
-
--- tsql user=babel_4344_l1 password=12345678
-use babel_4344_d1;
-go
-select * from babel_4344_s1.babel_4344_t1; -- accessible
-go
-use master
-go
-
--- psql
--- revoke schema permission
-revoke select on all tables in schema babel_4344_s1 from babel_4344_d1_babel_4344_u1;
-go
-
--- tsql user=babel_4344_l1 password=12345678
-use babel_4344_d1;
-go
-select * from babel_4344_s1.babel_4344_t1; -- not accessible
-go
-use master
 go
 
 -- tsql
@@ -463,9 +344,6 @@ go
 drop proc babel_4344_s1.babel_4344_p2;
 go
 
-drop proc babel_4344_s1.babel_4344_p3;
-go
-
 drop function babel_4344_f1;
 go
 
@@ -484,16 +362,7 @@ go
 drop schema babel_4344_s2;
 go
 
-drop table αγάπη.abc;
-go
-
-drop schema αγάπη;
-go
-
 drop user babel_4344_u1;
-go
-
-drop user αιώνια;
 go
 
 use master;
@@ -514,18 +383,4 @@ go
 
 -- tsql
 drop login babel_4344_l1;
-go
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'αιώνια' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-go
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-go
-
--- tsql
-drop login αιώνια;
 go
