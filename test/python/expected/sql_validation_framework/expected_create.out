@@ -72,7 +72,6 @@ Could not find tests for procedure sys.printarg
 Could not find tests for procedure sys.sp_cursor_list
 Could not find tests for procedure sys.sp_describe_cursor
 Could not find tests for table sys.babelfish_helpcollation
-Could not find tests for table sys.babelfish_schema_permissions
 Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
 Could not find tests for table sys.spt_datatype_info_table

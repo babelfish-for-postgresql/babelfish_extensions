@@ -155,9 +155,6 @@ GO
 ~~ERROR (Message: 'REVOKE ALL on Database' is not currently supported in Babelfish)~~
 
 
-REVOKE SELECT ON SCHEMA::scm FROM guest;
-GO
-
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 ~~ERROR (Code: 33557097)~~
