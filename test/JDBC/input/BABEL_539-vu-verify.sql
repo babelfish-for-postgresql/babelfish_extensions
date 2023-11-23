@@ -1,6 +1,15 @@
 EXEC babel_539_prepare_proc
 GO
 
+SELECT current_setting('babelfishpg_tsql.escape_hatch_identity_function');
+GO
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'ignore';
+GO
+
+EXEC babel_539_prepare_proc
+GO
+
 SELECT id_num, col1, name  FROM babel_539NewTable_proc ORDER BY col1;
 GO
 
@@ -262,4 +271,7 @@ SELECT IDENTITY(int, 21);
 GO
 
 SELECT sys.IDENTITY_INTO_BIGINT(20, 1, 1);
+GO
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'strict';
 GO
