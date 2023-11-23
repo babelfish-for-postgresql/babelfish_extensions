@@ -125,8 +125,6 @@ runs:
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
 
-        # Just for testing
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "select a.attname as attname, c.relname as relname, col.collname as collation from pg_attribute as a JOIN pg_class as c ON c.oid = a.attrelid JOIN pg_collation col ON col.oid = a.attcollation where a.attname='name' and c.relname='spt_tablecollations_view';"
       shell: bash
 
     - uses: actions/checkout@v2

@@ -18,10 +18,6 @@ inputs:
   migration_mode:
     description: "Database migration mode for Babelfish"
     required: true
-  diff_conn:
-    description: "Whether to upgrade babelfishpg_common and babelfishpg_tsql in different connection"
-    required: false
-    default: "false"
 
 runs:
   using: "composite"
@@ -43,7 +39,6 @@ runs:
         migration_mode: ${{ inputs.migration_mode }}
         pg_old_dir: ${{ inputs.pg_old_dir }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
-        diff_conn: ${{ inputs.diff_conn }}
 
     - name: Run Verify Tests
       if: always() && steps.run-pg_upgrade.outcome == 'success' && inputs.is_final_ver == 'true'

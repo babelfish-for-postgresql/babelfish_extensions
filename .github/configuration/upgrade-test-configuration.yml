@@ -167,9 +167,7 @@ upgrade-version: [{
   ],
   db-parameters: [
     "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
-  ],
-  diff-conn: true,
-  description: "Upgrade with non-default server collation in the base version and updating extensions in different connections",
+  ]
 },
 {
   upgrade-path: [
@@ -184,9 +182,7 @@ upgrade-version: [{
   ],
   db-parameters: [
     "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
-  ],
-  diff-conn: true,
-  description: "Upgrade with non-default server collation in the base version and updating extensions in different connections",
+  ]
 },
 {
   upgrade-path: [
@@ -201,9 +197,7 @@ upgrade-version: [{
   ],
   db-parameters: [
     "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
-  ],
-  diff-conn: true,
-  description: "Upgrade with non-default server collation in the base version and updating extensions in different connections",
+  ]
 },
 {
   upgrade-path: [
@@ -222,9 +216,7 @@ upgrade-version: [{
   ],
   db-parameters: [
     "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
-  ],
-  diff-conn: true,
-  description: "Upgrade with non-default server collation in the base version and updating extensions in different connections",
+  ]
 },
 {
   upgrade-path: [
@@ -247,8 +239,6 @@ upgrade-version: [{
   ],
   db-parameters: [
     "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
-  ],
-  diff-conn: true,
-  description: "Upgrade with non-default server collation in the base version and updating extensions in different connections",
+  ]
 }
 ]
