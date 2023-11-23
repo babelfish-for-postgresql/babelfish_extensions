@@ -154,7 +154,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	update_CreateRoleStmt(stmt, dbo, NULL, db_owner);
 
 	stmt = parsetree_nth_stmt(res, i++);
-	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
 
 	if (guest)
 	{
@@ -181,7 +181,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_AlterTableStmt(stmt, schema, db_owner);
-  
+
 	if (guest)
 	{
 		stmt = parsetree_nth_stmt(res, i++);
@@ -261,7 +261,7 @@ gen_dropdb_subcmds(const char *schema,
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
 	
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_owner);
