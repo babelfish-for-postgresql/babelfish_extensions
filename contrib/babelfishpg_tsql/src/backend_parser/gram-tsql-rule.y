@@ -2019,7 +2019,7 @@ func_expr_common_subexpr:
 					{
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("IDENTITY() is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_identity_function to ignore"),
+							errmsg("To use IDENTITY(), set \'babelfishpg_tsql.escape_hatch_identity_function\' to \'ignore\'"),
 							parser_errposition(@1)));
 					}
 				}
@@ -2033,7 +2033,7 @@ func_expr_common_subexpr:
 					{
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("IDENTITY() is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_identity_function to ignore"),
+							errmsg("To use IDENTITY(), set \'babelfishpg_tsql.escape_hatch_identity_function\' to \'ignore\'"),
 							parser_errposition(@1)));
 					}
 					
@@ -2048,7 +2048,7 @@ func_expr_common_subexpr:
 					{
 						ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("IDENTITY() is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_identity_function to ignore"),
+							errmsg("To use IDENTITY(), set \'babelfishpg_tsql.escape_hatch_identity_function\' to \'ignore\'"),
 							parser_errposition(@1)));
 					}
 				}
