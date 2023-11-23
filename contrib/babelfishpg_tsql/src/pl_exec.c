@@ -5062,10 +5062,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* If query affects IDENTITY_INSERT relation then update sequence */
 		pltsql_update_identity_insert_sequence(expr);
 
-		/* If current plan constains a pivot operator, we set it as execute oneshot */
+		/* If current plan constains a pivot operator, we remove the plan */
 		if (is_pivot)
 		{
-			expr->plan->oneshot = true;
+			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
 		}
 
 		/* Expect SPI_tuptable to be NULL else complain */
