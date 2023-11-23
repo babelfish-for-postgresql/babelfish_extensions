@@ -130,6 +130,7 @@ char* translate_simple_term(const char* inputStr) {
 
     // removing trailing and leading spaces
     trim(trimmedInputStr, false);
+    inputLength = strlen(trimmedInputStr);
 
     // Check if the input is a phrase enclosed in double quotes
     if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
