@@ -53,7 +53,9 @@ include $(PGXS)
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 
 UPGRADES = $(patsubst sql/upgrades/babelfishpg_common--%.sql,sql/babelfishpg_common--%.sql,$(wildcard sql/upgrades/babelfishpg_common--*.sql))
-GENERATED_UPGRADES = $(sql/$(EXTENSION)--3.2.0--3.3.0.sql,sql/$(EXTENSION)--3.3.0--3.4.0.sql)
+GENERATED_UPGRADES = \
+    sql/$(EXTENSION)--3.2.0--3.3.0.sql \
+    sql/$(EXTENSION)--3.3.0--3.4.0.sql
 
 ifdef PREV_EXTVERSION
 DATA = sql/$(EXTENSION)--$(PREV_EXTVERSION).sql
