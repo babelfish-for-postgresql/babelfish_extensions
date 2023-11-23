@@ -89,6 +89,9 @@ protected:
 		bool throw_error = false;
 		int count = 0; /* record count to skip unnecessary visiting */
 		bool is_inside_trigger = false;
+		bool is_inside_view = false;
+		bool is_inside_with = false;
+		bool is_inside_join = false;
 
 		/* handler */
 		void handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node, escape_hatch_t* eh);
@@ -526,7 +529,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlP
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW_VIEW_METADATA_OPTION, option->VIEW_METADATA());
 	}
 
-	return visitChildren(ctx);
+	is_inside_view = true;
+	auto ret =  visitChildren(ctx);
+	is_inside_view = false;
+	
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitProcedure_param(TSqlParser::Procedure_paramContext *ctx)
@@ -1334,10 +1341,38 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
+	if (ctx->PIVOT())
+	{
+		if (is_inside_view)
+		{
+			is_inside_view = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Create view on stmt with PIVOT operator is not currently supported.", 0, 0);
+		}
+			
+
+		if (is_inside_with)
+		{
+			is_inside_with = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "WITH CTE stmt with usage of PIVOT operator is not currently supported", 0, 0);
+		}
+
+		if (is_inside_join)
+		{
+			is_inside_join = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "JOIN with PIVOT statement is not currently supported", 0, 0);
+		}
+	}
+	if (ctx->JOIN())
+	{
+		is_inside_join = true;
+	}
 	if (ctx->UNPIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
 
-	return visitChildren(ctx);
+	auto ret = visitChildren(ctx);
+
+	is_inside_join = false;
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For_clauseContext *ctx)
@@ -1386,7 +1421,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser
 {
 	if (ctx->XMLNAMESPACES())
 		handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx));
-	return visitChildren(ctx);
+
+	is_inside_with = true;
+	auto ret = visitChildren(ctx);
+	is_inside_with = false;
+
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)

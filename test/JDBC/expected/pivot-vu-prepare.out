@@ -856,20 +856,141 @@ RETURN
     ) AS pvt2
 GO
 
--- Cannot create view (Bug)
-create view pivot_view as
-SELECT top 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)as srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID in ([2], [3], [4], [5], [6])
-) AS pvt
+CREATE VIEW StoreReceipt_view
+AS
+SELECT * FROM StoreReceipt;
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: a column definition list is required for functions returning "record")~~
+-- BABEL-4558 
+CREATE TABLE OSTable(
+    [Oid] [int] NOT NULL,
+    [Sid] [int] NOT NULL
+)
+GO
+
+
+CREATE TABLE STable(
+    [Id] [int] IDENTITY(1,1) NOT NULL,
+    [Scode] [varchar](10) NOT NULL,
+    [Type] [smallint] NOT NULL
+)
+GO
+
+insert into OSTable (Oid, Sid) values (1, 2);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (2, 8);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (3, 5);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (4, 11);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (5, 12);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (6, 8);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (7, 5);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (8, 2);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (9, 15);
+GO
+~~ROW COUNT: 1~~
+
+insert into OSTable (Oid, Sid) values (10, 1);
+GO
+~~ROW COUNT: 1~~
+
+
+insert into STable (Scode, Type) values ('vestibulum', 11);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('eget', 15);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('pharetra', 13);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('nam', 15);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('fermentum', 13);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('hac', 12);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('molestie', 10);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('justo', 11);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('lobortis', 7);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('at', 3);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('augue', 9);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('luctus', 2);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('nisi', 9);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('sociis', 1);
+GO
+~~ROW COUNT: 1~~
+
+insert into STable (Scode, Type) values ('ultrices', 14);
+GO
+~~ROW COUNT: 1~~
+
+
+-- table for aggregate with string value
+CREATE TABLE seating_tbl (
+    seatings VARCHAR(20) NOT NULL,
+    left_right VARCHAR(20) NOT NULL
+);
+go
+
+INSERT INTO seating_tbl (seatings, left_right)
+VALUES ('SEAT1', 'LEFT'),
+       ('SEAT1', 'RIGHT'),
+       ('SEAT2', 'LEFT'),
+       ('SEAT3', 'LEFT'),
+       ('SEAT3', 'RIGHT');
+go
+~~ROW COUNT: 5~~
 
