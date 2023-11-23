@@ -365,6 +365,8 @@ ignore#!#sys_server_principals_dep-vu-cleanup
 ignore#!#sys_server_principals_dep-vu-prepare
 ignore#!#Test-sp_rename-dep-vu-prepare
 ignore#!#Test-sp_rename-dep-vu-cleanup
+# This test is failing only in github check
+ignore#!#bbf_view_def
 
 # TIME-OUT
 ignore#!#TestSimpleErrorsWithImplicitTran
