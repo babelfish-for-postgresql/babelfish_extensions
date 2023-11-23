@@ -64,6 +64,7 @@ Oid			bbf_authid_login_ext_idx_oid;
  *****************************************/
 Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
+Oid			bbf_authid_user_ext_login_db_idx_oid;
 
 /*****************************************
  *			VIEW_DEF
@@ -136,6 +137,17 @@ static struct cachedesc my_cacheinfo[] = {
 			0
 		},
 		16
+	},
+	{-1,						/* TSQLUSERMAP */
+		-1,
+		2,
+		{
+			Anum_bbf_authid_user_ext_login_name,
+			Anum_bbf_authid_user_ext_database_name,
+			0,
+			0
+		},
+		16
 	}
 };
 
@@ -180,6 +192,11 @@ init_catalog(PG_FUNCTION_ARGS)
 												sys_schema_oid);
 	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
 													sys_schema_oid);
+	bbf_authid_user_ext_login_db_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_LOGIN_DB_IDX_NAME,
+																   sys_schema_oid);
+	my_cacheinfo[3].reloid = bbf_authid_user_ext_oid;
+	my_cacheinfo[3].indoid = bbf_authid_user_ext_login_db_idx_oid;
+
 
 	/* bbf_view_def */
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
@@ -202,7 +219,7 @@ initTsqlSyscache()
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited)
 	{
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 4);
 		tsql_syscache_inited = true;
 	}
 }
@@ -896,47 +913,28 @@ get_authid_user_ext_idx_oid(void)
 char *
 get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
-	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple_user_ext;
-	ScanKeyData key[3];
-	TableScanDesc scan;
 	char	   *user_name = NULL;
 	NameData   *login_name;
 
 	if (!db_name || !login)
 		return NULL;
 
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
-
 	login_name = (NameData *) palloc0(NAMEDATALEN);
 	snprintf(login_name->data, NAMEDATALEN, "%s", login);
-	ScanKeyInit(&key[0],
-				Anum_bbf_authid_user_ext_login_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				NameGetDatum(login_name));
-	ScanKeyInit(&key[1],
-				Anum_bbf_authid_user_ext_database_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
-
-	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	tuple_user_ext = SearchSysCache2(TSQLUSERMAP,
+									 NameGetDatum(login_name),
+									 CStringGetTextDatum(db_name));
 	if (HeapTupleIsValid(tuple_user_ext))
 	{
 		Form_authid_user_ext userform;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-		user_name = pstrdup(NameStr(userform->rolname));
+		if (userform->user_can_connect)
+			user_name = pstrdup(NameStr(userform->rolname));
+		ReleaseSysCache(tuple_user_ext);
 	}
-
-	table_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return user_name;
 }
