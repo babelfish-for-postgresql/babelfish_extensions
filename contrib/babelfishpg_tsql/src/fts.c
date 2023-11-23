@@ -10,10 +10,20 @@ PG_FUNCTION_INFO_V1(babelfish_fts_rewrite);
 Datum 
 babelfish_fts_rewrite(PG_FUNCTION_ARGS)
 {
-    text* input_text = PG_GETARG_TEXT_P(0);
-    char* input_str = text_to_cstring(input_text);
+    text* input_text;
+    char* input_str;
     char* translated_query;
     text* result_text = NULL; // Initialize result_text to NULL
+
+    if (PG_ARGISNULL(0))
+    {
+        ereport(ERROR,
+            (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+                errmsg("Incorrect syntax near the keyword 'null'")));
+    }
+
+    input_text = PG_GETARG_TEXT_P(0);
+    input_str = text_to_cstring(input_text);
 
     if (!pltsql_allow_fulltext_parser)
     {
