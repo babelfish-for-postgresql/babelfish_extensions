@@ -302,21 +302,21 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
 1. To work with Spatial Datatypes, you must install the `PostGIS` extension. 
 Steps on how to get PostGIS working on open-source:
     ```
-    wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
-    tar -xvzf postgis-3.3.3dev.tar.gz
+    wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
+    tar -xvzf postgis-3.4.0.tar.gz
     sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
     sudo yum install gdal gdal-devel
     sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-3.7.2-1.el8.x86_64.rpm
     sudo yum install https://www.rpmfind.net/linux/epel/8/Everything/x86_64/Packages/g/geos-devel-3.7.2-1.el8.x86_64.rpm
-    wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
-    tar -xvzf proj-4.9.1.tar.gz
-    cd proj-4.9.1
+    wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz
+    tar -xvzf proj-9.2.1.tar.gz
+    cd proj-9.2.1
     mkdir build
     cd build
-    cmake ..
+    cmake -DCMAKE_INSTALL_LIBDIR="lib/x86_64-linux-gnu" -DCMAKE_INSTALL_PREFIX="/usr" ..
     cmake --build .
     sudo cmake --build . --target install
-    cd ../../postgis-3.3.3dev
+    cd ../../postgis-3.4.0
     ./configure
     make
     sudo make install
