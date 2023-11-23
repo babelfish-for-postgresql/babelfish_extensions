@@ -63,7 +63,7 @@ jobs:
           if [[ ${{matrix.branch}} == "BABEL_2_"* ]]; then 
             git clone --depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git
           else
-            git clone --depth 1 --branch PG15 https://github.com/ossc-db/pg_hint_plan.git
+            git clone --depth 1 --branch REL15_1_5_1 https://github.com/ossc-db/pg_hint_plan.git
           fi
           cd pg_hint_plan
           export PATH=$HOME/psql/bin:$PATH
