@@ -65,6 +65,34 @@ GO
 ~~ERROR (Message: Incorrect syntax near the keyword 'null')~~
 
 
+EXEC fts_contains_vu_prepare_p1 '  "" '
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '  ""'
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"" '
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '" "'
+GO
+~~START~~
+int#!#text
+~~END~~
+
+
 EXEC fts_contains_vu_prepare_p1 'other'
 GO
 ~~START~~

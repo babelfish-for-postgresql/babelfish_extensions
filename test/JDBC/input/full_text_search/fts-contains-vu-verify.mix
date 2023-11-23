@@ -32,6 +32,18 @@ GO
 EXEC fts_contains_vu_prepare_p1 NULL
 GO
 
+EXEC fts_contains_vu_prepare_p1 '  "" '
+GO
+
+EXEC fts_contains_vu_prepare_p1 '  ""'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"" '
+GO
+
+EXEC fts_contains_vu_prepare_p1 '" "'
+GO
+
 EXEC fts_contains_vu_prepare_p1 'other'
 GO
 
