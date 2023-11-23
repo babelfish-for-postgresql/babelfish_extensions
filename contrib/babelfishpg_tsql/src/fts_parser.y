@@ -1,5 +1,6 @@
 %{
 #include "postgres.h"
+#include "lib/stringinfo.h"
 #include <ctype.h>
 #include "fts_data.h"
 
@@ -21,8 +22,7 @@ static char *scanbuf;
 static int	scanbuflen;
 
 static char* translate_simple_term(const char* s);
-static char *trim(char *s);
-static char *trimInsideQuotes(char *s);
+static char *trim(char *s, bool insideQuotes);
 
 %}
 
@@ -114,52 +114,32 @@ simple_term_list:
  */
 static
 char* translate_simple_term(const char* inputStr) {
-    int inputLength;
-    int outputSize;
-    char* output;
-    const char* inputPtr;
-    char* outputPtr;
-    char* trimmedInputStr;
+    int             inputLength;
+    StringInfoData  output;
+    const char*     inputPtr;
+    char*           trimmedInputStr;
 
-    // Check for empty input
+    // Check for empty input - this should not be possible based on lexer rules, but check just in case
     if (!inputStr || !(inputLength = strlen(inputStr))) {
-        return NULL;
+        ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Null or empty full-text predicate.")));
     }
 
     trimmedInputStr = pstrdup(inputStr);
 
     // removing trailing and leading spaces
-    trim(trimmedInputStr);
-    inputLength = strlen(trimmedInputStr);
+    trim(trimmedInputStr, false);
 
     // Check if the input is a phrase enclosed in double quotes
     if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
-        trimInsideQuotes(trimmedInputStr);
+        trim(trimmedInputStr, true);
         inputLength = strlen(trimmedInputStr);
 
-        // Calculate the maximum possible size of output
-        outputSize = inputLength * 3;
-
-        // Check for potential overflow and adjust the output size
-        if (outputSize < inputLength || outputSize < 0) {
-            pfree(trimmedInputStr);
-            ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-                    errmsg("Memory allocation failed"))); // Potential overflow
-        }
-
-        // Allocate the output buffer with the adjusted size
-        output = (char*)palloc(outputSize + 1); // +1 for the null terminator
-        if (output == NULL) {
-            pfree(trimmedInputStr);
-            ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-                    errmsg("Memory allocation failed")));
-        }
+        initStringInfo(&output);
 
         // Initialize pointers for input and output
         inputPtr = trimmedInputStr;
-        outputPtr = output;
 
         while (*inputPtr != '\0') {
             if (*inputPtr == ' ') {
@@ -168,107 +148,57 @@ char* translate_simple_term(const char* inputStr) {
                     // Handle multiples spaces between words and skip over additional spaces
                     inputPtr++;
                 }
-                if (outputPtr - output + 3 > outputSize) {
-                    // Output buffer overflow
-                    pfree(trimmedInputStr);
-                    pfree(output);
-                    ereport(ERROR,
-                        (errcode(ERRCODE_OUT_OF_MEMORY),
-                            errmsg("Memory allocation failed"))); // Potential overflow
-                }
-                *outputPtr++ = '<';
-                *outputPtr++ = '-';
-                *outputPtr++ = '>';
+                appendStringInfoString(&output, "<->");
             } else {
                 // Copy the character
-                if (outputPtr - output + 1 > outputSize) {
-                    // Output buffer overflow
-                    pfree(trimmedInputStr);
-                    pfree(output);
-                    ereport(ERROR,
-                        (errcode(ERRCODE_OUT_OF_MEMORY),
-                            errmsg("Memory allocation failed"))); // Potential overflow
-                }
-                *outputPtr++ = *inputPtr;
+                appendStringInfoChar(&output, *inputPtr);
             }
             inputPtr++;
         }
-        *outputPtr = '\0';
         pfree(trimmedInputStr);
-        return output;
+        return output.data;
     } else {
         // It's a single word, so no transformation needed
         return trimmedInputStr;
     }
 }
 
-// Function to remove leading and trailing spaces of a string
-static char *trim(char *s) {
+/*
+ * Function to remove leading and trailing spaces of a string
+ * If flag is true then it removes spaces inside double quotes
+ */
+static char *trim(char *s, bool insideQuotes) {
     size_t length;
     size_t start;
     size_t end;
     size_t newLength;
-    
-    // Empty string, nothing to trim
+    bool inQuotes;
+
+    /*
+     * Empty string, nothing to trim
+     * for the empty input, we're automatically throwing error, 
+     * so if string is NULL or empty, this clause won't pose any issue, it's just a safety check
+     */
     if (!s || !(length = strlen(s))) {
         return s;
     }
 
+    inQuotes = false;
     start = 0;
     end = length - 1;
 
-    // Trim leading spaces
-    while (start < length && isspace(s[start])) {
-        start++;
-    }
-
-    // Trim trailing spaces
-    while (end > start && isspace(s[end])) {
-        end--;
-    }
-
-    // Calculate the new length
-    newLength = end - start + 1;
-
-    // Shift the non-space part to the beginning of the string
-    memmove(s, s + start, newLength);
-
-    // Null-terminate the result
-    s[newLength] = '\0';
-
-    return s;
-}
-
-// Function to remove leading and trailing spaces inside double quotes
-static char *trimInsideQuotes(char *s) {
-    size_t length;
-    size_t start;
-    size_t end;
-    size_t i;
-    size_t newLength;
-    bool insideQuotes;
-
-     // Empty string, nothing to trim
-    if (!s || !(length = strlen(s))) {
-        return s;
-    }
-
-    insideQuotes = false;
-    start = 1;
-    end = length - 2;
-
-    for (i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         if (s[i] == '"') {
-            insideQuotes = !insideQuotes;
+            inQuotes = !inQuotes;
         }
 
-        if (!insideQuotes) {
-            // Trim leading spaces inside quotes
+        if (!inQuotes || insideQuotes) {
+            // Trim leading spaces
             while (start < length && isspace(s[start])) {
                 start++;
             }
 
-            // Trim trailing spaces inside quotes
+            // Trim trailing spaces
             while (end > start && isspace(s[end])) {
                 end--;
             }

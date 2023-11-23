@@ -80,7 +80,6 @@ fts_scanner_init(const char *str)
 	memcpy(scanbuf, str, slen);
 	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
 	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
-		
 	BEGIN(INITIAL);
 }
 
