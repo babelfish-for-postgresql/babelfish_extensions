@@ -1592,16 +1592,16 @@ simple_select:
 			| tsql_values_clause							{ $$ = $1; }
 			;
 
-tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
+tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR columnref IN_P in_expr ')'
 				{						
 					ColumnRef 		*a_star;
 					ResTarget 		*a_star_restarget;
 					RangeSubselect 	*range_sub_select;
 					Alias 			*temptable_alias;
-					SortBy 			*s;
 					List    *ret;
 					List    *value_col_strlist = NULL;
 					List	*subsel_valuelists = NULL;
+					String 	*pivot_colstr;
 					
 					SelectStmt 	*category_sql = makeNode(SelectStmt);
 					SelectStmt 	*valuelists_sql = makeNode(SelectStmt);
@@ -1647,7 +1647,9 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 
 					temptable_alias = makeNode(Alias);
 					temptable_alias->aliasname = "pivotTempTable";
-					temptable_alias->colnames = list_make1(makeString(pstrdup($5)));
+					/* get the column name from the columnref*/
+					pivot_colstr = llast(((ColumnRef *)$5)->fields);
+					temptable_alias->colnames = list_make1(copyObject(pivot_colstr));
 					
 					valuelists_sql->valuesLists = subsel_valuelists;
 
@@ -1655,18 +1657,10 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 					range_sub_select->subquery = (Node *) valuelists_sql;
 					range_sub_select->alias = temptable_alias;
 
-					s = makeNode(SortBy);
-					s->node = makeIntConst(1, -1);
-					s->sortby_dir = 0;
-					s->sortby_nulls = 0;     
-					s->useOp = NIL;
-					s->location = -1;
-
 					category_sql->targetList = list_make1(a_star_restarget);
 					category_sql->fromClause = list_make1(range_sub_select);
-					category_sql->sortClause = list_make1(s);
 
-					ret = list_make4(pstrdup($5), restarget_aggfunc, category_sql, value_col_strlist);
+					ret = list_make4($5, restarget_aggfunc, category_sql, value_col_strlist);
 					$$ = (Node*) ret; 
 				} 
 			;
