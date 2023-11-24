@@ -1801,6 +1801,14 @@ typedef struct tsql_identity_insert_fields
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
 
+typedef struct tsql_pivot_fields
+{
+	RawStmt	*s_sql;
+	RawStmt	*c_sql;
+	char 	*sourcetext;
+	char	*funcName;
+}tsql_pivot_fields;
+
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;

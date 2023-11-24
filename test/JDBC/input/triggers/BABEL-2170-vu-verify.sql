@@ -31,7 +31,7 @@ GO
 UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
 GO
 
-SELECT EmployeeID,EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID = 2 ORDER BY EmployeeID;
+SELECT EmployeeID,EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID = 2;
 GO
 
 BEGIN TRANSACTION
@@ -251,6 +251,46 @@ SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu
 GO
 
 DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_delete;
+GO
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
+GO
+
+-- Transition table join test
+CREATE TRIGGER babel_2170_vu_employees_view_transition ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees_view set MonthSalary = i.MonthSalary + 15 FROM inserted as i
+        JOIN babel_2170_vu_employees_view AS v ON v.EmployeeID = i.EmployeeID
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = 5 WHERE EmployeeID = 2;
+GO
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view WHERE EmployeeID = 2;
+GO
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_transition;
+GO
+
+-- Recursive Trigger test Direct Recursion Trigger calling itself trigger 1 -> trigger 1
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view WHERE EmployeeID = 2;
+GO
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
 GO
 
 -- test multi-db mode

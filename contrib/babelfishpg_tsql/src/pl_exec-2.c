@@ -3756,6 +3756,9 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	Oid			datdba;
 	bool		login_is_db_owner;
 	bool		is_create;
+	List		*res;
+	Node	   	*res_stmt;
+	PlannedStmt *wrapper;
 
 	Assert(stmt->schema_name != NULL);
 
@@ -3833,6 +3836,29 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	/* The above query will be
 	 * executed using ProcessUtility()
 	 */
-	exec_utility_cmd_helper(query_str);
+	res = raw_parser(query_str, RAW_PARSE_DEFAULT);
+	res_stmt = ((RawStmt *) linitial(res))->stmt;
+
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = res_stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 1;
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				is_create ? "(CREATE FULLTEXT INDEX STATEMENT )" : "(DELETE FULLTEXT INDEX STATEMENT )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+
 	return PLTSQL_RC_OK;
 }
