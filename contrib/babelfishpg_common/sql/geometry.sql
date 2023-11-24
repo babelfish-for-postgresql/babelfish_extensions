@@ -91,7 +91,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
 		ELSE
-			RAISE EXCEPTION 'The spatial reference identifier (SRID) is not valid. SRIDs must be between 0 and 999999.';
+			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -261,7 +261,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__Point(float8, float8, srid integer)
 			-- Call the underlying function after preprocessing
 			RETURN (SELECT sys.GeomPoint_helper($1, $2, $3));
 		ELSE
-			RAISE EXCEPTION 'The spatial reference identifier (SRID) is not valid. SRIDs must be between 0 and 999999.';
+			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -294,7 +294,7 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 				RAISE EXCEPTION '% is not supported', Geomtype;
 			END IF;
 		ELSE
-			RAISE EXCEPTION 'The spatial reference identifier (SRID) is not valid. SRIDs must be between 0 and 999999.';
+			RAISE EXCEPTION 'SRID value should be between 0 and 999999';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

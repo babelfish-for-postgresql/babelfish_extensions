@@ -317,7 +317,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
-				RAISE EXCEPTION 'The spatial reference identifier (SRID) is not valid.';
+				RAISE EXCEPTION 'Inavalid SRID';
 			END IF;
 		ELSE
 			RAISE EXCEPTION '% is not supported', Geomtype;
@@ -358,7 +358,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__Point(float8, float8, srid integer)
 		ELSEIF lat < -90.0 OR lat > 90.0 THEN
 			RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 		ELSE
-			RAISE EXCEPTION 'The spatial reference identifier (SRID) is not valid.';
+			RAISE EXCEPTION 'Inavalid SRID';
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -402,7 +402,7 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
 				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
 			ELSE
-				RAISE EXCEPTION 'The spatial reference identifier (SRID) is not valid.';
+				RAISE EXCEPTION 'Inavalid SRID';
 			END IF;
 		ELSE
 			RAISE EXCEPTION '% is not supported', Geomtype;

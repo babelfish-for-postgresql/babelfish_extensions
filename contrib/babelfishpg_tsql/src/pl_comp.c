@@ -111,7 +111,10 @@ static int	cur_handle_id = 1;
  * Global variable used to prevent recurring check for TSQL functional call for Geospatial types
  * Eg: table.col.stx  (here stx will be considered as a Geospatial function)
  */
-static bool isGeospatialFunction = false;
+static bool is_geospatial_function = false;
+
+/* Macros for list of Geospatial functions */
+#define GEOSPATIAL_COLREF_LIST {"stx", "sty", "lat", "long"}
 
 /* ----------
  * static prototypes
@@ -155,6 +158,7 @@ static void delete_function(PLtsql_function *func);
 static Node *resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref);
 static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List *fargs);
 static char *resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode);
+static bool check_Geospatial_function_exists(const char *target);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
@@ -1669,22 +1673,25 @@ pltsql_param_ref(ParseState *pstate, ParamRef *pref)
 
 /*
  * pltsql_post_func_ref		parser callback for FuncRefs to check and modify Geospatial function call
+ * We are returning a List * of function args because in the cases we are concerned with geospatial types
+ * we are just trying to modify the arg list for functions, which is then passed to ParseFuncOrColumn in transformFuncCall.
  */
 static List *
 pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
 {
 	List *ret = resolve_geospatial_func_ref(pstate, fn, fargs);
 	if (ret)
-	{
-		elog(WARNING, "got some rets %d", ret->length);
 		return ret;
-	}
+
 	return fargs;
 }
 
 /*
  * This function reverts schema name, which is already rewritten by rewrite_column_refs or rewrite_plain_name functions
  * This is required so that parser identifies the name for Geospatial Function call
+ * Eg: select t2.geom.STX from t2; (where 'geom' is geometry column in table t2)
+ * In this Case, 't2.geom.STX' will rewritten as 'master_t2.geom.STX'
+ * because t2 is considered as Schema name and not table name because of 3 part call. So, we have to resolve it
  */
 static char *
 resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode)
@@ -1712,10 +1719,26 @@ resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode)
 	return schema_name;
 }
 
+/* Function to check if the name is a Geospatial Function */
+static bool
+check_Geospatial_function_exists(const char *target)
+{
+    static const char *stringList[] = GEOSPATIAL_COLREF_LIST;
+
+    for (int i = 0; i < sizeof(stringList); ++i)
+	{
+        if (pg_strcasecmp(target, stringList[i]) == 0)
+		{
+            return true; /* function name found */
+        }
+    }
+
+    return false; /* function name not found */
+}
+
 /*
  * This function identifies and modifies geospatial function call for
  * STX, STY, LAT, LONG functions
- * TODO: Add handling for more such TSQL function syntax here
  */
 static Node *
 resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
@@ -1725,20 +1748,17 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 
 	/* if there is only one field then it cannot be a geospatial function call */
 	if (list_length(cref->fields) <= 1){
-		isGeospatialFunction = false;	/* resetting the global variable */
+		is_geospatial_function = false;	/* resetting the global variable */
 		return NULL;
 	}
 
 	last_field = (Node *) llast(cref->fields);
 	/* 
 	 * checking if last field matches any of the geospatial functions - stx, sty, lat, long
-	 * and also checking if isGeospatialFunction variable is false to avoid entering the loop if it is a column rather than function
+	 * and also checking if is_geospatial_function variable is false to avoid entering the loop if it is a column rather than function
 	 */
-	if (IsA(last_field, String) && !isGeospatialFunction &&
-		(pg_strcasecmp(strVal(last_field), "stx") == 0 ||
-		pg_strcasecmp(strVal(last_field), "sty") == 0 ||
-		pg_strcasecmp(strVal(last_field), "lat") == 0 ||
-		pg_strcasecmp(strVal(last_field), "long") == 0))
+	if (IsA(last_field, String) && !is_geospatial_function &&
+		check_Geospatial_function_exists(strVal(last_field)))
 	{
 		FuncExpr   *funcexpr = makeNode(FuncExpr);	/* func expression to modify colref to funcref */
 		char *name = strVal(last_field);
@@ -1746,7 +1766,7 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 		Oid dataTypeId;
 		ColumnRef *colref = makeNode(ColumnRef);	/* new colref to avoid making changes to existing structure */
 
-		isGeospatialFunction = true;
+		is_geospatial_function = true;
 		colref->fields = list_copy(cref->fields);
 		/* if length is 3 then colref would have been modified by rewrite_column_refs function */
 		if(list_length(colref->fields) == 3)
@@ -1769,7 +1789,7 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 		}
 		PG_CATCH();
 		{
-			isGeospatialFunction = false;	/* resetting the global variable */
+			is_geospatial_function = false;	/* resetting the global variable */
 			return NULL;	/* if not a valid column ref */
 		}
 		PG_END_TRY();
@@ -1777,19 +1797,14 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 		dataTypeId = ((Var *)col)->vartype;
 		/* Modifying colref to funcref since a valid Geospatial function call is identified */
 		funcid = LookupFuncName(list_make2(makeString("sys"), makeString(name)), 1, &dataTypeId, false);
-		funcexpr->funcid = funcid;
-		funcexpr->funcresulttype = get_func_rettype(funcid);
-		funcexpr->funcretset = false;
-		funcexpr->funcvariadic = false;
-		funcexpr->funcformat = COERCE_EXPLICIT_CALL;
-		funcexpr->args = list_make1(col);
+		funcexpr = makeFuncExpr(funcid, get_func_rettype(funcid), list_make1(col), 0, 0, COERCE_EXPLICIT_CALL);
 		funcexpr->location = cref->location;
-		isGeospatialFunction = false;	/* resetting the global variable */
+		is_geospatial_function = false;	/* resetting the global variable */
 
 		return (Node *) funcexpr;
 	}
 
-	isGeospatialFunction = false;	/* resetting the global variable */
+	is_geospatial_function = false;	/* resetting the global variable */
 
 	return NULL;
 }
@@ -1797,23 +1812,24 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 /*
  * This function identifies and modifies geospatial function call for
  * STDistance(), STAsText(), STAsBinary() functions
- * TODO: Add handling for more such TSQL function syntax here
  */
 static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
 {
 	Node *fname;	/* represents the geospatial function name */
 
-	if(list_length(fn->funcname) > 1 && list_length(fn->args) <= 1 && fn->agg_order == NULL && fn->agg_filter == NULL 
-		&& !fn->agg_within_group && !fn->agg_star && !fn->agg_distinct && !fn->func_variadic)
+	if(list_length(fn->funcname) > 1 && list_length(fn->args) <= 1 
+		&& fn->agg_order == NULL && fn->agg_filter == NULL 
+		&& !fn->agg_within_group && !fn->agg_star 
+		&& !fn->agg_distinct && !fn->func_variadic)
 	{
 		Node *col;
 		bool flag = true;
 		fname = (Node *) llast(fn->funcname);
 		/* 
 		 * checking if last field matches any of the geospatial functions - stdistance, stastext, stasbinary
-		 * and also checking if isGeospatialFunction variable is false to avoid entering the loop if it is not a function
+		 * and also checking if is_geospatial_function variable is false to avoid entering the loop if it is not a function
 		 */
-		if (IsA(fname, String) && !isGeospatialFunction &&
+		if (IsA(fname, String) && !is_geospatial_function &&
 				((pg_strcasecmp(strVal(fname), "stdistance") == 0 && list_length(fn->args) == 1) ||
 				(pg_strcasecmp(strVal(fname), "stastext") == 0 && list_length(fn->args) == 0) || 
 				(pg_strcasecmp(strVal(fname), "stasbinary") == 0 && list_length(fn->args) == 0)))
@@ -1822,7 +1838,7 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 			cref->fields = list_copy(fn->funcname);
 			cref->fields = list_delete_last(cref->fields);	/* deletes the function name and check if the remaining colref is a valid column reference */
 
-			isGeospatialFunction = true;
+			is_geospatial_function = true;
 			/* if length is 1 then colref would have been modified by rewrite_plain_name function */
 			if(list_length(cref->fields) == 1)
 			{
@@ -1844,7 +1860,7 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 			}
 			PG_CATCH();
 			{
-				flag = false;	/* if not a valid column ref */
+				flag = false;	/* if not a valid column ref. Eg: table.col.stx (where col is not a coulmn of table) */
 			}
 			PG_END_TRY();
 
@@ -1854,12 +1870,12 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 				fn->args = lcons(cref, fn->args);
 				fargs = lcons(col, fargs);
 				fn->funcname = list_delete_first(fn->funcname);
-				isGeospatialFunction = false;	/* resetting the global variable */
+				is_geospatial_function = false;	/* resetting the global variable */
 				return fargs;
 			}
 		}
 	}
-	isGeospatialFunction = false;	/* resetting the global variable */
+	is_geospatial_function = false;	/* resetting the global variable */
 
 	return NULL;
 }
