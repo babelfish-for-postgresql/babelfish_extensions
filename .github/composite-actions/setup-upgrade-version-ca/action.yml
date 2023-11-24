@@ -32,7 +32,7 @@ runs:
         for (( i=1 ; i<$LEN ; i++ )); 
         do
           # Computing input parameters that need to pass
-          version_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}]."upgrade-path"[$i].version"
+          version_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}].\"upgrade-path\"[$i].version"
           upgrade_version=$(yq $version_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           upgrade_version_engb=".\""${upgrade_version}"\".engine_branch"
           engine_branch=$(yq $upgrade_version_engb ${{ github.workspace }}/.github/template/version-branch-template.yml)
