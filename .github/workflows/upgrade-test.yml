@@ -13,9 +13,9 @@ jobs:
       - name: "Read and setup upgrade path list from configuration"
         id: generate-upgrade-path
         run: |
-          config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)'"
+          config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml | sed "s/'/\\\\\'/g")'"
           config=$(echo $config | sed "s/\"/\\\\\"/g")
-          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
+          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")), db_parameters: itm['db-parameters'] ? (\"(\" + itm['db-parameters'].map(dbp => '\"' + dbp + '\"').toString().replace(/[ ]/g, \"\").replace(/[,]/g, \" \") + \")\") : \"()\", title: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\") + (itm['db-parameters'] ? \" with non-default db-paramters\" : \"\"), last_version: itm['upgrade-path'][itm['upgrade-path'].length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
           echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
 
   run-version-upgrade-test:
@@ -39,10 +39,10 @@ jobs:
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
           echo "::set-output name=base-version::$(
-            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )" && 
           echo "::set-output name=final-version::$(
-            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
