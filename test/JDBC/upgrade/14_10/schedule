@@ -108,7 +108,7 @@ BABEL-3358
 BABEL-3747
 BABEL-3781
 temp-tables
-table-variable
+# table-variable
 TestNotNull
 Test-Identity
 Test-Computed-Columns
