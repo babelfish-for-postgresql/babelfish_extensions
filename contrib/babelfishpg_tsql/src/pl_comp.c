@@ -1805,7 +1805,6 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 		&& !fn->agg_distinct && !fn->func_variadic)
 	{
 		Node *col;
-		bool flag = true;
 		fname = (Node *) llast(fn->funcname);
 		/* 
 		 * checking if last field matches any of the geospatial functions - stdistance, stastext, stasbinary
@@ -1841,19 +1840,17 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 			}
 			PG_CATCH();
 			{
-				flag = false;	/* if not a valid column ref. Eg: table.col.stx (where col is not a coulmn of table) */
+				is_geospatial_function = false;	/* resetting the global variable */
+				return NULL;
 			}
 			PG_END_TRY();
 
 			/* Modifying funcref since a valid Geospatial function call is identified */
-			if(flag)
-			{
-				is_geospatial_function = false;	/* resetting the global variable */
-				fn->args = lcons(cref, fn->args);
-				fargs = lcons(col, fargs);
-				fn->funcname = list_delete_first(fn->funcname);
-				return fargs;
-			}
+			is_geospatial_function = false;	/* resetting the global variable */
+			fn->args = lcons(cref, fn->args);
+			fargs = lcons(col, fargs);
+			fn->funcname = list_delete_first(fn->funcname);
+			return fargs;
 		}
 	}
 	is_geospatial_function = false;	/* resetting the global variable */
