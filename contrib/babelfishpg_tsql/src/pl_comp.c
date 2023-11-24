@@ -113,9 +113,6 @@ static int	cur_handle_id = 1;
  */
 static bool is_geospatial_function = false;
 
-/* Macros for list of Geospatial functions */
-#define GEOSPATIAL_COLREF_LIST {"stx", "sty", "lat", "long"}
-
 /* ----------
  * static prototypes
  * ----------
@@ -157,8 +154,7 @@ static void pltsql_HashTableDelete(PLtsql_function *function);
 static void delete_function(PLtsql_function *func);
 static Node *resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref);
 static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List *fargs);
-static char *resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode);
-static bool check_Geospatial_function_exists(const char *target);
+static char *extract_logical_schema_name(char *db_name, char *schema_name, MigrationMode mode);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
@@ -1694,7 +1690,7 @@ pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
  * because t2 is considered as Schema name and not table name because of 3 part call. So, we have to resolve it
  */
 static char *
-resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode)
+extract_logical_schema_name(char *db_name, char *physical_schema_name, MigrationMode mode)
 {
 
 	if (SINGLE_DB == mode)
@@ -1703,37 +1699,20 @@ resolve_schema_name(char *db_name, char *schema_name, MigrationMode mode)
 			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
 			(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
 		{
-			return schema_name + strlen(db_name) + 1;
+			return physical_schema_name + strlen(db_name) + 1;
 		}
 		else
 		{
 			/* all schema names are not prepended with db name on single-db */
-			return schema_name;
+			return physical_schema_name;
 		}
 	}
 	else
 	{
-		return schema_name + strlen(db_name) + 1;
+		return physical_schema_name + strlen(db_name) + 1;
 	}
 
-	return schema_name;
-}
-
-/* Function to check if the name is a Geospatial Function */
-static bool
-check_Geospatial_function_exists(const char *target)
-{
-    static const char *stringList[] = GEOSPATIAL_COLREF_LIST;
-
-    for (int i = 0; i < sizeof(stringList); ++i)
-	{
-        if (pg_strcasecmp(target, stringList[i]) == 0)
-		{
-            return true; /* function name found */
-        }
-    }
-
-    return false; /* function name not found */
+	return physical_schema_name;
 }
 
 /*
@@ -1758,7 +1737,10 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 	 * and also checking if is_geospatial_function variable is false to avoid entering the loop if it is a column rather than function
 	 */
 	if (IsA(last_field, String) && !is_geospatial_function &&
-		check_Geospatial_function_exists(strVal(last_field)))
+		(pg_strcasecmp(strVal(last_field), "stx") == 0 ||
+		pg_strcasecmp(strVal(last_field), "sty") == 0 ||
+		pg_strcasecmp(strVal(last_field), "lat") == 0 ||
+		pg_strcasecmp(strVal(last_field), "long") == 0))
 	{
 		FuncExpr   *funcexpr = makeNode(FuncExpr);	/* func expression to modify colref to funcref */
 		char *name = strVal(last_field);
@@ -1766,7 +1748,6 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 		Oid dataTypeId;
 		ColumnRef *colref = makeNode(ColumnRef);	/* new colref to avoid making changes to existing structure */
 
-		is_geospatial_function = true;
 		colref->fields = list_copy(cref->fields);
 		/* if length is 3 then colref would have been modified by rewrite_column_refs function */
 		if(list_length(colref->fields) == 3)
@@ -1777,12 +1758,13 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 
 			if (!is_shared_schema(strVal(schema)))
 			{
-				new_schema = makeString(resolve_schema_name(cur_db, strVal(schema), get_migration_mode()));
+				new_schema = makeString(extract_logical_schema_name(cur_db, strVal(schema), get_migration_mode()));
 				colref->fields = list_delete_first(colref->fields);
 				colref->fields = lcons(new_schema, colref->fields);
 			}
 		}
 		colref->fields = list_delete_last(colref->fields);	/* deletes the function name and check if the remaining colref is a valid column reference */
+		is_geospatial_function = true;
 		PG_TRY();
 		{
 			col = transformExpr(pstate, (Node *) colref, pstate->p_expr_kind);	/* Recursive call to check for valid column reference */
@@ -1794,12 +1776,12 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 		}
 		PG_END_TRY();
 		
+		is_geospatial_function = false;	/* resetting the global variable */
 		dataTypeId = ((Var *)col)->vartype;
 		/* Modifying colref to funcref since a valid Geospatial function call is identified */
 		funcid = LookupFuncName(list_make2(makeString("sys"), makeString(name)), 1, &dataTypeId, false);
 		funcexpr = makeFuncExpr(funcid, get_func_rettype(funcid), list_make1(col), 0, 0, COERCE_EXPLICIT_CALL);
 		funcexpr->location = cref->location;
-		is_geospatial_function = false;	/* resetting the global variable */
 
 		return (Node *) funcexpr;
 	}
@@ -1838,7 +1820,6 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 			cref->fields = list_copy(fn->funcname);
 			cref->fields = list_delete_last(cref->fields);	/* deletes the function name and check if the remaining colref is a valid column reference */
 
-			is_geospatial_function = true;
 			/* if length is 1 then colref would have been modified by rewrite_plain_name function */
 			if(list_length(cref->fields) == 1)
 			{
@@ -1848,12 +1829,12 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 
 				if (!is_shared_schema(strVal(schema)))
 				{
-					new_schema = makeString(resolve_schema_name(cur_db, strVal(schema), get_migration_mode()));
+					new_schema = makeString(extract_logical_schema_name(cur_db, strVal(schema), get_migration_mode()));
 					cref->fields = list_delete_first(cref->fields);
 					cref->fields = lcons(new_schema, cref->fields);
 				}
 			}
-
+			is_geospatial_function = true;
 			PG_TRY();
 			{
 				col = transformExpr(pstate, (Node *) cref, pstate->p_expr_kind);	/* Recursive call to check for valid column reference */
@@ -1867,10 +1848,10 @@ static List *resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List 
 			/* Modifying funcref since a valid Geospatial function call is identified */
 			if(flag)
 			{
+				is_geospatial_function = false;	/* resetting the global variable */
 				fn->args = lcons(cref, fn->args);
 				fargs = lcons(col, fargs);
 				fn->funcname = list_delete_first(fn->funcname);
-				is_geospatial_function = false;	/* resetting the global variable */
 				return fargs;
 			}
 		}

@@ -26,6 +26,30 @@ SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT @point1.STDistance(@point2);
 Go
 
+DECLARE @point geometry;
+SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+Insert INTO SPATIALPOINTGEOM_dt(location) VALUES(geometry::point(@point.STX, @point.STY,4326))
+go
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+DECLARE @STX geometry;
+SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+select geometry::Point(@STX.STX, @STX.STY, 4326).STX
+go
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+CREATE VIEW CoordsFromGeom AS SELECT location.STX, location.STY AS Coordinates FROM SPATIALPOINTGEOM_dt;
+GO
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+DECLARE @STX geometry;
+SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
+select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText()
+go
+
 SELECT * FROM TextFromGeom;
 GO
 
@@ -39,6 +63,25 @@ SELECT * FROM equal_geom;
 GO
 
 SELECT * FROM point_distances_geom;
+GO
+
+SELECT location.STX from SPATIALPOINTGEOM_dt;
+GO
+
+SELECT SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
+GO
+
+SELECT location.STAsText() from SPATIALPOINTGEOM_dt;
+GO
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;
+GO
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+SELECT dbo.SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
 GO
 
 SELECT location FROM SPATIALPOINTGEOM_dt; 
@@ -180,6 +223,17 @@ SELECT * FROM equal_geog;
 GO
 
 SELECT * FROM point_distances_geog;
+GO
+
+SELECT location.LAT from SPATIALPOINTGEOG_dt;
+GO
+
+SELECT SPATIALPOINTGEOG_dt.location.LONG from SPATIALPOINTGEOG_dt;
+GO
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+SELECT dbo.SPATIALPOINTGEOG_dt.location.LAT from SPATIALPOINTGEOG_dt;
 GO
 
 SELECT location FROM SPATIALPOINTGEOG_dt;
