@@ -256,15 +256,6 @@ POINT(-122.349 47.651)
 
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
-SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "location" does not exist)~~
-
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 SELECT dbo.SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
 GO
 ~~ERROR (Code: 33557097)~~

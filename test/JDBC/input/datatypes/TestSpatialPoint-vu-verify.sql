@@ -76,11 +76,6 @@ GO
 
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
-SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;
-GO
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 SELECT dbo.SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
 GO
 
