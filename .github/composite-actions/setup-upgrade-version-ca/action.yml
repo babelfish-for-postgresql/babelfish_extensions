@@ -42,7 +42,7 @@ runs:
           pg_old_dir=$(echo postgres$(awk -F. '{print $1}' <<< $previous_installed_version))
           pg_new_dir=$(echo postgres$(awk -F. '{print $1}' <<< $upgrade_version))
           
-          upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}][$i].\"upgrade-type\"" 
+          upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}].\"upgrade-path\"[$i].\"upgrade-type\"" 
           upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           uses_file=./.github/composite-actions/$upgrade_type-version-upgrade-util
 
