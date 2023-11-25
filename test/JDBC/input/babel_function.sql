@@ -263,9 +263,9 @@ select datepart(weekday, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
 select datepart(dw, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
-select datepart(hour, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+select datepart(hour, '2016-12-26 23:30:05.523456+8:0');
 GO
-select datepart(hh, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
+select datepart(hh, '2016-12-26 23:30:05.523456+8:0');
 GO
 select datepart(minute, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO

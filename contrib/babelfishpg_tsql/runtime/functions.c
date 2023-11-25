@@ -193,7 +193,6 @@ void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
 int			babelfish_date_part(const char* field, Timestamp timestamp);
-int			babelfish_right(const char* source, int length);
 int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
 int			datepart_internal_wrapper(char *field, float8 num);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
@@ -228,6 +227,7 @@ extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
+bool		isnumeric = false;
 #define MD5_HASH_LEN 32
 
 #define MAX_CATNAME_LEN			NAMEDATALEN
@@ -359,14 +359,14 @@ int
 babelfish_date_part(const char* field, Timestamp timestamp)
 {	
 	fsec_t		fsec1;
-	int64 		microseconds;
 	long int	first_day_ts;
-	struct		pg_tm tt1, *tm = &tt1;
+	struct pg_tm tt1, *tm = &tt1;
 	int32		first_day, first_week_end;
-	int			tz1, doy = 0, year, month, day, milliseconds,res = 0; //for Zeller's Congruence
+	int			tz1, doy = 0, year, month, day,res = 0, doy_day; //for Zeller's Congruence
 	int			daysInMonth[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	bool		has53Weeks;
 
-	//Getting the date back from the timestamp to the tm struct 
+	//Getting the date back from the timestamp to the tm struct pointer
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
 		ereport(ERROR,
@@ -374,22 +374,20 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 			errmsg("timestamp out of range")));
 	}
 
+	year = tm->tm_year;
+	month = tm->tm_mon;
+	day = tm->tm_mday;
+
 	if (strcmp(field, "year") == 0)
 		return tm->tm_year;
 	else if (strcmp(field, "quarter") == 0)
-		return (tm->tm_mon / 3) + 1;
+		return (int)ceil((float)tm->tm_mon / 3.0);
 	else if (strcmp(field, "month") == 0)
 		return tm->tm_mon;
 	else if (strcmp(field, "day") == 0)
 		return tm->tm_mday;
 	else if (strcmp(field, "hour") == 0)
 		return tm->tm_hour;
-	else if (strcmp(field, "millisecond") == 0)
-	{
-		microseconds = timestamp;
-		milliseconds = (microseconds / 1000) % 1000;
-		return milliseconds;
-	}
 	else if (strcmp(field, "minute") == 0)
 		return tm->tm_min;
 	else if (strcmp(field, "second") == 0)
@@ -408,40 +406,48 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 		}
 		return doy;
 	}
-	else if (strcmp(field, "dow") == 0)
+	else if (strcmp(field, "dow") == 0)		//day-of-week of the date
 	{
-		year = tm->tm_year;
-		month = tm->tm_mon;
 		if (tm->tm_mon < 3)
 		{
 			month += 12;
 			year -= 1;
 		}
 	//dow calculated using Zeller's Congruence
-		day = tm->tm_mday;
 
 		res = day + 2*month + ((3*(month+1))/(5)) + year + year/4 - year/100 + year/400 + 2;
 		
-		return (((res ) % 7) + 7 - pltsql_datefirst) == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
+		return (((res ) % 7) + 7 - pltsql_datefirst)%7 == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
 
 	}
-	else if (strcasecmp(field , "tsql_week") == 0)
+	else if (strcasecmp(field , "tsql_week") == 0 || strcasecmp(field , "week") == 0)		//week number of the year and week for iso_week
 	{
-		first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; // returns number of days since 1/1/1970 to 1/1/tm_year
-		//convert this first day of tm_year to timestamp into first_day_ts
-		first_day_ts = first_day*86400000000 - 946684800000000;
-		first_week_end = 8 - datepart_internal("dow", first_day_ts, 0);
-		day = babelfish_date_part("doy",timestamp);
-		if(day <= first_week_end) return 1;
-		else return (2+(day-first_week_end-1)/7)%52;
-	}
-	else if (strcasecmp(field , "week") == 0) 
-	{
-		first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
-		first_week_end = 8 - datepart_internal("doy", first_day, 0);
-		day = babelfish_date_part("doy",timestamp);
-		if(day <= first_week_end) return 1;
-		else return (2+(day-first_week_end-1)/7)%52;
+		if(strcasecmp(field , "tsql_week") == 0 )
+		{
+			first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; // returns number of days since 1/1/1970 to 1/1/tm_year
+			//convert this first day of tm_year to timestamp into first_day_ts
+			first_day_ts = (long int) first_day*86400000000 - 946684800000000;
+			first_week_end = 8 - datepart_internal("dow", first_day_ts, 0);
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			first_day = DirectFunctionCall3(make_date, tm->tm_year,1,1);
+			first_week_end = 8 - datepart_internal("doy", first_day, 0);
+		}
+		doy_day = babelfish_date_part("doy",timestamp);
+		has53Weeks = ((int)(year + (int)(year/4) - (int)(year/100) + (int)(year/400)) % 7) >= 5;	//checks if a year has 53 weeks
+		if(doy_day <= first_week_end)
+		{
+			return 1;		//day is less than first_week_end means its a first week
+		}
+		else if(has53Weeks && !isnumeric)
+		{
+			return ((2+(doy_day-first_week_end-1)/7)%53)==0 ? (tm->tm_mon==12?53:((2+(doy_day-first_week_end-1)/7)%53)) : ((2+(doy_day-first_week_end-1)/7)%53);   //when month is 12 and result is 0, return 52 as last week
+		}
+		else
+		{
+			return ((2+(doy_day-first_week_end-1)/7)%52)==0 ? (tm->tm_mon==12?52:((2+(doy_day-first_week_end-1)/7)%52)) : ((2+(doy_day-first_week_end-1)/7)%52);   //when month is 12 and result is 0, return 52 as last week
+		}
 	}
 	else
 	{
@@ -451,22 +457,7 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 		
 		return -1;
 	}
-}
-
-/*
- * babelfish_right is function similar to postgres right
- * reimplemented in c for a faster execution
- */
-
-int
-babelfish_right(const char* source, int length)
-{
-	int		source_length = strlen(source);
-	if (length >= source_length)
-	{
-		return atoi(source);
-	}
-	return atoi(source + source_length - length);
+	return 1;
 }
 
 /*
@@ -484,29 +475,17 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 	{
 		if(strcasecmp(field , "millisecond") == 0)
 		{
-			int datePartValue = babelfish_date_part(field, timestamp);
-			char *buffer = (char *) palloc(20);
-			sprintf(buffer, "%d", datePartValue);
-			result = babelfish_right(buffer, 3);
-			pfree(buffer);
+			return (timestamp) % 1000;
 		}
 		else if(strcasecmp(field , "microsecond") == 0)
 		{
-			int datePartValue = babelfish_date_part(field, timestamp);
-			char *buffer = (char *) palloc(20);
-			sprintf(buffer, "%d", datePartValue);
-			result = babelfish_right(buffer, 6);
-			pfree(buffer);
-		}
-		else if(strcasecmp(field , "nanosecond") == 0 && df_tz==0)
-		{
-			int datePartValue = babelfish_date_part(field, timestamp);
-			char *buffer = (char *) palloc(20);
-			sprintf(buffer, "%d", datePartValue);
-			result = babelfish_right(buffer, 6) * 1000;
-			pfree(buffer);
+			return timestamp%1000000;
 		}
 		else if(strcasecmp(field , "nanosecond") == 0)
+		{
+			result = (timestamp % 1000000)*1000;
+		}
+		else if(strcasecmp(field , "tzoffset") == 0)
 		{
 			result = df_tz;
 		}
@@ -518,25 +497,25 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 	PG_CATCH();
 	{
 		if(strcasecmp(field , "year") == 0)
-		result = 1900;
+			result = 1900;
 		else if(strcasecmp(field , "quarter") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "month") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "day") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "doy") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "y") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "tsql_week") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "week") == 0)
-		result = 1;
+			result = 1;
 		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
+			result = 0;
 		else if(strcasecmp(field , "dow") == 0)
-		result = ((1 - tsql_datefirst + 7) % 7 + 1);
+			result = ((1 - tsql_datefirst + 7) % 7 + 1);
 		else
 		{
 			PG_RE_THROW();
@@ -547,8 +526,10 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 }
 
 /*
-* Converts the num into proper timestamp with days ahead from 01/01/1970
-* i.e. when num = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00
+* datepart_internal_wrapper is used when the second argument in datepart is not a 
+* date or time relate but instead a numeric. datepart_internal converts the numeric (num) into proper timestamp with days ahead from 01/01/1970
+* i.e. when num = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 and calls datepart_internal
+* with the proper parameters of the converted timestamp
 */
 
 int
@@ -558,6 +539,8 @@ datepart_internal_wrapper(char *field, float8 num)
 	
 	//Converting the num into the appopriate timestamp that is ahead of 01/01/1970 by num days (and hours)
 	timestamp = (long int)(86400000000*(num)*1L - 3155673600000000);
+
+	isnumeric = true;
 
 	if (strcmp(field, "dow") == 0)
 	{
@@ -810,7 +793,7 @@ datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for datetime2")));
+				 errmsg("data out of range for smalldatetime")));
 	}
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
@@ -833,6 +816,11 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 	}
 
 	timestamp  = PG_GETARG_TIMESTAMP(1);
+
+	if(timestamp <= 86400000000 )		//when only time is given and no date, we adjust the timestamp date to 1/1/1900 instead of 1/1/2000
+	{	
+		timestamp = timestamp - 3155673600000000;
+	}
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
@@ -857,8 +845,10 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	interval_days = interval->day;
 	interval_month = interval->month;
 
+	// Extracting year, months, days, etc from the interval period.
+
 	year = interval_month/12;
-	month = interval_month%12;
+	month = (interval_month%12) == 0 ? 12 : (interval_month%12);
 	days = interval_days;
 	hours = (interval_time / 3600000000) % 24;
 	minutes = (interval_time / 60000000) % 60;
@@ -870,29 +860,29 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	PG_TRY();
 	{
 		if(strcasecmp(field , "year") == 0)
-		result = year;
+			result = year;
 		else if(strcasecmp(field , "quarter") == 0)
-		result = year/4;
+			result = year/4;
 		else if(strcasecmp(field , "month") == 0)
-		result = month;
+			result = month;
 		else if(strcasecmp(field , "day") == 0)
-		result = days;
+			result = days;
 		else if(strcasecmp(field , "y") == 0)
-		result = year;
+			result = year;
 		else if(strcasecmp(field , "tzoffset") == 0)
-		result = 0;
+			result = 0;
 		else if(strcasecmp(field , "minute") == 0)
-		result = minutes;
+			result = minutes;
 		else if(strcasecmp(field , "nanosecond") == 0)
-		result = nanosec;
+			result = nanosec;
 		else if(strcasecmp(field , "second") == 0)
-		result = sec;
+			result = sec;
 		else if(strcasecmp(field , "millisecond") == 0)
-		result = millisec;
+			result = millisec;
 		else if(strcasecmp(field , "microsecond") == 0)
-		result = microsec;
+			result = microsec;
 		else if(strcasecmp(field , "hour") == 0)
-		result = hours;
+			result = hours;
 		else
 		{
 			ereport(ERROR,
