@@ -18,6 +18,10 @@ inputs:
   migration_mode:
     description: "Database migration mode for Babelfish"
     required: true
+  db_parameters:
+    description: "DB parameters which need to be set in postgresql.conf"
+    required: false
+    default: "()"
 
 runs:
   using: "composite"
@@ -57,6 +61,11 @@ runs:
         sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
         ipaddress=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
         sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
+        
+        DB_PARAMETERS=${{ inputs.db_parameters }}
+        for DB_PARAMETER in ${DB_PARAMETERS[@]}; do
+          sudo echo $DB_PARAMETER >> postgresql.conf
+        done
       shell: bash
 
     - name: Run pg_upgrade
