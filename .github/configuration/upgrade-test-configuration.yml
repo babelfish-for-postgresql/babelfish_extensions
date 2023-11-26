@@ -141,21 +141,6 @@ upgrade-version: [{
       upgrade-type: null
     },
     { 
-      version: 15.4,
-      upgrade-type: major
-    }
-  ],
-  db-parameters: [
-    "babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as'"
-  ]
-},
-{
-  upgrade-path: [
-    {
-      version: 14.6,
-      upgrade-type: null
-    },
-    { 
       version: target.latest,
       upgrade-type: major
     }

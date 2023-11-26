@@ -30,6 +30,7 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
+        db_parameters: ${{ matrix.upgrade-path.db_parameters }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade
