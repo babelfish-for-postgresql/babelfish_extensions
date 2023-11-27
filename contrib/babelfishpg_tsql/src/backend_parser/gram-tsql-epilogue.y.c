@@ -1815,7 +1815,6 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	SelectStmt 	*src_sql;
 	SortBy 		*s;
 
-	char 		*pivot_colstr = (char *)list_nth(pivot_clause, 0);
 	Node 		*aggFunc = (Node *) list_nth(pivot_clause, 1);
 	
 	/* prepare SortBy node for source sql */
@@ -1855,10 +1854,10 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
 	pivot_sl->fromClause = list_make1(funCallNode);
 	pivot_sl->isPivot = true;
 	pivot_sl->srcSql = src_sql;
-	pivot_sl->catSql = list_nth((List *)pivot_clause, 2);
-	pivot_sl->pivotCol = pivot_colstr;
+	pivot_sl->catSql = list_nth(pivot_clause, 2);
+	pivot_sl->pivotCol = list_nth(pivot_clause, 0);;
 	pivot_sl->aggFunc = aggFunc;
-	pivot_sl->value_col_strlist = (List *) list_nth((List *)pivot_clause, 3);
+	pivot_sl->value_col_strlist = (List *) list_nth(pivot_clause, 3);
 
 	return (Node *)pivot_sl;
 }
@@ -1869,7 +1868,7 @@ tsql_pivot_select_transformation(List *target_list, List *from_clause, List *piv
  * for DESC index, default should be NULLS LAST.
  */
 static void 
-tsql_index_nulls_order(List *indexParams)
+tsql_index_nulls_order(List *indexParams, const char *accessMethod)
 {
 	ListCell *lc;
 
@@ -1886,6 +1885,10 @@ tsql_index_nulls_order(List *indexParams)
 		/* No need to adjust if user already specified the nulls order */
 		if (indexElem->nulls_ordering != SORTBY_NULLS_DEFAULT)
 			continue;
+
+		/* GIN indexes don't support NULLS FIRST/LAST options */
+		if (strcmp(accessMethod, "gin") == 0)
+			return;
 
 		switch (indexElem->ordering)
 		{

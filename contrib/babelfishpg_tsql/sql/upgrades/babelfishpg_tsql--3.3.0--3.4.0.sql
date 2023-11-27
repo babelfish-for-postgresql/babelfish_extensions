@@ -782,7 +782,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
 DECLARE
@@ -888,17 +887,6 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
-
--- BABELFISH_SCHEMA_PERMISSIONS
-CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
-  dbid smallint NOT NULL,
-  schema_name NAME NOT NULL,
-  object_name NAME NOT NULL,
-  permission NAME NOT NULL,
-  grantee NAME NOT NULL,
-  object_type NAME,
-  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
-);
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'timezone_mapping'
@@ -4144,74 +4132,125 @@ CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEX
 'babelfishpg_tsql', 'babelfish_fts_rewrite'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
-AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR, IN INT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern NVARCHAR, IN p_culture VARCHAR default 'en-us')
-RETURNS sys.NVARCHAR
-AS
-$BODY$
+DO $$
 DECLARE
-    arg_type regtype;
-    v_temp_integer INTEGER;
+    exception_message text;
 BEGIN
-    arg_type := pg_typeof(arg);
+    -- Rename format_datetime function for dependencies
+    ALTER FUNCTION sys.format_datetime(anyelement, NVARCHAR, VARCHAR, VARCHAR) RENAME TO format_datetime_deprecated_3_4_0;
 
-    CASE
-        WHEN arg_type IN ('time'::regtype ) THEN
-            RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
+    CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '') RETURNS sys.nvarchar
+    AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
+    GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR) TO PUBLIC;
 
-        WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
-            RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
+    -- === DROP format_datetime_deprecated_3_4_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_datetime_deprecated_3_4_0');
 
-        WHEN arg_type IN ('sys.tinyint'::regtype) THEN
-            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
-        WHEN arg_type IN ('smallint'::regtype) THEN
-            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename format_numeric for dependencies
+    ALTER FUNCTION sys.format_numeric(anyelement, NVARCHAR, VARCHAR, VARCHAR, int) RENAME TO format_numeric_deprecated_3_4_0;
 
-        WHEN arg_type IN ('integer'::regtype) THEN
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+    CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern sys.NVARCHAR,IN culture sys.VARCHAR,  IN data_type sys.VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+    AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL UNSAFE;
+    GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR, IN sys.VARCHAR, IN INT) TO PUBLIC;
 
-         WHEN arg_type IN ('bigint'::regtype) THEN
+    -- === DROP format_numeric_deprecated_3_4_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_numeric_deprecated_3_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename FORMAT for dependencies
+    ALTER FUNCTION sys.FORMAT(anyelement, NVARCHAR, VARCHAR) RENAME TO format_deprecated_3_4_0;
+
+    CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern sys.NVARCHAR, IN p_culture sys.VARCHAR default 'en-us')
+    RETURNS sys.NVARCHAR
+    AS
+    $BODY$
+    DECLARE
+        arg_type regtype;
+        v_temp_integer INTEGER;
+    BEGIN
+        arg_type := pg_typeof(arg);
+
+        CASE
+            WHEN arg_type IN ('time'::regtype ) THEN
+                RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
+
+            WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
+                RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
+
+            WHEN arg_type IN ('sys.tinyint'::regtype) THEN
+                RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+
+            WHEN arg_type IN ('smallint'::regtype) THEN
+                RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+
+            WHEN arg_type IN ('integer'::regtype) THEN
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+
+            WHEN arg_type IN ('bigint'::regtype) THEN
             RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'bigint');
 
-        WHEN arg_type IN ('numeric'::regtype) THEN
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
+            WHEN arg_type IN ('numeric'::regtype) THEN
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
 
-        WHEN arg_type IN ('sys.decimal'::regtype) THEN
-            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+            WHEN arg_type IN ('sys.decimal'::regtype) THEN
+                RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
 
-        WHEN arg_type IN ('real'::regtype) THEN
-            IF(p_format_pattern LIKE 'R%') THEN
-                v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
-            ELSE v_temp_integer:= -1;
-            END IF;
+            WHEN arg_type IN ('real'::regtype) THEN
+                IF(p_format_pattern LIKE 'R%') THEN
+                    v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
+                ELSE v_temp_integer:= -1;
+                END IF;
 
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
 
-        WHEN arg_type IN ('float'::regtype) THEN
-            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
+            WHEN arg_type IN ('float'::regtype) THEN
+                RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
 
-        WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
-            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
-        ELSE
-            RAISE datatype_mismatch;
-        END CASE;
-EXCEPTION
-	WHEN datatype_mismatch THEN
-		RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
-					DETAIL := 'Invalid datatype.',
-					HINT := 'Convert it to valid datatype and try again.';
+            WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
+                RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+            ELSE
+                RAISE datatype_mismatch;
+            END CASE;
+    EXCEPTION
+	    WHEN datatype_mismatch THEN
+		    RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
+					    DETAIL := 'Invalid datatype.',
+					    HINT := 'Convert it to valid datatype and try again.';
+    END;
+    $BODY$
+    LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
+    GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN sys.NVARCHAR, IN sys.VARCHAR) TO PUBLIC;
+
+    -- === DROP format_deprecated_3_4_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'format_deprecated_3_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
 END;
-$BODY$
-LANGUAGE plpgsql IMMUTABLE PARALLEL UNSAFE;
-GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.bbf_pivot()
 RETURNS setof record
@@ -4226,8 +4265,6 @@ CREATE OR REPLACE VIEW sys.babelfish_configurations_view as
           name collate "C" = 'babelfishpg_tsql.enable_pg_hint' OR
           name collate "C" like 'babelfishpg_tsql.isolation_level_%';
 GRANT SELECT on sys.babelfish_configurations_view TO PUBLIC;
-
-
 
 -- Change the owner of the current database.
 -- This is a wrapper around ALTER AUTHORIZATION ON DATABASE::
@@ -4279,6 +4316,178 @@ CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
 AS 'babelfishpg_tsql', 'sysdatetimeoffset'
 LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
+
+ALTER FUNCTION sys.datediff_internal(PG_CATALOG.TEXT, anyelement, anyelement) RENAME TO datediff_internal_deprecated_3_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_deprecated_3_4_0');
+
+ALTER FUNCTION sys.datediff_internal_df(PG_CATALOG.TEXT, anyelement, anyelement) RENAME TO datediff_internal_df_deprecated_in_3_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_df_deprecated_in_3_4_0');
+
+ALTER FUNCTION sys.datediff_internal_date(PG_CATALOG.TEXT, PG_CATALOG.date, PG_CATALOG.date) RENAME TO datediff_internal_date_deprecated_in_3_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_date_deprecated_in_3_4_0');
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- datediff big
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+
+/*
+    This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
+        select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
+    We tried to merge this function with sys.dateadd_internal by using '+' when adding interval to datetimeoffset, 
+    but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
+    but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
+*/
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset)
+RETURNS datetimeoffset AS
+'babelfishpg_common', 'dateadd_datetimeoffset'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+BEGIN
+    IF pg_typeof(startdate) = 'time'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 0);
+	END IF;
+    IF pg_typeof(startdate) = 'date'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 1);
+	END IF;
+    IF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
+    END IF;
+    IF (pg_typeof(startdate) = 'sys.datetime'::regtype or pg_typeof(startdate) = 'timestamp'::regtype) THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+    END IF;
+    IF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 4);
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_datetime(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT, IN datetimetype INT) 
+RETURNS TIMESTAMP AS
+'babelfishpg_common', 'dateadd_datetime'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal_big(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement)
+RETURNS BIGINT AS
+'babelfishpg_common', 'timestamp_diff_big'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement)
+RETURNS INT AS
+'babelfishpg_common', 'timestamp_diff'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

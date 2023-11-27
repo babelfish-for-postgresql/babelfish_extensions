@@ -89,7 +89,7 @@ typedef bool (*Stmt_set_explain_mode) ACTION_SIGNITURE(set_explain_mode);
 typedef bool (*Stmt_grantdb_act) ACTION_SIGNITURE(grantdb);
 typedef bool (*Stmt_change_dbowner_act) ACTION_SIGNITURE(change_dbowner);
 typedef bool (*Stmt_dbcc_act) ACTION_SIGNITURE(dbcc);
-typedef bool (*Stmt_grantschema_act) ACTION_SIGNITURE(grantschema);
+typedef bool (*Stmt_fulltextindex_act) ACTION_SIGNITURE(fulltextindex);
 
  /* TSQL-only executable node */
 typedef bool (*Stmt_save_ctx) ACTION_SIGNITURE(save_ctx);
@@ -142,7 +142,7 @@ typedef struct Walker_context
 	Stmt_grantdb_act grantdb_act;
 	Stmt_change_dbowner_act change_dbowner_act;
 	Stmt_dbcc_act dbcc_act;
-	Stmt_grantschema_act grantschema_act;
+	Stmt_fulltextindex_act fulltextindex_act;
 
 	/* TSQL-only executable node */
 	Stmt_save_ctx save_ctx_act;

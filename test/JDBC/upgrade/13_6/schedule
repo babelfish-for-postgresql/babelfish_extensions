@@ -106,7 +106,7 @@ babelfish_inconsistent_metadata
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
-babel_function_string
+babel_function_string-before-15-5-or-14-10
 BABEL_GRANT_CONNECT
 babel_isnumeric
 BABEL-LOGIN
@@ -324,7 +324,7 @@ triggers_with_transaction
 BABEL-4046
 getdate
 BABEL-4410
-GRANT_SCHEMA
 AUTO_ANALYZE-before-15-5-or-14-10
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+BABEL-2999

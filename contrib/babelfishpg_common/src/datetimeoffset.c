@@ -13,6 +13,7 @@
 #include "utils/datetime.h"
 #include "libpq/pqformat.h"
 #include "utils/timestamp.h"
+#include "parser/scansup.h"
 
 #include "fmgr.h"
 #include "miscadmin.h"
@@ -63,6 +64,9 @@ PG_FUNCTION_INFO_V1(datetimeoffset_datetime2);
 PG_FUNCTION_INFO_V1(datetimeoffset_scale);
 
 PG_FUNCTION_INFO_V1(get_datetimeoffset_tzoffset_internal);
+PG_FUNCTION_INFO_V1(dateadd_datetimeoffset);
+
+#define DTK_NANO 32
 
 
 /* datetimeoffset_in()
@@ -831,4 +835,105 @@ EncodeDatetimeoffsetTimezone(char *str, int tz, int style)
 	tmp = pg_ultostr_zeropad(tmp, min, 2);
 
 	*tmp = '\0';
+}
+
+Datum
+dateadd_datetimeoffset(PG_FUNCTION_ARGS) {
+	text    *field     = PG_GETARG_TEXT_PP(0);
+	int      num       = PG_GETARG_INT32(1);
+	tsql_datetimeoffset *init_startdate = PG_GETARG_DATETIMEOFFSET(2);
+	bool validDateAdd = true;
+	char	   *lowunits;
+	int			type,
+				val;
+	tsql_datetimeoffset *result;
+	Interval   *interval;
+	int timezone = DirectFunctionCall1(get_datetimeoffset_tzoffset_internal, DatetimeoffsetGetDatum(init_startdate)) * 2;
+	tsql_datetimeoffset *startdate = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(init_startdate), DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, timezone, 0));
+
+
+	lowunits = downcase_truncate_identifier(VARDATA_ANY(field),
+									VARSIZE_ANY_EXHDR(field),
+									false);
+
+	type = DecodeUnits(0, lowunits, &val);
+
+	if(strncmp(lowunits, "doy", 3) == 0 || strncmp(lowunits, "dayofyear", 9) == 0) {
+		type = UNITS;
+		val = DTK_DOY;
+	}
+
+	if(strncmp(lowunits, "nanosecond", 11) == 0) {
+		type = UNITS;
+		val = DTK_NANO;
+	}
+	if(strncmp(lowunits, "weekday", 7) == 0) {
+		type = UNITS;
+		val = DTK_DAY;
+	}
+
+	if(type == UNITS) {
+		switch(val) {
+			case DTK_YEAR:
+				interval = (Interval *) DirectFunctionCall7(make_interval, num, 0, 0, 0, 0, 0, 0);
+				break;
+			case DTK_QUARTER:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num * 3, 0, 0, 0, 0, 0);
+				break;
+			case DTK_MONTH:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, num, 0, 0, 0, 0, 0);
+				break;
+			case DTK_WEEK:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, num, 0, 0, 0, 0);
+				break;
+			case DTK_DAY:
+			case DTK_DOY:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, num, 0, 0, 0);
+				break;
+			case DTK_HOUR:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, num, 0, 0);
+				break;
+			case DTK_MINUTE:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, num, 0);
+				break;
+			case DTK_SECOND:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum(num));
+				break;
+			case DTK_MILLISEC:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.001));
+				break;
+			case DTK_MICROSEC:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000001));
+				break;
+			case DTK_NANO:
+				interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, 0, 0, 0, Float8GetDatum((float) num * 0.000000001));
+				break;
+			default:
+				validDateAdd = false;
+				break;
+		}
+	} else {
+		validDateAdd = false;
+	}
+
+	if(!validDateAdd) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("\'%s\' is not a recognized %s option", lowunits, "dateadd")));
+	}
+
+	PG_TRY();
+	{
+		result = (tsql_datetimeoffset *) DirectFunctionCall2(datetimeoffset_pl_interval, DatetimeoffsetGetDatum(startdate), PointerGetDatum(interval));
+
+	}
+	PG_CATCH();
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Adding a value to a \'%s\' column caused an overflow.", "datetimeoffset")));
+	}
+	PG_END_TRY();
+
+	PG_RETURN_DATETIMEOFFSET(result);
 }

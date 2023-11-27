@@ -1,0 +1,227 @@
+insert into t1_BABEL2999 exec('Select ''5''');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1_BABEL2999 exec('Select 5');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1_BABEL2999 exec('Select ''5''');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1_BABEL2999 exec('Select ''hello''');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1_BABEL2999 exec('SELECT ''helloworld''');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1_BABEL2999 exec('SELECT ''helloworldhello''');
+GO
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(10))~~
+
+
+select b from t1_BABEL2999 order by b;
+GO
+~~START~~
+varchar
+5
+5
+5
+hello
+helloworld
+~~END~~
+
+
+insert into t2_BABEL2999 exec('Select ''5'''); -- varchar to int
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t2_BABEL2999 exec('Select 5');  -- int to int
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t2_BABEL2999 SELECT '5'; 
+GO
+~~ROW COUNT: 1~~
+
+
+select b from t2_BABEL2999 order by b;
+GO
+~~START~~
+int
+5
+5
+5
+~~END~~
+
+
+insert into t3_BABEL2999 exec('Select ''5''');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t3_BABEL2999 exec('Select 5');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t3_BABEL2999 exec('Select ''5''');
+GO
+~~ROW COUNT: 1~~
+
+
+select b from t3_BABEL2999 order by b;
+GO
+~~START~~
+varchar
+5
+5
+5
+~~END~~
+
+
+delete from t1_BABEL2999
+GO
+~~ROW COUNT: 5~~
+
+
+insert into t1_BABEL2999 exec p1_BABEL2999;
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t1_BABEL2999 exec('exec p1_BABEL2999');
+GO
+~~ROW COUNT: 1~~
+
+
+select * from  t1_BABEL2999;
+GO
+~~START~~
+varchar
+abc
+abc
+~~END~~
+
+
+insert t3_BABEL2999_2 exec('select ''123'', 123, 123');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t3_BABEL2999_2 exec p3_BABEL2999
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t3_BABEL2999_2 select '123', 123, 123
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t3_BABEL2999_2;
+GO
+~~START~~
+int#!#datetime#!#varchar
+123#!#1900-05-04 00:00:00.0#!#123
+123#!#1900-05-04 00:00:00.0#!#123
+123#!#1900-05-04 00:00:00.0#!#123
+~~END~~
+
+
+insert into t3_BABEL2999_2 exec('select ''123''');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: structure of query does not match function result type)~~
+
+
+insert into t3_BABEL2999_2 exec('select 123, 123');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: structure of query does not match function result type)~~
+
+
+insert into t4_BABEL2999 exec('select 123, 123, 123, 123, 123')
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t4_BABEL2999 exec('select cast(123 as binary), cast(123 as varbinary), 123, cast(123 as datetime), cast(123 as smalldatetime)')
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t4_BABEL2999 select 123, 123, 123, 123, 123
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t4_BABEL2999 exec('select ''123'', ''123'', ''123'', ''123'', ''123''');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type varchar to binary is not allowed. Use the CONVERT function to run this query.)~~
+
+
+select * from t4_BABEL2999
+GO
+~~START~~
+binary#!#varbinary#!#varchar#!#datetime#!#smalldatetime
+00000000000000000000000000000000000000000000000000000000007B#!#0000007B#!#123#!#1900-05-04 00:00:00.0#!#1900-05-04 00:00:00.0
+00000000000000000000000000000000000000000000000000000000007B#!#0000007B#!#123#!#1900-05-04 00:00:00.0#!#1900-05-04 00:00:00.0
+00000000000000000000000000000000000000000000000000000000007B#!#0000007B#!#123#!#1900-05-04 00:00:00.0#!#1900-05-04 00:00:00.0
+~~END~~
+
+
+insert into t5_BABEL2999 exec('select ''1.234'', ''33.33''');
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t5_BABEL2999
+GO
+~~START~~
+numeric#!#numeric
+1#!#33
+~~END~~
+
+
+insert into t6_BABEL2999 exec('select 1,2,3')
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t6_BABEL2999 exec('select ''1'',''2'',''3''')
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t6_BABEL2999 exec('select c,b,a from t6_BABEL2999')
+GO
+~~ROW COUNT: 2~~
+
+
+select * from t6_BABEL2999
+GO
+~~START~~
+int#!#tinyint#!#smallint
+1#!#2#!#3
+1#!#2#!#3
+3#!#2#!#1
+3#!#2#!#1
+~~END~~
+

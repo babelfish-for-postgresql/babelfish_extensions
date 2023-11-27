@@ -429,6 +429,9 @@ static Datum exec_cast_value(PLtsql_execstate *estate,
 							 Datum value, bool *isnull,
 							 Oid valtype, int32 valtypmod,
 							 Oid reqtype, int32 reqtypmod);
+Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod);
 static pltsql_CastHashEntry *get_cast_hashentry(PLtsql_execstate *estate,
 												Oid srctype, int32 srctypmod,
 												Oid dsttype, int32 dsttypmod);
@@ -464,6 +467,7 @@ static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 static bool reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset_session_properties, bool inside_trigger);
+static bool pltsql_check_pivot_plan(void);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
@@ -4347,7 +4351,6 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->insert_exec = (func->fn_prokind == PROKIND_PROCEDURE ||
 						   strcmp(func->fn_signature, "inline_code_block") == 0)
 		&& rsi;
-	
 	estate->pivot_number = 0;
 	estate->pivot_parsetree_list = NIL;
 	
@@ -4623,6 +4626,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	CachedPlan *cp;
 	bool		is_returning = false;
 	bool		is_select = true;
+	bool		is_pivot = false;
 
 	/*
 	 * Temporarily disable FMTONLY as it is causing issues with Import-Export.
@@ -4706,6 +4710,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 			prepare_stmt_execsql(estate, estate->func, stmt, true);
 		}
+
+		/*
+		 * Check if the current plan contains a pivot operator
+		 */
+		is_pivot = pltsql_check_pivot_plan();
 
 		/*
 		 * Set up ParamListInfo to pass to executor
@@ -5046,6 +5055,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 		/* If query affects IDENTITY_INSERT relation then update sequence */
 		pltsql_update_identity_insert_sequence(expr);
+
+		/* If current plan constains a pivot operator, we remove the plan */
+		if (is_pivot)
+		{
+			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
+		}
 
 		/* Expect SPI_tuptable to be NULL else complain */
 		if (SPI_tuptable != NULL)
@@ -7318,6 +7334,7 @@ exec_run_select(PLtsql_execstate *estate,
 {
 	ParamListInfo paramLI;
 	int			rc;
+	bool 		is_pivot = false;
 
 	/*
 	 * On the first call for this expression generate the plan.
@@ -7331,6 +7348,7 @@ exec_run_select(PLtsql_execstate *estate,
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr, portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
 
+	is_pivot = pltsql_check_pivot_plan();
 	/*
 	 * If we started an implicit_transaction for this statement but the
 	 * statement has a simple expression associated with them, we no longer
@@ -7360,6 +7378,13 @@ exec_run_select(PLtsql_execstate *estate,
 		if (*portalP == NULL)
 			elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				 expr->query, SPI_result_code_string(SPI_result));
+	
+		/* If current plan constains a pivot operator, we remove the plan */
+		if (is_pivot)
+		{
+			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
+		}
 		exec_eval_cleanup(estate);
 		return SPI_OK_CURSOR;
 	}
@@ -7374,6 +7399,12 @@ exec_run_select(PLtsql_execstate *estate,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("query \"%s\" is not a SELECT", expr->query)));
 
+	/* If current plan constains a pivot operator, we remove the plan */
+	if (is_pivot)
+	{
+		SPI_freeplan(expr->plan);
+		expr->plan = NULL;
+	}
 	/* Save query results for eventual cleanup */
 	Assert(estate->eval_tuptable == NULL);
 	estate->eval_tuptable = SPI_tuptable;
@@ -10384,4 +10415,28 @@ char *
 get_original_query_string(void)
 {
 	return original_query_string;
+}
+
+Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
+							 Oid valtype, int32 valtypmod,
+							 Oid reqtype, int32 reqtypmod)
+{
+	return exec_cast_value(get_current_tsql_estate(), 
+					value, isnull,
+					valtype, valtypmod,
+					reqtype, reqtypmod);
+}
+
+/*
+ * check if current plan contains a pivot operater
+ */
+static bool
+pltsql_check_pivot_plan(void)
+{
+	int nestlevel;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	if (tsql_outmost_estat->pivot_number != 0)
+		return true;
+	return false;
 }

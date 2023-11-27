@@ -1,5 +1,6 @@
 %{
 #include "postgres.h"
+#include "lib/stringinfo.h"
 #include <ctype.h>
 #include "fts_data.h"
 
@@ -21,8 +22,7 @@ static char *scanbuf;
 static int	scanbuflen;
 
 static char* translate_simple_term(const char* s);
-static char *trim(char *s);
-static char *trimInsideQuotes(char *s);
+static char *trim(char *s, bool insideQuotes);
 
 %}
 
@@ -74,13 +74,13 @@ simple_term:
 
 prefix_term:
     PREFIX_TERM_TOKEN {
-        fts_yyerror(NULL, "Prefix term not supported");
+        fts_yyerror(NULL, "Prefix term is not currently supported in Babelfish");
     }
     ;
 
 generation_term:
     FORMSOF_TOKEN O_PAREN_TOKEN generation_type COMMA_TOKEN simple_term_list C_PAREN_TOKEN {
-        fts_yyerror(NULL, "Generation term not supported");
+        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
     }
     ;
 
@@ -114,136 +114,92 @@ simple_term_list:
  */
 static
 char* translate_simple_term(const char* inputStr) {
+    int             inputLength;
+    StringInfoData  output;
+    const char*     inputPtr;
+    char*           trimmedInputStr;
 
-    int inputLength;
-    int outputSize;
-    char* output;
-    const char* inputPtr;
-    char* outputPtr;
-    char* trimmedInputStr;
-
-    // Check for empty input
-    if (inputStr == NULL) {
-        return NULL;
+    // Check for empty input - this should not be possible based on lexer rules, but check just in case
+    if (!inputStr || !(inputLength = strlen(inputStr))) {
+        ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Null or empty full-text predicate.")));
     }
 
-    trimmedInputStr = (char*)palloc(strlen(inputStr) + 1);
-    strcpy(trimmedInputStr, inputStr);
+    trimmedInputStr = pstrdup(inputStr);
 
     // removing trailing and leading spaces
-    trim(trimmedInputStr);
+    trim(trimmedInputStr, false);
     inputLength = strlen(trimmedInputStr);
-    
+
     // Check if the input is a phrase enclosed in double quotes
     if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
-        trimInsideQuotes(trimmedInputStr);
+        trim(trimmedInputStr, true);
         inputLength = strlen(trimmedInputStr);
-        outputSize = inputLength - 2; // Exclude both quotes
-        output = (char*)palloc(outputSize + 1); // +1 for the null terminator
-        if (output == NULL) {   
-            return NULL;
-        }
+
+        initStringInfo(&output);
 
         // Initialize pointers for input and output
         inputPtr = trimmedInputStr;
-        outputPtr = output;
 
         while (*inputPtr != '\0') {
             if (*inputPtr == ' ') {
                 // Replace space with "<->"
-                *outputPtr++ = '<';
-                *outputPtr++ = '-';
-                *outputPtr++ = '>';
+                while (*(inputPtr + 1) == ' ') {
+                    // Handle multiples spaces between words and skip over additional spaces
+                    inputPtr++;
+                }
+                appendStringInfoString(&output, "<->");
             } else {
                 // Copy the character
-                *outputPtr++ = *inputPtr;
+                appendStringInfoChar(&output, *inputPtr);
             }
             inputPtr++;
         }
-        *outputPtr = '\0';
-
-        return output;
+        pfree(trimmedInputStr);
+        return output.data;
     } else {
         // It's a single word, so no transformation needed
-        return strdup(trimmedInputStr);
+        return trimmedInputStr;
     }
 }
 
-// Function to remove leading and trailing spaces of a string
-static char *trim(char *s) {
+/*
+ * Function to remove leading and trailing spaces of a string
+ * If flag is true then it removes spaces inside double quotes
+ */
+static char *trim(char *s, bool insideQuotes) {
     size_t length;
     size_t start;
     size_t end;
     size_t newLength;
+    bool inQuotes;
 
-    if (s == NULL) {
-        return NULL;
+    /*
+     * Empty string, nothing to trim
+     * for the empty input, we're automatically throwing error, 
+     * so if string is NULL or empty, this clause won't pose any issue, it's just a safety check
+     */
+    if (!s || !(length = strlen(s))) {
+        return s;
     }
 
-    length = strlen(s);
-    if (length == 0) {
-        return s; // Empty string, nothing to trim
-    }
-
+    inQuotes = false;
     start = 0;
     end = length - 1;
 
-    // Trim leading spaces
-    while (start < length && isspace(s[start])) {
-        start++;
-    }
-
-    // Trim trailing spaces
-    while (end > start && isspace(s[end])) {
-        end--;
-    }
-
-    // Calculate the new length
-    newLength = end - start + 1;
-
-    // Shift the non-space part to the beginning of the string
-    memmove(s, s + start, newLength);
-
-    // Null-terminate the result
-    s[newLength] = '\0';
-
-    return s;
-}
-
-// Function to remove leading and trailing spaces inside double quotes
-static char *trimInsideQuotes(char *s) {
-    size_t length;
-    size_t start;
-    size_t end;
-    size_t i;
-    size_t newLength;
-    bool insideQuotes;
-
-    if (s == NULL) {
-        return NULL;
-    }
-
-    length = strlen(s);
-    if (length == 0) {
-        return s; // Empty string, nothing to trim
-    }
-
-    insideQuotes = false;
-    start = 1;
-    end = length - 2;
-
-    for (i = 0; i < length; i++) {
+    for (size_t i = 0; i < length; i++) {
         if (s[i] == '"') {
-            insideQuotes = !insideQuotes;
+            inQuotes = !inQuotes;
         }
 
-        if (!insideQuotes) {
-            // Trim leading spaces inside quotes
+        if (!inQuotes || insideQuotes) {
+            // Trim leading spaces
             while (start < length && isspace(s[start])) {
                 start++;
             }
 
-            // Trim trailing spaces inside quotes
+            // Trim trailing spaces
             while (end > start && isspace(s[end])) {
                 end--;
             }

@@ -1,4 +1,11 @@
 -- enable CONTAINS
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
+SELECT pg_reload_conf();
+GO
+
+-- tsql user=jdbc_user password=12345678
+-- enable CONTAINS
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
@@ -11,6 +18,30 @@ GO
 -- test basic CONTAINS use: ... CONTAINS(col_name, <simple_term>) ...
 -- <simple_term> ::= { word | "phrase" }
 EXEC fts_contains_vu_prepare_p1 'love'
+GO
+
+-- Test for empty string input, should throw error
+EXEC fts_contains_vu_prepare_p1 ''
+GO
+
+-- Test for empty string input, should throw error
+EXEC fts_contains_vu_prepare_p1 '            '
+GO
+
+-- Test for empty string input, should throw error
+EXEC fts_contains_vu_prepare_p1 NULL
+GO
+
+EXEC fts_contains_vu_prepare_p1 '  "" '
+GO
+
+EXEC fts_contains_vu_prepare_p1 '  ""'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"" '
+GO
+
+EXEC fts_contains_vu_prepare_p1 '" "'
 GO
 
 EXEC fts_contains_vu_prepare_p1 'other'
@@ -41,6 +72,9 @@ EXEC fts_contains_vu_prepare_p1 'version'
 GO
 
 EXEC fts_contains_vu_prepare_p1 '"come back"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"come       back"'
 GO
 
 EXEC fts_contains_vu_prepare_p1 '"much of the"'
@@ -89,4 +123,8 @@ GO
 
 -- Generation Term not supported
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
+GO
+
+-- disable CONTAINS
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

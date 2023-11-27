@@ -21,9 +21,9 @@ static YY_BUFFER_STATE scanbufhandle;
 
 %%
 
-"AND"           { yylval = "AND"; return AND_TOKEN; }
-"AND NOT"       { yylval = "AND NOT"; return AND_NOT_TOKEN; }
-"OR"            { yylval = "OR"; return OR_TOKEN; }
+"AND"           { yylval = "AND"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return AND_TOKEN; }
+"AND NOT"       { yylval = "AND NOT"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return AND_NOT_TOKEN; }
+"OR"            { yylval = "OR"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return OR_TOKEN; }
 "INFLECTIONAL"  { yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
 "THESAURUS"     { yylval = "THESAURUS"; return THESAURUS_TOKEN; }
 "FORMSOF"       { yylval = "FORMSOF"; return FORMSOF_TOKEN; }
@@ -34,7 +34,7 @@ static YY_BUFFER_STATE scanbufhandle;
 
 \"[^"]+\*\"              { if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  // Handle prefix terms
 [a-zA-Z0-9]+       { yylval = yytext; return WORD_TOKEN; }  // Handle individual words
-\"[^"*]+\"          { yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
+\"[^"*]*\"          { yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
 
 FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\) { yylval = yytext; return GENERATION_TERM_TOKEN; }  // Handle FORMSOF generation term
 
@@ -64,6 +64,14 @@ fts_scanner_init(const char *str)
 	if (YY_CURRENT_BUFFER)
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 
+	
+	/*
+	 * Check for empty input
+	 */
+	if (!str || !*str || (strspn(str, " \t\n\r") == slen)) {
+		yyerror(NULL, "Null or empty full-text predicate.");
+	}
+
 	/*
 	 * Make a scan buffer with special termination needed by flex.
 	 */
@@ -72,7 +80,6 @@ fts_scanner_init(const char *str)
 	memcpy(scanbuf, str, slen);
 	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
 	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
-
 	BEGIN(INITIAL);
 }
 

@@ -185,7 +185,7 @@ babel_datetime
 babel_char
 BABEL-SQUARE
 BABEL-728
-babel_function_string
+babel_function_string-before-15-5-or-14-10
 BABEL-1566
 BABEL-3360
 BABEL-3380
@@ -270,6 +270,7 @@ BABEL-3000-dep
 Test-sp_helprole-dep
 Test-sp_helprolemember-dep
 format
+format-dep
 msdb-dbo-syspolicy_system_health_state
 dateadd_internal_df
 sys-all_columns
@@ -370,7 +371,7 @@ ISC-Columns
 ISC-Table_Constraints
 sys_server_principals_dep
 sys_database_principals_dep
-datediff_big
+datediff_big-before-15_5
 atn2
 app_name
 str
@@ -390,7 +391,7 @@ BABEL-3914
 BABEL_OBJECT_NAME
 sys-systypes
 BABEL_OBJECT_DEFINITION
-datediff_internal_date
+datediff_internal_date-before-14_10-or-15_5
 Test-sp_rename
 Test-sp_rename-dep
 BABEL-3657
@@ -413,3 +414,4 @@ default_params
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+BABEL-2999

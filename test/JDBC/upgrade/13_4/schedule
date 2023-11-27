@@ -78,7 +78,7 @@ babelfish_cast_floor
 babelfish_migration_mode
 babelfish_namespace_ext
 babelfish_sysdatabases
-babel_function_string
+babel_function_string-before-15-5-or-14-10
 BABEL_GRANT_CONNECT
 babel_isnumeric
 BABEL-LOGIN
@@ -220,3 +220,4 @@ AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+BABEL-2999

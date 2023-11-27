@@ -207,7 +207,8 @@ column_domain_usage
 constraint_column_usage
 dateadd_internal_df
 datediff_big
-datediff_internal_date
+datediff
+dateadd
 datepart
 datetime2fromparts-after-15-2
 forjson
@@ -215,9 +216,11 @@ forjson-datatypes
 forjson-subquery
 forjson-nesting
 format
+format-dep
 forxml
 forxml-subquery
 fulltextserviceproperty
+FULLTEXT_INDEX
 fts-contains
 get_tds_id
 HAS_DBACCESS
@@ -487,3 +490,4 @@ pivot
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order
+BABEL-2999

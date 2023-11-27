@@ -81,6 +81,7 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 42883 ERRCODE_UNDEFINED_FUNCTION	"could not identify an equality operator for type %s"	SQL_ERROR_306	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"could not identify an ordering operator for type %s"	SQL_ERROR_306	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s expects parameter \"%s\", which was not supplied."	SQL_ERROR_201	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"Procedure or function \'%s\' expects parameter \'%s\', which was not supplied."	SQL_ERROR_201	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s has no parameters and arguments were supplied."	SQL_ERROR_8146	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s has too many arguments specified."	SQL_ERROR_8144	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"\"%s\" is not an parameter for %s %s."	SQL_ERROR_8145	16
@@ -179,4 +180,7 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Column name or number of supplied values does not match table definition."	SQL_ERROR_213	16
 42501 ERRCODE_INSUFFICIENT_PRIVILEGE	"Only members of the sysadmin role can execute this stored procedure."	SQL_ERROR_15003	16
 42809 ERRCODE_WRONG_OBJECT_TYPE	 "The target \"%s\" of the OUTPUT INTO clause cannot be a view or common table expression."	SQL_ERROR_330	16
-
+22008 ERRCODE_DATETIME_VALUE_OUT_OF_RANGE	"The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart" SQL_ERROR_535 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE   "\'%s\' is not a recognized %s option"  SQL_ERROR_155	15
+22023 ERRCODE_INVALID_PARAMETER_VALUE   "The datepart %s is not supported by date function %s for data type %s." SQL_ERROR_9810 16
+22008 ERRCODE_DATETIME_VALUE_OUT_OF_RANGE	"Adding a value to a \'%s\' column caused an overflow." SQL_ERROR_517 16
