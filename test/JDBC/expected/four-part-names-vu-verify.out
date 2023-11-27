@@ -89,7 +89,7 @@ SELECT * FROM bbf_fpn_server.invalid_db.dbo.fpn_table
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: relation "dbo.fpn_table" does not exist, Server: BABELFISH, Process: , Line: 1, Level: 16)~~
+~~ERROR (Message: TDS client library error: Msg #: 33557097, Msg state: 1, Msg: database "invalid_db" does not exist. Make sure that the name is entered correctly., Server: BABELFISH, Process: , Line: 1, Level: 16)~~
 
 
 -- Invalid schema name (Should throw error)

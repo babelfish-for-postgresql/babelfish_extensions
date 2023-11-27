@@ -260,7 +260,7 @@ SELECT dbo.SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: missing FROM-clause entry for table "location")~~
+~~ERROR (Message: database "dbo" does not exist. Make sure that the name is entered correctly.)~~
 
 
 SELECT location FROM SPATIALPOINTGEOM_dt; 
@@ -772,7 +772,7 @@ SELECT dbo.SPATIALPOINTGEOG_dt.location.LAT from SPATIALPOINTGEOG_dt;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: missing FROM-clause entry for table "location")~~
+~~ERROR (Message: database "dbo" does not exist. Make sure that the name is entered correctly.)~~
 
 
 SELECT location FROM SPATIALPOINTGEOG_dt;
