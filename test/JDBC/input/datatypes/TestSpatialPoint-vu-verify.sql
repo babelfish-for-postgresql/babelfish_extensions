@@ -74,11 +74,6 @@ GO
 SELECT location.STAsText() from SPATIALPOINTGEOM_dt;
 GO
 
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
-SELECT dbo.SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
-GO
-
 SELECT location FROM SPATIALPOINTGEOM_dt; 
 GO
 
@@ -224,11 +219,6 @@ SELECT location.LAT from SPATIALPOINTGEOG_dt;
 GO
 
 SELECT SPATIALPOINTGEOG_dt.location.LONG from SPATIALPOINTGEOG_dt;
-GO
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
-SELECT dbo.SPATIALPOINTGEOG_dt.location.LAT from SPATIALPOINTGEOG_dt;
 GO
 
 SELECT location FROM SPATIALPOINTGEOG_dt;
