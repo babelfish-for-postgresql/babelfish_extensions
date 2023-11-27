@@ -593,14 +593,6 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 			
 	//Converting the datetime offset into the timestamp
 	timestamp = datetime->tsql_ts + (int64) df_tz * 60 * 1000000L;
-
-	//Validating 
-	if (!IS_VALID_DATETIME2(timestamp))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for datetime2")));
-	}
 	
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
