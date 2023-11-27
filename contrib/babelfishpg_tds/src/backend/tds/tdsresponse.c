@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "nodes/pathnodes.h"
 #include "parser/parse_coerce.h"
+#include "parser/parsetree.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -128,6 +129,8 @@ static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelati
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
+static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
+static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
 
 static inline void
 SendPendingDone(bool more)
@@ -401,9 +404,112 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	}
 }
 
+static int32
+resolve_numeric_typmod_from_append_or_mergeappend(Plan *plan, AttrNumber attno)
+{
+	ListCell	*lc;
+	int32		max_precision = 0,
+				max_scale = 0,
+				precision = 0,
+				scale = 0,
+				integralDigitCount = 0,
+				typmod = -1,
+				result_typmod = -1;
+	List		*planlist = NIL;
+	if (IsA(plan, Append))
+	{
+		planlist = ((Append *) plan)->appendplans;
+	}
+	else if(IsA(plan, MergeAppend))
+	{
+		planlist = ((MergeAppend *) plan)->mergeplans; 
+	}
+
+	Assert(planlist != NIL);
+	foreach(lc, planlist)
+	{
+		TargetEntry *tle;
+		Plan 		*outerplan = (Plan *) lfirst(lc);
+
+		/* if outerplan is SubqueryScan then use actual subplan */
+		if (IsA(outerplan, SubqueryScan))
+			outerplan = ((SubqueryScan *)outerplan)->subplan;
+
+		tle = get_tle_by_resno(outerplan->targetlist, attno);
+		if (IsA(tle->expr, Var))
+		{
+			Var *var = (Var *)tle->expr;
+			if (var->varno == OUTER_VAR)
+			{
+				typmod = resolve_numeric_typmod_outer_var(outerplan, var->varattno);
+			}
+			else
+			{
+				typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+			}
+		}
+		else
+		{
+			typmod = resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+		}
+		if (typmod == -1)
+			continue;
+		scale = (typmod - VARHDRSZ) & 0xffff;
+		precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+		integralDigitCount = Max(precision - scale, max_precision - max_scale);
+		max_scale = Max(max_scale, scale);
+		max_precision = integralDigitCount + max_scale;
+		/*
+		 * If max_precision is more than TDS_MAX_NUM_PRECISION then adjust precision
+		 * to TDS_MAX_NUM_PRECISION at the cost of scale.
+		 */
+		if (max_precision > TDS_MAX_NUM_PRECISION)
+		{
+			max_scale = Max(0, max_scale - (max_precision - TDS_MAX_NUM_PRECISION));
+			max_precision = TDS_MAX_NUM_PRECISION;
+		}
+		result_typmod = ((max_precision << 16) | max_scale) + VARHDRSZ;
+	}
+	/* If max_precision is still default then use tds specific defaults */
+	if (result_typmod == -1)
+	{
+		result_typmod = ((tds_default_numeric_precision << 16) | tds_default_numeric_scale) + VARHDRSZ;
+	}
+	return result_typmod;
+}
+
+static int32
+resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno)
+{
+	TargetEntry	*tle;
+	Plan		*outerplan = NULL;
+
+	if (IsA(plan, Append) || IsA(plan, MergeAppend))
+		return resolve_numeric_typmod_from_append_or_mergeappend(plan, attno);
+	else
+		outerplan = outerPlan(plan);
+
+	/* if outerplan is SubqueryScan then use actual subplan */
+	if (IsA(outerplan, SubqueryScan))
+		outerplan = ((SubqueryScan *)outerplan)->subplan;
+
+	/* outerplan must not be NULL */
+	Assert(outerplan);
+	tle = get_tle_by_resno(outerplan->targetlist, attno);
+	if (IsA(tle->expr, Var))
+	{
+		Var *var = (Var *)tle->expr;
+		if (var->varno == OUTER_VAR)
+		{
+			return resolve_numeric_typmod_outer_var(outerplan, var->varattno);
+		}
+	}
+	return resolve_numeric_typmod_from_exp(outerplan, (Node *)tle->expr);
+}
+
 /* look for a typmod to return from a numeric expression */
 static int32
-resolve_numeric_typmod_from_exp(Node *expr)
+resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 {
 	if (expr == NULL)
 		return -1;
@@ -434,6 +540,12 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			{
 				Var		   *var = (Var *) expr;
 
+				/* If this var referes to tuple returned by its outer plan then find the original tle from it */
+				if (var->varno == OUTER_VAR)
+				{
+					Assert(plan);
+					return (resolve_numeric_typmod_outer_var(plan, var->varattno));
+				}
 				return var->vartypmod;
 			}
 		case T_OpExpr:
@@ -464,8 +576,8 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				{
 					arg1 = linitial(op->args);
 					arg2 = lsecond(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(arg1);
-					typmod2 = resolve_numeric_typmod_from_exp(arg2);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
+					typmod2 = resolve_numeric_typmod_from_exp(plan, arg2);
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = (typmod2 - VARHDRSZ) & 0xffff;
@@ -474,7 +586,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				else if (list_length(op->args) == 1)
 				{
 					arg1 = linitial(op->args);
-					typmod1 = resolve_numeric_typmod_from_exp(arg1);
+					typmod1 = resolve_numeric_typmod_from_exp(plan, arg1);
 					scale1 = (typmod1 - VARHDRSZ) & 0xffff;
 					precision1 = ((typmod1 - VARHDRSZ) >> 16) & 0xffff;
 					scale2 = 0;
@@ -545,7 +657,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 							scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
 
 						/*
-						 * precisionn adjustment to TDS_MAX_NUM_PRECISION
+						 * precision adjustment to TDS_MAX_NUM_PRECISION
 						 */
 						if (precision > TDS_MAX_NUM_PRECISION)
 							precision = TDS_MAX_NUM_PRECISION;
@@ -653,7 +765,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				Assert(nullif->args != NIL);
 
 				arg1 = linitial(nullif->args);
-				return resolve_numeric_typmod_from_exp(arg1);
+				return resolve_numeric_typmod_from_exp(plan, arg1);
 			}
 		case T_CoalesceExpr:
 			{
@@ -676,7 +788,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				foreach(lc, coale->args)
 				{
 					arg = lfirst(lc);
-					arg_typmod = resolve_numeric_typmod_from_exp(arg);
+					arg_typmod = resolve_numeric_typmod_from_exp(plan, arg);
 					/* return -1 if we fail to resolve one of the arg's typmod */
 					if (arg_typmod == -1)
 						return -1;
@@ -717,7 +829,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				{
 					casewhen = lfirst(lc);
 					casewhen_result = (Node *) casewhen->result;
-					typmod = resolve_numeric_typmod_from_exp(casewhen_result);
+					typmod = resolve_numeric_typmod_from_exp(plan, casewhen_result);
 
 					/*
 					 * return -1 if we fail to resolve one of the result's
@@ -752,7 +864,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				Assert(aggref->args != NIL);
 
 				te = (TargetEntry *) linitial(aggref->args);
-				typmod = resolve_numeric_typmod_from_exp((Node *) te->expr);
+				typmod = resolve_numeric_typmod_from_exp(plan, (Node *) te->expr);
 				aggFuncName = get_func_name(aggref->aggfnoid);
 
 				scale = (typmod - VARHDRSZ) & 0xffff;
@@ -798,7 +910,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) expr;
 
-				return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
+				return resolve_numeric_typmod_from_exp(plan, (Node *) phv->phexpr);
 			}
 		case T_RelabelType:
 			{
@@ -807,7 +919,7 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				if (rlt->resulttypmod != -1)
 					return rlt->resulttypmod;
 				else
-					return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
+					return resolve_numeric_typmod_from_exp(plan, (Node *) rlt->arg);
 			}
 			/* TODO handle more Expr types if needed */
 		default:
@@ -1562,8 +1674,8 @@ TdsGetGenericTypmod(Node *expr)
  * 					for a relation. (used for keyset and dynamic cursors)
  */
 void
-PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
-					  bool extendedInfo, bool fetchPkeys)
+PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *targetlist,
+					  int16 *formats, bool extendedInfo, bool fetchPkeys)
 {
 	int			natts = typeinfo->natts;
 	int			attno;
@@ -1786,7 +1898,16 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					 * than -1.
 					 */
 					if (atttypmod == -1 && tle != NULL)
-						atttypmod = resolve_numeric_typmod_from_exp((Node *) tle->expr);
+					{
+						if (!plannedstmt || !plannedstmt->planTree)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_INTERNAL_ERROR),
+									 errmsg("Internal error detected while calculating the precision of numeric expression"),
+									 errhint("plannedstmt is NULL while calculating the precision of numeric expression when it contains outer var")));
+						}
+						atttypmod = resolve_numeric_typmod_from_exp(plannedstmt->planTree, (Node *) tle->expr);
+					}
 
 					/*
 					 * Get the precision and scale out of the typmod value if
@@ -2562,7 +2683,7 @@ TdsSendInfoOrError(int token, int number, int state, int class,
 }
 
 void
-TdsSendRowDescription(TupleDesc typeinfo,
+TdsSendRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt,
 					  List *targetlist, int16 *formats)
 {
 	TDSRequest	request = TdsRequestCtrl->request;
@@ -2571,7 +2692,7 @@ TdsSendRowDescription(TupleDesc typeinfo,
 	Assert(typeinfo != NULL);
 
 	/* Prepare the column metadata first */
-	PrepareRowDescription(typeinfo, targetlist, formats, false, false);
+	PrepareRowDescription(typeinfo, plannedstmt, targetlist, formats, false, false);
 
 	/*
 	 * If fNoMetadata flags is set in RPC header flag, the server doesn't need
@@ -3297,7 +3418,8 @@ TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool 
 void
 SendColumnMetadata(TupleDesc typeinfo, List *targetlist, int16 *formats)
 {
-	TdsSendRowDescription(typeinfo, targetlist, formats);
+	/* This will only be used for sp_preapre request hence do not need to pass plannedstmt */
+	TdsSendRowDescription(typeinfo, NULL, targetlist, formats);
 	TdsPrintTupShutdown();
 }
 
