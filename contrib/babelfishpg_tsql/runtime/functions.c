@@ -785,13 +785,6 @@ datepart_internal_smalldatetime(PG_FUNCTION_ARGS)
 
 	timestamp = PG_GETARG_TIMESTAMP(1);
 
-	if (!IS_VALID_DATETIME2(timestamp))
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("data out of range for smalldatetime")));
-	}
-
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
 }
 
