@@ -446,7 +446,7 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 		}
 		else if(has53Weeks && !isnumeric)
 		{
-			return ((2+(doy_day-first_week_end-1)/7)%53)==0 ? (tm->tm_mon==12?53:((2+(doy_day-first_week_end-1)/7)%53)) : ((2+(doy_day-first_week_end-1)/7)%53);   //when month is 12 and result is 0, return 52 as last week
+			return ((2+(doy_day-first_week_end-1)/7)%53)==0 ? (tm->tm_mon==12?53:((2+(doy_day-first_week_end-1)/7)%53)) : ((2+(doy_day-first_week_end-1)/7)%53);   //when month is 12 and result is 0, return 53 as last week
 		}
 		else
 		{

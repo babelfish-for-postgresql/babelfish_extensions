@@ -186,7 +186,7 @@ SELECT DATEPART(hh, '01:01:01.1234567 +01:01')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -451,7 +451,7 @@ int
 
 
 -- max
-SELECT DATEPART(ss, '12-31-9999 23:59:59.9999999 +14:00')
+SELECT DATEPART(ss, '12-31-9999 23:59:59.999999 +14:00')
 GO
 ~~START~~
 int
@@ -479,7 +479,7 @@ SELECT DATEPART(hh, 'Jul 18, 22 01:01:00.1234567 -7:8')
 GO
 ~~START~~
 int
-8
+1
 ~~END~~
 
 
