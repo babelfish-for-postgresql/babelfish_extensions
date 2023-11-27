@@ -196,12 +196,14 @@ void	   *get_host_id(void);
 int			babelfish_date_part(const char* field, Timestamp timestamp);
 int			datepart_internal(char *field , Timestamp timestamp , int df_tz);
 int			datepart_internal_wrapper(char *field, float8 num);
-int 		SPI_execute_raw_parsetree(RawStmt *parsetree, bool read_only, long tcount);
-static HTAB *load_categories_hash(RawStmt *cats_sql, MemoryContext per_query_ctx);
-static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt *sql,
-										HTAB *bbf_pivot_hash,
-										TupleDesc tupdesc,
-										bool randomAccess);
+int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
+static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
+static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
+												const char 	*sourcetext,
+												const char 	*funcName,
+												HTAB 		*bbf_pivot_hash,
+												TupleDesc 	tupdesc,
+												bool 		randomAccess);
 
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
