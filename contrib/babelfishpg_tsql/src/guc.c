@@ -683,7 +683,7 @@ define_custom_variables(void)
 							 gettext_noop("GUC for enabling or disabling full text search features"),
 							 NULL,
 							 &pltsql_allow_fulltext_parser,
-							 false,
+							 true,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
