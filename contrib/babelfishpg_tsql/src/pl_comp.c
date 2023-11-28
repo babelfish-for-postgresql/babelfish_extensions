@@ -128,7 +128,7 @@ static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
-static List *pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs);
+static List *pltsql_pre_func_ref(ParseState *pstate, FuncCall *fn, List *fargs);
 static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
@@ -1492,7 +1492,7 @@ pltsql_parser_setup(struct ParseState *pstate, PLtsql_expr *expr)
 {
 	pstate->p_pre_columnref_hook = pltsql_pre_column_ref;
 	pstate->p_post_columnref_hook = pltsql_post_column_ref;
-	pstate->p_post_funcref_hook = pltsql_post_func_ref;
+	pstate->p_pre_funcref_hook = pltsql_pre_func_ref;
 	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
 	pstate->p_paramref_hook = pltsql_param_ref;
 	/* no need to use p_coerce_param_hook */
@@ -1668,12 +1668,12 @@ pltsql_param_ref(ParseState *pstate, ParamRef *pref)
 }
 
 /*
- * pltsql_post_func_ref		parser callback for FuncRefs to check and modify Geospatial function call
+ * pltsql_pre_func_ref		parser callback for FuncRefs to check and modify Geospatial function call
  * We are returning a List * of function args because in the cases we are concerned with geospatial types
  * we are just trying to modify the arg list for functions, which is then passed to ParseFuncOrColumn in transformFuncCall.
  */
 static List *
-pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
+pltsql_pre_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
 {
 	List *ret = resolve_geospatial_func_ref(pstate, fn, fargs);
 	if (ret)
