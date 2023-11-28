@@ -916,7 +916,7 @@ BeginBulkCopy(Relation rel,
 	 */
 	if (RELKIND_HAS_STORAGE(cstate->rel->rd_rel->relkind) &&
 		(cstate->rel->rd_createSubid != InvalidSubTransactionId ||
-		 cstate->rel->rd_firstRelfilenodeSubid != InvalidSubTransactionId))
+		 cstate->rel->rd_firstRelfilelocatorSubid != InvalidSubTransactionId))
 		ti_options |= TABLE_INSERT_SKIP_FSM;
 
 	/*
