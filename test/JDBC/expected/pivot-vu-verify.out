@@ -738,6 +738,8 @@ PIVOT (
 ) AS pvt;
 SELECT TOP 10 * FROM pivot_insert_into ORDER by 1, 2;
 GO
+~~ROW COUNT: 197~~
+
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int
 1200#!#200#!#0#!#0#!#0#!#0#!#0
