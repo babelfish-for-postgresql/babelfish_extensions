@@ -3183,7 +3183,7 @@ tsql_IndexStmt:
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
-					n->oldNode = InvalidOid;
+					n->oldNumber = InvalidOid;
 					n->primary = false;
 					n->isconstraint = false;
 					n->deferrable = false;
