@@ -3801,7 +3801,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 	if (is_create)
 	{
 		uniq_index_name = construct_unique_index_name((char *) stmt->index_name, table_name);
-		if(is_unique_index(relid, (const char *) uniq_index_name))
+		if(is_unique_index(relid, (const char *) uniq_index_name) || is_unique_index(relid, (const char *)stmt->index_name))
 		{
 			column_name = stmt->column_name;
 			ft_index_name = construct_unique_index_name("ft_index", table_name);

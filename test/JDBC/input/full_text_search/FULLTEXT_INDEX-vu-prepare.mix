@@ -38,7 +38,7 @@ SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
 -- Index creation on different character data type columns
-CREATE TABLE fti_table_t1(id int NOT NULL, a text);
+CREATE TABLE fti_table_t1(id int NOT NULL constraint pk_mytexts primary key, a text);
 GO
 
 -- should throw syntax error for NULL index name
@@ -49,10 +49,7 @@ GO
 CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX IX_t1_a;
 GO
 
-CREATE UNIQUE INDEX IX_t1_a ON fti_table_t1(id);
-GO
-
-CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX IX_t1_a;
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX pk_mytexts;
 GO
 
 CREATE TABLE fti_table_t2(id int not null, b char(10));
