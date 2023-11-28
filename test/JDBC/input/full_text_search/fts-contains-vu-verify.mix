@@ -1,11 +1,5 @@
--- enable CONTAINS
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
-SELECT pg_reload_conf();
-GO
-
+-- enable FULLTEXT
 -- tsql user=jdbc_user password=12345678
--- enable CONTAINS
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
@@ -98,6 +92,6 @@ GO
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
 GO
 
--- disable CONTAINS
+-- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
