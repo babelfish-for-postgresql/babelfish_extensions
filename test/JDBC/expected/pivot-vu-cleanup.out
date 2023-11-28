@@ -13,6 +13,9 @@ GO
 drop function test_table_valued_function;
 GO
 
+drop view pivot_view;
+GO
+
 drop table StoreReceipt;
 GO
 

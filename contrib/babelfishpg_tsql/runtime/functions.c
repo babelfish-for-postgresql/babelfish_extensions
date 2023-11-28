@@ -3839,6 +3839,12 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
 	PG_TRY();
 	{
+		if (!tsql_outmost_estat->pivot_parsetree_list)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_ASSERT_FAILURE),
+					errmsg("Unexpected error while trying to evaluate PIVOT clause")));
+		}
 		per_pivot_list = list_nth_node(List, tsql_outmost_estat->pivot_parsetree_list, tsql_outmost_estat->pivot_number - 1);
 		Assert(list_length(per_pivot_list) >= 2);
 		bbf_pivot_src_sql = list_nth_node(RawStmt, per_pivot_list, 0);

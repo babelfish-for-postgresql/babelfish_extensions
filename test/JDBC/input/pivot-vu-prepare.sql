@@ -456,7 +456,6 @@ RETURN
     ) AS pvt2
 GO
 
--- Cannot create view (Bug)
 create view pivot_view as
 SELECT top 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
 FROM

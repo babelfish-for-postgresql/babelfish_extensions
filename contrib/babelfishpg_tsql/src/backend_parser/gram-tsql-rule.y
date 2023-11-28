@@ -1635,11 +1635,11 @@ tsql_pivot_expr: TSQL_PIVOT '(' func_application FOR ColId IN_P in_expr ')'
 							List 		*l = list_make1(copyObject(n));
 							if (value_col_strlist == NULL || subsel_valuelists == NULL)
 							{
-								value_col_strlist = list_make1(s->sval);
+								value_col_strlist = list_make1(s);
 								subsel_valuelists = list_make1(l);
 							}else
 							{
-								value_col_strlist = lappend(value_col_strlist, s->sval);
+								value_col_strlist = lappend(value_col_strlist, s);
 								subsel_valuelists = lappend(subsel_valuelists, l);
 							}
 						}

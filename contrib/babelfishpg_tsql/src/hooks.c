@@ -4415,7 +4415,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	for(int i = 0; i < stmt->value_col_strlist->length; i++)
 	{
 		ColumnDef	*tempColDef;
-		tempColDef = makeColumnDef((char *) list_nth(stmt->value_col_strlist, i),
+		tempColDef = makeColumnDef(((String *) list_nth(stmt->value_col_strlist, i))->sval,
 									((Aggref *)aggfunc_te->expr)->aggtype, 
 									-1,
 									((Aggref *)aggfunc_te->expr)->aggcollid

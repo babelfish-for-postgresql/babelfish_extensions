@@ -933,6 +933,25 @@ int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
+-- view test
+select * from pivot_view
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unexpected error while trying to evaluate PIVOT clause)~~
+
+
+select * from pivot_view
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unexpected error while trying to evaluate PIVOT clause)~~
+
+
 -- explain pivot
 set BABELFISH_SHOWPLAN_ALL ON;
 SELECT top 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6

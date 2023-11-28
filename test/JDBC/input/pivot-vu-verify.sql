@@ -221,6 +221,13 @@ GO
 select * from test_table_valued_function(12);
 GO
 
+-- view test
+select * from pivot_view
+GO
+
+select * from pivot_view
+GO
+
 -- explain pivot
 set BABELFISH_SHOWPLAN_ALL ON;
 SELECT top 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
