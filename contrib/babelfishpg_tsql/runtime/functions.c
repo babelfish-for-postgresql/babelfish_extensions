@@ -479,11 +479,11 @@ datepart_internal(char *field , Timestamp timestamp , int df_tz)
 	{
 		if(strcasecmp(field , "millisecond") == 0)
 		{
-			return (timestamp) % 1000;
+			return (timestamp%1000000) / 1000;
 		}
 		else if(strcasecmp(field , "microsecond") == 0)
 		{
-			return timestamp%1000000;
+			return (timestamp%1000000);
 		}
 		else if(strcasecmp(field , "nanosecond") == 0)
 		{

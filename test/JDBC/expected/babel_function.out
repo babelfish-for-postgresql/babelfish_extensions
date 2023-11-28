@@ -717,14 +717,14 @@ int
 2
 ~~END~~
 
-select datepart(hour, '2016-12-26 23:30:05.523456+8:0');
+select datepart(hour, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
 ~~START~~
 int
 23
 ~~END~~
 
-select datepart(hh, '2016-12-26 23:30:05.523456+8:0');
+select datepart(hh, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
 ~~START~~
 int
