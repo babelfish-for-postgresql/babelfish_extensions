@@ -35,7 +35,7 @@ go
 -- TODO: Need to support it and make it similar to TSQL
 DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-select geometry::Point(@STX.STX, @STX.STY, 4326).STX
+select geometry::Point(@STX.STX, @STX.STY, 4326).STX, geometry::Point(@STX.STX, @STX.STY, 4326).STY;
 go
 
 -- Currently it is not supported
@@ -47,8 +47,34 @@ GO
 -- TODO: Need to support it and make it similar to TSQL
 DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText()
+select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
 go
+
+-- Null test for Geospatial functions
+DECLARE @point1 geometry, @point2 geometry, @point3 geometry;
+SET @point1 = geometry::STPointFromText(null, 4326);
+SET @point2 = geometry::STGeomFromText(null, 4326);
+SET @point3 = geometry::POINT(22.34900, -47.65100, 4326);
+SELECT @point1.STX;
+SELECT @point1.STY;
+SELECT @point1.STAsText();
+SELECT @point1.STAsBinary();
+SELECT @point1.STDistance(@point2);
+SELECT @point3.STDistance(@point2);
+SELECT @point1.STDistance(@point3);
+Go
+
+-- Negative test for Geospatial functions
+DECLARE @point1 geometry, @point2 varchar(50), @point3 int;
+SET @point1 = geometry::POINT(22.34900, -47.65100, 4326);;
+SET @point2 = 'Test_String';
+SELECT @point1.STDistance(@point2);
+Go
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+CREATE VIEW ValFromGeom AS SELECT location.STAsText(), location.STAsBinary() FROM SPATIALPOINTGEOM_dt;
+GO
 
 SELECT * FROM TextFromGeom;
 GO
@@ -74,7 +100,16 @@ GO
 SELECT location.STAsText() from SPATIALPOINTGEOM_dt;
 GO
 
-SELECT [location].[STX] from [SPATIALPOINTGEOM_dt];
+SELECT location.STAsBinary() from SPATIALPOINTGEOM_dt;
+GO
+
+SELECT location.STDistance(geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOM_dt;
+GO
+
+SELECT [SPATIALPOINTGEOM_dt].[location].[STX] from [SPATIALPOINTGEOM_dt];
+GO
+
+SELECT [location].[STY] from [SPATIALPOINTGEOM_dt];
 GO
 
 SELECT location FROM SPATIALPOINTGEOM_dt; 
@@ -200,6 +235,51 @@ SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT @point1.STDistance(@point2);
 Go
 
+DECLARE @point geography;
+SET @point = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+Insert INTO SPATIALPOINTGEOG_dt(location) VALUES(geography::point(@point.LONG, @point.LAT, 4326))
+go
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+DECLARE @LAT geography;
+SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+select geography::Point(@LAT.LONG, @LAT.LAT, 4326).LONG, geography::Point(@LAT.LONG, @LAT.LAT, 4326).LAT;
+go
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+CREATE VIEW CoordsFromGeog AS SELECT location.LONG, location.LAT AS Coordinates FROM SPATIALPOINTGEOG_dt;
+GO
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+DECLARE @LAT geography;
+SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+select geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsText(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsBinary(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STDistance(geography::Point(@LAT.LONG, @LAT.LAT, 4326));
+go
+
+-- Null test for Geospatial functions
+DECLARE @point1 geography, @point2 geography, @point3 geography;
+SET @point1 = geography::STPointFromText(null, 4326);
+SET @point2 = geography::STGeomFromText(null, 4326);
+SET @point3 = geography::POINT(22.34900, -47.65100, 4326);
+SELECT @point1.LONG;
+SELECT @point1.LAT;
+SELECT @point1.STAsText();
+SELECT @point1.STAsBinary();
+SELECT @point1.STDistance(@point2);
+SELECT @point3.STDistance(@point2);
+SELECT @point1.STDistance(@point3);
+Go
+
+-- Negative test for Geospatial functions
+DECLARE @point1 geography, @point2 varchar(50), @point3 int;
+SET @point1 = geography::POINT(22.34900, -47.65100, 4326);
+SET @point2 = 'Test_String';
+SELECT @point2.STDistance(@point1);
+Go
+
 SELECT * FROM TextFromGeog;
 GO
 
@@ -222,6 +302,21 @@ SELECT location.LAT from SPATIALPOINTGEOG_dt;
 GO
 
 SELECT SPATIALPOINTGEOG_dt.location.LONG from SPATIALPOINTGEOG_dt;
+GO
+
+SELECT location.STAsText() from SPATIALPOINTGEOG_dt;
+GO
+
+SELECT location.STAsBinary() from SPATIALPOINTGEOG_dt;
+GO
+
+SELECT location.STDistance(geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOG_dt;
+GO
+
+SELECT [SPATIALPOINTGEOG_dt].[location].[LONG] from [SPATIALPOINTGEOG_dt];
+GO
+
+SELECT [location].[LAT] from [SPATIALPOINTGEOG_dt];
 GO
 
 SELECT location FROM SPATIALPOINTGEOG_dt;
