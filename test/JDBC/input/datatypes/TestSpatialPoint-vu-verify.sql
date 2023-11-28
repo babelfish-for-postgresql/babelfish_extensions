@@ -74,6 +74,9 @@ GO
 SELECT location.STAsText() from SPATIALPOINTGEOM_dt;
 GO
 
+SELECT [location].[STX] from [SPATIALPOINTGEOM_dt];
+GO
+
 SELECT location FROM SPATIALPOINTGEOM_dt; 
 GO
 
@@ -307,5 +310,104 @@ GO
 Select CAST(CAST (0xE6100000010C17D9CEF753D34740D34D6210585936C0 AS image) as geography)
 GO
 
+SELECT
+    GeomColumn.STX AS XCoordinate,
+    GeomColumn.STY AS YCoordinate,
+    PrimaryKey,
+    GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint
+FROM
+    SPATIALPOINT_dt;
+GO
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'GeomColumn.STX AS XCoordinate, ' +
+    N'GeomColumn.STY AS YCoordinate, ' +
+    N'PrimaryKey, ' +
+    N'GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint ' +
+    N'FROM SPATIALPOINT_dt';
+    
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+
 SELECT * FROM SPATIALPOINT_dt;
+GO
+
+-- test multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+
+USE db2;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData]';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
+SELECT set_config('role', 'jdbc_user', false);
+GO
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
 GO

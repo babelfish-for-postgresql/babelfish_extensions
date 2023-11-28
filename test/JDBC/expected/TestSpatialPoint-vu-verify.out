@@ -254,6 +254,24 @@ POINT(-122.349 47.651)
 ~~END~~
 
 
+SELECT [location].[STX] from [SPATIALPOINTGEOM_dt];
+GO
+~~START~~
+float
+47.651
+1.0
+47.651
+<NULL>
+47.651
+1.0
+47.651
+47.651
+1.0
+47.651
+-122.349
+~~END~~
+
+
 SELECT location FROM SPATIALPOINTGEOM_dt; 
 GO
 ~~START~~
@@ -1019,6 +1037,48 @@ E6100000010C17D9CEF753D34740D34D6210585936C0
 ~~END~~
 
 
+SELECT
+    GeomColumn.STX AS XCoordinate,
+    GeomColumn.STY AS YCoordinate,
+    PrimaryKey,
+    GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint
+FROM
+    SPATIALPOINT_dt;
+GO
+~~START~~
+float#!#float#!#int#!#float
+47.651#!#-22.349#!#1#!#<NULL>
+<NULL>#!#<NULL>#!#2#!#5405374.929245813
+1.0#!#2.0#!#3#!#953316.5401136167
+47.651#!#-22.349#!#4#!#<NULL>
+<NULL>#!#<NULL>#!#5#!#5405374.929245813
+1.0#!#2.0#!#6#!#953316.5401136167
+~~END~~
+
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'GeomColumn.STX AS XCoordinate, ' +
+    N'GeomColumn.STY AS YCoordinate, ' +
+    N'PrimaryKey, ' +
+    N'GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint ' +
+    N'FROM SPATIALPOINT_dt';
+    
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+~~START~~
+float#!#float#!#int#!#float
+47.651#!#-22.349#!#1#!#<NULL>
+<NULL>#!#<NULL>#!#2#!#5405374.929245813
+1.0#!#2.0#!#3#!#953316.5401136167
+47.651#!#-22.349#!#4#!#<NULL>
+<NULL>#!#<NULL>#!#5#!#5405374.929245813
+1.0#!#2.0#!#6#!#953316.5401136167
+~~END~~
+
+
 SELECT * FROM SPATIALPOINT_dt;
 GO
 ~~START~~
@@ -1029,5 +1089,116 @@ int#!#geometry#!#geography
 4#!#E6100000010C17D9CEF753D34740D34D6210585936C0#!#<NULL>
 5#!#<NULL>#!#E6100000010CD34D6210585936C017D9CEF753D34740
 6#!#E6100000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F
+~~END~~
+
+
+-- test multi-db mode
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
+GO
+~~START~~
+text
+multi-db
+~~END~~
+
+
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(1, 2, 0), 1),
+    (geometry::Point(3, 4, 0), 2),
+    (geometry::Point(5, 6, 0), 3);
+GO
+~~ROW COUNT: 3~~
+
+
+USE db2;
+GO
+
+CREATE TABLE SpatialData
+(
+    SpatialPoint GEOMETRY,
+    PrimaryKey INT
+);
+GO
+
+INSERT INTO SpatialData (SpatialPoint, PrimaryKey)
+VALUES
+    (geometry::Point(7, 8, 0), 4),
+    (geometry::Point(9, 10, 0), 5),
+    (geometry::Point(11, 12, 0), 6);
+GO
+~~ROW COUNT: 3~~
+
+
+DECLARE @sql NVARCHAR(MAX);
+SET @sql = 
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db1].[dbo].[SpatialData] ' +
+    N'UNION ALL ' +
+    N'SELECT ' +
+    N'[SpatialPoint].[STX] AS XCoordinate, ' +
+    N'[SpatialPoint].[STY] AS YCoordinate, ' +
+    N'[PrimaryKey] ' +
+    N'FROM [db2].[dbo].[SpatialData]';
+-- Execute the dynamic SQL
+EXEC sp_executesql @sql;
+GO
+~~START~~
+float#!#float#!#int
+1.0#!#2.0#!#1
+3.0#!#4.0#!#2
+5.0#!#6.0#!#3
+7.0#!#8.0#!#4
+9.0#!#10.0#!#5
+11.0#!#12.0#!#6
+~~END~~
+
+
+USE master
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
+SELECT set_config('role', 'jdbc_user', false);
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+GO
+~~START~~
+text
+single-db
 ~~END~~
 
