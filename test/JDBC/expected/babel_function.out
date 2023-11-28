@@ -770,14 +770,14 @@ select datepart(millisecond, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffse
 GO
 ~~START~~
 int
-456
+523
 ~~END~~
 
 select datepart(ms, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
 GO
 ~~START~~
 int
-456
+523
 ~~END~~
 
 select datepart(microsecond, CAST('2016-12-26 23:30:05.523456+8'AS datetimeoffset));
