@@ -172,12 +172,12 @@ hello#!#jello
 #Q#Insert into sourceTable values (NULL, 0x4202);
 #Q#Select * from sourceTable
 #D#binary#!#binary
-49505152000000#!#1466500000000
+49505152000000#!#22612815365000000
 
 66200000000
 #Q#Select * from destinationTable
 #D#binary#!#binary
-49505152000000#!#1466500000000
+49505152000000#!#22612815365000000
 
 66200000000
 #Q#drop table sourceTable
@@ -188,12 +188,12 @@ hello#!#jello
 #Q#Insert into sourceTable values (NULL, 0x4202);
 #Q#Select * from sourceTable
 #D#varbinary#!#varbinary
-49505152#!#14665
+49505152#!#22612815365
 
 662
 #Q#Select * from destinationTable
 #D#varbinary#!#varbinary
-49505152#!#14665
+49505152#!#22612815365
 
 662
 #Q#drop table sourceTable

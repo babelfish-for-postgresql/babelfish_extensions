@@ -49,18 +49,18 @@ jdbc_user
 
 EXEC sys_suser_sname_proc_vu_prepare
 GO
-~~START~~
-nvarchar
-jdbc_user
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 SELECT sys_suser_sname_func_vu_prepare()
 GO
 ~~START~~
 varchar
-jdbc_user
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 SELECT * FROM sys_suser_name_view_vu_prepare

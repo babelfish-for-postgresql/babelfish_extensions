@@ -54,28 +54,25 @@ declare @vb varbinary(10)
 set @vb = 0x0102030405060708090a021321321a321a3a213a21a;
 select len(@vb)
 go
-~~START~~
-int
-10
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 declare @vb varbinary(10)
 set @vb = 0x0102030405060708090a021a31321a321a321a321a321a3a213a21a;
 select len(@vb)
 go
-~~START~~
-int
-10
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 
 declare @vb varbinary(10) = 0x0102030405060708090a021a31321a321a321a321a321a3a213a21a321a321a321a36513a216a03
 select len(@vb)
 go
-~~START~~
-int
-10
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 

@@ -8,10 +8,9 @@ foo
 
 select 'foo' where 0xAE = 0xAE00;
 go
-~~START~~
-varchar
-foo
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid byte sequence for encoding "WIN1252": 0x00)~~
 
 
 select 'foo' where 101.5E5 = 1015E4;

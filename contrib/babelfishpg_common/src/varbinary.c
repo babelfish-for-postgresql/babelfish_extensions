@@ -15,6 +15,7 @@
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"
+#include "collation.h"
 #include "catalog/pg_type.h"
 #include "collation.h"
 #include "common/int.h"
@@ -33,6 +34,7 @@
 #include "utils/pg_locale.h"
 #include "utils/sortsupport.h"
 #include "utils/varlena.h"
+#include "encoding/encoding.h"
 
 #include "instr.h"
 
@@ -165,25 +167,49 @@ Datum
 varbinaryin(PG_FUNCTION_ARGS)
 {
 	char	   *inputText = PG_GETARG_CSTRING(0);
+	char       *r_data;
 	char	   *rp;
-	char	   *tp;
+	char         *tp;
 	int			len;
 	bytea	   *result;
-	int32		typmod = PG_GETARG_INT32(2);
+	int32 typmod = PG_GETARG_INT32(2);
 	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+	int		encodedByteLen;
+	coll_info	collInfo;
 
+	collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	len = strlen(inputText);
 
-	if (typmod == TSQLHexConstTypmod ||
-		(dump_restore && strcmp(dump_restore, "on") == 0))	/* Treat input string as
-															 * T-SQL hex constant
-															 * during restore */
+	if (typmod == TSQLHexConstTypmod)
+	{
+		/*
+		 * calculate length of the binary code
+		 * e.g. 0xFF should be 1 byte (plus VARHDRSZ)
+		 * and 0xF should also be 1 byte (plus VARHDRSZ).
+		 */
+		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
+		
+		/* decode the hex */
+		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, inputText);
+
+		/* Encode the input string encoding to UTF8(server) encoding */
+		rp = encoding_conv_util(inputText, bc, collInfo.enc, PG_UTF8, &encodedByteLen);
+
+		result = palloc(encodedByteLen + VARHDRSZ);
+		SET_VARSIZE(result, encodedByteLen + VARHDRSZ);
+
+		r_data = VARDATA(result);
+		memcpy(r_data, rp, encodedByteLen);
+
+		PG_RETURN_BYTEA_P(result);
+	}
+	else if (dump_restore && strcmp(dump_restore, "on") == 0) /* Treat input string as T-SQL hex constant during restore */
 	{
 		/*
 		 * calculate length of the binary code e.g. 0xFF should be 1 byte
 		 * (plus VARHDRSZ) and 0xF should also be 1 byte (plus VARHDRSZ).
 		 */
-		int			bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
+		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
 
 		result = palloc(bc);
 		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
@@ -191,16 +217,18 @@ varbinaryin(PG_FUNCTION_ARGS)
 
 		PG_RETURN_BYTEA_P(result);
 	}
+	else
+	{
+		tp = inputText;
 
-	tp = inputText;
+		result = (bytea *) palloc(len + VARHDRSZ);
+		SET_VARSIZE(result, len + VARHDRSZ);
 
-	result = (bytea *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
+		rp = VARDATA(result);
+		memcpy(rp, tp, len);
 
-	rp = VARDATA(result);
-	memcpy(rp, tp, len);
-
-	PG_RETURN_BYTEA_P(result);
+		PG_RETURN_BYTEA_P(result);
+	}
 }
 
 /*

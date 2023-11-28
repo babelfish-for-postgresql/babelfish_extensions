@@ -12,7 +12,7 @@ exec sp_test1 @a, @b, @c, @d, @e, @f;
 GO
 ~~START~~
 nchar#!#nvarchar#!#varbinary#!#char#!#varchar#!#binary
-h#!#w#!#AB#!#H#!#W#!#12
+h#!#w#!#C2#!#H#!#W#!#12
 ~~END~~
 
 
@@ -28,7 +28,7 @@ exec sp_test2 @a, @b, @c, @d, @e, @f;
 GO
 ~~START~~
 nchar#!#nvarchar#!#varbinary#!#char#!#varchar#!#binary
-h#!#w#!#AB#!#H#!#W#!#12
+h#!#w#!#C2#!#H#!#W#!#12
 ~~END~~
 
 
@@ -44,7 +44,7 @@ exec sp_test3 @a, @b, @c, @d, @e, @f;
 GO
 ~~START~~
 nchar#!#nvarchar#!#varbinary#!#char#!#varchar#!#binary
-he#!#wo#!#ABCD#!#HE#!#WO#!#1234
+he#!#wo#!#C2AB#!#HE#!#WO#!#1234
 ~~END~~
 
 
@@ -61,7 +61,7 @@ exec sp_test4 @a, @b, @c, @d, @e, @f;
 GO
 ~~START~~
 nchar#!#nvarchar#!#varbinary#!#char#!#varchar#!#binary
-w#!#h#!#12#!#W#!#H#!#AB
+w#!#h#!#12#!#W#!#H#!#C2
 ~~END~~
 
 
