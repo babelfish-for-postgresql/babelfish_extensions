@@ -1837,15 +1837,11 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 												att->attcollation, (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_VARCHAR:
-				if (atttypmod == TSQLMaxTypmod)
-					atttypmod = -1;
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4));
 				break;
 			case TDS_SEND_NVARCHAR:
-				if (atttypmod == TSQLMaxTypmod)
-					atttypmod = -1;
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4) * 2);
@@ -1961,6 +1957,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 			case TDS_SEND_VARBINARY:
 				if (atttypmod == -1 && tle != NULL)
 					atttypmod = resolve_varbinary_typmod_from_exp((Node *) tle->expr);
+				if (atttypmod == TSQLMaxTypmod)
+					atttypmod = -1;
 				SetColMetadataForBinaryType(col, TDS_TYPE_VARBINARY, (atttypmod == -1) ?
 											atttypmod : atttypmod - VARHDRSZ);
 				break;

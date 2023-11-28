@@ -65,6 +65,7 @@ extern "C"
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_any_char_datatype(Oid oid);
+	extern bool is_tsql_any_char_datatype_with_max_expr(Oid oid);
 	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 	extern int CurrentLineNumber;
@@ -4593,6 +4594,10 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx, std::map<PLtsql_stmt 
 				{
 					std::string newTypeStr = typeStr + "(1)"; /* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 */
 					type = parse_datatype(newTypeStr.c_str(), 0);
+				}
+				else if (type->atttypmod == TSQLMaxTypmod && is_tsql_any_char_datatype_with_max_expr(type->typoid))
+				{
+					type->atttypmod = -1;
 				}
 				else if (is_tsql_text_ntext_or_image_datatype(type->typoid))
 				{

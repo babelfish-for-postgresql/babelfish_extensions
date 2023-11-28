@@ -35,7 +35,9 @@ bool		suppress_string_truncation_error = false;
 bool		pltsql_suppress_string_truncation_error(void);
 
 bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
-												 * sys.varchar / sys.nvarchar */
+												 * sys.varcha
+												 r / sys.nvarchar */
+bool		is_tsql_any_char_datatype_with_max_expr(Oid oid);
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 bool
@@ -1071,6 +1073,17 @@ is_tsql_any_char_datatype(Oid oid)
 	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
+}
+
+/* 
+ * tsql data-types that allow syntax varchar(max), nvarchar(max)
+ * varbinary(max) is not allowed as typmod for varbinary if fixed in tdsresponse.
+*/
+bool
+is_tsql_any_char_datatype_with_max_expr(Oid oid)
+{
+	return	(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
 }
 
