@@ -291,7 +291,7 @@ go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#decimal_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#63
-master#!#dbo#!#decimal_int_identity#!#dec5int_col#!#3#!#decimal#!#5#!#7#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#106
+master#!#dbo#!#decimal_int_identity#!#dec5int_col#!#3#!#decimal#!#5#!#7#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#106
 ~~END~~
 
 exec [sys].sp_columns N'decimal_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
@@ -299,7 +299,7 @@ go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 master#!#dbo#!#decimal_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#63
-master#!#dbo#!#decimal_int_identity#!#dec5int_col#!#3#!#decimal#!#5#!#7#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#2#!#YES#!#106
+master#!#dbo#!#decimal_int_identity#!#dec5int_col#!#3#!#decimal#!#5#!#7#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#2#!#YES#!#106
 ~~END~~
 
 
