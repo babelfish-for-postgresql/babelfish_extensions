@@ -38,7 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
-CREATE VIEW information_schema_tsql.tables AS
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 		   CAST(
@@ -54,11 +54,11 @@ CREATE VIEW information_schema_tsql.tables AS
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
 		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
-		   left join sys.table_types_internal tt on c.oid = tt.typrelid
+		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
 
 	WHERE c.relkind IN ('r', 'v', 'p')
 		AND (NOT pg_is_other_temp_schema(nc.oid))
-		AND tt.typrelid is null
+		AND tt.typrelid IS NULL
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
