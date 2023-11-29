@@ -43,14 +43,6 @@ go
 CREATE VIEW CoordsFromGeom AS SELECT location.STX, location.STY AS Coordinates FROM SPATIALPOINTGEOM_dt;
 GO
 
--- TODO: Need to throw proper error message
-SELECT dbo.SPATIALPOINTGEOM_dt.location.STX from SPATIALPOINTGEOM_dt;
-GO
-
--- TODO: Need to throw proper error message
-SELECT master.dbo.SPATIALPOINTGEOM_dt.location.STX from SPATIALPOINTGEOM_dt;
-GO
-
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
 SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;

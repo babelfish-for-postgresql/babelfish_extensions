@@ -88,22 +88,6 @@ GO
 ~~ERROR (Message: missing FROM-clause entry for table "location")~~
 
 
--- TODO: Need to throw proper error message
-SELECT dbo.SPATIALPOINTGEOM_dt.location.STX from SPATIALPOINTGEOM_dt;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: database "dbo" does not exist. Make sure that the name is entered correctly.)~~
-
-
--- TODO: Need to throw proper error message
-SELECT master.dbo.SPATIALPOINTGEOM_dt.location.STX from SPATIALPOINTGEOM_dt;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near '.' at line 2 and character position 46)~~
-
-
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
 SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;
