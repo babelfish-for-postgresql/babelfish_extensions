@@ -225,8 +225,6 @@ GO
 select * from pivot_view
 GO
 
-select * from pivot_view
-GO
 
 -- explain pivot
 set BABELFISH_SHOWPLAN_ALL ON;

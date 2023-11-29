@@ -943,14 +943,6 @@ int#!#int#!#int#!#int#!#int#!#int
 ~~ERROR (Message: Unexpected error while trying to evaluate PIVOT clause)~~
 
 
-select * from pivot_view
-GO
-~~START~~
-int#!#int#!#int#!#int#!#int#!#int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unexpected error while trying to evaluate PIVOT clause)~~
-
 
 -- explain pivot
 set BABELFISH_SHOWPLAN_ALL ON;
