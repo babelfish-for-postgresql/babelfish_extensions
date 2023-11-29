@@ -1492,7 +1492,7 @@ RETURNS sys.VARBINARY(128) AS 'babelfishpg_tsql', 'bbf_get_context_info' LANGUAG
 
 CREATE OR REPLACE FUNCTION sys.context_info()
 RETURNS sys.VARBINARY(128)
-AS '{"version_num": "1", "typmod_array": ["128"], "original_probin": ""}',
+AS
 $$
 BEGIN
     return sys.bbf_get_context_info()
