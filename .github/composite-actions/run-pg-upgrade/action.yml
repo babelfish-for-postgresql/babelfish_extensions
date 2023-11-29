@@ -13,6 +13,10 @@ inputs:
     description: "Current postgres intall directory"
     required: false
     default: postgres14
+  db_parameters:
+    description: "DB parameters which need to be set in postgresql.conf"
+    required: false
+    default: "()"
 
 runs:
   using: "composite"
@@ -39,6 +43,13 @@ runs:
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+
+        DB_PARAMETERS=${{ inputs.db_parameters }}
+        for DB_PARAMETER in ${DB_PARAMETERS[@]}; do
+          sudo echo $DB_PARAMETER >> ~/${{ inputs.pg_new_dir }}/data/postgresql.conf
+        done
+        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile14 restart
+
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
