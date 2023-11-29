@@ -1,5 +1,5 @@
 name: Version Upgrade Test Framework
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   generate-version-upgrade-tests:
