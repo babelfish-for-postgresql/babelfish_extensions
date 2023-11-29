@@ -45,11 +45,6 @@ GO
 
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
-SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;
-GO
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
