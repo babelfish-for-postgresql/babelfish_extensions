@@ -1,6 +1,6 @@
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT @point.STAsText();
+SELECT STAsText(@point);
 Go
 ~~START~~
 text
@@ -10,7 +10,7 @@ POINT(-122.349 47.651)
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT @point.STAsText();
+SELECT STAsText(@point);
 Go
 ~~START~~
 text
@@ -20,8 +20,8 @@ POINT(22.349 -47.651)
 
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT @point.stx;
-SELECT @point.sty;
+SELECT stx(@point);
+SELECT sty(@point);
 Go
 ~~START~~
 float
@@ -36,8 +36,8 @@ float
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT @point.stx;
-SELECT @point.sty;
+SELECT stx(@point);
+SELECT sty(@point);
 Go
 ~~START~~
 float
@@ -53,7 +53,7 @@ float
 DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT @point1.STDistance(@point2);
+SELECT STDistance(@point1, @point2);
 Go
 ~~START~~
 float
@@ -86,6 +86,31 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: missing FROM-clause entry for table "location")~~
+
+
+-- TODO: Need to throw proper error message
+SELECT dbo.SPATIALPOINTGEOM_dt.location.STX from SPATIALPOINTGEOM_dt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: database "dbo" does not exist. Make sure that the name is entered correctly.)~~
+
+
+-- TODO: Need to throw proper error message
+SELECT master.dbo.SPATIALPOINTGEOM_dt.location.STX from SPATIALPOINTGEOM_dt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 2 and character position 46)~~
+
+
+-- Currently it is not supported
+-- TODO: Need to support it and make it similar to TSQL
+SELECT SPATIALPOINTGEOM_dt.location.STAsText() from SPATIALPOINTGEOM_dt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: database "spatialpointgeom_dt" does not exist. Make sure that the name is entered correctly.)~~
 
 
 -- Currently it is not supported
@@ -157,6 +182,13 @@ Go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT location.LAT from SPATIALPOINTGEOM_dt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function sys.lat(geometry) does not exist)~~
 
 
 -- Currently it is not supported
@@ -677,7 +709,7 @@ E6100000010C17D9CEF753D34740D34D6210585936C0
 
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT @point.STAsText();
+SELECT STAsText(@point);
 Go
 ~~START~~
 text
@@ -687,7 +719,7 @@ POINT(-122.349 47.651)
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT @point.STAsText();
+SELECT STAsText(@point);
 Go
 ~~START~~
 text
@@ -697,8 +729,8 @@ POINT(-47.651 22.349)
 
 DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT @point.long;
-SELECT @point.lat;
+SELECT long(@point);
+SELECT lat(@point);
 Go
 ~~START~~
 float
@@ -713,8 +745,8 @@ float
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT @point.long;
-SELECT @point.lat;
+SELECT long(@point);
+SELECT lat(@point);
 Go
 ~~START~~
 float
@@ -730,7 +762,7 @@ float
 DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
-SELECT @point1.STDistance(@point2);
+SELECT STDistance(@point1, @point2);
 Go
 ~~START~~
 float
@@ -775,6 +807,85 @@ go
 
 ~~ERROR (Message: syntax error at or near ".")~~
 
+
+CREATE TABLE SpatialData
+(
+    ID INT PRIMARY KEY,
+    SpatialLocation GEOGRAPHY
+);
+GO
+
+INSERT INTO SpatialData (ID, SpatialLocation)
+VALUES
+    (1, geography::Point(1, 2, 4326)),
+    (2, geography::Point(3, 4, 4326)),
+    (3, geography::Point(5, 6, 4326)),
+    (4, geography::Point(7, 8, 4326)),
+    (5, geography::Point(9, 10, 4326));
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT
+    SpatialData.ID,
+    SPATIALPOINTGEOG_dt.location.LAT,
+    SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location)
+FROM
+    SpatialData
+JOIN
+    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.long - SpatialData.SpatialLocation.lat <= 10;
+GO
+~~START~~
+int#!#float#!#float
+1#!#2.0#!#156876.14940188668
+2#!#2.0#!#351485.0664919168
+3#!#2.0#!#647017.0083805197
+4#!#2.0#!#953316.5401136167
+5#!#2.0#!#1261960.137843746
+1#!#2.0#!#156876.14940188668
+2#!#2.0#!#351485.0664919168
+3#!#2.0#!#647017.0083805197
+4#!#2.0#!#953316.5401136167
+5#!#2.0#!#1261960.137843746
+1#!#47.651#!#5678803.288585193
+2#!#47.651#!#5557193.284430087
+3#!#47.651#!#5446042.320579326
+4#!#47.651#!#5345543.26741007
+5#!#47.651#!#5255813.671417903
+1#!#2.0#!#156876.14940188668
+2#!#2.0#!#351485.0664919168
+3#!#2.0#!#647017.0083805197
+4#!#2.0#!#953316.5401136167
+5#!#2.0#!#1261960.137843746
+~~END~~
+
+
+WITH RegionLocations AS (
+    SELECT
+        SpatialData.ID,
+        SPATIALPOINTGEOG_dt.location.LAT
+    FROM
+        SpatialData
+    JOIN
+        SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.long - SpatialData.SpatialLocation.lat <= 10
+)
+SELECT
+    lat,
+    COUNT(ID) AS LocationCount
+FROM
+    RegionLocations
+GROUP BY
+    lat;
+GO
+~~START~~
+float#!#int
+47.651#!#5
+2.0#!#15
+~~END~~
+
+
+DROP TABLE SpatialData;
+GO
 
 -- Null test for Geospatial functions
 DECLARE @point1 geography, @point2 geography, @point3 geography;
@@ -834,6 +945,13 @@ Go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: parse error - invalid geometry)~~
+
+
+SELECT location.STY from SPATIALPOINTGEOG_dt;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function sys.sty(geography) does not exist)~~
 
 
 SELECT * FROM TextFromGeog;
