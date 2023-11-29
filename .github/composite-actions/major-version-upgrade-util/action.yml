@@ -30,7 +30,6 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         extension_branch: ${{ inputs.extension_branch }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
-        db_parameters: ${{ matrix.upgrade-path.db_parameters }}
 
     - name: Run pg_upgrade
       id: run-pg_upgrade
@@ -40,6 +39,7 @@ runs:
         migration_mode: ${{ inputs.migration_mode }}
         pg_old_dir: ${{ inputs.pg_old_dir }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
+        db_parameters: ${{ matrix.upgrade-path.db_parameters }}
 
     - name: Run Verify Tests
       if: always() && steps.run-pg_upgrade.outcome == 'success' && inputs.is_final_ver == 'true'

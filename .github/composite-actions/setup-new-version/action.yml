@@ -9,10 +9,6 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
-  db_parameters:
-    description: "DB parameters which need to be set in postgresql.conf"
-    required: false
-    default: "()"
 
 runs:
   using: "composite"
@@ -74,9 +70,4 @@ runs:
           sudo echo "host    all             all             0.0.0.0/0                md5"
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
-
-        DB_PARAMETERS=${{ inputs.db_parameters }}
-        for DB_PARAMETER in ${DB_PARAMETERS[@]}; do
-          sudo echo $DB_PARAMETER >> postgresql.conf
-        done
       shell: bash
