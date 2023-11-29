@@ -235,6 +235,7 @@ BEGIN
     WHEN 'money' THEN radix = 10;
     WHEN 'smallmoney' THEN radix = 10;
     WHEN 'sql_variant' THEN radix = 10;
+    WHEN 'decimal' THEN radix = 10;
   ELSE
     radix = NULL;
   END CASE;
