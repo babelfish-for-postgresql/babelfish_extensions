@@ -67,6 +67,39 @@ CREATE OR REPLACE VIEW information_schema_tsql.tables AS
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+			CAST(
+				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+					THEN 'CASCADE'
+					ELSE 'NONE' END
+				AS sys.varchar(7)) COLLATE sys.database_default AS "CHECK_OPTION",
+
+			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext
+			ON (nc.nspname = ext.nspname COLLATE sys.database_default)
+		LEFT OUTER JOIN sys.babelfish_view_def vd
+			ON ext.dbid = vd.dbid
+				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
+				AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
+		LEFT JOIN sys.shipped_objects_not_in_sys nis on (nis.name = c.relname and nis.schemaid = nc.oid and nis.type = 'V')
+
+	WHERE c.relkind = 'v'
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND nis.name is null
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = sys.db_id();
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
+
 create or replace view sys.views as 
 select 
   t.relname as name
