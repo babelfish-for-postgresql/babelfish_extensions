@@ -2017,15 +2017,46 @@ func_expr_common_subexpr:
 				}
 			| IDENTITY_P '(' Typename ',' a_expr ',' a_expr ')'
 				{
-					$$ = TsqlFunctionIdentityInto($3, $5, $7, @1);	 
+					if (escape_hatch_identity_function)
+					{
+						$$ = TsqlFunctionIdentityInto($3, $5, $7, @1);	
+					}
+					else
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							errmsg("To use IDENTITY(), set \'babelfishpg_tsql.escape_hatch_identity_function\' to \'ignore\'"),
+							parser_errposition(@1)));
+					}
 				}
 			| IDENTITY_P '(' Typename ',' a_expr ')'
 				{ 
-					$$ = TsqlFunctionIdentityInto($3, $5, (Node *)makeIntConst(1, -1), @1);
+					if (escape_hatch_identity_function)
+					{
+						$$ = TsqlFunctionIdentityInto($3, $5, (Node *)makeIntConst(1, -1), @1);
+					}
+					else
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							errmsg("To use IDENTITY(), set \'babelfishpg_tsql.escape_hatch_identity_function\' to \'ignore\'"),
+							parser_errposition(@1)));
+					}
+					
 				}
 			| IDENTITY_P '(' Typename ')'
 				{
-					$$ = TsqlFunctionIdentityInto($3, (Node *)makeIntConst(1, -1), (Node *)makeIntConst(1, -1), @1);
+					if (escape_hatch_identity_function)
+					{
+						$$ = TsqlFunctionIdentityInto($3, (Node *)makeIntConst(1, -1), (Node *)makeIntConst(1, -1), @1);
+					}
+					else
+					{
+						ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							errmsg("To use IDENTITY(), set \'babelfishpg_tsql.escape_hatch_identity_function\' to \'ignore\'"),
+							parser_errposition(@1)));
+					}
 				}
 			| TSQL_CONTAINS '(' ColId ',' tsql_contains_search_condition ')'
 				{
