@@ -1,5 +1,5 @@
 name: Unit Tests
-on: [push, pull_request]
+on: [push]
 
 jobs:
   run-babelfish-unit-tests:

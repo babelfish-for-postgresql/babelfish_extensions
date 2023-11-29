@@ -1,5 +1,5 @@
 name: JDBC Tests With Parallel Query
-on: [push, pull_request]
+on: [push]
 
 jobs:
   run-babelfish-jdbc-tests-with-parallel-query-mode:
