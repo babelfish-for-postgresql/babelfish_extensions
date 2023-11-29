@@ -4489,6 +4489,25 @@ RETURNS INT AS
 STRICT
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_type_radix_for_sp_columns_helper(IN type TEXT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+  radix SMALLINT;
+BEGIN
+  CASE type
+    WHEN 'tinyint' THEN radix = 10;
+    WHEN 'money' THEN radix = 10;
+    WHEN 'smallmoney' THEN radix = 10;
+    WHEN 'sql_variant' THEN radix = 10;
+    WHEN 'decimal' THEN radix = 10;
+  ELSE
+    radix = NULL;
+  END CASE;
+  RETURN radix;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
