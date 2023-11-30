@@ -419,9 +419,11 @@ CREATE VIEW information_schema_tsql.tables AS
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
 		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
 
 	WHERE c.relkind IN ('r', 'v', 'p')
 		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND tt.typrelid IS NULL
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
@@ -492,9 +494,11 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 			ON ext.dbid = vd.dbid
 				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
 				AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
+		LEFT JOIN sys.shipped_objects_not_in_sys nis on (nis.name = c.relname and nis.schemaid = nc.oid and nis.type = 'V')
 
 	WHERE c.relkind = 'v'
 		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND nis.name is null
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
 			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
