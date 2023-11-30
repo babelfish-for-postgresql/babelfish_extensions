@@ -1,9 +1,4 @@
--- enable CONTAINS
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
-SELECT pg_reload_conf();
-GO
-
+-- enable FULLTEXT
 -- tsql user=jdbc_user password=12345678
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
@@ -3047,6 +3042,6 @@ GO
 INSERT INTO fts_contains_vu_t VALUES (1000, 'Last month , scientists from the Hebrew University of Jerusalem reported that washing down red meat with a glass of red can actually prevent the build-up of cholesterol in the body ')
 GO
 
--- disable CONTAINS
+-- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

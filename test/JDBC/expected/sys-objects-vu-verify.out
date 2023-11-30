@@ -41,7 +41,6 @@ varchar
 sys_objects_vu_prepare_proc1
 sys_objects_vu_prepare_table1
 sys_objects_vu_prepare_trig1
-sysdatabases
 ~~END~~
 
 
@@ -52,7 +51,6 @@ select name, type, type_desc from tempdb.sys.objects order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-sysdatabases#!#V #!#VIEW
 ~~END~~
 
 
@@ -67,7 +65,6 @@ varchar
 sys_objects_vu_prepare_proc1
 sys_objects_vu_prepare_table1
 sys_objects_vu_prepare_trig1
-sysdatabases
 ~~END~~
 
 
@@ -75,7 +72,6 @@ select name, type, type_desc from tempdb.sys.objects order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-sysdatabases#!#V #!#VIEW
 ~~END~~
 
 

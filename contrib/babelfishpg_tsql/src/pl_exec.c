@@ -4693,6 +4693,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			return ret;
 		}
 
+		if (expr->plan && expr->plan->oneshot)
+		{
+			SPI_freeplan(expr->plan);
+			expr->plan = NULL;
+		}
+
 		if (expr->plan == NULL)
 		{
 			/*
@@ -5056,11 +5062,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		/* If query affects IDENTITY_INSERT relation then update sequence */
 		pltsql_update_identity_insert_sequence(expr);
 
-		/* If current plan constains a pivot operator, we remove the plan */
+		/* If current plan constains a pivot operator, we set it as execute oneshot */
 		if (is_pivot)
 		{
-			SPI_freeplan(expr->plan);
-			expr->plan = NULL;
+			expr->plan->oneshot = true;
 		}
 
 		/* Expect SPI_tuptable to be NULL else complain */

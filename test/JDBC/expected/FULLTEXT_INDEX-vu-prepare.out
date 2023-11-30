@@ -1,15 +1,5 @@
--- psql
--- enable CONTAINS
-ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql user=jdbc_user password=12345678
+-- enable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 ~~START~~
@@ -62,7 +52,7 @@ ignore
 
 
 -- Index creation on different character data type columns
-CREATE TABLE fti_table_t1(id int NOT NULL, a text);
+CREATE TABLE fti_table_t1(id int NOT NULL constraint pk_mytexts primary key, a text);
 GO
 
 -- should throw syntax error for NULL index name
@@ -81,10 +71,7 @@ GO
 ~~ERROR (Message: '"ix_t1_a"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.)~~
 
 
-CREATE UNIQUE INDEX IX_t1_a ON fti_table_t1(id);
-GO
-
-CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX IX_t1_a;
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX pk_mytexts;
 GO
 
 CREATE TABLE fti_table_t2(id int not null, b char(10));
@@ -204,15 +191,5 @@ GO
 ~~START~~
 text
 strict
-~~END~~
-
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
 ~~END~~
 

@@ -321,7 +321,6 @@ Select table_catalog, table_schema, table_name from information_schema.views
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-isc_db#!#dbo#!#sysdatabases
 ~~END~~
 
 
