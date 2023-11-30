@@ -425,7 +425,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *prev_current_user;
 	int			stmt_number = 0;
 	int 			save_sec_context;
-	bool 			is_set_userid;
+	bool 			is_set_userid = false;
 	Oid 			save_userid;
 
 	/* TODO: Extract options */
@@ -626,7 +626,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	ListCell   *parsetree_item;
 	const char *prev_current_user;
 	int 		save_sec_context;
-	bool 		is_set_userid;
+	bool 		is_set_userid = false;
 	Oid 		save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
