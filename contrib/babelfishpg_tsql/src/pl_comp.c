@@ -129,6 +129,9 @@ enum geospatial_type
 	INVALID_TYPE
 };
 
+static Oid	geomId = InvalidOid;
+static Oid	geogId = InvalidOid;
+
 /* ----------
  * Current session's handler
  * ----------
@@ -1739,8 +1742,6 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 {
 	Node       *last_field;		/* represents the geospatial function name */
 	Node       *col;
-	Oid        geomId = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("geometry"), ObjectIdGetDatum(get_namespace_oid("sys", false)));
-	Oid        geogId = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("geography"), ObjectIdGetDatum(get_namespace_oid("sys", false)));
 
 	/* Initializing Hash Table to store func and return id's for geospatial functions */
 	if (ht_spatial_func_info == NULL)
@@ -1748,6 +1749,8 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 		geospatial_hash_entry_t *t1 = (geospatial_hash_entry_t*)palloc(sizeof(geospatial_hash_entry_t));
 		int key = GEOM_STX;
 		HASHCTL		hashCtl;
+		geomId = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("geometry"), ObjectIdGetDatum(get_namespace_oid("sys", false)));
+		geogId = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("geography"), ObjectIdGetDatum(get_namespace_oid("sys", false)));
 		MemSet(&hashCtl, 0, sizeof(hashCtl));
 		hashCtl.keysize = sizeof(int);
 		hashCtl.entrysize = sizeof(geospatial_hash_entry_t);
@@ -1793,7 +1796,6 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 	{
 		FuncExpr   *funcexpr = makeNode(FuncExpr);	/* func expression to modify colref to funcref */
 		char *name = strVal(last_field);
-		Oid funcid;
 		Oid dataTypeId;
 		int key;
 		geospatial_hash_entry_t *t1;
@@ -1847,14 +1849,15 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 
 		t1 = hash_search(ht_spatial_func_info, &key, HASH_FIND, NULL);
 		/* Prepare a Funcexpr node for the corresponding geospatial function. */
-		/* if key is Invalid then check for invalid func and datatype match */
+		/* if key is Invalid then we need to throw an error */
 		if (key == INVALID_TYPE)
 		{
-			funcid = LookupFuncName(list_make2(makeString("sys"), makeString(name)), 1, &dataTypeId, false);
-			funcexpr = makeFuncExpr(funcid, get_func_rettype(funcid), list_make1(col), 0, 0, COERCE_EXPLICIT_CALL);
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function sys.%s(%s) does not exist", name,  format_type_be(dataTypeId))));
 		}
-		else
-			funcexpr = makeFuncExpr(t1->funcid, t1->returntype, list_make1(col), 0, 0, COERCE_EXPLICIT_CALL);
+
+		funcexpr = makeFuncExpr(t1->funcid, t1->returntype, list_make1(col), 0, 0, COERCE_EXPLICIT_CALL);
 		
 		funcexpr->location = cref->location;
 
