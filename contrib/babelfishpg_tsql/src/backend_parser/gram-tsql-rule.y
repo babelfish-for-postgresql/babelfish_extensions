@@ -3165,7 +3165,7 @@ opt_from:	FROM									{}
 
 tsql_IndexStmt:
 			CREATE opt_unique tsql_opt_cluster tsql_opt_columnstore
-			INDEX opt_concurrently opt_index_name
+			INDEX opt_concurrently opt_single_name
 			ON relation_expr access_method_clause '(' index_params ')'
 			opt_include where_clause opt_reloptions
 			tsql_opt_on_filegroup
