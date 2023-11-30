@@ -94,6 +94,7 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input);
 Oid			get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input);
 static Node *transform_like_in_add_constraint(Node *node);
+static char** fetch_func_input_arg_names(HeapTuple func_tuple);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -119,7 +120,7 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
 static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *fargs);
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
-static ResTarget* make_restarget_from_colname(char * colName);
+static ResTarget* make_restarget_from_cstr_list(List * l);
 static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 
 /*****************************************
@@ -158,7 +159,6 @@ static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
-static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -210,7 +210,6 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
-static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -233,7 +232,6 @@ static table_variable_satisfies_vacuum_horizon_hook_type prev_table_variable_sat
 static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
-/* TODO: do we need to use variable to store hook value before transfrom pivot? No other function uses the same hook, should be redundant */
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
@@ -326,9 +324,6 @@ InstallExtendedHooks(void)
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
-
-	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
-	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger; 
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
@@ -445,7 +440,6 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
-	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -721,38 +715,6 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 			}
 		}
 		cur = cur->next;
-	}
-	return false;
-}
-
-/**
- * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
- * Checks if view have an INSTEAD OF trigger at statement level
- * If it does, we don't want to treat it as auto-updatable. 
- * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
-*/
-static bool
-pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
-{
-	TriggerDesc *trigDesc = view->trigdesc;
-
-	switch (event)
-	{
-		case CMD_INSERT:
-			if(trigDesc && trigDesc->trig_insert_instead_statement)
-				return true;
-			break;
-		case CMD_UPDATE:
-			if (trigDesc && trigDesc->trig_update_instead_statement)
-				return true;
-			break;
-		case CMD_DELETE:
-			if (trigDesc && trigDesc->trig_delete_instead_statement)
-				return true;
-			break;
-		default:
-			elog(ERROR, "unrecognized CmdType: %d", (int) event);
-			break;
 	}
 	return false;
 }
@@ -3566,13 +3528,15 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 
 static int getDefaultPosition(const List *default_positions, const ListCell *def_idx, int argPosition)
 {
-	int currPosition = intVal((Node *) lfirst(def_idx));
+	int currPosition;
+	if (default_positions == NIL || def_idx == NULL)
+		return -1;
+	currPosition = intVal((Node *) lfirst(def_idx));
 	while (currPosition != argPosition)
 	{
 		def_idx = lnext(default_positions, def_idx);
 		if (def_idx == NULL)
 		{
-			elog(ERROR, "not enough default arguments");
 			return -1;
 		}
 		currPosition = intVal((Node *) lfirst(def_idx));
@@ -3581,10 +3545,40 @@ static int getDefaultPosition(const List *default_positions, const ListCell *def
 }
 
 /**
+ * @brief fetch the func input arg names
+ * 
+ * @param func_tuple or proc_tuple
+ * @return char** list of input arg names
+ */
+static char** fetch_func_input_arg_names(HeapTuple func_tuple)
+{
+	Datum proargnames;
+	Datum		proargmodes;
+	char**		arg_names;
+	bool 		isnull;
+
+	proargnames = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
+					Anum_pg_proc_proargnames,
+					&isnull);
+
+	proargmodes = SysCacheGetAttr(PROCNAMEARGSNSP, func_tuple,
+					Anum_pg_proc_proargmodes,
+					&isnull);
+
+	if (isnull)
+		proargmodes = PointerGetDatum(NULL);	/* just to be sure */
+
+	get_func_input_arg_names(proargnames,
+									proargmodes,
+									&arg_names);
+	return arg_names;
+}
+
+/**
  * @brief farg position default should get the corresponding default position value
  * 
  * @param func_tuple 
- * @param defaults 
+ * @param defaults can be NIL
  * @param fargs 
  * @return List* 
  */
@@ -3593,19 +3587,24 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 
 {
 	HeapTuple	bbffunctuple;
+	Form_pg_proc proc_form;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return fargs;
 
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(func_tuple);
+	proc_form = (Form_pg_proc) GETSTRUCT(func_tuple);
 
-	if (HeapTupleIsValid(bbffunctuple)){
+	if (HeapTupleIsValid(bbffunctuple))
+	{
 		Datum		arg_default_positions;
 		bool		isnull;
 		char	   *str;
 		List	   *default_positions = NIL, *ret = NIL;
 		ListCell   *def_idx;
 		ListCell   *lc;
+		char	  **arg_names;
+
 		int		   position,i,j;
 
 		/* Fetch default positions */
@@ -3614,46 +3613,86 @@ replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, List *far
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
 
-		if (isnull)
-			elog(ERROR, "not enough default arguments");
+		if (!isnull)
+		{
+			str =TextDatumGetCString(arg_default_positions);
+			default_positions = castNode(List, stringToNode(str));
+			pfree(str);
 
-		str =TextDatumGetCString(arg_default_positions);
-		default_positions = castNode(List, stringToNode(str));
-		pfree(str);
-
-		def_idx = list_head(default_positions);
+			def_idx = list_head(default_positions);
+		}
+		else
+		{
+			default_positions = NIL;
+			def_idx = NULL;
+		}
 		i = 0;
 
 		foreach(lc, fargs)
 		{
+			bool has_default = false;
 			if (nodeTag((Node*)lfirst(lc)) == T_RelabelType &&
 				nodeTag(((RelabelType*)lfirst(lc))->arg) == T_SetToDefault)
 			{
 				position = getDefaultPosition(default_positions, def_idx, i);
-				ret = lappend(ret, list_nth(defaults, position));
-			}
-			else if (nodeTag((Node*)lfirst(lc)) == T_FuncExpr)
-			{
-				if(((FuncExpr*)lfirst(lc))->funcformat == COERCE_IMPLICIT_CAST &&
-					nodeTag(linitial(((FuncExpr*)lfirst(lc))->args)) == T_SetToDefault)
+				if (position >= 0)
 				{
+					ret = lappend(ret, list_nth(defaults, position));
+					has_default = true;
+				}
+				else if (proc_form->prokind == PROKIND_FUNCTION)
+				{
+					ret = lappend(ret, makeNullConst(proc_form->proargtypes.values[i], -1, InvalidOid));
+					has_default = true;
+				}
+			}
+			else if (nodeTag((Node*)lfirst(lc)) == T_FuncExpr && 
+			((FuncExpr*)lfirst(lc))->funcformat == COERCE_IMPLICIT_CAST &&
+					nodeTag(linitial(((FuncExpr*)lfirst(lc))->args)) == T_SetToDefault)
+			{
 				// We'll keep the implicit cast function when it needs implicit cast
-					FuncExpr *funcExpr = (FuncExpr*)lfirst(lc);
-					List *newArgs = NIL;
-					position = getDefaultPosition(default_positions, def_idx, i);
+				FuncExpr *funcExpr = (FuncExpr*)lfirst(lc);
+				List *newArgs = NIL;
+				position = getDefaultPosition(default_positions, def_idx, i);
+				if (position >= 0)
+				{
 					newArgs = lappend(newArgs, list_nth(defaults, position));
 					for (j = 1; j < list_length(funcExpr->args); ++j)
 						newArgs = lappend(newArgs, list_nth(funcExpr->args, j));
 					funcExpr->args = newArgs;
 					ret = lappend(ret, funcExpr);
+					has_default = true;
+				}
+				else if (proc_form->prokind == PROKIND_FUNCTION)
+				{
+					newArgs = lappend(newArgs, makeNullConst(proc_form->proargtypes.values[i], -1, InvalidOid));
+					for (j = 1; j < list_length(funcExpr->args); ++j)
+						newArgs = lappend(newArgs, list_nth(funcExpr->args, j));
+					funcExpr->args = newArgs;
+					ret = lappend(ret, funcExpr);
+					has_default = true;
 				}
 			}
-			else ret = lappend(ret, lfirst(lc));
+			else 
+			{
+				ret = lappend(ret, lfirst(lc));	
+				has_default = true;
+			}
+			if (!has_default)
+			{
+				arg_names = fetch_func_input_arg_names(func_tuple);
+				
+				if (proc_form->prokind == PROKIND_PROCEDURE)
+					ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						errmsg("Procedure or function \'%s\' expects parameter \'%s\', which was not supplied.",
+							NameStr(proc_form->proname), arg_names[i])));
+			}
 			++i;
 		}
-		return ret;
-
 		ReleaseSysCache(bbffunctuple);
+
+		return ret;
 	}
 	else
 	{
@@ -4276,7 +4315,7 @@ get_local_schema_for_bbf_functions(Oid proc_nsp_oid)
 }
 
 static ResTarget *
-make_restarget_from_colname(char * colName)
+make_restarget_from_cstr_list(List * l)
 {
 	ResTarget 	*tempResTarget;
 	ColumnRef	*tempColRef;
@@ -4284,7 +4323,7 @@ make_restarget_from_colname(char * colName)
 	tempResTarget = makeNode(ResTarget);
 	tempColRef = makeNode(ColumnRef);
 	tempColRef->location = -1;
-	tempColRef->fields = list_make1(makeString(colName));
+	tempColRef->fields = l;
 	tempResTarget->name = NULL;
 	tempResTarget->name_location = -1;
 	tempResTarget->indirection = NIL;
@@ -4302,17 +4341,21 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	List		*new_pivot_aliaslist;
 	List		*src_sql_groupbylist;
 	List		*src_sql_sortbylist;
+	List		*src_sql_fromClause_copy;
 	char		*pivot_colstr;
 	char		*value_colstr;
+	String		*funcName;
 	ColumnRef	*value_col;
 	TargetEntry	*aggfunc_te;
 	RangeFunction	*pivot_from_function;
-	RawStmt	*s_sql;
-	RawStmt	*c_sql;
-	MemoryContext 	oldContext;
-	MemoryContext 	tsql_outmost_context;
+	SelectStmt 		*pivot_src_sql;
+	RawStmt			*s_sql;
+	RawStmt			*c_sql;
+	tsql_pivot_fields	*pivot_fields;
+	MemoryContext 		oldContext;
+	MemoryContext 		tsql_outmost_context;
 	PLtsql_execstate 	*tsql_outmost_estat;
-	int				nestlevel;
+	int					nestlevel;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -4322,6 +4365,9 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	src_sql_groupbylist = NULL;
 	src_sql_sortbylist = NULL;
 
+	pivot_src_sql =  makeNode(SelectStmt);
+	pivot_src_sql->fromClause = copyObject(stmt->srcSql->fromClause);
+	src_sql_fromClause_copy = copyObject(stmt->srcSql->fromClause);
 	/* transform temporary src_sql */
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 										false,
@@ -4329,8 +4375,9 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	temp_src_targetlist = temp_src_query->targetList;
 
 	/* Get pivot column str & value column str from parser result */
-	pivot_colstr = stmt->pivotCol;
+	pivot_colstr = ((String *) llast(((ColumnRef *)stmt->pivotCol)->fields))->sval;
 	value_col = list_nth_node(ColumnRef, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->args, 0);
+	funcName = list_nth_node(String, ((FuncCall *)((ResTarget *)stmt->aggFunc)->val)->funcname, 0);
 	value_colstr = list_nth_node(String, value_col->fields, 0)->sval;
 
 	/* Get the targetList of the src table */
@@ -4345,7 +4392,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 		if (strcasecmp(colName, pivot_colstr) == 0 || strcasecmp(colName, value_colstr) == 0)
 			continue;
 		/* prepare src_sql's targetList */
-		tempResTarget = make_restarget_from_colname(colName);
+		tempResTarget = make_restarget_from_cstr_list(list_make1(makeString(colName)));
 
 		if (new_src_sql_targetist == NULL)
 			new_src_sql_targetist = list_make1(tempResTarget);
@@ -4365,11 +4412,11 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 			new_pivot_aliaslist = lappend(new_pivot_aliaslist, tempColDef);
 	}
 	/* source_sql: non-pivot column + pivot colunm+ agg(value_col) */
-	/* complete src_sql's targetList*/
-	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_colname(pivot_colstr));
+	/* complete src_sql's targetList*/	
+	new_src_sql_targetist = lappend(new_src_sql_targetist, make_restarget_from_cstr_list(stmt->pivotCol->fields));
 	new_src_sql_targetist = lappend(new_src_sql_targetist, (ResTarget *)stmt->aggFunc);
 	((SelectStmt *)stmt->srcSql)->targetList = new_src_sql_targetist;
-
+	pivot_src_sql->targetList = copyObject(new_src_sql_targetist);
 	/* complete src_sql's groupby*/
 	for (int i = 0; i < new_src_sql_targetist->length - 1; i++)
 	{
@@ -4398,18 +4445,24 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	}
 	((SelectStmt *)stmt->srcSql)->groupClause = src_sql_groupbylist;
 	((SelectStmt *)stmt->srcSql)->sortClause = src_sql_sortbylist;
-
+	pivot_src_sql->groupClause = copyObject(src_sql_groupbylist);
+	pivot_src_sql->sortClause = copyObject(src_sql_sortbylist);
+	
+	/* use the copy of the orgininal fromClause to prevent double analyzing fromClause */
+	((SelectStmt *)stmt->srcSql)->fromClause = src_sql_fromClause_copy;
 	/* Transform the new src_sql & get the output type of that agg function*/
 	temp_src_query = parse_sub_analyze((Node *) stmt->srcSql, pstate, NULL,
 									false,
 									false);
-	temp_src_targetlist = temp_src_query->targetList;
 
-	/* asClause: non-pivot columns + value columns) */
-	/* we can get the output data type of the aggregation function for later pivot columns */
+	/* 
+	 * complete pivot outer wrapper sql's alias_clause
+	 * asClause: non-pivot columns + value columns) 
+	 * we can get the output data type of the aggregation function for later pivot columns 
+	 */
+	temp_src_targetlist = temp_src_query->targetList;
 	aggfunc_te = list_nth_node(TargetEntry, temp_src_targetlist, temp_src_targetlist->length - 1);
 
-	/* complete pivo sql's alias_clause */
 	/* Rewrite the fromClause in the outer select to have correct alias column name and datatype */
 	pivot_from_function = list_nth_node(RangeFunction, stmt->fromClause, 0);
 	for(int i = 0; i < stmt->value_col_strlist->length; i++)
@@ -4420,7 +4473,7 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 									-1,
 									((Aggref *)aggfunc_te->expr)->aggcollid
 									);
-				
+
 		if (new_pivot_aliaslist == NULL)
 			new_pivot_aliaslist = list_make1(tempColDef);
 		else
@@ -4437,11 +4490,9 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 			(errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("pivot outer context not found")));
 
-	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
-	/* save rewrited sqls to global variable for later retrive */
 	s_sql = makeNode(RawStmt);
 	c_sql = makeNode(RawStmt);
-	s_sql->stmt = (Node *) stmt->srcSql;
+	s_sql->stmt = (Node *) pivot_src_sql;
 	s_sql->stmt_location = 0;
 	s_sql->stmt_len = 0;
 
@@ -4449,7 +4500,14 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
 
-	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, list_make2(copyObject(s_sql), copyObject(c_sql)));
+	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
+	/* save rewrited sqls to global variable for later retrive */
+	pivot_fields = (tsql_pivot_fields *) palloc(sizeof(tsql_pivot_fields));
+	pivot_fields->s_sql = copyObject(s_sql);
+	pivot_fields->c_sql = copyObject(c_sql);
+	pivot_fields->sourcetext = pstrdup(pstate->p_sourcetext);
+	pivot_fields->funcName = pstrdup(funcName->sval);
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, pivot_fields);
 	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
 }

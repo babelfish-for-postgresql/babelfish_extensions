@@ -782,7 +782,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
 DECLARE
@@ -888,17 +887,6 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
-
--- BABELFISH_SCHEMA_PERMISSIONS
-CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
-  dbid smallint NOT NULL,
-  schema_name NAME NOT NULL COLLATE sys.database_default,
-  object_name NAME NOT NULL COLLATE sys.database_default,
-  permission NAME NOT NULL COLLATE sys.database_default,
-  grantee NAME NOT NULL COLLATE sys.database_default,
-  object_type NAME COLLATE sys.database_default,
-  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
-);
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'timezone_mapping'
@@ -4500,6 +4488,25 @@ RETURNS INT AS
 'babelfishpg_common', 'timestamp_diff'
 STRICT
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_radix_for_sp_columns_helper(IN type TEXT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+  radix SMALLINT;
+BEGIN
+  CASE type
+    WHEN 'tinyint' THEN radix = 10;
+    WHEN 'money' THEN radix = 10;
+    WHEN 'smallmoney' THEN radix = 10;
+    WHEN 'sql_variant' THEN radix = 10;
+    WHEN 'decimal' THEN radix = 10;
+  ELSE
+    radix = NULL;
+  END CASE;
+  RETURN radix;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

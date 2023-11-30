@@ -683,7 +683,7 @@ define_custom_variables(void)
 							 gettext_noop("GUC for enabling or disabling full text search features"),
 							 NULL,
 							 &pltsql_allow_fulltext_parser,
-							 false,
+							 true,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
@@ -1229,6 +1229,7 @@ int			escape_hatch_checkpoint = EH_IGNORE;
 int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
 int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
+int 		escape_hatch_identity_function = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1598,6 +1599,17 @@ define_escape_hatch_variables(void)
 							 &pltsql_isolation_level_serializable,
 							 ISOLATION_OFF,
 							 bbf_isolation_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
+	/* IDENTITY() in SELECT-INTO */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_identity_function",
+							 gettext_noop("escape hatch for IDENTITY() in SELECT-INTO"),
+							 NULL,
+							 &escape_hatch_identity_function,
+							 EH_STRICT,
+							 escape_hatch_options,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);

@@ -410,7 +410,6 @@ smalldatetimefromparts-dep
 BABEL_4330
 BABEL-4231
 BABEL-4384
-GRANT_SCHEMA
 default_params
 BABEL-3326
 cast_eliminate

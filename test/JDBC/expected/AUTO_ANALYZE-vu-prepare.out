@@ -22,7 +22,6 @@ babelfish_extended_properties
 babelfish_function_ext
 babelfish_helpcollation
 babelfish_namespace_ext
-babelfish_schema_permissions
 babelfish_server_options
 babelfish_sysdatabases
 babelfish_syslanguages

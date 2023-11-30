@@ -1,5 +1,23 @@
 EXEC babel_539_prepare_proc
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: To use IDENTITY(), set 'babelfishpg_tsql.escape_hatch_identity_function' to 'ignore')~~
+
+
+SELECT current_setting('babelfishpg_tsql.escape_hatch_identity_function');
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'ignore';
+GO
+
+EXEC babel_539_prepare_proc
+GO
 
 SELECT id_num, col1, name  FROM babel_539NewTable_proc ORDER BY col1;
 GO
@@ -459,3 +477,6 @@ GO
 
 ~~ERROR (Message: function IDENTITY_INTO_BIGINT does not exist)~~
 
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_identity_function', 'strict';
+GO
