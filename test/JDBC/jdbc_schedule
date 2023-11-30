@@ -14,6 +14,7 @@ all
 
 # TODO: re-enable these tests after merging engine up to pg16
 ignore#!#BABEL-2903
+ignore#!#BABEL-3293
 ignore#!#TestRecreatedInnerProcedures
 ignore#!#babel_delete
 ignore#!#babel_update
