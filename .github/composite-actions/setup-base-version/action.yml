@@ -16,6 +16,10 @@ inputs:
     description: "Logical Babelfish database to dump and restore"
     required: false
     default: 'null'
+  server_collation_name:
+    description: "Server collation name which need to be set in postgresql.conf"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -105,6 +109,10 @@ runs:
           sudo echo "host    all             all             0.0.0.0/0                md5"
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.install_dir }}/data/postgresql.conf
+          ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l ~/${{ inputs.install_dir }}/data/logfile restart
+        fi
         ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
@@ -139,6 +147,9 @@ runs:
         cd test/JDBC/
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          export serverCollationName=${{ server_collation_name }}
+        fi
         if [[ "$migr_mode" == "multi-db" ]];then
           export isUpgradeTestMode=true
           base_dir=${{ matrix.upgrade-path.path[0] }}

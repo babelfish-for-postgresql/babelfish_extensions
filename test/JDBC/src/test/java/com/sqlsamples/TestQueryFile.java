@@ -25,6 +25,7 @@ public class TestQueryFile {
     static String timestamp = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss.SSS").format(new Date());
     static String generatedFilesDirectoryPath = testFileRoot + "/expected/";
     static String parallelQueryGeneratedFilesDirectoryPath = testFileRoot + "/expected/parallel_query/";
+    static String nonDefaultServerCollationGeneratedFilesDirectoryPath = testFileRoot + "/expected/non_default_server_collation/";
     static String sqlServerGeneratedFilesDirectoryPath = testFileRoot + "/sql_expected/";
     static String outputFilesDirectoryPath = testFileRoot + "/output/";
     static Logger summaryLogger = LogManager.getLogger("testSummaryLogger");    //logger to write summary of tests executed
@@ -430,6 +431,12 @@ public class TestQueryFile {
         File expectedFile;
         if (isParallelQueryMode && checkParallelQueryExpected)
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
+        else if(serverCollationName != "default"){
+            expectedFile = new File(nonDefaultServerCollationGeneratedFilesDirectoryPath + "/" + serverCollationName + "/" + outputFileName + ".out");
+            if(!expectedFile.exists()) {
+                expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
+            }
+        }
         else
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
 

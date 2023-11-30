@@ -39,6 +39,8 @@ scheduleFile = ./jdbc_schedule
 # WHETHER TEST MODE IS PARALLEL QUERY MODE ON
 isParallelQueryMode = false
 
+# WHETHER TEST MODE HAS NON-DEFAULT-SERVER-COLLATION-NAME
+serverCollationName = default
 
 # Where to find the input, output, expected, etc.
 testFileRoot = ./

@@ -1,4 +1,4 @@
-name: 'Dump Restore Utility'
+name: 'Run verify & cleanup scripts'
 inputs:
   is_final_ver:
     description: "Is this the final version"
@@ -13,6 +13,10 @@ inputs:
     description: "Logical Babelfish database to dump and restore"
     required: false
     default: 'null'
+  server_collation_name:
+    description: "Server collation name"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -28,7 +32,10 @@ runs:
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
         export isUpgradeTestMode=false
-
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          export serverCollationName=${{ server_collation_name }}
+        fi
+        
         if [[ "$migr_mode" == "multi-db" ]];then
           base_dir=${{ matrix.upgrade-path.path[0] }}
           tar_dir=${{ matrix.upgrade-path.last_version }}

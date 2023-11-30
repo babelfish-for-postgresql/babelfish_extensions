@@ -15,7 +15,7 @@ jobs:
         run: |
           config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)'"
           config=$(echo $config | sed "s/\"/\\\\\"/g")
-          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
+          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")), server_collation_name: itm['babelfishpg_tsql_server_collation_name'] ? itm['babelfishpg_tsql_server_collation_name'] : \"default\", title: itm['upgrade-path'].map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\") + (itm['babelfishpg_tsql_server_collation_name'] ? \" with non-default server-collation\" : \"\"), last_version: itm['upgrade-path'][itm['upgrade-path'].length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
           echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
 
   run-version-upgrade-test:
@@ -39,10 +39,10 @@ jobs:
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
           echo "::set-output name=base-version::$(
-            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )" && 
           echo "::set-output name=final-version::$(
-            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path"[-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
@@ -66,6 +66,7 @@ jobs:
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
           migration_mode: 'multi-db'
+          server_collation_name: ${{ matrix.upgrade-path.server_collation_name }}
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca
@@ -73,6 +74,7 @@ jobs:
         uses: ./.github/composite-actions/setup-upgrade-version-ca
         with: 
           base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
+          server_collation_name: ${{ matrix.upgrade-path.server_collation_name }}
 
       - name: Upgrade till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: upgrade-and-test

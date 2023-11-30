@@ -18,6 +18,10 @@ inputs:
   migration_mode:
     description: "Database migration mode for Babelfish"
     required: true
+  server_collation_name:
+    description: "Server collation name"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -39,6 +43,7 @@ runs:
         migration_mode: ${{ inputs.migration_mode }}
         pg_old_dir: ${{ inputs.pg_old_dir }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
+        server_collation_name: ${{ inputs.server_collation_name }}
 
     - name: Run Verify Tests
       if: always() && steps.run-pg_upgrade.outcome == 'success' && inputs.is_final_ver == 'true'
@@ -47,3 +52,4 @@ runs:
         is_final_ver: ${{ inputs.is_final_ver }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
         migration_mode: ${{ inputs.migration_mode }}
+        server_collation_name: ${{ inputs.server_collation_name }}
