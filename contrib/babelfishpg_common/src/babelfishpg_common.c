@@ -152,9 +152,6 @@ _PG_init(void)
 void
 _PG_fini(void)
 {
-	handle_type_and_collation_hook = NULL;
-	avoid_collation_override_hook = NULL;
-	define_type_default_collation_hook = NULL;
 	CLUSTER_COLLATION_OID_hook = prev_CLUSTER_COLLATION_OID_hook;
 	TranslateCollation_hook = prev_TranslateCollation_hook;
 	PreCreateCollation_hook = prev_PreCreateCollation_hook;

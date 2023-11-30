@@ -418,17 +418,11 @@ UninstallExtendedHooks(void)
 	object_access_hook = prev_object_access_hook;
 
 	core_yylex_hook = prev_core_yylex_hook;
-	set_target_table_alternative_hook = NULL;
-	get_output_clause_status_hook = NULL;
-	post_transform_delete_hook = NULL;
-	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
 	pre_transform_insert_hook = prev_pre_transform_insert_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	pre_transform_setop_tree_hook = prev_pre_transform_setop_tree_hook;
 	pre_transform_setop_sort_clause_hook = prev_pre_transform_setop_sort_clause_hook;
-	post_transform_column_definition_hook = NULL;
-	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
 	get_trigger_object_address_hook = prev_get_trigger_object_address_hook;
