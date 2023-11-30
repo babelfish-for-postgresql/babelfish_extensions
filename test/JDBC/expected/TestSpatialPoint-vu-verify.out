@@ -1,7 +1,13 @@
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
+~~START~~
+text
+POINT(-122.349 47.651)
+~~END~~
+
 ~~START~~
 text
 POINT(-122.349 47.651)
@@ -11,7 +17,13 @@ POINT(-122.349 47.651)
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
+~~START~~
+text
+POINT(22.349 -47.651)
+~~END~~
+
 ~~START~~
 text
 POINT(22.349 -47.651)
@@ -22,7 +34,19 @@ DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT stx(@point);
 SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
+~~START~~
+float
+-122.349
+~~END~~
+
+~~START~~
+float
+47.651
+~~END~~
+
 ~~START~~
 float
 -122.349
@@ -38,7 +62,19 @@ DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
 SELECT stx(@point);
 SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
+~~START~~
+float
+22.349
+~~END~~
+
+~~START~~
+float
+-47.651
+~~END~~
+
 ~~START~~
 float
 22.349
@@ -54,7 +90,13 @@ DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
 Go
+~~START~~
+float
+0.0014142135623697993
+~~END~~
+
 ~~START~~
 float
 0.0014142135623697993
@@ -77,15 +119,6 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near ".")~~
-
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
-CREATE VIEW CoordsFromGeom AS SELECT location.STX, location.STY AS Coordinates FROM SPATIALPOINTGEOM_dt;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: missing FROM-clause entry for table "location")~~
 
 
 -- Currently it is not supported
@@ -166,13 +199,60 @@ GO
 ~~ERROR (Message: function sys.lat(geometry) does not exist)~~
 
 
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
-CREATE VIEW ValFromGeom AS SELECT location.STAsText(), location.STAsBinary() FROM SPATIALPOINTGEOM_dt;
+SELECT * FROM GeomView;
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+float#!#float
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+<NULL>#!#<NULL>
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+-122.349#!#47.651
+~~END~~
 
-~~ERROR (Message: schema "master_location" does not exist)~~
+
+SELECT * FROM ValFromGeom;
+GO
+~~START~~
+text#!#varbinary
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+<NULL>#!#<NULL>
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(1 2)#!#0101000000000000000000F03F0000000000000040
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0
+POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740
+~~END~~
+
+
+EXEC dbo.p_getcoordinates;
+GO
+~~ROW COUNT: 11~~
+
+~~START~~
+float#!#float
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+<NULL>#!#<NULL>
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+-122.349#!#47.651
+~~END~~
 
 
 SELECT * FROM TextFromGeom;
@@ -685,7 +765,13 @@ E6100000010C17D9CEF753D34740D34D6210585936C0
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
+~~START~~
+text
+POINT(-122.349 47.651)
+~~END~~
+
 ~~START~~
 text
 POINT(-122.349 47.651)
@@ -695,7 +781,13 @@ POINT(-122.349 47.651)
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
+~~START~~
+text
+POINT(-47.651 22.349)
+~~END~~
+
 ~~START~~
 text
 POINT(-47.651 22.349)
@@ -706,7 +798,19 @@ DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT long(@point);
 SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
+~~START~~
+float
+-122.349
+~~END~~
+
+~~START~~
+float
+47.651
+~~END~~
+
 ~~START~~
 float
 -122.349
@@ -722,7 +826,19 @@ DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT long(@point);
 SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
+~~START~~
+float
+-47.651
+~~END~~
+
+~~START~~
+float
+22.349
+~~END~~
+
 ~~START~~
 float
 -47.651
@@ -738,7 +854,13 @@ DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
 Go
+~~START~~
+float
+134.1864008701007
+~~END~~
+
 ~~START~~
 float
 134.1864008701007
@@ -765,15 +887,6 @@ go
 
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
-CREATE VIEW CoordsFromGeog AS SELECT location.LONG, location.LAT AS Coordinates FROM SPATIALPOINTGEOG_dt;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: missing FROM-clause entry for table "location")~~
-
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @LAT geography;
 SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
 select geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsText(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsBinary(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STDistance(geography::Point(@LAT.LONG, @LAT.LAT, 4326));
@@ -781,24 +894,6 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error at or near ".")~~
-
-
-CREATE TABLE SpatialData
-(
-    ID INT PRIMARY KEY,
-    SpatialLocation GEOGRAPHY
-);
-GO
-
-INSERT INTO SpatialData (ID, SpatialLocation)
-VALUES
-    (1, geography::Point(1, 2, 4326)),
-    (2, geography::Point(3, 4, 4326)),
-    (3, geography::Point(5, 6, 4326)),
-    (4, geography::Point(7, 8, 4326)),
-    (5, geography::Point(9, 10, 4326));
-GO
-~~ROW COUNT: 5~~
 
 
 SELECT
@@ -859,8 +954,73 @@ float#!#int
 ~~END~~
 
 
-DROP TABLE SpatialData;
-GO
+-- Test with CTE
+with mycte (a)
+as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt)
+select a.STAsText()
+				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.lat >= y.location.long;
+go
+~~START~~
+text
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(47.651 -22.349)
+~~END~~
+
+
+-- Test with tvf
+select f.STAsText()
+                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.lat >= t.location.long;
+go
+~~START~~
+text
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(-22.349 47.651)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(1 2)
+POINT(47.651 -22.349)
+~~END~~
+
 
 -- Null test for Geospatial functions
 DECLARE @point1 geography, @point2 geography, @point3 geography;
@@ -927,6 +1087,40 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: function sys.sty(geography) does not exist)~~
+
+
+SELECT * FROM GeogView;
+GO
+~~START~~
+float#!#float
+47.651#!#-22.349
+1.0#!#2.0
+<NULL>#!#<NULL>
+47.651#!#-22.349
+1.0#!#2.0
+-22.349#!#47.651
+47.651#!#-22.349
+1.0#!#2.0
+47.651#!#-22.349
+~~END~~
+
+
+EXEC dbo.proc_getdata;
+GO
+~~ROW COUNT: 9~~
+
+~~START~~
+text
+POINT(47.651 -22.349)
+POINT(1 2)
+<NULL>
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(-22.349 47.651)
+POINT(47.651 -22.349)
+POINT(1 2)
+POINT(47.651 -22.349)
+~~END~~
 
 
 SELECT * FROM TextFromGeog;
@@ -1501,6 +1695,11 @@ int#!#geometry#!#geography
 ~~END~~
 
 
+INSERT INTO babelfish_migration_mode_tbl SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~ROW COUNT: 1~~
+
+
 -- test multi-db mode
 SELECT set_config('role', 'jdbc_user', false);
 GO
@@ -1604,10 +1803,14 @@ text
 jdbc_user
 ~~END~~
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+
+-- Reset migration mode to default
+DECLARE @mig_mode VARCHAR(10)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_tbl WHERE id_num = 1)
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO
 ~~START~~
-text
-single-db
+int
+1
 ~~END~~
 

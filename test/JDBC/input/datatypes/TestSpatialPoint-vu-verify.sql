@@ -1,29 +1,36 @@
 DECLARE @point geometry;
 SET @point = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT stx(@point);
 SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
 SELECT stx(@point);
 SELECT sty(@point);
+SELECT @point.stx;
+SELECT @point.sty;
 Go
 
 DECLARE @point1 geometry, @point2 geometry;
 SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
 Go
 
 DECLARE @point geometry;
@@ -37,11 +44,6 @@ DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 select geometry::Point(@STX.STX, @STX.STY, 4326).STX, geometry::Point(@STX.STX, @STX.STY, 4326).STY;
 go
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
-CREATE VIEW CoordsFromGeom AS SELECT location.STX, location.STY AS Coordinates FROM SPATIALPOINTGEOM_dt;
-GO
 
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
@@ -74,9 +76,13 @@ Go
 SELECT location.LAT from SPATIALPOINTGEOM_dt;
 GO
 
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
-CREATE VIEW ValFromGeom AS SELECT location.STAsText(), location.STAsBinary() FROM SPATIALPOINTGEOM_dt;
+SELECT * FROM GeomView;
+GO
+
+SELECT * FROM ValFromGeom;
+GO
+
+EXEC dbo.p_getcoordinates;
 GO
 
 SELECT * FROM TextFromGeom;
@@ -213,29 +219,36 @@ GO
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
+SELECT @point.STAsText();
 Go
 
 DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT long(@point);
 SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
 SELECT long(@point);
 SELECT lat(@point);
+SELECT @point.long;
+SELECT @point.lat;
 Go
 
 DECLARE @point1 geography, @point2 geography;
 SET @point1 = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geography::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
+SELECT @point1.STDistance(@point2);
 Go
 
 DECLARE @point geography;
@@ -252,31 +265,10 @@ go
 
 -- Currently it is not supported
 -- TODO: Need to support it and make it similar to TSQL
-CREATE VIEW CoordsFromGeog AS SELECT location.LONG, location.LAT AS Coordinates FROM SPATIALPOINTGEOG_dt;
-GO
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @LAT geography;
 SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
 select geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsText(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsBinary(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STDistance(geography::Point(@LAT.LONG, @LAT.LAT, 4326));
 go
-
-CREATE TABLE SpatialData
-(
-    ID INT PRIMARY KEY,
-    SpatialLocation GEOGRAPHY
-);
-GO
-
-INSERT INTO SpatialData (ID, SpatialLocation)
-VALUES
-    (1, geography::Point(1, 2, 4326)),
-    (2, geography::Point(3, 4, 4326)),
-    (3, geography::Point(5, 6, 4326)),
-    (4, geography::Point(7, 8, 4326)),
-    (5, geography::Point(9, 10, 4326));
-GO
 
 SELECT
     SpatialData.ID,
@@ -306,8 +298,17 @@ GROUP BY
     lat;
 GO
 
-DROP TABLE SpatialData;
-GO
+-- Test with CTE
+with mycte (a)
+as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt)
+select a.STAsText()
+				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.lat >= y.location.long;
+go
+
+-- Test with tvf
+select f.STAsText()
+                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.lat >= t.location.long;
+go
 
 -- Null test for Geospatial functions
 DECLARE @point1 geography, @point2 geography, @point3 geography;
@@ -331,6 +332,12 @@ SELECT @point2.STDistance(@point1);
 Go
 
 SELECT location.STY from SPATIALPOINTGEOG_dt;
+GO
+
+SELECT * FROM GeogView;
+GO
+
+EXEC dbo.proc_getdata;
 GO
 
 SELECT * FROM TextFromGeog;
@@ -483,6 +490,9 @@ GO
 SELECT * FROM SPATIALPOINT_dt;
 GO
 
+INSERT INTO babelfish_migration_mode_tbl SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+
 -- test multi-db mode
 SELECT set_config('role', 'jdbc_user', false);
 GO
@@ -557,5 +567,9 @@ GO
 
 SELECT set_config('role', 'jdbc_user', false);
 GO
-SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false);
+
+-- Reset migration mode to default
+DECLARE @mig_mode VARCHAR(10)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_tbl WHERE id_num = 1)
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO

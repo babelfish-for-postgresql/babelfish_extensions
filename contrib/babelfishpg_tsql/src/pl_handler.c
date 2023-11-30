@@ -487,6 +487,9 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (prev_pre_parse_analyze_hook)
 		prev_pre_parse_analyze_hook(pstate, parseTree);
 
+	if (pstate->p_post_columnref_hook == NULL)
+		pltsql_parser_setup(pstate, NULL);
+
 	switch (parseTree->stmt->type)
 	{
 		case T_InsertStmt:

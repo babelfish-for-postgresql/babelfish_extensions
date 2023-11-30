@@ -64,6 +64,14 @@ CREATE VIEW BinaryFromGeom AS SELECT STAsBinary(location) AS BinaryRepresentatio
 
 CREATE VIEW CoordsFromGeom AS SELECT STX(location), STY(location)  AS Coordinates FROM SPATIALPOINTGEOM_dt;
 
+CREATE VIEW GeomView AS SELECT location.STX, location.STY AS Coordinates FROM SPATIALPOINTGEOM_dt;
+
+CREATE VIEW ValFromGeom AS SELECT location.STAsText(), location.STAsBinary() FROM SPATIALPOINTGEOM_dt;
+
+CREATE FUNCTION f_getval() RETURNS TABLE AS RETURN ( SELECT location.STX AS XCoordinate, location.STY AS YCoordinate FROM SPATIALPOINTGEOM_dt );
+
+CREATE PROCEDURE dbo.p_getcoordinates AS BEGIN DECLARE @Coordinates TABLE ( XCoordinate float, YCoordinate float ); INSERT INTO @Coordinates SELECT * FROM dbo.f_getval(); SELECT * FROM @Coordinates; END;
+
 CREATE VIEW equal_geom AS SELECT p1.location AS point FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location = p2.location;
 
 CREATE VIEW point_distances_geom AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOM_dt p1 CROSS JOIN SPATIALPOINTGEOM_dt p2 WHERE p1.location <> p2.location;
@@ -168,12 +176,24 @@ CREATE VIEW BinaryFromGeog AS SELECT STAsBinary(location) AS BinaryRepresentatio
 
 CREATE VIEW CoordsFromGeog AS SELECT long(location), lat(location)  AS Coordinates FROM SPATIALPOINTGEOG_dt;
 
+CREATE VIEW GeogView AS SELECT location.LONG, location.LAT AS Coordinates FROM SPATIALPOINTGEOG_dt;
+
+CREATE FUNCTION func_getval() RETURNS TABLE AS RETURN ( SELECT location.STAsText() AS TextPoint FROM SPATIALPOINTGEOG_dt );
+
+CREATE PROCEDURE dbo.proc_getdata AS BEGIN DECLARE @Data TABLE ( TextPoint text ); INSERT INTO @Data SELECT * FROM dbo.func_getval(); SELECT * FROM @Data; END;
 
 CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified_points FROM SPATIALPOINTGEOG_dt;
 
 CREATE VIEW equal_geog AS SELECT p1.location AS point FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location = p2.location;
 
 CREATE VIEW point_distances_geog AS SELECT p1.location AS point1, p2.location AS point2, STDistance( p1.location, p2.location ) AS distance FROM SPATIALPOINTGEOG_dt p1 CROSS JOIN SPATIALPOINTGEOG_dt p2 WHERE p1.location <> p2.location;
+
+CREATE TABLE SpatialData(ID INT PRIMARY KEY, SpatialLocation GEOGRAPHY);
+INSERT INTO SpatialData (ID, SpatialLocation) VALUES (1, geography::Point(1, 2, 4326)), (2, geography::Point(3, 4, 4326)), (3, geography::Point(5, 6, 4326)), (4, geography::Point(7, 8, 4326)), (5, geography::Point(9, 10, 4326));
+
+create function testspatial_tvf(@x int) returns table as return select location from SPATIALPOINTGEOG_dt;
+
+CREATE TABLE babelfish_migration_mode_tbl (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
 
 #Testing Implicit CASTs to and from Geography data type for supported Explicit CASTs
 #UnSupported CASTs to and from Geography data type

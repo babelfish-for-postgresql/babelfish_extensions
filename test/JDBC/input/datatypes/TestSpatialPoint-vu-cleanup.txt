@@ -18,7 +18,25 @@ DROP VIEW IF EXISTS TransformFromGeog
 
 DROP VIEW IF EXISTS equal_geog
 
+DROP VIEW IF EXISTS GeomView
+
+DROP PROCEDURE IF EXISTS dbo.p_getcoordinates
+
+DROP FUNCTION IF EXISTS f_getval
+
+DROP VIEW IF EXISTS ValFromGeom
+
+DROP VIEW IF EXISTS GeogView
+
+DROP PROCEDURE IF EXISTS dbo.proc_getdata
+
+DROP FUNCTION IF EXISTS func_getval
+
 DROP VIEW IF EXISTS point_distances_geog
+
+DROP function IF EXISTS testspatial_tvf;
+
+DROP TABLE IF EXISTS SpatialData;
 
 DROP TABLE IF EXISTS SPATIALPOINTGEOM_dt
 
@@ -45,3 +63,5 @@ DROP TABLE IF EXISTS GeogToVarchar
 DROP TABLE IF EXISTS TypeToGeog
 
 DROP TABLE IF EXISTS SPATIALPOINT_dt
+
+Drop Table IF EXISTS babelfish_migration_mode_tbl
