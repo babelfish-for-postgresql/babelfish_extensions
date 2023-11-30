@@ -2,8 +2,18 @@ SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'isc_tables_vu_prepar
 SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'ISC_TABLES_VU_PREPARE_T1'
 GO
 
+-- Table types should not be a result
+-- Should not return any rows.
+SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'isc_table_type1'
+GO
+
 SELECT * FROM information_schema.tables WHERE TABLE_SCHEMA = 'isc_tables_sc1'
 SELECT * FROM information_schema.tables WHERE TABLE_SCHEMA = 'ISC_TABLES_SC1'
+GO
+
+-- Table types should not be a result
+-- Should not return any rows.
+SELECT * FROM information_schema.tables WHERE (TABLE_NAME = 'isc_table_type2' AND TABLE_SCHEMA = 'isc_tables_sc1')
 GO
 
 EXEC isc_tables_vu_prepare_p1
