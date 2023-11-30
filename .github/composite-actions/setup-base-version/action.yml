@@ -148,7 +148,7 @@ runs:
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
-          export serverCollationName=${{ server_collation_name }}
+          export serverCollationName=${{ inputs.server_collation_name }}
         fi
         if [[ "$migr_mode" == "multi-db" ]];then
           export isUpgradeTestMode=true
