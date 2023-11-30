@@ -1,0 +1,167 @@
+USE sys_syscolumns_vu_prepare_db1;
+GO
+
+SELECT name, sys_syscolumns_vu_prepare_OidToObject_pg_proc(id), sys_syscolumns_vu_prepare_OidToDataType(xtype), typestat, length
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam' or name = '@syscolumns_proc2_firstparam' or name = '@syscolumns_proc2_secondparam'
+ORDER BY sys_syscolumns_vu_prepare_OidToObject_pg_proc(id) asc, name
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#smallint
+@syscolumns_proc1_firstparam#!#sys_syscolumns_vu_prepare_proc1#!#nvarchar#!#0#!#<NULL>
+@syscolumns_proc2_firstparam#!#sys_syscolumns_vu_prepare_proc2#!#nvarchar#!#0#!#<NULL>
+@syscolumns_proc2_secondparam#!#sys_syscolumns_vu_prepare_proc2#!#varchar#!#0#!#<NULL>
+~~END~~
+
+
+SELECT name, sys_syscolumns_vu_prepare_OidToObject_pg_class(id), sys_syscolumns_vu_prepare_OidToDataType(xtype), typestat, length
+FROM sys.syscolumns
+WHERE name = 'syscolumns_t1_col_a' or name = 'syscolumns_t1_col_b' or name = 'syscolumns_t1_col_c' or name = 'syscolumns_t1_col_d'
+ORDER BY sys_syscolumns_vu_prepare_OidToObject_pg_class(id) asc, name
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#smallint
+syscolumns_t1_col_a#!#sys_syscolumns_vu_prepare_t1#!#int4#!#0#!#4
+syscolumns_t1_col_b#!#sys_syscolumns_vu_prepare_t1#!#int8#!#0#!#8
+syscolumns_t1_col_c#!#sys_syscolumns_vu_prepare_t1#!#bpchar#!#0#!#10
+syscolumns_t1_col_d#!#sys_syscolumns_vu_prepare_t1#!#numeric#!#0#!#5
+~~END~~
+
+
+SELECT colid, cdefault, domain, number
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+   or name = 'syscolumns_t1_col_d'
+ORDER BY name
+GO
+~~START~~
+smallint#!#int#!#int#!#smallint
+1#!#<NULL>#!#<NULL>#!#0
+1#!#<NULL>#!#<NULL>#!#0
+2#!#<NULL>#!#<NULL>#!#0
+1#!#0#!#0#!#0
+2#!#0#!#0#!#0
+3#!#0#!#0#!#0
+4#!#0#!#0#!#0
+~~END~~
+
+
+SELECT sys_syscolumns_vu_prepare_OidToCollation(collationid), status, sys_syscolumns_vu_prepare_OidToDataType(type), prec, scale
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+   or name = 'syscolumns_t1_col_d'
+ORDER BY name
+GO
+~~START~~
+varchar#!#tinyint#!#varchar#!#smallint#!#int
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
+<NULL>#!#8#!#int4#!#10#!#0
+<NULL>#!#8#!#int8#!#19#!#0
+chinese_prc_ci_as#!#8#!#bpchar#!#0#!#0
+<NULL>#!#8#!#numeric#!#5#!#4
+~~END~~
+
+
+SELECT iscomputed, isoutparam, isnullable, collation
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+   or name = 'syscolumns_t1_col_d'
+ORDER BY name, id asc
+GO
+~~START~~
+int#!#int#!#int#!#varchar
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#1#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#chinese_prc_ci_as
+0#!#0#!#1#!#<NULL>
+~~END~~
+
+
+SELECT COUNT(*)
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+USE master;
+GO
+
+SELECT COUNT(*) FROM sys.syscolumns WHERE name = '@syscolumns_proc3_thirdparam'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- should not be visible here
+SELECT COUNT(*)
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE sys_syscolumns_vu_prepare_db1;
+GO
+
+SELECT COUNT(*) 
+FROM sys.syscolumns 
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys.syscolumns WHERE name = '@syscolumns_proc3_thirdparam'
+GO
+~~START~~
+int
+0
+~~END~~
+
