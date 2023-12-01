@@ -487,8 +487,10 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (prev_pre_parse_analyze_hook)
 		prev_pre_parse_analyze_hook(pstate, parseTree);
 
-	if (pstate->p_post_columnref_hook == NULL && parseTree->stmt->type == T_SelectStmt && sql_dialect == SQL_DIALECT_TSQL)
-		pltsql_parser_setup(pstate, NULL);
+	if (pstate->p_pre_columnref_hook == NULL && pstate->p_post_columnref_hook == NULL 
+		&& pstate->p_pre_funcref_hook == NULL && pstate->p_post_expand_star_hook == NULL 
+		&& pstate->p_paramref_hook == NULL && parseTree->stmt->type == T_SelectStmt && sql_dialect == SQL_DIALECT_TSQL)
+		pltsql_parser_setup(pstate, NULL); 
 
 	switch (parseTree->stmt->type)
 	{
