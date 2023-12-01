@@ -9,8 +9,15 @@
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
 # all
+pgr_000_test_setup
+pgr_delete
 pgr_select
 pgr_select_distinct
+pgr_select_distinct_on
+pgr_select_having
+pgr_select_implicit
+pgr_select_into
+pgr_zzz_clean_up
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
