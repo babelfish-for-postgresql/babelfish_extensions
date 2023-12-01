@@ -21,10 +21,8 @@ static int	pe_create_server_port(int family, const char *hostName,
 static int	pe_create_connection(pgsocket server_fd, Port *port);
 
 
-#ifdef HAVE_UNIX_SOCKETS
 static int	Lock_AF_UNIX(const char *unixSocketDir, const char *unixSocketPath);
 static int	Setup_AF_UNIX(const char *sock_path);
-#endif							/* HAVE_UNIX_SOCKETS */
 
 /*
  * pe_create_server_ports - create server ports as per config
@@ -136,9 +134,8 @@ pe_create_server_port(int family, const char *hostName,
 	struct addrinfo hint;
 	int			added = 0;
 
-#ifdef HAVE_UNIX_SOCKETS
 	char		unixSocketPath[MAXPGPATH];
-#endif
+
 #if !defined(WIN32) || defined(IPV6_V6ONLY)
 	int			one = 1;
 #endif
@@ -149,7 +146,6 @@ pe_create_server_port(int family, const char *hostName,
 	hint.ai_flags = AI_PASSIVE;
 	hint.ai_socktype = SOCK_STREAM;
 
-#ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
 		/*
@@ -170,7 +166,6 @@ pe_create_server_port(int family, const char *hostName,
 		service = unixSocketPath;
 	}
 	else
-#endif							/* HAVE_UNIX_SOCKETS */
 	{
 		snprintf(portNumberStr, sizeof(portNumberStr), "%d", portNumber);
 		service = portNumberStr;
@@ -218,11 +213,9 @@ pe_create_server_port(int family, const char *hostName,
 				familyDesc = _("IPv6");
 				break;
 #endif
-#ifdef HAVE_UNIX_SOCKETS
 			case AF_UNIX:
 				familyDesc = _("Unix");
 				break;
-#endif
 			default:
 				snprintf(familyDescBuf, sizeof(familyDescBuf),
 						 _("unrecognized address family %d"),
@@ -232,11 +225,9 @@ pe_create_server_port(int family, const char *hostName,
 		}
 
 		/* set up text form of address for log messages */
-#ifdef HAVE_UNIX_SOCKETS
 		if (addr->ai_family == AF_UNIX)
 			addrDesc = unixSocketPath;
 		else
-#endif
 		{
 			pg_getnameinfo_all((const struct sockaddr_storage *) addr->ai_addr,
 							   addr->ai_addrlen,
@@ -329,7 +320,6 @@ pe_create_server_port(int family, const char *hostName,
 			continue;
 		}
 
-#ifdef HAVE_UNIX_SOCKETS
 		if (addr->ai_family == AF_UNIX)
 		{
 			if (Setup_AF_UNIX(service) != STATUS_OK)
@@ -338,7 +328,6 @@ pe_create_server_port(int family, const char *hostName,
 				break;
 			}
 		}
-#endif
 
 		/*
 		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
@@ -361,13 +350,11 @@ pe_create_server_port(int family, const char *hostName,
 			continue;
 		}
 
-#ifdef HAVE_UNIX_SOCKETS
 		if (addr->ai_family == AF_UNIX)
 			ereport(LOG,
 					(errmsg("listening on Unix socket \"%s\"",
 							addrDesc)));
 		else
-#endif
 			ereport(LOG,
 			/* translator: first %s is IPv4 or IPv6 */
 					(errmsg("listening on %s address \"%s\", port %d",
@@ -385,7 +372,6 @@ pe_create_server_port(int family, const char *hostName,
 	return STATUS_OK;
 }
 
-#ifdef HAVE_UNIX_SOCKETS
 
 /*
  * Lock_AF_UNIX -- configure unix socket file path
@@ -491,7 +477,6 @@ Setup_AF_UNIX(const char *sock_path)
 	}
 	return STATUS_OK;
 }
-#endif							/* HAVE_UNIX_SOCKETS */
 
 /*
  * pe_create_connection -- create a new connection with client using
