@@ -678,8 +678,6 @@ go
 
 ~~ERROR (Message: database "change_owner_db" does not exist)~~
 
-drop login dba_login
-go
 drop login new_owner_login
 go
 drop login new_owner_login2
@@ -691,6 +689,8 @@ go
 drop procedure p_change_db_owner_1
 go
 drop procedure p_change_db_owner_2
+go
+drop login dba_login
 go
 -- should raise error as procedure was not created:
 drop procedure p_change_db_owner_3

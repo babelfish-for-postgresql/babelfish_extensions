@@ -2,8 +2,6 @@
 -- tsql
 use master
 go
-drop login dba_login_sp 
-go
 drop login new_OWNER_login_sp 
 go
 drop login new_OWNER_login_sp2 
@@ -23,4 +21,6 @@ go
 drop login LOGIN64long_3456789012345678901234567890123456789012345678901234 
 go
 drop login LOGIN63long_345678901234567890123456789012345678901234567890123 
+go
+drop login dba_login_sp 
 go
