@@ -490,7 +490,7 @@ GO
 SELECT * FROM SPATIALPOINT_dt;
 GO
 
-INSERT INTO babelfish_migration_mode_tbl SELECT current_setting('babelfishpg_tsql.migration_mode')
+INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
 GO
 
 -- test multi-db mode
@@ -570,6 +570,6 @@ GO
 
 -- Reset migration mode to default
 DECLARE @mig_mode VARCHAR(10)
-SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_tbl WHERE id_num = 1)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
 SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO

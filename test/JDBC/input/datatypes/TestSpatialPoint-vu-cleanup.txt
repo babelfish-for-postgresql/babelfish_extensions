@@ -64,4 +64,4 @@ DROP TABLE IF EXISTS TypeToGeog
 
 DROP TABLE IF EXISTS SPATIALPOINT_dt
 
-Drop Table IF EXISTS babelfish_migration_mode_tbl
+Drop Table IF EXISTS babelfish_migration_mode_table
