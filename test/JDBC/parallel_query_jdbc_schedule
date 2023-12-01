@@ -33,7 +33,6 @@ ignore#!#BABEL-3513-vu-verify
 ignore#!#BABEL-4281
 ignore#!#babel_collection
 ignore#!#binary-index-vu-verify
-ignore#!#pgr_select_into
 ignore#!#cast_eliminate-vu-verify
 
 # Query plan change (verified)
@@ -60,10 +59,6 @@ ignore#!#BABEL-1444
 ignore#!#babel_datetime-vu-verify
 ignore#!#babel_datetime
 ignore#!#BABEL-2812-vu-verify
-
-# relation "onek" does not exist: JIRA-4541
-ignore#!#pgr_select
-ignore#!#pgr_select_distinct
 
 # output difference: JIRA-4542
 ignore#!#sys-sp_pkeys-dep-vu-verify
