@@ -2052,3 +2052,114 @@ GO
 
 SELECT DATEPART(tzoffset, '2023-04-15T12:30:45.6789Z')
 GO
+
+-- tests when datefirst is changed for iso_week
+
+SET datefirst 7;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 1;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 2;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 3;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 4;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 5;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 6;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+
+-- tests when datefirst is changed for week
+
+SET datefirst 7;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 1;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 2;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 3;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 4;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 5;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 6;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+
+-- tests when datefirst is changed for doy
+
+SET datefirst 7;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 1;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 2;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 3;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 4;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 5;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+
+SET datefirst 6;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO

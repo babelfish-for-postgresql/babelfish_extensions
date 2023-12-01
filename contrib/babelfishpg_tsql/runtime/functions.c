@@ -14,8 +14,6 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "../../babelfishpg_common/src/datetimeoffset.h"
-#include "../../babelfishpg_common/src/datetime.h"
-#include "../../babelfishpg_common/src/datetime2.h"
 
 #include "access/detoast.h"
 #include "access/htup_details.h"
@@ -73,7 +71,7 @@
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 #define SYSVARCHAR_MAX_LENGTH 4000
-#define DAYS_BETWEEN_YEARS_1900_TO_2000 36524 		//number of days present in between 1/1/1900 and 1/1/2000
+#define DAYS_BETWEEN_YEARS_1900_TO_2000 36524 		/* number of days present in between 1/1/1900 and 1/1/2000 */
 
 typedef enum
 {
@@ -367,11 +365,11 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 	long int	tsql_first_day;
 	struct pg_tm tt1, *tm = &tt1;
 	int64		first_day, first_week_end;
-	int			tz1, doy = 0, year, month, day,res = 0, day_of_year; //for Zeller's Congruence
+	int			tz1, doy = 0, year, month, day,res = 0, day_of_year; /* for Zeller's Congruence */
 	int			days_in_month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 	bool		year_has_53_weeks;
 
-	//Getting the date back from the timestamp to the tm struct pointer
+	/* Getting the date back from the timestamp to the tm struct pointer */
 	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 	{
 		ereport(ERROR,
@@ -411,9 +409,9 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 	{
 		return tm->tm_sec;
 	}
-	else if (strcmp(field, "doy") == 0)		//day-of-year of the date
+	else if (strcmp(field, "doy") == 0)		/* day-of-year of the date */
 	{
-		// checking and accounting for leap year
+		/* checking and accounting for leap year */
 		doy = tm->tm_mday;
 		if (((tm->tm_year % 4 == 0 && tm->tm_year % 100 != 0) || tm->tm_year % 400 == 0) && tm->tm_mon > 2)
 		{
@@ -425,9 +423,9 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 		}
 		return doy;
 	}
-	else if (strcmp(field, "dow") == 0)		//day-of-week of the date
+	else if (strcmp(field, "dow") == 0)		/* day-of-week of the date */
 	{
-		//dow calculated using Zeller's Congruence
+		/* dow calculated using Zeller's Congruence */
 		if (tm->tm_mon < 3)
 		{
 			month += MONTHS_PER_YEAR;
@@ -436,15 +434,16 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 
 		res = day + 2*month + ((3*(month+1))/(5)) + year + year/4 - year/100 + year/400 + 2;
 		
-		return (((res ) % 7) + 7 - pltsql_datefirst)%7 == 0 ? 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
+		return (((res ) % 7) + 7 - pltsql_datefirst)%7 == 0 ?
+					 7 : (((res ) % 7) + 7 - pltsql_datefirst)%7 ;
 
 	}
-	else if (strcasecmp(field , "tsql_week") == 0 || strcasecmp(field , "week") == 0)		//week number of the year and week for iso_week
+	else if (strcasecmp(field , "tsql_week") == 0 || strcasecmp(field , "week") == 0)		/* week number of the year and week for iso_week */
 	{
 		if(strcasecmp(field , "tsql_week") == 0 )
 		{
-			first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; // returns number of days since 1/1/1970 to 1/1/tm_year
-			//convert this first day of tm_year to timestamp into tsql_first_day
+			first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE; /* returns number of days since 1/1/1970 to 1/1/tm_year */
+			/* convert this first day of tm_year to timestamp into tsql_first_day */
 			tsql_first_day = (long int) (first_day - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE)) * USECS_PER_DAY;
 			first_week_end = 8 - datepart_internal("dow", tsql_first_day, 0);
 		}
@@ -456,19 +455,23 @@ babelfish_date_part(const char* field, Timestamp timestamp)
 
 		day_of_year = babelfish_date_part("doy",timestamp);
 
-		year_has_53_weeks = ((int)(year + (int)(year/4) - (int)(year/100) + (int)(year/400)) % 7) >= 5;	//checks if a year has 53 weeks
+		year_has_53_weeks = ((int)(year + (int)(year/4) - (int)(year/100) + (int)(year/400)) % 7) >= 5;	/* checks if a year has 53 weeks */
 
 		if(day_of_year <= first_week_end)
 		{
-			return 1;		//day of year is less than first_week_end means its a first week
+			return 1;		/* day of year is less than first_week_end means its a first week */
 		}
 		else if(year_has_53_weeks && !isnumeric)
 		{
-			return ((2+(day_of_year-first_week_end-1)/7)%53)==0 ? (tm->tm_mon==MONTHS_PER_YEAR?53:((2+(day_of_year-first_week_end-1)/7)%53)) : ((2+(day_of_year-first_week_end-1)/7)%53);   //when month is 12 and result is 0, return 53 as last week
+			return ((2+(day_of_year-first_week_end-1)/7)%53)==0 ? 
+					(tm->tm_mon==MONTHS_PER_YEAR?53:((2+(day_of_year-first_week_end-1)/7)%53)) : 
+							((2+(day_of_year-first_week_end-1)/7)%53);   /* when month is 12 and result is 0, return 53 as last week else returning week */
 		}
 		else
 		{
-			return ((2+(day_of_year-first_week_end-1)/7)%52)==0 ? (tm->tm_mon==MONTHS_PER_YEAR?52:((2+(day_of_year-first_week_end-1)/7)%52)) : ((2+(day_of_year-first_week_end-1)/7)%52);   //when month is 12 and result is 0, return 52 as last week
+			return ((2+(day_of_year-first_week_end-1)/7)%52)==0 ? 
+					(tm->tm_mon==MONTHS_PER_YEAR?52:((2+(day_of_year-first_week_end-1)/7)%52)) : 
+							((2+(day_of_year-first_week_end-1)/7)%52);   /* when month is 12 and result is 0, return 52 as last week else returning week */
 		}
 	}
 	else
@@ -557,7 +560,7 @@ datepart_internal_wrapper(char *field, float8 num)
 {
 	Timestamp		timestamp;
 	
-	//Converting the num into the appopriate timestamp that is ahead of 01/01/1970 by num days (and hours)
+	/* Converting the num into the appopriate timestamp that is ahead of 01/01/1970 by num days (and hours) */
 	timestamp = (long int)(((num) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
 
 	isnumeric = true;
@@ -606,7 +609,7 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 
 	datetime = PG_GETARG_DATETIMEOFFSET(1);
 			
-	//Converting the datetime offset into the timestamp
+	/* Converting the datetime offset into the timestamp */
 	timestamp = datetime->tsql_ts + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 	
 	PG_RETURN_INT32(datepart_internal(field, timestamp, df_tz));
@@ -821,7 +824,7 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 
 	timestamp  = PG_GETARG_TIMESTAMP(1);
 
-	if(timestamp <= USECS_PER_DAY )		//when only time is given and no date, we adjust the timestamp date to 1/1/1900 instead of 1/1/2000
+	if(timestamp <= USECS_PER_DAY )		/* when only time is given and no date, we adjust the timestamp date to 1/1/1900 instead of 1/1/2000 */
 	{	
 		timestamp = timestamp - (long int)(DAYS_BETWEEN_YEARS_1900_TO_2000 * USECS_PER_DAY * 1L);
 	}
@@ -849,7 +852,7 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	interval_days = interval->day;
 	interval_month = interval->month;
 
-	// Extracting year, months, days, etc from the interval period.
+	/* Extracting year, months, days, etc from the interval period. */
 
 	year = interval_month / MONTHS_PER_YEAR;
 	month = (interval_month % MONTHS_PER_YEAR) == 0 ? MONTHS_PER_YEAR : (interval_month % MONTHS_PER_YEAR);

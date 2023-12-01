@@ -5267,3 +5267,219 @@ int
 0
 ~~END~~
 
+
+
+-- tests when datefirst is changed for iso_week
+SET datefirst 7;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 1;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 2;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 3;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 4;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 5;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 6;
+GO
+SELECT datepart(iso_week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+
+-- tests when datefirst is changed for week
+SET datefirst 7;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SET datefirst 1;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SET datefirst 2;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SET datefirst 3;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SET datefirst 4;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 5;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SET datefirst 6;
+GO
+SELECT datepart(week,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+
+-- tests when datefirst is changed for doy
+SET datefirst 7;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
+
+SET datefirst 1;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
+
+SET datefirst 2;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
+
+SET datefirst 3;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
+
+SET datefirst 4;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
+
+SET datefirst 5;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
+
+SET datefirst 6;
+GO
+SELECT datepart(dy,'2016-02-03 13:30:05.523456');
+GO
+~~START~~
+int
+34
+~~END~~
+
