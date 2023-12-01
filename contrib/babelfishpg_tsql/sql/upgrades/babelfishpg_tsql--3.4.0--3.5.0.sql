@@ -140,7 +140,7 @@ EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
 END;
 $$
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE plpgsql IMMUTABLE
 RENAME TO datepart_internal_deprecated_3_5;
 
 
