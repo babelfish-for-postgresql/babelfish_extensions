@@ -186,7 +186,7 @@ column_domain_usage
 constraint_column_usage
 dateadd_internal_df
 datediff_big
-datediff_internal_date
+datediff_internal_date-before-14_10-or-15_5
 datepart
 datetime2fromparts
 forjson
@@ -416,7 +416,6 @@ BABEL-4046
 getdate
 BABEL_4330
 BABEL-4410
-GRANT_SCHEMA
 AUTO_ANALYZE-before-15-5-or-14-10
 default_params
 cast_eliminate

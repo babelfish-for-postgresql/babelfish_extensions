@@ -144,7 +144,15 @@ select table_catalog, table_schema, table_name from information_schema.views
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-isc_db#!#dbo#!#sysdatabases
+~~END~~
+
+
+-- Should return 0 rows. 
+select count(*) from information_schema.views WHERE TABLE_NAME = 'sysdatabases'
+GO
+~~START~~
+int
+0
 ~~END~~
 
 

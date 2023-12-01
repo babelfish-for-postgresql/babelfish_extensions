@@ -154,7 +154,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	update_CreateRoleStmt(stmt, dbo, NULL, db_owner);
 
 	stmt = parsetree_nth_stmt(res, i++);
-	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
 
 	if (guest)
 	{
@@ -181,7 +181,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_AlterTableStmt(stmt, schema, db_owner);
-  
+
 	if (guest)
 	{
 		stmt = parsetree_nth_stmt(res, i++);
@@ -261,7 +261,7 @@ gen_dropdb_subcmds(const char *schema,
 	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo, NULL);
+	update_GrantStmt(stmt, get_database_name(MyDatabaseId), NULL, dbo);
 	
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_owner);
@@ -425,7 +425,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *prev_current_user;
 	int			stmt_number = 0;
 	int 			save_sec_context;
-	bool 			is_set_userid;
+	bool 			is_set_userid = false;
 	Oid 			save_userid;
 
 	/* TODO: Extract options */
@@ -626,7 +626,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	ListCell   *parsetree_item;
 	const char *prev_current_user;
 	int 		save_sec_context;
-	bool 		is_set_userid;
+	bool 		is_set_userid = false;
 	Oid 		save_userid;
 
 	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||

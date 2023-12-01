@@ -38,7 +38,6 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
-BABEL-2170
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -207,7 +206,8 @@ column_domain_usage
 constraint_column_usage
 dateadd_internal_df
 datediff_big
-datediff_internal_date
+datediff
+dateadd
 datepart
 datetime2fromparts-after-15-2
 forjson

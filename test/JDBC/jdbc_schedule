@@ -42,9 +42,6 @@ ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
 ignore#!#BABEL-3655-vu-prepare
 ignore#!#BABEL-3655-vu-verify
-ignore#!#GRANT_SCHEMA-vu-prepare
-ignore#!#GRANT_SCHEMA-vu-verify
-ignore#!#GRANT_SCHEMA-vu-cleanup
 ignore#!#sys-types-before-dep-vu-prepare
 ignore#!#sys-types-before-dep-vu-verify
 ignore#!#sys-types-before-dep-vu-cleanup
@@ -145,9 +142,13 @@ ignore#!#test_windows_login_before_15_2-vu-cleanup
 ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-prepare
 ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-verify
 ignore#!#datediff_internal_date-before-14_7-or-15_2-vu-cleanup
+ignore#!#datediff_internal_date-before-14_10-or-15_5-vu-prepare
+ignore#!#datediff_internal_date-before-14_10-or-15_5-vu-verify
+ignore#!#datediff_internal_date-before-14_10-or-15_5-vu-cleanup
 ignore#!#datetime2fromparts-vu-prepare
 ignore#!#datetime2fromparts-vu-verify
 ignore#!#datetime2fromparts-vu-cleanup
+ignore#!#babel_smalldatetime_before_15-5
 
 # These tests are meant for only upgrade
 ignore#!#openquery_upgrd-vu-prepare

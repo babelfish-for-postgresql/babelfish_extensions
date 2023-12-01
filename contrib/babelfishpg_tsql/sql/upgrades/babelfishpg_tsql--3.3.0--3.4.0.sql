@@ -782,7 +782,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
 DECLARE
@@ -888,17 +887,6 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
-
--- BABELFISH_SCHEMA_PERMISSIONS
-CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
-  dbid smallint NOT NULL,
-  schema_name NAME NOT NULL,
-  object_name NAME NOT NULL,
-  permission NAME NOT NULL,
-  grantee NAME NOT NULL,
-  object_type NAME,
-  PRIMARY KEY(dbid, schema_name, object_name, permission, grantee)
-);
 
 create or replace function sys.babelfish_timezone_mapping(IN tmz text) returns text
 AS 'babelfishpg_tsql', 'timezone_mapping'
@@ -4328,6 +4316,285 @@ CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
 AS 'babelfishpg_tsql', 'sysdatetimeoffset'
 LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
+
+ALTER FUNCTION sys.datediff_internal(PG_CATALOG.TEXT, anyelement, anyelement) RENAME TO datediff_internal_deprecated_3_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_deprecated_3_4_0');
+
+ALTER FUNCTION sys.datediff_internal_df(PG_CATALOG.TEXT, anyelement, anyelement) RENAME TO datediff_internal_df_deprecated_in_3_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_df_deprecated_in_3_4_0');
+
+ALTER FUNCTION sys.datediff_internal_date(PG_CATALOG.TEXT, PG_CATALOG.date, PG_CATALOG.date) RENAME TO datediff_internal_date_deprecated_in_3_4_0;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datediff_internal_date_deprecated_in_3_4_0');
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    return sys.datediff_internal(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- datediff big
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime, IN enddate sys.datetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetimeoffset, IN enddate sys.datetimeoffset) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.datetime2, IN enddate sys.datetime2) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate sys.smalldatetime, IN enddate sys.smalldatetime) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.time, IN enddate PG_CATALOG.time) RETURNS BIGINT
+AS
+$body$
+BEGIN
+    return sys.datediff_internal_big(datepart, startdate, enddate);
+END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+
+/*
+    This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
+        select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
+    We tried to merge this function with sys.dateadd_internal by using '+' when adding interval to datetimeoffset, 
+    but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
+    but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
+*/
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset)
+RETURNS datetimeoffset AS
+'babelfishpg_common', 'dateadd_datetimeoffset'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+BEGIN
+    IF pg_typeof(startdate) = 'time'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 0);
+	END IF;
+    IF pg_typeof(startdate) = 'date'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 1);
+	END IF;
+    IF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
+    END IF;
+    IF (pg_typeof(startdate) = 'sys.datetime'::regtype or pg_typeof(startdate) = 'timestamp'::regtype) THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+    END IF;
+    IF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 4);
+    END IF;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_datetime(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT, IN datetimetype INT) 
+RETURNS TIMESTAMP AS
+'babelfishpg_common', 'dateadd_datetime'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal_big(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement)
+RETURNS BIGINT AS
+'babelfishpg_common', 'timestamp_diff_big'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement)
+RETURNS INT AS
+'babelfishpg_common', 'timestamp_diff'
+STRICT
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_radix_for_sp_columns_helper(IN type TEXT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+  radix SMALLINT;
+BEGIN
+  CASE type
+    WHEN 'tinyint' THEN radix = 10;
+    WHEN 'money' THEN radix = 10;
+    WHEN 'smallmoney' THEN radix = 10;
+    WHEN 'sql_variant' THEN radix = 10;
+    WHEN 'decimal' THEN radix = 10;
+  ELSE
+    radix = NULL;
+  END CASE;
+  RETURN radix;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+		   CAST(
+			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
+                  ELSE c.relname END
+			 AS sys._ci_sysname) AS "TABLE_NAME",
+
+		   CAST(
+			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
+				  WHEN c.relkind = 'v' THEN 'VIEW'
+				  ELSE null END
+			 AS sys.varchar(10)) COLLATE sys.database_default AS "TABLE_TYPE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+		   LEFT JOIN sys.table_types_internal tt on c.oid = tt.typrelid
+
+	WHERE c.relkind IN ('r', 'v', 'p')
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND tt.typrelid IS NULL
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = sys.db_id()
+		AND (NOT c.relname = 'sysdatabases');
+
+GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+			CAST(
+				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+					THEN 'CASCADE'
+					ELSE 'NONE' END
+				AS sys.varchar(7)) COLLATE sys.database_default AS "CHECK_OPTION",
+
+			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext
+			ON (nc.nspname = ext.nspname COLLATE sys.database_default)
+		LEFT OUTER JOIN sys.babelfish_view_def vd
+			ON ext.dbid = vd.dbid
+				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
+				AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
+		LEFT JOIN sys.shipped_objects_not_in_sys nis on (nis.name = c.relname and nis.schemaid = nc.oid and nis.type = 'V')
+
+	WHERE c.relkind = 'v'
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND nis.name is null
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = sys.db_id();
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
+
+create or replace view sys.views as 
+select 
+  t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type 
+  , 'VIEW'::varchar(60) as type_desc
+  , vd.create_date::timestamp as create_date
+  , vd.create_date::timestamp as modify_date
+  , 0 as is_ms_shipped 
+  , 0 as is_published 
+  , 0 as is_schema_published 
+  , 0 as with_check_option 
+  , 0 as is_date_correlation_view 
+  , 0 as is_tracked_by_cdc 
+from pg_class t inner join sys.schemas sch on (t.relnamespace = sch.schema_id)
+left join sys.shipped_objects_not_in_sys nis on (nis.name = t.relname and nis.schemaid = sch.schema_id and nis.type = 'V')
+left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
+where t.relkind = 'v'
+and nis.name is null
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.views TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

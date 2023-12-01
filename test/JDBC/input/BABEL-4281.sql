@@ -21,15 +21,18 @@ GO
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 GO
 
-SET BABELFISH_STATISTICS PROFILE ON
+SET BABELFISH_SHOWPLAN_ALL ON
 GO
 
 select a, count(*) from t_babel4281 group by a order by 2; -- should not crash
 GO
 
-
 -- set configurations back
-SET BABELFISH_STATISTICS PROFILE OFF
+SET BABELFISH_SHOWPLAN_ALL OFF
+GO
+
+-- Verify Output
+select a, count(*) from t_babel4281 group by a order by 2; -- should not crash
 GO
 
 select set_config('babelfishpg_tsql.explain_timing', 'on', false);
