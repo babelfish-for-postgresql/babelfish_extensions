@@ -653,7 +653,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 with ENCRYPTED password '123456
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: must have CREATEROLE privilege to change another user's password
     Server SQLState: 42501)~~
 
 
@@ -661,7 +661,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 with password NULL;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: must have CREATEROLE privilege to change another user's password
     Server SQLState: 42501)~~
 
 
@@ -669,7 +669,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 with password '12345678';
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: must have CREATEROLE privilege to change another user's password
     Server SQLState: 42501)~~
 
 
