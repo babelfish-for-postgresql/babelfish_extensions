@@ -352,7 +352,7 @@ AlterRoleStmt:
 					n->is_grant = true;
 					n->granted_roles = list_make1(ap);
 					n->grantee_roles = list_make1($6);
-					n->admin_opt = false;
+					n->opt = NIL;
 					n->grantor = NULL;
 					$$ = (Node *) n;
 				}
@@ -365,7 +365,7 @@ AlterRoleStmt:
 					n->is_grant = false;
 					n->granted_roles = list_make1(ap);
 					n->grantee_roles = list_make1($6);
-					n->admin_opt = false;
+					n->opt = NIL;
 					n->grantor = NULL;
 					$$ = (Node *) n;
 				}
@@ -2990,7 +2990,7 @@ tsql_alter_server_role:
 			n->is_grant = true;
 			n->granted_roles = list_make1(ap);
 			n->grantee_roles = list_make1($7);
-			n->admin_opt = false;
+			n->opt = NIL;
 			n->grantor = NULL;
 			$$ = (Node *) n;
 		}
@@ -3008,7 +3008,7 @@ tsql_alter_server_role:
 			n->is_grant = false;
 			n->granted_roles = list_make1(ap);
 			n->grantee_roles = list_make1($7);
-			n->admin_opt = false;
+			n->opt = NIL;
 			n->grantor = NULL;
 			$$ = (Node *) n;
 		}
