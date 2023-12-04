@@ -4314,7 +4314,9 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 				retval = (Datum) 0;
 			}
 			else
-				retval = pltsql_exec_function(func, fcinfo, NULL, false);
+				retval = pltsql_exec_function(func, fcinfo,
+										   NULL, NULL,
+										   !nonatomic);
 
 			set_procid(prev_procid);
 		}
@@ -4368,6 +4370,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	PLtsql_function *func;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
+	ResourceOwner simple_eval_resowner;
 	Datum		retval;
 	int			rc;
 	int			saved_dialect = sql_dialect;
@@ -4473,6 +4476,19 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	flinfo.fn_oid = InvalidOid;
 	flinfo.fn_mcxt = CurrentMemoryContext;
 	fake_fcinfo->nargs = nargs > 2 ? nargs - 2 : 0;
+
+	/* 
+	 * Create a private EState and resowner for simple-expression execution.
+	 * Notice that these are NOT tied to transaction-level resources; they
+	 * must survive any COMMIT/ROLLBACK the DO block executes, since we will
+	 * unconditionally try to clean them up below.  (Hence, be wary of adding
+	 * anything that could fail between here and the PG_TRY block.)  See the
+	 * comments for shared_simple_eval_estate.
+	 */
+
+	simple_eval_resowner =
+		ResourceOwnerCreate(NULL, "PLTSQL DO block simple expressions");
+
 	for (i = 0; i < fake_fcinfo->nargs; i++)
 	{
 		fake_fcinfo->args[i].value = PG_GETARG_DATUM(i + 2);
@@ -4483,7 +4499,11 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	if (OPTION_ENABLED(codeblock_args, NO_FREE))
 		simple_eval_estate = NULL;
 	else
+	{	
+		simple_eval_resowner =
+			ResourceOwnerCreate(NULL, "PLTSQL DO block simple expressions");
 		simple_eval_estate = CreateExecutorState();
+	}
 
 	/*
 	 * If we are here for INSERT ... EXECUTE, prepare a resultinfo node for
@@ -4536,7 +4556,10 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							errmsg("The parameterized query expects %d number of parameters, but %d were supplied", func->fn_nargs, fake_fcinfo->nargs)));
 
-		retval = pltsql_exec_function(func, fake_fcinfo, simple_eval_estate, codeblock->atomic);
+		retval = pltsql_exec_function(func, fake_fcinfo,
+									   simple_eval_estate,
+									   simple_eval_resowner,
+									   codeblock->atomic);
 		fcinfo->isnull = false;
 	}
 	PG_CATCH();
@@ -4547,7 +4570,10 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		 * statements (which can be flushed with pltsql_free_function_memory)
 		 * and execution trees for simple expressions, which are in the
 		 * private EState.
-		 *
+		 * statements (which can be flushed by plpgsql_free_function_memory),
+		 * execution trees for simple expressions, which are in the private
+		 * EState, and cached-plan refcounts held by the private resowner.
+		 * 
 		 * Before releasing the private EState, we must clean up any
 		 * simple_econtext_stack entries pointing into it. It is done inside
 		 * pltsql_exec_function
@@ -4560,8 +4586,10 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		/* ... so we can free subsidiary storage */
 		if (!OPTION_ENABLED(codeblock_args, NO_FREE))
 		{
-			/* Clean up the private EState */
+			/* Clean up the private EState and resowner*/
 			FreeExecutorState(simple_eval_estate);
+			ResourceOwnerReleaseAllPlanCacheRefs(simple_eval_resowner);
+			ResourceOwnerDelete(simple_eval_resowner);
 			pltsql_free_function_memory(func);
 		}
 		sql_dialect = saved_dialect;
@@ -4601,6 +4629,8 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	if (!OPTION_ENABLED(codeblock_args, NO_FREE))
 	{
 		FreeExecutorState(simple_eval_estate);
+		ResourceOwnerReleaseAllPlanCacheRefs(simple_eval_resowner);
+		ResourceOwnerDelete(simple_eval_resowner);
 		pltsql_free_function_memory(func);
 	}
 	sql_dialect = saved_dialect;
