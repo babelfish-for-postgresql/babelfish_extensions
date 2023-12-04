@@ -1,0 +1,744 @@
+-- DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select a from babel_datatype_sqlvariant_vu_prepare_t1 order by id;
+go
+~~START~~
+sql_variant
+2020-10-05 09:00:00.0
+2020-10-05 09:00:00.0
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+
+-- Test CAST from SQL_VARIANT
+-- datetime2
+select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-20 09:00:00.0000000
+~~END~~
+
+-- datetimeoffset
+select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_variant) as datetimeoffset);
+go
+~~START~~
+datetimeoffset
+2020-10-05 09:00:00.0000000 -09:00
+~~END~~
+
+-- datetime
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+2020-10-20 09:00:00.0
+~~END~~
+
+-- smalldatetime
+select cast(cast(cast('2020-10-20 09:00:00' as smalldatetime) as sql_variant) as smalldatetime);
+go
+~~START~~
+smalldatetime
+2020-10-20 09:00:00.0
+~~END~~
+
+-- date
+select cast(cast(cast('2020-10-20' as date) as sql_variant) as date);
+go
+~~START~~
+date
+2020-10-20
+~~END~~
+
+-- time
+select cast(cast(cast('09:00:00' as time) as sql_variant) as time);
+go
+~~START~~
+time
+09:00:00.0000000
+~~END~~
+
+-- float
+select cast(cast(cast(3.1415926 as float) as sql_variant) as float);
+go
+~~START~~
+float
+3.1415926
+~~END~~
+
+-- real
+select cast(cast(cast(3.1415926 as real) as sql_variant) as real);
+go
+~~START~~
+real
+3.1415925
+~~END~~
+
+-- numeric
+select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as numeric(4, 3));
+go
+~~START~~
+numeric
+3.142
+~~END~~
+
+select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as numeric(4, 2));
+go
+~~START~~
+numeric
+3.14
+~~END~~
+
+-- money
+select cast(cast(cast('$123.123' as money) as sql_variant) as money);
+go
+~~START~~
+money
+123.1230
+~~END~~
+
+-- smallmoney
+select cast(cast(cast('$123.123' as smallmoney) as sql_variant) as smallmoney);
+go
+~~START~~
+smallmoney
+123.1230
+~~END~~
+
+-- bigint
+select cast(cast(cast(2147483648 as bigint) as sql_variant) as bigint);
+go
+~~START~~
+bigint
+2147483648
+~~END~~
+
+-- int
+select cast(cast(cast(32768 as int) as sql_variant) as int);
+go
+~~START~~
+int
+32768
+~~END~~
+
+-- smallint
+select cast(cast(cast(256 as smallint) as sql_variant) as smallint);
+go
+~~START~~
+smallint
+256
+~~END~~
+
+-- tinyint
+select cast(cast(cast(255 as tinyint) as sql_variant) as tinyint);
+go
+~~START~~
+tinyint
+255
+~~END~~
+
+-- bit
+select cast(cast(cast(1.5 as bit) as sql_variant) as bit);
+go
+~~START~~
+bit
+1
+~~END~~
+
+select cast(cast(cast(0 as bit) as sql_variant) as bit);
+go
+~~START~~
+bit
+0
+~~END~~
+
+select cast(cast(cast(NULL as bit) as sql_variant) as bit);
+go
+~~START~~
+bit
+<NULL>
+~~END~~
+
+-- nvarchar
+select cast(cast(cast('£' as nvarchar(1)) as sql_variant) as nvarchar(1));
+go
+~~START~~
+nvarchar
+£
+~~END~~
+
+-- varchar
+select cast(cast(cast('£' as varchar(1)) as sql_variant) as varchar(1));
+go
+~~START~~
+varchar
+
+~~END~~
+
+-- nchar
+select cast(cast(cast('£' as nchar(1)) as sql_variant) as nchar(1));
+go
+~~START~~
+nchar
+£
+~~END~~
+
+-- char
+select cast(cast(cast('£' as char(1)) as sql_variant) as char(1));
+go
+~~START~~
+char
+ 
+~~END~~
+
+-- varbinary
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as varbinary(3));
+go
+~~START~~
+varbinary
+616263
+~~END~~
+
+-- binary
+select cast(cast(cast('abc' as binary(3)) as sql_variant) as binary(3));
+go
+~~START~~
+binary
+616263
+~~END~~
+
+-- uniqueidentifier
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier) 
+                 as sql_variant) as uniqueidentifier);
+go
+~~START~~
+uniqueidentifier
+0E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
+
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0wrong' as uniqueidentifier) 
+                 as sql_variant) as uniqueidentifier);
+go
+~~START~~
+uniqueidentifier
+0E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
+
+-- CAST examples already supported
+-- datetime to date
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as date);
+go
+~~START~~
+date
+2020-10-20
+~~END~~
+
+-- datetime to float
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
+go
+~~START~~
+float
+44122.375
+~~END~~
+
+-- date to datetime2
+select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-20 00:00:00.0000000
+~~END~~
+
+-- datetimeoffset 2 datetime2
+select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-05 09:00:00.0000000
+~~END~~
+
+-- datetime2 2 datetimeoffset
+select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as datetimeoffset);
+go
+~~START~~
+datetimeoffset
+2020-10-20 09:00:00.0000000 +00:00
+~~END~~
+
+-- float to numeric
+select cast(cast(cast(3.1415926 as float) as sql_variant) as numeric(4, 3));
+go
+~~START~~
+numeric
+3.142
+~~END~~
+
+-- float to money
+select cast(cast(cast(3.1415926 as float) as sql_variant) as money);
+go
+~~START~~
+money
+3.1416
+~~END~~
+
+-- float to int
+select cast(cast(cast(3.1415926 as float) as sql_variant) as int);
+go
+~~START~~
+int
+3
+~~END~~
+
+-- money to int
+select cast(cast(cast('$123.123' as money) as sql_variant) as int);
+go
+~~START~~
+int
+123
+~~END~~
+
+-- int to varbinary
+select cast(cast(cast(123 as int) as sql_variant) as varbinary(4));
+go
+~~START~~
+varbinary
+0000007B
+~~END~~
+
+-- varchar to varbinary
+select cast(cast(cast('abc' as varchar(3)) as sql_variant) as varbinary(3));
+go
+~~START~~
+varbinary
+616263
+~~END~~
+
+-- varbinary to int
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as int);
+go
+~~START~~
+int
+6382179
+~~END~~
+
+-- varbinary to varchar
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as varchar(3));
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- CAST examples not supported yet
+-- time to datetime
+select cast(cast(cast('09:00:00' as time) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+1900-01-01 09:00:00.0
+~~END~~
+
+-- float to datetime
+select cast(cast(cast(3.1415926 as float) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+1900-01-04 03:23:53.6
+~~END~~
+
+-- int to datetime2
+select cast(cast(cast(123 as int) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type integer to datetime2)~~
+
+-- numeric to varbinary
+select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as varbinary(6));
+go
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type numeric to varbinary)~~
+
+-- money to bigint
+select cast(cast(cast('$123.123' as money) as sql_variant) as bigint);
+go
+~~START~~
+bigint
+123
+~~END~~
+
+-- money to bit
+select cast(cast(cast('$123.123' as money) as sql_variant) as bit);
+go
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type money to "bit")~~
+
+-- bigint to money
+select cast(cast(cast(12345 as bigint) as sql_variant) as money);
+go
+~~START~~
+money
+12345.0000
+~~END~~
+
+-- bit to float
+select cast(cast(cast(1.5 as bit) as sql_variant) as float);
+go
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type "bit" to double precision)~~
+
+-- varbinary to money
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as money);
+go
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type varbinary to money)~~
+
+-- uniqueidentifier to varbinary
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier)
+                 as sql_variant) as varbinary(36));
+go
+~~START~~
+varbinary
+2547980E1CC5F44B9960E1C80E27ABA0
+~~END~~
+
+
+-- Test DATALENGTH for SQL_VARIANT TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select datalength(a), a from babel_datatype_sqlvariant_vu_prepare_t1;
+go
+~~START~~
+int#!#sql_variant
+8#!#2020-10-05 09:00:00.0
+8#!#2020-10-05 09:00:00.0
+10#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+
+-- no such property
+select sql_variant_property(v, 'nothing') from babel_datatype_sqlvariant_vu_prepare_t2;
+go
+~~START~~
+sql_variant
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+select sql_variant_property(a, 'basetype') as 'basetype',
+       sql_variant_property(a, 'precision') as 'precision',
+       sql_variant_property(a, 'scale') as 'scale',
+       sql_variant_property(a, 'collation') as 'collation',
+       sql_variant_property(a, 'totalbytes') as 'totalbytes',
+       sql_variant_property(a, 'maxlength') as 'maxlength' from babel_datatype_sqlvariant_vu_prepare_t3;
+go
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a = b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+4#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+7#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a <> b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+2#!#2020-10-05 09:00:00.0#!#2020-10-05 06:00:00.0
+3#!#2020-10-05 06:00:00.0#!#2020-10-05 09:00:00.0
+5#!#2020-10-05 09:00:00.0#!#2020-10-05 01:00:00.0
+6#!#2020-10-05 01:00:00.0#!#2020-10-05 09:00:00.0
+8#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a > b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+2#!#2020-10-05 09:00:00.0#!#2020-10-05 06:00:00.0
+5#!#2020-10-05 09:00:00.0#!#2020-10-05 01:00:00.0
+8#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a < b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+3#!#2020-10-05 06:00:00.0#!#2020-10-05 09:00:00.0
+6#!#2020-10-05 01:00:00.0#!#2020-10-05 09:00:00.0
+9#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a >= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+2#!#2020-10-05 09:00:00.0#!#2020-10-05 06:00:00.0
+4#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+5#!#2020-10-05 09:00:00.0#!#2020-10-05 01:00:00.0
+7#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a <= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+3#!#2020-10-05 06:00:00.0#!#2020-10-05 09:00:00.0
+4#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+6#!#2020-10-05 01:00:00.0#!#2020-10-05 09:00:00.0
+7#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a = b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a <> b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#1234#!#5678
+2#!#1234#!#2020-10-05 09:00:00.0
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a > b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#1234#!#5678
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a < b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+2#!#1234#!#2020-10-05 09:00:00.0
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a >= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#1234#!#5678
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a <= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+2#!#1234#!#2020-10-05 09:00:00.0
+~~END~~
+
+
+select count(*) from babel_datatype_sqlvariant_vu_prepare_t7 where a > b;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a = b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a > b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685477.5807#!#-922337203685478
+922337203685478#!#922337203685477.5807
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a < b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685478#!#-922337203685477.5807
+922337203685477.5807#!#922337203685478
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a <> b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685478#!#-922337203685477.5807
+-922337203685477.5807#!#-922337203685478
+922337203685477.5807#!#922337203685478
+922337203685478#!#922337203685477.5807
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a >= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685477.5807#!#-922337203685478
+922337203685478#!#922337203685477.5807
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a <= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685478#!#-922337203685477.5807
+922337203685477.5807#!#922337203685478
+~~END~~
+
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a = b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#200
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a > b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#100
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a < b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#300
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a <> b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#100
+200.0000#!#300
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a >= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#100
+200.0000#!#200
+~~END~~
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a <= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#200
+200.0000#!#300
+~~END~~
+
+
+select * from babel_4036_t1 order by a;
+go
+~~START~~
+int#!#sql_variant#!#varchar#!#sql_variant#!#sql_variant
+1#!#<NULL>#!#String 1#!#<NULL>#!#Varchar String
+2#!#😊😋😎😍😅😆                  #!#String 2#!#😊😋😎😍😅😆                    #!#😊  😋 😎dsfsd😍 😅ds😆       
+3#!#2016-12-21#!#String 3#!#2016-12-21 00:00:00.0#!#2016-12-21 00:00:00.0
+4#!#12:10:16.1234570#!#String 4#!#1900-01-01 12:10:16.123457#!#1900-01-01 12:10:16.123457
+5#!#2016-12-01 12:32:00.0#!#String 5#!#2016-12-01 12:32:00.0#!#2016-12-01 12:32:00.0
+6#!#2016-10-23 12:45:37.123457#!#String 6#!#2016-10-23 12:45:37.12346#!#2016-10-23 12:45:37.123457
+10#!#-0.5679#!#String 10#!#-0.56789#!#-0.567890
+10#!#-0.5679#!#String 10#!#-0.56789#!#-0.567890
+11#!#<NULL>#!#String 11#!#0#!#0.0000
+12#!#<NULL>#!#String 11#!#0#!#0.0000
+13#!#2079-06-06 23:59:29.0#!#String 11#!#2079-06-06 23:59:29.1#!#2079-06-06 23:59:29.12
+14#!#2079-06-06 23:59:29.123#!#String 11#!#2079-06-06 23:59:29.1235#!#2079-06-06 23:59:29.12346
+15#!#2079-06-06 23:59:29.123456#!#String 11#!#2079-06-06 23:59:29.123456#!#2079-06-06 23:59:29.123456
+~~END~~
+
+
+select * from babel_4036_t2 order by a;
+go
+~~START~~
+int#!#int#!#sql_variant#!#sql_variant#!#varchar
+1#!#1#!#-0.99999999999999960#!#-0.99999999999999960#!#String 1
+2#!#4#!#-1234567890123.1234567891234567891234567#!#-1234567890123.1234567891234567891234567#!#String 2
+2#!#4#!#1234567890123.1234567891234567891234567#!#1234567890123.1234567891234567891234567#!#String 2
+2#!#4#!#-1234567890123.1234567891234567891234567#!#-1234567890123.1234567891234567891234567#!#String 2
+3#!#9#!#0.1234567890123456789012345678901234567#!#0.1234567890123456789012345678901234567#!#abc
+3#!#9#!#-0.1234567890123456789012345678901234567#!#-0.1234567890123456789012345678901234567#!#abc
+3#!#9#!#-0.1234567890123456789012345678901234567#!#-0.1234567890123456789012345678901234567#!#abc
+4#!#16#!#-99999999999999999999999999999999999999#!#-99999999999999999999999999999999999999#!#abc
+4#!#16#!#99999999999999999999999999999999999999#!#99999999999999999999999999999999999999#!#abc
+4#!#16#!#-99999999999999999999999999999999999999#!#-99999999999999999999999999999999999999#!#abc
+5#!#25#!#0E-26#!#0E-26#!#abc
+6#!#36#!#-0.99999999999999960#!#-0.99999999999999960#!#String 3
+7#!#49#!#1234567890123.1234567891234567891234567#!#1234567890123.1234567891234567891234567#!#String 4
+8#!#64#!#0.1234567890123456789012345678901234567#!#0.1234567890123456789012345678901234567#!#abc
+9#!#81#!#99999999999999999999999999999999999999#!#99999999999999999999999999999999999999#!#abc
+10#!#100#!#0E-26#!#0E-26#!#abc
+~~END~~
+
