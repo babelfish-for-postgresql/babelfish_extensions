@@ -1,3 +1,14 @@
+-- psql
+-- enable CONTAINS
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = on;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql user=testLogin password=abc
 USE master;
 GO
@@ -147,5 +158,15 @@ GO
 ~~START~~
 text
 strict
+~~END~~
+
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_fulltext_parser = off;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
 ~~END~~
 

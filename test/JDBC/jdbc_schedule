@@ -39,6 +39,12 @@ ignore#!#sys-types-before-dep-vu-cleanup
 ignore#!#sys-table_types-before-dep-vu-prepare
 ignore#!#sys-table_types-before-dep-vu-verify
 ignore#!#sys-table_types-before-dep-vu-cleanup
+ignore#!#fts-contains-vu-prepare
+ignore#!#fts-contains-vu-verify
+ignore#!#fts-contains-vu-cleanup
+ignore#!#FULLTEXT_INDEX-vu-prepare
+ignore#!#FULLTEXT_INDEX-vu-verify
+ignore#!#FULLTEXT_INDEX-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
