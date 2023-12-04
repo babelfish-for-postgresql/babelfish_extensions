@@ -26,7 +26,7 @@
 #include "storage/ipc.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/pidfile.h"
 #include "utils/portal.h"
 #include "utils/ps_status.h"
