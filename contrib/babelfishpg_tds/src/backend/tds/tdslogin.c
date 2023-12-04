@@ -1206,11 +1206,7 @@ ProcessLoginInternal(Port *port)
 	 */
 	if (request->appname != NULL)
 	{
-		char	   *tmpAppName = pstrdup(request->appname);
-
-		pg_clean_ascii(tmpAppName);
-
-		port->application_name = tmpAppName;
+		port->application_name = pg_clean_ascii(request->appname, 0);
 	}
 
 	/*
@@ -2269,9 +2265,7 @@ TdsSendLoginAck(Port *port)
 		if (request->appname != NULL)
 		{
 			int			ret;
-			char	   *tmpAppName = pstrdup(request->appname);
-
-			pg_clean_ascii(tmpAppName);
+			char	   *tmpAppName = pg_clean_ascii(request->appname, 0);
 
 			/*
 			 * For varchar GUCs we call pltsql_truncate_identifier which calls
