@@ -1837,7 +1837,10 @@ is_unique_index(Oid relid, const char *index_name)
 							{
 								unique_key_count++;
 								if (unique_key_count > 1)
+								{
+									ReleaseSysCache(attTuple);
 									break;
+								}
 							}
 						}
                         ReleaseSysCache(attTuple);

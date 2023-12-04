@@ -2,7 +2,7 @@ EXEC babel_539_prepare_proc
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: IDENTITY() is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_identity_function to ignore)~~
+~~ERROR (Message: To use IDENTITY(), set 'babelfishpg_tsql.escape_hatch_identity_function' to 'ignore')~~
 
 
 SELECT current_setting('babelfishpg_tsql.escape_hatch_identity_function');
