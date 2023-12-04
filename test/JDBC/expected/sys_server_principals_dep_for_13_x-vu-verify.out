@@ -1,9 +1,9 @@
 SELECT * FROM sys_server_principals_dep_for_13_x_vu_prepare_view
 GO
 ~~START~~
-varchar#!#char#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#bit
-sys_server_principals_dep_for_13_x_vu_prepare_login1#!#S#!#SQL_LOGIN#!#0#!#master#!#English#!#0
-sys_server_principals_dep_for_13_x_vu_prepare_login2#!#S#!#SQL_LOGIN#!#0#!#master#!#English#!#0
++~~ERROR (Code: 33557097)~~
++
++~~ERROR (Message: permission denied for table pg_authid)~~
 ~~END~~
 
 
