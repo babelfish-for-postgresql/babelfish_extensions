@@ -358,7 +358,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
  */
 
 int
-datepart_internal(const char* field, Timestamp timestamp, int df_tz)
+datepart_internal(char* field, Timestamp timestamp, int df_tz)
 {	
 	fsec_t		fsec1;
 	long int	tsql_first_day;
