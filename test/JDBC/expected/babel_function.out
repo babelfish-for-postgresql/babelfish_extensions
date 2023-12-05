@@ -882,143 +882,123 @@ int
 -- test edge cases: try to get datepart that does not exist in the argument
 select datepart(year, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1900
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function datepart for data type time.)~~
 
 select datepart(yyyy, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1900
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function datepart for data type time.)~~
 
 select datepart(yy, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1900
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function datepart for data type time.)~~
 
 select datepart(quarter, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart quarter is not supported by date function datepart for data type time.)~~
 
 select datepart(qq, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart quarter is not supported by date function datepart for data type time.)~~
 
 select datepart(q, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart quarter is not supported by date function datepart for data type time.)~~
 
 select datepart(month, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart month is not supported by date function datepart for data type time.)~~
 
 select datepart(mm, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart month is not supported by date function datepart for data type time.)~~
 
 select datepart(m, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart month is not supported by date function datepart for data type time.)~~
 
 select datepart(dayofyear, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
 
 select datepart(dy, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
 
 select datepart(y, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
 
 select datepart(day, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function datepart for data type time.)~~
 
 select datepart(dd, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function datepart for data type time.)~~
 
 select datepart(d, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function datepart for data type time.)~~
 
 select datepart(week, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tsql_week is not supported by date function datepart for data type time.)~~
 
 select datepart(wk, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tsql_week is not supported by date function datepart for data type time.)~~
 
 select datepart(ww, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart tsql_week is not supported by date function datepart for data type time.)~~
 
 select datepart(weekday, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-2
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart dow is not supported by date function datepart for data type time.)~~
 
 select datepart(dw, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-2
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart dow is not supported by date function datepart for data type time.)~~
 
 select datepart(tzoffset, cast('12:10:30.123' as time));
 GO
@@ -1036,24 +1016,21 @@ int
 
 select datepart(iso_week, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
 
 select datepart(isowk, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
 
 select datepart(isoww, cast('12:10:30.123' as time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
 
 select datepart(hour, cast('2016-12-26' as date));
 GO
@@ -2158,10 +2135,9 @@ int
 
 select DAY(CAST('04:12:34.876543' AS time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function datepart for data type time.)~~
 
 select DAY(CAST('2037-03-01' AS date));
 GO
@@ -2201,10 +2177,9 @@ int
 
 select MONTH(CAST('04:12:34.876543' AS time));
 GO
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart month is not supported by date function datepart for data type time.)~~
 
 select MONTH(CAST('2037-03-01' AS date));
 GO
@@ -2244,10 +2219,9 @@ int
 
 select YEAR(CAST('04:12:34.876543' AS time));
 GO
-~~START~~
-int
-1900
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function datepart for data type time.)~~
 
 select YEAR(CAST('2037-03-01' AS date));
 GO

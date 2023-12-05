@@ -724,17 +724,28 @@ datepart_internal_numeric(PG_FUNCTION_ARGS)
 	Numeric		arg = PG_GETARG_NUMERIC(1);
 	int			result;
 	int			scale = DatumGetInt32(DirectFunctionCall1(numeric_scale, NumericGetDatum(arg)));
-	int			argument = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(arg)));
-	
-	if(scale>0 && argument>=0)
-	{
-		argument--;
-	}
+	int			argument;
+	float8		floatarg;
+
 	isnumeric = true;
-	result = datepart_internal(field,0, argument);		/* 
-														 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	
+	if(scale>0)					/* Detecting if the numeric has a floating point */
+	{
+		floatarg = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(arg)));
+		result = datepart_internal(field,0, floatarg);	/* 
+														 * Setting the timestamp in datepart_internal as 0 and passing floatarg in third argument 
 														 * as there is no need of df_tz
 														 */
+	}
+	else
+	{
+		argument = DatumGetInt32(DirectFunctionCall1(numeric_int4, NumericGetDatum(arg)));
+		result = datepart_internal(field,0, argument);	/* 
+														 * Setting the timestamp in datepart_internal as 0 and passing 'argument' in third argument 
+														 * as there is no need of df_tz
+														 */
+	}
+
 	PG_RETURN_INT32(result);
 }
 
