@@ -486,11 +486,11 @@ datepart_internal(const char* field, Timestamp timestamp, int df_tz)
 		}
 		else if(strcasecmp(field , "nanosecond") == 0)
 		{
-			result = (fsec1) * 1000;
+			return (fsec1) * 1000;
 		}
 		else if(strcasecmp(field , "tzoffset") == 0)
 		{
-			result = df_tz;
+			return df_tz;
 		}
 		else
 		{
