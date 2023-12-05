@@ -236,7 +236,7 @@ translate_pg_type_to_tsql(PG_FUNCTION_ARGS)
 		entry = hash_search(ht_oid2typecode, &pg_type, HASH_FIND, NULL);
 
 		if (entry && entry->persist_id < TOTAL_TYPECODE_COUNT)
-			PG_RETURN_TEXT_P(CStringGetTextDatum(type_infos[entry->persist_id].tsql_typname));
+			PG_RETURN_TEXT_P(cstring_to_text(type_infos[entry->persist_id].tsql_typname));
 	}
 	PG_RETURN_NULL();
 }

@@ -132,8 +132,8 @@ sp_unprepare(PG_FUNCTION_ARGS)
 Datum
 sp_prepare(PG_FUNCTION_ARGS)
 {
-	char	   *params = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-	char	   *batch = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
+	char	   *params = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	   *batch = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
 
 	/* int  options = PG_GETARG_INT32(3); */
 	InlineCodeBlockArgs *args;
@@ -237,7 +237,7 @@ sp_babelfish_configure(PG_FUNCTION_ARGS)
 	{
 		const char *common_prefix = "babelfishpg_tsql.";
 
-		char	   *arg0 = PG_ARGISNULL(0) ? "%" : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		char	   *arg0 = PG_ARGISNULL(0) ? "%" : text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 		if (strncmp(arg0, common_prefix, strlen(common_prefix)) == 0)
 			arg = PointerGetDatum(cstring_to_text(arg0));
@@ -431,7 +431,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		batch = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		batch = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 		/*
 		 * TODO: params and browseMode has to be still implemented in this
@@ -975,8 +975,8 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		undeclaredparams = (UndeclaredParams *) palloc0(sizeof(UndeclaredParams));
 		funcctx->user_fctx = (void *) undeclaredparams;
 
-		batch = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		params = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		batch = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+		params = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 		/* First, pass the batch to the ANTLR parser */
 		result = antlr_parser_cpp(batch);
@@ -1126,12 +1126,12 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		target_attnums_len = list_length(target_attnums);
 		while (target_attnum_i < target_attnums_len)
 		{
-			ListCell   *lc;
+			ListCell   *lc1;
 			ResTarget  *col;
 			int			colname_len;
 
-			lc = list_nth_cell(target_attnums, target_attnum_i);
-			undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc);
+			lc1 = list_nth_cell(target_attnums, target_attnum_i);
+			undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc1);
 
 			col = (ResTarget *) list_nth(cols, target_attnum_i);
 			colname_len = strlen(col->name);
@@ -1696,7 +1696,7 @@ xp_instance_regread_internal(PG_FUNCTION_ARGS)
 
 	if (argtypeid == INT4OID)
 	{
-		values[0] = Int32GetDatum(NULL);
+		values[0] = (Datum) NULL;
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", INT4OID, -1, 0);
 	}
 
@@ -1790,7 +1790,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 						GUC_CONTEXT_CONFIG,
 						PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		postgresStmt = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		postgresStmt = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 		if (postgresStmt == NULL)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -2000,8 +2000,8 @@ sp_addrole(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		ownername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		rolname = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+		ownername = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 		/* Role name is not NULL */
 		if (rolname == NULL)
@@ -2157,7 +2157,7 @@ sp_droprole(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		rolname = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 		/* Role name is not NULL */
 		if (rolname == NULL)
@@ -2293,8 +2293,8 @@ sp_addrolemember(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		rolname = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+		membername = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
 		if (rolname == NULL || membername == NULL)
@@ -2464,8 +2464,8 @@ sp_droprolemember(PG_FUNCTION_ARGS)
 						  GUC_CONTEXT_CONFIG,
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		rolname = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+		membername = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 
 		/* Role name, member name is not NULL */
 		if (rolname == NULL || membername == NULL)
@@ -3164,8 +3164,8 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 	char	   *db_name = get_cur_db_name();
 	char	   *function_signature = NULL;
 	char	   *query = NULL;
-	char	   *function_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-	char	   *volatility = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+	char	   *function_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char	   *volatility = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
 	Oid			function_id;
 	Oid			user_id = GetUserId();
 
@@ -3236,8 +3236,8 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 		{
 			logical_schema_name = downcase_identifier(logical_schema_name, strlen(logical_schema_name), false, false);
 			function_name = downcase_identifier(function_name, strlen(function_name), false, false);
-			for (int i = 0; i < 4; i++)
-				pfree(splited_object_name[i]);
+			for (int j = 0; j < 4; j++)
+				pfree(splited_object_name[j]);
 		}
 		else
 		{
@@ -3477,11 +3477,11 @@ sp_rename_internal(PG_FUNCTION_ARGS)
 						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 		/* 2. read the input arguments */
-		obj_name = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
-		new_name = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
-		schema_name = PG_ARGISNULL(2) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(2));
-		objtype = PG_ARGISNULL(3) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(3));
-		curr_relname = PG_ARGISNULL(4) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(4));
+		obj_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+		new_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+		schema_name = PG_ARGISNULL(2) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(2));
+		objtype = PG_ARGISNULL(3) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(3));
+		curr_relname = PG_ARGISNULL(4) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(4));
 
 		/* 3. check if the input arguments are valid, and parse the objname */
 		/* objname can have at most 3 parts */

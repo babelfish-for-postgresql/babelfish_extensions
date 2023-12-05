@@ -22,7 +22,6 @@
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
-#include "parser/gramparse.h"
 #include "hooks.h"
 #include "tcop/utility.h"
 
@@ -1528,7 +1527,7 @@ tsql_get_proc_nsp_oid(Oid object_id)
 	bool		isnull;
 
 	/* retrieve pronamespace in pg_proc by oid */
-	tuple = SearchSysCache1(PROCOID, CStringGetDatum(object_id));
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -1560,7 +1559,7 @@ tsql_get_constraint_nsp_oid(Oid object_id, Oid user_id)
 	bool		isnull;
 
 	/* retrieve connamespace in pg_constraint by oid */
-	tuple = SearchSysCache1(CONSTROID, CStringGetDatum(object_id));
+	tuple = SearchSysCache1(CONSTROID, ObjectIdGetDatum(object_id));
 
 	if (HeapTupleIsValid(tuple))
 	{

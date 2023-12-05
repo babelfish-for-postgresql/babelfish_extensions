@@ -761,8 +761,8 @@ select_json_modify(SelectStmt *stmt)
 				rewrite_plain_name(json_mod_fc->funcname);
 				if (is_json_modify(json_mod_fc->funcname) && is_select_for_json(from_sel_stmt))
 				{
-					Node	   *n = lfourth(json_mod_fc->args);
-					A_Const    *escape = (A_Const *) n;
+					Node	   *n1 = lfourth(json_mod_fc->args);
+					A_Const    *escape = (A_Const *) n1;
 
 					escape->val.boolval.boolval = true;
 				}
@@ -1214,9 +1214,9 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
 	if (cur_db_name)
 		ret = get_physical_schema_name(cur_db_name, schema_name);
 	else
-		PG_RETURN_TEXT_P(CStringGetTextDatum(schema_name));
+		PG_RETURN_TEXT_P(cstring_to_text(schema_name));
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(ret));
+	PG_RETURN_TEXT_P(cstring_to_text(ret));
 }
 
 

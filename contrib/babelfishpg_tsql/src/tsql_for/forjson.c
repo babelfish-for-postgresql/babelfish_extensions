@@ -324,8 +324,8 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 
 		found = false;
 		if (num > 1)	{
-			for (int i = num - 1; i >= 0; i--)	{
-				hashKey = build_key(parts, i);
+			for (int j = num - 1; j >= 0; j--)	{
+				hashKey = build_key(parts, j);
 
 				// Check if the current key exists in the hashTable
 				hashEntry = (JsonbEntry *) hash_search(jsonbHash, hashKey, HASH_FIND, &found);
@@ -343,10 +343,10 @@ tsql_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_values)
 				hashEntry = (JsonbEntry *) hash_search(jsonbHash, (void *) hashKey, HASH_ENTER, NULL);
 				strlcpy(hashEntry->path, hashKey, NAMEDATALEN);
 				hashEntry->value = nestedVal;
-				nestedVal = create_json(parts[i], nestedVal, &hashEntry->idx);
+				nestedVal = create_json(parts[j], nestedVal, &hashEntry->idx);
 
 				// if the nested json is not at the jsonbRow level
-				if (i != 0)
+				if (j != 0)
 					hashEntry->parent = nestedVal;
 				else	{
 					hashEntry->parent = jsonbRow;

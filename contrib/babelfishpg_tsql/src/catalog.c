@@ -684,7 +684,7 @@ bbf_get_login_default_db(PG_FUNCTION_ARGS)
 	if (!ret)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(ret));
+	PG_RETURN_TEXT_P(cstring_to_text(ret));
 }
 
 char *

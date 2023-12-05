@@ -201,7 +201,7 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_min_protocol_version)
 	{
-		int			ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
+		ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
 
 		if (ssl_ver_min == -1)
 		{
@@ -224,7 +224,7 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_max_protocol_version)
 	{
-		int			ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
+		ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
 
 		if (ssl_ver_max == -1)
 		{

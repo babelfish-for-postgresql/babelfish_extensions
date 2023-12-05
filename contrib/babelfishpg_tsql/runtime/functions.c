@@ -380,22 +380,22 @@ version(PG_FUNCTION_ARGS)
 
 Datum sysutcdatetime(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
-                                                            PointerGetDatum(GetCurrentStatementStartTimestamp())));
+    PG_RETURN_DATUM(DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
     
 }
 
 Datum getutcdate(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
-                                                            PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+    PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
+                                                            TimestampTzGetDatum(GetCurrentStatementStartTimestamp()))));
     
 }
 
 Datum getdate_internal(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
-						PointerGetDatum(GetCurrentStatementStartTimestamp())));
+	PG_RETURN_DATUM(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
+						TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 	
 }
 
@@ -408,8 +408,8 @@ Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
 {
 	
 
-	PG_RETURN_POINTER((DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
-							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
+	PG_RETURN_DATUM(DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+							TimestampTzGetDatum(GetCurrentStatementStartTimestamp())));
 }
 
 void *
@@ -1442,8 +1442,8 @@ object_id(PG_FUNCTION_ARGS)
 		db_name = downcase_identifier(db_name, strlen(db_name), false, false);
 		schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
 		object_name = downcase_identifier(object_name, strlen(object_name), false, false);
-		for (int i = 0; i < 4; i++)
-			pfree(splited_object_name[i]);
+		for (int j = 0; j < 4; j++)
+			pfree(splited_object_name[j]);
 	}
 	else
 		pfree(splited_object_name[0]);
@@ -1877,8 +1877,8 @@ type_id(PG_FUNCTION_ARGS)
     if(pg_mbstrlen(splitted_object_name[1]) != 0)
     {
         pfree(input);
-        for (int i = 0; i < 4; i++)
-            pfree(splitted_object_name[i]);
+        for (int j = 0; j < 4; j++)
+            pfree(splitted_object_name[j]);
         pfree(splitted_object_name);
         PG_RETURN_NULL();
     }
@@ -1892,8 +1892,8 @@ type_id(PG_FUNCTION_ARGS)
         db_name = downcase_identifier(db_name, strlen(db_name), false, false);
         schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
         object_name = downcase_identifier(object_name, strlen(object_name), false, false);
-        for (int i = 0; i < 4; i++)
-            pfree(splitted_object_name[i]);
+        for (int k = 0; k < 4; k++)
+            pfree(splitted_object_name[k]);
     }
     else
         pfree(splitted_object_name[0]);
@@ -2015,7 +2015,7 @@ type_name(PG_FUNCTION_ARGS)
     tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo1);
     if (tsql_typename)
     {
-        PG_RETURN_TEXT_P(tsql_typename);
+        PG_RETURN_DATUM(tsql_typename);
     }
     else
     {   

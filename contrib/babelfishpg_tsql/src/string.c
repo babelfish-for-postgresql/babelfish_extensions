@@ -477,9 +477,9 @@ prepare_format_string(StringInfo buf, char *msg_string, int nargs,
 	if (buf->len > TSQL_MAX_MESSAGE_LEN)
 	{
 		/* Trim buf to be 2044, truncate with ... */
-		for (int i = TSQL_MAX_MESSAGE_LEN - 3; i < TSQL_MAX_MESSAGE_LEN; i++)
+		for (int j = TSQL_MAX_MESSAGE_LEN - 3; j < TSQL_MAX_MESSAGE_LEN; j++)
 		{
-			buf->data[i] = '.';
+			buf->data[j] = '.';
 		}
 		buf->len = TSQL_MAX_MESSAGE_LEN;
 	}
@@ -499,9 +499,9 @@ tsql_varchar_substr(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(0) || PG_ARGISNULL(1) || PG_ARGISNULL(2))
 		PG_RETURN_NULL();
 
-	PG_RETURN_VARCHAR_P(DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
+	return DirectFunctionCall3(text_substr, PG_GETARG_DATUM(0),
 											PG_GETARG_INT32(1),
-											PG_GETARG_INT32(2)));
+											PG_GETARG_INT32(2));
 }
 
 /*

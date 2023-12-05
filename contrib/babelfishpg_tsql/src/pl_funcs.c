@@ -1774,13 +1774,13 @@ pltsql_dumptree(PLtsql_function *func)
 			case PLTSQL_DTYPE_ROW:
 				{
 					PLtsql_row *row = (PLtsql_row *) d;
-					int			i;
+					int			j;
 
 					printf("ROW %-16s fields", row->refname);
-					for (i = 0; i < row->nfields; i++)
+					for (j = 0; j < row->nfields; j++)
 					{
-						printf(" %s=var %d", (row->fieldnames[i] != NULL) ? row->fieldnames[i] : "",
-							   row->varnos[i]);
+						printf(" %s=var %d", (row->fieldnames[j] != NULL) ? row->fieldnames[j] : "",
+							   row->varnos[j]);
 					}
 					printf("\n");
 				}

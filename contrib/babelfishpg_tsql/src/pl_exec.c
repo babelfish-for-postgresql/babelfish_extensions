@@ -4938,11 +4938,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 		if (columns_updated_list != NIL && 0 == pltsql_trigger_depth)
 		{
-			ListCell   *lc;
+			ListCell   *lc1;
 
-			foreach(lc, columns_updated_list)
+			foreach(lc1, columns_updated_list)
 			{
-				List	   *list = (List *) lfirst(lc);
+				List	   *list = (List *) lfirst(lc1);
 
 				if (list != NIL)
 					list_free_deep(list);
