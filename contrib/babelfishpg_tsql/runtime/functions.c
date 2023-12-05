@@ -177,7 +177,6 @@ extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 
 extern int	pltsql_datefirst;
-extern bool pltsql_implicit_transactions;
 extern bool pltsql_cursor_close_on_commit;
 extern bool pltsql_ansi_warnings;
 extern bool pltsql_ansi_padding;

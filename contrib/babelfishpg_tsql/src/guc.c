@@ -49,7 +49,7 @@ bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
 
 bool		pltsql_xact_abort = false;
-bool		pltsql_implicit_transactions = false;
+bool		pltsql_implicit_transactions = true;
 bool		pltsql_cursor_close_on_commit = false;
 bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
@@ -60,7 +60,7 @@ bool		pltsql_showplan_all = false;
 bool		pltsql_showplan_text = false;
 bool		pltsql_showplan_xml = false;
 bool		pltsql_fmtonly = false;
-bool		pltsql_enable_tsql_information_schema = true;
+bool		pltsql_enable_tsql_information_schema = false;
 bool		pltsql_no_browsetable = false;
 
 char	   *pltsql_host_destribution = NULL;
@@ -884,7 +884,7 @@ define_custom_variables(void)
 							 gettext_noop("enable implicit transactions"),
 							 NULL,
 							 &pltsql_implicit_transactions,
-							 false,
+							 true,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
