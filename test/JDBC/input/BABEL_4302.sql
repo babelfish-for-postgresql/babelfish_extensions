@@ -2163,3 +2163,23 @@ SET datefirst 6;
 GO
 SELECT datepart(dy,'2016-02-03 13:30:05.523456');
 GO
+
+-- Queries that should throw error
+
+SELECT DATEPART(YEAR, cast('12:10:30.123' as time))
+GO
+
+SELECT DATEPART(QUARTER, cast('12:10:30.123' as time))
+GO
+
+SELECT DATEPART(MONTH, cast('12:10:30.123' as time))
+GO
+
+SELECT DATEPART(DAY, cast('12:10:30.123' as time))
+GO
+
+SELECT DATEPART(dow, cast('12:10:30.123' as time))
+GO
+
+SELECT DATEPART(doy, cast('12:10:30.123' as time))
+GO

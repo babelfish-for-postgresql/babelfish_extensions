@@ -828,7 +828,16 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 
 	if(timestamp <= USECS_PER_DAY )		/* when only time is given and no date, we adjust the timestamp date to 1/1/1900 instead of 1/1/2000 */
 	{	
-		timestamp = timestamp - (long int)(DAYS_BETWEEN_YEARS_1900_TO_2000 * USECS_PER_DAY * 1L);
+		timestamp = timestamp - (Timestamp)(DAYS_BETWEEN_YEARS_1900_TO_2000 * USECS_PER_DAY * 1L);
+		if(strcasecmp(field , "quarter") == 0 || strcasecmp(field , "month") == 0 || 
+					strcasecmp(field , "day") == 0 || strcasecmp(field , "doy") == 0 || 
+					strcasecmp(field , "year") == 0 || strcasecmp(field , "tsql_week") == 0 || 
+					strcasecmp(field , "week") == 0 || strcasecmp(field , "dow") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart %s is not supported by date function datepart for data type time.", field)));
+		}
 	}
 
 	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz));

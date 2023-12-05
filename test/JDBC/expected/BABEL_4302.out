@@ -5483,3 +5483,47 @@ int
 34
 ~~END~~
 
+
+
+-- Queries that should throw error
+SELECT DATEPART(YEAR, cast('12:10:30.123' as time))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart year is not supported by date function datepart for data type time.)~~
+
+
+SELECT DATEPART(QUARTER, cast('12:10:30.123' as time))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart quarter is not supported by date function datepart for data type time.)~~
+
+
+SELECT DATEPART(MONTH, cast('12:10:30.123' as time))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart month is not supported by date function datepart for data type time.)~~
+
+
+SELECT DATEPART(DAY, cast('12:10:30.123' as time))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart day is not supported by date function datepart for data type time.)~~
+
+
+SELECT DATEPART(dow, cast('12:10:30.123' as time))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart dow is not supported by date function datepart for data type time.)~~
+
+
+SELECT DATEPART(doy, cast('12:10:30.123' as time))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
+
