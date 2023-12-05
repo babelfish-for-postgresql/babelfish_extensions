@@ -1,5 +1,7 @@
 name: Code Coverage
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: '0 0 * * *'  # runs every midnight
   
 jobs:
   run-code-coverage-tests:
@@ -11,6 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         id: checkout
+        with:
+          ref: ${{env.BRANCH}}
 
       - name: Install Dependencies
         id: install-dependencies
