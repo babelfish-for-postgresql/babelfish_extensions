@@ -353,7 +353,9 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 /*
  * datepart_internal take the timestamp and extracts
  * year, month, week, dow, doy, etc. Fields for which date is needed
- * back from the timestamp. 
+ * back from the timestamp. df_tz is the offset of datetime when there is a 
+ * valid timestamp and it is the general integer datatype when the timestamp
+ * is not valid for the general numeric datatypes 
  */
 
 int
@@ -376,14 +378,16 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz)
 			/*
 			* This block is used when the second argument in datepart is not a 
 			* date or time relate but instead general integer datatypes. datepart_internal converts the general integer datatypes (df_tz)
-			* into proper timestamp with days offset from 01/01/1970
+			* into proper timestamp with days offset from 01/01/1970. The general integer datatypes are passed in the df_tz
 			* i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
-			* Converting the num into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
+			* Converting the df_tz into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
 			*/
 
 			timestamp = (Timestamp)(((df_tz) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
 		}
 		
+		/* Gets the date time related fields back from timestamp into struct tm pointer */
+
 		if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
 		{
 			ereport(ERROR,
@@ -425,6 +429,7 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz)
 		}
 		else if (strcmp(field, "dow") == 0 && isnumeric)
 		{
+			/* dow calculated using Zeller's Congruence modified for the generic integer datatypes */
 			if (tm->tm_mon < 3)
 			{
 				month += MONTHS_PER_YEAR;
@@ -627,11 +632,11 @@ datepart_internal_int(PG_FUNCTION_ARGS)
 	int64		num = PG_GETARG_INT64(1);
 	int			result;
 
+	isnumeric = true;
 	result = datepart_internal(field,0,num);			/* 
 														 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 														 * as there is no need of df_tz
 														 */
-	isnumeric = true;
 
 	PG_RETURN_INT32(result);
 }
@@ -648,11 +653,12 @@ datepart_internal_money(PG_FUNCTION_ARGS)
 	int64		num = PG_GETARG_INT64(1);
 	int			result;
 
+	isnumeric = true;
+
 	result = datepart_internal(field,0, (float8)num/10000);				/* 
 																		 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 																		 * as there is no need of df_tz
 																		 */
-	isnumeric = true;
 
 	PG_RETURN_INT32(result);
 }
@@ -669,12 +675,13 @@ datepart_internal_double(PG_FUNCTION_ARGS)
 	double		arg = PG_GETARG_FLOAT8(1);
 	int			result;
 	int			num = (int)ceil(arg);
+
+	isnumeric = true;
 	
 	result = datepart_internal(field,0, num);			/* 
 														 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 														 * as there is no need of df_tz
 														 */
-	isnumeric = true;
 
 	PG_RETURN_INT32(result - 1);
 }
