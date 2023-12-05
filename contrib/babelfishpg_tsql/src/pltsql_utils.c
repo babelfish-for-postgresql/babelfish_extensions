@@ -22,7 +22,6 @@
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
-#include "parser/gramparse.h"
 #include "hooks.h"
 #include "tcop/utility.h"
 
