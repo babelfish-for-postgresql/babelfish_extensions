@@ -70,6 +70,40 @@ and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
+create or replace view sys.shipped_objects_not_in_sys AS
+-- This portion of view retrieves information on objects that reside in a schema in one specfic database.
+-- For example, 'master_dbo' schema can only exist in the 'master' database.
+-- Internally stored schema name (nspname) must be provided.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values
+    ('xp_qv','master_dbo','P'),
+    ('xp_instance_regread','master_dbo','P'),
+    ('sp_addlinkedserver', 'master_dbo', 'P'),
+    ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_dropserver', 'master_dbo', 'P'),
+    ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
+    ('sp_testlinkedserver', 'master_dbo', 'P'),
+    ('sp_enum_oledb_providers','master_dbo','P'),
+    ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
+    ('syspolicy_configuration', 'msdb_dbo', 'V'),
+    ('syspolicy_system_health_state', 'msdb_dbo', 'V')
+) t(name,schema_name, type)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+
+union all
+
+-- This portion of view retrieves information on objects that reside in a schema in any number of databases.
+-- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values
+    ('sysdatabases','dbo','V')
+) t (name, schema_name, type)
+inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
+
 create or replace view sys.views as 
 select 
   t.relname as name
@@ -87,9 +121,11 @@ select
   , 0 as with_check_option 
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
-from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
+from pg_class t inner join sys.schemas sch on (t.relnamespace = sch.schema_id)
+left join sys.shipped_objects_not_in_sys nis on (nis.name = t.relname and nis.schemaid = sch.schema_id and nis.type = 'V')
 left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
+and nis.name is null
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
@@ -1231,40 +1267,6 @@ INNER JOIN sys.schemas s on c.connamespace = s.schema_id
 WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
-
-create or replace view sys.shipped_objects_not_in_sys AS
--- This portion of view retrieves information on objects that reside in a schema in one specfic database.
--- For example, 'master_dbo' schema can only exist in the 'master' database.
--- Internally stored schema name (nspname) must be provided.
-select t.name,t.type, ns.oid as schemaid from
-(
-  values
-    ('xp_qv','master_dbo','P'),
-    ('xp_instance_regread','master_dbo','P'),
-    ('sp_addlinkedserver', 'master_dbo', 'P'),
-    ('sp_addlinkedsrvlogin', 'master_dbo', 'P'),
-    ('sp_dropserver', 'master_dbo', 'P'),
-    ('sp_droplinkedsrvlogin', 'master_dbo', 'P'),
-    ('sp_testlinkedserver', 'master_dbo', 'P'),
-    ('sp_enum_oledb_providers','master_dbo','P'),
-    ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
-    ('syspolicy_configuration', 'msdb_dbo', 'V'),
-    ('syspolicy_system_health_state', 'msdb_dbo', 'V')
-) t(name,schema_name, type)
-inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
-
-union all
-
--- This portion of view retrieves information on objects that reside in a schema in any number of databases.
--- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
-select t.name,t.type, ns.oid as schemaid from
-(
-  values
-    ('sysdatabases','dbo','V')
-) t (name, schema_name, type)
-inner join sys.babelfish_namespace_ext b on t.schema_name = b.orig_name
-inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
-GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.all_objects as
 select 
