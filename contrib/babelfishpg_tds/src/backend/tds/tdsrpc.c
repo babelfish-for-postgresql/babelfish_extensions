@@ -17,6 +17,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 
 #include "src/include/tds_debug.h"
@@ -508,6 +509,7 @@ SPExecuteSQL(TDSRequestSP req)
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_EXECUTESQL: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -641,6 +643,7 @@ SPPrepare(TDSRequestSP req)
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_PREPARE: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -717,6 +720,7 @@ SPExecute(TDSRequestSP req)
 
 	char	   *activity = psprintf("SP_EXECUTE Handle: %d", req->handle);
 
+	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing SP_EXECUTE Request";
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -859,6 +863,7 @@ SPPrepExec(TDSRequestSP req)
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_PREPEXEC: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -1105,6 +1110,7 @@ SPCustomType(TDSRequestSP req)
 	initStringInfo(&s);
 	FillStoredProcedureCallFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_CUSTOMTYPE: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -1229,6 +1235,7 @@ SPUnprepare(TDSRequestSP req)
 
 	char	   *activity = psprintf("SP_UNPREPARE Handle: %d", req->handle);
 
+	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing SP_UNPREPARE Request";
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -2418,7 +2425,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 		if (req->spType == SP_CURSOREXEC)
 		{
 			char	   *activity = psprintf("SP_CURSOREXEC Handle: %d", (int) req->cursorPreparedHandle);
-
+			set_ps_display("active");
 			pgstat_report_activity(STATE_RUNNING, activity);
 			pfree(activity);
 
@@ -2437,6 +2444,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 			switch (req->spType)
 			{
 				case SP_CURSOROPEN:
+					set_ps_display("active");
 					activity = psprintf("SP_CURSOROPEN: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);
@@ -2445,6 +2453,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 																			NULL /* TODO row_count */ , req->nTotalParams, req->boundParamsData, req->boundParamsNullList);
 					break;
 				case SP_CURSORPREPARE:
+					set_ps_display("active");
 					activity = psprintf("SP_CURSORPREPARE: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);
@@ -2453,6 +2462,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 																			   (int) req->nTotalBindParams, req->boundParamsOidList);
 					break;
 				case SP_CURSORPREPEXEC:
+					set_ps_display("active");
 					activity = psprintf("SP_CURSORPREPEXEC: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);
