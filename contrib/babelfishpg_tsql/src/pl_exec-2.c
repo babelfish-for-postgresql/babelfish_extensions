@@ -2121,39 +2121,39 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			{
 				Datum		batch;
 				char	   *batchstr;
-				bool		isnull;
-				Oid			restype;
-				int32		restypmod;
+				bool		isnull1;
+				Oid			restype1;
+				int32		restypmod1;
 				int			save_nestlevel;
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
 
-				batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
-				if (isnull)
+				batch = exec_eval_expr(estate, stmt->query, &isnull1, &restype1, &restypmod1);
+				if (isnull1)
 					ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 									errmsg("batch string argument of sp_executesql is null")));
 
-				batchstr = convert_value_to_string(estate, batch, restype);
+				batchstr = convert_value_to_string(estate, batch, restype1);
 
 				args = create_args(0);
 				if (stmt->param_def)
 				{
 					Datum		paramdef;
-					Oid			restype;
-					int32		restypmod;
+					Oid			restype2;
+					int32		restypmod2;
 					char	   *paramdefstr;
-					bool		isnull;
+					bool		isnull2;
 
 					/*
 					 * Evaluate the parameter definition
 					 */
-					paramdef = exec_eval_expr(estate, stmt->param_def, &isnull, &restype, &restypmod);
+					paramdef = exec_eval_expr(estate, stmt->param_def, &isnull2, &restype2, &restypmod2);
 
-					if (isnull)
+					if (isnull2)
 						ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 										errmsg("NULL param definition")));
 
-					paramdefstr = convert_value_to_string(estate, paramdef, restype);
+					paramdefstr = convert_value_to_string(estate, paramdef, restype2);
 
 					if (strcmp(paramdefstr, "") != 0)	/* check edge cases for
 														 * sp_executesql */
@@ -2218,30 +2218,30 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			{
 				Datum		batch;
 				char	   *batchstr;
-				bool		isnull;
-				Oid			restype;
-				int32		restypmod;
+				bool		isnull3;
+				Oid			restype3;
+				int32		restypmod3;
 				InlineCodeBlockArgs *args = NULL;
 				Datum		paramdef;
 				char	   *paramdefstr;
 
-				batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
-				if (isnull)
+				batch = exec_eval_expr(estate, stmt->query, &isnull3, &restype3, &restypmod3);
+				if (isnull3)
 					ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 									errmsg("batch string argument of sp_prepexec is null")));
 
-				batchstr = convert_value_to_string(estate, batch, restype);
+				batchstr = convert_value_to_string(estate, batch, restype3);
 
 				args = create_args(0);
 
 				/*
 				 * Evaluate the parameter definition
 				 */
-				paramdef = exec_eval_expr(estate, stmt->param_def, &isnull, &restype, &restypmod);
+				paramdef = exec_eval_expr(estate, stmt->param_def, &isnull3, &restype3, &restypmod3);
 
-				if (!isnull)
+				if (!isnull3)
 				{
-					paramdefstr = convert_value_to_string(estate, paramdef, restype);
+					paramdefstr = convert_value_to_string(estate, paramdef, restype3);
 
 					read_param_def(args, paramdefstr);
 

@@ -3727,7 +3727,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		if (sign == 1 && num != 0)
 			decString++;
 		res = TdsSetVarFromStrWrapper(decString);
-		memcpy(READ_DATA(result, variantHeaderLen), (bytea *) DatumGetPointer(res), dataLen);
+		memcpy(READ_DATA(result, variantHeaderLen), (bytea *) res, dataLen);
 	}
 	else
 	{

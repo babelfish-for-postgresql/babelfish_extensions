@@ -4459,21 +4459,21 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 		OpExpr *opExpr = (OpExpr*) node;
 		Form_pg_operator form;
 		HeapTuple	tuple;
-		Node* node = optimize_explicit_cast(pstate, linitial(opExpr->args));
+		Node* node1 = optimize_explicit_cast(pstate, linitial(opExpr->args));
 		Node* result = NULL;
-		if (node != linitial(opExpr->args))
+		if (node1 != linitial(opExpr->args))
 		{
 			char	   *opname;
 
 			tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(opExpr->opno));
 			if (!HeapTupleIsValid(tuple))
-				return node; // no need to error out in here, stop transform and quite, keep the original node
+				return node1; // no need to error out in here, stop transform and quite, keep the original node
 			form = (Form_pg_operator) GETSTRUCT(tuple);
 
 			opname = NameStr(form->oprname);
 			if (strcmp(opname, "=") == 0)
 			{
-				result =(Node*)make_op(pstate, list_make1(makeString(opname)), node, lsecond(opExpr->args), pstate->p_last_srf, -1);
+				result =(Node*)make_op(pstate, list_make1(makeString(opname)), node1, lsecond(opExpr->args), pstate->p_last_srf, -1);
 			}
 			ReleaseSysCache(tuple);
 			if (result)

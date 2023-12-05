@@ -1508,11 +1508,11 @@ exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_
 				{
 					int			err_handler_pc;
 					int			i;
-					PLtsql_errctx *cur_err_ctx = *(PLtsql_errctx **) vec_at(estate->err_ctx_stack,
+					PLtsql_errctx *cur_err_ctx1 = *(PLtsql_errctx **) vec_at(estate->err_ctx_stack,
 																			estate->cur_err_ctx_idx);
 
 					/* restore error context */
-					err_handler_pc = cur_err_ctx->target_pc;
+					err_handler_pc = cur_err_ctx1->target_pc;
 
 					/* Cleanup dangling errors */
 					for (i = (int) vec_size(estate->err_ctx_stack) - 1; i > (int) estate->cur_err_ctx_idx; i--)

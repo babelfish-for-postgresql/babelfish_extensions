@@ -267,7 +267,7 @@ babelfish_db_name(PG_FUNCTION_ARGS)
 	if (dbname == NULL)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(dbname));
+	PG_RETURN_TEXT_P(cstring_to_text(dbname));
 }
 
 /*

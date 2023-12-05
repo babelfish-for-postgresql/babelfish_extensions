@@ -725,7 +725,7 @@ user_name(PG_FUNCTION_ARGS)
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(user));
+	PG_RETURN_TEXT_P(cstring_to_text(user));
 }
 
 PG_FUNCTION_INFO_V1(user_id);
@@ -868,7 +868,7 @@ suser_name(PG_FUNCTION_ARGS)
 	if (!orig_loginname)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(orig_loginname));
+	PG_RETURN_TEXT_P(cstring_to_text(orig_loginname));
 }
 
 PG_FUNCTION_INFO_V1(suser_id);
@@ -970,7 +970,7 @@ drop_all_logins(PG_FUNCTION_ARGS)
 
 	while (rolname_list != NIL)
 	{
-		char	   *rolname = linitial(rolname_list);
+		char	   *rolname1 = linitial(rolname_list);
 
 		rolname_list = list_delete_first(rolname_list);
 
@@ -979,7 +979,7 @@ drop_all_logins(PG_FUNCTION_ARGS)
 			/* Advance cmd counter to make the delete visible */
 			CommandCounterIncrement();
 
-			parsetree_list = gen_droplogin_subcmds(rolname);
+			parsetree_list = gen_droplogin_subcmds(rolname1);
 
 			/* Run all subcommands */
 			foreach(parsetree_item, parsetree_list)

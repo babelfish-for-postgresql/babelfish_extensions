@@ -271,6 +271,7 @@ TriggerFault(FaultInjectorType_e type, void *arg)
 	foreach(lc, list)
 	{
 		FaultInjectorEntry_s *entry = (FaultInjectorEntry_s *) lfirst(lc);
+		ListCell   *lc1; 
 
 		/* otherwise it should have been removed */
 		Assert(entry->num_occurrences > 0);
@@ -285,11 +286,11 @@ TriggerFault(FaultInjectorType_e type, void *arg)
 			if (entry->num_occurrences == 0)
 				tmp_list = lappend(tmp_list, entry);
 
-			foreach(lc, tmp_list)
+			foreach(lc1, tmp_list)
 			{
-				FaultInjectorEntry_s *entry = (FaultInjectorEntry_s *) lfirst(lc);
+				FaultInjectorEntry_s *entry1 = (FaultInjectorEntry_s *) lfirst(lc1);
 
-				FaultInjectionDisableTest(entry);
+				FaultInjectionDisableTest(entry1);
 			}
 
 			list_free(tmp_list);

@@ -803,7 +803,7 @@ datetime_to_numeric(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
-	PG_RETURN_NUMERIC(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
+	return (DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }
 
 /*

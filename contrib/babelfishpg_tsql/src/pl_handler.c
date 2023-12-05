@@ -515,12 +515,12 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					/* Skip if dbid and owner column already exists */
 					foreach(lc, stmt->cols)
 					{
-						ResTarget  *col = (ResTarget *) lfirst(lc);
+						ResTarget  *col1 = (ResTarget *) lfirst(lc);
 
-						if (pg_strcasecmp(col->name, "dbid") == 0)
+						if (pg_strcasecmp(col1->name, "dbid") == 0)
 							dbid_found = true;
 						if (relid == sysdatabases_oid &&
-							pg_strcasecmp(col->name, "owner") == 0)
+							pg_strcasecmp(col1->name, "owner") == 0)
 							owner_found = true;
 					}
 					if (dbid_found && (owner_found || relid != sysdatabases_oid))
@@ -1015,6 +1015,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 										{
 											char	*colname = NULL;
 											int		 colname_len = 0;
+											ListCell *elements2;
 
 											/* T-SQL Parser might have directly prepared IndexElem instead of String*/
 											if (nodeTag(lfirst(lc)) == T_IndexElem) {
@@ -1026,12 +1027,12 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												colname_len = strlen(colname);
 											}
 
-											foreach(elements, stmt->tableElts)
+											foreach(elements2, stmt->tableElts)
 											{
-												Node	*element = lfirst(elements);
-												if (nodeTag(element) == T_ColumnDef)
+												Node	*element2 = lfirst(elements2);
+												if (nodeTag(element2) == T_ColumnDef)
 												{
-													ColumnDef* def = (ColumnDef *) element;
+													ColumnDef* def = (ColumnDef *) element2;
 
 													if (strlen(def->colname) == colname_len && 
 														strncmp(def->colname, colname, colname_len) == 0 && 
@@ -4299,7 +4300,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		scope_level = pltsql_new_scope_identity_nest_level();
 
 		prev_procid = procid_var;
-		PG_TRY();
+		PG_TRY(2);
 		{
 			set_procid(func->fn_oid);
 
@@ -4333,7 +4334,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 			set_procid(prev_procid);
 		}
-		PG_CATCH();
+		PG_CATCH(2);
 		{
 			set_procid(prev_procid);
 			/* Decrement use-count, restore cur_estate, and propagate error */
@@ -4347,7 +4348,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			sql_dialect = saved_dialect;
 			return retval;
 		}
-		PG_END_TRY();
+		PG_END_TRY(2);
 	}
 	PG_FINALLY();
 	{

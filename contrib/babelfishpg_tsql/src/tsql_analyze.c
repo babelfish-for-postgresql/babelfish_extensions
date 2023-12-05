@@ -362,7 +362,7 @@ fix_setop_typmods(ParseState *pstate, Query *qry)
 			RangeTblRef *rtref = (RangeTblRef*)setOp;
 			RangeTblEntry *rte;
 			List *targetList;
-			ListCell *tlistl, *collistl;
+			ListCell *tlistl;
 
 			if (rtref->rtindex <= 0 || rtref->rtindex > list_length(pstate->p_rtable))
 				elog(ERROR, "invalid RangeTblRef %d", rtref->rtindex);
