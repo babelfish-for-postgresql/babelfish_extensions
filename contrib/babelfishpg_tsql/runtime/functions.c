@@ -375,10 +375,10 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz)
 		{	
 			/*
 			* This block is used when the second argument in datepart is not a 
-			* date or time relate but instead general integer datatypes. datepart_internal converts the numeric (df_tz)
+			* date or time relate but instead general integer datatypes. datepart_internal converts the general integer datatypes (df_tz)
 			* into proper timestamp with days offset from 01/01/1970
-			* i.e. when num = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
-			* Converting the num into the appopriate timestamp that is ahead of 01/01/1970 by num days (and hours)
+			* i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
+			* Converting the num into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
 			*/
 
 			timestamp = (Timestamp)(((df_tz) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
