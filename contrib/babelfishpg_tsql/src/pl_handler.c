@@ -5230,8 +5230,7 @@ pltsql_revert_guc(int nest_level)
 	}
 
 	still_dirty = false;
-	num_guc_variables = GetNumConfigOptions();
-	guc_variables = get_guc_variables();
+	guc_variables = get_guc_variables(&num_guc_variables);
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];

@@ -116,8 +116,7 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 static void
 set_newval_to_product_version(char **newval)
 {
-	free(*newval);
-	*newval = strdup(product_version);
+	*newval = guc_strdup(LOG, product_version);
 	if (*newval == NULL)
 			ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),

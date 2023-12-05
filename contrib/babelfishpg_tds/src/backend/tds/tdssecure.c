@@ -38,8 +38,8 @@
 #include "src/include/tds_secure.h"
 #include "src/include/tds_int.h"
 
-int			tds_ssl_min_protocol_version;
-int			tds_ssl_max_protocol_version;
+int			tds_ssl_min_protocol_version = PG_TLS1_VERSION;
+int			tds_ssl_max_protocol_version = PG_TLS1_2_VERSION;
 #ifdef USE_SSL
 
 /*
