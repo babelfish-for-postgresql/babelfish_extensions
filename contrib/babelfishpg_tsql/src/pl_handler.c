@@ -4047,6 +4047,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* Set statement_timestamp() */
 	SetCurrentStatementStartTimestamp();
 
+	set_ps_display("active");
 	pgstat_report_activity(STATE_RUNNING, codeblock->source_text);
 
 	if (nargs > 1)
