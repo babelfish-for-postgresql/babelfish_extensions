@@ -3355,10 +3355,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					const char *prev_current_user;
 					const char *session_user_name;
+					StringInfoData query;
+					RoleSpec   *spec;
+					char	   *grantee_name;
 
 					check_alter_server_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+					initStringInfo(&query);
+					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
+					grantee_name = convertToUPN(spec->rolename);
+					if (grant_role->is_grant)
+						appendStringInfo(&query, "ALTER ROLE \"%s\" WITH CREATEDB CREATEROLE", grantee_name);
+					else
+						appendStringInfo(&query, "ALTER ROLE \"%s\" WITH NOCREATEDB NOCREATEROLE", grantee_name);
 
 					bbf_set_current_user(session_user_name);
 					PG_TRY();
@@ -3370,17 +3380,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-
+						exec_utility_cmd_helper(query.data);
 					}
 					PG_CATCH();
 					{
 						/* Clean up. Restore previous state. */
 						bbf_set_current_user(prev_current_user);
+						pfree(query.data);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 					/* Clean up. Restore previous state. */
 					bbf_set_current_user(prev_current_user);
+					pfree(query.data);
 					return;
 				}
 				else if (is_alter_role_stmt(grant_role))
