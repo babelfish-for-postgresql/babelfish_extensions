@@ -59,6 +59,23 @@ LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
 
 GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 
+DO $$
+DECLARE
+    nsp_name NAME;
+    error_msg text;
+BEGIN
+    FOR nsp_name IN (SELECT nspname FROM sys.babelfish_namespace_ext WHERE orig_name = 'dbo')
+    LOOP
+        BEGIN
+            EXECUTE 'CREATE OR REPLACE VIEW ' || nsp_name || '.sysdatabases AS
+            SELECT * FROM sys.sysdatabases';
+        EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'CREATE sysdatabases catalog view for database schema failed with error: %s', error_msg;
+		END;
+    END LOOP;
+END $$;
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysdatabases_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
