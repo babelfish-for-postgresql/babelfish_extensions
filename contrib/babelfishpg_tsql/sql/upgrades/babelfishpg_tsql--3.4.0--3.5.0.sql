@@ -63,14 +63,19 @@ DO $$
 DECLARE
     nsp_name NAME;
     error_msg text;
+    query1 text;
+    query2 text;
+    query3 text;
 BEGIN
     FOR nsp_name IN (SELECT nspname FROM sys.babelfish_namespace_ext WHERE orig_name = 'dbo')
     LOOP
         BEGIN
-            EXECUTE
-            'ALTER VIEW ' || nsp_name || '.sysdatabases RENAME TO ' || nsp_name || 'sysdatabases_deprecated_3_4;
-            CREATE OR REPLACE VIEW ' || nsp_name || '.sysdatabases AS SELECT * FROM sys.sysdatabases;
-            DROP VIEW ' || nsp_name || '.' || nsp_name || 'sysdatabases_deprecated_3_4;';
+            query1 := pg_catalog.format('ALTER VIEW %s.sysdatabases RENAME TO %s_sysdatabases_deprecated_3_4', nsp_name, nsp_name);
+            query2 := pg_catalog.format('CREATE OR REPLACE VIEW %s.sysdatabases AS SELECT * FROM sys.sysdatabases', nsp_name);
+            query3 := pg_catalog.format('DROP VIEW %s.%s_sysdatabases_deprecated_3_4', nsp_name,nsp_name);
+            execute query1;
+            execute query2;
+            execute query3;
         EXCEPTION WHEN OTHERS THEN
 			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
 			RAISE WARNING 'creation of database level sysdatabases catalog view failed with error: %s', error_msg;
