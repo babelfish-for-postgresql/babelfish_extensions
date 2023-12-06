@@ -67,8 +67,10 @@ BEGIN
     FOR nsp_name IN (SELECT nspname FROM sys.babelfish_namespace_ext WHERE orig_name = 'dbo')
     LOOP
         BEGIN
-            EXECUTE 'CREATE OR REPLACE VIEW ' || nsp_name || '.sysdatabases AS
-            SELECT * FROM sys.sysdatabases';
+            EXECUTE
+            'ALTER VIEW ' || nsp_name || '.sysdatabases RENAME TO ' || nsp_name || 'sysdatabases_deprecated_3_4;
+            CREATE OR REPLACE VIEW ' || nsp_name || '.sysdatabases AS SELECT * FROM sys.sysdatabases;
+            CALL sys.babelfish_drop_deprecated_object(''view'', ''' || nsp_name || ''', ''' || nsp_name || 'sysdatabases_deprecated_3_4'');';
         EXCEPTION WHEN OTHERS THEN
 			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
 			RAISE WARNING 'CREATE sysdatabases catalog view for database schema failed with error: %s', error_msg;
