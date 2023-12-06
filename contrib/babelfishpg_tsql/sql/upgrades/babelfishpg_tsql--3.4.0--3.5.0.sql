@@ -59,29 +59,32 @@ LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
 
 GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 
--- DO $$
--- DECLARE
---     nsp_name NAME;
---     error_msg text;
---     query1 text;
---     query2 text;
---     query3 text;
--- BEGIN
---     FOR nsp_name IN (SELECT nspname FROM sys.babelfish_namespace_ext WHERE orig_name = 'dbo')
---     LOOP
---         BEGIN
---             query1 := pg_catalog.format('ALTER VIEW %s.sysdatabases RENAME TO %s_sysdatabases_deprecated_3_4', nsp_name, nsp_name);
---             query2 := pg_catalog.format('CREATE OR REPLACE VIEW %s.sysdatabases AS SELECT * FROM sys.sysdatabases', nsp_name);
---             query3 := pg_catalog.format('DROP VIEW %s.%s_sysdatabases_deprecated_3_4', nsp_name,nsp_name);
---             execute query1;
---             execute query2;
---             execute query3;
---         EXCEPTION WHEN OTHERS THEN
--- 			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
--- 			RAISE WARNING 'creation of database level sysdatabases catalog view failed with error: %s', error_msg;
--- 		END;
---     END LOOP;
--- END $$;
+DO $$
+DECLARE
+    nsp_name NAME;
+    error_msg text;
+    query1 text;
+    query2 text;
+    query3 text;
+BEGIN
+    FOR nsp_name IN (SELECT nspname FROM sys.babelfish_namespace_ext WHERE orig_name = 'dbo')
+    LOOP
+        BEGIN
+            query1 := pg_catalog.format('ALTER VIEW %s.sysdatabases RENAME TO schema_sysdatabases_deprecated_3_4', nsp_name);
+            query2 := pg_catalog.format('CREATE OR REPLACE VIEW %s.sysdatabases AS SELECT * FROM sys.sysdatabases', nsp_name);
+            query3 := pg_catalog.format('DROP VIEW %s.schema_sysdatabases_deprecated_3_4', nsp_name);
+            RAISE INFO '%', query1;
+            RAISE INFO '%', query2;
+            RAISE INFO '%', query3;
+            execute query1;
+            execute query2;
+            execute query3;
+        EXCEPTION WHEN OTHERS THEN
+			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+			RAISE WARNING 'creation of database level sysdatabases catalog view failed with error: %', error_msg;
+		END;
+    END LOOP;
+END $$;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysdatabases_deprecated_3_4');
 
