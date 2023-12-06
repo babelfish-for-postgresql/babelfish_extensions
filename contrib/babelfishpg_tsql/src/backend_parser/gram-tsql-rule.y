@@ -33,11 +33,11 @@ tsql_CreateLoginStmt:
 											@1)); /* Must be first */
 					n->options = lappend(n->options,
 										 makeDefElem("createdb",
-													 (Node *)makeBoolean(false),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("createrole",
-													 (Node *)makeBoolean(false),
+													 (Node *)makeBoolean(true),
 													 @1));
 					n->options = lappend(n->options,
 										 makeDefElem("inherit",
