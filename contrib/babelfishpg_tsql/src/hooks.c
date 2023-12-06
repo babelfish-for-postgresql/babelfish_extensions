@@ -2083,7 +2083,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 	Oid			trigger_rel_oid = InvalidOid;
 
 
-	address.classId = InvalidOid;
+	address.classId = TriggerRelationId;
 	address.objectId = InvalidOid;
 	address.objectSubId = InvalidAttrNumber;
 
@@ -2102,7 +2102,6 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 	if (!OidIsValid(trigger_rel_oid))
 		return address;
 
-	address.classId = TriggerRelationId;
 	address.objectId = get_trigger_oid(trigger_rel_oid, depname, missing_ok);
 	address.objectSubId = 0;
 
