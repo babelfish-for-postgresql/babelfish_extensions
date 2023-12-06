@@ -1,3 +1,4 @@
+\c jdbc_testdb
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '3.4.0'" to load this file. \quit
 
@@ -70,10 +71,10 @@ BEGIN
             EXECUTE
             'ALTER VIEW ' || nsp_name || '.sysdatabases RENAME TO ' || nsp_name || 'sysdatabases_deprecated_3_4;
             CREATE OR REPLACE VIEW ' || nsp_name || '.sysdatabases AS SELECT * FROM sys.sysdatabases;
-            CALL sys.babelfish_drop_deprecated_object(''view'', ''' || nsp_name || ''', ''' || nsp_name || 'sysdatabases_deprecated_3_4'');';
+            DROP VIEW ' || nsp_name || '.' || nsp_name || 'sysdatabases_deprecated_3_4;';
         EXCEPTION WHEN OTHERS THEN
 			GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-			RAISE WARNING 'CREATE sysdatabases catalog view for database schema failed with error: %s', error_msg;
+			RAISE WARNING 'creation of database level sysdatabases catalog view failed with error: %s', error_msg;
 		END;
     END LOOP;
 END $$;
