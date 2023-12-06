@@ -159,7 +159,6 @@ sys-suser_sid
 sys-suser_sname
 sys-syscharsets
 sys-syscolumns
-sys-sysdatabases
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysobjects

@@ -364,7 +364,6 @@ sys-synonyms
 sys-syscharsets
 sys-syscolumns
 sys-syscolumns-dep
-sys-sysdatabases
 sys-sysforeignkeys
 sys-sysforeignkeys-dep
 sys-sysindexes
