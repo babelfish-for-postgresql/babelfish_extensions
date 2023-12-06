@@ -1380,7 +1380,7 @@ tsql_get_proc_oid(char *proname, Oid pronamespace, Oid user_id)
 		procform = (Form_pg_proc) GETSTRUCT(tuple);
 		/* then consider only procs in specified namespace */
 		if (procform->pronamespace == pronamespace &&
-			pg_proc_aclcheck(procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
+			object_aclcheck(ProcedureRelationId, procform->oid, user_id, ACL_EXECUTE) == ACLCHECK_OK)
 		{
 			result = procform->oid;
 

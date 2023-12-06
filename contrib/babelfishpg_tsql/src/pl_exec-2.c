@@ -8,6 +8,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "commands/proclang.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
@@ -3288,7 +3289,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	}
 
 	/* Permission check */
-	if (!(pg_namespace_ownercheck(nsp_oid, GetUserId()) ||
+	if (!(object_ownercheck(NamespaceRelationId, nsp_oid, GetUserId()) ||
 			has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)) ||
 				login_is_db_owner))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA, nsp_name);
@@ -3781,7 +3782,7 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 					stmt->schema_name)));
 
 	// Check if the user has necessary permissions for CREATE/DROP FULLTEXT INDEX
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId, schemaOid, GetUserId()))
 	{
 		const char *error_msg = is_create ? "A default full-text catalog does not exist in the database or user does not have permission to perform this action" : "Cannot drop the full-text index, because it does not exist or you do not have permission";
     	ereport(ERROR, 

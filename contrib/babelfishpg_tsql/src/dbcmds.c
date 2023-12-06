@@ -461,7 +461,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* dbowner is always sysadmin */
 	datdba = get_role_oid("sysadmin", false);
-	check_is_member_of_role(GetSessionUserId(), datdba);
+	check_can_set_role(GetSessionUserId(), datdba);
 
 	/* pre check availablity of critical structures */
 	dbo_scm = get_dbo_schema_name(dbname);
@@ -1078,7 +1078,7 @@ create_schema_if_not_exists(const uint16 dbid,
 	}
 
 	datdba = get_role_oid("sysadmin", false);
-	check_is_member_of_role(GetSessionUserId(), datdba);
+	check_can_set_role(GetSessionUserId(), datdba);
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE SCHEMA %s AUTHORIZATION %s; ", schemaname, owner_role);
