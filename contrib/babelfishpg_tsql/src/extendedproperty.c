@@ -1001,7 +1001,7 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 		ReleaseSysCache(heaptuple);
 
 		if (strcmp(type, ExtendedPropertyTypeNames[EXTENDED_PROPERTY_SCHEMA]) == 0 &&
-			pg_namespace_aclcheck(schema_id, cur_user_id, ACL_USAGE | ACL_CREATE) != ACLCHECK_OK)
+			object_aclcheck(NamespaceRelationId, schema_id, cur_user_id, ACL_USAGE | ACL_CREATE) != ACLCHECK_OK)
 			return false;
 
 		major_name = NameStr(bep->major_name);
@@ -1070,7 +1070,7 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 					strcmp(type, ExtendedPropertyTypeNames[EXTENDED_PROPERTY_FUNCTION]) == 0)
 				{
 					if (!find ||
-						pg_proc_aclcheck(procoid, cur_user_id, ACL_EXECUTE) != ACLCHECK_OK)
+						object_aclcheck(ProcedureRelationId, procoid, cur_user_id, ACL_EXECUTE) != ACLCHECK_OK)
 						return false;
 				}
 			}
@@ -1090,7 +1090,7 @@ get_extended_property_from_tuple(Relation relation, HeapTuple tuple,
 
 				if (strcmp(type, ExtendedPropertyTypeNames[EXTENDED_PROPERTY_TYPE]) == 0)
 				{
-					if (pg_type_aclcheck(typeoid, cur_user_id, ACL_USAGE) != ACLCHECK_OK)
+					if (object_aclcheck(TypeRelationId, typeoid, cur_user_id, ACL_USAGE) != ACLCHECK_OK)
 						return false;
 				}
 			}

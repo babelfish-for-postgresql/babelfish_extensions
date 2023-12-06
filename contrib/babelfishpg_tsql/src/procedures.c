@@ -3295,7 +3295,7 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 					 errmsg("function does not exist")));
 
 		/* check if the current user has priviledge on the function */
-		if (pg_proc_aclcheck(candidates->oid, user_id, ACL_EXECUTE) != ACLCHECK_OK)
+		if (object_aclcheck(ProcedureRelationId, candidates->oid, user_id, ACL_EXECUTE) != ACLCHECK_OK)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("current user does not have priviledges on the function")));
