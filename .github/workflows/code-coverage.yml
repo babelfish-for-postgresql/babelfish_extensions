@@ -1,20 +1,16 @@
 name: Code Coverage
 on:
   schedule:
-    - cron: '0 0 * * *'  # runs every midnight
+    - cron: '0 */2 * * *'  # runs every midnight
   
 jobs:
   run-code-coverage-tests:
     runs-on: ubuntu-20.04
     env:
       INSTALL_DIR: psql
-      BRANCH: BABEL_3_X_DEV
-      ENGINE_BRANCH: BABEL_3_X_DEV__PG_15_X
     steps:
       - uses: actions/checkout@v2
         id: checkout
-        with:
-          ref: ${{env.BRANCH}}
 
       - name: Install Dependencies
         id: install-dependencies
@@ -32,7 +28,6 @@ jobs:
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
-          engine_branch: ${{env.ENGINE_BRANCH}}
           install_dir: ${{env.INSTALL_DIR}}
           code_coverage: 'yes'
 
@@ -127,35 +122,35 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_tsql_${{env.BRANCH}}
+          name: coverage_tsql_${{github.ref_name}}
           path: contrib/babelfishpg_tsql/coverage/
 
       - name: Upload Coverage Report for babelfishpg_tds extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_tds_${{env.BRANCH}}
+          name: coverage_tds_${{github.ref_name}}
           path: contrib/babelfishpg_tds/coverage/
 
       - name: Upload Coverage Report for babelfishpg_common extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_common_${{env.BRANCH}}
+          name: coverage_common_${{github.ref_name}}
           path: contrib/babelfishpg_common/coverage/
 
       - name: Upload Coverage Report for babelfishpg_money extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_money_${{env.BRANCH}}
+          name: coverage_money_${{github.ref_name}}
           path: contrib/babelfishpg_money/coverage/
 
       - name: Download CSV report from previous run
         if: (github.event_name == 'schedule')
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: csv_${{env.BRANCH}}
+          name: csv_${{github.ref_name}}
           path: contrib/
           search_artifacts: true
           if_no_artifact_found: warn
@@ -164,12 +159,12 @@ jobs:
         if: (github.event_name == 'schedule')
         run: |
           cd contrib/
-          paste -s -d, <(date +"%m/%d/%Y %H:%M:%S";lcov --summary lcov.info | grep -Po "[0-9]+\.[0-9]*") >> ${{env.BRANCH}}.csv
+          paste -s -d, <(date +"%m/%d/%Y %H:%M:%S";lcov --summary lcov.info | grep -Po "[0-9]+\.[0-9]*") >> ${{github.ref_name}}.csv
         shell: bash
 
       - name: Upload CSV report with latest coverage numbers
         if: (github.event_name == 'schedule')
         uses: actions/upload-artifact@v3
         with:
-          name: csv_${{env.BRANCH}}
-          path: contrib/${{env.BRANCH}}.csv
+          name: csv_${{github.ref_name}}
+          path: contrib/${{github.ref_name}}.csv
