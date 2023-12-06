@@ -34,7 +34,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
-master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#varchar#!#128#!#256#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -67,7 +67,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#varchar#!#128#!#256#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -100,7 +100,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#varchar#!#128#!#256#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -123,7 +123,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases'
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-logical_database_db1#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#varchar#!#128#!#256#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
 logical_database_db1#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 logical_database_db1#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 logical_database_db1#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -160,7 +160,7 @@ select * from information_schema_tsql.columns where "TABLE_NAME"='sysdatabases';
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#varchar#!#"sys"."varchar"#!#int4#!#int4#!#int2#!#int2#!#int4#!#int2#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"
-logical_database_db1#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#C#!#<NULL>#!#<NULL>#!#<NULL>
+logical_database_db1#!#dbo#!#sysdatabases#!#name#!#1#!#<NULL>#!#YES#!#varchar#!#128#!#256#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
 logical_database_db1#!#dbo#!#sysdatabases#!#dbid#!#2#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 logical_database_db1#!#dbo#!#sysdatabases#!#sid#!#3#!#<NULL>#!#YES#!#varbinary#!#85#!#85#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 logical_database_db1#!#dbo#!#sysdatabases#!#mode#!#4#!#<NULL>#!#YES#!#smallint#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>

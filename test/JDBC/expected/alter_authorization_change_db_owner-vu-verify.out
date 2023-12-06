@@ -51,7 +51,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 msdb#!#new_OWNER_login
 ~~END~~
 
@@ -69,7 +69,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -79,7 +79,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -90,7 +90,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -191,7 +191,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -250,7 +250,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -265,7 +265,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db#!#dba_login
 ~~END~~
 
@@ -295,12 +295,12 @@ go
 exec p_change_db_owner_1
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 p_change_db_owner_1: before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 p_change_db_owner_1: after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -338,12 +338,12 @@ alter authorization on database::change_owner_db to new_owner_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 p_change_db_owner_2: before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 p_change_db_owner_2: after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -418,7 +418,7 @@ go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 before owner change#!#change_owner_db#!#dba_login
 ~~END~~
 
@@ -427,7 +427,7 @@ go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 after owner change#!#change_owner_db#!#new_OWNER_login
 ~~END~~
 
@@ -436,7 +436,7 @@ go
 select 'after rollback', name, suser_sname(sid) from sysdatabases where name = 'change_owner_db'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 after rollback#!#change_owner_db#!#dba_login
 ~~END~~
 
@@ -465,7 +465,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
@@ -474,7 +474,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db63long_012345678901234567890123456789012345678901234567890123#!#dba_login
 ~~END~~
 
@@ -483,7 +483,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
@@ -494,7 +494,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db63long_012345678901234567890123456789012345678901234567890123#!#dba_login
 ~~END~~
 
@@ -503,7 +503,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
@@ -535,7 +535,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
@@ -544,7 +544,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login
 ~~END~~
 
@@ -553,7 +553,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 
@@ -564,7 +564,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login
 ~~END~~
 
@@ -573,7 +573,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#LOGIN64long_3456789012345678901234567890123456789012345678901234
 ~~END~~
 

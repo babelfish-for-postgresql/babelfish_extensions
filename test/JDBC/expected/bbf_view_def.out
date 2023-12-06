@@ -90,7 +90,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like '%def_%' order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-text#!#varchar#!#varchar#!#ntext
+varchar#!#varchar#!#varchar#!#ntext
 master#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;
 master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;
 ~~END~~
@@ -205,7 +205,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from sys.babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('def_vwalt') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-text#!#"sys"."varchar"#!#"sys"."varchar"#!#text
+"sys"."varchar"#!#"sys"."varchar"#!#"sys"."varchar"#!#text
 master#!#dbo#!#def_vwalt#!#create view def_vwalt as select 123 as a;
 ~~END~~
 
@@ -251,7 +251,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-text#!#varchar#!#varchar#!#ntext
+varchar#!#varchar#!#varchar#!#ntext
 master#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;
 master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;
 ~~END~~
@@ -268,7 +268,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-text#!#varchar#!#varchar#!#ntext
+varchar#!#varchar#!#varchar#!#ntext
 master#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;
 master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;
 master#!#def_sch1#!#def_v1#!#create view def_sch1.def_v1 as select 1;
@@ -293,7 +293,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%db1_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-text#!#varchar#!#varchar#!#ntext
+varchar#!#varchar#!#varchar#!#ntext
 db1#!#db1_sch1#!#db1_v2#!#create view db1_sch1.db1_v2 as select 2;
 db1#!#dbo#!#db1_v1#!#create view db1_v1 as select 1;
 ~~END~~
@@ -317,7 +317,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%db1_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-text#!#varchar#!#varchar#!#ntext
+varchar#!#varchar#!#varchar#!#ntext
 ~~END~~
 
 

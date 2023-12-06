@@ -51,7 +51,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 msdb#!#new_OWNER_login_sp
 ~~END~~
 
@@ -60,7 +60,7 @@ go
 select name, suser_sname(sid) from sysdatabases where name = 'msdb'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 msdb#!#dba_login_sp
 ~~END~~
 
@@ -86,7 +86,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#dba_login_sp
 ~~END~~
 
@@ -109,7 +109,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#dba_login_sp
 ~~END~~
 
@@ -120,7 +120,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -147,7 +147,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp2
 ~~END~~
 
@@ -156,7 +156,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp3
 ~~END~~
 
@@ -165,7 +165,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp3
 ~~END~~
 
@@ -174,7 +174,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp 4
 ~~END~~
 
@@ -183,7 +183,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp5
 ~~END~~
 
@@ -192,7 +192,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp 6
 ~~END~~
 
@@ -218,7 +218,7 @@ dbo#!#change_owner_db_sp
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -227,7 +227,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -236,7 +236,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -245,7 +245,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -261,7 +261,7 @@ go
 select 'before owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 before owner change#!#change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -270,7 +270,7 @@ go
 select 'after owner change', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 after owner change#!#change_owner_db_sp#!#new_OWNER_login_sp2
 ~~END~~
 
@@ -279,7 +279,7 @@ go
 select 'after rollback', name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-varchar#!#text#!#nvarchar
+varchar#!#varchar#!#nvarchar
 after rollback#!#change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -291,7 +291,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -300,7 +300,7 @@ go
 select name, suser_sname(sid) from sysdatabases where lower(name) = 'change_owner_db_sp'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 change_owner_db_sp#!#new_OWNER_login_sp
 ~~END~~
 
@@ -353,7 +353,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB63LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db63long_012345678901234567890123456789012345678901234567890123#!#LOGIN63long_345678901234567890123456789012345678901234567890123
 ~~END~~
 
@@ -392,7 +392,7 @@ go
 select name, suser_sname(sid) from sysdatabases where upper(name) like 'DB64LONG%'
 go
 ~~START~~
-text#!#nvarchar
+varchar#!#nvarchar
 db64long_012345678901234567890109e0da63a1cdb0673c21e39afa6178e9#!#dba_login_sp
 ~~END~~
 

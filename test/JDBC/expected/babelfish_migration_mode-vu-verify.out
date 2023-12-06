@@ -172,7 +172,7 @@ WHERE name LIKE 'babelfish_migration_mode%'
 ORDER BY name
 GO
 ~~START~~
-text
+varchar
 babelfish_migration_mode_db1
 babelfish_migration_mode_db2
 ~~END~~
