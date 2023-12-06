@@ -3366,9 +3366,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
 					grantee_name = convertToUPN(spec->rolename);
 					if (grant_role->is_grant)
-						appendStringInfo(&query, "ALTER ROLE \"%s\" WITH CREATEDB CREATEROLE", grantee_name);
+						appendStringInfo(&query, "ALTER USER \"%s\" WITH CREATEDB CREATEROLE", grantee_name);
 					else
-						appendStringInfo(&query, "ALTER ROLE \"%s\" WITH NOCREATEDB NOCREATEROLE", grantee_name);
+						appendStringInfo(&query, "ALTER USER \"%s\" WITH NOCREATEDB NOCREATEROLE", grantee_name);
 
 					bbf_set_current_user(session_user_name);
 					PG_TRY();
@@ -3380,7 +3380,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-						exec_utility_cmd_helper(query.data);
+						if (strcmp(queryString, "(CREATE DATABASE )") != 0)
+							exec_utility_cmd_helper(query.data);
+
 					}
 					PG_CATCH();
 					{
