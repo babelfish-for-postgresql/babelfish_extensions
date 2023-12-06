@@ -59,7 +59,7 @@ LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
 
 GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'sysdatabases_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysdatabases_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
