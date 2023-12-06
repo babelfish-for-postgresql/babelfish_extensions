@@ -45,7 +45,7 @@ GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
 SELECT
-t.name,
+CAST(t.name as sys.sysname),
 sys.db_id(t.name) AS dbid,
 CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
 CAST(0 AS SMALLINT) AS mode,

@@ -24,3 +24,12 @@ BEGIN
 RETURN (SELECT COUNT(*) FROM sys.sysdatabases WHERE name LIKE 'sys_sysdatabases_vu_prepare_db%')
 END
 GO
+
+-- test case-sensitivity
+CREATE VIEW sys_sysdatabases_vu_prepare_view_case
+AS
+SELECT name, cmptlevel 
+FROM sys.sysdatabases 
+WHERE name LIKE 'SYS_sysdatabases_vu_prepare_db%'
+ORDER BY name
+GO

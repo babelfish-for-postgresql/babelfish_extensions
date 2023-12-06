@@ -38,6 +38,29 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+ALTER VIEW sys.sysdatabases RENAME TO sysdatabases_deprecated_3_4;
+
+CREATE OR REPLACE VIEW sys.sysdatabases AS
+SELECT
+CAST(t.name as sys.sysname),
+sys.db_id(t.name) AS dbid,
+CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
+CAST(0 AS SMALLINT) AS mode,
+t.status,
+t.status2,
+CAST(t.crdate AS SYS.DATETIME) AS crdate,
+CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
+CAST(0 AS INT) AS category,
+CAST(120 AS SYS.TINYINT) AS cmptlevel,
+CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
+CAST(NULL AS SMALLINT) AS version
+FROM sys.babelfish_sysdatabases AS t
+LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
+
+GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'sysdatabases_deprecated_3_4');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

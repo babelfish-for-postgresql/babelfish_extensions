@@ -2,7 +2,7 @@
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-text
+varchar
 master
 msdb
 tempdb
@@ -84,7 +84,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-text
+varchar
 db1
 master
 msdb
@@ -196,7 +196,7 @@ multi-db
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-text
+varchar
 master
 msdb
 tempdb
@@ -266,7 +266,7 @@ GO
 SELECT name FROM sys.sysdatabases ORDER BY name;
 GO
 ~~START~~
-text
+varchar
 master
 msdb
 tempdb

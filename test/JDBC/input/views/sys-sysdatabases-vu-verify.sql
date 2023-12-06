@@ -1,6 +1,9 @@
 SELECT * FROM sys_sysdatabases_vu_prepare_view
 GO
 
+SELECT * FROM sys_sysdatabases_vu_prepare_view_case
+GO
+
 EXEC sys_sysdatabases_vu_prepare_proc
 GO
 
