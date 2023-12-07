@@ -238,7 +238,7 @@ ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_
 
 ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated_3_4;
 
-CREATE OR REPLACE TABLE sys.babelfish_authid_login_ext (
+CREATE TABLE sys.babelfish_authid_login_ext (
 rolname NAME NOT NULL, -- pg_authid.rolname
 is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
 type sys.bpchar(1) NOT NULL DEFAULT 'S',
