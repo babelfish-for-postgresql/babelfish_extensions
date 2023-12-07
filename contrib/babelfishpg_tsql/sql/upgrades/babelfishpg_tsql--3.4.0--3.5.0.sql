@@ -56,8 +56,6 @@ and (c.connamespace in (select schema_id from sys.schemas))
 and has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_4');
-
 ALTER VIEW sys.system_objects RENAME TO system_objects_deprecated_3_4;
 
 create or replace view sys.system_objects as
@@ -69,8 +67,6 @@ select
 inner join pg_namespace s on s.oid = o.schema_id
 where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
-
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_4');
 
 ALTER VIEW sys.syscolumns RENAME TO syscolumns_deprecated_3_4;
 
@@ -141,8 +137,6 @@ SELECT p.name
 FROM sys.proc_param_helper() as p;
 GRANT SELECT ON sys.syscolumns TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_3_4');
-
 ALTER VIEW sys.dm_exec_connections RENAME TO dm_exec_connections_deprecated_3_4;
 
 create or replace view sys.dm_exec_connections
@@ -173,7 +167,6 @@ create or replace view sys.dm_exec_connections
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
  GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_connections_deprecated_3_4');
 
 ALTER VIEW sys.xml_indexes RENAME TO xml_indexes_connections_deprecated_3_4;
 
@@ -209,7 +202,6 @@ FROM  sys.indexes idx
 WHERE idx.type = 3; -- 3 is of type XML
 GRANT SELECT ON sys.xml_indexes TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_connections_deprecated_3_4');
 
 ALTER VIEW sys.stats RENAME TO stats__deprecated_3_4;
 
@@ -232,27 +224,10 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_4');
 
-ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_3_4;
+ALTER TABLE sys.babelfish_authid_login_ext ALTER COLUMN type TYPE sys.bpchar(1);
 
 ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated_3_4;
-
-CREATE TABLE sys.babelfish_authid_login_ext (
-rolname NAME NOT NULL, -- pg_authid.rolname
-is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
-type sys.bpchar(1) NOT NULL DEFAULT 'S',
-credential_id INT NOT NULL,
-owning_principal_id INT NOT NULL,
-is_fixed_role INT NOT NULL DEFAULT 0,
-create_date timestamptz NOT NULL,
-modify_date timestamptz NOT NULL,
-default_database_name SYS.NVARCHAR(128) NOT NULL,
-default_language_name SYS.NVARCHAR(128) NOT NULL,
-properties JSONB,
-orig_loginname SYS.NVARCHAR(128) NOT NULL,
-PRIMARY KEY (rolname));
-GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
@@ -417,6 +392,12 @@ WHERE Base.type in ('S', 'U');
 
 GRANT SELECT ON sys.syslogins TO PUBLIC;
 
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_connections_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_connections_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_4');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_principals_deprecated_3_4');
 CALL sys.babelfish_drop_deprecated_object('table', 'sys', 'babelfish_authid_login_ext_deprecated_3_4');
 
