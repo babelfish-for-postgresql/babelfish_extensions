@@ -803,7 +803,7 @@ BeginBulkCopy(Relation rel,
 	}
 
 	/* Check access permissions. */
-	ExecCheckPermissions(pstate->p_rtable, list_make1(perminfo), true);
+	ExecCheckPermissions(pstate->p_rtable, pstate->p_rteperminfos, true);
 
 	/* Permission check for row security policies. */
 	if (check_enable_rls(perminfo->relid, InvalidOid, false) == RLS_ENABLED)
