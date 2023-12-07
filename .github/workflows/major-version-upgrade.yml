@@ -123,6 +123,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
+          release_mode: 'yes'
 
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
