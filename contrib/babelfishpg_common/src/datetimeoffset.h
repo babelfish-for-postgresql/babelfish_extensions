@@ -20,9 +20,9 @@
 
 
 extern void AdjustTimestampForSmallDatetime(Timestamp *time);
-extern void CheckSmalldatetimeRange(const Timestamp time);
-extern void CheckDatetimeRange(const Timestamp time);
-extern void CheckDatetime2Range(const Timestamp time);
+extern void CheckSmalldatetimeRange(const Timestamp time, Node *escontext);
+extern void CheckDatetimeRange(const Timestamp time, Node *escontext);
+extern void CheckDatetime2Range(const Timestamp time, Node *escontext);
 extern Datum timestamp_datetimeoffset(PG_FUNCTION_ARGS);
 typedef struct tsql_datetimeoffset
 {

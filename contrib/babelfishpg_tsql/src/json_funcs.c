@@ -94,7 +94,7 @@ tsql_jsonb_in(text *json_text)
 	tok = lex_first_token->token_type;
 	if (result_first_token != JSON_SUCCESS ||
 		(tok != JSON_TOKEN_OBJECT_START && tok != JSON_TOKEN_ARRAY_START))
-		json_ereport_error(result_first_token, lex_first_token);
+		json_errsave_error(result_first_token, lex_first_token, NULL);
 
 	/* convert json expression to jsonb */
 	return DirectFunctionCall1(jsonb_in, CStringGetDatum(text_to_cstring(json_text)));
