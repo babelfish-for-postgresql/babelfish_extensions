@@ -234,6 +234,191 @@ GRANT SELECT ON sys.stats TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_4');
 
+ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_3_4;
+
+ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated_3_4;
+
+CREATE OR REPLACE TABLE sys.babelfish_authid_login_ext (
+rolname NAME NOT NULL, -- pg_authid.rolname
+is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
+type sys.bpchar(1) NOT NULL DEFAULT 'S',
+credential_id INT NOT NULL,
+owning_principal_id INT NOT NULL,
+is_fixed_role INT NOT NULL DEFAULT 0,
+create_date timestamptz NOT NULL,
+modify_date timestamptz NOT NULL,
+default_database_name SYS.NVARCHAR(128) NOT NULL,
+default_language_name SYS.NVARCHAR(128) NOT NULL,
+properties JSONB,
+orig_loginname SYS.NVARCHAR(128) NOT NULL,
+PRIMARY KEY (rolname));
+GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+Ext.type as type,
+CAST(
+  CASE
+    WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+    WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+    WHEN Ext.type = 'U' THEN 'WINDOWS_LOGIN'
+    ELSE NULL
+  END
+  AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
+WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+OR Ext.orig_loginname = suser_name()
+OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
+OR Ext.type = 'R';
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.server_role_members AS
+SELECT
+CAST(Authmbr.roleid AS INT) AS role_principal_id,
+CAST(Authmbr.member AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.type = 'R';
+
+GRANT SELECT ON sys.server_role_members TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STABLE STRICT
+AS $$
+declare return_value text;
+begin
+	RETURN (select orig_loginname from sys.babelfish_authid_login_ext where rolname = session_user)::sys.sysname;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
+RETURNS INTEGER AS
+$$
+DECLARE has_role BOOLEAN;
+DECLARE login_valid BOOLEAN;
+BEGIN
+	role  := TRIM(trailing from LOWER(role));
+	login := TRIM(trailing from LOWER(login));
+	
+	login_valid = (login = suser_name()) OR 
+		(EXISTS (SELECT name
+	 			FROM sys.server_principals
+		 	 	WHERE 
+				LOWER(name) = login 
+				AND type = 'S'));
+ 	
+ 	IF NOT login_valid THEN
+ 		RETURN NULL;
+    
+    ELSIF role = 'public' THEN
+    	RETURN 1;
+	
+ 	ELSIF role = 'sysadmin' THEN
+	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
+	    IF has_role THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	
+    ELSIF role IN (
+            'serveradmin',
+            'securityadmin',
+            'setupadmin',
+            'securityadmin',
+            'processadmin',
+            'dbcreator',
+            'diskadmin',
+            'bulkadmin') THEN 
+    	RETURN 0;
+ 	
+    ELSE
+ 		  RETURN NULL;
+ 	END IF;
+	
+ 	EXCEPTION WHEN OTHERS THEN
+	 	  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE VIEW sys.syslogins
+AS SELECT 
+Base.sid AS sid,
+CAST(9 AS SYS.TINYINT) AS status,
+Base.create_date AS createdate,
+Base.modify_date AS updatedate,
+Base.create_date AS accdate,
+CAST(0 AS INT) AS totcpu,
+CAST(0 AS INT) AS totio,
+CAST(0 AS INT) AS spacelimit,
+CAST(0 AS INT) AS timelimit,
+CAST(0 AS INT) AS resultlimit,
+Base.name AS name,
+Base.default_database_name AS dbname,
+Base.default_language_name AS default_language_name,
+CAST(Base.name AS SYS.NVARCHAR(128)) AS loginname,
+CAST(NULL AS SYS.NVARCHAR(128)) AS password,
+CAST(0 AS INT) AS denylogin,
+CAST(1 AS INT) AS hasaccess,
+CAST( 
+  CASE 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' OR Base.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntname,
+CAST(
+   CASE 
+    WHEN Base.type_desc = 'WINDOWS_GROUP' THEN 1 
+    ELSE 0
+  END
+  AS INT) AS isntgroup,
+CAST(
+  CASE 
+    WHEN Base.type_desc = 'WINDOWS_LOGIN' THEN 1 
+    ELSE 0
+  END
+AS INT) AS isntuser,
+CAST(
+    CASE
+        WHEN is_srvrolemember('sysadmin', Base.name) = 1 THEN 1
+        ELSE 0
+    END
+AS INT) AS sysadmin,
+CAST(0 AS INT) AS securityadmin,
+CAST(0 AS INT) AS serveradmin,
+CAST(0 AS INT) AS setupadmin,
+CAST(0 AS INT) AS processadmin,
+CAST(0 AS INT) AS diskadmin,
+CAST(0 AS INT) AS dbcreator,
+CAST(0 AS INT) AS bulkadmin
+FROM sys.server_principals AS Base
+WHERE Base.type in ('S', 'U');
+
+GRANT SELECT ON sys.syslogins TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_principals_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('table', 'sys', 'babelfish_authid_login_ext_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -302,7 +302,7 @@ $$;
 CREATE TABLE sys.babelfish_authid_login_ext (
 rolname NAME NOT NULL, -- pg_authid.rolname
 is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
-type CHAR(1) NOT NULL DEFAULT 'S',
+type sys.bpchar(1) NOT NULL DEFAULT 'S',
 credential_id INT NOT NULL,
 owning_principal_id INT NOT NULL,
 is_fixed_role INT NOT NULL DEFAULT 0,
@@ -321,7 +321,7 @@ AS SELECT
 CAST(Ext.orig_loginname AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
 CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
-CAST(Ext.type AS CHAR(1)) as type,
+Ext.type as type,
 CAST(
   CASE
     WHEN Ext.type = 'S' THEN 'SQL_LOGIN'

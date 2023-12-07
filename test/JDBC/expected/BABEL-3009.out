@@ -15,7 +15,7 @@ name#!#sysname
 owning_principal_id#!#int
 principal_id#!#int
 sid#!#varbinary
-type#!#<NULL>
+type#!#char
 type_desc#!#nvarchar
 ~~END~~
 
