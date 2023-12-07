@@ -3360,14 +3360,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					char	   *grantee_name;
 					bool		is_windows_login = false;
 
-					check_alter_server_stmt(grant_role);
-					prev_current_user = GetUserNameFromId(GetUserId(), false);
-					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
-					initStringInfo(&query);
 					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
 					grantee_name = convertToUPN(spec->rolename);
 					if ((strcmp(grantee_name, spec->rolename) != 0))
 						is_windows_login = true;
+					check_alter_server_stmt(grant_role);
+					prev_current_user = GetUserNameFromId(GetUserId(), false);
+					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+					initStringInfo(&query);
 					if (grant_role->is_grant)
 						appendStringInfo(&query, "ALTER USER \"%s\" WITH CREATEDB CREATEROLE", spec->rolename);
 					else
