@@ -61,9 +61,9 @@ hex_cont [0-9A-Za-z]
  */
 %s		tsql
 tsql_ident		@{ident_cont}*
-tsql_money_with_one_byte		{currency_symbol_with_one_byte}{space}*[-+]?{digit}*\.?{digit}*
-tsql_money_with_two_byte		{currency_symbol_with_two_byte}{space}*[-+]?{digit}*\.?{digit}*
-tsql_money_with_three_byte		{currency_symbol_with_three_byte}{space}*[-+]?{digit}*\.?{digit}*
+tsql_money_with_one_byte		{currency_symbol_with_one_byte}{space}*[-+]?{decdigit}*\.?{decdigit}*
+tsql_money_with_two_byte		{currency_symbol_with_two_byte}{space}*[-+]?{decdigit}*\.?{decdigit}*
+tsql_money_with_three_byte		{currency_symbol_with_three_byte}{space}*[-+]?{decdigit}*\.?{decdigit}*
 tsql_atat		"@@"
 tsql_hex		0[xX]{hex_cont}*
 tsql_ttname		\#?\#{ident_cont}*
