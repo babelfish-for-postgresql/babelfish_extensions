@@ -485,7 +485,7 @@ serverproperty(PG_FUNCTION_ARGS)
 	{
 		/* We need a valid date in here */
 		const char *date = "2021-01-01 00:00:00-08";
-		Datum		data = (*common_utility_plugin_ptr->datetime_in_str) ((char *) date);
+		Datum		data = (*common_utility_plugin_ptr->datetime_in_str) ((char *) date, fcinfo->context);
 
 		/*
 		 * bytea        *result  =

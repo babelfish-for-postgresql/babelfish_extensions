@@ -33,8 +33,8 @@ PG_FUNCTION_INFO_V1(datetime2_char);
 PG_FUNCTION_INFO_V1(char_datetime2);
 
 static void AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod);
-static Datum datetime2_in_str(char *str, int32 typmod);
-void		CheckDatetime2Range(const Timestamp time);
+static Datum datetime2_in_str(char *str, int32 typmod, Node *escontext);
+void		CheckDatetime2Range(const Timestamp time, Node *escontext);
 
 /* datetime2_in_str()
  * Convert a string to internal form.
@@ -42,7 +42,7 @@ void		CheckDatetime2Range(const Timestamp time);
  * but we use a different rounding function for datetime2.
  */
 static Datum
-datetime2_in_str(char *str, int32 typmod)
+datetime2_in_str(char *str, int32 typmod, Node *escontext)
 {
 	Timestamp	result;
 	fsec_t		fsec;
@@ -52,10 +52,10 @@ datetime2_in_str(char *str, int32 typmod)
 	int			dtype;
 	int			nf;
 	int			dterr;
-	DateTimeErrorExtra extra;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	DateTimeErrorExtra extra;
 
 	/* Set input to default '1900-01-01 00:00:00.* if empty string encountered */
 	if (*str == '\0')
@@ -69,7 +69,8 @@ datetime2_in_str(char *str, int32 typmod)
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
-		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, &extra);
+		dterr = DecodeDateTime(field, ftype, nf, 
+							   &dtype, tm, &fsec, &tz, &extra);
 
 	/*
 	 * dterr == 1 means that input is TIME format(e.g 12:34:59.123) initialize
@@ -84,7 +85,7 @@ datetime2_in_str(char *str, int32 typmod)
 	}
 
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "datetime2", NULL);
+		DateTimeParseError(dterr, &extra, str, "datetime2", escontext);
 
 	/*
 	 * Caps upper limit on fractional seconds(999999 microseconds) so that the
@@ -127,7 +128,7 @@ datetime2_in_str(char *str, int32 typmod)
 			TIMESTAMP_NOEND(result);
 	}
 	AdjustDatetime2ForTypmod(&result, typmod);
-	CheckDatetime2Range(result);
+	CheckDatetime2Range(result, escontext);
 
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -146,7 +147,7 @@ datetime2_in(PG_FUNCTION_ARGS)
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 
-	return datetime2_in_str(str, typmod);
+	return datetime2_in_str(str, typmod, fcinfo->context);
 }
 
 /* AdjustDatetime2ForTypmod()
@@ -230,11 +231,11 @@ AdjustDatetime2ForTypmod(Timestamp *time, int32 typmod)
  * Check if timestamp is out of range for datetime2
  */
 void
-CheckDatetime2Range(const Timestamp time)
+CheckDatetime2Range(const Timestamp time, Node *escontext)
 {
 	if (!IS_VALID_DATETIME2(time))
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for datetime2")));
 	}
@@ -296,7 +297,7 @@ timestamp_datetime2(PG_FUNCTION_ARGS)
 {
 	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
-	CheckDatetime2Range(result);
+	CheckDatetime2Range(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -327,7 +328,7 @@ timestamptz_datetime2(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("data out of range for datetime2")));
 	}
-	CheckDatetime2Range(result);
+	CheckDatetime2Range(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -383,7 +384,7 @@ varchar_datetime2(PG_FUNCTION_ARGS)
 	Datum		txt = PG_GETARG_DATUM(0);
 	char	   *str = TextDatumGetCString(txt);
 
-	return datetime2_in_str(str, MAX_TIMESTAMP_PRECISION);
+	return datetime2_in_str(str, MAX_TIMESTAMP_PRECISION, fcinfo->context);
 }
 
 /* datetime2_char()
@@ -424,5 +425,5 @@ char_datetime2(PG_FUNCTION_ARGS)
 	Datum		txt = PG_GETARG_DATUM(0);
 	char	   *str = TextDatumGetCString(txt);
 
-	return datetime2_in_str(str, MAX_TIMESTAMP_PRECISION);
+	return datetime2_in_str(str, MAX_TIMESTAMP_PRECISION, fcinfo->context);
 }

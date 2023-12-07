@@ -868,7 +868,7 @@ varchar2float8(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(0);
 
 	num = varchar2cstring(source);
-	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
+	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num, fcinfo->context));
 }
 
 Datum
@@ -1341,7 +1341,7 @@ bpchar2float8(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(0);
 
 	num = bpchar2cstring(source);
-	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
+	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num, fcinfo->context));
 }
 
 static inline int

@@ -41,6 +41,6 @@ extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
 
-extern Datum datetime_in_str(char *str);
+extern Datum datetime_in_str(char *str, Node *escontext);
 
 #endif							/* PLTSQL_DATETIME_H */

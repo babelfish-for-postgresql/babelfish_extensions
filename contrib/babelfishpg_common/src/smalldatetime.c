@@ -51,8 +51,8 @@ PG_FUNCTION_INFO_V1(smalldatetime_pl_smalldatetime);
 PG_FUNCTION_INFO_V1(smalldatetime_mi_smalldatetime);
 
 void		AdjustTimestampForSmallDatetime(Timestamp *time);
-void		CheckSmalldatetimeRange(const Timestamp time);
-static Datum smalldatetime_in_str(char *str);
+void		CheckSmalldatetimeRange(const Timestamp time, Node *escontext);
+static Datum smalldatetime_in_str(char *str, Node *escontext);
 
 /* smalldatetime_in_str()
  * Convert a string to internal form.
@@ -60,7 +60,7 @@ static Datum smalldatetime_in_str(char *str);
  * but we use a different rounding function for smalldatetime.
  */
 static Datum
-smalldatetime_in_str(char *str)
+smalldatetime_in_str(char *str, Node *escontext)
 {
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
@@ -73,10 +73,10 @@ smalldatetime_in_str(char *str)
 	int			dtype;
 	int			nf;
 	int			dterr;
-	DateTimeErrorExtra extra;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+	DateTimeErrorExtra extra;
 
 	/* Set input to default '1900-01-01 00:00:00' if empty string encountered */
 	if (*str == '\0')
@@ -91,7 +91,8 @@ smalldatetime_in_str(char *str)
 						  field, ftype, MAXDATEFIELDS, &nf);
 
 	if (dterr == 0)
-		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, &extra);
+		dterr = DecodeDateTime(field, ftype, nf, 
+							   &dtype, tm, &fsec, &tz, &extra);
 	/* dterr == 1 means that input is TIME format(e.g 12:34:59.123) */
 	/* initialize other necessary date parts and accept input format */
 	if (dterr == 1)
@@ -102,7 +103,7 @@ smalldatetime_in_str(char *str)
 		dterr = 0;
 	}
 	if (dterr != 0)
-		DateTimeParseError(dterr, &extra, str, "smalldatetime", NULL);
+		DateTimeParseError(dterr, &extra, str, "smalldatetime", escontext);
 	switch (dtype)
 	{
 		case DTK_DATE:
@@ -130,7 +131,7 @@ smalldatetime_in_str(char *str)
 			TIMESTAMP_NOEND(result);
 	}
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, escontext);
 	AdjustTimestampForSmallDatetime(&result);
 
 	PG_RETURN_TIMESTAMP(result);
@@ -146,14 +147,14 @@ smalldatetime_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 
-	return smalldatetime_in_str(str);
+	return smalldatetime_in_str(str, fcinfo->context);
 }
 
 /*
  * CheckSmalldatetimeRange --- Check if timestamp is out of range for smalldatetime
  */
 void
-CheckSmalldatetimeRange(const Timestamp time)
+CheckSmalldatetimeRange(const Timestamp time, Node *escontext)
 {
 	/*
 	 * the lower bound and uppbound stands for 1899-12-31 23:59:29.999 and
@@ -164,7 +165,7 @@ CheckSmalldatetimeRange(const Timestamp time)
 
 	if (time < lower_bound || time >= upper_bound)
 	{
-		ereport(ERROR,
+		errsave(escontext,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("data out of range for smalldatetime")));
 	}
@@ -253,7 +254,7 @@ date_smalldatetime(PG_FUNCTION_ARGS)
 	else
 		result = dateVal * USECS_PER_DAY;
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -265,7 +266,7 @@ timestamp_smalldatetime(PG_FUNCTION_ARGS)
 {
 	Timestamp	result = PG_GETARG_TIMESTAMP(0);
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	AdjustTimestampForSmallDatetime(&result);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -297,7 +298,7 @@ timestamptz_smalldatetime(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("data out of range for smalldatetime")));
 	}
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	AdjustTimestampForSmallDatetime(&result);
 	PG_RETURN_TIMESTAMP(result);
 }
@@ -340,7 +341,7 @@ varchar_smalldatetime(PG_FUNCTION_ARGS)
 	Datum		txt = PG_GETARG_DATUM(0);
 	char	   *str = TextDatumGetCString(txt);
 
-	return smalldatetime_in_str(str);
+	return smalldatetime_in_str(str, fcinfo->context);
 }
 
 /* smalldatetime_char()
@@ -381,7 +382,7 @@ char_smalldatetime(PG_FUNCTION_ARGS)
 	Datum		txt = PG_GETARG_DATUM(0);
 	char	   *str = TextDatumGetCString(txt);
 
-	return smalldatetime_in_str(str);
+	return smalldatetime_in_str(str, fcinfo->context);
 }
 
 /*
@@ -408,7 +409,7 @@ smalldatetime_pl_int4(PG_FUNCTION_ARGS)
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -454,7 +455,7 @@ int4_mi_smalldatetime(PG_FUNCTION_ARGS)
 	 */
 	result = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(result_interval));
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -517,7 +518,7 @@ smalldatetime_pl_float8(PG_FUNCTION_ARGS)
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -567,7 +568,7 @@ float8_mi_smalldatetime(PG_FUNCTION_ARGS)
 	result = DirectFunctionCall2(timestamp_pl_interval, default_timestamp, PointerGetDatum(result_interval));
 
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -599,7 +600,7 @@ float8_pl_smalldatetime(PG_FUNCTION_ARGS)
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -632,7 +633,7 @@ smalldatetime_mi_float8(PG_FUNCTION_ARGS)
 	/* subtract interval */
 	result = DirectFunctionCall2(timestamp_mi_interval, timestamp, PointerGetDatum(input_interval));
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -653,7 +654,7 @@ smalldatetime_pl_smalldatetime(PG_FUNCTION_ARGS)
 	/* add interval */
 	result = timestamp1 + diff;
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -674,7 +675,7 @@ smalldatetime_mi_smalldatetime(PG_FUNCTION_ARGS)
 	/* subtract interval */
 	result = timestamp1 - diff;
 
-	CheckSmalldatetimeRange(result);
+	CheckSmalldatetimeRange(result, fcinfo->context);
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -732,5 +733,5 @@ smalldatetime_to_numeric(PG_FUNCTION_ARGS)
 {
 	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
 	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
-	return (DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
+	PG_RETURN_DATUM(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }
