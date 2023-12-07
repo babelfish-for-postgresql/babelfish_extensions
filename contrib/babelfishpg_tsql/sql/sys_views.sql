@@ -987,8 +987,7 @@ GRANT SELECT ON sys.procedures TO PUBLIC;
 
 create or replace view sys.sysforeignkeys as
 select
-  c.conname as name
-  , c.oid as object_id
+  c.oid as constid
   , c.conrelid as fkeyid
   , c.confrelid as rkeyid
   , a_con.attnum as fkey
@@ -1674,7 +1673,11 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || 
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 create or replace view sys.system_objects as
-select * from sys.all_objects o
+select
+  name, object_id, principal_id, schema_id, 
+  parent_object_id, type, type_desc, create_date, 
+  modify_date, is_ms_shipped, is_published, is_schema_published
+ from sys.all_objects o
 inner join pg_namespace s on s.oid = o.schema_id
 where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
@@ -2203,7 +2206,7 @@ SELECT out_name as name
      case out_is_identity::int when 1 then 128  else 0 end)::sys.tinyint as status
   , out_system_type_id as type
   , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as usertype
-  , null::varchar(255) as printfmt
+  , null::sys.varchar(255) as printfmt
   , out_precision::smallint as prec
   , out_scale::int as scale
   , out_is_computed::int as iscomputed
@@ -2318,9 +2321,9 @@ create or replace view sys.dm_exec_connections
    , null::sys.datetime as last_read
    , null::sys.datetime as last_write
    , d.packet_size as net_packet_size
-   , a.client_addr::varchar(48) as client_net_address
+   , a.client_addr::sys.varchar(48) as client_net_address
    , a.client_port as client_tcp_port
-   , null::varchar(48) as local_net_address
+   , null::sys.varchar(48) as local_net_address
    , null::int as local_tcp_port
    , null::sys.uniqueidentifier as connection_id
    , null::sys.uniqueidentifier as parent_connection_id
@@ -2583,7 +2586,7 @@ SELECT
   , CAST(idx.filter_definition AS sys.nvarchar(4000)) AS filter_definition
   , CAST(idx.auto_created AS sys.bit) AS auto_created
   , CAST(NULL AS INT) AS using_xml_index_id
-  , CAST(NULL AS char(1)) AS secondary_type
+  , CAST(NULL AS sys.bpchar(1)) AS secondary_type
   , CAST(NULL AS sys.nvarchar(60)) AS secondary_type_desc
   , CAST(0 AS sys.tinyint) AS xml_index_type
   , CAST(NULL AS sys.nvarchar(60)) AS xml_index_type_description
@@ -2801,7 +2804,7 @@ SELECT
    CAST(0 as sys.BIT) AS is_incremental,
    CAST(0 as sys.BIT) AS has_persisted_sample,
    CAST(0 as INT) AS stats_generation_method,
-   CAST('' as VARCHAR(255)) AS stats_generation_method_desc
+   CAST('' as sys.VARCHAR(255)) AS stats_generation_method_desc
 WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
