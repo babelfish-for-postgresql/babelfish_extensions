@@ -2874,6 +2874,14 @@ antlr_parser_cpp(const char *sourceText)
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
+
+	// initialise result
+	result.parseTreeCreated = false;
+	result.errpos = -1;
+	result.errcod = -1;
+	result.errfmt = NULL;
+	result.n_errargs = 0;
+
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
@@ -2930,6 +2938,13 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 
 	TSqlParser parser(&tokens);
 	volatile bool parseTreeCreated = false;
+
+	// initialise result
+	result.parseTreeCreated = false;
+	result.errpos = -1;
+	result.errcod = -1;
+	result.errfmt = NULL;
+	result.n_errargs = 0;
 
 	if (useSLLParsing)
 		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
