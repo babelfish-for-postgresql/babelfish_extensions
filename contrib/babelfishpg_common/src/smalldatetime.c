@@ -73,6 +73,7 @@ smalldatetime_in_str(char *str)
 	int			dtype;
 	int			nf;
 	int			dterr;
+	DateTimeErrorExtra extra;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
@@ -90,7 +91,7 @@ smalldatetime_in_str(char *str)
 						  field, ftype, MAXDATEFIELDS, &nf);
 
 	if (dterr == 0)
-		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, &extra);
 	/* dterr == 1 means that input is TIME format(e.g 12:34:59.123) */
 	/* initialize other necessary date parts and accept input format */
 	if (dterr == 1)
@@ -101,7 +102,7 @@ smalldatetime_in_str(char *str)
 		dterr = 0;
 	}
 	if (dterr != 0)
-		DateTimeParseError(dterr, str, "smalldatetime");
+		DateTimeParseError(dterr, &extra, str, "smalldatetime", NULL);
 	switch (dtype)
 	{
 		case DTK_DATE:
