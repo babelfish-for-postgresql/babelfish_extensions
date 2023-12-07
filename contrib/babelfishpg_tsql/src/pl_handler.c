@@ -3358,6 +3358,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					StringInfoData query;
 					RoleSpec   *spec;
 					char	   *grantee_name;
+					bool		is_windows_login = false;
 
 					check_alter_server_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -3365,10 +3366,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					initStringInfo(&query);
 					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
 					grantee_name = convertToUPN(spec->rolename);
+					if ((strcmp(grantee_name, spec->rolename) != 0))
+						is_windows_login = true;
 					if (grant_role->is_grant)
-						appendStringInfo(&query, "ALTER USER \"%s\" WITH CREATEDB CREATEROLE", grantee_name);
+						appendStringInfo(&query, "ALTER USER \"%s\" WITH CREATEDB CREATEROLE", spec->rolename);
 					else
-						appendStringInfo(&query, "ALTER USER \"%s\" WITH NOCREATEDB NOCREATEROLE", grantee_name);
+						appendStringInfo(&query, "ALTER USER \"%s\" WITH NOCREATEDB NOCREATEROLE", spec->rolename);
 
 					bbf_set_current_user(session_user_name);
 					PG_TRY();
@@ -3380,7 +3383,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-						if (strcmp(queryString, "(CREATE DATABASE )") != 0)
+						if (!is_windows_login)
 							exec_utility_cmd_helper(query.data);
 
 					}

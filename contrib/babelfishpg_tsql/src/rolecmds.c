@@ -1562,15 +1562,12 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 	{
 		RoleSpec   *spec = (RoleSpec *) linitial(stmt->granted_roles);
 
-		if (strcmp(spec->rolename, "sysadmin") != 0)	/* only supported server
+		if (strcmp(spec->rolename, "sysadmin") == 0)	/* only supported server
 														 * role */
-			return false;
+			return true;
 	}
-	/* has one and only one grantee  */
-	if (list_length(stmt->grantee_roles) != 1)
-		return false;
 
-	return true;
+	return false;
 }
 
 void
