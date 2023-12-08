@@ -18,6 +18,7 @@
 #include "catalog/objectaccess.h"
 #include "datatype/timestamp.h"
 #include "fmgr.h"
+#include "varatt.h"
 #include "lib/stringinfo.h"
 #include "libpq/hba.h"
 #include "libpq/libpq-be.h"

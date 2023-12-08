@@ -20,6 +20,7 @@
  */
 
 #include "postgres.h"
+#include "varatt.h"
 
 #include <ctype.h>
 #include <float.h>

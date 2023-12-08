@@ -7,6 +7,7 @@
  */
 
 #include "postgres.h"
+#include "varatt.h"
 
 #include "access/htup_details.h"
 #include "access/parallel.h"	/* InitializingParallelWorker */

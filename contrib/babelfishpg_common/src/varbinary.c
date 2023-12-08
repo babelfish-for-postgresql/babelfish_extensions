@@ -12,6 +12,7 @@
 
 #include <ctype.h>
 #include <limits.h>
+#include "varatt.h"
 
 #include "access/hash.h"
 #include "catalog/pg_collation.h"

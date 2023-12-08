@@ -2,6 +2,7 @@
 #include "catalog/pg_collation.h"
 #include "commands/typecmds.h"
 #include "optimizer/pathnode.h"
+#include "varatt.h"
 
 #include "fmgr.h"
 #include "instr.h"

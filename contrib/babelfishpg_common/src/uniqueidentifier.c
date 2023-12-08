@@ -9,6 +9,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "varatt.h"
 #include "utils/builtins.h"
 #include "utils/uuid.h"
 #include "lib/stringinfo.h"

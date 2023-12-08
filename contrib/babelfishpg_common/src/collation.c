@@ -1,4 +1,5 @@
 #include "postgres.h"
+#include "varatt.h"
 
 #include "utils/guc.h"
 #include "utils/hsearch.h"

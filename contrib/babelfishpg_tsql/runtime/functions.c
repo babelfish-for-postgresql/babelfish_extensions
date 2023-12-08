@@ -2,6 +2,7 @@
 #include "port.h"
 #include "funcapi.h"
 #include "pgstat.h"
+#include "varatt.h"
 
 #include "access/detoast.h"
 #include "access/htup_details.h"

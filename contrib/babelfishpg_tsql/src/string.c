@@ -3,6 +3,7 @@
  */
 
 #include "postgres.h"
+#include "varatt.h"
 
 #include "catalog/pg_type.h"
 #include "common/cryptohash.h"

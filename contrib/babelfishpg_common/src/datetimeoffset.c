@@ -7,6 +7,7 @@
  */
 
 #include "postgres.h"
+#include "varatt.h"
 #include "access/hash.h"
 #include "utils/builtins.h"
 #include "utils/date.h"

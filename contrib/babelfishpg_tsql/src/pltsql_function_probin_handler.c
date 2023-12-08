@@ -11,6 +11,7 @@
 #include "postgres.h"
 #include "pltsql.h"
 #include "funcapi.h"
+#include "varatt.h"
 
 #include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"

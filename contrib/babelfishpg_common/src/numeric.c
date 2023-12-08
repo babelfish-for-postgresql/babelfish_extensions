@@ -21,6 +21,7 @@
 
 #include "postgres.h"
 #include "fmgr.h"
+#include "varatt.h"
 
 #include <ctype.h>
 #include <float.h>

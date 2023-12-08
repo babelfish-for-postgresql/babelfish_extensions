@@ -14,6 +14,7 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "varatt.h"
 
 #include "access/htup_details.h"	/* for GETSTRUCT() to extract tuple data */
 #include "access/printtup.h"	/* for SetRemoteDestReceiverParams() */
