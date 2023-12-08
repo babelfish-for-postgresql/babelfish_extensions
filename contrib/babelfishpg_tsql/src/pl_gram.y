@@ -7215,7 +7215,7 @@ parse_datatype(const char *string, int location)
 	}
 
 	/* Let the main parser try to parse it under standard SQL rules */
-	typeName = typeStringToTypeName(string);
+	typeName = typeStringToTypeName(string, NULL);
 	rewrite_plain_name(typeName->names);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
 
