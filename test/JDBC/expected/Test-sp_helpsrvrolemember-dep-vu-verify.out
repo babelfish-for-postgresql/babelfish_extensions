@@ -1,9 +1,10 @@
 EXEC test_sp_helpsrvrolemember_proc
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#varchar#!#int
+sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 ~~END~~
 
@@ -12,7 +13,7 @@ SELECT dbo.test_sp_helpsrvrolemember_func()
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 
@@ -20,7 +21,7 @@ SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 
@@ -29,10 +30,11 @@ GO
 
 EXEC test_sp_helpsrvrolemember_proc 'sysadmin'
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 3~~
 
 ~~START~~
 varchar#!#varchar#!#int
+sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 sysadmin#!#test_sp_helpsrvrolemember_login#!#1
 ~~END~~
@@ -42,7 +44,7 @@ SELECT dbo.test_sp_helpsrvrolemember_func()
 GO
 ~~START~~
 int
-2
+3
 ~~END~~
 
 
@@ -50,7 +52,7 @@ SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 ~~START~~
 int
-2
+3
 ~~END~~
 
 
@@ -59,10 +61,11 @@ GO
 
 EXEC test_sp_helpsrvrolemember_proc 'sysadmin'
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#varchar#!#int
+sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 ~~END~~
 
@@ -71,7 +74,7 @@ SELECT dbo.test_sp_helpsrvrolemember_func()
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 
@@ -79,7 +82,7 @@ SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 ~~START~~
 int
-1
+2
 ~~END~~
 
 

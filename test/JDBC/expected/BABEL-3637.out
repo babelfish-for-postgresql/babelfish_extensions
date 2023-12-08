@@ -29,10 +29,11 @@ GO
 
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#varchar
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -77,11 +78,12 @@ GO
 
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 3~~
 
 ~~START~~
 varchar#!#varchar
 sysadmin#!#babel_3637_login1
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -101,12 +103,13 @@ GO
 
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 4~~
 
 ~~START~~
 varchar#!#varchar
 sysadmin#!#babel_3637_login1
 sysadmin#!#babel_3637_login2
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -125,11 +128,12 @@ ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login2;
 GO
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 3~~
 
 ~~START~~
 varchar#!#varchar
 sysadmin#!#babel_3637_login1
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -148,10 +152,11 @@ ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login1;
 GO
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#varchar
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -174,11 +179,12 @@ GO
 
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 3~~
 
 ~~START~~
 varchar#!#varchar
 sysadmin#!#babel_3637_login1
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -203,11 +209,12 @@ GO
 
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 3~~
 
 ~~START~~
 varchar#!#varchar
 sysadmin#!#babel_3637_login1
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -227,11 +234,12 @@ ALTER SERVER ROLE sysadmin DROP MEMBER babel_3637_login2;
 GO
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 3~~
 
 ~~START~~
 varchar#!#varchar
 sysadmin#!#babel_3637_login1
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -252,10 +260,11 @@ GO
 
 EXEC test_babel_3637_proc1
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#varchar
+sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 

@@ -43,6 +43,6 @@ SELECT name, type, type_desc, default_database_name, default_language_name, cred
 FROM sys.server_principals name WHERE name like 'sys_server_principals_vu_login%' ORDER BY name;
 GO
 
---tsql
+-- tsql
 ALTER ROLE sysadmin drop member sys_server_principals_vu_login_with_sa
 GO

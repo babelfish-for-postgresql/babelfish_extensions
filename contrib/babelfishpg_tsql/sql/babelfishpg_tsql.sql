@@ -2284,7 +2284,7 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
-		AND Ext1.type != 'R'
+		AND (Ext1.type != 'R' OR Ext1.type != 'A')
 		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
 	END
@@ -2329,7 +2329,7 @@ BEGIN
 					AND database_name = DB_NAME()
 					AND type != 'R')
 	BEGIN
-		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+		SELECT DISTINCT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
 			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
@@ -2354,7 +2354,7 @@ BEGIN
 		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
-		AND Ext1.type != 'R'
+		AND (Ext1.type != 'R' OR Ext1.type != 'A')
 		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
 		ORDER BY UserName, RoleName;

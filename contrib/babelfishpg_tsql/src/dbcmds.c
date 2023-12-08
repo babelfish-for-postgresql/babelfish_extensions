@@ -45,7 +45,6 @@
 Oid sys_babelfish_db_seq_oid = InvalidOid;
 
 static Oid get_sys_babelfish_db_seq_oid(void);
-static bool have_createdb_privilege(void);
 static List *gen_createdb_subcmds(const char *schema,
 								  const char *dbo,
 								  const char *db_owner,
@@ -74,26 +73,6 @@ get_sys_babelfish_db_seq_oid()
 	return sys_babelfish_db_seq_oid;
 }
 
-static bool
-have_createdb_privilege(void)
-{
-	bool result = false;
-	HeapTuple	utup;
-
-	/* Superusers can always do everything */
-	if (superuser())
-		return true;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetSessionUserId()));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
-
-		ReleaseSysCache(utup);
-	}
-	return result;
-}
-
 /*
  * Generate subcmds for CREATE DATABASE. Note 'guest' can be NULL.
  */
@@ -113,7 +92,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	 */
 	initStringInfo(&query);
 
-	appendStringInfo(&query, "CREATE ROLE dummy INHERIT; ");
+	appendStringInfo(&query, "CREATE ROLE dummy CREATEROLE INHERIT; ");
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT CREATEROLE ROLE sysadmin IN ROLE dummy; ");
 	appendStringInfo(&query, "GRANT CREATE, CONNECT, TEMPORARY ON DATABASE dummy TO dummy; ");
 
@@ -422,8 +401,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	const char *guest_scm;
 	NameData	default_collation;
 	const char *guest;
-	const char *prev_current_user;
 	int			stmt_number = 0;
+	const char *old_createrole_self_grant;
 	int 			save_sec_context;
 	bool 			is_set_userid = false;
 	Oid 			save_userid;
@@ -454,10 +433,21 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 							user_dbname)));
 	}
 
-	if (!have_createdb_privilege())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to create database")));
+	/* temporarily change to session user while checking createdb privilege */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	PG_TRY();
+	{
+		SetUserIdAndSecContext(GetSessionUserId(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		if (!have_createdb_privilege())
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("permission denied to create database")));
+	}
+	PG_FINALLY();
+	{
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_END_TRY();
 
 	/* dbowner is always sysadmin */
 	datdba = get_role_oid("sysadmin", false);
@@ -524,10 +514,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	parsetree_list = gen_createdb_subcmds(dbo_scm, dbo_role, db_owner_role, guest, guest_scm);
 
-	/* Set current user to session user for create permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-	bbf_set_current_user("sysadmin");
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
@@ -535,6 +523,12 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	PG_TRY();
 	{
+		/*
+		 * Set current user to bbf_role_admin for create permissions.
+		 * We have already checked for permissions.
+		 */
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
 		{
@@ -545,7 +539,6 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 			if(stmt->type == T_CreateSchemaStmt || stmt->type == T_AlterTableStmt
 				|| stmt->type == T_ViewStmt)
 			{
-				GetUserIdAndSecContext(&save_userid, &save_sec_context);
 				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
 							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				is_set_userid = true;
@@ -573,7 +566,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 						   NULL);
 
 			if(is_set_userid)
-				SetUserIdAndSecContext(save_userid, save_sec_context);
+				SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 
 			CommandCounterIncrement();
 		}
@@ -594,20 +587,14 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 				add_to_bbf_authid_user_ext(guest, "guest", dbname, "guest", NULL, false, false, false);
 		}
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		if(is_set_userid)
-			SetUserIdAndSecContext(save_userid, save_sec_context);
-
 		/* Clean up. Restore previous state. */
-		bbf_set_current_user(prev_current_user);
+		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
 }
 
 void
@@ -725,11 +712,15 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			PlannedStmt *wrapper;
 			is_set_userid = false;
 
-			if(stmt->type != T_DropRoleStmt && stmt->type != T_GrantStmt)
+			if(stmt->type != T_GrantStmt)
 			{
 				GetUserIdAndSecContext(&save_userid, &save_sec_context);
-				SetUserIdAndSecContext(get_role_oid(dbo_role, true),
-							save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt) // need bbf_role_admin to perform DropOwnedObjects
+					SetUserIdAndSecContext(get_bbf_role_admin_oid(),
+										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+				else
+					SetUserIdAndSecContext(get_role_oid(dbo_role, true),
+										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				is_set_userid = true;
 			}
 			/* need to make a wrapper PlannedStmt */

@@ -54,6 +54,7 @@ extern void drop_bbf_roles(ObjectAccessType access,
 						   int subId,
 						   void *arg);
 extern bool role_is_sa(Oid roleid);
+extern Oid get_bbf_role_admin_oid(void);
 extern Oid get_sa_role_oid(void);
 extern bool tsql_has_pgstat_permissions(Oid roleid);
 extern bool tsql_has_linked_srv_permissions(Oid roleid);
@@ -80,6 +81,5 @@ extern char *convertToUPN(char *input);
 extern bool windows_login_contains_invalid_chars(char *input);
 extern bool windows_domain_contains_invalid_chars(char *input);
 extern bool check_windows_logon_length(char *input);
-
 
 #endif

@@ -270,13 +270,17 @@ BEGIN
 		RAISE E'Could not initialize babelfish with given role name: % is not the DB owner of current database.', sa_name;
 	END IF;
 
+	EXECUTE format('CREATE ROLE bbf_role_admin WITH CREATEDB CREATEROLE INHERIT PASSWORD NULL');
+	EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
+	EXECUTE format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
 	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
 	EXECUTE format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
 	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
 	CALL sys.babel_initialize_logins(sa_name);
 	CALL sys.babel_initialize_logins('sysadmin');
+	CALL sys.babel_initialize_logins('bbf_role_admin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
 	-- run analyze for all babelfish catalog
