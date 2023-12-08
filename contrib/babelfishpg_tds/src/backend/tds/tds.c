@@ -140,6 +140,17 @@ typedef struct LocalTdsStatus
 	 * not.
 	 */
 	TransactionId backend_xmin;
+
+	/*
+	 * Number of cached subtransactions in the current session.
+	 */
+	int	backend_subxact_count;
+
+	/*
+	 * The number of subtransactions in the current session which exceeded the
+	 * cached subtransaction limit.
+	 */
+	bool backend_subxact_overflowed;
 } LocalTdsStatus;
 
 static TdsStatus *TdsStatusArray = NULL;
@@ -723,7 +734,11 @@ tdsstat_read_current_status(void)
 
 		/* Only valid entries get included into the local array */
 		if (localentry->tdsStatus.st_procpid > 0)
-			BackendIdGetTransactionIds(i, &localentry->backend_xid, &localentry->backend_xmin);
+			BackendIdGetTransactionIds(i, 
+									   &localentry->backend_xid, 
+									   &localentry->backend_xmin, 
+									   &localentry->backend_subxact_count, 
+									   &localentry->backend_subxact_overflowed);
 
 		localentry++;
 		localNumBackends++;
