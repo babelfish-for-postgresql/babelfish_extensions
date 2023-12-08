@@ -10,6 +10,7 @@
 
 #include "executor/spi.h"
 #include "fmgr.h"
+#include "varatt.h"
 #include "miscadmin.h"
 #include "access/hash.h"
 #include "access/htup_details.h"

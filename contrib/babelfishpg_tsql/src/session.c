@@ -1,6 +1,7 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "miscadmin.h"
+#include "varatt.h"
 
 #include "utils/acl.h"
 #include "utils/builtins.h"

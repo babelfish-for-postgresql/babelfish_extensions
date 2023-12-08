@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
+#include "varatt.h"
 #include <ctype.h>
 #include <fcntl.h>				/* FIXME: for debugging only - feel free to
 								 * remove */

@@ -17,6 +17,7 @@
 
 #include "postgres.h"
 #include "funcapi.h"
+#include "varatt.h"
 
 #include "access/printtup.h"
 #include "access/xact.h"

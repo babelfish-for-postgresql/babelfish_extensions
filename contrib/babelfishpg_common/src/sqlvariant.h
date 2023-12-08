@@ -1,3 +1,5 @@
+#include "varatt.h"
+
 #ifndef SQLVARIANT_H
 #define SQLVARIANT_H
 

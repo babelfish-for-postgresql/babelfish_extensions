@@ -1,4 +1,5 @@
 #include "postgres.h"
+#include "varatt.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"

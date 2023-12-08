@@ -9,6 +9,7 @@
 #include "postgres.h"
 
 #include "fmgr.h"
+#include "varatt.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"

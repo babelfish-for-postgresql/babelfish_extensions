@@ -14,6 +14,7 @@
 #include "utils/builtins.h"
 #include "utils/numeric.h"
 #include "utils/varbit.h"
+#include "varatt.h"
 
 #include "instr.h"
 #include "typecode.h"
