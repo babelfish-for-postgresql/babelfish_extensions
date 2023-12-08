@@ -180,7 +180,8 @@ jobs:
         if: always() && steps.setup-new-datadir.outcome == 'success'
         run: |
           cd test/JDBC/
-          echo "ignore#\!#babel_tds_fault_injection" >> jdbc_schedule 
+          echo "ignore#\!#babel_tds_fault_injection" >> jdbc_schedule
+          echo "ignore#\!#tds_faultinjection" >> jdbc_schedule
 
       - name: Run JDBC Tests
         id: jdbc
