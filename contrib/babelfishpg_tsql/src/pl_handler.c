@@ -5494,7 +5494,7 @@ transformSelectIntoStmt(CreateTableAsStmt *stmt)
 					{
 					case 1:
 						typeoid = get_identity_into_args(farg_node);
-						typename = typeStringToTypeName(get_oid_type_string(typeoid));
+						typename = typeStringToTypeName(get_oid_type_string(typeoid), NULL);
 						break;
 					case 2:
 						seedvalue = get_identity_into_args(farg_node);

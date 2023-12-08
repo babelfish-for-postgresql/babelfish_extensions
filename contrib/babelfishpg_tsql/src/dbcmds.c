@@ -65,7 +65,7 @@ get_sys_babelfish_db_seq_oid()
 {
 	if(!OidIsValid(sys_babelfish_db_seq_oid))
 	{
-		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq"));
+		RangeVar	*sequence = makeRangeVarFromNameList(stringToQualifiedNameList("sys.babelfish_db_seq", NULL));
 		Oid			seqid = RangeVarGetRelid(sequence, NoLock, false);
 		
 		Assert(OidIsValid(seqid));
