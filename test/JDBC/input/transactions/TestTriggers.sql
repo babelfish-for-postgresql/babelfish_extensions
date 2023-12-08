@@ -561,7 +561,7 @@ go
 create table babel4606_t1 (a int primary key, b int, update_date datetime)
 go
 
-insert into babel4606_t1 (a, b) values (1, 7)
+insert into babel4606_t1 (a, b) values (1, 7), (2, 8)
 go
 
 select * from babel4606_t1
@@ -573,7 +573,7 @@ after update
 AS
 begin
 	update t
-	set update_date = getdate()
+	set update_date = '2023-12-08 00:00:00.0'
 	from inserted as i
 	join babel4606_t1 as t
 		on t.a = i.a
@@ -583,7 +583,32 @@ go
 update babel4606_t1 set b = 11 where a = 1
 go
 
+select * from babel4606_t1
+go
+
 drop trigger tr_babel4606_t1_update_date
+go
+
+create trigger tr_babel4606_t1_delete
+on babel4606_t1
+after update
+AS
+begin
+	delete t
+	from inserted as i
+	join babel4606_t1 as t
+	on t.a < i.a
+	where t.update_date <= '2023-12-08 00:00:00.0'
+end
+go
+
+update babel4606_t1 set b = 21 where a = 2
+go
+
+select * from babel4606_t1;
+go
+
+drop trigger tr_babel4606_t1_delete
 go
 drop table babel4606_t1
 go
