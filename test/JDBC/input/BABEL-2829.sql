@@ -65,15 +65,9 @@ GO
 -- lastwaittype, waitresource column can not be test as these  are NULL.
 -- hostprocess colum is ID in char
 -- cmd, nt_domain, nt_username, net_address, net_library testing can't be done as these are NULL.
-select count(status) from sys.sysprocesses where status='active';
+SELECT CASE WHEN (select count(status) from sys.sysprocesses where status='active') = (select count(status) from sys.sysprocesses where status='ACTIVE') THEN 1 ELSE 0 END AS result;
 GO
-select count(status) from sys.sysprocesses where status='ACTIVE';
+SELECT CASE WHEN (select count(program_name) from sys.sysprocesses where program_name='sqlcmd') = (select count(program_name) from sys.sysprocesses where program_name='SQLCMD') THEN 1 ELSE 0 END AS result;
 GO
-select count(program_name) from sys.sysprocesses where program_name='sqlcmd';
-GO
-select count(program_name) from sys.sysprocesses where program_name='SQLCMD';
-GO
-select count(loginname) from sys.sysprocesses where loginname='jdbc_user';
-GO
-select count(loginname) from sys.sysprocesses where loginname='JDBC_user';
+SELECT CASE WHEN (select count(loginname) from sys.sysprocesses where loginname='jdbc_user') = (select count(loginname) from sys.sysprocesses where loginname='JDBC_user') THEN 1 ELSE 0 END AS result;
 GO
