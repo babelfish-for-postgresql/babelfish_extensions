@@ -225,9 +225,10 @@ WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
 
-ALTER TABLE sys.babelfish_authid_login_ext ALTER COLUMN type TYPE sys.bpchar(1);
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_principals');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_role_members');
 
-ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated_3_4;
+ALTER TABLE sys.babelfish_authid_login_ext ALTER COLUMN type TYPE sys.bpchar(1);
 
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
@@ -398,8 +399,6 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_connections_deprecated_3_4');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_connections_deprecated_3_4');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_principals_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('table', 'sys', 'babelfish_authid_login_ext_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
