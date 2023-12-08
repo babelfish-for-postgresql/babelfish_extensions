@@ -556,3 +556,34 @@ drop table triggerTab2;
 go
 drop table triggerTab3;
 go
+
+-- Test Issue where update in trigger fails
+create table babel4606_t1 (a int primary key, b int, update_date datetime)
+go
+
+insert into babel4606_t1 (a, b) values (1, 7)
+go
+
+select * from babel4606_t1
+go
+
+create trigger tr_babel4606_t1_update_date
+on babel4606_t1
+after update
+AS
+begin
+	update t
+	set update_date = getdate()
+	from inserted as i
+	join babel4606_t1 as t
+		on t.a = i.a
+end
+go
+
+update babel4606_t1 set b = 11 where a = 1
+go
+
+drop trigger tr_babel4606_t1_update_date
+go
+drop table babel4606_t1
+go
