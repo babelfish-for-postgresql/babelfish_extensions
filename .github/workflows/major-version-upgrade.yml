@@ -175,6 +175,13 @@ jobs:
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
+      - name: Disable TDS fault injection tests in release mode
+        id: disable-fault-injection
+        if: always() && steps.setup-new-datadir.outcome == 'success'
+        run: |
+          cd test/JDBC/
+          echo "ignore#\!#babel_tds_fault_injection" >> jdbc_schedule 
+
       - name: Run JDBC Tests
         id: jdbc
         timeout-minutes: 60
