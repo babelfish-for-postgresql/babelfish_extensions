@@ -3357,21 +3357,16 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *session_user_name;
 					StringInfoData query;
 					RoleSpec   *spec;
-					char	   *grantee_name;
-					bool		is_windows_login = false;
 
-					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
-					grantee_name = convertToUPN(spec->rolename);
-					if ((strcmp(grantee_name, spec->rolename) != 0))
-						is_windows_login = true;
 					check_alter_server_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
 					initStringInfo(&query);
 					if (grant_role->is_grant)
-						appendStringInfo(&query, "ALTER USER \"%s\" WITH CREATEDB CREATEROLE", spec->rolename);
+						appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
 					else
-						appendStringInfo(&query, "ALTER USER \"%s\" WITH NOCREATEDB NOCREATEROLE", spec->rolename);
+						appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
 
 					bbf_set_current_user(session_user_name);
 					PG_TRY();
@@ -3383,8 +3378,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
-						if (!is_windows_login)
-							exec_utility_cmd_helper(query.data);
+
+						exec_alter_role_cmd(query.data, spec);
 
 					}
 					PG_CATCH();
