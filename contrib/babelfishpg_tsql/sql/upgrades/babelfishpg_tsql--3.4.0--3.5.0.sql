@@ -234,6 +234,37 @@ GRANT SELECT ON sys.stats TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_4');
 
+ALTER VIEW sys.data_spaces RENAME TO data_spaces_deprecated_3_4;
+
+
+CREATE OR REPLACE VIEW sys.data_spaces
+AS
+SELECT 
+  CAST('PRIMARY' as SYSNAME) AS name,
+  CAST(1 as INT) AS data_space_id,
+  CAST('FG' as sys.bpchar(2)) AS type,
+  CAST('ROWS_FILEGROUP' as NVARCHAR(60)) AS type_desc,
+  CAST(1 as sys.BIT) AS is_default,
+  CAST(0 as sys.BIT) AS is_system;
+GRANT SELECT ON sys.data_spaces TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.filegroups
+AS
+SELECT 
+   CAST(ds.name AS sys.SYSNAME),
+   CAST(ds.data_space_id AS INT),
+   CAST(ds.type AS sys.BPCHAR(2)) COLLATE sys.database_default,
+   CAST(ds.type_desc AS sys.NVARCHAR(60)),
+   CAST(ds.is_default AS sys.BIT),
+   CAST(ds.is_system AS sys.BIT),
+   CAST(NULL as sys.UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(0 as INT) AS log_filegroup_id,
+   CAST(0 as sys.BIT) AS is_read_only,
+   CAST(0 as sys.BIT) AS is_autogrow_all_files
+FROM sys.data_spaces ds WHERE type = 'FG';
+GRANT SELECT ON sys.filegroups TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'data_spaces_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -5,3 +5,20 @@ varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
 PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
 ~~END~~
 
+
+-- test case-sementics of column type. 
+SELECT type FROM sys.data_spaces where type='FG';
+GO
+~~START~~
+char
+FG
+~~END~~
+
+
+SELECT type FROM sys.data_spaces where type='fg';
+GO
+~~START~~
+char
+FG
+~~END~~
+
