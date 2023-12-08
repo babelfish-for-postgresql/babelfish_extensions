@@ -1926,7 +1926,7 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
 	stmt = parsetree_nth_stmt(parsetree_list, 0);
 
 	/* Update dummy statement with real values */
-	update_AlterRoleStmt(query_str, role);
+	update_AlterRoleStmt(stmt, role);
 
 	/* Run the built query */
 	/* need to make a wrapper PlannedStmt */
