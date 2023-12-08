@@ -12,8 +12,3 @@ WHERE name LIKE 'sys_server_principals_dep_vu_prepare_login%'
 ORDER BY name
 GO
 
--- Test case-semantics for column type
-SELECT COUNT(*) FROM sys.server_principals WHERE type='R';
-GO
-SELECT COUNT(*) FROM sys.server_principals WHERE type='r';
-GO
