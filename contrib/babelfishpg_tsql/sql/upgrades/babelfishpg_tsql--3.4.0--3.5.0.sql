@@ -266,6 +266,261 @@ GRANT SELECT ON sys.filegroups TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'data_spaces_deprecated_3_4');
 
+ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_3_4;
+
+create or replace view sys.sysprocesses as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
+  , null::sys.nchar(256) as waitresource
+  , coalesce(t.database_id, 0)::oid as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , CAST(a.state as sys.nchar(30)) as status
+  , null::bytea as sid
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
+  , CAST(a.application_name as sys.nchar(128)) as program_name
+  , t.client_pid::sys.nchar(10) as hostprocess
+  , CAST(a.query as sys.nchar(52)) as cmd
+  , null::sys.nchar(128) as nt_domain
+  , null::sys.nchar(128) as nt_username
+  , null::sys.nchar(12) as net_address
+  , null::sys.nchar(12) as net_library
+  , CAST(a.usename as sys.nchar(128)) as loginname
+  , t.context_info::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_who(
+	IN "@loginame" sys.sysname DEFAULT NULL,
+	IN "@option"   sys.VARCHAR(30) DEFAULT NULL)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	SET NOCOUNT ON
+	DECLARE @msg sys.VARCHAR(200)
+	DECLARE @show_pg BIT = 0
+	DECLARE @hide_col sys.VARCHAR(50) 
+	
+	IF @option IS NOT NULL
+	BEGIN
+		IF LOWER(TRIM(@option)) <> 'postgres' 
+		BEGIN
+			RAISERROR('Parameter @option can only be ''postgres''', 16, 1)
+			RETURN			
+		END
+	END
+	
+	-- Take a copy of sysprocesses so that we reference it only once
+	SELECT DISTINCT * INTO #sp_who_sysprocesses FROM sys.sysprocesses
+
+	-- Get the executing statement for each spid and extract the main stmt type
+	-- This is for informational purposes only
+	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
+	
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
+	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
+	WHILE (SELECT count(*) FROM #sp_who_tmp WHERE sys.CHARINDEX('  ',query)>0) > 0 
+	BEGIN
+		UPDATE #sp_who_tmp SET query = sys.REPLACE(query, '  ', ' ')
+	END
+
+	-- Determine type of stmt to report by sp_who: very basic only
+	-- NB: not handling presence of comments in the query string
+	UPDATE #sp_who_tmp 
+	SET query = 
+	    CASE 
+			WHEN PATINDEX('%[^a-zA-Z0-9_]UPDATE[^a-zA-Z0-9_]%', query) > 0 THEN 'UPDATE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DELETE[^a-zA-Z0-9_]%', query) > 0 THEN 'DELETE'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]INSERT[^a-zA-Z0-9_]%', query) > 0 THEN 'INSERT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]SELECT[^a-zA-Z0-9_]%', query) > 0 THEN 'SELECT'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]WAITFOR[^a-zA-Z0-9_]%', query) > 0 THEN 'WAITFOR'
+			WHEN PATINDEX('%[^a-zA-Z0-9_]CREATE ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('CREATE ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]ALTER ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('ALTER ', query))
+			WHEN PATINDEX('%[^a-zA-Z0-9_]DROP ]%', query) > 0 THEN sys.SUBSTRING(query,1,sys.CHARINDEX('DROP ', query))
+			ELSE sys.SUBSTRING(query, 1, sys.CHARINDEX(' ', query))
+		END
+
+	UPDATE #sp_who_tmp 
+	SET query = sys.SUBSTRING(query,1, 8-1 + sys.CHARINDEX(' ', sys.SUBSTRING(query,8,99)))
+	WHERE query LIKE 'CREATE %' OR query LIKE 'ALTER %' OR query LIKE 'DROP %'	
+
+	-- The executing spid is always shown as doing a SELECT
+	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
+	UPDATE #sp_who_tmp SET query = TRIM(query)
+
+	-- Get all current connections
+	SELECT 
+		spid, 
+		MAX(blocked) AS blocked, 
+		0 AS ecid, 
+		CAST('' AS sys.VARCHAR(100)) AS status,
+		CAST('' AS sys.VARCHAR(100)) AS loginname,
+		CAST('' AS sys.VARCHAR(100)) AS hostname,
+		0 AS dbid,
+		CAST('' AS sys.VARCHAR(100)) AS cmd,
+		0 AS request_id,
+		CAST('TDS' AS sys.VARCHAR(20)) AS connection,
+		hostprocess
+	INTO #sp_who_proc
+	FROM #sp_who_sysprocesses
+		GROUP BY spid, status, hostprocess
+		
+	-- Add attributes to each connection
+	UPDATE #sp_who_proc
+	SET ecid = sp.ecid,
+		status = sp.status,
+		loginname = sp.loginname,
+		hostname = sp.hostname,
+		dbid = sp.dbid,
+		request_id = sp.request_id
+	FROM #sp_who_sysprocesses sp
+		WHERE #sp_who_proc.spid = sp.spid				
+
+	-- Identify PG connections: the hostprocess PID comes from the TDS login packet 
+	-- and therefore PG connections do not have a value here
+	UPDATE #sp_who_proc
+	SET connection = 'PostgreSQL'
+	WHERE hostprocess IS NULL 
+
+	-- Keep or delete PG connections
+	IF (LOWER(@loginame) = 'postgres' OR LOWER(@option) = 'postgres')
+	begin    
+		-- Show PG connections; these have dbid = 0
+		-- This is a Babelfish-specific enhancement, since PG connections may also be active in the Babelfish DB
+		-- and it may be useful to see these displayed
+		SET @show_pg = 1
+		
+		-- blank out the loginame parameter for the tests below
+		IF LOWER(@loginame) = 'postgres' SET @loginame = NULL
+	END
+	
+	-- By default, do not show the column indicating the connection type since SQL Server does not have this column
+	SET @hide_col = 'connection' 
+	
+	IF (@show_pg = 1) 
+	BEGIN
+		SET @hide_col = ''
+	END
+	ELSE 
+	BEGIN
+		-- Delete PG connections
+		DELETE #sp_who_proc
+		WHERE dbid = 0
+	END
+			
+	-- Apply filter if specified
+	IF (@loginame IS NOT NULL)
+	BEGIN
+		IF (TRIM(@loginame) = '')
+		BEGIN
+			-- Raise error
+			SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+			RAISERROR(@msg, 16, 1)
+			RETURN
+		END
+		
+		IF (sys.ISNUMERIC(@loginame) = 1)
+		BEGIN
+			-- Remove all connections except the specified one
+			DELETE #sp_who_proc
+			WHERE spid <> CAST(@loginame AS INT)
+		END
+		ELSE 
+		BEGIN	
+			IF (LOWER(@loginame) = 'active')
+			BEGIN
+				-- Remove all 'idle' connections 
+				DELETE #sp_who_proc
+				WHERE status = 'idle'
+			END
+			ELSE 
+			BEGIN
+				-- Verify the specified login name exists
+				IF (sys.SUSER_ID(@loginame) IS NULL)
+				BEGIN
+					SET @msg = ''''+@loginame+''' is not a valid login or you do not have permission.'
+					RAISERROR(@msg, 16, 1)
+					RETURN					
+				END
+				ELSE 
+				BEGIN
+					-- Keep only connections for the specified login
+					DELETE #sp_who_proc
+					WHERE sys.SUSER_ID(loginname) <> sys.SUSER_ID(@loginame)
+				END
+			END
+		END
+	END			
+			
+	-- Create final result set; use DISTINCT since there are usually duplicate rows from the PG catalogs
+	SELECT distinct 
+		p.spid AS spid, 
+		p.ecid AS ecid, 
+		CAST(LEFT(p.status,20) AS sys.VARCHAR(20)) AS status,
+		CAST(LEFT(p.loginname,40) AS sys.VARCHAR(40)) AS loginame,
+		CAST(LEFT(p.hostname,60) AS sys.VARCHAR(60)) AS hostname,
+		p.blocked AS blk, 
+		CAST(LEFT(db_name(p.dbid),40) AS sys.VARCHAR(40)) AS dbname,
+		CAST(LEFT(#sp_who_tmp.query,30)as sys.VARCHAR(30)) AS cmd,
+		p.request_id AS request_id,
+		connection
+	INTO #sp_who_tmp2
+	FROM #sp_who_proc p, #sp_who_tmp
+		WHERE p.spid = #sp_who_tmp.pid
+		ORDER BY spid		
+	
+	-- Patch up remaining cases
+	UPDATE #sp_who_tmp2
+	SET cmd = 'AWAITING COMMAND'
+	WHERE TRIM(ISNULL(cmd,'')) = '' AND status = 'idle'
+	
+	UPDATE #sp_who_tmp2
+	SET cmd = 'UNKNOWN'
+	WHERE TRIM(cmd) = ''	
+	
+	-- Format the result set as narrow as possible for readability
+	SET @hide_col += ',hostprocess'
+	EXECUTE sys.sp_babelfish_autoformat @tab='#sp_who_tmp2', @orderby='ORDER BY spid', @hiddencols=@hide_col, @printrc=0
+	RETURN
+END	
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecated_3_4');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

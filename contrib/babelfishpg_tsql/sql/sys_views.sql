@@ -1042,8 +1042,8 @@ select
   , coalesce(blocking_activity.pid, 0) as blocked
   , null::bytea as waittype
   , 0 as waittime
-  , a.wait_event_type as lastwaittype
-  , null::text as waitresource
+  , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
+  , null::sys.nchar(256) as waitresource
   , coalesce(t.database_id, 0)::oid as dbid
   , a.usesysid as uid
   , 0 as cpu
@@ -1053,17 +1053,17 @@ select
   , a.query_start as last_batch
   , 0 as ecid
   , 0 as open_tran
-  , a.state as status
+  , CAST(a.state as sys.nchar(30)) as status
   , null::bytea as sid
   , CAST(t.host_name AS sys.nchar(128)) as hostname
-  , a.application_name as program_name
-  , t.client_pid::varchar(10) as hostprocess
-  , a.query as cmd
-  , null::varchar(128) as nt_domain
-  , null::varchar(128) as nt_username
-  , null::varchar(12) as net_address
-  , null::varchar(12) as net_library
-  , a.usename as loginname
+  , CAST(a.application_name as sys.nchar(128)) as program_name
+  , t.client_pid::sys.nchar(10) as hostprocess
+  , CAST(a.query as sys.nchar(52)) as cmd
+  , null::sys.nchar(128) as nt_domain
+  , null::sys.nchar(128) as nt_username
+  , null::sys.nchar(12) as net_address
+  , null::sys.nchar(12) as net_library
+  , CAST(a.usename as sys.nchar(128)) as loginname
   , t.context_info::bytea as context_info
   , null::bytea as sql_handle
   , 0 as stmt_start
