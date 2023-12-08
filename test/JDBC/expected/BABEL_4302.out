@@ -4329,7 +4329,7 @@ SELECT DATEPART(iso_week, '2022-08-27T08:45:30.1234-03:00')
 GO
 ~~START~~
 int
-35
+34
 ~~END~~
 
 
@@ -5518,12 +5518,12 @@ SELECT DATEPART(dow, cast('12:10:30.123' as time))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart dow is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart weekday is not supported by date function datepart for data type time.)~~
 
 
 SELECT DATEPART(doy, cast('12:10:30.123' as time))
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart dayofyear is not supported by date function datepart for data type time.)~~
 

@@ -938,19 +938,19 @@ select datepart(dayofyear, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart dayofyear is not supported by date function datepart for data type time.)~~
 
 select datepart(dy, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart dayofyear is not supported by date function datepart for data type time.)~~
 
 select datepart(y, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart doy is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart dayofyear is not supported by date function datepart for data type time.)~~
 
 select datepart(day, cast('12:10:30.123' as time));
 GO
@@ -974,31 +974,31 @@ select datepart(week, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart tsql_week is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
 
 select datepart(wk, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart tsql_week is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
 
 select datepart(ww, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart tsql_week is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
 
 select datepart(weekday, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart dow is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart weekday is not supported by date function datepart for data type time.)~~
 
 select datepart(dw, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart dow is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart weekday is not supported by date function datepart for data type time.)~~
 
 select datepart(tzoffset, cast('12:10:30.123' as time));
 GO
@@ -1018,19 +1018,19 @@ select datepart(iso_week, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart iso_week is not supported by date function datepart for data type time.)~~
 
 select datepart(isowk, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart iso_week is not supported by date function datepart for data type time.)~~
 
 select datepart(isoww, cast('12:10:30.123' as time));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The datepart week is not supported by date function datepart for data type time.)~~
+~~ERROR (Message: The datepart iso_week is not supported by date function datepart for data type time.)~~
 
 select datepart(hour, cast('2016-12-26' as date));
 GO
