@@ -2468,10 +2468,12 @@ create_guest_role_for_db(const char *dbname)
 	Node	   *stmt;
 	ListCell   *res_item;
 	int			i = 0;
-	const char *prev_current_user;
 	int16		old_dbid;
 	char	   *old_dbname;
 	int16		dbid = get_db_id(dbname);
+	const char	*old_createrole_self_grant;
+	Oid save_userid;
+	int save_sec_context;
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
@@ -2494,10 +2496,8 @@ create_guest_role_for_db(const char *dbname)
 		update_GrantRoleStmt(stmt, list_make1(tmp), logins);
 	}
 
-	/* Set current user to session user for create permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-	bbf_set_current_user("sysadmin");
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	old_createrole_self_grant = pstrdup(GetConfigOption("createrole_self_grant", false, true));
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
@@ -2505,6 +2505,12 @@ create_guest_role_for_db(const char *dbname)
 
 	PG_TRY();
 	{
+		/* 
+		 * Set current user to bbf_role_admin for create permissions.
+		 * We assume that all permissions have been validated already
+		 */
+		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
 		/* Run all subcommands */
 		foreach(res_item, res)
 		{
@@ -2535,17 +2541,14 @@ create_guest_role_for_db(const char *dbname)
 		set_cur_db(old_dbid, old_dbname);
 		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false, false);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		/* Clean up. Restore previous state. */
-		bbf_set_current_user(prev_current_user);
+		SetConfigOption("createrole_self_grant", old_createrole_self_grant, PGC_USERSET, PGC_S_OVERRIDE);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
 		set_cur_db(old_dbid, old_dbname);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
-
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
 }
 
 /*

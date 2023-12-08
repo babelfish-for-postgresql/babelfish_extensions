@@ -331,10 +331,10 @@ GO
 DROP LOGIN babel_4080_testlogin1;
 GO
 
+-- tsql
 ALTER SERVER ROLE sysadmin DROP MEMBER babel_4080_sysadmin1;
 GO
 
--- tsql
 -- reset the login password
 ALTER LOGIN babel_4080_testlogin2 with PASSWORD = '1234';
 GO

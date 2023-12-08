@@ -81,6 +81,6 @@ sys_server_principals_vu_login_without_sa#!#S#!#SQL_LOGIN#!#master#!#English#!#-
 ~~END~~
 
 
---tsql
+-- tsql
 ALTER ROLE sysadmin drop member sys_server_principals_vu_login_with_sa
 GO

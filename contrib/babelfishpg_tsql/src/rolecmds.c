@@ -139,6 +139,8 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	if (strcmp(stmt->role, "sysadmin") == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
+	else if (strcmp(stmt->role, "bbf_role_admin") == 0)
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("A");
 	else if (from_windows)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
 	else
@@ -600,6 +602,12 @@ gen_droplogin_subcmds(const char *login)
 	update_DropRoleStmt(stmt, login);
 
 	return res;
+}
+
+Oid
+get_bbf_role_admin_oid(void)
+{
+	return get_role_oid("bbf_role_admin", false);
 }
 
 /*
@@ -1628,12 +1636,12 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
 								  ObjectIdGetDatum(sysadmin));
 
-	if (memlist->n_members == 1)
+	if (memlist->n_members <= 2)
 	{
 		HeapTuple	tup = &memlist->members[0]->tuple;
 		Oid			member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
 
-		if (member == grantee)
+		if (member ==  grantee || member == get_bbf_role_admin_oid())
 		{
 			ReleaseSysCacheList(memlist);
 			ereport(ERROR,
@@ -1713,33 +1721,41 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 bool
 is_empty_role(Oid roleid)
 {
-	CatCList   *memlist;
+    CatCList   *memlist;
+    char       *db_name = get_cur_db_name();
+    Oid         db_owner_oid, dbo_oid;
+    int         i;
 
-	if (roleid == InvalidOid)
-		return true;
+    if (roleid == InvalidOid || db_name == NULL || strcmp(db_name, "") == 0)
+        return true;
 
-	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
-								  ObjectIdGetDatum(roleid));
+    memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
+                                  ObjectIdGetDatum(roleid));
 
-	if (memlist->n_members == 1)
-	{
-		HeapTuple	tup = &memlist->members[0]->tuple;
-		Oid			member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
-		char	   *db_name = get_cur_db_name();
+    if (memlist->n_members == 0)
+    {
+        ReleaseSysCacheList(memlist);
+        return true;
+    }
 
-		if (db_name == NULL || strcmp(db_name, "") == 0)
-			return true;
+    db_owner_oid = get_role_oid(get_db_owner_name(db_name), true);
+    dbo_oid = get_role_oid(get_dbo_role_name(db_name), true);
 
-		if (member == get_role_oid(get_db_owner_name(db_name), true))
-		{
-			ReleaseSysCacheList(memlist);
-			return true;
-		}
-	}
+    for (i = 0; i < memlist->n_members; i++)
+    {
+        HeapTuple   tup = &memlist->members[i]->tuple;
+        Oid         member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
 
-	ReleaseSysCacheList(memlist);
+        if (member != db_owner_oid && member != dbo_oid && member != get_bbf_role_admin_oid())
+        {
+            ReleaseSysCacheList(memlist);
+            return false;
+        }
+    }
 
-	return false;
+    ReleaseSysCacheList(memlist);
+
+    return true;
 }
 
 PG_FUNCTION_INFO_V1(role_id);
@@ -1838,7 +1854,7 @@ is_rolemember(PG_FUNCTION_ARGS)
 	 * have permissions.
 	 */
 	if (!is_role(role_oid) ||
-		(principal_oid != cur_user_oid &&
+		((principal_oid != cur_user_oid) &&
 		 (!has_privs_of_role(cur_user_oid, role_oid) ||
 		  !has_privs_of_role(cur_user_oid, principal_oid))))
 		PG_RETURN_NULL();

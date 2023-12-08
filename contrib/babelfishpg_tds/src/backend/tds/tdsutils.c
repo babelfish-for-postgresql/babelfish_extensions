@@ -65,7 +65,6 @@ static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
 
 static char *get_role_name(RoleSpec *role);
-static bool have_createdb_privilege(void);
 char	   *get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 
 /*
@@ -1163,28 +1162,6 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
      */
     pfree(name);
     return true;
-}
-
-/*
- * Check if current user has create db privileges
- */
-static bool
-have_createdb_privilege(void)
-{
-	bool		result = false;
-	HeapTuple	utup;
-
-	/* Superusers can always do everything */
-	if (superuser())
-		return true;
-
-	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
-	if (HeapTupleIsValid(utup))
-	{
-		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
-		ReleaseSysCache(utup);
-	}
-	return result;
 }
 
 /*

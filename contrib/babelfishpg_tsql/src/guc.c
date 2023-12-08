@@ -665,7 +665,7 @@ define_custom_variables(void)
 							 &pltsql_allow_antlr_to_unsupported_grammar_for_testing,
 							 false,
 							 PGC_SUSET, /* only superuser can set */
-							 GUC_NO_SHOW_ALL,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE,
 							 NULL, NULL, NULL);
 
 	/* temporary GUC for enable or disable windows login */

@@ -56,7 +56,7 @@ runs:
           export PATH=$HOME/${{ inputs.install_dir }}/bin:$PATH
           make
           make install
-        if [[ ${{inputs.engine_branch}} == *"__PG_15_"* ]]; then
+        elif [[ ${{inputs.engine_branch}} == *"__PG_15_"* ]]; then
           cd ../..
           rm -rf pg_hint_plan
           git clone --depth 1 --branch REL15_1_5_1 https://github.com/ossc-db/pg_hint_plan.git
