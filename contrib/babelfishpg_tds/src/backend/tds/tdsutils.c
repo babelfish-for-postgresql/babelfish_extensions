@@ -57,7 +57,6 @@ static bool is_babelfish_role(const char *role);
 /* Role specific handlers */
 static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
 static bool handle_rename(RenameStmt *rename_stmt);
-static bool handle_alter_role(AlterRoleStmt* alter_role_stmt);
 static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
 
 /* Drop database handler */
@@ -707,9 +706,6 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		case T_DropdbStmt:
 			handle_result = handle_dropdb((DropdbStmt *) parsetree);
 			break;
-		case T_AlterRoleStmt:
-			handle_result = handle_alter_role((AlterRoleStmt*)parsetree);
-			break;
 		case T_AlterRoleSetStmt:
 			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
@@ -1018,96 +1014,6 @@ check_babelfish_alterrole_restictions(bool allow_alter_role_operation)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session")));
-}
-
-/*
- * handle_alter_role
- *
- * Description: This function handles dealing with ALTER ROLE <role> WITH.
- *
- * Returns: true - We're not attempting to modify something we shouldn't have access to. Normal security checks.
- *          false - We've reported an error and should not continue executing this call.
- */
-static bool
-handle_alter_role(AlterRoleStmt* alter_role_stmt)
-{
-    char *name = get_role_name(alter_role_stmt->role);
-    const char *babelfish_db_name = NULL;
-    bool allow_alter_role_operation;
-    bool master_user = false;
-    List *options = alter_role_stmt->options;
-    ListCell *opt;
-    Oid role_oid;
-    Oid	babelfish_db_oid;
-    HeapTuple tp;
-    Form_pg_authid authForm = NULL;
-
-    /* If the role does not exist, just let the normal Postgres checks happen. */
-    if (name == NULL)
-    {
-	    return true;
-    }
-
-    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
-    {
-	    tp = SearchSysCache1(AUTHNAME, CStringGetDatum(name));
-	    if (HeapTupleIsValid(tp))
-	    {
-		    authForm = (Form_pg_authid) GETSTRUCT(tp);
-	    }
-	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
-		if(babelfish_db_name)
-		{
-			babelfish_db_oid = get_database_oid(babelfish_db_name, true);
-			role_oid = get_role_oid(name, true);
-
-			/* Permission checks */
-			if (OidIsValid(role_oid) && OidIsValid(babelfish_db_oid) && pg_database_ownercheck(babelfish_db_oid, role_oid))
-				master_user = true;
-		}
-
-	    /*
-	     * For any pg user, there are only few operations which need to be allowed for
-	     * ALTER ROLE <role> WITH. The allowed operations to alter master user is password change
-		 * and the allowed operations to alter babelfish created logins/users/roles are
-		 * password change, connection limit and valid until.
-	     *
-	     * If any non-allowed option is given among the options of alter role then disallow the operation.
-	     *
-	     * In fututre, if need to allow more operations then add those options into the list.
-	     */
-	    foreach(opt, options)
-	    {
-		    DefElem *defel = (DefElem *) lfirst(opt);
-		    if(master_user)
-		    {
-			    if (strcmp(defel->defname, "password") == 0)
-				    allow_alter_role_operation = true;
-			    else
-			    {
-				    allow_alter_role_operation = false;
-				    break;
-			    }
-		    }
-		    else
-		    {
-			    if ((authForm && authForm->rolcanlogin) && (strcmp(defel->defname, "password") == 0 ||
-					    strcmp(defel->defname, "connectionlimit") == 0 ||
-					    strcmp(defel->defname, "validUntil") == 0))
-				    allow_alter_role_operation = true;
-			    else
-			    {
-				    allow_alter_role_operation = false;
-				    break;
-			    }
-		    }
-	    }
-	    if (authForm)
-		    ReleaseSysCache(tp);
-	    check_babelfish_alterrole_restictions(allow_alter_role_operation);
-    }
-    pfree(name);
-    return true;
 }
 
 /* handle_alter_role_set
