@@ -16,6 +16,10 @@ inputs:
     description: 'Is code coverage flag needed'
     required: false
     default: 'no'
+  release_mode:
+    description: 'Build in Release Mode'
+    required: no
+    default: no
 
 runs:
   using: "composite"
@@ -48,7 +52,11 @@ runs:
         elif [[ ${{inputs.code_coverage}} == "yes" ]]; then
           ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         else
-          ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+          if [[ ${{inputs.release_mode}} == "yes" ]]; then
+            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 CFLAGS="-ggdb -O2" --with-libxml --with-uuid=ossp --with-icu
+          else
+            ./configure CC='ccache gcc' --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python3.8 --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+          fi
         fi
         make -j 4 2>error.txt
         make install
