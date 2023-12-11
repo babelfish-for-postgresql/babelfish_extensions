@@ -2,38 +2,15 @@ name: Code Coverage
 on:
   schedule:
     - cron: '0 0 * * *'  # runs every midnight
-  workflow_dispatch:
-
+  
 jobs:
-
-  generate-branch-names:
-    runs-on: ubuntu-20.04
-    outputs:
-      matrix: ${{ steps.matrix.outputs.branches }}
-    steps:
-      - id: matrix
-        run: |
-          if [[ ${{ github.event_name }} == 'workflow_dispatch' ]]; then
-            echo "::set-output name=branches::['BABEL_3_X_DEV']"
-          else
-            echo "::set-output name=branches::['BABEL_3_X_DEV', 'BABEL_2_X_DEV']"
-          fi
-
-  run-all-tests:
-    needs: [ generate-branch-names ]
+  run-code-coverage-tests:
     runs-on: ubuntu-20.04
     env:
       INSTALL_DIR: psql
-    strategy:
-      fail-fast: false
-      matrix:
-        branch: ${{fromJson(needs.generate-branch-names.outputs.matrix)}} 
-
     steps:
       - uses: actions/checkout@v2
         id: checkout
-        with: 
-          ref: ${{ matrix.branch }}
 
       - name: Install Dependencies
         id: install-dependencies
@@ -49,49 +26,33 @@ jobs:
       - name: Build Modified Postgres
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
-        run: |
-          cd ..
-          rm -rf postgresql_modified_for_babelfish
-          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$GITHUB_REPOSITORY_OWNER" "${{matrix.branch}}"
-          cd postgresql_modified_for_babelfish
-          ./configure --prefix=$HOME/psql/ --with-python PYTHON=/usr/bin/python3.8 --enable-coverage --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-          make -j 4 2>error.txt
-          make install
-          cd contrib && make && sudo make install
-          cd ../..
-          rm -rf pg_hint_plan
-          if [[ ${{matrix.branch}} == "BABEL_2_"* ]]; then 
-            git clone --depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git
-          else
-            git clone --depth 1 --branch REL15_1_5_1 https://github.com/ossc-db/pg_hint_plan.git
-          fi
-          cd pg_hint_plan
-          export PATH=$HOME/psql/bin:$PATH
-          make
-          make install
+        uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          install_dir: ${{env.INSTALL_DIR}}
+          code_coverage: 'yes'
 
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
         with:
-          install_dir: 'psql'
+          install_dir: ${{env.INSTALL_DIR}}
 
       - name: Build Extensions
         id: build-extensions
         if: always() && steps.compile-antlr.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
-          install_dir: 'psql'
+          install_dir: ${{env.INSTALL_DIR}}
 
       - name: Build tds_fdw Extension
         id: build-tds_fdw-extension
-        if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-extensions.outcome == 'success') }}
+        if: always() &&  steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/build-tds_fdw-extension
 
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: ${{ startsWith(matrix.branch, 'BABEL_3_') && (steps.build-tds_fdw-extension.outcome == 'success') }}
+        if: always() &&  steps.build-tds_fdw-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
 
       - name: Install Extensions
@@ -99,155 +60,36 @@ jobs:
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
         with:
-          install_dir: 'psql'
+          install_dir: ${{env.INSTALL_DIR}}
 
       - name: Run JDBC Tests
-        id: jdbc
+        id: run-jdbc-tests
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
-        run: |
-          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
-          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
-          cd test/JDBC/
-          mvn test
-        
-      - name: Install MSSQL Tools
-        id: install-mssql-tools
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: |
-          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
-          sudo apt-get update
-          sudo apt-get install mssql-tools unixodbc-dev
-          echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
-          source ~/.bashrc
+        uses: ./.github/composite-actions/run-jdbc-tests 
       
-      - name: Install Dotnet
-        id: install-dotnet
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: | 
-          cd ~
-          wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-          sudo dpkg -i packages-microsoft-prod.deb
-          rm packages-microsoft-prod.deb
-          sudo apt-get install -y apt-transport-https
-          sudo apt-get install -y dotnet-sdk-5.0
-          sudo apt-get install -y apt-transport-https
-          sudo apt-get install -y aspnetcore-runtime-5.0
-          
       - name: Run Dotnet Tests
-        if: always() && steps.install-dotnet.outcome == 'success'
-        run: |
-          cd test/dotnet
-          dotnet build
-          babel_URL=localhost \
-            babel_port=1433 \
-            babel_databaseName=master \
-            babel_user=jdbc_user \
-            babel_password=12345678 \
-            testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestAuthentication.txt;TestText.txt" \
-            dotnet test
-      
-      - name: Install SQL Server ODBC Driver
-        id: install-sql-server-odbc-driver
+        id: install-and-run-dotnet
         if: always() && steps.install-extensions.outcome == 'success'
-        run: |
-          cd ~
-          sudo apt-get install msodbcsql17
-      
-      - name: Install unixODBC Driver
-        id: install-unix-odbc-driver
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: |
-          cd ~
-          wget http://www.unixodbc.org/unixODBC-2.3.11.tar.gz
-          gunzip unixODBC*.tar.gz
-          tar xvf unixODBC*.tar
-          cd unixODBC-2.3.11
-          ./configure
-          make
-          sudo make install
-
-      - name: Install psqlODBC Driver
-        id: install-psql-odbc-driver
-        if: always() && steps.install-extensions.outcome == 'success' && steps.install-unix-odbc-driver.outcome=='success'
-        run: |
-          cd ~
-          wget https://ftp.postgresql.org/pub/odbc/versions/src/psqlodbc-16.00.0000.tar.gz
-          tar -zxvf psqlodbc-16.00.0000.tar.gz
-          cd psqlodbc-16.00.0000
-          ./configure
-          sudo make
-          sudo make install
-          echo '[ODBC_Driver_16_for_PostgreSQL]' | sudo tee -a /etc/odbcinst.ini > /dev/null
-          echo 'Description=ODBC Driver 16 for PostgreSQL Server' | sudo tee -a /etc/odbcinst.ini > /dev/null
-          echo 'Driver=/usr/local/lib/psqlodbcw.so' | sudo tee -a /etc/odbcinst.ini > /dev/null
-          echo 'UsageCount=1' | sudo tee -a /etc/odbcinst.ini > /dev/null
+        uses: ./.github/composite-actions/install-and-run-dotnet
       
       - name: Run ODBC Tests
-        if: always() && steps.install-sql-server-odbc-driver.outcome == 'success' && steps.install-psql-odbc-driver.outcome == 'success'
-        run: |
-          cd test/odbc
-          cmake -S . -B build
-          cmake --build build
-          MSSQL_ODBC_DRIVER_NAME="ODBC Driver 17 for SQL Server" \
-            MSSQL_BABEL_DB_SERVER=localhost \
-            MSSQL_BABEL_DB_PORT=1433 \
-            MSSQL_BABEL_DB_USER=jdbc_user \
-            MSSQL_BABEL_DB_PASSWORD=12345678 \
-            MSSQL_BABEL_DB_NAME=master \
-            PSQL_ODBC_DRIVER_NAME=ODBC_Driver_16_for_PostgreSQL \
-            PSQL_BABEL_DB_SERVER=localhost \
-            PSQL_BABEL_DB_PORT=5432 \
-            PSQL_BABEL_DB_USER=jdbc_user \
-            PSQL_BABEL_DB_PASSWORD=12345678 \
-            PSQL_BABEL_DB_NAME=jdbc_testdb \
-            ./build/main
-
-      - name: Install Python
-        id: install-python
+        id: install-and-run-odbc-tests
         if: always() && steps.install-extensions.outcome == 'success'
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Configure Python Environment
-        id: configure-python-environment
-        if: always() && steps.install-python.outcome == 'success'
-        run: |
-          cd ~
-          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
-          cd ~/work/babelfish_extensions/babelfish_extensions/test/python
-          mkdir sqltoolsservice
-          cd sqltoolsservice
-          wget https://github.com/microsoft/sqltoolsservice/releases/download/4.4.0.12/Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz && tar -xzvf Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
-          cd ../
-          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
+        uses: ./.github/composite-actions/install-and-run-odbc
 
       - name: Drop and re-create Babelfish database
         id: re-install-extensions
-        if: always() && steps.configure-python-environment.outcome == 'success'
+        if: always() && steps.install-extensions.outcome == 'success'
         run: |
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
           sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode="single_db" -f .github/scripts/create_extension.sql
           sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       
       - name: Run Python Tests
+        id: install-and-run-python
         if: always() && steps.re-install-extensions.outcome == 'success'
-        run: | 
-          cd test/python
-          compareWithFile=true \
-            driver=pyodbc \
-            runInParallel=false \
-            testName=all \
-            provider="ODBC Driver 17 for SQL Server" \
-            fileGenerator_URL=localhost \
-            fileGenerator_port=1433 \
-            fileGenerator_databaseName=master \
-            fileGenerator_user=jdbc_user \
-            fileGenerator_password=12345678 \
-            pytest -s --tb=long -q .
+        uses: ./.github/composite-actions/install-and-run-python
 
       - name: Generate code coverage HTML report
         id: code-coverage
@@ -280,35 +122,35 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_tsql_${{ matrix.branch }}
+          name: coverage_tsql_${{github.ref_name}}
           path: contrib/babelfishpg_tsql/coverage/
 
       - name: Upload Coverage Report for babelfishpg_tds extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_tds_${{ matrix.branch }}
+          name: coverage_tds_${{github.ref_name}}
           path: contrib/babelfishpg_tds/coverage/
 
       - name: Upload Coverage Report for babelfishpg_common extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_common_${{ matrix.branch }}
+          name: coverage_common_${{github.ref_name}}
           path: contrib/babelfishpg_common/coverage/
 
       - name: Upload Coverage Report for babelfishpg_money extension
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: coverage_money_${{ matrix.branch }}
+          name: coverage_money_${{github.ref_name}}
           path: contrib/babelfishpg_money/coverage/
 
       - name: Download CSV report from previous run
         if: (github.event_name == 'schedule')
         uses: dawidd6/action-download-artifact@v2
         with:
-          name: csv_${{ matrix.branch }}
+          name: csv_${{github.ref_name}}
           path: contrib/
           search_artifacts: true
           if_no_artifact_found: warn
@@ -317,12 +159,12 @@ jobs:
         if: (github.event_name == 'schedule')
         run: |
           cd contrib/
-          paste -s -d, <(date +"%m/%d/%Y %H:%M:%S";lcov --summary lcov.info | grep -Po "[0-9]+\.[0-9]*") >> ${{ matrix.branch }}.csv
+          paste -s -d, <(date +"%m/%d/%Y %H:%M:%S";lcov --summary lcov.info | grep -Po "[0-9]+\.[0-9]*") >> ${{github.ref_name}}.csv
         shell: bash
 
       - name: Upload CSV report with latest coverage numbers
         if: (github.event_name == 'schedule')
         uses: actions/upload-artifact@v3
         with:
-          name: csv_${{ matrix.branch }}
-          path: contrib/${{ matrix.branch }}.csv
+          name: csv_${{github.ref_name}}
+          path: contrib/${{github.ref_name}}.csv

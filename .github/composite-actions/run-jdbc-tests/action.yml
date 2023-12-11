@@ -1,0 +1,13 @@
+name: 'Run JDBC Tests'
+description: 'Run Babel JDBC test framework'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run JDBC Tests
+      run: |
+          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
+          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          cd test/JDBC/
+          mvn test
+      shell: bash
