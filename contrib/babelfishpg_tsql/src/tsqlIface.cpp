@@ -2870,17 +2870,18 @@ static void process_select_statement(
 ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
-	ANTLR_result result;
+	ANTLR_result result = {
+		false,	/* success */
+		false,	/* parseTreeCreated */
+		0,	/* errpos */
+		0,	/* errcod */
+		NULL,	/* errfmt */
+		0,	/* n_errargs */
+		{}	/* errargs */
+	};
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
-
-	// initialise result
-	result.parseTreeCreated = false;
-	result.errpos = -1;
-	result.errcod = -1;
-	result.errfmt = NULL;
-	result.n_errargs = 0;
 
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
@@ -2928,7 +2929,15 @@ antlr_parser_cpp(const char *sourceText)
 
 ANTLR_result
 antlr_parse_query(const char *sourceText, bool useSLLParsing) {
-	ANTLR_result result;
+	ANTLR_result result = {
+		false,	/* success */
+		false,	/* parseTreeCreated */
+		0,	/* errpos */
+		0,	/* errcod */
+		NULL,	/* errfmt */
+		0,	/* n_errargs */
+		{}	/* errargs */
+	};
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -2938,13 +2947,6 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 
 	TSqlParser parser(&tokens);
 	volatile bool parseTreeCreated = false;
-
-	// initialise result
-	result.parseTreeCreated = false;
-	result.errpos = -1;
-	result.errcod = -1;
-	result.errfmt = NULL;
-	result.n_errargs = 0;
 
 	if (useSLLParsing)
 		parser.getInterpreter<atn::ParserATNSimulator>()->setPredictionMode(atn::PredictionMode::SLL);
