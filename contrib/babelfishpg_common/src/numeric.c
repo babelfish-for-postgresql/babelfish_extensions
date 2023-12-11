@@ -1043,7 +1043,8 @@ tsql_numeric_get_typmod(Numeric num)
 Datum
 bigint_sum(PG_FUNCTION_ARGS)
 {
-	return bigint_poly_aggr_final(fcinfo, TSQL_SUM);
+  Assert(0);
+  return bigint_poly_aggr_final(fcinfo, TSQL_SUM);
 }
 
 /*
