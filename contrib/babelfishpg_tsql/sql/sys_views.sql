@@ -18,7 +18,7 @@ select
   , CAST(NULL as int) as principal_id
   , CAST(t.relnamespace  as int) as schema_id
   , 0 as parent_object_id
-  , CAST('U' as CHAR(2)) as type
+  , CAST('U' as sys.bpchar(2)) as type
   , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
   , CAST((select string_agg(
                   case
@@ -106,13 +106,13 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.views as 
 select 
-  t.relname as name
+  CAST(t.relname as sys.sysname) as name
   , t.oid as object_id
   , null::integer as principal_id
   , sch.schema_id as schema_id
   , 0 as parent_object_id
-  , 'V'::varchar(2) as type 
-  , 'VIEW'::varchar(60) as type_desc
+  , 'V'::sys.bpchar(2) as type
+  , 'VIEW'::sys.nvarchar(60) as type_desc
   , vd.create_date::timestamp as create_date
   , vd.create_date::timestamp as modify_date
   , 0 as is_ms_shipped 
@@ -709,7 +709,7 @@ SELECT
 , CAST(NULL AS INT) AS principal_id
 , CAST(sch.schema_id AS INT) AS schema_id
 , CAST(c.conrelid AS INT) AS parent_object_id
-, CAST('F' AS CHAR(2)) AS type
+, CAST('F' AS sys.bpchar(2)) AS type
 , CAST('FOREIGN_KEY_CONSTRAINT' AS NVARCHAR(60)) AS type_desc
 , CAST(NULL AS sys.DATETIME) AS create_date
 , CAST(NULL AS sys.DATETIME) AS modify_date
@@ -917,12 +917,10 @@ SELECT
   , CAST(0 AS INT) AS principal_id
   , CAST(sch.schema_id AS INT) AS schema_id
   , CAST(c.conrelid AS INT) AS parent_object_id
-  , CAST(
-    (CASE contype
-      WHEN 'p' THEN 'PK'
-      WHEN 'u' THEN 'UQ'
-    END) 
-    AS CHAR(2)) AS type
+  , CASE contype
+      WHEN 'p' THEN CAST('PK' as sys.bpchar(2))
+      WHEN 'u' THEN CAST('UQ' as sys.bpchar(2))
+    END AS type
   , CAST(
     (CASE contype
       WHEN 'p' THEN 'PRIMARY_KEY_CONSTRAINT'
@@ -1223,7 +1221,7 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(null as int) as principal_id
   , CAST(tab.schema_id as int) as schema_id
   , CAST(d.adrelid as int) as parent_object_id
-  , CAST('D' as char(2)) as type
+  , CAST('D' as sys.bpchar(2)) as type
   , CAST('DEFAULT_CONSTRAINT' as sys.nvarchar(60)) AS type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modified_date
@@ -1247,7 +1245,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
   , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as char(2)) as type
+  , CAST('C' as sys.bpchar(2)) as type
   , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
