@@ -852,10 +852,10 @@ CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
 
 CASE -- cases for when they are of type identity. 
 	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
-	THEN CONCAT(t1.name, '() identity')
+	THEN CAST(CONCAT(t1.name, '() identity') AS sys.sysname)
 	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
-	THEN CONCAT(t1.name, ' identity')
-	ELSE t1.name
+	THEN CAST(CONCAT(t1.name, ' identity') AS sys.sysname)
+	ELSE CAST(t1.name AS sys.sysname)
 END AS TYPE_NAME,
 
 CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
