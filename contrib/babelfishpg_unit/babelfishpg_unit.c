@@ -221,7 +221,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
     TestResult *tr;
     int nargs = PG_NARGS();
     text **args =  NULL;
-    text **arg_ptr;
+    text **arg_ptr = &args;
     int i;
     StateInfo* state;
     ArrayType *arr;

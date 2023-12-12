@@ -1191,7 +1191,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 	int			rc = PLTSQL_RC_OK;
 	volatile bool internal_sp_started;
 	volatile int before_lxid = MyProc->lxid;
-	volatile int before_subtxn_id;
+	volatile int before_subtxn_id = 0;
 	MemoryContext cur_ctxt = CurrentMemoryContext;
 	ResourceOwner oldowner = CurrentResourceOwner;
 	SimpleEcontextStackEntry *volatile topEntry = simple_econtext_stack;
