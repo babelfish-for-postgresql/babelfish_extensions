@@ -549,6 +549,7 @@ collation_is_accent_insensitive(int collidx)
 		return false;
 
 	if (coll_infos[collidx].collateflags == 0x000f ||	/* CI_AI  */
+		coll_infos[collidx].collateflags == 0x000c ||	/* CS_AS  */
 		coll_infos[collidx].collateflags == 0x000e) /* CS_AI  */
 		return true;
 

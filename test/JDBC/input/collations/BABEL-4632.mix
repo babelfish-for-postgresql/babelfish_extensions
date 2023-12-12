@@ -1,0 +1,12 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_as';  -- only CI_AS collation is supported for server collation
+GO
+
+ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'chinese_prc_cs_as';  -- CS_AS collation is not supported for server collation, throw error
+GO
+
+ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'chinese_prc_ci_ai';  -- CI_AI collation is not supported for server collation, throw error
+GO
+
+ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'chinese_prc_cs_ai';  -- CS_AI collation is not supported for server collation, throw error
+GO
