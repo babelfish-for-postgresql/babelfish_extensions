@@ -55,6 +55,7 @@ static bool is_babelfish_ownership_enabled(ArrayType *array);
 static bool is_babelfish_role(const char *role);
 
 /* Role specific handlers */
+static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
 static bool handle_rename(RenameStmt *rename_stmt);
 static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
 
@@ -694,6 +695,10 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 	}
 	switch (nodeTag(parsetree))
 	{
+			/* Role lock down. */
+		case T_DropRoleStmt:
+			handle_result = handle_drop_role((DropRoleStmt *) parsetree);
+			break;
 		case T_RenameStmt:
 			handle_result = handle_rename((RenameStmt *) parsetree);
 			break;
@@ -741,6 +746,48 @@ call_next_ProcessUtility(PlannedStmt *pstmt,
 		next_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
 	else
 		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+}
+
+/*
+ * handle_drop_role
+ *
+ * Description: This function deals with DROP ROLE.
+ *
+ * Returns: true - should allow statement to continue
+ * 	false - otherwise
+ */
+static bool
+handle_drop_role(DropRoleStmt *drop_role_stmt)
+{
+	ListCell   *item = NULL;
+
+	/* We should not be handling superusers */
+	Assert(!superuser());
+	Assert(NULL != drop_role_stmt);
+
+	/*
+	 * Postgres allows you to drop multiple roles at the same time, which
+	 * means we get to parse out the roles by hand.  We could theoretically
+	 * allow for skipping this role if it's specified in a list; however,
+	 * blocking the statement seems less error prone at this point.
+	 */
+	foreach(item, drop_role_stmt->roles)
+	{
+		char	   *role = NULL;
+
+		/* Roles is a list of RoleSpecs now */
+		RoleSpec   *node = lfirst(item);
+
+		/* If the role does not exist, the role name will be NULL */
+		role = get_role_name(node);
+		if (NULL == role)
+			continue;
+
+		check_babelfish_droprole_restrictions(role);
+		pfree(role);
+		role = NULL;
+	}
+	return true;
 }
 
 /*
