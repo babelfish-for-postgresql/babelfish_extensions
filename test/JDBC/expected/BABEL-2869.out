@@ -17,7 +17,7 @@ AND O.schema_id = SCHEMA_ID( 'dbo' )
 ORDER BY T.name
 go
 ~~START~~
-text
+varchar
 bigint
 binary
 char
@@ -37,7 +37,7 @@ go
 Select name from sys.types order by name
 go
 ~~START~~
-text
+varchar
 bigint
 binary
 bit

@@ -94,7 +94,7 @@ varchar
 SELECT name FROM sys.types WHERE name LIKE 'babel_4367_%' ORDER BY name ASC
 GO
 ~~START~~
-text
+varchar
 ~~END~~
 
 
@@ -121,7 +121,7 @@ babel_4367_v_2
 SELECT name FROM sys.types WHERE name LIKE 'babel_4367_%' ORDER BY name ASC
 GO
 ~~START~~
-text
+varchar
 babel_4367_t_1
 babel_4367_t_2
 ~~END~~
@@ -178,7 +178,7 @@ varchar
 SELECT name FROM sys.types WHERE name LIKE 'babel_4367_%' ORDER BY name ASC
 GO
 ~~START~~
-text
+varchar
 ~~END~~
 
 
@@ -195,6 +195,6 @@ varchar
 SELECT name FROM sys.types WHERE name LIKE 'babel_4367_%' ORDER BY name ASC
 GO
 ~~START~~
-text
+varchar
 ~~END~~
 
