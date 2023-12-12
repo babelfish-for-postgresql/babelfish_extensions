@@ -1088,8 +1088,8 @@ GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
 -- For System types
-select 
-  tsql_type_name as name
+select
+  CAST(tsql_type_name as sys.sysname) as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
@@ -1099,7 +1099,7 @@ select
   , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN default_collation_name
-    ELSE  c.collname
+    ELSE  CAST(c.collname as sys.sysname)
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , 0 as is_user_defined
@@ -1111,14 +1111,14 @@ from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 left join pg_collation c on c.oid = t.typcollation
 , sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
-,cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
 where
-tsql_type_name IS NOT NULL  
+tsql_type_name IS NOT NULL
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(t.typname as text) as name
+select cast(t.typname as sys.sysname) as name
   , t.typbasetype as system_type_id
   , t.oid as user_type_id
   , t.typnamespace as schema_id
@@ -1128,7 +1128,7 @@ select cast(t.typname as text) as name
   , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
   , CASE c.collname
     WHEN 'default' THEN default_collation_name
-    ELSE  c.collname 
+    ELSE  CAST(c.collname as sys.sysname)
     END as collation_name
   , case when tt.typrelid is not null then cast(0 as sys.bit)
          else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
@@ -1146,7 +1146,7 @@ left join pg_collation c on c.oid = t.typcollation
 left join sys.table_types_internal tt on t.typrelid = tt.typrelid
 , sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
-, cast(current_setting('babelfishpg_tsql.server_collation_name') as name) as default_collation_name
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
 -- we want to show details of user defined datatypes created under babelfish database
 where 
  tsql_type_name IS NULL
@@ -1179,7 +1179,7 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 CREATE OR REPLACE VIEW sys.systypes AS
-SELECT CAST(name as sys.sysname) as name
+SELECT name
   , CAST(system_type_id as int) as xtype
   , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
   , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
@@ -1201,7 +1201,7 @@ SELECT CAST(name as sys.sysname) as name
   , (case when precision <> 0::smallint then precision 
       else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
   , CAST(scale as sys.tinyint) as scale
-  , CAST(collation_name as sys.sysname) as collation
+  , collation_name as collation
 FROM sys.types;
 GRANT SELECT ON sys.systypes TO PUBLIC;
 

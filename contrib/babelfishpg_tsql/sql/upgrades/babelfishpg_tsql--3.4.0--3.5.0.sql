@@ -761,6 +761,874 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_4');
+
+ALTER VIEW sys.types  RENAME TO types_deprecated_3_4;
+
+create or replace view sys.types As
+-- For System types
+select
+  CAST(tsql_type_name as sys.sysname) as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  CAST(c.collname as sys.sysname)
+    END as collation_name
+  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
+  , 0 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+left join pg_collation c on c.oid = t.typcollation
+, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
+where
+tsql_type_name IS NOT NULL
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as sys.sysname) as name
+  , t.typbasetype as system_type_id
+  , t.oid as user_type_id
+  , t.typnamespace as schema_id
+  , null::integer as principal_id
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  CAST(c.collname as sys.sysname)
+    END as collation_name
+  , case when tt.typrelid is not null then cast(0 as sys.bit)
+         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , 1 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
+from pg_type t
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join pg_collation c on c.oid = t.typcollation
+left join sys.table_types_internal tt on t.typrelid = tt.typrelid
+, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
+-- we want to show details of user defined datatypes created under babelfish database
+where 
+ tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    tt.typrelid is not null  
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT
+CAST(1 AS SMALLINT) AS SCOPE,
+CAST(coalesce (split_part(a.attoptions[1] COLLATE "C", '=', 2) ,a.attname) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS SMALLINT) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+	WHEN  a.attidentity <> ''::"char" AND (t1.name = 'decimal' OR t1.name = 'numeric')
+	THEN CONCAT(t1.name, '() identity')
+	WHEN  a.attidentity <> ''::"char" AND (t1.name != 'decimal' AND t1.name != 'numeric')
+	THEN CONCAT(t1.name, ' identity')
+	ELSE t1.name
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(COALESCE(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS INT) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS SMALLINT) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CASE
+	WHEN a.attnotnull
+	THEN CAST(0 AS INT)
+	ELSE CAST(1 AS INT) END
+AS IS_NULLABLE,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(C.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+	WHEN X.indisprimary
+	THEN CAST('p' AS sys.sysname)
+	ELSE CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+END AS CONSTRAINT_TYPE,
+CAST(I.relname AS sys.sysname) CONSTRAINT_NAME,
+CAST(X.indexrelid AS int) AS INDEX_ID
+
+FROM( pg_index X
+JOIN pg_class C ON X.indrelid = C.oid
+JOIN pg_class I ON I.oid = X.indexrelid
+CROSS JOIN LATERAL unnest(X.indkey) AS ak(k)
+        LEFT JOIN pg_attribute a
+                       ON (a.attrelid = X.indrelid AND a.attnum = ak.k)
+)
+LEFT JOIN sys.pg_namespace_ext nsp_ext ON C.relnamespace = nsp_ext.oid
+LEFT JOIN sys.schemas s1 ON s1.schema_id = C.relnamespace
+LEFT JOIN sys.columns c1 ON c1.object_id = X.indrelid AND cast(a.attname AS sys.sysname) = c1.name COLLATE sys.database_default
+LEFT JOIN pg_catalog.pg_type AS T ON T.oid = c1.system_type_id
+LEFT JOIN sys.types AS t1 ON a.atttypid = t1.user_type_id
+LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON T.typname = t6.pg_type_name OR T.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+, sys.translate_pg_type_to_tsql(t1.user_type_id) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t1.system_type_id) AS tsql_base_type_name
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+AND X.indislive ;
+
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;  
+
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
+AS
+SELECT
+CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
+, CAST(
+CASE
+  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
+  ELSE CONCAT(ss.proname, ';0')
+END
+AS sys.nvarchar(134)) AS PROCEDURE_NAME
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+    ELSE '@RETURN_VALUE'
+  END 
+ELSE COALESCE(ss.proargnames[n], '')
+END
+AS sys.SYSNAME) AS COLUMN_NAME
+, CAST(
+CASE
+WHEN ss.n IS NULL THEN
+  CASE 
+    WHEN ss.proretset THEN 3
+    ELSE 5
+  END
+WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
+ELSE 1
+END
+AS smallint) AS COLUMN_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+    WHEN ss.proretset THEN NULL
+    ELSE sdit.data_type 
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.data_type 
+END
+AS smallint) AS DATA_TYPE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 'table' 
+      WHEN ss.prokind = 'p' THEN 'int'
+      ELSE st.name
+    END
+  ELSE st.name
+END
+AS sys.sysname) AS TYPE_NAME
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0 
+    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+    ELSE st.precision
+  END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE st.precision 
+END 
+AS sys.int) AS PRECISION
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+    ELSE st.max_length
+  END
+  WHEN st.is_table_type = 1 THEN 2147483647
+  ELSE st.max_length 
+END
+AS sys.int) AS LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 
+    CASE
+      WHEN ss.proretset THEN 0 
+      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+      ELSE st.scale
+    END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE st.scale
+END
+AS smallint) AS SCALE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+    ELSE sdit.num_prec_radix
+  END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE sdit.num_prec_radix
+END
+AS smallint) AS RADIX
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
+      ELSE sdit.nullable 
+    END
+  WHEN st.is_table_type = 1 THEN 1
+  ELSE sdit.nullable 
+END
+AS smallint) AS NULLABLE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+  ELSE NULL
+END
+AS sys.varchar(254)) COLLATE sys.database_default AS REMARKS
+, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN NULL
+      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_data_type
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.sql_data_type 
+END
+AS smallint) AS SQL_DATA_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_datetime_sub
+    END
+  ELSE sdit.sql_datetime_sub 
+END 
+AS smallint) AS SQL_DATETIME_SUB
+, CAST(
+CASE
+  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  ELSE NULL
+END
+AS sys.int) AS CHAR_OCTET_LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 0
+  ELSE n 
+END 
+AS sys.int) AS ORDINAL_POSITION
+, CAST(
+CASE
+  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
+  WHEN st.is_table_type = 1 THEN 'YES'
+  WHEN sdit.nullable = 1 THEN 'YES'
+  ELSE 'NO'
+END
+AS sys.varchar(254)) COLLATE sys.database_default AS IS_NULLABLE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN 56
+      ELSE sdit.ss_data_type
+    END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE sdit.ss_data_type
+END
+AS sys.tinyint) AS SS_DATA_TYPE
+, CAST(ss.proname AS sys.sysname) AS original_procedure_name
+FROM 
+( 
+  -- CTE to query procedures related to bbf
+  WITH bbf_proc AS (
+    SELECT
+      p.proname as proname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.proallargtypes as proallargtypes,
+      p.proargtypes as proargtypes,
+      s.name as schema_name
+    FROM 
+      pg_proc p
+    INNER JOIN (
+      SELECT name as name, schema_id as id  FROM sys.schemas 
+      UNION ALL 
+      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
+    ) as s ON p.pronamespace = s.id
+    WHERE (
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
+  )
+
+  SELECT *
+  FROM ( 
+    SELECT -- Selects all parameters (input and output), but NOT return values
+    p.proname as proname,
+    p.proargnames as proargnames,
+    p.proargmodes as proargmodes,
+    p.prokind as prokind,
+    p.proretset as proretset,
+    p.prorettype as prorettype,
+    p.schema_name as schema_name,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).x AS x,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).n AS n
+    FROM bbf_proc p) AS t
+  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
+
+  UNION ALL
+
+  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
+  p.proname as proname,
+  p.proargnames as proargnames,
+  p.proargmodes as proargmodes,
+  p.prokind as prokind,
+  p.proretset as proretset,
+  p.prorettype as prorettype,
+  p.schema_name as schema_name,
+  p.prorettype AS x, 
+  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
+  FROM bbf_proc p
+) ss
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left joined because return type of table-valued functions may not have an entry in sys.types
+-- Because spt_datatype_info_table does contain user-defind types and their names,
+-- the join below allows us to retrieve the name of the base type of the user-defined type
+LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.assembly_types
+AS
+SELECT
+   t.name AS name,
+   -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+   -- This is because the IDs of generated SQL Server system type values generated by B
+   -- Babelfish installation will exceed the size of TINYINT.
+   CAST(t.system_type_id as int) AS system_type_id,
+   CAST(t.user_type_id as int) AS user_type_id,
+   CAST(t.schema_id as int) AS schema_id,
+   CAST(t.principal_id as int) AS principal_id,
+   CAST(t.max_length as smallint) AS max_length,
+   CAST(t.precision as sys.tinyint) AS precision,
+   CAST(t.scale as sys.tinyint) AS scale,
+   t.collation_name AS collation_name,
+   CAST(t.is_nullable as sys.bit) AS is_nullable,
+   CAST(t.is_user_defined as sys.bit) AS is_user_defined,
+   CAST(t.is_assembly_type as sys.bit) AS is_assembly_type,
+   CAST(t.default_object_id as int) AS default_object_id,
+   CAST(t.rule_object_id as int) AS rule_object_id,
+   CAST(NULL as int) AS assembly_id,
+   CAST(NULL as sys.sysname) AS assembly_class,
+   CAST(NULL as sys.bit) AS is_binary_ordered,
+   CAST(NULL as sys.bit) AS is_fixed_length,
+   CAST(NULL as sys.nvarchar(40)) AS prog_id,
+   CAST(NULL as sys.nvarchar(4000)) AS assembly_qualified_name,
+   CAST(t.is_table_type as sys.bit) AS is_table_type
+FROM sys.types t
+WHERE t.is_assembly_type = 1;
+GRANT SELECT ON sys.assembly_types TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.systypes AS
+SELECT name
+  , CAST(system_type_id as int) as xtype
+  , CAST((case when is_nullable = 1 then 0 else 1 end) as sys.tinyint) as status
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as xusertype
+  , max_length as length
+  , CAST(precision as sys.tinyint) as xprec
+  , CAST(scale as sys.tinyint) as xscale
+  , CAST(default_object_id as int) as tdefault
+  , CAST(rule_object_id as int) as domain
+  , CAST((case when schema_id < 32767 then schema_id::int else null end) as smallint) as uid
+  , CAST(0 as smallint) as reserved
+  , CAST(sys.CollationProperty(collation_name, 'CollationId') as int) as collationid
+  , CAST((case when user_type_id < 32767 then user_type_id::int else null end) as smallint) as usertype
+  , CAST((case when (coalesce(sys.translate_pg_type_to_tsql(system_type_id), sys.translate_pg_type_to_tsql(user_type_id)) 
+            in ('nvarchar', 'varchar', 'sysname', 'varbinary')) then 1 
+          else 0 end) as sys.bit) as variable
+  , CAST(is_nullable as sys.bit) as allownulls
+  , CAST(system_type_id as int) as type
+  , CAST(null as sys.varchar(255)) as printfmt
+  , (case when precision <> 0::smallint then precision 
+      else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
+  , CAST(scale as sys.tinyint) as scale
+  , collation_name as collation
+FROM sys.types;
+GRANT SELECT ON sys.systypes TO PUBLIC;
+
+ALTER VIEW sys.table_types RENAME TO table_types_deprecated_3_4;
+
+create or replace view sys.table_types as
+select st.*
+  , pt.typrelid::int as type_table_object_id
+  , 0::sys.bit as is_memory_optimized -- return 0 until we support in-memory tables
+from sys.types st
+inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
+where is_table_type = 1;
+GRANT SELECT ON sys.table_types TO PUBLIC;
+
+--  sys.all_objects and sys.objects
+create or replace view sys.all_objects as
+select 
+    name collate sys.database_default
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , type collate sys.database_default
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
+-- Currently for pg_class, pg_proc UNIONs, we separated user defined objects and system objects because the 
+-- optimiser will be able to make a better estimation of number of rows(in case the query contains a filter on 
+-- is_ms_shipped column) and in turn chooses a better query plan. 
+
+-- details of system tables
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U'::char(2) as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and tt.typrelid is null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+ 
+union all
+-- details of user defined tables
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U'::char(2) as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.table_types_internal tt on t.oid = tt.typrelid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'U'
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and tt.typrelid is null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+ 
+union all
+-- details of system views
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::char(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
+where t.relkind = 'v'
+and (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- Details of user defined views
+select
+    t.relname::sys.sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::char(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = t.relname and nis.schemaid = s.oid and nis.type = 'V'
+where t.relkind = 'v'
+and s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system foreign key constraints
+select
+    c.conname::sys.sysname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F'::char(2) as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'F'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of user defined and system primary key constraints
+select
+    c.conname::sys.sysname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK'::char(2) as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'PK'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of system defined procedures
+select
+    p.proname::sys.sysname as name 
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
+and nis.type = (case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end)
+where (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+ 
+union all
+-- details of user defined procedures
+select
+    p.proname::sys.sysname as name 
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.proname and nis.schemaid = s.oid 
+and nis.type = (case p.prokind
+      when 'p' then 'P'::char(2)
+      when 'a' then 'AF'::char(2)
+      else
+        case 
+          when t.typname = 'trigger'
+            then 'TR'::char(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::char(2)
+              else 'IF'::char(2)
+            end
+          else 'FN'::char(2)
+        end
+    end)
+where s.nspname <> 'sys' and nis.name is null
+and ext.nspname is not null
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+ 
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::sys.sysname as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = ('DF_' || o.relname || '_' || d.oid) and nis.schemaid = s.oid and nis.type = 'D'
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::sys.sysname
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , s.oid as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = c.conname and nis.schemaid = s.oid and nis.type = 'C'
+where has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+and (s.nspname = 'sys' or ext.nspname is not null)
+union all
+-- details of user defined and system defined sequence objects
+select
+  p.relname::sys.sysname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'SO'::char(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (s.nspname = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join pg_namespace s on s.oid = p.relnamespace
+left join sys.babelfish_namespace_ext ext on (s.nspname = ext.nspname and ext.dbid = sys.db_id())
+left join sys.shipped_objects_not_in_sys nis on nis.name = p.relname and nis.schemaid = s.oid and nis.type = 'SO'
+where p.relkind = 'S'
+and (s.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::sys.sysname as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::char(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , CAST (case when (tt.schema_id::regnamespace::text = 'sys' or nis.name is not null) then 1
+         else 0 end as sys.bit ) as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt
+left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || '_' || tt.type_table_object_id)::name and nis.schemaid = tt.schema_id and nis.type = 'TT'
+) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
+
 create or replace view sys.objects as
 select
       CAST(t.name as sys.sysname) as name 
@@ -931,12 +1799,207 @@ from sys.table_types tt
 inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_4');
+CREATE OR REPLACE VIEW sys.all_parameters
+AS
+SELECT
+    CAST(ss.p_oid AS INT) AS object_id
+  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
+  , CAST(
+      CASE 
+        WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
+        ELSE (ss.x).n
+      END 
+    AS INT) AS parameter_id
+  -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+  -- This is because the IDs of system type values generated by
+  -- Babelfish installation will exceed the size of TINYINT
+  , CAST(st.system_type_id AS INT) AS system_type_id
+  , CAST(st.user_type_id AS INT) AS user_type_id
+  , CAST( 
+      CASE
+        WHEN st.is_table_type = 1 THEN -1 -- TVP case
+        WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
+        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
+      END
+    AS smallint) AS max_length
+  , CAST(
+      CASE
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
+        ELSE sys.tsql_type_precision_helper(st.name, typmod)
+      END
+    AS sys.tinyint) AS precision
+  , CAST(
+      CASE 
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.scale
+        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
+      END
+    AS sys.tinyint) AS scale
+  , CAST(
+      CASE
+        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
+        ELSE 0
+      END 
+    AS sys.bit) AS is_output
+  , CAST(0 AS sys.bit) AS is_cursor_ref
+  , CAST(0 AS sys.bit) AS has_default_value
+  , CAST(0 AS sys.bit) AS is_xml_document
+  , CAST(NULL AS sys.sql_variant) AS default_value
+  , CAST(0 AS int) AS xml_collection_id
+  , CAST(0 AS sys.bit) AS is_readonly
+  , CAST(1 AS sys.bit) AS is_nullable
+  , CAST(NULL AS int) AS encryption_type
+  , CAST(NULL AS sys.nvarchar(64)) AS encryption_type_desc
+  , CAST(NULL AS sys.sysname) AS encryption_algorithm_name
+  , CAST(NULL AS int) AS column_encryption_key_id
+  , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
+FROM pg_type t
+  INNER JOIN sys.types st ON st.user_type_id = t.oid
+  INNER JOIN 
+  (
+    SELECT
+      p.oid AS p_oid,
+      p.proargnames,
+      p.proargmodes,
+      p.prokind,
+      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
+      information_schema._pg_expandarray(
+      COALESCE(p.proallargtypes,
+        CASE 
+          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
+          ELSE CAST(p.proargtypes AS oid[])
+        END
+      )) AS x
+    FROM pg_proc p
+    WHERE (
+      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
+  ) ss ON t.oid = (ss.x).x,
+  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
+  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
+  CAST(
+    CASE
+      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
+      ELSE 0
+    END 
+  AS INT) AS is_out_scalar
+WHERE ( -- If it is a Table function, we only want the inputs
+      return_type NOT LIKE 'TABLE(%' OR 
+      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
+GRANT SELECT ON sys.all_parameters TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_rename(
+	IN "@objname" sys.nvarchar(776) = NULL,
+	IN "@newname" sys.SYSNAME = NULL,
+	IN "@objtype" sys.varchar(13) DEFAULT NULL
+)
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	If @objtype IS NULL
+		BEGIN
+			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
+		END
+	ELSE IF @objtype = 'INDEX'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Index', 1;
+		END
+	ELSE IF @objtype = 'STATISTICS'
+		BEGIN
+			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	ELSE
+		BEGIN
+			DECLARE @subname sys.nvarchar(776);
+			DECLARE @schemaname sys.nvarchar(776);
+			DECLARE @dbname sys.nvarchar(776);
+			DECLARE @curr_relname sys.nvarchar(776);
+			
+			EXEC sys.babelfish_sp_rename_word_parse @objname, @objtype, @subname OUT, @curr_relname OUT, @schemaname OUT, @dbname OUT;
+
+			DECLARE @currtype char(2);
+
+			IF @objtype = 'COLUMN'
+				BEGIN
+					DECLARE @col_count INT;
+					SELECT @col_count = COUNT(*)FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = @curr_relname and COLUMN_NAME = @subname;
+					IF @col_count < 0
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'CO';
+				END
+			ELSE IF @objtype = 'USERDATATYPE'
+				BEGIN
+					DECLARE @alias_count INT;
+					SELECT @alias_count = COUNT(*) FROM sys.types t1 INNER JOIN sys.schemas s1 ON t1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND t1.name = @subname;
+					IF @alias_count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @alias_count < 1
+						BEGIN
+							THROW 33557097, N'There is no object with the given @objname.', 1;
+						END
+					SET @currtype = 'AL';				
+				END
+			ELSE IF @objtype = 'OBJECT'
+				BEGIN
+					DECLARE @count INT;
+					SELECT type INTO #tempTable FROM sys.objects o1 INNER JOIN sys.schemas s1 ON o1.schema_id = s1.schema_id 
+					WHERE s1.name = @schemaname AND o1.name = @subname;
+					SELECT @count = COUNT(*) FROM #tempTable;
+
+					IF @count > 1
+						BEGIN
+							THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+						END
+					IF @count < 1
+						BEGIN
+							-- TABLE TYPE: check if there is a match in sys.table_types (if we cannot alter sys.objects table_type naming)
+							SELECT @count = COUNT(*) FROM sys.table_types tt1 INNER JOIN sys.schemas s1 ON tt1.schema_id = s1.schema_id 
+							WHERE s1.name = @schemaname AND tt1.name = @subname;
+							IF @count > 1
+								BEGIN
+									THROW 33557097, N'There are multiple objects with the given @objname.', 1;
+								END
+							ELSE IF @count < 1
+								BEGIN
+									THROW 33557097, N'There is no object with the given @objname.', 1;
+								END
+							ELSE
+								BEGIN
+									SET @currtype = 'TT'
+								END
+						END
+					IF @currtype IS NULL
+						BEGIN
+							SELECT @currtype = type from #tempTable;
+						END
+					IF @currtype = 'TR' OR @currtype = 'TA'
+						BEGIN
+							DECLARE @physical_schema_name sys.nvarchar(776) = '';
+							SELECT @physical_schema_name = nspname FROM sys.babelfish_namespace_ext WHERE dbid = sys.db_id() AND orig_name = @schemaname;
+							SELECT @curr_relname = relname FROM pg_catalog.pg_trigger tr LEFT JOIN pg_catalog.pg_class c ON tr.tgrelid = c.oid LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid 
+							WHERE tr.tgname = @subname AND n.nspname = @physical_schema_name;
+						END
+				END
+			ELSE
+				BEGIN
+					THROW 33557097, N'Provided @objtype is not currently supported in Babelfish', 1;
+				END
+			EXEC sys.babelfish_sp_rename_internal @subname, @newname, @schemaname, @currtype, @curr_relname;
+			PRINT 'Caution: Changing any part of an object name could break scripts and stored procedures.';
+		END
+END;
+$$;
+GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
