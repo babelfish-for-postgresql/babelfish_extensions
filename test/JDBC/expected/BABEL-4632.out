@@ -25,3 +25,6 @@ GO
 ~~ERROR (Message: ERROR: invalid value for parameter "babelfishpg_tsql.server_collation_name": "chinese_prc_cs_ai"
     Server SQLState: 22023)~~
 
+
+ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'sql_latin1_general_cp1_ci_as';   -- reset server collation name to default
+GO

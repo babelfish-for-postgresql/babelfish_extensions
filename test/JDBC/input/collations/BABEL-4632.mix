@@ -10,3 +10,6 @@ GO
 
 ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'chinese_prc_cs_ai';  -- CS_AI collation is not supported for server collation, throw error
 GO
+
+ALTER SYSTEM SET babelfishpg_tsql.server_collation_name = 'sql_latin1_general_cp1_ci_as';   -- reset server collation name to default
+GO
