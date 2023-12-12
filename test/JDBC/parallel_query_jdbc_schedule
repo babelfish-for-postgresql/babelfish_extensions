@@ -55,11 +55,6 @@ ignore#!#BABEL-ROLE-MEMBER
 # current_setting('role') returns NULL.
 ignore#!#BABEL-1444
 
-# ERROR CODE DIFFERENCE.  JIRA-4539
-ignore#!#babel_datetime-vu-verify
-ignore#!#babel_datetime
-ignore#!#BABEL-2812-vu-verify
-
 # output difference: JIRA-4542
 ignore#!#sys-sp_pkeys-dep-vu-verify
 ignore#!#BABEL-SP_PKEYS
