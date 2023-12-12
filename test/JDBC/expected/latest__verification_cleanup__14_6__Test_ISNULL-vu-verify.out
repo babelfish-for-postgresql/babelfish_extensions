@@ -9,7 +9,7 @@ select name from sys.types where system_type_id =
 ) and is_user_defined = 0;
 GO
 ~~START~~
-text
+varchar
 bigint
 ~~END~~
 
@@ -106,7 +106,7 @@ select name from sys.types where system_type_id =
 ) and is_user_defined = 0;
 GO
 ~~START~~
-text
+varchar
 int
 ~~END~~
 
@@ -121,7 +121,7 @@ select name from sys.types where system_type_id =
 ) and is_user_defined = 0;
 GO
 ~~START~~
-text
+varchar
 text
 ~~END~~
 
@@ -136,7 +136,7 @@ select name from sys.types where system_type_id =
 ) and is_user_defined = 0;
 GO
 ~~START~~
-text
+varchar
 varchar
 ~~END~~
 
@@ -151,7 +151,7 @@ select name from sys.types where system_type_id =
 ) and is_user_defined = 0;
 GO
 ~~START~~
-text
+varchar
 int
 ~~END~~
 
