@@ -1,0 +1,43 @@
+name: 'Run Python Tests'
+description: 'Install and Run Babel Python test framework'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Python
+      id: install-python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Configure Python Environment
+      id: configure-python-environment
+      if: always() && steps.install-python.outcome == 'success'
+      run: |
+        cd ~
+        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+        cd ~/work/babelfish_extensions/babelfish_extensions/test/python
+        mkdir sqltoolsservice
+        cd sqltoolsservice
+        wget https://github.com/microsoft/sqltoolsservice/releases/download/4.4.0.12/Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz && tar -xzvf Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
+        cd ../
+        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
+        pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
+      shell: bash
+      
+    - name: Run Python Tests
+      if: always() && steps.configure-python-environment.outcome == 'success'
+      run: | 
+        cd test/python
+        compareWithFile=true \
+          driver=pyodbc \
+          runInParallel=false \
+          testName=all \
+          provider="ODBC Driver 17 for SQL Server" \
+          fileGenerator_URL=localhost \
+          fileGenerator_port=1433 \
+          fileGenerator_databaseName=master \
+          fileGenerator_user=jdbc_user \
+          fileGenerator_password=12345678 \
+          pytest -s --tb=long -q .
+      shell: bash
