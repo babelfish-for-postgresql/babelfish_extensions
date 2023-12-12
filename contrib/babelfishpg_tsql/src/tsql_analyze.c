@@ -128,7 +128,7 @@ pltsql_update_query_result_relation(Query *qry, Relation target_rel, List *rtabl
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) list_nth(rtable, i);
 
-		if (rte->relid == target_relid)
+		if (rte->relid == target_relid && rte->rtekind != RTE_NAMEDTUPLESTORE)
 		{
 			qry->resultRelation = i + 1;
 			return;
