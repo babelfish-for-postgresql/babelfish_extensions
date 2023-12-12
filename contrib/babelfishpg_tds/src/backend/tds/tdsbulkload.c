@@ -926,7 +926,7 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_CATCH();
 		{
-			int			ret;
+			int			ret = 0;
 
 			HOLD_CANCEL_INTERRUPTS();
 
@@ -987,7 +987,7 @@ ProcessBCPRequest(TDSRequest request)
 			}
 			PG_CATCH();
 			{
-				int			ret;
+				int			ret = 0;
 
 				HOLD_CANCEL_INTERRUPTS();
 				HOLD_INTERRUPTS();

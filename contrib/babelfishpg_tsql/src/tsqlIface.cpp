@@ -3133,6 +3133,7 @@ rewriteBatchLevelStatement(
 {
 	// rewrite batch-level stmt query
 	PLtsql_expr_query_mutator mutator(expr, ctx);
+	// cppcheck-suppress autoVariables
 	ssm->mutator = &mutator;
 
 	/*
@@ -5578,7 +5579,7 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 	for (PLtsql_stmt *stmt : result) 
 	{
 		// Associate each fragement with a tree node
-		if (declare_local_expr.find(stmt) != declare_local_expr.end()) 
+		if (!declare_local_expr.empty() && declare_local_expr.find(stmt) != declare_local_expr.end()) 
 		{
 			attachPLtsql_fragment(declare_local_expr.at(stmt), stmt);	
 		}
