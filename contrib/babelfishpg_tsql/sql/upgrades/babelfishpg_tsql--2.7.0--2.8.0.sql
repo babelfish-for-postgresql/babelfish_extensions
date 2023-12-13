@@ -63,7 +63,7 @@ BEGIN
     LOOP
         SELECT nspname INTO nsp_name FROM sys.babelfish_namespace_ext AS a WHERE a.orig_name = r.schema_name AND a.dbid = r.dbid;
         SELECT oid INTO nsp_oid FROM sys.pg_namespace_ext as b WHERE b.nspname = nsp_name;
-        IF((SELECT COUNT(*) FROM pg_class WHERE pg_class.relnamespace = nsp_oid AND CAST(pg_class.relname AS sys.SYSNAME) = r.object_name) = 0) THEN
+        IF((SELECT COUNT(*) FROM pg_class WHERE pg_class.relnamespace = nsp_oid AND CAST(pg_class.relname AS sys.SYSNAME) = r.object_name AND pg_class.relkind = 'v') = 0) THEN
             DELETE FROM ONLY sys.babelfish_view_def AS c WHERE c.dbid = r.dbid AND c.schema_name = r.schema_name AND c.object_name = r.object_name;
         END IF;        
     END LOOP;
