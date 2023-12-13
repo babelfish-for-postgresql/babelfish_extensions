@@ -58,6 +58,7 @@ extern Oid get_sa_role_oid(void);
 extern bool tsql_has_pgstat_permissions(Oid roleid);
 extern bool tsql_has_linked_srv_permissions(Oid roleid);
 extern bool is_alter_server_stmt(GrantRoleStmt *stmt);
+extern bool is_grant_sysadmin_stmt(GrantRoleStmt *stmt);
 extern void check_alter_server_stmt(GrantRoleStmt *stmt);
 extern bool is_alter_role_stmt(GrantRoleStmt *stmt);
 extern void check_alter_role_stmt(GrantRoleStmt *stmt);

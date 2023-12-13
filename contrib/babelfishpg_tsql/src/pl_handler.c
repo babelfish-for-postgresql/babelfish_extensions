@@ -3347,7 +3347,44 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 			}
 		case T_GrantRoleStmt:
-			if (sql_dialect == SQL_DIALECT_TSQL)
+		{
+			if (sql_dialect != SQL_DIALECT_TSQL)
+			{
+				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
+				/* Execute the statement. */
+				if (prev_ProcessUtility)
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+										params, queryEnv, dest, qc);
+				else
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
+											params, queryEnv, dest, qc);
+
+				if (is_grant_sysadmin_stmt(grant_role))
+				{
+					/*
+					 * If this is a GRANT sysadmin to <role> statement,
+					 * add CREATEDB and CREATEROLE attributes to the grantees.
+					 */
+					RoleSpec   *spec;
+					ListCell	*cell;
+					foreach(cell, grant_role->grantee_roles)
+					{
+						StringInfoData query;
+
+						spec = (RoleSpec *) lfirst(cell);
+						initStringInfo(&query);
+						if (grant_role->is_grant)
+							appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
+						else
+							appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
+
+						exec_alter_role_cmd(query.data, spec);
+						pfree(query.data);
+					}
+				}
+				return;
+			}
+			else
 			{
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
 
@@ -3428,6 +3465,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 			}
 			break;
+		}
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;

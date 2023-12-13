@@ -1570,6 +1570,26 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 	return false;
 }
 
+bool
+is_grant_sysadmin_stmt(GrantRoleStmt *stmt)
+{
+	/*
+	 * is grant sysadmin statement, if any one granted role is
+	 * sysadmin role
+	 */
+	ListCell *cell;
+	foreach(cell, stmt->granted_roles)
+	{
+		RoleSpec   *spec = (RoleSpec *) lfirst(cell);
+
+		if (strcmp(spec->rolename, "sysadmin") == 0)	/* only supported server
+														 * role */
+			return true;
+	}
+
+	return false;
+}
+
 void
 check_alter_server_stmt(GrantRoleStmt *stmt)
 {
