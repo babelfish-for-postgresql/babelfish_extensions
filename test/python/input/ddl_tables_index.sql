@@ -58,6 +58,16 @@ create table test_tsql_collate(
 	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE bbf_unicode_cp1_ci_as),
 )
 GO
+CREATE TABLE [dbo].[CustomerCustomerDemo](
+    [CustomerID] [nchar](5) NOT NULL,
+    [CustomerTypeID] [nchar](10) NOT NULL,
+ CONSTRAINT [PK_CustomerCustomerDemo] PRIMARY KEY NONCLUSTERED 
+(
+    [CustomerID] ASC,
+    [CustomerTypeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 Create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint1 check (a>10));
 GO
 Create table test_upper(a char, check (upper(a) in ('A','B')));

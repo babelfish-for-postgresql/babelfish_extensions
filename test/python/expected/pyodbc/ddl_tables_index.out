@@ -130,6 +130,16 @@ CREATE TABLE [dbo].[test_tsql_const](
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 ) ON [PRIMARY]
 
+CREATE TABLE [dbo].[CustomerCustomerDemo](
+    [CustomerID] [nchar](5) NOT NULL,
+    [CustomerTypeID] [nchar](10) NOT NULL,
+ CONSTRAINT [PK_CustomerCustomerDemo] PRIMARY KEY NONCLUSTERED 
+(
+    [CustomerID] ASC,
+    [CustomerTypeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_binary_check] CHECK  (((c_binary > CAST(('0xfe') AS binary(8)))))
 ALTER TABLE [dbo].[test_tsql_const] CHECK CONSTRAINT [test_tsql_const_c_binary_check]
 ALTER TABLE [dbo].[test_tsql_const]  WITH CHECK ADD  CONSTRAINT [test_tsql_const_c_bit_check] CHECK  (((c_bit <> CAST((1) AS bit))))
