@@ -116,6 +116,17 @@ ALTER TABLE [dbo].[test_tsql_collate]  WITH CHECK ADD  CONSTRAINT [test_tsql_col
 ALTER TABLE [dbo].[test_tsql_collate] CHECK CONSTRAINT [test_tsql_collate_c_varchar_check]
 GO
 
+CREATE TABLE [dbo].[CustomerCustomerDemo](
+    [CustomerID] [nchar](5) NOT NULL,
+    [CustomerTypeID] [nchar](10) NOT NULL,
+ CONSTRAINT [PK_CustomerCustomerDemo] PRIMARY KEY NONCLUSTERED 
+(
+    [CustomerID] ASC,
+    [CustomerTypeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
 SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[test_tsql_const](
