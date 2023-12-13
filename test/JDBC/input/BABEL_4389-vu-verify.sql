@@ -21,3 +21,6 @@ GO
 SELECT object_name FROM sys.babelfish_view_def WHERE object_name IN ('BABEL4389V_1', 'BABEL4389V1', 'BABEL4389V2')
 GO
 
+DROP DATABASE babel_4389_db1
+GO
+

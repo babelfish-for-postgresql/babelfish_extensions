@@ -49,6 +49,39 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+ -- Delete orphan entries in babelfish view definition system catalog
+ -- We delete the entry if the view does not exists in pg_class or the
+ -- schema as whole does not exists
+DO $$
+DECLARE
+    r RECORD;
+    nsp_oid OID;
+    nsp_name NAME;
+BEGIN
+    FOR r IN 
+        SELECT * FROM sys.babelfish_view_def
+    LOOP
+        SELECT nspname INTO nsp_name FROM sys.babelfish_namespace_ext AS a WHERE a.orig_name = r.schema_name AND a.dbid = r.dbid;
+        SELECT oid INTO nsp_oid FROM sys.pg_namespace_ext as b WHERE b.nspname = nsp_name;
+        IF((SELECT COUNT(*) FROM pg_class WHERE pg_class.relnamespace = nsp_oid AND CAST(pg_class.relname AS sys.SYSNAME) = r.object_name) = 0) THEN
+            DELETE FROM ONLY sys.babelfish_view_def AS c WHERE c.dbid = r.dbid AND c.schema_name = r.schema_name AND c.object_name = r.object_name;
+        END IF;        
+    END LOOP;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error while dropping orphan entries is system catalog babelfish view definition';
+END $$
+LANGUAGE plpgsql;
+
+DO $$
+BEGIN
+    ALTER TABLE sys.babelfish_view_def DROP CONSTRAINT babelfish_view_def_pkey;
+    ALTER TABLE sys.babelfish_view_def ADD PRIMARY KEY (dbid, schema_name, object_name);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RAISE NOTICE 'Failed to recreate system catalog babelfish view def';
+END $$;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

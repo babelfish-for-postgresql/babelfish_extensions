@@ -2629,10 +2629,6 @@ ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date SYS.DATETIME, add COLU
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'schema_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'object_name');
 
--- primary key babelfish_view_def_pkey is based on sys.babelfish_view_def.schema_name and sys.babelfish_view_def.object_name
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def_pkey', 'schema_name');
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def_pkey', 'object_name');
-
 CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'clr_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'permission_set_desc');

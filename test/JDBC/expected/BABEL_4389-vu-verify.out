@@ -25,3 +25,6 @@ varchar
 ~~END~~
 
 
+DROP DATABASE babel_4389_db1
+GO
+
