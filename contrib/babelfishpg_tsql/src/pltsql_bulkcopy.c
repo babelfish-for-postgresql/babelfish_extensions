@@ -376,7 +376,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
 			recheckIndexes =
 				ExecInsertIndexTuples(resultRelInfo,
 									  buffer->slots[i], estate, false, false,
-									  NULL, NIL);
+									  NULL, NIL, false);
 			list_free(recheckIndexes);
 		}
 
@@ -924,7 +924,7 @@ BeginBulkCopy(Relation rel,
 	 * index-entry-making machinery.  (There used to be a huge amount of code
 	 * here that basically duplicated execUtils.c ...).
 	 */
-	ExecInitRangeTable(cstate->estate, cstate->range_table);
+	ExecInitRangeTable(cstate->estate, cstate->range_table, cstate->estate->es_rteperminfos);
 	cstate->resultRelInfo = cstate->target_resultRelInfo = makeNode(ResultRelInfo);
 	ExecInitResultRelation(cstate->estate, cstate->resultRelInfo, 1);
 
