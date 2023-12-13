@@ -8,9 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-BABEL-3144-vu-prepare
-BABEL-3144-vu-verify
-BABEL-3144-vu-cleanup
+all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
@@ -187,4 +185,3 @@ ignore#!#load_student
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
-ignore#!#babel_tds_fault_injection
