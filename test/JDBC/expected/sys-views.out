@@ -15,6 +15,46 @@ int
 ~~END~~
 
 
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type='V';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type='v';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type_desc='VIEW';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type_desc='view';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1';
 GO
 ~~START~~

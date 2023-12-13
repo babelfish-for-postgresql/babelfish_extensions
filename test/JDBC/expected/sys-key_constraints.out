@@ -15,6 +15,22 @@ int
 ~~END~~
 
 
+select count(*) from sys.key_constraints where parent_object_id = object_id('uq_1') and type = 'UQ';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.key_constraints where parent_object_id = object_id('uq_1') and type = 'uq';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE master
 GO
 

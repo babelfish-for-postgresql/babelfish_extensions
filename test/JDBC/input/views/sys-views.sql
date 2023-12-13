@@ -10,6 +10,21 @@ GO
 SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name1';
 GO
 
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1';
+GO
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type='V';
+GO
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type='v';
+GO
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type_desc='VIEW';
+GO
+
+SELECT count(*) FROM sys.views WHERE name='RAND_nAME1' and type_desc='view';
+GO
+
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1';
 GO
 
