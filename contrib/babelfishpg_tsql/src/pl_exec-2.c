@@ -2276,7 +2276,7 @@ exec_stmt_deallocate(PLtsql_execstate *estate, PLtsql_stmt_deallocate *stmt)
 {
 	PLtsql_var *curvar;
 	Portal		portal;
-	char	   *curname;
+	char	   *curname = NULL;
 	MemoryContext oldcontext;
 
 	Assert(estate->datums[stmt->curvar]->dtype == PLTSQL_DTYPE_VAR);

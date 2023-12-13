@@ -2879,6 +2879,12 @@ antlr_parser_cpp(const char *sourceText)
 	{
 		pltsql_parse_result = makeEmptyBlockStmt(0);
 		result.success = true;
+		result.parseTreeCreated = false;
+		result.errpos = 0;
+		result.errcod = 0;
+		result.errfmt = NULL;
+		result.n_errargs = 0;
+
 		return result;
 	}
 
@@ -4002,7 +4008,7 @@ std::string extractSchemaName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::T
 std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
 {
 	std::string table_name;
-	if (dctx == nullptr)
+	if (dctx == nullptr && tctx != nullptr)
 	{
 		if (tctx->full_object_name())
 			table_name = stripQuoteFromId(tctx->full_object_name()->object_name);
