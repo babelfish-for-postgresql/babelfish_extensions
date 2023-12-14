@@ -1,0 +1,36 @@
+name: Static Code Analyzer
+on: [push, pull_request]
+
+jobs:
+  run-static-code-analyzer:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install cppcheck
+        id: install-cppcheck
+        if: always()
+        run: |
+          sudo apt-get install cppcheck
+
+      - name: Clone engine repository
+        id: clone-engine-repo
+        if: always() && steps.install-cppcheck.outcome == 'success'
+        run: |
+          cd ..
+          rm -rf postgresql_modified_for_babelfish
+
+          if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
+            ENGINE_BRANCH=$GITHUB_HEAD_REF
+          else
+            ENGINE_BRANCH=$GITHUB_REF_NAME
+          fi
+
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$GITHUB_REPOSITORY_OWNER" "$ENGINE_BRANCH"
+
+      - name: Run cppcheck on extensions
+        id: run-cppcheck
+        if: always()
+        run: |
+          cppcheck --error-exitcode=-1 -j 16 -I ../postgresql_modified_for_babelfish --enable=warning --template=gcc ./contrib
