@@ -1,0 +1,9 @@
+--tsql user=u1 password=123
+
+DROP TABLE non_temp_table_1
+GO
+
+--tsql user=u2 password=123
+
+DROP TABLE non_temp_table_2
+GO

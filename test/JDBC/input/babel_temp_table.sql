@@ -224,18 +224,6 @@ GO
 DROP TABLE #babel322;
 GO
 
--- Alter temp table codepath works
-CREATE TABLE #temp_table_alter1(col1 int)
-GO
-ALTER TABLE #temp_table_alter1 ADD col2 varchar(20)
-GO
-
--- Alter temp table with toast, index works
-CREATE TABLE #temp_table_alter2(col1 int, col2 varchar(20))
-GO
-ALTER TABLE #temp_table_alter2 ADD col3 int IDENTITY(1, 1)
-GO
-
 -- cleanup
 
 DROP PROCEDURE temp_table_sp;

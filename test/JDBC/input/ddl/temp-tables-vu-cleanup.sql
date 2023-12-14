@@ -12,3 +12,9 @@ GO
 
 DROP TABLE temp_table_vu_prepare_t1;
 GO
+
+DROP TYPE temp_table_type_int
+GO
+
+DROP TYPE temp_table_type_char
+GO
