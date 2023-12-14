@@ -1234,12 +1234,15 @@ collation_is_CI_AS(Oid colloid)
 
 	/*
 	 * colStrength secondary, or level2, corresponds to a CI_AS collation,
-	 * unless colCaseLevel=yes is also specified
+	 * unless colCaseLevel=yes, or kc-true, is also specified.
 	 */
-	if (0 != strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) &&	/* CI_AS */
-		0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")))	/* without a
-																			 * colCaseLevel - not
-																			 * CS_AI */
+	if (strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) &&
+         0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes")))    /* without a colCaseLevel - not CS_AI */
+	         return true;
+	 
+	/* Starting from PG16, locale string is canonicalized to a language tag. */
+	if (0 != strstr(lowerstr(collcollate), "level2") &&    /* CI_AS */
+		0 == strstr(lowerstr(collcollate), "kc-true"))
 		return true;
 
 	return false;
