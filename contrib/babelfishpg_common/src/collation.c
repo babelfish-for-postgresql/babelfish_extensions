@@ -789,21 +789,22 @@ init_collid_trans_tab_internal(void)
 			init_default_locale();
 
 			locale = pstrdup(bbf_default_locale);
-			atsign = strstr(locale, "@");
+			if (locale)
+				atsign = strstr(locale, "@");
 			if (atsign != NULL)
 				*atsign = '\0';
 			locale_pos = find_locale(locale);
 
 			if (locale_pos < 0)
+			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INTERNAL_ERROR),
 						 errmsg("invalid setting detected for babelfishpg_tsql.default_locale setting")));
-			else
-			{
-				coll_infos[i].lcid = locales[locale_pos].lcid;
-				coll_infos[i].code_page = locales[locale_pos].code_page;
-				coll_infos[i].enc = locales[locale_pos].enc;
+				return 0;
 			}
+			coll_infos[i].lcid = locales[locale_pos].lcid;
+			coll_infos[i].code_page = locales[locale_pos].code_page;
+			coll_infos[i].enc = locales[locale_pos].enc;
 			
 			if (locale)
 				pfree(locale);
