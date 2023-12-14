@@ -69,7 +69,7 @@ WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
   AND ext.dbid = sys.db_id();
 
-ALTER FUNCTION sys.parsename(NVARCHAR, INT) RENAME TO parsename_deprecated_in_2_8_0;
+ALTER FUNCTION sys.parsename(sys.NVARCHAR, INT) RENAME TO parsename_deprecated_in_2_8_0;
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.NVARCHAR, object_piece int)
 RETURNS sys.NVARCHAR(128)
@@ -79,7 +79,7 @@ LANGUAGE C IMMUTABLE STRICT;
 CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_2_8_0');
 
 
-ALTER PROCEDURE sys.sp_set_session_context(NVARCHAR, SQL_VARIANT, BIT) RENAME TO sp_set_session_context_deprecated_in_2_8_0;
+ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_2_8_0;
 
 CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.NVARCHAR(128), 
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
@@ -90,7 +90,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_2_8_0');
 
 
-ALTER FUNCTION sys.session_context(NVARCHAR) RENAME TO session_context_deprecated_in_2_8_0;
+ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_2_8_0;
 
 CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.NVARCHAR(128))
 RETURNS sys.SQL_VARIANT 
@@ -98,7 +98,7 @@ AS 'babelfishpg_tsql', 'session_context'
 LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_2_8_0')
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_2_8_0');
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
