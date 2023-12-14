@@ -8,7 +8,7 @@ ALTER TABLE t1_babel4261 SET (parallel_workers = 16);  -- note: this is PG synta
 GO
 
 -- The third parameter is true to set config back to default after transaction is committed
-SELECT set_config('force_parallel_mode', '1', true)
+SELECT set_config('debug_parallel_query', '1', true)
 SELECT set_config('parallel_setup_cost', '0', true)
 SELECT set_config('parallel_tuple_cost', '0', true)
 GO
@@ -30,7 +30,7 @@ SELECT sum(a) FROM t1_babel4261
 SELECT sum(a) FROM t1_babel4261   -- should not crash
 GO
 
--- Commiting sets force_parallel_mode, parallel_setup_cost, parallel_tuple_cost back to default
+-- Commiting sets debug_parallel_query, parallel_setup_cost, parallel_tuple_cost back to default
 COMMIT TRAN BABEL4261_T1;
 GO
 

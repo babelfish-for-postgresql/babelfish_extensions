@@ -19,14 +19,14 @@ GROUP BY babel_4294_t2.val
 go
 
 -- Used force parallel mode to create a parallel worker
-select set_config('force_parallel_mode', '1', false)
+select set_config('debug_parallel_query', '1', false)
 go
 
 -- to check if parallel worker generated for following query, will crash or not
 select * from babel_4294_t4
 go
 
-select set_config('force_parallel_mode', '0', false)
+select set_config('debug_parallel_query', '0', false)
 go
 
 exec sp_babelfish_configure 'enable_pg_hint', 'off', 'server'

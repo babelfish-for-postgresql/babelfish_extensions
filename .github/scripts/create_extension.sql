@@ -14,7 +14,7 @@ ALTER SYSTEM SET babelfishpg_tsql.migration_mode = :'migration_mode';
     ALTER SYSTEM SET parallel_tuple_cost = 0;
     ALTER SYSTEM SET min_parallel_index_scan_size = 0;
     ALTER SYSTEM SET min_parallel_table_scan_size = 0;
-    ALTER SYSTEM SET force_parallel_mode = 1;
+    ALTER SYSTEM SET debug_parallel_query = 1;
     ALTER SYSTEM SET max_parallel_workers_per_gather = 4;
 \endif
 
