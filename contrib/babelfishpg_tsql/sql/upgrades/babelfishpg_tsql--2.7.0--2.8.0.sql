@@ -69,7 +69,7 @@ BEGIN
     END LOOP;
 EXCEPTION
     WHEN OTHERS THEN
-        RAISE NOTICE 'Error while dropping orphan entries is system catalog babelfish view definition';
+        RAISE NOTICE 'Error while dropping orphan entries in system catalog sys.babelfish_view_def';
 END $$
 LANGUAGE plpgsql;
 
@@ -79,7 +79,7 @@ BEGIN
     ALTER TABLE sys.babelfish_view_def ADD PRIMARY KEY (dbid, schema_name, object_name);
     EXCEPTION
         WHEN OTHERS THEN
-            RAISE NOTICE 'Failed to recreate system catalog babelfish view def';
+            RAISE NOTICE 'Failed to recreate primary key for system catalog sys.babelfish_view_def';
 END $$;
 
 -- Drops the temporary procedure used by the upgrade script.
