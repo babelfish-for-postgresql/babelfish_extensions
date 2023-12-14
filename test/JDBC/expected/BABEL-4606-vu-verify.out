@@ -1,0 +1,98 @@
+select * from babel_4606
+GO
+~~START~~
+int#!#int
+1#!#7
+2#!#8
+3#!#9
+4#!#10
+5#!#11
+6#!#12
+~~END~~
+
+
+update babel_4606 set b = 100 where a = 1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_4606
+GO
+~~START~~
+int#!#int
+2#!#8
+3#!#9
+4#!#10
+5#!#11
+6#!#12
+1#!#101
+~~END~~
+
+
+select * from babel_4606_2
+GO
+~~START~~
+int#!#int
+1#!#7
+2#!#8
+3#!#9
+4#!#10
+5#!#11
+6#!#12
+~~END~~
+
+
+update babel_4606_2 set b = 100 where a = 1;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_4606_2
+GO
+~~START~~
+int#!#int
+2#!#8
+3#!#9
+4#!#10
+5#!#11
+6#!#12
+1#!#102
+~~END~~
+
+
+select * from babel_4606_3
+GO
+~~START~~
+int#!#int
+1#!#7
+2#!#8
+3#!#9
+4#!#10
+5#!#11
+6#!#12
+~~END~~
+
+
+update babel_4606_3 set b = 100 where a = 1;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_4606_3
+GO
+~~START~~
+int#!#int
+2#!#8
+3#!#9
+4#!#10
+5#!#11
+6#!#12
+1#!#300
+~~END~~
+
