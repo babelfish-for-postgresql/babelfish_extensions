@@ -4,14 +4,14 @@ GO
 -- tsql
 
 -- VariableSetStmt doens't work in JDBC. use workaround
-DECLARE @orig_force_parallel_mode varchar(10);
-SET @orig_force_parallel_mode = (SELECT current_setting('force_parallel_mode'));
-SELECT 'enable force_parallel_mode' FROM (SELECT
-		set_config('force_parallel_mode', 'on', false)) sq;
+DECLARE @orig_debug_parallel_query varchar(10);
+SET @orig_debug_parallel_query = (SELECT current_setting('debug_parallel_query'));
+SELECT 'enable debug_parallel_query' FROM (SELECT
+		set_config('debug_parallel_query', 'on', false)) sq;
 GO
 ~~START~~
 varchar
-enable force_parallel_mode
+enable debug_parallel_query
 ~~END~~
 
 
@@ -46,14 +46,14 @@ int
 
 
 -- tsql
-DECLARE @orig_force_parallel_mode varchar(10);
-SET @orig_force_parallel_mode = (SELECT current_setting('force_parallel_mode'));
-SELECT 'reset force_parallel_mode' FROM (SELECT
-		set_config('force_parallel_mode', @orig_force_parallel_mode, false)) sq;
+DECLARE @orig_debug_parallel_query varchar(10);
+SET @orig_debug_parallel_query = (SELECT current_setting('debug_parallel_query'));
+SELECT 'reset debug_parallel_query' FROM (SELECT
+		set_config('debug_parallel_query', @orig_debug_parallel_query, false)) sq;
 GO
 ~~START~~
 varchar
-reset force_parallel_mode
+reset debug_parallel_query
 ~~END~~
 
 

@@ -9,7 +9,7 @@ alter table babel_3294_t1 set (parallel_workers = 16)
 go
 
 -- Encourage use of parallel plans
-select set_config('force_parallel_mode', '1', false)
+select set_config('debug_parallel_query', '1', false)
 go
 
 select set_config('parallel_setup_cost', '0', false)

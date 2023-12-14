@@ -28,7 +28,7 @@ int#!#int
 
 
 -- Used force parallel mode to create a parallel worker
-select set_config('force_parallel_mode', '1', false)
+select set_config('debug_parallel_query', '1', false)
 go
 ~~START~~
 text
@@ -44,7 +44,7 @@ int#!#int
 ~~END~~
 
 
-select set_config('force_parallel_mode', '0', false)
+select set_config('debug_parallel_query', '0', false)
 go
 ~~START~~
 text
