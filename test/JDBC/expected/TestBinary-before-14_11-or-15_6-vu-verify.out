@@ -1,0 +1,28 @@
+SELECT * FROM testBINARY_dt1
+~~START~~
+binary#!#varbinary
+00000000000004D2#!#00003039
+<NULL>#!#<NULL>
+~~END~~
+
+SELECT * FROM testBINARY_dt2
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+SELECT * FROM testBINARY_dt3
+~~START~~
+varbinary#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+<NULL>#!#1#!#2#!#3#!#4#!#5#!#6#!#7#!#8
+~~END~~
+
+SELECT * FROM testBINARY_dt4
+~~START~~
+binary#!#varbinary
+00000000000004D2#!#00003039
+3132333400000000#!#3132333435
+3132333435363738#!#3132333435
+3132333400000000#!#313233343536373839
+~~END~~
+

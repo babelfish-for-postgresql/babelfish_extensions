@@ -47,6 +47,8 @@ extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
 
+extern bool babelfish_dump_restore;
+
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
 
@@ -111,7 +113,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int4", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", NULL, 'i', 'b'},
+	{TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", "varbinarybinary", 'i', 'f'},
 /*  binary     {only allow to cast to integral data type) */
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
@@ -638,9 +640,26 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
 
 						if (!OidIsValid(entry->castfunc))
 						{
+							/*
+							 * varbinary to binary implicit type cast without function should be allowed during MVU
+							 * since the cast function might not exists when source version is before 14_11 and 15_6
+							 */ 
+							if (babelfish_dump_restore && ((*common_utility_plugin_ptr->is_tsql_varbinary_datatype) (castsource) 
+								&& (*common_utility_plugin_ptr->is_tsql_binary_datatype) (casttarget)))
+							{
+								entry->castfunc = 0;
+								entry->castcontext = COERCION_CODE_IMPLICIT;
+								entry->castmethod = COERCION_METHOD_BINARY;
+								value = hash_search(ht_tsql_cast_info, key, HASH_ENTER, NULL);
+								*(tsql_cast_info_entry_t *) value = *entry;
+								continue;
+							}
 							/* function is not loaded. wait for next scan */
-							inited_ht_tsql_cast_info = false;
-							continue;
+							else
+							{
+								inited_ht_tsql_cast_info = false;
+								continue;
+							}
 						}
 					}
 					break;
