@@ -178,7 +178,7 @@ sys-views-dep
 tdscollation
 temp-tables
 TestBigInt
-TestBinary-before-14_11-or-15_6
+TestBinary
 TestBIT
 TestChar
 TestDate

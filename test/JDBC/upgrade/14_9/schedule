@@ -12,7 +12,7 @@ BABEL-3613
 babelfish_cast_floor
 babel_try_parse
 TestBigInt
-TestBinary-before-14_11-or-15_6
+TestBinary
 TestBIT
 TestChar
 TestDatetime2
