@@ -9,6 +9,11 @@ GO
 DROP VIEW BABEL4389V1
 GO
 
+-- Check if we delete orphan entries in view_def even when 
+-- a non view relation with same name exists
+CREATE TABLE BABEL4389V1 (id INT)
+GO
+
 CREATE SCHEMA babel_4389_schema1
 GO
 
@@ -42,6 +47,9 @@ GO
 CREATE VIEW babel_4389_schema2.BABEL4389V1 as SELECT 1
 GO
 DROP VIEW babel_4389_schema2.BABEL4389V1
+GO
+
+CREATE TABLE babel_4389_schema2.BABEL4389V1 (id INT)
 GO
 
 CREATE SCHEMA babel_4389_schema3
