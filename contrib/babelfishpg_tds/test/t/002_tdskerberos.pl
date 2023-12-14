@@ -46,6 +46,7 @@ elsif ($^O eq 'linux')
 
 my $krb5_config  = 'krb5-config';
 my $kinit        = 'kinit';
+my $klist        = 'klist';
 my $kdb5_util    = 'kdb5_util';
 my $kadmin_local = 'kadmin.local';
 my $krb5kdc      = 'krb5kdc';
@@ -54,6 +55,7 @@ if ($krb5_bin_dir && -d $krb5_bin_dir)
 {
 	$krb5_config = $krb5_bin_dir . '/' . $krb5_config;
 	$kinit       = $krb5_bin_dir . '/' . $kinit;
+	$klist       = $krb5_bin_dir . '/' . $klist;
 }
 if ($krb5_sbin_dir && -d $krb5_sbin_dir)
 {
@@ -76,6 +78,8 @@ my $kdc_datadir = "${PostgreSQL::Test::Utils::tmp_check}/krb5kdc";
 my $kdc_pidfile = "${PostgreSQL::Test::Utils::tmp_check}/krb5kdc.pid";
 my $keytab      = "${PostgreSQL::Test::Utils::tmp_check}/krb5.keytab";
 
+my $pgpass      = "${PostgreSQL::Test::Utils::tmp_check}/.pgpass";
+
 my $dbname      = 'postgres';
 my $username    = 'test1';
 my $application = '002_tdskerberos.pl';
@@ -90,6 +94,14 @@ $stdout =~ m/Kerberos 5 release ([0-9]+\.[0-9]+)/
   or BAIL_OUT("could not get Kerberos version");
 $krb5_version = $1;
 
+# Construct a pgpass file to make sure we don't use it
+append_to_file(
+	$pgpass,
+	'*:*:*:*:abc123'
+);
+
+chmod 0600, $pgpass;
+
 append_to_file(
 	$krb5_conf,
 	qq![logging]
@@ -97,7 +109,11 @@ default = FILE:$krb5_log
 kdc = FILE:$kdc_log
 
 [libdefaults]
+dns_lookup_realm = false
+dns_lookup_kdc = false
 default_realm = $realm
+forwardable = false
+rdns = false
 
 [realms]
 $realm = {
@@ -244,8 +260,12 @@ sub test_query
 }
 
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{host all all $hostaddr/32 gss map=mymap});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+local all test2 scram-sha-256
+host all all $hostaddr/32 gss map=mymap
+});
 $node->restart;
 
 test_access($node, 'test1', 'SELECT true', 2, '', 'fails without ticket');
@@ -273,7 +293,7 @@ test_access(
 	'',
 	'succeeds with mapping with default gssencmode and host hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, delegated_credentials=no, principal=test1\@$realm)"
 );
 
 test_access(
@@ -284,7 +304,7 @@ test_access(
 	'gssencmode=prefer',
 	'succeeds with GSS-encrypted access preferred with host hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, delegated_credentials=no, principal=test1\@$realm)"
 );
 test_access(
 	$node,
@@ -294,7 +314,7 @@ test_access(
 	'gssencmode=require',
 	'succeeds with GSS-encrypted access required with host hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, delegated_credentials=no, principal=test1\@$realm)"
 );
 
 # Test that we can transport a reasonable amount of data.
@@ -319,8 +339,12 @@ test_query(
 	'sending 100K lines works');
 
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{hostgssenc all all $hostaddr/32 gss map=mymap});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	hostgssenc all all $hostaddr/32 gss map=mymap
+});
 $node->restart;
 
 test_access(
@@ -331,7 +355,7 @@ test_access(
 	'gssencmode=prefer',
 	'succeeds with GSS-encrypted access preferred and hostgssenc hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, delegated_credentials=no, principal=test1\@$realm)"
 );
 test_access(
 	$node,
@@ -341,14 +365,18 @@ test_access(
 	'gssencmode=require',
 	'succeeds with GSS-encrypted access required and hostgssenc hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, delegated_credentials=no, principal=test1\@$realm)"
 );
 test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=disable',
 	'fails with GSS encryption disabled and hostgssenc hba');
 
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{hostnogssenc all all $hostaddr/32 gss map=mymap});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	hostnogssenc all all $hostaddr/32 gss map=mymap
+});
 $node->restart;
 
 test_access(
@@ -359,7 +387,7 @@ test_access(
 	'gssencmode=prefer',
 	'succeeds with GSS-encrypted access preferred and hostnogssenc hba, but no encryption',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, delegated_credentials=no, principal=test1\@$realm)"
 );
 test_access($node, 'test1', 'SELECT true', 2, 'gssencmode=require',
 	'fails with GSS-encrypted access required and hostnogssenc hba');
@@ -371,13 +399,17 @@ test_access(
 	'gssencmode=disable',
 	'succeeds with GSS encryption disabled and hostnogssenc hba',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=no, delegated_credentials=no, principal=test1\@$realm)"
 );
 
 truncate($node->data_dir . '/pg_ident.conf', 0);
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{host all all $hostaddr/32 gss include_realm=0});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	host all all $hostaddr/32 gss include_realm=0
+});
 $node->restart;
 
 test_access(
@@ -388,14 +420,18 @@ test_access(
 	'',
 	'succeeds with include_realm=0 and defaults',
 	"connection authenticated: identity=\"test1\@$realm\" method=gss",
-	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, principal=test1\@$realm)"
+	"connection authorized: user=$username database=$dbname application_name=$application GSS (authenticated=yes, encrypted=yes, delegated_credentials=no, principal=test1\@$realm)"
 );
 
 # Reset pg_hba.conf, and cause a usermap failure with an authentication
 # that has passed.
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.ORG});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.ORG
+});
 $node->restart;
 
 test_access(
@@ -411,8 +447,12 @@ test_access(
 
 # Reset pg_hba.conf and mark every connection to use GSS
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.COM});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	host all all $hostaddr/32 gss include_realm=0 krb_realm=EXAMPLE.ORG
+});
 $node->restart;
 
 my @connstr1 = $tsql_node->tsql_connstr('master');
@@ -422,8 +462,12 @@ $tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr1));
 # But we should be able to use kerberos auth through TDS endpoint irrespective
 # of pg_hba.conf file
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{host all all $hostaddr/32 md5});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	host all all $hostaddr/32 md5
+});
 $node->restart;
 
 my @connstr2 = $tsql_node->tsql_connstr('master');
@@ -431,8 +475,12 @@ $tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr2));
 
 # Reset pg_hba.conf and mark every connection rejected
 unlink($node->data_dir . '/pg_hba.conf');
-$node->append_conf('pg_hba.conf',
-	qq{host all all $hostaddr/32 reject});
+$node->append_conf(
+	'pg_hba.conf',
+	qq{
+    local all test2 scram-sha-256
+	host all all $hostaddr/32 reject
+});
 $node->restart;
 
 my @connstr3 = $tsql_node->tsql_connstr('master');
