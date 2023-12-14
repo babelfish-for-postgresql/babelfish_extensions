@@ -1,9 +1,3 @@
-CREATE DATABASE db_babel_3166;
-go
-
-USE db_babel_3166;
-go
-
 -- function
 CREATE FUNCTION babel_3166_func(@a numeric, @b varchar, @c varchar(max), @d varchar(8), @e binary(6))
 RETURNS varbinary(8) AS BEGIN RETURN @e END;
@@ -12,19 +6,9 @@ go
 -- Look at the probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
 go
-~~START~~
-varchar#!#text
-babel_3166_func#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6", "8"], "original_probin": ""}
-~~END~~
-
 
 SELECT babel_3166_func(1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe);
 go
-~~START~~
-varbinary
-12BCFE000000
-~~END~~
-
 
 -- procedure
 CREATE PROCEDURE babel_3166_proc @a numeric, @b varchar, @c varchar(max), @d varchar(8), @e binary(6)
@@ -34,16 +18,6 @@ go
 -- Look at the probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_proc';
 go
-~~START~~
-varchar#!#text
-babel_3166_proc#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6"], "original_probin": ""}
-~~END~~
-
 
 EXEC babel_3166_proc 1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe;
 go
-~~START~~
-binary
-12BCFE000000
-~~END~~
-

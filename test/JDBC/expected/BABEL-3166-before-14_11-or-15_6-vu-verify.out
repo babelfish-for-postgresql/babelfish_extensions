@@ -1,15 +1,4 @@
-CREATE DATABASE db_babel_3166;
-go
-
-USE db_babel_3166;
-go
-
--- function
-CREATE FUNCTION babel_3166_func(@a numeric, @b varchar, @c varchar(max), @d varchar(8), @e binary(6))
-RETURNS varbinary(8) AS BEGIN RETURN @e END;
-go
-
--- Look at the probin for typmod information
+-- Look at function's probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
 go
 ~~START~~
@@ -26,12 +15,9 @@ varbinary
 ~~END~~
 
 
--- procedure
-CREATE PROCEDURE babel_3166_proc @a numeric, @b varchar, @c varchar(max), @d varchar(8), @e binary(6)
-AS SELECT @e;
-go
 
--- Look at the probin for typmod information
+DROP FUNCTION babel_3166_func;
+-- Look at procedures's probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_proc';
 go
 ~~START~~
@@ -47,3 +33,6 @@ binary
 12BCFE000000
 ~~END~~
 
+
+DROP PROCEDURE babel_3166_proc;
+go

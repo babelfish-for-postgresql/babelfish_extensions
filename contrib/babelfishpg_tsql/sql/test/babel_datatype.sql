@@ -678,7 +678,19 @@ drop table testing6;
 create table testing6(col binary);
 insert into testing6 values (cast('a' as varbinary));
 insert into testing6 values (cast('ab' as varbinary));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
+
 select * from testing6;
+GO
+~~START~~
+binary
+61
+~~END~~
+
 
 -- test default length of varbinary in cast/convert is 30
 -- truncation silently

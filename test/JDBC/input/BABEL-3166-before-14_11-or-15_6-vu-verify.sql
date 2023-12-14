@@ -1,47 +1,18 @@
-USE db_babel_3166;
-go
-
 -- Look at function's probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
 go
-~~START~~
-varchar#!#text
-babel_3166_func#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6", "8"], "original_probin": ""}
-~~END~~
-
 
 SELECT babel_3166_func(1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe);
 go
-~~START~~
-varbinary
-12BCFE000000
-~~END~~
-
-
 
 DROP FUNCTION babel_3166_func;
+
 -- Look at procedures's probin for typmod information
 SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_proc';
 go
-~~START~~
-varchar#!#text
-babel_3166_proc#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6"], "original_probin": ""}
-~~END~~
-
 
 EXEC babel_3166_proc 1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe;
 go
-~~START~~
-binary
-12BCFE000000
-~~END~~
-
 
 DROP PROCEDURE babel_3166_proc;
-go
-
-USE master;
-go
-
-DROP DATABASE db_babel_3166;
 go
