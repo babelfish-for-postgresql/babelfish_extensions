@@ -798,9 +798,13 @@ init_collid_trans_tab_internal(void)
 				ereport(ERROR,
 						(errcode(ERRCODE_INTERNAL_ERROR),
 						 errmsg("invalid setting detected for babelfishpg_tsql.default_locale setting")));
-			coll_infos[i].lcid = locales[locale_pos].lcid;
-			coll_infos[i].code_page = locales[locale_pos].code_page;
-			coll_infos[i].enc = locales[locale_pos].enc;
+			else
+			{
+				coll_infos[i].lcid = locales[locale_pos].lcid;
+				coll_infos[i].code_page = locales[locale_pos].code_page;
+				coll_infos[i].enc = locales[locale_pos].enc;
+			}
+			
 			if (locale)
 				pfree(locale);
 		}

@@ -4011,7 +4011,7 @@ std::string extractSchemaName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::T
 	std::string schema_name = "";
 	if (dctx == nullptr)
 	{
-		if (tctx->full_object_name() && tctx->full_object_name()->schema)
+		if (tctx && tctx->full_object_name() && tctx->full_object_name()->schema)
 			schema_name = stripQuoteFromId(tctx->full_object_name()->schema);
 	}
 	else
@@ -4027,9 +4027,9 @@ std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Ta
 	std::string table_name;
 	if (dctx == nullptr && tctx != nullptr)
 	{
-		if (tctx->full_object_name())
+		if (tctx && tctx->full_object_name())
 			table_name = stripQuoteFromId(tctx->full_object_name()->object_name);
-		else if (tctx->local_id())
+		else if (tctx && tctx->local_id())
 			table_name = ::getFullText(tctx->local_id());
 	}
 	else

@@ -275,7 +275,10 @@ varbinaryout(PG_FUNCTION_ARGS)
 			 bytea_output);
 		rp = result = NULL;		/* keep compiler quiet */
 	}
-	*rp = '\0';
+	
+	if (rp)
+		*rp = '\0';
+	
 	PG_RETURN_CSTRING(result);
 }
 

@@ -1515,7 +1515,8 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 
 		*cursor_handle = get_next_cursor_handle();
 
-		snprintf(curname, NAMEDATALEN, "%u", *cursor_handle);
+		if (cursor_handle != NULL)
+			snprintf(curname, NAMEDATALEN, "%u", *cursor_handle);
 
 		/* add new cursor entry */
 		hentry = pltsql_insert_cursor_entry(curname, NULL, cursor_options, cursor_handle);
