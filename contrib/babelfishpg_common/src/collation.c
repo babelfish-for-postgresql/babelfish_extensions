@@ -736,7 +736,7 @@ init_collid_trans_tab_internal(void)
 	Oid			nspoid;
 	ht_oid2collid_entry *entry;
 	int			locale_pos = -1;
-	char	   *atsign;
+	char	   *atsign = NULL;
 	char	   *locale;
 
 	if (TransMemoryContext == NULL) /* initialize memory context */

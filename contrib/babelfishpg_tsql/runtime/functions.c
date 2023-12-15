@@ -937,7 +937,7 @@ host_os(PG_FUNCTION_ARGS)
 
 	/* filter out host info */
 	pg_version = pstrdup(PG_VERSION_STR);
-	sscanf(pg_version, "PostgreSQL %*256s on %256s, compiled by %*256s", host_str);
+	sscanf(pg_version, "PostgreSQL %*255s on %255s, compiled by %*255s", host_str);
 
 	if (strstr(host_str, "w64") || strstr(host_str, "w32") || strstr(host_str, "mingw") || strstr(host_str, "visual studio"))
 	{
