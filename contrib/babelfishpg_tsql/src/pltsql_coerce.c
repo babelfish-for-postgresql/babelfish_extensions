@@ -1304,7 +1304,7 @@ select_common_type_for_isnull(ParseState *pstate, List *exprs)
 static int32
 tsql_select_common_typmod_hook(ParseState *pstate, List *exprs, Oid common_type)
 {
-	int32		max_typmods;
+	int32		max_typmods=0;
 	ListCell	*lc;
 	common_utility_plugin *utilptr = common_utility_plugin_ptr;
 
