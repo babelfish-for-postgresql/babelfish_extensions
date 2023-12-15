@@ -77,7 +77,7 @@ sys-original_login
 sys-schema-name
 sys-objects
 sys-procedures
-sys-parsename
+sys-parsename-before-14_11-or-15_6
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
