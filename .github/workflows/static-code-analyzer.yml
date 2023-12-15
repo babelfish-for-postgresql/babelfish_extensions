@@ -13,7 +13,8 @@ jobs:
         if: always()
         run: |
           sudo apt-get update
-          sudo apt-get install cppcheck
+          sudo apt-get install cppcheck=2.7-1
+          cppcheck --version
 
       - name: Clone engine repository
         id: clone-engine-repo
