@@ -36,4 +36,13 @@ jobs:
           cppcheck --error-exitcode=-1 -j 16 --template=gcc \
           --enable=warning --inline-suppr \
           ./contrib -I ../postgresql_modified_for_babelfish \
-          --suppress=nullPointerRedundantCheck 
+          --suppress=nullPointerRedundantCheck \
+          --output-file=cppcheck-failures.txt
+      
+      - name: Upload failures as artifacts
+        id: upload-failures
+        if: always() && steps.run-cppcheck.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck-failures
+          path: ./cppcheck-failures.txt
