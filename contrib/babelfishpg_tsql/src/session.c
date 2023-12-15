@@ -295,7 +295,7 @@ sp_set_session_context(PG_FUNCTION_ARGS)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						errmsg("The parameters supplied for the procedure \"sp_set_session_context\" are not valid.")));
 
-	encoded_key_bytelen = TsqlUTF8LengthInUTF16(VARDATA_ANY(key_arg), VARSIZE_ANY_EXHDR(key_arg)) * 2;	/* Each UTF16 character is 2 bytes */
+	encoded_key_bytelen = ((*common_utility_plugin_ptr->TsqlUTF8LengthInUTF16)(VARDATA_ANY(key_arg), VARSIZE_ANY_EXHDR(key_arg))) * 2;	/* Each UTF16 character is 2 bytes */
 
 	if (encoded_key_bytelen > 256)
 		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
