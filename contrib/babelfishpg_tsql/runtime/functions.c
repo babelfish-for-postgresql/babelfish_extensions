@@ -233,6 +233,9 @@ char	   *bbf_language = "us_english";
 #define MAX_CATNAME_LEN			NAMEDATALEN
 #define INIT_CATS				64
 
+/* Hook for plugins */
+// tsql_datetimeoffset	*datetime = NULL;
+
 /* stored info for a bbf_pivot category */
 typedef struct bbf_pivot_cat_desc
 {
@@ -522,9 +525,11 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
-	tsql_datetimeoffset	*datetime;
 
-	datetime = PG_GETARG_DATETIMEOFFSET(1);
+	// /* Set up a rendezvous point with optional instrumentation plugin */
+	// tsql_datetimeoffset	*datetime ;//= (tsql_datetimeoffset **) find_rendezvous_variable("tsql_datetimeoffset");
+
+	tsql_datetimeoffset	*datetime = (tsql_datetimeoffset*)(fcinfo->args[1].value);
 			
 	/* Converting the datetime offset into the timestamp */
 	timestamp = datetime->tsql_ts + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
