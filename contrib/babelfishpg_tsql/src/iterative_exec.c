@@ -595,7 +595,7 @@ get_stat_trace(ExecCodes *exec_code, ExecStat *stat, StringInfo buf)
 
 	/* Header */
 	snprintf(local_buf, TRACE_LOCAL_BUF_SIZE,
-			 "Execution Summary: %s.%s total execution code size %zu, total execution time %zums\n",
+			 "Execution Summary: %s.%s total execution code size %zu, total execution time %lums\n",
 			 exec_code->proc_namespace, exec_code->proc_name,
 			 code_size, stat->total_duration);
 	appendStringInfoString(buf, local_buf);

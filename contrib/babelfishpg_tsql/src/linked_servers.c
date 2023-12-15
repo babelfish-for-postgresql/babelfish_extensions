@@ -678,7 +678,7 @@ tdsTypeTypmod(int datatype, int datalen, bool is_metadata, int precision, int sc
 		case TSQL_TIME:
 			{
 				LINKED_SERVER_DEBUG_FINER("LINKED SERVER: time info - scale: %d", scale);
-
+				// cppcheck-suppress incorrectLogicOperator
 				if (scale >= 0 || scale < 7)
 					return scale;
 				else
