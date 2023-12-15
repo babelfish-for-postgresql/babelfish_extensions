@@ -12,10 +12,7 @@ jobs:
         id: install-cppcheck
         if: always()
         run: |
-          wget https://sourceforge.net/projects/cppcheck/files/cppcheck/2.5/cppcheck-2.5.tar.bz2/download
-          tar -xvf download
-          cd cppcheck-2.5
-          sudo make install
+          sudo apt-get install cppcheck
 
       - name: Clone engine repository
         id: clone-engine-repo
