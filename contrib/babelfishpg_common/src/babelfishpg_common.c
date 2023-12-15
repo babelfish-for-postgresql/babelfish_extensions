@@ -190,6 +190,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.TdsGetVariantBaseType = &TdsGetVariantBaseType;
 		common_utility_plugin_var.lookup_tsql_datatype_oid = &lookup_tsql_datatype_oid;
 		common_utility_plugin_var.GetUTF8CodePoint = &GetUTF8CodePoint;
+		common_utility_plugin_var.TsqlUTF8LengthInUTF16 = &TsqlUTF8LengthInUTF16;
 	}
 	return &common_utility_plugin_var;
 }
