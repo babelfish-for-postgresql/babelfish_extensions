@@ -12,6 +12,7 @@ jobs:
         id: install-cppcheck
         if: always()
         run: |
+          sudo apt-get update
           sudo apt-get install cppcheck
 
       - name: Clone engine repository
