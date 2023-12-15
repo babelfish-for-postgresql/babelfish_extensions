@@ -1739,6 +1739,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			if(actual_alias_len > alias_len)
 			{
 				/* First 32 characters of original_name are assigned to alias. */
+				// cppcheck-suppress invalidFunctionArg
 				memcpy(alias, original_name, (alias_len - 32));
 
 				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */

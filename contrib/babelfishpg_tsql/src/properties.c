@@ -225,8 +225,7 @@ get_product_level_helper()
 	char	   *product_level_prefix = "SP";
 
 	initStringInfo(&temp);
-	// cppcheck-suppress literalWithCharPtrCompare
-	Assert(BABELFISH_VERSION_STR != NULL);
+
 	minor_version = atoi(get_version_number(BABELFISH_VERSION_STR, 1));
 	if (minor_version == 0)
 	{

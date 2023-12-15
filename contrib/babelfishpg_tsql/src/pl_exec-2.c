@@ -2514,7 +2514,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 * be more than 2 since db name can not be a qualifier for a UDT and
 		 * error will be thrown in the parser itself.
 		 */
-		rewrite_plain_name(p->argType->names);
+		p->argType->names = rewrite_plain_name(p->argType->names);
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;
