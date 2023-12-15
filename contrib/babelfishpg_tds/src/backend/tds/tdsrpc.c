@@ -345,8 +345,6 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 {
 	InlineCodeBlockArgs *codeblock_args;
 	ParameterToken token = NULL;
-	int			i = 0,
-				index = 0;
 
 	/* should be only called for sp_execute */
 	Assert(req->spType == SP_EXECUTE);
@@ -363,11 +361,12 @@ SetVariables(TDSRequestSP req, FunctionCallInfo *fcinfo)
 		 * For each token, we need to call pltsql_declare_var_block_handler
 		 * API to declare the corresponding variable.
 		 */
-		for (token = req->dataParameter, index = 0; token != NULL; token = token->next, index++)
+		for (token = req->dataParameter, int index = 0; token != NULL; token = token->next, index++)
 		{
 			Datum		pval;
 			bool		isNull;
 			TdsIoFunctionInfo tempFuncInfo;
+			int			i = 0;
 
 
 			tempFuncInfo = TdsLookupTypeFunctionsByTdsId(token->type, token->maxLen);
@@ -623,7 +622,7 @@ SPPrepare(TDSRequestSP req)
 	FunctionCallInfo fcinfo;
 
 	Datum		retval;
-	Datum	   *values = NULL;
+	Datum	   *values;
 	bool	   *nulls;
 	char	   *activity;
 
@@ -1448,7 +1447,6 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 {
 	ParameterToken temp,
 				prev = NULL;
-	int			len = 0;
 	TdsIoFunctionInfo tempFuncInfo;
 	uint16		paramOrdinal = 0;
 	int			retStatus;
@@ -1456,6 +1454,7 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 	while (offset < message->len)
 	{
 		uint8_t		tdsType;
+		int			len = 0;
 
 		/*
 		 * If next byte after a parameter is a BatchFlag we store the
@@ -1850,16 +1849,16 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 				break;
 			case TDS_TYPE_CLRUDT:
 				{
-					uint16_t	len;
+					uint16_t	length;
 					uint8_t   typenamelen;
 					StringInfoData   typeName;
 
 					initStringInfo(&typeName);
 
-					memcpy(&len, &message->data[offset], sizeof(len));
-					offset += sizeof(len);
+					memcpy(&length, &message->data[offset], sizeof(length));
+					offset += sizeof(length);
 
-					temp->maxLen = len;
+					temp->maxLen = length;
 
 					/* Read the type name for the given CLR-UDT */
 					memcpy(&typenamelen, &message->data[offset], sizeof(typenamelen));
@@ -2449,7 +2448,6 @@ static void
 HandleSPCursorOpenCommon(TDSRequestSP req)
 {
 	int			curoptions = 0;
-	int			ret;
 	StringInfoData buf;
 
 	TdsErrorContext->err_text = "Processing SP_CURSOROPEN Common Request";
@@ -2465,6 +2463,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 		if (req->spType == SP_CURSOREXEC)
 		{
 			char	   *activity = psprintf("SP_CURSOREXEC Handle: %d", (int) req->cursorPreparedHandle);
+			int			ret;
 
 			pgstat_report_activity(STATE_RUNNING, activity);
 			pfree(activity);
@@ -2545,7 +2544,6 @@ GenerateBindParamsData(TDSRequestSP req)
 {
 	uint16_t	count = 0;
 	ParameterToken tempBindParam;
-	bool		isNull;
 	TdsIoFunctionInfo tempFuncInfo;
 	Oid			ptype;
 	Datum		pval;
@@ -2581,6 +2579,7 @@ GenerateBindParamsData(TDSRequestSP req)
 
 		tempFuncInfo = TdsLookupTypeFunctionsByTdsId(tempBindParam->type,
 													 tempBindParam->maxLen);
+		bool		isNull;
 		isNull = tempBindParam->isNull;
 
 		ptype = tempBindParam->paramMeta.pgTypeOid;
@@ -2704,7 +2703,6 @@ FetchAndValidateCursorFetchOptions(TDSRequestSP req, int *fetchType,
 static void
 HandleSPCursorFetchRequest(TDSRequestSP req)
 {
-	int			ret;
 	int			fetchType;
 	int			rownum;
 	int			nrows;
@@ -2720,7 +2718,7 @@ HandleSPCursorFetchRequest(TDSRequestSP req)
 
 	PG_TRY();
 	{
-		ret = pltsql_plugin_handler_ptr->sp_cursorfetch_callback((int) req->cursorHandle, &fetchType, &rownum, &nrows);
+		int			ret = pltsql_plugin_handler_ptr->sp_cursorfetch_callback((int) req->cursorHandle, &fetchType, &rownum, &nrows);
 		MemoryContextSwitchTo(MessageContext);
 
 		if (ret > 0)
@@ -2753,7 +2751,6 @@ HandleSPCursorFetchRequest(TDSRequestSP req)
 static void
 HandleSPCursorCloseRequest(TDSRequestSP req)
 {
-	int			ret;
 	char	   *activity = psprintf("SP_CURSORCLOSE Handle: %d", (int) req->cursorHandle);
 
 	TdsErrorContext->err_text = "Processing SP_CURSORCLOSE Request";
@@ -2764,7 +2761,7 @@ HandleSPCursorCloseRequest(TDSRequestSP req)
 	/* close the cursor */
 	PG_TRY();
 	{
-		ret = pltsql_plugin_handler_ptr->sp_cursorclose_callback((int) req->cursorHandle);
+		int			ret = pltsql_plugin_handler_ptr->sp_cursorclose_callback((int) req->cursorHandle);
 		MemoryContextSwitchTo(MessageContext);
 
 		if (ret > 0)
@@ -2795,7 +2792,6 @@ HandleSPCursorCloseRequest(TDSRequestSP req)
 static void
 HandleSPCursorUnprepareRequest(TDSRequestSP req)
 {
-	int			ret;
 	char	   *activity = psprintf("SP_CURSORUNPREPARE Handle: %d", (int) req->cursorPreparedHandle);
 
 	TdsErrorContext->err_text = "Processing SP_CURSORUNPREPARE Request";
@@ -2806,7 +2802,7 @@ HandleSPCursorUnprepareRequest(TDSRequestSP req)
 	/* close the cursor */
 	PG_TRY();
 	{
-		ret = pltsql_plugin_handler_ptr->sp_cursorunprepare_callback((int) req->cursorPreparedHandle);
+		int			ret = pltsql_plugin_handler_ptr->sp_cursorunprepare_callback((int) req->cursorPreparedHandle);
 		MemoryContextSwitchTo(MessageContext);
 
 		if (ret > 0)
@@ -2837,7 +2833,6 @@ HandleSPCursorUnprepareRequest(TDSRequestSP req)
 static void
 HandleSPCursorOptionRequest(TDSRequestSP req)
 {
-	int			ret;
 	ParameterToken token;
 	int			code;
 	int			value;
@@ -2873,7 +2868,7 @@ HandleSPCursorOptionRequest(TDSRequestSP req)
 
 	PG_TRY();
 	{
-		ret = pltsql_plugin_handler_ptr->sp_cursoroption_callback((int) req->cursorHandle, code, value);
+		int			ret = pltsql_plugin_handler_ptr->sp_cursoroption_callback((int) req->cursorHandle, code, value);
 		MemoryContextSwitchTo(MessageContext);
 
 		if (ret > 0)
@@ -2904,7 +2899,6 @@ HandleSPCursorOptionRequest(TDSRequestSP req)
 static void
 HandleSPCursorRequest(TDSRequestSP req)
 {
-	int			ret;
 	List	   *values = NIL;
 	int			i;
 	ParameterToken token;
@@ -2947,7 +2941,7 @@ HandleSPCursorRequest(TDSRequestSP req)
 		TdsReadUnicodeDataFromTokenCommon(req->messageData, token, buf);
 		appendStringInfoCharMacro(buf, '\0');
 
-		ret = pltsql_plugin_handler_ptr->sp_cursor_callback((int) req->cursorHandle, optype, rownum, buf->data, values);
+		int			ret = pltsql_plugin_handler_ptr->sp_cursor_callback((int) req->cursorHandle, optype, rownum, buf->data, values);
 		MemoryContextSwitchTo(MessageContext);
 
 		if (ret > 0)
@@ -2981,7 +2975,6 @@ GetRPCRequest(StringInfo message)
 	TDSRequestSP request;
 	uint64_t	offset = 0;
 	uint16_t	len = 0;
-	int			messageLen = 0;
 	int			parameterCount = 0;
 	uint32_t	tdsVersion = GetClientTDSVersion();
 
@@ -3004,8 +2997,8 @@ GetRPCRequest(StringInfo message)
 		 * is left to process then we set the offset to the first byte of the
 		 * next RPC packet and use the existing request after initialising.
 		 */
+		int messageLen = TdsRequestCtrl->request->sp.messageLen;
 		offset = TdsRequestCtrl->request->sp.batchSeparatorOffset;
-		messageLen = TdsRequestCtrl->request->sp.messageLen;
 		request = &TdsRequestCtrl->request->sp;
 		memset(request, 0, sizeof(TDSRequestSPData));
 		request->messageLen = messageLen;
@@ -3851,13 +3844,12 @@ TdsGetAndSetParamIndex(const char *name)
 					temp = 0;
 		const char *source = req->metaDataParameterValue->data;
 		char	   *pos;
-		int			ptr;
 		int			qlen = strlen(source);
 		int			nlen = strlen(name);
 
 		while (temp < qlen)
 		{
-			int			j;
+			int			j, ptr;
 
 			/*
 			 * If param names are not given by the application, then driver
