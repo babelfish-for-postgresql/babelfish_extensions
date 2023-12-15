@@ -38,6 +38,7 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+
 ALTER VIEW sys.sysforeignkeys RENAME TO sysforeignkeys_deprecated_3_4;
 
 create or replace view sys.sysforeignkeys as
@@ -2000,6 +2001,29 @@ $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4');
+
+
+CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST(seq AS smallint) AS KEY_SEQ,
+CAST(t5.conname AS sys.sysname) AS PK_NAME
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+	JOIN information_schema_tsql.columns t4 ON (cast(t1.relname as sys.nvarchar(128)) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA" )
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
+WHERE t5.contype = 'p'
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = sys.db_id();
+
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
