@@ -3,6 +3,9 @@
 USE master
 GO
 
+SELECT object_name FROM sys.babelfish_view_def WHERE object_name LIKE 'BABEL4389%'
+GO
+
 DROP TABLE BABEL4389V1
 GO
 
@@ -53,6 +56,9 @@ GO
 DROP VIEW babel_4389_schema2.BABEL4389V_1
 GO
 
+DROP VIEW babel_4389_schema2.BABEL4389V_3, babel_4389_schema2.BABEL4389V3
+GO
+
 CREATE VIEW babel_4389_schema2.BABEL4389V1 as SELECT 1
 GO
 DROP VIEW babel_4389_schema2.BABEL4389V1
@@ -75,6 +81,12 @@ DROP SCHEMA babel_4389_schema3
 GO
 
 USE master
+GO
+
+DROP VIEW BABEL4389V_3, BABEL4389V3, babel_4389_schema4.BABEL4389V_3, babel_4389_schema4.BABEL4389V3
+GO
+
+DROP SCHEMA babel_4389_schema4
 GO
 
 SELECT object_name FROM sys.babelfish_view_def WHERE object_name LIKE 'BABEL4389%'
