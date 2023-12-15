@@ -69,7 +69,7 @@ WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
   AND ext.dbid = sys.db_id();
 
-ALTER FUNCTION sys.parsename(sys.NVARCHAR, INT) RENAME TO parsename_deprecated_in_2_8_0;
+ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_2_8_0;
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.NVARCHAR, object_piece int)
 RETURNS sys.NVARCHAR(128)
