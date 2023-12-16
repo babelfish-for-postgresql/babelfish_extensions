@@ -149,6 +149,9 @@ PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
+PG_FUNCTION_INFO_V1(numeric_log_natural);
+PG_FUNCTION_INFO_V1(numeric_log_base);
+PG_FUNCTION_INFO_V1(numeric_log10);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
@@ -2564,6 +2567,56 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+Datum
+numeric_log_natural(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+	Numeric		arg1_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	result_numeric = DatumGetNumeric(DirectFunctionCall1(numeric_ln, NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+numeric_log_base(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	float8		result;
+	Numeric		arg1_numeric,
+				arg2_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	arg2_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg2));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_log, NumericGetDatum(arg2_numeric), NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+numeric_log10(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+	Numeric		arg1_numeric,
+				arg2_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	arg2_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, 10));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_log, NumericGetDatum(arg2_numeric), NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
 }
 
 /* 
