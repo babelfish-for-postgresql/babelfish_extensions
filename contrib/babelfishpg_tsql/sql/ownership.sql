@@ -64,8 +64,7 @@ GRANT SELECT ON sys.sysdatabases TO PUBLIC;
 
 -- PG_NAMESPACE_EXT
 CREATE VIEW sys.pg_namespace_ext AS
-SELECT BASE.oid, CAST(BASE.nspname as sys.sysname),
-BASE.nspowner, BASE.nspacl, CAST(DB.name as sys.sysname) as dbname FROM
+SELECT BASE.* , DB.name as dbname FROM
 pg_catalog.pg_namespace AS base
 LEFT OUTER JOIN sys.babelfish_namespace_ext AS EXT on BASE.nspname = EXT.nspname
 INNER JOIN sys.babelfish_sysdatabases AS DB ON EXT.dbid = DB.dbid;

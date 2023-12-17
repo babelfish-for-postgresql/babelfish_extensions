@@ -338,7 +338,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
     else CAST(0 AS smallint)
   end AS NULLABLE,
 
-  CAST(NULL AS sys.varchar(254)) AS remarks,
+  CAST(NULL AS varchar(254)) AS remarks,
   CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
   CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
   CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
@@ -350,18 +350,18 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   END AS CHAR_OCTET_LENGTH,
 
   CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
-  CAST(t4."IS_NULLABLE" AS sys.varchar(254)) AS IS_NULLABLE,
+  CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
   CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
   CAST(0 AS smallint) AS SS_IS_SPARSE,
   CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
   CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
   CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
-  CAST(NULL AS sys.varchar(254)) SS_UDT_CATALOG_NAME,
-  CAST(NULL AS sys.varchar(254)) SS_UDT_SCHEMA_NAME,
-  CAST(NULL AS sys.varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
-  CAST(NULL AS sys.varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
-  CAST(NULL AS sys.varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
-  CAST(NULL AS sys.varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
+  CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
 
   FROM pg_catalog.pg_class t1
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
@@ -964,15 +964,15 @@ CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
 CAST(t3.name AS name) AS TABLE_OWNER,
-CAST(t1.relname as sys.sysname) AS TABLE_NAME,
+t1.relname AS TABLE_NAME,
 
 CASE 
 WHEN t1.relkind = 'v' 
-	THEN CAST('VIEW' as sys.varchar(32))
-ELSE CAST('TABLE' as sys.varchar(32))
+	THEN 'VIEW'
+ELSE 'TABLE'
 END AS TABLE_TYPE,
 
-CAST(NULL AS sys.varchar(254)) AS remarks
+CAST(NULL AS varchar(254)) AS remarks
 FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
 WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','v','m') 
 AND has_schema_privilege(t1.relnamespace, 'USAGE')
@@ -1406,7 +1406,7 @@ GRANT ALL on FUNCTION sys.babelfish_runtime_error TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
-t2.dbname AS TABLE_QUALIFIER,
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
 CAST(COALESCE(SPLIT_PART(t6.attoptions[1], '=', 2), t5.column_name) AS sys.sysname) AS COLUMN_NAME,
@@ -1515,7 +1515,7 @@ FROM sys.sp_column_privileges_view
 UNION 
 -- We need these set of joins only for the DELETE privilege
 SELECT
-t2.dbname AS TABLE_QUALIFIER,
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
@@ -1635,7 +1635,7 @@ CASE
 	THEN CAST(0 AS INT)
 	ELSE CAST(1 AS INT) END
 AS IS_NULLABLE,
-nsp_ext.dbname AS TABLE_QUALIFIER,
+CAST(nsp_ext.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(C.relname AS sys.sysname) AS TABLE_NAME,
 
@@ -1892,7 +1892,7 @@ CAST(nsp_ext2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
 CAST(bbf_nsp2.orig_name AS sys.sysname) AS PKTABLE_OWNER ,
 CAST(c2.relname AS sys.sysname) AS PKTABLE_NAME,
 CAST(COALESCE(split_part(a2.attoptions[1] COLLATE "C", '=', 2),a2.attname) AS sys.sysname) AS PKCOLUMN_NAME,
-nsp_ext.dbname AS FKTABLE_QUALIFIER,
+CAST(nsp_ext.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
 CAST(bbf_nsp.orig_name AS sys.sysname) AS FKTABLE_OWNER ,
 CAST(c.relname AS sys.sysname) AS FKTABLE_NAME,
 CAST(COALESCE(split_part(a.attoptions[1] COLLATE "C", '=', 2),a.attname) AS sys.sysname) AS FKCOLUMN_NAME,

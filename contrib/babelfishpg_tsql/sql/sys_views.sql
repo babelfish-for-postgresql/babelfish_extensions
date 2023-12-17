@@ -74,7 +74,7 @@ create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
 -- For example, 'master_dbo' schema can only exist in the 'master' database.
 -- Internally stored schema name (nspname) must be provided.
-select CAST(t.name as sys.sysname), CAST(t.type as sys.bpchar(2)), ns.oid as schemaid from
+select t.name,t.type, ns.oid as schemaid from
 (
   values
     ('xp_qv','master_dbo','P'),
@@ -95,7 +95,7 @@ union all
 
 -- This portion of view retrieves information on objects that reside in a schema in any number of databases.
 -- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
-select CAST(t.name as sys.sysname), CAST(t.type as sys.bpchar(2)), ns.oid as schemaid from
+select t.name,t.type, ns.oid as schemaid from
 (
   values
     ('sysdatabases','dbo','V')
