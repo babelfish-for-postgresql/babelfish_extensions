@@ -18,7 +18,7 @@ from sys.table_types
 where name = 'sys_table_types_vu_prepare_tt';
 GO
 ~~START~~
-varchar#!#int#!#int#!#smallint#!#int#!#int#!#varchar#!#bit#!#int#!#int#!#int#!#int#!#int#!#bit
+varchar#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit#!#bit
 sys_table_types_vu_prepare_tt#!#0#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#1#!#0
 ~~END~~
 
