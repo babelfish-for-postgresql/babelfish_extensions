@@ -221,6 +221,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
     TestResult *tr;
     int nargs = PG_NARGS();
     text **args =  NULL;
+    text **arg_ptr = &args;
     int i;
     StateInfo* state;
     ArrayType *arr;
@@ -256,7 +257,7 @@ babelfishpg_unit_run_tests(PG_FUNCTION_ARGS)
             deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT, &decontructed_arr, &nulls, &nargs);
             
             args = palloc(nargs * sizeof(text *));
-            for (i=0; i<nargs; i++) 
+            for (i=0; i<nargs; i++, arg_ptr++) 
                 args[i] = DatumGetTextP(decontructed_arr[i]);
         }
 

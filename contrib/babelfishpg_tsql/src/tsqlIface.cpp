@@ -3156,7 +3156,7 @@ rewriteBatchLevelStatement(
 {
 	// rewrite batch-level stmt query
 	PLtsql_expr_query_mutator mutator(expr, ctx);
-	/* cppcheck-suppress autoVariables */
+	// cppcheck-suppress autoVariables
 	ssm->mutator = &mutator;
 
 	/*
@@ -4027,13 +4027,14 @@ std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Ta
 	std::string table_name;
 	if (dctx == nullptr && tctx != nullptr)
 	{
-		if (tctx->full_object_name())
+		if (tctx && tctx->full_object_name())
 			table_name = stripQuoteFromId(tctx->full_object_name()->object_name);
-		else if (tctx->local_id())
+		else if (tctx && tctx->local_id())
 			table_name = ::getFullText(tctx->local_id());
 	}
-	else if(dctx != nullptr)
+	else
 	{
+		// cppcheck-suppress nullPointer
 		if (dctx->full_object_name())
 			table_name = stripQuoteFromId(dctx->full_object_name()->object_name);
 		else if (dctx->local_id())
