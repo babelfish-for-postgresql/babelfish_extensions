@@ -298,7 +298,7 @@ select
   , null::sys.nchar(12) as net_address
   , null::sys.nchar(12) as net_library
   , CAST(a.usename as sys.nchar(128)) as loginname
-  , t.context_info::sys.binary(128) as context_info
+  , t.context_info::bytea as context_info
   , null::sys.binary(20) as sql_handle
   , 0 as stmt_start
   , 0 as stmt_end
@@ -809,8 +809,8 @@ select cast(t.typname as sys.sysname) as name
   , t.typnamespace as schema_id
   , null::integer as principal_id
   , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
-  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
-  , case when tt.typrelid is not null then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , case when tt.typrelid is not null then 0::tinyint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as tinyint) end as precision
+  , case when tt.typrelid is not null then 0::tinyint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as tinyint) end as scale
   , CASE c.collname
     WHEN 'default' THEN default_collation_name
     ELSE  CAST(c.collname as sys.sysname)
@@ -820,11 +820,11 @@ select cast(t.typname as sys.sysname) as name
     end
     as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
-  , 1 as is_user_defined
-  , 0 as is_assembly_type
-  , 0 as default_object_id
-  , 0 as rule_object_id
-  , case when tt.typrelid is not null then 1 else 0 end as is_table_type
+  , CAST(1 as sys.bit) as is_user_defined
+  , CAST(0 as sys.bit) as is_assembly_type
+  , CAST(0 as int) as default_object_id
+  , CAST(0 as int) as rule_object_id
+  , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
 from pg_type t
 join sys.schemas sch on t.typnamespace = sch.schema_id
 left join pg_collation c on c.oid = t.typcollation
