@@ -272,23 +272,23 @@ ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_3_4;
 create or replace view sys.sysprocesses as
 select
   a.pid as spid
-  , null::integer as kpid
+  , null::smallint as kpid
   , coalesce(blocking_activity.pid, 0) as blocked
-  , null::bytea as waittype
-  , 0 as waittime
+  , null::sys.binary(2) as waittype
+  , 0::bigint as waittime
   , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
   , null::sys.nchar(256) as waitresource
   , coalesce(t.database_id, 0)::oid as dbid
   , a.usesysid as uid
-  , 0 as cpu
-  , 0 as physical_io
-  , 0 as memusage
-  , a.backend_start as login_time
-  , a.query_start as last_batch
+  , 0::int as cpu
+  , 0::bigint as physical_io
+  , 0::int as memusage
+  , cast(a.backend_start as sys.datetime) as login_time
+  , cast(a.query_start as sys.datetime) as last_batch
   , 0 as ecid
-  , 0 as open_tran
+  , 0::smallint as open_tran
   , CAST(a.state as sys.nchar(30)) as status
-  , null::bytea as sid
+  , null::sys.binary(86) as sid
   , CAST(t.host_name AS sys.nchar(128)) as hostname
   , CAST(a.application_name as sys.nchar(128)) as program_name
   , t.client_pid::sys.nchar(10) as hostprocess
@@ -299,10 +299,10 @@ select
   , null::sys.nchar(12) as net_library
   , CAST(a.usename as sys.nchar(128)) as loginname
   , t.context_info::bytea as context_info
-  , null::bytea as sql_handle
-  , 0 as stmt_start
-  , 0 as stmt_end
-  , 0 as request_id
+  , null::sys.binary(20) as sql_handle
+  , 0::int as stmt_start
+  , 0::int as stmt_end
+  , 0::int as request_id
 from pg_stat_activity a
 left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
 left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
