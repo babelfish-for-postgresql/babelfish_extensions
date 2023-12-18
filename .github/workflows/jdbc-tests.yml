@@ -49,11 +49,7 @@ jobs:
         id: jdbc
         if: always() && steps.install-extensions.outcome == 'success'
         timeout-minutes: 60
-        run: |
-          export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
-          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
-          cd test/JDBC/
-          mvn test
+        uses: ./.github/composite-actions/run-jdbc-tests
 
       - name: Cleanup babelfish database
         id: cleanup
@@ -92,3 +88,7 @@ jobs:
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
+
+      - name: Check and upload coredumps
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: ./.github/composite-actions/upload-coredump

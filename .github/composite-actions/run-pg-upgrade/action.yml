@@ -23,11 +23,12 @@ runs:
   steps:
     - name: Run pg_upgrade
       run: |
+        ulimit -c unlimited
         echo 'Starting pg_upgrade...'
         cd ~
         mkdir -p upgrade
         cd upgrade
-        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_old_dir }}//data stop
+        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_old_dir }}//data stop
         export PATH="$HOME/${{ inputs.pg_new_dir }}/bin:$HOME/${{ inputs.pg_old_dir }}/bin:$PATH"
         export LD_LIBRARY_PATH="$HOME/${{ inputs.pg_new_dir }}/lib:$HOME/${{ inputs.pg_old_dir }}/lib:$LD_LIBRARY_PATH"
         ~/${{ inputs.pg_new_dir }}/bin/pg_upgrade -U runner -b ~/${{ inputs.pg_old_dir }}/bin -B ~/${{ inputs.pg_new_dir }}/bin \
