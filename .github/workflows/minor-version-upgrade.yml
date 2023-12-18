@@ -105,8 +105,9 @@ jobs:
       - name: Update extensions
         if: always() && steps.build-postgis-extension.outcome == 'success'
         run: |
+          ulimit -c unlimited
           cd ~
-          ~/psql/bin/pg_ctl -D ~/psql/data/ -l logfile restart
+          ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -c "\dx"
@@ -152,3 +153,7 @@ jobs:
         with:
           name: upgrade-output-diff.diff
           path: test/JDBC/Info/upgrade-output-diff.diff
+      
+      - name: Check and upload coredumps
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: ./.github/composite-actions/upload-coredump
