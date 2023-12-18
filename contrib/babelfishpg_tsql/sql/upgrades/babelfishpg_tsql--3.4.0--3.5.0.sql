@@ -272,9 +272,9 @@ ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_3_4;
 create or replace view sys.sysprocesses as
 select
   a.pid as spid
-  , null::integer as kpid
+  , null::smallint as kpid
   , coalesce(blocking_activity.pid, 0) as blocked
-  , null::bytea as waittype
+  , null::sys.binary(2) as waittype
   , 0 as waittime
   , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
   , null::sys.nchar(256) as waitresource
@@ -298,8 +298,8 @@ select
   , null::sys.nchar(12) as net_address
   , null::sys.nchar(12) as net_library
   , CAST(a.usename as sys.nchar(128)) as loginname
-  , t.context_info::bytea as context_info
-  , null::bytea as sql_handle
+  , t.context_info::sys.binary(128) as context_info
+  , null::sys.binary(20) as sql_handle
   , 0 as stmt_start
   , 0 as stmt_end
   , 0 as request_id
@@ -629,14 +629,14 @@ select
   , 0 as parent_object_id
   , 'V'::sys.bpchar(2) as type
   , 'VIEW'::sys.nvarchar(60) as type_desc
-  , vd.create_date::timestamp as create_date
-  , vd.create_date::timestamp as modify_date
-  , 0 as is_ms_shipped 
-  , 0 as is_published 
-  , 0 as is_schema_published 
-  , 0 as with_check_option 
-  , 0 as is_date_correlation_view 
-  , 0 as is_tracked_by_cdc 
+  , vd.create_date::sys.datetime as create_date
+  , vd.create_date::sys.datetime as modify_date
+  , CAST(0 as sys.BIT) as is_ms_shipped 
+  , CAST(0 as sys.BIT) as is_published 
+  , CAST(0 as sys.BIT) as is_schema_published 
+  , CAST(0 as sys.BIT) as with_check_option 
+  , CAST(0 as sys.BIT) as is_date_correlation_view 
+  , CAST(0 as sys.BIT) as is_tracked_by_cdc 
 from pg_class t inner join sys.schemas sch on (t.relnamespace = sch.schema_id)
 left join sys.shipped_objects_not_in_sys nis on (nis.name = t.relname and nis.schemaid = sch.schema_id and nis.type = 'V')
 left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
@@ -780,18 +780,18 @@ select
   , s.oid as schema_id
   , cast(NULL as INT) as principal_id
   , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
-  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
+  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as tinyint) as precision
+  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as tinyint) as scale
   , CASE c.collname
     WHEN 'default' THEN default_collation_name
     ELSE  CAST(c.collname as sys.sysname)
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
-  , 0 as is_user_defined
-  , 0 as is_assembly_type
-  , 0 as default_object_id
-  , 0 as rule_object_id
-  , 0 as is_table_type
+  , CAST(0 as sys.bit) as is_user_defined
+  , CAST(0 as sys.bit) as is_assembly_type
+  , CAST(0 as int) as default_object_id
+  , CAST(0 as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 left join pg_collation c on c.oid = t.typcollation
