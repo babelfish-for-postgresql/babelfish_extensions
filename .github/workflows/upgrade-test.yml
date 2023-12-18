@@ -133,4 +133,8 @@ jobs:
             ~/psql*/data/logfile
             ~/psql*/data/pg_upgrade_output.d/*
             ~/failed-testscript-outputs
+      
+      - name: Check and upload coredumps
+        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
+        uses: ./.github/composite-actions/upload-coredump
             

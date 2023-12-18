@@ -46,6 +46,7 @@ runs:
       id: run-pg_dump-restore
       if: always() && steps.setup-new-version.outcome == 'success'
       run: |
+        ulimit -c unlimited
         echo 'Starting dump...'
         cd ~
         mkdir -p upgrade
@@ -70,8 +71,8 @@ runs:
         fi
 
         # Stop old server and start the new.
-        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_old_dir }}/data stop
-        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
+        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_old_dir }}/data stop
+        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
         cd ~/work/babelfish_extensions/babelfish_extensions/
         echo 'Database dump complete.'
 
