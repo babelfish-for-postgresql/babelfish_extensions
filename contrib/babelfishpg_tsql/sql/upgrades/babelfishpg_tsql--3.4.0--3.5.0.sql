@@ -762,13 +762,6 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_4');
-
 ALTER VIEW sys.types  RENAME TO types_deprecated_3_4;
 
 create or replace view sys.types As
@@ -2000,8 +1993,6 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4');
-
 
 CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
@@ -2023,7 +2014,14 @@ WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
   AND ext.dbid = sys.db_id();
 
-
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
