@@ -2669,7 +2669,7 @@ CASE
   WHEN st.is_table_type = 1 THEN 0
   ELSE st.precision 
 END 
-AS sys.int) AS PRECISION
+AS sys.tinyint) AS PRECISION
 , CAST(
 CASE
   WHEN ss.n IS NULL THEN
@@ -2693,7 +2693,7 @@ CASE
   WHEN st.is_table_type = 1 THEN NULL
   ELSE st.scale
 END
-AS smallint) AS SCALE
+AS sys.tinyint) AS SCALE
 , CAST(
 CASE
   WHEN ss.n IS NULL THEN
