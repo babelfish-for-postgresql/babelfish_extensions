@@ -1558,24 +1558,23 @@ PG_FUNCTION_INFO_V1(ftrunci4);
 Datum
 ftrunci4(PG_FUNCTION_ARGS)
 {
-	float4		num = PG_GETARG_FLOAT4(0), arg = 0;
-
+	float4		num = PG_GETARG_FLOAT4(0);
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
 	 * on just-out-of-range values that would round into range.  Note
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
 	BBF_Pragma_IgnoreFloatConversionWarning_Push
-	arg = rint(ftrunc_(num));
+	num = rint(ftrunc_(num));
 	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
-	if (unlikely(isnan(arg) || !FLOAT4_FITS_IN_INT32(arg)))
+	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT32(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	PG_RETURN_INT32((int32) arg);
+	PG_RETURN_INT32((int32) num);
 }
 
 
