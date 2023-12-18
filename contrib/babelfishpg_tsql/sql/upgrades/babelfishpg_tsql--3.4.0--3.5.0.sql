@@ -629,14 +629,14 @@ select
   , 0 as parent_object_id
   , 'V'::sys.bpchar(2) as type
   , 'VIEW'::sys.nvarchar(60) as type_desc
-  , vd.create_date::timestamp as create_date
-  , vd.create_date::timestamp as modify_date
-  , 0 as is_ms_shipped 
-  , 0 as is_published 
-  , 0 as is_schema_published 
-  , 0 as with_check_option 
-  , 0 as is_date_correlation_view 
-  , 0 as is_tracked_by_cdc 
+  , vd.create_date::sys.datetime as create_date
+  , vd.create_date::sys.datetime as modify_date
+  , CAST(0 as sys.BIT) as is_ms_shipped 
+  , CAST(0 as sys.BIT) as is_published 
+  , CAST(0 as sys.BIT) as is_schema_published 
+  , CAST(0 as sys.BIT) as with_check_option 
+  , CAST(0 as sys.BIT) as is_date_correlation_view 
+  , CAST(0 as sys.BIT) as is_tracked_by_cdc
 from pg_class t inner join sys.schemas sch on (t.relnamespace = sch.schema_id)
 left join sys.shipped_objects_not_in_sys nis on (nis.name = t.relname and nis.schemaid = sch.schema_id and nis.type = 'V')
 left outer join sys.babelfish_view_def vd on t.relname::sys.sysname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
@@ -2001,6 +2001,7 @@ $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4');
 
 
 CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
