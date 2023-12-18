@@ -74,7 +74,7 @@ char	   *get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 static inline int32_t
 GetUTF8CodePoint(const unsigned char *in, int len, int *consumed_p)
 {
-	int32_t		code = -1;
+	int32_t		code;
 	int			consumed;
 
 	if (len == 0)
