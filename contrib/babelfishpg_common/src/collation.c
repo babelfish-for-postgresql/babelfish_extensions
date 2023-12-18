@@ -1508,10 +1508,9 @@ BabelfishPreCreateCollation_hook(
 Oid
 get_oid_from_collidx(int collidx)
 {
-	if (collidx > NOT_FOUND)
-		return coll_infos[collidx].oid;
-
-	return InvalidOid;
+	if (collidx == NOT_FOUND)
+		return InvalidOid;
+	return coll_infos[collidx].oid;
 }
 
 collation_callbacks *

@@ -4034,6 +4034,7 @@ std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Ta
 	}
 	else
 	{
+		// cppcheck-suppress nullPointer
 		if (dctx->full_object_name())
 			table_name = stripQuoteFromId(dctx->full_object_name()->object_name);
 		else if (dctx->local_id())
