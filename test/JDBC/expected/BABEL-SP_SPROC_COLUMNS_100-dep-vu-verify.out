@@ -1,7 +1,7 @@
 exec babel_sp_sproc_columns_100_dep_vu_prepare_p2
 go
 ~~START~~
-varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#tinyint#!#int#!#tinyint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 master#!#dbo#!#babel_sp_sproc_columns_100_dep_vu_prepare_p1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 ~~END~~
 
@@ -9,7 +9,7 @@ master#!#dbo#!#babel_sp_sproc_columns_100_dep_vu_prepare_p1;1#!#@RETURN_VALUE#!#
 exec babel_sp_sproc_columns_100_dep_vu_prepare_p3
 go
 ~~START~~
-varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#tinyint#!#int#!#tinyint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 master#!#dbo#!#babel_sp_sproc_columns_100_dep_vu_prepare_p1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 ~~END~~
 

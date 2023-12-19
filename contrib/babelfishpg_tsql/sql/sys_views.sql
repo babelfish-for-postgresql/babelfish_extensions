@@ -1198,7 +1198,7 @@ SELECT name
   , CAST(is_nullable as sys.bit) as allownulls
   , CAST(system_type_id as int) as type
   , CAST(null as sys.varchar(255)) as printfmt
-  , (case when precision <> 0::smallint then precision 
+  , (case when precision <> 0::tinyint then precision::smallint
       else sys.systypes_precision_helper(sys.translate_pg_type_to_tsql(system_type_id), max_length) end) as prec
   , CAST(scale as sys.tinyint) as scale
   , collation_name as collation
