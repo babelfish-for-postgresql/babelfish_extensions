@@ -735,7 +735,7 @@ init_collid_trans_tab_internal(void)
 	Oid			nspoid;
 	ht_oid2collid_entry *entry;
 	int			locale_pos = -1;
-	char	   *atsign;
+	char	   *atsign = NULL;
 	char	   *locale;
 
 	if (TransMemoryContext == NULL) /* initialize memory context */
@@ -788,18 +788,22 @@ init_collid_trans_tab_internal(void)
 			init_default_locale();
 
 			locale = pstrdup(bbf_default_locale);
-			atsign = strstr(locale, "@");
+			if (locale)
+				atsign = strstr(locale, "@");
 			if (atsign != NULL)
 				*atsign = '\0';
 			locale_pos = find_locale(locale);
 
 			if (locale_pos < 0)
+			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INTERNAL_ERROR),
 						 errmsg("invalid setting detected for babelfishpg_tsql.default_locale setting")));
+			}
 			coll_infos[i].lcid = locales[locale_pos].lcid;
 			coll_infos[i].code_page = locales[locale_pos].code_page;
 			coll_infos[i].enc = locales[locale_pos].enc;
+			
 			if (locale)
 				pfree(locale);
 		}
@@ -916,9 +920,19 @@ lookup_like_ilike_table(Oid opno)
 	/* return invalid oid when not found */
 	if (!found)
 	{
-		like_ilike_info invalid;
+		like_ilike_info invalid = {
+			InvalidOid,		/* like_oid */
+			NULL,			/* like_op_name */
+			NULL,			/* ilike_op_name */
+			NULL,			/* op_left_schema */
+			NULL,			/* the name of left operand */
+			NULL,			/* op_left_name */
+			NULL,			/* op_right_name */
+			false,			/* is_not_match */
+			InvalidOid,		/* ilike_oid */
+			InvalidOid		/* ilike_opfuncid */
+		};
 
-		invalid.like_oid = InvalidOid;
 		return invalid;
 	}
 
@@ -960,9 +974,17 @@ lookup_collation_table(Oid coll_oid)
 	{
 		int			collidx;
 
-		coll_info	invalid;
-
-		invalid.oid = InvalidOid;
+		coll_info	invalid = {
+			InvalidOid,		/* oid */
+			NULL,			/* collname */
+			-1,			/* lcid */
+			-1,			/* ver */
+			-1,			/* style */
+			-1,			/* sortid */
+			-1,			/* collateflags */
+			-1,			/* code_page */
+			PG_SQL_ASCII		/* enc */
+		};
 
 		collidx = get_server_collation_collidx();
 		if (collidx == NOT_FOUND)
@@ -1484,10 +1506,9 @@ BabelfishPreCreateCollation_hook(
 Oid
 get_oid_from_collidx(int collidx)
 {
-	if (collidx > NOT_FOUND)
-		return coll_infos[collidx].oid;
-
-	return InvalidOid;
+	if (collidx == NOT_FOUND)
+		return InvalidOid;
+	return coll_infos[collidx].oid;
 }
 
 collation_callbacks *
