@@ -4368,7 +4368,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	PLtsql_function *func;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
-	Datum		retval;
+	Datum		retval = NULL;
 	int			rc;
 	int			saved_dialect = sql_dialect;
 	int			nargs = PG_NARGS();

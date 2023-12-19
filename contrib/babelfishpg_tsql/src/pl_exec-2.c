@@ -1453,11 +1453,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	InlineCodeBlock *codeblock;
-	volatile LocalTransactionId before_lxid;
+	volatile LocalTransactionId before_lxid = 0;
 	LocalTransactionId after_lxid;
-	SimpleEcontextStackEntry *topEntry;
-	volatile int save_nestlevel;
-	volatile int scope_level;
+	SimpleEcontextStackEntry *topEntry = NULL;
+	volatile int save_nestlevel = 0;
+	volatile int scope_level = 0;
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 

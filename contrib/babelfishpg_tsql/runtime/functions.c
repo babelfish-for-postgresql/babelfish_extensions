@@ -3748,7 +3748,7 @@ int
 SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount)
 {
 	_SPI_plan			plan;
-	int					ret;
+	int					ret = 0;
 	List				*plancache_list;
 	CachedPlanSource	*plansource;
 	int					prev_sql_dialect;
