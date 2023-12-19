@@ -6,7 +6,7 @@ select cast(name as varchar(20))
 from sys.types where is_user_defined = 0 order by name asc;
 GO
 ~~START~~
-varchar#!#smallint#!#int#!#int#!#varchar
+varchar#!#smallint#!#tinyint#!#tinyint#!#varchar
 bigint#!#8#!#19#!#0#!#<NULL>
 binary#!#8000#!#0#!#0#!#<NULL>
 bit#!#1#!#1#!#0#!#<NULL>
@@ -53,7 +53,7 @@ select cast(name as varchar(20))
 from sys.types where is_user_defined = 1 order by name asc;
 GO
 ~~START~~
-varchar#!#smallint#!#int#!#int#!#varchar
+varchar#!#smallint#!#tinyint#!#tinyint#!#varchar
 my_type#!#4#!#10#!#0#!#<NULL>
 my_type2#!#20#!#0#!#0#!#sql_latin1_general_cp1_ci_as
 tbl_type_sys_types#!#-1#!#0#!#0#!#<NULL>
