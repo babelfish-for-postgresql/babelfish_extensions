@@ -1044,7 +1044,7 @@ execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablen
 
 	validate_sp_cursor_params(opttype, rownum, tablename, values);
 
-	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%d", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1171,7 +1171,7 @@ execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pn
 	PortalContext = savedPortalCxt;
 
 	/* find cursor entry, validate input options and open portal */
-	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%d", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1307,7 +1307,7 @@ execute_sp_cursoroption(int cursor_handle, int code, int value)
 
 	validate_sp_cursoroption_params(code, value);
 
-	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%d", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1403,7 +1403,7 @@ execute_sp_cursorclose(int cursor_handle)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
-	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%d", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1515,7 +1515,8 @@ execute_sp_cursoropen_common(int *stmt_handle, int *cursor_handle, const char *s
 
 		*cursor_handle = get_next_cursor_handle();
 
-		snprintf(curname, NAMEDATALEN, "%u", *cursor_handle);
+		if (cursor_handle != NULL)
+			snprintf(curname, NAMEDATALEN, "%d", *cursor_handle);
 
 		/* add new cursor entry */
 		hentry = pltsql_insert_cursor_entry(curname, NULL, cursor_options, cursor_handle);
