@@ -57,15 +57,6 @@ ignore#!#BABEL-ROLE-MEMBER
 # current_setting('role') returns NULL.
 ignore#!#BABEL-1444
 
-# ERROR CODE DIFFERENCE.  JIRA-4539
-ignore#!#babel_datetime-vu-verify
-ignore#!#babel_datetime
-ignore#!#BABEL-2812-vu-verify
-
-# relation "onek" does not exist: JIRA-4541
-ignore#!#pgr_select
-ignore#!#pgr_select_distinct
-
 # Test failures caused by babel_extra_join_test_cases_northwind failure
 ignore#!#babelfish_sysdatabases-vu-prepare
 ignore#!#babelfish_sysdatabases-vu-verify
