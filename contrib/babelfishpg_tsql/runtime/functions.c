@@ -522,8 +522,9 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
+	tsql_datetimeoffset	*datetime;
 
-	tsql_datetimeoffset	*datetime = (tsql_datetimeoffset*)(fcinfo->args[1].value);
+	datetime = PG_GETARG_DATETIMEOFFSET(1);
 			
 	/* Converting the datetime offset into the timestamp */
 	timestamp = datetime->tsql_ts + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
