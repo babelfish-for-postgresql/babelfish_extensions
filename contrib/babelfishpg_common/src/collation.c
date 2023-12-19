@@ -543,13 +543,12 @@ find_collation(const char *collation_name)
 }
 
 static bool
-collation_is_accent_insensitive(int collidx)
+collation_is_case_insensitive_and_accent_sensitive(int collidx)
 {
 	if (collidx < 0 || collidx >= TOTAL_COLL_COUNT)
 		return false;
 
-	if (coll_infos[collidx].collateflags == 0x000f ||	/* CI_AI  */
-		coll_infos[collidx].collateflags == 0x000e) /* CS_AI  */
+	if (coll_infos[collidx].collateflags == 0x000d) /* CI_AS  */
 		return true;
 
 	return false;
@@ -1300,7 +1299,7 @@ is_valid_server_collation_name(const char *collname)
 	int			collidx = find_any_collation(collname, true);
 
 	if (NOT_FOUND != collidx &&
-		!collation_is_accent_insensitive(collidx))
+		collation_is_case_insensitive_and_accent_sensitive(collidx))
 		return true;
 
 	return false;
