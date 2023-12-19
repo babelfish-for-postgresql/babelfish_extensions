@@ -1823,6 +1823,16 @@ create_index
     with_index_options?
     (ON storage_partition_clause)?
  SEMI?
+    |CREATE UNIQUE? clustered? COLUMNSTORE? INDEX id ON table_name (USING vector_index_method)? (LR_BRACKET column_name_list_with_order_for_vector RR_BRACKET)?
+    (INCLUDE LR_BRACKET column_name_list RR_BRACKET )?
+    (WHERE where=search_condition)?
+    with_index_options?
+    (ON storage_partition_clause)?
+ SEMI?
+    ;
+
+vector_index_method
+    : id
     ;
 
 alter_index
@@ -3574,8 +3584,9 @@ xml_common_directives
     : COMMA (BINARY_KEYWORD BASE64 | TYPE | ROOT ( LR_BRACKET char_string RR_BRACKET )?)
     ;
 
-order_by_expression
+order_by_expression 
     : order_by=expression (ascending=ASC | descending=DESC)?
+    | order_by=expression vector_operator expression (ascending=ASC | descending=DESC)? (NULLS FIRST | NULLS LAST)?
     ;
 
 group_by_item
@@ -5142,6 +5153,10 @@ column_name_list_with_order
     : simple_column_name (ASC | DESC)? (COMMA simple_column_name (ASC | DESC)?)*
     ;
 
+column_name_list_with_order_for_vector
+    : simple_column_name (ASC | DESC)? id? (COMMA simple_column_name (ASC | DESC)?)*
+    ;
+
 //For some reason, sql server allows any number of prefixes:  Here, h is the column: a.b.c.d.e.f.g.h
 insert_column_name_list
     : col+=insert_column_id (COMMA col+=insert_column_id)*
@@ -5182,7 +5197,11 @@ local_id
 // https://msdn.microsoft.com/en-us/library/ms188074.aspx
 // Spaces are allowed for comparison operators.
 comparison_operator
-    : EQUAL | GREATER | LESS | LESS EQUAL | GREATER EQUAL | LESS GREATER | EXCLAMATION EQUAL | EXCLAMATION GREATER | EXCLAMATION LESS | MULT_ASSIGN | EQUAL_STAR_OJ
+    : EQUAL | GREATER | LESS | LESS EQUAL | GREATER EQUAL | LESS GREATER | EXCLAMATION EQUAL | EXCLAMATION GREATER | EXCLAMATION LESS | MULT_ASSIGN | EQUAL_STAR_OJ | vector_operator
+    ;
+
+vector_operator
+    : VECTOR_COSINE | VECTOR_IP | VECTOR_L2
     ;
 
 assignment_operator

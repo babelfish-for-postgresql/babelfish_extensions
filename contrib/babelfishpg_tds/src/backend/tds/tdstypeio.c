@@ -132,6 +132,9 @@ Datum		TdsTypeUIDToDatum(StringInfo buf);
 Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
 Datum		TdsTypeSpatialToDatum(StringInfo buf);
 
+Datum LoadTdsType(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(LoadTdsType);
+
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
 /* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
@@ -546,6 +549,34 @@ TdsLookupEncodingByLCID(int lcid)
 	return mInfo->enc;
 }
 
+Datum
+LoadTdsType(PG_FUNCTION_ARGS)
+{
+	Oid			typeoid;
+	Oid			basetypeoid;
+	TdsIoFunctionInfo finfo;
+
+	typeoid = PG_GETARG_INT32(0);
+
+	if (OidIsValid(typeoid))
+	{
+		basetypeoid = getBaseType(typeoid);
+		finfo = (TdsIoFunctionInfo) hash_search(functionInfoCacheByOid,
+												&typeoid,
+												HASH_ENTER,
+												NULL);
+		finfo->ttmbasetypeid = typeoid == basetypeoid ? 0 : basetypeoid;
+		finfo->ttmtdstypeid = TDS_TYPE_VARCHAR;
+		finfo->ttmtdstypelen = -1;
+		finfo->ttmtdslenbytes = 2;
+		finfo->sendFuncId = TDS_SEND_VARCHAR;
+		finfo->sendFuncPtr = getSendFunc(finfo->sendFuncId);
+		finfo->recvFuncId = TDS_RECV_VARCHAR;
+		finfo->recvFuncPtr = getRecvFunc(finfo->recvFuncId);
+	}
+	PG_RETURN_INT32(0);
+}
+
 void
 TdsLoadTypeFunctionCache(void)
 {
@@ -590,10 +621,13 @@ TdsLoadTypeFunctionCache(void)
 		FunctionCacheByTdsIdKey fc2key;
 		FunctionCacheByTdsIdEntry *fc2ent;
 
-		nspoid = strcmp(TdsIoFunctionRawData_data[i].typnsp, "sys") == 0 ? sys_nspoid : PG_CATALOG_NAMESPACE;
+		nspoid = strcmp(TdsIoFunctionRawData_data[i].typnsp, "sys") == 0 ? sys_nspoid :
+			strcmp(TdsIoFunctionRawData_data[i].typnsp, "puclic") == 0 ? PG_PUBLIC_NAMESPACE : PG_CATALOG_NAMESPACE;
+
 		typeoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 								  CStringGetDatum(TdsIoFunctionRawData_data[i].typname), ObjectIdGetDatum(nspoid));
 
+		elog(LOG, "kushaal %s, %s, %d, %d", TdsIoFunctionRawData_data[i].typnsp, TdsIoFunctionRawData_data[i].typname, typeoid, nspoid);
 		if (OidIsValid(typeoid))
 		{
 			basetypeoid = getBaseType(typeoid);

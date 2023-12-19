@@ -1887,7 +1887,7 @@ tsql_index_nulls_order(List *indexParams, const char *accessMethod)
 			continue;
 
 		/* GIN indexes don't support NULLS FIRST/LAST options */
-		if (strcmp(accessMethod, "gin") == 0)
+		if (strcmp(accessMethod, "gin") == 0 || strcmp(accessMethod, "hnsw") == 0 || strcmp(accessMethod, "ivfflat") == 0)
 			return;
 
 		switch (indexElem->ordering)

@@ -1157,6 +1157,9 @@ MOD_ASSIGN:          '%=';
 AND_ASSIGN:          '&=';
 XOR_ASSIGN:          '^=';
 OR_ASSIGN:           '|=';
+VECTOR_L2:           '<->';
+VECTOR_COSINE:       '<=>';
+VECTOR_IP:           '<#>';
 
 DOT:                 '.';
 UNDERLINE:           '_';

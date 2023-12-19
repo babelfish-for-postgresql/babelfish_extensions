@@ -31,6 +31,7 @@
 #include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
@@ -3784,6 +3785,9 @@ _PG_init(void)
 	/* Fixme: Handle loading of pgtsql_common_library_name library cleanly. */
 	load_libraries("babelfishpg_common", NULL, false);
 	init_and_check_common_utility();
+
+	if (OidIsValid(get_extension_oid("vector", true)))
+		load_libraries("vector", NULL, false);
 
 	pg_bindtextdomain(TEXTDOMAIN);
 

@@ -48,3 +48,8 @@ CREATE FUNCTION sys.disable_injected_fault_all()
 RETURNS text
 AS $$ SELECT sys.inject_fault('all', 0) $$
 LANGUAGE SQL;
+
+create function sys.LoadTdsType(object_id int)
+RETURNS integer
+AS 'babelfishpg_tds', 'LoadTdsType'
+LANGUAGE C VOLATILE STRICT;

@@ -1777,7 +1777,7 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	Node	   *parsetree;
 	size_t		len;
 	PlannedStmt *wrapper;
-	const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "fuzzystrmatch"};
+	const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "fuzzystrmatch", "vector"};
 	int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
