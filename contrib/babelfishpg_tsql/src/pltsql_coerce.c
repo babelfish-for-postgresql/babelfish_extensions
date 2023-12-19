@@ -1531,7 +1531,7 @@ PG_FUNCTION_INFO_V1(ftrunci8);
 Datum
 ftrunci8(PG_FUNCTION_ARGS)
 {
-	float4		num = PG_GETARG_FLOAT4(0), arg = 0;
+	float4		num = PG_GETARG_FLOAT4(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -1539,16 +1539,16 @@ ftrunci8(PG_FUNCTION_ARGS)
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
 	BBF_Pragma_IgnoreFloatConversionWarning_Push
-	arg = rint(ftrunc_(num));
+	num = rint(ftrunc_(num));
 	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
-	if (unlikely(isnan(arg) || !FLOAT4_FITS_IN_INT64(arg)))
+	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT64(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	PG_RETURN_INT64((int64) arg);
+	PG_RETURN_INT64((int64) num);
 }
 
 
@@ -1559,6 +1559,7 @@ Datum
 ftrunci4(PG_FUNCTION_ARGS)
 {
 	float4		num = PG_GETARG_FLOAT4(0);
+
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
 	 * on just-out-of-range values that would round into range.  Note
@@ -1584,7 +1585,7 @@ PG_FUNCTION_INFO_V1(ftrunci2);
 Datum
 ftrunci2(PG_FUNCTION_ARGS)
 {
-	float4		num = PG_GETARG_FLOAT4(0), arg = 0;
+	float4		num = PG_GETARG_FLOAT4(0);
 
 	/*
 	 * Get rid of any fractional part in the input.  This is so we don't fail
@@ -1592,16 +1593,16 @@ ftrunci2(PG_FUNCTION_ARGS)
 	 * assumption that rint() will pass through a NaN or Inf unchanged.
 	 */
 	BBF_Pragma_IgnoreFloatConversionWarning_Push
-	arg = rint(ftrunc_(num));
+	num = rint(ftrunc_(num));
 	BBF_Pragma_IgnoreFloatConversionWarning_Pop
 
 	/* Range check */
-	if (unlikely(isnan(arg) || !FLOAT4_FITS_IN_INT16(arg)))
+	if (unlikely(isnan(num) || !FLOAT4_FITS_IN_INT16(num)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
 
-	PG_RETURN_INT16((int16) arg);
+	PG_RETURN_INT16((int16) num);
 }
 
 
