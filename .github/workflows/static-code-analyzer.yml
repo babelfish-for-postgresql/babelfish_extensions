@@ -38,8 +38,8 @@ jobs:
           ./contrib \
           --suppress=nullPointerRedundantCheck \
           --output-file=cppcheck-failures.txt \
-          --include=/home/sumiji/workplace/postgresql_modified_for_babelfish/src/include/utils/elog.h \
-          --include=/home/sumiji/workplace/postgresql_modified_for_babelfish/src/include/c.h
+          --include=../postgresql_modified_for_babelfish/src/include/utils/elog.h \
+          --include=../postgresql_modified_for_babelfish/src/include/c.h
       
       - name: Upload failures as artifacts
         id: upload-failures
