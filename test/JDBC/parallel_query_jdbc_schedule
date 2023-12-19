@@ -183,8 +183,3 @@ ignore#!#sys-has_perms_by_name-vu-verify
 ignore#!#sys-server_principals-vu-prepare
 ignore#!#sys-server_principals-vu-verify
 ignore#!#sys-server_principals-vu-cleanup
-
-#investigate following failure
-ignore#!#jira-BABEL-3504-vu-prepare
-ignore#!#jira-BABEL-3504-vu-verify
-ignore#!#jira-BABEL-3504-vu-cleanup
