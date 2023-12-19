@@ -33,8 +33,8 @@ jobs:
         id: run-cppcheck
         if: always()
         run: |
-          export NPROC=16
-          
+          export NPROC=`nproc`
+
           cppcheck --error-exitcode=-1 -j $NPROC --template=gcc \
           --enable=warning --inline-suppr \
           ./contrib \
