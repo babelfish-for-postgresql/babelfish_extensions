@@ -796,12 +796,9 @@ void
 CopyMsgBytes(StringInfo msg, char *buf, int datalen)
 {
 	if (datalen < 0 || datalen > (msg->len - msg->cursor))
-	{
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
-		// return;
-	}
 	memcpy(buf, &msg->data[msg->cursor], datalen);
 	msg->cursor += datalen;
 }

@@ -625,7 +625,7 @@ SPPrepare(TDSRequestSP req)
 	FunctionCallInfo fcinfo;
 
 	Datum		retval;
-	Datum	   *values = NULL;
+	Datum	   *values;
 	bool	   *nulls;
 	char	   *activity;
 
