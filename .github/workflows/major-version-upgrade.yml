@@ -92,10 +92,11 @@ jobs:
         id: install-extensions-old
         if: always() && steps.build-extensions-old.outcome == 'success'
         run: |
+          ulimit -c unlimited
           cd ~
           export PATH=/opt/mssql-tools/bin:$PATH
           ~/${{env.OLD_INSTALL_DIR}}/bin/initdb -D ~/${{env.OLD_INSTALL_DIR}}/data
-          ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -D ~/${{env.OLD_INSTALL_DIR}}/data -l logfile13 start
+          ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -c -D ~/${{env.OLD_INSTALL_DIR}}/data -l logfile13 start
           cd ${{env.OLD_INSTALL_DIR}}/data
           sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
           sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
@@ -109,7 +110,7 @@ jobs:
             sudo echo "host    all             all             0.0.0.0/0                md5"
             sudo echo "host    all             all             ::/0                     md5"
           } > pg_hba.conf
-          ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -D ~/${{env.OLD_INSTALL_DIR}}/data -l logfile13 restart
+          ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -c -D ~/${{env.OLD_INSTALL_DIR}}/data -l logfile13 restart
           cd ~/work/babelfish_extensions/babelfish_extensions/
           sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/create_extension.sql
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
@@ -123,6 +124,7 @@ jobs:
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
+          release_mode: 'yes'
 
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
@@ -173,6 +175,15 @@ jobs:
         id: run-pg_upgrade
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
+
+      - name: Disable TDS fault injection tests in release mode
+        id: disable-fault-injection
+        if: always() && steps.setup-new-datadir.outcome == 'success'
+        run: |
+          cd test/JDBC/
+          echo 'ignore#!#babel_tds_fault_injection' >> jdbc_schedule
+          echo 'ignore#!#tds_faultinjection' >> jdbc_schedule
+          echo jdbc_schedule
 
       - name: Run JDBC Tests
         id: jdbc
@@ -226,3 +237,7 @@ jobs:
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
+      
+      - name: Check and upload coredumps
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: ./.github/composite-actions/upload-coredump
