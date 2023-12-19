@@ -82,8 +82,3 @@ ignore#!#TestDatetime-numeric-representation-vu-verify
 ignore#!#four-part-names-vu-verify
 ignore#!#sp_columns_100
 ignore#!#sys-has_perms_by_name-vu-verify
-
-#investigate following failure
-ignore#!#jira-BABEL-3504-vu-prepare
-ignore#!#jira-BABEL-3504-vu-verify
-ignore#!#jira-BABEL-3504-vu-cleanup
