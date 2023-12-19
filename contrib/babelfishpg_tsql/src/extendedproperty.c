@@ -254,10 +254,10 @@ sp_dropextendedproperty(PG_FUNCTION_ARGS)
 static void
 sp_execextended_property(PG_FUNCTION_ARGS, ExtendedPropertyProc proc)
 {
-	char		*name, *orig_name,
-				*level0type, *level0name,
-				*level1type, *level1name,
-				*level2type, *level2name;
+	char		*name = NULL, *orig_name = NULL,
+				*level0type = NULL, *level0name = NULL,
+				*level1type = NULL, *level1name = NULL,
+				*level2type = NULL, *level2name = NULL;
 	bytea		*value = NULL;
 	int16		db_id;
 	const char	*type;

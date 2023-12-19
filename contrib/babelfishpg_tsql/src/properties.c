@@ -226,7 +226,6 @@ get_product_level_helper()
 
 	initStringInfo(&temp);
 
-	Assert(BABELFISH_VERSION_STR != NULL);
 	minor_version = atoi(get_version_number(BABELFISH_VERSION_STR, 1));
 	if (minor_version == 0)
 	{

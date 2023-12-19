@@ -2396,7 +2396,7 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 		{
 			TdsIoFunctionInfo tempFuncInfo;
 			int			currentColumn = 0;
-			char	   *currentQuery = " ";
+			char	   *currentQuery = pstrdup(" ");
 
 			while (currentColumn != token->tvpInfo->colCount)
 			{
