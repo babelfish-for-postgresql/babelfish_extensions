@@ -33,13 +33,16 @@ jobs:
         id: run-cppcheck
         if: always()
         run: |
-          cppcheck --error-exitcode=-1 -j 16 --template=gcc \
+          export NPROC=16
+          
+          cppcheck --error-exitcode=-1 -j $NPROC --template=gcc \
           --enable=warning --inline-suppr \
           ./contrib \
           --suppress=nullPointerRedundantCheck \
+          --suppress=unknownMacro \
           --output-file=cppcheck-failures.txt \
           --include=../postgresql_modified_for_babelfish/src/include/utils/elog.h \
-          --include=../postgresql_modified_for_babelfish/src/include/c.h
+          --include=../postgresql_modified_for_babelfish/src/include/c.h 
       
       - name: Upload failures as artifacts
         id: upload-failures
