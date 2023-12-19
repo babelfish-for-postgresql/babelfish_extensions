@@ -800,7 +800,7 @@ CopyMsgBytes(StringInfo msg, char *buf, int datalen)
 		ereport(FATAL,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("insufficient data left in message")));
-		return;
+		// return;
 	}
 	memcpy(buf, &msg->data[msg->cursor], datalen);
 	msg->cursor += datalen;

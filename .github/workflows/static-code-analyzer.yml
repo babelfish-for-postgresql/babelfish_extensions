@@ -35,9 +35,11 @@ jobs:
         run: |
           cppcheck --error-exitcode=-1 -j 16 --template=gcc \
           --enable=warning --inline-suppr \
-          ./contrib -I ../postgresql_modified_for_babelfish \
+          ./contrib \
           --suppress=nullPointerRedundantCheck \
-          --output-file=cppcheck-failures.txt
+          --output-file=cppcheck-failures.txt \
+          --include=/home/sumiji/workplace/postgresql_modified_for_babelfish/src/include/utils/elog.h \
+          --include=/home/sumiji/workplace/postgresql_modified_for_babelfish/src/include/c.h
       
       - name: Upload failures as artifacts
         id: upload-failures
