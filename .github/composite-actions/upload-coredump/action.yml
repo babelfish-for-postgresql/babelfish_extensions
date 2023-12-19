@@ -1,0 +1,24 @@
+name: 'Check for coredumps on the System'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create coredump summaries
+      if: always()
+      run: |
+        gdb --quiet --core /var/coredumps/* --batch -ex 'info auxv'
+        ./.github/scripts/get_coredumps linux /var/coredumps
+        ls ./*.out
+      shell: bash
+
+
+
+    - name: Upload Coredumps
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coredumps
+        path: |
+          /var/coredumps/*
+          /home/runner/work/babelfish_extensions/babelfish_extensions/bt-*
+

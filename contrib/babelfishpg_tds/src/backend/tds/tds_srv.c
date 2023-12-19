@@ -349,6 +349,7 @@ pe_authenticate(Port *port, const char **username)
 	ClientAuthInProgress = false;	/* client_min_messages is active now */
 
 	*username = port->user_name;
+	port->is_tds_conn = true;
 }
 
 static void
