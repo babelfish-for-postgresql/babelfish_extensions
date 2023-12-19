@@ -36,7 +36,7 @@ runs:
         echo 'pg_upgrade completed!'
         echo 'Updating babelfish extensions...'
         cd ~/work/babelfish_extensions/babelfish_extensions/
-        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile14 start
+        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE;"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_tsql UPDATE;"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
@@ -46,7 +46,7 @@ runs:
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.pg_new_dir }}/data/postgresql.conf
-          ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data/ -l ~/${{ inputs.pg_new_dir }}/data/logfile14 restart
+          ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data/ -l ~/${{ inputs.pg_new_dir }}/data/logfile restart
         fi
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
