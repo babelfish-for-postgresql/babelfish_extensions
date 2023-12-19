@@ -113,7 +113,7 @@ runs:
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
           sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.install_dir }}/data/postgresql.conf
         fi
-        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
