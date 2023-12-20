@@ -1645,6 +1645,12 @@ object_id(PG_FUNCTION_ARGS)
 			}
 		}
 	}
+
+	if (is_temp_object && !result)
+	{
+		result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+	}
+
 	pfree(object_name);
 	if (object_type)
 		pfree(object_type);
@@ -1821,7 +1827,8 @@ object_name(PG_FUNCTION_ARGS)
 		if (!OidIsValid(schema_id) ||
 			is_schema_from_db(schema_id, database_id) ||
 			(schema_id == get_namespace_oid("sys", true)) ||
-			(schema_id == get_namespace_oid("information_schema_tsql", true)))
+			(schema_id == get_namespace_oid("information_schema_tsql", true)) ||
+			(isTempNamespace(schema_id)))
 		{
 			PG_RETURN_VARCHAR_P((VarChar *) result_text);
 		}

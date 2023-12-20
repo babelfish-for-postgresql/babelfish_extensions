@@ -46,6 +46,9 @@ GO
 CREATE TABLE [babel_object_id_schema .with .dot_and_spaces]."babel_object_id_t3 .with .dot_and_spaces" (a int);
 GO
 
+CREATE TYPE babel_object_id_type FROM int
+GO
+
 -- To test lookup in different database
 CREATE DATABASE babel_object_id_db;
 GO
