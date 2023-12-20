@@ -2537,14 +2537,16 @@ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
 
-CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
+CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.NVARCHAR(128), 
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
 AS 'babelfishpg_tsql', 'sp_set_session_context'
 LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
-	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
+CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.NVARCHAR(128))
+RETURNS sys.SQL_VARIANT
+AS 'babelfishpg_tsql', 'session_context'
+LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
 -- SYSLOGINS
