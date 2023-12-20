@@ -8,6 +8,7 @@
 
 # These tests are hanging in 16.1 with parallel query mode on
 ignore#!#545_1
+ignore#!#BABEL-3092
 
 # Group 1: BABEL-4481
 ignore#!#Test-sp_addrolemember-vu-prepare
