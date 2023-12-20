@@ -224,6 +224,10 @@ static	tsql_exec_param *parse_sp_proc_param(int *endtoken, bool *flag);
 static	bool word_matches_sp_proc(int tok);
 static	PLtsql_stmt *parse_sp_proc(int tok, int lineno, int return_dno);
 static	void parse_sp_cursor_value(StringInfoData* pbuffer, int *pterm);
+extern	bool is_tsql_nchar_or_nvarchar_datatype(Oid oid);
+extern	bool is_tsql_varchar_or_char_datatype(Oid oid);
+extern	bool is_tsql_binary_or_varbinary_datatype(Oid oid);
+extern	bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid);
 
 #define ereport_syntax_error(pos, msg, ...) \
 	ereport(ERROR, \
@@ -7214,10 +7218,11 @@ parse_datatype(const char *string, int location)
 		return pltsql_build_table_datatype_coldef(&string[5]);
 	}
 
-	if (pg_strcasecmp(string, "nchar") == 0 ||
-		pg_strcasecmp(string, "char") == 0 ||
-		pg_strcasecmp(string, "varchar") == 0 ||
-		pg_strcasecmp(string, "nvarchar") == 0)
+	typeName = typeStringToTypeName(string);
+	typeName->names = rewrite_plain_name(typeName->names);
+	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
+
+	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id)))
 	{
 		/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
 		char *newString = (char *) palloc(1 + strlen(string)+ 3);
@@ -7225,42 +7230,36 @@ parse_datatype(const char *string, int location)
     	strcat(newString, "(1)");
 		/* Let the main parser try to parse it under standard SQL rules */
 		typeName = typeStringToTypeName(newString);
+		typeName->names = rewrite_plain_name(typeName->names);
+		typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
 		pfree(newString);
 	}
-	else
-	{
-		/* Let the main parser try to parse it under standard SQL rules */
-		typeName = typeStringToTypeName(string);
-	}
-	typeName->names = rewrite_plain_name(typeName->names);
-	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
 	
-	/* for sys.varchar/nvarchar(MAX), set typmod back to -1 */
-	if (typmod == TSQLMaxTypmod && (pg_strncasecmp(string, "varchar", 7) == 0 ||
-									pg_strncasecmp(string, "nvarchar", 8) == 0))
+	/* for varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
+	if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
 	{
 		typmod = -1;
 	}
-	else if (typmod > (8000 + VARHDRSZ) && (pg_strncasecmp(string, "varchar", 7) == 0 || pg_strncasecmp(string, "char", 4) == 0))
+	else if (typmod > (8000 + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id)))
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
-						typmod - VARHDRSZ, string)));
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
+				typmod - VARHDRSZ, string)));
 	}
-	else if (typmod > (8000 + VARHDRSZ) && (pg_strncasecmp(string, "varbinary", 9) == 0 || pg_strncasecmp(string, "binary", 6) == 0))
+	else if (typmod > (8000 + VARHDRSZ) && (is_tsql_binary_or_varbinary_datatype(type_id)))
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
-						typmod - VARHDRSZ, string)));
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
+				typmod - VARHDRSZ, string)));
 	}
-	else if (typmod > (4000 + VARHDRSZ) && (pg_strncasecmp(string, "nchar", 5) == 0 || pg_strncasecmp(string, "nvarchar", 8) == 0))
+	else if (typmod > (4000 + VARHDRSZ) && (is_tsql_nchar_or_nvarchar_datatype(type_id)))
 	{
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("The size '%d' exceeds the maximum allowed (4000) for '%s' datatype.",
-						typmod - VARHDRSZ, string)));
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The size '%d' exceeds the maximum allowed (4000) for '%s' datatype.",
+				typmod - VARHDRSZ, string)));
 	}
 
 	/* Restore former ereport callback */

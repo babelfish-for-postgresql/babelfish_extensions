@@ -1965,12 +1965,6 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 			case TDS_SEND_VARBINARY:
 				if (atttypmod == -1 && tle != NULL)
 					atttypmod = resolve_varbinary_typmod_from_exp((Node *) tle->expr);
-				/* 
-				 * If atttypmod value is TSQLMaxTypmod (-8000) it is varbinary(max) case
-				 * we can set atttypmod value to -1 now as we have already covered other cases where attypmod is -1
-				 */
-				if (atttypmod == TSQLMaxTypmod)
-					atttypmod = -1;
 				SetColMetadataForBinaryType(col, TDS_TYPE_VARBINARY, (atttypmod == -1) ?
 											atttypmod : atttypmod - VARHDRSZ);
 				break;

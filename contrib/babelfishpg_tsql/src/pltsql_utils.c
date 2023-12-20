@@ -34,8 +34,10 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
-												 * sys.varchar / sys.nvarchar */
+bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 bool
@@ -1073,12 +1075,33 @@ update_ViewStmt(Node *n, const char *view_schema)
 }
 
 bool
-is_tsql_any_char_datatype(Oid oid)
+is_tsql_varchar_or_char_datatype(Oid oid)
 {
 	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid);
+}
+
+bool
+is_tsql_nchar_or_nvarchar_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
+}
+
+bool 
+is_tsql_binary_or_varbinary_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
+}
+
+/* varchar(max), nvarchar(max), varbinary(max) */
+bool
+is_tsql_datatype_with_max_scale_expr_allowed(Oid oid)
+{
+	return	(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
 }
 
 bool
