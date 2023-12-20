@@ -51,6 +51,10 @@ go
 select table_catalog, table_schema, table_name from information_schema.views
 go
 
+-- Should return 0 rows. 
+select count(*) from information_schema.views WHERE TABLE_NAME = 'sysdatabases'
+GO
+
 -- Will only include sysdatabases view
 select count(*) from information_schema.views WHERE TABLE_NAME != 'sysdatabases'
 go

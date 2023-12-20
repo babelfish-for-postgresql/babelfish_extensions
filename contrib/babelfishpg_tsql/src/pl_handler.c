@@ -279,7 +279,7 @@ static bool
 check_identity_insert(char** newval, void **extra, GucSource source)
 {
 	/*
-	 * Workers synchronize the parameter at the beginning of each parallel 
+	 * Workers synchronize the parameter at the beginning of each parallel
 	 * operation. Avoid performing parameter assignment uring parallel operation.
 	 */
 	if (IsParallelWorker() && !InitializingParallelWorker)
@@ -1037,8 +1037,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												{
 													ColumnDef* def = (ColumnDef *) element;
 
-													if (strlen(def->colname) == colname_len && 
-														strncmp(def->colname, colname, colname_len) == 0 && 
+													if (strlen(def->colname) == colname_len &&
+														strncmp(def->colname, colname, colname_len) == 0 &&
 														has_nullable_constraint(def))
 													{
 														ereport(ERROR,
@@ -1046,9 +1046,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 															errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
 																"or add a NOT NULL constraint")));
 													}
-												}	
+												}
 											}
-										}		
+										}
 									}
 
 									if (rowversion_column_name)
@@ -2294,7 +2294,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (atstmt->relation->schemaname != NULL)
 							{
 								/*
-								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> ) 
+								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> )
 								* is mapped to syntax2 ( ALTER TABLE <table> { ENABLE | DISABLE } TRIGGER <trigger> ),
 								* objtype of atstmt for syntax1 is temporarily set to OBJECT_TRIGGER to identify whether the
 								* query was originally of syntax1 or syntax2, here astmt->objtype is reset back to OBJECT_TABLE
@@ -4372,7 +4372,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	PLtsql_function *func;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
-	Datum		retval;
+	Datum		retval = 0;
 	int			rc;
 	int			saved_dialect = sql_dialect;
 	int			nargs = PG_NARGS();
@@ -4400,6 +4400,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* Set statement_timestamp() */
 	SetCurrentStatementStartTimestamp();
 
+	set_ps_display("active");
 	pgstat_report_activity(STATE_RUNNING, codeblock->source_text);
 
 	if (nargs > 1)
@@ -5390,7 +5391,7 @@ get_oid_type_string(int type_oid)
 	return type_string;
 }
 
-static int64 
+static int64
 get_identity_into_args(Node *node)
 {
 	int64 val = 0;
@@ -5802,7 +5803,7 @@ bbf_set_tran_isolation(char *new_isolation_level_str)
 
 	if(new_isolation_int_val != DefaultXactIsoLevel)
 	{
-		if(FirstSnapshotSet || IsSubTransaction() || 
+		if(FirstSnapshotSet || IsSubTransaction() ||
 				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
 		{
 			if(escape_hatch_set_transaction_isolation_level == EH_IGNORE)

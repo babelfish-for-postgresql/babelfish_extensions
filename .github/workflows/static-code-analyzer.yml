@@ -1,0 +1,53 @@
+name: Static Code Analyzer
+on: [push, pull_request]
+
+jobs:
+  run-static-code-analyzer:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install cppcheck
+        id: install-cppcheck
+        if: always()
+        run: |
+          sudo apt-get install cppcheck
+
+      - name: Clone engine repository
+        id: clone-engine-repo
+        if: always() && steps.install-cppcheck.outcome == 'success'
+        run: |
+          cd ..
+          rm -rf postgresql_modified_for_babelfish
+
+          if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
+            ENGINE_BRANCH=$GITHUB_HEAD_REF
+          else
+            ENGINE_BRANCH=$GITHUB_REF_NAME
+          fi
+
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$GITHUB_REPOSITORY_OWNER" "$ENGINE_BRANCH"
+
+      - name: Run cppcheck on extensions
+        id: run-cppcheck
+        if: always()
+        run: |
+          export NPROC=`nproc`
+
+          cppcheck --error-exitcode=-1 -j $NPROC --template=gcc \
+          --enable=warning --inline-suppr \
+          ./contrib \
+          --suppress=nullPointerRedundantCheck \
+          --suppress=unknownMacro \
+          --output-file=cppcheck-failures.txt \
+          --include=../postgresql_modified_for_babelfish/src/include/utils/elog.h \
+          --include=../postgresql_modified_for_babelfish/src/include/c.h 
+      
+      - name: Upload failures as artifacts
+        id: upload-failures
+        if: always() && steps.run-cppcheck.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck-failures
+          path: ./cppcheck-failures.txt

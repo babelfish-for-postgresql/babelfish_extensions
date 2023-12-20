@@ -3905,7 +3905,7 @@ remove_delimited_identifer(char *str)
 		memmove(str, &str[1], len - 1);
 		str[len - 2] = '\0';
 	}
-	if isspace(str[0])
+	if (isspace(str[0]))
 		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 						errmsg("Either the parameter @objname is ambiguous or the claimed @objtype (COLUMN) is wrong.")));
 	len = strlen(str);

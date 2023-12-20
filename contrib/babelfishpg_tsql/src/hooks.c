@@ -159,7 +159,6 @@ static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
-static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -211,7 +210,6 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
-static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -326,9 +324,6 @@ InstallExtendedHooks(void)
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
-
-	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
-	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger; 
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
@@ -445,7 +440,6 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
-	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -721,60 +715,6 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 			}
 		}
 		cur = cur->next;
-	}
-	return false;
-}
-
-/**
- * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
- * Checks if view have an INSTEAD OF trigger at statement level
- * If it does, we don't want to treat it as auto-updatable. 
- * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
-*/
-static bool
-pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
-{
-	TriggerDesc *trigDesc = view->trigdesc;
-	if (triggerOids)
-	{
-		int i;
-		for (i = 0; i < trigDesc->numtriggers; i++)
-		{
-			Trigger *trigger = &trigDesc->triggers[i];
-			Oid current_tgoid = trigger->tgoid;
-			Oid prev_tgoid = InvalidOid;
-			prev_tgoid = lfirst_oid(list_tail(triggerOids));
-			if (prev_tgoid == current_tgoid)
-			{
-				return false; /** Direct recursive trigger case*/
-			}
-			else if (list_member_oid(triggerOids, current_tgoid))
-            {
-                /** Indirect recursive trigger case*/
-                ereport(ERROR,
-                        (errcode(ERRCODE_SYNTAX_ERROR),
-                         errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
-            }
-		}
-	}
-
-	switch (event)
-	{
-		case CMD_INSERT:
-			if(trigDesc && trigDesc->trig_insert_instead_statement)
-				return true;
-			break;
-		case CMD_UPDATE:
-			if (trigDesc && trigDesc->trig_update_instead_statement)
-				return true;
-			break;
-		case CMD_DELETE:
-			if (trigDesc && trigDesc->trig_delete_instead_statement)
-				return true;
-			break;
-		default:
-			elog(ERROR, "unrecognized CmdType: %d", (int) event);
-			break;
 	}
 	return false;
 }
@@ -1799,6 +1739,7 @@ pre_transform_target_entry(ResTarget *res, ParseState *pstate,
 			if(actual_alias_len > alias_len)
 			{
 				/* First 32 characters of original_name are assigned to alias. */
+				/* cppcheck-suppress invalidFunctionArg */
 				memcpy(alias, original_name, (alias_len - 32));
 
 				/* Last 32 characters of identifier_name are assigned to alias, as actual alias is truncated. */
