@@ -35,9 +35,7 @@ bool		suppress_string_truncation_error = false;
 bool		pltsql_suppress_string_truncation_error(void);
 
 bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
-												 * sys.varcha
-												 r / sys.nvarchar */
-bool		is_tsql_any_char_datatype_with_max_expr(Oid oid);
+												 * sys.varchar / sys.nvarchar */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 bool
@@ -439,6 +437,13 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 							 errmsg("Incorrect syntax near the keyword '%s'.", typname)));
 			}
 			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0))
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+								*typmod - VARHDRSZ, max_allowed_varchar_length, typname)));
+			}
+			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varbinary") == 0 || strcmp(typname, "binary") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1073,17 +1078,6 @@ is_tsql_any_char_datatype(Oid oid)
 	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
-}
-
-/* 
- * tsql data-types that allow syntax varchar(max), nvarchar(max)
- * varbinary(max) is not allowed as typmod for varbinary if fixed in tdsresponse.
-*/
-bool
-is_tsql_any_char_datatype_with_max_expr(Oid oid)
-{
-	return	(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
 }
 

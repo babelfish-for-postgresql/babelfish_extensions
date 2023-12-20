@@ -7214,10 +7214,54 @@ parse_datatype(const char *string, int location)
 		return pltsql_build_table_datatype_coldef(&string[5]);
 	}
 
-	/* Let the main parser try to parse it under standard SQL rules */
-	typeName = typeStringToTypeName(string);
+	if (pg_strcasecmp(string, "nchar") == 0 ||
+		pg_strcasecmp(string, "char") == 0 ||
+		pg_strcasecmp(string, "varchar") == 0 ||
+		pg_strcasecmp(string, "nvarchar") == 0)
+	{
+		/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
+		char *newString = (char *) palloc(1 + strlen(string)+ 3);
+		strcpy(newString, string);
+    	strcat(newString, "(1)");
+		/* Let the main parser try to parse it under standard SQL rules */
+		typeName = typeStringToTypeName(newString);
+		pfree(newString);
+	}
+	else
+	{
+		/* Let the main parser try to parse it under standard SQL rules */
+		typeName = typeStringToTypeName(string);
+	}
 	rewrite_plain_name(typeName->names);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
+	
+	/* for sys.varchar/nvarchar(MAX), set typmod back to -1 */
+	if (typmod == TSQLMaxTypmod && (pg_strncasecmp(string, "varchar", 7) == 0 ||
+									pg_strncasecmp(string, "nvarchar", 8) == 0))
+	{
+		typmod = -1;
+	}
+	else if (typmod > (8000 + VARHDRSZ) && (pg_strncasecmp(string, "varchar", 7) == 0 || pg_strncasecmp(string, "char", 4) == 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
+						typmod - VARHDRSZ, string)));
+	}
+	else if (typmod > (8000 + VARHDRSZ) && (pg_strncasecmp(string, "varbinary", 9) == 0 || pg_strncasecmp(string, "binary", 6) == 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
+						typmod - VARHDRSZ, string)));
+	}
+	else if (typmod > (4000 + VARHDRSZ) && (pg_strncasecmp(string, "nchar", 5) == 0 || pg_strncasecmp(string, "nvarchar", 8) == 0))
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The size '%d' exceeds the maximum allowed (4000) for '%s' datatype.",
+						typmod - VARHDRSZ, string)));
+	}
 
 	/* Restore former ereport callback */
 	error_context_stack = syntax_errcontext.previous;
