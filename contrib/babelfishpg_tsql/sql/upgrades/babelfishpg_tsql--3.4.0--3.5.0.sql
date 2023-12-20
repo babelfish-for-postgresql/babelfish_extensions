@@ -58,18 +58,53 @@ WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
   AND ext.dbid = sys.db_id();
 
+-- Rename functions for dependencies
+DO $$
+DECLARE
+  exception_message text;
+BEGIN
+  -- Rename parsename for dependencies
+  ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_3_5_0;
 
-ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_3_5_0;
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS
+  exception_message = MESSAGE_TEXT;
+  RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+  exception_message text;
+BEGIN
+  -- Rename sp_set_session_context for dependencies
+  ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_3_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS
+  exception_message = MESSAGE_TEXT;
+  RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+  exception_message text;
+BEGIN
+  -- Rename session_context for dependencies
+  ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_3_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+  GET STACKED DIAGNOSTICS
+  exception_message = MESSAGE_TEXT;
+  RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.NVARCHAR, object_piece int)
 RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
-
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_5_0');
-
-
-ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_3_5_0;
 
 CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.NVARCHAR(128), 
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
@@ -77,18 +112,55 @@ AS 'babelfishpg_tsql', 'sp_set_session_context'
 LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_3_5_0');
-
-
-ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_3_5_0;
-
 CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.NVARCHAR(128))
 RETURNS sys.SQL_VARIANT 
 AS 'babelfishpg_tsql', 'session_context' 
 LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_3_5_0');
+-- === DROP deprecated functions (if exists)
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- === DROP parsename_deprecated_in_3_5_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- === DROP sp_set_session_context_deprecated_in_3_5_0
+    CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- === DROP session_context_deprecated_in_3_5_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
