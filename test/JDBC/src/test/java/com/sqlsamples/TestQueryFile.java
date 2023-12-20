@@ -25,7 +25,6 @@ public class TestQueryFile {
     static String timestamp = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss.SSS").format(new Date());
     static String generatedFilesDirectoryPath = testFileRoot + "/expected/";
     static String parallelQueryGeneratedFilesDirectoryPath = testFileRoot + "/expected/parallel_query/";
-    static String nonDefaultServerCollationGeneratedFilesDirectoryPath = testFileRoot + "/expected/non_default_server_collation/";
     static String sqlServerGeneratedFilesDirectoryPath = testFileRoot + "/sql_expected/";
     static String outputFilesDirectoryPath = testFileRoot + "/output/";
     static Logger summaryLogger = LogManager.getLogger("testSummaryLogger");    //logger to write summary of tests executed
@@ -429,16 +428,16 @@ public class TestQueryFile {
             sla = defaultSLA*1000000L;
         }
         File expectedFile;
-        if (isParallelQueryMode && checkParallelQueryExpected)
+        File nonDefaultServerCollationExpectedFile;
+
+        if (isParallelQueryMode && checkParallelQueryExpected){
             expectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + outputFileName + ".out");
-        else if(serverCollationName != "default"){
-            expectedFile = new File(nonDefaultServerCollationGeneratedFilesDirectoryPath + "/" + serverCollationName + "/" + outputFileName + ".out");
-            if(!expectedFile.exists()) {
-                expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
-            }
+            nonDefaultServerCollationExpectedFile = new File(parallelQueryGeneratedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
         }
-        else
+        else{
             expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
+            nonDefaultServerCollationExpectedFile = new File(generatedFilesDirectoryPath + "non_default_server_collation/" + serverCollationName + "/" + outputFileName + ".out");
+        }
 
         File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
@@ -448,7 +447,12 @@ public class TestQueryFile {
         else{
             timeout = true;
         }
-        if (expectedFile.exists()) {
+
+        if (serverCollationName != "default" && nonDefaultServerCollationExpectedFile.exists()){    /* If server collation name is non-default then use it's corresponding expected file if exists */
+            // get the diff
+            result = compareOutFiles(outputFile, nonDefaultServerCollationExpectedFile);
+        }
+        else if (expectedFile.exists()) {
             // get the diff
             result = compareOutFiles(outputFile, expectedFile);
         } else if (sqlExpectedFile.exists()) {
