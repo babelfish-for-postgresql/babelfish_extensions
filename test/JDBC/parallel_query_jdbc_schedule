@@ -10,6 +10,7 @@
 ignore#!#545_1
 ignore#!#BABEL-3092
 ignore#!#BABEL-SEQUENCE
+ignore#!#TestSPPrepare
 
 # Group 1: BABEL-4481
 ignore#!#Test-sp_addrolemember-vu-prepare
