@@ -191,6 +191,7 @@ get_common_utility_plugin(void)
 		common_utility_plugin_var.datetime_in_str = &datetime_in_str;
 		common_utility_plugin_var.datetime2sqlvariant = &datetime2sqlvariant;
 		common_utility_plugin_var.timestamp_datetimeoffset = &timestamp_datetimeoffset;
+		common_utility_plugin_var.datetimeoffset_timestamp = &datetimeoffset_timestamp;
 		common_utility_plugin_var.tinyint2sqlvariant = &tinyint2sqlvariant;
 		common_utility_plugin_var.translate_pg_type_to_tsql = &translate_pg_type_to_tsql;
 		common_utility_plugin_var.get_tsql_datatype_oid = &get_tsql_datatype_oid;

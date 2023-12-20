@@ -13,7 +13,6 @@
 
 #include "fmgr.h"
 #include "miscadmin.h"
-#include "../../babelfishpg_common/src/datetimeoffset.h"
 
 #include "access/detoast.h"
 #include "access/htup_details.h"
@@ -522,12 +521,11 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
-	tsql_datetimeoffset	*datetime;
 
-	datetime = PG_GETARG_DATETIMEOFFSET(1);
-			
-	/* Converting the datetime offset into the timestamp */
-	timestamp = datetime->tsql_ts + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+	timestamp = (Timestamp)(DirectFunctionCall1(common_utility_plugin_ptr->datetimeoffset_timestamp,
+							PG_GETARG_DATUM(1)));
+	
+	timestamp = timestamp + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 	
 	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz, false));
 }
