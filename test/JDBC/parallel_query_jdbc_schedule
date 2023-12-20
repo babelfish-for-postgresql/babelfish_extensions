@@ -6,6 +6,9 @@
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 # These tests are crashing/failing with parallel query mode is on. 
 
+# These tests are hanging in 16.1 with parallel query mode on
+ignore#!#545_1
+
 # Group 1: BABEL-4481
 ignore#!#Test-sp_addrolemember-vu-prepare
 ignore#!#Test-sp_addrolemember-vu-verify
