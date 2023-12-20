@@ -657,12 +657,12 @@ go
 text
 Query Text: select/*+ mergejoin(babel_3293_t1 babel_3293_t2) leading(babel_3293_t1 babel_3293_t2)*/ * from (select distinct a1 as a1 from babel_3293_t1) s1 inner       join babel_3293_t2 on s1.a1 = babel_3293_t2.a2
 Hash Join
-  Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
-  ->  HashAggregate
-        Group Key: babel_3293_t1.a1
-        ->  Seq Scan on babel_3293_t1
+  Hash Cond: (babel_3293_t2.a2 = babel_3293_t1.a1)
+  ->  Seq Scan on babel_3293_t2
   ->  Hash
-        ->  Seq Scan on babel_3293_t2
+        ->  HashAggregate
+              Group Key: babel_3293_t1.a1
+              ->  Seq Scan on babel_3293_t1
 ~~END~~
 
 
