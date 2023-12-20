@@ -1,0 +1,102 @@
+-- tsql
+create login restricting_permission_on_role_l1 with password = '123';
+go
+
+-- psql
+create user restricting_permission_on_role_u1 with password '123';
+go
+
+-- psql user=restricting_permission_on_role_l1 password=123
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to restricting_permission_on_role_l1;
+go
+
+-- Creating user by an underprivileged login should be restricted
+create user restricting_permission_on_role_u2;
+go
+
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to restricting_permission_on_role_u1;
+go
+
+-- Altering a role by an underprivileged login should be restricted
+alter user restricting_permission_on_role_u1 with password '123'
+go
+
+-- Dropping a role by an underprivileged login should be restricted
+drop user restricting_permission_on_role_u1;
+go
+
+-- psql user=restricting_permission_on_role_u1 password=123
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to restricting_permission_on_role_l1;
+go
+
+-- Creating user by an underprivileged login should be restricted
+create user restricting_permission_on_role_u2;
+go
+
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to restricting_permission_on_role_u1;
+go
+
+-- Altering a role by an underprivileged login should be restricted
+alter user restricting_permission_on_role_l1 with password '123'
+go
+
+-- Dropping a role by an underprivileged login should be restricted
+drop user restricting_permission_on_role_u1;
+go
+
+-- tsql
+alter server role sysadmin add member restricting_permission_on_role_l1;
+go
+
+-- psql user=restricting_permission_on_role_l1 password=123
+-- user has sysadmin membership via TDS Port, create user is allowed
+create user restricting_permission_on_role_u2 with password '123';
+go
+
+-- user has sysadmin membership, alter user is allowed
+alter user restricting_permission_on_role_u2 with password '1234'
+go
+
+-- user has sysadmin membership, drop user is allowed
+drop user restricting_permission_on_role_u2;
+go
+
+-- tsql
+alter server role sysadmin drop member restricting_permission_on_role_l1;
+go
+
+-- psql
+-- Grant sysadmin privilege to underprivileged T-SQL user
+grant sysadmin to restricting_permission_on_role_l1;
+go
+
+-- Grant sysadmin privilege to underprivileged PG user
+grant sysadmin to restricting_permission_on_role_u1;
+go
+
+-- psql user=restricting_permission_on_role_l1 password=123
+-- user has sysadmin membership via PG port, create user is not allowed
+create user restricting_permission_on_role_u2 with password '123';
+go
+
+-- psql
+revoke sysadmin from restricting_permission_on_role_u1;
+go
+drop user restricting_permission_on_role_u1;
+go
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'restricting_permission_on_role_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+select pg_sleep(1);
+GO
+
+-- tsql
+drop login restricting_permission_on_role_l1
+go
