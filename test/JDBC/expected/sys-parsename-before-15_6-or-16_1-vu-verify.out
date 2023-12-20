@@ -3,7 +3,7 @@ PARSENAME('tempdb.dbo.Employee', 2) AS [Schema Name],
 PARSENAME('tempdb.dbo.Employee', 1) AS [Table Name],
 *
 FROM
-parsename_Employee
+parsename_Employee_before_14_11_or_15_6
 ORDER BY HireDate DESC;
 GO
 ~~START~~
@@ -14,7 +14,15 @@ tempdb#!#dbo#!#Employee#!#1#!#John#!#Doe#!#2020-01-01 00:00:00.0#!#50000.0000
 ~~END~~
 
 
-SELECT * FROM parsename_EmployeeDatabaseView1
+SELECT * FROM parsename_EmployeeDatabaseView1_before_14_11_or_15_6
+GO
+~~START~~
+varchar
+tempdb
+~~END~~
+
+
+EXEC parsename_GetEmployeeDatabaseName1_before_14_11_or_15_6
 GO
 ~~START~~
 nvarchar
@@ -22,15 +30,15 @@ tempdb
 ~~END~~
 
 
-EXEC parsename_GetEmployeeDatabaseName1
+SELECT * FROM parsename_EmployeeDatabaseView2_before_14_11_or_15_6
 GO
 ~~START~~
-nvarchar
-tempdb
+varchar
+dbo
 ~~END~~
 
 
-SELECT * FROM parsename_EmployeeDatabaseView2
+EXEC parsename_GetEmployeeDatabaseName2_before_14_11_or_15_6
 GO
 ~~START~~
 nvarchar
@@ -38,23 +46,15 @@ dbo
 ~~END~~
 
 
-EXEC parsename_GetEmployeeDatabaseName2
+SELECT * FROM parsename_EmployeeDatabaseView3_before_14_11_or_15_6
 GO
 ~~START~~
-nvarchar
-dbo
-~~END~~
-
-
-SELECT * FROM parsename_EmployeeDatabaseView3
-GO
-~~START~~
-nvarchar
+varchar
 Employee
 ~~END~~
 
 
-EXEC parsename_GetEmployeeDatabaseName3
+EXEC parsename_GetEmployeeDatabaseName3_before_14_11_or_15_6
 GO
 ~~START~~
 nvarchar
