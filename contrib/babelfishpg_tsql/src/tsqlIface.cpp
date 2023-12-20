@@ -2869,15 +2869,30 @@ static void process_select_statement(
 ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
-	ANTLR_result result;
+	ANTLR_result result = {
+		false,	/* success */
+		false,	/* parseTreeCreated */
+		0,	/* errpos */
+		0,	/* errcod */
+		NULL,	/* errfmt */
+		0,	/* n_errargs */
+		{}	/* errargs */
+	};
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
+
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
 		pltsql_parse_result = makeEmptyBlockStmt(0);
 		result.success = true;
+		result.parseTreeCreated = false;
+		result.errpos = 0;
+		result.errcod = 0;
+		result.errfmt = NULL;
+		result.n_errargs = 0;
+
 		return result;
 	}
 
@@ -2913,7 +2928,15 @@ antlr_parser_cpp(const char *sourceText)
 
 ANTLR_result
 antlr_parse_query(const char *sourceText, bool useSLLParsing) {
-	ANTLR_result result;
+	ANTLR_result result = {
+		false,	/* success */
+		false,	/* parseTreeCreated */
+		0,	/* errpos */
+		0,	/* errcod */
+		NULL,	/* errfmt */
+		0,	/* n_errargs */
+		{}	/* errargs */
+	};
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -3132,6 +3155,7 @@ rewriteBatchLevelStatement(
 {
 	// rewrite batch-level stmt query
 	PLtsql_expr_query_mutator mutator(expr, ctx);
+	/* cppcheck-suppress autoVariables */
 	ssm->mutator = &mutator;
 
 	/*
@@ -3986,7 +4010,7 @@ std::string extractSchemaName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::T
 	std::string schema_name = "";
 	if (dctx == nullptr)
 	{
-		if (tctx->full_object_name() && tctx->full_object_name()->schema)
+		if (tctx && tctx->full_object_name() && tctx->full_object_name()->schema)
 			schema_name = stripQuoteFromId(tctx->full_object_name()->schema);
 	}
 	else
@@ -4000,14 +4024,14 @@ std::string extractSchemaName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::T
 std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
 {
 	std::string table_name;
-	if (dctx == nullptr)
+	if (dctx == nullptr && tctx != nullptr)
 	{
 		if (tctx->full_object_name())
 			table_name = stripQuoteFromId(tctx->full_object_name()->object_name);
 		else if (tctx->local_id())
 			table_name = ::getFullText(tctx->local_id());
 	}
-	else
+	else if(dctx != nullptr)
 	{
 		if (dctx->full_object_name())
 			table_name = stripQuoteFromId(dctx->full_object_name()->object_name);
@@ -5567,7 +5591,7 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 	for (PLtsql_stmt *stmt : result) 
 	{
 		// Associate each fragement with a tree node
-		if (declare_local_expr.find(stmt) != declare_local_expr.end()) 
+		if (!declare_local_expr.empty() && declare_local_expr.find(stmt) != declare_local_expr.end()) 
 		{
 			attachPLtsql_fragment(declare_local_expr.at(stmt), stmt);	
 		}

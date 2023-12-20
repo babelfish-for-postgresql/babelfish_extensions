@@ -88,9 +88,9 @@ FaultInjectionInitialize()
 		/* should not try to insert same entry multiple times */
 		Assert(foundPtr == false);
 
-		if (entry == NULL)
+		if (new_entry == NULL)
 		{
-			ereport(DEBUG5,
+			ereport(ERROR,
 					(errmsg("FaultInjectionLookupHashEntry() could not insert fault injection hash entry:'%s' ",
 							entry->faultName)));
 		}

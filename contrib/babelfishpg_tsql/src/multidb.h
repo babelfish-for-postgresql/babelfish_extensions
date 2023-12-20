@@ -14,7 +14,7 @@ extern bool enable_schema_mapping(void);
 /* rewriting column/object references accoring schema mapping */
 extern void rewrite_column_refs(ColumnRef *cref);
 extern void rewrite_object_refs(Node *stmt);
-extern void rewrite_plain_name(List *name); /* Value Strings */
+extern List* rewrite_plain_name(List *name); /* Value Strings */
 
 /* helper functions */
 extern char *get_physical_user_name(char *db_name, char *user_name);

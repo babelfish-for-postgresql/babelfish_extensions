@@ -214,13 +214,9 @@ declare @key nvarchar(4000) = cast (REPLICATE('a', 129) as nvarchar(4000));
 EXEC sp_set_session_context @key, '129 chars';
 SELECT sys.session_context(@key)
 go
-~~ERROR (Code: 8152)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value too long for type character varying(128))~~
-
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character varying(128))~~
+~~ERROR (Message: Cannot set key 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' in the session context. The size of the key cannot exceed 256 bytes.)~~
 
 
 declare @key nvarchar(4000) = cast (REPLICATE('あ', 128) as nvarchar(4000));
@@ -237,13 +233,9 @@ declare @key nvarchar(4000) = cast (REPLICATE('あ', 129) as nvarchar(4000));
 EXEC sp_set_session_context @key, 1;
 select session_context(@key);
 go
-~~ERROR (Code: 8152)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value too long for type character varying(128))~~
-
-~~ERROR (Code: 8152)~~
-
-~~ERROR (Message: value too long for type character varying(128))~~
+~~ERROR (Message: Cannot set key 'あああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ' in the session context. The size of the key cannot exceed 256 bytes.)~~
 
 
 EXEC sp_set_session_context 'a    ', 'trailing spaces'

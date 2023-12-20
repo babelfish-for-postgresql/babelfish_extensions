@@ -35,7 +35,7 @@
 
 #include "dynavec.h"
 #include "dynastack.h"
-#include "../../contrib/babelfishpg_common/src/babelfishpg_common.h"
+#include "../../babelfishpg_common/src/babelfishpg_common.h"
 
 /**********************************************************************
  * Definitions

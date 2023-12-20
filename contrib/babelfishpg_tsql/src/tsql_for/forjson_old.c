@@ -52,8 +52,7 @@ tsql_query_to_json_text(PG_FUNCTION_ARGS)
 
 	for (int i = 0; i < PG_NARGS() - 1; i++)
 	{
-		if PG_ARGISNULL
-			(i)
+		if (PG_ARGISNULL(i))
 				PG_RETURN_NULL();
 	}
 	query = text_to_cstring(PG_GETARG_TEXT_PP(0));
