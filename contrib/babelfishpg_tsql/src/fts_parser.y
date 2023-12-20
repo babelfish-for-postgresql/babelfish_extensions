@@ -23,10 +23,11 @@ static int	scanbuflen;
 
 static char* translate_simple_term(const char* s);
 static char *trim(char *s, bool insideQuotes);
+static bool containsSpecialCharacters(char s);
 
 %}
 
-%token WORD_TOKEN WS_TOKEN TEXT_TOKEN PREFIX_TERM_TOKEN GENERATION_TERM_TOKEN AND_TOKEN AND_NOT_TOKEN OR_TOKEN INFLECTIONAL_TOKEN THESAURUS_TOKEN FORMSOF_TOKEN O_PAREN_TOKEN C_PAREN_TOKEN COMMA_TOKEN
+%token WORD_TOKEN WS_TOKEN TEXT_TOKEN PREFIX_TERM_TOKEN GENERATION_TERM_TOKEN AND_TOKEN NOT_TOKEN AND_NOT_TOKEN OR_TOKEN INFLECTIONAL_TOKEN THESAURUS_TOKEN FORMSOF_TOKEN O_PAREN_TOKEN C_PAREN_TOKEN COMMA_TOKEN SPECIAL_CHAR_TOKEN NON_ENGLISH_TOKEN
 %left OR_TOKEN
 %left AND_TOKEN
 %left AND_NOT_TOKEN
@@ -86,10 +87,10 @@ generation_term:
 
 generation_type:
     INFLECTIONAL_TOKEN {
-        $$ = $1;
+        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
     }
     | THESAURUS_TOKEN {
-        $$ = $1;
+        fts_yyerror(NULL, "Generation term is not currently supported in Babelfish");
     }
     ;
 
@@ -138,27 +139,35 @@ char* translate_simple_term(const char* inputStr) {
         inputLength = strlen(trimmedInputStr);
 
         initStringInfo(&output);
+        appendStringInfoString(&output, "");
 
         // Initialize pointers for input and output
-        inputPtr = trimmedInputStr;
-
-        while (*inputPtr != '\0') {
-            if (*inputPtr == ' ') {
+        for (inputPtr = trimmedInputStr; *inputPtr != '\0'; inputPtr++) {
+            if (isspace((unsigned char)*inputPtr)) {
                 // Replace space with "<->"
-                while (*(inputPtr + 1) == ' ') {
+                while (isspace((unsigned char)*(inputPtr + 1))) {
                     // Handle multiples spaces between words and skip over additional spaces
                     inputPtr++;
                 }
                 appendStringInfoString(&output, "<->");
+            } else if (*inputPtr != '-' && containsSpecialCharacters((unsigned char)*inputPtr)) {   // Handle special characters and other languages
+                pfree(trimmedInputStr);
+                yyerror(NULL, "Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish");
             } else {
                 // Copy the character
                 appendStringInfoChar(&output, *inputPtr);
             }
-            inputPtr++;
         }
         pfree(trimmedInputStr);
         return output.data;
     } else {
+         // Initialize pointers for input and output
+        for (inputPtr = trimmedInputStr; *inputPtr != '\0'; inputPtr++) {
+            if (*inputPtr != '-' && containsSpecialCharacters((unsigned char)*inputPtr)) {   // Handle special characters and other languages
+                pfree(trimmedInputStr);
+                yyerror(NULL, "Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish");
+            }
+        }
         // It's a single word, so no transformation needed
         return trimmedInputStr;
     }
@@ -173,7 +182,6 @@ static char *trim(char *s, bool insideQuotes) {
     size_t start;
     size_t end;
     size_t newLength;
-    bool inQuotes;
 
     /*
      * Empty string, nothing to trim
@@ -184,26 +192,22 @@ static char *trim(char *s, bool insideQuotes) {
         return s;
     }
 
-    inQuotes = false;
     start = 0;
     end = length - 1;
 
-    for (size_t i = 0; i < length; i++) {
-        if (s[i] == '"') {
-            inQuotes = !inQuotes;
-        }
+    if(insideQuotes) {
+        start++;
+        end--;
+    }
 
-        if (!inQuotes || insideQuotes) {
-            // Trim leading spaces
-            while (start < length && isspace(s[start])) {
-                start++;
-            }
+    // Trim leading spaces
+    while (start < length && isspace(s[start])) {
+        start++;
+    }
 
-            // Trim trailing spaces
-            while (end > start && isspace(s[end])) {
-                end--;
-            }
-        }
+    // Trim trailing spaces
+    while (end > start && isspace(s[end])) {
+        end--;
     }
 
     // Calculate the new length
@@ -216,6 +220,11 @@ static char *trim(char *s, bool insideQuotes) {
     s[newLength] = '\0';
 
     return s;
+}
+
+static bool containsSpecialCharacters(char str) {
+    // Ignore Non-breaking space character
+    return str != '\302' && str != -62 && str != '\240' && str != -96 && !isalnum(str) && !isspace(str);
 }
 
 # include "fts_scan.c"

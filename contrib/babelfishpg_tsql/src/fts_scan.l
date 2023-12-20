@@ -21,9 +21,10 @@ static YY_BUFFER_STATE scanbufhandle;
 
 %%
 
-"AND"           { yylval = "AND"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return AND_TOKEN; }
-"AND NOT"       { yylval = "AND NOT"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return AND_NOT_TOKEN; }
-"OR"            { yylval = "OR"; yyerror(NULL, "Boolean operator is not currently supported in Babelfish"); return OR_TOKEN; }
+"AND"           { yylval = "AND"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return AND_TOKEN; }
+"AND NOT"       { yylval = "AND NOT"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return AND_NOT_TOKEN; }
+"OR"            { yylval = "OR"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return OR_TOKEN; }
+"NOT"			{ yylval = "NOT"; yyerror(NULL, "Full-text search conditions with boolean operators are not currently supported in Babelfish"); return NOT_TOKEN; }
 "INFLECTIONAL"  { yylval = "INFLECTIONAL"; return INFLECTIONAL_TOKEN; }
 "THESAURUS"     { yylval = "THESAURUS"; return THESAURUS_TOKEN; }
 "FORMSOF"       { yylval = "FORMSOF"; return FORMSOF_TOKEN; }
@@ -32,13 +33,13 @@ static YY_BUFFER_STATE scanbufhandle;
 ","             { yylval = ","; return COMMA_TOKEN; }
 [ \t\r\n]+      { yylval = " "; return WS_TOKEN; }
 
-\"[^"]+\*\"              { if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  // Handle prefix terms
-[a-zA-Z0-9]+       { yylval = yytext; return WORD_TOKEN; }  // Handle individual words
-\"[^"*]*\"          { yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
 
-FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\) { yylval = yytext; return GENERATION_TERM_TOKEN; }  // Handle FORMSOF generation term
+FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\)				{ yylval = yytext; yyerror(NULL, "Generation term is not currently supported in Babelfish"); yylval = yytext; return GENERATION_TERM_TOKEN; }  // Handle FORMSOF generation term
+\"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  // Handle prefix terms
+\"[^"]*\"                																							{ yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
+[a-zA-Z0-9]+ 																										{ yylval = yytext; return WORD_TOKEN; }  // Handle individual words
 
-.               { return yytext[0]; }  // Other characters are returned as-is
+.               																									{ return yytext[0]; }  // Other characters are returned as-is
 
 %%
 
@@ -72,6 +73,11 @@ fts_scanner_init(const char *str)
 		yyerror(NULL, "Null or empty full-text predicate.");
 	}
 
+	// Check for Non-English Language, if true, throw unsupported error
+	if(isNonEnglishString(str)) {
+		yyerror(NULL, "Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish");
+	}
+
 	/*
 	 * Make a scan buffer with special termination needed by flex.
 	 */
@@ -92,4 +98,21 @@ fts_scanner_finish(void)
 {
 	yy_delete_buffer(scanbufhandle);
 	pfree(scanbuf);
+}
+
+/*
+ * Util function to check if the string is of Non-English language
+ */
+bool
+isNonEnglishString(const char *str) {
+	for (const char *p = str; *p; p++) {
+		// Ignore non-breaking space character
+		if ((*p == '\302' && *p == -62 ) || (*p == '\240' && *p == -96)) {
+			continue;
+		}
+		if (*p < 0 || *p > 127) {
+			return true;
+		}
+	}
+	return false;
 }

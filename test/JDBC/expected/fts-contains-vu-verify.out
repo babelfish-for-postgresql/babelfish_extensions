@@ -18,10 +18,198 @@ fts_contains_simple
 
 
 
+
 -- Full syntax of CONTAINS: https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/contains-transact-sql.md
 -- test basic CONTAINS use: ... CONTAINS(col_name, <simple_term>) ...
 -- <simple_term> ::= { word | "phrase" }
+-- tab character in search string
+EXEC fts_contains_vu_prepare_p1 '"due	to"'
+GO
+~~START~~
+int#!#text
+140#!# The idea for a set of new performance spaces began taking place around 1976 due to dissatisfaction with Civic Auditorium @ @ @ @ @ @ @ @ @ @ satisfying venue ) 
+408#!# These sites are at risk , endangered due to everyday exposure to the elements , vandalism , war , urbanization , poorly managed tourism , catastrophic events , and general neglect 
+511#!#A trial was due to be held next month , but Melissa was told last week that the CPS were dropping the case due to " insufficient evidence " 
+562#!# Loans characterized by low down payments @ @ @ @ @ @ @ @ @ @ early accumulations of interest due , or involve balloon or variable future payments , have a higher default rate than more traditional loans 
+705#!# Black guessed that any aborted @ @ @ @ @ @ @ @ @ @ due to the " private choice " of a mother 
+~~END~~
+
+
+-- line break
+EXEC fts_contains_vu_prepare_p1 '"due
+to"'
+GO
+~~START~~
+int#!#text
+140#!# The idea for a set of new performance spaces began taking place around 1976 due to dissatisfaction with Civic Auditorium @ @ @ @ @ @ @ @ @ @ satisfying venue ) 
+408#!# These sites are at risk , endangered due to everyday exposure to the elements , vandalism , war , urbanization , poorly managed tourism , catastrophic events , and general neglect 
+511#!#A trial was due to be held next month , but Melissa was told last week that the CPS were dropping the case due to " insufficient evidence " 
+562#!# Loans characterized by low down payments @ @ @ @ @ @ @ @ @ @ early accumulations of interest due , or involve balloon or variable future payments , have a higher default rate than more traditional loans 
+705#!# Black guessed that any aborted @ @ @ @ @ @ @ @ @ @ due to the " private choice " of a mother 
+~~END~~
+
+
+-- no-break space character
+declare @my_str varchar(50) = '"due'+char(160)+'to"';
+EXEC fts_contains_vu_prepare_p1 @my_str
+GO
+~~START~~
+int#!#text
+140#!# The idea for a set of new performance spaces began taking place around 1976 due to dissatisfaction with Civic Auditorium @ @ @ @ @ @ @ @ @ @ satisfying venue ) 
+408#!# These sites are at risk , endangered due to everyday exposure to the elements , vandalism , war , urbanization , poorly managed tourism , catastrophic events , and general neglect 
+511#!#A trial was due to be held next month , but Melissa was told last week that the CPS were dropping the case due to " insufficient evidence " 
+562#!# Loans characterized by low down payments @ @ @ @ @ @ @ @ @ @ early accumulations of interest due , or involve balloon or variable future payments , have a higher default rate than more traditional loans 
+705#!# Black guessed that any aborted @ @ @ @ @ @ @ @ @ @ due to the " private choice " of a mother 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 '天'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 N'שלום'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one 天 two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'Tópicos'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '天'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+SELECT sys.babelfish_fts_rewrite('"one''two"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+SELECT sys.babelfish_fts_rewrite('"one`two"')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+-- colons, semicolons, pipes, parenthesis, etc.
+EXEC fts_contains_vu_prepare_p1 '"one : two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one :)"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'one;two'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'one|two'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one (two)"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one * two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one<two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one&two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one~two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one|two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"one$two"'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish)~~
+
+
 EXEC fts_contains_vu_prepare_p1 'love'
+GO
+~~START~~
+int#!#text
+45#!#Rina : I love that !
+655#!# This is now a convention we are familiar with too , in theatre in particular -- The Phantom of the Opera is also about a disfigured face that needs love 
+~~END~~
+
+
+-- Case sensitive tests
+EXEC fts_contains_vu_prepare_p1 'LOVE'
+GO
+~~START~~
+int#!#text
+45#!#Rina : I love that !
+655#!# This is now a convention we are familiar with too , in theatre in particular -- The Phantom of the Opera is also about a disfigured face that needs love 
+~~END~~
+
+
+EXEC fts_contains_vu_prepare_p1 'Love'
 GO
 ~~START~~
 int#!#text
@@ -190,7 +378,7 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '"come back"'
+EXEC fts_contains_vu_prepare_p1 '"come       back"'
 GO
 ~~START~~
 int#!#text
@@ -208,7 +396,7 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '"come       back"'
+EXEC fts_contains_vu_prepare_p1 '"  come          back    "'
 GO
 ~~START~~
 int#!#text
@@ -378,8 +566,27 @@ int#!#text
 ~~END~~
 
 
+-- Transactionality test
+BEGIN TRANSACTION;
+EXEC fts_contains_vu_prepare_p1 '   "  daily news            " '
+COMMIT TRANSACTION;
+GO
+~~START~~
+int#!#text
+479#!#Get daily news by email
+501#!#Get daily news by email
+~~END~~
+
+
 -- Prefix Term not supported
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Prefix term is not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 '"conf      *"', 20
 GO
 ~~ERROR (Code: 33557097)~~
 
@@ -392,6 +599,21 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Generation term is not currently supported in Babelfish)~~
+
+
+-- Boolean operators not supported
+EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
+
+
+EXEC fts_contains_vu_prepare_p1 'test AND love';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
 
 
 -- disable FULLTEXT

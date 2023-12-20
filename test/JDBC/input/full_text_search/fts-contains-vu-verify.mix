@@ -11,7 +11,84 @@ GO
 
 -- test basic CONTAINS use: ... CONTAINS(col_name, <simple_term>) ...
 -- <simple_term> ::= { word | "phrase" }
+
+-- tab character in search string
+EXEC fts_contains_vu_prepare_p1 '"due	to"'
+GO
+
+-- line break
+EXEC fts_contains_vu_prepare_p1 '"due
+to"'
+GO
+
+-- no-break space character
+declare @my_str varchar(50) = '"due'+char(160)+'to"';
+EXEC fts_contains_vu_prepare_p1 @my_str
+GO
+
+EXEC fts_contains_vu_prepare_p1 '天'
+GO
+
+EXEC fts_contains_vu_prepare_p1 N'שלום'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one 天 two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Tópicos'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '天'
+GO
+
+SELECT sys.babelfish_fts_rewrite('"one''two"')
+GO
+
+SELECT sys.babelfish_fts_rewrite('"one`two"')
+GO
+
+-- colons, semicolons, pipes, parenthesis, etc.
+EXEC fts_contains_vu_prepare_p1 '"one : two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one :)"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'one;two'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'one|two'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one (two)"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one * two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one<two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one&two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one~two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one|two"'
+GO
+
+EXEC fts_contains_vu_prepare_p1 '"one$two"'
+GO
+
 EXEC fts_contains_vu_prepare_p1 'love'
+GO
+
+-- Case sensitive tests
+EXEC fts_contains_vu_prepare_p1 'LOVE'
+GO
+
+EXEC fts_contains_vu_prepare_p1 'Love'
 GO
 
 -- Test for empty string input, should throw error
@@ -65,10 +142,10 @@ GO
 EXEC fts_contains_vu_prepare_p1 'version'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '"come back"'
+EXEC fts_contains_vu_prepare_p1 '"come       back"'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '"come       back"'
+EXEC fts_contains_vu_prepare_p1 '"  come          back    "'
 GO
 
 EXEC fts_contains_vu_prepare_p1 '"much of the"'
@@ -111,12 +188,28 @@ GO
 EXEC fts_contains_vu_prepare_p1 '"daily news" '
 GO
 
+-- Transactionality test
+BEGIN TRANSACTION;
+EXEC fts_contains_vu_prepare_p1 '   "  daily news            " '
+COMMIT TRANSACTION;
+GO
+
 -- Prefix Term not supported
 EXEC fts_contains_vu_prepare_p1 '"conf*"', 20
 GO
 
+EXEC fts_contains_vu_prepare_p1 '"conf      *"', 20
+GO
+
 -- Generation Term not supported
 EXEC fts_contains_vu_prepare_p1 'FORMSOF(THESAURUS, love)'
+GO
+
+-- Boolean operators not supported
+EXEC fts_contains_vu_prepare_p1 '"test" AND "love"';
+GO
+
+EXEC fts_contains_vu_prepare_p1 'test AND love';
 GO
 
 -- disable FULLTEXT
