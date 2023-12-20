@@ -35,6 +35,8 @@ bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
 												 * sys.varchar / sys.nvarchar */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
+bool		is_tsql_binary_or_varbinary_datatype(Oid oid);
+
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
 
@@ -793,6 +795,12 @@ is_tsql_text_ntext_or_image_datatype(Oid oid)
 	return (*common_utility_plugin_ptr->is_tsql_text_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_ntext_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
+}
+
+bool is_tsql_binary_or_varbinary_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
 }
 
 /*
