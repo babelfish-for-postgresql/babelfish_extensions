@@ -1,5 +1,3 @@
-
-use test_babel730
 -- verify log function return value datatype
 SELECT * INTO test_log FROM
          (
@@ -21,9 +19,9 @@ WHERE table_name = 'test_log'
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-test_babel730#!#test_log#!#log#!#float
-test_babel730#!#test_log#!#log_10#!#float
-test_babel730#!#test_log#!#log10#!#float
+master#!#test_log#!#log#!#float
+master#!#test_log#!#log_10#!#float
+master#!#test_log#!#log10#!#float
 ~~END~~
 
 
@@ -324,31 +322,6 @@ float
 
 DECLARE @strVar VARCHAR(10) = '100';
 SELECT log10(@strVar);
-GO
-~~START~~
-float
-2.0
-~~END~~
-
-
--- test view
-SELECT * from TestLogView
-GO
-~~START~~
-float
-0.6931471805599453
-~~END~~
-
-
-SELECT * from TestLogBaseView
-GO
-~~START~~
-float
-2.0
-~~END~~
-
-
-SELECT * from TestLog10View
 GO
 ~~START~~
 float

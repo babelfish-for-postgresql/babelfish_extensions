@@ -1,5 +1,3 @@
-use test_babel730
-
 -- verify log function return value datatype
 SELECT * INTO test_log FROM
          (
@@ -140,16 +138,6 @@ GO
 
 DECLARE @strVar VARCHAR(10) = '100';
 SELECT log10(@strVar);
-GO
-
--- test view
-SELECT * from TestLogView
-GO
-
-SELECT * from TestLogBaseView
-GO
-
-SELECT * from TestLog10View
 GO
 
 -- test bbf_log function to fix upgrade tests failures

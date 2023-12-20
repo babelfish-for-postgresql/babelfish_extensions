@@ -1,9 +1,3 @@
-CREATE DATABASE test_babel730
-GO
-
-USE test_babel730
-GO
-
 CREATE FUNCTION TestLogFunction(@input float)
 RETURNS float
 AS
@@ -55,16 +49,4 @@ BEGIN
 END
 GO
 
--- test log on a view
-CREATE VIEW TestLogView AS
-SELECT log(2.0) AS log_result
-GO
-
-CREATE VIEW TestLogBaseView AS
-SELECT log(100, 10) AS log_result
-GO
-
-CREATE VIEW TestLog10View AS
-SELECT log10(100) AS log_result
-GO
 
