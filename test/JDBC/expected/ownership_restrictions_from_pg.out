@@ -2,6 +2,9 @@
 CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '12345678';
 GO
 
+CREATE LOGIN ownership_restrictions_from_pg_login2 WITH password = '12345678';
+GO
+
 CREATE ROLE ownership_restrictions_from_pg_role1;
 GO
 
@@ -10,6 +13,21 @@ GO
 
 DECLARE @ownership_restrictions_from_pg_test_variable  int = 100;
 GO
+
+-- tsql user=ownership_restrictions_from_pg_login2 password=12345678
+CREATE ROLE ownership_restrictions_from_pg_role_by_pg_login2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
+
+CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User does not have permission to perform this action.)~~
+
 
 -- psql
 CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' inherit;
@@ -840,8 +858,18 @@ t
 ~~END~~
 
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ownership_restrictions_from_pg_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql
 DROP DATABASE ownership_restrictions_from_pg_db;
 DROP ROLE ownership_restrictions_from_pg_role1;
 DROP LOGIN ownership_restrictions_from_pg_login1;
+DROP LOGIN ownership_restrictions_from_pg_login2;
 GO
