@@ -2653,6 +2653,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
+						if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("User does not have permission to perform this action.")));
 						/*
 						 * check whether sql user name and role name contains
 						 * '\' or not
