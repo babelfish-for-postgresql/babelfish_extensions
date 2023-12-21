@@ -1074,6 +1074,7 @@ update_ViewStmt(Node *n, const char *view_schema)
 		stmt->view->schemaname = pstrdup(view_schema);
 }
 
+/* sys.char, sys.varchar */
 bool
 is_tsql_varchar_or_char_datatype(Oid oid)
 {
@@ -1081,6 +1082,7 @@ is_tsql_varchar_or_char_datatype(Oid oid)
 		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid);
 }
 
+/* sys.nchar, sys.nvarchar */
 bool
 is_tsql_nchar_or_nvarchar_datatype(Oid oid)
 {
@@ -1088,6 +1090,7 @@ is_tsql_nchar_or_nvarchar_datatype(Oid oid)
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
 }
 
+/* sys.binary, sys.varbinary */
 bool 
 is_tsql_binary_or_varbinary_datatype(Oid oid)
 {

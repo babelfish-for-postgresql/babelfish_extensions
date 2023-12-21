@@ -7218,6 +7218,7 @@ parse_datatype(const char *string, int location)
 		return pltsql_build_table_datatype_coldef(&string[5]);
 	}
 
+	/* Let the main parser try to parse it under standard SQL rules */
 	typeName = typeStringToTypeName(string);
 	typeName->names = rewrite_plain_name(typeName->names);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
@@ -7227,7 +7228,7 @@ parse_datatype(const char *string, int location)
 		/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
 		char *newString = (char *) palloc(1 + strlen(string)+ 3);
 		strcpy(newString, string);
-    	strcat(newString, "(1)");
+		strcat(newString, "(1)");
 		/* Let the main parser try to parse it under standard SQL rules */
 		typeName = typeStringToTypeName(newString);
 		typeName->names = rewrite_plain_name(typeName->names);
