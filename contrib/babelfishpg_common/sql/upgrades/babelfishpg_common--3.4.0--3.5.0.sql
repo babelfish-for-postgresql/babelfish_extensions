@@ -33,7 +33,18 @@ LANGUAGE plpgsql;
 -- (sys.BBF_BINARY AS sys.VARCHAR)
 DROP CAST IF EXISTS(sys.BBF_BINARY AS sys.VARCHAR);
 
-ALTER FUNCTION sys.binarysysvarchar(sys.BBF_BINARY) RENAME TO binarysysvarchar_deprecated_3_5_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.binarysysvarchar(sys.BBF_BINARY) RENAME TO binarysysvarchar_deprecated_3_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.binarysysvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.VARCHAR
@@ -43,12 +54,34 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BBF_BINARY AS sys.VARCHAR)
 WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binarysysvarchar_deprecated_3_5_0');
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binarysysvarchar_deprecated_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- (sys.BBF_BINARY AS pg_catalog.VARCHAR)
 DROP CAST IF EXISTS(sys.BBF_BINARY AS pg_catalog.VARCHAR);
 
-ALTER FUNCTION sys.binaryvarchar(sys.BBF_BINARY) RENAME TO binaryvarchar_deprecated_3_5_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.binaryvarchar(sys.BBF_BINARY) RENAME TO binaryvarchar_deprecated_3_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.binaryvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS pg_catalog.VARCHAR
@@ -58,12 +91,34 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BBF_BINARY AS pg_catalog.VARCHAR)
 WITH FUNCTION sys.binaryvarchar (sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binaryvarchar_deprecated_3_5_0');
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binaryvarchar_deprecated_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- (sys.ROWVERSION AS sys.VARCHAR)
 DROP CAST IF EXISTS(sys.ROWVERSION AS sys.VARCHAR);
 
-ALTER FUNCTION sys.rowversionsysvarchar(sys.ROWVERSION) RENAME TO rowversionsysvarchar_deprecated_3_5_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.rowversionsysvarchar(sys.ROWVERSION) RENAME TO rowversionsysvarchar_deprecated_3_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.rowversionsysvarchar(sys.ROWVERSION, integer, boolean)
 RETURNS sys.VARCHAR
@@ -73,12 +128,34 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.ROWVERSION AS sys.VARCHAR)
 WITH FUNCTION sys.rowversionsysvarchar (sys.ROWVERSION, integer, boolean) AS ASSIGNMENT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionsysvarchar_deprecated_3_5_0');
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionsysvarchar_deprecated_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- (sys.BBF_BINARY AS pg_catalog.VARCHAR)
 DROP CAST IF EXISTS(sys.ROWVERSION AS pg_catalog.VARCHAR);
 
-ALTER FUNCTION sys.rowversionvarchar(sys.ROWVERSION) RENAME TO rowversionvarchar_deprecated_3_5_0;
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    ALTER FUNCTION sys.rowversionvarchar(sys.ROWVERSION) RENAME TO rowversionvarchar_deprecated_3_5_0;
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.rowversionvarchar(sys.ROWVERSION, integer, boolean)
 RETURNS pg_catalog.VARCHAR
@@ -88,7 +165,18 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.ROWVERSION AS pg_catalog.VARCHAR)
 WITH FUNCTION sys.rowversionvarchar (sys.ROWVERSION, integer, boolean) AS ASSIGNMENT;
 
-CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionvarchar_deprecated_3_5_0');
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionvarchar_deprecated_3_5_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
