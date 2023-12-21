@@ -1133,6 +1133,7 @@ bpchar(PG_FUNCTION_ARGS)
 		size_t		maxmblen;
 
 		maxmblen = pg_encoding_mbcliplen(collInfo.enc, tmp, byteLen, maxByteLen);
+		blankSpace = maxByteLen - maxmblen;
 
 		if (!isExplicit &&
 			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook) ()))
