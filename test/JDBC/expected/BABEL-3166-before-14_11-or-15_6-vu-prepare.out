@@ -16,7 +16,7 @@ SELECT babel_3166_func(1.2, 'abc', 'abcd', 'abcdefgh', 0x12bcfe);
 go
 ~~START~~
 varbinary
-12BCFE000000
+12BCFE
 ~~END~~
 
 
