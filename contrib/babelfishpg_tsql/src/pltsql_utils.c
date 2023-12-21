@@ -40,6 +40,7 @@ bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbina
 bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
+
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);

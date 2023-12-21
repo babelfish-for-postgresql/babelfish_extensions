@@ -2279,13 +2279,15 @@ GO
 
 insert into testing6 values (cast('ab' as varbinary));
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
 
 select * from testing6;
 GO
 ~~START~~
 binary
-61
 61
 ~~END~~
 

@@ -99,6 +99,8 @@ ignore#!#orderby-before-15_3-vu-verify
 ignore#!#orderby-before-15_3-vu-cleanup
 ignore#!#babel_function_string-before-15-5-or-14-10-vu-prepare
 ignore#!#babel_function_string-before-15-5-or-14-10-vu-verify
+ignore#!#BABEL-3166-before-14_11-or-15_6-vu-prepare
+ignore#!#BABEL-3166-before-14_11-or-15_6-vu-verify
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup

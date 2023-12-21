@@ -344,7 +344,7 @@ select cast(cast(0xfe as binary) as text);
 go
 ~~START~~
 text
-0xfe
+0xfe0000000000000000000000000000000000000000000000000000000000
 ~~END~~
 
 

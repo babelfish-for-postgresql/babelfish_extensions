@@ -13,5 +13,5 @@ insert into testBINARY_dt3 (a,b,c,d,e,f,g,h,i) values (NULL,1,2,3,4,5,6,7,8);
 CREATE TABLE testBINARY_dt4(a BINARY(8), b VARBINARY(10));
 INSERT INTO testBINARY_dt4(a, b) values (1234, 12345);
 prepst#!# INSERT INTO testBINARY_dt4(a, b) values(@a, @b) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
-prepst#!#exec#!#binary|-|a|-|123456789#!#varbinary|-|b|-|12345
+prepst#!#exec#!#binary|-|a|-|12345678#!#varbinary|-|b|-|12345
 prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789

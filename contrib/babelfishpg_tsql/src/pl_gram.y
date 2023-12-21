@@ -7223,7 +7223,7 @@ parse_datatype(const char *string, int location)
 	typeName->names = rewrite_plain_name(typeName->names);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
 
-	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id)))
+	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
 	{
 		/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
 		char *newString = (char *) palloc(1 + strlen(string)+ 3);
