@@ -1462,6 +1462,7 @@ CheckGSSAuth(Port *port)
 	gss_buffer_desc gbuf;
 	MemoryContext oldContext;
 	char	   *at_pos = NULL;
+	char	   *princ;
 
 	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
 	{
