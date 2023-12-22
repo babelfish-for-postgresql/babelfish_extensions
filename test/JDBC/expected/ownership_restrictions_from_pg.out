@@ -5,15 +5,6 @@ GO
 CREATE LOGIN ownership_restrictions_from_pg_login2 WITH password = '12345678';
 GO
 
-CREATE ROLE ownership_restrictions_from_pg_role1;
-GO
-
-CREATE DATABASE ownership_restrictions_from_pg_db;
-GO
-
-DECLARE @ownership_restrictions_from_pg_test_variable  int = 100;
-GO
-
 -- tsql user=ownership_restrictions_from_pg_login2 password=12345678
 CREATE ROLE ownership_restrictions_from_pg_role_by_pg_login2;
 GO
@@ -28,6 +19,63 @@ GO
 
 ~~ERROR (Message: User does not have permission to perform this action.)~~
 
+
+-- tsql
+ALTER SERVER ROLE sysadmin ADD MEMBER ownership_restrictions_from_pg_login2;
+GO
+
+-- tsql user=ownership_restrictions_from_pg_login2 password=12345678
+CREATE DATABASE ownership_restrictions_from_pg_login2_db1;
+GO
+
+-- tsql
+ALTER SERVER ROLE sysadmin DROP MEMBER ownership_restrictions_from_pg_login2;
+GO
+
+-- tsql user=ownership_restrictions_from_pg_login2 password=12345678
+USE ownership_restrictions_from_pg_login2_db1;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+CREATE ROLE ownership_restrictions_from_pg_role_by_pg_login2;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role_by_pg_login2;
+GO
+
+-- This is a temporary failure, it will be fixed with BABEL-4652.
+CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: errstart was not called)~~
+
+
+
+-- DROP USER ownership_restrictions_from_pg_user_by_pg_login2;
+-- GO
+USE master;
+go
+
+-- tsql
+DROP DATABASE ownership_restrictions_from_pg_login2_db1;
+go
+
+CREATE ROLE ownership_restrictions_from_pg_role1;
+GO
+
+CREATE DATABASE ownership_restrictions_from_pg_db;
+GO
+
+DECLARE @ownership_restrictions_from_pg_test_variable  int = 100;
+GO
 
 -- psql
 CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' inherit;

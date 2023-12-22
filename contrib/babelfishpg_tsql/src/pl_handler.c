@@ -2653,7 +2653,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
-						if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+						const char *db_owner_name;
+
+						db_owner_name = get_db_owner_name(get_cur_db_name());
+						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
 							ereport(ERROR,
 									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 									 errmsg("User does not have permission to perform this action.")));
