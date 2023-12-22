@@ -117,14 +117,6 @@ int#!#varchar#!#int
 --
 -- Check mentioning same column more than once
 --
-select set_config('babelfishpg_tsql.explain_verbose', 'on', false);
-GO
-~~START~~
-text
-on
-~~END~~
-
-
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 GO
 ~~START~~
@@ -142,12 +134,9 @@ GO
 text
 Query Text: SELECT count(*) FROM (SELECT DISTINCT two, four, two FROM tenk1) ss
 Aggregate
-  Output: count(*)
   ->  HashAggregate
-        Output: tenk1.two, tenk1.four, tenk1.two
-        Group Key: tenk1.two, tenk1.four, tenk1.two
-        ->  Seq Scan on master_dbo.tenk1
-              Output: tenk1.two, tenk1.four, tenk1.two
+        Group Key: tenk1.two, tenk1.four
+        ->  Seq Scan on tenk1
 ~~END~~
 
 
@@ -159,12 +148,9 @@ text
 Query Text: SELECT count(*) FROM
   (SELECT DISTINCT two, four, two FROM tenk1) ss
 Aggregate
-  Output: count(*)
   ->  HashAggregate
-        Output: tenk1.two, tenk1.four, tenk1.two
-        Group Key: tenk1.two, tenk1.four, tenk1.two
-        ->  Seq Scan on master_dbo.tenk1
-              Output: tenk1.two, tenk1.four, tenk1.two
+        Group Key: tenk1.two, tenk1.four
+        ->  Seq Scan on tenk1
 ~~END~~
 
 
@@ -214,13 +200,9 @@ GO
 text
 Query Text: SELECT DISTINCT g%1000 FROM generate_series(0,9999) g
 Unique
-  Output: ((g % 1000))
   ->  Sort
-        Output: ((g % 1000))
-        Sort Key: ((g.g % 1000))
-        ->  Function Scan on pg_catalog.generate_series g
-              Output: (g % 1000)
-              Function Call: generate_series(0, 9999)
+        Sort Key: ((g % 1000))
+        ->  Function Scan on generate_series g
 ~~END~~
 
 
@@ -274,11 +256,8 @@ GO
 text
 Query Text: SELECT DISTINCT g%1000 FROM generate_series(0,9999) g
 HashAggregate
-  Output: ((g % 1000))
-  Group Key: (g.g % 1000)
-  ->  Function Scan on pg_catalog.generate_series g
-        Output: (g % 1000)
-        Function Call: generate_series(0, 9999)
+  Group Key: (g % 1000)
+  ->  Function Scan on generate_series g
 ~~END~~
 
 
