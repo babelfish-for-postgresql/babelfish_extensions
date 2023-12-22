@@ -1,0 +1,418 @@
+use master;
+go
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_statistics profile On;
+go
+create table babel_2843_t1 (a1 int, b1 int);
+go
+create table babel_2843_t2 (a2 int, b2 int);
+go
+
+-- single statement
+select 1;
+go
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+Query Text: select 1
+Gather  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
+~~END~~
+
+select * from babel_2843_t1 where b1 = 1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_t1 where b1 = 1
+Gather  (cost=0.00..19.11 rows=11 width=8) (actual rows=0 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=4)
+        Filter: (b1 = 1)
+~~END~~
+
+
+-- XML
+select set_config('babelfishpg_tsql.explain_format', 'xml', false);
+go
+~~START~~
+text
+xml
+~~END~~
+
+~~START~~
+xml
+<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Query-Text>select set_config('babelfishpg_tsql.explain_format', 'xml', false)</Query-Text><newline>  <Plan><newline>    <Node-Type>Result</Node-Type><newline>    <Parallel-Aware>false</Parallel-Aware><newline>    <Async-Capable>false</Async-Capable><newline>    <Startup-Cost>0.00</Startup-Cost><newline>    <Total-Cost>0.01</Total-Cost><newline>    <Plan-Rows>1</Plan-Rows><newline>    <Plan-Width>32</Plan-Width><newline>    <Actual-Rows>1</Actual-Rows><newline>    <Actual-Loops>1</Actual-Loops><newline>  </Plan><newline>  <Triggers><newline>  </Triggers><newline></explain>
+~~END~~
+
+select * from babel_2843_t1 where b1 = 1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+xml
+<explain xmlns="http://www.postgresql.org/2009/explain"><newline>  <Query-Text>select * from babel_2843_t1 where b1 = 1</Query-Text><newline>  <Plan><newline>    <Node-Type>Gather</Node-Type><newline>    <Parallel-Aware>false</Parallel-Aware><newline>    <Async-Capable>false</Async-Capable><newline>    <Startup-Cost>0.00</Startup-Cost><newline>    <Total-Cost>19.11</Total-Cost><newline>    <Plan-Rows>11</Plan-Rows><newline>    <Plan-Width>8</Plan-Width><newline>    <Actual-Rows>0</Actual-Rows><newline>    <Actual-Loops>1</Actual-Loops><newline>    <Workers-Planned>3</Workers-Planned><newline>    <Workers-Launched>3</Workers-Launched><newline>    <Single-Copy>false</Single-Copy><newline>    <Plans><newline>      <Plan><newline>        <Node-Type>Seq Scan</Node-Type><newline>        <Parent-Relationship>Outer</Parent-Relationship><newline>        <Parallel-Aware>true</Parallel-Aware><newline>        <Async-Capable>false</Async-Capable><newline>        <Relation-Name>babel_2843_t1</Relation-Name><newline>        <Alias>babel_2843_t1</Alias><newline>        <Startup-Cost>0.00</Startup-Cost><newline>        <Total-Cost>19.11</Total-Cost><newline>        <Plan-Rows>4</Plan-Rows><newline>        <Plan-Width>8</Plan-Width><newline>        <Actual-Rows>0</Actual-Rows><newline>        <Actual-Loops>4</Actual-Loops><newline>        <Filter>(b1 = 1)</Filter><newline>        <Rows-Removed-by-Filter>0</Rows-Removed-by-Filter><newline>        <Workers><newline>        </Workers><newline>      </Plan><newline>    </Plans><newline>  </Plan><newline>  <Triggers><newline>  </Triggers><newline></explain>
+~~END~~
+
+
+-- JSON
+select set_config('babelfishpg_tsql.explain_format', 'json', false);
+go
+~~START~~
+text
+json
+~~END~~
+
+~~START~~
+text
+{<newline>  "Query Text": "select set_config('babelfishpg_tsql.explain_format', 'json', false)",<newline>  "Plan": {<newline>    "Node Type": "Result",<newline>    "Parallel Aware": false,<newline>    "Async Capable": false,<newline>    "Startup Cost": 0.00,<newline>    "Total Cost": 0.01,<newline>    "Plan Rows": 1,<newline>    "Plan Width": 32,<newline>    "Actual Rows": 1,<newline>    "Actual Loops": 1<newline>  },<newline>  "Triggers": [<newline>  ]<newline>}
+~~END~~
+
+select * from babel_2843_t1 where b1 = 1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+text
+{<newline>  "Query Text": "select * from babel_2843_t1 where b1 = 1",<newline>  "Plan": {<newline>    "Node Type": "Gather",<newline>    "Parallel Aware": false,<newline>    "Async Capable": false,<newline>    "Startup Cost": 0.00,<newline>    "Total Cost": 19.11,<newline>    "Plan Rows": 11,<newline>    "Plan Width": 8,<newline>    "Actual Rows": 0,<newline>    "Actual Loops": 1,<newline>    "Workers Planned": 3,<newline>    "Workers Launched": 3,<newline>    "Single Copy": false,<newline>    "Plans": [<newline>      {<newline>        "Node Type": "Seq Scan",<newline>        "Parent Relationship": "Outer",<newline>        "Parallel Aware": true,<newline>        "Async Capable": false,<newline>        "Relation Name": "babel_2843_t1",<newline>        "Alias": "babel_2843_t1",<newline>        "Startup Cost": 0.00,<newline>        "Total Cost": 19.11,<newline>        "Plan Rows": 4,<newline>        "Plan Width": 8,<newline>        "Actual Rows": 0,<newline>        "Actual Loops": 4,<newline>        "Filter": "(b1 = 1)",<newline>        "Rows Removed by Filter": 0,<newline>        "Workers": [<newline>        ]<newline>      }<newline>    ]<newline>  },<newline>  "Triggers": [<newline>  ]<newline>}
+~~END~~
+
+
+-- YAML
+select set_config('babelfishpg_tsql.explain_format', 'yaml', false);
+go
+~~START~~
+text
+yaml
+~~END~~
+
+~~START~~
+text
+Query Text: "select set_config('babelfishpg_tsql.explain_format', 'yaml', false)"<newline>Plan: <newline>  Node Type: "Result"<newline>  Parallel Aware: false<newline>  Async Capable: false<newline>  Startup Cost: 0.00<newline>  Total Cost: 0.01<newline>  Plan Rows: 1<newline>  Plan Width: 32<newline>  Actual Rows: 1<newline>  Actual Loops: 1<newline>Triggers: 
+~~END~~
+
+select * from babel_2843_t1 where b1 = 1;
+go
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+text
+Query Text: "select * from babel_2843_t1 where b1 = 1"<newline>Plan: <newline>  Node Type: "Gather"<newline>  Parallel Aware: false<newline>  Async Capable: false<newline>  Startup Cost: 0.00<newline>  Total Cost: 19.11<newline>  Plan Rows: 11<newline>  Plan Width: 8<newline>  Actual Rows: 0<newline>  Actual Loops: 1<newline>  Workers Planned: 3<newline>  Workers Launched: 3<newline>  Single Copy: false<newline>  Plans: <newline>    - Node Type: "Seq Scan"<newline>      Parent Relationship: "Outer"<newline>      Parallel Aware: true<newline>      Async Capable: false<newline>      Relation Name: "babel_2843_t1"<newline>      Alias: "babel_2843_t1"<newline>      Startup Cost: 0.00<newline>      Total Cost: 19.11<newline>      Plan Rows: 4<newline>      Plan Width: 8<newline>      Actual Rows: 0<newline>      Actual Loops: 4<newline>      Filter: "(b1 = 1)"<newline>      Rows Removed by Filter: 0<newline>      Workers: <newline>Triggers: 
+~~END~~
+
+
+select set_config('babelfishpg_tsql.explain_format', 'text', false);
+go
+~~START~~
+text
+text
+~~END~~
+
+~~START~~
+text
+Query Text: select set_config('babelfishpg_tsql.explain_format', 'text', false)
+Result  (cost=0.00..0.01 rows=1 width=32) (actual rows=1 loops=1)
+~~END~~
+
+
+-- multiple statements
+insert babel_2843_t1 values (1, 1);
+insert babel_2843_t1 values (2, 2);
+insert into babel_2843_t2 select * from babel_2843_t1 where a1 = 1;
+select * from babel_2843_t1;
+select * from babel_2843_t2;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Query Text: insert babel_2843_t1 values (1, 1);
+Insert on babel_2843_t1  (cost=0.00..0.01 rows=0 width=0) (actual rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=8) (actual rows=1 loops=1)
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Query Text: insert babel_2843_t1 values (2, 2);
+Insert on babel_2843_t1  (cost=0.00..0.01 rows=0 width=0) (actual rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=8) (actual rows=1 loops=1)
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+Query Text: insert into babel_2843_t2 select * from babel_2843_t1 where a1 = 1;
+Insert on babel_2843_t2  (cost=0.00..38.25 rows=0 width=0) (actual rows=0 loops=1)
+  ->  Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
+        Filter: (a1 = 1)
+        Rows Removed by Filter: 1
+~~END~~
+
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_t1
+Gather  (cost=0.00..17.29 rows=2260 width=8) (actual rows=2 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..17.29 rows=729 width=8) (actual rows=0 loops=4)
+~~END~~
+
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_t2
+Gather  (cost=0.00..17.29 rows=2260 width=8) (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on babel_2843_t2  (cost=0.00..17.29 rows=729 width=8) (actual rows=0 loops=4)
+~~END~~
+
+
+-- procedure
+create procedure babel_2843_proc @param int
+as
+    insert babel_2843_t1 values (3, 3);
+    select * from babel_2843_t1 where a1 = @param;
+go
+execute babel_2843_proc 1;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+text
+Query Text: insert babel_2843_t1 values (3, 3);
+Insert on babel_2843_t1  (cost=0.00..0.01 rows=0 width=0) (actual rows=0 loops=1)
+  ->  Result  (cost=0.00..0.01 rows=1 width=8) (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_t1 where a1 = "@param"
+Gather  (cost=0.00..19.11 rows=11 width=8) (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=4)
+        Filter: (a1 = 1)
+        Rows Removed by Filter: 0
+~~END~~
+
+drop procedure babel_2843_proc;
+go
+
+-- ITVF (Inline Table-Valued Function)
+create function babel_2843_itvf(@param int)
+returns table
+    as return (
+        select * from babel_2843_t1 where a1 = @param
+    );
+go
+select * from babel_2843_itvf(2);
+go
+~~START~~
+int#!#int
+2#!#2
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_t1 where a1 = @param
+Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
+  Filter: (a1 = 2)
+  Rows Removed by Filter: 2
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_itvf(2)
+Function Scan on babel_2843_itvf  (cost=0.25..10.25 rows=1000 width=8) (actual rows=1 loops=1)
+~~END~~
+
+drop function babel_2843_itvf;
+go
+
+-- MSTVF (Multi-Statement Table-Valued Function)
+create function babel_2843_mstvf(@param int)
+returns @tab table (a int, b int)
+as begin
+    insert into @tab select * from babel_2843_t1 where a1 = @param;
+    insert into @tab select * from babel_2843_t2 where a2 = @param;
+    return;
+end;
+go
+select * from babel_2843_mstvf(1);
+go
+~~START~~
+int#!#int
+1#!#1
+1#!#1
+~~END~~
+
+~~START~~
+text
+Query Text: SELECT @@nestlevel
+Result  (cost=0.00..0.26 rows=1 width=4) (actual rows=1 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: insert into "@tab" select * from babel_2843_t1 where a1 = "@param";
+Insert on "@tab_1"  (cost=0.00..38.25 rows=0 width=0) (actual rows=0 loops=1)
+  ->  Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
+        Filter: (a1 = 1)
+        Rows Removed by Filter: 2
+~~END~~
+
+~~START~~
+text
+Query Text: insert into "@tab" select * from babel_2843_t2 where a2 = "@param";
+Insert on "@tab_1"  (cost=0.00..38.25 rows=0 width=0) (actual rows=0 loops=1)
+  ->  Seq Scan on babel_2843_t2  (cost=0.00..38.25 rows=11 width=8) (actual rows=1 loops=1)
+        Filter: (a2 = 1)
+~~END~~
+
+~~START~~
+text
+Query Text: select * from @tab_1
+Seq Scan on "@tab_1"  (cost=0.00..32.60 rows=2260 width=8) (actual rows=2 loops=1)
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_mstvf(1)
+Function Scan on babel_2843_mstvf  (cost=0.25..10.25 rows=1000 width=8) (actual rows=2 loops=1)
+~~END~~
+
+drop function babel_2843_mstvf;
+go
+
+-- Control structure
+declare @val int = (select a1 from babel_2843_t1 where b1 = 1);
+if @val = 1
+    select 1
+else
+    select 2
+;
+go
+~~START~~
+text
+Query Text: SELECT (select a1 from babel_2843_t1 where b1 = 1)
+Result  (cost=38.25..38.26 rows=1 width=4) (actual rows=1 loops=1)
+  InitPlan 1 (returns $0)
+    ->  Seq Scan on babel_2843_t1  (cost=0.00..38.25 rows=11 width=4) (actual rows=1 loops=1)
+          Filter: (b1 = 1)
+          Rows Removed by Filter: 2
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+Query Text: select 1
+Gather  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Result  (cost=0.00..0.01 rows=1 width=4) (actual rows=1 loops=1)
+~~END~~
+
+
+-- execsql
+DECLARE @val INT;
+DECLARE @sql NVARCHAR(500);
+DECLARE @paramdef NVARCHAR(500);
+SET @sql = N'select * from babel_2843_t1 where a1 = @param';
+SET @paramdef = N'@param int';
+SET @val = 2;
+EXECUTE sp_executesql @sql, @paramdef,
+        @param = @val;
+go
+~~START~~
+int#!#int
+2#!#2
+~~END~~
+
+~~START~~
+text
+Query Text: select * from babel_2843_t1 where a1 = "@param"
+Gather  (cost=0.00..19.11 rows=11 width=8) (actual rows=1 loops=1)
+  Workers Planned: 3
+  Workers Launched: 3
+  ->  Parallel Seq Scan on babel_2843_t1  (cost=0.00..19.11 rows=4 width=8) (actual rows=0 loops=4)
+        Filter: (a1 = 2)
+        Rows Removed by Filter: 0
+~~END~~
+
+
+drop table babel_2843_t1;
+go
+drop table babel_2843_t2;
+go
+set babelfish_statistics profile oFf;
+go
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+

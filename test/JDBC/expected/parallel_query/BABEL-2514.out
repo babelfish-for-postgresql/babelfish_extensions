@@ -1,9 +1,13 @@
--- parallel_query_expected
 USE master;
 go
 
 select 'value' = '1';
 go
+~~START~~
+varchar
+1
+~~END~~
+
 
 drop view if exists babel_2514_view;
 go
@@ -13,6 +17,11 @@ create view babel_2514_view as (
 go
 select * from babel_2514_view;
 go
+~~START~~
+varchar
+1
+~~END~~
+
 drop view if exists babel_2514_view;
 go
 
@@ -26,6 +35,11 @@ create function babel_2514_func()
 go
 select babel_2514_func();
 go
+~~START~~
+varchar
+1
+~~END~~
+
 drop function if exists babel_2514_func;
 go
 
@@ -35,18 +49,38 @@ FETCH NEXT FROM babel_2514_cursor;
 close babel_2514_cursor;
 deallocate babel_2514_cursor;
 go
+~~START~~
+varchar
+1
+~~END~~
+
 
 declare @babel_2514_cursor cursor
 set @babel_2514_cursor = CURSOR FOR select * from (select 'value' = '1') col1;
 open @babel_2514_cursor;
 fetch next from @babel_2514_cursor;
 go
+~~START~~
+varchar
+1
+~~END~~
+
 
 select (select 'value' = '1');
 go
+~~START~~
+varchar
+1
+~~END~~
+
 
 select * from (select 'value' = '1') a;
 go
+~~START~~
+varchar
+1
+~~END~~
+
 
 WITH babel_2514_cte (a) AS
 (
@@ -54,14 +88,28 @@ WITH babel_2514_cte (a) AS
 )
 SELECT * from babel_2514_cte;
 go
+~~START~~
+varchar
+1
+~~END~~
+
 
 WITH XMLNAMESPACES ('uri' as ns1)
 SELECT 'value' = '1'
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'WITH XMLNAMESPACES' is not currently supported in Babelfish)~~
+
 
 declare @string1 nvarchar(5);
 SELECT 'v' = @String1;
 go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
 
 drop function if exists babel_2514_func_local_id_1;
 go
@@ -73,6 +121,11 @@ returns table as return
 go
 select babel_2514_func_local_id_1('abc');
 go
+~~START~~
+nvarchar
+abc
+~~END~~
+
 drop function if exists babel_2514_func_local_id_1;
 go
 
@@ -86,6 +139,11 @@ returns table as return
 go
 select babel_2514_func_local_id_2('abc def');
 go
+~~START~~
+nvarchar
+abc def
+~~END~~
+
 drop function if exists babel_2514_func_local_id_2;
 go
 
@@ -114,6 +172,12 @@ RETURN
 go
 select babel_2514_complex_func('abc def', ' ');
 go
+~~START~~
+nvarchar
+abc
+def
+~~END~~
+
 drop function if exists babel_2514_complex_func;
 go
 
@@ -125,5 +189,11 @@ create view babel_2514_complex_view as (
 go
 select * from babel_2514_complex_view;
 go
+~~START~~
+int#!#int
+1#!#3
+1#!#2
+~~END~~
+
 drop view if exists babel_2514_complex_view;
 go

@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- Nulls check
 SELECT * FROM babel_index_nulls_order_a_v1
 go

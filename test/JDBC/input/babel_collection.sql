@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- nvarchar is not supported in PG
 create table testing1(col nvarchar(60)); -- expect this to fail in the Postgres dialect
 GO

@@ -1,14 +1,17 @@
--- parallel_query_expected
 create table tab_binary (a binary(4), b int)
 GO
 
 insert into tab_binary
 select 0xDEADC0DE, 1234 from generate_series(1,10000) as i
 GO
+~~ROW COUNT: 10000~~
+
 
 insert into tab_binary
 values (0xBAADF00D, 1234)
 GO
+~~ROW COUNT: 1~~
+
 
 create index ix_tab_binary_a on tab_binary (a)
 GO
@@ -30,10 +33,14 @@ GO
 insert into tab_varbinary
 select 0xDEADC0DE, 1234 from generate_series(1,10000) as i
 GO
+~~ROW COUNT: 10000~~
+
 
 insert into tab_varbinary
 values (0xBAADF00D, 1234)
 GO
+~~ROW COUNT: 1~~
+
 
 create index ix_tab_binary_b on tab_varbinary (a)
 GO
