@@ -624,7 +624,7 @@ datepart_internal_decimal(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		argument = PG_GETARG_NUMERIC(1);
 	int			result;
-	int64		num = DatumGetInt64(DirectFunctionCall1(numeric_int8, NumericGetDatum(argument)));
+	float8		num = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(argument)));
 
 	/* 
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
