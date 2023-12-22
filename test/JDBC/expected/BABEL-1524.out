@@ -333,5 +333,14 @@ ok
 drop table t1;
 go
 
+-- Test BABEL-4433
+CREATE TABLE t( c timestamp NOT NULL, PRIMARY KEY ( [ID] ASC))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "id" named in key does not exist)~~
+
+
+
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go
