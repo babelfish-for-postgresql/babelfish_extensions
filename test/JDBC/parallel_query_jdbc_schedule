@@ -14,32 +14,6 @@ ignore#!#Test-sp_droprolemember-vu-prepare
 ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
 
-# Group 2: Need ORDER BY
-ignore#!#BABEL-2514
-ignore#!#BABEL-2998
-ignore#!#BABEL-328-vu-verify
-ignore#!#TestSQLQueries
-
-# Query plan change (needs verification)
-ignore#!#BABEL-1363
-ignore#!#BABEL-2843
-ignore#!#BABEL-2844
-ignore#!#BABEL-2902
-ignore#!#BABEL-2903
-ignore#!#BABEL-3248
-ignore#!#BABEL-3295
-ignore#!#BABEL-3513-vu-prepare
-ignore#!#BABEL-3513-vu-verify
-ignore#!#BABEL-4281
-ignore#!#babel_collection
-ignore#!#binary-index-vu-verify
-ignore#!#cast_eliminate-vu-verify
-
-# Query plan change (verified)
-# Need to design a way to allow expected parallel mode output to be accepted
-ignore#!#babel_index_nulls_order-vu-verify
-# Query Plan changed. (verified)
-ignore#!#BABEL-4264
 ignore#!#table-variable-vu-verify
 
 # Other or mixed issues - JIRA-BABEL-4538
