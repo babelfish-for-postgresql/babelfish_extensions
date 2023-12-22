@@ -1,3 +1,5 @@
+
+-- tsql
 -- MAX/MIN functionality already verified in upgrade scripts.
 -- This test mainly focuses on query plans.
 CREATE TABLE TestDatatypeAggSort_tbl (
@@ -78,7 +80,12 @@ go
 CREATE INDEX TestDatatypeAggSort_smalldatetime_idx ON TestDatatypeAggSort_tbl (smalldatetime_col)
 go
 
+-- psql
+ANALYZE master_dbo.TestDatatypeAggSort_tbl
+go
 
+
+-- tsql
 -- Check query plans, all aggregations should be optimized 
 -- into LIMIT + index scan.
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
@@ -138,16 +145,16 @@ Result
                 Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col <= 'xxx'::"varchar"))
 ~~END~~
 
-SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'xxx'
+SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'ppp'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'xxx'
+Query Text: SELECT MIN(varchar_col) FROM TestDatatypeAggSort_tbl WHERE varchar_col > 'ppp'
 Result
   InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_varchar_idx9ad0e932a2f10239b7debb0a3f366a92 on testdatatypeaggsort_tbl
-                Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col > 'xxx'::"varchar"))
+                Index Cond: ((varchar_col IS NOT NULL) AND (varchar_col > 'ppp'::"varchar"))
 ~~END~~
 
 
@@ -163,16 +170,16 @@ Result
                 Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col <= '2020-12-31 23:59:59'::datetime))
 ~~END~~
 
-SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2020-12-31 23:59:59'
+SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2010-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(datetime_col) FROM TestDatatypeAggSort_tbl WHERE datetime_col > '2010-12-31 23:59:59'
 Result
   InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetime_id059c1f40bc288b4812242508f8efa093 on testdatatypeaggsort_tbl
-                Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col > '2020-12-31 23:59:59'::datetime))
+                Index Cond: ((datetime_col IS NOT NULL) AND (datetime_col > '2010-12-31 23:59:59'::datetime))
 ~~END~~
 
 
@@ -188,16 +195,16 @@ Result
                 Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col <= '2020-12-31 23:59:59'::datetime2))
 ~~END~~
 
-SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2010-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(datetime2_col) FROM TestDatatypeAggSort_tbl WHERE datetime2_col > '2010-12-31 23:59:59'
 Result
   InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetime2_i1725d75058c0b3bc1047ac8734b677ec on testdatatypeaggsort_tbl
-                Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col > '2020-12-31 23:59:59'::datetime2))
+                Index Cond: ((datetime2_col IS NOT NULL) AND (datetime2_col > '2010-12-31 23:59:59'::datetime2))
 ~~END~~
 
 
@@ -213,16 +220,16 @@ Result
                 Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col <= '2020-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
-SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2010-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(datetimeoffset_col) FROM TestDatatypeAggSort_tbl WHERE datetimeoffset_col > '2010-12-31 23:59:59'
 Result
   InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_datetimeoffc266914d4bc72ff84892083238ed8c64 on testdatatypeaggsort_tbl
-                Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col > '2020-12-31 23:59:59 +00:00'::datetimeoffset))
+                Index Cond: ((datetimeoffset_col IS NOT NULL) AND (datetimeoffset_col > '2010-12-31 23:59:59 +00:00'::datetimeoffset))
 ~~END~~
 
 
@@ -238,16 +245,16 @@ Result
                 Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col <= '2021-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
-SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
+SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2010-12-31 23:59:59'
 go
 ~~START~~
 text
-Query Text: SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2020-12-31 23:59:59'
+Query Text: SELECT MIN(smalldatetime_col) FROM TestDatatypeAggSort_tbl WHERE smalldatetime_col > '2010-12-31 23:59:59'
 Result
   InitPlan 1 (returns $0)
     ->  Limit
           ->  Index Only Scan using testdatatypeaggsort_smalldateti2dc63bb7d48110e1d7497e0fb6e1aad7 on testdatatypeaggsort_tbl
-                Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col > '2021-01-01 00:00:00'::smalldatetime))
+                Index Cond: ((smalldatetime_col IS NOT NULL) AND (smalldatetime_col > '2011-01-01 00:00:00'::smalldatetime))
 ~~END~~
 
 
