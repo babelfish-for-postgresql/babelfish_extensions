@@ -49,10 +49,6 @@ go
 
 exec sp_babelfish_configure 'enable_pg_hint', 'on'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not access file "pg_hint_plan": No such file or directory)~~
-
 
 set babelfish_showplan_all on;
 go
@@ -83,10 +79,14 @@ Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_
 Gather
   Workers Planned: 1
   Single Copy: true
-  ->  Nested Loop
-        Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
-        ->  Seq Scan on babel_3513_t1
-        ->  Seq Scan on babel_3513_t2
+  ->  Merge Join
+        Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
+        ->  Sort
+              Sort Key: babel_3513_t1.a1
+              ->  Seq Scan on babel_3513_t1
+        ->  Sort
+              Sort Key: babel_3513_t2.b2
+              ->  Seq Scan on babel_3513_t2
 ~~END~~
 
 
@@ -95,7 +95,3 @@ go
 
 exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not access file "pg_hint_plan": No such file or directory)~~
-

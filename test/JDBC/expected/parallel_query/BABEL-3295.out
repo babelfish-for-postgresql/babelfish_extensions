@@ -95,9 +95,8 @@ select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
 ~~START~~
 text
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not access file "pg_hint_plan": No such file or directory)~~
+on
+~~END~~
 
 
 set babelfish_showplan_all on
@@ -115,10 +114,8 @@ Query Text: select/*+ indexscan(babel_3295_t1 index_babel_3295_t1_b1babel_329f05
 Gather
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on babel_3295_t1
-        Recheck Cond: (b1 = 1)
-        ->  Bitmap Index Scan on index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
-              Index Cond: (b1 = 1)
+  ->  Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7 on babel_3295_t1
+        Index Cond: (b1 = 1)
 ~~END~~
 
 
@@ -130,10 +127,8 @@ Query Text: select/*+ indexscan(babel_3295_t1 index_babel_3295_t1_b1babel_329f05
 Gather
   Workers Planned: 1
   Single Copy: true
-  ->  Bitmap Heap Scan on babel_3295_t1
-        Recheck Cond: (b1 = 1)
-        ->  Bitmap Index Scan on index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
-              Index Cond: (b1 = 1)
+  ->  Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7 on babel_3295_t1
+        Index Cond: (b1 = 1)
 ~~END~~
 
 
@@ -143,12 +138,11 @@ go
 text
 Query Text: select/*+ mergejoin(babel_3295_t1 babel_3295_t2) leading(babel_3295_t1 babel_3295_t2)*/ * from babel_3295_t1 inner       join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2
 Gather
-  Workers Planned: 3
-  ->  Parallel Hash Join
-        Hash Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
-        ->  Parallel Seq Scan on babel_3295_t1
-        ->  Parallel Hash
-              ->  Parallel Seq Scan on babel_3295_t2
+  Workers Planned: 1
+  ->  Merge Join
+        Merge Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
+        ->  Parallel Index Scan using babel_3295_t1_pkey on babel_3295_t1
+        ->  Index Scan using babel_3295_t2_pkey on babel_3295_t2
 ~~END~~
 
 
@@ -158,12 +152,11 @@ go
 text
 Query Text: select/*+ set(enable_nestloop off) set(enable_hashjoin off) */ * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2                   
 Gather
-  Workers Planned: 3
-  ->  Parallel Hash Join
-        Hash Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
-        ->  Parallel Seq Scan on babel_3295_t1
-        ->  Parallel Hash
-              ->  Parallel Seq Scan on babel_3295_t2
+  Workers Planned: 1
+  ->  Merge Join
+        Merge Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
+        ->  Parallel Index Scan using babel_3295_t1_pkey on babel_3295_t1
+        ->  Index Scan using babel_3295_t2_pkey on babel_3295_t2
 ~~END~~
 
 
