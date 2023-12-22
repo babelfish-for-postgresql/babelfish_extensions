@@ -2471,9 +2471,9 @@ create_guest_role_for_db(const char *dbname)
 	int16		old_dbid;
 	char	   *old_dbname;
 	int16		dbid = get_db_id(dbname);
+	Oid 		save_userid;
+	int 		save_sec_context;
 	const char	*old_createrole_self_grant;
-	Oid save_userid;
-	int save_sec_context;
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
@@ -2505,9 +2505,11 @@ create_guest_role_for_db(const char *dbname)
 
 	PG_TRY();
 	{
-		/* 
+		/*
+		 * We have performed all the permissions checks.
 		 * Set current user to bbf_role_admin for create permissions.
-		 * We assume that all permissions have been validated already
+		 * Set createrole_self_grant to "inherit" so that bbf_role_admin
+		 * inherits the new role.
 		 */
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);

@@ -3,7 +3,6 @@ SELECT * from sys_server_role_members_vu_prepare_view;
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -18,7 +17,6 @@ SELECT * from sys_server_role_members_vu_prepare_view;
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 sysadmin#!#sys_server_role_members_vu_prepare_login1
 sysadmin#!#sys_server_role_members_vu_prepare_login2
@@ -32,7 +30,6 @@ SELECT * from sys_server_role_members_vu_prepare_view;
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 sysadmin#!#sys_server_role_members_vu_prepare_login1
 sysadmin#!#sys_server_role_members_vu_prepare_login2
@@ -89,7 +86,6 @@ SELECT * from sys_server_role_members_vu_prepare_view;
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 sysadmin#!#sys_server_role_members_vu_prepare_login1
 sysadmin#!#sys_server_role_members_vu_prepare_login2
@@ -101,7 +97,6 @@ EXEC sys_server_role_members_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 sysadmin#!#sys_server_role_members_vu_prepare_login1
 sysadmin#!#sys_server_role_members_vu_prepare_login2
@@ -113,7 +108,6 @@ SELECT * FROM sys_server_role_members_vu_prepare_func();
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 sysadmin#!#sys_server_role_members_vu_prepare_login1
 sysadmin#!#sys_server_role_members_vu_prepare_login2
@@ -138,7 +132,6 @@ EXEC sys_server_role_members_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 
@@ -147,7 +140,6 @@ SELECT * FROM sys_server_role_members_vu_prepare_func();
 GO
 ~~START~~
 varchar#!#varchar
-sysadmin#!#bbf_role_admin
 sysadmin#!#jdbc_user
 ~~END~~
 

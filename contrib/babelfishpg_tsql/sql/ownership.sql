@@ -270,7 +270,7 @@ BEGIN
 		RAISE E'Could not initialize babelfish with given role name: % is not the DB owner of current database.', sa_name;
 	END IF;
 
-	EXECUTE format('CREATE ROLE bbf_role_admin WITH CREATEDB CREATEROLE INHERIT PASSWORD NULL');
+	EXECUTE format('CREATE ROLE bbf_role_admin CREATEDB CREATEROLE INHERIT PASSWORD NULL');
 	EXECUTE format('GRANT CREATE ON DATABASE %s TO bbf_role_admin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
 	EXECUTE format('GRANT sysadmin TO bbf_role_admin WITH ADMIN TRUE');
@@ -298,6 +298,8 @@ BEGIN
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
 	DROP OWNED BY sysadmin;
 	DROP ROLE sysadmin;
+	DROP OWNED BY bbf_role_admin;
+	DROP ROLE bbf_role_admin;
 END
 $$;
 
@@ -343,10 +345,11 @@ CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS cr
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname
-WHERE pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
+WHERE (pg_has_role(suser_id(), 'sysadmin'::TEXT, 'MEMBER')
 OR Ext.orig_loginname = suser_name()
 OR Ext.orig_loginname = (SELECT pg_get_userbyid(datdba) FROM pg_database WHERE datname = CURRENT_DATABASE()) COLLATE sys.database_default
-OR Ext.type = 'R';
+OR Ext.type = 'R')
+AND Ext.type != 'Z';
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
@@ -510,7 +513,7 @@ INNER JOIN pg_catalog.pg_roles AS Auth1 ON Auth1.oid = Authmbr.roleid
 INNER JOIN pg_catalog.pg_roles AS Auth2 ON Auth2.oid = Authmbr.member
 INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
 INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
-WHERE Ext1.type = 'R';
+WHERE Ext1.type = 'R' AND Ext1.type != 'Z';
 
 GRANT SELECT ON sys.server_role_members TO PUBLIC;
 

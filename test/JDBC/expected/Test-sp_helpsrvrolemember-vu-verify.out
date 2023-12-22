@@ -1,13 +1,12 @@
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
-sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 ~~END~~
 
@@ -20,14 +19,13 @@ GO
 
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'sysadmin'
 GO
-~~ROW COUNT: 3~~
+~~ROW COUNT: 2~~
 
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
-sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 sysadmin#!#test_sp_helpsrvrolemember_login#!#1
 ~~END~~
@@ -41,14 +39,13 @@ GO
 
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'sysadmin'
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
-sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 ~~END~~
 
@@ -70,14 +67,13 @@ GO
 
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'sysadmin    '
 GO
-~~ROW COUNT: 2~~
+~~ROW COUNT: 1~~
 
 
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
-sysadmin#!#bbf_role_admin#!#1
 sysadmin#!#jdbc_user#!#1
 ~~END~~
 

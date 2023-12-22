@@ -4,7 +4,7 @@ EXEC babel_4206_vu_prepare_user_ext;
 GO
 
 -- dbo and guest roles should be member of sysadmin
-SELECT DISTINCT r.rolname FROM pg_catalog.pg_auth_members m
+SELECT r.rolname FROM pg_catalog.pg_auth_members m
         JOIN pg_catalog.pg_roles r
         ON (m.roleid = r.oid)
 WHERE m.member = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')

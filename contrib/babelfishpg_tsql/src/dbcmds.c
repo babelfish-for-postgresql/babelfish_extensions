@@ -402,10 +402,10 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	NameData	default_collation;
 	const char *guest;
 	int			stmt_number = 0;
-	const char *old_createrole_self_grant;
 	int 			save_sec_context;
 	bool 			is_set_userid = false;
 	Oid 			save_userid;
+	const char	*old_createrole_self_grant;
 
 	/* TODO: Extract options */
 
@@ -524,8 +524,10 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	PG_TRY();
 	{
 		/*
+		 * We have performed all the permissions checks.
 		 * Set current user to bbf_role_admin for create permissions.
-		 * We have already checked for permissions.
+		 * Set createrole_self_grant to "inherit" so that bbf_role_admin
+		 * inherits the new role.
 		 */
 		SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 		SetConfigOption("createrole_self_grant", "inherit", PGC_USERSET, PGC_S_OVERRIDE);
@@ -715,7 +717,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			if(stmt->type != T_GrantStmt)
 			{
 				GetUserIdAndSecContext(&save_userid, &save_sec_context);
-				if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt) // need bbf_role_admin to perform DropOwnedObjects
+				if (stmt->type == T_DropOwnedStmt || stmt->type == T_DropRoleStmt) /* need bbf_role_admin to perform DropOwnedObjects */
 					SetUserIdAndSecContext(get_bbf_role_admin_oid(),
 										   save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
 				else
@@ -764,8 +766,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	PG_CATCH();
 	{
 		if(is_set_userid)
-				SetUserIdAndSecContext(save_userid, save_sec_context);
-				
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+
 		/* Clean up. Restore previous state. */
 		bbf_set_current_user(prev_current_user);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
