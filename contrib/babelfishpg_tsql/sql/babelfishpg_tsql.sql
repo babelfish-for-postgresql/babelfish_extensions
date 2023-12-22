@@ -2476,7 +2476,7 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.type = 'R'
+		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If a valid server role is specified, return its member info
@@ -2499,7 +2499,7 @@ BEGIN
 		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
-		WHERE Ext1.type = 'R'
+		WHERE Ext1.type = 'R' AND Ext2.type != 'Z'
 		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
 		ORDER BY ServerRole, MemberName;
 	END

@@ -140,7 +140,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	if (strcmp(stmt->role, "sysadmin") == 0)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
 	else if (strcmp(stmt->role, "bbf_role_admin") == 0)
-		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("A");
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("Z");
 	else if (from_windows)
 		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("U");
 	else
@@ -961,7 +961,7 @@ drop_all_logins(PG_FUNCTION_ARGS)
 		 * Remove SA from authid_login_ext now but do not add it to the list
 		 * because we don't want to remove the corresponding PG role.
 		 */
-		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "sysadmin") == 0))
+		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "sysadmin") == 0) || (strcmp(rolname, "bbf_role_admin") == 0))
 			CatalogTupleDelete(bbf_authid_login_ext_rel, &tuple->t_self);
 		else
 			rolname_list = lcons(rolname, rolname_list);
@@ -1632,16 +1632,24 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("'sysadmin' role cannot be granted to login: a user is already created in database '%s'", db_name)));
 
-	/* could not drop the last member of sysadmin */
+	/*
+	 * could not drop the last member of sysadmin excluding bbf_role_admin,
+	 * which always needs to be its member.
+	 */
 	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
 								  ObjectIdGetDatum(sysadmin));
 
-	if (memlist->n_members <= 2)
+	if (memlist->n_members == 2)
 	{
-		HeapTuple	tup = &memlist->members[0]->tuple;
-		Oid			member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
+		HeapTuple	tup1 = &memlist->members[0]->tuple;
+		HeapTuple	tup2 = &memlist->members[1]->tuple;
+		Oid			member1 = ((Form_pg_auth_members) GETSTRUCT(tup1))->member;
+		Oid			member2 = ((Form_pg_auth_members) GETSTRUCT(tup2))->member;
 
-		if (member ==  grantee || member == get_bbf_role_admin_oid())
+		/* swap member1 with the OID of the role other than bbf_role_admin */
+		member1 = (member1 == get_bbf_role_admin_oid() ? member2 : member1);
+
+		if (member1 == grantee)
 		{
 			ReleaseSysCacheList(memlist);
 			ereport(ERROR,
@@ -1723,7 +1731,7 @@ is_empty_role(Oid roleid)
 {
     CatCList   *memlist;
     char       *db_name = get_cur_db_name();
-    Oid         db_owner_oid, dbo_oid;
+    Oid         db_owner_oid;
     int         i;
 
     if (roleid == InvalidOid || db_name == NULL || strcmp(db_name, "") == 0)
@@ -1739,14 +1747,13 @@ is_empty_role(Oid roleid)
     }
 
     db_owner_oid = get_role_oid(get_db_owner_name(db_name), true);
-    dbo_oid = get_role_oid(get_dbo_role_name(db_name), true);
 
     for (i = 0; i < memlist->n_members; i++)
     {
         HeapTuple   tup = &memlist->members[i]->tuple;
         Oid         member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
 
-        if (member != db_owner_oid && member != dbo_oid && member != get_bbf_role_admin_oid())
+        if (member != db_owner_oid && member != get_bbf_role_admin_oid())
         {
             ReleaseSysCacheList(memlist);
             return false;
