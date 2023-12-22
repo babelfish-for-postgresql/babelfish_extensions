@@ -64,7 +64,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t1."abc.nfds" AS "ABC.nfds"<newline>   FROM master_dbo.test_babel_4279_t1;
+ SELECT "abc.nfds" AS "ABC.nfds"<newline>   FROM master_dbo.test_babel_4279_t1;
 ~~END~~
 
 
@@ -72,7 +72,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t1."abc.nfds" AS "ABC.nfds",<newline>    test_babel_4279_t1."def.j" AS "DEf.j"<newline>   FROM master_dbo.test_babel_4279_t1;
+ SELECT "abc.nfds" AS "ABC.nfds",<newline>    "def.j" AS "DEf.j"<newline>   FROM master_dbo.test_babel_4279_t1;
 ~~END~~
 
 
@@ -80,7 +80,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT "abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
 ~~END~~
 
 
@@ -88,7 +88,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_st1."abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
+ SELECT "abc.nfds" AS "ABC.nfds"<newline>   FROM test_babel_4279_s1.test_babel_4279_st1;
 ~~END~~
 
 
@@ -96,7 +96,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t2."您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de"<newline>   FROM master_dbo.test_babel_4279_t2;
+ SELECT "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de"<newline>   FROM master_dbo.test_babel_4279_t2;
 ~~END~~
 
 
@@ -104,7 +104,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT "ぁあ"."您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de"<newline>   FROM master_dbo.test_babel_4279_t2 "ぁあ";
+ SELECT "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de"<newline>   FROM master_dbo.test_babel_4279_t2 "ぁあ";
 ~~END~~
 
 
@@ -112,7 +112,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT "sc,sdg""fdsngjds'"."ab[c" AS "AB[C"<newline>   FROM "master_tngdf'"."sc,sdg""fdsngjds'";
+ SELECT "ab[c" AS "AB[C"<newline>   FROM "master_tngdf'"."sc,sdg""fdsngjds'";
 ~~END~~
 
 
@@ -120,7 +120,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t3.abcd AS "ABCD"<newline>   FROM master_dbo.test_babel_4279_t3;
+ SELECT abcd AS "ABCD"<newline>   FROM master_dbo.test_babel_4279_t3;
 ~~END~~
 
 
@@ -128,7 +128,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'test_
 GO
 ~~START~~
 text
- SELECT test_babel_4279_t4."ぁあ'"""<newline>   FROM master_dbo.test_babel_4279_t4;
+ SELECT "ぁあ'"""<newline>   FROM master_dbo.test_babel_4279_t4;
 ~~END~~
 
 

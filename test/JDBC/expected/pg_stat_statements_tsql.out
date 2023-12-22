@@ -168,8 +168,7 @@ go
 ~~START~~
 bit#!#text#!#bigint#!#bigint#!#bigint
 1#!#BEGIN TRANSACTION#!#2#!#0#!#0
-1#!#COMMIT#!#1#!#0#!#0
-1#!#COMMIT TRANSACTION#!#1#!#0#!#0
+1#!#COMMIT TRANSACTION#!#2#!#0#!#0
 1#!#CREATE DATABASE pgss_db#!#1#!#0#!#0
 1#!#CREATE TABLE pgss_cursor(age int)#!#1#!#0#!#0
 1#!#CREATE TABLE pgss_transaction(age int)#!#1#!#0#!#0
@@ -312,7 +311,6 @@ bit#!#text#!#bigint#!#bigint#!#bigint
 1#!#ALTER TABLE pgss_test DISABLE  TRIGGER pgss_trigger1#!#1#!#0#!#0
 1#!#ALTER TABLE pgss_test ENABLE TRIGGER pgss_trigger1#!#1#!#0#!#0
 1#!#ALTER TABLE pgss_test add c varchar(22)#!#1#!#0#!#0
-1#!#CREATE ROLE pgss_test_role#!#1#!#0#!#0
 1#!#CREATE TABLE pgss_test (a int, b char(20))#!#1#!#0#!#0
 1#!#CREATE TRIGGER pgss_trigger1 on [dbo].[pgss_test] for insert as<newline>PRINT 'after insert trigger called'#!#1#!#0#!#0
 1#!#DELETE FROM pgss_test WHERE a > $1#!#1#!#1#!#0

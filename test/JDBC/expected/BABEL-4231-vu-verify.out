@@ -165,7 +165,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "abndand_dkandf""".a,<newline>    "abndand_dkandf""".b<newline>   FROM master_dbo.table1_babel_4231 "abndand_dkandf""";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table1_babel_4231 "abndand_dkandf""";
 ~~END~~
 
 
@@ -174,7 +174,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422".a,<newline>    "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422".b<newline>   FROM master_dbo.table2_babel_4231 "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table2_babel_4231 "abnkxalnclksncfjnajcb jdsb;fcbo3230b498a93d3d3c201b75df000f7422";
 ~~END~~
 
 
@@ -183,7 +183,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "您对数".a,<newline>    "您对数".b<newline>   FROM master_dbo.table3_babel_4231 "您对数";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table3_babel_4231 "您对数";
 ~~END~~
 
 
@@ -192,7 +192,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "您对数".a,<newline>    "您对数".b<newline>   FROM master_dbo.table4_babel_4231 "您对数";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table4_babel_4231 "您对数";
 ~~END~~
 
 
@@ -201,7 +201,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "您对“数据一览“中的车型，颜色，内饰，选装".a,<newline>    "您对“数据一览“中的车型，颜色，内饰，选装".b<newline>   FROM master_dbo.table5_babel_4231 "您对“数据一览“中的车型，颜色，内饰，选装";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table5_babel_4231 "您对“数据一览“中的车型，颜色，内饰，选装";
 ~~END~~
 
 
@@ -210,7 +210,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT " ぁ あ".a,<newline>    " ぁ あ".b<newline>   FROM master_dbo.table6_babel_4231 " ぁ あ";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table6_babel_4231 " ぁ あ";
 ~~END~~
 
 
@@ -219,7 +219,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".a,<newline>    "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".b<newline>   FROM master_dbo.table7_babel_4231 "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table7_babel_4231 "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445";
 ~~END~~
 
 
@@ -228,7 +228,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".a,<newline>    "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445".b<newline>   FROM master_dbo.table8_babel_4231 "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table8_babel_4231 "ぁ あ ぃ い ぅ う ぇ え0ee571349edc4237ec58683730cf1445";
 ~~END~~
 
 
@@ -237,7 +237,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ㄱ ㄴ ㄷ ㄹ".a,<newline>    "ㄱ ㄴ ㄷ ㄹ".b<newline>   FROM master_dbo.table9_babel_4231 "ㄱ ㄴ ㄷ ㄹ";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table9_babel_4231 "ㄱ ㄴ ㄷ ㄹ";
 ~~END~~
 
 
@@ -246,7 +246,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ㄱ ㄴ ㄷ ㄹ".a,<newline>    "ㄱ ㄴ ㄷ ㄹ".b<newline>   FROM master_dbo.table10_babel_4231 "ㄱ ㄴ ㄷ ㄹ";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table10_babel_4231 "ㄱ ㄴ ㄷ ㄹ";
 ~~END~~
 
 
@@ -255,7 +255,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6".a,<newline>    "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6".b<newline>   FROM master_dbo.table11_babel_4231 "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table11_babel_4231 "ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅅ ㅇ8522e1e3c9eb50a92076a5c0c105a0d6";
 ~~END~~
 
 
@@ -264,7 +264,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "خ	ذ	ض	ظ".a,<newline>    "خ	ذ	ض	ظ".b<newline>   FROM master_dbo.table12_babel_4231 "خ	ذ	ض	ظ";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table12_babel_4231 "خ	ذ	ض	ظ";
 ~~END~~
 
 
@@ -273,7 +273,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8".a,<newline>    "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8".b<newline>   FROM master_dbo.table13_babel_4231 "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table13_babel_4231 "ج	د	ه	و	ز	ح	ط	ي	ك	ل	17a5c50aadee4e5fc6ccb1f1f70dd4f8";
 ~~END~~
 
 
@@ -282,7 +282,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "ĄĆĘŁŃÓŚŹŻąćęłńóśź".a,<newline>    "ĄĆĘŁŃÓŚŹŻąćęłńóśź".b<newline>   FROM master_dbo.table14_babel_4231 "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table14_babel_4231 "ĄĆĘŁŃÓŚŹŻąćęłńóśź";
 ~~END~~
 
 
@@ -291,7 +291,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "αΒβΓγΔδΕε".a,<newline>    "αΒβΓγΔδΕε".b<newline>   FROM master_dbo.table15_babel_4231 "αΒβΓγΔδΕε";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table15_babel_4231 "αΒβΓγΔδΕε";
 ~~END~~
 
 
@@ -300,7 +300,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "αΒβΓγΔδΕε".a,<newline>    "αΒβΓγΔδΕε".b<newline>   FROM master_dbo.table16_babel_4231 "αΒβΓγΔδΕε";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table16_babel_4231 "αΒβΓγΔδΕε";
 ~~END~~
 
 
@@ -309,7 +309,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c".a,<newline>    "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c".b<newline>   FROM master_dbo.table17_babel_4231 "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table17_babel_4231 "αΒβΓγΔδΕεΖζ ΗηΘΙc65025c8691f705f084f6d40aa6e076c";
 ~~END~~
 
 
@@ -354,7 +354,7 @@ SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'view_
 GO
 ~~START~~
 text
- SELECT "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de".a,<newline>    "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de".b<newline>   FROM master_dbo.table18_babel_4231 "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de";
+ SELECT a,<newline>    b<newline>   FROM master_dbo.table18_babel_4231 "您您对您对您对您对您d60211ff7d947ff09db87babbf0cb9de";
 ~~END~~
 
 
