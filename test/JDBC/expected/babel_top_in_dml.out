@@ -1244,7 +1244,7 @@ Update on top_with_output_tbl
               ->  Seq Scan on top_with_output_tbl
                     Filter: (no_w_id = 'foo'::"varchar")
               ->  Tid Scan on top_with_output_tbl deleted
-                    TID Cond: (ctid = top_with_output_tbl.ctid)
+                    TID Cond: (top_with_output_tbl.ctid = ctid)
 ~~END~~
 
 
