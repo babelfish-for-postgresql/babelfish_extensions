@@ -1371,6 +1371,9 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar *relation, c
 	if (babelfish_dump_restore)
 		return;
 
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
 	table_name_start = (char *) pstate->p_sourcetext + relation->location;
 
 	/*
