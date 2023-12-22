@@ -140,11 +140,8 @@ Query Text: ASSIGN @a = SELECT 0
   Query Text: SELECT 0
   ->  Result
 Query Text: SELECT COUNT(*) FROM babel_2902_ma1
-Finalize Aggregate
-  ->  Gather
-        Workers Planned: 3
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_2902_ma1
+Aggregate
+  ->  Seq Scan on babel_2902_ma1
 Query Text: PRINT 'The value of a is ' + CONVERT(VARCHAR, @a)
 Query Text: ASSIGN @a = SELECT @a + 1
   Query Text: SELECT @a + 1
@@ -169,14 +166,10 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM babel_2902_ma1
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_ma1
+Seq Scan on babel_2902_ma1
 Query Text: USE DATABASE babel_2902_testdb_1
 Query Text: SELECT * FROM babel_2902_t1
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t1
+Seq Scan on babel_2902_t1
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -200,16 +193,11 @@ GO
 text
 Query Text: PRINT 'testing'
 Query Text: SELECT COUNT(*) FROM babel_2902_ma1
-Finalize Aggregate
-  ->  Gather
-        Workers Planned: 3
-        ->  Partial Aggregate
-              ->  Parallel Seq Scan on babel_2902_ma1
+Aggregate
+  ->  Seq Scan on babel_2902_ma1
 Query Text: USE DATABASE babel_2902_testdb_3
 Query Text: SELECT * FROM babel_2902_t3
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t3
+Seq Scan on babel_2902_t3
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -240,31 +228,19 @@ GO
 text
 Query Text: USE DATABASE babel_2902_testdb_1
 Query Text: SELECT * FROM babel_2902_t1
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t1
+Seq Scan on babel_2902_t1
 Query Text: SELECT * FROM babel_2902_t1
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t1
+Seq Scan on babel_2902_t1
 Query Text: SELECT * FROM babel_2902_t1
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t1
+Seq Scan on babel_2902_t1
 Query Text: USE DATABASE babel_2902_testdb_2
 Query Text: SELECT * FROM babel_2902_t2
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t2
+Seq Scan on babel_2902_t2
 Query Text: SELECT * FROM babel_2902_t2
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t2
+Seq Scan on babel_2902_t2
 Query Text: USE DATABASE babel_2902_testdb_3
 Query Text: SELECT * FROM babel_2902_t3
-Gather
-  Workers Planned: 3
-  ->  Parallel Seq Scan on babel_2902_t3
+Seq Scan on babel_2902_t3
 Query Text: USE DATABASE babel_2902_testdb_2
 ~~END~~
 
