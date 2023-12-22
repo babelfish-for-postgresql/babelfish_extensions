@@ -45,9 +45,6 @@ GO
 -- Check mentioning same column more than once
 --
 
-select set_config('babelfishpg_tsql.explain_verbose', 'on', false);
-GO
-
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 GO
 
