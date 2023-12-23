@@ -2374,7 +2374,7 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 			role->rolename = pstrdup(loginname);
 			initStringInfo(&query);
 
-			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
+			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreatedb; ");
 			exec_alter_role_cmd(query.data, role);
 			pfree(query.data);
 		}
