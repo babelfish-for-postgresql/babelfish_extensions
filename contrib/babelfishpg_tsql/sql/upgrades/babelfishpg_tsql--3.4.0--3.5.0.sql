@@ -118,6 +118,12 @@ AS 'babelfishpg_tsql', 'session_context'
 LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+-- Update existing logins to remove createrole privilege
+CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
+CALL sys.bbf_remove_createrole_from_logins();
+
 -- === DROP deprecated functions (if exists)
 DO $$
 DECLARE
@@ -164,15 +170,6 @@ $$;
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- Update existing logins to remove createrole privilege
-CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
-
-CALL sys.bbf_remove_createrole_from_logins();
-
-DROP PROCEDURE sys.bbf_remove_createrole_from_logins();
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
