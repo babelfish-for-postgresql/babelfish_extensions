@@ -172,6 +172,8 @@ AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
 
 CALL sys.bbf_remove_createrole_from_logins();
 
+DROP PROCEDURE sys.bbf_remove_createrole_from_logins();
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
