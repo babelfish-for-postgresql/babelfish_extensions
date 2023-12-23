@@ -1,0 +1,3 @@
+-- tsql
+create login permission_restrictions_tsql_login with password = '123';
+go

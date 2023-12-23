@@ -165,6 +165,9 @@ $$;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+-- Update existing logins to remove createrole privilege
+CALL sys.remove_createrole_from_logins();
+
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 

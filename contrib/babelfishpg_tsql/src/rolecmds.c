@@ -2339,3 +2339,48 @@ check_windows_logon_length(char *input)
 	else
 		return false;
 }
+
+PG_FUNCTION_INFO_V1(remove_createrole_from_logins);
+Datum
+remove_createrole_from_logins(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_authid_login_ext_rel;
+	TableScanDesc scan;
+	HeapTuple	tuple;
+	bool		is_null;
+
+	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(), AccessShareLock);
+	scan = table_beginscan_catalog(bbf_authid_login_ext_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum	loginname_datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_orig_loginname,
+													RelationGetDescr(bbf_authid_login_ext_rel), &is_null);
+		const char *loginname = TextDatumGetCString(loginname_datum);
+
+		/*
+		 * For each login (except sysadmin and the member of sysadmin), remove
+		 * createrole and createdb privileges from the logins.
+		 */
+		if ((strcmp(loginname, "sysadmin") != 0) && has_privs_of_role(get_role_oid(loginname, false), get_role_oid("sysadmin", false)))
+		{
+			StringInfoData query;
+			RoleSpec *role;
+
+			role = makeNode(RoleSpec);
+			role->roletype = ROLESPEC_CSTRING;
+			role->location = -1;
+			role->rolename = pstrdup(loginname);
+			initStringInfo(&query);
+
+			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
+			exec_alter_role_cmd(query.data, role);
+			pfree(query.data);
+		}
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(bbf_authid_login_ext_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
