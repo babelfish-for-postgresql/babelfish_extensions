@@ -166,7 +166,11 @@ $$;
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Update existing logins to remove createrole privilege
-CALL sys.remove_createrole_from_logins();
+CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
+
+CALL sys.bbf_remove_createrole_from_logins();
 
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
