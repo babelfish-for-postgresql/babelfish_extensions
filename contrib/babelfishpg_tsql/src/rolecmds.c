@@ -2361,9 +2361,9 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 
 		/*
 		 * For each login (except sysadmin and the member of sysadmin), remove
-		 * createrole and createdb privileges from the logins.
+		 * createrole privileges from the logins.
 		 */
-		if ((strcmp(loginname, "sysadmin") != 0) && has_privs_of_role(get_role_oid(loginname, false), get_role_oid("sysadmin", false)))
+		if ((strcmp(loginname, "sysadmin") != 0) && !has_privs_of_role(get_role_oid(loginname, false), get_role_oid("sysadmin", false)))
 		{
 			StringInfoData query;
 			RoleSpec *role;
@@ -2374,7 +2374,7 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 			role->rolename = pstrdup(loginname);
 			initStringInfo(&query);
 
-			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreatedb; ");
+			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreatedb nocreaterole; ");
 			exec_alter_role_cmd(query.data, role);
 			pfree(query.data);
 		}
