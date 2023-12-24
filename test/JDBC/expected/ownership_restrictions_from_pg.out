@@ -928,6 +928,15 @@ t
 ~~END~~
 
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ownership_restrictions_from_pg_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql
 DROP DATABASE ownership_restrictions_from_pg_db;
 DROP ROLE ownership_restrictions_from_pg_role1;
