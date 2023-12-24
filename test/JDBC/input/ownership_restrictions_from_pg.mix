@@ -2,6 +2,55 @@
 CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '12345678';
 GO
 
+CREATE LOGIN ownership_restrictions_from_pg_login2 WITH password = '12345678';
+GO
+
+-- tsql user=ownership_restrictions_from_pg_login2 password=12345678
+CREATE ROLE ownership_restrictions_from_pg_role_by_pg_login2;
+GO
+
+CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
+GO
+
+-- tsql
+ALTER SERVER ROLE sysadmin ADD MEMBER ownership_restrictions_from_pg_login2;
+GO
+
+-- tsql user=ownership_restrictions_from_pg_login2 password=12345678
+CREATE DATABASE ownership_restrictions_from_pg_login2_db1;
+GO
+
+-- tsql
+ALTER SERVER ROLE sysadmin DROP MEMBER ownership_restrictions_from_pg_login2;
+GO
+
+-- tsql user=ownership_restrictions_from_pg_login2 password=12345678
+USE ownership_restrictions_from_pg_login2_db1;
+GO
+
+SELECT current_user;
+GO
+
+CREATE ROLE ownership_restrictions_from_pg_role_by_pg_login2;
+GO
+
+DROP ROLE ownership_restrictions_from_pg_role_by_pg_login2;
+GO
+
+-- This is a temporary failure, it will be fixed with BABEL-4652.
+CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
+GO
+
+-- DROP USER ownership_restrictions_from_pg_user_by_pg_login2;
+-- GO
+
+USE master;
+go
+
+-- tsql
+DROP DATABASE ownership_restrictions_from_pg_login2_db1;
+go
+
 CREATE ROLE ownership_restrictions_from_pg_role1;
 GO
 
@@ -346,8 +395,13 @@ SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'ownership_restrictions_from_pg_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ownership_restrictions_from_pg_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
 -- tsql
 DROP DATABASE ownership_restrictions_from_pg_db;
 DROP ROLE ownership_restrictions_from_pg_role1;
 DROP LOGIN ownership_restrictions_from_pg_login1;
+DROP LOGIN ownership_restrictions_from_pg_login2;
 GO
