@@ -2355,7 +2355,7 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum	loginname_datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_orig_loginname,
+		Datum	loginname_datum = heap_getattr(tuple, Anum_bbf_authid_login_ext_rolname,
 													RelationGetDescr(bbf_authid_login_ext_rel), &is_null);
 		const char *loginname = TextDatumGetCString(loginname_datum);
 
@@ -2374,7 +2374,7 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 			role->rolename = pstrdup(loginname);
 			initStringInfo(&query);
 
-			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole; ");
+			appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
 			exec_alter_role_cmd(query.data, role);
 			pfree(query.data);
 		}
