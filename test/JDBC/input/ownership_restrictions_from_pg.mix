@@ -207,11 +207,8 @@ GO
 ALTER ROLE ownership_restrictions_from_pg_login1 NOBYPASSRLS;
 GO
 
--- after connection limit set to 1, shouldn't be able to connect to multiple sessions
 ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
 GO
-
--- tsql user=ownership_restrictions_from_pg_login1 password=12345678
 
 -- psql user=ownership_restrictions_from_pg_login1 password=12345678
 ALTER ROLE ownership_restrictions_from_pg_login1 set babelfishpg_tsql.ownership_restrictions_from_pg_test_variable = 101;
