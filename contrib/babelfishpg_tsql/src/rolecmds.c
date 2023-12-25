@@ -2366,7 +2366,7 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 		 * For each login (except sysadmin and the member of sysadmin), remove
 		 * createrole and createdb privileges from the logins.
 		 */
-		if ((strcmp(rolname, "sysadmin") != 0) && !has_privs_of_role(get_role_oid(rolname, false), get_role_oid("sysadmin", false)))
+		if ((strcmp(rolname, "sysadmin") != 0) && !has_privs_of_role(get_role_oid(rolname, false), get_sysadmin_oid()))
 		{
 			StringInfoData query;
 			RoleSpec *role;
