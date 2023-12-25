@@ -240,7 +240,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+~~ERROR (Message: ERROR: permission denied
     Server SQLState: 42501)~~
 
 
@@ -377,7 +377,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+~~ERROR (Message: ERROR: permission denied
     Server SQLState: 42501)~~
 
 
@@ -640,7 +640,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+~~ERROR (Message: ERROR: permission denied
     Server SQLState: 42501)~~
 
 
@@ -792,7 +792,7 @@ ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
 GO
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+~~ERROR (Message: ERROR: permission denied
     Server SQLState: 42501)~~
 
 

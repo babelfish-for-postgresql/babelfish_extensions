@@ -1566,6 +1566,9 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 														 * role */
 			return true;
 	}
+	/* has one and only one grantee  */
+	if (list_length(stmt->grantee_roles) != 1)
+		return false;
 
 	return false;
 }
@@ -2378,6 +2381,7 @@ remove_createrole_from_logins(PG_FUNCTION_ARGS)
 			exec_alter_role_cmd(query.data, role);
 			pfree(query.data);
 		}
+		pfree(rolname);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);

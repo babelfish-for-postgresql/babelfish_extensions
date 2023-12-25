@@ -1091,7 +1091,9 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 		    }
 		    else
 		    {
-			    if ((authForm && authForm->rolcanlogin) && (strcmp(defel->defname, "password") == 0))
+			    if ((authForm && authForm->rolcanlogin) && (strcmp(defel->defname, "password") == 0 ||
+					    strcmp(defel->defname, "connectionlimit") == 0 ||
+					    strcmp(defel->defname, "validUntil") == 0))
 					allow_alter_role_operation = true;
 			    else
 			    {
