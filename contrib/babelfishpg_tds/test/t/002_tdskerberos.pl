@@ -417,6 +417,7 @@ $node->restart;
 
 my @connstr1 = $tsql_node->tsql_connstr('master');
 $tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr1));
+
 my $ret = $tsql_node->safe_tsql('master', 'SELECT gss_authenticated, principal from pg_stat_gssapi where pid = pg_backend_pid();');
 is($ret, "test1\@$realm", 'Verified');
 
