@@ -1,3 +1,9 @@
 -- tsql
 create login permission_restrictions_tsql_login with password = '123';
 go
+
+create login permission_restrictions_tsql_login_with_sysadmin with password = '123';
+go
+
+alter server role sysadmin add member permission_restrictions_tsql_login_with_sysadmin;
+go
