@@ -103,6 +103,11 @@ BEGIN
             RAISE NOTICE 'Failed to recreate primary key for system catalog sys.babelfish_view_def';
 END $$;
 
+-- Update existing logins to remove createrole privilege
+CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
+CALL sys.bbf_remove_createrole_from_logins();
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
