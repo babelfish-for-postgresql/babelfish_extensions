@@ -246,7 +246,6 @@ sub safe_tsql {
 		print $stderr;
 		print "\n#### End standard error\n";
 	}
-	print $stdout;
 	return $stdout;
 }
 
