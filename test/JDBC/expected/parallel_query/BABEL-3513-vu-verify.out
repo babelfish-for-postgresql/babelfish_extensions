@@ -1,0 +1,107 @@
+-- psql
+analyze master_dbo.babel_3513_t1;
+go
+
+analyze master_dbo.babel_3513_t2;
+go
+
+-- tsql
+exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
+go
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_showplan_all on;
+go
+
+-- expect merge join
+exec babel_3513_proc_1;
+go
+~~START~~
+text
+Query Text: EXEC babel_3513_proc_1
+  Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Merge Join
+              Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
+              ->  Sort
+                    Sort Key: babel_3513_t1.a1
+                    ->  Seq Scan on babel_3513_t1
+              ->  Sort
+                    Sort Key: babel_3513_t2.b2
+                    ->  Seq Scan on babel_3513_t2
+~~END~~
+
+
+set babelfish_showplan_all off;
+go
+
+select set_config('babelfishpg_tsql.enable_pg_hint', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+
+set babelfish_showplan_all on;
+go
+
+-- expect merge join because of plan caching
+exec babel_3513_proc_1;
+go
+~~START~~
+text
+Query Text: EXEC babel_3513_proc_1
+  Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Merge Join
+              Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
+              ->  Sort
+                    Sort Key: babel_3513_t1.a1
+                    ->  Seq Scan on babel_3513_t1
+              ->  Sort
+                    Sort Key: babel_3513_t2.b2
+                    ->  Seq Scan on babel_3513_t2
+~~END~~
+
+
+-- expect nested loop join
+SELECT babel_3513_t1.a1 FROM babel_3513_t1 inner merge join babel_3513_t2 ON a1 = b2;
+go
+~~START~~
+text
+Query Text: SELECT/*+ mergejoin(babel_3513_t1 babel_3513_t2) leading(babel_3513_t1 babel_3513_t2)*/ babel_3513_t1.a1 FROM babel_3513_t1 inner       join babel_3513_t2 ON a1 = b2
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Nested Loop
+        Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
+        ->  Seq Scan on babel_3513_t1
+        ->  Seq Scan on babel_3513_t2
+~~END~~
+
+
+set babelfish_showplan_all off;
+go
+
+-- clean up
+drop procedure babel_3513_proc_1;
+go
+drop table babel_3513_t1;
+go
+drop table babel_3513_t2;
+go
+
+exec sp_babelfish_configure 'enable_pg_hint', 'off', 'server'
+go
