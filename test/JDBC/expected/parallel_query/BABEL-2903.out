@@ -1,0 +1,113 @@
+use master;
+go
+
+drop table if exists babel_2903_t1;
+go
+create table babel_2903_t1 (a int, b int);
+go
+insert into babel_2903_t1 values (1, 1);
+go
+~~ROW COUNT: 1~~
+
+insert into babel_2903_t1 values (2, 2);
+go
+~~ROW COUNT: 1~~
+
+select * from babel_2903_t1;
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+drop procedure if exists babel_2903_inner_proc;
+go
+create procedure babel_2903_inner_proc @b int
+as
+    set @b = (select top 1 a+b from babel_2903_t1 order by b);
+    insert into babel_2903_t1 values (@b, @b);
+go
+
+drop procedure if exists babel_2903_outer_proc;
+go
+create procedure babel_2903_outer_proc @a int, @b int
+as
+    declare @t table (a int, b int);
+    set @a = 3;
+    insert into babel_2903_t1 values (@a, @b);
+    exec babel_2903_inner_proc @b;
+    insert into @t select * from babel_2903_t1;
+    select * from @t;
+go
+
+set BABELFISH_SHOWPLAN_ALL ON;
+go
+
+declare @a int = 5, @b int = 5;
+declare @c int;
+execute babel_2903_outer_proc @a, @b;
+select @a, @b;
+go
+~~START~~
+text
+Query Text: ASSIGN @a = SELECT 5
+  Query Text: SELECT 5
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+Query Text: ASSIGN @b = SELECT 5
+  Query Text: SELECT 5
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+Query Text: EXEC    babel_2903_outer_proc @a, @b
+  Query Text: DECLARE TABLE @t
+    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_1 (a int, b int)
+  Query Text: ASSIGN @a = SELECT 3
+    Query Text: SELECT 3
+    ->  Result  (cost=0.00..0.01 rows=1 width=4)
+  Query Text: insert into babel_2903_t1 values ("@a", "@b");
+  ->  Insert on babel_2903_t1  (cost=0.00..0.01 rows=0 width=0)
+        ->  Result  (cost=0.00..0.01 rows=1 width=8)
+  Query Text: EXEC babel_2903_inner_proc @b
+    Query Text: ASSIGN @b = SELECT (select top 1 a+b from babel_2903_t1 order by b)
+      Query Text: SELECT (select top 1 a+b from babel_2903_t1 order by b)
+      ->  Result  (cost=49.55..49.56 rows=1 width=4)
+            InitPlan 1 (returns $0)
+              ->  Limit  (cost=49.55..49.55 rows=1 width=8)
+                    ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
+                          Sort Key: babel_2903_t1.b NULLS FIRST
+                          ->  Seq Scan on babel_2903_t1  (cost=0.00..38.25 rows=2260 width=8)
+    Query Text: insert into babel_2903_t1 values ("@b", "@b");
+    ->  Insert on babel_2903_t1  (cost=0.00..0.01 rows=0 width=0)
+          ->  Result  (cost=0.00..0.01 rows=1 width=8)
+  Query Text: insert into "@t" select * from babel_2903_t1;
+  ->  Insert on "@t_1"  (cost=0.00..32.60 rows=0 width=0)
+        ->  Seq Scan on babel_2903_t1  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: select * from "@t"
+  ->  Seq Scan on "@t_1"  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: DROP TABLE @t_1
+Query Text: select "@a", "@b"
+Gather  (cost=0.00..0.01 rows=1 width=8)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Result  (cost=0.00..0.01 rows=1 width=8)
+~~END~~
+
+
+set BABELFISH_SHOWPLAN_ALL Off;
+go
+
+select * from babel_2903_t1;
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+drop procedure if exists babel_2903_outer_proc;
+go
+drop procedure if exists babel_2903_inner_proc;
+go
+drop table if exists babel_2903_t1;
+go
