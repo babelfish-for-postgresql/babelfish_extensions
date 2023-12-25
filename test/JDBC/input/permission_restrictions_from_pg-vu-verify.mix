@@ -4,6 +4,9 @@ create user permission_restrictions_psql_user1 with password '123';
 go
 
 -- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+
 alter server role sysadmin add member permission_restrictions_tsql_login;
 go
 
@@ -25,6 +28,9 @@ select pg_sleep(1);
 GO
 
 -- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+
 alter server role sysadmin drop member permission_restrictions_tsql_login;
 go
 

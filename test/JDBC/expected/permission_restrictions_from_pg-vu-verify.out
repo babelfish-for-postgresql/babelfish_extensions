@@ -9,6 +9,14 @@ go
 
 
 -- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+~~START~~
+varchar#!#bit#!#bit
+permission_restrictions_tsql_login#!#0#!#0
+~~END~~
+
+
 alter server role sysadmin add member permission_restrictions_tsql_login;
 go
 
@@ -40,6 +48,14 @@ void
 
 
 -- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+~~START~~
+varchar#!#bit#!#bit
+permission_restrictions_tsql_login#!#1#!#1
+~~END~~
+
+
 alter server role sysadmin drop member permission_restrictions_tsql_login;
 go
 
