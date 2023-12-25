@@ -67,6 +67,10 @@ GO
 DROP ROLE ownership_restrictions_from_pg_login1;
 GO
 
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ownership_restrictions_from_pg_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
 -- Create a non babelfish role that is a member of master_guest
 -- and enable dropping
 CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
