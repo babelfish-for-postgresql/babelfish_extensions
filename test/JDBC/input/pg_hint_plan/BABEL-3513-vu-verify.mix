@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- psql
 analyze master_dbo.babel_3513_t1;
 go
