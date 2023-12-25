@@ -22,6 +22,7 @@
 #include "access/table.h"
 #include "access/genam.h"
 #include "catalog.h"
+#include "tcop/utility.h"
 
 #include "multidb.h"
 
