@@ -1,0 +1,63 @@
+-- psql user=permission_restrictions_tsql_login password=123
+-- user should not be able to create user since it is not a member of sysadmin.
+create user permission_restrictions_psql_user1 with password '123';
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create role
+    Server SQLState: 42501)~~
+
+
+-- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+~~START~~
+varchar#!#bit#!#bit
+permission_restrictions_tsql_login#!#0#!#0
+~~END~~
+
+
+alter server role sysadmin add member permission_restrictions_tsql_login;
+go
+
+-- psql user=permission_restrictions_tsql_login password=123
+-- user should be able to create user since it is a member of sysadmin.
+create user permission_restrictions_psql_user1 with password '123';
+go
+
+drop user permission_restrictions_psql_user1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+select pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+~~START~~
+varchar#!#bit#!#bit
+permission_restrictions_tsql_login#!#1#!#1
+~~END~~
+
+
+alter server role sysadmin drop member permission_restrictions_tsql_login;
+go
+
+drop login permission_restrictions_tsql_login
+go

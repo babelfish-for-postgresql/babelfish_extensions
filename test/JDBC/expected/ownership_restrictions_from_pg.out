@@ -304,6 +304,11 @@ GO
 
 ALTER ROLE ownership_restrictions_from_pg_login1 VALID UNTIL 'infinity';
 GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
 
 ALTER ROLE ownership_restrictions_from_pg_login1 rename to master_ownership_restrictions_from_pg_role5;
 GO
@@ -434,14 +439,12 @@ GO
     Server SQLState: 42501)~~
 
 
--- after connection limit set to 1, shouldn't be able to connect to multiple sessions
 ALTER ROLE ownership_restrictions_from_pg_login1 WITH CONNECTION LIMIT 1;
 GO
+~~ERROR (Code: 0)~~
 
--- tsql user=ownership_restrictions_from_pg_login1 password=12345678
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: too many connections for role "ownership_restrictions_from_pg_login1" )~~
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
 
 
 -- psql user=ownership_restrictions_from_pg_login1 password=12345678
