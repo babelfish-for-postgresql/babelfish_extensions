@@ -385,3 +385,4 @@ triggers_with_transaction
 BABEL-4046
 getdate
 BABEL_4330
+permission_restrictions_from_pg
