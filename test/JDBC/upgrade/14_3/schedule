@@ -335,3 +335,4 @@ timefromparts
 triggers_with_transaction
 BABEL-4046
 BABEL_4330
+permission_restrictions_from_pg
