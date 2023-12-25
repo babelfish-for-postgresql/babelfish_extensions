@@ -27,13 +27,13 @@ ignore#!#BABEL-2833
 ignore#!#BABEL-ROLE-MEMBER-vu-verify
 ignore#!#BABEL-ROLE-MEMBER
 
-# current_setting('role') returns NULL.
-ignore#!#BABEL-1444
-
 # JIRA - BABEL-4421
 ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
+
+# These test should not ger run in parallel query
+ignore#!#BABEL-1363
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
