@@ -3,7 +3,11 @@
 create user permission_restrictions_psql_user1 with password '123';
 go
 
--- psql user=permission_restrictions_tsql_login_with_sysadmin password=123
+-- tsql
+alter server role sysadmin add member permission_restrictions_tsql_login;
+go
+
+-- psql user=permission_restrictions_tsql_login password=123
 -- user should be able to create user since it is a member of sysadmin.
 create user permission_restrictions_psql_user1 with password '123';
 go
@@ -20,19 +24,9 @@ GO
 select pg_sleep(1);
 GO
 
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login_with_sysadmin' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-
-select pg_sleep(1);
-GO
-
 -- tsql
+alter server role sysadmin drop member permission_restrictions_tsql_login;
+go
+
 drop login permission_restrictions_tsql_login
-go
-
-alter server role sysadmin drop member permission_restrictions_tsql_login_with_sysadmin;
-go
-
-drop login permission_restrictions_tsql_login_with_sysadmin
 go
