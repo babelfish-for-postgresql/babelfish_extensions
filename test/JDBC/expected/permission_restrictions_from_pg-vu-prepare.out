@@ -1,0 +1,11 @@
+-- tsql
+create login permission_restrictions_tsql_login with password = '123';
+go
+
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+~~START~~
+varchar#!#bit#!#bit
+permission_restrictions_tsql_login#!#1#!#1
+~~END~~
+

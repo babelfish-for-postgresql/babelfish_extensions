@@ -25,7 +25,7 @@ INSERT INTO testBINARY_dt4(a, b) values (1234, 12345);
 prepst#!# INSERT INTO testBINARY_dt4(a, b) values(?, ?) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
 ~~ROW COUNT: 1~~
 
-prepst#!#exec#!#binary|-|a|-|123456789#!#varbinary|-|b|-|12345
+prepst#!#exec#!#binary|-|a|-|12345678#!#varbinary|-|b|-|12345
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789

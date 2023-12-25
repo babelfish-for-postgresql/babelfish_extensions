@@ -55,7 +55,7 @@ BABEL-3116
 BABEL-3118
 BABEL-3121
 BABEL-3147-before-14_5
-BABEL-3166
+BABEL-3166-before-14_11-or-15_6
 BABEL-3192
 BABEL-3204
 BABEL-3213
@@ -221,7 +221,7 @@ sys-max_connections
 sys-nestlevel-dep
 sys-objects
 sys-original_login
-sys-parsename
+sys-parsename-before-15_6-or-16_1
 sys-procedures
 sys-proc_param_helper-dep
 sys-registered_search_property_lists
@@ -325,3 +325,4 @@ cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
 BABEL-2999
+permission_restrictions_from_pg
