@@ -105,7 +105,7 @@ SELECT * FROM COL_NAME('0x1A', 3);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type integer: "0x1A")~~
+~~ERROR (Message: Conversion failed when converting the varchar value '0x1A' to data type int.)~~
 
 
 SELECT * FROM COL_NAME(7, 'column_name');
@@ -119,14 +119,14 @@ SELECT * FROM COL_NAME('0x2F', 'another_column');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type integer: "0x2F")~~
+~~ERROR (Message: Conversion failed when converting the varchar value '0x2F' to data type int.)~~
 
 
 SELECT * FROM COL_NAME('0xAB', '0x8C');
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type integer: "0xAB")~~
+~~ERROR (Message: Conversion failed when converting the varchar value '0xAB' to data type int.)~~
 
 
 SELECT * FROM COL_NAME('sample_table', 'some_column');
