@@ -7189,9 +7189,10 @@ pltsql_sql_error_callback(void *arg)
 PLtsql_type *
 parse_datatype(const char *string, int location)
 {
-	TypeName   *typeName;
-	Oid			type_id;
+	TypeName  	*typeName;
+	Oid		type_id;
 	int32		typmod;
+	char		*datatype_string = pstrdup(string);
 	sql_error_callback_arg cbarg;
 	ErrorContextCallback  syntax_errcontext;
 
@@ -7223,10 +7224,13 @@ parse_datatype(const char *string, int location)
 	typeName->names = rewrite_plain_name(typeName->names);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
 
-	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
+	/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
+	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id) 
+									|| is_tsql_binary_or_varbinary_datatype(type_id)))
 	{
 		/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
-		char *newString = (char *) palloc(1 + strlen(string)+ 3);
+		/* Create string with scale "(1)" appended to build correct typeName */
+		char *newString = (char *) palloc(1 + strlen(string) + 3);
 		strcpy(newString, string);
 		strcat(newString, "(1)");
 		/* Let the main parser try to parse it under standard SQL rules */
@@ -7237,34 +7241,32 @@ parse_datatype(const char *string, int location)
 	}
 	
 	/* for varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
-	if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
-	{
+	else if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
 		typmod = -1;
-	}
-	else if (typmod > (8000 + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id)))
+	
+	else if (typmod > (8000 + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
 	{
+		datatype_string = strtok(datatype_string, "(");
+		datatype_string = strtok(datatype_string, " ");
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
-				typmod - VARHDRSZ, string)));
-	}
-	else if (typmod > (8000 + VARHDRSZ) && (is_tsql_binary_or_varbinary_datatype(type_id)))
-	{
-		ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
-				typmod - VARHDRSZ, string)));
+				typmod - VARHDRSZ, datatype_string)));
 	}
 	else if (typmod > (4000 + VARHDRSZ) && (is_tsql_nchar_or_nvarchar_datatype(type_id)))
 	{
+		datatype_string = strtok(datatype_string, "(");
+		datatype_string = strtok(datatype_string, " ");
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("The size '%d' exceeds the maximum allowed (4000) for '%s' datatype.",
-				typmod - VARHDRSZ, string)));
+				typmod - VARHDRSZ, datatype_string)));
 	}
 
 	/* Restore former ereport callback */
 	error_context_stack = syntax_errcontext.previous;
+
+	pfree(datatype_string);
 
 	/* Okay, build a PLtsql_type data structure for it */
 	return pltsql_build_datatype(type_id, typmod,

@@ -70,6 +70,7 @@
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
 #define ROWVERSION_SIZE 8
+#define VARBINARY_MAX_SCALE 8000
 
 /*
  * Local structures and functions copied from printtup.c
@@ -931,7 +932,7 @@ resolve_numeric_typmod_from_exp(Plan *plan, Node *expr)
 static int32
 resolve_varbinary_typmod_from_exp(Node *expr)
 {
-	int32 actualSize = 0;
+	int32 actual_size = 0;
 
 	if (expr == NULL)
 		return -1;
@@ -948,13 +949,12 @@ resolve_varbinary_typmod_from_exp(Node *expr)
 			if (!con->constisnull)
 			{
 				bytea	   *source = (bytea *) con->constvalue;
-				actualSize = VARSIZE_ANY(source);
+				actual_size = VARSIZE_ANY_EXHDR(source);
 				
-				/* varbinary(max) case */
-				if (actualSize > TSQLMaxTypmod + VARHDRSZ)
-				{
+				/* if the actual size is greater than 8000, it should be varbinary(max) case as we have set a limit on scale */
+				if (actual_size > VARBINARY_MAX_SCALE)
 					return -1;
-				}
+	
 				return VARSIZE_ANY(source);
 			}
 			else

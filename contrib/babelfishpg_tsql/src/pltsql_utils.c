@@ -439,14 +439,8 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("Incorrect syntax near the keyword '%s'.", typname)));
 			}
-			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0))
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
-								*typmod - VARHDRSZ, max_allowed_varchar_length, typname)));
-			}
-			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varbinary") == 0 || strcmp(typname, "binary") == 0))
+			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0 || 
+											strcmp(typname, "varbinary") == 0 || strcmp(typname, "binary") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),

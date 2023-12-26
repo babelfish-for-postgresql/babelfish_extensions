@@ -83,6 +83,8 @@ GO
 -- char
 declare @char1 char(8001) = 'abc';
 go
+declare @char1     char     (8001) = 'abc';
+go
 declare @char2 char(8000) = 'abc';
 select @char2
 go
@@ -91,6 +93,8 @@ go
 
 -- varchar
 declare @varchar1 varchar(8001) = 'abc';
+go
+declare @varchar1  varchar    (8001)   = 'abc';
 go
 declare @varchar2 varchar(8000) = 'abc';
 select @varchar2
@@ -101,6 +105,8 @@ go
 -- nchar
 declare @nchar1 nchar(4001) = 'abc';
 go
+declare @nchar1    nchar   (4001) = 'abc';
+go
 declare @nchar2 nchar(4000) = 'abc';
 select @nchar2
 go
@@ -109,6 +115,8 @@ go
 
 -- nvarchar
 declare @nvarchar1 nvarchar(4001) = 'abc';
+go
+declare @nvarchar1   nvarchar    (4001) = 'abc';
 go
 declare @nvarchar2 nvarchar(4000) = 'abc';
 select @nvarchar2
@@ -119,17 +127,71 @@ go
 -- Binary
 declare @binary1 binary(8001) = 1;
 go
+declare @binary1     binary   (8001) = 1;
+go
 declare @binary2 binary(8000) = 1;
 select @binary2;
 go
 select cast(1 as binary(8001));
 go
+create table test_binary_t1 (a binary(8001))
+go
+drop table if exists test_binary_t1
+go
+create table test_binary_t2 (a binary(8000))
+go
+insert into test_binary_t2 values (123)
+go
+select * from test_binary_t2
+go
+drop table if exists test_binary_t2
+go
+
 
 -- Varbinary
 declare @varbinary1 varbinary(8001) = 1;
+go
+declare @varbinary1    varbinary    (8001) = 1;
 go
 declare @varbinary2 varbinary(8000) = 1;
 select @varbinary2;
 go
 select cast(1 as varbinary(8001));
+go
+create table test_varbinary_t1 (a varbinary(8001))
+go
+drop table if exists test_varbinary_t1
+go
+create table test_varbinary_t2 (a varbinary(8000))
+go
+insert into test_varbinary_t2 values (123)
+go
+select * from test_varbinary_t2
+go
+drop table if exists test_varbinary_t2
+go
+
+-- test without specifing scale
+declare @test_variable varchar = 'aaaaaa';
+select @test_variable
+go
+
+declare @test_variable char = 'aaaaaa';
+select @test_variable
+go
+
+declare @test_variable nvarchar = 'aaaaaa';
+select @test_variable
+go
+
+declare @test_variable nchar = 'aaaaaa';
+select @test_variable
+go
+
+declare @test_variable varbinary = 1234552;
+select @test_variable
+go
+
+declare @test_variable binary = 1234552;
+select @test_variable
 go
