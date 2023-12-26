@@ -4260,6 +4260,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int			save_pltsql_trigger_depth = pltsql_trigger_depth;
 	int			saved_dialect = sql_dialect;
 	int 		current_spi_stack_depth;
+	bool 		send_error = false;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -4365,10 +4366,11 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
 		sql_dialect = saved_dialect;
+		send_error = true;
 	}
 	PG_END_TRY();
 
-	terminate_batch(false /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
+	terminate_batch(send_error /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 
 	return retval;
 }
