@@ -1,0 +1,32 @@
+select * from babel_4475_v1
+go
+~~START~~
+varchar
+a
+~~END~~
+
+
+select * from babel_4475_v2
+go
+~~START~~
+varchar
+ab
+~~END~~
+
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'bsrohan_view_1';
+go
+~~START~~
+text
+ SELECT 'a'::sys."varchar"(10)::sys."binary"(2)::sys."varchar"(2) AS "varchar";
+~~END~~
+
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'bsrohan_view_1';
+go
+~~START~~
+text
+ SELECT 'a'::sys."varchar"(10)::sys."binary"(2)::sys."varchar"(2) AS "varchar";
+~~END~~
+

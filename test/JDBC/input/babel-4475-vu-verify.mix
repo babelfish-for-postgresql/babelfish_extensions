@@ -1,0 +1,12 @@
+select * from babel_4475_v1
+go
+
+select * from babel_4475_v2
+go
+
+-- psql
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'bsrohan_view_1';
+go
+
+SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'bsrohan_view_1';
+go
