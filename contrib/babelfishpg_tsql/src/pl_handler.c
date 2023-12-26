@@ -4432,7 +4432,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
-	if (support_tsql_trans)
+	if (support_tsql_trans || true)
 		SPI_setCurrentInternalTxnMode(true);
 
 	elog(DEBUG2, "TSQL TXN inline handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);

@@ -1,0 +1,7 @@
+DECLARE @a TABLE (a INT);
+INSERT INTO @a EXECUTE('SELECT * FROM t1; SELECT 3');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t1" does not exist)~~
+
