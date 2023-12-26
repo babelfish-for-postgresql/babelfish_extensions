@@ -1,0 +1,135 @@
+-- arabic_ci_as
+SELECT * FROM babel_4638_t1
+GO
+~~START~~
+varchar
+ح
+غ
+سسس
+للل
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t1
+GO
+~~START~~
+text
+ح|
+غ|
+س|
+ل|
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t1
+GO
+~~START~~
+text
+ح    |
+غ    |
+سسس  |
+للل  |
+~~END~~
+
+
+-- chinese_prc_ci_as
+SELECT * FROM babel_4638_t2
+GO
+~~START~~
+varchar
+五
+九
+乙乙乙
+魚魚魚
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t2
+GO
+~~START~~
+text
+ |
+ |
+ |
+ |
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t2
+GO
+~~START~~
+text
+五   |
+九   |
+乙乙 |
+魚魚 |
+~~END~~
+
+
+-- japanese_ci_as
+SELECT * FROM babel_4638_t3
+GO
+~~START~~
+varchar
+あ
+九
+ちちち
+さささ
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t3
+GO
+~~START~~
+text
+ |
+ |
+ |
+ |
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t3
+GO
+~~START~~
+text
+あ   |
+九   |
+ちち |
+ささ |
+~~END~~
+
+
+-- hebrew_ci_as
+SELECT * FROM babel_4638_t4
+GO
+~~START~~
+varchar
+ב
+א
+קקק
+מממ
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t4
+GO
+~~START~~
+text
+ב|
+א|
+ק|
+מ|
+~~END~~
+
+
+SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t4
+GO
+~~START~~
+text
+ב    |
+א    |
+קקק  |
+מממ  |
+~~END~~
+
