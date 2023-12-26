@@ -1878,6 +1878,7 @@ extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern uint64 execute_bulk_load_insert(int ncol, int nrow,
 									   Datum *Values, bool *Nulls);
+extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 
 /*
  * Functions in pl_exec.c

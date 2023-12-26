@@ -95,6 +95,8 @@ ignore#!#BABEL-3166-before-14_11-or-15_6-vu-verify
 ignore#!#TestBinary-before-14_11-or-15_6-vu-prepare
 ignore#!#TestBinary-before-14_11-or-15_6-vu-verify
 ignore#!#TestBinary-before-14_11-or-15_6-vu-cleanup
+ignore#!#permission_restrictions_from_pg-vu-prepare
+ignore#!#permission_restrictions_from_pg-vu-verify
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
