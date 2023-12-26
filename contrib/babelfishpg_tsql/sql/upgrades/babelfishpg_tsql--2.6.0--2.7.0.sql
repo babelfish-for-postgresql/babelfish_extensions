@@ -1983,5 +1983,11 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 -- After upgrade, always run analyze for all babelfish catalogs.
 CALL sys.analyze_babelfish_catalogs();
 
+-- Update existing logins to remove createrole privilege
+CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'remove_createrole_from_logins';
+CALL sys.bbf_remove_createrole_from_logins();
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

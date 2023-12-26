@@ -1,0 +1,167 @@
+-- tsql
+create login permission_restrictions_tsql_login with password = '123';
+go
+
+-- psql
+create user permission_restrictions_psql_user with password '123';
+go
+
+-- psql user=permission_restrictions_tsql_login password=123
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to permission_restrictions_tsql_login;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+    Server SQLState: 42501)~~
+
+
+-- Creating user by an underprivileged login should be restricted
+create user permission_restrictions_psql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create role
+    Server SQLState: 42501)~~
+
+
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+    Server SQLState: 42501)~~
+
+
+-- Altering a role by an underprivileged login should be restricted
+alter user permission_restrictions_psql_user with password '123'
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+-- Dropping a role by an underprivileged login should be restricted
+drop user permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to drop role
+    Server SQLState: 42501)~~
+
+
+-- psql user=permission_restrictions_psql_user password=123
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to permission_restrictions_tsql_login;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+    Server SQLState: 42501)~~
+
+
+-- Creating user by an underprivileged login should be restricted
+create user permission_restrictions_psql_user1;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create role
+    Server SQLState: 42501)~~
+
+
+-- Granting sysadmin membership by an underprivileged login should be restricted
+grant sysadmin to permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+    Server SQLState: 42501)~~
+
+
+-- Altering a role by an underprivileged login should be restricted
+alter user permission_restrictions_tsql_login with password '123'
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied
+    Server SQLState: 42501)~~
+
+
+-- Dropping a role by an underprivileged login should be restricted
+drop user permission_restrictions_psql_user;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to drop role
+    Server SQLState: 42501)~~
+
+
+-- tsql
+alter server role sysadmin add member permission_restrictions_tsql_login;
+go
+
+-- psql user=permission_restrictions_tsql_login password=123
+-- user has sysadmin membership via TDS Port, create user is allowed
+create user permission_restrictions_psql_user1 with password '123';
+go
+
+-- user has sysadmin membership, alter user is allowed
+alter user permission_restrictions_psql_user1 with password '1234'
+go
+
+-- user has sysadmin membership, drop user is allowed
+drop user permission_restrictions_psql_user1;
+go
+
+-- tsql
+alter server role sysadmin drop member permission_restrictions_tsql_login;
+go
+
+-- psql
+-- Grant sysadmin privilege to underprivileged T-SQL user
+grant sysadmin to permission_restrictions_tsql_login;
+go
+
+-- Grant sysadmin privilege to underprivileged PG user
+grant sysadmin to permission_restrictions_psql_user;
+go
+
+-- psql user=permission_restrictions_tsql_login password=123
+-- user has sysadmin membership via PG port, create user is not allowed
+create user permission_restrictions_psql_user1 with password '123';
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to create role
+    Server SQLState: 42501)~~
+
+
+-- psql
+revoke sysadmin from permission_restrictions_psql_user;
+go
+drop user permission_restrictions_psql_user;
+go
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+select pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login permission_restrictions_tsql_login
+go
