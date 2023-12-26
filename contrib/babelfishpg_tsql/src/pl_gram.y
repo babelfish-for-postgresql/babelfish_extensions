@@ -7227,18 +7227,7 @@ parse_datatype(const char *string, int location)
 	/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
 	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id) 
 									|| is_tsql_binary_or_varbinary_datatype(type_id)))
-	{
-		/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
-		/* Create string with scale "(1)" appended to build correct typeName */
-		char *newString = (char *) palloc(1 + strlen(string) + 3);
-		strcpy(newString, string);
-		strcat(newString, "(1)");
-		/* Let the main parser try to parse it under standard SQL rules */
-		typeName = typeStringToTypeName(newString);
-		typeName->names = rewrite_plain_name(typeName->names);
-		typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
-		pfree(newString);
-	}
+		typmod = 1 + VARHDRSZ;
 	
 	/* for varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
 	else if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
