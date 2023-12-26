@@ -1,0 +1,103 @@
+-- tsql
+-- typmod associated with NULL will be -1 so this will throw an error
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION 
+SELECT NULL AS Col1
+GO
+~~START~~
+char
+1         
+<NULL>
+~~END~~
+
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION ALL
+SELECT NULL AS Col1
+GO
+~~START~~
+char
+<NULL>
+1         
+~~END~~
+
+
+-- taking suggestion from above error, added explicit CAST and CONVERT
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION 
+SELECT CAST(NULL AS CHAR(10)) AS Col1
+GO
+~~START~~
+char
+1         
+<NULL>
+~~END~~
+
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION ALL
+SELECT CONVERT(CHAR(10), NULL) AS Col1
+GO
+~~START~~
+char
+<NULL>
+1         
+~~END~~
+
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION ALL
+SELECT CAST(NULL AS CHAR(10)) AS Col1
+GO
+~~START~~
+char
+<NULL>
+1         
+~~END~~
+
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION 
+SELECT CONVERT(CHAR(10), NULL) AS Col1
+GO
+~~START~~
+char
+1         
+<NULL>
+~~END~~
+
+
+-- psql
+-- create a function from PG endpoint and try calling it from T-SQL endpoint
+CREATE FUNCTION sys.func_2998() RETURNS CHAR(20) LANGUAGE SQL RETURN 'abc';
+GO
+
+-- tsql
+-- throws error
+SELECT func_2998()
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+-- taking suggestion from above error, added explicit CAST and CONVERT
+SELECT CAST(func_2998() AS CHAR(20))
+GO
+~~START~~
+char
+abc                 
+~~END~~
+
+
+SELECT CONVERT(CHAR(20), func_2998())
+GO
+~~START~~
+char
+abc                 
+~~END~~
+
+
+-- psql
+DROP FUNCTION sys.func_2998()
+GO
