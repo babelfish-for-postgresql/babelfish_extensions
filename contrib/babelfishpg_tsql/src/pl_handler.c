@@ -4352,6 +4352,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(prev_procid);
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
+			send_error = true;
 		}
 		PG_END_TRY();
 	}
@@ -4366,7 +4367,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		pltsql_revert_guc(save_nestlevel);
 		pltsql_revert_last_scope_identity(scope_level);
 		sql_dialect = saved_dialect;
-		send_error = true;
 	}
 	PG_END_TRY();
 
