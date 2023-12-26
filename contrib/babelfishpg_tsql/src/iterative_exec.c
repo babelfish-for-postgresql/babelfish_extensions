@@ -1306,13 +1306,16 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			{
 				if (is_part_of_pltsql_trycatch_block(estate))
 				{
+					bool 	spi_current_internal_xact_mode;
+
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
 					HoldPinnedPortals();
+					SPI_getCurrentInternalTxnMode(&spi_current_internal_xact_mode);
 					SPI_setCurrentInternalTxnMode(true);
 					AbortCurrentTransaction();
 					StartTransactionCommand();
-					SPI_setCurrentInternalTxnMode(false);
+					SPI_setCurrentInternalTxnMode(spi_current_internal_xact_mode);
 					MemoryContextSwitchTo(cur_ctxt);
 					RESUME_INTERRUPTS();
 				}

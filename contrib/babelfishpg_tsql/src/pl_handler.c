@@ -4252,7 +4252,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	PLtsql_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
-	int			save_nestlevel;
+	int			save_nestlevel = PltsqlGUCNestLevel;
 	int			scope_level;
 	MemoryContext savedPortalCxt;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
