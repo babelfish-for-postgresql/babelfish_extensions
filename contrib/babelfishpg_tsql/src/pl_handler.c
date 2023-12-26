@@ -4088,14 +4088,23 @@ _PG_fini(void)
  */
 
 static void
-terminate_batch(bool send_error, bool compile_error)
+terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 {
 	bool		error_mapping_failed = false;
 	int			rc;
+	int 		current_spi_stack_depth;
 
 	HOLD_INTERRUPTS();
 
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
+
+	/*
+	 * Cleanup leftovers non internal SPI connections
+	 */
+	AtEOXact_SPI(false);
+	SPI_get_depth(&current_spi_stack_depth);
+
+	Assert(current_spi_stack_depth == SPI_depth);
 
 	/*
 	 * Disconnect from SPI manager
@@ -4250,6 +4259,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	Oid			prev_procid = InvalidOid;
 	int			save_pltsql_trigger_depth = pltsql_trigger_depth;
 	int			saved_dialect = sql_dialect;
+	int 		current_spi_stack_depth;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -4274,8 +4284,9 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
-	if (support_tsql_trans)
-		SPI_setCurrentInternalTxnMode(true);
+
+	SPI_setCurrentInternalTxnMode(true);
+	SPI_get_depth(&current_spi_stack_depth);
 
 	elog(DEBUG2, "TSQL TXN call handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
@@ -4346,7 +4357,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			pltsql_remove_current_query_env();
 			pltsql_revert_guc(save_nestlevel);
 			pltsql_revert_last_scope_identity(scope_level);
-			terminate_batch(true /* send_error */ , false /* compile_error */ );
+			terminate_batch(true /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 			sql_dialect = saved_dialect;
 			return retval;
 		}
@@ -4366,7 +4377,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	pltsql_revert_guc(save_nestlevel);
 	pltsql_revert_last_scope_identity(scope_level);
 
-	terminate_batch(false /* send_error */ , false /* compile_error */ );
+	terminate_batch(false /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 
 	return retval;
 }
@@ -4391,6 +4402,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	int			saved_dialect = sql_dialect;
 	int			nargs = PG_NARGS();
 	int			i;
+	int 		current_spi_stack_depth;
 	MemoryContext savedPortalCxt;
 	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
 	bool		nonatomic;
@@ -4432,8 +4444,8 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
-	if (support_tsql_trans || true)
-		SPI_setCurrentInternalTxnMode(true);
+	SPI_setCurrentInternalTxnMode(true);
+	SPI_get_depth(&current_spi_stack_depth);
 
 	elog(DEBUG2, "TSQL TXN inline handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
@@ -4476,7 +4488,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		terminate_batch(true /* send_error */ , true /* compile_error */ );
+		terminate_batch(true /* send_error */ , true /* compile_error */ , current_spi_stack_depth);
 		return retval;
 	}
 	PG_END_TRY();
@@ -4585,7 +4597,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		}
 		sql_dialect = saved_dialect;
 
-		terminate_batch(true /* send_error */ , false /* compile_error */ );
+		terminate_batch(true /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 		return retval;
 	}
 	PG_END_TRY();
@@ -4624,7 +4636,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	}
 	sql_dialect = saved_dialect;
 
-	terminate_batch(false /* send_error */ , false /* compile_error */ );
+	terminate_batch(false /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 
 	return retval;
 }
