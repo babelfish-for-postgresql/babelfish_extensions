@@ -418,10 +418,12 @@ $node->restart;
 my @connstr1 = $tsql_node->tsql_connstr('master');
 $tsql_node->connect_ok('Kerberos auth test', (connstr => \@connstr1));
 
-# my $ret = $tsql_node->safe_tsql('master', 'SELECT gss_authenticated from pg_stat_gssapi where pid = pg_backend_pid();');
-note "printing ret value";
-# note "$ret";
-# is($ret, 1, 'Verified');
+$tsql_node->connect_ok('pg_stat_gssapi and connection log test',
+			(connstr => \@connstr1,
+			 sql => "SELECT gss_authenticated, principal from pg_stat_gssapi where pid = pg_backend_pid();",
+      			 expected_stdout => qr/1.*test1\@$realm/,
+	    		 log_like => [qr/connection authorized: user=test1\@$realm, application=SQLCMD, Tds Version=0x\d\d\d\d\d\d\d\d. GSS \(authenticated=yes, encrypted=no, principal=test1\@$realm\)/]));
+
 
 # Reset pg_hba.conf and mark every connection to use password based auth
 # But we should be able to use kerberos auth through TDS endpoint irrespective
