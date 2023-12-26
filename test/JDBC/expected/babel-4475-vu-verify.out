@@ -14,19 +14,18 @@ ab
 ~~END~~
 
 
--- psql
-SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'bsrohan_view_1';
+select definition from sys.sql_modules where object_id = object_id('babel_4475_v1')
 go
 ~~START~~
-text
- SELECT 'a'::sys."varchar"(10)::sys."binary"(2)::sys."varchar"(2) AS "varchar";
+nvarchar
+create view babel_4475_v1 as select cast(cast('a' as binary(2)) as varchar(2))
 ~~END~~
 
 
-SELECT pg_catalog.pg_get_viewdef(oid, true) FROM pg_class WHERE relname = 'bsrohan_view_1';
+select definition from sys.sql_modules where object_id = object_id('babel_4475_v2')
 go
 ~~START~~
-text
- SELECT 'a'::sys."varchar"(10)::sys."binary"(2)::sys."varchar"(2) AS "varchar";
+nvarchar
+create view babel_4475_v2 as select cast(cast('ab' as rowversion) as varchar(2))
 ~~END~~
 
