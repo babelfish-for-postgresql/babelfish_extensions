@@ -847,6 +847,8 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connecting to remote server \"%s\"", data_src);
 
+		LINKED_SERVER_DEBUG("code coverage debug log");
+
 		*lsproc = LINKED_SERVER_OPEN(login, data_src);
 		if (!(*lsproc))
 			ereport(ERROR,
