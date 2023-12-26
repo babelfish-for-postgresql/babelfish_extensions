@@ -4252,7 +4252,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	PLtsql_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
-	int			save_nestlevel = PltsqlGUCNestLevel;
+	int			save_nestlevel;
 	int			scope_level;
 	MemoryContext savedPortalCxt;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
@@ -4366,16 +4366,15 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	PG_FINALLY();
 	{
 		sql_dialect = saved_dialect;
+		func->use_count--;
+
+		func->cur_estate = save_cur_estate;
+
+		pltsql_remove_current_query_env();
+		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
 	}
 	PG_END_TRY();
-
-	func->use_count--;
-
-	func->cur_estate = save_cur_estate;
-
-	pltsql_remove_current_query_env();
-	pltsql_revert_guc(save_nestlevel);
-	pltsql_revert_last_scope_identity(scope_level);
 
 	terminate_batch(false /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 
