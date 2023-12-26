@@ -19,6 +19,8 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          code_coverage: 'yes'
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -92,3 +94,34 @@ jobs:
       - name: Check and upload coredumps
         if: always() && steps.jdbc.outcome == 'failure'
         uses: ./.github/composite-actions/upload-coredump
+
+      - name: Generate Code Coverage
+        id: generate-code-coverage
+        if: always() && steps.jdbc.outcome == 'success'
+        run: |
+          export PG_CONFIG=~/psql/bin/pg_config
+          export PG_SRC=~/work/postgresql_modified_for_babelfish
+          export cmake=$(which cmake)
+          cd contrib
+          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
+          do
+            cd $ext
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+            cd ..
+          done
+        shell: bash
+  
+      - name: Summarize code coverage
+        id: code-coverage-summary
+        if: always() && steps.generate-code-coverage.outcome == 'success'
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o jdbc-lcov.info
+          lcov --list jdbc-lcov.info
+
+      - name: Upload coverage to coveralls
+        if: always() && steps.code-coverage-summary.outcome == 'success' && github.event_name == 'pull_request'
+        uses: coverallsapp/github-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: $GITHUB_WORKSPACE/contrib/jdbc-lcov.info
