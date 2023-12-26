@@ -2435,6 +2435,14 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
+						const char *db_owner_name;
+
+						db_owner_name = get_db_owner_name(get_cur_db_name());
+						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("User does not have permission to perform this action.")));
+
 						/* Set current user to dbo user for create permissions */
 						prev_current_user = GetUserNameFromId(GetUserId(), false);
 
