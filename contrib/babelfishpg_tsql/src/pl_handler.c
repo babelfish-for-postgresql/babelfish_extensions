@@ -4099,18 +4099,19 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
 
 	/*
-	 * Cleanup leftovers non internal SPI connections
-	 */
-	AtEOXact_SPI(false);
-	SPI_get_depth(&current_spi_stack_depth);
-
-	Assert(current_spi_stack_depth == SPI_depth);
-
-	/*
 	 * Disconnect from SPI manager
+	 * Also cleanup remnant SPI connections
+	 * Ideally current depth should be same as 
+	 * when caller was connecting to SPI Manager
 	 */
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	SPI_get_depth(&current_spi_stack_depth);
+	
+	if(current_spi_stack_depth < SPI_depth)
+		elog(FATAL, "SPI stack corrupted");
+	
+	while(current_spi_stack_depth-- >= SPI_depth)
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	if (send_error)
 	{
