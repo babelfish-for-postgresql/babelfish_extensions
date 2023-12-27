@@ -160,7 +160,6 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event);
-static bool pltsql_bbfCheckRecursionInTrigger(ResultRelInfo *resultRelInfo);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static bool bbf_check_rowcount_hook(int es_processed);
@@ -213,7 +212,6 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
-static bbfCheckRecursionInTrigger_hook_type prev_bbfCheckRecursionInTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -332,9 +330,6 @@ InstallExtendedHooks(void)
 	prev_bbfViewHasInsteadofTrigger_hook = bbfViewHasInsteadofTrigger_hook;
 	bbfViewHasInsteadofTrigger_hook = pltsql_bbfViewHasInsteadofTrigger;
 
-	prev_bbfCheckRecursionInTrigger_hook = bbfCheckRecursionInTrigger_hook;
-	bbfCheckRecursionInTrigger_hook = pltsql_bbfCheckRecursionInTrigger;
-
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -451,7 +446,6 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
-	bbfCheckRecursionInTrigger_hook = prev_bbfCheckRecursionInTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -741,7 +735,7 @@ static bool
 pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 {
 	TriggerDesc *trigDesc = view->trigdesc;
-	if (trigDesc && triggerOids)
+	if (trigDesc && triggerInvocationSequence)
 	{
 		int i;
 		for (i = 0; i < trigDesc->numtriggers; i++)
@@ -749,12 +743,12 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			Trigger *trigger = &trigDesc->triggers[i];
 			Oid current_tgoid = trigger->tgoid;
 			Oid prev_tgoid = InvalidOid;
-			prev_tgoid = lfirst_oid(list_tail(triggerOids));
+			prev_tgoid = lfirst_oid(list_tail(triggerInvocationSequence));
 			if (prev_tgoid == current_tgoid)
 			{
 				return false; /** Direct recursive trigger case*/
 			}
-			else if (list_member_oid(triggerOids, current_tgoid))
+			else if (list_member_oid(triggerInvocationSequence, current_tgoid))
             {
                 /** Indirect recursive trigger case*/
                 ereport(ERROR,
@@ -783,30 +777,6 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			break;
 	}
 	return false;
-}
-
-static bool pltsql_bbfCheckRecursionInTrigger(ResultRelInfo *relinfo)
-{
-	if (triggerOids && relinfo->ri_TrigDesc)
-	{
-		TriggerDesc *trigDesc;
-		int i;
-		trigDesc = relinfo->ri_TrigDesc;
-		for (i = 0; i < trigDesc->numtriggers; i++)
-		{
-			Trigger *trigger = &trigDesc->triggers[i];
-			Oid current_tgoid = trigger->tgoid;
-			Oid prev_tgoid = lfirst_oid(list_tail(triggerOids));
-			if (prev_tgoid != current_tgoid && list_member_oid(triggerOids, current_tgoid))
-			{
-				/** Recursive trigger case*/
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
-			}
-		}
-	}
-	return true;
 }
 
 /*
