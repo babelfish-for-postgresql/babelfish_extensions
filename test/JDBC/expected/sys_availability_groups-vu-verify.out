@@ -1,0 +1,28 @@
+SELECT * FROM sys.availability_groups
+GO
+~~START~~
+uniqueidentifier#!#varchar#!#nvarchar#!#nvarchar#!#int#!#int#!#tinyint#!#nvarchar#!#smallint#!#bit#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#int#!#bigint#!#bit
+~~END~~
+
+
+SELECT * FROM sys_availability_groups_test_view
+GO
+~~START~~
+uniqueidentifier#!#varchar#!#nvarchar#!#nvarchar#!#int#!#int#!#tinyint#!#nvarchar#!#smallint#!#bit#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#int#!#bigint#!#bit
+~~END~~
+
+
+EXEC sys_availability_groups_test_proc
+GO
+~~START~~
+uniqueidentifier#!#varchar#!#nvarchar#!#nvarchar#!#int#!#int#!#tinyint#!#nvarchar#!#smallint#!#bit#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#int#!#bigint#!#bit
+~~END~~
+
+
+SELECT sys_availability_groups_test_func()
+GO
+~~START~~
+int
+0
+~~END~~
+
