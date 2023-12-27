@@ -4248,12 +4248,12 @@ Datum
 pltsql_call_handler(PG_FUNCTION_ARGS)
 {
 	bool		nonatomic;
-	PLtsql_function *func = NULL;
+	PLtsql_function *func;
 	PLtsql_execstate *save_cur_estate;
 	Datum		retval;
 	int			rc;
-	int			save_nestlevel = NULL;
-	int			scope_level = NULL;
+	int			save_nestlevel;
+	int			scope_level;
 	MemoryContext savedPortalCxt;
 	bool		support_tsql_trans = pltsql_support_tsql_transactions();
 	Oid			prev_procid = InvalidOid;
@@ -4352,24 +4352,21 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(prev_procid);
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
+			/* Decrement use-count, restore cur_estate, and propagate error */
+			func->use_count--;
+
+			func->cur_estate = save_cur_estate;
+
+			pltsql_remove_current_query_env();
+			pltsql_revert_guc(save_nestlevel);
+			pltsql_revert_last_scope_identity(scope_level);
+			
 			send_error = true;
 		}
 		PG_END_TRY();
 	}
 	PG_FINALLY();
 	{
-		/* Decrement use-count, restore cur_estate, and propagate error */
-		if(func != NULL)
-		{
-			func->use_count--;
-			func->cur_estate = save_cur_estate;
-		}
-
-		pltsql_remove_current_query_env();
-		if(save_nestlevel != NULL)
-			pltsql_revert_guc(save_nestlevel);
-		if(scope_level != NULL)
-			pltsql_revert_last_scope_identity(scope_level);
 		sql_dialect = saved_dialect;
 	}
 	PG_END_TRY();
