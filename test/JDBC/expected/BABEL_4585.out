@@ -1,0 +1,74 @@
+CREATE TABLE babel_4585_t1 (id VARCHAR(10));
+INSERT INTO babel_4585_t1 VALUES ('2000-12-12'), ('1000-01-01');
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT DATEDIFF(Year, GetDate(), id) FROM babel_4585_t1
+GO
+~~START~~
+int
+-23
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+
+DECLARE cursor_4585_1 CURSOR FOR SELECT DATEDIFF(Year, GetDate(), id) FROM babel_4585_t1;
+OPEN cursor_4585_1;
+FETCH NEXT FROM cursor_4585_1;
+FETCH NEXT FROM cursor_4585_1;
+CLOSE cursor_4585_1;    
+GO
+~~START~~
+int
+-23
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cursor "cursor_4585_1" does not exist)~~
+
+
+CREATE TABLE babel_4585_2 (id VARBINARY(10));
+INSERT INTO babel_4585_2 VALUES (0x64756D6D7976616C7565), (0x000001);
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT CAST(id AS VARCHAR(30)) FROM babel_4585_2;
+GO
+~~START~~
+varchar
+dummyvalue
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
+
+
+DECLARE cursor_4585_2 CURSOR FOR SELECT CAST(id as VARCHAR(30)) FROM babel_4585_2;
+OPEN cursor_4585_2; 
+FETCH NEXT FROM cursor_4585_2; 
+FETCH NEXT FROM cursor_4585_2;
+CLOSE cursor_4585_2;
+GO
+~~START~~
+varchar
+dummyvalue
+~~END~~
+
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Failed to convert from data type varbinary to varchar, invalid byte sequence for encoding "WIN1252": 0x00)~~
+
+
+DROP TABLE babel_4585_2, babel_4585_t1
+GO
