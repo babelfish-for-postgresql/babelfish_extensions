@@ -78,7 +78,7 @@ ALTER VIEW sys.syscolumns RENAME TO syscolumns_deprecated_3_4;
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name
   , out_object_id as id
-  , CAST(out_system_type_id as sys.tinyint) as xtype
+  , out_system_type_id as xtype
   , 0::sys.tinyint as typestat
   , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as xusertype
   , out_max_length as length
@@ -98,7 +98,7 @@ SELECT out_name as name
   , out_collation_id as collationid
   , (case out_is_nullable::int when 1 then 8    else 0 end +
      case out_is_identity::int when 1 then 128  else 0 end)::sys.tinyint as status
-  , CAST(out_system_type_id as sys.tinyint) as type
+  , out_system_type_id as type
   , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as usertype
   , null::sys.varchar(255) as printfmt
   , out_precision::smallint as prec
@@ -111,7 +111,7 @@ FROM sys.columns_internal()
 union all
 SELECT p.name
   , p.id
-  , CAST(p.xtype as sys.tinyint)
+  , p.xtype
   , 0::sys.tinyint as typestat
   , (case when p.xtype < 32767 then p.xtype else null end)::smallint as xusertype
   , null as length
@@ -130,7 +130,7 @@ SELECT p.name
   , 0::smallint as offset
   , collationid
   , (case p.isoutparam when 1 then 64 else 0 end)::sys.tinyint as status
-  , CAST(p.xtype as sys.tinyint) as type
+  , p.xtype type
   , (case when p.xtype < 32767 then p.xtype else null end)::smallint as usertype
   , null::varchar(255) as printfmt
   , p.prec
