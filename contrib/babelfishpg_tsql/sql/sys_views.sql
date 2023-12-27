@@ -107,9 +107,9 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 create or replace view sys.views as 
 select 
   CAST(t.relname as sys.sysname) as name
-  , t.oid as object_id
+  , t.oid::int as object_id
   , null::integer as principal_id
-  , sch.schema_id as schema_id
+  , sch.schema_id::int as schema_id
   , 0 as parent_object_id
   , 'V'::sys.bpchar(2) as type
   , 'VIEW'::sys.nvarchar(60) as type_desc
@@ -985,9 +985,9 @@ GRANT SELECT ON sys.procedures TO PUBLIC;
 
 create or replace view sys.sysforeignkeys as
 select
-  c.oid as constid
-  , c.conrelid as fkeyid
-  , c.confrelid as rkeyid
+  CAST(c.oid as int) as constid
+  , CAST(c.conrelid as int) as fkeyid
+  , CAST(c.confrelid as int) as rkeyid
   , a_con.attnum as fkey
   , a_conf.attnum as rkey
   , a_conf.attnum as keyno
@@ -1035,21 +1035,21 @@ GRANT SELECT ON sys.sysindexes TO PUBLIC;
 
 create or replace view sys.sysprocesses as
 select
-  a.pid as spid
+  cast(a.pid as smallint) as spid
   , null::smallint as kpid
-  , coalesce(blocking_activity.pid, 0) as blocked
+  , CAST(coalesce(blocking_activity.pid, 0) as smallint) as blocked
   , null::sys.binary(2) as waittype
   , 0::bigint as waittime
   , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
   , null::sys.nchar(256) as waitresource
-  , coalesce(t.database_id, 0)::oid as dbid
+  , coalesce(t.database_id, 0)::int as dbid
   , a.usesysid as uid
   , 0::int as cpu
   , 0::bigint as physical_io
   , 0::int as memusage
   , cast(a.backend_start as sys.datetime) as login_time
   , cast(a.query_start as sys.datetime) as last_batch
-  , 0 as ecid
+  , 0::smallint as ecid
   , 0::smallint as open_tran
   , CAST(a.state as sys.nchar(30)) as status
   , null::sys.binary(86) as sid
@@ -1062,7 +1062,7 @@ select
   , null::sys.nchar(12) as net_address
   , null::sys.nchar(12) as net_library
   , CAST(a.usename as sys.nchar(128)) as loginname
-  , t.context_info::bytea as context_info
+  , CAST(t.context_info::sys.varbinary(128) as sys.binary(128)) as context_info
   , null::sys.binary(20) as sql_handle
   , 0::int as stmt_start
   , 0::int as stmt_end
@@ -1090,9 +1090,9 @@ create or replace view sys.types As
 -- For System types
 select
   CAST(tsql_type_name as sys.sysname) as name
-  , t.oid as system_type_id
-  , t.oid as user_type_id
-  , s.oid as schema_id
+  , cast(t.oid as int) as system_type_id
+  , cast(t.oid as int) as user_type_id
+  , cast(s.oid as int) as schema_id
   , cast(NULL as INT) as principal_id
   , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
   , sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as precision
@@ -1119,9 +1119,9 @@ and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
 select cast(t.typname as sys.sysname) as name
-  , t.typbasetype as system_type_id
-  , t.oid as user_type_id
-  , t.typnamespace as schema_id
+  , cast(t.typbasetype as int) as system_type_id
+  , cast(t.oid as int) as user_type_id
+  , cast(t.typnamespace as int) as schema_id
   , null::integer as principal_id
   , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
   , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) end as precision
@@ -2182,7 +2182,7 @@ LANGUAGE plpgsql STABLE;
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name
   , out_object_id as id
-  , out_system_type_id as xtype
+  , CAST(out_system_type_id as sys.tinyint) as xtype
   , 0::sys.tinyint as typestat
   , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as xusertype
   , out_max_length as length
@@ -2202,7 +2202,7 @@ SELECT out_name as name
   , out_collation_id as collationid
   , (case out_is_nullable::int when 1 then 8    else 0 end +
      case out_is_identity::int when 1 then 128  else 0 end)::sys.tinyint as status
-  , out_system_type_id as type
+  , CAST(out_system_type_id as sys.tinyint) as type
   , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as usertype
   , null::sys.varchar(255) as printfmt
   , out_precision::smallint as prec
@@ -2215,7 +2215,7 @@ FROM sys.columns_internal()
 union all
 SELECT p.name
   , p.id
-  , p.xtype
+  , CAST(p.xtype as sys.tinyint)
   , 0::sys.tinyint as typestat
   , (case when p.xtype < 32767 then p.xtype else null end)::smallint as xusertype
   , null as length
@@ -2234,7 +2234,7 @@ SELECT p.name
   , 0::smallint as offset
   , collationid
   , (case p.isoutparam when 1 then 64 else 0 end)::sys.tinyint as status
-  , p.xtype as type
+  , CAST(p.xtype as sys.tinyint) as type
   , (case when p.xtype < 32767 then p.xtype else null end)::smallint as usertype
   , null::varchar(255) as printfmt
   , p.prec
@@ -2310,7 +2310,7 @@ create or replace view sys.dm_exec_connections
    , 'TCP'::sys.nvarchar(40) as net_transport
    , 'TSQL'::sys.nvarchar(40) as protocol_type
    , d.protocol_version as protocol_version
-   , 4 as endpoint_id
+   , CAST(4 as int) as endpoint_id
    , d.encrypyt_option::sys.nvarchar(40) as encrypt_option
    , null::sys.nvarchar(40) as auth_scheme
    , null::smallint as node_affinity
