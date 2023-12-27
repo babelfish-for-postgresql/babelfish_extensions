@@ -5,3 +5,118 @@ GO
 
 ~~ERROR (Message: relation "t1" does not exist)~~
 
+
+
+-- tsql
+
+-- Test nested procedure calls with rollback and error case
+CREATE TABLE babel_4360_t (id INT);
+GO
+
+-- psql     currentSchema=master_dbo,public
+
+CREATE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+  ROLLBACK;
+  INSERT INTO babel_4360_t VALUES (99);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+  CALL psql_interop_proc1();
+  INSERT INTO babel_4360_t VALUES (98);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+
+CREATE PROCEDURE tsql_interop_proc1
+AS
+EXEC psql_interop_proc2;
+INSERT INTO babel_4360_t VALUES (97);
+GO
+
+CREATE PROCEDURE tsql_interop_proc2
+AS
+EXEC tsql_interop_proc1;
+INSERT INTO babel_4360_t VALUES (96);
+GO
+
+-- psql     currentSchema=master_dbo,public
+
+CREATE PROCEDURE psql_interop_proc3()
+AS
+$$
+BEGIN
+  CALL tsql_interop_proc2();
+  INSERT INTO babel_4360_t VALUES (95);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE psql_interop_proc4()
+AS
+$$
+BEGIN
+  CALL psql_interop_proc3();
+  INSERT INTO babel_4360_t VALUES (94);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+
+CREATE PROCEDURE tsql_interop_proc3
+AS
+EXEC psql_interop_proc4;
+INSERT INTO babel_4360_t VALUES (93);
+GO
+
+CREATE PROCEDURE tsql_interop_proc4
+AS
+EXEC tsql_interop_proc3;
+INSERT INTO babel_4360_t VALUES (92);
+GO
+
+EXEC tsql_interop_proc4;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_4360_t
+GO
+~~START~~
+int
+99
+98
+97
+96
+95
+94
+93
+92
+~~END~~
+
+
+DROP TABLE babel_4360_t
+GO
+
+DROP PROCEDURE IF EXISTS tsql_interop_proc4, tsql_interop_proc3, tsql_interop_proc2, tsql_interop_proc1;
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE IF EXISTS psql_interop_proc4, psql_interop_proc3, psql_interop_proc2, psql_interop_proc1;
+GO
