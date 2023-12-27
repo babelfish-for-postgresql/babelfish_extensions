@@ -4352,18 +4352,19 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		{
 			set_procid(prev_procid);
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
-			/* Decrement use-count, restore cur_estate, and propagate error */
-			func->use_count--;
-
-			func->cur_estate = save_cur_estate;
-
-			pltsql_remove_current_query_env();
-			pltsql_revert_guc(save_nestlevel);
-			pltsql_revert_last_scope_identity(scope_level);
 			
 			send_error = true;
 		}
 		PG_END_TRY();
+		
+		/* Decrement use-count, restore cur_estate, and propagate error */
+		func->use_count--;
+
+		func->cur_estate = save_cur_estate;
+
+		pltsql_remove_current_query_env();
+		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
 	}
 	PG_FINALLY();
 	{
