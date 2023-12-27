@@ -1,15 +1,11 @@
 DECLARE @a TABLE (a INT);
 INSERT INTO @a EXECUTE('SELECT * FROM t1; SELECT 3');
 GO
-~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: relation "t1" does not exist)~~
-
-
+-- Test nested procedure calls with rollback and error case
 
 -- tsql
 
--- Test nested procedure calls with rollback and error case
 CREATE TABLE babel_4360_t (id INT);
 GO
 
@@ -87,37 +83,15 @@ GO
 
 EXEC tsql_interop_proc4;
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 SELECT * FROM babel_4360_t
 GO
-~~START~~
-int
-99
-98
-97
-96
-95
-94
-93
-92
-~~END~~
-
 
 DELETE FROM babel_4360_t;
 GO
-~~ROW COUNT: 8~~
 
-
--- psql     currentSchema=master_dbo,public
 -- alter procedure to throw error
+-- psql     currentSchema=master_dbo,public
 CREATE OR REPLACE PROCEDURE psql_interop_proc1()
 AS
 $$
@@ -135,18 +109,9 @@ GO
 -- tsql
 EXEC tsql_interop_proc4;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Throw an exception to check error case)~~
-
 
 SELECT * FROM babel_4360_t
 GO
-~~START~~
-int
-100
-~~END~~
-
 
 DROP TABLE babel_4360_t
 GO
