@@ -152,7 +152,7 @@ char* translate_simple_term(const char* inputStr) {
                 appendStringInfoString(&output, "<->");
             } else if (*inputPtr != '-' && containsSpecialCharacters((unsigned char)*inputPtr)) {   // Handle special characters and other languages
                 pfree(trimmedInputStr);
-                yyerror(NULL, "Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish");
+                yyerror(NULL, "Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish");
             } else {
                 // Copy the character
                 appendStringInfoChar(&output, *inputPtr);
@@ -165,7 +165,7 @@ char* translate_simple_term(const char* inputStr) {
         for (inputPtr = trimmedInputStr; *inputPtr != '\0'; inputPtr++) {
             if (*inputPtr != '-' && containsSpecialCharacters((unsigned char)*inputPtr)) {   // Handle special characters and other languages
                 pfree(trimmedInputStr);
-                yyerror(NULL, "Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish");
+                yyerror(NULL, "Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish");
             }
         }
         // It's a single word, so no transformation needed

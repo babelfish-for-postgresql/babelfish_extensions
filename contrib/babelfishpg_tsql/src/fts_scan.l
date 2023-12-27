@@ -75,7 +75,7 @@ fts_scanner_init(const char *str)
 
 	// Check for Non-English Language, if true, throw unsupported error
 	if(isNonEnglishString(str)) {
-		yyerror(NULL, "Full-text search conditions with noise words or languages other than English are not currently supported in Babelfish");
+		yyerror(NULL, "Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish");
 	}
 
 	/*
