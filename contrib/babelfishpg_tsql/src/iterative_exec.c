@@ -1365,6 +1365,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 */
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
+			AtCleanup_Portals();
 			/* Hold portals to make sure that cursors work */
 			HoldPinnedPortals();
 			AbortCurrentTransaction();
@@ -1380,6 +1381,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 */
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback internal transaction");
+			AtCleanup_Portals();
 			HoldPinnedPortals();
 			pltsql_rollback_txn();
 			estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
@@ -1401,6 +1403,7 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback implicit transaction");
+			AtCleanup_Portals();
 			pltsql_rollback_txn();
 			MemoryContextSwitchTo(cur_ctxt);
 			RESUME_INTERRUPTS();
