@@ -148,7 +148,7 @@ ALTER VIEW sys.dm_exec_connections RENAME TO dm_exec_connections_deprecated_3_4;
 
 create or replace view sys.dm_exec_connections
  as
- select a.pid as session_idsf
+ select a.pid as session_id
    , a.pid as most_recent_session_id
    , a.backend_start::sys.datetime as connect_time
    , 'TCP'::sys.nvarchar(40) as net_transport
@@ -298,7 +298,7 @@ select
   , null::sys.nchar(12) as net_address
   , null::sys.nchar(12) as net_library
   , CAST(a.usename as sys.nchar(128)) as loginname
-  , CAST(t.context_info::sys.varbinary(128) as sys.binary(128)) as context_info
+  , t.context_info as context_info
   , null::sys.binary(20) as sql_handle
   , 0::int as stmt_start
   , 0::int as stmt_end

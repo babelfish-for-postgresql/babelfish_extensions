@@ -1062,7 +1062,7 @@ select
   , null::sys.nchar(12) as net_address
   , null::sys.nchar(12) as net_library
   , CAST(a.usename as sys.nchar(128)) as loginname
-  , CAST(t.context_info::sys.varbinary(128) as sys.binary(128)) as context_info
+  , t.context_info as context_info
   , null::sys.binary(20) as sql_handle
   , 0::int as stmt_start
   , 0::int as stmt_end
