@@ -271,9 +271,9 @@ ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_3_4;
 
 create or replace view sys.sysprocesses as
 select
-  cast(a.pid as smallint) as spid
+  a.pid as spid
   , null::smallint as kpid
-  , CAST(coalesce(blocking_activity.pid, 0) as smallint) as blocked
+  , coalesce(blocking_activity.pid, 0) as blocked
   , null::sys.binary(2) as waittype
   , 0::bigint as waittime
   , CAST(a.wait_event_type as sys.nchar(32)) as lastwaittype
