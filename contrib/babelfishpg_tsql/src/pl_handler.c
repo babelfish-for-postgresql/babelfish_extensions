@@ -4106,10 +4106,10 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 	 */
 	SPI_get_depth(&current_spi_stack_depth);
 	
-	if(current_spi_stack_depth < SPI_depth)
+	if (current_spi_stack_depth < SPI_depth)
 		elog(FATAL, "SPI stack corrupted");
 	
-	while(current_spi_stack_depth-- >= SPI_depth)
+	while (current_spi_stack_depth-- >= SPI_depth)
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)
 			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
