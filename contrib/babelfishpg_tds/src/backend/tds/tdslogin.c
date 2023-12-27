@@ -1462,6 +1462,7 @@ CheckGSSAuth(Port *port)
 	gss_buffer_desc gbuf;
 	MemoryContext oldContext;
 	char	   *at_pos = NULL;
+	char	   *princ;
 
 	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
 	{
@@ -1582,6 +1583,24 @@ CheckGSSAuth(Port *port)
 		SendGSSAuthError(ERROR,
 						 _("retrieving GSS user name failed"),
 						 maj_stat, min_stat);
+
+	/*
+	 * gbuf.value might not be null-terminated, so turn it into a regular
+	 * null-terminated string.
+	 */
+	princ = palloc(gbuf.length + 1);
+	memcpy(princ, gbuf.value, gbuf.length);
+	princ[gbuf.length] = '\0';
+
+	/*
+	 * Copy the original name of the authenticated principal into our backend
+	 * memory for display later.
+	 *
+	 * This is also our authenticated identity.  Set it now, rather than
+	 * waiting for the usermap check below, because authentication has already
+	 * succeeded and we want the log file to reflect that.
+	 */
+	port->gss->princ = MemoryContextStrdup(TopMemoryContext, princ);
 
 	/*
 	 * XXX: In PG there are options to match realm names or perform ident

@@ -1453,11 +1453,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	InlineCodeBlock *codeblock;
-	volatile LocalTransactionId before_lxid;
+	volatile LocalTransactionId before_lxid = 0;
 	LocalTransactionId after_lxid;
-	SimpleEcontextStackEntry *topEntry;
-	volatile int save_nestlevel;
-	volatile int scope_level;
+	SimpleEcontextStackEntry *topEntry = NULL;
+	volatile int save_nestlevel = 0;
+	volatile int scope_level = 0;
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 
@@ -2276,7 +2276,7 @@ exec_stmt_deallocate(PLtsql_execstate *estate, PLtsql_stmt_deallocate *stmt)
 {
 	PLtsql_var *curvar;
 	Portal		portal;
-	char	   *curname;
+	char	   *curname = NULL;
 	MemoryContext oldcontext;
 
 	Assert(estate->datums[stmt->curvar]->dtype == PLTSQL_DTYPE_VAR);
@@ -2514,7 +2514,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 * be more than 2 since db name can not be a qualifier for a UDT and
 		 * error will be thrown in the parser itself.
 		 */
-		rewrite_plain_name(p->argType->names);
+		p->argType->names = rewrite_plain_name(p->argType->names);
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;

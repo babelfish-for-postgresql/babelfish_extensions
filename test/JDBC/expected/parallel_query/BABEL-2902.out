@@ -1,0 +1,587 @@
+-- psql
+-- Test setup --
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+USE master
+GO
+
+-- Drop tables and databases if exist
+DROP TABLE IF EXISTS babel_2902_ma1
+DROP DATABASE IF EXISTS babel_2902_testdb_1
+DROP DATABASE IF EXISTS babel_2902_testdb_2
+DROP DATABASE IF EXISTS babel_2902_testdb_3
+GO
+
+
+--Create tables and databases for testing
+CREATE TABLE babel_2902_ma1 (a int)
+GO
+
+CREATE DATABASE babel_2902_testdb_1
+GO
+
+USE babel_2902_testdb_1
+CREATE TABLE babel_2902_t1 (z int)
+GO
+
+CREATE DATABASE babel_2902_testdb_2
+GO
+
+USE babel_2902_testdb_2
+CREATE TABLE babel_2902_t2 (z int)
+GO
+
+CREATE DATABASE babel_2902_testdb_3
+GO
+
+USE babel_2902_testdb_3
+CREATE TABLE babel_2902_t3 (z int)
+GO
+
+USE master
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET babelfish_showplan_all on
+GO
+
+-- Test cases for print --
+--Basic
+PRINT 'hi'
+GO
+~~START~~
+text
+Query Text: PRINT 'hi'
+~~END~~
+
+PRINT 10
+GO
+~~START~~
+text
+Query Text: PRINT 10
+~~END~~
+
+PRINT 12.023
+GO
+~~START~~
+text
+Query Text: PRINT 12.023
+~~END~~
+
+
+--Function
+PRINT pg_backend_pid()
+GO
+~~START~~
+text
+Query Text: PRINT pg_backend_pid()
+~~END~~
+
+
+--Expression
+PRINT 20 + 20
+GO
+~~START~~
+text
+Query Text: PRINT 20 + 20
+~~END~~
+
+
+-- Variables
+DECLARE @a INT
+SET @a = 100
+PRINT @a
+GO
+~~START~~
+text
+Query Text: ASSIGN @a = SELECT 100
+  Query Text: SELECT 100
+  ->  Result
+Query Text: PRINT @a
+~~END~~
+
+
+-- Exceptions
+PRINT 1/0
+GO
+~~START~~
+text
+Query Text: PRINT 1/0
+~~END~~
+
+
+--In combination with other statements
+BEGIN
+    DECLARE @a INT
+    SET @a = 0
+    SELECT COUNT(*) FROM babel_2902_ma1
+    PRINT 'The value of a is ' + CONVERT(VARCHAR, @a)
+    SET @a = @a + 1
+END
+GO
+~~START~~
+text
+Query Text: ASSIGN @a = SELECT 0
+  Query Text: SELECT 0
+  ->  Result
+Query Text: SELECT COUNT(*) FROM babel_2902_ma1
+Finalize Aggregate
+  ->  Gather
+        Workers Planned: 3
+        ->  Partial Aggregate
+              ->  Parallel Seq Scan on babel_2902_ma1
+Query Text: PRINT 'The value of a is ' + CONVERT(VARCHAR, @a)
+Query Text: ASSIGN @a = SELECT @a + 1
+  Query Text: SELECT @a + 1
+  ->  Result
+~~END~~
+
+
+--Invalid statements
+PRINT SELECT 1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'SELECT' at line 2 and character position 6)~~
+
+ 
+---- Test cases for USE DB ----
+--Happy path
+SELECT * FROM babel_2902_ma1
+USE babel_2902_testdb_1
+SELECT * FROM babel_2902_t1
+GO
+~~START~~
+text
+Query Text: SELECT * FROM babel_2902_ma1
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_ma1
+Query Text: USE DATABASE babel_2902_testdb_1
+Query Text: SELECT * FROM babel_2902_t1
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t1
+~~END~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() --should be master
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+--Test statements before USE DB
+SET babelfish_showplan_all on
+GO
+PRINT 'testing'
+SELECT COUNT(*) FROM babel_2902_ma1
+USE babel_2902_testdb_3
+SELECT * FROM babel_2902_t3
+GO
+~~START~~
+text
+Query Text: PRINT 'testing'
+Query Text: SELECT COUNT(*) FROM babel_2902_ma1
+Finalize Aggregate
+  ->  Gather
+        Workers Planned: 3
+        ->  Partial Aggregate
+              ->  Parallel Seq Scan on babel_2902_ma1
+Query Text: USE DATABASE babel_2902_testdb_3
+Query Text: SELECT * FROM babel_2902_t3
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t3
+~~END~~
+
+SET babelfish_showplan_all off
+GO
+SELECT DB_NAME() --should be master
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+--test multiple switches
+SET babelfish_showplan_all on
+GO
+USE babel_2902_testdb_1
+SELECT * FROM babel_2902_t1
+SELECT * FROM babel_2902_t1
+SELECT * FROM babel_2902_t1
+USE babel_2902_testdb_2
+SELECT * FROM babel_2902_t2
+SELECT * FROM babel_2902_t2
+USE babel_2902_testdb_3
+SELECT * FROM babel_2902_t3
+USE babel_2902_testdb_2
+GO
+~~START~~
+text
+Query Text: USE DATABASE babel_2902_testdb_1
+Query Text: SELECT * FROM babel_2902_t1
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t1
+Query Text: SELECT * FROM babel_2902_t1
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t1
+Query Text: SELECT * FROM babel_2902_t1
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t1
+Query Text: USE DATABASE babel_2902_testdb_2
+Query Text: SELECT * FROM babel_2902_t2
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t2
+Query Text: SELECT * FROM babel_2902_t2
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t2
+Query Text: USE DATABASE babel_2902_testdb_3
+Query Text: SELECT * FROM babel_2902_t3
+Gather
+  Workers Planned: 3
+  ->  Parallel Seq Scan on babel_2902_t3
+Query Text: USE DATABASE babel_2902_testdb_2
+~~END~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() -- should still be master
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+--test multiple switches between two databases
+SET babelfish_showplan_all on
+GO
+USE babel_2902_testdb_1
+USE master
+USE babel_2902_testdb_1
+USE master
+USE babel_2902_testdb_1
+USE master
+USE babel_2902_testdb_1
+GO
+~~START~~
+text
+Query Text: USE DATABASE babel_2902_testdb_1
+Query Text: USE DATABASE master
+Query Text: USE DATABASE babel_2902_testdb_1
+Query Text: USE DATABASE master
+Query Text: USE DATABASE babel_2902_testdb_1
+Query Text: USE DATABASE master
+Query Text: USE DATABASE babel_2902_testdb_1
+~~END~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() -- should still be master
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+--test returning to a database other than master
+USE babel_2902_testdb_1
+GO
+
+SET babelfish_showplan_all on
+GO
+USE master
+GO
+~~START~~
+text
+Query Text: USE DATABASE master
+~~END~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() -- should still be babel_2902_testdb_1
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+
+SET babelfish_showplan_all on
+GO
+PRINT 10
+USE master
+USE babel_2902_testdb_2
+GO
+~~START~~
+text
+Query Text: PRINT 10
+Query Text: USE DATABASE master
+Query Text: USE DATABASE babel_2902_testdb_2
+~~END~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() -- should still be babel_2902_testdb_1
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+
+
+USE master
+--Test invalid statements
+SET babelfish_showplan_all on
+GO
+USE babel_2902_testdb_1
+SELECT * FROM babel_2902_ma1 --table only exists in master db
+PRINT 10 -- shouldn't execute
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_2902_ma1" does not exist)~~
+
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() --should be master
+SET babelfish_showplan_all on
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+USE babel_2902_testdb_1
+SELECT * FROM babel_2902_t1
+USE NOT_A_REAL_DATABASE
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "not_a_real_database" does not exist)~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() --should be master
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+
+SET babelfish_showplan_all on
+GO
+USE babel_2902_testdb_1
+USE master
+USE babel_2902_testdb_2
+USE babel_2902_testdb_1
+USE babel_2902_testdb_3
+USE NOT_A_REAL_DATABASE
+USE babel_2902_testdb_1 --should not be reached
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "not_a_real_database" does not exist)~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() --should be master
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+
+-- Invalid syntax
+SET babelfish_showplan_all on
+GO
+PRINT 'test'
+USE babel_2902_testdb_1
+USE master
+USE babel_2902_testdb_2
+SELECT FROM WHERE
+USE babel_2902_testdb_3 --should not be reached
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'FROM' at line 5 and character position 7)~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() --should be master
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+
+SET babelfish_showplan_all on
+GO
+USE babel_2902_testdb_1
+PRINT 'test'
+PRINT 'test'
+USE master
+USE babel_2902_testdb_2
+PRINT 'test'
+PRINT 'test'
+SELECT FROM WHERE
+USE babel_2902_testdb_3 --should not be reached
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'FROM' at line 8 and character position 7)~~
+
+SET babelfish_showplan_all off
+SELECT DB_NAME() --should be master
+GO
+~~START~~
+nvarchar
+babel_2902_testdb_1
+~~END~~
+
+
+
+---- TEST RAISEERROR ----
+-- note that during explain TSQL does very limited no validation on inputs to raiserror 
+-- This means that normally invalid cases such as using error code that are too low, too high
+-- or are non existant do not result in an error. Similarly, things like argument counts are 
+-- not validated, nor are variables checked for existance, so long as it is syntactically correct
+-- explain will accept the raiserror statements
+SET babelfish_showplan_all ON
+GO
+--happy path--
+RAISERROR (N'TEST %s %d.',1,1,N'testing',9);
+GO
+~~START~~
+text
+Query Text: RAISERROR (N'TEST %s %d.',1,1,N'testing',9)
+~~END~~
+
+--system error message, note message code validation is NOT done during explain--
+RAISERROR (10000,1,1,N'testing',9);
+GO
+~~START~~
+text
+Query Text: RAISERROR (10000,1,1,N'testing',9)
+~~END~~
+
+--variables, note that variable substitution is NOT done during explain --
+DECLARE @testMsg VARCHAR(100)
+SET @testMsg = 'a: %s b: %s c :%s'
+RAISERROR (@testMsg, 1, 1, 'a', 'b', 'c')
+GO
+~~START~~
+text
+Query Text: ASSIGN @testmsg = SELECT 'a: %s b: %s c :%s'
+  Query Text: SELECT 'a: %s b: %s c :%s'
+  ->  Result
+Query Text: RAISERROR (@testMsg,1,1,'a','b','c')
+~~END~~
+
+
+-- TEST THROW --
+-- Throw is similar to RAISERROR in that during explain it is lax in enforcement of validation
+-- However it does validate two cases in particular. First if it is invoked without parameters
+-- you must be inside a catch block. arguments must be of the correct types
+--happy path--
+THROW 51000, 'test', 1
+GO
+~~START~~
+text
+Query Text: THROW 51000, 'test', 1
+~~END~~
+
+-- invalid argument types --
+THROW 'a', 'test', 1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure throw(unknown, unknown, integer) does not exist)~~
+
+THROW 51000, 1, 1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure throw(integer, integer, integer) does not exist)~~
+
+THROW 51000, 1, 'test'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure throw(integer, integer, unknown) does not exist)~~
+
+
+-- try catch --
+THROW
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: THROW without parameters should be executed inside a CATCH block)~~
+
+
+-- Unable to test until explain for RESTORE CTX PARTIAL is implemented
+BEGIN TRY
+    SELECT 1/0
+END TRY
+BEGIN CATCH
+    PRINT 'test'
+    THROW
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Showing Estimated Execution Plan for RESTORE CTX PARTIAL statment is not yet supported)~~
+
+
+-- Clean up --
+SET babelfish_showplan_all OFF
+GO
+USE babel_2902_testdb_1
+DROP TABLE babel_2902_t1
+GO
+USE babel_2902_testdb_2
+DROP TABLE babel_2902_t2
+GO
+USE babel_2902_testdb_3
+DROP TABLE babel_2902_t3
+GO
+USE MASTER
+GO
+DROP TABLE IF EXISTS babel_2902_ma1
+GO
+DROP DATABASE IF EXISTS babel_2902_testdb_1
+DROP DATABASE IF EXISTS babel_2902_testdb_2
+DROP DATABASE IF EXISTS babel_2902_testdb_3
+GO
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+

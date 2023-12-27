@@ -937,7 +937,7 @@ host_os(PG_FUNCTION_ARGS)
 
 	/* filter out host info */
 	pg_version = pstrdup(PG_VERSION_STR);
-	sscanf(pg_version, "PostgreSQL %*s on %s, compiled by %*s", host_str);
+	sscanf(pg_version, "PostgreSQL %*255s on %255s, compiled by %*255s", host_str);
 
 	if (strstr(host_str, "w64") || strstr(host_str, "w32") || strstr(host_str, "mingw") || strstr(host_str, "visual studio"))
 	{
@@ -3748,7 +3748,7 @@ int
 SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount)
 {
 	_SPI_plan			plan;
-	int					ret;
+	int					ret = 0;
 	List				*plancache_list;
 	CachedPlanSource	*plansource;
 	int					prev_sql_dialect;

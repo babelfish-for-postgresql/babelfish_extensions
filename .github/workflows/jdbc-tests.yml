@@ -88,3 +88,7 @@ jobs:
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
+
+      - name: Check and upload coredumps
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: ./.github/composite-actions/upload-coredump

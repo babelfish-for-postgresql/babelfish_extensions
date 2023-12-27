@@ -73,7 +73,7 @@ datetime_in_str(char *str)
 	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
-	int			dtype;
+	int			dtype = -1;
 	int			nf;
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];

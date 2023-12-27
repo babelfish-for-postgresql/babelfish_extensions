@@ -89,6 +89,9 @@ ignore#!#forjson-subquery-before-14_10-or-15_5-vu-cleanup
 ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-prepare
 ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-verify
 ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-cleanup
+ignore#!#sys-parsename-before-15_6-or-16_1-vu-prepare
+ignore#!#sys-parsename-before-15_6-or-16_1-vu-verify
+ignore#!#sys-parsename-before-15_6-or-16_1-vu-cleanup
 ignore#!#AUTO_ANALYZE-before-15-5-or-14-10-vu-prepare
 ignore#!#AUTO_ANALYZE-before-15-5-or-14-10-vu-verify
 ignore#!#orderby-before-15_3-vu-prepare
@@ -96,6 +99,8 @@ ignore#!#orderby-before-15_3-vu-verify
 ignore#!#orderby-before-15_3-vu-cleanup
 ignore#!#babel_function_string-before-15-5-or-14-10-vu-prepare
 ignore#!#babel_function_string-before-15-5-or-14-10-vu-verify
+ignore#!#BABEL-3166-before-14_11-or-15_6-vu-prepare
+ignore#!#BABEL-3166-before-14_11-or-15_6-vu-verify
 
 # These tests are meant for upgrade scenario where source version is 13_X
 ignore#!#sys_database_principals_dep_for_13_x-vu-cleanup
@@ -160,6 +165,8 @@ ignore#!#select-strip-parens-before-pr1812-vu-cleanup
 ignore#!#select-strip-parens-before-15_5-vu-prepare
 ignore#!#select-strip-parens-before-15_5-vu-verify
 ignore#!#select-strip-parens-before-15_5-vu-cleanup
+ignore#!#permission_restrictions_from_pg-vu-prepare
+ignore#!#permission_restrictions_from_pg-vu-verify
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare

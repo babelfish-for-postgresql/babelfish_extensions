@@ -340,6 +340,25 @@ pe_authenticate(Port *port, const char **username)
 
 		appendStringInfo(&logmsg, _(" Tds Version=0x%X."), GetClientTDSVersion());
 
+#ifdef ENABLE_GSS
+		if (port->gss)
+		{
+			const char *princ = be_gssapi_get_princ(port);
+
+			if (princ)
+				appendStringInfo(&logmsg,
+								 _(" GSS (authenticated=%s, encrypted=%s, principal=%s)"),
+								 be_gssapi_get_auth(port) ? _("yes") : _("no"),
+								 be_gssapi_get_enc(port) ? _("yes") : _("no"),
+								 princ);
+			else
+				appendStringInfo(&logmsg,
+								 _(" GSS (authenticated=%s, encrypted=%s)"),
+								 be_gssapi_get_auth(port) ? _("yes") : _("no"),
+								 be_gssapi_get_enc(port) ? _("yes") : _("no"));
+		}
+#endif
+
 		ereport(LOG, errmsg_internal("%s", logmsg.data));
 		pfree(logmsg.data);
 	}
@@ -349,6 +368,7 @@ pe_authenticate(Port *port, const char **username)
 	ClientAuthInProgress = false;	/* client_min_messages is active now */
 
 	*username = port->user_name;
+	port->is_tds_conn = true;
 }
 
 static void

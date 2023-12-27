@@ -89,7 +89,7 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
-	int			dtype;
+	int			dtype = -1;
 	int			nf;
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];

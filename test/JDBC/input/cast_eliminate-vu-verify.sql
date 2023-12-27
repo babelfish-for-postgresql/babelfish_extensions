@@ -1,3 +1,4 @@
+-- parallel_query_expected
 set babelfish_showplan_all on
 GO
 

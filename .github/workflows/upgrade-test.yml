@@ -121,7 +121,7 @@ jobs:
           done
  
       - name: Upload Logs
-        if: always() && steps.test-file-rename.outcome == 'success'
+        if: always() && steps.upgrade-and-test.outcome != 'success'
         uses: actions/upload-artifact@v2
         with:
           name: upgrade-logs-${{ matrix.upgrade-path.title }}
@@ -133,4 +133,8 @@ jobs:
             ~/psql*/data/logfile
             ~/psql*/data/pg_upgrade_output.d/*
             ~/failed-testscript-outputs
+      
+      - name: Check and upload coredumps
+        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
+        uses: ./.github/composite-actions/upload-coredump
             
