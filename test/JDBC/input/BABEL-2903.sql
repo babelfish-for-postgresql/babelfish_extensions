@@ -1,4 +1,3 @@
--- parallel_query_expected
 use master;
 go
 

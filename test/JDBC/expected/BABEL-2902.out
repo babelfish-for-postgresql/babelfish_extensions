@@ -1,3 +1,4 @@
+
 -- psql
 -- Test setup --
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';

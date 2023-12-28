@@ -1,4 +1,3 @@
--- parallel_query_expected
 select set_config('babelfishpg_tsql.explain_costs', 'off', false);
 go
 select set_config('babelfishpg_tsql.explain_timing', 'off', false);

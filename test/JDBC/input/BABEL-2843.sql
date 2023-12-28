@@ -1,4 +1,3 @@
--- parallel_query_expected
 use master;
 go
 select set_config('babelfishpg_tsql.explain_timing', 'off', false);

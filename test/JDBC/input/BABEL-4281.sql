@@ -1,4 +1,3 @@
--- parallel_query_expected
 BEGIN TRAN BABEL4281_T1; 
 GO
 

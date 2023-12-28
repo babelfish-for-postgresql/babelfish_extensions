@@ -1,4 +1,3 @@
--- parallel_query_expected
 select set_config('enable_bitmapscan', 'off', false);
 GO
 
