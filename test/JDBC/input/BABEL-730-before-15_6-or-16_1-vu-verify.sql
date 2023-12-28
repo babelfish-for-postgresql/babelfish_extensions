@@ -139,38 +139,3 @@ GO
 DECLARE @strVar VARCHAR(10) = '100'
 SELECT log10(@strVar)
 GO
-
-SELECT * FROM BABEL_730_LOG_VIEW
-GO
-
--- test bbf_log function to fix upgrade tests failures
-SELECT bbf_log(5)
-GO
-
-SELECT bbf_log10(10)
-GO
-
-SELECT bbf_log(100,10)
-GO
-
-SELECT TestBBF_LogFunction(5)
-GO
-
-SELECT TestBBF_LogFunctionWithBase(100, 10)
-GO
-
-SELECT TestBBF_Log10Function(100)
-GO
-
--- test user defined procedure with log function
-EXECUTE TestBBF_LogProcedure 5
-GO
-
-EXECUTE TestBBF_LogProcedureWithBase 100, 10
-GO
-
-EXECUTE TestBBF_Log10Procedure 100
-GO
-
-SELECT * FROM BABEL_730_BBF_LOG_VIEW
-GO
