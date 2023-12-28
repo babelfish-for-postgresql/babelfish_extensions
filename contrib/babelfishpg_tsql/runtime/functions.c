@@ -73,6 +73,8 @@
 #define DAYS_BETWEEN_YEARS_1900_TO_2000 36524 		/* number of days present in between 1/1/1900 and 1/1/2000 */
 #define DATEPART_MAX_VALUE 2958463
 #define DATEPART_MIN_VALUE -53690
+#define DATEPART_SMALLMONEY_MAX_VALUE 214748
+#define DATEPART_SMALLMONEY_MIN_VALUE -53690
 
 typedef enum
 {
@@ -174,6 +176,8 @@ PG_FUNCTION_INFO_V1(getdate_internal);
 PG_FUNCTION_INFO_V1(sysdatetime);
 PG_FUNCTION_INFO_V1(sysdatetimeoffset);
 PG_FUNCTION_INFO_V1(datepart_internal_int);
+PG_FUNCTION_INFO_V1(datepart_internal_smallint);
+PG_FUNCTION_INFO_V1(datepart_internal_tinyint);
 PG_FUNCTION_INFO_V1(datepart_internal_date);
 PG_FUNCTION_INFO_V1(datepart_internal_datetime);
 PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
@@ -183,6 +187,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_decimal);
 PG_FUNCTION_INFO_V1(datepart_internal_float);
 PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
+PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -364,20 +369,21 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 	uint		first_week_end, year, month, day, res = 0, day_of_year; /* for Zeller's Congruence */
 	int 		tz1;
 
+	/*
+	 * This block is used when the second argument in datepart is not a 
+	 * date or time relate but instead general integer datatypes. datepart_internal converts the general integer datatypes (df_tz)
+	 * into proper timestamp with days offset from 01/01/1970. The general integer datatypes are passed in the df_tz
+	 * i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
+	 * Converting the df_tz into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
+	 */
 	if (timestamp == 0 && general_integer_datatype)
 	{	
-		/*
-		 * This block is used when the second argument in datepart is not a 
-		 * date or time relate but instead general integer datatypes. datepart_internal converts the general integer datatypes (df_tz)
-		 * into proper timestamp with days offset from 01/01/1970. The general integer datatypes are passed in the df_tz
-		 * i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
-		 * Converting the df_tz into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
-		 */
+		/* Checking for the limits for general_integer_datatype */
 		if(df_tz > DATEPART_MAX_VALUE || df_tz < DATEPART_MIN_VALUE)
 		{
 			ereport(ERROR,
-			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-			errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type datetime.")));
 		}
 
 		timestamp = (Timestamp)(((df_tz) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
@@ -600,6 +606,62 @@ datepart_internal_int(PG_FUNCTION_ARGS)
 }
 
 /*
+ * datepart_internal_smallint takes int and converts it to
+ * timestamp and calls datepart_internal and checks limits
+ */
+
+Datum
+datepart_internal_smallint(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int			num = PG_GETARG_INT16(1);
+	int			result;
+
+	if(num > SHRT_MAX || num < SHRT_MIN)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error for data type smallint, value = %d",num)));
+	}
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz
+	 */
+	result = datepart_internal(field, 0, num, true);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_tinyint takes int and converts it to
+ * timestamp and calls datepart_internal and checks limits
+ */
+
+Datum
+datepart_internal_tinyint(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int			num = PG_GETARG_INT16(1);
+	int			result;
+
+	if(num > UCHAR_MAX || num < 0)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error for data type tinyint, value = %d",num)));
+	}
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz
+	 */
+	result = datepart_internal(field, 0, num, true);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
  * datepart_internal_money takes money and converts it to
  * timestamp and calls datepart_internal 
  */
@@ -617,6 +679,38 @@ datepart_internal_money(PG_FUNCTION_ARGS)
 	 * gets a multiple of 10000 internally
 	 */
 	result = datepart_internal(field, 0, (float8)num/10000, true);
+
+	PG_RETURN_INT32(result);
+}
+
+/*
+ * datepart_internal_smallmoney takes int and converts it to
+ * timestamp and calls datepart_internal and checks limits
+ */
+
+Datum
+datepart_internal_smallmoney(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		arg = PG_GETARG_INT64(1);
+	int			result;
+	float8		num;
+
+	/* Dividing arg by 10000 as money datatype gets a multiple of 10000 internally*/
+	num = (float8)arg/10000;
+
+	if(num > DATEPART_SMALLMONEY_MAX_VALUE || num < DATEPART_SMALLMONEY_MIN_VALUE)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error for data type smallmoney, value = %f.",num)));
+	}
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz. 
+	 */
+	result = datepart_internal(field, 0, num, true);
 
 	PG_RETURN_INT32(result);
 }
