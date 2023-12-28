@@ -154,13 +154,13 @@ declare @char1 char(8001) = 'abc';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The size '8001' exceeds the maximum allowed (8000) for 'char' datatype.)~~
+~~ERROR (Message: The size '8001' exceeds the maximum allowed (8000) for 'bpchar' datatype.)~~
 
 declare @char1     char     (8001) = 'abc';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The size '8001' exceeds the maximum allowed (8000) for 'char' datatype.)~~
+~~ERROR (Message: The size '8001' exceeds the maximum allowed (8000) for 'bpchar' datatype.)~~
 
 declare @char2 char(8000) = 'abc';
 select @char2
