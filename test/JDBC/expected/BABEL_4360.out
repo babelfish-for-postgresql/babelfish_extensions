@@ -122,11 +122,11 @@ CREATE OR REPLACE PROCEDURE psql_interop_proc1()
 AS
 $$
 BEGIN
-  INSERT INTO babel_4360_t VALUES (101);
+  INSERT INTO babel_4360_t VALUES (-1);
   ROLLBACK;
   INSERT INTO babel_4360_t VALUES (100);
   COMMIT;
-  INSERT INTO babel_4360_t VALUES (99);
+  INSERT INTO babel_4360_t VALUES (-1);
   RAISE EXCEPTION 'Throw an exception to check error case';
 END
 $$ LANGUAGE PLPGSQL;
@@ -148,10 +148,41 @@ int
 ~~END~~
 
 
+DELETE FROM babel_4360_t;
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE tsql_interop_proc5
+AS
+BEGIN TRY
+  EXEC tsql_interop_proc3;
+  INSERT INTO babel_4360_t VALUES (-1);
+END TRY
+BEGIN CATCH
+  INSERT INTO babel_4360_t VALUES (92);
+END CATCH
+GO
+
+-- test error handling for interop procedures with tsql try catch block
+EXEC tsql_interop_proc5
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_4360_t
+GO
+~~START~~
+int
+100
+92
+~~END~~
+
+
 DROP TABLE babel_4360_t
 GO
 
-DROP PROCEDURE IF EXISTS tsql_interop_proc4, tsql_interop_proc3, tsql_interop_proc2, tsql_interop_proc1;
+DROP PROCEDURE IF EXISTS tsql_interop_proc5, tsql_interop_proc4, tsql_interop_proc3, tsql_interop_proc2, tsql_interop_proc1;
 GO
 
 -- psql     currentSchema=master_dbo,public
