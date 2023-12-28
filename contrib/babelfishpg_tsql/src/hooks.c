@@ -728,7 +728,8 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
 /**
  * Hook function to skip rewriting VIEW with base table if the VIEW has an instead of trigger
  * Checks if view have an INSTEAD OF trigger at statement level
- * If it does, we don't want to treat it as auto-updatable. 
+ * If it does, we don't want to treat it as auto-updatable.
+ * This function also does error checking for recursive triggers
  * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
 */
 static bool
@@ -746,11 +747,11 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			prev_tgoid = lfirst_oid(list_tail(triggerInvocationSequence));
 			if (prev_tgoid == current_tgoid)
 			{
-				return false; /** Direct recursive trigger case*/
+				return false; /** A trigger called recursively by itself*/
 			}
 			else if (list_member_oid(triggerInvocationSequence, current_tgoid))
             {
-                /** Indirect recursive trigger case*/
+                /** A trigger called recursively by another trigger */
                 ereport(ERROR,
                         (errcode(ERRCODE_SYNTAX_ERROR),
                          errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
