@@ -731,7 +731,7 @@ plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
  * If it does, we don't want to treat it as auto-updatable.
  * This function also does error checking for recursive triggers
  * Reference - src/backend/rewrite/rewriteHandler.c view_has_instead_trigger
-*/
+ */
 static bool
 pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 {
@@ -745,24 +745,30 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			Oid current_tgoid = trigger->tgoid;
 			Oid prev_tgoid = InvalidOid;
 			prev_tgoid = lfirst_oid(list_tail(triggerInvocationSequence));
-			if (prev_tgoid == current_tgoid)
+			if (list_length(triggerInvocationSequence) > 32)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
+			}
+			else if (prev_tgoid == current_tgoid)
 			{
 				return false; /** A trigger called recursively by itself*/
 			}
 			else if (list_member_oid(triggerInvocationSequence, current_tgoid))
-            {
-                /** A trigger called recursively by another trigger */
-                ereport(ERROR,
-                        (errcode(ERRCODE_SYNTAX_ERROR),
-                         errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
-            }
+			{
+				/** A trigger called recursively by another trigger */
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
+			}
 		}
 	}
 
 	switch (event)
 	{
 		case CMD_INSERT:
-			if(trigDesc && trigDesc->trig_insert_instead_statement)
+			if (trigDesc && trigDesc->trig_insert_instead_statement)
 				return true;
 			break;
 		case CMD_UPDATE:
@@ -774,7 +780,7 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 				return true;
 			break;
 		default:
-			elog(ERROR, "unrecognized CmdType: %d", (int) event);
+			elog(ERROR, "unrecognized CmdType: %d", (int)event);
 			break;
 	}
 	return false;
