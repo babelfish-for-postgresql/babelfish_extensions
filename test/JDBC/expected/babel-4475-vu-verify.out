@@ -1,0 +1,37 @@
+select * from babel_4475_v1
+go
+~~START~~
+varchar
+a
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
+select * from babel_4475_v2
+go
+~~START~~
+varchar
+ab
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
+select definition from sys.sql_modules where object_id = object_id('babel_4475_v1')
+go
+~~START~~
+nvarchar
+create view babel_4475_v1 as select cast(cast('a' as binary(2)) as varchar(2))
+~~END~~
+
+
+select definition from sys.sql_modules where object_id = object_id('babel_4475_v2')
+go
+~~START~~
+nvarchar
+create view babel_4475_v2 as select cast(cast('ab' as rowversion) as varchar(2))
+~~END~~
+
