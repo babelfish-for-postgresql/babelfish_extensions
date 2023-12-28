@@ -73,7 +73,7 @@
 #define DAYS_BETWEEN_YEARS_1900_TO_2000 36524 		/* number of days present in between 1/1/1900 and 1/1/2000 */
 #define DATEPART_MAX_VALUE 2958463
 #define DATEPART_MIN_VALUE -53690
-#define DATEPART_SMALLMONEY_MAX_VALUE 214748
+#define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647
 #define DATEPART_SMALLMONEY_MIN_VALUE -53690
 
 typedef enum
@@ -195,7 +195,7 @@ void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
 
-int 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
+Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
 static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
@@ -360,7 +360,7 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
  * is not valid for the general numeric datatypes 
  */
 
-int
+Datum
 datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_integer_datatype)
 {	
 	fsec_t		fsec1;
@@ -403,37 +403,37 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 
 	if (strcmp(field, "year") == 0)
 	{
-		return tm->tm_year;
+		PG_RETURN_INT32(tm->tm_year);
 	}
 	else if (strcmp(field, "quarter") == 0)
 	{
 		/* There are 3 months in each quarter ( 12 / 3 = 4 ) */
-		return (int)ceil((float)tm->tm_mon / 3.0);
+		PG_RETURN_INT32((int)ceil((float)tm->tm_mon / 3.0));
 	}
 	else if (strcmp(field, "month") == 0)
 	{
-		return tm->tm_mon;
+		PG_RETURN_INT32(tm->tm_mon);
 	}
 	else if (strcmp(field, "day") == 0)
 	{
-		return tm->tm_mday;
+		PG_RETURN_INT32(tm->tm_mday);
 	}
 	else if (strcmp(field, "hour") == 0)
 	{
-		return tm->tm_hour;
+		PG_RETURN_INT32(tm->tm_hour);
 	}
 	else if (strcmp(field, "minute") == 0)
 	{
-		return tm->tm_min;
+		PG_RETURN_INT32(tm->tm_min);
 	}
 	else if (strcmp(field, "second") == 0)
 	{
-		return tm->tm_sec;
+		PG_RETURN_INT32(tm->tm_sec);
 	}
 	else if (strcmp(field, "doy") == 0)		/* day-of-year of the date */
 	{
-		return (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
-						 - date2j(tm->tm_year, 1, 1) + 1);
+		PG_RETURN_INT32( (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+						 - date2j(tm->tm_year, 1, 1) + 1));
 	}
 	else if (strcmp(field, "dow") == 0)		/* day-of-week of the date */
 	{
@@ -455,12 +455,12 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 		 * The numbers of these months are 13 and 14 of the PREVIOUS YEAR. This means that to find the day of the week of New Year's Day this year, 1/1/98,
 		 * you must use the date 13/1/97.
 		 */
-		res = (day + 2*month + ((3*(month+1))/(5)) + year +
-					year/4 - year/100 + year/400 + 2) % 7;
+		res = (day + 2 * month + ((3 * (month + 1)) / (5)) + year +
+					year / 4 - year / 100 + year / 400 + 2) % 7;
 		
 		/* Adjusting the dow accourding to the datefirst guc */
-		return ((res) + 7 - pltsql_datefirst)%7 == 0 ?
-					7 : ((res) + 7 - pltsql_datefirst)%7;
+		PG_RETURN_INT32(((res) + 7 - pltsql_datefirst)%7 == 0 ?
+					7 : ((res) + 7 - pltsql_datefirst)%7);
 
 	}
 	else if (strcasecmp(field , "tsql_week") == 0)		/* week number of the year  */
@@ -478,28 +478,28 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 		if(day_of_year <= first_week_end)
 		{
 			/* day of year is less than first_week_end means its a first week */
-			return 1;
+			PG_RETURN_INT32(1);
 		}
 		else
 		{
-			return (2+(day_of_year - first_week_end - 1) / 7);
+			PG_RETURN_INT32(2+(day_of_year - first_week_end - 1) / 7);
 		}
 	}
 	else if(strcasecmp(field , "week") == 0)
 	{
-		return date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
+		PG_RETURN_INT32(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
 	}
 	else if(strcasecmp(field , "millisecond") == 0)
 	{
-		return (fsec1) / 1000;
+		PG_RETURN_INT32((fsec1) / 1000);
 	}
 	else if(strcasecmp(field , "microsecond") == 0)
 	{
-		return (fsec1);
+		PG_RETURN_INT32(fsec1);
 	}
 	else if(strcasecmp(field , "nanosecond") == 0)
 	{
-		return (fsec1) * 1000;
+		PG_RETURN_INT32((fsec1) * 1000);
 	}
 	else if(strcasecmp(field , "tzoffset") == 0)
 	{
@@ -509,11 +509,11 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("The datepart tzoffset is not supported by date function datepart for data type datetime.")));
 			
-			return -1;
+			PG_RETURN_INT32(-1);
 		}
 		else
 		{
-			return (int)df_tz;
+			PG_RETURN_INT32((int)df_tz);
 		}
 	}
 	else
@@ -522,10 +522,10 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			errmsg("\'%s\' is not a recognized datepart option",field)));
 			
-		return -1;
+		PG_RETURN_INT32(-1);
 	}
 	
-	return 1;
+	PG_RETURN_INT32(1);
 }
 
 
@@ -546,7 +546,7 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 	
 	timestamp = timestamp + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 	
-	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz, false));
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
 }
 
 /*
@@ -560,11 +560,10 @@ datepart_internal_date(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
-	DateADT		date_arg;
-	date_arg = PG_GETARG_DATEADT(1);
-	timestamp = DirectFunctionCall1(date_timestamp, date_arg);
+	
+	timestamp = DirectFunctionCall1(date_timestamp, PG_GETARG_DATUM(1));
 
-	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz, false));
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
 }
 
 /*
@@ -581,7 +580,7 @@ datepart_internal_datetime(PG_FUNCTION_ARGS)
 	
 	timestamp = PG_GETARG_TIMESTAMP(1);
 
-	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz, false));
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
 }
 
 /*
@@ -594,15 +593,13 @@ datepart_internal_int(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int64		num = PG_GETARG_INT64(1);
-	int			result;
 
 	/* 
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 	 * as there is no need of df_tz
 	 */
-	result = datepart_internal(field, 0, num, true);
+	return datepart_internal(field, 0, num, true);
 
-	PG_RETURN_INT32(result);
 }
 
 /*
@@ -615,7 +612,6 @@ datepart_internal_smallint(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			num = PG_GETARG_INT16(1);
-	int			result;
 
 	if(num > SHRT_MAX || num < SHRT_MIN)
 	{
@@ -628,9 +624,7 @@ datepart_internal_smallint(PG_FUNCTION_ARGS)
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 	 * as there is no need of df_tz
 	 */
-	result = datepart_internal(field, 0, num, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, num, true);
 }
 
 /*
@@ -643,7 +637,6 @@ datepart_internal_tinyint(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int			num = PG_GETARG_INT16(1);
-	int			result;
 
 	if(num > UCHAR_MAX || num < 0)
 	{
@@ -656,9 +649,7 @@ datepart_internal_tinyint(PG_FUNCTION_ARGS)
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 	 * as there is no need of df_tz
 	 */
-	result = datepart_internal(field, 0, num, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, num, true);
 }
 
 /*
@@ -671,16 +662,13 @@ datepart_internal_money(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int64		num = PG_GETARG_INT64(1);
-	int			result;
 
 	/* 
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 	 * as there is no need of df_tz. Also dividing num by 10000 as money datatype 
 	 * gets a multiple of 10000 internally
 	 */
-	result = datepart_internal(field, 0, (float8)num/10000, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, (float8)num/10000, true);
 }
 
 /*
@@ -693,7 +681,6 @@ datepart_internal_smallmoney(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int64		arg = PG_GETARG_INT64(1);
-	int			result;
 	float8		num;
 
 	/* Dividing arg by 10000 as money datatype gets a multiple of 10000 internally*/
@@ -710,9 +697,7 @@ datepart_internal_smallmoney(PG_FUNCTION_ARGS)
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 	 * as there is no need of df_tz. 
 	 */
-	result = datepart_internal(field, 0, num, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, num, true);
 }
 
 /*
@@ -725,16 +710,13 @@ datepart_internal_decimal(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Numeric		argument = PG_GETARG_NUMERIC(1);
-	int			result;
 	float8		num = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(argument)));
 
 	/* 
 	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
 	 * as there is no need of df_tz
 	 */
-	result = datepart_internal(field, 0, num, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, num, true);
 }
 
 /*
@@ -747,15 +729,12 @@ datepart_internal_float(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	float8		arg = PG_GETARG_FLOAT8(1);
-	int			result;
 
 	/* 
 	 * Setting the timestamp in datepart_internal as 0 and passing arg in third argument 
 	 * as there is no need of df_tz
 	 */
-	result = datepart_internal(field, 0, arg, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, arg, true);
 }
 
 /*
@@ -768,15 +747,12 @@ datepart_internal_real(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	float4		arg = PG_GETARG_FLOAT4(1);
-	int			result;
 
 	/* 
 	 * Setting the timestamp in datepart_internal as 0 and passing arg in third argument 
 	 * as there is no need of df_tz
 	 */
-	result = datepart_internal(field, 0, arg, true);
-
-	PG_RETURN_INT32(result);
+	return datepart_internal(field, 0, arg, true);
 }
 
 /*
@@ -790,11 +766,6 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
-
-	if (PG_ARGISNULL(1))
-	{
-		PG_RETURN_NULL();
-	}
 
 	timestamp  = PG_GETARG_TIMESTAMP(1);
 
@@ -835,7 +806,7 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 		}
 	}
 
-	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz, false));
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
 }
 
 /*
@@ -869,9 +840,9 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	minutes = (interval_time / USECS_PER_MINUTE) % MINS_PER_HOUR;
 	sec = (interval_time / USECS_PER_SEC) % SECS_PER_MINUTE;
 
-	millisec = (interval_time / 1000 * 1L);
+	millisec = ((1L * interval_time) / 1000);
 	microsec = interval_time;
-	nanosec = (interval_time * 1L)*1000;
+	nanosec = (interval_time * 1L) * 1000;
 
 	if(strcasecmp(field , "year") == 0)
 	{

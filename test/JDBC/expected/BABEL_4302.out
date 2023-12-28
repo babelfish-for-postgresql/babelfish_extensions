@@ -5527,3 +5527,300 @@ GO
 
 ~~ERROR (Message: The datepart dayofyear is not supported by date function datepart for data type time.)~~
 
+
+
+-- Max Limits checked
+SELECT DATEPART(day, CAST(9999999999 AS bit));
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEPART(day, CAST(214748 AS smallmoney));
+GO
+~~START~~
+int
+17
+~~END~~
+
+
+SELECT DATEPART(day, CAST(214748.3647 AS smallmoney));
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type smallmoney, value = 214748.364700.)~~
+
+
+SELECT DATEPART(day, CAST(2958463 AS int));
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+SELECT DATEPART(day, CAST(2958464 AS int));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(32767 AS smallint));
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+SELECT DATEPART(day, CAST(32768 AS smallint));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT DATEPART(day, CAST(2958463 AS bigint));
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+SELECT DATEPART(day, CAST(2958464 AS bigint));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(255 AS tinyint));
+GO
+~~START~~
+int
+13
+~~END~~
+
+
+SELECT DATEPART(day, CAST(256 AS tinyint));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT DATEPART(day, CAST(2958463 AS decimal));
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+SELECT DATEPART(day, CAST(2958464 AS decimal));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(2958463 AS real));
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+SELECT DATEPART(day, CAST(2958464 AS real));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(2958463 AS numeric));
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+SELECT DATEPART(day, CAST(2958464 AS numeric));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(2958463.6 AS float));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(2958464.6 AS float));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+
+-- Min Limits checked
+SELECT DATEPART(day, CAST(-999999999 AS bit));
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS smallmoney));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS smallmoney));
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type smallmoney, value = -53691.000000.)~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS int));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS int));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(-32768 AS smallint));
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-32769 AS smallint));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS bigint));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS bigint));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(0 AS tinyint));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-1 AS tinyint));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS decimal));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS decimal));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS real));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS real));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS numeric));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS numeric));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, CAST(-53690 AS float));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(day, CAST(-53691 AS float));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
