@@ -917,10 +917,12 @@ SELECT
   , CAST(0 AS INT) AS principal_id
   , CAST(sch.schema_id AS INT) AS schema_id
   , CAST(c.conrelid AS INT) AS parent_object_id
-  , CASE contype
+  , CAST(
+    (CASE contype
       WHEN 'p' THEN CAST('PK' as sys.bpchar(2))
       WHEN 'u' THEN CAST('UQ' as sys.bpchar(2))
-    END AS type
+    END) 
+    AS sys.bpchar(2)) AS type
   , CAST(
     (CASE contype
       WHEN 'p' THEN 'PRIMARY_KEY_CONSTRAINT'
