@@ -45,16 +45,16 @@ GO
 SELECT log(8.5, 2)
 GO
 
-SELECT log(1, 10);
+SELECT log(1, 10)
 GO
 
-SELECT log(10, 10);
+SELECT log(10, 10)
 GO
 
-SELECT log(100, 10);
+SELECT log(100, 10)
 GO
 
-SELECT log(100.10, 10);
+SELECT log(100.10, 10)
 GO
 
 SELECT log(-8, -2)
@@ -114,30 +114,30 @@ SELECT log10('100')
 GO
 
 -- test variable with log function
-DECLARE @num INT = 5;
-SELECT log(@num);
+DECLARE @num INT = 5
+SELECT log(@num)
 GO
 
-DECLARE @num INT = 100;
-DECLARE @num2 INT = 10;
-SELECT log(@num, @num2);
+DECLARE @num INT = 100
+DECLARE @num2 INT = 10
+SELECT log(@num, @num2)
 GO
 
-DECLARE @num INT = 100;
-SELECT log10(@num);
+DECLARE @num INT = 100
+SELECT log10(@num)
 GO
 
-DECLARE @strVar VARCHAR(10) = '5';
-SELECT log(@strVar);
+DECLARE @strVar VARCHAR(10) = '5'
+SELECT log(@strVar)
 GO
 
-DECLARE @strVar VARCHAR(10) = '100';
-DECLARE @strVar2 VARCHAR(10) = '10';
-SELECT log(@strVar, @strVar2);
+DECLARE @strVar VARCHAR(10) = '100'
+DECLARE @strVar2 VARCHAR(10) = '10'
+SELECT log(@strVar, @strVar2)
 GO
 
-DECLARE @strVar VARCHAR(10) = '100';
-SELECT log10(@strVar);
+DECLARE @strVar VARCHAR(10) = '100'
+SELECT log10(@strVar)
 GO
 
 -- test bbf_log function to fix upgrade tests failures
