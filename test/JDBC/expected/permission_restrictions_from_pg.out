@@ -12,7 +12,8 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
+  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
     Server SQLState: 42501)~~
 
 
@@ -22,6 +23,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied to create role
+  Detail: Only roles with the CREATEROLE attribute may create roles.
     Server SQLState: 42501)~~
 
 
@@ -30,7 +32,8 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
+  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
     Server SQLState: 42501)~~
 
 
@@ -39,7 +42,8 @@ alter user permission_restrictions_psql_user with password '123'
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: permission denied to alter role
+  Detail: To change another role's password, the current user must have the CREATEROLE attribute and the ADMIN option on the role.
     Server SQLState: 42501)~~
 
 
@@ -49,6 +53,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied to drop role
+  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
     Server SQLState: 42501)~~
 
 
@@ -58,7 +63,8 @@ grant sysadmin to permission_restrictions_tsql_login;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
+  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
     Server SQLState: 42501)~~
 
 
@@ -68,6 +74,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied to create role
+  Detail: Only roles with the CREATEROLE attribute may create roles.
     Server SQLState: 42501)~~
 
 
@@ -76,7 +83,8 @@ grant sysadmin to permission_restrictions_psql_user;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: must have admin option on role "sysadmin"
+~~ERROR (Message: ERROR: permission denied to grant role "sysadmin"
+  Detail: Only roles with the ADMIN option on role "sysadmin" may grant this role.
     Server SQLState: 42501)~~
 
 
@@ -85,7 +93,8 @@ alter user permission_restrictions_tsql_login with password '123'
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: permission denied
+~~ERROR (Message: ERROR: permission denied to alter role
+  Detail: To change another role's password, the current user must have the CREATEROLE attribute and the ADMIN option on the role.
     Server SQLState: 42501)~~
 
 
@@ -95,6 +104,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied to drop role
+  Detail: Only roles with the CREATEROLE attribute and the ADMIN option on the target roles may drop roles.
     Server SQLState: 42501)~~
 
 
@@ -135,6 +145,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied to create role
+  Detail: Only roles with the CREATEROLE attribute may create roles.
     Server SQLState: 42501)~~
 
 
