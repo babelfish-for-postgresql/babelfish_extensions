@@ -1933,8 +1933,6 @@ GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, I
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_4');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_4');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_4');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_3_4');
-
 
 CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
