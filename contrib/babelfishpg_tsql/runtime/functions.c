@@ -71,6 +71,8 @@
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 #define SYSVARCHAR_MAX_LENGTH 4000
 #define DAYS_BETWEEN_YEARS_1900_TO_2000 36524 		/* number of days present in between 1/1/1900 and 1/1/2000 */
+#define DATEPART_MAX_VALUE 2958463
+#define DATEPART_MIN_VALUE -53690
 
 typedef enum
 {
@@ -371,6 +373,12 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 		 * i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
 		 * Converting the df_tz into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
 		 */
+		if(df_tz > DATEPART_MAX_VALUE || df_tz < DATEPART_MIN_VALUE)
+		{
+			ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+		}
 
 		timestamp = (Timestamp)(((df_tz) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
 	}
@@ -530,7 +538,7 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 	timestamp = (Timestamp)(DirectFunctionCall1(common_utility_plugin_ptr->datetimeoffset_timestamp,
 							PG_GETARG_DATUM(1)));
 	
-	timestamp = timestamp + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+	timestamp = timestamp + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 	
 	PG_RETURN_INT32(datepart_internal(field, timestamp, (float8)df_tz, false));
 }
@@ -750,7 +758,7 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 
 	Interval*	interval = PG_GETARG_INTERVAL_P(1);
 
-	int64	interval_time = interval->time + (int64) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+	Timestamp	interval_time = interval->time + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 
 	int32	interval_days,interval_month;
 	int		year,month,days,hours,minutes,sec,millisec,microsec,nanosec;
@@ -767,76 +775,67 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	minutes = (interval_time / USECS_PER_MINUTE) % MINS_PER_HOUR;
 	sec = (interval_time / USECS_PER_SEC) % SECS_PER_MINUTE;
 
-	millisec = ((interval_time / 1000  * 1L)*1L ) ;
-	microsec = (interval_time * 1L)*1L  ;
-	nanosec = ((interval_time * 1L)*1L) *1000 ;
+	millisec = (interval_time / 1000 * 1L);
+	microsec = interval_time;
+	nanosec = (interval_time * 1L)*1000;
 
-	PG_TRY();
+	if(strcasecmp(field , "year") == 0)
 	{
-		if(strcasecmp(field , "year") == 0)
-		{
-			result = year;
-		}
-		else if(strcasecmp(field , "quarter") == 0)
-		{
-			result = (int)ceil((float)month / 3.0);
-		}
-		else if(strcasecmp(field , "month") == 0)
-		{
-			result = month;
-		}
-		else if(strcasecmp(field , "day") == 0)
-		{
-			result = days;
-		}
-		else if(strcasecmp(field , "y") == 0)
-		{
-			result = year;
-		}
-		else if(strcasecmp(field , "tzoffset") == 0)
-		{
-			result = 0;
-		}
-		else if(strcasecmp(field , "minute") == 0)
-		{
-			result = minutes;
-		}
-		else if(strcasecmp(field , "nanosecond") == 0)
-		{
-			result = nanosec;
-		}
-		else if(strcasecmp(field , "second") == 0)
-		{
-			result = sec;
-		}
-		else if(strcasecmp(field , "millisecond") == 0)
-		{
-			result = millisec;
-		}
-		else if(strcasecmp(field , "microsecond") == 0)
-		{
-			result = microsec;
-		}
-		else if(strcasecmp(field , "hour") == 0)
-		{
-			result = hours;
-		}
-		else
-		{
-			ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("\'%s\' is not a recognized datepart option", field)));
+		result = year;
+	}
+	else if(strcasecmp(field , "quarter") == 0)
+	{
+		result = (int)ceil((float)month / 3.0);
+	}
+	else if(strcasecmp(field , "month") == 0)
+	{
+		result = month;
+	}
+	else if(strcasecmp(field , "day") == 0)
+	{
+		result = days;
+	}
+	else if(strcasecmp(field , "y") == 0)
+	{
+		result = year;
+	}
+	else if(strcasecmp(field , "tzoffset") == 0)
+	{
+		result = 0;
+	}
+	else if(strcasecmp(field , "minute") == 0)
+	{
+		result = minutes;
+	}
+	else if(strcasecmp(field , "nanosecond") == 0)
+	{
+		result = nanosec;
+	}
+	else if(strcasecmp(field , "second") == 0)
+	{
+		result = sec;
+	}
+	else if(strcasecmp(field , "millisecond") == 0)
+	{
+		result = millisec;
+	}
+	else if(strcasecmp(field , "microsecond") == 0)
+	{
+		result = microsec;
+	}
+	else if(strcasecmp(field , "hour") == 0)
+	{
+		result = hours;
+	}
+	else
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("\'%s\' is not a recognized datepart option", field)));
 			
-			result = -1;
-		}
-
+		result = -1;
 	}
-	PG_CATCH();
-	{
-		PG_RE_THROW();
-	}
-
-	PG_END_TRY();
+	
 	PG_RETURN_INT32(result);
 
 }
