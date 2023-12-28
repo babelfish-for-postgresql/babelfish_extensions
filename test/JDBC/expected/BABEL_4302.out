@@ -5550,9 +5550,8 @@ SELECT DATEPART(day, CAST(214748.3647 AS smallmoney));
 GO
 ~~START~~
 int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Arithmetic overflow error for data type smallmoney, value = 214748.364700.)~~
+17
+~~END~~
 
 
 SELECT DATEPART(day, CAST(2958463 AS int));
