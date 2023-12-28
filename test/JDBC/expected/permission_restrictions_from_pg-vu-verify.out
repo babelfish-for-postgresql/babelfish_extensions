@@ -5,6 +5,7 @@ go
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: permission denied to create role
+  Detail: Only roles with the CREATEROLE attribute may create roles.
     Server SQLState: 42501)~~
 
 
