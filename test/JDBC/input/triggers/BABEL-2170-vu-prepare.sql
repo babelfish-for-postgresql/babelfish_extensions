@@ -1,8 +1,7 @@
--- We will create two databases db1_BABEL2170, db2_BABEL2170
-CREATE DATABASE db1_BABEL2170;
+CREATE DATABASE babel_2170_db1;
 GO
 
-USE db1_BABEL2170;
+USE babel_2170_db1;
 GO
 
 CREATE TABLE babel_2170_vu_employees

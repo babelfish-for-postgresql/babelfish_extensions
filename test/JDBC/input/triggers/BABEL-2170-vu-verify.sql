@@ -1,4 +1,4 @@
-USE db1_BABEL2170;
+USE babel_2170_db1;
 GO
 
 -- Instead of Insert Trigger on View 
@@ -6,7 +6,7 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employee
 INSTEAD OF INSERT
 AS
 BEGIN
-    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
 END
 GO
 
@@ -24,7 +24,7 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employee
 INSTEAD OF UPDATE
 AS
 BEGIN
-    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
 END
 GO
 
@@ -47,7 +47,7 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_delete ON babel_2170_vu_employee
 INSTEAD OF DELETE
 AS
 BEGIN
-    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_delete Invoked'
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_delete Invoked'
 END
 GO
 
@@ -87,7 +87,7 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employee
 INSTEAD OF INSERT
 AS
 BEGIN
-    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view2_iot_update Invoked'
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
 END
 GO
 
@@ -96,7 +96,7 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employee
 INSTEAD OF INSERT
 AS
 BEGIN
-    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees__table_iot_update Invoked'
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
 END
 GO
 
@@ -109,13 +109,13 @@ GO
 CREATE TRIGGER [schema_2170].[babel_2170_vu_employees_view_iot_update] ON [schema_2170].[babel_2170_vu_employees_view]
 INSTEAD OF UPDATE
 AS
-    SELECT 'Trigger db1_BABEL2170.schema_2170.babel_2170_vu_employees_view_iot_update Invoked'
+    SELECT 'Trigger babel_2170_db1.schema_2170.babel_2170_vu_employees_view_iot_update Invoked'
 GO
 
 CREATE TRIGGER [babel_2170_vu_employees_view_iot_update] ON [babel_2170_vu_employees_view]
 INSTEAD OF UPDATE
 AS
-    SELECT 'Trigger db1_BABEL2170.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
 GO
 
 UPDATE [schema_2170].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
@@ -392,17 +392,10 @@ GO
 DROP TABLE IF EXISTS babel_2170_vu_employees_t2;
 GO
 
--- test multi-db mode
-SELECT set_config('role', 'jdbc_user', false);
+CREATE DATABASE babel_2170_db2;
 GO
 
-SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false);
-GO
-
-CREATE DATABASE db2_BABEL2170;
-GO
-
-USE db2_BABEL2170;
+USE babel_2170_db2;
 GO
 
 CREATE TABLE babel_2170_vu_employees
@@ -432,15 +425,15 @@ CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employee
 INSTEAD OF INSERT
 AS
 BEGIN
-    SELECT 'Trigger db2_BABEL2170.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
+    SELECT 'Trigger babel_2170_db2.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
 END
 GO
 
 -- should fire IOT trigger of second db
-INSERT INTO babel_2170_vu_employees_view VALUES(3, 'adam', '1st Street db2_BABEL2170', '3000');
+INSERT INTO babel_2170_vu_employees_view VALUES(3, 'adam', '1st Street babel_2170_db2', '3000');
 GO
 
-SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view  ORDER BY EmployeeID;
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view ORDER BY EmployeeID;
 GO
 
 -- clean  all objects in second database
@@ -456,5 +449,5 @@ GO
 USE MASTER;
 GO
 
-DROP DATABASE IF EXISTS db2_BABEL2170;
+DROP DATABASE IF EXISTS babel_2170_db2;
 GO

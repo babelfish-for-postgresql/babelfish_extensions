@@ -1,5 +1,5 @@
 -- clean all objects in first database
-USE db1_BABEL2170;
+USE babel_2170_db1;
 GO
 
 DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_insert;
@@ -35,5 +35,5 @@ GO
 USE MASTER; 
 GO
 
-DROP DATABASE IF EXISTS db1_BABEL2170;
+DROP DATABASE IF EXISTS babel_2170_db1;
 GO
