@@ -6,9 +6,6 @@ analyze master_dbo.babel_3513_t2;
 go
 
 -- tsql
-exec sp_babelfish_configure 'enable_pg_hint', 'on', 'server'
-go
-
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
 ~~START~~
@@ -30,14 +27,10 @@ Query Text: EXEC babel_3513_proc_1
   ->  Gather
         Workers Planned: 1
         Single Copy: true
-        ->  Merge Join
-              Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
-              ->  Sort
-                    Sort Key: babel_3513_t1.a1
-                    ->  Seq Scan on babel_3513_t1
-              ->  Sort
-                    Sort Key: babel_3513_t2.b2
-                    ->  Seq Scan on babel_3513_t2
+        ->  Nested Loop
+              Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
+              ->  Seq Scan on babel_3513_t1
+              ->  Seq Scan on babel_3513_t2
 ~~END~~
 
 
@@ -65,14 +58,10 @@ Query Text: EXEC babel_3513_proc_1
   ->  Gather
         Workers Planned: 1
         Single Copy: true
-        ->  Merge Join
-              Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
-              ->  Sort
-                    Sort Key: babel_3513_t1.a1
-                    ->  Seq Scan on babel_3513_t1
-              ->  Sort
-                    Sort Key: babel_3513_t2.b2
-                    ->  Seq Scan on babel_3513_t2
+        ->  Nested Loop
+              Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
+              ->  Seq Scan on babel_3513_t1
+              ->  Seq Scan on babel_3513_t2
 ~~END~~
 
 

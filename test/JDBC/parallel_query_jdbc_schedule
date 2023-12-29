@@ -16,7 +16,6 @@ ignore#!#Test-sp_droprolemember-vu-cleanup
 ignore#!#babel_datatype_sqlvariant-vu-verify
 
 ignore#!#table-variable-vu-verify
-ignore#!#table-variable-vu-cleanup
 
 # Other or mixed issues - JIRA-BABEL-4538
 # database "" does not exists. (calls is_member() functions)
