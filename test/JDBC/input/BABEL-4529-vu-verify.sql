@@ -1,50 +1,50 @@
-EXEC babel_4529_stats
+SELECT * FROM babel_4529_stats
 GO
 
-EXEC babel_4529_dm_exec_connections
+SELECT * FROM babel_4529_dm_exec_connections
 GO
 
-EXEC babel_4529_syscolumns
+SELECT * FROM babel_4529_syscolumns
 GO
 
-EXEC babel_4529_system_objects
+SELECT * FROM babel_4529_system_objects
 GO
 
-EXEC babel_4529_xml_indexes
+SELECT * FROM babel_4529_xml_indexes
 GO
 
-EXEC babel_4529_sysforeignkeys
+SELECT * FROM babel_4529_sysforeignkeys
 GO
 
-EXEC babel_4529_data_spaces
+SELECT * FROM babel_4529_data_spaces
 GO
 
-EXEC babel_4529_sysprocesses
+SELECT * FROM babel_4529_sysprocesses
 GO
 
-EXEC babel_4529_key_constraints
+SELECT * FROM babel_4529_key_constraints
 GO
 
-EXEC babel_4529_foreign_keys
+SELECT * FROM babel_4529_foreign_keys
 GO
 
-EXEC babel_4529_sysviews
+SELECT * FROM babel_4529_sysviews
 GO
 
-EXEC babel_4529_systables
+SELECT * FROM babel_4529_systables
 GO
 
-EXEC babel_4529_default_constraints
+SELECT * FROM babel_4529_default_constraints
 GO
 
-EXEC babel_4529_check_constraints
+SELECT * FROM babel_4529_check_constraints
 GO
 
-EXEC babel_4529_types
+SELECT * FROM babel_4529_types
 GO
 
-EXEC babel_4529_sp_sproc_columns_view
+SELECT * FROM babel_4529_sp_sproc_columns_view
 GO
 
-EXEC babel_4529_systypes
+SELECT * FROM babel_4529_systypes
 GO

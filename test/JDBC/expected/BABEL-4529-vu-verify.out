@@ -1,47 +1,47 @@
-EXEC babel_4529_stats
+SELECT * FROM babel_4529_stats
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
-EXEC babel_4529_dm_exec_connections
+SELECT * FROM babel_4529_dm_exec_connections
 GO
 ~~START~~
 varchar#!#varchar#!#int
-<NULL>#!#127.0.0.1#!#4
+<NULL>#!#127.0.0.1/32#!#4
 ~~END~~
 
 
-EXEC babel_4529_syscolumns
+SELECT * FROM babel_4529_syscolumns
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
-EXEC babel_4529_system_objects
+SELECT * FROM babel_4529_system_objects
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#int#!#varchar#!#int#!#varchar
 ~~END~~
 
 
-EXEC babel_4529_xml_indexes
+SELECT * FROM babel_4529_xml_indexes
 GO
 ~~START~~
 char
 ~~END~~
 
 
-EXEC babel_4529_sysforeignkeys
+SELECT * FROM babel_4529_sysforeignkeys
 GO
 ~~START~~
-int#!#int#!#int#!#smallint#!#smallint#!#smallint
+varchar#!#int#!#int#!#int#!#smallint#!#smallint#!#smallint
 ~~END~~
 
 
-EXEC babel_4529_data_spaces
+SELECT * FROM babel_4529_data_spaces
 GO
 ~~START~~
 char
@@ -49,72 +49,72 @@ FG
 ~~END~~
 
 
-EXEC babel_4529_sysprocesses
+SELECT * FROM babel_4529_sysprocesses
 GO
 ~~START~~
-int#!#smallint#!#int#!#binary#!#bigint#!#nchar#!#nchar#!#int#!#int#!#int#!#bigint#!#int#!#datetime#!#datetime#!#smallint#!#smallint#!#nchar#!#binary#!#nchar#!#nchar#!#nchar#!#nchar#!#nchar#!#nchar#!#nchar#!#nchar#!#nchar#!#varbinary#!#binary#!#int#!#int#!#int
+int#!#int#!#int#!#varbinary#!#int#!#text#!#text#!#int#!#int#!#int#!#int#!#int#!#varchar#!#varchar#!#int#!#int#!#text#!#varbinary#!#nchar#!#text#!#varchar#!#text#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#int#!#int#!#int
 ~~END~~
 
 
-EXEC babel_4529_key_constraints
+SELECT * FROM babel_4529_key_constraints
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#int#!#bit#!#bit#!#bit#!#bit
 ~~END~~
 
 
-EXEC babel_4529_foreign_keys
+SELECT * FROM babel_4529_foreign_keys
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#int#!#int#!#bit#!#bit#!#bit#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#bit
 ~~END~~
 
 
-EXEC babel_4529_sysviews
+SELECT * FROM babel_4529_sysviews
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
+varchar#!#int#!#int#!#int#!#int#!#varchar#!#varchar#!#datetime#!#datetime#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
-EXEC babel_4529_systables
+SELECT * FROM babel_4529_systables
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#int#!#bit#!#bit
 ~~END~~
 
 
-EXEC babel_4529_default_constraints
+SELECT * FROM babel_4529_default_constraints
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#int#!#nvarchar#!#bit
 ~~END~~
 
 
-EXEC babel_4529_check_constraints
+SELECT * FROM babel_4529_check_constraints
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#nvarchar#!#bit#!#bit
 ~~END~~
 
 
-EXEC babel_4529_types
+SELECT * FROM babel_4529_types
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+text#!#int#!#int#!#int#!#int#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 
-EXEC babel_4529_sp_sproc_columns_view
+SELECT * FROM babel_4529_sp_sproc_columns_view
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint#!#varchar
 ~~END~~
 
 
-EXEC babel_4529_systypes
+SELECT * FROM babel_4529_systypes
 GO
 ~~START~~
-varchar#!#int#!#tinyint#!#smallint#!#smallint#!#tinyint#!#tinyint#!#int#!#int#!#smallint#!#smallint#!#int#!#smallint#!#bit#!#bit#!#int#!#varchar#!#smallint#!#tinyint#!#varchar
+varchar#!#int#!#tinyint#!#smallint#!#smallint#!#tinyint#!#tinyint#!#int#!#int#!#smallint#!#smallint#!#int#!#smallint#!#bit#!#bit#!#int#!#varchar#!#int#!#tinyint#!#varchar
 ~~END~~
 
