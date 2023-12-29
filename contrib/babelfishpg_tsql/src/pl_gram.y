@@ -54,7 +54,8 @@
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
-
+#define VARCHAR_MAX_SCALE 8000
+#define NVARCHAR_MAX_SCALE 4000
 #define TEMPOBJ_QUALIFIER "TEMPORARY "
 
 typedef struct
@@ -7234,21 +7235,21 @@ parse_datatype(const char *string, int location)
 	else if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
 		typmod = -1;
 	
-	else if (typmod > (8000 + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
+	else if (typmod > (VARCHAR_MAX_SCALE + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
 	{
 		DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("The size '%d' exceeds the maximum allowed (8000) for '%s' datatype.",
-				typmod - VARHDRSZ, dataTypeName)));
+			errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+				typmod - VARHDRSZ, VARCHAR_MAX_SCALE, dataTypeName)));
 	}
-	else if (typmod > (4000 + VARHDRSZ) && (is_tsql_nchar_or_nvarchar_datatype(type_id)))
+	else if (typmod > (NVARCHAR_MAX_SCALE + VARHDRSZ) && (is_tsql_nchar_or_nvarchar_datatype(type_id)))
 	{
 		DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			errmsg("The size '%d' exceeds the maximum allowed (4000) for '%s' datatype.",
-				typmod - VARHDRSZ, dataTypeName)));
+			errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+				typmod - VARHDRSZ, NVARCHAR_MAX_SCALE, dataTypeName)));
 	}
 
 	/* Restore former ereport callback */
