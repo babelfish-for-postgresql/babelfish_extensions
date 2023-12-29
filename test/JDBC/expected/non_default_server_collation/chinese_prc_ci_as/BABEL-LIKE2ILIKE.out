@@ -35,13 +35,18 @@ select c1 from like_tesing1 where c1 LIKE 'Jon%'
 GO
 ~~START~~
 varchar
+JONES
 JoneS
+jOnes
 ~~END~~
 
 select c1 from like_tesing1 where c1 LIKE 'jone_'
 GO
 ~~START~~
 varchar
+JONES
+JoneS
+jOnes
 ~~END~~
 
 select c1 from like_tesing1 where c1 LIKE '_one_'
@@ -87,9 +92,6 @@ select c1 from like_tesing1 where c1 NOT LIKE 'jone%'
 GO
 ~~START~~
 varchar
-JONES
-JoneS
-jOnes
 abcD
 ?b?D
 ~~END~~
@@ -170,9 +172,8 @@ Select count(*) from like_tesing1 where c3 LIKE (select c3 from like_tesing1 whe
 GO
 ~~START~~
 int
-~~ERROR (Code: 512)~~
-
-~~ERROR (Message: more than one row returned by a subquery used as an expression)~~
+1
+~~END~~
 
 with p1 as (select c1 from like_tesing1 where c1 LIKE '__Ć_'),
 p2 as (select c3 from like_tesing1 where c3 LIKE 'äƀ__')

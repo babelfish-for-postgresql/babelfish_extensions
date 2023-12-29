@@ -114,6 +114,7 @@ GO
 ~~START~~
 varchar
 abc
+Abc
 ~~END~~
 
 

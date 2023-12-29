@@ -388,9 +388,8 @@ Select * from testing4 where c3 LIKE (select c3 from testing4 where c3 NOT LIKE'
 GO
 ~~START~~
 varchar#!#char#!#nvarchar
-~~ERROR (Code: 512)~~
-
-~~ERROR (Message: more than one row returned by a subquery used as an expression)~~
+abcD#!#AbcD                #!#ABCd
+~~END~~
 
 with p1 as (select c1 from testing4 where c1 LIKE '__Ć_'),
 p2 as (select c3 from testing4 where c3 LIKE 'äƀ__')
@@ -510,6 +509,8 @@ SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%' ;
 GO
 ~~START~~
 varchar
+JONES
+JoneS
 ~~END~~
 
 SET babelfish_showplan_all ON;
@@ -529,6 +530,8 @@ SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%' ;
 GO
 ~~START~~
 varchar
+JONES
+JoneS
 ~~END~~
 
 SET babelfish_showplan_all ON;
