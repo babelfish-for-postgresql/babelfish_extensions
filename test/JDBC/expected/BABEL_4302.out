@@ -5699,7 +5699,7 @@ GO
 int
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Arithmetic overflow error for data type smallmoney, value = -53691.000000.)~~
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
 
 
 SELECT DATEPART(day, CAST(-53690 AS int));

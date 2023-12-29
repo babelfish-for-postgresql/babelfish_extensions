@@ -690,7 +690,7 @@ datepart_internal_smallmoney(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error for data type smallmoney, value = %f.",num)));
+				errmsg("Arithmetic overflow error converting expression to data type datetime.")));
 	}
 
 	/* 
