@@ -436,9 +436,18 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     ```bash
     mvn test
     ```
-4. If the expected output is different when run with non-default server collation, one can add a different expected output in `expected/non_default_server_collation/<server_collation_name>` folder. Similary, if tests are running in parallel query mode and expected output is different with non-default server collation, one can add a different expected output in `expected/parallel_query/non_default_server_collation/<server_collation_name>/` folder.
+4. How to add expected output for some test
+    1. By default expected output of a test should be added into `expected` folder.
+    2. If JDBC is running in normal mode with server collation=<server_collation_name> and expected output of some test is different then add this new expected output in `expected/non_default_server_collation/<server_collation_name>` folder.
+    3. If JDBC is running in parallel query mode with default server collation and expected output of some test is different then the expected output should be added in `expected/parallel_query` folder.(As mentioned in [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled))
+    4. If JDBC is running in parallel query mode with server collation=<server_collation_name> and expected output of some test is different then add this new expected output in `expected/parallel_query/non_default_server_collation/<server_collation_name>` folder.
+
 5. Cleanup all the objects, users, roles and databases created while running the tests:
     ```bash
     ./cleanup.sh
     ```
-6. Please note that whenever you had changed the server collation and reinitialised Babelfish extensions update the `serverCollationName` environment variable with appropriate server collation name and set `serverCollationName = default` when server collation name is set to default server collation. This ensures that correct expected output is picked for current server collation name.
+6. Please note that whenever you had changed the server collation and reinitialised Babelfish extensions update the `serverCollationName` environment variable with appropriate server collation name and unset when server collation name is set to default server collation.
+    ```bash
+    unset serverCollationName
+    ```
+    This ensures that correct expected output is picked for current server collation name.
