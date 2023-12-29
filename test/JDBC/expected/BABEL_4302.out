@@ -5823,3 +5823,357 @@ GO
 
 ~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
 
+
+
+
+-- Max Limits checked for datatypes
+SELECT DATEPART(day, CAST(9999999999 AS bit));
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEPART(week, CAST(922337203685477.5807 AS money));
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(weekday, CAST(214748.3649 AS smallmoney));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT DATEPART(year, CAST(2147483647 AS int));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(q, CAST(32767 AS smallint));
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT DATEPART(qq, CAST(9223372036854775807 AS bigint));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(second, CAST(256 AS tinyint));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT DATEPART(ms, CAST(2147483648 AS decimal));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(month, CAST(3.40E+38 AS real));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(microsecond, CAST(2147483648 AS numeric));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(iso_week, CAST(1.79E+308 AS float));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+
+-- Min Limits checked for datatypes
+SELECT DATEPART(day, CAST(-9999999999 AS bit));
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEPART(week, CAST(-922337203685477.5809 AS money));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685477.5809" is out of range for type fixeddecimal)~~
+
+
+SELECT DATEPART(weekday, CAST(-214748.3649 AS smallmoney));
+GO
+~~START~~
+int
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT DATEPART(year, CAST(-2147483648 AS int));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(q, CAST(-32768 AS smallint));
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT DATEPART(qq, CAST(-9223372036854775808 AS bigint));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(second, CAST(0 AS tinyint));
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(ms, CAST(-247483647 AS decimal));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(month, CAST(-3.40E+38 AS real));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(microsecond, CAST(-247483647 AS numeric));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(iso_week, CAST(-1.79E+308 AS float));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+
+-- Max Limits checked for dates
+SELECT DATEPART(day, '9999-12-31');
+GO
+~~START~~
+int
+31
+~~END~~
+
+
+SELECT DATEPART(week, '9999-12-31 23:59:59.997');
+GO
+~~START~~
+int
+53
+~~END~~
+
+
+SELECT DATEPART(second, '12:45:37.123456');
+GO
+~~START~~
+int
+37
+~~END~~
+
+
+SELECT DATEPART(year, '9999-12-31 23:59:29.998 +0');
+GO
+~~START~~
+int
+9999
+~~END~~
+
+
+SELECT DATEPART(minute, '23:59:59.99');
+GO
+~~START~~
+int
+59
+~~END~~
+
+
+
+-- Min Limits checked for dates
+SELECT DATEPART(day, '0001-01-01 -1');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(week, '0001-01-01 00:00:00.0000000 +00:00');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(second, '0001-01-01');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(year, '00:00:00.0000000');
+GO
+~~START~~
+int
+1900
+~~END~~
+
+
+
+-- NULL
+SELECT DATEPART(day, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(week, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(weekday, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(year, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(q, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(qq, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(second, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(ms, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(month, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(microsecond, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(iso_week, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(nanosecond, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT DATEPART(tzoffset, NULL);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+

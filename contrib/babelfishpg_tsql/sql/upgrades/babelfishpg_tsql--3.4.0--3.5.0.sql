@@ -45,8 +45,6 @@ BEGIN
 
     ALTER FUNCTION sys.datepart_internal(PG_CATALOG.TEXT, anyelement, INTEGER) RENAME TO datepart_internal_deprecated_3_5;
 
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datepart_internal_deprecated_3_5');
-
     CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.BIT ,df_tz INTEGER DEFAULT 0)
     RETURNS INTEGER
     AS 'babelfishpg_tsql', 'datepart_internal_int'
@@ -131,6 +129,8 @@ BEGIN
     RETURNS INTEGER
     AS 'babelfishpg_tsql', 'datepart_internal_float'
     LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+     CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'datepart_internal_deprecated_3_5');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
