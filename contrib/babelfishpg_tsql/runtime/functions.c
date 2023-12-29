@@ -536,7 +536,7 @@ datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_i
 Datum
 datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
 
@@ -556,7 +556,7 @@ datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_date(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
 	
@@ -573,7 +573,7 @@ datepart_internal_date(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_datetime(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
 	
@@ -590,7 +590,7 @@ datepart_internal_datetime(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_int(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	int64		num = PG_GETARG_INT64(1);
 
 	/* 
@@ -609,7 +609,7 @@ datepart_internal_int(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_smallint(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	int			num = PG_GETARG_INT16(1);
 
 	if(num > SHRT_MAX || num < SHRT_MIN)
@@ -634,7 +634,7 @@ datepart_internal_smallint(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_tinyint(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	int			num = PG_GETARG_INT16(1);
 
 	if(num > UCHAR_MAX || num < 0)
@@ -659,7 +659,7 @@ datepart_internal_tinyint(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_money(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	int64		num = PG_GETARG_INT64(1);
 
 	/* 
@@ -678,7 +678,7 @@ datepart_internal_money(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_smallmoney(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	int64		arg = PG_GETARG_INT64(1);
 	float8		num;
 
@@ -707,7 +707,7 @@ datepart_internal_smallmoney(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_decimal(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	Numeric		argument = PG_GETARG_NUMERIC(1);
 	float8		num = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(argument)));
 
@@ -726,7 +726,7 @@ datepart_internal_decimal(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_float(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	float8		arg = PG_GETARG_FLOAT8(1);
 
 	/* 
@@ -744,7 +744,7 @@ datepart_internal_float(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_real(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	float4		arg = PG_GETARG_FLOAT4(1);
 
 	/* 
@@ -762,7 +762,7 @@ datepart_internal_real(PG_FUNCTION_ARGS)
 Datum
 datepart_internal_time(PG_FUNCTION_ARGS)
 {
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*field = PG_GETARG_CSTRING(0);
 	Timestamp	timestamp;
 	int			df_tz = PG_GETARG_INT32(2);
 
