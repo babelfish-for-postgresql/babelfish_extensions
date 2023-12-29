@@ -35,3 +35,10 @@ ignore#!#babel_table_type
 # These test should not ger run in parallel query
 ignore#!#BABEL-1363
 
+# Taking too much time to complete. (TIME-OUT FAILURES)
+ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
+ignore#!#BABEL-3013
+ignore#!#BABEL-SP_TABLE_PRIVILEGES
+ignore#!#ISC-Columns-vu-verify
+ignore#!#four-part-names-vu-verify
+ignore#!#sys-has_perms_by_name-vu-verify
