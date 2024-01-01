@@ -5,7 +5,7 @@ GO
 
 CREATE VIEW babel_4529_dm_exec_connections
 AS 
-SELECT local_net_address, client_net_address, endpoint_id  FROM sys.dm_exec_connections where session_id = @@SPID
+SELECT local_net_address, client_net_address, endpoint_id  FROM sys.dm_exec_connections where session_id IS NULL;
 GO
 
 CREATE VIEW babel_4529_syscolumns
@@ -40,45 +40,45 @@ GO
 
 CREATE VIEW babel_4529_key_constraints
 AS
-SELECT * FROM sys.key_constraints where parent_object_id IS NULL
+SELECT type FROM sys.key_constraints where parent_object_id IS NULL
 GO
 
 CREATE VIEW babel_4529_foreign_keys
 AS
-SELECT * FROM sys.foreign_keys where name = 'test_name_4529'
+SELECT type FROM sys.foreign_keys where name = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_sysviews
 AS
-SELECT * FROM sys.views where name = 'test_name_4529'
+SELECT name, type, type_desc, create_date, modify_date, is_ms_shipped, is_published, is_schema_published, with_check_option, is_date_correlation_view, is_tracked_by_cdc, object_id, schema_id FROM sys.views where name = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_systables
 AS
-SELECT * FROM sys.tables where name = 'test_name_4529'
+SELECT type FROM sys.tables where name = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_default_constraints
 AS
-SELECT * FROM sys.default_constraints where name = 'test_name_4529'
+SELECT type FROM sys.default_constraints where name = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_check_constraints
 AS
-SELECT * FROM sys.check_constraints where name = 'test_name_4529'
+SELECT type FROM sys.check_constraints where name = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_types
 AS
-SELECT * FROM sys.types where name = 'test_name_4529'
+SELECT name, collation_name, precision, scale, is_user_defined, is_assembly_type, is_table_type, default_object_id, rule_object_id, system_type_id, user_type_id, schema_id FROM sys.types where name = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_sp_sproc_columns_view
 AS
-SELECT * FROM sys.sp_sproc_columns_view where PROCEDURE_QUALIFIER = 'test_name_4529'
+SELECT precision, scale FROM sys.sp_sproc_columns_view where PROCEDURE_QUALIFIER = 'test_name_4529'
 GO
 
 CREATE VIEW babel_4529_systypes
 AS
-SELECT * FROM sys.systypes where name = 'test_name_4529'
+SELECT prec FROM sys.systypes where name = 'test_name_4529'
 GO
