@@ -5,7 +5,7 @@ GO
 
 CREATE VIEW babel_4529_dm_exec_connections
 AS 
-SELECT local_net_address, client_net_address, endpoint_id  FROM sys.dm_exec_connections where session_id IS NULL;
+SELECT local_net_address, client_net_address, endpoint_id  FROM sys.dm_exec_connections where local_net_address = 'test_address_4529';
 GO
 
 CREATE VIEW babel_4529_syscolumns
