@@ -54,6 +54,7 @@ typedef struct common_utility_plugin
 	Datum		(*datetime_in_str) (char *str);
 	Datum		(*datetime2sqlvariant) (PG_FUNCTION_ARGS);
 	Datum		(*timestamp_datetimeoffset) (PG_FUNCTION_ARGS);
+	Datum		(*datetimeoffset_timestamp) (PG_FUNCTION_ARGS);
 	Datum		(*tinyint2sqlvariant) (PG_FUNCTION_ARGS);
 	Datum		(*translate_pg_type_to_tsql) (PG_FUNCTION_ARGS);
 	void		(*TdsGetPGbaseType) (uint8 variantBaseType, int *pgBaseType, int tempLen,
