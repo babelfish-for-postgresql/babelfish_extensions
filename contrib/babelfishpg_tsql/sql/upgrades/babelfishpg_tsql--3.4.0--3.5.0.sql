@@ -39,7 +39,7 @@ LANGUAGE plpgsql;
  */
 
 
-ALTER VIEW sys.sysforeignkeys RENAME TO sysforeignkeys_deprecated_3_5;
+ALTER VIEW sys.sysforeignkeys RENAME TO sysforeignkeys_deprecated_3_5_0;
 
 create or replace view sys.sysforeignkeys as
 select
@@ -57,9 +57,9 @@ and (c.connamespace in (select schema_id from sys.schemas))
 and has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5_0');
 
-ALTER VIEW sys.system_objects RENAME TO system_objects_deprecated_3_5;
+ALTER VIEW sys.system_objects RENAME TO system_objects_deprecated_3_5_0;
 
 create or replace view sys.system_objects as
 select
@@ -71,9 +71,9 @@ inner join pg_namespace s on s.oid = o.schema_id
 where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5_0');
 
-ALTER VIEW sys.syscolumns RENAME TO syscolumns_deprecated_3_5;
+ALTER VIEW sys.syscolumns RENAME TO syscolumns_deprecated_3_5_0;
 
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name
@@ -142,9 +142,9 @@ SELECT p.name
 FROM sys.proc_param_helper() as p;
 GRANT SELECT ON sys.syscolumns TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_3_5_0');
 
-ALTER VIEW sys.dm_exec_connections RENAME TO dm_exec_connections_deprecated_3_5;
+ALTER VIEW sys.dm_exec_connections RENAME TO dm_exec_connections_deprecated_3_5_0;
 
 create or replace view sys.dm_exec_connections
  as
@@ -174,9 +174,9 @@ create or replace view sys.dm_exec_connections
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
  GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_connections_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_connections_deprecated_3_5_0');
 
-ALTER VIEW sys.xml_indexes RENAME TO xml_indexes_connections_deprecated_3_5;
+ALTER VIEW sys.xml_indexes RENAME TO xml_indexes_connections_deprecated_3_5_0;
 
 CREATE OR REPLACE VIEW sys.xml_indexes
 AS
@@ -210,9 +210,9 @@ FROM  sys.indexes idx
 WHERE idx.type = 3; -- 3 is of type XML
 GRANT SELECT ON sys.xml_indexes TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_connections_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'xml_indexes_connections_deprecated_3_5_0');
 
-ALTER VIEW sys.stats RENAME TO stats__deprecated_3_5;
+ALTER VIEW sys.stats RENAME TO stats__deprecated_3_5_0;
 
 CREATE OR REPLACE VIEW sys.stats
 AS
@@ -233,9 +233,9 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'stats__deprecated_3_5_0');
 
-ALTER VIEW sys.data_spaces RENAME TO data_spaces_deprecated_3_5;
+ALTER VIEW sys.data_spaces RENAME TO data_spaces_deprecated_3_5_0;
 
 
 CREATE OR REPLACE VIEW sys.data_spaces
@@ -265,9 +265,9 @@ SELECT
 FROM sys.data_spaces ds WHERE type = 'FG';
 GRANT SELECT ON sys.filegroups TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'data_spaces_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'data_spaces_deprecated_3_5_0');
 
-ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_3_5;
+ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_3_5_0;
 
 create or replace view sys.sysprocesses as
 select
@@ -520,9 +520,9 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecated_3_5_0');
 
-ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated_3_5;
+ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated_3_5_0;
 
 CREATE OR replace view sys.foreign_keys AS
 SELECT
@@ -586,7 +586,7 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
-ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated_3_5;
+ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated_3_5_0;
 
 CREATE OR replace view sys.key_constraints AS
 SELECT
@@ -620,7 +620,7 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
-ALTER VIEW sys.views RENAME TO views_deprecated_3_5;
+ALTER VIEW sys.views RENAME TO views_deprecated_3_5_0;
 
 create or replace view sys.views as 
 select 
@@ -648,7 +648,7 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
-ALTER VIEW sys.tables RENAME TO tables_deprecated_3_5;
+ALTER VIEW sys.tables RENAME TO tables_deprecated_3_5_0;
 
 create or replace view sys.tables as
 select
@@ -709,7 +709,7 @@ and has_schema_privilege(t.relnamespace, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
-ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_3_5;
+ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_3_5_0;
 
 create or replace view sys.default_constraints
 AS
@@ -736,7 +736,7 @@ AND has_schema_privilege(tab.schema_id, 'USAGE')
 AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
-ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_3_5;
+ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_3_5_0;
 
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
@@ -764,14 +764,14 @@ WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
 GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_3_5_0');
 
-ALTER VIEW sys.types RENAME TO types_deprecated_3_5;
+ALTER VIEW sys.types RENAME TO types_deprecated_3_5_0;
 
 create or replace view sys.types As
 -- For System types
@@ -933,7 +933,7 @@ FROM sys.types t
 WHERE t.is_assembly_type = 1;
 GRANT SELECT ON sys.assembly_types TO PUBLIC;
 
-ALTER VIEW sys.systypes RENAME TO systypes_deprecated_3_5;
+ALTER VIEW sys.systypes RENAME TO systypes_deprecated_3_5_0;
 
 CREATE OR REPLACE VIEW sys.systypes AS
 SELECT name
@@ -1145,7 +1145,7 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_autoformat(IN sys.VARCHAR(257), IN sys.VARCHAR(1000), sys.bit, sys.VARCHAR(1000)) TO PUBLIC;
 
-ALTER VIEW sys.table_types RENAME TO table_types_deprecated_3_5;
+ALTER VIEW sys.table_types RENAME TO table_types_deprecated_3_5_0;
 
 create or replace view sys.table_types as
 select st.*
@@ -1932,9 +1932,9 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_5');
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_5');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_5_0');
 
 CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
@@ -1962,7 +1962,7 @@ DECLARE
   exception_message text;
 BEGIN
   -- Rename parsename for dependencies
-  ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_3_5_0;
+  ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_3_5_0_0;
 
 EXCEPTION WHEN OTHERS THEN
   GET STACKED DIAGNOSTICS
@@ -1976,7 +1976,7 @@ DECLARE
   exception_message text;
 BEGIN
   -- Rename sp_set_session_context for dependencies
-  ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_3_5_0;
+  ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_3_5_0_0;
 
 EXCEPTION WHEN OTHERS THEN
   GET STACKED DIAGNOSTICS
@@ -1990,7 +1990,7 @@ DECLARE
   exception_message text;
 BEGIN
   -- Rename session_context for dependencies
-  ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_3_5_0;
+  ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_3_5_0_0;
 
 EXCEPTION WHEN OTHERS THEN
   GET STACKED DIAGNOSTICS
@@ -2027,8 +2027,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    -- === DROP parsename_deprecated_in_3_5_0
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_5_0');
+    -- === DROP parsename_deprecated_in_3_5_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_5_0_0');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -2041,8 +2041,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    -- === DROP sp_set_session_context_deprecated_in_3_5_0
-    CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_3_5_0');
+    -- === DROP sp_set_session_context_deprecated_in_3_5_0_0
+    CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_3_5_0_0');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -2055,8 +2055,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    -- === DROP session_context_deprecated_in_3_5_0
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_3_5_0');
+    -- === DROP session_context_deprecated_in_3_5_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_3_5_0_0');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
