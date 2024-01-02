@@ -251,6 +251,7 @@ extern ProcessUtility_hook_type next_ProcessUtility;
 /* Postgres Public role name */
 #define PUBLIC_ROLE_NAME "public"
 #define BABELFISH_SYSADMIN "sysadmin"
+#define BABELFISH_ROLE_ADMIN "bbf_role_admin"
 
 /* Functions in backend/tds/tdscomm.c */
 extern void TdsSetMessageType(uint8_t msgType);

@@ -60,6 +60,7 @@ static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
 static bool handle_rename(RenameStmt *rename_stmt);
 static bool handle_alter_role(AlterRoleStmt* alter_role_stmt);
 static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
+static bool handle_grant_role(GrantRoleStmt *grant_stmt);
 
 /* Drop database handler */
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
@@ -713,6 +714,9 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		case T_AlterRoleSetStmt:
 			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
+		case T_GrantRoleStmt:
+			handle_result = handle_grant_role((GrantRoleStmt *) parsetree);
+			break;
 		default:
 			break;
 	}
@@ -910,26 +914,27 @@ check_babelfish_droprole_restrictions(char *role)
  * 	that is only accessible in babelfish_db.
  * 	Since role related DDLs could be executed in any PG databases,
  * 	This function check the underlying assumption on the membership chain instead
- * 	sysadmin <-- dbo* <--- db_owner* <--- users/roles
+ * 	1. sysadmin <-- dbo* <--- db_owner* <--- users/roles
+ * 	2. bbf_role_admin <-- users/roles/logins
  *
  * actual dbo and db_owner name varies across different babelfish logical databases
  */
 static bool
 is_babelfish_role(const char *role)
 {
-	Oid			sysadmin_oid;
+	Oid			bbf_role_admin_oid;
 	Oid			role_oid;
 	Oid			bbf_master_guest_oid;
 	Oid			bbf_tempdb_guest_oid;
 	Oid			bbf_msdb_guest_oid;
 
-	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
 
-	if (sysadmin_oid == InvalidOid || role_oid == InvalidOid)
+	if (bbf_role_admin_oid == InvalidOid || role_oid == InvalidOid)
 		return false;
 
-	if (is_member_of_role(sysadmin_oid, role_oid))
+	if (is_member_of_role(bbf_role_admin_oid, role_oid))
 		return true;
 
 	bbf_master_guest_oid = get_role_oid("master_guest", true);
@@ -1162,6 +1167,59 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
      */
     pfree(name);
     return true;
+}
+
+/*
+ * handle_grant_role
+ *
+ * Handles GRANT/REVOKE ROLE TO/FROM ROLE.
+ *
+ * Returns: true - We're not attempting to modify something we shouldn't have access to. Normal security checks.
+ *          false - We've reported an error and should not continue executing this call.
+ */
+static bool
+handle_grant_role(GrantRoleStmt *grant_stmt)
+{
+	ListCell *item;
+	Oid bbf_role_admin_oid = InvalidOid;
+	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+
+	if (sql_dialect == SQL_DIALECT_TSQL ||
+		(babelfish_dump_restore && strncmp(babelfish_dump_restore, "on", 2) == 0 && superuser())) /* allow during dump/restore only to superuser */
+		return true;
+
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true);
+
+	if (!OidIsValid(bbf_role_admin_oid))
+		return true;
+
+	/* Restrict roles to added as a member of bbf_role_admin */
+	foreach(item, grant_stmt->granted_roles)
+	{
+		AccessPriv *priv = (AccessPriv *) lfirst(item);
+		char	   *rolename = priv->priv_name;
+		Oid			roleid;
+
+		if (rolename == NULL)
+			continue;
+
+		roleid = get_role_oid(rolename, false);
+		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+			check_babelfish_alterrole_restictions(false);
+	}
+
+	/* Restrict grant to/from bbf_role_admin role */
+	foreach(item, grant_stmt->grantee_roles)
+	{
+		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
+		Oid			roleid;
+
+		roleid = get_rolespec_oid(rolespec, false);
+		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+			check_babelfish_alterrole_restictions(false);
+	}
+
+	return true;
 }
 
 /*
