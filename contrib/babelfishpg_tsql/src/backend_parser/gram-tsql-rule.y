@@ -4140,7 +4140,7 @@ tsql_VariableSetStmt:
 					n->is_local = false;
 					$$ = (Node *) n;
 				}
-			| SET TRANSACTION tsql_IsolationLevel
+			| SET tsql_TranKeyword tsql_IsolationLevel
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;

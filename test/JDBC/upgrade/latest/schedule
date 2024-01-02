@@ -473,6 +473,7 @@ BABEL-4175
 sp_who
 BABEL_4330
 kill
+set_tran_isolvl
 BABEL-4217
 Test_ISNULL
 BABEL-4270
