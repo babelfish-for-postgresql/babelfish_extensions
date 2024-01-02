@@ -31,7 +31,7 @@ runs:
         
         if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
           if [[ ${{inputs.engine_branch}} == "latest" ]]; then
-            ENGINE_BRANCH=BABEL_4_X_DEV__PG_16_X
+            ENGINE_BRANCH=$GITHUB_HEAD_REF
           else
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi            
