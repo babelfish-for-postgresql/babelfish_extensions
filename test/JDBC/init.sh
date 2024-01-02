@@ -57,8 +57,6 @@ ALTER SYSTEM SET min_parallel_index_scan_size = 0;
 ALTER SYSTEM SET min_parallel_table_scan_size = 0;
 ALTER SYSTEM SET force_parallel_mode = 1;
 ALTER SYSTEM SET max_parallel_workers_per_gather = 4;
-ALTER SYSTEM SET max_worker_processes = 20;
-ALTER SYSTEM SET max_parallel_workers = 20;
 SELECT pg_reload_conf();
 \c jdbc_testdb
 show babelfishpg_tsql.database_name;

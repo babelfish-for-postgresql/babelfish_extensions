@@ -36,7 +36,7 @@ ignore#!#babel_table_type
 ignore#!#BABEL-1363
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
-#ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
+ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
 ignore#!#BABEL-3013
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
