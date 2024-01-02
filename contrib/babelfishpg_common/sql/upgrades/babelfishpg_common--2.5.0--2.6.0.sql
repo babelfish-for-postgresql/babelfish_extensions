@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '2.5.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_common"" UPDATE TO '2.6.0'" to load this file. \quit
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
@@ -14,7 +14,7 @@ DECLARE
     query2 text;
 BEGIN
 
-    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
     query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
 
     execute query1;
