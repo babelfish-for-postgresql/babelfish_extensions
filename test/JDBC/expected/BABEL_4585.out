@@ -4,25 +4,32 @@ GO
 ~~ROW COUNT: 2~~
 
 
-SELECT DATEDIFF(Year, GetDate(), id) FROM babel_4585_t1
+SELECT DATEDIFF(Year, CAST('2024-01-01' AS DATETIME), id) FROM babel_4585_t1
 GO
 ~~START~~
 int
--23
+-24
 ~~ERROR (Code: 517)~~
 
 ~~ERROR (Message: data out of range for datetime)~~
 
 
-DECLARE cursor_4585_1 CURSOR FOR SELECT DATEDIFF(Year, GetDate(), id) FROM babel_4585_t1;
+DECLARE cursor_4585_1 CURSOR FOR SELECT DATEDIFF(Year, CAST('2024-01-01' AS DATETIME), id) FROM babel_4585_t1
 OPEN cursor_4585_1;
 FETCH NEXT FROM cursor_4585_1;
 FETCH NEXT FROM cursor_4585_1;
-CLOSE cursor_4585_1;    
+FETCH NEXT FROM cursor_4585_1;
+CLOSE cursor_4585_1;
+OPEN cursor_4585_1;
+FETCH NEXT FROM cursor_4585_1;
+FETCH NEXT FROM cursor_4585_1;
+FETCH NEXT FROM cursor_4585_1;
+CLOSE cursor_4585_1;
+DEALLOCATE cursor_4585_1;
 GO
 ~~START~~
 int
--23
+-24
 ~~END~~
 
 ~~START~~
@@ -31,7 +38,30 @@ int
 
 ~~ERROR (Message: data out of range for datetime)~~
 
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 16916)~~
+
+~~ERROR (Message: cursor "cursor_4585_1" does not exist)~~
+
+~~ERROR (Code: 16916)~~
+
+~~ERROR (Message: cursor "cursor_4585_1" does not exist)~~
+
+~~START~~
+int
+-24
+~~END~~
+
+~~START~~
+int
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: data out of range for datetime)~~
+
+~~ERROR (Code: 16916)~~
+
+~~ERROR (Message: cursor "cursor_4585_1" does not exist)~~
+
+~~ERROR (Code: 16916)~~
 
 ~~ERROR (Message: cursor "cursor_4585_1" does not exist)~~
 

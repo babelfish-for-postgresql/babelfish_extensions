@@ -668,6 +668,7 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_open(estate, (PLtsql_stmt_open *) stmt);
 			break;
 		case PLTSQL_STMT_FETCH:
+			((PLtsql_stmt_fetch *) stmt)->cursor_portal_name = NULL;
 			if (pltsql_explain_only)
 			{
 				ereport(ERROR,
@@ -1288,6 +1289,17 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		if (TransactionIdIsValid(GetCurrentTransactionIdIfAny()))
 			add_failed_transaction(GetCurrentTransactionIdIfAny());
 
+		/* Incase of failed cursor fetch Unpin Curosr Portal */
+		if (stmt->cmd_type == PLTSQL_STMT_FETCH && 
+		   ((PLtsql_stmt_fetch *) stmt)->cursor_portal_name != NULL)
+		{
+			Portal portal;
+			portal = SPI_cursor_find(((PLtsql_stmt_fetch *) stmt)->cursor_portal_name);
+
+			if (portal != NULL && portal->status == PORTAL_FAILED)
+				UnpinPortal(portal);
+		}
+
 		/*
 		 * Non TDS clients will just throw the error in all cases
 		 */
@@ -1365,7 +1377,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 */
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback current transaction");
-			AtCleanup_Portals();
 			/* Hold portals to make sure that cursors work */
 			HoldPinnedPortals();
 			AbortCurrentTransaction();
@@ -1381,7 +1392,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			 */
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback internal transaction");
-			AtCleanup_Portals();
 			HoldPinnedPortals();
 			pltsql_rollback_txn();
 			estate->tsql_trigger_flags &= ~TSQL_TRAN_STARTED;
@@ -1403,7 +1413,6 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		{
 			HOLD_INTERRUPTS();
 			elog(DEBUG1, "TSQL TXN TSQL semantics : Rollback implicit transaction");
-			AtCleanup_Portals();
 			pltsql_rollback_txn();
 			MemoryContextSwitchTo(cur_ctxt);
 			RESUME_INTERRUPTS();

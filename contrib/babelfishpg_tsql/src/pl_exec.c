@@ -6102,6 +6102,8 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("cursor \"%s\" does not exist", pltsql_demangle_curname(curname))));
 
+	stmt->cursor_portal_name = curname;
+
 	/* Calculate position for FETCH_RELATIVE or FETCH_ABSOLUTE */
 	if (stmt->expr)
 	{

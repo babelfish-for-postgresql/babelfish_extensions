@@ -902,6 +902,7 @@ typedef struct PLtsql_stmt_fetch
 	PLtsql_expr *expr;			/* count, if expression */
 	bool		is_move;		/* is this a fetch or move? */
 	bool		returns_multiple_rows;	/* can return more than one row? */
+	char 		*cursor_portal_name;
 } PLtsql_stmt_fetch;
 
 /*
