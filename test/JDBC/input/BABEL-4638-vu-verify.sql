@@ -2,16 +2,16 @@
 SELECT * FROM babel_4638_t1
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t1
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t1
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t1
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t1
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t1
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t1
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t1
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t1
 GO
 
 INSERT INTO babel_4638_char_t1 VALUES('ح'), ('غ'), ('سسس'), ('للل')
@@ -19,27 +19,27 @@ INSERT INTO babel_4638_nchar_t1 VALUES('ح'), ('غ'), ('سسس'), ('للل')
 GO
 
 -- here a is defined as CHAR(10) COLLATE arabic_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t1
+SELECT a + '|' FROM babel_4638_char_t1
 GO
 
 -- here a is defined as NCHAR(10) COLLATE arabic_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t1
+SELECT a + '|' FROM babel_4638_nchar_t1
 GO
 
 -- chinese_prc_ci_as
 SELECT * FROM babel_4638_t2
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t2
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t2
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t2
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t2
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t2
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t2
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t2
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t2
 GO
 
 INSERT INTO babel_4638_char_t2 VALUES('五'), ('九'), ('乙乙乙'), ('魚魚魚')
@@ -47,27 +47,27 @@ INSERT INTO babel_4638_nchar_t2 VALUES('五'), ('九'), ('乙乙乙'), ('魚魚�
 GO
 
 -- here a is defined as CHAR(10) COLLATE chinese_prc_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t2
+SELECT a + '|' FROM babel_4638_char_t2
 GO
 
 -- here a is defined as NCHAR(10) COLLATE chinese_prc_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t2
+SELECT a + '|' FROM babel_4638_nchar_t2
 GO
 
 -- japanese_ci_as
 SELECT * FROM babel_4638_t3
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t3
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t3
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t3
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t3
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t3
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t3
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t3
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t3
 GO
 
 INSERT INTO babel_4638_char_t3 VALUES('あ'), ('九'), ('ちちち'), ('さささ')
@@ -75,27 +75,27 @@ INSERT INTO babel_4638_nchar_t3 VALUES('あ'), ('九'), ('ちちち'), ('ささ�
 GO
 
 -- here a is defined as CHAR(10) COLLATE japanese_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t3
+SELECT a + '|' FROM babel_4638_char_t3
 GO
 
 -- here a is defined as NCHAR(10) COLLATE japanese_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t3
+SELECT a + '|' FROM babel_4638_nchar_t3
 GO
 
 -- hebrew_ci_as
 SELECT * FROM babel_4638_t4
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t4
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t4
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t4
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t4
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t4
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t4
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t4
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t4
 GO
 
 INSERT INTO babel_4638_char_t4 VALUES('ב'), ('א'), ('קקק'), ('מממ');
@@ -103,11 +103,11 @@ INSERT INTO babel_4638_nchar_t4 VALUES('ב'), ('א'), ('קקק'), ('מממ');
 GO
 
 -- here a is defined as CHAR(10) COLLATE hebrew_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t4
+SELECT a + '|' FROM babel_4638_char_t4
 GO
 
 -- here a is defined as NCHAR(10) COLLATE hebrew_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t4
+SELECT a + '|' FROM babel_4638_nchar_t4
 GO
 
 
@@ -115,36 +115,30 @@ GO
 SELECT * FROM babel_4638_t5
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t5
+SELECT CAST(a as NVARCHAR(10)) FROM babel_4638_t5
 GO
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t5
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t5
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t5
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t5
 GO
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t5
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t5
 GO
 
-SELECT CAST('🙂' as NCHAR(1))
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t5
 GO
 
 INSERT INTO babel_4638_char_t5 VALUES('a'), ('🙂'), ('🙂🙂🙂'), ('さささ');
 INSERT INTO babel_4638_nchar_t5 VALUES('a'), ('🙂'), ('🙂🙂🙂'), ('さささ');
 GO
 
-SELECT * FROM babel_4638_char_t5
-GO
-
 -- here a is defined as CHAR(10)
-SELECT CONCAT(a,'|') FROM babel_4638_char_t5
-GO
-
-SELECT * FROM babel_4638_nchar_t5
+SELECT a + '|' FROM babel_4638_char_t5
 GO
 
 -- here a is defined as NCHAR(10)
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t5
+SELECT a + '|' FROM babel_4638_nchar_t5
 GO
 

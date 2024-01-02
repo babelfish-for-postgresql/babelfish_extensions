@@ -10,10 +10,10 @@ varchar
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t1
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t1
 GO
 ~~START~~
-text
+varchar
 ح|
 غ|
 س|
@@ -21,10 +21,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t1
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t1
 GO
 ~~START~~
-text
+varchar
 ح    |
 غ    |
 سسس  |
@@ -32,10 +32,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t1
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t1
 GO
 ~~START~~
-text
+nvarchar
 ح|
 غ|
 س|
@@ -43,10 +43,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t1
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t1
 GO
 ~~START~~
-text
+nvarchar
 ح    |
 غ    |
 سسس  |
@@ -63,10 +63,10 @@ GO
 
 
 -- here a is defined as CHAR(10) COLLATE arabic_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t1
+SELECT a + '|' FROM babel_4638_char_t1
 GO
 ~~START~~
-text
+varchar
 ح         |
 غ         |
 سسس       |
@@ -75,10 +75,10 @@ text
 
 
 -- here a is defined as NCHAR(10) COLLATE arabic_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t1
+SELECT a + '|' FROM babel_4638_nchar_t1
 GO
 ~~START~~
-text
+nvarchar
 ح         |
 غ         |
 سسس       |
@@ -98,10 +98,10 @@ varchar
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t2
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t2
 GO
 ~~START~~
-text
+varchar
  |
  |
  |
@@ -109,10 +109,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t2
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t2
 GO
 ~~START~~
-text
+varchar
 五   |
 九   |
 乙乙 |
@@ -120,10 +120,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t2
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t2
 GO
 ~~START~~
-text
+nvarchar
 五|
 九|
 乙|
@@ -131,10 +131,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t2
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t2
 GO
 ~~START~~
-text
+nvarchar
 五    |
 九    |
 乙乙乙  |
@@ -151,10 +151,10 @@ GO
 
 
 -- here a is defined as CHAR(10) COLLATE chinese_prc_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t2
+SELECT a + '|' FROM babel_4638_char_t2
 GO
 ~~START~~
-text
+varchar
 五        |
 九        |
 乙乙乙    |
@@ -163,10 +163,10 @@ text
 
 
 -- here a is defined as NCHAR(10) COLLATE chinese_prc_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t2
+SELECT a + '|' FROM babel_4638_nchar_t2
 GO
 ~~START~~
-text
+nvarchar
 五         |
 九         |
 乙乙乙       |
@@ -186,10 +186,10 @@ varchar
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t3
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t3
 GO
 ~~START~~
-text
+varchar
  |
  |
  |
@@ -197,10 +197,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t3
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t3
 GO
 ~~START~~
-text
+varchar
 あ   |
 九   |
 ちち |
@@ -208,10 +208,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t3
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t3
 GO
 ~~START~~
-text
+nvarchar
 あ|
 九|
 ち|
@@ -219,10 +219,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t3
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t3
 GO
 ~~START~~
-text
+nvarchar
 あ    |
 九    |
 ちちち  |
@@ -239,10 +239,10 @@ GO
 
 
 -- here a is defined as CHAR(10) COLLATE japanese_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t3
+SELECT a + '|' FROM babel_4638_char_t3
 GO
 ~~START~~
-text
+varchar
 あ        |
 九        |
 ちちち    |
@@ -251,10 +251,10 @@ text
 
 
 -- here a is defined as NCHAR(10) COLLATE japanese_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t3
+SELECT a + '|' FROM babel_4638_nchar_t3
 GO
 ~~START~~
-text
+nvarchar
 あ         |
 九         |
 ちちち       |
@@ -274,10 +274,10 @@ varchar
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t4
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t4
 GO
 ~~START~~
-text
+varchar
 ב|
 א|
 ק|
@@ -285,10 +285,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t4
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t4
 GO
 ~~START~~
-text
+varchar
 ב    |
 א    |
 קקק  |
@@ -296,10 +296,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t4
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t4
 GO
 ~~START~~
-text
+nvarchar
 ב|
 א|
 ק|
@@ -307,10 +307,10 @@ text
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t4
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t4
 GO
 ~~START~~
-text
+nvarchar
 ב    |
 א    |
 קקק  |
@@ -327,10 +327,10 @@ GO
 
 
 -- here a is defined as CHAR(10) COLLATE hebrew_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_char_t4
+SELECT a + '|' FROM babel_4638_char_t4
 GO
 ~~START~~
-text
+varchar
 ב         |
 א         |
 קקק       |
@@ -339,10 +339,10 @@ text
 
 
 -- here a is defined as NCHAR(10) COLLATE hebrew_ci_as
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t4
+SELECT a + '|' FROM babel_4638_nchar_t4
 GO
 ~~START~~
-text
+nvarchar
 ב         |
 א         |
 קקק       |
@@ -363,10 +363,21 @@ a
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(1)), '|') FROM babel_4638_t5
+SELECT CAST(a as NVARCHAR(10)) FROM babel_4638_t5
 GO
 ~~START~~
-text
+nvarchar
+a
+🙂
+🙂🙂🙂
+さささ
+~~END~~
+
+
+SELECT CAST(a AS CHAR(1)) + '|' FROM babel_4638_t5
+GO
+~~START~~
+varchar
 a|
 ?|
 ?|
@@ -374,10 +385,10 @@ a|
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS CHAR(5)), '|') FROM babel_4638_t5
+SELECT CAST(a AS CHAR(5)) + '|' FROM babel_4638_t5
 GO
 ~~START~~
-text
+varchar
 a    |
 ?    |
 ???  |
@@ -385,32 +396,25 @@ a    |
 ~~END~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(1)), '|') FROM babel_4638_t5
+SELECT CAST(a AS NCHAR(1)) + '|' FROM babel_4638_t5
 GO
 ~~START~~
-text
+nvarchar
 a|
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value too long for type character(1) as UTF16 output)~~
 
 
-SELECT CONCAT(CAST(a AS NCHAR(5)), '|') FROM babel_4638_t5
+SELECT CAST(a AS NCHAR(5)) + '|' FROM babel_4638_t5
 GO
 ~~START~~
-text
+nvarchar
 a    |
-?    |
+🙂    |
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value too long for type character(5) as UTF16 output)~~
-
-
-SELECT CAST('🙂' as NCHAR(1))
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: value too long for type character(1) as UTF16 output)~~
 
 
 INSERT INTO babel_4638_char_t5 VALUES('a'), ('🙂'), ('🙂🙂🙂'), ('さささ');
@@ -421,49 +425,27 @@ GO
 ~~ROW COUNT: 4~~
 
 
-SELECT * FROM babel_4638_char_t5
-GO
-~~START~~
-char
-a         
-?         
-???       
-???       
-~~END~~
-
-
 -- here a is defined as CHAR(10)
-SELECT CONCAT(a,'|') FROM babel_4638_char_t5
+SELECT a + '|' FROM babel_4638_char_t5
 GO
 ~~START~~
-text
+varchar
 a         |
 ?         |
 ???       |
 ???       |
-~~END~~
-
-
-SELECT * FROM babel_4638_nchar_t5
-GO
-~~START~~
-nchar
-a         
-🙂        
-🙂🙂🙂    
-さささ       
 ~~END~~
 
 
 -- here a is defined as NCHAR(10)
-SELECT CONCAT(a,'|') FROM babel_4638_nchar_t5
+SELECT a + '|' FROM babel_4638_nchar_t5
 GO
 ~~START~~
-text
+nvarchar
 a         |
-?         |
-???       |
-???       |
+🙂         |
+🙂🙂🙂       |
+さささ       |
 ~~END~~
 
 
