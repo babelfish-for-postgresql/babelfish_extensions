@@ -239,91 +239,6 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'datepart_internal_float'
 LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.BIT ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_int'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date INT ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_int'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date BIGINT ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_int'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.TINYINT ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_int'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date SMALLINT ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_int'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.MONEY ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_money'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.SMALLMONEY ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_smallmoney'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date date ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_date'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.datetime ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_datetime'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.datetime2 ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_datetime'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.smalldatetime ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_datetime'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.DATETIMEOFFSET ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_datetimeoffset'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date time ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_time'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.DECIMAL ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_decimal'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date NUMERIC ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_decimal'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date REAL ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_real'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date FLOAT ,df_tz INTEGER DEFAULT 0)
-RETURNS INTEGER
-AS 'babelfishpg_tsql', 'datepart_internal_float'
-LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128) AS $$
     SELECT CASE 
@@ -1358,83 +1273,13 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.dateadd_numeric_representation_helper(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS DATETIME AS $$
-DECLARE
-    digit_to_startdate DATETIME;
-BEGIN
-    IF pg_typeof(startdate) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,
-    'numeric'::regtype, 'float'::regtype,'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
-        digit_to_startdate := CAST('1900-01-01 00:00:00.0' AS sys.DATETIME) + CAST(startdate as sys.DATETIME);
-    END IF;
-
-    CASE datepart
-	WHEN 'year' THEN
-		RETURN digit_to_startdate + make_interval(years => num);
-	WHEN 'quarter' THEN
-		RETURN digit_to_startdate + make_interval(months => num * 3);
-	WHEN 'month' THEN
-		RETURN digit_to_startdate + make_interval(months => num);
-	WHEN 'dayofyear', 'y' THEN
-		RETURN digit_to_startdate + make_interval(days => num);
-	WHEN 'day' THEN
-		RETURN digit_to_startdate + make_interval(days => num);
-	WHEN 'week' THEN
-		RETURN digit_to_startdate + make_interval(weeks => num);
-	WHEN 'weekday' THEN
-		RETURN digit_to_startdate + make_interval(days => num);
-	WHEN 'hour' THEN
-		RETURN digit_to_startdate + make_interval(hours => num);
-	WHEN 'minute' THEN
-		RETURN digit_to_startdate + make_interval(mins => num);
-	WHEN 'second' THEN
-		RETURN digit_to_startdate + make_interval(secs => num);
-	WHEN 'millisecond' THEN
-		RETURN digit_to_startdate + make_interval(secs => (num::numeric) * 0.001);
-	ELSE
-		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
-	END CASE;
-END;
-$$
-STRICT
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION sys.datepart_internal(IN datepart PG_CATALOG.TEXT, IN arg anyelement,IN df_tz INTEGER DEFAULT 0) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
 	first_day DATE;
 	first_week_end INTEGER;
 	day INTEGER;
-    datapart_date sys.DATETIME;
 BEGIN
-    IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
-     'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
-        datapart_date = CAST(arg AS sys.DATETIME);
-        CASE datepart
-        WHEN 'dow' THEN
-            result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
-        WHEN 'tsql_week' THEN
-            first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
-            first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
-            day = date_part('doy', datapart_date)::INTEGER;
-            IF day <= first_week_end THEN
-                result = 1;
-            ELSE
-                result = 2 + (day - first_week_end - 1) / 7;
-            END IF;
-        WHEN 'second' THEN
-            result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
-        WHEN 'millisecond' THEN
-            result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
-        WHEN 'microsecond' THEN
-            result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
-        WHEN 'nanosecond' THEN
-            -- Best we can do - Postgres does not support nanosecond precision
-            result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
-        ELSE
-            result = date_part(datepart, datapart_date)::INTEGER;
-        END CASE;
-        RETURN result;
-    END IF;
 	CASE datepart
 	WHEN 'dow' THEN
 		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
@@ -1463,7 +1308,7 @@ BEGIN
 		result = date_part(datepart, arg)::INTEGER;
 	END CASE;
 	RETURN result;
-EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
+EXCEPTION WHEN invalid_parameter_value THEN
     -- date_part() throws an exception when trying to get day/month/year etc. from
 	-- TIME, so we just need to catch the exception in this case
 	-- date_part() returns 0 when trying to get hour/minute/second etc. from
