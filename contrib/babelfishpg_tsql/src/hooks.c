@@ -745,22 +745,16 @@ pltsql_bbfViewHasInsteadofTrigger(Relation view, CmdType event)
 			Oid current_tgoid = trigger->tgoid;
 			Oid prev_tgoid = InvalidOid;
 			prev_tgoid = lfirst_oid(list_tail(triggerInvocationSequence));
-			if (list_length(triggerInvocationSequence) > 32)
+			if (prev_tgoid == current_tgoid)
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
+				return false; /** Loop trigger call by itself*/
 			}
-			else if (prev_tgoid == current_tgoid)
+			else if (list_length(triggerInvocationSequence) > TRIGGER_MAX_NEST_LEVEL || list_member_oid(triggerInvocationSequence, current_tgoid))
 			{
-				return false; /** A trigger called recursively by itself*/
-			}
-			else if (list_member_oid(triggerInvocationSequence, current_tgoid))
-			{
-				/** A trigger called recursively by another trigger */
+				/** Loop trigger call by another trigger */
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32)")));
+						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+						 errmsg("Maximum stored procedure, function, trigger, or view nesting level exceeded (limit %d)", TRIGGER_MAX_NEST_LEVEL)));
 			}
 		}
 	}
