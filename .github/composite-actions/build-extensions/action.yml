@@ -7,7 +7,7 @@ inputs:
   extension_branch: 
     description: 'Extension Branch name which needs to checkout first'
     required: no
-    default: 'not_specified'
+    default: 'BABEL_4_X_DEV'
 
 runs:
   using: "composite"
