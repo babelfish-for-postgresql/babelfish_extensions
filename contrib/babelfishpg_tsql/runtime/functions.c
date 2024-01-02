@@ -176,8 +176,6 @@ PG_FUNCTION_INFO_V1(getdate_internal);
 PG_FUNCTION_INFO_V1(sysdatetime);
 PG_FUNCTION_INFO_V1(sysdatetimeoffset);
 PG_FUNCTION_INFO_V1(datepart_internal_int);
-PG_FUNCTION_INFO_V1(datepart_internal_smallint);
-PG_FUNCTION_INFO_V1(datepart_internal_tinyint);
 PG_FUNCTION_INFO_V1(datepart_internal_date);
 PG_FUNCTION_INFO_V1(datepart_internal_datetime);
 PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
@@ -599,56 +597,6 @@ datepart_internal_int(PG_FUNCTION_ARGS)
 	 */
 	return datepart_internal(field, 0, num, true);
 
-}
-
-/*
- * datepart_internal_smallint takes int and converts it to
- * timestamp and calls datepart_internal and checks limits
- */
-
-Datum
-datepart_internal_smallint(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int			num = PG_GETARG_INT16(1);
-
-	if(num > SHRT_MAX || num < SHRT_MIN)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error for data type smallint, value = %d",num)));
-	}
-
-	/* 
-	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
-	 * as there is no need of df_tz
-	 */
-	return datepart_internal(field, 0, num, true);
-}
-
-/*
- * datepart_internal_tinyint takes int and converts it to
- * timestamp and calls datepart_internal and checks limits
- */
-
-Datum
-datepart_internal_tinyint(PG_FUNCTION_ARGS)
-{
-	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int			num = PG_GETARG_INT16(1);
-
-	if(num > UCHAR_MAX || num < 0)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				errmsg("Arithmetic overflow error for data type tinyint, value = %d",num)));
-	}
-
-	/* 
-	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
-	 * as there is no need of df_tz
-	 */
-	return datepart_internal(field, 0, num, true);
 }
 
 /*

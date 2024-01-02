@@ -6177,3 +6177,128 @@ int
 <NULL>
 ~~END~~
 
+
+
+-- datepart without cast
+SELECT DATEPART(day, 2147483647);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(qq, -2147483648);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(month, 9223372036854775807);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(year, -9223372036854775808);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(yy, 214748.3647);
+GO
+~~START~~
+int
+2487
+~~END~~
+
+
+SELECT DATEPART(day, -214748.3648);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(yy, 922337203685477.5807);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(yyyy, -922337203685477.5808);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, 1.79E+308);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(hour, -1.79E+308);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(second, 3.40E+38);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(minute, -3.40E+38);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(day, 0);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(month, 2958463);
+GO
+~~START~~
+int
+12
+~~END~~
+
+
+SELECT DATEPART(hour, 2958464);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
+
+SELECT DATEPART(year, -53690);
+GO
+~~START~~
+int
+1753
+~~END~~
+
+
+SELECT DATEPART(microsecond, -53691);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type datetime.)~~
+
