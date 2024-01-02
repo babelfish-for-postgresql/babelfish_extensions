@@ -1,5 +1,5 @@
 
--- Since the JDBC tests do not capture output from PRINT statements, these tests actually don;t do anything
+-- Since the JDBC tests do not capture output from PRINT statements, these tests actually don't do anything
 -- Keeping them for when then moment comes that PRINT tests are supported
 -- prints a single space:
 print null
