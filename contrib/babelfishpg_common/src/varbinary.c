@@ -52,6 +52,7 @@ PG_FUNCTION_INFO_V1(rowversionvarbinary);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
+PG_FUNCTION_INFO_V1(varbinaryvarchar_deprecated_2_6_0);
 PG_FUNCTION_INFO_V1(varcharbinary);
 PG_FUNCTION_INFO_V1(bpcharbinary);
 PG_FUNCTION_INFO_V1(varcharrowversion);
@@ -722,8 +723,6 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(result);
 }
 
-
-
 Datum
 varbinaryvarchar(PG_FUNCTION_ARGS)
 {
@@ -732,11 +731,17 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	VarChar    *result;
 	char 	   *encoded_result;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
-	int32		typmod = PG_GETARG_INT32(1);
-	int32		maxlen = typmod - VARHDRSZ;
+	int32		typmod = -1;
+	int32		maxlen = -1;
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
+
+	if (fcinfo->nargs > 1)
+	{
+		typmod = PG_GETARG_INT32(1);
+		maxlen = typmod - VARHDRSZ;
+	}
 
 	/*
 	 * Allow trailing null bytes 
