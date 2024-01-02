@@ -27,10 +27,14 @@ Query Text: EXEC babel_3513_proc_1
   ->  Gather
         Workers Planned: 1
         Single Copy: true
-        ->  Nested Loop
-              Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
-              ->  Seq Scan on babel_3513_t1
-              ->  Seq Scan on babel_3513_t2
+        ->  Merge Join
+              Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
+              ->  Sort
+                    Sort Key: babel_3513_t1.a1
+                    ->  Seq Scan on babel_3513_t1
+              ->  Sort
+                    Sort Key: babel_3513_t2.b2
+                    ->  Seq Scan on babel_3513_t2
 ~~END~~
 
 
@@ -58,10 +62,14 @@ Query Text: EXEC babel_3513_proc_1
   ->  Gather
         Workers Planned: 1
         Single Copy: true
-        ->  Nested Loop
-              Join Filter: (babel_3513_t1.a1 = babel_3513_t2.b2)
-              ->  Seq Scan on babel_3513_t1
-              ->  Seq Scan on babel_3513_t2
+        ->  Merge Join
+              Merge Cond: (babel_3513_t1.a1 = babel_3513_t2.b2)
+              ->  Sort
+                    Sort Key: babel_3513_t1.a1
+                    ->  Seq Scan on babel_3513_t1
+              ->  Sort
+                    Sort Key: babel_3513_t2.b2
+                    ->  Seq Scan on babel_3513_t2
 ~~END~~
 
 
