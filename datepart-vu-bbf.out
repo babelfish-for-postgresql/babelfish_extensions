@@ -1,0 +1,430 @@
+
+4096:1:157:157.0:6.4 
+
+4096:1:39:39.0:25.6 
+
+4096:1:456:456.0:2.2 
+
+4096:1:25:25.0:40.0 
+
+4096:1:16:16.0:62.5 
+
+4096:1:2:2.0:500.0 
+
+4096:1:23:23.0:43.5 
+datepart   
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:5:5.0:200.0 
+datepart   
+-----------
+         30
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         30
+
+(1 rows affected)
+
+4096:1:20:20.0:50.0 
+datepart   
+-----------
+          7
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          7
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          7
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+isoweek_3101
+------------
+          30
+
+(1 rows affected)
+
+4096:1:23:23.0:43.5 
+Msg 33557097, Level 16, State 1, Server BABELFISH, Line 11
+function master_dbo.isoweek("varchar") does not exist
+
+4096:1:15:15.0:66.7 
+datepart   
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:23:23.0:43.5 
+datepart   
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+day        
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+day        
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:12:12.0:83.3 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+Msg 33557097, Level 16, State 1, Server BABELFISH, Line 3
+date/time field value out of range: "23:59:66"
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+Msg 33557097, Level 16, State 1, Server BABELFISH, Line 3
+data out of range for datetimeoffset
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         18
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         30
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          7
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         59
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+Msg 33557097, Level 16, State 1, Server BABELFISH, Line 3
+date/time field value out of range: "01-01-00000 12:44:45.034"
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         59
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+Msg 33557097, Level 16, State 1, Server BABELFISH, Line 3
+date/time field value out of range: "01-01-1900 12:44:63"
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         30
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         59
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         30
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+Msg 33557097, Level 16, State 1, Server BABELFISH, Line 3
+data out of range for datetimeoffset
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+         30
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          1
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+          0
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+datepart   
+-----------
+       2022
+
+(1 rows affected)
+
+4096:1:1:1.0:1000.0 
+
+4096:1:7:7.0:142.9 
+
+4096:1:10:10.0:100.0 
+
+4096:1:1:1.0:1000.0 
+
+4096:1:9:9.0:111.1 
+
+4096:1:1:1.0:1000.0 
+
+4096:1:1:1.0:1000.0 
+
+4096:1:1:1.0:1000.0 
