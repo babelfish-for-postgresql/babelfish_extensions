@@ -668,7 +668,6 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_open(estate, (PLtsql_stmt_open *) stmt);
 			break;
 		case PLTSQL_STMT_FETCH:
-			((PLtsql_stmt_fetch *) stmt)->cursor_portal_name = NULL;
 			if (pltsql_explain_only)
 			{
 				ereport(ERROR,
@@ -1291,12 +1290,12 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 
 		/* Incase of failed cursor fetch Unpin Curosr Portal */
 		if (stmt->cmd_type == PLTSQL_STMT_FETCH && 
-		   ((PLtsql_stmt_fetch *) stmt)->cursor_portal_name != NULL)
+		   ((PLtsql_stmt_fetch *) stmt)->cursor_portal_name)
 		{
 			Portal portal;
 			portal = SPI_cursor_find(((PLtsql_stmt_fetch *) stmt)->cursor_portal_name);
 
-			if (portal != NULL && portal->status == PORTAL_FAILED)
+			if (portal && portal->status == PORTAL_FAILED)
 				UnpinPortal(portal);
 		}
 

@@ -5318,6 +5318,7 @@ makeFetchCursorStatement(TSqlParser::Fetch_cursorContext *ctx)
 	result->how_many = 1;
 	result->expr = NULL;
 	result->returns_multiple_rows = false;
+	result->cursor_portal_name = NULL;
 
 	/* cursor_name */
 	auto targetText = ::getFullText(ctx->cursor_name());
