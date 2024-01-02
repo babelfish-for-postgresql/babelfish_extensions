@@ -1,0 +1,38 @@
+-- psql user=permission_restrictions_tsql_login password=123
+-- user should not be able to create user since it is not a member of sysadmin.
+create user permission_restrictions_psql_user1 with password '123';
+go
+
+-- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+
+alter server role sysadmin add member permission_restrictions_tsql_login;
+go
+
+-- psql user=permission_restrictions_tsql_login password=123
+-- user should be able to create user since it is a member of sysadmin.
+create user permission_restrictions_psql_user1 with password '123';
+go
+
+drop user permission_restrictions_psql_user1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'permission_restrictions_tsql_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+select pg_sleep(1);
+GO
+
+-- tsql
+select rolname, rolcreaterole, rolcreatedb from pg_roles where rolname = 'permission_restrictions_tsql_login';
+go
+
+alter server role sysadmin drop member permission_restrictions_tsql_login;
+go
+
+drop login permission_restrictions_tsql_login
+go

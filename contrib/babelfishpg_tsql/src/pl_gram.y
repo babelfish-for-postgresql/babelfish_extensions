@@ -54,7 +54,8 @@
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
-
+#define VARCHAR_MAX_SCALE 8000
+#define NVARCHAR_MAX_SCALE 4000
 #define TEMPOBJ_QUALIFIER "TEMPORARY "
 
 typedef struct
@@ -224,6 +225,10 @@ static	tsql_exec_param *parse_sp_proc_param(int *endtoken, bool *flag);
 static	bool word_matches_sp_proc(int tok);
 static	PLtsql_stmt *parse_sp_proc(int tok, int lineno, int return_dno);
 static	void parse_sp_cursor_value(StringInfoData* pbuffer, int *pterm);
+extern	bool is_tsql_nchar_or_nvarchar_datatype(Oid oid);
+extern	bool is_tsql_varchar_or_char_datatype(Oid oid);
+extern	bool is_tsql_binary_or_varbinary_datatype(Oid oid);
+extern	bool is_tsql_datatype_with_max_scale_expr_allowed(Oid oid);
 
 #define ereport_syntax_error(pos, msg, ...) \
 	ereport(ERROR, \
@@ -7185,9 +7190,11 @@ pltsql_sql_error_callback(void *arg)
 PLtsql_type *
 parse_datatype(const char *string, int location)
 {
-	TypeName   *typeName;
-	Oid			type_id;
+	TypeName  	*typeName;
+	Oid		type_id;
 	int32		typmod;
+	char	   *dataTypeName,
+			   *schemaName;
 	sql_error_callback_arg cbarg;
 	ErrorContextCallback  syntax_errcontext;
 
@@ -7218,6 +7225,32 @@ parse_datatype(const char *string, int location)
 	typeName = typeStringToTypeName(string);
 	typeName->names = rewrite_plain_name(typeName->names);
 	typenameTypeIdAndMod(NULL, typeName, &type_id, &typmod);
+
+	/* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 by default */
+	if (typmod == -1 && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_nchar_or_nvarchar_datatype(type_id) 
+									|| is_tsql_binary_or_varbinary_datatype(type_id)))
+		typmod = 1 + VARHDRSZ;
+	
+	/* for varchar/nvarchar/varbinary(MAX), set typmod back to -1 */
+	else if (typmod == TSQLMaxTypmod && is_tsql_datatype_with_max_scale_expr_allowed(type_id))
+		typmod = -1;
+	
+	else if (typmod > (VARCHAR_MAX_SCALE + VARHDRSZ) && (is_tsql_varchar_or_char_datatype(type_id) || is_tsql_binary_or_varbinary_datatype(type_id)))
+	{
+		DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+				typmod - VARHDRSZ, VARCHAR_MAX_SCALE, dataTypeName)));
+	}
+	else if (typmod > (NVARCHAR_MAX_SCALE + VARHDRSZ) && (is_tsql_nchar_or_nvarchar_datatype(type_id)))
+	{
+		DeconstructQualifiedName(typeName->names, &schemaName, &dataTypeName);
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("The size '%d' exceeds the maximum allowed (%d) for '%s' datatype.",
+				typmod - VARHDRSZ, NVARCHAR_MAX_SCALE, dataTypeName)));
+	}
 
 	/* Restore former ereport callback */
 	error_context_stack = syntax_errcontext.previous;

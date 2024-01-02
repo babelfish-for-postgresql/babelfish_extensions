@@ -34,9 +34,12 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
-												 * sys.varchar / sys.nvarchar */
+bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
+
 
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
@@ -436,7 +439,8 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("Incorrect syntax near the keyword '%s'.", typname)));
 			}
-			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0))
+			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0 || 
+											strcmp(typname, "varbinary") == 0 || strcmp(typname, "binary") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1065,13 +1069,37 @@ update_ViewStmt(Node *n, const char *view_schema)
 		stmt->view->schemaname = pstrdup(view_schema);
 }
 
+/* sys.char, sys.varchar */
 bool
-is_tsql_any_char_datatype(Oid oid)
+is_tsql_varchar_or_char_datatype(Oid oid)
 {
 	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid);
+}
+
+/* sys.nchar, sys.nvarchar */
+bool
+is_tsql_nchar_or_nvarchar_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
+}
+
+/* sys.binary, sys.varbinary */
+bool 
+is_tsql_binary_or_varbinary_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
+}
+
+/* varchar(max), nvarchar(max), varbinary(max) */
+bool
+is_tsql_datatype_with_max_scale_expr_allowed(Oid oid)
+{
+	return	(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
 }
 
 bool
@@ -1900,4 +1928,53 @@ char
 	else
 		appendStringInfo(&query, "\"%s\".\"%s\"", schema_name, index_name);
 	return query.data;
+}
+
+/*
+ * Helper function to execute ALTER ROLE command using
+ * ProcessUtility(). Caller should make sure their
+ * inputs are sanitized to prevent unexpected behaviour.
+ */
+void
+exec_alter_role_cmd(char *query_str, RoleSpec *role)
+{
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
+
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+	/* Update dummy statement with real values */
+	update_AlterRoleStmt(stmt, role);
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
 }

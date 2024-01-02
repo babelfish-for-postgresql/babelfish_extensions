@@ -46,7 +46,7 @@ sys-suser_sid
 sys-trigger_events
 BABEL-2688
 BABEL-328
-BABEL-3166
+BABEL-3166-before-14_11-or-15_6
 BABEL-3192
 BABEL-3221
 BABEL-3204
@@ -417,3 +417,5 @@ TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
 BABEL-2999
 BABEL-4606
+sys-parsename-before-15_6-or-16_1
+permission_restrictions_from_pg

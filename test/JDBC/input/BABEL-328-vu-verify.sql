@@ -1,3 +1,4 @@
+-- parallel_query_expected
 SELECT * FROM babel_328_vu_v1
 GO
 

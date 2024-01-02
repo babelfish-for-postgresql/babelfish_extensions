@@ -1,4 +1,4 @@
-
+-- parallel_query_expected
 -- Test setup --
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
