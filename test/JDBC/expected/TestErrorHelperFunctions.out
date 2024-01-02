@@ -207,6 +207,7 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 22023#!#'%s' is not a recognized %s option#!##!#155
 22023#!#The datepart %s is not supported by date function %s for data type %s.#!##!#9810
 22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
+34000#!#cursor "%s" does not exist#!##!#16916
 ~~END~~
 
 

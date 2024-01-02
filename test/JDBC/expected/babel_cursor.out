@@ -1549,9 +1549,14 @@ GO
 
 EXEC babel_cursor_fetch_unopened_proc;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 16916)~~
 
 ~~ERROR (Message: cursor "cur_a" does not exist)~~
+
+~~START~~
+varchar
+@@fetch_status: -9
+~~END~~
 
 
 
