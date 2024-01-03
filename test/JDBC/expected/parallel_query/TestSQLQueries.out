@@ -622,17 +622,17 @@ int#!#int#!#text#!#int
 SELECT * FROM temp1 LEFT OUTER JOIN temp2 ON temp1.i=temp2.k;
 ~~START~~
 int#!#int#!#text#!#int#!#int
-1#!#4#!#one#!#<NULL>#!#<NULL>
 2#!#3#!#two#!#2#!#2
-3#!#2#!#three#!#<NULL>#!#<NULL>
 4#!#1#!#four#!#2#!#4
-5#!#0#!#five#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#zero#!#<NULL>#!#0
+<NULL>#!#0#!#zero#!#<NULL>#!#<NULL>
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+8#!#8#!#eight#!#<NULL>#!#<NULL>
 6#!#6#!#six#!#<NULL>#!#<NULL>
 7#!#7#!#seven#!#<NULL>#!#<NULL>
-8#!#8#!#eight#!#<NULL>#!#<NULL>
-0#!#<NULL>#!#zero#!#<NULL>#!#0
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-<NULL>#!#0#!#zero#!#<NULL>#!#<NULL>
+5#!#0#!#five#!#<NULL>#!#<NULL>
+1#!#4#!#one#!#<NULL>#!#<NULL>
+3#!#2#!#three#!#<NULL>#!#<NULL>
 ~~END~~
 
 
