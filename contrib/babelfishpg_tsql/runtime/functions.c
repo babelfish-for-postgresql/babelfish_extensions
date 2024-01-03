@@ -615,13 +615,13 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	int 		df_tz = PG_GETARG_INT32(2);
-	int 		result;
+	int64 		result;
 
 	Interval	*interval = PG_GETARG_INTERVAL_P(1);
 	Timestamp	interval_time = interval->time + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 	int32		interval_days,interval_month;
-	int 		year,month,days,hours,minutes,sec;
-	int64		millisec,microsec,nanosec;
+	float8		year,month,days,hours,minutes,sec;
+	int32		millisec,microsec,nanosec;
 
 	interval_days = interval->day;
 	interval_month = interval->month;
@@ -629,19 +629,27 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	/* Extracting year, months, days, etc from the interval period. */
 	year = interval_month / MONTHS_PER_YEAR;
 	month = (interval_month % MONTHS_PER_YEAR);
-	days = interval_days % (int)DAYS_PER_YEAR;
+	days = interval_days;
 
 	hours = (interval_time / USECS_PER_HOUR);
 	minutes = (interval_time / USECS_PER_MINUTE);
-	sec = (interval_time / USECS_PER_SEC);
 
-	millisec = ((1L * interval_time) / 1000);
-	microsec = interval_time;
-	nanosec = (interval_time * 1L) * 1000;
+	if(interval_time < USECS_PER_SEC)
+	{
+		sec = ((float8)interval_time / USECS_PER_SEC);
+	}
+	else
+	{
+		sec = (interval_time % USECS_PER_SEC) % SECS_PER_MINUTE;
+	}
+
+	millisec = (int32)(sec * 1000);
+	microsec = (int32)(millisec * 1000);
+	nanosec = (int32)(microsec) * 1000;
 
 	if(strcasecmp(field , "year") == 0)
 	{
-		result = year;
+		result = (int)year;
 	}
 	else if(strcasecmp(field , "quarter") == 0)
 	{
@@ -649,31 +657,31 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	}
 	else if(strcasecmp(field , "month") == 0)
 	{
-		result = month;
+		result = (int)month;
 	}
 	else if(strcasecmp(field , "day") == 0)
 	{
-		result = days;
+		result = (int)days;
 	}
 	else if(strcasecmp(field , "y") == 0)
 	{
-		result = year;
+		result = (int)year;
 	}
-	else if(strcasecmp(field , "tzoffset") == 0)
+	else if(strcasecmp(field , "hour") == 0)
 	{
-		result = 0;
+		result = (int)hours;
 	}
 	else if(strcasecmp(field , "minute") == 0)
 	{
-		result = minutes;
+		result = (int)minutes;
+	}
+	else if(strcasecmp(field , "second") == 0)
+	{
+		result = (int)sec;
 	}
 	else if(strcasecmp(field , "nanosecond") == 0)
 	{
 		result = nanosec;
-	}
-	else if(strcasecmp(field , "second") == 0)
-	{
-		result = sec;
 	}
 	else if(strcasecmp(field , "millisecond") == 0)
 	{
@@ -683,9 +691,9 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	{
 		result = microsec;
 	}
-	else if(strcasecmp(field , "hour") == 0)
+	else if(strcasecmp(field , "tzoffset") == 0)
 	{
-		result = hours;
+		result = 0;
 	}
 	else
 	{
