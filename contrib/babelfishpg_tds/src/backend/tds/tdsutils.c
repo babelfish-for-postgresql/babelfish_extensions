@@ -893,8 +893,21 @@ get_rolespec_name_internal(const RoleSpec *role, bool missing_ok)
 static void
 check_babelfish_droprole_restrictions(char *role)
 {
+	Oid bbf_role_admin_oid = InvalidOid;
+
 	if (MyProcPort->is_tds_conn)
 		return;
+
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true);
+
+	/*
+	 * Allow DROP ROLE if current user is bbf_role_admin as we need
+	 * to allow remove_babelfish from PG endpoint. It is safe
+	 * since only superusers can assume this role.
+	 */
+	if (OidIsValid(bbf_role_admin_oid) && bbf_role_admin_oid == GetUserId())
+		return;
+
 	if (is_babelfish_role(role))
 	{
 		pfree(role);			/* avoid mem leak */
@@ -1186,15 +1199,18 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 {
 	ListCell *item;
 	Oid bbf_role_admin_oid = InvalidOid;
-	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
-	if (MyProcPort->is_tds_conn ||
-		(babelfish_dump_restore && strncmp(babelfish_dump_restore, "on", 2) == 0 && superuser())) /* allow during dump/restore only to superuser */
+	if (MyProcPort->is_tds_conn)
 		return true;
 
 	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true);
 
-	if (!OidIsValid(bbf_role_admin_oid))
+	/*
+	 * Allow GRANT ROLE if current user is bbf_role_admin as we need
+	 * to allow initialise_babelfish from PG endpoint. It is safe
+	 * since only superusers can assume this role.
+	 */
+	if (!OidIsValid(bbf_role_admin_oid) || bbf_role_admin_oid == GetUserId())
 		return true;
 
 	/* Restrict roles to added as a member of bbf_role_admin */

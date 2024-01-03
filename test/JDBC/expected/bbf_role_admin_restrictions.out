@@ -114,6 +114,22 @@ GO
     Server SQLState: 42501)~~
 
 
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "bbf_role_admin"
+    Server SQLState: 42501)~~
+
+
 -- psql user=bbf_role_admin_restrictions_pg_user password=12345678
 -- a normal psql user should not be able to alter/grant/drop bbf_role_admin from pg port
 ALTER ROLE bbf_role_admin NOCREATEROLE;
@@ -185,6 +201,22 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "bbf_role_admin"
     Server SQLState: 42501)~~
 
 

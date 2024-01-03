@@ -57,6 +57,12 @@ GO
 DROP ROLE bbf_role_admin;
 GO
 
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+
+SET ROLE bbf_role_admin;
+GO
+
 -- psql user=bbf_role_admin_restrictions_pg_user password=12345678
 -- a normal psql user should not be able to alter/grant/drop bbf_role_admin from pg port
 ALTER ROLE bbf_role_admin NOCREATEROLE;
@@ -84,6 +90,12 @@ REVOKE master_dbo FROM bbf_role_admin;
 GO
 
 DROP ROLE bbf_role_admin;
+GO
+
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+
+SET ROLE bbf_role_admin;
 GO
 
 -- psql
