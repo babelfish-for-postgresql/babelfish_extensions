@@ -1,5 +1,5 @@
 name: Babelfish Smoke Tests
-on: [push, workflow_call]
+on: [workflow_call]
 
 jobs:
   isolation-tests:
@@ -61,6 +61,7 @@ jobs:
           java -Xmx500M -cp /usr/local/lib/antlr-4.9.3-complete.jar org.antlr.v4.Tool -Dlanguage=Python3 ./parser/*.g4 -visitor -no-listener
 
       - name: Run Isolation tests
+        id: run-isolation-tests
         run: | 
           cd test/python
           compareWithFile=true \
@@ -80,7 +81,7 @@ jobs:
         
       - name: Generate Code Coverage
         id: generate-code-coverage
-        if: always() && github.event_name == 'pull_request'
+        if: always() && steps.run-isolation-tests.outcome == 'success'
         run: |
           export PG_CONFIG=~/psql/bin/pg_config
           export PG_SRC=~/work/postgresql_modified_for_babelfish
