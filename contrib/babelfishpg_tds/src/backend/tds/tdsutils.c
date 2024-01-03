@@ -1055,6 +1055,10 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 
     if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
     {
+		/* Quick check, directly disallow alter role for bbf_role_admin */
+		if (pg_strcasecmp(name, BABELFISH_ROLE_ADMIN) == 0)
+			check_babelfish_alterrole_restictions(false);
+
 	    tp = SearchSysCache1(AUTHNAME, CStringGetDatum(name));
 	    if (HeapTupleIsValid(tp))
 	    {
