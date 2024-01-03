@@ -527,6 +527,7 @@ LOCATION:                                        L O C A T I O N;
 LOCK:                                            L O C K;
 LOCK_ESCALATION:                                 L O C K  UNDERLINE  E S C A L A T I O N;
 LOG:                                             L O G;
+LOG10:                                           L O G '10';
 LOGIN:                                           L O G I N;
 LOOP:                                            L O O P;
 LOW:                                             L O W;
