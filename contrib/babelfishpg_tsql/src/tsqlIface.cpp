@@ -2473,6 +2473,41 @@ public:
 	}
     }	
 
+	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
+	{
+		// Handle multiple cases:
+		// - 2-char comparison operators containing whitespace, i.e. '! =', '< >', etc.
+		// - operators !< and !> (which may also contains whitespace), convert to >= and <= 
+		std::string str = getFullText(ctx);
+		std::string operator_final = "";			
+		int fill = 0;
+
+		if (str.length() > 2)
+		{
+			// This operator contains whitespace, remove it	        
+			for(size_t i = 0; i < str.length(); i++) 
+			{
+			    if (!isspace(str[i])) 
+			    	operator_final += str[i];
+			}	   
+			fill = str.length() - operator_final.length();			
+		}
+
+		// Handle !> and !< operators by converting to <= and >=
+		if      (pg_strncasecmp(str.c_str(),            "!<", 2) == 0) operator_final = ">=";
+		else if (pg_strncasecmp(operator_final.c_str(), "!<", 2) == 0) operator_final = ">=";
+		else if (pg_strncasecmp(str.c_str(),            "!>", 2) == 0) operator_final = "<=";
+		else if (pg_strncasecmp(operator_final.c_str(), "!>", 2) == 0) operator_final = "<=";
+						
+		// Fill with spaces until original length 
+		operator_final.append(fill, ' ');  
+			
+		if (operator_final.length() > 0)
+		{
+			stream.setText(ctx->start->getStartIndex(), operator_final.c_str());
+		}
+	}
+
     void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
     {
 	// We are looking at a function name; it may be a function call, or a

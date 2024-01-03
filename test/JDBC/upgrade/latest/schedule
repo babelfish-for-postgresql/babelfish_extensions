@@ -463,6 +463,7 @@ typeid-typename
 typeid-typename-dep
 unquoted_string
 doublequoted_string
+operator_whitespace
 alter_authorization_change_db_owner
 sp_changedbowner
 datetimeoffset-timezone
