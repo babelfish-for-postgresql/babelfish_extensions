@@ -52,7 +52,6 @@ PG_FUNCTION_INFO_V1(rowversionvarbinary);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
-PG_FUNCTION_INFO_V1(varbinaryvarchar_deprecated_2_6_0);
 PG_FUNCTION_INFO_V1(varcharbinary);
 PG_FUNCTION_INFO_V1(bpcharbinary);
 PG_FUNCTION_INFO_V1(varcharrowversion);
