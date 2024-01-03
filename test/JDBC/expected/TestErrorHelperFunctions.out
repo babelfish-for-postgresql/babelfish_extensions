@@ -104,6 +104,7 @@ XX000#!#CREATE FUNCTION failed because a column name is not specified for column
 42883#!#could not identify an equality operator for type %s#!##!#306
 42883#!#could not identify an ordering operator for type %s#!##!#306
 42883#!#%s %s expects parameter "%s", which was not supplied.#!##!#201
+42883#!#Procedure or function '%s' expects parameter '%s', which was not supplied.#!##!#201
 42883#!#%s %s has no parameters and arguments were supplied.#!##!#8146
 42883#!#%s %s has too many arguments specified.#!##!#8144
 42883#!#"%s" is not an parameter for %s %s.#!##!#8145
@@ -202,6 +203,10 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 0A000#!#Column name or number of supplied values does not match table definition.#!##!#213
 42501#!#Only members of the sysadmin role can execute this stored procedure.#!##!#15003
 42809#!#The target "%s" of the OUTPUT INTO clause cannot be a view or common table expression.#!##!#330
+22008#!#The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart#!##!#535
+22023#!#'%s' is not a recognized %s option#!##!#155
+22023#!#The datepart %s is not supported by date function %s for data type %s.#!##!#9810
+22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
 ~~END~~
 
 

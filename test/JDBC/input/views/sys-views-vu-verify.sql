@@ -4,6 +4,10 @@ GO
 SELECT COUNT(*) FROM sys.views WHERE name = 'sys_views_vu_prepare_t1';
 GO
 
+-- Should not include sysdatabases
+SELECT COUNT(*) FROM sys.views WHERE type = 'V' and name = 'sysdatabases'
+GO
+
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'sys_views_vu_prepare_t1';
 GO
 

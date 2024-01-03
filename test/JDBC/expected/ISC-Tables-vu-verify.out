@@ -12,6 +12,15 @@ master#!#dbo#!#isc_tables_vu_prepare_t1#!#BASE TABLE
 ~~END~~
 
 
+-- Table types should not be a result
+-- Should not return any rows.
+SELECT * FROM information_schema.tables WHERE TABLE_NAME = 'isc_table_type1'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
+~~END~~
+
+
 SELECT * FROM information_schema.tables WHERE TABLE_SCHEMA = 'isc_tables_sc1'
 SELECT * FROM information_schema.tables WHERE TABLE_SCHEMA = 'ISC_TABLES_SC1'
 GO
@@ -23,6 +32,15 @@ master#!#isc_tables_sc1#!#t2#!#BASE TABLE
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#isc_tables_sc1#!#t2#!#BASE TABLE
+~~END~~
+
+
+-- Table types should not be a result
+-- Should not return any rows.
+SELECT * FROM information_schema.tables WHERE (TABLE_NAME = 'isc_table_type2' AND TABLE_SCHEMA = 'isc_tables_sc1')
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#varchar
 ~~END~~
 
 

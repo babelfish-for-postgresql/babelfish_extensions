@@ -112,6 +112,34 @@ $newnode->command_fails_like(
 	'Restore of Babelfish database failed since source and target versions do not match.');
 $newnode->stop;
 
+# Restore is not supported on versions older than 15.5.
+$oldnode->start;
+
+$oldnode->command_fails_like(
+	[
+		'psql',
+		'-d',         'testdb',
+		'-U',         'test_master',
+		'-p',         $oldnode->port,
+		'--single-transaction',
+		'-f',         $dump1_file,
+	],
+	qr/Target Postgres version must be 15.5 or higher for Babelfish restore./,
+	'Restore of global objects failed since target version is older than 15.5.');
+
+$oldnode->command_fails_like(
+	[
+		'psql',
+		'-d',         'testdb',
+		'-U',         'test_master',
+		'-p',         $oldnode->port,
+		'--single-transaction',
+		'-f',         $dump2_file,
+	],
+	qr/Target Postgres version must be 15.5 or higher for Babelfish restore./,
+	'Restore of Babelfish database failed since target version is older than 15.5.');
+$oldnode->stop;
+
 ############################################################################################
 ############################## Test for cross migration mode ###############################
 ############################################################################################

@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- tsql
 -- typmod associated with NULL will be -1 so this will throw an error
 SELECT CAST('1' AS CHAR(10)) AS Col1

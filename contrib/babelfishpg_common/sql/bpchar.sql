@@ -294,6 +294,7 @@ CREATE OR REPLACE AGGREGATE sys.max(sys.BPCHAR)
   sfunc = sys.bpchar_larger,
   stype = sys.bpchar,
   combinefunc = sys.bpchar_larger,
+  sortop = >,
   parallel = safe
 );
 
@@ -302,6 +303,7 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.BPCHAR)
   sfunc = sys.bpchar_smaller,
   stype = sys.bpchar,
   combinefunc = sys.bpchar_smaller,
+  sortop = <,
   parallel = safe
 );
 

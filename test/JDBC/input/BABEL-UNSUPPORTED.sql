@@ -429,6 +429,8 @@ GO
 
 -- escape hatch: fulltext
 -- 'strict' is default
+CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
+GO
 
 CREATE TABLE t_unsupported_ft (a text);
 GO
@@ -437,26 +439,51 @@ CREATE FULLTEXT INDEX ON t_unsupported_ft(a) KEY INDEX ix_unsupported_ft;
 GO
 
 DROP TABLE t_unsupported_ft;
-GO
-
-CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 
-CREATE TABLE t_unsupported_ft (a text);
-GO
-
-CREATE FULLTEXT INDEX ON t_unsupported_ft(a) KEY INDEX ix_unsupported_ft;
-GO
-
-DROP TABLE t_unsupported_ft;
-GO
-
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
+
 DROP DATABASE db_unsupported_ft;
+GO
+
+CREATE SCHEMA t_unsupported_s_ft;
+GO
+
+CREATE TABLE t_unsupported_s_ft.t_unsupported_ft1 (id int not null, a text);
+GO
+
+CREATE UNIQUE INDEX ix_unsupported_ft1 ON t_unsupported_s_ft.t_unsupported_ft1(id);
+GO
+
+CREATE FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1(a) KEY INDEX ix_unsupported_ft1;
+GO
+
+DROP FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1;
+GO
+
+DROP TABLE t_unsupported_s_ft.t_unsupported_ft1;
+GO
+
+DROP SCHEMA t_unsupported_s_ft;
+GO
+
+CREATE TABLE t_unsupported_ft2 (id int not null, a text);
+GO
+
+CREATE UNIQUE INDEX ix_unsupported_ft2 ON t_unsupported_ft2(id);
+GO
+
+CREATE FULLTEXT INDEX ON t_unsupported_ft2(a) KEY INDEX ix_unsupported_ft2;
+GO
+
+DROP FULLTEXT INDEX ON t_unsupported_ft2;
+GO
+
+DROP TABLE t_unsupported_ft2;
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
@@ -1368,21 +1395,6 @@ GO
 DROP TABLE t4919;
 GO
 
-
--- PIVOT (265, 488)
-CREATE TABLE t265 (c1 VARCHAR(50), c2 VARCHAR(50));
-GO
-SELECT * FROM (SELECT c1, c2 FROM t265) AS p PIVOT (COUNT(c1) FOR c2 IN (c1)) AS pv;
-GO
-DROP TABLE t265;
-GO
-
-CREATE TABLE t488(id text);
-GO
-SELECT * FROM (SELECT id from t488) p PIVOT( sum(id)FOR id in (["HI"])) s;
-GO
-DROP TABLE t488;
-GO
 
 
 -- CREATE DATBASE COLLATE (448)

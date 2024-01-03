@@ -99,6 +99,7 @@ extern bool pltsql_nocount;
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
 
+static bool check_identity_insert(char **newal, void **extra, GucSource source);
 static void assign_identity_insert(const char *newval, void *extra);
 static void assign_textsize(int newval, void *extra);
 extern Datum init_collid_trans_tab(PG_FUNCTION_ARGS);
@@ -145,7 +146,7 @@ extern void apply_post_compile_actions(PLtsql_function *func, InlineCodeBlockArg
 Datum		sp_prepare(PG_FUNCTION_ARGS);
 Datum		sp_unprepare(PG_FUNCTION_ARGS);
 static List *transformReturningList(ParseState *pstate, List *returningList);
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString);
+static List *transformSelectIntoStmt(CreateTableAsStmt *stmt);
 static char *get_oid_type_string(int type_oid);
 static int64 get_identity_into_args(Node *node);
 extern char *construct_unique_index_name(char *index_name, char *relation_name);
@@ -186,7 +187,6 @@ static Oid	lang_handler_oid = InvalidOid;	/* Oid of language handler
 											 * function */
 static Oid	lang_validator_oid = InvalidOid;	/* Oid of language validator
 												 * function */
-Oid tsql_select_into_seq_oid = InvalidOid; /* Sequence table oid used by select into*/
 
 PG_MODULE_MAGIC;
 
@@ -272,6 +272,28 @@ static void
 set_procid(Oid oid)
 {
 	procid_var = oid;
+}
+
+static bool
+check_identity_insert(char** newval, void **extra, GucSource source)
+{
+	/*
+	 * Workers synchronize the parameter at the beginning of each parallel
+	 * operation. Avoid performing parameter assignment uring parallel operation.
+	 */
+	if (IsParallelWorker() && !InitializingParallelWorker)
+	{
+        /*
+         * A change other than during startup, for example due to a SET clause
+         * attached to a function definition, should be rejected, as there is
+         * nothing we can do inside the worker to make it take effect.
+         */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TRANSACTION_STATE),
+				 errmsg("cannot change identity_insert during a parallel operation")));
+	}
+
+	return true;
 }
 
 static void
@@ -670,7 +692,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 									trig_schema, cmd->name, rel_schema, atstmt->relation->relname, rel_schema, atstmt->relation->relname)));
 				}
 
-				if(atstmt->relation->schemaname == NULL)
+				if(atstmt->relation->schemaname == NULL && rel_schema)
 				{
 					pfree((char *) rel_schema);
 				}
@@ -1014,8 +1036,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												{
 													ColumnDef* def = (ColumnDef *) element;
 
-													if (strlen(def->colname) == colname_len && 
-														strncmp(def->colname, colname, colname_len) == 0 && 
+													if (strlen(def->colname) == colname_len &&
+														strncmp(def->colname, colname, colname_len) == 0 &&
 														has_nullable_constraint(def))
 													{
 														ereport(ERROR,
@@ -1023,9 +1045,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 															errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
 																"or add a NOT NULL constraint")));
 													}
-												}	
+												}
 											}
-										}		
+										}
 									}
 
 									if (rowversion_column_name)
@@ -2271,7 +2293,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (atstmt->relation->schemaname != NULL)
 							{
 								/*
-								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> ) 
+								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> )
 								* is mapped to syntax2 ( ALTER TABLE <table> { ENABLE | DISABLE } TRIGGER <trigger> ),
 								* objtype of atstmt for syntax1 is temporarily set to OBJECT_TRIGGER to identify whether the
 								* query was originally of syntax1 or syntax2, here astmt->objtype is reset back to OBJECT_TABLE
@@ -2631,6 +2653,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
+						const char *db_owner_name;
+
+						db_owner_name = get_db_owner_name(get_cur_db_name());
+						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("User does not have permission to perform this action.")));
 						/*
 						 * check whether sql user name and role name contains
 						 * '\' or not
@@ -3213,7 +3242,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List	   *res;
 					GrantStmt  *stmt;
 					PlannedStmt *wrapper;
-					RoleSpec *rolspec = create_schema->authrole;
 
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
@@ -3262,45 +3290,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								   NULL);
 
 					CommandCounterIncrement();
-					/* Grant all privileges to the user.*/
-					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
-					{
-						char *permissions[] = {"select", "insert", "update", "references", "delete", "execute"};
-						List	   *parsetree_list;
-						ListCell   *parsetree_item;
-						int i;
-						for (i = 0; i < 6; i++)
-						{
-							parsetree_list = gen_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
-							/* Run all subcommands */
-							foreach(parsetree_item, parsetree_list)
-							{
-								Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-								PlannedStmt *wrapper;
 
-								/* need to make a wrapper PlannedStmt */
-								wrapper = makeNode(PlannedStmt);
-								wrapper->commandType = CMD_UTILITY;
-								wrapper->canSetTag = false;
-								wrapper->utilityStmt = stmt;
-								wrapper->stmt_location = 0;
-								wrapper->stmt_len = 0;
-
-								/* do this step */
-								ProcessUtility(wrapper,
-											"(GRANT SCHEMA )",
-											false,
-											PROCESS_UTILITY_SUBCOMMAND,
-											NULL,
-											NULL,
-											None_Receiver,
-											NULL);
-
-								/* make sure later steps can see the object created here */
-								CommandCounterIncrement();
-							}
-						}
-					}
 					return;
 				}
 				else
@@ -3314,6 +3304,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						bbf_ExecDropStmt(drop_stmt);
+
 					break;
 				}
 
@@ -3325,11 +3316,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * database command.
 					 */
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
-					char	   *cur_db = get_cur_db_name();
-					const char	*logicalschema = get_logical_schema_name(schemaname, true);
 
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
+						char	   *cur_db = get_cur_db_name();
 						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
 
 						if (strcmp(schemaname, guest_schema_name) == 0)
@@ -3342,8 +3332,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-					if (logicalschema != NULL)
-						clean_up_bbf_schema(logicalschema, NULL, true);
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3374,10 +3362,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					const char *prev_current_user;
 					const char *session_user_name;
+					StringInfoData query;
+					RoleSpec   *spec;
 
 					check_alter_server_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
+					initStringInfo(&query);
+					if (grant_role->is_grant)
+						appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
+					else
+						appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
 
 					bbf_set_current_user(session_user_name);
 					PG_TRY();
@@ -3389,17 +3385,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
+						exec_alter_role_cmd(query.data, spec);
 
 					}
 					PG_CATCH();
 					{
 						/* Clean up. Restore previous state. */
 						bbf_set_current_user(prev_current_user);
+						pfree(query.data);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 					/* Clean up. Restore previous state. */
 					bbf_set_current_user(prev_current_user);
+					pfree(query.data);
 					return;
 				}
 				else if (is_alter_role_stmt(grant_role))
@@ -3580,233 +3579,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 				}
 				break;
-			}
-		case T_GrantStmt:
-			{
-				GrantStmt *grant = (GrantStmt *) parsetree;
-				char	   *dbname = get_cur_db_name();
-				const char *current_user = GetUserNameFromId(GetUserId(), false);
-				/* Ignore when GRANT statement has no specific named object. */
-				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
-					break;
-				Assert(list_length(grant->objects) == 1);
-				if (grant->objtype == OBJECT_SCHEMA)
-						break;
-				else if (grant->objtype == OBJECT_TABLE)
-				{
-					/* Ignore CREATE database subcommands */
-					if (strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
-					{
-						RangeVar   *rv = (RangeVar *) linitial(grant->objects);
-						const char *logical_schema = NULL;
-						char	   *obj = rv->relname;
-						ListCell   *lc;
-						ListCell	*lc1;
-						const char *obj_type = "r";
-						if (rv->schemaname != NULL)
-							logical_schema = get_logical_schema_name(rv->schemaname, true);
-						else
-							logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
-						/* If ALL PRIVILEGES is granted/revoked. */
-						if (list_length(grant->privileges) == 0)
-						{
-							if (grant->is_grant)
-							{
-								foreach(lc, grant->grantees)
-								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									int i = 0;
-									char *permissions[] = {"select", "insert", "update", "references", "delete"};
-									for(i = 0; i < 5; i++)
-									{
-										if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
-											add_entry_to_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename, obj_type);
-									}
-								}
-								break;
-							}
-							else
-							{
-								foreach(lc, grant->grantees)
-								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									int i = 0;
-									bool has_schema_perms = false;
-									char *permissions[] = {"select", "insert", "update", "references", "delete"};
-									for(i = 0; i < 5; i++)
-									{
-										if (check_bbf_schema_for_entry(logical_schema, "ALL", permissions[i], rol_spec->rolename) && !has_schema_perms)
-											has_schema_perms = true;
-										if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logical_schema, obj, permissions[i], rol_spec->rolename))
-											del_from_bbf_schema(logical_schema, obj, permissions[i], rol_spec->rolename);
-									}
-									if (has_schema_perms)
-										return;
-								}
-								break;
-							}
-						}
-						foreach(lc1, grant->privileges)
-						{
-							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-							if (grant->is_grant)
-							{
-								/*
-								* 1. Execute the GRANT statement.
-								* 2. Add its corresponding entry in the catalog, if doesn't exist already.
-								* 3. Don't add an entry, if the permission is granted on column list.
-								*/
-								if (prev_ProcessUtility)
-									prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-								else
-									standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-										queryEnv, dest, qc);
-								foreach(lc, grant->grantees)
-								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									if ((ap->cols == NULL) && !check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
-										add_entry_to_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename, obj_type);
-								}
-							}
-							else
-							{
-								foreach(lc, grant->grantees)
-								{
-									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-									/*
-									* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists.
-									* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
-									*/
-									if ((logical_schema != NULL) && !check_bbf_schema_for_entry(logical_schema, "ALL", ap->priv_name, rol_spec->rolename))
-									{
-										if (prev_ProcessUtility)
-											prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																queryEnv, dest, qc);
-										else
-											standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																	queryEnv, dest, qc);
-									}
-									if ((ap->cols == NULL) && check_bbf_schema_for_entry(logical_schema, obj, ap->priv_name, rol_spec->rolename))
-										del_from_bbf_schema(logical_schema, obj, ap->priv_name, rol_spec->rolename);
-								}
-							}
-						}
-						return;
-					}
-				}
-				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
-				{
-					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
-					ListCell   *lc;
-					ListCell	*lc1;
-					const char *logicalschema = NULL;
-					char *funcname = NULL;
-					const char *obj_type = NULL;
-					if (grant->objtype == OBJECT_FUNCTION)
-						obj_type = "f";
-					else
-						obj_type = "p";
-					if (list_length(ob->objname) == 1)
-					{
-						Node *func = (Node *) linitial(ob->objname);
-						funcname = strVal(func);
-						logicalschema = get_authid_user_ext_schema_name(dbname, current_user);
-					}
-					else
-					{
-						Node *schema = (Node *) linitial(ob->objname);
-						char *schemaname = strVal(schema);
-						Node *func = (Node *) lsecond(ob->objname);
-						logicalschema = get_logical_schema_name(schemaname, true);
-						funcname = strVal(func);
-					}
-					/* 
-					 * Case: When ALL PRIVILEGES is revoked internally during create function.
-					 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
-					 */
-					if (pstmt->stmt_len == 0 && list_length(grant->privileges) == 0)
-					{
-						if(check_bbf_schema_for_schema(logicalschema, "ALL", "execute"))
-							return;
-						break;
-					}
-					/* If ALL PRIVILEGES is granted/revoked. */
-					if (list_length(grant->privileges) == 0)
-					{
-						if (grant->is_grant)
-						{
-							foreach(lc, grant->grantees)
-							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								if ((rol_spec->rolename != NULL) && !check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
-									add_entry_to_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename, obj_type);
-							}
-							break;
-						}
-						else
-						{
-							foreach(lc, grant->grantees)
-							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								bool has_schema_perms = false;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, "ALL", "execute", rol_spec->rolename) && !has_schema_perms)
-									has_schema_perms = true;
-								if ((rol_spec->rolename != NULL) && check_bbf_schema_for_entry(logicalschema, funcname, "execute", rol_spec->rolename))
-									del_from_bbf_schema(logicalschema, funcname, "execute", rol_spec->rolename);
-								if (has_schema_perms)
-									return;
-							}
-							break;
-						}
-					}
-					foreach(lc1, grant->privileges)
-					{
-						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
-						if (grant->is_grant)
-						{
-							/* Execute the GRANT statement. */
-							if (prev_ProcessUtility)
-								prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-									queryEnv, dest, qc);
-							else
-								standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-									queryEnv, dest, qc);
-							/* Add entry to the catalog if it doesn't exist already. */
-							foreach(lc, grant->grantees)
-							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								/* Don't store a row in catalog, if permission is granted for column */
-								if (!check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-									add_entry_to_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename, obj_type);
-							}
-						}
-						else
-						{
-							foreach(lc, grant->grantees)
-							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								/* 
-								* 1. If GRANT on schema does not exist, execute REVOKE statement and remove the catalog entry if exists. 
-								* 2. If GRANT on schema exist, only remove the entry from the catalog if exists.
-								*/
-								if (!check_bbf_schema_for_entry(logicalschema, "ALL", ap->priv_name, rol_spec->rolename))
-								{
-									/* Execute REVOKE statement. */
-									if (prev_ProcessUtility)
-										prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-															queryEnv, dest, qc);
-									else
-										standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-																queryEnv, dest, qc);
-								}
-								if (check_bbf_schema_for_entry(logicalschema, funcname, ap->priv_name, rol_spec->rolename))
-									del_from_bbf_schema(logicalschema, funcname, ap->priv_name, rol_spec->rolename);
-							}
-						}
-					}
-					return;
-				}
 			}
 		default:
 			break;
@@ -4069,7 +3841,7 @@ _PG_init(void)
 							   "",
 							   PGC_USERSET,
 							   GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							   NULL,
+							   check_identity_insert,
 							   assign_identity_insert,
 							   NULL);
 
@@ -4321,6 +4093,8 @@ terminate_batch(bool send_error, bool compile_error)
 	bool		error_mapping_failed = false;
 	int			rc;
 
+	HOLD_INTERRUPTS();
+
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
 
 	/*
@@ -4392,9 +4166,12 @@ terminate_batch(bool send_error, bool compile_error)
 			AbortCurTransaction = false;
 
 			if (!send_error)
+			{
+				RESUME_INTERRUPTS();
 				ereport(ERROR,
 						(errcode(ERRCODE_TRANSACTION_ROLLBACK),
 						 errmsg("Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.")));
+			}
 		}
 		else if (send_error && !IsTransactionBlockActive())
 		{
@@ -4409,6 +4186,8 @@ terminate_batch(bool send_error, bool compile_error)
 			MemoryContextSwitchTo(oldcontext);
 		}
 	}
+
+	RESUME_INTERRUPTS();
 	if (send_error)
 	{
 		PG_RE_THROW();
@@ -4607,7 +4386,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	PLtsql_function *func;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
-	Datum		retval;
+	Datum		retval = 0;
 	int			rc;
 	int			saved_dialect = sql_dialect;
 	int			nargs = PG_NARGS();
@@ -4635,6 +4414,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* Set statement_timestamp() */
 	SetCurrentStatementStartTimestamp();
 
+	set_ps_display("active");
 	pgstat_report_activity(STATE_RUNNING, codeblock->source_text);
 
 	if (nargs > 1)
@@ -4761,6 +4541,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		rsinfo.isDone = ExprSingleResult;
 		rsinfo.setResult = NULL;
 		rsinfo.setDesc = NULL;
+		ReleaseTupleDesc(reldesc);
 	}
 
 	/* And run the function */
@@ -4827,6 +4608,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 			dest->receiveSlot(slot, dest);
 			ExecClearTuple(slot);
 		}
+		ReleaseTupleDesc(rsinfo.expectedDesc);
 		ExecDropSingleTupleTableSlot(slot);
 	}
 
@@ -5591,7 +5373,9 @@ pltsql_revert_guc(int nest_level)
 
 }
 
-static char *get_oid_type_string(int type_oid){
+static char *
+get_oid_type_string(int type_oid)
+{
 	char *type_string = NULL;
 	if ((*common_utility_plugin_ptr->is_tsql_decimal_datatype) (type_oid))
 	{
@@ -5615,13 +5399,14 @@ static char *get_oid_type_string(int type_oid){
 			break;
 		default:
 			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("identity column type must be of data type int, bigint, smallint, decimal or numeric")));
+				errmsg("A user-defined data type for an IDENTITY column is not currently supported")));
 			break;
 	}
 	return type_string;
 }
 
-static int64 get_identity_into_args(Node *node)
+static int64
+get_identity_into_args(Node *node)
 {
 	int64 val = 0;
 	Const *con = NULL;
@@ -5656,49 +5441,49 @@ static int64 get_identity_into_args(Node *node)
 	return val;
 }
 
-static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryString)
+static List *
+transformSelectIntoStmt(CreateTableAsStmt *stmt)
 {
 	List *result;
 	ListCell *elements;
-	CreateSeqStmt *seqstmt;
-	AlterSeqStmt *altseqstmt;
-	List *attnamelist;
+	AlterTableStmt *altstmt;
 	IntoClause *into;
 	Node *n;
 
 	n = stmt->query;
 	into = stmt->into;
 	result = NIL;
-	seqstmt = NULL;
-	altseqstmt = NULL;
+	altstmt = NULL;
 
 	if (n && n->type == T_Query)
 	{
 		Query *q = (Query *)n;
 		bool seen_identity = false;
+		AttrNumber current_resno = 0;
+		Index identity_ressortgroupref = 0;
+		List *modifiedTargetList = NIL;
+
 		foreach (elements, q->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *)lfirst(elements);
 
-			if (tle->expr && IsA(tle->expr, FuncExpr) && strncasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into", strlen( "identity_into")) == 0)
+			if (tle->expr && IsA(tle->expr, FuncExpr) && strcasecmp(get_func_name(((FuncExpr *)(tle->expr))->funcid), "identity_into_bigint") == 0)
 			{
 				FuncExpr *funcexpr;
-				Oid snamespaceid;
-				char *snamespace;
-				char *sname;
 				List *seqoptions = NIL;
 				ListCell *arg;
 				int typeoid = 0;
-				char *type = NULL;
 
 				TypeName *typename = NULL;
-				int64 seedvalue = 0;
-				int64 incrementvalue = 0;
+				int64 seedvalue = 0, incrementvalue = 0;
 				int argnum;
+				AlterTableCmd *lcmd;
+				ColumnDef *def;
+				Constraint *constraint;
 
 				if (seen_identity)
-					ereport(ERROR,(errcode(ERRCODE_SYNTAX_ERROR),
-						errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
+					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+									errmsg("Attempting to add multiple identity columns to table \"%s\" using the SELECT INTO statement.", into->rel->relname)));
 
 				if (tle->resname == NULL)
 					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("Incorrect syntax near the keyword 'INTO'")));
@@ -5713,9 +5498,7 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 					{
 					case 1:
 						typeoid = get_identity_into_args(farg_node);
-						type = get_oid_type_string(typeoid);
-						typename = typeStringToTypeName(type);
-						seqoptions = lappend(seqoptions, makeDefElem("as", (Node *)typename, -1));
+						typename = typeStringToTypeName(get_oid_type_string(typeoid));
 						break;
 					case 2:
 						seedvalue = get_identity_into_args(farg_node);
@@ -5736,33 +5519,68 @@ static List *transformSelectIntoStmt(CreateTableAsStmt *stmt, const char *queryS
 					}
 				}
 
-				into->identityName = tle->resname;
-				into->identityType = TypeNameToString(typename);
 				seen_identity = true;
+				identity_ressortgroupref = tle->ressortgroupref; /** Save this Index to modify sortClause and distinctClause*/
 
-				snamespaceid = RangeVarGetCreationNamespace(into->rel);
-				snamespace = get_namespace_name(snamespaceid);
-				sname = ChooseRelationName(into->rel->relname, tle->resname, "seq", snamespaceid, false);
-				seqstmt = makeNode(CreateSeqStmt);
-				seqstmt->for_identity = true;
-				seqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				seqstmt->sequence->relpersistence = into->rel->relpersistence;
-				seqstmt->options = seqoptions;
+				/** Add alter table add identity node after Select Into statement */
+				altstmt = makeNode(AlterTableStmt);
+				altstmt->relation = into->rel;
+				altstmt->cmds = NIL;
 
-				altseqstmt = makeNode(AlterSeqStmt);
-				altseqstmt->sequence = makeRangeVar(snamespace, sname, -1);
-				attnamelist = list_make3(makeString(snamespace), makeString(into->rel->relname), makeString(tle->resname));
-				altseqstmt->options = list_make1(makeDefElem("owned_by", (Node *)attnamelist, -1));
-				altseqstmt->for_identity = true;
+				constraint = makeNode(Constraint);
+				constraint->contype = CONSTR_IDENTITY;
+				constraint->generated_when = ATTRIBUTE_IDENTITY_ALWAYS;
+				constraint->options = seqoptions;
+
+				def = makeNode(ColumnDef);
+				def->colname = tle->resname;
+				def->typeName = typename;
+				def->identity = ATTRIBUTE_IDENTITY_ALWAYS;
+				def->is_not_null = true;
+				def->constraints = lappend(def->constraints, constraint);
+
+				lcmd = makeNode(AlterTableCmd);
+				lcmd->subtype = AT_AddColumn;
+				lcmd->missing_ok = false;
+				lcmd->def = (Node *)def;
+				altstmt->cmds = lappend(altstmt->cmds, lcmd);
 			}
+			else
+			{
+				current_resno += 1;
+				tle->resno = current_resno;
+				modifiedTargetList = lappend(modifiedTargetList, tle);
+			}
+		}
+		q->targetList = modifiedTargetList;
+
+		if (seen_identity)
+		{
+			if (q->sortClause)
+			{
+				List *modifiedSortClause = NIL;
+				ListCell *olitem;
+				foreach (olitem, q->sortClause)
+				{
+					Node *sortnode = (Node *)lfirst(olitem);
+					if (IsA(sortnode, SortGroupClause))
+					{
+						SortGroupClause *sortcl = (SortGroupClause *)sortnode;
+						if (sortcl->tleSortGroupRef != identity_ressortgroupref)
+							modifiedSortClause = lappend(modifiedSortClause, sortcl);
+					}
+				}
+				q->sortClause = modifiedSortClause;
+			}
+
+			if (q->distinctClause && list_length(q->distinctClause) > (identity_ressortgroupref - 1))
+				q->distinctClause = list_delete_nth_cell(q->distinctClause, identity_ressortgroupref - 1);
 		}
 	}
 
-	if (seqstmt)
-		result = lappend(result, seqstmt);
 	result = lappend(result, stmt);
-	if (altseqstmt)
-		result = lappend(result, altseqstmt);
+	if (altstmt)
+		result = lappend(result, altstmt);
 
 	return result;
 }
@@ -5775,7 +5593,7 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 	ObjectAddress address;
 	ObjectAddress secondaryObject = InvalidObjectAddress;
 	List *stmts;
-	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree, queryString);
+	stmts = transformSelectIntoStmt((CreateTableAsStmt *)parsetree);
 	while (stmts != NIL)
 	{
 		Node *stmt = (Node *)linitial(stmts);
@@ -5783,13 +5601,6 @@ void pltsql_bbfSelectIntoUtility(ParseState *pstate, PlannedStmt *pstmt, const c
 		if (IsA(stmt, CreateTableAsStmt))
 		{
 			address = ExecCreateTableAs(pstate, (CreateTableAsStmt *)parsetree, params, queryEnv, qc);
-			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
-		}
-		else if (IsA(stmt, CreateSeqStmt))
-		{
-			address = DefineSequence(pstate, (CreateSeqStmt *)stmt);
-			Assert(address.objectId != InvalidOid);
-			tsql_select_into_seq_oid = address.objectId;
 			EventTriggerCollectSimpleCommand(address, secondaryObject, stmt);
 		}
 		else
@@ -5859,7 +5670,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Relation		relation = NULL;
 	Oid				schema_oid;
 	ListCell		*cell;
-	const char *logicalschema = NULL;
 
 	db_id = get_cur_db_id();
 
@@ -5900,7 +5710,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5926,8 +5735,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 											 major_name, NULL);
 				}
 			}
-			if (logicalschema != NULL)
-				clean_up_bbf_schema(logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -5971,7 +5778,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
-			logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5985,8 +5791,6 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				delete_extended_property(db_id, type, schema_name, major_name,
 										 NULL);
 			}
-			if (logicalschema != NULL)
-				clean_up_bbf_schema(logicalschema, major_name, false);
 		}
 	}
 }
@@ -6013,7 +5817,7 @@ bbf_set_tran_isolation(char *new_isolation_level_str)
 
 	if(new_isolation_int_val != DefaultXactIsoLevel)
 	{
-		if(FirstSnapshotSet || IsSubTransaction() || 
+		if(FirstSnapshotSet || IsSubTransaction() ||
 				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
 		{
 			if(escape_hatch_set_transaction_isolation_level == EH_IGNORE)

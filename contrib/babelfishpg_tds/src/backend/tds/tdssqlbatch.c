@@ -23,6 +23,7 @@
 #include "nodes/parsenodes.h"
 #include "pgstat.h"
 #include "tcop/tcopprot.h"
+#include "utils/ps_status.h"
 
 #include "src/include/tds_int.h"
 #include "src/include/tds_protocol.h"
@@ -73,6 +74,7 @@ ExecuteSQLBatch(char *query)
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
 	char	   *activity = psprintf("SQL_BATCH: %s", query);
 
+	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing SQL Batch Request";
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -94,9 +96,13 @@ ExecuteSQLBatch(char *query)
 	PG_CATCH();
 	{
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
+		{
+			HOLD_INTERRUPTS();
 			ereport(LOG,
 					(errmsg("sql_batch statement: %s", query),
 					 errhidestmt(true)));
+			RESUME_INTERRUPTS();
+		}
 
 		PG_RE_THROW();
 	}

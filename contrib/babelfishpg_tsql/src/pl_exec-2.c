@@ -4,7 +4,9 @@
 #include "funcapi.h"
 
 #include "access/table.h"
+#include "access/attmap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_language.h"
 #include "commands/proclang.h"
 #include "executor/tstoreReceiver.h"
@@ -51,7 +53,7 @@ static int	exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_r
 static int	exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
-static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
+static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -64,6 +66,7 @@ static bool is_char_identstart(char c);
 static bool is_char_identpart(char c);
 
 void		read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr);
+bool  		called_from_tsql_insert_exec(void);
 void		cache_inline_args(PLtsql_function *func, InlineCodeBlockArgs *args);
 InlineCodeBlockArgs *create_args(int numargs);
 InlineCodeBlockArgs *clone_inline_args(InlineCodeBlockArgs *args);
@@ -87,6 +90,8 @@ extern void enable_sp_cursor_find_param_hook(void);
 extern void disable_sp_cursor_find_param_hook(void);
 extern void add_sp_cursor_param(char *name);
 extern void reset_sp_cursor_params();
+extern char *construct_unique_index_name(char *index_name, char *relation_name);
+extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
@@ -101,6 +106,7 @@ extern SPIPlanPtr prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 extern int	sp_prepare_count;
 
 BulkCopyStmt *cstmt = NULL;
+bool		called_from_tsql_insert_execute = false;
 
 int			insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int			insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
@@ -112,7 +118,7 @@ static bool prev_insert_bulk_keep_nulls = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
-
+ 
 /*
  * The pltsql_proc_return_code global variable is used to record the
  * return code (RETURN 41 + 1) of the most recently completed procedure
@@ -1447,11 +1453,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	InlineCodeBlock *codeblock;
-	volatile LocalTransactionId before_lxid;
+	volatile LocalTransactionId before_lxid = 0;
 	LocalTransactionId after_lxid;
-	SimpleEcontextStackEntry *topEntry;
-	volatile int save_nestlevel;
-	volatile int scope_level;
+	SimpleEcontextStackEntry *topEntry = NULL;
+	volatile int save_nestlevel = 0;
+	volatile int scope_level = 0;
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 
@@ -2270,7 +2276,7 @@ exec_stmt_deallocate(PLtsql_execstate *estate, PLtsql_stmt_deallocate *stmt)
 {
 	PLtsql_var *curvar;
 	Portal		portal;
-	char	   *curname;
+	char	   *curname = NULL;
 	MemoryContext oldcontext;
 
 	Assert(estate->datums[stmt->curvar]->dtype == PLTSQL_DTYPE_VAR);
@@ -2508,7 +2514,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 * be more than 2 since db name can not be a qualifier for a UDT and
 		 * error will be thrown in the parser itself.
 		 */
-		rewrite_plain_name(p->argType->names);
+		p->argType->names = rewrite_plain_name(p->argType->names);
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;
@@ -2984,6 +2990,13 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	return PLTSQL_RC_OK;
 }
 
+bool called_from_tsql_insert_exec()
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+	return called_from_tsql_insert_execute;
+}
+
 /*
  * For naked SELECT stmt in INSERT ... EXECUTE, instead of pushing the result to
  * the client, we accumulate the result in estate->tuple_store (similar to
@@ -3007,10 +3020,11 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 	/* Use eval_mcontext for tuple conversion work */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 
+	called_from_tsql_insert_execute = true;
 	tupmap = convert_tuples_by_position(portal->tupDesc,
 										estate->tuple_store_desc,
 										gettext_noop("structure of query does not match function result type"));
-
+	called_from_tsql_insert_execute = false;
 	while (true)
 	{
 		uint64		i;
@@ -3028,7 +3042,11 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 			HeapTuple	tuple = SPI_tuptable->vals[i];
 
 			if (tupmap)
+			{
+				called_from_tsql_insert_execute = true;
 				tuple = execute_attr_map_tuple(tuple, tupmap);
+				called_from_tsql_insert_execute = false;
+			}
 			tuplestore_puttuple(estate->tuple_store, tuple);
 			if (tupmap)
 				heap_freetuple(tuple);
@@ -3118,7 +3136,6 @@ exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 	return PLTSQL_RC_OK;
 }
 
-
 int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 {
 	switch (stmt->dbcc_stmt_type)
@@ -3131,7 +3148,6 @@ int exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt)
 	}
 	return PLTSQL_RC_OK;
 }
-
 
 void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 {
@@ -3160,7 +3176,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	Oid	current_user_id = GetUserId();
 	volatile bool cur_value_is_null = true;
 	bool	login_is_db_owner;
-	char	message[200];
+	StringInfoData msg;
 	bool	is_float_value;
 	bool    is_cross_db = false;
 
@@ -3323,6 +3339,9 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 	}
 	PG_END_TRY();
 
+	if (!dbcc_stmt.no_infomsgs)
+		initStringInfo(&msg);
+
 	PG_TRY();
 	{
 		/*
@@ -3350,8 +3369,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			if (dbcc_stmt.new_reseed_value)
 			{
-				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL'.\n");
-
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL'.\n");
 				DirectFunctionCall3(setval3_oid,
 					ObjectIdGetDatum(seqid),
 					Int64GetDatum(reseed_value),
@@ -3359,7 +3378,8 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 			}
 			else
 			{
-				snprintf(message, sizeof(message), "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
+				if (!dbcc_stmt.no_infomsgs)
+					appendStringInfo(&msg, "Checking identity information: current identity value 'NULL', current column value 'NULL'.\n");
 			}
 		}
 
@@ -3372,7 +3392,7 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 				* DBCC command option.
 				*/
 				if (!dbcc_stmt.no_infomsgs)
-					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld'.\n", cur_identity_value);
 
 				DirectFunctionCall2(setval_oid,
 					ObjectIdGetDatum(seqid),
@@ -3397,9 +3417,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 					max_identity_value = pg_strtoint64(max_identity_value_str);
 
 				if (!dbcc_stmt.no_infomsgs)
-					snprintf(message, sizeof(message), "Checking identity information: current identity value '%ld', current column value '%s'.\n", 
-														cur_identity_value, 
+				{
+					appendStringInfo(&msg, "Checking identity information: current identity value '%ld', current column value '%s'.\n",
+														cur_identity_value,
 														max_identity_value_str ? max_identity_value_str : "NULL");
+				}
 
 				/*
 				* RESEED option only resets the identity column value if the 
@@ -3439,6 +3461,10 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 		{
 			UnlockRelationOid(table_oid, ShareLock);
 		}
+		if(msg.data)
+		{
+			pfree(msg.data);
+		}
 
 		PG_RE_THROW();
 	}
@@ -3462,10 +3488,11 @@ void exec_stmt_dbcc_checkident(PLtsql_stmt_dbcc *stmt)
 
 	if (!dbcc_stmt.no_infomsgs)
 	{
-		strcat(message, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
+		appendStringInfo(&msg, "DBCC execution completed. If DBCC printed error messages, contact your system administrator.");
 		/* send message to user */
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+			((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, msg.data, 0);
+		pfree(msg.data);
 	}
 
 }
@@ -3647,97 +3674,191 @@ get_insert_bulk_kilobytes_per_batch()
 	return insert_bulk_kilobytes_per_batch;
 }
 
+/*
+ * ALTER AUTHORIZATION ON DATABASE::dbname TO loginname
+ */
 static int
-exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
+exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *stmt)
 {
-	List	   *parsetree_list;
-	ListCell   *parsetree_item;
-	char	   *dbname = get_cur_db_name();
-	char	   *login = GetUserNameFromId(GetSessionUserId(), false);
-	bool		login_is_db_owner;
+	char *new_owner_is_user;
+	
+	/* Verify target database exists. */
+	if (!DbidIsValid(get_db_id(stmt->db_name)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_UNDEFINED_DATABASE),	
+						errmsg("Cannot find the database '%s', because it does not exist or you do not have permission.", stmt->db_name)));
+	}
+
+	/* Verify new owner exists as a login. */
+	if (get_role_oid(stmt->new_owner_name, true) == InvalidOid)
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
+	}
+	
+	/* T-SQL allows granting ownership to yourself when you are owner already, even without having sysadmin role. */
+	if (get_role_oid(stmt->new_owner_name, true) == GetSessionUserId())  // Granting ownership to myself?
+	{
+		/* Is the current login already DB owner? */
+		if (get_role_oid(get_owner_of_db(stmt->db_name), true) == GetSessionUserId())
+		{
+			/* Current login is DB owner, so perform the update */
+			update_db_owner(stmt->new_owner_name, stmt->db_name);	
+			return PLTSQL_RC_OK;	
+		}			
+	}		
+
+	/* 
+	 * The executing login must have sysadmin role: even when the current session is the owner, but has no sysadmin role, 
+	 * T-SQL does not allow the owner to grant ownership to another login -- not even to 'sa'.
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", stmt->new_owner_name)));
+	}			
+	
+	/* The new owner cannot be a user in the database already (but 'guest' user is fine). */
+	new_owner_is_user = get_authid_user_ext_physical_name(stmt->db_name, stmt->new_owner_name);
+	if (!new_owner_is_user) 
+	{
+		// OK to proceed
+	}
+	else if (new_owner_is_user && pg_strcasecmp(new_owner_is_user, "guest") == 0)
+	{
+		// OK to proceed		
+	}
+	else
+	{
+		ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("The proposed new database owner is already a user or aliased in the database.")));				
+	}
+					
+	/* All validations done, perform the actual update */
+	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt)
+{
+	char		*table_name;
+	char		*ft_index_name;
+	char		*query_str;
+	char		*old_ft_index_name;	// existing fulltext index name
+	char		*uniq_index_name;
+	const char	*schema_name;
+	Oid			schemaOid;
+	Oid			relid;
+	List		*column_name;
+	char	    *dbname = get_cur_db_name();
+	char		*login = GetUserNameFromId(GetSessionUserId(), false);
 	Oid			datdba;
-	char		*rolname;
-	char		*schema_name;
-	ListCell   *lc;
-	ListCell	*lc1;
-	Oid 		schemaOid;
+	bool		login_is_db_owner;
+	bool		is_create;
+	List		*res;
+	Node	   	*res_stmt;
+	PlannedStmt *wrapper;
+
+	Assert(stmt->schema_name != NULL);
 
 	/*
 	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+	 * sysadmin or login is not the schema owner, then it doesn't have the permission to CREATE/DROP FULLTEXT INDEX.
 	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	datdba = get_role_oid("sysadmin", false);
-	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
-	schemaOid = LookupExplicitNamespace(schema_name, true);
+	schema_name = gen_schema_name_for_fulltext_index((char *)stmt->schema_name);
+	schemaOid = LookupExplicitNamespace(schema_name, true);						
+	table_name = stmt->table_name;
+	is_create = stmt->is_create;
 
+	// Check if schema exists
 	if (!OidIsValid(schemaOid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist",
-							schema_name)));
-	
-	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
+			(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				errmsg("schema \"%s\" does not exist",
+					stmt->schema_name)));
 
-	foreach(lc1, stmt->privileges)
+	// Check if the user has necessary permissions for CREATE/DROP FULLTEXT INDEX
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 	{
-		char	*priv_name = (char *) lfirst(lc1);
-		foreach(lc, stmt->grantees)
-		{
-			char	   *grantee_name = (char *) lfirst(lc);
-			Oid	role_oid;
-			bool		grantee_is_db_owner;
-			rolname	= get_physical_user_name(dbname, grantee_name);
-			role_oid = get_role_oid(rolname, true);
-			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
-	
-			if (pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, datdba) || grantee_is_db_owner)
-				ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
-
-			parsetree_list = gen_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, priv_name);
-			/* Run all subcommands */
-			foreach(parsetree_item, parsetree_list)
-			{
-				Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-				PlannedStmt *wrapper;
-
-				/* need to make a wrapper PlannedStmt */
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = stmt;
-				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 0;
-
-				/* do this step */
-				ProcessUtility(wrapper,
-							"(GRANT SCHEMA )",
-							false,
-							PROCESS_UTILITY_SUBCOMMAND,
-							NULL,
-							NULL,
-							None_Receiver,
-							NULL);
-
-				/* make sure later steps can see the object created here */
-				CommandCounterIncrement();
-			}
-			/* Add entry for each grant statement. */
-			if (stmt->is_grant && !check_bbf_schema_for_entry(stmt->schema_name, "ALL", priv_name, rolname))
-				add_entry_to_bbf_schema(stmt->schema_name, "ALL", priv_name, rolname, NULL);
-			/* Remove entry for each revoke statement. */
-			if (!stmt->is_grant && check_bbf_schema_for_entry(stmt->schema_name, "ALL", priv_name, rolname))
-			{
-				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
-				grant_perms_to_objects_in_schema(stmt->schema_name, priv_name, rolname);
-				del_from_bbf_schema(stmt->schema_name, "ALL", priv_name, rolname);
-			}
-		}
+		const char *error_msg = is_create ? "A default full-text catalog does not exist in the database or user does not have permission to perform this action" : "Cannot drop the full-text index, because it does not exist or you do not have permission";
+    	ereport(ERROR, 
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE), 
+				errmsg("%s", error_msg)));	
 	}
+
+	relid = get_relname_relid((const char *) table_name, schemaOid);
+
+	// Check if table exists
+	if (!OidIsValid(relid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" does not exist",
+					table_name)));
+
+	// Get the existing fulltext index name
+	old_ft_index_name = get_fulltext_index_name(relid, table_name);
+
+	if (is_create)
+	{
+		uniq_index_name = construct_unique_index_name((char *) stmt->index_name, table_name);
+		if(is_unique_index(relid, (const char *) uniq_index_name) || is_unique_index(relid, (const char *)stmt->index_name))
+		{
+			column_name = stmt->column_name;
+			ft_index_name = construct_unique_index_name("ft_index", table_name);
+			if (old_ft_index_name)
+				ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						errmsg("A full-text index for table or indexed view \"%s\" has already been created.",
+							table_name)));
+			else
+				query_str = gen_createfulltextindex_cmds(table_name, schema_name, column_name, ft_index_name);
+		}
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					errmsg("'\"%s\"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.",
+						stmt->index_name)));
+	}
+	else
+	{
+		if (old_ft_index_name)					
+			query_str = gen_dropfulltextindex_cmds(old_ft_index_name, schema_name);
+		else
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("Table or indexed view \"%s\" does not have a full-text index or user does not have permission to perform this action.",
+						table_name))); 
+	}
+
+	/* The above query will be
+	 * executed using ProcessUtility()
+	 */
+	res = raw_parser(query_str, RAW_PARSE_DEFAULT);
+	res_stmt = ((RawStmt *) linitial(res))->stmt;
+
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = res_stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 1;
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				is_create ? "(CREATE FULLTEXT INDEX STATEMENT )" : "(DELETE FULLTEXT INDEX STATEMENT )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
+
 	return PLTSQL_RC_OK;
 }

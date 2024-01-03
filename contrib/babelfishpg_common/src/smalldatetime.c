@@ -12,6 +12,7 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/numeric.h"
 #include "utils/timestamp.h"
 
 #include "miscadmin.h"
@@ -38,6 +39,14 @@ PG_FUNCTION_INFO_V1(smalldatetime_mi_float8);
 PG_FUNCTION_INFO_V1(float8_pl_smalldatetime);
 PG_FUNCTION_INFO_V1(float8_mi_smalldatetime);
 
+PG_FUNCTION_INFO_V1(smalldatetime_to_bit);
+PG_FUNCTION_INFO_V1(smalldatetime_to_int2);
+PG_FUNCTION_INFO_V1(smalldatetime_to_int4);
+PG_FUNCTION_INFO_V1(smalldatetime_to_int8);
+PG_FUNCTION_INFO_V1(smalldatetime_to_float4);
+PG_FUNCTION_INFO_V1(smalldatetime_to_float8);
+PG_FUNCTION_INFO_V1(smalldatetime_to_numeric);
+
 PG_FUNCTION_INFO_V1(smalldatetime_pl_smalldatetime);
 PG_FUNCTION_INFO_V1(smalldatetime_mi_smalldatetime);
 
@@ -61,7 +70,7 @@ smalldatetime_in_str(char *str)
 	struct pg_tm tt,
 			   *tm = &tt;
 	int			tz;
-	int			dtype;
+	int			dtype = -1;
 	int			nf;
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
@@ -666,4 +675,61 @@ smalldatetime_mi_smalldatetime(PG_FUNCTION_ARGS)
 
 	CheckSmalldatetimeRange(result);
 	PG_RETURN_TIMESTAMP(result);
+}
+
+Datum
+smalldatetime_to_bit(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_BOOL((bool)result);
+}
+
+Datum
+smalldatetime_to_int2(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_INT16((int16)round(result));
+}
+
+
+Datum
+smalldatetime_to_int4(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_INT32((int32)round(result));
+}
+
+Datum
+smalldatetime_to_int8(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_INT64((int64)round(result));
+}
+
+Datum
+smalldatetime_to_float4(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_FLOAT4((float4)result);
+}
+
+Datum
+smalldatetime_to_float8(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_FLOAT8((float8)result);
+}
+
+Datum
+smalldatetime_to_numeric(PG_FUNCTION_ARGS)
+{
+	Timestamp timestamp_left = PG_GETARG_TIMESTAMP(0);
+	float8 result = calculateDaysFromDefaultDatetime(timestamp_left);
+	PG_RETURN_NUMERIC(DirectFunctionCall1(float8_numeric, Float8GetDatum(result)));
 }

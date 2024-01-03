@@ -17,6 +17,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/ps_status.h"
 #include "utils/snapmgr.h"
 
 #include "src/include/tds_debug.h"
@@ -493,6 +494,7 @@ SPExecuteSQL(TDSRequestSP req)
 	Datum	   *values;
 	bool	   *nulls;
 	char	   *activity;
+	tvp_lookup_list = NIL;
 
 	TdsErrorContext->err_text = "Processing SP_EXECUTESQL Request";
 	if ((req->nTotalParams) > PREPARE_STMT_MAX_ARGS)
@@ -507,6 +509,7 @@ SPExecuteSQL(TDSRequestSP req)
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_EXECUTESQL: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -550,6 +553,7 @@ SPExecuteSQL(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("sp_executesql statement: %s", s.data),
@@ -557,6 +561,8 @@ SPExecuteSQL(TDSRequestSP req)
 					 errdetail_params(req->nTotalParams)));
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
+		RESUME_INTERRUPTS();
+		tvp_lookup_list = NIL;
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -584,10 +590,21 @@ SPExecuteSQL(TDSRequestSP req)
 
 		error_context_stack = plerrcontext->previous;
 
-		ereport(LOG,
-				(errmsg("sp_executesql statement: %s", s.data),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("sp_executesql statement: %s", s.data),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("sp_executesql statement: %s", s.data),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
 
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
@@ -598,6 +615,7 @@ SPExecuteSQL(TDSRequestSP req)
 	 */
 	TDSLogDuration(s.data);
 	pfree(codeblock);
+	tvp_lookup_list = NIL;
 }
 
 static void
@@ -625,6 +643,7 @@ SPPrepare(TDSRequestSP req)
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_PREPARE: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -701,6 +720,7 @@ SPExecute(TDSRequestSP req)
 
 	char	   *activity = psprintf("SP_EXECUTE Handle: %d", req->handle);
 
+	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing SP_EXECUTE Request";
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -749,6 +769,7 @@ SPExecute(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("sp_execute handle: %d", req->handle),
@@ -757,6 +778,7 @@ SPExecute(TDSRequestSP req)
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		tvp_lookup_list = NIL;
+		RESUME_INTERRUPTS();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -783,10 +805,22 @@ SPExecute(TDSRequestSP req)
 
 		error_context_stack = plerrcontext->previous;
 
-		ereport(LOG,
-				(errmsg("sp_execute handle: %d", req->handle),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("sp_execute handle: %d", req->handle),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("sp_execute handle: %d", req->handle),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
@@ -829,6 +863,7 @@ SPPrepExec(TDSRequestSP req)
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_PREPEXEC: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -871,6 +906,7 @@ SPPrepExec(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("sp_prepexec handle: %d, "
@@ -880,6 +916,7 @@ SPPrepExec(TDSRequestSP req)
 
 		TDSStatementExceptionCallback(NULL, NULL, false);
 		tvp_lookup_list = NIL;
+		RESUME_INTERRUPTS();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -909,11 +946,25 @@ SPPrepExec(TDSRequestSP req)
 		ErrorContextCallback *plerrcontext = error_context_stack;
 
 		error_context_stack = plerrcontext->previous;
-		ereport(LOG,
-				(errmsg("sp_prepexec handle: %d, "
-						"statement: %s", req->handle, s.data),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("sp_prepexec handle: %d, "
+							"statement: %s", req->handle, s.data),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("sp_prepexec handle: %d, "
+							"statement: %s", req->handle, s.data),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
@@ -1059,6 +1110,7 @@ SPCustomType(TDSRequestSP req)
 	initStringInfo(&s);
 	FillStoredProcedureCallFromParameterToken(req, &s);
 
+	set_ps_display("active");
 	activity = psprintf("SP_CUSTOMTYPE: %s", s.data);
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -1099,6 +1151,7 @@ SPCustomType(TDSRequestSP req)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		if (TDS_DEBUG_ENABLED(TDS_DEBUG2))
 			ereport(LOG,
 					(errmsg("stored procedure: %s", req->name.data),
@@ -1107,6 +1160,7 @@ SPCustomType(TDSRequestSP req)
 
 		tvp_lookup_list = NIL;
 
+		RESUME_INTERRUPTS();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1144,10 +1198,23 @@ SPCustomType(TDSRequestSP req)
 		ErrorContextCallback *plerrcontext = error_context_stack;
 
 		error_context_stack = plerrcontext->previous;
-		ereport(LOG,
-				(errmsg("stored procedure: %s", req->name.data),
-				 errhidestmt(true),
-				 errdetail_params(req->nTotalParams)));
+
+		/* In certain cases TVP can throw error for errdetail_params. */
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("stored procedure: %s", req->name.data),
+					errhidestmt(true),
+					errdetail_params(req->nTotalParams)));
+		}
+		PG_CATCH();
+		{
+			ereport(LOG,
+					(errmsg("stored procedure: %s", req->name.data),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+
 		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
 		error_context_stack = plerrcontext;
 	}
@@ -1168,6 +1235,7 @@ SPUnprepare(TDSRequestSP req)
 
 	char	   *activity = psprintf("SP_UNPREPARE Handle: %d", req->handle);
 
+	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing SP_UNPREPARE Request";
 	pgstat_report_activity(STATE_RUNNING, activity);
 	pfree(activity);
@@ -2273,10 +2341,15 @@ static void
 SendCursorResponse(TDSRequestSP req)
 {
 	int			cmd_type = TDS_CMD_UNKNOWN;
-	Portal		portal;
-
 	/* fetch the portal */
-	portal = GetPortalFromCursorHandle(req->cursorHandle, false);
+	Portal		portal = GetPortalFromCursorHandle(req->cursorHandle, false);
+	PlannedStmt *plannedStmt = PortalGetPrimaryStmt(portal);
+	List 		*targetList = NIL;
+
+	if (portal->strategy != PORTAL_MULTI_QUERY)
+	{
+		targetList = FetchStatementTargetList((Node *) plannedStmt);
+	}
 
 	/*
 	 * If we are in aborted transaction state, we can't run
@@ -2305,7 +2378,7 @@ SendCursorResponse(TDSRequestSP req)
 	 * break the protocol.  We also need to fetch the primary keys for dynamic
 	 * and keyset cursors (XXX: these cursors are not yet implemented).
 	 */
-	PrepareRowDescription(portal->tupDesc, FetchPortalTargetList(portal),
+	PrepareRowDescription(portal->tupDesc, plannedStmt, targetList,
 						  portal->formats, true,
 						  (req->scrollopt & (SP_CURSOR_SCROLLOPT_DYNAMIC | SP_CURSOR_SCROLLOPT_KEYSET)));
 
@@ -2399,7 +2472,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 		if (req->spType == SP_CURSOREXEC)
 		{
 			char	   *activity = psprintf("SP_CURSOREXEC Handle: %d", (int) req->cursorPreparedHandle);
-
+			set_ps_display("active");
 			pgstat_report_activity(STATE_RUNNING, activity);
 			pfree(activity);
 
@@ -2418,6 +2491,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 			switch (req->spType)
 			{
 				case SP_CURSOROPEN:
+					set_ps_display("active");
 					activity = psprintf("SP_CURSOROPEN: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);
@@ -2426,6 +2500,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 																			NULL /* TODO row_count */ , req->nTotalParams, req->boundParamsData, req->boundParamsNullList);
 					break;
 				case SP_CURSORPREPARE:
+					set_ps_display("active");
 					activity = psprintf("SP_CURSORPREPARE: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);
@@ -2434,6 +2509,7 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 																			   (int) req->nTotalBindParams, req->boundParamsOidList);
 					break;
 				case SP_CURSORPREPEXEC:
+					set_ps_display("active");
 					activity = psprintf("SP_CURSORPREPEXEC: %s", buf.data);
 					pgstat_report_activity(STATE_RUNNING, activity);
 					pfree(activity);

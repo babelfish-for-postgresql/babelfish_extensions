@@ -110,11 +110,13 @@ BulkCopy(BulkCopyStmt *stmt, uint64 *processed)
 	}
 	PG_CATCH();
 	{
+		HOLD_INTERRUPTS();
 		/* For exact row which caused error, we have BulkCopyErrorCallback. */
 		elog(WARNING, "Error while executing Bulk Copy. Error occured while processing at "
 			 "implicit Batch number: %d, Rows inserted in total: %ld", stmt->cur_batch_num, stmt->rows_processed);
 		if (rel != NULL)
 			table_close(rel, NoLock);
+		RESUME_INTERRUPTS();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

@@ -282,7 +282,7 @@ SELECT * FROM babel_2812_vu_v32
 GO
 ~~START~~
 int
-51
+52
 ~~END~~
 
 SELECT * FROM babel_2812_vu_v33
@@ -323,9 +323,9 @@ int
 -- should overflow
 SELECT * FROM babel_2812_vu_v38
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 535)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
 -- smaller interval for millisecond
 SELECT * FROM babel_2812_vu_v39
@@ -338,9 +338,9 @@ int
 -- should overflow
 SELECT * FROM babel_2812_vu_v40
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 535)~~
 
-~~ERROR (Message: integer out of range)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
 -- microsecond and nanosecond can only handle diff of 0 for date type
 SELECT * FROM babel_2812_vu_v41

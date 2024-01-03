@@ -12,6 +12,18 @@ GO
 SET LANGUAGE us_english
 GO
 
+declare @rc varchar(10) = 'Italian';
+SET LANGUAGE @rc
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Settings other than "us_english" are not allowed for option LANGUAGE. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
+declare @rc varchar(10) = 'us_english';
+SET LANGUAGE @rc
+go
+
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
 GO
 
@@ -20,3 +32,28 @@ GO
 
 SET LANGUAGE us_english
 GO
+
+
+declare @rc varchar(10) = 'Italian';
+SET LANGUAGE @rc
+go
+
+declare @rc varchar(10) = 'us_english';
+SET LANGUAGE @rc
+go
+
+
+declare @rc varchar(10) = NULL;
+SET LANGUAGE @rc
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid argument for SET LANGUAGE. Must be a non-null value.)~~
+
+
+SET LANGUAGE NULL
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "NULL")~~
+

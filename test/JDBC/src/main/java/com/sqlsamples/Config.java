@@ -27,6 +27,7 @@ public class Config {
     static String scheduleFileName = properties.getProperty("scheduleFile");
     static boolean isParallelQueryMode = Boolean.parseBoolean(properties.getProperty("isParallelQueryMode"));
     static String parallelQueryTestIgnoreFileName = "./parallel_query_jdbc_schedule";
+    static boolean checkParallelQueryExpected = false;
     static String testFileRoot = properties.getProperty("testFileRoot");
     static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
     static long defaultSLA = Long.parseLong(properties.getProperty("defaultSLA"));

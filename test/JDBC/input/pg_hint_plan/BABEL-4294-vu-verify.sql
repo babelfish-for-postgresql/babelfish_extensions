@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- Test to check if initialisation of Parallel Worker crash when babelfishpg_tsql.enable_pg_hint is set
 /*
  * Set the enable_pg_hint, try to create parallel worker

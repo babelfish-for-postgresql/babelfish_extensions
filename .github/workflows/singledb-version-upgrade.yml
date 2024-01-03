@@ -83,3 +83,7 @@ jobs:
             ~/upgrade/*.diff
             ~/failed-testscript-outputs
             ~/${{env.NEW_INSTALL_DIR}}/data/pg_upgrade_output.d/*
+      
+      - name: Check and upload coredumps
+        if: always() && ( steps.upgrade-and-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
+        uses: ./.github/composite-actions/upload-coredump

@@ -46,6 +46,7 @@ char	   *pltsql_psql_logical_babelfish_db_name = NULL;
 int			pltsql_lock_timeout = -1;
 bool		pltsql_enable_linked_servers = true;
 bool		pltsql_allow_windows_login = true;
+bool		pltsql_allow_fulltext_parser = false;
 
 bool		pltsql_xact_abort = false;
 bool		pltsql_implicit_transactions = false;
@@ -101,6 +102,7 @@ static bool check_noexec(bool *newval, void **extra, GucSource source);
 static bool check_showplan_all(bool *newval, void **extra, GucSource source);
 static bool check_showplan_text(bool *newval, void **extra, GucSource source);
 static bool check_showplan_xml(bool *newval, void **extra, GucSource source);
+static bool check_enable_pg_hint(bool *newval, void **extra, GucSource source);
 static void assign_transform_null_equals(bool newval, void *extra);
 static void assign_ansi_defaults(bool newval, void *extra);
 static void assign_quoted_identifier(bool newval, void *extra);
@@ -126,6 +128,12 @@ static const struct config_enum_entry escape_hatch_options[] = {
 	{"strict", EH_STRICT, false},
 	{"ignore", EH_IGNORE, false},
 	{NULL, EH_NULL, false},
+};
+
+static const struct config_enum_entry bbf_isolation_options[] = {
+	{"off", ISOLATION_OFF, false},
+	{"pg_isolation", PG_ISOLATION, false},
+	{NULL, ISOLATION_OFF, false},
 };
 
 static bool
@@ -390,23 +398,15 @@ check_tsql_version(char **newval, void **extra, GucSource source)
 	return true;
 }
 
-static void
-assign_enable_pg_hint(bool newval, void *extra)
+static bool
+check_enable_pg_hint(bool *newval, void **extra, GucSource source)
 {
 	/*
      * Parallel workers send data to the leader, not the client. They always
      * send data using pg_hint_plan.enable_hint_plan.
      */
-    if (IsParallelWorker())
+    if (IsParallelWorker() && !InitializingParallelWorker)
     {
-        /*
-         * During parallel worker startup, we want to accept the leader's
-         * hint_plan setting so that anyone who looks at the value in
-         * the worker sees the same value that they would see in the leader.
-         */
-        if (InitializingParallelWorker)
-            return;
-
         /*
          * A change other than during startup, for example due to a SET clause
          * attached to a function definition, should be rejected, as there is
@@ -417,6 +417,16 @@ assign_enable_pg_hint(bool newval, void *extra)
                  errmsg("cannot change enable_hint_plan during a parallel operation")));
     }
 
+	return true;
+}
+
+
+static void
+assign_enable_pg_hint(bool newval, void *extra)
+{
+    if (IsParallelWorker())
+		return;
+    
 	if (newval)
 	{
 		/* Will throw an error if pg_hint_plan is not installed */
@@ -666,6 +676,16 @@ define_custom_variables(void)
 							 true,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* GUC for enabling or disabling full text search features */
+	DefineCustomBoolVariable("babelfishpg_tsql.allow_fulltext_parser",
+							 gettext_noop("GUC for enabling or disabling full text search features"),
+							 NULL,
+							 &pltsql_allow_fulltext_parser,
+							 true,
+							 PGC_SUSET,
+							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_SUPERUSER_ONLY,
 							 NULL, NULL, NULL);
 
 	/* ISO standard settings */
@@ -1135,7 +1155,7 @@ define_custom_variables(void)
 							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, assign_enable_pg_hint, NULL);
+							 check_enable_pg_hint, assign_enable_pg_hint, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_rows_per_batch",
 							gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),
@@ -1207,6 +1227,9 @@ int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
 int			escape_hatch_checkpoint = EH_IGNORE;
 int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
+int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
+int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
+int 		escape_hatch_identity_function = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1328,7 +1351,7 @@ define_escape_hatch_variables(void)
 
 	/* fulltext */
 	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_fulltext",
-							 gettext_noop("escape hatch for fulltext"),
+							 gettext_noop("escape hatch for fulltext search"),
 							 NULL,
 							 &escape_hatch_fulltext,
 							 EH_STRICT,
@@ -1552,6 +1575,39 @@ define_escape_hatch_variables(void)
 							 gettext_noop("escape hatch for SET TRANSACTION ISOLATION LEVEL"),
 							 NULL,
 							 &escape_hatch_set_transaction_isolation_level,
+							 EH_STRICT,
+							 escape_hatch_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	/* REPEATABLE READ MAPPING */
+	DefineCustomEnumVariable("babelfishpg_tsql.isolation_level_repeatable_read",
+							 gettext_noop("Select mapping for isolation level reapeatable read"),
+							 NULL,
+							 &pltsql_isolation_level_repeatable_read,
+							 ISOLATION_OFF,
+							 bbf_isolation_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
+	/* SERIALIZABLE MAPPING */
+	DefineCustomEnumVariable("babelfishpg_tsql.isolation_level_serializable",
+							 gettext_noop("Select mapping for isolation level serializable"),
+							 NULL,
+							 &pltsql_isolation_level_serializable,
+							 ISOLATION_OFF,
+							 bbf_isolation_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+	
+	/* IDENTITY() in SELECT-INTO */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_identity_function",
+							 gettext_noop("escape hatch for IDENTITY() in SELECT-INTO"),
+							 NULL,
+							 &escape_hatch_identity_function,
 							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,

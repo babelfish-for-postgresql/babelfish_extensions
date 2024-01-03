@@ -1,3 +1,4 @@
+-- parallel_query_expected
 #1 CREATE TABLE with primary and unique keyword
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
 CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);

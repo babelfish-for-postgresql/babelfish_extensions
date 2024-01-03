@@ -35,7 +35,7 @@
 
 #include "dynavec.h"
 #include "dynastack.h"
-#include "../../contrib/babelfishpg_common/src/babelfishpg_common.h"
+#include "../../babelfishpg_common/src/babelfishpg_common.h"
 
 /**********************************************************************
  * Definitions
@@ -192,8 +192,9 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RESTORE_CTX_PARTIAL,
 	PLTSQL_STMT_INSERT_BULK,
 	PLTSQL_STMT_GRANTDB,
+	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
-	PLTSQL_STMT_GRANTSCHEMA
+	PLTSQL_STMT_FULLTEXTINDEX,
 } PLtsql_stmt_type;
 
 /*
@@ -399,6 +400,9 @@ typedef struct PLtsql_var
 	PLtsql_expr *cursor_explicit_expr;
 	int			cursor_explicit_argrow;
 	int			cursor_options;
+
+	/* to identify if variable is getting used for babelfish GUC */
+	bool is_babelfish_guc;
 
 	/* Fields below here can change at runtime */
 
@@ -1037,18 +1041,29 @@ typedef struct PLtsql_stmt_grantdb
 } PLtsql_stmt_grantdb;
 
 /*
- *	Grant on schema stmt
+ *	ALTER AUTHORIZATION ON DATABASE::<dbname> TO <login>
  */
-typedef struct PLtsql_stmt_grantschema
+typedef struct PLtsql_stmt_change_dbowner
 {
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
-	bool		is_grant;
-	List		*privileges;		/* list of privileges */
-	List		*grantees;		/* list of users */
-	bool 		with_grant_option;
-	char		*schema_name;	/* schema name */
-} PLtsql_stmt_grantschema;
+	char	   *db_name;
+	char	   *new_owner_name;  /* Login name for new owner */
+} PLtsql_stmt_change_dbowner;
+
+/*
+ *	Fulltext Index stmt
+ */
+typedef struct PLtsql_stmt_fulltextindex
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char        *table_name;   /* table name */
+	List		*column_name;  /* column name */
+	char		*index_name;   /* index name */
+	char		*schema_name;  /* schema name */
+	bool		is_create;     /* flag for create index */		
+} PLtsql_stmt_fulltextindex;
 
 /*
  * ASSERT statement
@@ -1461,6 +1476,9 @@ typedef struct PLtsql_execstate
 	 */
 	bool		insert_exec;
 
+	int		    pivot_number;
+	List	   *pivot_parsetree_list;
+
 	List	   *explain_infos;
 	char	   *schema_name;
 	const char *db_name;
@@ -1783,6 +1801,14 @@ typedef struct tsql_identity_insert_fields
 	Oid			schema_oid;
 } tsql_identity_insert_fields;
 
+typedef struct tsql_pivot_fields
+{
+	RawStmt	*s_sql;
+	RawStmt	*c_sql;
+	char 	*sourcetext;
+	char	*funcName;
+}tsql_pivot_fields;
+
 extern tsql_identity_insert_fields tsql_identity_insert;
 extern check_lang_as_clause_hook_type check_lang_as_clause_hook;
 extern write_stored_proc_probin_hook_type write_stored_proc_probin_hook;
@@ -1833,7 +1859,6 @@ extern int	fetch_status_var;
 extern int	pltsql_proc_return_code;
 
 extern char *pltsql_version;
-extern Oid tsql_select_into_seq_oid;
 
 typedef struct PLtsqlErrorData
 {
@@ -2016,7 +2041,12 @@ extern void pltsql_scanner_finish(void);
 extern int	pltsql_yyparse(void);
 
 /* functions in pltsql_utils.c */
-extern List *gen_grantschema_subcmds(const char *schema, const char *db_user, bool is_grant, bool with_grant_option, const char *privilege);
+extern char *gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name);
+extern char *gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name);
+extern char *get_fulltext_index_name(Oid relid, const char *table_name);
+extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
+extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
+extern bool is_unique_index(Oid relid, const char *index_name);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2055,8 +2085,7 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
-extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
-extern void update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv);
+extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
@@ -2080,6 +2109,7 @@ extern Oid	tsql_get_trigger_rel_oid(Oid object_id);
 extern bool pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 extern Oid get_sys_varcharoid(void);
+extern Oid get_sysadmin_oid(void);
 
 typedef struct
 {
@@ -2160,5 +2190,6 @@ extern int64 last_scope_identity_value(void);
  */
 void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc);
 extern void 	exec_utility_cmd_helper(char *query_str);
+extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 
 #endif							/* PLTSQL_H */

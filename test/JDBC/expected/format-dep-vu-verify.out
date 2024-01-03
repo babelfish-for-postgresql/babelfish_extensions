@@ -1,0 +1,501 @@
+-- date
+select * from format_dep_view_date
+go
+~~START~~
+nvarchar
+Monday, January 1, 1753 12:00:00 AM
+Friday, December 31, 9999 12:00:00 AM
+Saturday, May 23, 1992 12:00:00 AM
+~~END~~
+
+
+exec format_dep_proc_date
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753
+Friday, December 31, 9999
+Saturday, May 23, 1992
+~~END~~
+
+
+select * from format_dep_func_date()
+go
+~~START~~
+date
+1753-01-01
+~~END~~
+
+
+-- datetime
+select * from format_dep_view_datetime
+go
+~~START~~
+nvarchar
+1/1/1753
+12/31/9999
+5/23/1992
+12/31/1999
+1/1/1900
+1/1/1900
+3/14/2020
+~~END~~
+
+
+exec format_dep_proc_datetime
+GO
+~~START~~
+nvarchar
+Monday, January 1, 1753
+Friday, December 31, 9999
+Saturday, May 23, 1992
+Friday, December 31, 1999
+Monday, January 1, 1900
+Monday, January 1, 1900
+Saturday, March 14, 2020
+~~END~~
+
+
+select * from format_dep_func_datetime()
+go
+~~START~~
+datetime
+1753-01-01 00:00:00.0
+~~END~~
+
+
+-- datetime2
+select * from format_dep_view_datetime2
+go
+~~START~~
+nvarchar
+Monday, January 1, 0001 12:00:00 AM
+Friday, December 31, 9999 11:59:59 PM
+Saturday, May 23, 1992 11:40:29 PM
+Saturday, May 23, 1992 11:40:30 PM
+Friday, December 31, 1999 11:59:59 PM
+Friday, December 31, 1999 11:59:59 PM
+Monday, January 1, 1900 11:40:29 PM
+Monday, January 1, 1900 11:40:30 PM
+Saturday, March 14, 2020 12:00:00 AM
+~~END~~
+
+
+exec format_dep_proc_datetime2
+GO
+~~START~~
+nvarchar
+Monday, January 1, 0001
+Friday, December 31, 9999
+Saturday, May 23, 1992
+Saturday, May 23, 1992
+Friday, December 31, 1999
+Friday, December 31, 1999
+Monday, January 1, 1900
+Monday, January 1, 1900
+Saturday, March 14, 2020
+~~END~~
+
+
+select * from format_dep_func_datetime2()
+go
+~~START~~
+datetime2
+0001-01-01 00:00:00.0000000
+~~END~~
+
+
+-- smalldatetime
+select * from format_dep_view_smalldatetime
+go
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40:00 PM
+Sunday, January 1, 2023 12:00:00 AM
+Tuesday, June 6, 2079 11:00:00 PM
+~~END~~
+
+
+exec format_dep_proc_smalldatetime
+GO
+~~START~~
+nvarchar
+Wednesday, May 23, 1990 11:40 PM
+Sunday, January 1, 2023 12:00 AM
+Tuesday, June 6, 2079 11:00 PM
+~~END~~
+
+
+select * from format_dep_func_smalldatetime()
+go
+~~START~~
+smalldatetime
+1990-05-23 00:00:00.0
+~~END~~
+
+
+-- time
+select * from format_dep_view_time
+go
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+select * from format_datetime_dep_view_time
+go
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+select * from format_datetime_dep_view_time2
+go
+~~START~~
+nvarchar
+00:00:00.123450
+03:53:59
+15:05:45
+23:59:59.123450
+~~END~~
+
+
+exec format_dep_proc_time
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+~~END~~
+
+
+select * from format_dep_func_time()
+go
+~~START~~
+time
+00:00:00.1234500
+~~END~~
+
+
+-- tinyint
+select * from format_dep_view_tinyint
+go
+~~START~~
+nvarchar
+$0
+$31
+$255
+~~END~~
+
+
+exec format_dep_proc_tinyint
+GO
+~~START~~
+nvarchar
+$0.00
+$31.00
+$255.00
+~~END~~
+
+
+-- smallint
+select * from format_dep_view_smallint
+go
+~~START~~
+nvarchar
+($2,456.000000)
+($62.000000)
+$282.000000
+$2,456.000000
+~~END~~
+
+
+exec format_dep_proc_smallint
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The culture parameter "aa-DJ" provided in the function call is not supported.)~~
+
+
+-- int
+select * from format_dep_view_int
+go
+~~START~~
+nvarchar
+($2,147,483.000000)
+($586.000000)
+$7,869.000000
+$2,147,483.000000
+~~END~~
+
+
+select * from format_numeric_dep_view_int
+go
+~~START~~
+nvarchar
+($2,147,483.000000)
+($586.000000)
+$7,869.000000
+$2,147,483.000000
+~~END~~
+
+
+exec format_dep_proc_int
+GO
+~~START~~
+nvarchar
+($2,147,483.00)
+($586.00)
+$7,869.00
+$2,147,483.00
+~~END~~
+
+
+-- bigint
+select * from format_dep_view_bigint
+go
+~~START~~
+nvarchar
+($9,223,372,036,854.000000)
+($352.000000)
+$2,822.000000
+$9,223,372,036,854.000000
+~~END~~
+
+
+exec format_dep_proc_bigint
+GO
+~~START~~
+nvarchar
+($9,223,372,036,854.00)
+($352.00)
+$2,822.00
+$9,223,372,036,854.00
+~~END~~
+
+
+-- decimal
+select * from format_dep_view_decimal
+go
+~~START~~
+nvarchar
+($8,999,999,999.099090)
+($352.000000)
+$5,478.000000
+$8,999,999,999.999990
+~~END~~
+
+
+exec format_dep_proc_decimal
+GO
+~~START~~
+nvarchar
+($8,999,999,999.10)
+($352.00)
+$5,478.00
+$9,000,000,000.00
+~~END~~
+
+
+-- numeric
+select * from format_dep_view_numeric
+go
+~~START~~
+nvarchar
+($8,999,999,999.099000)
+($352.000000)
+$5,478.000000
+$8,999,999,999.999900
+~~END~~
+
+
+exec format_dep_proc_numeric
+GO
+~~START~~
+nvarchar
+($8,999,999,999.10)
+($352.00)
+$5,478.00
+$9,000,000,000.00
+~~END~~
+
+
+-- real
+select * from format_dep_view_real
+go
+~~START~~
+nvarchar
+($340,000,000,000,000,000,000,000,000,000,000,000,000.000000000)
+($331,234,600,000,000,000,000,000,000,000,000,000,000.000000000)
+($331,234,100,000,000,000,000,000,000,000,000,000,000.000000000)
+($22.123400000)
+$22.123400000
+$22.123410000
+$331,234,600,000,000,000,000,000,000,000,000,000,000.000000000
+$340,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+~~END~~
+
+
+exec format_dep_proc_real
+GO
+~~START~~
+nvarchar
+($340,000,000,000,000,000,000,000,000,000,000,000,000.00)
+($331,234,600,000,000,000,000,000,000,000,000,000,000.00)
+($331,234,100,000,000,000,000,000,000,000,000,000,000.00)
+($22.12)
+$22.12
+$22.12
+$331,234,600,000,000,000,000,000,000,000,000,000,000.00
+$340,000,000,000,000,000,000,000,000,000,000,000,000.00
+~~END~~
+
+
+-- float
+select * from format_dep_view_float
+go
+~~START~~
+nvarchar
+($179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.000000000)
+($340,000,000,000,000,000,000,000,000,000,000,000,000.000000000)
+$35.367500000
+$340,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+$179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+~~END~~
+
+
+exec format_dep_proc_float
+GO
+~~START~~
+nvarchar
+($179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.00)
+($340,000,000,000,000,000,000,000,000,000,000,000,000.00)
+$35.37
+$340,000,000,000,000,000,000,000,000,000,000,000,000.00
+$179,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000,000.00
+~~END~~
+
+
+-- smallmoney
+select * from format_dep_view_smallmoney
+go
+~~START~~
+nvarchar
+($214,478.364800000)
+$435,627.143500000
+($435,627.143500000)
+$214,478.364700000
+~~END~~
+
+
+exec format_dep_proc_smallmoney
+GO
+~~START~~
+nvarchar
+($214,478.36)
+$435,627.14
+($435,627.14)
+$214,478.36
+~~END~~
+
+
+-- money
+select * from format_dep_view_money
+go
+~~START~~
+nvarchar
+($92,233,720.580800000)
+($214,478.364800000)
+$435,627.143500000
+$214,478.364700000
+$92,233,720.580700000
+~~END~~
+
+
+exec format_dep_proc_money
+GO
+~~START~~
+nvarchar
+($92,233,720.58)
+($214,478.36)
+$435,627.14
+$214,478.36
+$92,233,720.58
+~~END~~
+
+
+-- real
+select * from format_dep_view_real2
+go
+~~START~~
+nvarchar
+($34.000000000)
+($34.000000000)
+($331,234,700,000,000,000,000,000,000,000,000,000,000.000000000)
+$22,123.460000000
+$22.123410000
+$331,234,600,000,000,000,000,000,000,000,000,000,000.000000000
+$340,000,000,000,000,000,000,000,000,000,000,000,000.000000000
+~~END~~
+
+
+exec format_dep_proc_real2
+GO
+~~START~~
+nvarchar
+($34.00)
+($34.00)
+($331,234,700,000,000,000,000,000,000,000,000,000,000.00)
+$22,123.46
+$22.12
+$331,234,600,000,000,000,000,000,000,000,000,000,000.00
+$340,000,000,000,000,000,000,000,000,000,000,000,000.00
+~~END~~
+
+
+-- float
+select * from format_dep_view_float2
+go
+~~START~~
+nvarchar
+($331,234,678,912,346,000,000,000,000,000,000,000,000.000000000)
+$3.312348966
+$3.312348966
+$3.312348966
+$3.312348966
+$3.312348966
+$33,123,489,656,565,100.000000000
+$3.312348966
+$3.312348966
+$351,234,567,891,026,000.000000000
+~~END~~
+
+
+exec format_dep_proc_float2
+GO
+~~START~~
+nvarchar
+($331,234,678,912,346,000,000,000,000,000,000,000,000.00)
+$3.31
+$3.31
+$3.31
+$3.31
+$3.31
+$33,123,489,656,565,100.00
+$3.31
+$3.31
+$351,234,567,891,026,000.00
+~~END~~
+

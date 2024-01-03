@@ -1,0 +1,26 @@
+DROP LOGIN sys_server_role_members_vu_prepare_login1;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_login2;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_login3;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_login4;
+GO
+
+DROP VIEW sys_server_role_members_vu_prepare_view;
+GO
+
+DROP FUNCTION sys_server_role_members_vu_prepare_func;
+GO
+
+DROP PROCEDURE sys_server_role_members_vu_prepare_proc;
+GO
+
+DROP USER sys_server_role_members_vu_prepare_without_sa;
+GO
+
+DROP LOGIN sys_server_role_members_vu_prepare_without_sa;
+GO

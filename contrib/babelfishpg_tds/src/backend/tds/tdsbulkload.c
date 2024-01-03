@@ -20,6 +20,7 @@
 #include "utils/guc.h"
 #include "lib/stringinfo.h"
 #include "pgstat.h"
+#include "utils/ps_status.h"
 
 #include "src/include/tds_instr.h"
 #include "src/include/tds_int.h"
@@ -909,6 +910,7 @@ ProcessBCPRequest(TDSRequest request)
 	TDSRequestBulkLoad req = (TDSRequestBulkLoad) request;
 	StringInfo	message = req->firstMessage;
 
+	set_ps_display("active");
 	TdsErrorContext->err_text = "Processing Bulk Load Request";
 	pgstat_report_activity(STATE_RUNNING, "Processing Bulk Load Request");
 
@@ -926,7 +928,7 @@ ProcessBCPRequest(TDSRequest request)
 		}
 		PG_CATCH();
 		{
-			int			ret;
+			int			ret = 0;
 
 			HOLD_CANCEL_INTERRUPTS();
 
@@ -987,9 +989,10 @@ ProcessBCPRequest(TDSRequest request)
 			}
 			PG_CATCH();
 			{
-				int			ret;
+				int			ret = 0;
 
 				HOLD_CANCEL_INTERRUPTS();
+				HOLD_INTERRUPTS();
 
 				/*
 				 * Discard remaining TDS_BULK_LOAD packets only if End of
@@ -1014,6 +1017,7 @@ ProcessBCPRequest(TDSRequest request)
 									req->rowCount, req->colCount),
 							 errhidestmt(true)));
 
+				RESUME_INTERRUPTS();
 				PG_RE_THROW();
 			}
 			PG_END_TRY();

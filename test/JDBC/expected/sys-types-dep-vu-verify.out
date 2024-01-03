@@ -24,3 +24,27 @@ int
 1
 ~~END~~
 
+
+EXEC sys_types_dep_vu_prepare_p2
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT * FROM sys_types_dep_vu_prepare_v2
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT * FROM sys_types_dep_vu_prepare_f2()
+GO
+~~START~~
+bit
+1
+~~END~~
+

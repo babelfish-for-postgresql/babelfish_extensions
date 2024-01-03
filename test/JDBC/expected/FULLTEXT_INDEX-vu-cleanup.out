@@ -1,0 +1,151 @@
+-- tsql user=testLogin password=abc
+USE master;
+GO
+
+-- enable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- should throw error because login doesn't have sufficient permissions to DROP FULLTEXT INDEX
+DROP FULLTEXT INDEX ON fti_table_t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the full-text index, because it does not exist or you do not have permission)~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- enable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+DROP FULLTEXT INDEX ON fti_table_t1;
+GO
+
+DROP TABLE IF EXISTS fti_table_t1;
+GO
+
+DROP FULLTEXT INDEX ON fti_table_t2;
+GO
+
+DROP TABLE IF EXISTS fti_table_t2;
+GO
+
+DROP FULLTEXT INDEX ON fti_table_t3;
+GO
+
+DROP TABLE IF EXISTS fti_table_t3;
+GO
+
+DROP FULLTEXT INDEX ON fti_table_t4;
+GO
+
+DROP TABLE IF EXISTS fti_table_t4;
+GO
+
+DROP FULLTEXT INDEX ON fti_table_t5;
+GO
+
+DROP TABLE IF EXISTS fti_table_t5;
+GO
+
+DROP FULLTEXT INDEX ON fti_table_t6;
+GO
+
+DROP TABLE IF EXISTS fti_table_t6;
+GO
+
+DROP FULLTEXT INDEX ON fti_table_t7;
+GO
+
+DROP TABLE IF EXISTS fti_table_t7;
+GO
+
+DROP FULLTEXT INDEX ON fti_schema_s1.fti_table_t8;
+GO
+
+DROP TABLE IF EXISTS fti_schema_s1.fti_table_t8;
+GO
+
+DROP SCHEMA IF EXISTS fti_schema_s1;
+GO
+
+DROP FULLTEXT INDEX ON fti_schema_s2.fti_table_t8;
+GO
+
+DROP TABLE IF EXISTS fti_schema_s2.fti_table_t8;
+GO
+
+DROP SCHEMA IF EXISTS fti_schema_s2;
+GO
+
+-- should throw error as there is no index in the table
+DROP FULLTEXT INDEX ON fti_table_no_ix;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Table or indexed view "fti_table_no_ix" does not have a full-text index or user does not have permission to perform this action.)~~
+
+
+DROP TABLE IF EXISTS fti_table_no_ix;
+GO
+
+DROP TABLE IF EXISTS fti_table_unsupported;
+GO
+
+DROP VIEW IF EXISTS fti_prepare_v1;
+GO
+
+DROP PROCEDURE IF EXISTS fti_prepare_p1;
+GO
+
+DROP FUNCTION IF EXISTS fti_prepare_f1;
+GO
+
+DROP TABLE IF EXISTS fti_schema_s3.fti_table_t9;
+GO
+
+DROP SCHEMA IF EXISTS fti_schema_s3;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'testLogin' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN testLogin;
+GO
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+

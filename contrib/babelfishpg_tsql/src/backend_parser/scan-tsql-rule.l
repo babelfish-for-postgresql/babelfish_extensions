@@ -232,6 +232,8 @@
 							case TSQL_ISO_WEEK:
 							case TSQL_ISOWK:
 							case TSQL_ISOWW:
+							case TSQL_LOG:
+							case TSQL_LOG10:
 							case TSQL_LOGIN:
 							case TSQL_M:
 							case TSQL_MCS:

@@ -1,0 +1,33 @@
+DROP VIEW TestDatatypeAggSort_vu_prepare_char_view_max
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_char_view_min
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_varchar_view_max
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_varchar_view_min
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_datetime_view_max
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_datetime_view_min
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_datetime2_view_max
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_datetime2_view_min
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_datetimeoffset_view_max
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_datetimeoffset_view_min
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_smalldatetime_view_max
+go
+DROP VIEW TestDatatypeAggSort_vu_prepare_smalldatetime_view_min
+go
+
+DROP PROCEDURE TestDatatypeAggSort_vu_prepare_proc
+go
+
+DROP TABLE TestDatatypeAggSort_vu_prepare_tbl
+go
+
+DROP TABLE TestDatatypeAggSort_vu_prepare_tbl2
+go

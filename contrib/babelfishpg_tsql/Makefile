@@ -74,6 +74,8 @@ OBJS += src/tsql_analyze.o
 OBJS += src/linked_servers.o
 OBJS += src/table_variable_mvcc.o
 OBJS += src/extendedproperty.o
+OBJS += src/fts.o
+OBJS += src/fts_parser.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
@@ -239,6 +241,10 @@ src/backend_parser/scan-backend.c: src/backend_parser/scan-backend.l
 
 # Force these dependencies to be known even without dependency info built:
 src/backend_parser/gram-backend.o src/backend_parser/scan-backend.o src/backend_parser/parser.o: src/backend_parser/gram-backend.h
+
+src/fts_parser.o: src/fts_scan.c src/fts_data.h
+src/fts.o: src/fts_scan.c src/fts_parser.c src/fts_data.h
+distprep: src/fts_scan.c src/fts_parser.c
 
 include $(PGXS)
 

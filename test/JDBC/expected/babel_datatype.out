@@ -2202,9 +2202,10 @@ binary
 -- BABEL-1030
 select cast(cast(cast('a' AS nvarchar(10)) as binary(2)) as nvarchar(2));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: invalid Unicode code point 0x0)~~
+~~START~~
+nvarchar
+a
+~~END~~
 
 select cast(cast('ab' AS nvarchar(10)) as binary(2));
 GO
@@ -2278,13 +2279,15 @@ GO
 
 insert into testing6 values (cast('ab' as varbinary));
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: String or binary data would be truncated.
+The statement has been terminated.)~~
 
 select * from testing6;
 GO
 ~~START~~
 binary
-61
 61
 ~~END~~
 

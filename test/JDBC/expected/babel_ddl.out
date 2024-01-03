@@ -59,10 +59,10 @@ select indexname, indexdef from pg_indexes where tablename like 't_' order by in
 GO
 ~~START~~
 varchar#!#text
-t1_idx1t18e881e6977bd6b8cbb78725b3a8ac988#!#CREATE INDEX t1_idx1t18e881e6977bd6b8cbb78725b3a8ac988 ON master_dbo.t1 USING btree (a)
-t1_idx2t117dbbb74ced1fe936cdf7cd7baeff266#!#CREATE INDEX t1_idx2t117dbbb74ced1fe936cdf7cd7baeff266 ON master_dbo.t1 USING btree (a)
-t1_idx3t19eceb46c036c3c1bd6895a34ec3c93f1#!#CREATE INDEX t1_idx3t19eceb46c036c3c1bd6895a34ec3c93f1 ON master_dbo.t1 USING btree (a)
-t1_idx4t1fb4b953a652720bfa47919dff09b172e#!#CREATE INDEX t1_idx4t1fb4b953a652720bfa47919dff09b172e ON master_dbo.t1 USING btree (a)
+t1_idx1t18e881e6977bd6b8cbb78725b3a8ac988#!#CREATE INDEX t1_idx1t18e881e6977bd6b8cbb78725b3a8ac988 ON master_dbo.t1 USING btree (a NULLS FIRST)
+t1_idx2t117dbbb74ced1fe936cdf7cd7baeff266#!#CREATE INDEX t1_idx2t117dbbb74ced1fe936cdf7cd7baeff266 ON master_dbo.t1 USING btree (a NULLS FIRST)
+t1_idx3t19eceb46c036c3c1bd6895a34ec3c93f1#!#CREATE INDEX t1_idx3t19eceb46c036c3c1bd6895a34ec3c93f1 ON master_dbo.t1 USING btree (a NULLS FIRST)
+t1_idx4t1fb4b953a652720bfa47919dff09b172e#!#CREATE INDEX t1_idx4t1fb4b953a652720bfa47919dff09b172e ON master_dbo.t1 USING btree (a NULLS FIRST)
 t2_pkey#!#CREATE UNIQUE INDEX t2_pkey ON master_dbo.t2 USING btree (a)
 t3_pkey#!#CREATE UNIQUE INDEX t3_pkey ON master_dbo.t3 USING btree (a)
 t4_a_key#!#CREATE UNIQUE INDEX t4_a_key ON master_dbo.t4 USING btree (a)

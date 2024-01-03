@@ -152,6 +152,7 @@ CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIME)
     sfunc = sys.datetime_larger,
     stype = sys.datetime,
     combinefunc = sys.datetime_larger,
+    sortop = >,
     parallel = safe
 );
 
@@ -160,6 +161,7 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME)
     sfunc = sys.datetime_smaller,
     stype = sys.datetime,
     combinefunc = sys.datetime_smaller,
+    sortop = <,
     parallel = safe
 );
 
@@ -530,3 +532,38 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (FIXEDDECIMAL AS sys.DATETIME)
 WITH FUNCTION sys.money2datetime (FIXEDDECIMAL) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_bit(IN arg sys.DATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'datetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int2(IN arg sys.DATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'datetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int4(IN arg sys.DATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'datetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_int8(IN arg sys.DATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'datetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float4(IN arg sys.DATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'datetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_float8(IN arg sys.DATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'datetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_to_numeric(IN arg sys.DATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'datetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

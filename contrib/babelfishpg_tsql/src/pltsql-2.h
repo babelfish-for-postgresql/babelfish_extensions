@@ -210,7 +210,7 @@ typedef struct PLtsql_stmt_throw
  * babelfishpg_tsql executor internally creates constant cursor and it will be assigned to refcursor
  * but it should be invisible to user through sp_cursor_list.
  */
-#define PGTSQL_CURSOR_ANONYMOUS      (1<<31)
+#define PGTSQL_CURSOR_ANONYMOUS      (1u<<31)
 
 /*
  * DEALLOCATE curvar

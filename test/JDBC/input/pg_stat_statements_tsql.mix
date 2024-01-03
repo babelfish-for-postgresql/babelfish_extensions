@@ -168,7 +168,10 @@ SELECT * FROM pgss_test ORDER BY a;
 SELECT * FROM pgss_test WHERE a IN (1, 2, 3, 4, 5);
 go
 
-SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 ORDER BY query COLLATE "C";
+SELECT toplevel, query, calls, rows, plans from pg_stat_statements where queryid != 0 and (query not like 'GRANT%' AND query not like 'REVOKE%') ORDER BY query COLLATE "C";
+go
+
+SELECT toplevel, query, rows, plans from pg_stat_statements where queryid != 0 and (query like 'GRANT%' OR query like 'REVOKE%') ORDER BY query COLLATE "C";
 go
 
 -- psql

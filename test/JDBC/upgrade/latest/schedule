@@ -38,7 +38,6 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
-BABEL-2170
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -78,6 +77,7 @@ BABEL-3249
 BABEL-3268
 BABEL-328
 BABEL-3314
+BABEL-3326
 BABEL-3347
 BABEL-3358
 BABEL-3360
@@ -118,6 +118,7 @@ BABEL-404
 BABEL-405
 BABEL-4078
 BABEL-4098
+BABEL-4214
 babel_417
 BABEL-493
 BABEL_539
@@ -206,7 +207,8 @@ column_domain_usage
 constraint_column_usage
 dateadd_internal_df
 datediff_big
-datediff_internal_date
+datediff
+dateadd
 datepart
 datetime2fromparts-after-15-2
 forjson
@@ -214,9 +216,12 @@ forjson-datatypes
 forjson-subquery
 forjson-nesting
 format
+format-dep
 forxml
 forxml-subquery
 fulltextserviceproperty
+FULLTEXT_INDEX
+fts-contains
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -344,6 +349,7 @@ sys-schemas
 sys-schemas-dep
 sys-selective_xml_index_paths
 sys-server_principals
+sys_server_role_members
 sys_server_principals_dep
 sys-sid_binary
 sys-spatial_indexes
@@ -454,8 +460,12 @@ TestXML
 timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
+typeid-typename
+typeid-typename-dep
 unquoted_string
 doublequoted_string
+alter_authorization_change_db_owner
+sp_changedbowner
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -469,8 +479,19 @@ Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+typeproperty-dep
 sys_asymmetric_keys
 sys_certificates
 sys_database_permissions
 BABEL-4279
 BABEL-4484
+pivot
+#AUTO_ANALYZE #uncomment this test when preparing for new minor version
+cast_eliminate
+TestDatatypeAggSort
+babel_index_nulls_order
+BABEL-2999
+BABEL-4606
+sys_availability_groups
+sys_availability_replicas
+BABEL-730

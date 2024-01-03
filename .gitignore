@@ -37,6 +37,8 @@ contrib/babelfishpg_tsql/src/backend_parser/gram-backend.y
 contrib/babelfishpg_tsql/src/backend_parser/kwlist_d.h
 contrib/babelfishpg_tsql/src/backend_parser/scan-backend.c
 contrib/babelfishpg_tsql/src/backend_parser/scan-backend.l
+contrib/babelfishpg_tsql/src/fts_parser.c
+contrib/babelfishpg_tsql/src/fts_scan.c
 contrib/babelfishpg_tsql/src/pl_gram.c
 contrib/babelfishpg_tsql/src/pl_gram.h
 contrib/babelfishpg_tsql/src/pl_gram.output

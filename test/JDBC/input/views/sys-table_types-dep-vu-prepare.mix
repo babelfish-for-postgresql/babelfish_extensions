@@ -17,3 +17,19 @@ GO
 create view sys_table_types_dep_vu_prepare_v1 as
     select count(*) from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt'
 GO
+
+create procedure sys_table_types_dep_vu_prepare_p2 as
+    select is_nullable from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt'
+GO
+
+create view sys_table_types_dep_vu_prepare_v2 as
+    select is_nullable from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt'
+GO
+
+create function sys_table_types_dep_vu_prepare_f2()
+returns sys.bit
+as
+begin
+    return (select is_nullable from sys.table_types where name = 'sys_table_types_dep_vu_prepare_tt')
+end
+GO

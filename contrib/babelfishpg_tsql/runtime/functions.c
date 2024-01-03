@@ -3,6 +3,17 @@
 #include "funcapi.h"
 #include "pgstat.h"
 
+#include "postgres.h"
+#include "access/hash.h"
+#include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "libpq/pqformat.h"
+#include "utils/timestamp.h"
+
+#include "fmgr.h"
+#include "miscadmin.h"
+
 #include "access/detoast.h"
 #include "access/htup_details.h"
 #include "access/table.h"
@@ -16,6 +27,8 @@
 #include "commands/dbcommands.h"
 #include "commands/extension.h"
 #include "common/md5.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
@@ -56,6 +69,12 @@
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
+#define SYSVARCHAR_MAX_LENGTH 4000
+#define DAYS_BETWEEN_YEARS_1900_TO_2000 36524   	/* number of days present in between 1/1/1900 and 1/1/2000 */
+#define DATEPART_MAX_VALUE 2958463              	/* maximum value for datepart general_integer_datatype */
+#define DATEPART_MIN_VALUE -53690               	/* minimun value for datepart general_integer_datatype */
+#define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
+#define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
 
 typedef enum
 {
@@ -121,6 +140,8 @@ PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(object_id);
 PG_FUNCTION_INFO_V1(object_name);
+PG_FUNCTION_INFO_V1(type_id);
+PG_FUNCTION_INFO_V1(type_name);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(identity_into_smallint);
@@ -144,6 +165,9 @@ PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
+PG_FUNCTION_INFO_V1(numeric_log_natural);
+PG_FUNCTION_INFO_V1(numeric_log_base);
+PG_FUNCTION_INFO_V1(numeric_log10);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
@@ -151,15 +175,38 @@ PG_FUNCTION_INFO_V1(objectproperty_internal);
 PG_FUNCTION_INFO_V1(sysutcdatetime);
 PG_FUNCTION_INFO_V1(getutcdate);
 PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
+PG_FUNCTION_INFO_V1(getdate_internal);
+PG_FUNCTION_INFO_V1(sysdatetime);
+PG_FUNCTION_INFO_V1(sysdatetimeoffset);
+PG_FUNCTION_INFO_V1(datepart_internal_int);
+PG_FUNCTION_INFO_V1(datepart_internal_date);
+PG_FUNCTION_INFO_V1(datepart_internal_datetime);
+PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
+PG_FUNCTION_INFO_V1(datepart_internal_time);
+PG_FUNCTION_INFO_V1(datepart_internal_decimal);
+PG_FUNCTION_INFO_V1(datepart_internal_float);
+PG_FUNCTION_INFO_V1(datepart_internal_real);
+PG_FUNCTION_INFO_V1(datepart_internal_money);
+PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
+
+Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
+int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
+static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
+static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
+												const char 	*sourcetext,
+												const char 	*funcName,
+												HTAB 		*bbf_pivot_hash,
+												TupleDesc 	tupdesc,
+												bool 		randomAccess);
+
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
-static int64 get_identity_next_value(void);
 
 extern int	pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -179,11 +226,78 @@ extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
 extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char	   *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
+
+#define MAX_CATNAME_LEN			NAMEDATALEN
+#define INIT_CATS				64
+
+/* stored info for a bbf_pivot category */
+typedef struct bbf_pivot_cat_desc
+{
+	char	   *catname;		/* full category name */
+	uint64		attidx;			/* zero based */
+} bbf_pivot_cat_desc;
+
+typedef struct bbf_pivot_hashent
+{
+	char		internal_catname[MAX_CATNAME_LEN];
+	bbf_pivot_cat_desc *catdesc;
+} bbf_pivot_HashEnt;
+
+#define bbf_pivot_HashTableLookup(HASHTAB, CATNAME, CATDESC) \
+do { \
+	bbf_pivot_HashEnt *hentry; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATNAME); \
+	hentry = (bbf_pivot_HashEnt*) hash_search(HASHTAB, \
+										 key, HASH_FIND, NULL); \
+	if (hentry) \
+		CATDESC = hentry->catdesc; \
+	else \
+		CATDESC = NULL; \
+} while(0)
+
+#define bbf_pivot_HashTableInsert(HASHTAB, CATDESC) \
+do { \
+	bbf_pivot_HashEnt *hentry; bool found; char key[MAX_CATNAME_LEN]; \
+	\
+	MemSet(key, 0, MAX_CATNAME_LEN); \
+	snprintf(key, MAX_CATNAME_LEN - 1, "%s", CATDESC->catname); \
+	hentry = (bbf_pivot_HashEnt*) hash_search(HASHTAB, \
+										 key, HASH_ENTER, &found); \
+	if (found) \
+		ereport(ERROR, \
+				(errcode(ERRCODE_DUPLICATE_OBJECT), \
+				 errmsg("duplicate category name"))); \
+	hentry->catdesc = CATDESC; \
+} while(0)
+
+#define xpfree(var_) \
+	do { \
+		if (var_ != NULL) \
+		{ \
+			pfree(var_); \
+			var_ = NULL; \
+		} \
+	} while (0)
+
+#define xpstrdup(tgtvar_, srcvar_) \
+	do { \
+		if (srcvar_) \
+			tgtvar_ = pstrdup(srcvar_); \
+		else \
+			tgtvar_ = NULL; \
+	} while (0)
+
+#define xstreq(tgtvar_, srcvar_) \
+	(((tgtvar_ == NULL) && (srcvar_ == NULL)) || \
+	 ((tgtvar_ != NULL) && (srcvar_ != NULL) && (strcmp(tgtvar_, srcvar_) == 0)))
 
 
 Datum
@@ -237,6 +351,414 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(new_text);
 }
+
+/*
+ * datepart_internal take the timestamp and extracts
+ * year, month, week, dow, doy, etc. Fields for which date is needed
+ * back from the timestamp. df_tz is the offset of datetime when there is a 
+ * valid timestamp and it is the general integer datatype when the timestamp
+ * is not valid for the general numeric datatypes 
+ */
+
+Datum
+datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_integer_datatype)
+{	
+	fsec_t		fsec1;
+	Timestamp	tsql_first_day, first_day;
+	struct pg_tm tt1, *tm = &tt1;
+	uint		first_week_end, year, month, day, res = 0, day_of_year; /* for Zeller's Congruence */
+	int 		tz1;
+
+	/*
+	 * This block is used when the second argument in datepart is not a 
+	 * date or time relate but instead general integer datatypes. datepart_internal converts the general integer datatypes (df_tz)
+	 * into proper timestamp with days offset from 01/01/1970. The general integer datatypes are passed in the df_tz
+	 * i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
+	 * Converting the df_tz into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
+	 */
+	if (timestamp == 0 && general_integer_datatype)
+	{	
+		/* Checking for the limits for general_integer_datatype */
+		if(df_tz > DATEPART_MAX_VALUE || df_tz < DATEPART_MIN_VALUE)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+		}
+
+		timestamp = (Timestamp)(((df_tz) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
+	}
+		
+	/* Gets the date time related fields back from timestamp into struct tm pointer */
+	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+	}
+
+	year = tm->tm_year;
+	month = tm->tm_mon;
+	day = tm->tm_mday;
+
+	if (strcmp(field, "year") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_year);
+	}
+	else if (strcmp(field, "quarter") == 0)
+	{
+		/* There are 3 months in each quarter ( 12 / 3 = 4 ) */
+		PG_RETURN_INT32((int)ceil((float)tm->tm_mon / 3.0));
+	}
+	else if (strcmp(field, "month") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_mon);
+	}
+	else if (strcmp(field, "day") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_mday);
+	}
+	else if (strcmp(field, "hour") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_hour);
+	}
+	else if (strcmp(field, "minute") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_min);
+	}
+	else if (strcmp(field, "second") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_sec);
+	}
+	else if (strcmp(field, "doy") == 0)		/* day-of-year of the date */
+	{
+		PG_RETURN_INT32( (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+						 - date2j(tm->tm_year, 1, 1) + 1));
+	}
+	else if (strcmp(field, "dow") == 0)		/* day-of-week of the date */
+	{
+		/* dow calculated using Zeller's Congruence */
+		if (tm->tm_mon < 3)
+		{
+			month += MONTHS_PER_YEAR;
+			year -= 1;
+		}
+
+		/* 
+		 * Zeller’s congruence is an algorithm devised by Christian Zeller to calculate
+		 * the day of the week for any calendar date. 
+		 * Here is a formula for finding the day of the week for ANY date. 
+		 * N = d + 2m + [3(m+1)/5] + y + [y/4] - [y/100] + [y/400] + 2
+		 * where d is the number of the day of the month, m is the number of the month, and y is the year.
+		 * The brackets around the divisions mean to drop the remainder and just use the integer part that you get.
+		 * Also, a VERY IMPORTANT RULE is the number to use for the months for January and February.
+		 * The numbers of these months are 13 and 14 of the PREVIOUS YEAR. This means that to find the day of the week of New Year's Day this year, 1/1/98,
+		 * you must use the date 13/1/97.
+		 */
+		res = (day + 2 * month + ((3 * (month + 1)) / (5)) + year +
+					year / 4 - year / 100 + year / 400 + 2) % 7;
+		
+		/* Adjusting the dow accourding to the datefirst guc */
+		PG_RETURN_INT32(((res) + 7 - pltsql_datefirst)%7 == 0 ?
+					7 : ((res) + 7 - pltsql_datefirst)%7);
+
+	}
+	else if (strcasecmp(field , "tsql_week") == 0)		/* week number of the year  */
+	{
+		/* returns number of days since 1/1/1970 to 1/1/tm_year */
+		first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE;
+
+		/* convert this first day of tm_year to timestamp into tsql_first_day */
+		tsql_first_day = (Timestamp) (first_day - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE)) * USECS_PER_DAY;
+
+		first_week_end = 8 - datepart_internal("dow", tsql_first_day, 0, false);
+
+		day_of_year = datepart_internal("doy",timestamp,0, false);
+
+		if(day_of_year <= first_week_end)
+		{
+			/* day of year is less than first_week_end means its a first week */
+			PG_RETURN_INT32(1);
+		}
+		else
+		{
+			PG_RETURN_INT32(2+(day_of_year - first_week_end - 1) / 7);
+		}
+	}
+	else if(strcasecmp(field , "week") == 0)
+	{
+		PG_RETURN_INT32(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
+	}
+	else if(strcasecmp(field , "millisecond") == 0)
+	{
+		PG_RETURN_INT32((fsec1) / 1000);
+	}
+	else if(strcasecmp(field , "microsecond") == 0)
+	{
+		PG_RETURN_INT32(fsec1);
+	}
+	else if(strcasecmp(field , "nanosecond") == 0)
+	{
+		PG_RETURN_INT32((fsec1) * 1000);
+	}
+	else if(strcasecmp(field , "tzoffset") == 0)
+	{
+		if(general_integer_datatype)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart tzoffset is not supported by date function datepart for data type datetime.")));
+			
+			PG_RETURN_INT32(-1);
+		}
+		else
+		{
+			PG_RETURN_INT32((int)df_tz);
+		}
+	}
+	else
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("\'%s\' is not a recognized datepart option",field)));
+			
+		PG_RETURN_INT32(-1);
+	}
+	
+	PG_RETURN_INT32(1);
+}
+
+
+/*
+ * datepart_internal_datetimeoffset takes datetimeoffset and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+
+	timestamp = (Timestamp)(DirectFunctionCall1(common_utility_plugin_ptr->datetimeoffset_timestamp,
+							PG_GETARG_DATUM(1)));
+	
+	timestamp = timestamp + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+	
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_date takes date and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_date(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	
+	timestamp = DirectFunctionCall1(date_timestamp, PG_GETARG_DATUM(1));
+
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_datetime takes datetime and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_datetime(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	
+	timestamp = PG_GETARG_TIMESTAMP(1);
+
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_int takes int and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_int(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, num, true);
+
+}
+
+/*
+ * datepart_internal_money takes money and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_money(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz. Also dividing num by 10000 as money datatype 
+	 * gets a multiple of 10000 internally
+	 */
+	return datepart_internal(field, 0, (float8)num/10000, true);
+}
+
+/*
+ * datepart_internal_smallmoney takes int and converts it to
+ * timestamp and calls datepart_internal and checks limits
+ */
+
+Datum
+datepart_internal_smallmoney(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		arg = PG_GETARG_INT64(1);
+	float8		num;
+
+	/* Dividing arg by 10000 as money datatype gets a multiple of 10000 internally*/
+	num = (float8)arg/10000;
+
+	if(num > DATEPART_SMALLMONEY_MAX_VALUE || num < DATEPART_SMALLMONEY_MIN_VALUE)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+	}
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz. 
+	 */
+	return datepart_internal(field, 0, num, true);
+}
+
+/*
+ * datepart_internal_decimal takes decimal and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_decimal(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Numeric		argument = PG_GETARG_NUMERIC(1);
+	float8		num = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(argument)));
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, num, true);
+}
+
+/*
+ * datepart_internal_float takes float and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_float(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	float8		arg = PG_GETARG_FLOAT8(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing arg in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, arg, true);
+}
+
+/*
+ * datepart_internal_real takes real value and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_real(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	float4		arg = PG_GETARG_FLOAT4(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing arg in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, arg, true);
+}
+
+/*
+ * datepart_internal_time takes timestamp and calls datepart_internal 
+ * and thorows valid errors wherever necessary
+ */
+
+Datum
+datepart_internal_time(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+
+	timestamp  = PG_GETARG_TIMESTAMP(1);
+
+	if(timestamp <= USECS_PER_DAY )		/* when only time is given and no date, we adjust the timestamp date to 1/1/1900 instead of 1/1/2000 */
+	{	
+		timestamp = timestamp - (Timestamp)(DAYS_BETWEEN_YEARS_1900_TO_2000 * USECS_PER_DAY * 1L);
+
+		if(strcasecmp(field , "quarter") == 0 || strcasecmp(field , "month") == 0 || 
+					strcasecmp(field , "day") == 0 || strcasecmp(field , "year") == 0 )
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart %s is not supported by date function datepart for data type time.", field)));
+		}
+		else if(strcasecmp(field , "dow") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart weekday is not supported by date function datepart for data type time.")));
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart dayofyear is not supported by date function datepart for data type time.")));
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart iso_week is not supported by date function datepart for data type time.")));
+		}
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart week is not supported by date function datepart for data type time.")));
+		}
+	}
+
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -308,6 +830,26 @@ Datum getutcdate(PG_FUNCTION_ARGS)
     PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),DirectFunctionCall2(timestamptz_zone,CStringGetTextDatum("UTC"),
                                                             PointerGetDatum(GetCurrentStatementStartTimestamp()))));
     
+}
+
+Datum getdate_internal(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMP(DirectFunctionCall2(timestamp_trunc,CStringGetTextDatum("millisecond"),
+						PointerGetDatum(GetCurrentStatementStartTimestamp())));
+	
+}
+
+Datum sysdatetime(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_TIMESTAMPTZ(GetCurrentStatementStartTimestamp());
+}
+
+Datum sysdatetimeoffset(PG_FUNCTION_ARGS)
+{
+	
+
+	PG_RETURN_POINTER((DirectFunctionCall1(common_utility_plugin_ptr->timestamp_datetimeoffset,
+							PointerGetDatum(GetCurrentStatementStartTimestamp()))));
 }
 
 void *
@@ -835,7 +1377,7 @@ host_os(PG_FUNCTION_ARGS)
 
 	/* filter out host info */
 	pg_version = pstrdup(PG_VERSION_STR);
-	sscanf(pg_version, "PostgreSQL %*s on %s, compiled by %*s", host_str);
+	sscanf(pg_version, "PostgreSQL %*255s on %255s, compiled by %*255s", host_str);
 
 	if (strstr(host_str, "w64") || strstr(host_str, "w32") || strstr(host_str, "mingw") || strstr(host_str, "visual studio"))
 	{
@@ -1727,6 +2269,215 @@ object_name(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
+/*
+ * type_id
+ * Returns the object ID with type name as input.
+ * Returns NULL
+ *  if input is NULL
+ *  if there is no such type
+ *  if user don't have right permission
+ *  if any error occured
+ */
+Datum
+type_id(PG_FUNCTION_ARGS)
+{
+    char       *db_name,
+               *schema_name,
+               *object_name;
+    char       *physical_schema_name;
+    char       *input;
+    char       **splitted_object_name;
+    Oid        schema_oid = InvalidOid;
+    Oid        user_id = GetUserId();
+    Oid        result = InvalidOid;
+    int        i;
+    int        len;
+
+    if (PG_ARGISNULL(0))
+        PG_RETURN_NULL();
+    input = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+    /* strip trailing whitespace from input */
+    len = pg_mbstrlen(input);
+    i = len;
+    while (i > 0 && scanner_isspace((unsigned char) input[i - 1]))
+        i--;
+    if(i < len)
+        input[i] = '\0';
+
+    /* length should be restricted to 4000 */
+    if (i > SYSVARCHAR_MAX_LENGTH)
+        ereport(ERROR,
+                (errcode(ERRCODE_STRING_DATA_LENGTH_MISMATCH),
+                 errmsg("input value is too long for object name")));
+
+    /* resolve the two part name */
+    splitted_object_name = split_object_name(input);
+    /* If three part name(db_name also included in input) then return null */
+    if(pg_mbstrlen(splitted_object_name[1]) != 0)
+    {
+        pfree(input);
+        for (int i = 0; i < 4; i++)
+            pfree(splitted_object_name[i]);
+        pfree(splitted_object_name);
+        PG_RETURN_NULL();
+    }
+    db_name = get_cur_db_name();
+    schema_name = splitted_object_name[2];
+    object_name = splitted_object_name[3];
+
+    /* downcase identifier if needed */
+    if (pltsql_case_insensitive_identifiers)
+    {
+        db_name = downcase_identifier(db_name, strlen(db_name), false, false);
+        schema_name = downcase_identifier(schema_name, strlen(schema_name), false, false);
+        object_name = downcase_identifier(object_name, strlen(object_name), false, false);
+        for (int i = 0; i < 4; i++)
+            pfree(splitted_object_name[i]);
+    }
+    else
+        pfree(splitted_object_name[0]);
+
+    pfree(input);
+    pfree(splitted_object_name);
+
+    /* truncate identifiers if needed */
+    truncate_tsql_identifier(db_name);
+    truncate_tsql_identifier(schema_name);
+    truncate_tsql_identifier(object_name);
+
+    if (!strcmp(schema_name, ""))
+    {
+        // To check if it is a system datatype, search in typecode list and it will give result oid, else if not it will return null.
+        result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
+
+        // If null result, then it is not system datatype and now search with default schema in pg_type
+        if (!OidIsValid(result))
+        {
+            /* find the default schema for current user and get physical schema name */
+            const char *user = get_user_for_database(db_name);
+            const char *guest_role_name = get_guest_role_name(db_name);
+
+            if (!user)
+            {
+                pfree(db_name);
+                pfree(schema_name);
+                pfree(object_name);
+                PG_RETURN_NULL();
+            }
+            else if ((guest_role_name && strcmp(user, guest_role_name) == 0))
+            {
+                physical_schema_name = pstrdup(get_guest_schema_name(db_name));
+            }
+            else
+            {
+                pfree(schema_name);
+                schema_name = get_authid_user_ext_schema_name((const char *) db_name, user);
+                physical_schema_name = get_physical_schema_name(db_name, schema_name);
+            }
+        }
+        else
+        {
+            pfree(db_name);
+            pfree(schema_name);
+            pfree(object_name);
+            PG_RETURN_INT32(result);
+        }
+    }
+    else
+    {
+	// If schema is 'sys' or 'pg_catalog' then search in typecode list.
+	if(!strcmp(schema_name, "sys") || !strcmp(schema_name, "pg_catalog"))
+	{
+	    result = (*common_utility_plugin_ptr->get_tsql_datatype_oid) (object_name);
+	    pfree(db_name);
+	    pfree(schema_name);
+	    pfree(object_name);
+	    if (OidIsValid(result))
+		PG_RETURN_INT32(result);
+	    else
+		PG_RETURN_NULL();
+	}
+	else
+	{
+	    physical_schema_name = get_physical_schema_name(db_name, schema_name);
+	}
+    }
+
+    /* get schema oid from physical schema name, it will return InvalidOid if user don't have lookup access */
+    if (physical_schema_name != NULL && pg_mbstrlen(physical_schema_name) != 0)
+	schema_oid = get_namespace_oid(physical_schema_name, true);
+	
+    pfree(schema_name);
+    pfree(db_name);
+    pfree(physical_schema_name);
+
+    // Check if user has permission to access schema
+    if (OidIsValid(schema_oid) && pg_namespace_aclcheck(schema_oid, user_id, ACL_USAGE) == ACLCHECK_OK)
+    {
+    	// Search in pg_type.
+	result = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(object_name), ObjectIdGetDatum(schema_oid));
+	if (OidIsValid(result) && pg_type_aclcheck(result, user_id, ACL_USAGE) == ACLCHECK_OK)
+	{
+		pfree(object_name);
+		PG_RETURN_INT32(result);
+	}
+    }
+    pfree(object_name);
+    PG_RETURN_NULL();
+}
+
+/*
+ * type_name
+ *      returns the type name with type id as input
+ * Returns NULL
+ *      if there is no such type
+ *      if user don't have right permission
+ */
+Datum
+type_name(PG_FUNCTION_ARGS)
+{
+    Datum       type_id = PG_GETARG_DATUM(0);
+    Datum       tsql_typename;
+    HeapTuple   tuple;
+    Oid         user_id = GetUserId();
+    char        *result = NULL;
+
+    LOCAL_FCINFO(fcinfo1, 1);
+
+    if (type_id < 0)
+        PG_RETURN_NULL();
+    
+    InitFunctionCallInfoData(*fcinfo1, NULL, 1, InvalidOid, NULL, NULL);
+    fcinfo1->args[0].value = type_id;
+    fcinfo1->args[0].isnull = false;
+    // Search in typecode list, it will return type name if system datatype, else will return null.
+    tsql_typename = (*common_utility_plugin_ptr->translate_pg_type_to_tsql) (fcinfo1);
+    if (tsql_typename)
+    {
+        PG_RETURN_TEXT_P(tsql_typename);
+    }
+    else
+    {   
+        // Search in pg_type catalog
+        tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_id));
+        if (HeapTupleIsValid(tuple))
+        {
+            if (pg_type_aclcheck(type_id, user_id, ACL_USAGE) == ACLCHECK_OK)
+            {
+                Form_pg_type pg_type = (Form_pg_type) GETSTRUCT(tuple);
+                result = NameStr(pg_type->typname);
+            }
+            ReleaseSysCache(tuple);
+        }
+        if (result)
+        {
+            PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(result));
+        }
+    }
+    PG_RETURN_NULL();
+}
+
 Datum
 has_dbaccess(PG_FUNCTION_ARGS)
 {
@@ -2025,34 +2776,25 @@ bbf_set_context_info(PG_FUNCTION_ARGS)
 	PG_RETURN_VOID();
 }
 
-/**
- * Common function to get next value of sequence for Identity function in Select Into
- */
-static int64 
-get_identity_next_value(void)
-{
-	int64 result;
-	Assert(tsql_select_into_seq_oid != InvalidOid);
-	result = nextval_internal(tsql_select_into_seq_oid, false);
-	return result;
-}
-
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum 
 identity_into_smallint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT16((int16)get_identity_next_value());
+	PG_RETURN_INT16(0);
 }
 
+/** Added in 3_3_0, Deprecated in 3_4_0*/
 Datum
 identity_into_int(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32((int32)get_identity_next_value());
+	PG_RETURN_INT32(0);
 }
 
+/** This function is only used for identifying IDENTITY() in SELECT-INTO statement, It is never actually invoked*/
 Datum 
 identity_into_bigint(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT64((int64)get_identity_next_value());
+	PG_RETURN_INT64(0);
 }
 
 /*
@@ -2262,6 +3004,56 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+Datum
+numeric_log_natural(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+	Numeric		arg1_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	result_numeric = DatumGetNumeric(DirectFunctionCall1(numeric_ln, NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+numeric_log_base(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	float8		result;
+	Numeric		arg1_numeric,
+				arg2_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	arg2_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg2));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_log, NumericGetDatum(arg2_numeric), NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+numeric_log10(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+	Numeric		arg1_numeric,
+				arg2_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	arg2_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, 10));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_log, NumericGetDatum(arg2_numeric), NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
 }
 
 /* 
@@ -3434,4 +4226,465 @@ objectproperty_internal(PG_FUNCTION_ARGS)
 		pfree(property);
 
 	PG_RETURN_NULL();
+}
+
+/*
+* We transformed tsql pivot stmt to 3 parsetree. The outer parsetree is a wrapper stmt
+* while the other two are helper stmts. Since postgres does not natively support execute
+* raw parsetree, and we can only get raw parsetree after the analyzer, we created this 
+* SPI function to help execute raw parsetree.
+*/
+int 
+SPI_execute_raw_parsetree(RawStmt *parsetree, const char * sourcetext, bool read_only, long tcount)
+{
+	_SPI_plan			plan;
+	int					ret = 0;
+	List				*plancache_list;
+	CachedPlanSource	*plansource;
+	int					prev_sql_dialect;
+
+	if (parsetree == NULL || tcount < 0)
+		return SPI_ERROR_ARGUMENT;
+	
+	/*
+	 * set sql_dialect to tsql, which is needed for raw parsetree parsing 
+	 * and processing
+	 */
+	prev_sql_dialect = sql_dialect;
+	sql_dialect = SQL_DIALECT_TSQL;
+	
+	memset(&plan, 0, sizeof(_SPI_plan));
+	plan.magic = _SPI_PLAN_MAGIC;
+	plan.parse_mode = RAW_PARSE_DEFAULT;
+	plan.cursor_options = CURSOR_OPT_PARALLEL_OK;
+
+	/*
+	 * Construct plancache entries, but don't do parse analysis yet.
+	 */
+	plancache_list = NIL;
+
+	/*
+	 * there are some parsetree node copied from the orginial parsetree,
+	 * and the node's location is fixed with the sourcetext. So we are 
+	 * passing the orginal sourcetext to the following function to prevent
+	 * analyzing error.
+	 */
+	plansource = CreateOneShotCachedPlan(parsetree,
+										sourcetext,
+										CreateCommandTag(parsetree->stmt));
+
+	plancache_list = lappend(plancache_list, plansource);
+	plan.plancache_list = plancache_list;
+	plan.oneshot = true;
+	PG_TRY();
+	{
+		ret = SPI_execute_plan_with_paramlist(&plan, NULL, read_only, tcount);
+	}
+	PG_FINALLY();
+	{
+		/* reset sql_dialect */
+		sql_dialect = prev_sql_dialect;
+	}
+	PG_END_TRY();
+
+	return ret;
+}
+
+PG_FUNCTION_INFO_V1(bbf_pivot);
+Datum
+bbf_pivot(PG_FUNCTION_ARGS)
+{	
+	ReturnSetInfo   *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc		tupdesc;
+	MemoryContext 	per_query_ctx;
+	MemoryContext 	oldcontext;
+	HTAB	   	   	*bbf_pivot_hash;
+	MemoryContext 		tsql_outmost_context;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	RawStmt	   			*bbf_pivot_src_sql;
+	RawStmt	   			*bbf_pivot_cat_sql;
+	int					nestlevel;
+	tsql_pivot_fields	*per_pivot_fields;
+	char				*query_string;
+	char				*funcName;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize) ||
+		rsinfo->expectedDesc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* 
+	* Previously we saved two raw parsetrees in tsql outermost context
+	* here we are retrieve those raw parsetree for pivot execution
+	*/
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	
+	if (!tsql_outmost_context)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot outer context not found")));
+	
+	Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
+
+	per_pivot_fields = (tsql_pivot_fields *) list_nth(tsql_outmost_estat->pivot_parsetree_list, 0);
+	bbf_pivot_src_sql = per_pivot_fields->s_sql;
+	bbf_pivot_cat_sql = per_pivot_fields->c_sql;
+	query_string = per_pivot_fields->sourcetext;
+	funcName = per_pivot_fields->funcName;
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/* get the requested return tuple description */
+	tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+
+	/*
+	 * Check to make sure we have a reasonable tuple descriptor
+	 *
+	 * Note we will attempt to coerce the values into whatever the return
+	 * attribute type is and depend on the "in" function to complain if
+	 * needed.
+	 */
+	if (tupdesc->natts < 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query-specified return tuple and " \
+						"bbf_pivot function are not compatible")));
+
+	/* load up the categories hash table */
+	bbf_pivot_hash = load_categories_hash(bbf_pivot_cat_sql, query_string, per_query_ctx);
+
+	/* let the caller know we're sending back a tuplestore */
+	rsinfo->returnMode = SFRM_Materialize;
+
+	/* now go build it */
+	rsinfo->setResult = get_bbf_pivot_tuplestore(bbf_pivot_src_sql,
+												query_string,
+												funcName,
+												bbf_pivot_hash,
+												tupdesc,
+												rsinfo->allowedModes & SFRM_Materialize_Random);
+
+	/*
+	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual
+	 * tuples are in our tuplestore and passed back through rsinfo->setResult.
+	 * rsinfo->setDesc is set to the tuple description that we actually used
+	 * to build our tuples with, so the caller can verify we did what it was
+	 * expecting.
+	 */
+	rsinfo->setDesc = tupdesc;
+
+	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
+	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, 0);
+	tsql_outmost_estat->pivot_number--;
+	MemoryContextSwitchTo(oldcontext);
+	return (Datum) 0;
+}
+
+/*
+ * load up the categories hash table
+ */
+static HTAB *
+load_categories_hash(RawStmt *cats_sql, const char * sourcetext, MemoryContext per_query_ctx)
+{
+	HTAB	   *bbf_pivot_hash;
+	HASHCTL		ctl;
+	int			ret;
+	uint64		tuple_processed;
+	MemoryContext oldcontext;
+
+	/* initialize the category hash table */
+	ctl.keysize = MAX_CATNAME_LEN;
+	ctl.entrysize = sizeof(bbf_pivot_HashEnt);
+	ctl.hcxt = per_query_ctx;
+
+	/*
+	 * use INIT_CATS, defined above as a guess of how many hash table entries
+	 * to create, initially
+	 */
+	bbf_pivot_hash = hash_create("bbf_pivot hash",
+								INIT_CATS,
+								&ctl,
+								HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
+
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		/* internal error */
+		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
+
+	/* Retrieve the category name rows */
+	ret = SPI_execute_raw_parsetree(cats_sql, sourcetext, true, 0);
+	tuple_processed = SPI_processed;
+
+	/* Check for qualifying tuples */
+	if ((ret == SPI_OK_SELECT) && (tuple_processed > 0))
+	{
+		SPITupleTable *spi_tuptable = SPI_tuptable;
+		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
+		uint64		i;
+
+		/*
+		 * The provided categories SQL query must always return one column:
+		 * category - the label or identifier for each column
+		 */
+		if (spi_tupdesc->natts != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("provided \"categories\" SQL must " \
+							"return 1 column of at least one row")));
+
+		Assert(spi_tuptable->numvals >= tuple_processed);
+		for (i = 0; i < tuple_processed; i++)
+		{
+			bbf_pivot_cat_desc *catdesc;
+			char	   *catname;
+			char	   *catname_lower;
+			HeapTuple	spi_tuple;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			/* get the category from the current sql result tuple */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			catname_lower = downcase_identifier(catname, strlen(catname), false, false);
+			if (catname_lower == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("provided \"categories\" SQL must " \
+								"not return NULL values")));
+
+			oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+			catdesc = (bbf_pivot_cat_desc *) palloc(sizeof(bbf_pivot_cat_desc));
+			catdesc->catname = pstrdup(catname_lower);
+			catdesc->attidx = i;
+			/* Add the tuple description block to the hashtable */
+			bbf_pivot_HashTableInsert(bbf_pivot_hash, catdesc);
+
+			MemoryContextSwitchTo(oldcontext);
+		}
+	}
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
+		elog(ERROR, "load_categories_hash: SPI_finish() failed");
+
+	return bbf_pivot_hash;
+}
+
+
+
+/*
+ * create and populate the bbf_pivot tuplestore
+ */
+static Tuplestorestate *
+get_bbf_pivot_tuplestore(RawStmt 	*sql,
+						const char 	*sourcetext,
+						const char	*funcName,
+						HTAB 		*bbf_pivot_hash,
+						TupleDesc 	tupdesc,
+						bool 		randomAccess)
+{
+	Tuplestorestate *tupstore;
+	int			num_categories = hash_get_num_entries(bbf_pivot_hash);
+	AttInMetadata *attinmeta = TupleDescGetAttInMetadata(tupdesc);
+	char	  **values;
+	HeapTuple	tuple;
+	int			ret;
+	uint64		tuple_processed;
+
+	/* initialize our tuplestore (while still in query context!) */
+	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
+
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		/* internal error */
+		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_connect returned %d", ret);
+
+	/* Now retrieve the bbf_pivot source rows */
+	ret = SPI_execute_raw_parsetree(sql, sourcetext, true, 0);
+	tuple_processed = SPI_processed;
+
+	/* Check for qualifying tuples */
+	if ((ret == SPI_OK_SELECT) && (tuple_processed > 0))
+	{
+		SPITupleTable *spi_tuptable = SPI_tuptable;
+		TupleDesc	spi_tupdesc = spi_tuptable->tupdesc;
+		int			ncols = spi_tupdesc->natts;
+		char	   **columngroup;
+		char	   **lastcolumngroup = NULL;
+		bool		firstpass = true;
+		uint64		i;
+		int			j;
+		int			non_pivot_columns;
+		int			result_ncols;
+		/* 
+		 * only COUNT will output 0 when no row is selected
+		 * https://www.postgresql.org/docs/12/functions-aggregate.html 
+		 */
+		bool		output_zero = !strcasecmp(funcName, "count");
+
+		if (num_categories == 0)
+		{
+			/* no qualifying category tuples */
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("provided \"categories\" SQL must " \
+							"return 1 column of at least one row")));
+		}
+
+		if (ncols < 2)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid source data SQL statement"),
+					 errdetail("The provided SQL must return 2 " \
+							   " columns; category, and values.")));
+
+		Assert(spi_tuptable->numvals >= tuple_processed);
+		/* 
+		* The last 2 columns of the results are category column and value column
+		* that will be used for later pivot operation. The remaining columns are 
+		* non_pivot columns;
+		*/
+		non_pivot_columns = ncols - 2;
+		result_ncols = non_pivot_columns + num_categories;
+
+		/* Recheck to make sure we tuple descriptor still looks reasonable */
+		if (tupdesc->natts != result_ncols)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("invalid return type"),
+					 errdetail("Query-specified return " \
+							   "tuple has %d columns but bbf_pivot " \
+							   "returns %d.", tupdesc->natts, result_ncols)));
+
+		/* allocate space and make sure it's clear */
+		values = (char **) palloc0(result_ncols * sizeof(char *));
+		columngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
+		lastcolumngroup = (char **) palloc0(non_pivot_columns * sizeof(char *));
+
+		for (i = 0; i < tuple_processed; i++)
+		{
+			HeapTuple	spi_tuple;
+			bbf_pivot_cat_desc *catdesc;
+			char	   *catname;
+			char	   *catname_lower;
+			bool 	   	is_new_row = false;
+
+			/* get the next sql result tuple */
+			spi_tuple = spi_tuptable->vals[i];
+
+			if (ncols > 2)
+			{
+				/* get the non-pivot column group from the current sql result tuple */
+				for (j = 0; j < non_pivot_columns; j++)
+				{	
+					columngroup[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j+1);
+				}
+
+				/*
+				* if we're on a new output row, grab the column values up to
+				* column N-2 now
+				*/
+
+				if (!firstpass)
+				{
+					for (j = 0; j < non_pivot_columns; j++)
+					{	
+						if (!xstreq(columngroup[j], lastcolumngroup[j]))
+						{
+							is_new_row = true;
+							break;
+						}
+					}
+				}
+
+				if (firstpass || is_new_row)
+				{
+					/*
+					* a new row means we need to flush the old one first, unless
+					* we're on the very first row
+					*/
+					if (!firstpass)
+					{
+						/* only COUNT will output 0 when no row is selected */
+						if (output_zero)
+						{
+							for (j = 0; j < result_ncols; j++)
+							{
+								if (values[j] == NULL)
+									values[j] = pstrdup("0");
+							}
+						}
+
+						/* rowid changed, flush the previous output row */
+						tuple = BuildTupleFromCStrings(attinmeta, values);
+
+						tuplestore_puttuple(tupstore, tuple);
+
+						for (j = 0; j < result_ncols; j++)
+							xpfree(values[j]);
+					}
+
+					for (j = 0; j < non_pivot_columns; j++)
+						values[j] = SPI_getvalue(spi_tuple, spi_tupdesc, j + 1);
+
+					/* we're no longer on the first pass */
+					firstpass = false;
+				}
+			}
+
+			/*
+			 * look up the category and fill in the appropriate column
+			 * Column names get from SPI result can be in mixed case but we only use
+			 * lowered cases column names for new pivot table, and so we need to lower 
+			 * the column names obtained from SPI results to get the tuple index from 
+			 * the hash table
+			 */
+			catname = SPI_getvalue(spi_tuple, spi_tupdesc, ncols - 1);
+			catname_lower = downcase_identifier(catname, strlen(catname), false, false);
+			if (catname_lower != NULL)
+			{
+				bbf_pivot_HashTableLookup(bbf_pivot_hash, catname_lower, catdesc);
+
+				if (catdesc)
+					values[catdesc->attidx + non_pivot_columns] =
+						SPI_getvalue(spi_tuple, spi_tupdesc, ncols);
+			}
+
+			if (ncols > 2)
+			{
+				for (j = 0; j < non_pivot_columns; j++)
+				{	
+					xpfree(lastcolumngroup[j]);
+					xpstrdup(lastcolumngroup[j], columngroup[j]);
+				}
+			}
+		}
+
+		/* flush the last output row */
+		if (output_zero)
+		{
+			for (i = 0; i < result_ncols; i++)
+			{
+				if (values[i] == NULL)
+					values[i] = pstrdup("0");
+			}
+		}
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+		tuplestore_puttuple(tupstore, tuple);
+	}
+
+	if (SPI_finish() != SPI_OK_FINISH)
+		/* internal error */
+		elog(ERROR, "get_bbf_pivot_tuplestore: SPI_finish() failed");
+
+	return tupstore;
 }

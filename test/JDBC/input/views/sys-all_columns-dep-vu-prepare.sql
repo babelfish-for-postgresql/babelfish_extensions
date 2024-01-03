@@ -11,7 +11,7 @@ CREATE PROCEDURE sys_all_columns_dep_vu_prepare_proc1
 AS
     SELECT name, is_nullable, column_id 
     FROM sys.all_columns 
-    WHERE name in ('sac_int_col1', 'sac_text_col_not_null1');
+    WHERE name in ('sac_int_col1', 'sac_text_col_not_null1') ORDER BY name;
 GO
 
 CREATE FUNCTION sys_all_columns_dep_vu_prepare_func1() 
@@ -25,5 +25,5 @@ CREATE VIEW sys_all_columns_dep_vu_prepare_view1
 AS
     SELECT name, max_length, precision
     FROM sys.all_columns
-    WHERE name in ('sac_int_col1', 'sac_text_col_not_null1');
+    WHERE name in ('sac_int_col1', 'sac_text_col_not_null1') ORDER BY name;
 GO

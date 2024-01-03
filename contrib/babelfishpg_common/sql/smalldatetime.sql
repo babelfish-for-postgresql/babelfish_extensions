@@ -152,6 +152,7 @@ CREATE OR REPLACE AGGREGATE sys.max(sys.SMALLDATETIME)
     sfunc = sys.smalldatetime_larger,
     stype = sys.smalldatetime,
     combinefunc = sys.smalldatetime_larger,
+    sortop = >,
     parallel = safe
 );
 
@@ -160,6 +161,7 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
     sfunc = sys.smalldatetime_smaller,
     stype = sys.smalldatetime,
     combinefunc = sys.smalldatetime_smaller,
+    sortop = <,
     parallel = safe
 );
 
@@ -728,3 +730,38 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (FIXEDDECIMAL AS sys.SMALLDATETIME)
 WITH FUNCTION sys.money2smalldatetime (FIXEDDECIMAL) AS IMPLICIT;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_bit(IN arg sys.SMALLDATETIME)
+RETURNS SYS.BIT
+AS 'babelfishpg_common', 'smalldatetime_to_bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int2(IN arg sys.SMALLDATETIME)
+RETURNS INT2
+AS 'babelfishpg_common', 'smalldatetime_to_int2'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int4(IN arg sys.SMALLDATETIME)
+RETURNS INT4
+AS 'babelfishpg_common', 'smalldatetime_to_int4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_int8(IN arg sys.SMALLDATETIME)
+RETURNS INT8
+AS 'babelfishpg_common', 'smalldatetime_to_int8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float4(IN arg sys.SMALLDATETIME)
+RETURNS float4
+AS 'babelfishpg_common', 'smalldatetime_to_float4'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_float8(IN arg sys.SMALLDATETIME)
+RETURNS float8
+AS 'babelfishpg_common', 'smalldatetime_to_float8'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_to_numeric(IN arg sys.SMALLDATETIME)
+RETURNS NUMERIC
+AS 'babelfishpg_common', 'smalldatetime_to_numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

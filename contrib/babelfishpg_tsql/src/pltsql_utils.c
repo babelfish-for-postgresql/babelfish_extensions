@@ -34,18 +34,26 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
-												 * sys.varchar / sys.nvarchar */
+bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
+
 
 bool
 pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryString, ProcessUtilityContext context, 
                           ParamListInfo params);
 
 extern bool restore_tsql_tabletype;
+extern char *get_cur_db_name(void);
+extern char *construct_unique_index_name(char *index_name, char *relation_name); 
+extern char *get_physical_schema_name(char *db_name, const char *schema_name);
+extern const char *get_dbo_schema_name(const char *dbname);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
+static Oid sysadmin_oid = InvalidOid;
 
 /*
  * Following the rule for locktag fields of advisory locks:
@@ -431,7 +439,8 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("Incorrect syntax near the keyword '%s'.", typname)));
 			}
-			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0))
+			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0 || 
+											strcmp(typname, "varbinary") == 0 || strcmp(typname, "binary") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -1012,7 +1021,7 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 }
 
 void
-update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv)
+update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee)
 {
 	GrantStmt  *stmt = (GrantStmt *) n;
 
@@ -1033,39 +1042,6 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
 
 		tmp->rolename = pstrdup(grantee);
-	}
-
-	if (priv && stmt->privileges)
-	{
-		AccessPriv *tmp = (AccessPriv *) llast(stmt->privileges);
-
-		tmp->priv_name = pstrdup(priv);
-	}
-}
-
-void
-update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
-{
-	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
-
-	ListCell *lc;
-
-	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
-
-	if (grantee && priv && stmt->action)
-	{
-		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
-	}
-
-	foreach(lc, stmt->options)
-	{
-		if (object)
-		{
-			DefElem *tmp = (DefElem *) lfirst(lc);
-			tmp->defname = pstrdup("schemas");
-			tmp->arg = (Node *)list_make1(makeString((char *)object));
-		}
 	}
 }
 
@@ -1093,13 +1069,37 @@ update_ViewStmt(Node *n, const char *view_schema)
 		stmt->view->schemaname = pstrdup(view_schema);
 }
 
+/* sys.char, sys.varchar */
 bool
-is_tsql_any_char_datatype(Oid oid)
+is_tsql_varchar_or_char_datatype(Oid oid)
 {
 	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid);
+}
+
+/* sys.nchar, sys.nvarchar */
+bool
+is_tsql_nchar_or_nvarchar_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
+}
+
+/* sys.binary, sys.varbinary */
+bool 
+is_tsql_binary_or_varbinary_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
+}
+
+/* varchar(max), nvarchar(max), varbinary(max) */
+bool
+is_tsql_datatype_with_max_scale_expr_allowed(Oid oid)
+{
+	return	(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
 }
 
 bool
@@ -1718,67 +1718,263 @@ Oid get_sys_varcharoid(void)
 	return sys_varcharoid;
 }
 
-List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
+Oid get_sysadmin_oid(void)
+{
+	if (!OidIsValid(sysadmin_oid))
+		sysadmin_oid = get_role_oid("sysadmin", true);
+	
+	return sysadmin_oid;
+}
+
+/*
+ *	Generates the schema name for fulltext index statements
+ *	depending on whether it's master schema or not
+ */
+const char *
+gen_schema_name_for_fulltext_index(const char *schema_name)
+{
+	char *dbname = get_cur_db_name();
+	if (strlen(schema_name) == 0)
+		return get_dbo_schema_name(dbname);
+	else
+		return get_physical_schema_name(dbname, schema_name);
+}
+
+/*
+ * check_fulltext_exist
+ * Check if the fulltext index exist for the given table and schema 
+ * during execution of CONTAINS() statement
+ */
+bool
+check_fulltext_exist(const char *schema_name, const char *table_name)
+{
+	const char	*gen_schema_name = gen_schema_name_for_fulltext_index((char *)schema_name);
+	char		*ft_index_name;
+	Oid			schemaOid;
+	Oid			relid;
+
+	schemaOid = LookupExplicitNamespace(gen_schema_name, true);
+
+	// Check if schema exists
+	if (!OidIsValid(schemaOid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				errmsg("schema \"%s\" does not exist",
+					schema_name)));	
+
+	relid = get_relname_relid((const char *) table_name, schemaOid);
+
+
+	// Check if table exists
+	if (!OidIsValid(relid))
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+				errmsg("relation \"%s\" does not exist",
+					table_name)));
+	
+	ft_index_name = get_fulltext_index_name(relid, table_name);
+	return ft_index_name != NULL;
+}
+
+/*
+ * get_fulltext_index_name
+ * Get the fulltext index name of a relation specified by OID
+ */
+char
+*get_fulltext_index_name(Oid relid, const char *table_name)
+{
+    Relation        relation = RelationIdGetRelation(relid);
+    List            *indexoidlist = RelationGetIndexList(relation);
+	ListCell		*cell;
+    char            *ft_index_name = NULL;
+	char			*table_name_cpy = palloc(strlen(table_name) + 1);
+    char            *temp_ft_index_name;
+
+	strcpy(table_name_cpy, table_name);
+	temp_ft_index_name = construct_unique_index_name("ft_index", table_name_cpy);
+    foreach(cell, indexoidlist)
+    {
+        Oid indexOid = lfirst_oid(cell);
+        ft_index_name = get_rel_name(indexOid);
+
+        if (strcmp(ft_index_name, temp_ft_index_name) == 0)
+            break;
+
+        ft_index_name = NULL;
+    }
+
+    RelationClose(relation);
+    list_free(indexoidlist);
+	pfree(table_name_cpy);
+    return ft_index_name;
+}
+
+/*
+ * is_unique_index
+ * Check if given index is unique index of a relation specified by OID
+ */
+bool
+is_unique_index(Oid relid, const char *index_name)
+{
+    Relation        relation = RelationIdGetRelation(relid);
+    List            *indexoidlist = RelationGetIndexList(relation);
+	ListCell		*cell;
+    bool            is_unique = false;
+	int				unique_key_count = 0;
+
+    foreach(cell, indexoidlist)
+    {
+        Oid indexOid = lfirst_oid(cell);
+        char *name = get_rel_name(indexOid);
+
+        if (strcmp(name, index_name) == 0)
+        {
+            HeapTuple       indexTuple = SearchSysCache1(INDEXRELID, ObjectIdGetDatum(indexOid));
+            Form_pg_index   indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+			/* Check if the key column is unique and is of single-key */
+            if (indexForm->indisunique && indexForm->indrelid == relid && indexForm->indnkeyatts == 1)
+            {
+				/* Check if the key column is non-nullable */
+                for (int i = 0; i < indexForm->indnatts; i++)
+                {
+					AttrNumber attnum = indexForm->indkey.values[i];
+                    if (attnum != 0)
+                    {
+                        HeapTuple attTuple = SearchSysCache2(ATTNUM,
+												ObjectIdGetDatum(relid),
+                                                Int16GetDatum(attnum));
+						if(HeapTupleIsValid(attTuple))
+						{
+							Form_pg_attribute attForm = (Form_pg_attribute) GETSTRUCT(attTuple);
+
+							if (attForm->attnotnull)
+							{
+								unique_key_count++;
+								if (unique_key_count > 1)
+								{
+									ReleaseSysCache(attTuple);
+									break;
+								}
+							}
+						}
+                        ReleaseSysCache(attTuple);
+                    }
+                }
+
+                if (unique_key_count == 1)
+					is_unique = true;
+			}
+
+            ReleaseSysCache(indexTuple);
+            break;
+        }
+    }
+
+    RelationClose(relation);
+    list_free(indexoidlist);
+    return is_unique;
+}
+
+char
+*gen_createfulltextindex_cmds(const char *table_name, const char *schema_name, const List *column_name, const char *index_name)
 {
 	StringInfoData query;
-	List	   *stmt_list;
-	Node	   *stmt;
-	int			expected_stmts = 2;
-	int			i = 0;
+
 	initStringInfo(&query);
-	if (is_grant)
-	{
-		if (strcmp(privilege, "execute") == 0)
-		{
-			if (with_grant_option)
-			{
-				appendStringInfo(&query, "GRANT dummy ON ALL FUNCTIONS IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
-				appendStringInfo(&query, "GRANT dummy ON ALL PROCEDURES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
-			}
-			else
-			{
-				appendStringInfo(&query, "GRANT dummy ON ALL FUNCTIONS IN SCHEMA dummy TO dummy; ");
-				appendStringInfo(&query, "GRANT dummy ON ALL PROCEDURES IN SCHEMA dummy TO dummy; ");
-			}
-		}
-		else
-		{
-			if (with_grant_option)
-				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
-			else
-				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
-		}
-	}
+
+	/*
+	 * We prepare the following query to create a fulltext index.
+	 *
+	 * CREATE INDEX <index_name> ON <table_name> 
+	 * USING gin(to_tsvector('fts_contains_simple', <column_name>));
+	 *
+	 */
+	appendStringInfo(&query, "CREATE INDEX \"%s\" ON ", index_name);
+	if (schema_name == NULL || strlen(schema_name) == 0 || *schema_name == '\0')
+		appendStringInfo(&query, "\"%s\"", table_name);
 	else
+		appendStringInfo(&query, "\"%s\".\"%s\"", schema_name, table_name);
+
+	appendStringInfo(&query, "USING GIN(");
+	for (int i = 0; i < list_length(column_name); i++)
 	{
-		if (strcmp(privilege, "execute") == 0)
-		{
-			appendStringInfo(&query, "REVOKE dummy ON ALL FUNCTIONS IN SCHEMA dummy FROM dummy; ");
-			appendStringInfo(&query, "REVOKE dummy ON ALL PROCEDURES IN SCHEMA dummy FROM dummy; ");
-		}
-		else
-		{
-			appendStringInfo(&query, "REVOKE dummy ON ALL TABLES IN SCHEMA dummy FROM dummy; ");
-			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
-		}
+		char *col_name = (char *) list_nth(column_name, i);
+		// Add column name
+		appendStringInfo(&query, "to_tsvector('fts_contains_simple', \"%s\")", col_name);
+		if (i != list_length(column_name) - 1)
+			appendStringInfo(&query, ", ");
 	}
-	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
-	if (list_length(stmt_list) != expected_stmts)
+	appendStringInfo(&query, ")");
+
+	return query.data;
+}
+
+char
+*gen_dropfulltextindex_cmds(const char *index_name, const char *schema_name) 
+{
+	StringInfoData query;
+	initStringInfo(&query);
+	/*
+	 * We prepare the following query to drop a fulltext index.
+	 *
+	 * DROP INDEX <index_name>
+	 *
+	 */
+	appendStringInfo(&query, "DROP INDEX ");
+
+	if (schema_name == NULL || strlen(schema_name) == 0 || *schema_name == '\0')
+		appendStringInfo(&query, "\"%s\"", index_name);
+	else
+		appendStringInfo(&query, "\"%s\".\"%s\"", schema_name, index_name);
+	return query.data;
+}
+
+/*
+ * Helper function to execute ALTER ROLE command using
+ * ProcessUtility(). Caller should make sure their
+ * inputs are sanitized to prevent unexpected behaviour.
+ */
+void
+exec_alter_role_cmd(char *query_str, RoleSpec *role)
+{
+	List	   *parsetree_list;
+	Node	   *stmt;
+	PlannedStmt *wrapper;
+
+	parsetree_list = raw_parser(query_str, RAW_PARSE_DEFAULT);
+
+	if (list_length(parsetree_list) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected %d statements, but got %d statements after parsing",
-						expected_stmts, list_length(stmt_list))));
-	/* Replace dummy elements in parsetree with real values */
-	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantStmt(stmt, schema, NULL, rolname, privilege);
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(parsetree_list))));
 
-	stmt = parsetree_nth_stmt(stmt_list, i++);
-	if (strcmp(privilege, "execute") == 0)
-		update_GrantStmt(stmt, schema, NULL, rolname, privilege);
-	else
-		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege);
+	/* Update the dummy statement with real values */
+	stmt = parsetree_nth_stmt(parsetree_list, 0);
 
-	return stmt_list;
+	/* Update dummy statement with real values */
+	update_AlterRoleStmt(stmt, role);
+
+	/* Run the built query */
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = strlen(query_str);
+
+	/* do this step */
+	ProcessUtility(wrapper,
+				   query_str,
+				   false,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* make sure later steps can see the object created here */
+	CommandCounterIncrement();
 }

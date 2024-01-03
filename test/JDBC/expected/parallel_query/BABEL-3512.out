@@ -1,0 +1,929 @@
+
+/*
+ * Test stored procs WITH hints. All tests examine the query plan AND the 
+ * pg_proc table to ensure that subsequent connections will be using the correct
+ * query.
+*/
+DROP TABLE IF EXISTS babel_3512_t1
+GO
+
+DROP TABLE IF EXISTS babel_3512_t2
+GO
+
+DROP TABLE IF EXISTS babel_3512_t3
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_2
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_3
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_4
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_5
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_6
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_7
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_8
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_9
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_10
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_2
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_1
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_2
+GO
+
+CREATE TABLE babel_3512_t1(a1 int PRIMARY KEY, b1 int, c1 int)
+GO
+
+CREATE INDEX index_babel_3512_t1_b1 ON babel_3512_t1(b1)
+GO
+
+CREATE INDEX index_babel_3512_t1_c1 ON babel_3512_t1(c1)
+GO
+
+CREATE TABLE babel_3512_t2(a2 int PRIMARY KEY, b2 int, c2 int)
+GO
+
+CREATE TABLE babel_3512_t3(a3 int PRIMARY KEY, b3 int, c3 int)
+GO
+
+CREATE INDEX index_babel_3512_t2_b2 ON babel_3512_t2(b2)
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+
+-- Test one line stored procs WITH join hints
+CREATE PROCEDURE babel_3512_proc_1 AS SELECT babel_3512_t1.a1 FROM babel_3512_t1 inner hash join babel_3512_t2 ON a1 = b2
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_1';
+GO
+~~START~~
+text
+SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ babel_3512_t1.a1 FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_1
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_1
+  Query Text: SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ babel_3512_t1.a1 FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
+  ->  Gather
+        Workers Planned: 3
+        ->  Parallel Hash Join
+              Hash Cond: (babel_3512_t2.b2 = babel_3512_t1.a1)
+              ->  Parallel Seq Scan on babel_3512_t2
+              ->  Parallel Hash
+                    ->  Parallel Seq Scan on babel_3512_t1
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test multi line stored procs WITH join hints
+CREATE PROCEDURE babel_3512_proc_2 AS
+SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON a1 = b2
+SELECT * FROM babel_3512_t2 inner loop join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_2';
+GO
+~~START~~
+text
+SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2<newline>SELECT/*+ nestloop(babel_3512_t2 babel_3512_t1) leading(babel_3512_t2 babel_3512_t1)*/ * FROM babel_3512_t2 inner      join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_2
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_2
+  Query Text: SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON a1 = b2
+  ->  Gather
+        Workers Planned: 3
+        ->  Parallel Hash Join
+              Hash Cond: (babel_3512_t2.b2 = babel_3512_t1.a1)
+              ->  Parallel Seq Scan on babel_3512_t2
+              ->  Parallel Hash
+                    ->  Parallel Seq Scan on babel_3512_t1
+  Query Text: SELECT/*+ nestloop(babel_3512_t2 babel_3512_t1) leading(babel_3512_t2 babel_3512_t1)*/ * FROM babel_3512_t2 inner      join babel_3512_t1 ON babel_3512_t1.c1 = babel_3512_t2.c2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t2
+              ->  Index Scan using index_babel_3512_t1_c1babel_35191aab574110138d8b9ec599810282a81 on babel_3512_t1
+                    Index Cond: (c1 = babel_3512_t2.c2)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test one line stored procs WITH index hints
+CREATE PROCEDURE babel_3512_proc_3 AS
+SELECT * FROM babel_3512_t1 (index(index_babel_3512_t1_b1)) WHERE b1 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_3';
+GO
+~~START~~
+text
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_3
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_3
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+              Index Cond: (b1 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test multple line stored procs WITH index hints
+CREATE PROCEDURE babel_3512_proc_4 AS
+SELECT * FROM babel_3512_t1 (index(index_babel_3512_t1_b1)) WHERE b1 = 1
+SELECT * FROM babel_3512_t1 WITH(index(index_babel_3512_t1_b1)) WHERE b1 = 1
+SELECT * FROM babel_3512_t1 WHERE b1 = 3 OPTION(table hint(babel_3512_t1, index(index_babel_3512_t1_b1)))
+SELECT * FROM babel_3512_t1 WITH(index=index_babel_3512_t1_b1) WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2 WITH(index=index_babel_3512_t2_b2) WHERE b2 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_4';
+GO
+~~START~~
+text
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                     WHERE b1 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1 WHERE b1 = 3                                                                 <newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_4
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_4
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                 WHERE b1 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+              Index Cond: (b1 = 1)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1                                     WHERE b1 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+              Index Cond: (b1 = 1)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ * FROM babel_3512_t1 WHERE b1 = 3
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+              Index Cond: (b1 = 3)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1                                    WHERE b1 = 1 UNION SELECT * FROM babel_3512_t2                                    WHERE b2 = 1
+  ->  HashAggregate
+        Group Key: babel_3512_t1.a1, babel_3512_t1.b1, babel_3512_t1.c1
+        ->  Gather
+              Workers Planned: 2
+              ->  Parallel Append
+                    ->  Parallel Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                          Index Cond: (b1 = 1)
+                    ->  Parallel Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test CTE Queries single line
+CREATE PROCEDURE babel_3512_proc_5 AS
+WITH babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1 WITH(index=index_babel_3512_t1_b1) WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_5';
+GO
+~~START~~
+text
+WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_5
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_5
+  Query Text: WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+              Index Cond: (b1 = 1)
+              Filter: (c1 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test CTE Queries multi-line
+CREATE PROCEDURE babel_3512_proc_6 AS
+WITH babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1 WITH(index=index_babel_3512_t1_b1) WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+WITH babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2 WITH(index=index_babel_3512_t2_b1) WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_6';
+GO
+~~START~~
+text
+WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1<newline>WITH/*+ indexscan(babel_3512_t2 index_babel_3512_t2_b1babel_351ed65eb34ef55dec01b20e7fff9c5ca06) */ babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2                                    WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+-- the purpose of babel_3512_t2_cte is to check the behavior for invalid hint 
+EXEC babel_3512_proc_6
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_6
+  Query Text: WITH/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) */ babel_3512_t1_cte (a1, b1, c1) as (SELECT * FROM babel_3512_t1                                    WHERE b1 = 1) SELECT * FROM babel_3512_t1_cte WHERE c1 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+              Index Cond: (b1 = 1)
+              Filter: (c1 = 1)
+  Query Text: WITH/*+ indexscan(babel_3512_t2 index_babel_3512_t2_b1babel_351ed65eb34ef55dec01b20e7fff9c5ca06) */ babel_3512_t2_cte (a1, b2, c2) as (SELECT * FROM babel_3512_t2                                    WHERE b2 = 1) SELECT * FROM babel_3512_t2_cte WHERE c2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Bitmap Heap Scan on babel_3512_t2
+              Recheck Cond: (b2 = 1)
+              Filter: (c2 = 1)
+              ->  Bitmap Index Scan on index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test table hints single line
+CREATE PROCEDURE babel_3512_proc_7 AS
+SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1 OPTION(table hint(babel_3512_t1, index(index_babel_3512_t1_b1)), table hint(babel_3512_t2, index(index_babel_3512_t2_b2)))
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_7';
+GO
+~~START~~
+text
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1                                                                                                                           
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_7
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_7
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Nested Loop
+              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                    Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test table hints multi line
+CREATE PROCEDURE babel_3512_proc_8 AS
+SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
+SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1 OPTION(table hint(babel_3512_t1, index(index_babel_3512_t1_b1)), table hint(babel_3512_t2, index(index_babel_3512_t2_b2)))
+SELECT * FROM babel_3512_t1 babel_3512_t1 WITH(index=index_babel_3512_t1_b1), babel_3512_t2 babel_3512_t2 WITH(index=index_babel_3512_t2_b2) WHERE b1 = 1 AND b2 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_8';
+GO
+~~START~~
+text
+SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1                                                                                                                           <newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1 babel_3512_t1                                   , babel_3512_t2 babel_3512_t2                                    WHERE b1 = 1 AND b2 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_8
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_8
+  Query Text: SELECT * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Nested Loop
+              ->  Bitmap Heap Scan on babel_3512_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a
+                          Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Bitmap Heap Scan on babel_3512_t2
+                          Recheck Cond: (b2 = 1)
+                          ->  Bitmap Index Scan on index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9
+                                Index Cond: (b2 = 1)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1, babel_3512_t2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Nested Loop
+              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                    Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) */ * FROM babel_3512_t1 babel_3512_t1                                   , babel_3512_t2 babel_3512_t2                                    WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Nested Loop
+              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                    Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+-- Test multiple hints combined single line
+CREATE PROCEDURE babel_3512_proc_9 AS
+SELECT * FROM babel_3512_t1 WITH(index(index_babel_3512_t1_b1)) inner loop join babel_3512_t2 (index(index_babel_3512_t2_b2)) ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_9';
+GO
+~~START~~
+text
+SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     inner      join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_9
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_9
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     inner      join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Nested Loop
+              Join Filter: (babel_3512_t1.a1 = babel_3512_t2.a2)
+              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                    Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+-- Test multiple hints combined multi-line
+CREATE PROCEDURE babel_3512_proc_10 AS
+SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1 OPTION(loop join, table hint(babel_3512_t1, index(index_babel_3512_t1_b1)), table hint(babel_3512_t2, index(index_babel_3512_t2_b2)))
+SELECT * FROM babel_3512_t1 WITH(index(index_babel_3512_t1_b1)) right outer merge join babel_3512_t2 (index(index_babel_3512_t2_b2)) ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_proc_10';
+GO
+~~START~~
+text
+SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1<newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) set(enable_hashjoin off) set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1                                                                                                                                      <newline>SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     right outer       join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_proc_10
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_proc_10
+  Query Text: SELECT * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 2
+        ->  Nested Loop
+              ->  Parallel Bitmap Heap Scan on babel_3512_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a
+                          Index Cond: (b1 = 1)
+              ->  Memoize
+                    Cache Key: babel_3512_t1.a1
+                    Cache Mode: logical
+                    ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                          Index Cond: (a2 = babel_3512_t1.a1)
+                          Filter: (b2 = 1)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) set(enable_hashjoin off) set(enable_mergejoin off) */ * FROM babel_3512_t1 join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Nested Loop
+              Join Filter: (babel_3512_t1.a1 = babel_3512_t2.a2)
+              ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                    Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+  Query Text: SELECT/*+ indexscan(babel_3512_t1 index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a) indexscan(babel_3512_t2 index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9) mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ * FROM babel_3512_t1                                     right outer       join babel_3512_t2                                 ON babel_3512_t1.a1 = babel_3512_t2.a2 WHERE b1 = 1 AND b2 = 1
+  ->  Gather
+        Workers Planned: 1
+        Single Copy: true
+        ->  Merge Join
+              Merge Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+              ->  Sort
+                    Sort Key: babel_3512_t1.a1
+                    ->  Index Scan using index_babel_3512_t1_b1babel_351c4a7795e05c8f14a17174b8ca33d439a on babel_3512_t1
+                          Index Cond: (b1 = 1)
+              ->  Sort
+                    Sort Key: babel_3512_t2.a2
+                    ->  Index Scan using index_babel_3512_t2_b2babel_351e39a010b48f9dda93369af0e37b7b7e9 on babel_3512_t2
+                          Index Cond: (b2 = 1)
+~~END~~
+
+
+SET babelfish_showplan_all OFF
+GO
+
+-- Test conflicting hints raises error
+CREATE PROCEDURE babel_3512_proc_conflict_1 AS
+SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
+
+EXEC babel_3512_proc_conflict_1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_3512_proc_conflict_1() does not exist)~~
+
+
+-- Test conflicting hints in multi-line stored proc raises error
+CREATE PROCEDURE babel_3512_proc_conflict_2 AS
+SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
+
+EXEC babel_3512_proc_conflict_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_3512_proc_conflict_2() does not exist)~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+-- Test hints with comment blocks
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Parallel Hash Join
+        Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Parallel Hash
+              ->  Parallel Seq Scan on babel_3512_t2
+~~END~~
+
+
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+SELECT /* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+SELECT	/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/	/* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+SELECT
+*
+FROM
+babel_3512_t1
+inner
+hash
+join
+babel_3512_t2
+ON
+babel_3512_t1.a1
+=
+babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ hashjoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/
+*
+FROM
+babel_3512_t1
+inner
+    
+join
+babel_3512_t2
+ON
+babel_3512_t1.a1
+=
+babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Parallel Hash Join
+        Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Parallel Hash
+              ->  Parallel Seq Scan on babel_3512_t2
+~~END~~
+
+
+SELECT/*test*/SUM(1)
+GO
+~~START~~
+text
+Query Text: SELECT/*test*/SUM(1)
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Aggregate
+        ->  Result
+~~END~~
+
+
+SELECT/*this is a comment block*/*FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+/* this is another comment block */SELECT/*this is a comment block*/* FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+/* this is another comment block *//*thisisanothercommentblock*/SELECT/*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+/* this is another comment block *//* this is another comment block */SELECT/*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+SELECT/*this is a comment
+ multi line block */
+ /*this is a comment block*/	* FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
+ multi line block */
+ /*this is a comment block*/	* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Gather
+  Workers Planned: 3
+  ->  Nested Loop
+        ->  Parallel Seq Scan on babel_3512_t1
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+-- Test hints with comment blocks in stored procs
+SET babelfish_showplan_all OFF
+GO
+
+CREATE PROCEDURE babel_3512_comment_test_1 AS
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT /* this is a comment block */ * FROM
+ babel_3512_t1 inner merge join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT/*this is a comment block*/*FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+/* this is another comment block */SELECT/*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_comment_test_1';
+GO
+~~START~~
+text
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM<newline> babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block */SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+~~END~~
+
+
+CREATE PROCEDURE babel_3512_comment_test_2 AS
+/* this is another comment block *//*thisisanothercommentblock*/SELECT/*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+/* this is another comment block *//* this is another comment block */SELECT/*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT/*this is a comment
+ multi line block */
+ /*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+
+SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_comment_test_2';
+GO
+~~START~~
+text
+SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block *//* this is another comment block */SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment<newline> multi line block */<newline> /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+~~END~~
+
+
+SET babelfish_showplan_all ON
+GO
+
+EXEC babel_3512_comment_test_1
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_comment_test_1
+  Query Text: SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Parallel Hash Join
+              Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Parallel Hash
+                    ->  Parallel Seq Scan on babel_3512_t2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                    Index Cond: (a2 = babel_3512_t1.a1)
+  Query Text: SELECT/*+ mergejoin(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM
+ babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 1
+        ->  Merge Join
+              Merge Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+              ->  Parallel Index Scan using babel_3512_t1_pkey on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                    Index Cond: (a2 = babel_3512_t1.a1)
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                    Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+EXEC babel_3512_comment_test_2
+GO
+~~START~~
+text
+Query Text: EXEC babel_3512_comment_test_2
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                    Index Cond: (a2 = babel_3512_t1.a1)
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                    Index Cond: (a2 = babel_3512_t1.a1)
+  Query Text: SELECT/*+ nestloop(babel_3512_t1 babel_3512_t2) leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
+ multi line block */
+ /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Gather
+        Workers Planned: 3
+        ->  Nested Loop
+              ->  Parallel Seq Scan on babel_3512_t1
+              ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+                    Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+-- clean up 
+SET babelfish_showplan_all OFF
+GO
+
+DROP PROCEDURE  babel_3512_proc_1
+GO
+
+DROP PROCEDURE  babel_3512_proc_2
+GO
+
+DROP PROCEDURE  babel_3512_proc_3
+GO
+
+DROP PROCEDURE  babel_3512_proc_4
+GO
+
+DROP PROCEDURE  babel_3512_proc_5
+GO
+
+DROP PROCEDURE  babel_3512_proc_6
+GO
+
+DROP PROCEDURE  babel_3512_proc_7
+GO
+
+DROP PROCEDURE  babel_3512_proc_8
+GO
+
+DROP PROCEDURE  babel_3512_proc_9
+GO
+
+DROP PROCEDURE  babel_3512_proc_10
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_2
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_1
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_2
+GO
+
+DROP TABLE babel_3512_t1
+GO
+
+DROP TABLE babel_3512_t2
+GO
+
+DROP TABLE babel_3512_t3
+GO

@@ -337,6 +337,8 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_GRANTDB:
 			return ((PLtsql_stmt_grantdb *) stmt)->is_grant ?
 				"GRANT CONNECT TO" : "REVOKE CONNECT FROM";
+		case PLTSQL_STMT_CHANGE_DBOWNER:
+			return "ALTER AUTHORIZATION ON DATABASE::";								
 			/* TSQL-only executable node */
 		case PLTSQL_STMT_SAVE_CTX:
 			return "SAVE_CONTEXT";

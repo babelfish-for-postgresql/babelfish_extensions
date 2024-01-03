@@ -1589,9 +1589,11 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		}
 		PG_CATCH();
 		{
+			HOLD_INTERRUPTS();
 			elog(LOG, "Cache lookup failed in pltsql_post_expand_star for attribute %d of relation %u",
 				 attnum, relid);
 			attopts = (Datum) 0;
+			RESUME_INTERRUPTS();
 		}
 		PG_END_TRY();
 		if (!attopts)

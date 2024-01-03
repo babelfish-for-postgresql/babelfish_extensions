@@ -17,7 +17,7 @@ jobs:
           config=$(echo $config | sed "s/\"/\\\\\"/g")
           DUMP_RESTORE_PATH_LIST=$(node -e "let k = JSON.parse($config); \
           let p = k['dump-restore-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), \
-          title: (itm[itm.length - 1]['logical-database'] == null ? 'Instance-level-' : 'Database-level-') + itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), \
+          title: (itm[itm.length - 1]['logical-database'] == null ? 'Instance-level-' : 'Database-level-' + '(' + itm[itm.length - 1]['logical-database'] + ')') + itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), \
           last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\"), \
           dump_method: itm[itm.length - 1]['dump-data-as'] == 'copy' ? 'COPY' : 'INSERTS', \
           dump_format: itm[itm.length - 1]['dump-format']})); \
@@ -135,7 +135,7 @@ jobs:
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.dump-restore-and-test.outcome == 'failure')
         uses: actions/upload-artifact@v2
         with:
-          name: upgrade-logs-${{ matrix.upgrade-path.title }}
+          name: upgrade-logs-${{ matrix.upgrade-path.dump_method }}-${{ matrix.upgrade-path.title }}-${{ matrix.upgrade-path.dump_format }}
           path: |
             ~/upgrade/*
             ~/psql*/data/logfile

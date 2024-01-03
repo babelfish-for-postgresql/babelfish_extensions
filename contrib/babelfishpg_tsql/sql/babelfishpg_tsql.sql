@@ -235,6 +235,7 @@ BEGIN
     WHEN 'money' THEN radix = 10;
     WHEN 'smallmoney' THEN radix = 10;
     WHEN 'sql_variant' THEN radix = 10;
+    WHEN 'decimal' THEN radix = 10;
   ELSE
     radix = NULL;
   END CASE;
@@ -1122,7 +1123,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE sys.database_default AND ext.orig_name = t4."TABLE_SCHEMA" )
+	JOIN information_schema_tsql.columns t4 ON (cast(t1.relname as sys.nvarchar(128)) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA" )
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
@@ -2536,14 +2537,16 @@ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
 
-CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.sysname, 
+CREATE OR REPLACE PROCEDURE sys.sp_set_session_context ("@key" sys.NVARCHAR(128), 
 	"@value" sys.SQL_VARIANT, "@read_only" sys.bit = 0)
 AS 'babelfishpg_tsql', 'sp_set_session_context'
 LANGUAGE C;
 GRANT EXECUTE ON PROCEDURE sys.sp_set_session_context TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.sysname)
-	RETURNS sys.SQL_VARIANT AS 'babelfishpg_tsql', 'session_context' LANGUAGE C;
+CREATE OR REPLACE FUNCTION sys.session_context ("@key" sys.NVARCHAR(128))
+RETURNS sys.SQL_VARIANT
+AS 'babelfishpg_tsql', 'session_context'
+LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
 -- SYSLOGINS
@@ -3617,3 +3620,40 @@ BEGIN
 END	
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_who(IN sys.sysname, IN sys.VARCHAR(30)) TO PUBLIC;
+
+-- Change the owner of the current database.
+-- This is a wrapper around ALTER AUTHORIZATION ON DATABASE::
+CREATE OR REPLACE PROCEDURE sys.sp_changedbowner(
+	IN "@loginame" sys.sysname,
+	IN "@map"      sys.VARCHAR(5) DEFAULT NULL) -- this parameter is ignored in T-SQL
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+	DECLARE @cmd sys.NVARCHAR(300)
+	DECLARE @db  sys.sysname = DB_NAME()
+
+	-- For a NULL login name, do nothing
+	IF @loginame IS NULL
+	BEGIN
+		RETURN
+	END
+
+	IF (@db = 'master') OR (@db = 'tempdb')
+	BEGIN
+		RAISERROR('Cannot change the owner of the master or tempdb database.', 16, 1)
+		RETURN
+	END
+
+	IF SUSER_ID(@loginame) IS NULL
+	BEGIN
+		RAISERROR('Cannot find the principal ''%s'', because it does not exist or you do not have permission.', 16, 1, @loginame)
+		RETURN
+	END
+
+	-- Compose the ALTER ATHORIZATION statement:
+	SET @cmd = 'ALTER AUTHORIZATION ON DATABASE::[' + @db + '] TO [' + SUSER_NAME(SUSER_ID(@loginame)) + ']'
+	EXECUTE(@cmd)
+END
+$$;
+GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
+

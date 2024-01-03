@@ -28,6 +28,15 @@
 #define END_DATETIME	INT64CONST(252455615999999000)
 
 extern Timestamp initializeToDefaultDatetime(void);
+/** Utility function to calculate days from '1900-01-01 00:00:00' */
+extern double calculateDaysFromDefaultDatetime(Timestamp timestamp_left); 
+extern int roundFractionalSeconds(int fractseconds); 
+
+extern int days_in_date(int day, int month, int year);
+extern char* datetypeName(int num);
+
+extern bool int64_multiply_add(int64 val, int64 multiplier, int64 *sum);
+extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
 
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)

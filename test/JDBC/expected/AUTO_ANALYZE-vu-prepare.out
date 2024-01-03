@@ -1,0 +1,33 @@
+
+-- list all the babel catalogs that has not been analyzed manually during extension create
+-- will return NULL in this case
+SELECT relname FROM pg_stat_all_tables WHERE schemaname = 'sys' and last_analyze IS NULL order by relname
+Go
+~~START~~
+varchar
+~~END~~
+
+
+-- list all the babel catalogs that has been analyzed manually during extension create
+SELECT relname FROM pg_stat_all_tables WHERE schemaname = 'sys' and last_analyze IS NOT NULL order by relname
+Go
+~~START~~
+varchar
+assemblies
+babelfish_authid_login_ext
+babelfish_authid_user_ext
+babelfish_configurations
+babelfish_domain_mapping
+babelfish_extended_properties
+babelfish_function_ext
+babelfish_helpcollation
+babelfish_namespace_ext
+babelfish_server_options
+babelfish_sysdatabases
+babelfish_syslanguages
+babelfish_view_def
+service_settings
+spt_datatype_info_table
+versions
+~~END~~
+

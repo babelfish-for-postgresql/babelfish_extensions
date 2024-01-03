@@ -177,13 +177,13 @@ EXEC sp_serveroption @server='bbf_server_2', @optname='connect timeout', @optval
 GO
 
 -- check if the linked servers added above are reflected in babelfish_server_options catalog
-SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1' OR servername = 'bbf_server_2'
+SELECT servername, query_timeout, connect_timeout FROM babelfish_server_options WHERE servername = 'bbf_server' OR servername = 'bbf_server_1' OR servername = 'bbf_server_2' order by servername
 GO
 ~~START~~
 varchar#!#int#!#int
 bbf_server#!#0#!#0
-bbf_server_2#!#0#!#1
 bbf_server_1#!#1#!#5
+bbf_server_2#!#0#!#1
 ~~END~~
 
 

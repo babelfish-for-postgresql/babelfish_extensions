@@ -154,19 +154,23 @@ numeric
 
 
 -- test Union All
-select a from t1 Union All
-select b from t1;
+select * from 
+	(
+		select a as col from t1 Union All
+		select b as col from t1
+	) dummy
+order by col
 go
 ~~START~~
 numeric
-4.00000000
-10.12340000
-1.20000000
 <NULL>
-16.00000000
-10.12300000
-6.00000000
-101.12300000
+1.2000
+4.0000
+6.0000
+10.1230
+10.1234
+16.0000
+101.1230
 ~~END~~
 
 

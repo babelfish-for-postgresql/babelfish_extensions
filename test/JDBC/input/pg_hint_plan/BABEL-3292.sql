@@ -1,3 +1,4 @@
+-- parallel_query_expected
 drop table if exists babel_3292_t1
 go
 

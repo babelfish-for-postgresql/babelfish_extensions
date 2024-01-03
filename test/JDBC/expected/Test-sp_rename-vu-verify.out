@@ -12,11 +12,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1#!#VIEW
 ~~END~~
 
@@ -52,11 +50,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_new#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new2#!#VIEW
 ~~END~~
 
@@ -83,11 +79,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_new#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -290,11 +284,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -310,11 +302,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -330,11 +320,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1_case_insensitive1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -370,11 +358,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -547,11 +533,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 
@@ -581,11 +565,9 @@ nvarchar#!#nvarchar#!#varchar#!#varchar
 master#!#dbo#!#sp_rename_vu_table_delim#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table1_case_insensitive2#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_table2#!#BASE TABLE
-master#!#dbo#!#sp_rename_vu_tabletype1_new#!#BASE TABLE
 master#!#dbo#!#sp_rename_vu_view1#!#VIEW
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table1#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_table2_new#!#BASE TABLE
-master#!#sp_rename_vu_schema1#!#sp_rename_vu_tabletype1_schema1_new#!#BASE TABLE
 master#!#sp_rename_vu_schema1#!#sp_rename_vu_view1_new#!#VIEW
 ~~END~~
 

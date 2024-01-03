@@ -1203,3 +1203,97 @@ go
 
 DROP TABLE #t2;
 go
+
+-- BABEL-4199 DELETE, join, and output
+CREATE TABLE babel4199_t1(c1 varchar(30), c2 varchar(50));
+CREATE TABLE babel4199_t2(c1 varchar(30), c2 varchar(50));
+INSERT INTO babel4199_t1 VALUES ('1', '2'), ('2', '3');
+INSERT INTO babel4199_t2 VALUES ('1', '10'), ('-1', '100');
+GO
+
+BEGIN TRANSACTION
+    DELETE TOP(1) a OUTPUT b.* FROM babel4199_t1 a
+    JOIN babel4199_t2 b on a.c1 = b.c1
+    WHERE a.c1 IN (
+        SELECT TOP(5) c1 
+        FROM babel4199_t1 a
+        ORDER BY c2
+    )
+ROLLBACK
+GO
+
+BEGIN TRANSACTION 
+    DELETE a output b.* 
+    from babel4199_t1 a
+    join babel4199_t2 b on a.c1 = b.c1
+    where a.c1 = 1
+ROLLBACK
+GO
+
+BEGIN TRANSACTION 
+    DELETE babel4199_t1 output b.* 
+    from babel4199_t1 a
+    join babel4199_t2 b on a.c1 = b.c1
+    where a.c1 = 1
+ROLLBACK
+GO
+
+-- Is an error in T-SQL
+BEGIN TRANSACTION 
+    DELETE a output a.*
+    from babel4199_t1 a
+	join babel4199_t2 b on a.c1 = b.c1
+	where a.c1 = 1
+ROLLBACK
+GO
+
+-- Should error
+BEGIN TRANSACTION 
+    DELETE babel4199_t1 output babel4199_t1.*
+    from babel4199_t1 a
+	join babel4199_t2 b on a.c1 = b.c1
+	where a.c1 = 1
+ROLLBACK
+GO
+
+BEGIN TRANSACTION 
+    DELETE a output deleted.*
+    from babel4199_t1 a
+	join babel4199_t2 b on a.c1 = b.c1
+	where a.c1 = 1
+ROLLBACK
+GO
+
+BEGIN TRANSACTION 
+    DELETE a output deleted.c1, deleted.c2
+    from babel4199_t1 a
+	join babel4199_t2 b on a.c1 = b.c1
+	where a.c1 = 1
+ROLLBACK
+GO
+
+
+DROP TABLE babel4199_t1
+DROP TABLE babel4199_t2
+GO
+
+-- BABEL-1633
+create table deleted(num integer, nextnum integer);
+insert into deleted values(10, 11);
+GO
+
+create table babel1633(num integer, word varchar(10));
+insert into babel1633 values(10, 'ten');
+GO
+
+DELETE deleted
+  OUTPUT babel1633.word
+FROM deleted
+INNER JOIN babel1633
+  ON deleted.num=babel1633.num
+WHERE babel1633.num=10;
+GO
+
+drop table deleted;
+drop table babel1633;
+GO

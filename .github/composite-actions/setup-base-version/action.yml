@@ -62,20 +62,23 @@ runs:
     - name: Build PostGIS Extension
       run: |
         cd ..
+        export CC='ccache gcc'
+        export CMAKE_C_COMPILER_LAUNCHER=ccache
+        export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
         sudo apt-get install wget
-        wget http://postgis.net/stuff/postgis-3.3.3dev.tar.gz
-        tar -xvzf postgis-3.3.3dev.tar.gz
-        wget https://download.osgeo.org/proj/proj-4.9.1.tar.gz
-        tar -xvzf proj-4.9.1.tar.gz
-        cd proj-4.9.1
+        wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
+        tar -xvzf postgis-3.4.0.tar.gz
+        wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz
+        tar -xvzf proj-9.2.1.tar.gz
+        cd proj-9.2.1
         if [ ! -d "build" ]; then
           mkdir build
         fi
         cd build
-        cmake ..
+        cmake -DCMAKE_INSTALL_LIBDIR="lib/x86_64-linux-gnu" -DCMAKE_INSTALL_PREFIX="/usr" ..
         cmake --build .
         sudo cmake --build . --target install
-        cd ../../postgis-3.3.3dev
+        cd ../../postgis-3.4.0
         ./configure --without-protobuf --without-raster --with-pgconfig=$HOME/${{ inputs.install_dir }}/bin/pg_config
         make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
@@ -85,10 +88,11 @@ runs:
     # checked out a branch/tag which may not have the updated install-extension composite action
     - name: Install extensions
       run: |
+        ulimit -c unlimited
         cd ~
         export PATH=/opt/mssql-tools/bin:$PATH
         ~/${{ inputs.install_dir }}/bin/initdb -D ~/${{ inputs.install_dir }}/data/
-        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile start
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile start
         cd ${{ inputs.install_dir }}/data
         sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
         sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
@@ -102,7 +106,7 @@ runs:
           sudo echo "host    all             all             0.0.0.0/0                md5"
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
-        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"

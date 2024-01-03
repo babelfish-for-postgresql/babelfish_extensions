@@ -1,0 +1,195 @@
+-- tsql user=jdbc_user password=12345678
+-- enable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+CREATE LOGIN testLogin WITH PASSWORD = '123';
+GO
+
+USE master;
+GO
+
+CREATE SCHEMA fti_schema_s3;
+GO
+
+CREATE TABLE fti_schema_s3.fti_table_t9(id int NOT NULL, a text);
+GO
+
+CREATE UNIQUE INDEX IX_t9_a ON fti_schema_s3.fti_table_t9(id);
+GO
+
+-- tsql user=testLogin password=123
+-- Create new login with insufficient permissions
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- should throw error as new login has insufficient permissions to CREATE FULLTEXT INDEX
+CREATE FULLTEXT INDEX ON fti_schema_s3.fti_table_t9(a) KEY INDEX IX_t9_a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: A default full-text catalog does not exist in the database or user does not have permission to perform this action)~~
+
+
+-- tsql user=jdbc_user password=12345678
+-- Reset to super user
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- Index creation on different character data type columns
+CREATE TABLE fti_table_t1(id int NOT NULL constraint pk_mytexts primary key, a text);
+GO
+
+-- should throw syntax error for NULL index name
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX NULL;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'NULL' at line 2 and character position 51)~~
+
+
+-- should throw error for no unique index on the table
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX IX_t1_a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: '"ix_t1_a"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.)~~
+
+
+CREATE FULLTEXT INDEX ON fti_table_t1(a) KEY INDEX pk_mytexts;
+GO
+
+CREATE TABLE fti_table_t2(id int not null, b char(10));
+GO
+
+CREATE UNIQUE INDEX IX_t2_b ON fti_table_t2(id);
+GO
+
+CREATE FULLTEXT INDEX ON fti_table_t2(b) KEY INDEX IX_t2_b;
+GO
+
+CREATE TABLE fti_table_t3(id int not null, c varchar(10));
+GO
+
+CREATE UNIQUE INDEX IX_t3_c ON fti_table_t3(id);
+GO
+
+CREATE FULLTEXT INDEX ON fti_table_t3(c) KEY INDEX IX_t3_c;
+GO
+
+CREATE TABLE fti_table_t4(id int not null, d nvarchar(10));
+GO
+
+CREATE UNIQUE INDEX IX_t4_d ON fti_table_t4(id);
+GO
+
+CREATE FULLTEXT INDEX ON fti_table_t4(d) KEY INDEX IX_t4_d;
+GO
+
+CREATE TABLE fti_table_t5(id int not null, e nchar(10));
+GO
+
+CREATE UNIQUE INDEX IX_t5_e ON fti_table_t5(id);
+GO
+
+CREATE FULLTEXT INDEX ON fti_table_t5(e) KEY INDEX IX_t5_e;
+GO
+
+CREATE TABLE fti_table_t6(id int not null, f ntext);
+GO
+
+CREATE UNIQUE INDEX IX_t6_f ON fti_table_t6(id);
+GO
+
+CREATE FULLTEXT INDEX ON fti_table_t6(f) KEY INDEX IX_t6_f;
+GO
+
+CREATE TABLE fti_table_t7(id int not null, a1 text, b1 char(10), c1 varchar(10));
+GO
+
+CREATE UNIQUE INDEX IX_t7_a1b1c1 ON fti_table_t7(id);
+GO
+
+-- multi column index creation
+CREATE FULLTEXT INDEX ON fti_table_t7(a1, b1, c1) KEY INDEX IX_t7_a1b1c1;
+GO
+
+-- checking if the indexes are created correctly
+CREATE VIEW fti_prepare_v1 AS (SELECT indexname FROM pg_indexes WHERE tablename='fti_table_t1' AND indexname LIKE 'ft_index%');
+GO
+
+CREATE PROCEDURE fti_prepare_p1 AS (SELECT indexname FROM pg_indexes WHERE tablename='fti_table_t2' AND indexname LIKE 'ft_index%');
+GO
+
+
+CREATE FUNCTION fti_prepare_f1()
+RETURNS NVARCHAR(MAX) AS
+BEGIN
+    DECLARE @indexName NVARCHAR(MAX);
+    SELECT @indexName= indexname 
+    FROM pg_indexes 
+    WHERE tablename='fti_table_t3' AND indexname LIKE 'ft_index%';
+    RETURN @indexName;
+END
+GO
+
+-- Creating index in a new schema
+CREATE SCHEMA fti_schema_s1;
+GO
+
+CREATE TABLE fti_schema_s1.fti_table_t8(id int not null, a text, b text);
+GO
+
+CREATE UNIQUE INDEX IX_s1_t8_a ON fti_schema_s1.fti_table_t8(id);
+GO
+
+CREATE FULLTEXT INDEX ON fti_schema_s1.fti_table_t8(a) KEY INDEX IX_s1_t8_a;
+GO
+
+CREATE SCHEMA FTI_schema_s2;
+GO
+
+CREATE TABLE FTI_schema_s2.FTI_table_t8(Id int not null, a text, b text);
+GO
+
+CREATE UNIQUE INDEX IX_s2_t8_a ON FTI_schema_s2.FTI_table_t8(Id);
+GO
+
+-- Case for same table name on different schemas
+CREATE FULLTEXT INDEX ON FTI_schema_s2.FTI_table_t8(a) KEY INDEX IX_s2_t8_a;
+GO
+
+-- Table for testing dropping non-existent index, should throw error on dropping
+CREATE TABLE fti_table_no_ix(id int not null, a text)
+GO
+
+-- Table for testing unsupported options
+CREATE TABLE fti_table_unsupported(id int not null, a text)
+GO
+
+CREATE UNIQUE INDEX ix_unsupported_fti ON fti_table_unsupported(id);
+GO
+
+-- disable FULLTEXT
+SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+

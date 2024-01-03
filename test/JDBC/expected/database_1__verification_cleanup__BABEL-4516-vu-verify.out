@@ -1,0 +1,59 @@
+USE [DATABASE_1];
+GO
+
+-- login_name should be empty and database users should
+-- be present after database-level restore.
+EXEC [db1_SCHEMA_2].[babel_user_ext];
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar
+database_1_db1_user_1#!##!#S#!#DB1_User_1#!#database_1
+database_1_db1_user_3#!##!#S#!#DB1_User_3#!#database_1
+~~END~~
+
+
+-- dbo and guest roles should be member of sysadmin
+SELECT r.rolname FROM pg_catalog.pg_auth_members m
+        JOIN pg_catalog.pg_roles r
+        ON (m.roleid = r.oid)
+WHERE m.member = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND r.rolname LIKE 'database_1%' ORDER BY r.rolname;
+GO
+~~START~~
+varchar
+database_1_dbo
+database_1_guest
+~~END~~
+
+
+SELECT COUNT(*) FROM [Table_1];
+GO
+~~START~~
+int
+1000
+~~END~~
+
+
+SELECT COUNT(*) FROM [DB1_My_Schema].[Table_2];
+GO
+~~START~~
+int
+1000
+~~END~~
+
+
+SELECT COUNT(*) FROM [db1_SCHEMA_2].[DB1 My View];
+GO
+~~START~~
+int
+1000
+~~END~~
+
+
+SELECT * FROM [db1_SCHEMA_2].[Func_2](555);
+GO
+~~START~~
+int#!#int
+555#!#556
+~~END~~
+

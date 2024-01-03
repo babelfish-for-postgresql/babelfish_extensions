@@ -64,7 +64,6 @@ extern "C"
 	void report_antlr_error(ANTLR_result result);
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
-	extern bool is_tsql_any_char_datatype(Oid oid);
 	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 	extern int CurrentLineNumber;
@@ -85,6 +84,7 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
+	extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 
 	extern int escape_hatch_showplan_all;
 }
@@ -116,6 +116,9 @@ PLtsql_stmt *makeDbccCheckidentStatement(TSqlParser::Dbcc_statementContext *ctx)
 PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
+PLtsql_stmt	*makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
+PLtsql_stmt	*makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
+std::pair<std::string, std::string> getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char* repl, ParserRuleContext *baseCtx);
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
@@ -124,6 +127,7 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx);
 void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name);
 std::string extractTableName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Table_source_itemContext *tctx);
+std::string extractSchemaName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Table_source_itemContext *tctx);
 void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name);
 void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_names);
 void extractJoinHintFromOption(TSqlParser::OptionContext *option);
@@ -138,9 +142,10 @@ static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate = false);
 static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static void post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx);
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -179,6 +184,7 @@ static bool in_execute_body_batch = false;
 static bool in_execute_body_batch_parameter = false;	
 static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix for expressions
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
+static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -540,7 +546,7 @@ protected:
 	int base_idx;		
 		
 	// Indicate the fragment being processed is an expression that was prefixed with 'SELECT ', 
-	// so that offsets can be adjsted when doing the rewriting
+	// so that offsets can be adjusted when doing the rewriting
 	bool isSelectFragment = false;
 	int idxStart = 0;
 	int idxEnd = 0;
@@ -1755,14 +1761,45 @@ public:
 	void enterDdl_statement(TSqlParser::Ddl_statementContext *ctx) override
 	{
 		// See the comments in enterDml_statement() for an explanation of this code
-		graft(makeSQL(ctx), peekContainer());
-
-		// clean up object_name positions maps before entering
-		rewritten_query_fragment.clear();
+		PLtsql_stmt *stmt;
+		if (ctx->alter_authorization())
+		{
+			stmt = makeChangeDbOwnerStatement(ctx->alter_authorization());
+		}
+		else if (ctx->create_fulltext_index())
+		{
+			stmt = makeCreateFulltextIndexStmt(ctx->create_fulltext_index());
+		}
+		else if (ctx->drop_fulltext_index())
+		{
+			stmt = makeDropFulltextIndexStmt(ctx->drop_fulltext_index());
+		}
+		else
+		{
+			stmt = makeSQL(ctx);
+		}
+		graft(stmt, peekContainer());
+		clear_rewritten_query_fragment();
 	}
 
 	void exitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override
 	{
+		if (ctx->alter_authorization()) 
+		{
+			// Exit in case of Change DB owner
+			return;
+		}
+		
+		if (ctx->create_fulltext_index())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
+		if (ctx->drop_fulltext_index())
+		{
+			clear_rewritten_query_fragment();
+			return;
+		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 		// record that the stmt is ddl
@@ -1786,13 +1823,11 @@ public:
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
 		else if (ctx->create_type())
 			nop = post_process_create_type(ctx->create_type(), stmt, ctx);
-		else if (ctx->create_fulltext_index() ||
-		         ctx->alter_fulltext_index() ||
-		         ctx->drop_fulltext_index())
+		else if (ctx->alter_fulltext_index())
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("FULLTEXT related statements will be ignored.")));
+					 errmsg("ALTER FULLTEXT INDEX statement will be ignored.")));
 			nop = true;
 		}
 
@@ -1874,52 +1909,6 @@ public:
 				}
 			}
 		}
-		else if (ctx->grant_statement() && ctx->grant_statement()->ON() && ctx->grant_statement()->permission_object()
-				&& ctx->grant_statement()->permission_object()->object_type() && ctx->grant_statement()->permission_object()->object_type()->SCHEMA())
-		{
-			if (ctx->grant_statement()->TO() && ctx->grant_statement()->principals() && ctx->grant_statement()->permissions())
-			{
-				for (auto perm: ctx->grant_statement()->permissions()->permission())
-				{
-					auto single_perm = perm->single_permission();
-					if (single_perm->EXECUTE()
-						|| single_perm->EXEC()
-						|| single_perm->SELECT() 
-						|| single_perm->INSERT()
-						|| single_perm->UPDATE()
-						|| single_perm->DELETE()
-						|| single_perm->REFERENCES())
-					{
-						clear_rewritten_query_fragment();
-						return;	
-					}
-				}
-			}
-		}
-
-		else if (ctx->revoke_statement() && ctx->revoke_statement()->ON() && ctx->revoke_statement()->permission_object()
-				&& ctx->revoke_statement()->permission_object()->object_type() && ctx->revoke_statement()->permission_object()->object_type()->SCHEMA())
-		{
-			if (ctx->revoke_statement()->FROM() && ctx->revoke_statement()->principals() && ctx->revoke_statement()->permissions())
-			{
-				for (auto perm: ctx->revoke_statement()->permissions()->permission())
-				{
-					auto single_perm = perm->single_permission();
-					if (single_perm->EXECUTE()
-						|| single_perm->EXEC()
-						|| single_perm->SELECT() 
-						|| single_perm->INSERT()
-						|| single_perm->UPDATE()
-						|| single_perm->DELETE()
-						|| single_perm->REFERENCES())
-					{
-						clear_rewritten_query_fragment();
-						return;	
-					}
-				}
-			}
-		}
-
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 
@@ -2299,7 +2288,7 @@ public:
 					has_identity_function = true;
 				}
 				
-				if (pg_strncasecmp(proc_name.c_str(), "identity_into", strlen("identity_into")) == 0)
+				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
@@ -2771,6 +2760,10 @@ static void process_query_specification(
 		}
 	}
 
+	bool is_freetext_predicate = false;
+	if(qctx->where)
+		is_freetext_predicate = check_freetext_predicate(qctx->where);
+
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
 
@@ -2778,7 +2771,7 @@ static void process_query_specification(
 	if (qctx->table_sources())
 	{
 		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-			post_process_table_source(tctx, expr, baseCtx);
+			post_process_table_source(tctx, expr, baseCtx, is_freetext_predicate);
 	}
 
 	/* handle special alias syntax and quote alias */
@@ -2876,15 +2869,30 @@ static void process_select_statement(
 ANTLR_result
 antlr_parser_cpp(const char *sourceText)
 {
-	ANTLR_result result;
+	ANTLR_result result = {
+		false,	/* success */
+		false,	/* parseTreeCreated */
+		0,	/* errpos */
+		0,	/* errcod */
+		NULL,	/* errfmt */
+		0,	/* n_errargs */
+		{}	/* errargs */
+	};
 	instr_time	parseStart;
 	instr_time	parseEnd;
 	INSTR_TIME_SET_CURRENT(parseStart);
+
 	// special handling for empty sourceText
 	if (strlen(sourceText) == 0)
 	{
 		pltsql_parse_result = makeEmptyBlockStmt(0);
 		result.success = true;
+		result.parseTreeCreated = false;
+		result.errpos = 0;
+		result.errcod = 0;
+		result.errfmt = NULL;
+		result.n_errargs = 0;
+
 		return result;
 	}
 
@@ -2920,7 +2928,15 @@ antlr_parser_cpp(const char *sourceText)
 
 ANTLR_result
 antlr_parse_query(const char *sourceText, bool useSLLParsing) {
-	ANTLR_result result;
+	ANTLR_result result = {
+		false,	/* success */
+		false,	/* parseTreeCreated */
+		0,	/* errpos */
+		0,	/* errcod */
+		NULL,	/* errfmt */
+		0,	/* n_errargs */
+		{}	/* errargs */
+	};
 	MyInputStream sourceStream(sourceText);
 
 	TSqlLexer lexer(&sourceStream);
@@ -3139,6 +3155,7 @@ rewriteBatchLevelStatement(
 {
 	// rewrite batch-level stmt query
 	PLtsql_expr_query_mutator mutator(expr, ctx);
+	/* cppcheck-suppress autoVariables */
 	ssm->mutator = &mutator;
 
 	/*
@@ -3988,17 +4005,33 @@ void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string ta
 	}
 }
 
+std::string extractSchemaName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
+{
+	std::string schema_name = "";
+	if (dctx == nullptr)
+	{
+		if (tctx && tctx->full_object_name() && tctx->full_object_name()->schema)
+			schema_name = stripQuoteFromId(tctx->full_object_name()->schema);
+	}
+	else
+	{
+		if (dctx->full_object_name() && dctx->full_object_name()->schema)
+			schema_name = stripQuoteFromId(dctx->full_object_name()->schema);
+	}
+	return schema_name;
+}
+
 std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
 {
 	std::string table_name;
-	if (dctx == nullptr)
+	if (dctx == nullptr && tctx != nullptr)
 	{
 		if (tctx->full_object_name())
 			table_name = stripQuoteFromId(tctx->full_object_name()->object_name);
 		else if (tctx->local_id())
 			table_name = ::getFullText(tctx->local_id());
 	}
-	else
+	else if(dctx != nullptr)
 	{
 		if (dctx->full_object_name())
 			table_name = stripQuoteFromId(dctx->full_object_name()->object_name);
@@ -4548,11 +4581,6 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx, std::map<PLtsql_stmt 
 		const char *name = downcase_truncate_identifier(nameStr.c_str(), nameStr.length(), true);
 		check_dup_declare(name);
 		PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);
-		if (type->atttypmod == -1 && is_tsql_any_char_datatype(type->typoid))
-		{
-			std::string newTypeStr = typeStr + "(1)"; /* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 */
-			type = parse_datatype(newTypeStr.c_str(), 0);
-		}
 
 		PLtsql_variable *var = pltsql_build_variable(name, 0, type, true);
 
@@ -4579,12 +4607,7 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx, std::map<PLtsql_stmt 
 			{
 				std::string typeStr = ::getFullText(local->data_type());
 				PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);  // FIXME: the second arg should be 'location'
-				if (type->atttypmod == -1 && is_tsql_any_char_datatype(type->typoid))
-				{
-					std::string newTypeStr = typeStr + "(1)"; /* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 */
-					type = parse_datatype(newTypeStr.c_str(), 0);
-				}
-				else if (is_tsql_text_ntext_or_image_datatype(type->typoid))
+				if (is_tsql_text_ntext_or_image_datatype(type->typoid))
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "The text, ntext, and image data types are invalid for local variables.", getLineAndPos(local->data_type()));
 				}
@@ -4706,6 +4729,26 @@ static bool is_valid_set_option(std::string val)
 		(pg_strcasecmp("CONTEXT_INFO", val.c_str()) == 0) ||
 		(pg_strcasecmp("LANGUAGE", val.c_str()) == 0) ||
 		(pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0);
+}
+
+static PLtsql_var * build_babelfish_guc_variable(TSqlParser::Special_variableContext *guc_ctx)
+{
+	PLtsql_var *var;
+	int type;
+	std::string command = ::getFullText(guc_ctx);
+	std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+
+	if (guc_ctx->ROWCOUNT() || guc_ctx->DATEFIRST())
+		type = INT4OID;
+	else 
+		type = TEXTOID;
+
+	var = (PLtsql_var *) pltsql_build_variable(command.c_str(), 
+						  0, 
+						  pltsql_build_datatype(type, -1, InvalidOid, NULL), 
+						  false);
+	var->is_babelfish_guc = true;
+	return var;
 }
 
 PLtsql_stmt *
@@ -4954,6 +4997,21 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			stmt->is_set_tran_isolation = true;
 			return (PLtsql_stmt *) stmt;
 		}			
+		else if(set_special_ctx->special_variable())
+		{
+			TSqlParser::Special_variableContext *guc_ctx = static_cast<TSqlParser::Special_variableContext*> (set_special_ctx->special_variable());
+			/* build expression with the input variable */
+			PLtsql_expr* input_expr = makeTsqlExpr(getFullText(set_special_ctx->LOCAL_ID()), true);
+			/* build target variable for this GUC, so that in backend we can identify that target is GUC */
+			PLtsql_var *target_var = build_babelfish_guc_variable(guc_ctx);
+			/* assign expression to target */
+			PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
+			result->cmd_type = PLTSQL_STMT_ASSIGN;
+			result->lineno   = getLineNo(ctx);
+			result->varno    = target_var->dno;
+			result->expr     = input_expr;
+			return (PLtsql_stmt *) result;
+		}
 		else
 			return makeSQL(ctx);
 	}
@@ -5470,108 +5528,6 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 			}
 		}
 	}
-	if (ctx->grant_statement() && ctx->grant_statement()->ON() && ctx->grant_statement()->permission_object()
-			&& ctx->grant_statement()->permission_object()->object_type() && ctx->grant_statement()->permission_object()->object_type()->SCHEMA())
-	{
-		if (ctx->grant_statement()->TO() && ctx->grant_statement()->principals() && ctx->grant_statement()->permissions())
-		{
-			PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
-			result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
-			result->lineno = getLineNo(ctx->grant_statement());
-			result->is_grant = true;
-			std::string schema_name;
-			if (ctx->grant_statement()->permission_object()->full_object_name()->object_name)
-			{
-				schema_name = stripQuoteFromId(ctx->grant_statement()->permission_object()->full_object_name()->object_name);
-				result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-			}
-			List *grantee_list = NIL;
-			for (auto prin : ctx->grant_statement()->principals()->principal_id())
-			{
-				if (prin->id())
-				{
-					std::string id_str = ::getFullText(prin->id());
-					char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
-					grantee_list = lappend(grantee_list, grantee_name);
-				}
-			}
-			List *privilege_list = NIL;
-			for (auto perm: ctx->grant_statement()->permissions()->permission())
-			{
-				auto single_perm = perm->single_permission();
-				if (single_perm->EXECUTE())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->EXEC())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->SELECT())
-					privilege_list = lappend(privilege_list, (void *)"select");
-				if (single_perm->INSERT())
-					privilege_list = lappend(privilege_list, (void *)"insert");
-				if (single_perm->UPDATE())
-					privilege_list = lappend(privilege_list, (void *)"update");
-				if (single_perm->DELETE())
-					privilege_list = lappend(privilege_list, (void *)"delete");
-				if (single_perm->REFERENCES())
-					privilege_list = lappend(privilege_list, (void *)"references");
-			}
-			result->privileges = privilege_list;
-			if (ctx->grant_statement()->WITH())
-				result->with_grant_option = true;
-			result->grantees = grantee_list;
-			return (PLtsql_stmt *) result;
-		}
-	}
-
-	if (ctx->revoke_statement() && ctx->revoke_statement()->ON() && ctx->revoke_statement()->permission_object()
-			&& ctx->revoke_statement()->permission_object()->object_type() && ctx->revoke_statement()->permission_object()->object_type()->SCHEMA())
-	{
-		if (ctx->revoke_statement()->FROM() && ctx->revoke_statement()->principals() && ctx->revoke_statement()->permissions())
-		{
-			PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
-			result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
-			result->lineno = getLineNo(ctx->revoke_statement());
-			result->is_grant = false;
-			std::string schema_name;
-			if (ctx->revoke_statement()->permission_object()->full_object_name()->object_name)
-			{
-				schema_name = stripQuoteFromId(ctx->revoke_statement()->permission_object()->full_object_name()->object_name);
-				result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-			}
-			List *grantee_list = NIL;
-			for (auto prin : ctx->revoke_statement()->principals()->principal_id())
-			{
-				if (prin->id())
-				{
-					std::string id_str = ::getFullText(prin->id());
-					char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
-					grantee_list = lappend(grantee_list, grantee_name);
-				}
-			}
-			List *privilege_list = NIL;
-			for (auto perm: ctx->revoke_statement()->permissions()->permission())
-			{
-				auto single_perm = perm->single_permission();
-				if (single_perm->EXECUTE())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->EXEC())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->SELECT())
-					privilege_list = lappend(privilege_list, (void *)"select");
-				if (single_perm->INSERT())
-					privilege_list = lappend(privilege_list, (void *)"insert");
-				if (single_perm->UPDATE())
-					privilege_list = lappend(privilege_list, (void *)"update");
-				if (single_perm->DELETE())
-					privilege_list = lappend(privilege_list, (void *)"delete");
-				if (single_perm->REFERENCES())
-					privilege_list = lappend(privilege_list, (void *)"references");
-			}
-			result->privileges = privilege_list;
-			result->grantees = grantee_list;
-			return (PLtsql_stmt *) result;
-		}
-	}
-
 	PLtsql_stmt *result;
 	result = makeExecSql(ctx);
 	attachPLtsql_fragment(ctx, result);
@@ -5635,7 +5591,7 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 	for (PLtsql_stmt *stmt : result) 
 	{
 		// Associate each fragement with a tree node
-		if (declare_local_expr.find(stmt) != declare_local_expr.end()) 
+		if (!declare_local_expr.empty() && declare_local_expr.find(stmt) != declare_local_expr.end()) 
 		{
 			attachPLtsql_fragment(declare_local_expr.at(stmt), stmt);	
 		}
@@ -6215,10 +6171,27 @@ void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_s
 	}
 }
 
-static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx)
+static bool check_freetext_predicate(TSqlParser::Search_conditionContext *ctx)
+{
+    if (ctx && ctx->predicate_br().size() > 0)
+	{
+        for (auto pred : ctx->predicate_br())
+		{
+            if (pred && pred->predicate() && pred->predicate()->freetext_predicate())
+                return true;
+            if (pred && pred->search_condition()) {
+                if (check_freetext_predicate(pred->search_condition()))
+                    return true;
+            }
+        }
+    }
+    return false;
+}
+
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx, bool is_freetext_predicate)
 {
 	for (auto cctx : ctx->table_source_item())
-		post_process_table_source(cctx, expr, baseCtx);
+		post_process_table_source(cctx, expr, baseCtx, is_freetext_predicate);
 
 	std::string table_name = extractTableName(nullptr, ctx);
 
@@ -6263,6 +6236,19 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 			extractJoinHint(ctx->join_hint(), table_names);
 		}
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
+	}
+
+	// check for freetext predicate CONTAINS()
+	if(is_freetext_predicate)
+	{
+		std::string schema_name = extractSchemaName(nullptr, ctx);
+		
+		const char * t_name = downcase_truncate_identifier(table_name.c_str(), table_name.length(), true);
+		const char * s_name = downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true);
+		
+		// check if full-text index exist for the table, if not throw error
+		if(!check_fulltext_exist(const_cast <char *>(s_name), const_cast <char *>(t_name)))
+			throw PGErrorWrapperException(ERROR, ERRCODE_RAISE_EXCEPTION, format_errmsg("Cannot use a CONTAINS or FREETEXT predicate on table or indexed view '%s' because it is not full-text indexed.", table_name.c_str()), getLineAndPos(ctx));
 	}
 }
 
@@ -6562,6 +6548,91 @@ post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsq
 	}
 
 	return false;
+}
+
+std::pair<std::string, std::string> 
+getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx)
+{
+    std::string table_info = ::getFullText(ctx);
+    std::string table_name = "";
+    std::string schema_name = "";
+    size_t pos = table_info.find(".");
+    if (pos != std::string::npos) {
+        // Extract the schema name before the "."
+        schema_name = table_info.substr(0, pos);
+        // Extract the table name after the "."
+        table_name = table_info.substr(pos + 1);
+    } else {
+        // No "." character found, set first to the entire string
+        table_name = table_info;
+    }
+    return std::make_pair(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true),
+                           downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+}
+
+PLtsql_stmt *
+makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
+{
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
+	stmt->lineno = getLineNo(ctx);
+	stmt->is_create = true;
+
+	if (ctx->table_name())
+	{ 
+		auto table_info = getTableNameAndSchemaName(ctx->table_name());
+        stmt->table_name = pstrdup(table_info.first.c_str());
+        stmt->schema_name = pstrdup(table_info.second.c_str());
+	}
+	List *column_name_list = NIL;
+    if (ctx->fulltext_index_column().size() > 0)
+    {
+        for (auto column : ctx->fulltext_index_column())
+        {
+			if (column->TYPE() && column->COLUMN())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'TYPE COLUMN' option is not currently supported in Babelfish", getLineAndPos(column->TYPE()));
+			else if (column->LANGUAGE())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'LANGUAGE' option is not currently supported in Babelfish", getLineAndPos(column->LANGUAGE()));
+			else if (column->STATISTICAL_SEMANTICS())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'STATISTICAL_SEMANTICS' option is not currently supported in Babelfish", getLineAndPos(column->STATISTICAL_SEMANTICS()));
+			else
+			{
+				std::string column_name_str = ::getFullText(column->full_column_name());
+				char *column_name = pstrdup(downcase_truncate_identifier(column_name_str.c_str(), column_name_str.length(), true));
+				column_name_list = lappend(column_name_list, column_name);
+			}
+
+        }
+		stmt->column_name = column_name_list;
+    }
+	if (ctx->catalog_filegroup_option())
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'CATALOG FILEGROUP OPTION' is not currently supported in Babelfish", getLineAndPos(ctx));
+	if (ctx->fulltext_with_option().size() > 0)
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'WITH OPTION' is not currently supported in Babelfish", getLineAndPos(ctx));
+	if (ctx->id())
+	{
+		std::string index_name = ::getFullText(ctx->id());
+		stmt->index_name = pstrdup(downcase_truncate_identifier(index_name.c_str(), index_name.length(), true));
+	}
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+    return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt *
+makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
+{
+	PLtsql_stmt_fulltextindex *stmt = (PLtsql_stmt_fulltextindex *) palloc0(sizeof(PLtsql_stmt_fulltextindex));
+	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
+	stmt->lineno = getLineNo(ctx);
+	stmt->is_create = false;
+	if (ctx->table_name())
+	{
+		auto table_info = getTableNameAndSchemaName(ctx->table_name());
+        stmt->table_name = pstrdup(table_info.first.c_str());
+        stmt->schema_name = pstrdup(table_info.second.c_str());
+	}
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
 }
 
 static bool
@@ -7524,4 +7595,23 @@ escapeDoubleQuotes(const std::string strWithDoubleQuote)
 	}
 
 	return str;
+}
+
+PLtsql_stmt *
+makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
+{
+	PLtsql_stmt_change_dbowner *result = (PLtsql_stmt_change_dbowner *) palloc0(sizeof(*result));
+
+	result->cmd_type = PLTSQL_STMT_CHANGE_DBOWNER;
+	result->lineno = getLineNo(ctx);
+	
+	// 'table' represents the actual database name in the grammar
+	std::string db_name_str = stripQuoteFromId(ctx->entity_name()->table);
+	result->db_name = pstrdup(downcase_truncate_identifier(db_name_str.c_str(), db_name_str.length(), true));
+	
+	// Login name for the new owner
+	std::string new_owner_name_str = stripQuoteFromId(ctx->authorization_grantee()->id());
+	result->new_owner_name = pstrdup(downcase_truncate_identifier(new_owner_name_str.c_str(), new_owner_name_str.length(), true));
+
+	return (PLtsql_stmt *) result;
 }

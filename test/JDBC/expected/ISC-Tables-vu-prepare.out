@@ -1,11 +1,17 @@
 CREATE TABLE isc_tables_vu_prepare_t1(a INT,b INT)
 GO
 
+CREATE TYPE isc_table_type1 AS TABLE(a INT)
+GO
+
 -- test different schema 
 CREATE SCHEMA isc_tables_sc1
 GO
 
 CREATE TABLE isc_tables_sc1.t2(a INT,b INT)
+GO
+
+CREATE TYPE isc_tables_sc1.isc_table_type2 AS TABLE(a INT)
 GO
 
 --Dep Proc

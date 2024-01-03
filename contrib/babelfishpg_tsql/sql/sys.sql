@@ -1,13 +1,12 @@
 /* Built in functions */
 CREATE OR REPLACE FUNCTION sys.sysdatetime() RETURNS datetime2
-    AS $$select statement_timestamp()::datetime2;$$
-    LANGUAGE SQL;
+AS 'babelfishpg_tsql', 'sysdatetime'
+LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetime() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.sysdatetimeoffset() RETURNS sys.datetimeoffset
-    -- Casting to text as there are not type cast function from timestamptz to datetimeoffset
-    AS $$select cast(cast(statement_timestamp() as text) as sys.datetimeoffset);$$
-    LANGUAGE SQL STABLE;
+AS 'babelfishpg_tsql', 'sysdatetimeoffset'
+LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
 
 
@@ -16,8 +15,8 @@ AS 'babelfishpg_tsql', 'sysutcdatetime'
 LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', statement_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
-    LANGUAGE SQL STABLE;
+AS 'babelfishpg_tsql', 'getdate_internal'
+LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC;
 
 create or replace function sys.getutcdate() returns sys.datetime

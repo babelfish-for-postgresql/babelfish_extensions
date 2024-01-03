@@ -244,3 +244,7 @@ GO
 --Checking for 0 parts returns NULL
 SELECT PARSENAME('',1)
 GO
+
+--Checking for NULL input value
+SELECT PARSENAME(NULL,1)
+GO

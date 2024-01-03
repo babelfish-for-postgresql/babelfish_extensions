@@ -1,0 +1,43 @@
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+CREATE TABLE [dbo].[t_udd](
+	[a] [shc_test].[test3] NULL
+) ON [PRIMARY]
+
+GO
+
+CREATE TYPE [dbo].[test1] FROM [varchar](11) NOT NULL
+GO
+
+CREATE TYPE [dbo].[test2] FROM [int] NULL
+GO
+
+CREATE TYPE [dbo].[test4] FROM [numeric](15, 4) NULL
+GO
+
+CREATE TYPE [shc_test].[test3] FROM [int] NOT NULL
+GO
+
+CREATE TYPE [dbo].[inventoryitem] AS TABLE(
+	[name] [nvarchar](50) NOT NULL,
+	[supplierid] [bigint] NOT NULL,
+	[price] [decimal](18, 4) NULL,
+	PRIMARY KEY NONCLUSTERED 
+(
+	[name]
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+GO
+
+CREATE TYPE [dbo].[locationtabletype] AS TABLE(
+	[locationname] [varchar](50) NULL,
+	[costrate] [int] NULL
+)
+GO
+
+CREATE TYPE [shc_test].[locationtabletype] AS TABLE(
+	[locationname] [varchar](50) NULL,
+	[costrate] [int] NULL
+)
+GO
+

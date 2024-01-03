@@ -1,3 +1,4 @@
+-- parallel_query_expected
 drop procedure if exists babel_3592_insert_multiline
 go
 

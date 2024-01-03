@@ -1,0 +1,6 @@
+drop procedure sys_table_types_dep_vu_prepare_p1
+drop function sys_table_types_dep_vu_prepare_f1
+drop view sys_table_types_dep_vu_prepare_v1
+drop procedure sys_table_types_dep_vu_prepare_p2
+drop type sys_table_types_dep_vu_prepare_tt
+GO

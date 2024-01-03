@@ -159,6 +159,91 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'suser_name'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
 
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.BIT ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_int'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date INT ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_int'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date BIGINT ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_int'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.TINYINT ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_int'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date SMALLINT ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_int'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.MONEY ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_money'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.SMALLMONEY ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_smallmoney'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date date ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_date'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.datetime ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetime'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.datetime2 ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetime'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.smalldatetime ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetime'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.DATETIMEOFFSET ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_datetimeoffset'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date time ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_time'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.DECIMAL ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_decimal'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date NUMERIC ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_decimal'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date REAL ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_real'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date FLOAT ,df_tz INTEGER DEFAULT 0)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'datepart_internal_float'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128) AS $$
     SELECT CASE 
@@ -702,8 +787,8 @@ RETURNS INTEGER AS
 'babelfishpg_tsql', 'object_id'
 LANGUAGE C STABLE;
 
-CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.VARCHAR, object_piece int)
-RETURNS sys.SYSNAME
+CREATE OR REPLACE FUNCTION sys.parsename(object_name sys.NVARCHAR, object_piece int)
+RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'parsename'
 LANGUAGE C IMMUTABLE STRICT;
 
@@ -805,6 +890,19 @@ RETURNS NULL ON NULL INPUT;
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
 'babelfishpg_tsql', 'has_dbaccess'
 LANGUAGE C STABLE STRICT;
+
+-- This function performs string rewriting for the full text search CONTAINS predicate
+-- in Babelfish
+-- For example, a T-SQL query 
+-- SELECT * FROM t WHERE CONTAINS(txt, '"good old days"')
+-- is rewritten into a Postgres query 
+-- SELECT * FROM t WHERE to_tsvector('fts_contains', txt) @@ to_tsquery('fts_contains', 'good <-> old <-> days')
+-- In particular, the string constant '"good old days"' gets rewritten into 'good <-> old <-> days'
+-- This function performs the string rewriting from '"good old days"' to 'good <-> old <-> days'
+-- For prefix terms, '"word1*"' is rewritten into 'word1:*', and '"word1 word2 word3*"' is rewritten into 'word1<->word2<->word3:*'
+CREATE OR REPLACE FUNCTION sys.babelfish_fts_rewrite(IN phrase text) RETURNS TEXT AS 
+'babelfishpg_tsql', 'babelfish_fts_rewrite'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
@@ -1066,6 +1164,18 @@ END;
 $BODY$
 LANGUAGE 'plpgsql' STABLE;
 
+CREATE OR REPLACE FUNCTION sys.typeproperty(
+    typename sys.VARCHAR,
+    property sys.VARCHAR
+    )
+RETURNS INT
+AS $$
+DECLARE
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql STABLE;
 
 
 CREATE OR REPLACE FUNCTION sys.SWITCHOFFSET(IN input_expr PG_CATALOG.TEXT,
@@ -1531,7 +1641,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return CAST(sys.datediff_internal_date(datepart, startdate, enddate) AS INTEGER);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1540,7 +1650,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1549,7 +1659,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return CAST(sys.datediff_internal_df(datepart, startdate, enddate) AS INTEGER);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1558,7 +1668,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1567,7 +1677,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP) AS INTEGER);
+    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1576,7 +1686,7 @@ CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdat
 AS
 $body$
 BEGIN
-    return CAST(sys.datediff_internal(datepart, startdate, enddate) AS INTEGER);
+    return sys.datediff_internal(datepart, startdate, enddate);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1586,7 +1696,7 @@ CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN star
 AS
 $body$
 BEGIN
-    return sys.datediff_internal_date(datepart, startdate, enddate);
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1595,7 +1705,7 @@ CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN star
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1604,7 +1714,7 @@ CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN star
 AS
 $body$
 BEGIN
-    return sys.datediff_internal_df(datepart, startdate, enddate);
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1613,7 +1723,7 @@ CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN star
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1622,7 +1732,7 @@ CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN star
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
+    return sys.datediff_internal_big(datepart, startdate::TIMESTAMP, enddate::TIMESTAMP);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1631,7 +1741,7 @@ CREATE OR REPLACE FUNCTION sys.datediff_big(IN datepart PG_CATALOG.TEXT, IN star
 AS
 $body$
 BEGIN
-    return sys.datediff_internal(datepart, startdate, enddate);
+    return sys.datediff_internal_big(datepart, startdate, enddate);
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1748,109 +1858,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datepart_internal(IN datepart PG_CATALOG.TEXT, IN arg anyelement,IN df_tz INTEGER DEFAULT 0) RETURNS INTEGER AS $$
-DECLARE
-	result INTEGER;
-	first_day DATE;
-	first_week_end INTEGER;
-	day INTEGER;
-    datapart_date sys.DATETIME;
-BEGIN
-    IF pg_typeof(arg) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,'sys.decimal'::regtype,'numeric'::regtype,
-     'float'::regtype, 'double precision'::regtype, 'real'::regtype, 'sys.money'::regtype,'sys.smallmoney'::regtype,'sys.bit'::regtype) THEN
-        datapart_date = CAST(arg AS sys.DATETIME);
-        CASE datepart
-        WHEN 'dow' THEN
-            result = (date_part(datepart, datapart_date)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
-        WHEN 'tsql_week' THEN
-            first_day = make_date(date_part('year', datapart_date)::INTEGER, 1, 1);
-            first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
-            day = date_part('doy', datapart_date)::INTEGER;
-            IF day <= first_week_end THEN
-                result = 1;
-            ELSE
-                result = 2 + (day - first_week_end - 1) / 7;
-            END IF;
-        WHEN 'second' THEN
-            result = TRUNC(date_part(datepart, datapart_date))::INTEGER;
-        WHEN 'millisecond' THEN
-            result = right(date_part(datepart, datapart_date)::TEXT, 3)::INTEGER;
-        WHEN 'microsecond' THEN
-            result = right(date_part(datepart, datapart_date)::TEXT, 6)::INTEGER;
-        WHEN 'nanosecond' THEN
-            -- Best we can do - Postgres does not support nanosecond precision
-            result = right(date_part('microsecond', datapart_date)::TEXT, 6)::INTEGER * 1000;
-        ELSE
-            result = date_part(datepart, datapart_date)::INTEGER;
-        END CASE;
-        RETURN result;
-    END IF;
-	CASE datepart
-	WHEN 'dow' THEN
-		result = (date_part(datepart, arg)::INTEGER - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1;
-	WHEN 'tsql_week' THEN
-		first_day = make_date(date_part('year', arg)::INTEGER, 1, 1);
-		first_week_end = 8 - sys.datepart_internal('dow', first_day)::INTEGER;
-		day = date_part('doy', arg)::INTEGER;
-		IF day <= first_week_end THEN
-			result = 1;
-		ELSE
-			result = 2 + (day - first_week_end - 1) / 7;
-		END IF;
-	WHEN 'second' THEN
-		result = TRUNC(date_part(datepart, arg))::INTEGER;
-	WHEN 'millisecond' THEN
-		result = right(date_part(datepart, arg)::TEXT, 3)::INTEGER;
-	WHEN 'microsecond' THEN
-		result = right(date_part(datepart, arg)::TEXT, 6)::INTEGER;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		result = right(date_part('microsecond', arg)::TEXT, 6)::INTEGER * 1000;
-	WHEN 'tzoffset' THEN
-		-- timezone for datetimeoffset
-		result = df_tz;
-	ELSE
-		result = date_part(datepart, arg)::INTEGER;
-	END CASE;
-	RETURN result;
-EXCEPTION WHEN invalid_parameter_value or feature_not_supported THEN
-    -- date_part() throws an exception when trying to get day/month/year etc. from
-	-- TIME, so we just need to catch the exception in this case
-	-- date_part() returns 0 when trying to get hour/minute/second etc. from
-	-- DATE, which is the desirable behavior for datepart() as well.
-    -- If the date argument data type does not have the specified datepart,
-    -- date_part() will return the default value for that datepart.
-    CASE datepart
-	-- Case for datepart is year, yy and yyyy, all mappings are defined in gram.y.
-    WHEN 'year' THEN RETURN 1900;
-    -- Case for datepart is quater, qq and q
-    WHEN 'quarter' THEN RETURN 1;
-    -- Case for datepart is month, mm and m
-    WHEN 'month' THEN RETURN 1;
-    -- Case for datepart is day, dd and d
-    WHEN 'day' THEN RETURN 1;
-    -- Case for datepart is dayofyear, dy
-    WHEN 'doy' THEN RETURN 1;
-    -- Case for datepart is y(also refers to dayofyear)
-    WHEN 'y' THEN RETURN 1;
-    -- Case for datepart is week, wk and ww
-    WHEN 'tsql_week' THEN RETURN 1;
-    -- Case for datepart is iso_week, isowk and isoww
-    WHEN 'week' THEN RETURN 1;
-    -- Case for datepart is tzoffset and tz
-    WHEN 'tzoffset' THEN RETURN 0;
-    -- Case for datepart is weekday and dw, return dow according to datefirst
-    WHEN 'dow' THEN
-        RETURN (1 - current_setting('babelfishpg_tsql.datefirst')::INTEGER + 7) % 7 + 1 ;
-	ELSE
-        RAISE EXCEPTION '''%'' is not a recognized datepart option', datepart;
-        RETURN -1;
-	END CASE;
-END;
-$$
-STRICT
-LANGUAGE plpgsql IMMUTABLE;
-
 /*
     This function is needed when input date is datetimeoffset type. When running the following query in postgres using tsql dialect, it faied.
         select dateadd(minute, -70, '2016-12-26 00:30:05.523456+8'::datetimeoffset);
@@ -1858,384 +1865,51 @@ LANGUAGE plpgsql IMMUTABLE;
     but the error shows : operator does not exist: sys.datetimeoffset + interval. As the result, we should not use '+' directly
     but should keep using OPERATOR(sys.+) when input date is in datetimeoffset type.
 */
-CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
-DECLARE
-	timezone INTEGER;
-BEGIN
-	timezone = sys.babelfish_get_datetimeoffset_tzoffset(startdate)::INTEGER * 2;
-	startdate = startdate OPERATOR(sys.+) make_interval(mins => timezone);
-	CASE datepart
-	WHEN 'year' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
-	WHEN 'quarter' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
-	WHEN 'month' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
-	WHEN 'dayofyear', 'y' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'day' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'week' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
-	WHEN 'weekday' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'hour' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
-	WHEN 'minute' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
-	WHEN 'second' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
-	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.000001);
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
-	END CASE;
-END;
-$$
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset)
+RETURNS datetimeoffset AS
+'babelfishpg_common', 'dateadd_datetimeoffset'
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
 BEGIN
-    IF pg_typeof(startdate) = 'date'::regtype AND
-		datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
-		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type date.', datepart;
+    IF pg_typeof(startdate) = 'time'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 0);
 	END IF;
-    IF pg_typeof(startdate) = 'time'::regtype AND
-		datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'weekday') THEN
-		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+    IF pg_typeof(startdate) = 'date'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 1);
 	END IF;
-
-	CASE datepart
-	WHEN 'year' THEN
-		RETURN startdate + make_interval(years => num);
-	WHEN 'quarter' THEN
-		RETURN startdate + make_interval(months => num * 3);
-	WHEN 'month' THEN
-		RETURN startdate + make_interval(months => num);
-	WHEN 'dayofyear', 'y' THEN
-		RETURN startdate + make_interval(days => num);
-	WHEN 'day' THEN
-		RETURN startdate + make_interval(days => num);
-	WHEN 'week' THEN
-		RETURN startdate + make_interval(weeks => num);
-	WHEN 'weekday' THEN
-		RETURN startdate + make_interval(days => num);
-	WHEN 'hour' THEN
-		RETURN startdate + make_interval(hours => num);
-	WHEN 'minute' THEN
-		RETURN startdate + make_interval(mins => num);
-	WHEN 'second' THEN
-		RETURN startdate + make_interval(secs => num);
-	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
-	WHEN 'microsecond' THEN
-        IF pg_typeof(startdate) = 'time'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
-        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
-        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
-        ELSE
-            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
-        END IF;
-	WHEN 'nanosecond' THEN
-        IF pg_typeof(startdate) = 'time'::regtype THEN
-            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
-        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
-            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
-        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
-            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
-        ELSE
-            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
-        END IF;
-	ELSE
-		RAISE EXCEPTION '''%'' is not a recognized dateadd option.', datepart;
-	END CASE;
+    IF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 2);
+    END IF;
+    IF (pg_typeof(startdate) = 'sys.datetime'::regtype or pg_typeof(startdate) = 'timestamp'::regtype) THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 3);
+    END IF;
+    IF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+        return sys.dateadd_internal_datetime(datepart, num, startdate, 4);
+    END IF;
 END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
-DECLARE
-	result BIGINT;
-	year_diff BIGINT;
-	month_diff BIGINT;
-	day_diff BIGINT;
-	hour_diff BIGINT;
-	minute_diff BIGINT;
-	second_diff BIGINT;
-	millisecond_diff BIGINT;
-	microsecond_diff BIGINT;
-	y1 BIGINT;
-	m1 BIGINT;
-	d1 BIGINT;
-	y2 BIGINT;
-	m2 BIGINT;
-	d2 BIGINT;
-BEGIN
-	CASE datepart
-	WHEN 'year' THEN
-		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
-		result = year_diff;
-	WHEN 'quarter' THEN
-		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
-		month_diff = sys.datepart('month', enddate) - sys.datepart('month', startdate);
-		result = (year_diff * 12 + month_diff) / 3;
-	WHEN 'month' THEN
-		year_diff = sys.datepart('year', enddate) - sys.datepart('year', startdate);
-		month_diff = sys.datepart('month', enddate) - sys.datepart('month', startdate);
-		result = year_diff * 12 + month_diff;
-	WHEN 'doy', 'y' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff;
-	WHEN 'day' THEN
-		y1 = sys.datepart('year', enddate);
-		m1 = sys.datepart('month', enddate);
-		d1 = sys.datepart('day', enddate);
-		y2 = sys.datepart('year', startdate);
-		m2 = sys.datepart('month', startdate);
-		d2 = sys.datepart('day', startdate);
-		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
-	WHEN 'week' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff / 7;
-	WHEN 'hour' THEN
-		y1 = sys.datepart('year', enddate);
-		m1 = sys.datepart('month', enddate);
-		d1 = sys.datepart('day', enddate);
-		y2 = sys.datepart('year', startdate);
-		m2 = sys.datepart('month', startdate);
-		d2 = sys.datepart('day', startdate);
-		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
-		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
-		result = day_diff * 24 + hour_diff;
-	WHEN 'minute' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
-		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
-		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
-	WHEN 'second' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
-		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
-		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
-		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
-	WHEN 'millisecond' THEN
-		-- millisecond result from date_part by default contains second value,
-		-- so we do not need to add second_diff again
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
-		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
-		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
-		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
-		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
-	WHEN 'microsecond' THEN
-		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we do not need to add second_diff and millisecond_diff again
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
-		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
-		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
-		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
-		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
-		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		day_diff = sys.datepart('day', enddate - startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
-		minute_diff = sys.datepart('minute', enddate OPERATOR(sys.-) startdate);
-		second_diff = TRUNC(sys.datepart('second', enddate OPERATOR(sys.-) startdate));
-		millisecond_diff = TRUNC(sys.datepart('millisecond', enddate OPERATOR(sys.-) startdate));
-		microsecond_diff = TRUNC(sys.datepart('microsecond', enddate OPERATOR(sys.-) startdate));
-		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
-	END CASE;
-
-	return result;
-END;
-$$
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_datetime(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT, IN datetimetype INT) 
+RETURNS TIMESTAMP AS
+'babelfishpg_common', 'dateadd_datetime'
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal_date(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS BIGINT AS $$
-DECLARE
-	result BIGINT;
-	year_diff BIGINT;
-	month_diff BIGINT;
-	day_diff BIGINT;
-	hour_diff BIGINT;
-	minute_diff BIGINT;
-	second_diff BIGINT;
-	millisecond_diff BIGINT;
-	microsecond_diff BIGINT;
-BEGIN
-	CASE datepart
-	WHEN 'year' THEN
-		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
-		result = year_diff;
-	WHEN 'quarter' THEN
-		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
-		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
-		result = (year_diff * 12 + month_diff) / 3;
-	WHEN 'month' THEN
-		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
-		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
-		result = year_diff * 12 + month_diff;
-	-- for all intervals smaller than month, (DATE - DATE) already returns the integer number of days
-	-- between the dates, so just use that directly as the day_diff. There is no finer resolution
-	-- than days with the DATE type anyways.
-	WHEN 'doy', 'y' THEN
-		day_diff = enddate - startdate;
-		result = day_diff;
-	WHEN 'day' THEN
-		day_diff = enddate - startdate;
-		result = day_diff;
-	WHEN 'week' THEN
-		day_diff = enddate - startdate;
-		result = day_diff / 7;
-	WHEN 'hour' THEN
-		day_diff = enddate - startdate;
-		result = day_diff * 24;
-	WHEN 'minute' THEN
-		day_diff = enddate - startdate;
-		result = day_diff * 24 * 60;
-	WHEN 'second' THEN
-		day_diff = enddate - startdate;
-		result = day_diff * 24 * 60 * 60;
-	WHEN 'millisecond' THEN
-		-- millisecond result from date_part by default contains second value,
-		-- so we do not need to add second_diff again
-		day_diff = enddate - startdate;
-		result = day_diff * 24 * 60 * 60 * 1000;
-	WHEN 'microsecond' THEN
-		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we do not need to add second_diff and millisecond_diff again
-		day_diff = enddate - startdate;
-		result = day_diff * 24 * 60 * 60 * 1000 * 1000;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		day_diff = enddate - startdate;
-		result = day_diff * 24 * 60 * 60 * 1000 * 1000 * 1000;
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
-	END CASE;
-
-	return result;
-END;
-$$
+CREATE OR REPLACE FUNCTION sys.datediff_internal_big(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement)
+RETURNS BIGINT AS
+'babelfishpg_common', 'timestamp_diff_big'
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS BIGINT AS $$
-DECLARE
-	result BIGINT;
-	year_diff BIGINT;
-	month_diff BIGINT;
-	day_diff BIGINT;
-	hour_diff BIGINT;
-	minute_diff BIGINT;
-	second_diff BIGINT;
-	millisecond_diff BIGINT;
-	microsecond_diff BIGINT;
-	y1 BIGINT;
-	m1 BIGINT;
-	d1 BIGINT;
-	y2 BIGINT;
-	m2 BIGINT;
-	d2 BIGINT;
-BEGIN
-	CASE datepart
-	WHEN 'year' THEN
-		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
-		result = year_diff;
-	WHEN 'quarter' THEN
-		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
-		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
-		result = (year_diff * 12 + month_diff) / 3;
-	WHEN 'month' THEN
-		year_diff = date_part('year', enddate)::BIGINT - date_part('year', startdate)::BIGINT;
-		month_diff = date_part('month', enddate)::BIGINT - date_part('month', startdate)::BIGINT;
-		result = year_diff * 12 + month_diff;
-	WHEN 'doy', 'y' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		result = day_diff;
-	WHEN 'day' THEN
-		y1 = date_part('year', enddate)::BIGINT;
-		m1 = date_part('month', enddate)::BIGINT;
-		d1 = date_part('day', enddate)::BIGINT;
-		y2 = date_part('year', startdate)::BIGINT;
-		m2 = date_part('month', startdate)::BIGINT;
-		d2 = date_part('day', startdate)::BIGINT;
-		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
-	WHEN 'week' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		result = day_diff / 7;
-	WHEN 'hour' THEN
-		y1 = date_part('year', enddate)::BIGINT;
-		m1 = date_part('month', enddate)::BIGINT;
-		d1 = date_part('day', enddate)::BIGINT;
-		y2 = date_part('year', startdate)::BIGINT;
-		m2 = date_part('month', startdate)::BIGINT;
-		d2 = date_part('day', startdate)::BIGINT;
-		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
-		hour_diff = date_part('hour', enddate)::BIGINT - date_part('hour', startdate)::BIGINT;
-		result = day_diff * 24 + hour_diff;
-	WHEN 'minute' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		result = (day_diff * 24 + hour_diff) * 60 + minute_diff;
-	WHEN 'second' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
-		result = ((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60 + second_diff;
-	WHEN 'millisecond' THEN
-		-- millisecond result from date_part by default contains second value,
-		-- so we do not need to add second_diff again
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
-		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
-		result = (((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000 + millisecond_diff;
-	WHEN 'microsecond' THEN
-		-- microsecond result from date_part by default contains second and millisecond values,
-		-- so we do not need to add second_diff and millisecond_diff again
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
-		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
-		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
-		result = ((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		minute_diff = date_part('minute', enddate OPERATOR(sys.-) startdate)::BIGINT;
-		second_diff = TRUNC(date_part('second', enddate OPERATOR(sys.-) startdate));
-		millisecond_diff = TRUNC(date_part('millisecond', enddate OPERATOR(sys.-) startdate));
-		microsecond_diff = TRUNC(date_part('microsecond', enddate OPERATOR(sys.-) startdate));
-		result = (((((day_diff * 24 + hour_diff) * 60 + minute_diff) * 60) * 1000) * 1000 + microsecond_diff) * 1000;
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized datediff option.', datepart;
-	END CASE;
-
-	return result;
-END;
-$$
+CREATE OR REPLACE FUNCTION sys.datediff_internal(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement)
+RETURNS INT AS
+'babelfishpg_common', 'timestamp_diff'
 STRICT
-LANGUAGE plpgsql IMMUTABLE;
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg anyelement) RETURNS TEXT AS 
 $BODY$
@@ -3808,14 +3482,6 @@ CREATE OR REPLACE FUNCTION sys.host_id()
 RETURNS sys.VARCHAR(10)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.host_id() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.identity_into_int(IN typename INT, IN seed INT, IN increment INT)
-RETURNS int AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into_int(INT, INT, INT) TO PUBLIC;
-
-CREATE OR REPLACE FUNCTION sys.identity_into_smallint(IN typename INT, IN seed SMALLINT, IN increment SMALLINT)
-RETURNS smallint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
-GRANT EXECUTE ON FUNCTION sys.identity_into_smallint(INT, SMALLINT, SMALLINT) TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.identity_into_bigint(IN typename INT, IN seed BIGINT, IN increment BIGINT)
 RETURNS bigint AS 'babelfishpg_tsql' LANGUAGE C STABLE;
 GRANT EXECUTE ON FUNCTION sys.identity_into_bigint(INT, BIGINT, BIGINT) TO PUBLIC;
@@ -3875,6 +3541,15 @@ GRANT EXECUTE ON FUNCTION sys.degrees(NUMERIC) TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_natural' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT, IN arg2 INT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_base' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log10(IN arg1 FLOAT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log10' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
@@ -4387,6 +4062,16 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION SYS.TYPE_NAME(IN type_id INT)
+RETURNS SYS.NVARCHAR(128) AS
+'babelfishpg_tsql', 'type_name'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION SYS.TYPE_ID(IN type_name SYS.NVARCHAR)
+RETURNS INT AS
+'babelfishpg_tsql', 'type_id'
+LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.DATETRUNC(IN datepart PG_CATALOG.TEXT, IN date ANYELEMENT) RETURNS ANYELEMENT AS
 $body$
 DECLARE
@@ -4492,3 +4177,8 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_pivot()
+RETURNS setof record
+AS 'babelfishpg_tsql', 'bbf_pivot'
+LANGUAGE C STABLE;

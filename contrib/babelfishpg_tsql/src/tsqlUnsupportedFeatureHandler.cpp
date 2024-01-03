@@ -89,6 +89,9 @@ protected:
 		bool throw_error = false;
 		int count = 0; /* record count to skip unnecessary visiting */
 		bool is_inside_trigger = false;
+		bool is_inside_view = false;
+		bool is_inside_with = false;
+		bool is_inside_join = false;
 
 		/* handler */
 		void handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node, escape_hatch_t* eh);
@@ -121,6 +124,7 @@ protected:
 
 		// for unsupported DDLs. we'll manage whitelist
 		antlrcpp::Any visitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override;
+		antlrcpp::Any visitAlter_authorization(TSqlParser::Alter_authorizationContext *ctx) override;
 
 		// DML
 		antlrcpp::Any visitSelect_statement(TSqlParser::Select_statementContext *ctx) override;
@@ -188,14 +192,13 @@ protected:
 		}
 		antlrcpp::Any visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx) override; // UPDATE() in trigger
 		antlrcpp::Any visitFreetext_function(TSqlParser::Freetext_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitFreetext_predicate(TSqlParser::Freetext_predicateContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "CONTAINS/FREETEXT predicate", &st_escape_hatch_fulltext, getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function", getLineAndPos(ctx)); return visitChildren(ctx); }
 
-		antlrcpp::Any visitDefault_expr(TSqlParser::Default_exprContext *ctx) override;
 		antlrcpp::Any visitHierarchyid_coloncolon(TSqlParser::Hierarchyid_coloncolonContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_literal_expr(TSqlParser::Odbc_literal_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitDollar_action_expr(TSqlParser::Dollar_action_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx) override;
 
 		antlrcpp::Any visitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override;
@@ -526,7 +529,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlP
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW_VIEW_METADATA_OPTION, option->VIEW_METADATA());
 	}
 
-	return visitChildren(ctx);
+	is_inside_view = true;
+	auto ret =  visitChildren(ctx);
+	is_inside_view = false;
+	
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitProcedure_param(TSqlParser::Procedure_paramContext *ctx)
@@ -1024,6 +1031,25 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_authorization(TSqlParser::Alter_authorizationContext *ctx)
+{	
+	if (!ctx->object_type()) 
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION on object types other than DATABASE::", getLineAndPos(ctx));		
+	else {
+		std::string object_type = ::getFullText(ctx->object_type());
+		if (pg_strcasecmp("DATABASE", object_type.c_str()) != 0) 
+			handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION on object types other than DATABASE::", getLineAndPos(ctx));	
+	}
+	
+	if (ctx->authorization_grantee()->SCHEMA()) 
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION TO SCHEMA OWNER", getLineAndPos(ctx));
+		
+	if (ctx->entity_name()->DOT().size() > 0) 
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_AUTHORIZATION, "ALTER AUTHORIZATION with multi-part database name", getLineAndPos(ctx));	
+				
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::Ddl_statementContext *ctx)
 {
 	if (ctx->create_user())
@@ -1038,12 +1064,17 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		if (create_user->WITHOUT())
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
 	}
+	if(ctx->alter_fulltext_index())
+	{
+		handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER FULLTEXT INDEX",  getLineAndPos(ctx));
+	}
 	/*
 	 * We have more than 100 DDLs but support a few of them.
 	 * manage the whitelist here.
 	 * Please keep the order in grammar file.
 	 */
-	if (ctx->alter_database()
+	if (ctx->alter_authorization()
+	 || ctx->alter_database()
 	 || ctx->alter_db_role()
 	 || ctx->alter_fulltext_index()
 	 || ctx->alter_index()
@@ -1269,9 +1300,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDbcc_statement(TSqlParser:
 		}
 		else
 		{
+			std::string dbcc_cmd = ::getFullText(ctx->dbcc_command());
+			std::transform(dbcc_cmd.begin(), dbcc_cmd.end(), dbcc_cmd.begin(), ::toupper);
 			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED,
-				format_errmsg("DBCC %s is not yet supported in Babelfish",
-					::getFullText(ctx->dbcc_command()).c_str()), 
+				format_errmsg("DBCC %s is not currently supported in Babelfish",
+					dbcc_cmd.c_str()), 
 						getLineAndPos(ctx->dbcc_command()));
 		}
 	}
@@ -1309,11 +1342,37 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlP
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
 	if (ctx->PIVOT())
-		handle(INSTR_UNSUPPORTED_TSQL_PIVOT, ctx->PIVOT());
+	{
+		if (is_inside_view)
+		{
+			is_inside_view = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Create view on stmt with PIVOT operator is not currently supported.", 0, 0);
+		}
+			
+
+		if (is_inside_with)
+		{
+			is_inside_with = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "WITH CTE stmt with usage of PIVOT operator is not currently supported", 0, 0);
+		}
+
+		if (is_inside_join)
+		{
+			is_inside_join = false;
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "JOIN with PIVOT statement is not currently supported", 0, 0);
+		}
+	}
+	if (ctx->JOIN())
+	{
+		is_inside_join = true;
+	}
 	if (ctx->UNPIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_UNPIVOT, ctx->UNPIVOT());
 
-	return visitChildren(ctx);
+	auto ret = visitChildren(ctx);
+
+	is_inside_join = false;
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For_clauseContext *ctx)
@@ -1362,7 +1421,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser
 {
 	if (ctx->XMLNAMESPACES())
 		handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx));
-	return visitChildren(ctx);
+
+	is_inside_with = true;
+	auto ret = visitChildren(ctx);
+	is_inside_with = false;
+
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)
@@ -1377,21 +1441,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAggregate_windowed_functio
 	if (ctx->GROUPING_ID())
 		handle(INSTR_UNSUPPORTED_TSQL_GROUPING_FUNCTION, ctx->GROUPING());
 
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDefault_expr(TSqlParser::Default_exprContext *ctx)
-{
-	TSqlParser::Expression_listContext *pctx = dynamic_cast<TSqlParser::Expression_listContext *>(ctx->parent);
-	if (!pctx || dynamic_cast<TSqlParser::Table_value_constructorContext *>(pctx->parent) == nullptr) /* if DEFAULT expression is used for VALUES ..., accept it */
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx)
-{
-	if (ctx->DEFAULT())
-		handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_PARAMETER_DEFAULT, ctx->DEFAULT());
 	return visitChildren(ctx);
 }
 
@@ -1609,7 +1658,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_approlepassword",
 	"sp_audit_write",
 	"sp_change_users_login",
-	"sp_changedbowner",
 	"sp_changeobjectowner",
 	"sp_control_dbmasterkey_password",
 	"sp_dbfixedrolepermission",
@@ -1699,6 +1747,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 				unsupported_feature = "GRANT PERMISSION " + perm->getText();
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
+
 		}
 	}
 
@@ -1706,9 +1755,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	{
 		auto perm_obj = grant->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (grant->ALL() && obj_type && obj_type->SCHEMA())
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(grant));
-		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
+		if (obj_type && !obj_type->OBJECT())
 		{
 			unsupported_feature = "GRANT ON " + obj_type->getText();
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
@@ -1793,6 +1840,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 				unsupported_feature = "REVOKE PERMISSION " + perm->getText();
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
+
 		}
 	}
 
@@ -1800,9 +1848,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 	{
 		auto perm_obj = revoke->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (revoke->ALL() && obj_type && obj_type->SCHEMA())
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(revoke));
-		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
+		if (obj_type && !obj_type->OBJECT())
 		{
 			unsupported_feature = "REVOKE ON " + obj_type->getText();
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));

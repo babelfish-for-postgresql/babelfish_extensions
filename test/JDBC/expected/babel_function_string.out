@@ -165,7 +165,7 @@ SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e),
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
-3#!#3#!#3#!#10#!#3#!#3#!#10#!#3#!#3
+10#!#3#!#3#!#10#!#3#!#3#!#10#!#3#!#3
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 

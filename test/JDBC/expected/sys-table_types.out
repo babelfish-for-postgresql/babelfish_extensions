@@ -22,7 +22,7 @@ from sys.table_types
 where name = 'tt_type';
 GO
 ~~START~~
-text#!#int#!#int#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#bit
+text#!#int#!#int#!#smallint#!#int#!#int#!#varchar#!#bit#!#int#!#int#!#int#!#int#!#int#!#bit
 tt_type#!#0#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#1#!#0
 ~~END~~
 

@@ -180,6 +180,8 @@ GO
 -- Unsupported DBCC command
 DBCC CHECKTABLE(babel_3201_t1);
 GO
+DBCC checktable(babel_3201_t1);
+GO
 
 -- Invalid DBCC command
 DBCC FAKE_COMMAND(t1);

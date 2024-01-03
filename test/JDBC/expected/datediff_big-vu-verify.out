@@ -2,22 +2,22 @@ SELECT * FROM datediff_big_vu_prepare_v1
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-1000#!#4000#!#12000#!#365243#!#365243#!#52177#!#8765832#!#525949920#!#31556995200#!#31556995200000#!#31556995200000000#!#6311433600000000000
+1000#!#4000#!#12000#!#365243#!#365243#!#52178#!#8765832#!#525949920#!#31556995200#!#31556995200000#!#31556995200000000#!#6311433600000000000
 ~~END~~
 
 
 SELECT * FROM datediff_big_vu_prepare_v2
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 535)~~
 
-~~ERROR (Message: bigint out of range)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
 
 SELECT * FROM datediff_big_vu_prepare_v3
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-200#!#803#!#2411#!#73413#!#73413#!#10487#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
+200#!#803#!#2411#!#73413#!#73413#!#10488#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
 ~~END~~
 
 
@@ -25,7 +25,7 @@ SELECT * FROM datediff_big_vu_prepare_v4
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-200#!#803#!#2411#!#73413#!#73413#!#10487#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
+200#!#803#!#2411#!#73413#!#73413#!#10488#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
 ~~END~~
 
 
@@ -33,7 +33,7 @@ SELECT * FROM datediff_big_vu_prepare_v5
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-100#!#396#!#1189#!#36160#!#36160#!#5165#!#867840#!#52070401#!#3124224060#!#3124224060000#!#3124224060000000#!#3124224060000000000
+100#!#396#!#1189#!#36160#!#36160#!#5166#!#867840#!#52070401#!#3124224060#!#3124224060000#!#3124224060000000#!#3124224060000000000
 ~~END~~
 
 
@@ -55,16 +55,18 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!
 
 SELECT * FROM datediff_big_vu_prepare_v8
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unit "year" not supported for type time without time zone)~~
+~~START~~
+bigint
+0
+~~END~~
 
 
 SELECT * FROM datediff_big_vu_prepare_v9
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: operator is not unique: time without time zone sys.- time without time zone)~~
+~~START~~
+bigint
+51
+~~END~~
 
 
 SELECT * FROM datediff_big_vu_prepare_v10
@@ -95,22 +97,22 @@ EXEC datediff_big_vu_prepare_p1
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-1000#!#4000#!#12000#!#365243#!#365243#!#52177#!#8765832#!#525949920#!#31556995200#!#31556995200000#!#31556995200000000#!#6311433600000000000
+1000#!#4000#!#12000#!#365243#!#365243#!#52178#!#8765832#!#525949920#!#31556995200#!#31556995200000#!#31556995200000000#!#6311433600000000000
 ~~END~~
 
 
 EXEC datediff_big_vu_prepare_p2
 GO
-~~ERROR (Code: 8115)~~
+~~ERROR (Code: 535)~~
 
-~~ERROR (Message: bigint out of range)~~
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
 
 
 EXEC datediff_big_vu_prepare_p3
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-200#!#803#!#2411#!#73413#!#73413#!#10487#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
+200#!#803#!#2411#!#73413#!#73413#!#10488#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
 ~~END~~
 
 
@@ -118,7 +120,7 @@ EXEC datediff_big_vu_prepare_p4
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-200#!#803#!#2411#!#73413#!#73413#!#10487#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
+200#!#803#!#2411#!#73413#!#73413#!#10488#!#1761912#!#105714720#!#6342883200#!#6342883200000#!#6342883200000000#!#6342883200000000000
 ~~END~~
 
 
@@ -126,7 +128,7 @@ EXEC datediff_big_vu_prepare_p5
 GO
 ~~START~~
 bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint
-100#!#396#!#1189#!#36160#!#36160#!#5165#!#867840#!#52070401#!#3124224060#!#3124224060000#!#3124224060000000#!#3124224060000000000
+100#!#396#!#1189#!#36160#!#36160#!#5166#!#867840#!#52070401#!#3124224060#!#3124224060000#!#3124224060000000#!#3124224060000000000
 ~~END~~
 
 
@@ -148,16 +150,18 @@ bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!
 
 EXEC datediff_big_vu_prepare_p8
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unit "year" not supported for type time without time zone)~~
+~~START~~
+bigint
+0
+~~END~~
 
 
 EXEC datediff_big_vu_prepare_p9
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unit "year" not supported for type time without time zone)~~
+~~START~~
+bigint
+0
+~~END~~
 
 
 EXEC datediff_big_vu_prepare_p10
@@ -190,3 +194,66 @@ bigint#!#bigint#!#bigint#!#bigint
 0#!#366#!#739013#!#3652424
 ~~END~~
 
+
+begin transaction
+go
+
+SELECT DATEDIFF_BIG(fakeoption, cast('2023-01-01 01:01:20.98' as datetime), cast('2023-01-01 01:01:20.98' as datetime))
+go
+~~ERROR (Code: 155)~~
+
+~~ERROR (Message: 'fakeoption' is not a recognized datediff option)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEDIFF_BIG(nanosecond, cast('1900-01-01 01:01:20.98' as datetime), cast('3000-01-01 01:01:20.98' as datetime))
+go
+~~ERROR (Code: 535)~~
+
+~~ERROR (Message: The datediff function resulted in an overflow. The number of dateparts separating two date/time instances is too large. Try to use datediff with a less precise datepart)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+begin transaction
+go
+
+SELECT DATEADD(YY,-30000000, cast('1900-01-01' as datetime));
+go
+~~ERROR (Code: 517)~~
+
+~~ERROR (Message: Adding a value to a 'datetime' column caused an overflow.)~~
+
+
+if (@@trancount > 0) select cast('compile time error' as text) else select cast('runtime error' as text)
+GO
+~~START~~
+text
+compile time error
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO

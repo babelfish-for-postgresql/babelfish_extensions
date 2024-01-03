@@ -20,10 +20,6 @@ GO
 ---  Prepare Objects
 ---
 
----- SCHEMA
-CREATE SCHEMA scm;
-GO
-
 ---- TABLE
 CREATE TABLE t1 ( a int, b int);
 GO
@@ -59,13 +55,13 @@ GO
 ---  Basic Grant / Revoke
 ---
 
-GRANT SELECT ON SCHEMA::scm TO guest;
-GO
-
-GRANT INSERT ON SCHEMA::scm TO guest;
-GO
-
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION;
+GO
+
+GRANT ALL ON OBJECT::t1 TO PUBLIC;
+GO
+
+REVOKE ALL ON OBJECT::t1 FROM PUBLIC;
 GO
 
 GRANT ALL ON OBJECT::seq_tinyint TO guest WITH GRANT OPTION;
@@ -75,6 +71,12 @@ GRANT ALL ON OBJECT::my_view TO guest WITH GRANT OPTION;
 GO
 
 GRANT ALL ON OBJECT::my_func TO guest WITH GRANT OPTION;
+GO
+
+GRANT EXECUTE ON OBJECT::my_func TO PUBLIC;
+GO
+
+REVOKE EXECUTE ON OBJECT::my_func FROM PUBLIC;
 GO
 
 GRANT ALL ON OBJECT::my_proc TO guest WITH GRANT OPTION;
@@ -143,9 +145,6 @@ GO
 REVOKE ALL TO alogin; -- database permission
 GO
 
-REVOKE SELECT ON SCHEMA::scm FROM guest; -- unsupported permission
-GO
-
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission
 GO
 
@@ -161,15 +160,24 @@ GO
 GRANT ALL ON OBJECT::t1 TO guest WITH GRANT OPTION AS superuser;
 GO
 
+GRANT SELECT ON t1 TO PUBLIC;
+GO
+
+REVOKE SELECT ON t1 FROM PUBLIC;
+GO
+
+GRANT EXECUTE ON my_func TO PUBLIC;
+GO
+
+REVOKE EXECUTE ON my_func FROM PUBLIC;
+GO
+
 REVOKE ALL ON OBJECT::t1 TO guest AS superuser;
 GO
 
 ---
 ---  Clean Up
 ---
-
-DROP SCHEMA scm;
-GO
 
 DROP VIEW IF EXISTS my_view;
 GO

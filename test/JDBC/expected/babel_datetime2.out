@@ -658,9 +658,9 @@ datetime2
 -- out of range
 select dateadd(year, 150, cast('9900-12-26 23:29:29' as datetime2));
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 517)~~
 
-~~ERROR (Message: data out of range for datetime2)~~
+~~ERROR (Message: Adding a value to a 'datetime2' column caused an overflow.)~~
 
 
 -- Test data type precedence TODO Fix [BABEL-883] missing TDS support for type regtype (was pg_typeof produces error in sqlcmd)
