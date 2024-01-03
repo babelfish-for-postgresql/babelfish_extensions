@@ -1,5 +1,5 @@
 name: JDBC Tests
-on: [push, workflow_call]
+on: [workflow_call]
 
 jobs:
   run-babelfish-jdbc-tests:
@@ -98,7 +98,7 @@ jobs:
         
       - name: Generate Code Coverage
         id: generate-code-coverage
-        if: always() && github.event_name == 'pull_request'
+        if: always() && steps.jdbc.outcome == 'success'
         run: |
           export PG_CONFIG=~/psql/bin/pg_config
           export PG_SRC=~/work/postgresql_modified_for_babelfish

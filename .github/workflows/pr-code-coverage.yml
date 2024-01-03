@@ -1,5 +1,5 @@
 name: Tests
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
 
@@ -81,3 +81,9 @@ jobs:
         lcov --list lcov.info
       shell: bash
 
+    - name: Upload coverage to coveralls
+      if: always() && steps.generate-total-code-coverage.outcome == 'success'
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: $GITHUB_WORKSPACE/contrib/lcov.info
