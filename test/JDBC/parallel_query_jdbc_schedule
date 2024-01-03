@@ -32,7 +32,7 @@ ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
 
-# These test should not ger run in parallel query
+# These test should not get ran in parallel query
 ignore#!#BABEL-1363
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
