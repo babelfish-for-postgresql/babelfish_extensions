@@ -326,6 +326,17 @@ AS SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.availability_groups TO PUBLIC;
 
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name NAME NOT NULL COLLATE sys.database_default,
+  object_name NAME NOT NULL COLLATE sys.database_default,
+  permission INT NOT NULL,
+  grantee NAME NOT NULL COLLATE sys.database_default,
+  object_type NAME COLLATE sys.database_default,
+  PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
+);
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
