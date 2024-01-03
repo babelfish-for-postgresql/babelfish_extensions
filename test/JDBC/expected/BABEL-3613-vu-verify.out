@@ -58,3 +58,26 @@ GO
 int#!#varchar#!#int#!#nvarchar
 ~~END~~
 
+
+-- BABEL-4662
+select count(*) from sys.all_objects where name = 'pltsql_call_handler';
+go
+~~START~~
+int
+0
+~~END~~
+
+select count(*) from sys.procedures where name = 'pltsql_call_handler';
+go
+~~START~~
+int
+0
+~~END~~
+
+select count(*) from sys.system_objects where name = 'pltsql_call_handler';
+go
+~~START~~
+int
+0
+~~END~~
+
