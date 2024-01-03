@@ -1,0 +1,8 @@
+DROP VIEW sys_availability_replicas_test_view
+GO
+
+DROP PROC sys_availability_replicas_test_proc
+GO
+
+DROP FUNCTION sys_availability_replicas_test_func
+GO
