@@ -1,5 +1,5 @@
 name: JDBC Tests
-on: [push, pull_request]
+on: [push, workflow_call]
 
 jobs:
   run-babelfish-jdbc-tests:
@@ -19,6 +19,9 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          install_dir: 'psql'
+          code_coverage: 'yes'
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -61,7 +64,7 @@ jobs:
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
-          name: postgres-log
+          name: postgres-log-jdbc
           path: ~/psql/data/logfile
       
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
@@ -86,9 +89,43 @@ jobs:
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
-          name: output-diff.diff
+          name: jdbc-output-diff.diff
           path: test/JDBC/Info/output-diff.diff
 
       - name: Check and upload coredumps
         if: always() && steps.jdbc.outcome == 'failure'
         uses: ./.github/composite-actions/upload-coredump
+        
+      - name: Generate Code Coverage
+        id: generate-code-coverage
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          export PG_CONFIG=~/psql/bin/pg_config
+          export PG_SRC=~/work/postgresql_modified_for_babelfish
+          export cmake=$(which cmake)
+          cd contrib
+          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
+          do
+            cd $ext
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+            cd ..
+          done
+        shell: bash
+  
+      - name: Summarize code coverage
+        id: code-coverage-summary
+        if: always() && steps.generate-code-coverage.outcome == 'success'
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o jdbc-lcov.info
+          lcov --list jdbc-lcov.info
+
+      - name: Upload Coverage Report for Babelfish Extensions
+        if: always() && steps.code-coverage-summary.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-babelfish-extensions-jdbc
+          path: contrib/jdbc-lcov.info
+          retention-days: 1
+  
+ 
