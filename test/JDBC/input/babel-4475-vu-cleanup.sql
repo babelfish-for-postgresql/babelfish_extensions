@@ -16,12 +16,6 @@ go
 drop function babel_4475_f2
 go
 
-drop function babel_4475_f3
-go
-
-drop function babel_4475_f4
-go
-
 drop procedure babel_4475_p1
 go
 

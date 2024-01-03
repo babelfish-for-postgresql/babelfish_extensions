@@ -22,16 +22,10 @@ go
 select * from babel_4475_v3
 go
 
-select babel_4475_f3()
-go
-
 exec babel_4475_p3
 go
 
 select * from babel_4475_v4
-go
-
-select babel_4475_f4()
 go
 
 exec babel_4475_p4

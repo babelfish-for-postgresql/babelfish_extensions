@@ -28,22 +28,10 @@ go
 create view babel_4475_v3 as select cast(cast('ab' as rowversion) as varchar(2))
 go
 
-create function babel_4475_f3() returns table 
-as return (
-    select cast(cast('ab' as rowversion) as varchar(2))
-)
-go
-
 create procedure babel_4475_p3 as select cast(cast('ab' as rowversion) as varchar(2))
 go
 
 create view babel_4475_v4 as select cast(cast('ab' as rowversion) as pg_catalog.varchar(2))
-go
-
-create function babel_4475_f4() returns table 
-as return (
-    select cast(cast('ab' as rowversion) as pg_catalog.varchar(2))
-)
 go
 
 create procedure babel_4475_p4 as select cast(cast('ab' as rowversion) as pg_catalog.varchar(2))

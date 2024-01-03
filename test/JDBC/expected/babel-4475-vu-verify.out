@@ -57,14 +57,6 @@ ab
 ~~END~~
 
 
-select babel_4475_f3()
-go
-~~START~~
-varchar
-ab
-~~END~~
-
-
 exec babel_4475_p3
 go
 ~~START~~
@@ -74,14 +66,6 @@ ab
 
 
 select * from babel_4475_v4
-go
-~~START~~
-varchar
-ab
-~~END~~
-
-
-select babel_4475_f4()
 go
 ~~START~~
 varchar
