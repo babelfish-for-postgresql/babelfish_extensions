@@ -1,0 +1,28 @@
+SELECT * FROM sys.availability_replicas
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier#!#int#!#nvarchar#!#varbinary#!#nvarchar#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#datetime#!#datetime#!#int#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar
+~~END~~
+
+
+SELECT * FROM sys_availability_replicas_test_view
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier#!#int#!#nvarchar#!#varbinary#!#nvarchar#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#datetime#!#datetime#!#int#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar
+~~END~~
+
+
+EXEC sys_availability_replicas_test_proc
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier#!#int#!#nvarchar#!#varbinary#!#nvarchar#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#datetime#!#datetime#!#int#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar
+~~END~~
+
+
+SELECT sys_availability_replicas_test_func()
+GO
+~~START~~
+int
+0
+~~END~~
+
