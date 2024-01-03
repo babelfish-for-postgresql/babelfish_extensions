@@ -506,7 +506,7 @@ and nis.type = (case p.prokind
 where (s.nspname = 'sys' or (nis.name is not null and ext.nspname is not null))
 and has_schema_privilege(s.oid, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
-and name != 'pltsql_call_handler'
+and p.proname != 'pltsql_call_handler'
  
 union all
 -- details of user defined procedures
