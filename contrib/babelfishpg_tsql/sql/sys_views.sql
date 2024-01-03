@@ -3229,3 +3229,53 @@ SELECT
     CAST('' as sys.NVARCHAR(60)) AS state_desc
 WHERE FALSE;
 GRANT SELECT ON sys.database_permissions TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.availability_replicas 
+AS SELECT  
+    CAST(NULL as sys.UNIQUEIDENTIFIER) AS replica_id
+    , CAST(NULL as sys.UNIQUEIDENTIFIER) AS group_id
+    , CAST(0 as INT) AS replica_metadata_id
+    , CAST(NULL as sys.NVARCHAR(256)) AS replica_server_name
+    , CAST(NULL as sys.VARBINARY(85)) AS owner_sid
+    , CAST(NULL as sys.NVARCHAR(128)) AS endpoint_url
+    , CAST(0 as sys.TINYINT) AS availability_mode
+    , CAST(NULL as sys.NVARCHAR(60)) AS availability_mode_desc
+    , CAST(0 as sys.TINYINT) AS failover_mode
+    , CAST(NULL as sys.NVARCHAR(60)) AS failover_mode_desc
+    , CAST(0 as INT) AS session_timeout
+    , CAST(0 as sys.TINYINT) AS primary_role_allow_connections
+    , CAST(NULL as sys.NVARCHAR(60)) AS primary_role_allow_connections_desc
+    , CAST(0 as sys.TINYINT) AS secondary_role_allow_connections
+    , CAST(NULL as sys.NVARCHAR(60)) AS secondary_role_allow_connections_desc
+    , CAST(NULL as sys.DATETIME) AS create_date
+    , CAST(NULL as sys.DATETIME) AS modify_date
+    , CAST(0 as INT) AS backup_priority
+    , CAST(NULL as sys.NVARCHAR(256)) AS read_only_routing_url
+    , CAST(NULL as sys.NVARCHAR(256)) AS read_write_routing_url
+    , CAST(0 as sys.TINYINT) AS seeding_mode
+    , CAST(NULL as sys.NVARCHAR(60)) AS seeding_mode_desc
+WHERE FALSE;
+GRANT SELECT ON sys.availability_replicas TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.availability_groups 
+AS SELECT  
+    CAST(NULL as sys.UNIQUEIDENTIFIER) AS group_id
+    , CAST(NULL as sys.SYSNAME) AS name
+    , CAST(NULL as sys.NVARCHAR(40)) AS resource_id
+    , CAST(NULL as sys.NVARCHAR(40)) AS resource_group_id
+    , CAST(0 as INT) AS failure_condition_level
+    , CAST(0 as INT) AS health_check_timeout
+    , CAST(0 as sys.TINYINT) AS automated_backup_preference
+    , CAST(NULL as sys.NVARCHAR(60)) AS automated_backup_preference_desc
+    , CAST(0 as SMALLINT) AS version
+    , CAST(0 as sys.BIT) AS basic_features
+    , CAST(0 as sys.BIT) AS dtc_support
+    , CAST(0 as sys.BIT) AS db_failover
+    , CAST(0 as sys.BIT) AS is_distributed
+    , CAST(0 as sys.TINYINT) AS cluster_type
+    , CAST(NULL as sys.NVARCHAR(60)) AS cluster_type_desc
+    , CAST(0 as INT) AS required_synchronized_secondaries_to_commit
+    , CAST(0 as sys.BIGINT) AS sequence_number
+    , CAST(0 as sys.BIT) AS is_contained
+WHERE FALSE;
+GRANT SELECT ON sys.availability_groups TO PUBLIC;

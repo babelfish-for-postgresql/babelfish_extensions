@@ -493,4 +493,6 @@ babel_index_nulls_order
 BABEL-2999
 BABEL-4606
 permission_restrictions_from_pg
+sys_availability_groups
+sys_availability_replicas
 BABEL-730
