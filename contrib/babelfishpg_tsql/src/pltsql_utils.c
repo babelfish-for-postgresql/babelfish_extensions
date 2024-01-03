@@ -32,11 +32,12 @@ bool		suppress_string_truncation_error = false;
 
 bool		pltsql_suppress_string_truncation_error(void);
 
-bool		is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar /
-												 * sys.varchar / sys.nvarchar */
+bool		is_tsql_varchar_or_char_datatype(Oid oid); /* sys.char / sys.varchar */
+bool		is_tsql_nchar_or_nvarchar_datatype(Oid oid); /* sys.nchar / sys.nvarchar */
+bool		is_tsql_binary_or_varbinary_datatype(Oid oid); /* sys.binary / sys.varbinary */
+bool		is_tsql_datatype_with_max_scale_expr_allowed(Oid oid); /* sys.varchar(max), sys.nvarchar(max), sys.varbinary(max) */
 bool		is_tsql_text_ntext_or_image_datatype(Oid oid);
 
-bool		is_tsql_binary_or_varbinary_datatype(Oid oid);
 
 /* To cache oid of sys.varchar */
 static Oid sys_varcharoid = InvalidOid;
@@ -152,7 +153,8 @@ pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_ca
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 							 errmsg("Incorrect syntax near the keyword '%s'.", typname)));
 			}
-			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0))
+			else if (*typmod > (max_allowed_varchar_length + VARHDRSZ) && (strcmp(typname, "varchar") == 0 || strcmp(typname, "bpchar") == 0 || 
+											strcmp(typname, "varbinary") == 0 || strcmp(typname, "binary") == 0))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -781,13 +783,37 @@ update_ViewStmt(Node *n, const char *view_schema)
 		stmt->view->schemaname = pstrdup(view_schema);
 }
 
+/* sys.char, sys.varchar */
 bool
-is_tsql_any_char_datatype(Oid oid)
+is_tsql_varchar_or_char_datatype(Oid oid)
 {
 	return (*common_utility_plugin_ptr->is_tsql_bpchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid);
+}
+
+/* sys.nchar, sys.nvarchar */
+bool
+is_tsql_nchar_or_nvarchar_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_nchar_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid);
+}
+
+/* sys.binary, sys.varbinary */
+bool 
+is_tsql_binary_or_varbinary_datatype(Oid oid)
+{
+	return (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
+}
+
+/* varchar(max), nvarchar(max), varbinary(max) */
+bool
+is_tsql_datatype_with_max_scale_expr_allowed(Oid oid)
+{
+	return	(*common_utility_plugin_ptr->is_tsql_varchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_nvarchar_datatype) (oid) ||
+		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
 }
 
 bool
@@ -796,12 +822,6 @@ is_tsql_text_ntext_or_image_datatype(Oid oid)
 	return (*common_utility_plugin_ptr->is_tsql_text_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_ntext_datatype) (oid) ||
 		(*common_utility_plugin_ptr->is_tsql_image_datatype) (oid);
-}
-
-bool is_tsql_binary_or_varbinary_datatype(Oid oid)
-{
-	return (*common_utility_plugin_ptr->is_tsql_sys_binary_datatype) (oid) ||
-		(*common_utility_plugin_ptr->is_tsql_sys_varbinary_datatype) (oid);
 }
 
 /*

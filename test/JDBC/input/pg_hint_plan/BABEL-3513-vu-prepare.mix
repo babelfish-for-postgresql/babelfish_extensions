@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- tsql
 CREATE TABLE babel_3513_t1(a1 int PRIMARY KEY, b1 int, c1 int)
 GO

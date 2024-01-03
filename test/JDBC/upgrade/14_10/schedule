@@ -420,3 +420,4 @@ sys_asymmetric_keys
 sys_certificates
 sys_database_permissions
 babel-4475
+BABEL-4606

@@ -70,6 +70,7 @@
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
 #define ROWVERSION_SIZE 8
+#define VARBINARY_MAX_SCALE 8000
 
 /*
  * Local structures and functions copied from printtup.c
@@ -1860,8 +1861,13 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 					if (!con->constisnull)
 					{
 						bytea	   *source = (bytea *) con->constvalue;
-
-						atttypmod = VARSIZE_ANY(source);
+						int32 actual_size = VARSIZE_ANY_EXHDR(source);
+						
+						/* if the actual size is greater than 8000, it should be varbinary(max) case as we have set a limit on scale */
+						if (actual_size > VARBINARY_MAX_SCALE)
+							atttypmod = -1;
+						else 
+							atttypmod = VARSIZE_ANY(source);
 					}
 				}
 				SetColMetadataForBinaryType(col, TDS_TYPE_VARBINARY, (atttypmod == -1) ?
