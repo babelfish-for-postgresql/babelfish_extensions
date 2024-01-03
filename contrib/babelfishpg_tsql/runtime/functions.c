@@ -605,17 +605,22 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 	return datepart_internal(field, timestamp, (float8)df_tz, false);
 }
 
+/*
+ * datepart_internal_interval takes interval and extracts the required field
+ * Since it is interval, there is no need to call datepart_internal
+ */
+
 Datum
 datepart_internal_interval(PG_FUNCTION_ARGS)
 {
 	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
-	int			df_tz = PG_GETARG_INT32(2);
-	int			result;
+	int 		df_tz = PG_GETARG_INT32(2);
+	int 		result;
 
 	Interval	*interval = PG_GETARG_INTERVAL_P(1);
 	Timestamp	interval_time = interval->time + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
 	int32		interval_days,interval_month;
-	int			year,month,days,hours,minutes,sec;
+	int 		year,month,days,hours,minutes,sec;
 	int64		millisec,microsec,nanosec;
 
 	interval_days = interval->day;
@@ -626,9 +631,9 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	month = (interval_month % MONTHS_PER_YEAR);
 	days = interval_days % (int)DAYS_PER_YEAR;
 
-	hours = (interval_time / USECS_PER_HOUR) ;//% HOURS_PER_DAY == 0 ? HOURS_PER_DAY : (interval_time / USECS_PER_HOUR) % HOURS_PER_DAY;
-	minutes = (interval_time / USECS_PER_MINUTE);// % MINS_PER_HOUR == 0 ? MINS_PER_HOUR : (interval_time / USECS_PER_MINUTE) % MINS_PER_HOUR;
-	sec = (interval_time / USECS_PER_SEC) ;//% SECS_PER_MINUTE == 0 ? SECS_PER_MINUTE : (interval_time / USECS_PER_SEC) % SECS_PER_MINUTE;
+	hours = (interval_time / USECS_PER_HOUR);
+	minutes = (interval_time / USECS_PER_MINUTE);
+	sec = (interval_time / USECS_PER_SEC);
 
 	millisec = ((1L * interval_time) / 1000);
 	microsec = interval_time;
