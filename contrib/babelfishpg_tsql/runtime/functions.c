@@ -3,6 +3,17 @@
 #include "funcapi.h"
 #include "pgstat.h"
 
+#include "postgres.h"
+#include "access/hash.h"
+#include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "libpq/pqformat.h"
+#include "utils/timestamp.h"
+
+#include "fmgr.h"
+#include "miscadmin.h"
+
 #include "access/detoast.h"
 #include "access/htup_details.h"
 #include "access/table.h"
@@ -59,6 +70,11 @@
 #define TSQL_STAT_GET_ACTIVITY_COLS 26
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 #define SYSVARCHAR_MAX_LENGTH 4000
+#define DAYS_BETWEEN_YEARS_1900_TO_2000 36524   	/* number of days present in between 1/1/1900 and 1/1/2000 */
+#define DATEPART_MAX_VALUE 2958463              	/* maximum value for datepart general_integer_datatype */
+#define DATEPART_MIN_VALUE -53690               	/* minimun value for datepart general_integer_datatype */
+#define DATEPART_SMALLMONEY_MAX_VALUE 214748.3647	/* maximum value for datepart smallmoney */
+#define DATEPART_SMALLMONEY_MIN_VALUE -53690		/* minimum value for datepart smallmoney */
 
 typedef enum
 {
@@ -149,6 +165,9 @@ PG_FUNCTION_INFO_V1(int_power);
 PG_FUNCTION_INFO_V1(smallint_power);
 PG_FUNCTION_INFO_V1(numeric_degrees);
 PG_FUNCTION_INFO_V1(numeric_radians);
+PG_FUNCTION_INFO_V1(numeric_log_natural);
+PG_FUNCTION_INFO_V1(numeric_log_base);
+PG_FUNCTION_INFO_V1(numeric_log10);
 PG_FUNCTION_INFO_V1(object_schema_name);
 PG_FUNCTION_INFO_V1(parsename);
 PG_FUNCTION_INFO_V1(pg_extension_config_remove);
@@ -159,12 +178,24 @@ PG_FUNCTION_INFO_V1(babelfish_concat_wrapper);
 PG_FUNCTION_INFO_V1(getdate_internal);
 PG_FUNCTION_INFO_V1(sysdatetime);
 PG_FUNCTION_INFO_V1(sysdatetimeoffset);
+PG_FUNCTION_INFO_V1(datepart_internal_int);
+PG_FUNCTION_INFO_V1(datepart_internal_date);
+PG_FUNCTION_INFO_V1(datepart_internal_datetime);
+PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
+PG_FUNCTION_INFO_V1(datepart_internal_time);
+PG_FUNCTION_INFO_V1(datepart_internal_decimal);
+PG_FUNCTION_INFO_V1(datepart_internal_float);
+PG_FUNCTION_INFO_V1(datepart_internal_real);
+PG_FUNCTION_INFO_V1(datepart_internal_money);
+PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
 void	   *get_servicename_internal(void);
 void	   *get_language(void);
 void	   *get_host_id(void);
+
+Datum 		datepart_internal(char *field , Timestamp timestamp , float8 df_tz, bool general_integer_datatype);
 int 		SPI_execute_raw_parsetree(RawStmt *parsetree, const char *sourcetext, bool read_only, long tcount);
 static HTAB *load_categories_hash(RawStmt *cats_sql, const char *sourcetext, MemoryContext per_query_ctx);
 static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
@@ -173,6 +204,7 @@ static Tuplestorestate *get_bbf_pivot_tuplestore(RawStmt 	*sql,
 												HTAB 		*bbf_pivot_hash,
 												TupleDesc 	tupdesc,
 												bool 		randomAccess);
+
 extern bool canCommitTransaction(void);
 extern bool is_ms_shipped(char *object_name, int type, Oid schema_id);
 
@@ -319,6 +351,414 @@ babelfish_concat_wrapper(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(new_text);
 }
+
+/*
+ * datepart_internal take the timestamp and extracts
+ * year, month, week, dow, doy, etc. Fields for which date is needed
+ * back from the timestamp. df_tz is the offset of datetime when there is a 
+ * valid timestamp and it is the general integer datatype when the timestamp
+ * is not valid for the general numeric datatypes 
+ */
+
+Datum
+datepart_internal(char* field, Timestamp timestamp, float8 df_tz, bool general_integer_datatype)
+{	
+	fsec_t		fsec1;
+	Timestamp	tsql_first_day, first_day;
+	struct pg_tm tt1, *tm = &tt1;
+	uint		first_week_end, year, month, day, res = 0, day_of_year; /* for Zeller's Congruence */
+	int 		tz1;
+
+	/*
+	 * This block is used when the second argument in datepart is not a 
+	 * date or time relate but instead general integer datatypes. datepart_internal converts the general integer datatypes (df_tz)
+	 * into proper timestamp with days offset from 01/01/1970. The general integer datatypes are passed in the df_tz
+	 * i.e. when df_tz = 1.5, it changes to timestamp corresponding to 02/01/1970 12:00:00 
+	 * Converting the df_tz into the appopriate timestamp that is offset from 01/01/1970 by df_tz days (and hours)
+	 */
+	if (timestamp == 0 && general_integer_datatype)
+	{	
+		/* Checking for the limits for general_integer_datatype */
+		if(df_tz > DATEPART_MAX_VALUE || df_tz < DATEPART_MIN_VALUE)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+		}
+
+		timestamp = (Timestamp)(((df_tz) - DAYS_BETWEEN_YEARS_1900_TO_2000) * USECS_PER_DAY);
+	}
+		
+	/* Gets the date time related fields back from timestamp into struct tm pointer */
+	if (timestamp2tm(timestamp, &tz1, tm, &fsec1, NULL, NULL) != 0)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+			errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+	}
+
+	year = tm->tm_year;
+	month = tm->tm_mon;
+	day = tm->tm_mday;
+
+	if (strcmp(field, "year") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_year);
+	}
+	else if (strcmp(field, "quarter") == 0)
+	{
+		/* There are 3 months in each quarter ( 12 / 3 = 4 ) */
+		PG_RETURN_INT32((int)ceil((float)tm->tm_mon / 3.0));
+	}
+	else if (strcmp(field, "month") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_mon);
+	}
+	else if (strcmp(field, "day") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_mday);
+	}
+	else if (strcmp(field, "hour") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_hour);
+	}
+	else if (strcmp(field, "minute") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_min);
+	}
+	else if (strcmp(field, "second") == 0)
+	{
+		PG_RETURN_INT32(tm->tm_sec);
+	}
+	else if (strcmp(field, "doy") == 0)		/* day-of-year of the date */
+	{
+		PG_RETURN_INT32( (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+						 - date2j(tm->tm_year, 1, 1) + 1));
+	}
+	else if (strcmp(field, "dow") == 0)		/* day-of-week of the date */
+	{
+		/* dow calculated using Zeller's Congruence */
+		if (tm->tm_mon < 3)
+		{
+			month += MONTHS_PER_YEAR;
+			year -= 1;
+		}
+
+		/* 
+		 * Zeller’s congruence is an algorithm devised by Christian Zeller to calculate
+		 * the day of the week for any calendar date. 
+		 * Here is a formula for finding the day of the week for ANY date. 
+		 * N = d + 2m + [3(m+1)/5] + y + [y/4] - [y/100] + [y/400] + 2
+		 * where d is the number of the day of the month, m is the number of the month, and y is the year.
+		 * The brackets around the divisions mean to drop the remainder and just use the integer part that you get.
+		 * Also, a VERY IMPORTANT RULE is the number to use for the months for January and February.
+		 * The numbers of these months are 13 and 14 of the PREVIOUS YEAR. This means that to find the day of the week of New Year's Day this year, 1/1/98,
+		 * you must use the date 13/1/97.
+		 */
+		res = (day + 2 * month + ((3 * (month + 1)) / (5)) + year +
+					year / 4 - year / 100 + year / 400 + 2) % 7;
+		
+		/* Adjusting the dow accourding to the datefirst guc */
+		PG_RETURN_INT32(((res) + 7 - pltsql_datefirst)%7 == 0 ?
+					7 : ((res) + 7 - pltsql_datefirst)%7);
+
+	}
+	else if (strcasecmp(field , "tsql_week") == 0)		/* week number of the year  */
+	{
+		/* returns number of days since 1/1/1970 to 1/1/tm_year */
+		first_day = date2j(tm->tm_year, 1, 1) - UNIX_EPOCH_JDATE;
+
+		/* convert this first day of tm_year to timestamp into tsql_first_day */
+		tsql_first_day = (Timestamp) (first_day - (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE)) * USECS_PER_DAY;
+
+		first_week_end = 8 - datepart_internal("dow", tsql_first_day, 0, false);
+
+		day_of_year = datepart_internal("doy",timestamp,0, false);
+
+		if(day_of_year <= first_week_end)
+		{
+			/* day of year is less than first_week_end means its a first week */
+			PG_RETURN_INT32(1);
+		}
+		else
+		{
+			PG_RETURN_INT32(2+(day_of_year - first_week_end - 1) / 7);
+		}
+	}
+	else if(strcasecmp(field , "week") == 0)
+	{
+		PG_RETURN_INT32(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday));
+	}
+	else if(strcasecmp(field , "millisecond") == 0)
+	{
+		PG_RETURN_INT32((fsec1) / 1000);
+	}
+	else if(strcasecmp(field , "microsecond") == 0)
+	{
+		PG_RETURN_INT32(fsec1);
+	}
+	else if(strcasecmp(field , "nanosecond") == 0)
+	{
+		PG_RETURN_INT32((fsec1) * 1000);
+	}
+	else if(strcasecmp(field , "tzoffset") == 0)
+	{
+		if(general_integer_datatype)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart tzoffset is not supported by date function datepart for data type datetime.")));
+			
+			PG_RETURN_INT32(-1);
+		}
+		else
+		{
+			PG_RETURN_INT32((int)df_tz);
+		}
+	}
+	else
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("\'%s\' is not a recognized datepart option",field)));
+			
+		PG_RETURN_INT32(-1);
+	}
+	
+	PG_RETURN_INT32(1);
+}
+
+
+/*
+ * datepart_internal_datetimeoffset takes datetimeoffset and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_datetimeoffset(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+
+	timestamp = (Timestamp)(DirectFunctionCall1(common_utility_plugin_ptr->datetimeoffset_timestamp,
+							PG_GETARG_DATUM(1)));
+	
+	timestamp = timestamp + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+	
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_date takes date and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_date(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	
+	timestamp = DirectFunctionCall1(date_timestamp, PG_GETARG_DATUM(1));
+
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_datetime takes datetime and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_datetime(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+	
+	timestamp = PG_GETARG_TIMESTAMP(1);
+
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_int takes int and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_int(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, num, true);
+
+}
+
+/*
+ * datepart_internal_money takes money and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_money(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		num = PG_GETARG_INT64(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz. Also dividing num by 10000 as money datatype 
+	 * gets a multiple of 10000 internally
+	 */
+	return datepart_internal(field, 0, (float8)num/10000, true);
+}
+
+/*
+ * datepart_internal_smallmoney takes int and converts it to
+ * timestamp and calls datepart_internal and checks limits
+ */
+
+Datum
+datepart_internal_smallmoney(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int64		arg = PG_GETARG_INT64(1);
+	float8		num;
+
+	/* Dividing arg by 10000 as money datatype gets a multiple of 10000 internally*/
+	num = (float8)arg/10000;
+
+	if(num > DATEPART_SMALLMONEY_MAX_VALUE || num < DATEPART_SMALLMONEY_MIN_VALUE)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error converting expression to data type datetime.")));
+	}
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz. 
+	 */
+	return datepart_internal(field, 0, num, true);
+}
+
+/*
+ * datepart_internal_decimal takes decimal and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_decimal(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Numeric		argument = PG_GETARG_NUMERIC(1);
+	float8		num = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(argument)));
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing num in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, num, true);
+}
+
+/*
+ * datepart_internal_float takes float and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_float(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	float8		arg = PG_GETARG_FLOAT8(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing arg in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, arg, true);
+}
+
+/*
+ * datepart_internal_real takes real value and converts it to
+ * timestamp and calls datepart_internal 
+ */
+
+Datum
+datepart_internal_real(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	float4		arg = PG_GETARG_FLOAT4(1);
+
+	/* 
+	 * Setting the timestamp in datepart_internal as 0 and passing arg in third argument 
+	 * as there is no need of df_tz
+	 */
+	return datepart_internal(field, 0, arg, true);
+}
+
+/*
+ * datepart_internal_time takes timestamp and calls datepart_internal 
+ * and thorows valid errors wherever necessary
+ */
+
+Datum
+datepart_internal_time(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	Timestamp	timestamp;
+	int			df_tz = PG_GETARG_INT32(2);
+
+	timestamp  = PG_GETARG_TIMESTAMP(1);
+
+	if(timestamp <= USECS_PER_DAY )		/* when only time is given and no date, we adjust the timestamp date to 1/1/1900 instead of 1/1/2000 */
+	{	
+		timestamp = timestamp - (Timestamp)(DAYS_BETWEEN_YEARS_1900_TO_2000 * USECS_PER_DAY * 1L);
+
+		if(strcasecmp(field , "quarter") == 0 || strcasecmp(field , "month") == 0 || 
+					strcasecmp(field , "day") == 0 || strcasecmp(field , "year") == 0 )
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart %s is not supported by date function datepart for data type time.", field)));
+		}
+		else if(strcasecmp(field , "dow") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart weekday is not supported by date function datepart for data type time.")));
+		}
+		else if(strcasecmp(field , "doy") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart dayofyear is not supported by date function datepart for data type time.")));
+		}
+		else if(strcasecmp(field , "week") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart iso_week is not supported by date function datepart for data type time.")));
+		}
+		else if(strcasecmp(field , "tsql_week") == 0)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The datepart week is not supported by date function datepart for data type time.")));
+		}
+	}
+
+	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -2564,6 +3004,56 @@ numeric_radians(PG_FUNCTION_ARGS)
 	result = DatumGetNumeric(DirectFunctionCall2(numeric_mul, NumericGetDatum(arg1), NumericGetDatum(radians_per_degree)));
 
 	PG_RETURN_NUMERIC(result);
+}
+
+Datum
+numeric_log_natural(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+	Numeric		arg1_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	result_numeric = DatumGetNumeric(DirectFunctionCall1(numeric_ln, NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+numeric_log_base(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	int32		arg2 = PG_GETARG_INT32(1);
+	float8		result;
+	Numeric		arg1_numeric,
+				arg2_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	arg2_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, arg2));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_log, NumericGetDatum(arg2_numeric), NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+numeric_log10(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+	Numeric		arg1_numeric,
+				arg2_numeric,
+				result_numeric;
+
+	arg1_numeric = DatumGetNumeric(DirectFunctionCall1(float8_numeric, Float8GetDatum(arg1)));
+	arg2_numeric = DatumGetNumeric(DirectFunctionCall1(int4_numeric, 10));
+	result_numeric = DatumGetNumeric(DirectFunctionCall2(numeric_log, NumericGetDatum(arg2_numeric), NumericGetDatum(arg1_numeric)));
+	result = DatumGetFloat8(DirectFunctionCall1(numeric_float8, NumericGetDatum(result_numeric)));
+
+	PG_RETURN_FLOAT8(result);
 }
 
 /* 
