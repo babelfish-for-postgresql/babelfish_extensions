@@ -893,7 +893,7 @@ get_rolespec_name_internal(const RoleSpec *role, bool missing_ok)
 static void
 check_babelfish_droprole_restrictions(char *role)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL)
+	if (MyProcPort->is_tds_conn)
 		return;
 	if (is_babelfish_role(role))
 	{
@@ -972,7 +972,7 @@ handle_rename(RenameStmt *rename_stmt)
 	 */
 	if (OBJECT_ROLE == rename_stmt->renameType)
 	{
-		if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(rename_stmt->subname))
+		if (!MyProcPort->is_tds_conn && is_babelfish_role(rename_stmt->subname))
 		{
 			/*
 			 * Renaming of an babelfish role/user/login
@@ -1053,7 +1053,7 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 	    return true;
     }
 
-    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
+    if (!MyProcPort->is_tds_conn && is_babelfish_role(name))
     {
 		/* Quick check, directly disallow alter role for bbf_role_admin */
 		if (pg_strcasecmp(name, BABELFISH_ROLE_ADMIN) == 0)
@@ -1147,7 +1147,7 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
     {
 	    const char *babelfish_db_name = NULL;
 	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
-	    if(sql_dialect != SQL_DIALECT_TSQL && babelfish_db_name && alter_role_set_stmt->database && strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
+	    if(!MyProcPort->is_tds_conn && babelfish_db_name && alter_role_set_stmt->database && strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
 		    check_babelfish_alterrole_restictions(false);
 	    return true;
     }
@@ -1160,7 +1160,7 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
 	    return true;
     }
 
-    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
+    if (!MyProcPort->is_tds_conn && is_babelfish_role(name))
     {
 	    check_babelfish_alterrole_restictions(false);
     }
@@ -1188,7 +1188,7 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	Oid bbf_role_admin_oid = InvalidOid;
 	const char *babelfish_dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
-	if (sql_dialect == SQL_DIALECT_TSQL ||
+	if (MyProcPort->is_tds_conn ||
 		(babelfish_dump_restore && strncmp(babelfish_dump_restore, "on", 2) == 0 && superuser())) /* allow during dump/restore only to superuser */
 		return true;
 
