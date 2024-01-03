@@ -1137,7 +1137,7 @@ DECIMAL:             DEC_DIGIT+;
 ID:                  ( [_#] | LETTER) ( [_#$@0-9] | LETTER)*;
 BINARY:              '0' [Xx] ( HEX_DIGIT | '\\' [\r]? [\n] )*;
 FLOAT:               DEC_DOT_DEC;
-REAL:                (DECIMAL | DEC_DOT_DEC) ([Ee] ([+-]? DEC_DIGIT+)?);
+REAL:                (DECIMAL | DEC_DOT_DEC) ([Ee] ([+-]? DEC_DIGIT*)?);
 
 MONEY:               CURRENCY_SYMBOL [ ]* ('+'|'-')? (DECIMAL | DEC_DOT_DEC);
 
