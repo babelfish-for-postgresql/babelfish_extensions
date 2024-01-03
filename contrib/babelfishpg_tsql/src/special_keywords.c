@@ -91,6 +91,8 @@ const char *pg_reserved_keywords_to_be_delimited[] = {
 	"datepart",
 	"datetrunc",
 	"iif",
+	"log",
+	"log10",
 	"out",
 	"output",
 	"parse",

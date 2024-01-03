@@ -3542,6 +3542,15 @@ CREATE OR REPLACE FUNCTION sys.radians(IN arg1 NUMERIC)
 RETURNS numeric  AS 'babelfishpg_tsql','numeric_radians' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.radians(NUMERIC) TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_natural' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT, IN arg2 INT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_base' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log10(IN arg1 FLOAT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log10' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
 $BODY$

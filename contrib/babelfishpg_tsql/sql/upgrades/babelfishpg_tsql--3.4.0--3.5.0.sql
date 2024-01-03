@@ -37,6 +37,14 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_natural' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log(IN arg1 FLOAT, IN arg2 INT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log_base' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bbf_log10(IN arg1 FLOAT)
+RETURNS FLOAT  AS 'babelfishpg_tsql','numeric_log10' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
 DO $$
 DECLARE
