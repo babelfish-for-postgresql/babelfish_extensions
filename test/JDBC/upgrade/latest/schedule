@@ -38,6 +38,7 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
+BABEL-2170
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -461,10 +462,12 @@ todatetimeoffset-dep
 triggers_with_transaction
 typeid-typename
 typeid-typename-dep
+print_null
 unquoted_string
 doublequoted_string
 alter_authorization_change_db_owner
 sp_changedbowner
+float_exponent
 datetimeoffset-timezone
 BABEL-4046
 host_id
@@ -473,11 +476,13 @@ BABEL-4175
 sp_who
 BABEL_4330
 kill
+set_tran_isolvl
 BABEL-4217
 Test_ISNULL
 BABEL-4270
 BABEL-4410
 BABEL-4231
+function_as_keywd
 typeproperty-dep
 sys_asymmetric_keys
 sys_certificates
@@ -491,6 +496,7 @@ TestDatatypeAggSort
 babel_index_nulls_order
 BABEL-2999
 BABEL-4606
+BABEL-4529
 sys_availability_groups
 sys_availability_replicas
 BABEL-730

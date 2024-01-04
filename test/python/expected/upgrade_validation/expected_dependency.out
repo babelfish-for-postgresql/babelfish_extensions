@@ -326,6 +326,7 @@ Function sys.datepart_internal(text,bigint,integer)
 Function sys.datepart_internal(text,date,integer)
 Function sys.datepart_internal(text,double precision,integer)
 Function sys.datepart_internal(text,integer,integer)
+Function sys.datepart_internal(text,interval,integer)
 Function sys.datepart_internal(text,numeric,integer)
 Function sys.datepart_internal(text,real,integer)
 Function sys.datepart_internal(text,smallint,integer)
@@ -1019,7 +1020,6 @@ View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
 View sys.change_tracking_databases
 View sys.change_tracking_tables
-View sys.data_spaces
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
@@ -1043,7 +1043,6 @@ View sys.sp_columns_100_view
 View sys.sp_fkeys_view
 View sys.sp_pkeys_view
 View sys.sp_special_columns_view
-View sys.sp_sproc_columns_view
 View sys.sp_statistics_view
 View sys.sp_stored_procedures_view
 View sys.sp_table_privileges_view
@@ -1051,9 +1050,7 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
-View sys.stats
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
-View sys.xml_indexes
 View sys.xml_schema_collections

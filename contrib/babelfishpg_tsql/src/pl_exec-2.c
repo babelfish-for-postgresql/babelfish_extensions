@@ -410,11 +410,22 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 								 &formattypmod);
 
 	if (formatisnull)
-		extval = "<NULL>";
+	{
+		// Printing NULL prints a single space in T-SQL 
+		extval = " ";
+	}
 	else
+	{
 		extval = convert_value_to_string(estate,
 										 formatdatum,
 										 formattypeid);
+	}
+
+	if (strlen(extval) == 0)
+	{
+		// Printing an empty string prints a single space in T-SQL
+		extval = " ";
+	}
 
 	ereport(INFO, errmsg_internal("%s", extval));
 
@@ -929,7 +940,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doens't allow call prcedure in function */
+		/* T-SQL doesn't allow call procedure in function */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
@@ -2128,11 +2139,13 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				int			save_nestlevel;
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
-
+				
 				batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
 				if (isnull)
-					ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-									errmsg("batch string argument of sp_executesql is null")));
+				{
+					// When called with a NULL argument, sp_executesql should take no action at all
+					break;
+				}
 
 				batchstr = convert_value_to_string(estate, batch, restype);
 

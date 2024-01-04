@@ -95,6 +95,9 @@ ignore#!#forjson-datatypes-before-14_10-or-15_5-vu-cleanup
 ignore#!#sys-parsename-before-15_6-or-16_1-vu-prepare
 ignore#!#sys-parsename-before-15_6-or-16_1-vu-verify
 ignore#!#sys-parsename-before-15_6-or-16_1-vu-cleanup
+ignore#!#BABEL-4529-before-15_6-or-14_11-vu-prepare
+ignore#!#BABEL-4529-before-15_6-or-14_11-vu-verify
+ignore#!#BABEL-4529-before-15_6-or-14_11-vu-cleanup
 ignore#!#AUTO_ANALYZE-before-15-5-or-14-10-vu-prepare
 ignore#!#AUTO_ANALYZE-before-15-5-or-14-10-vu-verify
 ignore#!#orderby-before-15_3-vu-prepare
@@ -131,6 +134,9 @@ ignore#!#case_insensitive_collation-before-13-5-vu-cleanup
 ignore#!#jira-BABEL-3504-upgrade-vu-prepare
 ignore#!#jira-BABEL-3504-upgrade-vu-verify
 ignore#!#jira-BABEL-3504-upgrade-vu-cleanup
+ignore#!#BABEL-2170-vu-prepare
+ignore#!#BABEL-2170-vu-verify
+ignore#!#BABEL-2170-vu-cleanup
 
 ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-prepare
 ignore#!#AVG-Aggregate-Dep-before-15-2-or-14-7-vu-verify
