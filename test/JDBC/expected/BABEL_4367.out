@@ -282,7 +282,7 @@ GO
 SELECT name FROM sys.types WHERE name in ('BABEL_4367_TYPE_1', 'BABEL_4367_TYPE_2') ORDER BY name ASC
 GO
 ~~START~~
-text
+varchar
 ~~END~~
 
 
