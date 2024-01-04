@@ -895,17 +895,17 @@ check_babelfish_droprole_restrictions(char *role)
 {
 	Oid bbf_role_admin_oid = InvalidOid;
 
-	if (MyProcPort->is_tds_conn)
+	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return;
 
-	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true);
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
 
 	/*
 	 * Allow DROP ROLE if current user is bbf_role_admin as we need
 	 * to allow remove_babelfish from PG endpoint. It is safe
 	 * since only superusers can assume this role.
 	 */
-	if (OidIsValid(bbf_role_admin_oid) && bbf_role_admin_oid == GetUserId())
+	if (bbf_role_admin_oid == GetUserId())
 		return;
 
 	if (is_babelfish_role(role))
@@ -985,7 +985,8 @@ handle_rename(RenameStmt *rename_stmt)
 	 */
 	if (OBJECT_ROLE == rename_stmt->renameType)
 	{
-		if (!MyProcPort->is_tds_conn && is_babelfish_role(rename_stmt->subname))
+		if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+			 is_babelfish_role(rename_stmt->subname))
 		{
 			/*
 			 * Renaming of an babelfish role/user/login
@@ -1066,11 +1067,12 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 	    return true;
     }
 
-    if (!MyProcPort->is_tds_conn && is_babelfish_role(name))
+    if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+	     is_babelfish_role(name))
     {
-		/* Quick check, directly disallow alter role for bbf_role_admin */
-		if (pg_strcasecmp(name, BABELFISH_ROLE_ADMIN) == 0)
-			check_babelfish_alterrole_restictions(false);
+	    /* Quick check, directly disallow alter role for bbf_role_admin */
+	    if (pg_strcasecmp(name, BABELFISH_ROLE_ADMIN) == 0)
+		    check_babelfish_alterrole_restictions(false);
 
 	    tp = SearchSysCache1(AUTHNAME, CStringGetDatum(name));
 	    if (HeapTupleIsValid(tp))
@@ -1160,7 +1162,9 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
     {
 	    const char *babelfish_db_name = NULL;
 	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
-	    if(!MyProcPort->is_tds_conn && babelfish_db_name && alter_role_set_stmt->database && strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
+	    if((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+		    babelfish_db_name && alter_role_set_stmt->database &&
+		    strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
 		    check_babelfish_alterrole_restictions(false);
 	    return true;
     }
@@ -1173,7 +1177,8 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
 	    return true;
     }
 
-    if (!MyProcPort->is_tds_conn && is_babelfish_role(name))
+    if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+	     is_babelfish_role(name))
     {
 	    check_babelfish_alterrole_restictions(false);
     }
@@ -1200,17 +1205,17 @@ handle_grant_role(GrantRoleStmt *grant_stmt)
 	ListCell *item;
 	Oid bbf_role_admin_oid = InvalidOid;
 
-	if (MyProcPort->is_tds_conn)
+	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return true;
 
-	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, true);
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
 
 	/*
 	 * Allow GRANT ROLE if current user is bbf_role_admin as we need
 	 * to allow initialise_babelfish from PG endpoint. It is safe
 	 * since only superusers can assume this role.
 	 */
-	if (!OidIsValid(bbf_role_admin_oid) || bbf_role_admin_oid == GetUserId())
+	if (bbf_role_admin_oid == GetUserId())
 		return true;
 
 	/* Restrict roles to added as a member of bbf_role_admin */
