@@ -3,7 +3,7 @@ LEFT JOIN sys.types tp ON tp.system_type_id = ac.system_type_id
 WHERE ac.object_id = object_id('sys.server_principals') ORDER BY ac.name;
 GO
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 create_date#!#datetime
 credential_id#!#int
 default_database_name#!#sysname
@@ -25,7 +25,7 @@ LEFT JOIN sys.types tp ON tp.system_type_id = ac.system_type_id
 WHERE ac.object_id = object_id('sys.database_principals') ORDER BY ac.name;
 GO
 ~~START~~
-varchar#!#text
+varchar#!#varchar
 allow_encrypted_value_modifications#!#bit
 authentication_type#!#int
 authentication_type_desc#!#nvarchar

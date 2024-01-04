@@ -18,6 +18,12 @@ GO
 CREATE TYPE my_type2 FROM varchar(20);
 GO
 
+select count(*) from sys.types where collation_name='bbf_unicode_cp1_ci_as';
+GO
+
+select count(*) from sys.types where collation_name='BBF_unicode_CP1_ci_as';
+GO
+
 select cast(name as varchar(20)) 
 		, max_length
 		, precision
@@ -29,10 +35,15 @@ GO
 SELECT count(*) FROM sys.types WHERE name = 'my_type';
 GO
 
+SELECT count(*) FROM sys.types WHERE name = 'MY_TYPE';
+GO
+
 CREATE TYPE tbl_type_sys_types AS TABLE(a INT);
 GO
 
 SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types';
+GO
+SELECT count(*) FROM sys.types WHERE name = 'TBL_type_SYS_types';
 GO
 
 USE master;

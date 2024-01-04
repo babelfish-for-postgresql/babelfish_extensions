@@ -14,5 +14,21 @@ sys_check_constraints_sck_date_col_check
 ~~END~~
 
 
+SELECT COUNT(*) FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_sck_date_col_check') and type = 'C'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_sck_date_col_check') and type = 'c'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 DROP TABLE IF EXISTS sys_check_constraints
 GO

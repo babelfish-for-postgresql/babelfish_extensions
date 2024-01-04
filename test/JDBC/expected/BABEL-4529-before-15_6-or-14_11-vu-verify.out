@@ -1,0 +1,119 @@
+SELECT * FROM babel_4529_stats
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT * FROM babel_4529_dm_exec_connections
+GO
+~~START~~
+varchar#!#varchar#!#int
+~~END~~
+
+
+SELECT * FROM babel_4529_syscolumns
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT * FROM babel_4529_system_objects
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#int#!#varchar#!#int#!#varchar
+~~END~~
+
+
+SELECT * FROM babel_4529_xml_indexes
+GO
+~~START~~
+char
+~~END~~
+
+
+SELECT * FROM babel_4529_sysforeignkeys
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#smallint#!#smallint#!#smallint
+~~END~~
+
+
+SELECT * FROM babel_4529_data_spaces
+GO
+~~START~~
+char
+FG
+~~END~~
+
+
+SELECT * FROM babel_4529_sysprocesses
+GO
+~~START~~
+int#!#int#!#int#!#varbinary#!#int#!#text#!#text#!#int#!#int#!#int#!#int#!#int#!#varchar#!#varchar#!#int#!#int#!#text#!#varbinary#!#nchar#!#text#!#varchar#!#text#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varbinary#!#varbinary#!#int#!#int#!#int
+~~END~~
+
+
+SELECT * FROM babel_4529_key_constraints
+GO
+~~START~~
+char
+~~END~~
+
+
+SELECT * FROM babel_4529_foreign_keys
+GO
+~~START~~
+char
+~~END~~
+
+
+SELECT * FROM babel_4529_sysviews
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#datetime#!#datetime#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+
+SELECT * FROM babel_4529_systables
+GO
+~~START~~
+char
+~~END~~
+
+
+SELECT * FROM babel_4529_default_constraints
+GO
+~~START~~
+char
+~~END~~
+
+
+SELECT * FROM babel_4529_check_constraints
+GO
+~~START~~
+char
+~~END~~
+
+
+SELECT * FROM babel_4529_types
+GO
+~~START~~
+text#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+~~END~~
+
+
+SELECT * FROM babel_4529_sp_sproc_columns_view
+GO
+~~START~~
+int#!#smallint
+~~END~~
+
+
+SELECT * FROM babel_4529_systypes
+GO
+~~START~~
+int
+~~END~~
+
