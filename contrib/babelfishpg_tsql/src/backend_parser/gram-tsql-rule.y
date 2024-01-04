@@ -2056,6 +2056,27 @@ func_expr_common_subexpr:
 				{
 					$$ = TsqlExpressionContains($3, $5, yyscanner);
 				}
+			| TSQL_LOG '(' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("bbf_log"),
+											   list_make1($3),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
+				}
+			| TSQL_LOG '(' a_expr ',' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("bbf_log"),
+											   list_make2($3, $5),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
+				}
+			| TSQL_LOG10 '(' a_expr ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("bbf_log10"),
+											   list_make1($3),
+											   COERCE_EXPLICIT_CALL,
+											   @1);
+				}
 		;
 
 tsql_contains_search_condition:
@@ -4140,7 +4161,7 @@ tsql_VariableSetStmt:
 					n->is_local = false;
 					$$ = (Node *) n;
 				}
-			| SET TRANSACTION tsql_IsolationLevel
+			| SET tsql_TranKeyword tsql_IsolationLevel
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;
@@ -4583,6 +4604,8 @@ reserved_keyword:
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_DATETRUNC
+			| TSQL_LOG
+			| TSQL_LOG10
 			| TSQL_IIF
 			| TSQL_OUT
 			| TSQL_OUTER

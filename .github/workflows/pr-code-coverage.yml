@@ -1,0 +1,89 @@
+name: Tests
+on: [push, pull_request]
+
+jobs:
+
+  run-jdbc-tests:
+    name: JDBC Tests
+    uses: ./.github/workflows/jdbc-tests.yml
+  
+  run-odbc-tests:
+    name: ODBC Tests
+    uses: ./.github/workflows/odbc-tests.yml
+  
+  run-dotnet-tests:
+    name: Dotnet Tests
+    uses: ./.github/workflows/dotnet-tests.yml
+
+  run-python-tests:
+    name: Python Tests
+    uses: ./.github/workflows/python-tests.yml
+
+  run-isolation-tests:
+    name: Isolation Tests
+    uses: ./.github/workflows/isolation-tests.yml
+
+  run-babelfish-code-coverage-for-pull_request:
+    needs: [run-jdbc-tests, run-odbc-tests, run-dotnet-tests, run-python-tests, run-isolation-tests]
+    runs-on: ubuntu-20.04
+    steps:
+    
+    - uses: actions/checkout@v2
+      id: checkout
+    
+    - name: Install Code Coverage Dependencies
+      id: install-code-coverage-dependencies
+      if: always()
+      run: |
+        sudo apt-get install lcov
+
+    - uses: actions/download-artifact@v3
+      id: download-jdbc-coverage
+      with:
+        name:  coverage-babelfish-extensions-jdbc
+        path: contrib/
+    
+    - uses: actions/download-artifact@v3
+      id: download-dotnet-coverage
+      with:
+        name: coverage-babelfish-extensions-dotnet
+        path: contrib/
+    
+    - uses: actions/download-artifact@v3
+      id: download-odbc-coverage
+      with:
+        name: coverage-babelfish-extensions-odbc
+        path: contrib/
+    
+    - uses: actions/download-artifact@v3
+      id: download-python-coverage
+      with:
+        name: coverage-babelfish-extensions-python
+        path: contrib/
+        
+    - uses: actions/download-artifact@v3
+      id: download-isolation-coverage
+      with:
+        name: coverage-babelfish-extensions-isolation
+        path: contrib/
+
+    - name: Generate Overall Code Coverage
+      id: generate-total-code-coverage
+      if: |
+        always() && steps.download-dotnet-coverage.outcome == 'success'
+        && steps.download-jdbc-coverage.outcome == 'success' 
+        && steps.download-odbc-coverage.outcome == 'success' 
+        && steps.download-python-coverage.outcome == 'success'
+        && steps.download-isolation-coverage.outcome == 'success'
+      run: |
+        cd contrib/
+        lcov -a jdbc-lcov.info -a dotnet-lcov.info -a odbc-lcov.info -o lcov.info
+        lcov --list lcov.info
+      shell: bash
+
+    - name: Upload coverage to coveralls
+      if: always() && steps.generate-total-code-coverage.outcome == 'success'
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: $GITHUB_WORKSPACE/contrib/lcov.info
