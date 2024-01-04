@@ -2654,7 +2654,22 @@ public:
 			in_procedure_parameter_id = true;
 		}		
 	}
-	
+
+	void exitFunc_body_returns_scalar(TSqlParser::Func_body_returns_scalarContext *ctx) override
+	{	
+		// If no AS keyword is specified, insert it prior to the BEGIN keyword.
+		// This only applies to scalar functions; for other function types, the optional AS keyword 
+		// is already supported.
+		// Formally, this fix is required only for all Babelfish-defined function result datatypes such as
+		// TINYINT, but for simplicity it's done for all data types.
+		if (!ctx->AS() && ctx->BEGIN())
+		{	
+			std::string b = getFullText(ctx->BEGIN());
+			size_t startPosition = ctx->BEGIN()->getSymbol()->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(b, "AS "+b)));	
+		}
+	}
+
 	void exitProcedure_param(TSqlParser::Procedure_paramContext *ctx) override
 	{
 		in_procedure_parameter = false;
