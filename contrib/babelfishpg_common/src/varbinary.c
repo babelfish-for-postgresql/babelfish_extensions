@@ -736,7 +736,12 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
 
-	if (fcinfo->nargs > 1)
+	/*
+	 * Check whether the typmod argument exists, so that we 
+	 * will not be reading any garbage values for typmod 
+	 * which might cause Invalid read such as BABEL-4475
+	 */
+	if (PG_NARGS() > 1)
 	{
 		typmod = PG_GETARG_INT32(1);
 		maxlen = typmod - VARHDRSZ;
