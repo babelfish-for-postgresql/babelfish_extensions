@@ -2003,7 +2003,6 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 extern int	get_insert_bulk_rows_per_batch(void);
 extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
-extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 extern AclMode string_to_privilege(const char *privname);
 extern const char *privilege_to_string(AclMode privilege);
 
@@ -2213,5 +2212,6 @@ extern int64 last_scope_identity_value(void);
  */
 void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc);
 extern void 	exec_utility_cmd_helper(char *query_str);
+extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 
 #endif							/* PLTSQL_H */

@@ -2229,7 +2229,6 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_depr
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_5_0');
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

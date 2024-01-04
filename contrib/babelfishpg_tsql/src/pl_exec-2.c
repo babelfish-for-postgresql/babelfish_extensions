@@ -3972,4 +3972,3 @@ exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stm
 
 	return PLTSQL_RC_OK;
 }
-

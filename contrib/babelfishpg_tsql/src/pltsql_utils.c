@@ -1033,7 +1033,6 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	else if (obj_schema && stmt->objects)
 	{
 		RangeVar   *tmp = (RangeVar *) llast(stmt->objects);
-
 		tmp->schemaname = pstrdup(obj_schema);
 	}
 
@@ -1050,7 +1049,6 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	if (priv && stmt->privileges)
 	{
 		AccessPriv *tmp = (AccessPriv *) llast(stmt->privileges);
-
 		tmp->priv_name = pstrdup(priv);
 	}
 }
@@ -1059,7 +1057,6 @@ void
 update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
 {
 	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
-
 	ListCell *lc;
 
 	if (!IsA(stmt, AlterDefaultPrivilegesStmt))

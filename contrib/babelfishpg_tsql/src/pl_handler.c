@@ -3299,43 +3299,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								   NULL);
 
 					CommandCounterIncrement();
-					/* Grant all privileges to the user.*/
+					/* Grant ALL schema privileges to the user.*/
 					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
 					{
 						char *permissions[] = {"select", "insert", "update", "references", "delete", "execute"};
-						List	   *parsetree_list;
-						ListCell   *parsetree_item;
 						int i;
 						for (i = 0; i < 6; i++)
 						{
-							parsetree_list = gen_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
-							/* Run all subcommands */
-							foreach(parsetree_item, parsetree_list)
-							{
-								Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-								PlannedStmt *wrapper;
-
-								/* need to make a wrapper PlannedStmt */
-								wrapper = makeNode(PlannedStmt);
-								wrapper->commandType = CMD_UTILITY;
-								wrapper->canSetTag = false;
-								wrapper->utilityStmt = stmt;
-								wrapper->stmt_location = 0;
-								wrapper->stmt_len = 0;
-
-								/* do this step */
-								ProcessUtility(wrapper,
-											"(GRANT SCHEMA )",
-											false,
-											PROCESS_UTILITY_SUBCOMMAND,
-											NULL,
-											NULL,
-											None_Receiver,
-											NULL);
-
-								/* make sure later steps can see the object created here */
-								CommandCounterIncrement();
-							}
+							/* Execute the GRANT SCHEMA subcommands. */
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
 						}
 					}
 					return;
