@@ -410,11 +410,22 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 								 &formattypmod);
 
 	if (formatisnull)
-		extval = "<NULL>";
+	{
+		// Printing NULL prints a single space in T-SQL 
+		extval = " ";
+	}
 	else
+	{
 		extval = convert_value_to_string(estate,
 										 formatdatum,
 										 formattypeid);
+	}
+
+	if (strlen(extval) == 0)
+	{
+		// Printing an empty string prints a single space in T-SQL
+		extval = " ";
+	}
 
 	ereport(INFO, errmsg_internal("%s", extval));
 

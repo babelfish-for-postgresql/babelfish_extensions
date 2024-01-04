@@ -462,6 +462,7 @@ todatetimeoffset-dep
 triggers_with_transaction
 typeid-typename
 typeid-typename-dep
+print_null
 unquoted_string
 doublequoted_string
 alter_authorization_change_db_owner
