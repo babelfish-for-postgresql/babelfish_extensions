@@ -1,0 +1,742 @@
+USE babel_2170_db1;
+GO
+
+-- Instead of Insert Trigger on View 
+CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employees_view
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
+END
+GO
+
+INSERT INTO babel_2170_vu_employees_view VALUES(3, 'adam', '1st Street', '3000');
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_insert Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees_view;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- Instead of Update Trigger on View 
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+~~END~~
+
+
+BEGIN TRANSACTION
+    UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID IN (1, 2);
+COMMIT TRANSACTION;
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees WHERE EmployeeID IN (1, 2) ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+~~END~~
+
+
+-- Instead of Delete Trigger on View
+CREATE TRIGGER babel_2170_vu_employees_view_iot_delete ON babel_2170_vu_employees_view
+INSTEAD OF DELETE
+AS
+BEGIN
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_delete Invoked'
+END
+GO
+
+BEGIN TRANSACTION
+    DELETE FROM babel_2170_vu_employees_view WHERE EmployeeID IN (1, 2);
+COMMIT TRANSACTION;
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_delete Invoked
+~~END~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees_view;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT COUNT(EmployeeID) FROM babel_2170_vu_employees;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+~~END~~
+
+
+--- Tests multiple insert queries and check if inserted table can be accessed and trigger is working fine.
+CREATE TRIGGER babel_2170_vu_employees_view_iot_bulkinsert ON babel_2170_vu_employees_view_bulkinsert
+INSTEAD OF INSERT
+AS
+    SELECT * FROM INSERTED;
+GO
+
+BEGIN TRANSACTION
+DECLARE @i int = 1
+    WHILE @i <= 3
+    BEGIN
+        INSERT INTO babel_2170_vu_employees_view_bulkinsert VALUES(@i, 'bob', '1st Street', '1000');
+        SET @i = @i + 1
+    END
+COMMIT TRANSACTION
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#bob#!#1st Street#!#1000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+2#!#bob#!#1st Street#!#1000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+3#!#bob#!#1st Street#!#1000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- Same trigger name on different View created on Same table in same schema
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view_2
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_2170_vu_employees_view_iot_update" already exists in the database)~~
+
+
+-- Same trigger name on a Table in same schema
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "babel_2170_vu_employees_view_iot_update" already exists in the database)~~
+
+
+
+-- Test Instead of Update trigger in same db but cross schema 
+-- Cleanup default dbo schema IO Update trigger
+DROP TRIGGER IF EXISTS [dbo].[babel_2170_vu_employees_view_iot_update];
+GO
+
+CREATE TRIGGER [schema_2170].[babel_2170_vu_employees_view_iot_update] ON [schema_2170].[babel_2170_vu_employees_view]
+INSTEAD OF UPDATE
+AS
+    SELECT 'Trigger babel_2170_db1.schema_2170.babel_2170_vu_employees_view_iot_update Invoked'
+GO
+
+CREATE TRIGGER [babel_2170_vu_employees_view_iot_update] ON [babel_2170_vu_employees_view]
+INSTEAD OF UPDATE
+AS
+    SELECT 'Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked'
+GO
+
+UPDATE [schema_2170].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.schema_2170.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM [schema_2170].[babel_2170_vu_employees_view] ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+~~END~~
+
+
+UPDATE [dbo].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.dbo.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM [dbo].[babel_2170_vu_employees_view] ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+~~END~~
+
+
+-- drop dbo schema trigger and test that schema_2170.update trigger is not dropped
+DROP TRIGGER IF EXISTS [dbo].[babel_2170_vu_employees_view_iot_update];
+GO
+
+UPDATE [schema_2170].[babel_2170_vu_employees_view] SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~START~~
+varchar
+Trigger babel_2170_db1.schema_2170.babel_2170_vu_employees_view_iot_update Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+-- schema_2170 object cleanup
+DROP TRIGGER IF EXISTS [schema_2170].babel_2170_vu_employees_view_iot_update;
+GO
+
+DROP VIEW IF EXISTS [schema_2170].babel_2170_vu_employees_view;
+GO
+
+DROP TABLE IF EXISTS [schema_2170].babel_2170_vu_employees;
+GO
+
+DROP SCHEMA IF EXISTS schema_2170;
+GO
+
+-- Test Transaction Commit and Rollback inside Instead of triggers
+CREATE TRIGGER babel_2170_vu_employees_view_iot_txn_update ON babel_2170_vu_employees_view_txn
+INSTEAD OF UPDATE
+AS
+    BEGIN
+        BEGIN TRAN;
+            INSERT INTO babel_2170_vu_employees_view_txn VALUES(3, 'adam', '1st Street', '3000');
+        COMMIT tran;
+    END
+GO
+
+UPDATE babel_2170_vu_employees_view_txn SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_update;
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_txn_update ON babel_2170_vu_employees_view_txn
+INSTEAD OF UPDATE
+AS
+    BEGIN
+        BEGIN TRAN;
+            INSERT INTO babel_2170_vu_employees_view_txn VALUES(3, 'adam', '1st Street', '3000');
+        ROLLBACK tran;
+    END
+GO
+
+UPDATE babel_2170_vu_employees_view_txn SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_update;
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_txn_insert ON babel_2170_vu_employees_view_txn INSTEAD OF INSERT AS
+BEGIN TRAN;
+UPDATE babel_2170_vu_employees_view_txn SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+COMMIT;
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+SELECT * FROM inserted;
+GO
+
+BEGIN TRAN;
+GO
+INSERT INTO babel_2170_vu_employees_view_txn VALUES(4, 'ana', '1st Street', '4000');
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2001.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+4#!#ana#!#1st Street#!#4000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+COMMIT;
+GO
+
+BEGIN TRAN
+GO
+INSERT INTO babel_2170_vu_employees_view_txn VALUES(4, 'ana', '1st Street', '4000');
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2002.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+4#!#ana#!#1st Street#!#4000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+IF (@@trancount > 0) ROLLBACK;
+GO
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2001.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_insert;
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_txn_update ON babel_2170_vu_employees_view_txn INSTEAD OF UPDATE AS
+SAVE TRAN sp1;
+SAVE TRAN sp2;
+DELETE FROM babel_2170_vu_employees_view_txn where EmployeeID =2;
+ROLLBACK TRAN sp1;
+GO
+
+BEGIN TRAN
+GO
+SELECT @@trancount;
+UPDATE babel_2170_vu_employees_view_txn SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+IF (@@trancount > 0) ROLLBACK;
+GO
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2001.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_update;
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_txn_delete ON babel_2170_vu_employees_view_txn INSTEAD OF DELETE AS
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+INSERT INTO babel_2170_vu_employees_view_txn VALUES(5, 'ash', '1st Street', '5000');
+SELECT * FROM deleted;
+GO
+
+DELETE FROM babel_2170_vu_employees_view_txn where EmployeeID =1;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2001.00
+3#!#adam#!#1st Street#!#3000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view_txn ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2001.00
+3#!#adam#!#1st Street#!#3000.00
+5#!#ash#!#1st Street#!#5000.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_txn_delete;
+GO
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
+GO
+
+-- Transition table join test
+CREATE TRIGGER babel_2170_vu_employees_view_transition ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE v set MonthSalary = 999 FROM inserted AS i
+        JOIN babel_2170_vu_employees_view AS v ON v.EmployeeID = i.EmployeeID
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = 5 WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#999.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_transition;
+GO
+
+-- Recursive Trigger test Direct Recursion Trigger calling itself trigger 1 -> trigger 1
+CREATE TRIGGER babel_2170_vu_employees_view_iot_update ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#1099.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_update;
+GO
+
+
+
+-- Recursive Trigger test Indirect Recursion trigger 1 -> trigger 2 -> trigger 1
+CREATE TABLE babel_2170_vu_employees_rec
+(
+    EmployeeID      int NOT NULL,
+    EmployeeName    VARCHAR(50),
+    EmployeeAddress VARCHAR(50),
+    MonthSalary     NUMERIC(10, 2)
+)
+GO
+
+INSERT INTO babel_2170_vu_employees_rec VALUES(1, 'amber', '1st Street', '1000');
+INSERT INTO babel_2170_vu_employees_rec VALUES(2, 'angel', '1st Street', '2000');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW babel_2170_vu_employees_view_rec AS
+SELECT EmployeeID,
+       EmployeeName,
+       EmployeeAddress,
+       MonthSalary
+FROM babel_2170_vu_employees_rec
+WHERE EmployeeName LIKE 'a%';
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_rec ON babel_2170_vu_employees_view
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees_view_rec SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+END
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_view_iot_rec2 ON babel_2170_vu_employees_view_rec
+INSTEAD OF UPDATE
+AS
+BEGIN
+    UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +1 WHERE EmployeeID = 2;
+END
+GO
+
+UPDATE babel_2170_vu_employees_view SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32))~~
+
+
+UPDATE babel_2170_vu_employees_view_rec SET MonthSalary = MonthSalary +100 WHERE EmployeeID = 2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Maximum stored procedure, function, trigger, or view nesting level exceeded (limit 32))~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_rec;
+GO
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_rec2;
+GO
+
+DROP VIEW IF EXISTS babel_2170_vu_employees_view_rec;
+GO
+
+DROP TABLE IF EXISTS babel_2170_vu_employees_rec;
+GO
+
+-- Test when trigger on one view inserts into another view on the same table
+CREATE TABLE babel_2170_vu_employees_t2
+(
+    EmployeeID      int NOT NULL,
+    EmployeeName    VARCHAR(50),
+    EmployeeAddress VARCHAR(50),
+    MonthSalary     NUMERIC(10, 2)
+)
+GO
+
+CREATE VIEW babel_2170_vu_employees_t2_v1 AS SELECT * FROM babel_2170_vu_employees_t2
+GO
+
+CREATE VIEW babel_2170_vu_employees_t2_v2 AS SELECT * FROM babel_2170_vu_employees_t2
+GO
+
+CREATE TRIGGER babel_2170_vu_employees_iot_t2_v2 ON babel_2170_vu_employees_t2_v1
+INSTEAD OF INSERT
+AS
+INSERT INTO babel_2170_vu_employees_t2_v2 SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary+20 FROM INSERTED
+GO
+
+INSERT INTO babel_2170_vu_employees_t2_v1 VALUES(5, 'ashley', '1st Street', '5000');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_t2_v2 ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+5#!#ashley#!#1st Street#!#5020.00
+~~END~~
+
+
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_iot_t2_v2;
+GO
+
+DROP VIEW IF EXISTS babel_2170_vu_employees_t2_v1;
+GO
+
+DROP VIEW IF EXISTS babel_2170_vu_employees_t2_v2;
+GO
+
+DROP TABLE IF EXISTS babel_2170_vu_employees_t2;
+GO
+
+CREATE DATABASE babel_2170_db2;
+GO
+
+USE babel_2170_db2;
+GO
+
+CREATE TABLE babel_2170_vu_employees
+(
+    EmployeeID      int NOT NULL,
+    EmployeeName    VARCHAR(50),
+    EmployeeAddress VARCHAR(50),
+    MonthSalary     NUMERIC(10, 2)
+)
+GO
+
+INSERT INTO babel_2170_vu_employees VALUES(1, 'amber', '1st Street', '1000');
+INSERT INTO babel_2170_vu_employees VALUES(2, 'angel', '1st Street', '2000');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+CREATE VIEW babel_2170_vu_employees_view AS
+SELECT EmployeeID,
+       EmployeeName,
+       EmployeeAddress,
+       MonthSalary
+FROM babel_2170_vu_employees
+WHERE EmployeeName LIKE 'a%';
+GO
+
+-- create same name Instead of Insert trigger in second db to test Cross db behavior
+CREATE TRIGGER babel_2170_vu_employees_view_iot_insert ON babel_2170_vu_employees_view
+INSTEAD OF INSERT
+AS
+BEGIN
+    SELECT 'Trigger babel_2170_db2.dbo.babel_2170_vu_employees_view_iot_insert Invoked'
+END
+GO
+
+-- should fire IOT trigger of second db
+INSERT INTO babel_2170_vu_employees_view VALUES(3, 'adam', '1st Street babel_2170_db2', '3000');
+GO
+~~START~~
+varchar
+Trigger babel_2170_db2.dbo.babel_2170_vu_employees_view_iot_insert Invoked
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT EmployeeID, EmployeeName, EmployeeAddress, MonthSalary FROM babel_2170_vu_employees_view ORDER BY EmployeeID;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#numeric
+1#!#amber#!#1st Street#!#1000.00
+2#!#angel#!#1st Street#!#2000.00
+~~END~~
+
+
+-- clean  all objects in second database
+DROP TRIGGER IF EXISTS babel_2170_vu_employees_view_iot_insert;
+GO
+
+DROP VIEW IF EXISTS babel_2170_vu_employees_view;
+GO
+
+DROP TABLE IF EXISTS babel_2170_vu_employees;
+GO
+
+USE MASTER;
+GO
+
+DROP DATABASE IF EXISTS babel_2170_db2;
+GO
