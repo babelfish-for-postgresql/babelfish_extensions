@@ -749,7 +749,7 @@ SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT', 'col2', 'COLUMN')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -793,7 +793,7 @@ SELECT HAS_PERMS_BY_NAME('db_perms_by_name..t_perms_by_name','OBJECT', 'SELECT',
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 

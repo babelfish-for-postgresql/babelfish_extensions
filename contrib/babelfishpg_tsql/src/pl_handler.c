@@ -3654,16 +3654,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						{
 							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
 							AclMode privilege = string_to_privilege(ap->priv_name);
-							/* Don't add/update an entry, if the permission is granted on column list.*/
-							if (ap->cols != NULL)
-								break;
 							foreach(lc, grant->grantees)
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								if (grant->is_grant)
 								{
 									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true);
+									/* Don't add/update an entry, if the permission is granted on column list.*/
+									if (ap->cols == NULL)
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true);
 								}
 								else
 								{
@@ -3674,8 +3673,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									{
 										call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 									}
-									/* Update the privilege in the catalog. */
-									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+									/* Don't update an entry, if the permission is granted on column list.*/
+									if (ap->cols == NULL)
+										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
 								}
 							}
 						}
