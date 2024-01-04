@@ -60,10 +60,6 @@ GO
 
 sp_executesql NULL;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: batch string argument of sp_executesql is null)~~
-
 
 CREATE TABLE t_3092_fmtonly(a INT);
 GO

@@ -10,6 +10,11 @@ GO
 SELECT COUNT(*) FROM sys.tables WHERE name COLLATE bbf_unicode_general_ci_as = 'rand_name1';
 GO
 
+SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1' and type='U';
+GO
+SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1' and type='u';
+GO
+
 SELECT COUNT(*) FROM sys.columns WHERE name COLLATE bbf_unicode_general_ci_as = 'rand_col1';
 GO
 

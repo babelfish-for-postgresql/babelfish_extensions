@@ -1,0 +1,2 @@
+drop procedure p1_print_null
+go

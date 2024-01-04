@@ -1,0 +1,356 @@
+select 2E
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select -2E
+go
+~~START~~
+numeric
+-2
+~~END~~
+
+
+select +2E
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select 2.1E
+go
+~~START~~
+numeric
+2.1
+~~END~~
+
+
+select -2.1E
+go
+~~START~~
+numeric
+-2.1
+~~END~~
+
+
+select +2.1E
+go
+~~START~~
+numeric
+2.1
+~~END~~
+
+
+select 2.e
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select -2.e
+go
+~~START~~
+numeric
+-2
+~~END~~
+
+
+select +2.e
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select .2e
+go
+~~START~~
+numeric
+0.2
+~~END~~
+
+
+select -.2E
+go
+~~START~~
+numeric
+-0.2
+~~END~~
+
+
+select +.2E
+go
+~~START~~
+numeric
+0.2
+~~END~~
+
+
+select .2E+
+go
+~~START~~
+numeric
+0.2
+~~END~~
+
+
+select .2E-
+go
+~~START~~
+numeric
+0.2
+~~END~~
+
+
+select 2E+
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select 2E-
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select +.2E+
+go
+~~START~~
+numeric
+0.2
+~~END~~
+
+
+select -.2E-
+go
+~~START~~
+numeric
+-0.2
+~~END~~
+
+
+select -.2E-1
+go
+~~START~~
+numeric
+-0.02
+~~END~~
+
+
+-- 2 + 1 = 3
+select 2E +1
+go
+~~START~~
+numeric
+3
+~~END~~
+
+
+-- 2 + 1 = 3
+select 2E+ +1
+go
+~~START~~
+numeric
+3
+~~END~~
+
+
+-- string constant, no change:
+select '2E'
+go
+~~START~~
+varchar
+2E
+~~END~~
+
+
+-- hex constant: no change
+select 0xe
+go
+~~START~~
+varbinary
+0E
+~~END~~
+
+
+-- invalid syntax in SQL Server
+select 2E+ 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '1' at line 2 and character position 11)~~
+
+
+-- invalid syntax in SQL Server
+select 2 E+1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '+' at line 2 and character position 10)~~
+
+
+-- invalid syntax in SQL Server
+select 2 E+
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '+' at line 2 and character position 10)~~
+
+
+-- not a number but parsed as identifier
+select .e
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ".")~~
+
+
+-- not a number
+select 1.2.e
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 2 and character position 10)~~
+
+
+insert t1_float_exponent values (2e+, 3.1e, -.4e-, 5.e-) 
+select * from t1_float_exponent
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#real#!#float#!#numeric
+2#!#3.1#!#-0.4#!#5.00
+~~END~~
+
+delete t1_float_exponent
+go
+~~ROW COUNT: 1~~
+
+
+exec p1_float_exponent 2E
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+exec p1_float_exponent 2E+
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+exec p1_float_exponent -.2E+
+go
+~~START~~
+float
+-0.2
+~~END~~
+
+
+exec p1_float_exponent @p=-.2E+
+go
+~~START~~
+float
+-0.2
+~~END~~
+
+
+p1_float_exponent 2E
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+p1_float_exponent 2E+
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+p1_float_exponent -.2E+
+go
+~~START~~
+float
+-0.2
+~~END~~
+
+
+p1_float_exponent @p=-.2E+
+go
+~~START~~
+float
+-0.2
+~~END~~
+
+
+exec p2_float_exponent
+select * from t1_float_exponent
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#real#!#float#!#numeric
+2#!#3.1#!#-0.4#!#5.00
+~~END~~
+
+
+select * from v1_float_exponent
+go
+~~START~~
+numeric
+2
+~~END~~
+
+
+select dbo.f1_float_exponent(2e)
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+select dbo.f1_float_exponent(-.2e-)
+go
+~~START~~
+float
+-0.2
+~~END~~
+
+
+select dbo.f1_float_exponent(+2.e-)
+go
+~~START~~
+float
+2.0
+~~END~~
+
+
+
+
+
+
+
+

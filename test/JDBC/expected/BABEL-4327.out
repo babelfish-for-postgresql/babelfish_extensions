@@ -16,7 +16,7 @@ select name from sys.types where system_type_id =
 );
 GO
 ~~START~~
-text
+varchar
 varchar
 ~~END~~
 
