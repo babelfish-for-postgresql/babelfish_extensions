@@ -59,18 +59,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BBF_BINARY AS sys.VARCHAR)
 WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binarysysvarchar_deprecated_2_6_0');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binarysysvarchar_deprecated_2_6_0');
 
 -- (sys.BBF_BINARY AS pg_catalog.VARCHAR)
 DROP CAST IF EXISTS(sys.BBF_BINARY AS pg_catalog.VARCHAR);
@@ -96,18 +85,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.BBF_BINARY AS pg_catalog.VARCHAR)
 WITH FUNCTION sys.binaryvarchar (sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binaryvarchar_deprecated_2_6_0');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'binaryvarchar_deprecated_2_6_0');
 
 -- (sys.ROWVERSION AS sys.VARCHAR)
 DROP CAST IF EXISTS(sys.ROWVERSION AS sys.VARCHAR);
@@ -133,18 +111,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.ROWVERSION AS sys.VARCHAR)
 WITH FUNCTION sys.rowversionsysvarchar (sys.ROWVERSION, integer, boolean) AS ASSIGNMENT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionsysvarchar_deprecated_2_6_0');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionsysvarchar_deprecated_2_6_0');
 
 -- (sys.BBF_BINARY AS pg_catalog.VARCHAR)
 DROP CAST IF EXISTS(sys.ROWVERSION AS pg_catalog.VARCHAR);
@@ -170,18 +137,7 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.ROWVERSION AS pg_catalog.VARCHAR)
 WITH FUNCTION sys.rowversionvarchar (sys.ROWVERSION, integer, boolean) AS ASSIGNMENT;
 
-DO $$
-DECLARE
-    exception_message text;
-BEGIN
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionvarchar_deprecated_2_6_0');
-
-EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS
-    exception_message = MESSAGE_TEXT;
-    RAISE WARNING '%', exception_message;
-END;
-$$;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionvarchar_deprecated_2_6_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
