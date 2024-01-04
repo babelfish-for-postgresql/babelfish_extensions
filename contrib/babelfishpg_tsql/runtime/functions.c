@@ -184,6 +184,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_date);
 PG_FUNCTION_INFO_V1(datepart_internal_datetime);
 PG_FUNCTION_INFO_V1(datepart_internal_datetimeoffset);
 PG_FUNCTION_INFO_V1(datepart_internal_time);
+PG_FUNCTION_INFO_V1(datepart_internal_interval);
 PG_FUNCTION_INFO_V1(datepart_internal_decimal);
 PG_FUNCTION_INFO_V1(datepart_internal_float);
 PG_FUNCTION_INFO_V1(datepart_internal_real);
@@ -757,6 +758,107 @@ datepart_internal_time(PG_FUNCTION_ARGS)
 	}
 
 	return datepart_internal(field, timestamp, (float8)df_tz, false);
+}
+
+/*
+ * datepart_internal_interval takes interval and extracts the required field
+ * Since it is interval, there is no need to call datepart_internal
+ */
+
+Datum
+datepart_internal_interval(PG_FUNCTION_ARGS)
+{
+	char		*field = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	int 		df_tz = PG_GETARG_INT32(2);
+	int64 		result;
+
+	Interval	*interval = PG_GETARG_INTERVAL_P(1);
+	Timestamp	interval_time = interval->time + (Timestamp) df_tz * SECS_PER_MINUTE * USECS_PER_SEC;
+	int32		interval_days,interval_month;
+	float8		year,month,days,hours,minutes,sec;
+	int32		millisec,microsec,nanosec;
+
+	interval_days = interval->day;
+	interval_month = interval->month;
+
+	/* Extracting year, months, days, etc from the interval period. */
+	year = interval_month / MONTHS_PER_YEAR;
+	month = (interval_month % MONTHS_PER_YEAR);
+	days = interval_days;
+
+	hours = (interval_time / USECS_PER_HOUR);
+	minutes = (interval_time / USECS_PER_MINUTE);
+
+	if(interval_time < USECS_PER_SEC)
+	{
+		sec = ((float8)interval_time / USECS_PER_SEC);
+	}
+	else
+	{
+		sec = (interval_time % USECS_PER_SEC) % SECS_PER_MINUTE;
+	}
+
+	millisec = (int32)(sec * 1000);
+	microsec = (int32)(millisec * 1000);
+	nanosec = (int32)(microsec) * 1000;
+
+	if(strcasecmp(field , "year") == 0)
+	{
+		result = (int)year;
+	}
+	else if(strcasecmp(field , "quarter") == 0)
+	{
+		result = (int)ceil((float)month / 3.0);
+	}
+	else if(strcasecmp(field , "month") == 0)
+	{
+		result = (int)month;
+	}
+	else if(strcasecmp(field , "day") == 0)
+	{
+		result = (int)days;
+	}
+	else if(strcasecmp(field , "y") == 0)
+	{
+		result = (int)year;
+	}
+	else if(strcasecmp(field , "hour") == 0)
+	{
+		result = (int)hours;
+	}
+	else if(strcasecmp(field , "minute") == 0)
+	{
+		result = (int)minutes;
+	}
+	else if(strcasecmp(field , "second") == 0)
+	{
+		result = (int)sec;
+	}
+	else if(strcasecmp(field , "nanosecond") == 0)
+	{
+		result = nanosec;
+	}
+	else if(strcasecmp(field , "millisecond") == 0)
+	{
+		result = millisec;
+	}
+	else if(strcasecmp(field , "microsecond") == 0)
+	{
+		result = microsec;
+	}
+	else if(strcasecmp(field , "tzoffset") == 0)
+	{
+		result = 0;
+	}
+	else
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("\'%s\' is not a recognized datepart option", field)));
+
+	}
+
+	PG_RETURN_INT32(result);
 }
 
 
