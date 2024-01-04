@@ -2782,9 +2782,6 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	}
 	else
 	{
-		/* We can store upto 2GB (2^31 - 1 bytes) for the varchar(max). */
-		if (unlikely(actualLen > VARCHAR_MAX))
-			elog(ERROR, "Number of bytes required for the field of varchar(max) exeeds 2GB");
 		TDSInstrumentation(INSTR_TDS_DATATYPE_VARCHAR_MAX);
 
 		rc = TdsSendPlpDataHelper(destBuf, actualLen);
