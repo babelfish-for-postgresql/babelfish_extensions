@@ -120,7 +120,7 @@ BEGIN
 
     CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date INTERVAL ,df_tz INTEGER DEFAULT 0)
     RETURNS INTEGER
-    AS 'babelfishpg_tsql', 'datepart_internal_interval'
+    AS 'babelfishpg_tsql', 'datepart_internal_interval' 
     LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
     CREATE OR REPLACE FUNCTION sys.datepart_internal(field text, datapart_date sys.DECIMAL ,df_tz INTEGER DEFAULT 0)

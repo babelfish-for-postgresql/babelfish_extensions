@@ -859,6 +859,7 @@ datepart_internal_interval(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_INT32(result);
+	
 }
 
 
