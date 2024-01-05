@@ -20,7 +20,6 @@ Could not find tests for function sys.get_host_os
 Could not find tests for function sys.is_collated_ci_as
 Could not find tests for function sys.is_collated_ci_as_internal
 Could not find tests for function sys.is_rolemember_internal
-Could not find tests for function sys.max_precision
 Could not find tests for function sys.openjson_array
 Could not find tests for function sys.openjson_object
 Could not find tests for function sys.openjson_simple
