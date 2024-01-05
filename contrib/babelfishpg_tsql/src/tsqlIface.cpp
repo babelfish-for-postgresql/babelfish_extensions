@@ -2130,6 +2130,63 @@ public:
 		handleFloatWithoutExponent(ctx);
 	}
 
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// For comparison operators directly followed by an '@@' variable, insert a space 
+		// to avoid these being parsed incorrectly by PG; this applies to the following 
+		// character sequences: =@@, >@@, <@@ as well as !=@ (i.e. a single-@ variable)
+		// Note: this issue does not occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
+
+		if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
+		{
+			std::string op = getFullText(ctx->comparison_operator());		
+			if ((op.back() == '=') || 
+			    (op.back() == '>') || 
+			    (op.back() == '<'))
+			{
+				// The operator must be followed immediately by the variable without any character in between
+				Assert(ctx->expression(1));
+				size_t startPosition = ctx->expression(1)->start->getStartIndex();
+				if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
+				{
+					std::string var = getFullText(ctx->expression(1));
+					// The subsequent expression must be a variable starting with '@@'
+					if (var.front() == '@') 
+					{
+						if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
+						{
+							// Insert a space before the variable name
+							rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void exitExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext *ctx) override
+	{
+		// Look for named arguments with an @@variable with no preceding whitespace, i.e. 'exec myproc @p=@@spid'
+		Assert(ctx->EQUAL());
+		Assert(ctx->execute_parameter());
+		size_t startPosition = ctx->execute_parameter()->start->getStartIndex();
+		if ((startPosition - ctx->EQUAL()->getSymbol()->getStopIndex()) == 1)
+		{
+			std::string var = getFullText(ctx->execute_parameter());
+				
+			// The subsequent expression must be a variable starting with '@@'
+			if (var.front() == '@') 
+			{
+				if (var.at(1) == '@') 
+				{
+					// Insert a space before the variable name
+					if (in_execute_body_batch) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+				}
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of non-statement context
 	//////////////////////////////////////////////////////////////////////////////
@@ -2709,6 +2766,27 @@ public:
 	{
 		in_procedure_parameter = false;
 		in_procedure_parameter_id = false;
+
+		// Look for parameter defaults that use an @@variable with no preceding whitespace
+		if (ctx->EQUAL())
+		{
+			// The '=' char must be followed immediately by the variable without any character in between
+			Assert(ctx->expression());			
+			size_t startPosition = ctx->expression()->start->getStartIndex();
+			if ((startPosition - ctx->EQUAL()->getSymbol()->getStopIndex()) == 1)
+			{
+				std::string var = getFullText(ctx->expression());
+				// The subsequent default expression must be a variable starting with '@@'
+				if (var.front() == '@') 
+				{
+					if (var.at(1) == '@') 
+					{
+						// Insert a space before the default variable name
+						rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+					}
+				}
+			}
+		}
 	}
 
 	void exitId(TSqlParser::IdContext *ctx) override
