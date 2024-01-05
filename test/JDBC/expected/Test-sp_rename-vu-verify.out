@@ -519,7 +519,7 @@ WHERE name LIKE '%sp_rename_vu%'
 ORDER BY schema_id, type_table_object_id, name;
 GO
 ~~START~~
-text
+varchar
 sp_rename_vu_tabletype1
 sp_rename_vu_tabletype1
 ~~END~~
@@ -551,7 +551,7 @@ WHERE name LIKE '%sp_rename_vu%'
 ORDER BY schema_id, type_table_object_id, name;
 GO
 ~~START~~
-text
+varchar
 sp_rename_vu_tabletype1_new
 sp_rename_vu_tabletype1_schema1_new
 ~~END~~
@@ -729,7 +729,7 @@ WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
 ORDER BY t1.name, s1.name;
 GO
 ~~START~~
-text#!#varchar
+varchar#!#varchar
 sp_rename_vu_alias1#!#dbo
 sp_rename_vu_alias1#!#sp_rename_vu_schema1
 sp_rename_vu_tabletype1_new#!#dbo
@@ -752,7 +752,7 @@ WHERE t1.is_user_defined = 1 AND t1.name LIKE '%sp_rename_vu%'
 ORDER BY t1.name, s1.name;
 GO
 ~~START~~
-text#!#varchar
+varchar#!#varchar
 sp_rename_vu_alias2#!#dbo
 sp_rename_vu_alias2#!#sp_rename_vu_schema1
 sp_rename_vu_tabletype1_new#!#dbo

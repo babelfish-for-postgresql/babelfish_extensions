@@ -1,0 +1,5 @@
+drop procedure p1_set_tran_isolvl
+go
+
+drop procedure p2_set_tran_isolvl
+go

@@ -17,12 +17,6 @@ jobs:
         if: always()
         uses: ./.github/composite-actions/install-dependencies
 
-      - name: Install Code Coverage Dependencies
-        id: install-code-coverage-dependencies
-        if: always()
-        run: |
-          sudo apt-get install lcov
-
       - name: Build Modified Postgres
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'

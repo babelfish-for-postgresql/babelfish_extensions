@@ -4606,6 +4606,7 @@ keyword
     | LOCK
     | LOCK_ESCALATION
     | LOG
+    | LOG10
     | LOGIN
     | LOOP
     | LOW
