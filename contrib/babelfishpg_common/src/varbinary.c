@@ -722,6 +722,12 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(result);
 }
 
+/*
+ * This function is currently being called with 1 and 3 arguments,
+ * Currently, the third argument is not being parsed in this function, 
+ * Check for the number of args needs to be added if the third arg is 
+ * being parsed in future
+ */
 Datum
 varbinaryvarchar(PG_FUNCTION_ARGS)
 {
