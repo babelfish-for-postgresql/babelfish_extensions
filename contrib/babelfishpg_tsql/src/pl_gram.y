@@ -5529,6 +5529,7 @@ read_fetch_direction(void)
 	fetch->how_many  = 1;
 	fetch->expr		 = NULL;
 	fetch->returns_multiple_rows = false;
+	fetch->cursor_portal_name = NULL;
 
 	tok = yylex();
 	if (tok == 0)

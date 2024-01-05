@@ -1296,7 +1296,10 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			portal = SPI_cursor_find(((PLtsql_stmt_fetch *) stmt)->cursor_portal_name);
 
 			if (portal && portal->status == PORTAL_FAILED)
+			{
 				UnpinPortal(portal);
+				exec_set_fetch_status(estate, -1);
+			}
 		}
 
 		/*
