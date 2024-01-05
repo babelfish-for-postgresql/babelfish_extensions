@@ -1,0 +1,25 @@
+use master
+go
+
+create procedure p1_drop_index @p int=0
+as
+if @p = 0
+	drop index guest.t1_drop_index.ix1
+else
+	drop index if exists guest.t1_drop_index.ix1	
+	select db_name(), object_name(id), object_schema_name(id), name from sysindexes where name like 'ix1%' order by 1,2,3,4	
+go
+
+
+create procedure p2_drop_index @p int=0
+as
+if @p = 0
+	drop index ix1 on guest.t1_drop_index
+else
+	drop index if exists ix1 on guest.t1_drop_index	
+	select db_name(), object_name(id), object_schema_name(id), name from sysindexes where name like 'ix1%' order by 1,2,3,4	
+go
+
+use tempdb
+go
+

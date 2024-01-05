@@ -2351,6 +2351,39 @@ public:
 		}
 	}
 
+	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
+	{
+		/* 
+		 * Rewrite 'DROP INDEX index_name ON schema.table' as 'DROP INDEX index_name ON table SCHEMA schema'
+		 * Note that using a 3-part or 4-part table name is not currently supported and has already been intercepted at this point.
+		 */
+		Assert(ctx->full_object_name());
+		if (ctx->full_object_name()->schema)
+		{
+			std::string str = getFullText(ctx->full_object_name());				
+			size_t startPosition = ctx->full_object_name()->start->getStartIndex();
+			std::string tbName = getFullText(ctx->full_object_name()->object_name);	
+			std::string schemaName = " SCHEMA " +getFullText(ctx->full_object_name()->schema);	
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, tbName+schemaName)));		
+		}
+	}
+
+	void exitDrop_backward_compatible_index(TSqlParser::Drop_backward_compatible_indexContext *ctx) override
+	{
+		/*
+		 * Rewrite 'DROP INDEX [schema.]table.index_name' as 'DROP INDEX index_name ON table [ SCHEMA schema ]'
+		 */
+		std::string str = getFullText(ctx);
+		size_t startPosition = ctx->start->getStartIndex();
+		std::string ixName = getFullText(ctx->index_name);
+		std::string tbName = getFullText(ctx->table_or_view_name);
+		std::string schemaName = "";
+		if (ctx->owner_name) {
+			schemaName = " SCHEMA " +getFullText(ctx->owner_name);
+		}
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, ixName+" ON "+tbName+schemaName)));
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of ITVF
 	//////////////////////////////////////////////////////////////////////////////
