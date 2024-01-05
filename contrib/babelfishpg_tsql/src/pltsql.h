@@ -62,6 +62,8 @@
 /* Max number of Args allowed for Prepared stmts. */
 #define PREPARE_STMT_MAX_ARGS 2100
 
+#define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
+
 /*
  * Compiler's namespace item types
  */
