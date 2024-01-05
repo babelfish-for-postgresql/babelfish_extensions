@@ -2828,7 +2828,9 @@ rename_procfunc_update_bbf_catalog(RenameStmt *stmt)
 	table_close(bbf_func_ext_rel, RowExclusiveLock);
 }
 
-/* Add an entry to catalog BABELFISH_SCHEMA_PERMISSIONS. */
+/*
+ * Add an entry to catalog BABELFISH_SCHEMA_PERMISSIONS.
+ */
 void
 add_entry_to_bbf_schema_perms(const char *schema_name,
 				const char *object_name,
@@ -2877,7 +2879,9 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	CommandCounterIncrement();
 }
 
-/* Update a catalog entry. */
+/*
+ * Updates the permission column for a particular row in BABELFISH_SCHEMA_PERMISSIONS table.
+ */
 void
 update_privileges_of_object(const char *schema_name,
 				const char *object_name,
@@ -2987,7 +2991,9 @@ update_privileges_of_object(const char *schema_name,
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
-/* Check if the catalog entry exists. */
+/*
+ * Checks if a particular catalog entry exists in BABELFISH_SCHEMA_PERMISSIONS.
+ */
 bool
 entry_exists_in_bbf_schema(const char *schema_name,
 							const char *object_name,
@@ -3153,8 +3159,8 @@ get_privilege_of_object(const char *schema_name,
 
 	if (HeapTupleIsValid(tuple_bbf_schema))
 	{
-		Form_bbf_schema_perms bbf_schema_perms = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
-		permission = bbf_schema_perms->permission;
+		Form_bbf_schema_perms schemaform = (Form_bbf_schema_perms) GETSTRUCT(tuple_bbf_schema);
+		permission = schemaform->permission;
 	}
 
 	systable_endscan(scan);
@@ -3162,6 +3168,9 @@ get_privilege_of_object(const char *schema_name,
 	return permission;
 }
 
+/*
+ * Removes a row from the catalog BABELFISH_SCHEMA_PERMISSIONS.
+ */
 void
 remove_entry_from_bbf_schema_perms(const char *schema_name,
 				  const char *object_name,
@@ -3227,7 +3236,7 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 
 /*
  * Add an entry to BABELFISH_SCHEMA_PERMISSIONS table, if it doesn't exist already.
- * If exists, update the PERMISSION column in the table.
+ * If exists, updates the PERMISSION column in the table.
  */
 void
 add_or_update_object_in_bbf_schema(const char *schema_name,
@@ -3243,6 +3252,9 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
 }
 
+/*
+ * Removes all the rows corresponding to an OBJECT/SCHEMA from the catalog.
+ */
 void
 clean_up_object_from_bbf_schema(const char *schema_name,
 				  const char *object_name,
@@ -3321,7 +3333,6 @@ clean_up_object_from_bbf_schema(const char *schema_name,
  * It grants the permission explicitly when REVOKE has been executed on that
  * specific schema.
  */
-
 void
 grant_perms_to_objects_in_schema(const char *schema_name,
 				  int permission,

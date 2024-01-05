@@ -3694,17 +3694,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	char		*dbname = get_cur_db_name();
 	char		*login = GetUserNameFromId(GetSessionUserId(), false);
 	bool		login_is_db_owner;
-	char		*rolname;
 	char		*schema_name;
 	ListCell	*lc;
 	ListCell	*lc1;
-	Oid			schemaOid;
+	Oid		schemaOid;
 	char		*user = GetUserNameFromId(GetUserId(), false);
 
-	/*
-	 * If the login is not the db owner or the login is not the member of
-	 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
-	 */
 	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
 
@@ -3728,28 +3723,33 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	foreach(lc1, stmt->privileges)
 	{
 		char	*priv_name = (char *) lfirst(lc1);
+		char	*rolname = NULL;
 		AclMode privilege = string_to_privilege(priv_name);
 		foreach(lc, stmt->grantees)
 		{
 			char	*grantee_name = (char *) lfirst(lc);
-			Oid		role_oid;
-			bool	grantee_is_db_owner;
-			if (strcmp(grantee_name, "public") != 0)
+			Oid	role_oid;
+			bool	grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
+			bool	is_public = 0 == strncmp(grantee_name, "public", NAMEDATALEN);
+			if (!is_public)
 				rolname	= get_physical_user_name(dbname, grantee_name);
 			else
 				rolname = pstrdup("public");
 			role_oid = get_role_oid(rolname, true);
-			grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
 
-			if (strcmp(grantee_name, "public") != 0 && role_oid == InvalidOid)
+			if (!is_public && !OidIsValid(role_oid))
 				ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
 
-			if ((strcmp(rolname, user) == 0) || pg_namespace_ownercheck(schemaOid, role_oid) || is_member_of_role(role_oid, get_sysadmin_oid()) || grantee_is_db_owner)
+			if ((strcmp(rolname, user) == 0) || (!is_public && pg_namespace_ownercheck(schemaOid, role_oid)) || is_member_of_role(role_oid, get_sysadmin_oid()) || grantee_is_db_owner)
 				ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
 
+			/*
+			 * If the login is not the db owner or the login is not the member of
+			 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+			 */
 			if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
 				ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -3776,7 +3776,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			pfree(rolname);
 		}
 	}
-
 	pfree(user);
 	pfree(schema_name);
 	pfree(dbname);
