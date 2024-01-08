@@ -185,6 +185,7 @@ static bool in_execute_body_batch_parameter = false;
 static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix for expressions
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
 static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
+static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx); 
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -2010,6 +2011,7 @@ public:
 		clear_rewritten_query_fragment();
 	}
 
+	// NB: similar code is in tsqlMutator
 	void exitChar_string(TSqlParser::Char_stringContext *ctx) override
 	{
 		std::string str = getFullText(ctx);			
@@ -2119,6 +2121,70 @@ public:
 	void exitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override
 	{
 		// TO-DO
+	}
+
+	// NB: this is copied in tsqlMutator
+	void exitConstant(TSqlParser::ConstantContext *ctx) override
+	{	
+		// Check for floating-point number without exponent
+		handleFloatWithoutExponent(ctx);
+	}
+
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// For comparison operators directly followed by an '@@' variable, insert a space 
+		// to avoid these being parsed incorrectly by PG; this applies to the following 
+		// character sequences: =@@, >@@, <@@ as well as !=@ (i.e. a single-@ variable)
+		// Note: this issue does not occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
+
+		if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
+		{
+			std::string op = getFullText(ctx->comparison_operator());		
+			if ((op.back() == '=') || 
+			    (op.back() == '>') || 
+			    (op.back() == '<'))
+			{
+				// The operator must be followed immediately by the variable without any character in between
+				Assert(ctx->expression(1));
+				size_t startPosition = ctx->expression(1)->start->getStartIndex();
+				if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
+				{
+					std::string var = getFullText(ctx->expression(1));
+					// The subsequent expression must be a variable starting with '@@'
+					if (var.front() == '@') 
+					{
+						if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
+						{
+							// Insert a space before the variable name
+							rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void exitExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext *ctx) override
+	{
+		// Look for named arguments with an @@variable with no preceding whitespace, i.e. 'exec myproc @p=@@spid'
+		Assert(ctx->EQUAL());
+		Assert(ctx->execute_parameter());
+		size_t startPosition = ctx->execute_parameter()->start->getStartIndex();
+		if ((startPosition - ctx->EQUAL()->getSymbol()->getStopIndex()) == 1)
+		{
+			std::string var = getFullText(ctx->execute_parameter());
+				
+			// The subsequent expression must be a variable starting with '@@'
+			if (var.front() == '@') 
+			{
+				if (var.at(1) == '@') 
+				{
+					// Insert a space before the variable name
+					if (in_execute_body_batch) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+				}
+			}
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -2374,6 +2440,39 @@ public:
 		}
 	}
 
+	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
+	{
+		/* 
+		 * Rewrite 'DROP INDEX index_name ON schema.table' as 'DROP INDEX index_name ON table SCHEMA schema'
+		 * Note that using a 3-part or 4-part table name is not currently supported and has already been intercepted at this point.
+		 */
+		Assert(ctx->full_object_name());
+		if (ctx->full_object_name()->schema)
+		{
+			std::string str = getFullText(ctx->full_object_name());				
+			size_t startPosition = ctx->full_object_name()->start->getStartIndex();
+			std::string tbName = getFullText(ctx->full_object_name()->object_name);	
+			std::string schemaName = " SCHEMA " +getFullText(ctx->full_object_name()->schema);	
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, tbName+schemaName)));		
+		}
+	}
+
+	void exitDrop_backward_compatible_index(TSqlParser::Drop_backward_compatible_indexContext *ctx) override
+	{
+		/*
+		 * Rewrite 'DROP INDEX [schema.]table.index_name' as 'DROP INDEX index_name ON table [ SCHEMA schema ]'
+		 */
+		std::string str = getFullText(ctx);
+		size_t startPosition = ctx->start->getStartIndex();
+		std::string ixName = getFullText(ctx->index_name);
+		std::string tbName = getFullText(ctx->table_or_view_name);
+		std::string schemaName = "";
+		if (ctx->owner_name) {
+			schemaName = " SCHEMA " +getFullText(ctx->owner_name);
+		}
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, ixName+" ON "+tbName+schemaName)));
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of ITVF
 	//////////////////////////////////////////////////////////////////////////////
@@ -2451,18 +2550,19 @@ public:
 
 class tsqlMutator : public TSqlParserBaseListener
 {
-public:
-    MyInputStream &stream;
+public:		
+	const std::vector<std::string> &ruleNames;	   		
+	MyInputStream &stream; 
 	bool in_procedure_parameter = false;    
 	bool in_procedure_parameter_id = false;    
 
 	std::vector<int> double_quota_places;
 
-    explicit tsqlMutator(MyInputStream &s)
-        : stream(s)
+    explicit tsqlMutator(const std::vector<std::string> &rules, MyInputStream &s)
+        : ruleNames(rules), stream(s)
     {
     }
-	    
+
 public:
     void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
     {	
@@ -2504,9 +2604,68 @@ public:
 		stream.setText(ctx->start->getStartIndex(), " chr");
 	}
     }	
+    
+	std::string
+	getNodeDesc(ParseTree *t)
+	{
+		std::string result = Trees::getNodeText(t, this->ruleNames);
+		return result;
+	}
 
-    void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
-    {
+	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
+	{
+		// Handle multiple cases:
+		// - 2-char comparison operators containing whitespace, i.e. '! =', '< >', etc.
+		// - operators !< and !> (which may also contains whitespace), convert to >= and <= 
+		std::string str = getFullText(ctx);
+		std::string operator_final = "";			
+		int fill = 0;
+
+		if (str.length() > 2)
+		{
+			// This operator contains whitespace, remove it	        
+			for(size_t i = 0; i < str.length(); i++) 
+			{
+			    if (!isspace(str[i])) 
+			    	operator_final += str[i];
+			}	   
+			fill = str.length() - operator_final.length();			
+		}
+
+		// Handle !> and !< operators by converting to <= and >=
+		if      (pg_strncasecmp(str.c_str(),            "!<", 2) == 0) operator_final = ">=";
+		else if (pg_strncasecmp(operator_final.c_str(), "!<", 2) == 0) operator_final = ">=";
+		else if (pg_strncasecmp(str.c_str(),            "!>", 2) == 0) operator_final = "<=";
+		else if (pg_strncasecmp(operator_final.c_str(), "!>", 2) == 0) operator_final = "<=";
+						
+		// Fill with spaces until original length 
+		operator_final.append(fill, ' ');  
+			
+		if (operator_final.length() > 0)
+		{
+			stream.setText(ctx->start->getStartIndex(), operator_final.c_str());
+		}
+	}
+
+	// Tree listener overrides		
+	void enterEveryRule(ParserRuleContext *ctx) override
+	{
+		std::string desc{getNodeDesc(ctx)};
+
+		if (pltsql_enable_antlr_detailed_log)
+			std::cout << "+entering (tsqlMutator)" << (void *) ctx << "[" << desc << "]" << std::endl;
+	}
+
+	void exitEveryRule(ParserRuleContext *ctx) override
+	{
+		std::string desc{getNodeDesc(ctx)};
+
+		if (pltsql_enable_antlr_detailed_log)
+			std::cout << "-leaving (tsqlMutator)" << (void *) ctx << "[" << desc << "]" << std::endl;
+	}    
+	
+  void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
+  {
 	// We are looking at a function name; it may be a function call, or a
 	// DROP function statement, or some other reference.
 	//
@@ -2652,11 +2811,47 @@ public:
 			in_procedure_parameter_id = true;
 		}		
 	}
-	
+
+	void exitFunc_body_returns_scalar(TSqlParser::Func_body_returns_scalarContext *ctx) override
+	{	
+		// If no AS keyword is specified, insert it prior to the BEGIN keyword.
+		// This only applies to scalar functions; for other function types, the optional AS keyword 
+		// is already supported.
+		// Formally, this fix is required only for all Babelfish-defined function result datatypes such as
+		// TINYINT, but for simplicity it's done for all data types.
+		if (!ctx->AS() && ctx->BEGIN())
+		{	
+			std::string b = getFullText(ctx->BEGIN());
+			size_t startPosition = ctx->BEGIN()->getSymbol()->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(b, "AS "+b)));	
+		}
+	}
+
 	void exitProcedure_param(TSqlParser::Procedure_paramContext *ctx) override
 	{
 		in_procedure_parameter = false;
 		in_procedure_parameter_id = false;
+
+		// Look for parameter defaults that use an @@variable with no preceding whitespace
+		if (ctx->EQUAL())
+		{
+			// The '=' char must be followed immediately by the variable without any character in between
+			Assert(ctx->expression());			
+			size_t startPosition = ctx->expression()->start->getStartIndex();
+			if ((startPosition - ctx->EQUAL()->getSymbol()->getStopIndex()) == 1)
+			{
+				std::string var = getFullText(ctx->expression());
+				// The subsequent default expression must be a variable starting with '@@'
+				if (var.front() == '@') 
+				{
+					if (var.at(1) == '@') 
+					{
+						// Insert a space before the default variable name
+						rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+					}
+				}
+			}
+		}
 	}
 
 	void exitId(TSqlParser::IdContext *ctx) override
@@ -2697,6 +2892,7 @@ public:
 		}
 	}
 	
+	// NB: similar code is in tsqlBuilder
 	void exitChar_string(TSqlParser::Char_stringContext *ctx) override
 	{
 		if (in_procedure_parameter)
@@ -2727,6 +2923,13 @@ public:
 			}
 		}
 	}
+
+	// NB: this is copied in tsqlBuilder
+	void exitConstant(TSqlParser::ConstantContext *ctx) override
+	{	
+		// Check for floating-point number without exponent
+		handleFloatWithoutExponent(ctx);
+	}	
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3021,7 +3224,7 @@ antlr_parse_query(const char *sourceText, bool useSLLParsing) {
 			unsupportedFeatureHandler->visit(tree);
 		}
 
-		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(sourceStream);
+		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(parser.getRuleNames(), sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
 
@@ -4639,6 +4842,7 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx, std::map<PLtsql_stmt 
 			{
 				std::string typeStr = ::getFullText(local->data_type());
 				PLtsql_type *type = parse_datatype(typeStr.c_str(), 0);  // FIXME: the second arg should be 'location'
+				
 				if (is_tsql_text_ntext_or_image_datatype(type->typoid))
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "The text, ntext, and image data types are invalid for local variables.", getLineAndPos(local->data_type()));
@@ -6045,7 +6249,7 @@ void process_execsql_destination_select(TSqlParser::Select_statement_standaloneC
 
 			if (elem->EQUAL())
 			{
-				// in PG main parser, '@a=1' will be treaed as a boolean expression to compare @a and 1. This is different T-SQL expected.
+				// in PG main parser, '@a=1' will be treated as a boolean expression to compare @a and 1. This is different T-SQL expected.
 				// We'll remove '@a=' from the query string so that main parser will return the expected result.
 				removeTokenStringFromQuery(stmt->sqlstmt, elem->LOCAL_ID(), ctx);
 				removeTokenStringFromQuery(stmt->sqlstmt, elem->EQUAL(), ctx);
@@ -6158,7 +6362,7 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 					removeCtxStringFromQuery(stmt->sqlstmt, elem->expression(), uctx);
 				}
 
-				// Concetually we have to remove any nearest COMMA.
+				// Conceptually we have to remove any nearest COMMA.
 				// But code is little bit dirty to handle some corner cases (the first few elems are removed or the last few elems are removed)
 				if ((i==0 || comma_carry_over) && i<uctx->COMMA().size())
 				{
@@ -6415,7 +6619,7 @@ static void
 post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
 	/*
-	 * TSQL allows timestamp datatype without column name in create/alter table/type
+	 * T-SQL allows TIMESTAMP datatype without column name in create/alter table/type
 	 * statement and internally assumes "timestamp" as column name. So here if
 	 * we find TIMESTAMP token then we will prepend "timestamp" as a column name
 	 * in the column definition.
@@ -6789,7 +6993,7 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())
 		{
 			/*
-			 * TSQL allows timestamp datatype without column name in declare table type
+			 * T-SQL allows TIMESTAMP datatype without column name in declare table type
 			 * statement and internally assumes "timestamp" as column name. So here if
 			 * we find TIMESTAMP token then we will prepend "timestamp" as a column name
 			 * in the column definition.
@@ -7337,10 +7541,10 @@ bool
 is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx)
 {
 	/*
-	 * in ANTLR t-sql grammar, top-level select statement is represented as select_statement_standalone.
-	 * subquery, derived table, cte can contain query specification via select statement but it is just a select_statement not via select_statement_standalone.
-	 * To figure out the query-specification is corresponding to top-level select statement,
-	 * iterate its ancestors and check if encoutering subquery, derived_table or common_table_expression.
+	 * In ANTLR T-SQL grammar, top-level SELECT statement is represented as select_statement_standalone.
+	 * subquery, derived table, CTE can contain query specification via SELECT statement but it is just a select_statement not via select_statement_standalone.
+	 * To figure out the query-specification is corresponding to top-level SELECT statement,
+	 * iterate its ancestors and check if encountering subquery, derived_table or common_table_expression.
 	 * if it is query specification in top-level statement, it will never meet those grammar element.
 	 */
 	Assert(ctx);
@@ -7646,4 +7850,82 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 	result->new_owner_name = pstrdup(downcase_truncate_identifier(new_owner_name_str.c_str(), new_owner_name_str.length(), true));
 
 	return (PLtsql_stmt *) result;
+}
+
+// Look for '<number>E' : T-SQL allows the exponent to be omitted (defaults to 0), but PG raises an error 
+// The REAL token is generated by the lexer; check the actual string to see if this is REAL notation		
+// Notes: 
+//  * the mantissa may also start with a '.', i.e. '.5e'
+//  * the exponent may just be a + or - sign (means '0'; 1e+ ==> 1e0 )
+void
+handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx) 
+{			
+	std::string str = getFullText(ctx);		
+			
+	// Check for case where exponent is only a sign: 2E+ , 2E-		
+	if ((str.back() == '+') || (str.back() == '-'))
+	{
+		// remove terminating sign	
+		str.pop_back();	
+						
+		if ((str.back() == 'E') || (str.back() == 'e'))
+		{		
+			// ends in 'E+' or 'E-', continue below
+		}
+		else 
+		{
+			// Whatever it is, it's not the notation we're looking for 	
+			return;
+		}
+	}
+		
+	if ((str.back() == 'E') || (str.back() == 'e'))
+	{
+		// remove terminating E		
+		str.pop_back();
+
+		if ((str.front() == '+') || (str.front() == '-'))
+		{
+			 // remove leading sign
+			 str.erase(0,1);
+		}
+		
+		// Now check if this is a valid number. Note that it may start or end with '.' 
+		// but in both cases it must have at least one digit as well.  
+		size_t dot = str.find(".");
+		if (dot != std::string::npos)
+		{
+			 // remove the dot
+			 str.erase(dot,1);
+		}
+    
+    	// What we have left now should be all digits
+    	bool is_number = true;
+    	if (str.length() == 0) 
+		{
+			is_number = false;
+		}
+		else        		
+    	{			
+			for(size_t i = 0; i < str.length(); i++) 
+			{
+			    if (!isdigit(str[i])) 
+			    {
+			    	is_number = false;
+			    	break;
+			    }
+			}
+		}
+	
+		if (is_number)
+		{	
+			// Rewrite the exponent by adding a '0'
+			std::string str = getFullText(ctx);
+			size_t startPosition = ctx->start->getStartIndex();
+			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch  		
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, str+"0")));
+		}	
+	}
+	
+	return;
 }

@@ -322,7 +322,24 @@ Function sys.datediff_internal_big(text,anyelement,anyelement)
 Function sys.datefirst()
 Function sys.datefromparts(integer,integer,integer)
 Function sys.datename(text,text)
-Function sys.datepart_internal(text,anyelement,integer)
+Function sys.datepart_internal(text,bigint,integer)
+Function sys.datepart_internal(text,date,integer)
+Function sys.datepart_internal(text,double precision,integer)
+Function sys.datepart_internal(text,integer,integer)
+Function sys.datepart_internal(text,interval,integer)
+Function sys.datepart_internal(text,numeric,integer)
+Function sys.datepart_internal(text,real,integer)
+Function sys.datepart_internal(text,smallint,integer)
+Function sys.datepart_internal(text,sys."bit",integer)
+Function sys.datepart_internal(text,sys."decimal",integer)
+Function sys.datepart_internal(text,sys.datetime,integer)
+Function sys.datepart_internal(text,sys.datetime2,integer)
+Function sys.datepart_internal(text,sys.datetimeoffset,integer)
+Function sys.datepart_internal(text,sys.money,integer)
+Function sys.datepart_internal(text,sys.smalldatetime,integer)
+Function sys.datepart_internal(text,sys.smallmoney,integer)
+Function sys.datepart_internal(text,sys.tinyint,integer)
+Function sys.datepart_internal(text,time without time zone,integer)
 Function sys.datetime22bpchar(sys.datetime2)
 Function sys.datetime22char(sys.datetime2)
 Function sys.datetime22date(sys.datetime2)
@@ -520,7 +537,6 @@ Function sys.len(sys.bbf_varbinary)
 Function sys.len(text)
 Function sys.lock_timeout()
 Function sys.max_connections()
-Function sys.max_precision()
 Function sys.microsoftversion()
 Function sys.money_sqlvariant(sys.fixeddecimal)
 Function sys.money_sqlvariant(sys.money)
@@ -990,7 +1006,6 @@ Operator sys.^(integer,integer)
 Operator sys.^(smallint,smallint)
 Operator sys.^(sys.tinyint,sys.tinyint)
 Operator sys.~(NONE,sys."bit")
-Type sys."bigint"
 Type sys."real"
 Type sys.bbf_varbinary
 Type sys.cursor
@@ -1004,7 +1019,6 @@ View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
 View sys.change_tracking_databases
 View sys.change_tracking_tables
-View sys.data_spaces
 View sys.database_files
 View sys.database_filestream_options
 View sys.database_recovery_status
@@ -1028,7 +1042,6 @@ View sys.sp_columns_100_view
 View sys.sp_fkeys_view
 View sys.sp_pkeys_view
 View sys.sp_special_columns_view
-View sys.sp_sproc_columns_view
 View sys.sp_statistics_view
 View sys.sp_stored_procedures_view
 View sys.sp_table_privileges_view
@@ -1036,9 +1049,7 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
-View sys.stats
 View sys.synonyms
 View sys.syscharsets
 View sys.syslanguages
-View sys.xml_indexes
 View sys.xml_schema_collections
