@@ -1,3 +1,8 @@
+-- tsql
+-- reset the login password
+alter login permission_restrictions_tsql_login with password = '123';
+go
+
 -- psql user=permission_restrictions_tsql_login password=123
 -- user should not be able to create user since it is not a member of sysadmin.
 create user permission_restrictions_psql_user1 with password '123';

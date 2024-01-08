@@ -1,5 +1,5 @@
 name: Dotnet Framework Tests
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   run-babelfish-dotnet-tests:
