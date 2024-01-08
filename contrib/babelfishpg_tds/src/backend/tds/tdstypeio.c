@@ -132,9 +132,6 @@ Datum		TdsTypeUIDToDatum(StringInfo buf);
 Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
 Datum		TdsTypeSpatialToDatum(StringInfo buf);
 
-Datum LoadTdsType(PG_FUNCTION_ARGS);
-PG_FUNCTION_INFO_V1(LoadTdsType);
-
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
 
 /* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
@@ -513,68 +510,6 @@ TdsLoadEncodingLCIDCache(void)
 			mInfo->enc = TdsLCIDToEncodingMap_data[i].enc;
 		}
 	}
-}
-
-/*
- * TdsLookupEncodingByLCID - LCID - Encoding lookup
- */
-int
-TdsLookupEncodingByLCID(int lcid)
-{
-	bool		found;
-	TdsLCIDToEncodingMapInfo mInfo;
-
-	mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
-												   &lcid,
-												   HASH_FIND,
-												   &found);
-
-	/*
-	 * TODO: which encoding by default we should consider if appropriate
-	 * Encoding is not found.
-	 */
-	if (!found)
-	{
-		mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
-													   &TdsDefaultLcid,
-													   HASH_FIND,
-													   &found);
-
-		/*
-		 * could not find encoding corresponding to default lcid still.
-		 */
-		if (!found)
-			return -1;
-	}
-	return mInfo->enc;
-}
-
-Datum
-LoadTdsType(PG_FUNCTION_ARGS)
-{
-	Oid			typeoid;
-	Oid			basetypeoid;
-	TdsIoFunctionInfo finfo;
-
-	typeoid = PG_GETARG_INT32(0);
-
-	if (OidIsValid(typeoid))
-	{
-		basetypeoid = getBaseType(typeoid);
-		finfo = (TdsIoFunctionInfo) hash_search(functionInfoCacheByOid,
-												&typeoid,
-												HASH_ENTER,
-												NULL);
-		finfo->ttmbasetypeid = typeoid == basetypeoid ? 0 : basetypeoid;
-		finfo->ttmtdstypeid = TDS_TYPE_VARCHAR;
-		finfo->ttmtdstypelen = -1;
-		finfo->ttmtdslenbytes = 2;
-		finfo->sendFuncId = TDS_SEND_VARCHAR;
-		finfo->sendFuncPtr = getSendFunc(finfo->sendFuncId);
-		finfo->recvFuncId = TDS_RECV_VARCHAR;
-		finfo->recvFuncPtr = getRecvFunc(finfo->recvFuncId);
-	}
-	PG_RETURN_INT32(0);
 }
 
 void

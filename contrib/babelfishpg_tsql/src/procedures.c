@@ -1768,6 +1768,27 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+/* 
+ * For Long Term, we might want to restrict some of the
+ * extensions to be created only in sys.
+ */
+typedef struct allowed_extensions_data
+{
+	char *extn_name;
+	bool restricted_to_sys;
+} allowed_extensions_data;
+
+/* Maintaining a proper defined list of supported extns. */
+const allowed_extensions_data allowed_extns[] =
+{
+	{"pg_stat_statements", false},
+	{"tds_fdw", false},
+	{"fuzzystrmatch", false},
+	{"vector", true}
+};
+
+const int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
+
 Datum
 sp_execute_postgresql(PG_FUNCTION_ARGS)
 {
@@ -1777,8 +1798,6 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 	Node	   *parsetree;
 	size_t		len;
 	PlannedStmt *wrapper;
-	const char *allowed_extns[] = {"pg_stat_statements", "tds_fdw", "fuzzystrmatch", "vector"};
-	int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
 	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
 	Oid			current_user_id = GetUserId();
 	const char *saved_path = pstrdup(GetConfigOption("search_path", true, true));
@@ -1834,10 +1853,11 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				ListCell   *lc;
 				char	   *schemaName = NULL;
 				bool ext_found = false;
+				int i;
 
-				for(int i = 0; i < allowed_extns_size; i++)
+				for(i = 0; i < allowed_extns_size; i++)
 				{
-					if(!(strcmp(crstmt->extname, allowed_extns[i])))
+					if(!(strcmp(crstmt->extname, allowed_extns[i].extn_name)))
 					{
 						ext_found = true;
 						break;
@@ -1848,6 +1868,26 @@ sp_execute_postgresql(PG_FUNCTION_ARGS)
 				{
 					ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 		errmsg("'%s' extension creation is not supported", crstmt->extname)));
+				}
+
+				if (allowed_extns[i].restricted_to_sys)
+				{
+					bool explicit_opt = false;
+
+					foreach (lc, crstmt->options)
+					{
+						DefElem *defel = (DefElem *) lfirst(lc);
+
+						if (strcmp(defel->defname, "schema") == 0 && strcmp(defGetString(defel), "sys") == 0)
+						{
+							explicit_opt = true;
+							break;
+						}
+					}
+
+					if (!explicit_opt)
+						ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 			errmsg("'%s' extension creation is restricted to 'sys' schema", crstmt->extname)));
 				}
 
 				if (!superuser_arg(GetSessionUserId()) || !role_is_sa(GetSessionUserId()))

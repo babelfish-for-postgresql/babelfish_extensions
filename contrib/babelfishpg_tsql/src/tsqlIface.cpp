@@ -2309,6 +2309,12 @@ public:
 	void exitOrder_by_expression(TSqlParser::Order_by_expressionContext *ctx) override
 	{
 		/*
+		 * If there are multiple Order by clauses then we do not need to append
+		 * NULLS LAST since cummulative order bys do not choose an index scan.
+		 */
+		if (!(ctx->parent && ((TSqlParser::Order_by_clauseContext *)ctx->parent)->order_bys.size() == 1))
+			return;
+		/*
 		 * If the order by clause expression has a vector operator then we need to append
 		 * NULLS LAST as the sort option such that vector index types can be chosen. This
 		 * is done because the TSQL ordering is NULLS FIRST but for PG it's the opposite
