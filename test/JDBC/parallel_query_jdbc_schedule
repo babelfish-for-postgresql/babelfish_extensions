@@ -24,7 +24,6 @@ ignore#!#sp_who-vu-prepare
 ignore#!#sp_who-vu-verify
 ignore#!#sp_who-vu-cleanup
 
-
 # Group 1: BABEL-4481
 ignore#!#Test-sp_addrolemember-vu-prepare
 ignore#!#Test-sp_addrolemember-vu-verify
