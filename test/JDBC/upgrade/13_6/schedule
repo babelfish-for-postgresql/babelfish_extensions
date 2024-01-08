@@ -328,6 +328,7 @@ BABEL-4410
 AUTO_ANALYZE-before-15-5-or-14-10
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+operator_binary_whitespace-15_6-or-16_1
 BABEL-2999
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
