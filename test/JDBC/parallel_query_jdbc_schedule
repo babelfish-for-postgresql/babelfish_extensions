@@ -19,7 +19,7 @@ ignore#!#BABEL-SEQUENCE
 # JIRA - BABEL-4671
 ignore#!#TestSPPrepare
 
-# TIME-OUT FAILURE
+# Hangs with unknown cause
 ignore#!#sp_who-vu-prepare
 ignore#!#sp_who-vu-verify
 ignore#!#sp_who-vu-cleanup
