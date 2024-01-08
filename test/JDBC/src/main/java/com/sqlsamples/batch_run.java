@@ -24,6 +24,7 @@ public class batch_run {
         boolean tsqlDialect = false;
         boolean psqlDialect = false;
         boolean customSLA = false;
+        boolean customSLAWithParallelQueryEnforced = false;
 
         if (testFilePath.contains(".mix")) {
             isCrossDialectFile = true;
@@ -273,7 +274,14 @@ public class batch_run {
                     }
                 } else {
                     customSLA = strLine.toLowerCase().startsWith("-- sla");
-                    if (customSLA){
+                    if (!customSLAWithParallelQueryEnforced && customSLA){
+                        String[] tokens=strLine.split(" ");
+                        sla = Long.parseLong(tokens[2]);
+                        sla = sla*(1000000L);
+                        continue;
+                    }
+                    customSLAWithParallelQueryEnforced = isParallelQueryMode && strLine.toLowerCase().startsWith("-- sla_for_parallel_query_enforced");
+                    if (customSLAWithParallelQueryEnforced){
                         String[] tokens=strLine.split(" ");  
                         sla = Long.parseLong(tokens[2]);
                         sla = sla*(1000000L);
