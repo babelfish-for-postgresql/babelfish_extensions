@@ -3161,7 +3161,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						int			role_oid = get_role_oid(role_name, true);
 
-						if (role_oid == InvalidOid || !is_member_of_role(GetSessionUserId(), get_sysadmin_oid()))
+						if (!OidIsValid(role_oid) ||
+							!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) ||
+							role_oid == get_bbf_role_admin_oid())
 							ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
 											errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 
