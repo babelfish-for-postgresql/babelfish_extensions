@@ -1,0 +1,112 @@
+-- tsql
+-- normal tsql login
+CREATE LOGIN bbf_role_admin_restrictions_login WITH password = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER bbf_role_admin_restrictions_login;
+GO
+
+-- psql
+-- normal PG user
+CREATE USER bbf_role_admin_restrictions_pg_user WITH LOGIN CREATEROLE CREATEDB PASSWORD '12345678' inherit;
+go
+
+-- tsql user=bbf_role_admin_restrictions_login password=12345678
+CREATE ROLE bbf_role_admin_restrictions_role;
+GO
+
+-- a tsql login should not be able to alter/drop bbf_role_admin explicitly from tsql port
+ALTER SERVER ROLE bbf_role_admin ADD MEMBER bbf_role_admin_restrictions_role;
+GO
+
+ALTER ROLE bbf_role_admin_restrictions_role ADD MEMBER bbf_role_admin;
+GO
+
+DROP LOGIN bbf_role_admin;
+GO
+
+DROP ROLE bbf_role_admin_restrictions_role;
+GO
+
+-- psql user=bbf_role_admin_restrictions_login password=12345678
+-- a tsql login should not be able to alter/grant/drop bbf_role_admin from pg port
+ALTER ROLE bbf_role_admin NOCREATEROLE;
+GO
+
+ALTER ROLE bbf_role_admin WITH PASSWORD '12345678';
+GO
+
+ALTER ROLE bbf_role_admin VALID UNTIL 'infinity';
+GO
+
+ALTER ROLE bbf_role_admin WITH CONNECTION LIMIT 1;
+GO
+
+GRANT bbf_role_admin TO bbf_role_admin_restrictions_login;
+GO
+
+GRANT bbf_role_admin_restrictions_login TO bbf_role_admin;
+GO
+
+REVOKE bbf_role_admin FROM master_dbo;
+GO
+
+REVOKE master_dbo FROM bbf_role_admin;
+GO
+
+DROP ROLE bbf_role_admin;
+GO
+
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+
+SET ROLE bbf_role_admin;
+GO
+
+-- psql user=bbf_role_admin_restrictions_pg_user password=12345678
+-- a normal psql user should not be able to alter/grant/drop bbf_role_admin from pg port
+ALTER ROLE bbf_role_admin NOCREATEROLE;
+GO
+
+ALTER ROLE bbf_role_admin WITH PASSWORD '12345678';
+GO
+
+ALTER ROLE bbf_role_admin VALID UNTIL 'infinity';
+GO
+
+ALTER ROLE bbf_role_admin WITH CONNECTION LIMIT 1;
+GO
+
+GRANT bbf_role_admin TO bbf_role_admin_restrictions_login;
+GO
+
+GRANT bbf_role_admin_restrictions_login TO bbf_role_admin;
+GO
+
+REVOKE bbf_role_admin FROM master_dbo;
+GO
+
+REVOKE master_dbo FROM bbf_role_admin;
+GO
+
+DROP ROLE bbf_role_admin;
+GO
+
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+
+SET ROLE bbf_role_admin;
+GO
+
+-- psql
+DROP USER bbf_role_admin_restrictions_pg_user;
+GO
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'bbf_role_admin_restrictions_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
+DROP LOGIN bbf_role_admin_restrictions_login;
+GO
