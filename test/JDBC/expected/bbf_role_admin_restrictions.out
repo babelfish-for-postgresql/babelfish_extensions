@@ -1,0 +1,240 @@
+-- tsql
+-- normal tsql login
+CREATE LOGIN bbf_role_admin_restrictions_login WITH password = '12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER bbf_role_admin_restrictions_login;
+GO
+
+-- psql
+-- normal PG user
+CREATE USER bbf_role_admin_restrictions_pg_user WITH LOGIN CREATEROLE CREATEDB PASSWORD '12345678' inherit;
+go
+
+-- tsql user=bbf_role_admin_restrictions_login password=12345678
+CREATE ROLE bbf_role_admin_restrictions_role;
+GO
+
+-- a tsql login should not be able to alter/drop bbf_role_admin explicitly from tsql port
+ALTER SERVER ROLE bbf_role_admin ADD MEMBER bbf_role_admin_restrictions_role;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+
+
+ALTER ROLE bbf_role_admin_restrictions_role ADD MEMBER bbf_role_admin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_bbf_role_admin" does not exist)~~
+
+
+DROP LOGIN bbf_role_admin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'bbf_role_admin', because it does not exist or you do not have permission.)~~
+
+
+DROP ROLE bbf_role_admin_restrictions_role;
+GO
+
+-- psql user=bbf_role_admin_restrictions_login password=12345678
+-- a tsql login should not be able to alter/grant/drop bbf_role_admin from pg port
+ALTER ROLE bbf_role_admin NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE bbf_role_admin WITH PASSWORD '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE bbf_role_admin VALID UNTIL 'infinity';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE bbf_role_admin WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT bbf_role_admin TO bbf_role_admin_restrictions_login;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT bbf_role_admin_restrictions_login TO bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE bbf_role_admin FROM master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE master_dbo FROM bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+DROP ROLE bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "bbf_role_admin"
+    Server SQLState: 42501)~~
+
+
+-- psql user=bbf_role_admin_restrictions_pg_user password=12345678
+-- a normal psql user should not be able to alter/grant/drop bbf_role_admin from pg port
+ALTER ROLE bbf_role_admin NOCREATEROLE;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE bbf_role_admin WITH PASSWORD '12345678';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE bbf_role_admin VALID UNTIL 'infinity';
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE bbf_role_admin WITH CONNECTION LIMIT 1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT bbf_role_admin TO bbf_role_admin_restrictions_login;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+GRANT bbf_role_admin_restrictions_login TO bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE bbf_role_admin FROM master_dbo;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+REVOKE master_dbo FROM bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+DROP ROLE bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created logins/users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+SET SESSION AUTHORIZATION bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set session authorization
+    Server SQLState: 42501)~~
+
+
+SET ROLE bbf_role_admin;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied to set role "bbf_role_admin"
+    Server SQLState: 42501)~~
+
+
+-- psql
+DROP USER bbf_role_admin_restrictions_pg_user;
+GO
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'bbf_role_admin_restrictions_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+t
+~~END~~
+
+
+-- tsql
+DROP LOGIN bbf_role_admin_restrictions_login;
+GO

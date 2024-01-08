@@ -60,6 +60,7 @@ static bool handle_drop_role(DropRoleStmt *drop_role_stmt);
 static bool handle_rename(RenameStmt *rename_stmt);
 static bool handle_alter_role(AlterRoleStmt* alter_role_stmt);
 static bool handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt);
+static bool handle_grant_role(GrantRoleStmt *grant_stmt);
 
 /* Drop database handler */
 static bool handle_dropdb(DropdbStmt *dropdb_stmt);
@@ -713,6 +714,9 @@ tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		case T_AlterRoleSetStmt:
 			handle_result = handle_alter_role_set((AlterRoleSetStmt*)parsetree);
 			break;
+		case T_GrantRoleStmt:
+			handle_result = handle_grant_role((GrantRoleStmt *) parsetree);
+			break;
 		default:
 			break;
 	}
@@ -889,8 +893,21 @@ get_rolespec_name_internal(const RoleSpec *role, bool missing_ok)
 static void
 check_babelfish_droprole_restrictions(char *role)
 {
-	if (sql_dialect == SQL_DIALECT_TSQL)
+	Oid bbf_role_admin_oid = InvalidOid;
+
+	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
 		return;
+
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
+
+	/*
+	 * Allow DROP ROLE if current user is bbf_role_admin as we need
+	 * to allow remove_babelfish from PG endpoint. It is safe
+	 * since only superusers can assume this role.
+	 */
+	if (bbf_role_admin_oid == GetUserId())
+		return;
+
 	if (is_babelfish_role(role))
 	{
 		pfree(role);			/* avoid mem leak */
@@ -926,10 +943,11 @@ is_babelfish_role(const char *role)
 	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);	/* missing OK */
 	role_oid = get_role_oid(role, true);	/* missing OK */
 
-	if (sysadmin_oid == InvalidOid || role_oid == InvalidOid)
+	if (!OidIsValid(sysadmin_oid) || !OidIsValid(role_oid))
 		return false;
 
-	if (is_member_of_role(sysadmin_oid, role_oid))
+	if (is_member_of_role(sysadmin_oid, role_oid) ||
+		pg_strcasecmp(role, BABELFISH_ROLE_ADMIN) == 0) /* check if it is bbf_role_admin */
 		return true;
 
 	bbf_master_guest_oid = get_role_oid("master_guest", true);
@@ -967,7 +985,8 @@ handle_rename(RenameStmt *rename_stmt)
 	 */
 	if (OBJECT_ROLE == rename_stmt->renameType)
 	{
-		if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(rename_stmt->subname))
+		if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+			 is_babelfish_role(rename_stmt->subname))
 		{
 			/*
 			 * Renaming of an babelfish role/user/login
@@ -1048,8 +1067,13 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 	    return true;
     }
 
-    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
+    if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+	     is_babelfish_role(name))
     {
+	    /* Quick check, directly disallow alter role for bbf_role_admin */
+	    if (pg_strcasecmp(name, BABELFISH_ROLE_ADMIN) == 0)
+		    check_babelfish_alterrole_restictions(false);
+
 	    tp = SearchSysCache1(AUTHNAME, CStringGetDatum(name));
 	    if (HeapTupleIsValid(tp))
 	    {
@@ -1138,7 +1162,9 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
     {
 	    const char *babelfish_db_name = NULL;
 	    babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
-	    if(sql_dialect != SQL_DIALECT_TSQL && babelfish_db_name && alter_role_set_stmt->database && strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
+	    if((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+		    babelfish_db_name && alter_role_set_stmt->database &&
+		    strcmp(alter_role_set_stmt->database, babelfish_db_name) == 0)
 		    check_babelfish_alterrole_restictions(false);
 	    return true;
     }
@@ -1151,7 +1177,8 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
 	    return true;
     }
 
-    if (sql_dialect != SQL_DIALECT_TSQL && is_babelfish_role(name))
+    if ((!MyProcPort->is_tds_conn || sql_dialect != SQL_DIALECT_TSQL) &&
+	     is_babelfish_role(name))
     {
 	    check_babelfish_alterrole_restictions(false);
     }
@@ -1162,6 +1189,62 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
      */
     pfree(name);
     return true;
+}
+
+/*
+ * handle_grant_role
+ *
+ * Handles GRANT/REVOKE ROLE TO/FROM ROLE.
+ *
+ * Returns: true - We're not attempting to modify something we shouldn't have access to. Normal security checks.
+ *          false - We've reported an error and should not continue executing this call.
+ */
+static bool
+handle_grant_role(GrantRoleStmt *grant_stmt)
+{
+	ListCell *item;
+	Oid bbf_role_admin_oid = InvalidOid;
+
+	if (MyProcPort->is_tds_conn && sql_dialect == SQL_DIALECT_TSQL)
+		return true;
+
+	bbf_role_admin_oid = get_role_oid(BABELFISH_ROLE_ADMIN, false);
+
+	/*
+	 * Allow GRANT ROLE if current user is bbf_role_admin as we need
+	 * to allow initialise_babelfish from PG endpoint. It is safe
+	 * since only superusers can assume this role.
+	 */
+	if (bbf_role_admin_oid == GetUserId())
+		return true;
+
+	/* Restrict roles to added as a member of bbf_role_admin */
+	foreach(item, grant_stmt->granted_roles)
+	{
+		AccessPriv *priv = (AccessPriv *) lfirst(item);
+		char	   *rolename = priv->priv_name;
+		Oid			roleid;
+
+		if (rolename == NULL)
+			continue;
+
+		roleid = get_role_oid(rolename, false);
+		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+			check_babelfish_alterrole_restictions(false);
+	}
+
+	/* Restrict grant to/from bbf_role_admin role */
+	foreach(item, grant_stmt->grantee_roles)
+	{
+		RoleSpec   *rolespec = lfirst_node(RoleSpec, item);
+		Oid			roleid;
+
+		roleid = get_rolespec_oid(rolespec, false);
+		if (OidIsValid(roleid) && roleid == bbf_role_admin_oid)
+			check_babelfish_alterrole_restictions(false);
+	}
+
+	return true;
 }
 
 /*
