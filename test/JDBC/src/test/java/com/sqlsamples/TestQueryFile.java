@@ -424,7 +424,7 @@ public class TestQueryFile {
         curr_exec_time = 0L;
         checkParallelQueryExpected = false;
         if (inputFileName.equals("temp_table_jdbc")) {
-            JDBCTempTable.runTest(bw);
+            JDBCTempTable.runTest(bw, logger);
         } else {
             batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         }

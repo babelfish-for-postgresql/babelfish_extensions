@@ -1,5 +1,6 @@
 package com.sqlsamples;
 
+import org.apache.logging.log4j.Logger;
 import java.io.*;
 import java.util.*;
 import java.sql.*;
@@ -13,7 +14,7 @@ import static com.sqlsamples.Statistics.curr_exec_time;
 public class JDBCTempTable {
     public static boolean toRun = false;
 
-    public static String initializeConnectionString() {
+    private static String initializeConnectionString() {
         String url = properties.getProperty("URL");
         String port = properties.getProperty("tsql_port");
         String databaseName = properties.getProperty("databaseName");
@@ -23,15 +24,23 @@ public class JDBCTempTable {
         return createSQLServerConnectionString(url, port, databaseName, user, password);
     }
 
-    public static void runTest(BufferedWriter bw) {
+    private static String initializeConnectionStringPSQL() {
+        String url = properties.getProperty("URL");
+        String port = properties.getProperty("tsql_port");
+        String databaseName = properties.getProperty("databaseName");
+        String user = properties.getProperty("user");
+        String password = properties.getProperty("password");
+
+        return createPostgreSQLConnectionString(url, port, databaseName, user, password);
+    }
+
+    public static void runTest(BufferedWriter bw, Logger logger) {
         long startTime = System.nanoTime();
 
         try {
+            test_oid_buffer(bw, logger);
             check_oids_equal(bw);
             concurrency_test(bw);
-
-            /* Disabled in GitHub because of runtime. */
-            // fill_oid_buffer(bw);
         } catch (Exception e) {
             try {
                 bw.write(e.getMessage());
@@ -45,11 +54,9 @@ public class JDBCTempTable {
     }
 
     /*
-     * This is a straightforward test to assert that temp tables created across different connections will have the same OID start.
+     * Helper function that creates the specified number of connections, creates a temp table on each connection, and returns whether all the OIDs are equal or not.
      */
-    private static void check_oids_equal(BufferedWriter bw) throws Exception {
-        int num_connections = 2;
-
+    private static boolean check_oids_equal_helper(int num_connections) throws Exception {
         ArrayList<Connection> connections = new ArrayList<Connection>();
         String connectionString = initializeConnectionString();
 
@@ -75,25 +82,25 @@ public class JDBCTempTable {
         }
 
         // The oids should all be equal here. 
-        boolean all_oids_equal = true;
         for (Integer i : oids)
         {
             if (!i.equals(oids.get(0))) {
-                all_oids_equal = false;
-                bw.newLine();
-                break;
+                return false;
             }
         }
+        return true;
+    }
 
-        if (!all_oids_equal)
+    /*
+     * This is a straightforward test to assert that temp tables created across different connections will have the same OID start.
+     */
+    private static void check_oids_equal(BufferedWriter bw) throws Exception {
+        int num_connections = 2;
+
+        if (!check_oids_equal_helper(num_connections))
         {
             bw.write("OID check failed! Not all oids were equal:");
             bw.newLine();
-            for (Integer i : oids)
-            {
-                bw.write(i.toString());
-                bw.newLine();
-            }
         }
     }
 
@@ -149,51 +156,76 @@ public class JDBCTempTable {
         }
     }
 
-    /*
-     * This takes about 20 minutes to run. This passes but it will be disabled by default
-     */
-    private static void fill_oid_buffer(BufferedWriter bw) throws Exception {
+    private static void test_oid_buffer(BufferedWriter bw, Logger logger) throws Exception {
         String connectionString = initializeConnectionString();
         Connection c = DriverManager.getConnection(connectionString);
-        Statement s = c.createStatement();
+        JDBCCrossDialect cx = new JDBCCrossDialect(c);
+
+        Connection psql = cx.getPsqlConnection("-- psql", bw, logger);
+        int num_connections = 2;
+
+        /*
+         * TEST: After disabling GUC, ensure that the OIDs are not equal, meaning we aren't using
+         * the OID buffer.
+         */
+        Statement alter_guc = psql.createStatement();
+        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 0");
+
+        if (check_oids_equal_helper(num_connections)) {
+            bw.write("OID check failed! Oids were equal after disabling guc.");
+            bw.newLine();
+        }
+
+        /*
+         * TEST: Ensure that we can create up to (and no more) than the oid buffer size.
+         */
+        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 10");
+
+        /* We need a new connection here to pick up the updated guc. */
+        Connection c2 = DriverManager.getConnection(connectionString);
+        Statement s = c2.createStatement();
 
         try {
-            bw.newLine();
-            for (int i = 0; i < 17000; i++) {
-                String queryString = "CREATE TABLE #tab" + i + " (a int identity, b nvarchar(20))";
+            for (int i = 0; i < 11; i++) {
+                String queryString = "CREATE TABLE #tab" + i + " (a int)";
                 s.execute(queryString);
             }
         } catch (Exception e) {
-            if (e.getMessage().startsWith("Unable to allocate oid for temp table.")) {
-                ResultSet rs = s.executeQuery("SELECT TOP 1 reloid FROM sys.babelfish_get_enr_list() where relname not like '%index' order by reloid desc");
-                rs.next();
-                int oid_high = Integer.parseInt(rs.getString("reloid"));
-
-                rs = s.executeQuery("SELECT TOP 1 reloid FROM sys.babelfish_get_enr_list() where relname not like '%index' order by reloid asc");
-                rs.next();
-                int oid_low = Integer.parseInt(rs.getString("reloid"));
-
-                rs = s.executeQuery("SELECT count(*) FROM sys.babelfish_get_enr_list()");
-                rs.next();
-                int oid_count = Integer.parseInt(rs.getString("count"));
-
-                /* Handle verification */
-                if (oid_count != 65535 && (oid_high - oid_low) != 65535)
-                {
-                    bw.write("Unable to allocate oid for temp table, but oid usage was not as expected.");
-                    bw.newLine();
-                    bw.write("oid count = " + oid_count);
-                    bw.newLine();
-                    bw.write("oid high = " + oid_high);
-                    bw.newLine();
-                    bw.write("oid low = " + oid_low);
-                    bw.newLine();
-                }
-            } else {
+            if (!e.getMessage().startsWith("Unable to allocate oid for temp table.")) {
                 bw.write(e.getMessage());
                 bw.newLine();
             }
         }
+
+        /* If the table was created, throw an error. */
+        ResultSet rs = s.executeQuery("SELECT * FROM babelfish_get_enr_list() WHERE relname = \'#table_cant_be_created\'");
+        if (rs.next()) {
+            bw.write("A table was created that should have reached buffer size limit.");
+            bw.newLine();
+        }
+
+        /*
+         * TEST: Ensure that we can wraparound properly.
+         */
+        rs = s.executeQuery("SELECT * FROM babelfish_get_enr_list() WHERE relname = \'#tab0\'");
+        if (!rs.next()) {
+            bw.write("Table is missing.");
+            bw.newLine();
+        }
+        int old_oid = Integer.parseInt(rs.getString("reloid"));
+        s.execute("DROP TABLE #tab0");
+        int new_oid = create_table_and_report_oid(c2, "CREATE TABLE #new_table(a int)", "#new_table");
+        
+        if (old_oid != new_oid) {
+            bw.write("Wraparound did not handle new OIDs properly.");
+            bw.newLine();
+        }
+
+        c2.close();
+
+        /* Restore GUC after tests. */
+        alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 65536");
+        psql.close();
         c.close();
     }
 }

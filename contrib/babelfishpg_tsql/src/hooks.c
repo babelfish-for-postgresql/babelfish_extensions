@@ -712,15 +712,8 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 		 * messages.
 		 */
 		if (retries >= temp_oid_buffer_size)
-		{
 			ereport(ERROR,
 				(errmsg("Unable to allocate oid for temp table. Drop some temporary tables or start a new session.")));
-		}
-		else if (retries >= (0.8 * temp_oid_buffer_size))
-		{
-			ereport(WARNING,
-				(errmsg("Temp object OID usage is over 80%%. Consider dropping some temp tables or starting a new session.")));
-		}
 
 		retries++;
 	} while (collides);
