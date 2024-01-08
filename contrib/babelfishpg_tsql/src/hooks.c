@@ -1,5 +1,7 @@
 #include "postgres.h"
 
+#include <unistd.h>
+
 #include "access/genam.h"
 #include "access/htup.h"
 #include "access/table.h"
@@ -18,6 +20,7 @@
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_tablespace.h"
 #include "commands/copy.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
@@ -52,6 +55,7 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
@@ -75,6 +79,8 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
+#define OID_TO_BUFFER_START(oid) 		((oid) + INT_MIN)
+#define BUFFER_START_TO_OID 			((Oid) (temp_oid_buffer_start) - INT_MIN)
 
 /*****************************************
  * 			Catalog Hooks
@@ -143,6 +149,9 @@ static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_blo
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
+static Oid  pltsql_GetNewTempObjectId(void);
+static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static Oid	pltsql_GetNewPermanentRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -210,6 +219,9 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
+static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
+static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
+static GetNewPermanentRelFileNode_hook_type prev_GetNewPermanentRelFileNode_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
@@ -322,6 +334,15 @@ InstallExtendedHooks(void)
 
 	prev_GetNewObjectId_hook = GetNewObjectId_hook;
 	GetNewObjectId_hook = pltsql_GetNewObjectId;
+
+	prev_GetNewTempObjectId_hook = GetNewTempObjectId_hook;
+	GetNewTempObjectId_hook = pltsql_GetNewTempObjectId;
+
+	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
+	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
+
+	prev_GetNewPermanentRelFileNode_hook = GetNewPermanentRelFileNode_hook;
+	GetNewPermanentRelFileNode_hook = pltsql_GetNewPermanentRelFileNode;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -444,6 +465,9 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
+	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
+	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
+	GetNewPermanentRelFileNode_hook = prev_GetNewPermanentRelFileNode_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
@@ -561,6 +585,228 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	variableCache->nextOid = minOid + 1;
 	variableCache->oidCount = 0;
+}
+
+static Oid
+pltsql_GetNewTempObjectId()
+{
+	Oid			result;
+	Oid			tempOidStart;
+	static Oid 	nextTempOid = InvalidOid;
+
+	/* safety check, we should never get this far in a HS standby */
+	if (RecoveryInProgress())
+		elog(ERROR, "cannot assign OIDs during recovery");
+
+	if (!OidIsValid(BUFFER_START_TO_OID)) /* InvalidOid means it needs assigning */
+	{
+		/* First check to see if another connection has already picked a start, then update. */
+		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+		if (OidIsValid(ShmemVariableCache->tempOidStart))
+		{
+			temp_oid_buffer_start = OID_TO_BUFFER_START(ShmemVariableCache->tempOidStart);
+			nextTempOid = ShmemVariableCache->tempOidStart;
+		}
+		else
+		{
+			/* We need to pick a new start for the buffer range. */
+			tempOidStart = ShmemVariableCache->nextOid;
+
+			/*
+			 * Decrement ShmemVariableCache->oidCount to take into account the new buffer we're allocating
+			 */
+			if (ShmemVariableCache->oidCount < temp_oid_buffer_size)
+				ShmemVariableCache->oidCount = 0;
+			else
+				ShmemVariableCache->oidCount -= temp_oid_buffer_size;
+
+			/*
+			 * If ShmemVariableCache->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
+			 * GetNewObjectId will return the right value on the next call.  
+			 */
+			if (tempOidStart < FirstNormalObjectId)
+				tempOidStart = FirstNormalObjectId;
+
+			/* If the OID range would wraparound, start from beginning instead. */
+			if (tempOidStart + temp_oid_buffer_size < tempOidStart) 
+				tempOidStart = FirstNormalObjectId;
+
+			temp_oid_buffer_start = OID_TO_BUFFER_START(tempOidStart);
+			ShmemVariableCache->tempOidStart = tempOidStart;
+			ShmemVariableCache->tempOidBufferSize = temp_oid_buffer_size;
+
+			nextTempOid = (Oid) tempOidStart;
+
+			/* Skip nextOid ahead to end of range here as well.  */
+			ShmemVariableCache->nextOid = (Oid) (tempOidStart + temp_oid_buffer_size);
+		}
+		LWLockRelease(OidGenLock);
+	}
+
+	/*
+	 * Check for wraparound of the temp OID buffer.
+	 */
+	if (nextTempOid >= (Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size) 
+			|| nextTempOid < BUFFER_START_TO_OID)
+	{
+		nextTempOid = BUFFER_START_TO_OID;
+	}
+
+	result = nextTempOid;
+	nextTempOid++;
+
+	return result;
+}
+
+/*
+ * Until index_create properly uses the temp OID buffer, we need a workaround to provide
+ * the expected BackendId while not using the temp OID buffer.
+ */
+Oid
+pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
+{
+	Oid			newOid;
+	SysScanDesc scan;
+	ScanKeyData key;
+	bool		collides;
+	uint64		retries = 0;
+
+	/* Only system relations are supported */
+	Assert(IsSystemRelation(relation));
+
+	/*
+	 * We should never be asked to generate a new pg_type OID during
+	 * pg_upgrade; doing so would risk collisions with the OIDs it wants to
+	 * assign.  Hitting this assert means there's some path where we failed to
+	 * ensure that a type OID is determined by commands in the dump script.
+	 */
+	Assert(!IsBinaryUpgrade);
+
+	/* Generate new OIDs until we find one not in the table */
+	do
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		newOid = pltsql_GetNewTempObjectId();
+
+		ScanKeyInit(&key,
+					oidcolumn,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(newOid));
+
+		/* see notes above about using SnapshotAny */
+		scan = systable_beginscan(relation, indexId, true,
+								  SnapshotAny, 1, &key);
+
+		collides = HeapTupleIsValid(systable_getnext(scan));
+
+		systable_endscan(scan);
+
+		/*
+		 * Log that we iterate more than GETNEWOID_LOG_THRESHOLD but have not
+		 * yet found OID unused in the relation. Then repeat logging with
+		 * exponentially increasing intervals until we iterate more than
+		 * GETNEWOID_LOG_MAX_INTERVAL. Finally repeat logging every
+		 * GETNEWOID_LOG_MAX_INTERVAL unless an unused OID is found. This
+		 * logic is necessary not to fill up the server log with the similar
+		 * messages.
+		 */
+		if (retries >= temp_oid_buffer_size)
+		{
+			ereport(ERROR,
+				(errmsg("Unable to allocate oid for temp table. Drop some temporary tables or start a new session.")));
+		}
+		else if (retries >= (0.8 * temp_oid_buffer_size))
+		{
+			ereport(WARNING,
+				(errmsg("Temp object OID usage is over 80%%. Consider dropping some temp tables or starting a new session.")));
+		}
+
+		retries++;
+	} while (collides);
+
+	return newOid;
+}
+
+static Oid
+pltsql_GetNewPermanentRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
+{
+	RelFileNodeBackend rnode;
+	char	   *rpath;
+	bool		collides;
+	BackendId	backend;
+
+	/*
+	 * If we ever get here during pg_upgrade, there's something wrong; all
+	 * relfilenode assignments during a binary-upgrade run should be
+	 * determined by commands in the dump script.
+	 */
+	Assert(!IsBinaryUpgrade);
+
+	switch (relpersistence)
+	{
+		case RELPERSISTENCE_TEMP:
+			backend = BackendIdForTempRelations();
+			break;
+		case RELPERSISTENCE_UNLOGGED:
+		case RELPERSISTENCE_PERMANENT:
+			backend = InvalidBackendId;
+			break;
+		default:
+			elog(ERROR, "invalid relpersistence: %c", relpersistence);
+			return InvalidOid;	/* placate compiler */
+	}
+
+	/* This logic should match RelationInitPhysicalAddr */
+	rnode.node.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
+	rnode.node.dbNode = (rnode.node.spcNode == GLOBALTABLESPACE_OID) ? InvalidOid : MyDatabaseId;
+
+	/*
+	 * The relpath will vary based on the backend ID, so we must initialize
+	 * that properly here to make sure that any collisions based on filename
+	 * are properly detected.
+	 */
+	rnode.backend = backend;
+
+	do
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		/* Generate the OID */
+		if (pg_class)
+		{
+			rnode.node.relNode = GetNewOidWithIndex(pg_class, ClassOidIndexId,
+												Anum_pg_class_oid);
+		}	
+		else
+		{
+			rnode.node.relNode = GetNewObjectId();
+		}
+
+		/* Check for existing file of same name */
+		rpath = relpath(rnode, MAIN_FORKNUM);
+
+		if (access(rpath, F_OK) == 0)
+		{
+			/* definite collision */
+			collides = true;
+		}
+		else
+		{
+			/*
+			 * Here we have a little bit of a dilemma: if errno is something
+			 * other than ENOENT, should we declare a collision and loop? In
+			 * practice it seems best to go ahead regardless of the errno.  If
+			 * there is a colliding file we will get an smgr failure when we
+			 * attempt to create the new relation file.
+			 */
+			collides = false;
+		}
+
+		pfree(rpath);
+	} while (collides);
+
+	return rnode.node.relNode;
 }
 
 static void
