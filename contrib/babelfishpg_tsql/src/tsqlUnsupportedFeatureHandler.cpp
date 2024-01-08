@@ -1068,6 +1068,25 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	{
 		handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER FULLTEXT INDEX",  getLineAndPos(ctx));
 	}
+	if (ctx->drop_index())
+	{
+		auto drop_index = ctx->drop_index();
+		if (drop_index->drop_relational_or_xml_or_spatial_index().size() > 0)
+		{
+			/* Raise proper error messages for the non-supported cases */
+			if (drop_index->drop_relational_or_xml_or_spatial_index(0)->full_object_name()->server)
+			{
+				/* DROP INDEX index_name ON srv.db.owner.table */
+				handle(INSTR_TSQL_DROP_INDEX, "DROP INDEX on remote table",  getLineAndPos(ctx));
+			}
+			else if (drop_index->drop_relational_or_xml_or_spatial_index(0)->full_object_name()->database)
+			{
+				/* DROP INDEX index_name ON db.owner.table */
+				handle(INSTR_TSQL_DROP_INDEX, "DROP INDEX cross-database",  getLineAndPos(ctx));
+			}
+		}
+	}
+	
 	/*
 	 * We have more than 100 DDLs but support a few of them.
 	 * manage the whitelist here.

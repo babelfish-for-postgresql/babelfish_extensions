@@ -32,27 +32,13 @@ ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
 
-# These test should not ger run in parallel query
+# These test should not get ran in parallel query
 ignore#!#BABEL-1363
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
-ignore#!#BABEL-SP_COLUMNS_MANAGED-dep-vu-verify
-ignore#!#BABEL-SP_TABLES
-ignore#!#ISC-Domains-vu-verify
-ignore#!#Test-sp_rename-vu-prepare
-ignore#!#Test-sp_rename-vu-verify
-ignore#!#Test-sp_rename-vu-cleanup
 ignore#!#BABEL-3013
-ignore#!#BABEL-SP_COLUMN_PRIVILEGES
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
-ignore#!#TestSimpleErrors
-ignore#!#ISC-Views
-ignore#!#TestSimpleErrorsWithXactAbort
-ignore#!#BABEL-2513
-ignore#!#TestDatetime-numeric-representation-vu-prepare
-ignore#!#TestDatetime-numeric-representation-vu-verify
 ignore#!#four-part-names-vu-verify
-ignore#!#sp_columns_100
-ignore#!#sys-has_perms_by_name-vu-verify
+#ignore#!#sys-has_perms_by_name-vu-verify
