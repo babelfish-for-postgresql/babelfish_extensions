@@ -54,9 +54,9 @@ jobs:
           export CMAKE_C_COMPILER_LAUNCHER=ccache
           export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
           sudo apt-get install wget
-          wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
+          wget --tries=20 http://postgis.net/stuff/postgis-3.4.0.tar.gz
           tar -xvzf postgis-3.4.0.tar.gz
-          wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz
+          wget --tries=20 https://download.osgeo.org/proj/proj-9.2.1.tar.gz
           tar -xvzf proj-9.2.1.tar.gz
           cd proj-9.2.1
           if [ ! -d "build" ]; then
