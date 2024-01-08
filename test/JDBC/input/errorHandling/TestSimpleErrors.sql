@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 100000
 CREATE TABLE simpleErrorTable (a varchar(15) UNIQUE NOT NULL, b nvarchar(25), c int PRIMARY KEY, d char(15) DEFAULT 'Whoops!', e nchar(25), f datetime, g numeric(4,1) CHECK (g >= 103.5))
 GO
 
