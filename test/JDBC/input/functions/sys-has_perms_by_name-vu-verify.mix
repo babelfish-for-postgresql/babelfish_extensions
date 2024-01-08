@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 70000
 -- tsql
 -- reset the login password
 ALTER LOGIN user_perms_by_name WITH PASSWORD='test';

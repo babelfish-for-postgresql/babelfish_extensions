@@ -1,5 +1,5 @@
 name: Babelfish Smoke Tests
-on: [push, pull_request]
+on: [workflow_call]
 
 jobs:
   isolation-tests:
@@ -18,6 +18,9 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          install_dir: 'psql'
+          code_coverage: 'yes'
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -58,6 +61,7 @@ jobs:
           java -Xmx500M -cp /usr/local/lib/antlr-4.9.3-complete.jar org.antlr.v4.Tool -Dlanguage=Python3 ./parser/*.g4 -visitor -no-listener
 
       - name: Run Isolation tests
+        id: run-isolation-tests
         run: | 
           cd test/python
           compareWithFile=true \
@@ -74,3 +78,35 @@ jobs:
             runIsolationTests=true \
             stepTimeLimit=30 \
             pytest -s --tb=long -q .
+        
+      - name: Generate Code Coverage
+        id: generate-code-coverage
+        if: always() && steps.run-isolation-tests.outcome == 'success'
+        run: |
+          export PG_CONFIG=~/psql/bin/pg_config
+          export PG_SRC=~/work/postgresql_modified_for_babelfish
+          export cmake=$(which cmake)
+          cd contrib
+          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
+          do
+            cd $ext
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+            cd ..
+          done
+        shell: bash
+  
+      - name: Summarize code coverage
+        id: code-coverage-summary
+        if: always() && steps.generate-code-coverage.outcome == 'success'
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o isolation-lcov.info
+          lcov --list isolation-lcov.info
+
+      - name: Upload Coverage Report for Babelfish Extensions
+        if: always() && steps.code-coverage-summary.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-babelfish-extensions-isolation
+          path: contrib/isolation-lcov.info
+          retention-days: 1

@@ -406,11 +406,12 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     mvn test
     ```
 5. If the expected output is different when run in parallel query mode and in normal mode, one can add a different expected output specially for parallel query mode in `expected/parallel_query/` folder. Additionally, one needs to add `-- parallel_query_expected` flag in the corresponding input file.
-6. Cleanup all the objects, users, roles and databases created while running the tests:
+6. If you want to have different SLA timeout when test runs in parallel query mode then use `-- sla_for_parallel_query_enforced` flag in the corresponding input file.
+7. Cleanup all the objects, users, roles and databases created while running the tests:
     ```bash
     ./cleanup.sh
     ```
-7. Please note that when you have completed testing with parallel query mode enabled, you should unset the `isParallelQueryMode` environment variable that was previously set to `true`. This ensures that all tests run in the normal Babelfish mode (without parallel query):
+8. Please note that when you have completed testing with parallel query mode enabled, you should unset the `isParallelQueryMode` environment variable that was previously set to `true`. This ensures that all tests run in the normal Babelfish mode (without parallel query):
 
    ```bash
     unset isParallelQueryMode
