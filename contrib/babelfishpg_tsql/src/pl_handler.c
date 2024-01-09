@@ -4104,7 +4104,7 @@ terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 	 * Ideally current depth should be same as 
 	 * when caller was connecting to SPI Manager
 	 */
-	SPI_get_depth(&current_spi_stack_depth);
+	current_spi_stack_depth = SPI_get_depth();
 	
 	if (current_spi_stack_depth < SPI_depth)
 		elog(FATAL, "SPI connection stack is inconsistent, spi stack depth" 
@@ -4294,7 +4294,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	PortalContext = savedPortalCxt;
 
 	SPI_setCurrentInternalTxnMode(true);
-	SPI_get_depth(&current_spi_stack_depth);
+	current_spi_stack_depth = SPI_get_depth();
 
 	elog(DEBUG2, "TSQL TXN call handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
@@ -4447,7 +4447,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	PortalContext = savedPortalCxt;
 
 	SPI_setCurrentInternalTxnMode(true);
-	SPI_get_depth(&current_spi_stack_depth);
+	current_spi_stack_depth = SPI_get_depth();
 
 	elog(DEBUG2, "TSQL TXN inline handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
