@@ -110,7 +110,7 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     ```
     Check that you have `uuid-devel` installed. If so, go to `antlr4/CMakeLists.txt` and comment out the line `pkg_check_modules(UUID REQUIRED uuid)` by adding a `#` to the beginning of the line.
 
-    More information about installing ANTLR4 can be found [at this link](https://www.cs.upc.edu/~padro/CL/practica/install.html).
+    More information about installing ANTLR4 can be found [at this link](https://www.cs.upc.edu/~cl/practica/install.html).
 
 
 
