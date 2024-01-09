@@ -269,6 +269,7 @@ TestXML
 timefromparts
 triggers_with_transaction
 BABEL-4046
+table_constraint_without_comma-before-15_5-or-16_1
 getdate
 AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
