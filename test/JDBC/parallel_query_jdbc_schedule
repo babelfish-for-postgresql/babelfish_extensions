@@ -7,18 +7,22 @@
 # These tests are crashing/failing with parallel query mode is on. 
 
 # These tests are hanging in 16.1 with parallel query mode on
+# JIRA - BABEL-4668
 ignore#!#545_1
+
+# JIRA - BABEL-4669
 ignore#!#BABEL-3092
+
+# JIRA - BABEL-4670
 ignore#!#BABEL-SEQUENCE
+
+# JIRA - BABEL-4671
 ignore#!#TestSPPrepare
+
+# Hangs with unknown cause
 ignore#!#sp_who-vu-prepare
 ignore#!#sp_who-vu-verify
 ignore#!#sp_who-vu-cleanup
-
-# Test failures in BABEL_4_X_DEV
-ignore#!#BABEL-328-vu-verify
-ignore#!#pgr_select_distinct
-ignore#!#TestSQLQueries
 
 # Group 1: BABEL-4481
 ignore#!#Test-sp_addrolemember-vu-prepare
