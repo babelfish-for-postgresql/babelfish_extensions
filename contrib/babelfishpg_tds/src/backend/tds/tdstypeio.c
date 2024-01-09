@@ -512,6 +512,40 @@ TdsLoadEncodingLCIDCache(void)
 	}
 }
 
+/*
+ * TdsLookupEncodingByLCID - LCID - Encoding lookup
+ */
+int
+TdsLookupEncodingByLCID(int lcid)
+{
+	bool		found;
+	TdsLCIDToEncodingMapInfo mInfo;
+
+	mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
+												   &lcid,
+												   HASH_FIND,
+												   &found);
+
+	/*
+	 * TODO: which encoding by default we should consider if appropriate
+	 * Encoding is not found.
+	 */
+	if (!found)
+	{
+		mInfo = (TdsLCIDToEncodingMapInfo) hash_search(TdsEncodingInfoCacheByLCID,
+													   &TdsDefaultLcid,
+													   HASH_FIND,
+													   &found);
+
+		/*
+		 * could not find encoding corresponding to default lcid still.
+		 */
+		if (!found)
+			return -1;
+	}
+	return mInfo->enc;
+}
+
 void
 TdsLoadTypeFunctionCache(void)
 {
