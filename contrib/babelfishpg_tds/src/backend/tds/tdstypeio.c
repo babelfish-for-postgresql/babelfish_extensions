@@ -590,13 +590,10 @@ TdsLoadTypeFunctionCache(void)
 		FunctionCacheByTdsIdKey fc2key;
 		FunctionCacheByTdsIdEntry *fc2ent;
 
-		nspoid = strcmp(TdsIoFunctionRawData_data[i].typnsp, "sys") == 0 ? sys_nspoid :
-			strcmp(TdsIoFunctionRawData_data[i].typnsp, "puclic") == 0 ? PG_PUBLIC_NAMESPACE : PG_CATALOG_NAMESPACE;
-
+		nspoid = strcmp(TdsIoFunctionRawData_data[i].typnsp, "sys") == 0 ? sys_nspoid : PG_CATALOG_NAMESPACE;
 		typeoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid,
 								  CStringGetDatum(TdsIoFunctionRawData_data[i].typname), ObjectIdGetDatum(nspoid));
 
-		elog(LOG, "kushaal %s, %s, %d, %d", TdsIoFunctionRawData_data[i].typnsp, TdsIoFunctionRawData_data[i].typname, typeoid, nspoid);
 		if (OidIsValid(typeoid))
 		{
 			basetypeoid = getBaseType(typeoid);

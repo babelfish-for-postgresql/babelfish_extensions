@@ -81,6 +81,18 @@ jobs:
           sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
         shell: bash
 
+      - name: Build vector Extension
+        run: |
+          cd ..
+          export VECTOR_VERSION="0.5.1"
+          sudo apt-get install wget
+          wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz
+          tar -xvzf v${VECTOR_VERSION}.tar.gz
+          cd pgvector-${VECTOR_VERSION}/
+          make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config
+          sudo make USE_PGXS=1 PG_CONFIG=~/psql/bin/pg_config install
+        shell: bash
+
       - name: Install extensions
         id: install-extensions-older
         if: always() && steps.build-tds_fdw-extension.outcome == 'success'

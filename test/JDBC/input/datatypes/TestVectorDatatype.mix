@@ -1,3 +1,4 @@
+-- parallel_query_expected
 -- tsql
 -- should throw error since vector is only allowed in sys
 exec sp_execute_postgresql 'create extension vector';

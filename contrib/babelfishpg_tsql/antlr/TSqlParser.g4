@@ -1831,8 +1831,10 @@ create_index
  SEMI?
     ;
 
+/* We introduce specific index methods so as to avoid PG syntax leaks. */
 vector_index_method
-    : id
+    : HNSW
+    | IVFFLAT
     ;
 
 alter_index
@@ -3586,7 +3588,7 @@ xml_common_directives
 
 order_by_expression 
     : order_by=expression (ascending=ASC | descending=DESC)?
-    | order_by=expression vector_operator expression (ascending=ASC | descending=DESC)? (NULLS FIRST | NULLS LAST)?
+    | order_by=expression vector_operator expression (ascending=ASC | descending=DESC)? 
     ;
 
 group_by_item
