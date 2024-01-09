@@ -66,9 +66,20 @@ runs:
         export CMAKE_C_COMPILER_LAUNCHER=ccache
         export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
         sudo apt-get install wget
-        wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
+        max_retries=20
+        retries=0
+        until [ $retries -ge $max_retries ]
+        do
+          wget http://postgis.net/stuff/postgis-3.4.0.tar.gz && break
+          retries=$((retries+1))
+        done
         tar -xvzf postgis-3.4.0.tar.gz
-        wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz
+        retries1=0
+        until [ $retries1 -ge $max_retries ]
+        do
+          wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz && break
+          retries1=$((retries1+1))
+        done
         tar -xvzf proj-9.2.1.tar.gz
         cd proj-9.2.1
         if [ ! -d "build" ]; then
