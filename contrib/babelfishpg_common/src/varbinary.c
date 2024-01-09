@@ -725,8 +725,12 @@ bpcharvarbinary(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(result);
 }
 
-
-
+/*
+ * This function is currently being called with 1 and 3 arguments,
+ * Currently, the third argument is not being parsed in this function, 
+ * Check for the number of args needs to be added if the third arg is 
+ * being parsed in future
+ */
 Datum
 varbinaryvarchar(PG_FUNCTION_ARGS)
 {
@@ -735,11 +739,22 @@ varbinaryvarchar(PG_FUNCTION_ARGS)
 	VarChar    *result;
 	char 	   *encoded_result;
 	size_t		len = VARSIZE_ANY_EXHDR(source);
-	int32		typmod = PG_GETARG_INT32(1);
-	int32		maxlen = typmod - VARHDRSZ;
+	int32		typmod = -1;
+	int32		maxlen = -1;
 	coll_info	collInfo;
 	int			encodedByteLen;
 	MemoryContext ccxt = CurrentMemoryContext;
+
+	/*
+	 * Check whether the typmod argument exists, so that we 
+	 * will not be reading any garbage values for typmod 
+	 * which might cause Invalid read such as BABEL-4475
+	 */
+	if (PG_NARGS() > 1)
+	{
+		typmod = PG_GETARG_INT32(1);
+		maxlen = typmod - VARHDRSZ;
+	}
 
 	/*
 	 * Allow trailing null bytes 
