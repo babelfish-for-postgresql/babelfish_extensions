@@ -536,6 +536,12 @@ GO
 
 ~~ERROR (Message: only "sql_latin1_general_cp1_ci_as" supported for default collation)~~
 
+DROP DATABASE db_unsupported9;
+GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "db_unsupported9" does not exist)~~
+
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_database_misc_options', 'strict', 'false')
 GO

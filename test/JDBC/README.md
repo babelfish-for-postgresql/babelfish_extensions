@@ -19,6 +19,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 - [Adding the test cases](#adding-the-test-cases)
 - [Reading the console output and diff](#reading-the-console-output-and-diff)
 - [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled)
+- [Running Tests with Non Default Server Collation](#running-tests-with-non-default-server-collation)
 
 ## Running the test framework
 
@@ -415,3 +416,38 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     unset isParallelQueryMode
    ```
 If you encounter failing or crashing tests in the "JDBC tests with parallel query" GitHub workflow, consider adding the names of these problematic test cases to the `parallel_query_jdbc_schedule` file. Prefix these test case names with `ignore#!#`. As we work towards resolving these issues in the future, we will gradually remove these excluded tests from the `parallel_query_jdbc_schedule` scheduling file.
+
+## Running Tests with Non Default Server Collation
+
+After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
+1. Create a PostgreSQL database and to initializing Babelfish extensions with non-default server collation add following line with server collation name of your choice in `postgres/data/postgresql.conf` and restart engine, then initialize Babelfish extensions using the [online instructions](../../contrib/README.md)
+
+   ```bash
+   babelfishpg_tsql.server_collation_name = '<server_collation_name>'
+    ```
+2. Before running JDBC tests, set the `serverCollationName` environment variable to the current server collation name:
+
+   ```bash
+    export serverCollationName=<server_collation_name>
+    # Verify if serverCollationName is set to correct collation name
+    echo $serverCollationName
+   ```
+3. Now Run the tests:
+    ```bash
+    mvn test
+    ```
+4. How to add expected output for some test
+    1. By default expected output of a test should be added into `expected` folder.
+    2. If JDBC is running in normal mode with server collation=<server_collation_name> and expected output of some test is different then add this new expected output in `expected/non_default_server_collation/<server_collation_name>` folder.
+    3. If JDBC is running in parallel query mode with default server collation and expected output of some test is different then the expected output should be added in `expected/parallel_query` folder.(As mentioned in [Running Tests with Parallel Query Enabled](#running-tests-with-parallel-query-enabled))
+    4. If JDBC is running in parallel query mode with server collation=<server_collation_name> and expected output of some test is different then add this new expected output in `expected/parallel_query/non_default_server_collation/<server_collation_name>` folder.
+
+5. Cleanup all the objects, users, roles and databases created while running the tests:
+    ```bash
+    ./cleanup.sh
+    ```
+6. Please note that whenever you had changed the server collation and reinitialised Babelfish extensions update the `serverCollationName` environment variable with appropriate server collation name and unset when server collation name is set to default server collation.
+    ```bash
+    unset serverCollationName
+    ```
+    This ensures that correct expected output is picked for current server collation name.

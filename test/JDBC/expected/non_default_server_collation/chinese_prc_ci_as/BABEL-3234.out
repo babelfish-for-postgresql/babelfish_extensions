@@ -1,0 +1,38 @@
+-- tsql
+
+drop table if exists babel_3234_t1;
+go
+drop table if exists babel_3234_t2;
+go
+drop table if exists babel_3234_t3;
+go
+
+create table babel_3234_t1 (a1 numeric DEFAULT '', b1 int);
+go
+create table babel_3234_t2 (a1 decimal DEFAULT ' ', b1 int);
+go
+create table babel_3234_t3 (a1 decimal(10, 2) DEFAULT '', b1 int);
+go
+
+-- psql
+select pg_catalog.pg_get_expr(adbin, adrelid) AS adsrc
+from pg_catalog.pg_attrdef
+where adrelid in ('master_dbo.babel_3234_t1'::regclass::oid,
+                  'master_dbo.babel_3234_t2'::regclass::oid,
+                  'master_dbo.babel_3234_t3'::regclass::oid);
+go
+~~START~~
+text
+sys.babelfish_runtime_error('An empty or space-only string cannot be converted into numeric/decimal data type'::text COLLATE sys.chinese_prc_ci_as)
+sys.babelfish_runtime_error('An empty or space-only string cannot be converted into numeric/decimal data type'::text COLLATE sys.chinese_prc_ci_as)
+sys.babelfish_runtime_error('An empty or space-only string cannot be converted into numeric/decimal data type'::text COLLATE sys.chinese_prc_ci_as)
+~~END~~
+
+
+-- tsql
+drop table if exists babel_3234_t1;
+go
+drop table if exists babel_3234_t2;
+go
+drop table if exists babel_3234_t3;
+go
