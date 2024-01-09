@@ -44,7 +44,7 @@ BRANCH=$2
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
 check_repo () {
     echo "Checking $1"
-    wget --spider "$1" || return $?
+    wget --max-redirect=0 --spider "$1" || return $?
 }
 
 BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
