@@ -1,0 +1,32 @@
+SELECT * FROM babelfish_sysdatabases_vu_prepare_view
+GO
+~~START~~
+text#!#varchar#!#varchar
+babelfish_sysdatabases_vu_prepare_db#!#jdbc_user#!#chinese_prc_ci_as
+~~END~~
+
+
+EXEC babelfish_sysdatabases_vu_prepare_proc
+GO
+~~START~~
+text#!#varchar#!#varchar
+babelfish_sysdatabases_vu_prepare_db#!#jdbc_user#!#chinese_prc_ci_as
+~~END~~
+
+
+SELECT babelfish_sysdatabases_vu_prepare_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT name FROM sys.babelfish_sysdatabases WHERE name LIKE 'babelfish_sysdatabases_vu_prepare_db%'
+ORDER BY name
+GO
+~~START~~
+text
+babelfish_sysdatabases_vu_prepare_db
+~~END~~
+

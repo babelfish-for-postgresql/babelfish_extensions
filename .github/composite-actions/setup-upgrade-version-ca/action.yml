@@ -3,6 +3,10 @@ inputs:
   base_version: 
     description: "Base version"
     required: true
+  server_collation_name:
+    description: "Server collation name which need to be set in postgresql.conf"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -17,7 +21,7 @@ runs:
         printf 'name: "Upgrade till final version and run verify tests"\nruns:\n  using: "composite"\n  steps:\n' > $upgrade_version_dir_path/action.yml
 
         # Length of the upgrade path
-        LEN=$(yq '."upgrade-version"[${{ matrix.upgrade-path.id }}] | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
+        LEN=$(yq '."upgrade-version"[${{ matrix.upgrade-path.id }}]."upgrade-path" | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
         if [[ $LEN -le 1 ]]
         then
             echo "ERROR: Upgrade path length less than 2" 1>&2
@@ -32,7 +36,7 @@ runs:
         for (( i=1 ; i<$LEN ; i++ )); 
         do
           # Computing input parameters that need to pass
-          version_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}][$i].version"
+          version_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}]."upgrade-path"[$i].version"
           upgrade_version=$(yq $version_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           upgrade_version_engb=".\""${upgrade_version}"\".engine_branch"
           engine_branch=$(yq $upgrade_version_engb ${{ github.workspace }}/.github/template/version-branch-template.yml)
@@ -42,7 +46,7 @@ runs:
           pg_old_dir=$(echo psql$(awk -F. '{print $1}' <<< $previous_installed_version))
           pg_new_dir=$(echo psql$(awk -F. '{print $1}' <<< $upgrade_version))
           
-          upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}][$i].\"upgrade-type\"" 
+          upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}]."upgrade-path"[$i].\"upgrade-type\"" 
           upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           uses_file=./.github/composite-actions/$upgrade_type-version-upgrade-util
 
@@ -56,7 +60,7 @@ runs:
           # Appending upgrade step in upgrade-version composite action based on upgrade type
           if [[ $upgrade_type == 'major' ]]
           then
-            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n\n"   >> $upgrade_version_dir_path/action.yml
+            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        server_collation_name: ${{ inputs.server_collation_name }}\n\n"   >> $upgrade_version_dir_path/action.yml
           else
             printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        install_dir: ${pg_new_dir}\n\n"   >> $upgrade_version_dir_path/action.yml
           fi
