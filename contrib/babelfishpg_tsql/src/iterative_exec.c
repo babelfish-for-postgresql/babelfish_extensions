@@ -1309,10 +1309,8 @@ dispatch_stmt_handle_error(PLtsql_execstate *estate,
 					HOLD_INTERRUPTS();
 					elog(DEBUG1, "TSQL TXN PG semantics : Rollback current transaction");
 					HoldPinnedPortals();
-					SPI_setCurrentInternalTxnMode(true);
 					AbortCurrentTransaction();
 					StartTransactionCommand();
-					SPI_setCurrentInternalTxnMode(false);
 					MemoryContextSwitchTo(cur_ctxt);
 					RESUME_INTERRUPTS();
 				}
