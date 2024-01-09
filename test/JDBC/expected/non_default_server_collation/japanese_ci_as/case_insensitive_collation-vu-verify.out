@@ -1,0 +1,113 @@
+select name from sys.columns where name = 'Test';
+go
+~~START~~
+varchar
+test
+~~END~~
+
+
+select name from sys.columns where name = 'TesT';
+go
+~~START~~
+varchar
+test
+~~END~~
+
+
+select COUNT(*) FROM sys.tables WHERE name = 'cameltable';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select COUNT(*) FROM sys.tables WHERE name = 'CAMELTABLE';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select COUNT(*) FROM sys.tables WHERE name = 'CaMeLtAbLe';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.columns WHERE name = 'cAmElCoLuMn';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select name from sys.databases where name = 'test';
+go
+~~START~~
+varchar
+test
+~~END~~
+
+
+select name from sys.databases where name = 'TEST';
+go
+~~START~~
+varchar
+test
+~~END~~
+
+
+select * from vB;
+go
+~~START~~
+text
+case-insensitive
+~~END~~
+
+
+SELECT t.TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES AS t
+JOIN sys.objects o ON t.TABLE_NAME = o.name where o.name = 'mytable';
+go
+~~START~~
+varchar
+MyTable
+~~END~~
+
+
+-- [BABEL-2981]
+-- sys.sysname and other string types in Babelfish need to have the correct collation
+select typ.typname, coll.collname from pg_type typ join pg_collation coll on typ.typcollation = coll.oid
+ where typnamespace = (select oid from pg_namespace where nspname = 'sys') order by typ.typname;
+go
+~~START~~
+varchar#!#varchar
+__ci_sysname#!#japanese_ci_as
+_bpchar#!#japanese_ci_as
+_ci_sysname#!#japanese_ci_as
+_nchar#!#japanese_ci_as
+_ntext#!#default
+_nvarchar#!#japanese_ci_as
+_sql_variant#!#japanese_ci_as
+_sysname#!#japanese_ci_as
+_varchar#!#japanese_ci_as
+bpchar#!#japanese_ci_as
+nchar#!#japanese_ci_as
+ntext#!#default
+nvarchar#!#japanese_ci_as
+sql_variant#!#japanese_ci_as
+sysname#!#japanese_ci_as
+varchar#!#japanese_ci_as
+~~END~~
+
+
+create table t_rcv16 (a [dbo].[myTyp6]);
+go
+
+create table t_rcv17(a dbo.myTyp6);
+go

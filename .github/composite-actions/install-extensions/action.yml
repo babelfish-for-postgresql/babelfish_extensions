@@ -13,6 +13,10 @@ inputs:
     description: 'Postgres Parallel Query Mode'
     required: no
     default: false
+  server_collation_name:
+    description: "Server collation name which need to be set in postgresql.conf"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -37,6 +41,9 @@ runs:
           sudo echo "host    all             all             0.0.0.0/0                md5"
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.install_dir }}/data/postgresql.conf
+        fi
         ~/${{inputs.install_dir}}/bin/pg_ctl -c -D ~/${{inputs.install_dir}}/data/ -l logfile restart
         cd ~/work/babelfish_extensions/babelfish_extensions/
         sudo ~/${{inputs.install_dir}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -v parallel_query_mode=${{inputs.parallel_query_mode}} -f .github/scripts/create_extension.sql

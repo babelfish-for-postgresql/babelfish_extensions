@@ -1,0 +1,39 @@
+EXEC sp_describe_first_result_set_vu_prepare_procedure;
+GO
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+0#!#2#!#b#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+0#!#2#!#b#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 1 and character position 8000)~~
+
+
+EXEC sp_describe_first_result_set_vu_prepare_procedure2;
+GO
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+~~END~~
+
+
+EXEC sp_describe_first_result_set N'select * from sp_describe_first_result_set_vu_prepare_t1'
+GO
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#col_a#!#1#!#25#!#text#!#-1#!#0#!#0#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#35#!#16#!#13633540#!#0
+0#!#2#!#col_b#!#1#!#16#!#boolean#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>
+0#!#3#!#col_c#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+0#!#4#!#col_d#!#1#!#20#!#bigint#!#8#!#19#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#8#!#<NULL>#!#<NULL>
+0#!#5#!#col_e#!#1#!#25#!#text#!#-1#!#0#!#0#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#35#!#16#!#13633540#!#0
+~~END~~
+

@@ -1,0 +1,96 @@
+exec sp_describe_first_result_set N'select * from babel_3000_vu_prepare_var'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#25#!#text#!#-1#!#0#!#0#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#35#!#16#!#13633540#!#0
+0#!#2#!#b#!#1#!#142#!#xml#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#241#!#8100#!#<NULL>#!#<NULL>
+~~END~~
+
+
+exec sp_describe_first_result_set N'select * from babel_3000_vu_prepare_dates'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#1082#!#date#!#3#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#40#!#3#!#<NULL>#!#<NULL>
+0#!#2#!#b#!#1#!#1083#!#time#!#5#!#14#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#41#!#5#!#<NULL>#!#<NULL>
+~~END~~
+
+
+exec sp_describe_first_result_set N'select * from dbo.babel_3000_vu_prepare_nums'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+0#!#2#!#b#!#1#!#21#!#smallint#!#2#!#5#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#2#!#<NULL>#!#<NULL>
+0#!#3#!#c#!#1#!#20#!#bigint#!#8#!#19#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#8#!#<NULL>#!#<NULL>
+0#!#4#!#d#!#1#!#701#!#float#!#8#!#53#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#109#!#8#!#<NULL>#!#<NULL>
+0#!#5#!#e#!#1#!#700#!#real#!#4#!#24#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#109#!#4#!#<NULL>#!#<NULL>
+0#!#6#!#f#!#1#!#1700#!#numeric#!#5#!#5#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#108#!#17#!#<NULL>#!#<NULL>
+~~END~~
+
+
+exec sp_describe_first_result_set N'select * from isc_udt'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "isc_udt" does not exist)~~
+
+
+exec sp_describe_first_result_set N'select * from master..babel_3000_vu_prepare_num_identity'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#0#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+0#!#2#!#b#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- no result testing
+exec sp_describe_first_result_set N'insert into babel_3000_vu_prepare_t1 values(1)', NULL, 0
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+~~END~~
+
+
+exec sp_describe_first_result_set
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_describe_first_result_set expects parameter "@tsql", which was not supplied.)~~
+
+
+exec sp_describe_first_result_set N''
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+~~END~~
+
+
+-- cross schema testing
+exec sp_describe_first_result_set N'select * from babel_3000_vu_prepare_s1.babel_3000_vu_prepare_nums'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#23#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#4#!#<NULL>#!#<NULL>
+0#!#2#!#b#!#1#!#21#!#smallint#!#2#!#5#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#2#!#<NULL>#!#<NULL>
+0#!#3#!#c#!#1#!#20#!#bigint#!#8#!#19#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#38#!#8#!#<NULL>#!#<NULL>
+0#!#4#!#d#!#1#!#701#!#float#!#8#!#53#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#109#!#8#!#<NULL>#!#<NULL>
+0#!#5#!#e#!#1#!#700#!#real#!#4#!#24#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#109#!#4#!#<NULL>#!#<NULL>
+0#!#6#!#f#!#1#!#1700#!#numeric#!#5#!#5#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#108#!#17#!#<NULL>#!#<NULL>
+~~END~~
+
+
+use babel_3000_vu_prepare_db1
+go
+
+exec sp_describe_first_result_set N'select * from babel_3000_vu_prepare_nums'
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3000_vu_prepare_nums" does not exist)~~
+
