@@ -1,0 +1,37 @@
+select * from babel_4688_v1
+go
+~~START~~
+varchar
+a
+~~END~~
+
+
+select * from babel_4688_v2
+go
+~~START~~
+varchar
+a
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
+select * from babel_4688_v3
+go
+~~START~~
+varchar
+ab
+~~END~~
+
+
+select * from babel_4688_v4
+go
+~~START~~
+varchar
+ab
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
