@@ -16,6 +16,8 @@
 #include "session.h"
 #include "pltsql.h"
 #include "guc.h"
+#include "access/parallel.h"
+#include "storage/shm_toc.h"
 
 /* Core Session Properties */
 
@@ -24,6 +26,7 @@
 
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND + 1] = {'\0'};
+static char current_db_name_for_parallelWorker[MAX_BBF_NAMEDATALEND + 1] = {'\0'};
 static Oid	current_user_id = InvalidOid;
 static void set_search_path_for_user_schema(const char *db_name, const char *user);
 void		reset_cached_batch(void);
@@ -48,8 +51,22 @@ get_cur_db_id(void)
 char *
 get_cur_db_name(void)
 {
+	if (IsBabelfishParallelWorker())
+		return pstrdup(current_db_name_for_parallelWorker);
 	return pstrdup(current_db_name);
 }
+
+void 
+set_cur_db_name_for_parallelWorker(const char* logical_db_name)
+{
+    int len = 0;
+    while (logical_db_name[len] != '\0' && len < MAX_BBF_NAMEDATALEND) {
+        len++;
+    }
+    strncpy(current_db_name_for_parallelWorker, logical_db_name, len);
+    current_db_name_for_parallelWorker[len] = '\0';
+}
+
 
 void
 set_cur_db(int16 id, const char *name)

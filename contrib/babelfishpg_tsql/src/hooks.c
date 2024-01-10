@@ -68,6 +68,8 @@
 #include "multidb.h"
 #include "tsql_analyze.h"
 #include "table_variable_mvcc.h"
+#include "storage/shm_toc.h"
+#include "access/parallel.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 extern bool babelfish_dump_restore;
@@ -169,6 +171,10 @@ extern bool called_from_tsql_insert_exec();
 extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
 							 Oid valtype, int32 valtypmod,
 							 Oid reqtype, int32 reqtypmod);
+
+/* Hooks for parallel workers for babelfish fixed state */
+static void bbf_parallel_serialise_babelfixedparallelstate_and_insert_into_dsm(ParallelContext *pcxt, bool estimate);
+static void bbf_parallel_restore_babelfishfixedparallelstate(shm_toc    *toc);
 
 /*****************************************
  * 			Replication Hooks
@@ -408,6 +414,9 @@ InstallExtendedHooks(void)
 
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
 	exec_tsql_cast_value_hook = pltsql_exec_tsql_cast_value;
+
+    bbf_parallel_serialise_babelfixedparallelstate_and_insert_into_dsm_hook = bbf_parallel_serialise_babelfixedparallelstate_and_insert_into_dsm;
+    bbf_parallel_restore_babelfishfixedparallelstate_hook = bbf_parallel_restore_babelfishfixedparallelstate;
 }
 
 void
@@ -472,6 +481,9 @@ UninstallExtendedHooks(void)
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
+
+	bbf_parallel_serialise_babelfixedparallelstate_and_insert_into_dsm_hook = NULL;
+	bbf_parallel_restore_babelfishfixedparallelstate_hook = NULL;
 }
 
 /*****************************************
@@ -4627,4 +4639,36 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 		}
 	}
 	return node;
+}
+
+static void bbf_parallel_serialise_babelfixedparallelstate_and_insert_into_dsm(ParallelContext *pcxt, bool estimate)
+{
+	BabelfishFixedParallelState *bfps;
+	int len;
+	if (estimate)
+	{
+		/* Allow space to store the babelfish fixed-size parallel state. */
+		shm_toc_estimate_chunk(&pcxt->estimator, sizeof(BabelfishFixedParallelState));
+		shm_toc_estimate_keys(&pcxt->estimator, 1);
+	}
+	else
+	{
+		/* Initialize babelfish fixed-size state in shared memory. */
+		bfps = (BabelfishFixedParallelState *) shm_toc_allocate(pcxt->toc, sizeof(BabelfishFixedParallelState));
+		strncpy(bfps->logical_db_name, get_cur_db_name(), MAX_BBF_NAMEDATALEND);
+		len = strlen(get_cur_db_name());
+		bfps->logical_db_name[len] = '\0';
+		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_FIXED, bfps);
+	}
+}
+
+static void bbf_parallel_restore_babelfishfixedparallelstate(shm_toc    *toc)
+{
+	BabelfishFixedParallelState *bfps;	
+
+	/* Get the babelfish fixed parallel state from DSM */
+	bfps = shm_toc_lookup(toc, BABELFISH_PARALLEL_KEY_FIXED, false);
+
+	/* Set the logcial db name for parallel workers */
+	set_cur_db_name_for_parallelWorker(bfps->logical_db_name);
 }
