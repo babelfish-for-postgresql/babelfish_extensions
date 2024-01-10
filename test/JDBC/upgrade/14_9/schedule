@@ -415,6 +415,7 @@ default_params
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+operator_binary_whitespace-before-15_5-or-16_1
 BABEL-2999
 babel-4475
 BABEL-4606
