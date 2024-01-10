@@ -16,6 +16,10 @@ inputs:
     description: "Logical Babelfish database to dump and restore"
     required: false
     default: 'null'
+  server_collation_name:
+    description: "Server collation name which need to be set in postgresql.conf"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -78,9 +82,20 @@ runs:
         export CMAKE_C_COMPILER_LAUNCHER=ccache
         export CMAKE_CXX_COMPILER_LAUNCHER=ccache 
         sudo apt-get install wget
-        wget http://postgis.net/stuff/postgis-3.4.0.tar.gz
+        max_retries=20
+        retries=0
+        until [ $retries -ge $max_retries ]
+        do
+          wget http://postgis.net/stuff/postgis-3.4.0.tar.gz && break
+          retries=$((retries+1))
+        done
         tar -xvzf postgis-3.4.0.tar.gz
-        wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz
+        retries1=0
+        until [ $retries1 -ge $max_retries ]
+        do
+          wget https://download.osgeo.org/proj/proj-9.2.1.tar.gz && break
+          retries1=$((retries1+1))
+        done
         tar -xvzf proj-9.2.1.tar.gz
         cd proj-9.2.1
         if [ ! -d "build" ]; then
@@ -118,6 +133,9 @@ runs:
           sudo echo "host    all             all             0.0.0.0/0                md5"
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.install_dir }}/data/postgresql.conf
+        fi
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
@@ -152,6 +170,9 @@ runs:
         cd test/JDBC/
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          export serverCollationName=${{ inputs.server_collation_name }}
+        fi
         if [[ "$migr_mode" == "multi-db" ]];then
           export isUpgradeTestMode=true
           base_dir=${{ matrix.upgrade-path.path[0] }}
