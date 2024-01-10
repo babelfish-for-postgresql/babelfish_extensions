@@ -13,7 +13,6 @@ ignore#!#Test-sp_addrolemember-vu-cleanup
 ignore#!#Test-sp_droprolemember-vu-prepare
 ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
-
 ignore#!#table-variable-vu-verify
 
 # Other or mixed issues - JIRA-BABEL-4538
