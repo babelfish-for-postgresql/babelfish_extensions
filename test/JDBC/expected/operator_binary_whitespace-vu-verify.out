@@ -1,0 +1,455 @@
+-- bit AND/OR/XOR
+select 99&-5
+go
+~~START~~
+int
+99
+~~END~~
+
+select 99&+5
+go
+~~START~~
+int
+1
+~~END~~
+
+select 99&~5
+go
+~~START~~
+int
+98
+~~END~~
+
+declare @v int = 99 set @v = 123&@v select @v
+go
+~~START~~
+int
+99
+~~END~~
+
+
+select 88|-~+2
+go
+~~START~~
+int
+91
+~~END~~
+
+select 88|+~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select 88|~~+2
+go
+~~START~~
+int
+90
+~~END~~
+
+declare @v int = 88 set @v = 123|@v select @v
+go
+~~START~~
+int
+123
+~~END~~
+
+
+select 77^-~+2
+go
+~~START~~
+int
+78
+~~END~~
+
+select 77^+~+2
+go
+~~START~~
+int
+-80
+~~END~~
+
+select 77^~~+2
+go
+~~START~~
+int
+79
+~~END~~
+
+declare @v int = 77 set @v = 123^@v select @v
+go
+~~START~~
+int
+54
+~~END~~
+
+declare @v int = 10&+2 set @v = @v|-9 select @v
+go
+~~START~~
+int
+-9
+~~END~~
+
+select * from v1_bitop
+go
+~~START~~
+int#!#int#!#int
+2#!#-1#!#-73
+~~END~~
+
+execute p1_bitop
+go
+~~START~~
+int
+-2
+~~END~~
+
+print 99&+2 
+go
+print 99&~1
+go
+
+
+-- bit NOT
+select ~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select +~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select -~+2
+go
+~~START~~
+int
+3
+~~END~~
+
+select ~-2
+go
+~~START~~
+int
+1
+~~END~~
+
+select +~-2
+go
+~~START~~
+int
+1
+~~END~~
+
+select -~-2
+go
+~~START~~
+int
+-1
+~~END~~
+
+select +~2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select -~2
+go
+~~START~~
+int
+3
+~~END~~
+
+select ~~2
+go
+~~START~~
+int
+2
+~~END~~
+
+select ~~~~~2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select ~~~~~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select +~~~~~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select -~~~~~+2
+go
+~~START~~
+int
+3
+~~END~~
+
+select ~~~~~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select +~~~~~-2
+go
+~~START~~
+int
+1
+~~END~~
+
+select -~~~~~-2
+go
+~~START~~
+int
+-1
+~~END~~
+
+select ~@@max_precision
+go
+~~START~~
+smallint
+-39
+~~END~~
+
+declare @v int = 2 set @v = ~@@max_precision select @v
+go
+~~START~~
+int
+-39
+~~END~~
+
+declare @v int = 2 set @v = ~@v select @v
+go
+~~START~~
+int
+-3
+~~END~~
+
+select * from v1_bitop_not
+go
+~~START~~
+int
+-3
+~~END~~
+
+execute p1_bitop_not 
+go
+~~START~~
+int
+-3
+~~END~~
+
+print ~+10
+go
+declare @v int = 10 print ~@v
+go
+
+-- modulo
+select 10%-3
+go
+~~START~~
+int
+1
+~~END~~
+
+select 10%+3
+go
+~~START~~
+int
+1
+~~END~~
+
+select 100%@@max_precision
+go
+~~START~~
+int
+24
+~~END~~
+
+declare @v int select 99%@v
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+select * from v1_modulo_op
+go
+~~START~~
+int
+1
+~~END~~
+
+exec p1_modulo_op
+go
+~~START~~
+int
+0
+~~END~~
+
+declare @v int =10%+3 select @v
+go
+~~START~~
+int
+1
+~~END~~
+
+declare @v int =10%+~3 select @v
+go
+~~START~~
+int
+2
+~~END~~
+
+declare @v int =10%~+3 select @v
+go
+~~START~~
+int
+2
+~~END~~
+
+declare @v int = 10 set @v = 3%@v select @v
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- many expressions in one SELECT:
+select 99&-5,99&+5,99&~5,99&-5,99&+5,99&~5,88|-~+2,88|+~+2,88|~~+2,77^-~+2,77^+~+2,77^~~+2,+~+2,~-2,+~-2-~-2,~~~~~2,+~~~~~-2,10%-3,10%+3,10%3,100%@@max_precision
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+99#!#1#!#98#!#99#!#1#!#98#!#91#!#-3#!#90#!#78#!#-80#!#79#!#-3#!#1#!#2#!#-3#!#1#!#1#!#1#!#1#!#24
+~~END~~
+
+select * from v1_bitop_all
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+99#!#1#!#98#!#99#!#1#!#98#!#91#!#-3#!#90#!#78#!#-80#!#79#!#-3#!#1#!#2#!#-3#!#1#!#1#!#1#!#1#!#24
+~~END~~
+
+execute p1_bitop_all
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+99#!#1#!#98#!#99#!#1#!#98#!#91#!#-3#!#90#!#78#!#-80#!#79#!#-3#!#1#!#2#!#-3#!#1#!#1#!#1#!#1#!#24
+~~END~~
+
+
+-- already supported before this fix
+select 12|~+2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select 10%3
+go
+~~START~~
+int
+1
+~~END~~
+
+select 99&5
+go
+~~START~~
+int
+1
+~~END~~
+
+select ~2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select ~ 2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select ~ + 2
+go
+~~START~~
+int
+-3
+~~END~~
+
+select ~ - 2
+go
+~~START~~
+int
+1
+~~END~~
+
+select ~ ~ ~ 2
+go
+~~START~~
+int
+-3
+~~END~~
+
+declare @v int = 2 select @v = ~@v select @v
+go
+~~START~~
+int
+-3
+~~END~~
+
+declare @v int =~2 select @v
+go
+~~START~~
+int
+-3
+~~END~~
+
+declare @v int = 10 set @v %=3 select @v
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- invalid syntax in SQL Server
+select 1~+2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '~' at line 2 and character position 8)~~
+
+-- invalid syntax in SQL Server
+select 1 ~ 2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '~' at line 2 and character position 9)~~
+
