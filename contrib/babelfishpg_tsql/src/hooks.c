@@ -151,7 +151,6 @@ static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bo
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
-static Oid	pltsql_GetNewPermanentRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -221,7 +220,6 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
-static GetNewPermanentRelFileNode_hook_type prev_GetNewPermanentRelFileNode_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
@@ -340,9 +338,6 @@ InstallExtendedHooks(void)
 
 	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
 	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
-
-	prev_GetNewPermanentRelFileNode_hook = GetNewPermanentRelFileNode_hook;
-	GetNewPermanentRelFileNode_hook = pltsql_GetNewPermanentRelFileNode;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -467,7 +462,6 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
-	GetNewPermanentRelFileNode_hook = prev_GetNewPermanentRelFileNode_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
@@ -580,11 +574,11 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	minOid = atooid(babelfish_dump_restore_min_oid);
 	Assert(OidIsValid(minOid));
-	if (variableCache->nextOid >= minOid + 1)
+	if (ShmemVariableCache->nextOid >= minOid + 1)
 		return;
 
-	variableCache->nextOid = minOid + 1;
-	variableCache->oidCount = 0;
+	ShmemVariableCache->nextOid = minOid + 1;
+	ShmemVariableCache->oidCount = 0;
 }
 
 static Oid
@@ -633,7 +627,6 @@ pltsql_GetNewTempObjectId()
 
 			temp_oid_buffer_start = OID_TO_BUFFER_START(tempOidStart);
 			ShmemVariableCache->tempOidStart = tempOidStart;
-			ShmemVariableCache->tempOidBufferSize = temp_oid_buffer_size;
 
 			nextTempOid = (Oid) tempOidStart;
 
@@ -719,87 +712,6 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	} while (collides);
 
 	return newOid;
-}
-
-static Oid
-pltsql_GetNewPermanentRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
-{
-	RelFileNodeBackend rnode;
-	char	   *rpath;
-	bool		collides;
-	BackendId	backend;
-
-	/*
-	 * If we ever get here during pg_upgrade, there's something wrong; all
-	 * relfilenode assignments during a binary-upgrade run should be
-	 * determined by commands in the dump script.
-	 */
-	Assert(!IsBinaryUpgrade);
-
-	switch (relpersistence)
-	{
-		case RELPERSISTENCE_TEMP:
-			backend = BackendIdForTempRelations();
-			break;
-		case RELPERSISTENCE_UNLOGGED:
-		case RELPERSISTENCE_PERMANENT:
-			backend = InvalidBackendId;
-			break;
-		default:
-			elog(ERROR, "invalid relpersistence: %c", relpersistence);
-			return InvalidOid;	/* placate compiler */
-	}
-
-	/* This logic should match RelationInitPhysicalAddr */
-	rnode.node.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
-	rnode.node.dbNode = (rnode.node.spcNode == GLOBALTABLESPACE_OID) ? InvalidOid : MyDatabaseId;
-
-	/*
-	 * The relpath will vary based on the backend ID, so we must initialize
-	 * that properly here to make sure that any collisions based on filename
-	 * are properly detected.
-	 */
-	rnode.backend = backend;
-
-	do
-	{
-		CHECK_FOR_INTERRUPTS();
-
-		/* Generate the OID */
-		if (pg_class)
-		{
-			rnode.node.relNode = GetNewOidWithIndex(pg_class, ClassOidIndexId,
-												Anum_pg_class_oid);
-		}	
-		else
-		{
-			rnode.node.relNode = GetNewObjectId();
-		}
-
-		/* Check for existing file of same name */
-		rpath = relpath(rnode, MAIN_FORKNUM);
-
-		if (access(rpath, F_OK) == 0)
-		{
-			/* definite collision */
-			collides = true;
-		}
-		else
-		{
-			/*
-			 * Here we have a little bit of a dilemma: if errno is something
-			 * other than ENOENT, should we declare a collision and loop? In
-			 * practice it seems best to go ahead regardless of the errno.  If
-			 * there is a colliding file we will get an smgr failure when we
-			 * attempt to create the new relation file.
-			 */
-			collides = false;
-		}
-
-		pfree(rpath);
-	} while (collides);
-
-	return rnode.node.relNode;
 }
 
 static void

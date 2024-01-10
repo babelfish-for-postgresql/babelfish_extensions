@@ -69,6 +69,12 @@ char	   *pltsql_host_service_pack_level = NULL;
 
 bool		pltsql_enable_create_alter_view_from_pg = false;
 
+/*
+ * OIDs are stored as uint32, so we will add INT_MIN to match the range.
+ */
+int			temp_oid_buffer_start;
+int			temp_oid_buffer_size;
+
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
 	{"xml", EXPLAIN_FORMAT_XML, false},
@@ -1140,7 +1146,7 @@ define_custom_variables(void)
 							   check_babelfish_dump_restore_min_oid, NULL, NULL);
 
 	/* 
-	 * This is an int here but actually represents an Oid (uint32). It's accessed only in varsup.c using the 
+	 * This is an int here but actually represents an Oid (uint32). It's accessed only in hooks.c using the 
 	 * macros defined there. 
 	 */
 	DefineCustomIntVariable("babelfishpg_tsql.temp_oid_buffer_start",
