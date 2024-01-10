@@ -196,6 +196,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_GRANTDB,
 	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
+	PLTSQL_STMT_ALTER_DB,
 	PLTSQL_STMT_FULLTEXTINDEX,
 } PLtsql_stmt_type;
 
@@ -1052,6 +1053,14 @@ typedef struct PLtsql_stmt_change_dbowner
 	char	   *db_name;
 	char	   *new_owner_name;  /* Login name for new owner */
 } PLtsql_stmt_change_dbowner;
+
+typedef struct PLtsql_stmt_alter_db
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	char	   *old_db_name;
+	char	   *new_db_name;
+} PLtsql_stmt_alter_db;
 
 /*
  *	Fulltext Index stmt

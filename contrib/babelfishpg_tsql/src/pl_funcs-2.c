@@ -482,6 +482,7 @@ free_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_LABEL:
 		case PLTSQL_STMT_USEDB:
 		case PLTSQL_STMT_INSERT_BULK:
+		case PLTSQL_STMT_ALTER_DB:
 		case PLTSQL_STMT_GRANTDB:
 		case PLTSQL_STMT_CHANGE_DBOWNER:
 		case PLTSQL_STMT_FULLTEXTINDEX:
@@ -544,6 +545,7 @@ void		dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
 void		dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb);
 void		dump_stmt_change_dbowner(PLtsql_stmt_change_dbowner *stmt_change_dbowner);
 void		dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
+void		dump_stmt_alter_db(PLtsql_stmt_alter_db *stmt_alter_db);
 void		dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void		dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
 void		dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
@@ -691,6 +693,13 @@ void
 dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
 {
 	printf("INSERT BULK %s\n", stmt_insert_bulk->table_name);
+}
+
+void
+dump_stmt_alter_db(PLtsql_stmt_alter_db *stmt_alter_db)
+{
+	//DUMPING ONLY MODIFY NAME
+	printf("ALTER DATABASE %s MODIFY NAME = %s", stmt_alter_db->old_db_name, stmt_alter_db->new_db_name);
 }
 
 void
@@ -844,6 +853,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_INSERT_BULK:
 			{
 				dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
+				break;
+			}
+		case PLTSQL_STMT_ALTER_DB:
+			{
+				dump_stmt_alter_db((PLtsql_stmt_alter_db *) stmt);
 				break;
 			}
 		case PLTSQL_STMT_DBCC:

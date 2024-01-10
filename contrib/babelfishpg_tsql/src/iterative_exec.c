@@ -852,6 +852,15 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_KILL:
 			exec_stmt_kill(estate, (PLtsql_stmt_kill *) stmt);
 			break;
+		case PLTSQL_STMT_ALTER_DB:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Showing Estimated Execution Plan for ALTER DATABASE statement is not yet supported")));
+			}
+			exec_stmt_alter_db(estate, (PLtsql_stmt_alter_db *) stmt);
+			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

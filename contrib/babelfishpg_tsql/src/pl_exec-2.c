@@ -10,6 +10,8 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "commands/proclang.h"
+#include "commands/schemacmds.h"
+#include "commands/user.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
@@ -3750,6 +3752,84 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 					
 	/* All validations done, perform the actual update */
 	update_db_owner(stmt->new_owner_name, stmt->db_name);	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
+{
+	char *old_dbo_schema_name = get_physical_schema_name(stmt->old_db_name, "dbo");
+	char *new_dbo_schema_name = get_physical_schema_name(stmt->new_db_name, "dbo");
+
+	char *old_guest_schema_name = get_physical_schema_name(stmt->old_db_name, "guest");
+	char *new_guest_schema_name = get_physical_schema_name(stmt->new_db_name, "guest");
+
+	char *old_db_owner_role_name = get_physical_user_name(stmt->old_db_name, "db_owner", false);
+	char *new_db_owner_role_name = get_physical_user_name(stmt->new_db_name, "db_owner", true);
+
+	// char *query = " ";
+	// int rc = 0;
+	int xactStarted = IsTransactionOrTransactionBlock();
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	PushActiveSnapshot(GetTransactionSnapshot());
+	
+	PG_TRY();
+	{
+	RenameSchema(old_dbo_schema_name, new_dbo_schema_name);
+	RenameSchema(old_guest_schema_name, new_guest_schema_name);
+
+	/* sys.babelfish_namespace_ext */
+	update_babelfish_namespace_ext_nsp_name(old_dbo_schema_name, new_dbo_schema_name);
+	update_babelfish_namespace_ext_nsp_name(old_guest_schema_name, new_guest_schema_name);
+
+	// query = psprintf("UPDATE sys.babelfish_namespace_ext SET nspname = \'%s\' where nspname = \'%s\';", new_dbo_schema_name, old_dbo_schema_name);
+	// query = psprintf("%s UPDATE sys.babelfish_namespace_ext SET nspname = \'%s\' where nspname = \'%s\';", query, new_guest_schema_name, old_guest_schema_name);
+
+	/* sys.babelfish_sysdatabases */
+	update_sysdatabases_db_name(stmt->old_db_name, stmt->new_db_name);
+	// query = psprintf("%s UPDATE sys.babelfish_sysdatabases SET name = \'%s\' WHERE name = \'%s\';", query, stmt->new_db_name, stmt->old_db_name);
+	
+	/* sys.babelfish_authid_user_ext */
+	update_babelfish_authid_user_ext_db_name(old_dbo_schema_name, new_dbo_schema_name, stmt->new_db_name);
+	update_babelfish_authid_user_ext_db_name(old_guest_schema_name, new_guest_schema_name, stmt->new_db_name);
+	update_babelfish_authid_user_ext_db_name(old_db_owner_role_name, new_db_owner_role_name, stmt->new_db_name);
+	// query = psprintf("%s UPDATE sys.babelfish_authid_user_ext SET rolname = \'%s\', database_name = \'%s\', modify_date = NOW() WHERE rolname = \'%s\';",
+	// 			query, new_dbo_schema_name, stmt->new_db_name, old_dbo_schema_name);
+	// query = psprintf("%s UPDATE sys.babelfish_authid_user_ext SET rolname = \'%s\', database_name = \'%s\', modify_date = NOW() WHERE rolname = \'%s\';",
+	// 			query, new_guest_schema_name, stmt->new_db_name, old_guest_schema_name);
+	// query = psprintf("%s UPDATE sys.babelfish_authid_user_ext SET rolname = \'%s\', database_name = \'%s\', modify_date = NOW() WHERE rolname = \'%s\';",
+	// 			query, new_db_owner_role_name, stmt->new_db_name, old_db_owner_role_name);
+
+	// rc = SPI_execute(query, false, 1);
+
+	// if (rc != SPI_OK_UTILITY)
+	// {
+	// 	/* Reset dialect. */
+	// 	// set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+	// 	// 				  GUC_CONTEXT_CONFIG,
+	// 	// 				  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	// 	elog(ERROR, "Failed SPI: %d", rc);
+	// }
+
+	RenameRole(old_dbo_schema_name, new_dbo_schema_name);
+	RenameRole(old_guest_schema_name, new_guest_schema_name);
+	RenameRole(old_db_owner_role_name, new_db_owner_role_name);
+	}
+	PG_CATCH();
+	{
+		PopActiveSnapshot();
+		if (!xactStarted)
+			CommitTransactionCommand();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	PopActiveSnapshot();
+	if (!xactStarted)
+		CommitTransactionCommand();
+
 	return PLTSQL_RC_OK;
 }
 

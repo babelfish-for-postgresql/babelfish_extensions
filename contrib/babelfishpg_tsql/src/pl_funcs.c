@@ -332,6 +332,8 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
 			return "USE";
 		case PLTSQL_STMT_INSERT_BULK:
 			return "INSERT BULK";
+		case PLTSQL_STMT_ALTER_DB:
+			return "ALTER DATABASE";
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			return "SET EXPLAIN MODE";
 		case PLTSQL_STMT_GRANTDB:

@@ -2959,3 +2959,221 @@ update_db_owner(const char *new_owner_name, const char *db_name)
 	table_endscan(tblscan);	
 	table_close(sysdatabases_rel, RowExclusiveLock);	
 }
+
+/*
+ * Update the name of a database in the sysdatabases catalog.
+ */
+void // todo use sys
+update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
+{
+	volatile 		Relation sysdatabases_rel;
+	TupleDesc		sysdatabases_rel_descr;
+	ScanKeyData		key;
+	HeapTuple		tuple, db_found;
+	TableScanDesc	tblscan;
+		
+	Datum		values[SYSDATABASES_NUM_COLS];
+	bool		nulls[SYSDATABASES_NUM_COLS];
+	bool		replaces[SYSDATABASES_NUM_COLS];
+
+	/* Do not allow changes to system databases. */
+	/* Note: T-SQL allows changing ownership of msdb. */
+	if ( (strlen(old_db_name) == 6 && (strncmp(old_db_name, "master", 6) == 0)) ||
+		 (strlen(old_db_name) == 6 && (strncmp(old_db_name, "tempdb", 6) == 0))
+	    )
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Cannot change the owner of the master, model, tempdb or distribution database.")));
+	}
+
+	sysdatabases_rel = table_open(sysdatabases_oid, RowExclusiveLock);
+	sysdatabases_rel_descr = RelationGetDescr(sysdatabases_rel);	
+
+	ScanKeyInit(&key,
+				Anum_sysdatabases_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(old_db_name));
+				
+	tblscan = table_beginscan_catalog(sysdatabases_rel, 1, &key);
+	
+	db_found = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!db_found)
+	{
+		/* Database should have been verified to exist, but if not, exit politely */
+		table_close(sysdatabases_rel, RowExclusiveLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", old_db_name)));
+	}
+	
+	/* Build a tuple */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+		
+	/* Set up the new database. */
+	values[Anum_sysdatabases_name - 1]   = CStringGetTextDatum(new_db_name);
+	replaces[Anum_sysdatabases_name - 1] = true;	
+								  
+	tuple = heap_modify_tuple(db_found,
+							  sysdatabases_rel_descr,
+							  values,
+							  nulls,
+							  replaces);							  
+
+	/* Perform the actual catalog update. */
+	CatalogTupleUpdate(sysdatabases_rel, &tuple->t_self, tuple);
+	
+	/* Cleanup. */
+	heap_freetuple(tuple);
+	table_endscan(tblscan);	
+	table_close(sysdatabases_rel, RowExclusiveLock);	
+}
+
+/*
+ * Update the name of a physical schema name in the babelfish_namespace_ext catalog.
+ */
+void // todo use sys
+update_babelfish_namespace_ext_nsp_name(const char *old_nsp_name, const char *new_nsp_name)
+{
+	volatile		Relation namespace_rel;
+	TupleDesc		namespace_rel_descr;
+	ScanKeyData		key;
+	HeapTuple		tuple, db_found;
+	SysScanDesc		tblscan;
+		
+	Datum		values[NAMESPACE_EXT_NUM_COLS];
+	bool		nulls[NAMESPACE_EXT_NUM_COLS];
+	bool		replaces[NAMESPACE_EXT_NUM_COLS];
+
+
+	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
+	namespace_rel_descr = RelationGetDescr(namespace_rel);	
+
+
+	ScanKeyInit(&key,
+				Anum_namespace_ext_namespace,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(old_nsp_name));
+
+	tblscan = systable_beginscan(namespace_rel, namespace_ext_idx_oid_oid, true,
+							  NULL, 1, &key);
+
+	db_found = systable_getnext(tblscan);
+	if (!HeapTupleIsValid(db_found))
+	{
+		systable_endscan(tblscan);
+		table_close(namespace_rel, AccessShareLock);
+		// if (!missingOk)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Could not find logical schema name for: \"%s\"", old_nsp_name)));
+	}
+
+	/* Build a tuple */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	/* Set up the new namespace. */
+	values[Anum_namespace_ext_namespace - 1]   = CStringGetDatum(new_nsp_name);
+	replaces[Anum_namespace_ext_namespace - 1] = true;	
+								  
+	tuple = heap_modify_tuple(db_found,
+							  namespace_rel_descr,
+							  values,
+							  nulls,
+							  replaces);							  
+
+	/* Perform the actual catalog update. */
+	CatalogTupleUpdate(namespace_rel, &tuple->t_self, tuple);
+	
+	/* Cleanup. */
+	heap_freetuple(tuple);
+	systable_endscan(tblscan);	
+	table_close(namespace_rel, RowExclusiveLock);	
+}
+
+/*
+ * Update the name of a database in the babelfish_authid_user_ext catalog.
+ */
+void // todo use sys
+update_babelfish_authid_user_ext_db_name(
+	const char *old_user_name,
+	const char *new_role_name,
+	const char *new_db_name)
+{
+	volatile 		Relation bbf_authid_user_ext_rel;
+	TupleDesc		bbf_authid_user_ext_dsc;
+	ScanKeyData		key;
+	HeapTuple		tuple, db_found;
+	SysScanDesc		tblscan;
+		
+	Datum		values[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		nulls[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		replaces[BBF_AUTHID_USER_EXT_NUM_COLS];
+
+	/* Do not allow changes to system databases. */
+	/* Note: T-SQL allows changing ownership of msdb. */
+	// if ( (strlen(old_db_name) == 6 && (strncmp(old_db_name, "master", 6) == 0)) ||
+	// 	 (strlen(old_db_name) == 6 && (strncmp(old_db_name, "tempdb", 6) == 0))
+	//     )
+	// {
+	// 	ereport(ERROR,
+	// 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+	// 			 errmsg("Cannot change the owner of the master, model, tempdb or distribution database.")));
+	// }
+
+	bbf_authid_user_ext_rel = table_open(bbf_authid_user_ext_oid, RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);	
+
+	ScanKeyInit(&key,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(old_user_name));
+
+	tblscan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &key);
+
+	/* Build a tuple to insert */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	db_found = systable_getnext(tblscan);
+
+	if (!HeapTupleIsValid(db_found))
+	{
+		systable_endscan(tblscan);
+		table_close(bbf_authid_user_ext_rel, AccessShareLock);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", old_user_name)));
+	}
+
+	/* Set up the new role name. */
+	values[Anum_bbf_authid_user_ext_rolname - 1]   = CStringGetDatum(new_role_name);
+	replaces[Anum_bbf_authid_user_ext_rolname - 1] = true;
+
+	values[Anum_bbf_authid_user_ext_database_name - 1]   = CStringGetTextDatum(new_db_name);
+	replaces[Anum_bbf_authid_user_ext_database_name - 1] = true;
+
+	values[Anum_bbf_authid_user_ext_database_name - 3]   = TimestampTzGetDatum(GetCurrentStatementStartTimestamp());
+	replaces[Anum_bbf_authid_user_ext_database_name - 3] = true;
+
+	tuple = heap_modify_tuple(db_found,
+								bbf_authid_user_ext_dsc,
+								values,
+								nulls,
+								replaces);
+
+	CatalogTupleUpdate(bbf_authid_user_ext_rel, &tuple->t_self, tuple);
+
+	heap_freetuple(tuple);
+
+	systable_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+}

@@ -912,7 +912,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_database(TSqlParser::Alter_databaseContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
+	if (!(ctx->MODIFY() && ctx->NAME() && ctx->EQUAL()))
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
