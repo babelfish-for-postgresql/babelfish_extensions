@@ -8,20 +8,20 @@ go
 declare @v int = 99 set @v = 123&@v select @v
 go
 
-select 88|-34
+select 88|-~+2
 go
-select 88|+34
+select 88|+~+2
 go
-select 88|~34
+select 88|~~+2
 go
 declare @v int = 88 set @v = 123|@v select @v
 go
 
-select 77^-34
+select 77^-~+2
 go
-select 77^+34
+select 77^+~+2
 go
-select 77^~34
+select 77^~~+2
 go
 declare @v int = 77 set @v = 123^@v select @v
 go
@@ -107,8 +107,16 @@ go
 declare @v int = 10 set @v = 3%@v select @v
 go
 
+-- many expressions in one SELECT:
+select 99&-5,99&+5,99&~5,99&-5,99&+5,99&~5,88|-~+2,88|+~+2,88|~~+2,77^-~+2,77^+~+2,77^~~+2,+~+2,~-2,+~-2-~-2,~~~~~2,+~~~~~-2,10%-3,10%+3,10%3,100%@@max_precision
+go
+select * from v1_bitop_all
+go
+execute p1_bitop_all
+go
+
 -- already supported before this fix
-select 12|34
+select 12|~+2
 go
 select 10%3
 go

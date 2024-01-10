@@ -28,25 +28,25 @@ int
 ~~END~~
 
 
-select 88|-34
+select 88|-~+2
 go
 ~~START~~
 int
--34
+91
 ~~END~~
 
-select 88|+34
+select 88|+~+2
 go
 ~~START~~
 int
-122
+-3
 ~~END~~
 
-select 88|~34
+select 88|~~+2
 go
 ~~START~~
 int
--35
+90
 ~~END~~
 
 declare @v int = 88 set @v = 123|@v select @v
@@ -57,25 +57,25 @@ int
 ~~END~~
 
 
-select 77^-34
+select 77^-~+2
 go
 ~~START~~
 int
--109
+78
 ~~END~~
 
-select 77^+34
+select 77^+~+2
 go
 ~~START~~
 int
-111
+-80
 ~~END~~
 
-select 77^~34
+select 77^~~+2
 go
 ~~START~~
 int
--112
+79
 ~~END~~
 
 declare @v int = 77 set @v = 123^@v select @v
@@ -337,12 +337,35 @@ int
 ~~END~~
 
 
+-- many expressions in one SELECT:
+select 99&-5,99&+5,99&~5,99&-5,99&+5,99&~5,88|-~+2,88|+~+2,88|~~+2,77^-~+2,77^+~+2,77^~~+2,+~+2,~-2,+~-2-~-2,~~~~~2,+~~~~~-2,10%-3,10%+3,10%3,100%@@max_precision
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+99#!#1#!#98#!#99#!#1#!#98#!#91#!#-3#!#90#!#78#!#-80#!#79#!#-3#!#1#!#2#!#-3#!#1#!#1#!#1#!#1#!#24
+~~END~~
+
+select * from v1_bitop_all
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+99#!#1#!#98#!#99#!#1#!#98#!#91#!#-3#!#90#!#78#!#-80#!#79#!#-3#!#1#!#2#!#-3#!#1#!#1#!#1#!#1#!#24
+~~END~~
+
+execute p1_bitop_all
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+99#!#1#!#98#!#99#!#1#!#98#!#91#!#-3#!#90#!#78#!#-80#!#79#!#-3#!#1#!#2#!#-3#!#1#!#1#!#1#!#1#!#24
+~~END~~
+
+
 -- already supported before this fix
-select 12|34
+select 12|~+2
 go
 ~~START~~
 int
-46
+-3
 ~~END~~
 
 select 10%3
