@@ -1358,27 +1358,29 @@ checkForJsonAuto(Query *query)
 	forjson_table **tableInfoArr;
 	if(target) {
 		ListCell* lc = (ListCell*) target->elements;
-		if(((Node*) lc->ptr_value)->type == T_TargetEntry) {
+		if(lc && ((Node*) lc->ptr_value)->type == T_TargetEntry) {
 			TargetEntry* te = (TargetEntry*) lc->ptr_value;
-			if(strncmp(te->resname, "json", 4) == 0 && ((Expr*) te->expr)->type == T_FuncExpr) {
-				List* args = ((FuncExpr*) te->expr)->args;
-				if(args && ((Node*) ((ListCell*) args->elements)->ptr_value)->type == T_Aggref) {
-					Aggref* agg = (Aggref*) ((ListCell*) args->elements)->ptr_value;
-					List* aggargs = agg->args;
-					if(aggargs && &(aggargs->elements[1]) != NULL && ((Node*) ((ListCell*) &(aggargs->elements[1]))->ptr_value)->type == T_TargetEntry) {
-						TargetEntry* te2 = (TargetEntry*) &(aggargs->elements[1]);
-						if(te2->expr && ((Expr*) te2->expr)->type == T_TargetEntry) {
-							TargetEntry* te3 = (TargetEntry*) te2->expr;
-							if(te3->expr && ((Expr*) te3->expr)->type == T_Const) {
-								Const* c = (Const*) te3->expr;
-								if(c->constvalue == 0)
-									isJsonAuto = true;
+			if(te && strncmp(te->resname, "json", 4) == 0 && ((Expr*) te->expr)->type == T_FuncExpr) {
+				if(te->expr) {
+					List* args = ((FuncExpr*) te->expr)->args;
+					if(args && ((Node*) ((ListCell*) args->elements)->ptr_value)->type == T_Aggref) {
+						Aggref* agg = (Aggref*) ((ListCell*) args->elements)->ptr_value;
+						List* aggargs = agg->args;
+						if(aggargs && &(aggargs->elements[1]) != NULL && ((Node*) ((ListCell*) &(aggargs->elements[1]))->ptr_value)->type == T_TargetEntry) {
+							TargetEntry* te2 = (TargetEntry*) (&(aggargs->elements[1]))->ptr_value;
+							if(te2->expr && ((Expr*) te2->expr)->type == T_TargetEntry) {
+								TargetEntry* te3 = (TargetEntry*) te2->expr;
+								if(te3->expr && ((Expr*) te3->expr)->type == T_Const) {
+									Const* c = (Const*) te3->expr;
+									if(c->constvalue == 0)
+										isJsonAuto = true;
+								}
 							}
 						}
 					}
 				}
 			}
-			else if(((Expr*) te->expr)->type == T_SubLink) {
+			else if(te->expr && ((Expr*) te->expr)->type == T_SubLink) {
 				// Handle Views with an alias
 				SubLink* sl = (SubLink*) te->expr;
 				if(((Node*) sl->subselect)->type == T_Query)
