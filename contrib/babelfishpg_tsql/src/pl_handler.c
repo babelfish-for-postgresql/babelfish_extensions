@@ -169,6 +169,15 @@ static void bbf_ExecDropStmt(DropStmt *stmt);
 static int isolation_to_int(char *isolation_level);
 static void bbf_set_tran_isolation(char *new_isolation_level_str);
 
+typedef struct {
+	int oid;
+	char *alias;
+	int nestLevel;
+} forjson_table;
+
+static void checkForJsonAuto(Query *query);
+static TargetEntry* buildJsonEntry(forjson_table *table, TargetEntry* te);
+
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_concat_null_yields_null;
@@ -865,6 +874,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 static void
 pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 {
+	checkForJsonAuto(query);
+
 	if (prev_post_parse_analyze_hook)
 		prev_post_parse_analyze_hook(pstate, query, jstate);
 
@@ -1326,6 +1337,125 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 			}
 		}
 	}
+}
+
+static void
+checkForJsonAuto(Query *query)
+{
+	// Detect JSON AUTO
+	List* target = query->targetList;
+	bool isJsonAuto = false;
+	List* rtable;
+	RangeTblEntry* rte;
+	Query* subq;
+	List* subqRtable;
+	RangeTblEntry* subqRte;
+	RangeTblEntry* queryRte;
+	Alias *colnameAlias;
+	int numTables = 0;
+	int currTables = 0;
+	int currMax = 0;
+	forjson_table **tableInfoArr;
+	if(target) {
+		ListCell* lc = (ListCell*) target->elements;
+		if(((Node*) lc->ptr_value)->type == T_TargetEntry) {
+			TargetEntry* te = (TargetEntry*) lc->ptr_value;
+			if(strncmp(te->resname, "json", 4) == 0 && ((Expr*) te->expr)->type == T_FuncExpr) {
+				List* args = ((FuncExpr*) te->expr)->args;
+				if(args && ((Node*) ((ListCell*) args->elements)->ptr_value)->type == T_Aggref) {
+					Aggref* agg = (Aggref*) ((ListCell*) args->elements)->ptr_value;
+					List* aggargs = agg->args;
+					if(aggargs && &(aggargs->elements[1]) != NULL && ((Node*) ((ListCell*) &(aggargs->elements[1]))->ptr_value)->type == T_TargetEntry) {
+						TargetEntry* te2 = (TargetEntry*) &(aggargs->elements[1]);
+						if(te2->expr && ((Expr*) te2->expr)->type == T_TargetEntry) {
+							TargetEntry* te3 = (TargetEntry*) te2->expr;
+							if(te3->expr && ((Expr*) te3->expr)->type == T_Const) {
+								Const* c = (Const*) te3->expr;
+								if(c->constvalue == 0)
+									isJsonAuto = true;
+							}
+						}
+					}
+				}
+			}
+			else if(((Expr*) te->expr)->type == T_SubLink) {
+				// Handle Views with an alias
+				SubLink* sl = (SubLink*) te->expr;
+				if(((Node*) sl->subselect)->type == T_Query)
+					checkForJsonAuto((Query*) sl->subselect);
+			}
+		}
+	}
+	
+	if(!isJsonAuto)
+		return;
+
+	// Modify query to be of the form "N.Alias" where is N is the
+	// order of appearance and alias is the table alias / name
+	rtable = (List*) query->rtable;
+	rte = (RangeTblEntry*) ((ListCell*) rtable->elements)->ptr_value;
+    subq = (Query*) rte->subquery;
+	subqRtable = (List*) subq->rtable;
+
+	for(int i = 0; i < subqRtable->length; i++) {
+		subqRte = (RangeTblEntry*) ((ListCell) subqRtable->elements[i]).ptr_value;
+		if(subqRte->rtekind == RTE_RELATION)
+			numTables++;
+	}
+
+    tableInfoArr = malloc(numTables * sizeof(forjson_table));
+	queryRte = (RangeTblEntry*) ((ListCell) query->rtable->elements[0]).ptr_value;
+	colnameAlias = (Alias*) queryRte->eref;
+
+	for(int i = 0; i < subqRtable->length; i++) {
+		subqRte = (RangeTblEntry*) ((ListCell) subqRtable->elements[i]).ptr_value;
+		if(subqRte->rtekind == RTE_RELATION) {
+			forjson_table *table = palloc(sizeof(forjson_table));
+			Alias* a = (Alias*) subqRte->eref;
+			table->oid = subqRte->relid;
+			table->nestLevel = -1;
+			table->alias = a->aliasname;
+			tableInfoArr[currTables] = table;
+			currTables++;
+		}
+	}
+
+	for(int i = 0; i < subq->targetList->length; i++) {
+		TargetEntry* te = (TargetEntry*) ((ListCell) subq->targetList->elements[i]).ptr_value;
+		int oid = te->resorigtbl;
+		for(int j = 0; j < numTables; j++) {
+			if(tableInfoArr[j]->oid == oid) {
+				// build entry
+				String* s = (((ListCell) colnameAlias->colnames->elements[i]).ptr_value);
+				if(tableInfoArr[j]->nestLevel == -1) {
+					currMax++;
+					tableInfoArr[j]->nestLevel = currMax;
+				}
+				te = buildJsonEntry(tableInfoArr[j], te);
+				s->sval = te->resname;
+				break;
+			}
+
+		}
+	}
+
+	free(tableInfoArr);
+	return;
+}
+
+static TargetEntry*
+buildJsonEntry(forjson_table *table, TargetEntry* te)
+{
+	char nest[NAMEDATALEN]; // check size appropriate
+	StringInfo new_resname = makeStringInfo();
+	sprintf(nest, "%d", table->nestLevel);
+	appendStringInfoString(new_resname, nest);
+	appendStringInfoChar(new_resname, '.');
+	appendStringInfoString(new_resname, table->alias);
+	appendStringInfoChar(new_resname, '.');
+	appendStringInfoString(new_resname, te->resname);
+	te->resname = new_resname->data;
+	return te;
 }
 
 /*
