@@ -61,9 +61,7 @@ static void insert_existing_json(JsonbValue *exists, JsonbValue* parent, JsonbVa
 
 static void insert_existing_json_to_obj(JsonbValue *exists, JsonbValue* parent, JsonbValue *val, int idx, char *key);
 
-static void checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth);
-
-static bool checkForDuplicateRowsHelper(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth);
+static void checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth, int* minInsertDepth);
 
 static int compareNumeric(Numeric a, Numeric b);
 
@@ -164,6 +162,7 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 	HeapTupleData tmptup;
 	HeapTuple	tuple;
 	int maxDepth = -1;
+	int minInsertDepth;
 
 	td = DatumGetHeapTupleHeader(record);
 
@@ -398,8 +397,8 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 	}
 
 	// Add the jsonb row to the jsonbArray
-
-	checkForDuplicateRows(jsonbArray, jsonbRow, maxDepth, 1);
+	minInsertDepth = 1;
+	checkForDuplicateRows(jsonbArray, jsonbRow, maxDepth, 1, &minInsertDepth);
 
 	ReleaseTupleDesc(tupdesc);
 }
@@ -944,7 +943,7 @@ insert_existing_json_to_obj(JsonbValue *current, JsonbValue* parent, JsonbValue 
  * nested based on the root object
  */
 static void
-checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth)
+checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth, int* minInsertDepth)
 {
 	JsonbPair *arrRowPairs;
 	JsonbPair *rowPairs;
@@ -952,6 +951,7 @@ checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int
 		jsonbArray->val.array.nElems++;
 		jsonbArray->val.array.elems = (JsonbValue *) repalloc(jsonbArray->val.array.elems, sizeof(JsonbValue) * (jsonbArray->val.array.nElems));
 		jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 1] = *row;
+		*minInsertDepth = currDepth;
 		return;
 	}
 	else {
@@ -993,81 +993,13 @@ checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int
 				if(!sameElem)
 					break;
 				if(sameElem && j == (jsonbArray->val.array.elems[i]).val.object.nPairs - 2) {
-					bool inserted = checkForDuplicateRowsHelper(&(arrRowPairs[(jsonbArray->val.array.elems[i]).val.object.nPairs - 1].value), (row->val.object.pairs[(jsonbArray->val.array.elems[i]).val.object.nPairs - 1].value).val.array.elems, maxDepth, currDepth + 1);
-					if(inserted)
-						return;
+					if(*minInsertDepth == 1)
+						*minInsertDepth = 2;
+					checkForDuplicateRows(&(arrRowPairs[(jsonbArray->val.array.elems[i]).val.object.nPairs - 1].value), (row->val.object.pairs[(jsonbArray->val.array.elems[i]).val.object.nPairs - 1].value).val.array.elems, maxDepth, currDepth + 1, minInsertDepth);
 				}
 			}
 		}
-		jsonbArray->val.array.nElems++;
-		jsonbArray->val.array.elems = (JsonbValue *) repalloc(jsonbArray->val.array.elems, sizeof(JsonbValue) * (jsonbArray->val.array.nElems));
-		if(jsonbArray->val.array.nElems == 1) {
-			jsonbArray->val.array.elems[0] = *row;
-		}
-		else {
-			jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 1] = jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 2];
-			jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 2] = *row;
-		}
-		return;
-	}
-}
-
-static bool checkForDuplicateRowsHelper(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth)
-{
-	JsonbPair *arrRowPairs;
-	JsonbPair *rowPairs;
-	bool inserted = false;
-	if(currDepth == maxDepth) {
-		jsonbArray->val.array.nElems++;
-		jsonbArray->val.array.elems = (JsonbValue *) repalloc(jsonbArray->val.array.elems, sizeof(JsonbValue) * (jsonbArray->val.array.nElems));
-		jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 1] = *row;
-		return true;;
-	} else {
-		for(int i = 0; i < jsonbArray->val.array.nElems; i++) {
-			arrRowPairs = (jsonbArray->val.array.elems[i]).val.object.pairs;
-			// Assumes that last value will be the next nested array
-			for(int j = 0; j < (jsonbArray->val.array.elems[i]).val.object.nPairs - 1; j++) {
-				bool sameElem = false;
-				rowPairs = row->val.object.pairs;
-				if(arrRowPairs[j].value.type != rowPairs[j].value.type)
-					break;
-				switch(rowPairs[j].value.type) {
-					case jbvNull:
-						sameElem = true;
-						continue;
-					case jbvString:
-						sameElem = (strcmp(arrRowPairs[j].value.val.string.val, rowPairs[j].value.val.string.val) == 0);
-						break;
-					case jbvNumeric:
-						sameElem = (compareNumeric(arrRowPairs[j].value.val.numeric, rowPairs[j].value.val.numeric) == 0);
-						break;
-					case jbvBool:
-						sameElem = arrRowPairs[j].value.val.boolean == rowPairs[j].value.val.boolean;
-						break;
-					case jbvDatetime:
-						sameElem = true;
-						if(arrRowPairs[j].value.val.datetime.value != rowPairs[j].value.val.datetime.value)
-							sameElem = false;
-						if(arrRowPairs[j].value.val.datetime.typid != rowPairs[j].value.val.datetime.typid)
-							sameElem = false;
-						if(arrRowPairs[j].value.val.datetime.typmod != rowPairs[j].value.val.datetime.typmod)
-							sameElem = false;
-						if(arrRowPairs[j].value.val.datetime.tz != rowPairs[j].value.val.datetime.tz)
-							sameElem = false;
-						break;
-					default:
-						break;
-				}
-				if(!sameElem)
-					break;
-				if(sameElem && j == (jsonbArray->val.array.elems[i]).val.object.nPairs - 2) {
-					inserted = checkForDuplicateRowsHelper(&(arrRowPairs[(jsonbArray->val.array.elems[i]).val.object.nPairs - 1].value), (row->val.object.pairs[(jsonbArray->val.array.elems[i]).val.object.nPairs - 1].value).val.array.elems, maxDepth, currDepth + 1);
-					if(inserted)
-						return true;
-				}
-			}
-		}
-		if(!inserted && currDepth == 2) {
+		if(currDepth == *minInsertDepth) {
 			jsonbArray->val.array.nElems++;
 			jsonbArray->val.array.elems = (JsonbValue *) repalloc(jsonbArray->val.array.elems, sizeof(JsonbValue) * (jsonbArray->val.array.nElems));
 			if(jsonbArray->val.array.nElems == 1) {
@@ -1077,11 +1009,8 @@ static bool checkForDuplicateRowsHelper(JsonbValue *jsonbArray, JsonbValue* row,
 				jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 1] = jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 2];
 				jsonbArray->val.array.elems[jsonbArray->val.array.nElems - 2] = *row;
 			}
-			return true;
 		}
-		else {
-			return false;
-		}
+		return;
 	}
 }
 
