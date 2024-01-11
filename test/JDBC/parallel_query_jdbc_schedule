@@ -13,7 +13,6 @@ ignore#!#Test-sp_addrolemember-vu-cleanup
 ignore#!#Test-sp_droprolemember-vu-prepare
 ignore#!#Test-sp_droprolemember-vu-verify
 ignore#!#Test-sp_droprolemember-vu-cleanup
-
 ignore#!#table-variable-vu-verify
 
 # Other or mixed issues - JIRA-BABEL-4538
@@ -32,7 +31,7 @@ ignore#!#Test-sp_addrolemember-dep-vu-verify
 ignore#!#Test-sp_droprolemember-dep-vu-verify
 ignore#!#babel_table_type
 
-# These test should not get ran in parallel query
+# These test should not get ran in parallel query 
 ignore#!#BABEL-1363
 
 # Taking too much time to complete. (TIME-OUT FAILURES)
