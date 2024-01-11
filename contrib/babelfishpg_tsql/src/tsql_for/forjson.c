@@ -331,12 +331,12 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 
 		found = false;
 
-		sscanf(parts[0], "%d", &num);
+		sscanf(parts[1], "%d", &num);
 
 		maxDepth = (num > maxDepth) ? num : maxDepth;
 
 		if (num > 1)	{
-			hashKey = parts[0];
+			hashKey = parts[1];
 
 			hashEntry = (JsonbEntry *) hash_search(jsonbHash, hashKey, HASH_FIND, &found);
 
@@ -349,7 +349,7 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 			} else {
 				hashEntry = (JsonbEntry *) hash_search(jsonbHash, (void *) hashKey, HASH_ENTER, NULL);
 				strlcpy(hashEntry->path, hashKey, NAMEDATALEN);
-				nestedVal = create_json_array(parts[1], colname, nestedVal, &hashEntry->idx);
+				nestedVal = create_json_array(parts[2], colname, nestedVal, &hashEntry->idx);
 				hashEntry->value = nestedVal;
 
 				// if the nested json is not at the jsonbRow level
@@ -359,7 +359,7 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 					sprintf(hashKey, "%d", num - 1);
 					hashEntry = (JsonbEntry *) hash_search(jsonbHash, hashKey, HASH_FIND, &found);
 					current = hashEntry->value;
-					insert_existing_json_to_obj(current, hashEntry->parent, &(nestedVal->val.object.pairs[0].value), hashEntry->idx, parts[1]);
+					insert_existing_json_to_obj(current, hashEntry->parent, &(nestedVal->val.object.pairs[0].value), hashEntry->idx, parts[2]);
 				}
 				else	{
 					hashEntry->parent = jsonbRow;
@@ -1095,7 +1095,7 @@ remove_index_and_alias(const char* str)
 		if (str[i] == '.')
 			num++;
 		index++;
-		if(num == 2)
+		if(num == 3)
 			return (char*) (str + index);
 	}
 	return (char*) str;

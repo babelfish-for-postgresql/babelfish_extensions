@@ -1446,6 +1446,9 @@ buildJsonEntry(forjson_table *table, TargetEntry* te)
 	char nest[NAMEDATALEN]; // check size appropriate
 	StringInfo new_resname = makeStringInfo();
 	sprintf(nest, "%d", table->nestLevel);
+	if(strncmp(te->resname, "JSONAUTOALIAS", 13) == 0)
+		return te; 
+	appendStringInfoString(new_resname, "JSONAUTOALIAS.");
 	appendStringInfoString(new_resname, nest);
 	appendStringInfoChar(new_resname, '.');
 	appendStringInfoString(new_resname, table->alias);
