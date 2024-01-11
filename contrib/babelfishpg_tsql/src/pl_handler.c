@@ -5173,11 +5173,6 @@ pltsql_guc_push_old_value(struct config_generic *gconf, GucAction action)
 	stack->scontext = gconf->scontext;
 	guc_set_stack_value(gconf, &stack->prior);
 
-	if (gconf->session_stack == NULL)
-	{
-		update_guc_stack_list(&gconf->stack_link);
-	}
-
 	gconf->session_stack = stack;
 	pltsql_guc_dirty = true;
 }
@@ -5331,10 +5326,6 @@ pltsql_revert_guc(int nest_level)
 			/* Finish popping the state stack */
 			gconf->session_stack = prev;
 
-			if (prev == NULL)
-			{
-				delete_guc_stack_list(&gconf->stack_link);
-			}
 			pfree(stack);
 		}						/* end of stack-popping loop */
 
