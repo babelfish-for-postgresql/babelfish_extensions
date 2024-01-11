@@ -6,18 +6,6 @@
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 # These tests are crashing/failing with parallel query mode is on. 
 
-# These tests are hanging in 16.1 with parallel query mode on
-# JIRA - BABEL-4668
-ignore#!#545_1
-
-# JIRA - BABEL-4669
-ignore#!#BABEL-3092
-
-# JIRA - BABEL-4670
-ignore#!#BABEL-SEQUENCE
-
-# JIRA - BABEL-4671
-ignore#!#TestSPPrepare
 
 # Hangs with unknown cause
 ignore#!#sp_who-vu-prepare
