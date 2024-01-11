@@ -28,18 +28,18 @@ GO
 DROP PROCEDURE forjson_vu_p_1
 GO
 
-DROP TABLE forjson_nesting_vu_t_users
+DROP TABLE forjson_auto_vu_t_users
 GO
 
-DROP TABLE forjson_nesting_vu_t_orders
+DROP TABLE forjson_auto_vu_t_orders
 GO
 
-DROP TABLE forjson_nesting_vu_t_products
+DROP TABLE forjson_auto_vu_t_products
 GO
 
-DROP TABLE forjson_nesting_vu_t_sales
+DROP TABLE forjson_auto_vu_t_sales
 GO
 
-DROP TABLE forjson_nesting_vu_t_times
+DROP TABLE forjson_auto_vu_t_times
 GO
 

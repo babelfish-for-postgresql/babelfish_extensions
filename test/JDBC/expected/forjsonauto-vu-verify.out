@@ -34,7 +34,7 @@ SELECT * FROM forjson_vu_v_5
 GO
 ~~START~~
 nvarchar
-[{"Id": 1, "firstname": "j", "forjson_nesting_vu_t_orders": [{"productId": 1}, {"productId": 1}]}, {"Id": 1, "firstname": "e", "forjson_nesting_vu_t_orders": [{"productId": 1}, {"productId": 1}]}]
+[{"Id": 1, "firstname": "j", "forjson_auto_vu_t_orders": [{"productId": 1}, {"productId": 1}]}, {"Id": 1, "firstname": "e", "forjson_auto_vu_t_orders": [{"productId": 1}, {"productId": 1}]}]
 ~~END~~
 
 
