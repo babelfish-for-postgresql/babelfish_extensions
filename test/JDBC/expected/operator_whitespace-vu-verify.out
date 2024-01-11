@@ -1,0 +1,311 @@
+-- Combines BABEL-3379 (whitespace in 2-char comparison operators (!=,  <>, <=, etc.)) and BABEL-4114 (comparison operators !< and !>)
+alter table t1_operator_whitespace add check(a!  <1)
+go
+
+alter table t1_operator_whitespace add check(a<
+=3)
+go
+
+insert t1_operator_whitespace values (0)
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "t1_operator_whitespace" violates check constraint "t1_operator_whitespace_a_check")~~
+
+insert t1_operator_whitespace values (4)
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "t1_operator_whitespace" violates check constraint "t1_operator_whitespace_a_check1")~~
+
+insert t1_operator_whitespace values (1)
+insert t1_operator_whitespace values (2)
+insert t1_operator_whitespace values (3)
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select a from t1_operator_whitespace
+go
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+select a as q1 from t1_operator_whitespace where a != 2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select a as q1 from t1_operator_whitespace where a ! = 2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select a as q2 from t1_operator_whitespace where a ! 	 =2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+
+select a as q3 from t1_operator_whitespace where a !  	
+		
+ 
+= 2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select a as q4 from t1_operator_whitespace where a <   >2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select a as q5 from t1_operator_whitespace where a <   	= 2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select a as q6 from t1_operator_whitespace where a >   	=2
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+
+select a as q7 from t1_operator_whitespace where a!<2
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+
+select a as q8 from t1_operator_whitespace where a !< 2
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+
+select a as q9 from t1_operator_whitespace where a ! 	  < 2
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+
+select a as q10 from t1_operator_whitespace where a! 	  <2
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+
+select a as q11 from t1_operator_whitespace where a !> 2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select a as q12 from t1_operator_whitespace where a!>2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select a as q13 from t1_operator_whitespace where a ! 	  > 2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select a as q14 from t1_operator_whitespace where a! 	  >2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select a as q15 from t1_operator_whitespace where a = case when a!  >2 then a else 0 end
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+EXECUTE('select a as q16 from t1_operator_whitespace where a ! = 2')
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+EXECUTE('select a as q17 from t1_operator_whitespace where a ! < 2')
+go
+~~START~~
+int
+2
+3
+~~END~~
+
+
+EXECUTE p1_operator_whitespace
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+~~START~~
+int
+1
+3
+~~END~~
+
+~~START~~
+int
+1
+3
+~~END~~
+
+~~START~~
+int
+1
+3
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+~~START~~
+int
+2
+3
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+1
+2
+~~END~~
+
+~~START~~
+int
+1
+3
+~~END~~
+
+~~START~~
+int
+2
+3
+~~END~~
+

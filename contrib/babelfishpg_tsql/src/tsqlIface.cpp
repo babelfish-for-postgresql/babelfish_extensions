@@ -186,6 +186,9 @@ static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix 
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
 static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
 static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx); 
+static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
+static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
+static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -302,6 +305,12 @@ std::string
 getFullText(TerminalNode *node)
 {
 	return node->getText();
+}
+
+std::string
+getFullText(Token* token)
+{
+	return token->getText();
 }
 
 std::string
@@ -2176,6 +2185,77 @@ public:
 		handleFloatWithoutExponent(ctx);
 	}
 
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// For comparison operators directly followed by an '@@' variable, insert a space 
+		// to avoid these being parsed incorrectly by PG; this applies to the following 
+		// character sequences: =@@, >@@, <@@ as well as !=@ (i.e. a single-@ variable)
+		// Note: this issue does not occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
+
+		if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
+		{
+			std::string op = getFullText(ctx->comparison_operator());		
+			if ((op.back() == '=') || 
+			    (op.back() == '>') || 
+			    (op.back() == '<'))
+			{
+				// The operator must be followed immediately by the variable without any character in between
+				Assert(ctx->expression(1));
+				size_t startPosition = ctx->expression(1)->start->getStartIndex();
+				if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
+				{
+					std::string var = getFullText(ctx->expression(1));
+					// The subsequent expression must be a variable starting with '@@'
+					if (var.front() == '@') 
+					{
+						if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
+						{
+							// Insert a space before the variable name
+							rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void exitExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext *ctx) override
+	{
+		// Look for named arguments with an @@variable with no preceding whitespace, i.e. 'exec myproc @p=@@spid'
+		Assert(ctx->EQUAL());
+		Assert(ctx->execute_parameter());
+		size_t startPosition = ctx->execute_parameter()->start->getStartIndex();
+		if ((startPosition - ctx->EQUAL()->getSymbol()->getStopIndex()) == 1)
+		{
+			std::string var = getFullText(ctx->execute_parameter());
+				
+			// The subsequent expression must be a variable starting with '@@'
+			if (var.front() == '@') 
+			{
+				if (var.at(1) == '@') 
+				{
+					// Insert a space before the variable name
+					if (in_execute_body_batch) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch
+					rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+				}
+			}
+		}
+	}
+
+	// NB: this is copied in TsqlMutator
+	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
+	{
+		handleBitNotOperator(ctx);
+	}
+	void exitPlus_minus_bit_expr(TSqlParser::Plus_minus_bit_exprContext *ctx) override
+	{
+		handleBitOperators(ctx);
+	}
+	void exitMult_div_percent_expr(TSqlParser::Mult_div_percent_exprContext *ctx) override
+	{
+		handleModuloOperator(ctx);
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of non-statement context
 	//////////////////////////////////////////////////////////////////////////////
@@ -2397,6 +2477,39 @@ public:
 		}
 	}
 
+	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
+	{
+		/* 
+		 * Rewrite 'DROP INDEX index_name ON schema.table' as 'DROP INDEX index_name ON table SCHEMA schema'
+		 * Note that using a 3-part or 4-part table name is not currently supported and has already been intercepted at this point.
+		 */
+		Assert(ctx->full_object_name());
+		if (ctx->full_object_name()->schema)
+		{
+			std::string str = getFullText(ctx->full_object_name());				
+			size_t startPosition = ctx->full_object_name()->start->getStartIndex();
+			std::string tbName = getFullText(ctx->full_object_name()->object_name);	
+			std::string schemaName = " SCHEMA " +getFullText(ctx->full_object_name()->schema);	
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, tbName+schemaName)));		
+		}
+	}
+
+	void exitDrop_backward_compatible_index(TSqlParser::Drop_backward_compatible_indexContext *ctx) override
+	{
+		/*
+		 * Rewrite 'DROP INDEX [schema.]table.index_name' as 'DROP INDEX index_name ON table [ SCHEMA schema ]'
+		 */
+		std::string str = getFullText(ctx);
+		size_t startPosition = ctx->start->getStartIndex();
+		std::string ixName = getFullText(ctx->index_name);
+		std::string tbName = getFullText(ctx->table_or_view_name);
+		std::string schemaName = "";
+		if (ctx->owner_name) {
+			schemaName = " SCHEMA " +getFullText(ctx->owner_name);
+		}
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, ixName+" ON "+tbName+schemaName)));
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of ITVF
 	//////////////////////////////////////////////////////////////////////////////
@@ -2535,7 +2648,42 @@ public:
 		std::string result = Trees::getNodeText(t, this->ruleNames);
 		return result;
 	}
-	
+
+	void enterComparison_operator(TSqlParser::Comparison_operatorContext *ctx) override
+	{
+		// Handle multiple cases:
+		// - 2-char comparison operators containing whitespace, i.e. '! =', '< >', etc.
+		// - operators !< and !> (which may also contains whitespace), convert to >= and <= 
+		std::string str = getFullText(ctx);
+		std::string operator_final = "";			
+		int fill = 0;
+
+		if (str.length() > 2)
+		{
+			// This operator contains whitespace, remove it	        
+			for(size_t i = 0; i < str.length(); i++) 
+			{
+			    if (!isspace(str[i])) 
+			    	operator_final += str[i];
+			}	   
+			fill = str.length() - operator_final.length();			
+		}
+
+		// Handle !> and !< operators by converting to <= and >=
+		if      (pg_strncasecmp(str.c_str(),            "!<", 2) == 0) operator_final = ">=";
+		else if (pg_strncasecmp(operator_final.c_str(), "!<", 2) == 0) operator_final = ">=";
+		else if (pg_strncasecmp(str.c_str(),            "!>", 2) == 0) operator_final = "<=";
+		else if (pg_strncasecmp(operator_final.c_str(), "!>", 2) == 0) operator_final = "<=";
+						
+		// Fill with spaces until original length 
+		operator_final.append(fill, ' ');  
+			
+		if (operator_final.length() > 0)
+		{
+			stream.setText(ctx->start->getStartIndex(), operator_final.c_str());
+		}
+	}
+
 	// Tree listener overrides		
 	void enterEveryRule(ParserRuleContext *ctx) override
 	{
@@ -2553,8 +2701,8 @@ public:
 			std::cout << "-leaving (tsqlMutator)" << (void *) ctx << "[" << desc << "]" << std::endl;
 	}    
 	
-    void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
-    {
+  void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
+  {
 	// We are looking at a function name; it may be a function call, or a
 	// DROP function statement, or some other reference.
 	//
@@ -2720,6 +2868,27 @@ public:
 	{
 		in_procedure_parameter = false;
 		in_procedure_parameter_id = false;
+
+		// Look for parameter defaults that use an @@variable with no preceding whitespace
+		if (ctx->EQUAL())
+		{
+			// The '=' char must be followed immediately by the variable without any character in between
+			Assert(ctx->expression());			
+			size_t startPosition = ctx->expression()->start->getStartIndex();
+			if ((startPosition - ctx->EQUAL()->getSymbol()->getStopIndex()) == 1)
+			{
+				std::string var = getFullText(ctx->expression());
+				// The subsequent default expression must be a variable starting with '@@'
+				if (var.front() == '@') 
+				{
+					if (var.at(1) == '@') 
+					{
+						// Insert a space before the default variable name
+						rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+					}
+				}
+			}
+		}
 	}
 
 	void exitId(TSqlParser::IdContext *ctx) override
@@ -2731,8 +2900,8 @@ public:
 			// parsed as a string by the backend parser
 			std::string str = getFullText(ctx);
 				
-			// When it's a bracketed identifier, remove the delimiters as T-SQL treats it as a string				
-			// When it's a quoted identifier, T-SQL also treats it as a string independent of the QUOTED_IDENTIFIER setting		
+			// When it's a bracketed identifier, remove the delimiters as T-SQL treats it as a string
+			// When it's a quoted identifier, T-SQL also treats it as a string independent of the QUOTED_IDENTIFIER setting
 			// (as we get here, it means QUOTED_IDENTIFIER=ON)
 			// When it none of the above, it is an unquoted string 
 			if (str.front() == '[') {
@@ -2747,19 +2916,19 @@ public:
 				str = rewriteDoubleQuotedString(str);
 			}
 			else if (str.front() == '"') {
-				Assert(str.back() == '"');				
+				Assert(str.back() == '"');
 				str = rewriteDoubleQuotedString(str);
 			}
 			else {
 				// Unquoted string, add quotes: there cannot be any quotes in the string otherwise it would 
 				// not have been parsed as an identifier
-				str = "'" + str + "'";				
+				str = "'" + str + "'";
 			}
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx), str)));
 		}
 	}
-	
+
 	// NB: similar code is in tsqlBuilder
 	void exitChar_string(TSqlParser::Char_stringContext *ctx) override
 	{
@@ -2780,7 +2949,7 @@ public:
 			else
 			{
 				// This is a double-quoted string used as parameter default.
-				// (as we get here, it means QUOTED_IDENTIFIER=OFF)				
+				// (as we get here, it means QUOTED_IDENTIFIER=OFF)	
 				
 				Assert(str.front() == '"');
 				Assert(str.back() == '"');
@@ -2794,10 +2963,25 @@ public:
 
 	// NB: this is copied in tsqlBuilder
 	void exitConstant(TSqlParser::ConstantContext *ctx) override
-	{	
+	{
 		// Check for floating-point number without exponent
 		handleFloatWithoutExponent(ctx);
-	}	
+	}
+
+	// NB: this is copied in tsqlBuilder
+	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
+	{
+		handleBitNotOperator(ctx);
+	}
+	void exitPlus_minus_bit_expr(TSqlParser::Plus_minus_bit_exprContext *ctx) override
+	{
+		handleBitOperators(ctx);
+	}
+	void exitMult_div_percent_expr(TSqlParser::Mult_div_percent_exprContext *ctx) override
+	{
+		handleModuloOperator(ctx);
+	}
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -7843,35 +8027,35 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 }
 
 // Look for '<number>E' : T-SQL allows the exponent to be omitted (defaults to 0), but PG raises an error 
-// The REAL token is generated by the lexer; check the actual string to see if this is REAL notation		
+// The REAL token is generated by the lexer; check the actual string to see if this is REAL notation	
 // Notes: 
 //  * the mantissa may also start with a '.', i.e. '.5e'
 //  * the exponent may just be a + or - sign (means '0'; 1e+ ==> 1e0 )
 void
 handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx) 
-{			
-	std::string str = getFullText(ctx);		
-			
-	// Check for case where exponent is only a sign: 2E+ , 2E-		
+{
+	std::string str = getFullText(ctx);
+
+	// Check for case where exponent is only a sign: 2E+ , 2E-
 	if ((str.back() == '+') || (str.back() == '-'))
 	{
 		// remove terminating sign	
-		str.pop_back();	
-						
+		str.pop_back();
+
 		if ((str.back() == 'E') || (str.back() == 'e'))
-		{		
+		{
 			// ends in 'E+' or 'E-', continue below
 		}
 		else 
 		{
-			// Whatever it is, it's not the notation we're looking for 	
+			// Whatever it is, it's not the notation we're looking for 
 			return;
 		}
 	}
-		
+
 	if ((str.back() == 'E') || (str.back() == 'e'))
 	{
-		// remove terminating E		
+		// remove terminating E
 		str.pop_back();
 
 		if ((str.front() == '+') || (str.front() == '-'))
@@ -7879,7 +8063,7 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 			 // remove leading sign
 			 str.erase(0,1);
 		}
-		
+
 		// Now check if this is a valid number. Note that it may start or end with '.' 
 		// but in both cases it must have at least one digit as well.  
 		size_t dot = str.find(".");
@@ -7889,14 +8073,14 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 			 str.erase(dot,1);
 		}
     
-    	// What we have left now should be all digits
-    	bool is_number = true;
-    	if (str.length() == 0) 
+		// What we have left now should be all digits
+		bool is_number = true;
+		if (str.length() == 0) 
 		{
 			is_number = false;
 		}
-		else        		
-    	{			
+		else
+    	{
 			for(size_t i = 0; i < str.length(); i++) 
 			{
 			    if (!isdigit(str[i])) 
@@ -7908,14 +8092,66 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 		}
 	
 		if (is_number)
-		{	
+		{
 			// Rewrite the exponent by adding a '0'
 			std::string str = getFullText(ctx);
 			size_t startPosition = ctx->start->getStartIndex();
-			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch  		
+			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, str+"0")));
-		}	
+		}
 	}
-	
+	return;
+}
+
+static void
+handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx)
+{
+	// For the bit negation unary operator ('~') always add a space ahead of it as there may be a '+' or '-' preceding it (but we cannot immediately tell from
+	// the current context). Also add a space behind it, depending on whether specific characters follow directly without an intervening space.
+	if (ctx->BIT_NOT())
+	{
+		std::string op   = getFullText(ctx->BIT_NOT()); // this is a bit redundant since it can only be '~', but keeping the same style as other rewrites
+		std::string expr = getFullText(ctx->expression());
+		std::string endSpace = "";
+		if ((expr.front() == '+') || (expr.front() == '-') || (expr.front() == '@')) endSpace = " ";
+		size_t startPosition = ctx->BIT_NOT()->getSymbol()->getStartIndex();
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(op, " "+op+endSpace)));
+	}
+	return;
+}
+
+static void
+handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx)
+{
+	// For the bit operators AND, OR , XOR ('&', '|', '^') add a space behind it, depending on whether specific characters follow directly without an intervening space.
+	if (ctx->BIT_AND() || ctx->BIT_OR() || ctx->BIT_XOR())
+	{
+		Assert(ctx->expression(1));
+		std::string expr = getFullText(ctx->expression(1));
+		if ((expr.front() = '+') || (expr.front() = '-') || (expr.front() = '@')) 
+		{
+			std::string op = getFullText(ctx->op);
+			size_t startPosition = ctx->op->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(op, op+" ")));
+		}
+	}
+	return;
+}
+
+static void
+handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx)
+{
+	// For the modulo operator ('%') add a space behind it, depending on whether specific characters follow directly without an intervening space.
+	if (ctx->PERCENT_SIGN())
+	{
+		Assert(ctx->expression(1));	
+		std::string expr = getFullText(ctx->expression(1));
+		if ((expr.front() == '+') || (expr.front() == '-') || (expr.front() == '@')) 
+		{
+			std::string op = getFullText(ctx->PERCENT_SIGN()); // this is a bit redundant since it can only be '%', but keeping the same style as other rewrites
+			size_t startPosition = ctx->PERCENT_SIGN()->getSymbol()->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(op, op+" ")));
+		}
+	}
 	return;
 }
