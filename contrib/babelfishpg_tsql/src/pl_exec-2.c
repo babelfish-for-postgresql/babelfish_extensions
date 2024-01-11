@@ -3699,8 +3699,9 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	ListCell	*lc1;
 	Oid		schemaOid;
 	char		*user = GetUserNameFromId(GetUserId(), false);
+	const char	*db_owner = get_owner_of_db(dbname);
 
-	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	login_is_db_owner = 0 == strncmp(login, db_owner, NAMEDATALEN);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
 
 	if(schema_name)
@@ -3718,7 +3719,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("schema \"%s\" does not exist",
-							schema_name)));
+							stmt->schema_name)));
 
 	foreach(lc1, stmt->privileges)
 	{
@@ -3729,7 +3730,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		{
 			char	*grantee_name = (char *) lfirst(lc);
 			Oid	role_oid;
-			bool	grantee_is_db_owner = 0 == strncmp(grantee_name, get_owner_of_db(dbname), NAMEDATALEN);
+			bool	grantee_is_db_owner = 0 == strncmp(grantee_name, db_owner, NAMEDATALEN);
 			bool	is_public = 0 == strncmp(grantee_name, "public", NAMEDATALEN);
 			if (!is_public)
 				rolname	= get_physical_user_name(dbname, grantee_name);

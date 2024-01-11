@@ -2208,7 +2208,7 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   object_name NAME NOT NULL COLLATE sys.database_default,
   permission INT NOT NULL,
   grantee NAME NOT NULL COLLATE sys.database_default,
-  object_type NAME COLLATE sys.database_default,
+  object_type NAME NOT NULL COLLATE sys.database_default,
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 

@@ -2846,7 +2846,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	int16	dbid = get_cur_db_id();
 
 	/* Immediately return, if grantee is NULL or PUBLIC. */
-	if ((grantee == NULL) || (strcmp(grantee, "public") == 0))
+	if ((grantee == NULL) || (strncmp(grantee, "public", NAMEDATALEN) == 0))
 		return;
 
 	/* Fetch the relation */
@@ -3399,11 +3399,11 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 			if (permission == (current_permission & permission))
 			{
 				priv_name = privilege_to_string(permission);
-				if (strcmp(object_type, "r") == 0)
+				if (strcmp(object_type, OBJ_RELATION) == 0)
 					appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
-				else if (strcmp(object_type, "f") == 0)
+				else if (strcmp(object_type, OBJ_FUNCTION) == 0)
 					appendStringInfo(&query, "GRANT \"%s\" ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
-				else if (strcmp(object_type, "p") == 0)
+				else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
 					appendStringInfo(&query, "GRANT \"%s\" ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
 				res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 				res_stmt = ((RawStmt *) linitial(res))->stmt;

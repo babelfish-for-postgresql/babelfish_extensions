@@ -15,13 +15,15 @@ CREATE TABLE sys.babelfish_sysdatabases (
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
 -- BABELFISH_SCHEMA_PERMISSIONS
+-- This catalog is implemented specially to support GRANT/REVOKE .. ON SCHEMA ..
+-- Please avoid using this catalog anywhere else.
 CREATE TABLE sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
   schema_name NAME NOT NULL COLLATE sys.database_default,
   object_name NAME NOT NULL COLLATE sys.database_default,
   permission INT NOT NULL,
   grantee NAME NOT NULL COLLATE sys.database_default,
-  object_type NAME COLLATE sys.database_default,
+  object_type NAME NOT NULL COLLATE sys.database_default,
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
