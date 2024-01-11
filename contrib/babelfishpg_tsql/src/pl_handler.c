@@ -1387,8 +1387,7 @@ checkForJsonAuto(Query *query)
 	if(!isJsonAuto)
 		return;
 
-	// Modify query to be of the form "N.Alias" where is N is the
-	// order of appearance and alias is the table alias / name
+	// Modify query to be of the form "JSONAUTOALIAS.[nest_level].[table_alias]" 
 	rtable = (List*) query->rtable;
 	rte = (RangeTblEntry*) ((ListCell*) rtable->elements)->ptr_value;
     subq = (Query*) rte->subquery;
@@ -1446,6 +1445,8 @@ buildJsonEntry(forjson_table *table, TargetEntry* te)
 	char nest[NAMEDATALEN]; // check size appropriate
 	StringInfo new_resname = makeStringInfo();
 	sprintf(nest, "%d", table->nestLevel);
+	// Adding JSONAUTOALIAS prevents us from modifying
+	// a column more than once
 	if(strncmp(te->resname, "JSONAUTOALIAS", 13) == 0)
 		return te; 
 	appendStringInfoString(new_resname, "JSONAUTOALIAS.");

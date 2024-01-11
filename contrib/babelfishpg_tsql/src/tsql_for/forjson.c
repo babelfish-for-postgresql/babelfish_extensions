@@ -804,6 +804,8 @@ create_json(char *part, JsonbValue* val, int *idx)
 
 }
 
+// Creates a json array object of the form
+// {arrayKey: [{pairkey: pairval}]}
 static JsonbValue*
 create_json_array(char *arrayKey, char* pairKey, JsonbValue* pairVal, int *idx)
 {
@@ -897,6 +899,7 @@ insert_existing_json(JsonbValue *current, JsonbValue* parent, JsonbValue *nested
     parent->val.object.pairs[idx].value = *current;
 }
 
+// This function adds a json pair to a given array
 static void
 insert_existing_json_to_obj(JsonbValue *current, JsonbValue* parent, JsonbValue *nestedVal, int idx, char *key)
 {
@@ -936,6 +939,10 @@ insert_existing_json_to_obj(JsonbValue *current, JsonbValue* parent, JsonbValue 
 	return;
 }
 
+/*
+ * checkForDuplicateRows inserts the given row into the json array 
+ * nested based on the root object
+ */
 static void
 checkForDuplicateRows(JsonbValue *jsonbArray, JsonbValue* row, int maxDepth, int currDepth)
 {
@@ -1086,6 +1093,11 @@ compareNumeric(Numeric a, Numeric b)
 											 NumericGetDatum(b)));
 }
 
+/*
+ * JSON AUTO columns are modified to be in the form
+ * JSONAUTOALIAS.[nest_level].[table_alias].[original_colname]
+ * this function returns the original column name
+ */
 char* 
 remove_index_and_alias(const char* str)
 {
@@ -1100,14 +1112,3 @@ remove_index_and_alias(const char* str)
 	}
 	return (char*) str;
 }
-
-/*
-	If currdepth == maxdepth then add to end
-
-	if currdepth == 1 then check is vals in row are the same
-
-	-> if theyre the same call function keep checking until either
-		-> currdepth = max depth and we add
-		-> not the same so we add the value to the array at currdep
-
-*/
