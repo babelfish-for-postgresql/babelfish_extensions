@@ -57,7 +57,7 @@ void
 set_cur_db_name_for_parallelWorker(const char* logical_db_name)
 {
     int len = strlen(logical_db_name);
-    strncpy(current_db_name, logical_db_name, len);
+    strncpy(current_db_name, logical_db_name, MAX_BBF_NAMEDATALEND);
 	current_db_name[len] = '\0';
 }
 

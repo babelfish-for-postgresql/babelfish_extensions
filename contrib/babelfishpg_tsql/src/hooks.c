@@ -4658,7 +4658,8 @@ static void babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate)
 		bfps = (BabelfishFixedParallelState *) shm_toc_allocate(pcxt->toc, sizeof(BabelfishFixedParallelState));
 		current_db_name = get_cur_db_name();
 		len = strlen(current_db_name);
-		strncpy(bfps->logical_db_name, current_db_name, len);
+		strncpy(bfps->logical_db_name, current_db_name, MAX_BBF_NAMEDATALEND);
+		bfps->logical_db_name[len] = '\0';
 		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_FIXED, bfps);
 	}
 }
