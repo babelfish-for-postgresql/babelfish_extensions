@@ -49,7 +49,7 @@ bool		pltsql_allow_windows_login = true;
 bool		pltsql_allow_fulltext_parser = false;
 
 bool		pltsql_xact_abort = false;
-bool		pltsql_implicit_transactions = true;
+bool		pltsql_implicit_transactions = false;
 bool		pltsql_cursor_close_on_commit = false;
 bool		pltsql_disable_batch_auto_commit = false;
 bool		pltsql_disable_internal_savepoint = false;
@@ -880,11 +880,15 @@ define_custom_variables(void)
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
+	pltsql_implicit_transactions = false;
+	// define babelfishpg_tsql.ansi_defaults will set pltsql_implicit_transactions = true
+	// that's not expected during initialize, set to false as the same for default
+
 	DefineCustomBoolVariable("babelfishpg_tsql.implicit_transactions",
 							 gettext_noop("enable implicit transactions"),
 							 NULL,
 							 &pltsql_implicit_transactions,
-							 true,
+							 false,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
