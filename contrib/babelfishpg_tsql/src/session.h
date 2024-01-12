@@ -14,7 +14,7 @@ extern void check_session_db_access(const char *dn_name);
 extern void set_cur_user_db_and_path(const char *db_name);
 extern void restore_session_properties(void);
 extern void reset_session_properties(void);
-extern void set_cur_db_name_for_parallelWorker(const char* logical_db_name);
+extern void set_cur_db_name_for_parallel_worker(const char* logical_db_name);
 
 /* Babelfish Fixed-size parallel state */
 typedef struct BabelfishFixedParallelState {

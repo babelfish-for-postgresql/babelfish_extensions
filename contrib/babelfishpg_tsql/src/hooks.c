@@ -415,8 +415,8 @@ InstallExtendedHooks(void)
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
 	exec_tsql_cast_value_hook = pltsql_exec_tsql_cast_value;
 
-    babelfixedparallelstate_insert_hook = babelfixedparallelstate_insert;
-    babelfixedparallelstate_restore_hook = babelfixedparallelstate_restore;
+	InitializeParallelDSM_hook = babelfixedparallelstate_insert;
+	ParallelWorkerMain_hook = babelfixedparallelstate_restore;
 }
 
 void
@@ -482,8 +482,8 @@ UninstallExtendedHooks(void)
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 
-	babelfixedparallelstate_insert_hook = NULL;
-	babelfixedparallelstate_restore_hook = NULL;
+	InitializeParallelDSM_hook = NULL;
+	ParallelWorkerMain_hook = NULL;
 }
 
 /*****************************************
@@ -4664,7 +4664,7 @@ static void babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate)
 	}
 }
 
-static void babelfixedparallelstate_restore(shm_toc    *toc)
+static void babelfixedparallelstate_restore(shm_toc *toc)
 {
 	BabelfishFixedParallelState *bfps;	
 
@@ -4672,5 +4672,5 @@ static void babelfixedparallelstate_restore(shm_toc    *toc)
 	bfps = shm_toc_lookup(toc, BABELFISH_PARALLEL_KEY_FIXED, false);
 
 	/* Set the logcial db name for parallel workers */
-	set_cur_db_name_for_parallelWorker(bfps->logical_db_name);
+	set_cur_db_name_for_parallel_worker(bfps->logical_db_name);
 }
