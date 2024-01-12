@@ -31,7 +31,19 @@ GO
 DROP VIEW forjson_vu_v_11
 GO
 
+DROP VIEW forjson_vu_v_12
+GO
+
+DROP VIEW forjson_vu_v_13
+GO
+
+DROP VIEW forjson_vu_v_14
+GO
+
 DROP PROCEDURE forjson_vu_p_1
+GO
+
+DROP PROCEDURE forjson_vu_p_2
 GO
 
 DROP TABLE forjson_auto_vu_t_users

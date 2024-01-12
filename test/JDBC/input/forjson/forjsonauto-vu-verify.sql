@@ -31,7 +31,19 @@ GO
 SELECT * FROM forjson_vu_v_11
 GO
 
+SELECT * FROM forjson_vu_v_12
+GO
+
+SELECT * FROM forjson_vu_v_13
+GO
+
+SELECT * FROM forjson_vu_v_14
+GO
+
 EXECUTE forjson_vu_p_1
+GO
+
+EXECUTE forjson_vu_p_2
 GO
 
 SELECT forjson_vu_f_1()

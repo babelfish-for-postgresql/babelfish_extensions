@@ -175,7 +175,8 @@ typedef struct {
 	int nestLevel;
 } forjson_table;
 
-static void checkForJsonAuto(Query *query);
+static bool checkForJsonAuto(Query *query);
+static bool check_json_auto_walker(Node *node, ParseState *pstate);
 static TargetEntry* buildJsonEntry(forjson_table *table, TargetEntry* te);
 
 extern bool pltsql_ansi_defaults;
@@ -874,7 +875,8 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 static void
 pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 {
-	checkForJsonAuto(query);
+	if(!checkForJsonAuto(query))
+		(void) query_tree_walker(query, check_json_auto_walker, (void *) pstate, 0);
 
 	if (prev_post_parse_analyze_hook)
 		prev_post_parse_analyze_hook(pstate, query, jstate);
@@ -1339,7 +1341,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	}
 }
 
-static void
+static bool
 checkForJsonAuto(Query *query)
 {
 	// Detect JSON AUTO
@@ -1360,7 +1362,7 @@ checkForJsonAuto(Query *query)
 		ListCell* lc = list_nth_cell(target, 0);
 		if(lc != NULL && ((Node*) lfirst(lc))->type == T_TargetEntry) {
 			TargetEntry* te = lfirst_node(TargetEntry, lc);
-			if(te && strncmp(te->resname, "json", 4) == 0 && te->expr != NULL && ((Expr*) te->expr)->type == T_FuncExpr) {
+			if(te && strcmp(te->resname, "json") == 0 && te->expr != NULL && ((Expr*) te->expr)->type == T_FuncExpr) {
 				List* args = ((FuncExpr*) te->expr)->args;
 				if(args != NULL && ((Node*) linitial(args))->type == T_Aggref) {
 					Aggref* agg = linitial_node(Aggref, args);
@@ -1375,17 +1377,11 @@ checkForJsonAuto(Query *query)
 					}
 				}
 			}
-			else if(te->expr != NULL && ((Expr*) te->expr)->type == T_SubLink) {
-				// Handle Views with an alias
-				SubLink* sl = (SubLink*) te->expr;
-				if(((Node*) sl->subselect)->type == T_Query)
-					checkForJsonAuto((Query*) sl->subselect);
-			}
 		}
 	}
 	
 	if(!isJsonAuto)
-		return;
+		return false;
 
 	// Modify query to be of the form "JSONAUTOALIAS.[nest_level].[table_alias]" 
 	rtable = (List*) query->rtable;
@@ -1443,7 +1439,7 @@ checkForJsonAuto(Query *query)
 			}
 		}
 	}
-	return;
+	return true;
 }
 
 static TargetEntry*
@@ -1469,6 +1465,22 @@ buildJsonEntry(forjson_table *table, TargetEntry* te)
 	appendStringInfoString(new_resname, te->resname);
 	te->resname = new_resname->data;
 	return te;
+}
+
+static bool check_json_auto_walker(Node *node, ParseState *pstate) {
+	if (node == NULL)
+		return false;
+	if (IsA(node, Query)) {
+		if(checkForJsonAuto((Query*) node))
+			return true;
+		else {
+			return query_tree_walker((Query*) node,
+								 check_json_auto_walker,
+								 (void *) pstate, 0);
+		}
+	}
+	return expression_tree_walker(node, check_json_auto_walker,
+								  (void *) pstate);
 }
 
 /*

@@ -86,11 +86,47 @@ nvarchar
 ~~END~~
 
 
+SELECT * FROM forjson_vu_v_12
+GO
+~~START~~
+nvarchar
+[{"totalSales": 50}, {"totalSales": 100}, {"totalSales": null}, {"totalSales": null}]
+~~END~~
+
+
+SELECT * FROM forjson_vu_v_13
+GO
+~~START~~
+nvarchar
+{"a": "[{\"x\": \"some string\"}]"}
+~~END~~
+
+
+SELECT * FROM forjson_vu_v_14
+GO
+~~START~~
+nvarchar
+[{"o": [{"p": [{"s": [{"totalsales": 50}, {"totalsales": 50}], "product.price": "20"}], "product.oid": 2, "order.productId": 1}, {"p": [{"s": [{"totalsales": 100}, {"totalsales": 100}], "product.price": "30"}], "product.oid": 1, "order.productId": 1}, {"p": [{"s": [{"totalsales": 100}, {"totalsales": 100}], "product.price": "30"}], "product.oid": 2, "order.productId": 1}, {"p": [{"s": [{"totalsales": 50}, {"totalsales": 50}], "product.price": "20"}], "product.oid": 1, "order.productId": 1}], "users.userid": 1}]
+~~END~~
+
+
 EXECUTE forjson_vu_p_1
 GO
 ~~START~~
 nvarchar
 [{"users.userid": 1, "o": [{"order.productId": 1, "product.oid": 2, "p": [{"product.price": "20", "s": [{"totalsales": 50}, {"totalsales": 50}]}]}, {"order.productId": 1, "product.oid": 1, "p": [{"product.price": "30", "s": [{"totalsales": 100}, {"totalsales": 100}]}]}, {"order.productId": 1, "product.oid": 2, "p": [{"product.price": "30", "s": [{"totalsales": 100}, {"totalsales": 100}]}]}, {"order.productId": 1, "product.oid": 1, "p": [{"product.price": "20", "s": [{"totalsales": 50}, {"totalsales": 50}]}]}]}]
+~~END~~
+
+
+EXECUTE forjson_vu_p_2
+GO
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 2~~
+
+~~START~~
+nvarchar
+[{"users.userid": 1, "firstname": "j"}, {"users.userid": 2, "firstname": "k"}]
 ~~END~~
 
 
