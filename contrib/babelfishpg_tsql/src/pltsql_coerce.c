@@ -1150,7 +1150,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 
 			typenameTypeIdAndMod(NULL, (const TypeName *)varcharTypeName, &baseTypeId, &baseTypeMod);
 
-			tempcon = makeConst(varcharTypeName->typeOid, -1,
+			tempcon = makeConst(baseTypeId, -1,
 								tsql_get_server_collation_oid_internal(false),
 								-1, PointerGetDatum(cstring_to_text(value)),
 								false, false);
