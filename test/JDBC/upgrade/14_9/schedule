@@ -418,6 +418,7 @@ TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
 operator_binary_whitespace-before-15_5-or-16_1
 BABEL-2999
+babel-4475
 BABEL-4606
 sys-parsename-before-15_6-or-16_1
 permission_restrictions_from_pg
