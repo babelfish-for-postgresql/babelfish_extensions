@@ -124,9 +124,15 @@ SELECT (
 ) c1
 GO
 
+create table t50 (x nvarchar(20))
+insert into t50 values ('some string')
+go
+~~ROW COUNT: 1~~
+
+
 CREATE VIEW forjson_vu_v_13 AS 
 SELECT (
-    select json_modify('{"a":"b"}', '$.a', x) from (select * from t1 for json auto) a ([x])
+    select json_modify('{"a":"b"}', '$.a', x) from (select * from t50 for json auto) a ([x])
 ) c1
 GO
 
