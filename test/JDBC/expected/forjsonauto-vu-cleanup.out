@@ -25,6 +25,12 @@ GO
 DROP VIEW forjson_vu_v_9
 GO
 
+DROP VIEW forjson_vu_v_10
+GO
+
+DROP VIEW forjson_vu_v_11
+GO
+
 DROP PROCEDURE forjson_vu_p_1
 GO
 
@@ -43,3 +49,5 @@ GO
 DROP TABLE forjson_auto_vu_t_times
 GO
 
+DROP FUNCTION forjson_vu_f_1()
+GO

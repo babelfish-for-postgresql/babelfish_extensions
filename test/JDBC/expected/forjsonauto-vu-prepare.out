@@ -101,3 +101,26 @@ SELECT (
     select U.Id AS "users.userid", O.productId AS "order.productId", O.Id AS "product.oid", P.price AS "product.price", S.totalSales AS "totalsales", T.date as "date" FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) JOIN forjson_auto_vu_t_sales S ON (P.price = S.price) JOIN forjson_auto_vu_t_times T ON (S.Id = T.Id) FOR JSON AUTO
 ) c1
 GO
+
+-- tests unique characters
+CREATE VIEW forjson_vu_v_10 AS 
+SELECT (
+    select U.Id AS "users.userid", O.productId AS "өглөө", O.Id AS "product.oid", P.price AS "product.price", S.totalSales AS "totalsales" FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) JOIN forjson_auto_vu_t_sales S ON (P.price = S.price) FOR JSON AUTO
+) c1
+GO
+
+CREATE VIEW forjson_vu_v_11 AS
+SELECT (
+    select U.Id AS "users.ελπίδα",
+           U.firstname as "爱",
+           U.lastname as "كلب"
+    FROM forjson_auto_vu_t_users U FOR JSON AUTO
+) c1
+GO
+
+CREATE FUNCTION forjson_vu_f_1()
+RETURNS sys.NVARCHAR(5000) AS
+BEGIN
+RETURN (select U.Id AS "users.userid", O.productId AS "өглөө", O.Id AS "product.oid", P.price AS "product.price", S.totalSales AS "totalsales" FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) JOIN forjson_auto_vu_t_sales S ON (P.price = S.price) FOR JSON AUTO)
+END
+GO
