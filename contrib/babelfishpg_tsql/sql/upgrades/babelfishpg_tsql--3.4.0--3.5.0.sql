@@ -2206,7 +2206,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         c.object_id                      AS object_id,
         CAST(p.relnamespace AS int)      AS schema_id,
         c.column_id                      AS colid,
-        CAST(c.name AS sys.sysname)      AS name,
+        CAST(c.name AS sys.varchar)      AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
