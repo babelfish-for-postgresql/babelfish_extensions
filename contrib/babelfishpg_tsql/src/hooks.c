@@ -172,10 +172,6 @@ extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
 							 Oid valtype, int32 valtypmod,
 							 Oid reqtype, int32 reqtypmod);
 
-/* Hooks for parallel workers for babelfish fixed state */
-static void babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate);
-static void babelfixedparallelstate_restore(shm_toc    *toc);
-
 /*****************************************
  * 			Replication Hooks
  *****************************************/
@@ -415,8 +411,8 @@ InstallExtendedHooks(void)
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
 	exec_tsql_cast_value_hook = pltsql_exec_tsql_cast_value;
 
-	InitializeParallelDSM_hook = babelfixedparallelstate_insert;
-	ParallelWorkerMain_hook = babelfixedparallelstate_restore;
+	bbf_InitializeParallelDSM_hook = babelfixedparallelstate_insert;
+	bbf_ParallelWorkerMain_hook = babelfixedparallelstate_restore;
 }
 
 void
@@ -482,8 +478,8 @@ UninstallExtendedHooks(void)
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 
-	InitializeParallelDSM_hook = NULL;
-	ParallelWorkerMain_hook = NULL;
+	bbf_InitializeParallelDSM_hook = NULL;
+	bbf_ParallelWorkerMain_hook = NULL;
 }
 
 /*****************************************
@@ -4639,38 +4635,4 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 		}
 	}
 	return node;
-}
-
-static void babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate)
-{
-	BabelfishFixedParallelState *bfps;
-	int len;
-	char* current_db_name;
-	if (estimate)
-	{
-		/* Allow space to store the babelfish fixed-size parallel state. */
-		shm_toc_estimate_chunk(&pcxt->estimator, sizeof(BabelfishFixedParallelState));
-		shm_toc_estimate_keys(&pcxt->estimator, 1);
-	}
-	else
-	{
-		/* Initialize babelfish fixed-size state in shared memory. */
-		bfps = (BabelfishFixedParallelState *) shm_toc_allocate(pcxt->toc, sizeof(BabelfishFixedParallelState));
-		current_db_name = get_cur_db_name();
-		len = strlen(current_db_name);
-		strncpy(bfps->logical_db_name, current_db_name, MAX_BBF_NAMEDATALEND);
-		bfps->logical_db_name[len] = '\0';
-		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_FIXED, bfps);
-	}
-}
-
-static void babelfixedparallelstate_restore(shm_toc *toc)
-{
-	BabelfishFixedParallelState *bfps;	
-
-	/* Get the babelfish fixed parallel state from DSM */
-	bfps = shm_toc_lookup(toc, BABELFISH_PARALLEL_KEY_FIXED, false);
-
-	/* Set the logcial db name for parallel workers */
-	set_cur_db_name_for_parallel_worker(bfps->logical_db_name);
 }
