@@ -421,3 +421,5 @@ sys_certificates
 sys_database_permissions
 BABEL-4606
 babel-4475
+sys_availability_groups
+sys_availability_replicas
