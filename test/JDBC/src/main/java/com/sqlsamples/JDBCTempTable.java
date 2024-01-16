@@ -24,16 +24,6 @@ public class JDBCTempTable {
         return createSQLServerConnectionString(url, port, databaseName, user, password);
     }
 
-    private static String initializeConnectionStringPSQL() {
-        String url = properties.getProperty("URL");
-        String port = properties.getProperty("tsql_port");
-        String databaseName = properties.getProperty("databaseName");
-        String user = properties.getProperty("user");
-        String password = properties.getProperty("password");
-
-        return createPostgreSQLConnectionString(url, port, databaseName, user, password);
-    }
-
     public static void runTest(BufferedWriter bw, Logger logger) {
         long startTime = System.nanoTime();
 
@@ -41,6 +31,7 @@ public class JDBCTempTable {
             test_oid_buffer(bw, logger);
             check_oids_equal(bw);
             concurrency_test(bw);
+            psql_test(bw, logger);
         } catch (Exception e) {
             try {
                 bw.write(e.getMessage());
@@ -227,6 +218,76 @@ public class JDBCTempTable {
         alter_guc.execute("ALTER DATABASE jdbc_testdb SET babelfishpg_tsql.temp_oid_buffer_size = 65536");
         psql.close();
         c.close();
+    }
+
+    /*
+     * Sanity checks that must be done from psql endpoint.
+     */
+    private static void psql_test(BufferedWriter bw, Logger logger) throws Exception {
+        /* Test GUC crash resiliency - Create a few normal tables (to advance OID counter). Ensure that the GUC remains the same from a different session. */
+        Connection connection = DriverManager.getConnection(connectionString);
+        Statement s = connection.createStatement();
+
+        /* Create a few tables so that the OID counter is not a predictable value. */
+        for (int i = 0; i < 100; i++)
+        {
+            s.execute("CREATE TABLE crash_res_dummy_table(a int)");
+            s.execute("DROP TABLE crash_res_dummy_table");
+        }
+        
+        s.execute("CREATE TABLE #t1(a int)");
+
+        /* Create two new connections to check the GUC value from postgres. */
+        Connection c = DriverManager.getConnection(connectionString);
+        JDBCCrossDialect cx = new JDBCCrossDialect(c);
+        Connection psql = cx.getPsqlConnection("-- psql", bw, logger);
+
+        Statement check_guc = psql.createStatement();
+        ResultSet rs = check_guc.executeQuery("SHOW babelfishpg_tsql.temp_oid_buffer_start");
+        if (!rs.next()) {
+            bw.write("Table is missing.");
+            bw.newLine();
+        }
+        int buffer_start = Integer.parseInt(rs.getString("babelfishpg_tsql.temp_oid_buffer_start"));
+
+        if (buffer_start == Integer.MIN_VALUE)
+        {
+            bw.write("Oid buffer guc was not set properly!");
+            bw.newLine();
+        }
+
+        Connection c2 = DriverManager.getConnection(connectionString);
+        JDBCCrossDialect cx2 = new JDBCCrossDialect(c2);
+        Connection psql2 = cx2.getPsqlConnection("-- psql", bw, logger);
+
+        check_guc = psql2.createStatement();
+        rs = check_guc.executeQuery("SHOW babelfishpg_tsql.temp_oid_buffer_start");
+        if (!rs.next()) {
+            bw.write("Table is missing.");
+            bw.newLine();
+        }
+        int buffer_start_2 = Integer.parseInt(rs.getString("babelfishpg_tsql.temp_oid_buffer_start"));
+
+        if (buffer_start_2 == Integer.MIN_VALUE)
+        {
+            bw.write("2nd Oid buffer guc was not set properly!");
+            bw.newLine();
+        }
+
+        if (buffer_start_2 != buffer_start) {
+            bw.write("Oid buffer guc was different between two connections!");
+            bw.newLine();
+        }
+
+        /* Ensure that psql still can't create tables with '#'. */
+        try {
+            check_guc.execute("CREATE TABLE #psql_table_with_hash(a int)");
+        } catch (Exception e) {
+            if (!e.getMessage().startsWith("ERROR: syntax error at or near \"#\"")) {
+                bw.write(e.getMessage());
+                bw.newLine();
+            }
+        }
     }
 }
 
