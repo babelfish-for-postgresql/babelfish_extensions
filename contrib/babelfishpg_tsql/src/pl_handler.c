@@ -3641,7 +3641,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 * 1. If permission on schema exists, don't revoke any permission from the object.
 									 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 									 */
-									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
 										has_schema_perms = true;
 									update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
 									if (has_schema_perms)
@@ -3669,7 +3669,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
-									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
 									{
 										call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 									}
@@ -3716,7 +3716,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * Case: When ALL PRIVILEGES is revoked internally during create function.
 						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
 						 */
-						if ((pstmt->stmt_len == 0) && permission_on_schema_exists(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA))
+						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL, true))
 							return;
 						
 						foreach(lc, grant->grantees)
@@ -3733,7 +3733,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								bool has_schema_perms = false;
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
 									has_schema_perms = true;
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
 								if (has_schema_perms)
@@ -3759,7 +3759,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 									* If permission on schema exists, don't revoke any permission from the object.
 									*/
-								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
 								{
 									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 								}

@@ -318,11 +318,10 @@ typedef struct FormData_bbf_schema_perms
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
 extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type);
-extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee);
+extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee, bool missing_ok);
 extern void update_privileges_of_object(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
-extern bool permission_on_schema_exists(const char *schema_name, const char *object_name);
 extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
 extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);
 
