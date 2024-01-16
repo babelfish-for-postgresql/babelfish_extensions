@@ -286,12 +286,6 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define BBF_SCHEMA_PERMS_TABLE_NAME "babelfish_schema_permissions"
 #define BBF_SCHEMA_PERMS_IDX_NAME "babelfish_schema_permissions_pkey"
 #define BBF_SCHEMA_PERMS_NUM_OF_COLS 6
-#define BBF_SCHEMA_PERMS_DBID 0
-#define BBF_SCHEMA_PERMS_SCHEMA_NAME 1
-#define BBF_SCHEMA_PERMS_OBJECT_NAME 2
-#define BBF_SCHEMA_PERMS_PERMISSION 3
-#define BBF_SCHEMA_PERMS_GRANTEE 4
-#define BBF_SCHEMA_PERMS_OBJECT_TYPE 5
 #define Anum_bbf_schema_perms_dbid 1
 #define Anum_bbf_schema_perms_schema_name 2
 #define Anum_bbf_schema_perms_object_name 3
@@ -299,9 +293,10 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_grantee 5
 #define Anum_bbf_schema_perms_object_type 6
 
+#define PUBLIC_ROLE_NAME "public"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
-#define ALL_PERMISSIONS_ON_RELATION 47
-#define ALL_PERMISSIONS_ON_FUNCTION 128
+#define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
+#define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */
 #define OBJ_SCHEMA "s"
 #define OBJ_RELATION "r"
 #define OBJ_PROCEDURE "p"
@@ -310,29 +305,25 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 extern Oid bbf_schema_perms_oid;
 extern Oid bbf_schema_perms_idx_oid;
 
-extern Oid get_bbf_schema_perms_oid(void);
-extern Oid get_bbf_schema_perms_idx_oid(void);
-
 typedef struct FormData_bbf_schema_perms
 {
 	int16		dbid;
-	NameData	schema_name;
-	NameData	object_name;
+	VarChar	schema_name;
+	VarChar	object_name;
 	int32		permission;
-	NameData	grantee;
-	NameData	object_type;
+	VarChar	grantee;
+	char	object_type;
 } FormData_bbf_schema_perms;
 
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
 extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type);
-extern bool entry_exists_in_bbf_schema(const char *schema_name, const char *object_name, const char *grantee);
-extern int get_privilege_of_object(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
+extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee);
 extern void update_privileges_of_object(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern bool permission_on_schema_exists(const char *schema_name, const char *object_name);
-extern void clean_up_object_from_bbf_schema(const char *schema_name, const char *object_name, bool is_schema);
+extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
 extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);
 
 /*****************************************

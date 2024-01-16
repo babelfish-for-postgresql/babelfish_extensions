@@ -3351,7 +3351,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
-					clean_up_object_from_bbf_schema(logicalschema, NULL, true);
+					clean_up_bbf_schema_permissions(logicalschema, NULL, true);
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3641,7 +3641,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									 * 1. If permission on schema exists, don't revoke any permission from the object.
 									 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 									 */
-									if (entry_exists_in_bbf_schema(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 										has_schema_perms = true;
 									update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
 									if (has_schema_perms)
@@ -3669,7 +3669,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									/*
 									 * If permission on schema exists, don't revoke any permission from the object.
 									 */
-									if (!entry_exists_in_bbf_schema(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 									{
 										call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 									}
@@ -3733,7 +3733,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								bool has_schema_perms = false;
-								if (entry_exists_in_bbf_schema(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 									has_schema_perms = true;
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
 								if (has_schema_perms)
@@ -3759,7 +3759,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 									* If permission on schema exists, don't revoke any permission from the object.
 									*/
-								if (!entry_exists_in_bbf_schema(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 								{
 									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 								}
@@ -5956,7 +5956,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 											 major_name, NULL);
 				}
 			}
-			clean_up_object_from_bbf_schema(logicalschema, major_name, false);
+			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -6015,7 +6015,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				delete_extended_property(db_id, type, schema_name, major_name,
 										 NULL);
 			}
-			clean_up_object_from_bbf_schema(logicalschema, major_name, false);
+			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 }

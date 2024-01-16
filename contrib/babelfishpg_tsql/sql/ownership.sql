@@ -19,11 +19,11 @@ GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 -- Please avoid using this catalog anywhere else.
 CREATE TABLE sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
-  schema_name NAME NOT NULL COLLATE sys.database_default,
-  object_name NAME NOT NULL COLLATE sys.database_default,
+  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   permission INT NOT NULL,
-  grantee NAME NOT NULL COLLATE sys.database_default,
-  object_type NAME NOT NULL COLLATE sys.database_default,
+  grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_type CHAR(1) NOT NULL COLLATE sys.database_default,
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 

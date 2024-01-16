@@ -1039,7 +1039,7 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	if (grantee && stmt->grantees)
 	{
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
-		if (strcmp(grantee, "public") == 0)
+		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
 		{
 			tmp->roletype = ROLESPEC_PUBLIC;
 		}
@@ -1053,7 +1053,7 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	}
 }
 
-void
+static void
 update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
 {
 	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
@@ -2015,7 +2015,7 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
 /*
  * Helper function to generate GRANT on SCHEMA subcommands.
  */
-List
+static List
 *gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
 {
 	StringInfoData query;
@@ -2077,6 +2077,7 @@ List
 	else
 		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege);
 
+	pfree(query.data);
 	return stmt_list;
 }
 
@@ -2115,9 +2116,6 @@ exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant,
 					NULL,
 					None_Receiver,
 					NULL);
-
-		/* make sure later steps can see the object created here */
-		CommandCounterIncrement();
 	}
 }
 

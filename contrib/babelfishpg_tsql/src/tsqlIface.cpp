@@ -25,6 +25,7 @@
 #define JOIN_HINTS_INFO_VECTOR_SIZE 6
 
 #define RAISE_ERROR_PARAMS_LIMIT 20
+#define PUBLIC_ROLE_NAME "public"
 
 
 #pragma GCC diagnostic push
@@ -5784,7 +5785,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 					}
 					if (prin->PUBLIC())
 					{
-						char *grantee_name = pstrdup("public");
+						char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
@@ -5817,7 +5818,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 					}
 					if (prin->PUBLIC())
 					{
-						char *grantee_name = pstrdup("public");
+						char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
@@ -5852,7 +5853,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				}
 				if (prin->PUBLIC())
 				{
-					char *grantee_name = pstrdup("public");
+					char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
 					grantee_list = lappend(grantee_list, grantee_name);
 				}
 			}
@@ -5909,7 +5910,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				}
 				if (prin->PUBLIC())
 				{
-					char *grantee_name = pstrdup("public");
+					char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
 					grantee_list = lappend(grantee_list, grantee_name);
 				}
 			}

@@ -3701,7 +3701,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 	char		*user = GetUserNameFromId(GetUserId(), false);
 	const char	*db_owner = get_owner_of_db(dbname);
 
-	login_is_db_owner = 0 == strncmp(login, db_owner, NAMEDATALEN);
+	login_is_db_owner = 0 == strcmp(login, db_owner);
 	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
 
 	if(schema_name)
@@ -3730,12 +3730,12 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		{
 			char	*grantee_name = (char *) lfirst(lc);
 			Oid	role_oid;
-			bool	grantee_is_db_owner = 0 == strncmp(grantee_name, db_owner, NAMEDATALEN);
-			bool	is_public = 0 == strncmp(grantee_name, "public", NAMEDATALEN);
+			bool	grantee_is_db_owner = 0 == strcmp(grantee_name, db_owner);
+			bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 			if (!is_public)
 				rolname	= get_physical_user_name(dbname, grantee_name);
 			else
-				rolname = pstrdup("public");
+				rolname = pstrdup(PUBLIC_ROLE_NAME);
 			role_oid = get_role_oid(rolname, true);
 
 			if (!is_public && !OidIsValid(role_oid))
@@ -3767,7 +3767,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			else
 			{
 				/* For REVOKE statement, update privileges in the catalog. */
-				if (entry_exists_in_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname))
+				if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname))
 				{
 					/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
 					grant_perms_to_objects_in_schema(stmt->schema_name, privilege, rolname);
