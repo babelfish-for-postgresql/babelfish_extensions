@@ -16,7 +16,6 @@
 #include "session.h"
 #include "pltsql.h"
 #include "guc.h"
-#include "access/parallel.h"
 #include "storage/shm_toc.h"
 
 /* Core Session Properties */
