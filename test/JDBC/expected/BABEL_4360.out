@@ -1,0 +1,190 @@
+DECLARE @a TABLE (a INT);
+INSERT INTO @a EXECUTE('SELECT * FROM t1; SELECT 3');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t1" does not exist)~~
+
+
+
+-- tsql
+
+-- Test nested procedure calls with rollback and error case
+CREATE TABLE babel_4360_t (id INT);
+GO
+
+-- psql     currentSchema=master_dbo,public
+
+CREATE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+  ROLLBACK;
+  INSERT INTO babel_4360_t VALUES (99);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+  CALL psql_interop_proc1();
+  INSERT INTO babel_4360_t VALUES (98);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+
+CREATE PROCEDURE tsql_interop_proc1
+AS
+EXEC psql_interop_proc2;
+INSERT INTO babel_4360_t VALUES (97);
+GO
+
+CREATE PROCEDURE tsql_interop_proc2
+AS
+EXEC tsql_interop_proc1;
+INSERT INTO babel_4360_t VALUES (96);
+GO
+
+-- psql     currentSchema=master_dbo,public
+
+CREATE PROCEDURE psql_interop_proc3()
+AS
+$$
+BEGIN
+  CALL tsql_interop_proc2();
+  INSERT INTO babel_4360_t VALUES (95);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE psql_interop_proc4()
+AS
+$$
+BEGIN
+  CALL psql_interop_proc3();
+  INSERT INTO babel_4360_t VALUES (94);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+
+CREATE PROCEDURE tsql_interop_proc3
+AS
+EXEC psql_interop_proc4;
+INSERT INTO babel_4360_t VALUES (93);
+GO
+
+CREATE PROCEDURE tsql_interop_proc4
+AS
+EXEC tsql_interop_proc3;
+INSERT INTO babel_4360_t VALUES (92);
+GO
+
+EXEC tsql_interop_proc4;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_4360_t
+GO
+~~START~~
+int
+99
+98
+97
+96
+95
+94
+93
+92
+~~END~~
+
+
+DELETE FROM babel_4360_t;
+GO
+~~ROW COUNT: 8~~
+
+
+-- psql     currentSchema=master_dbo,public
+-- alter procedure to throw error
+CREATE OR REPLACE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+  INSERT INTO babel_4360_t VALUES (-1);
+  ROLLBACK;
+  INSERT INTO babel_4360_t VALUES (100);
+  COMMIT;
+  INSERT INTO babel_4360_t VALUES (-1);
+  RAISE EXCEPTION 'Throw an exception to check error case';
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC tsql_interop_proc4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Throw an exception to check error case)~~
+
+
+SELECT * FROM babel_4360_t
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+DELETE FROM babel_4360_t;
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE tsql_interop_proc5
+AS
+BEGIN TRY
+  EXEC tsql_interop_proc3;
+  INSERT INTO babel_4360_t VALUES (-1);
+END TRY
+BEGIN CATCH
+  INSERT INTO babel_4360_t VALUES (92);
+END CATCH
+GO
+
+-- test error handling for interop procedures with tsql try catch block
+EXEC tsql_interop_proc5
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM babel_4360_t
+GO
+~~START~~
+int
+100
+92
+~~END~~
+
+
+DROP TABLE babel_4360_t
+GO
+
+DROP PROCEDURE IF EXISTS tsql_interop_proc5, tsql_interop_proc4, tsql_interop_proc3, tsql_interop_proc2, tsql_interop_proc1;
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE IF EXISTS psql_interop_proc4, psql_interop_proc3, psql_interop_proc2, psql_interop_proc1;
+GO
