@@ -4,8 +4,6 @@
 #include "multidb.h"
 #include "access/parallel.h"
 
-#define BABELFISH_PARALLEL_KEY_FIXED        UINT64CONST(0xBBF0000000000001)
-
 extern int16 get_cur_db_id(void);
 extern void set_cur_db(int16 id, const char *name);
 extern char *get_cur_db_name(void);

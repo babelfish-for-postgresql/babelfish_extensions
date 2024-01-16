@@ -419,6 +419,12 @@ babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate)
 		/* Initialize babelfish fixed-size state in shared memory. */
 		bfps = (BabelfishFixedParallelState *) shm_toc_allocate(pcxt->toc, sizeof(BabelfishFixedParallelState));
 		current_db_name = get_cur_db_name();
+
+		if(!DbidIsValid(get_db_id(current_db_name)))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", current_db_name)));
+
 		len = strlen(current_db_name);
 		strncpy(bfps->logical_db_name, current_db_name, MAX_BBF_NAMEDATALEND);
 		bfps->logical_db_name[len] = '\0';
