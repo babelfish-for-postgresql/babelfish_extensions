@@ -5320,11 +5320,12 @@ pltsql_revert_guc(int nest_level)
 			guc_set_extra_field(gconf, &(stack->masked.extra), NULL);
 
 			/* And restore source information */
-			gconf->source = newsource;
+			babelfish_set_guc_source(gconf, newsource);
 			gconf->scontext = newscontext;
 
 			/* Finish popping the state stack */
 			gconf->session_stack = prev;
+
 			pfree(stack);
 		}						/* end of stack-popping loop */
 
