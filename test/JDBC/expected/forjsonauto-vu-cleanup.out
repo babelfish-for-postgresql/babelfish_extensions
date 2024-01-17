@@ -46,6 +46,15 @@ GO
 DROP PROCEDURE forjson_vu_p_2
 GO
 
+DROP PROCEDURE forjson_vu_p_3
+GO
+
+DROP PROCEDURE forjson_vu_p_4
+GO
+
+DROP PROCEDURE forjson_vu_p_5
+GO
+
 DROP FUNCTION forjson_vu_f_1()
 GO
 

@@ -46,5 +46,14 @@ GO
 EXECUTE forjson_vu_p_2
 GO
 
+EXECUTE forjson_vu_p_3
+GO
+
+EXECUTE forjson_vu_p_4
+GO
+
+EXECUTE forjson_vu_p_5
+GO
+
 SELECT forjson_vu_f_1()
 GO

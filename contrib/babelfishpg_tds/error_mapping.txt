@@ -184,3 +184,5 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 22023 ERRCODE_INVALID_PARAMETER_VALUE   "\'%s\' is not a recognized %s option"  SQL_ERROR_155	15
 22023 ERRCODE_INVALID_PARAMETER_VALUE   "The datepart %s is not supported by date function %s for data type %s." SQL_ERROR_9810 16
 22008 ERRCODE_DATETIME_VALUE_OUT_OF_RANGE	"Adding a value to a \'%s\' column caused an overflow." SQL_ERROR_517 16
+42P01 ERRCODE_UNDEFINED_TABLE	"FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name."		SQL_ERROR_13600	16
+

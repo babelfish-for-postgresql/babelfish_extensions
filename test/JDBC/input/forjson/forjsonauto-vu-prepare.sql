@@ -9,8 +9,6 @@ INSERT INTO forjson_auto_vu_t_orders VALUES (1, 1, 1, 5, '2023-06-25'), (2, 1, 1
 INSERT INTO forjson_auto_vu_t_products VALUES (1, 'A', 20), (1, 'B', 30);
 INSERT INTO forjson_auto_vu_t_sales VALUES (1, 20, 50), (2, 30, 100);
 INSERT INTO forjson_auto_vu_t_times VALUES (1, '2023-11-26'), (2, '2023-11-27');
-
-
 GO
 
 CREATE VIEW forjson_vu_v_1 AS 
@@ -144,6 +142,25 @@ CREATE FUNCTION forjson_vu_f_1()
 RETURNS sys.NVARCHAR(5000) AS
 BEGIN
 RETURN (select U.Id AS "users.userid", O.productId AS "өглөө", O.Id AS "product.oid", P.price AS "product.price", S.totalSales AS "totalsales" FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) JOIN forjson_auto_vu_t_sales S ON (P.price = S.price) FOR JSON AUTO)
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_3 AS
+BEGIN
+    with cte as (select 1 as Id), cte2 as (select 1 as Id) select U.Id, O.Id from cte U JOIN cte2 O on (U.Id = O.Id) for json auto
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_4 AS
+BEGIN
+    with cte as (select Id, firstname from forjson_auto_vu_t_users), cte2 as (select Id, productid from forjson_auto_vu_t_orders) 
+    select U.Id, O.productId from cte U JOIN cte2 O ON (U.Id = O.Id) for JSON AUTO
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_5 AS
+BEGIN
+    SELECT  x.Val, y.Val ValY FROM (VALUES (1)) AS x(Val) JOIN (SELECT  Val FROM (VALUES (1)) AS _(Val)) y ON y.Val = x.Val for json auto
 END
 GO
 

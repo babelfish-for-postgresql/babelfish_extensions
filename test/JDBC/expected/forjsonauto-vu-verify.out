@@ -130,6 +130,29 @@ nvarchar
 ~~END~~
 
 
+EXECUTE forjson_vu_p_3
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "Id": 1}]
+~~END~~
+
+
+EXECUTE forjson_vu_p_4
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "forjson_auto_vu_t_orders": [{"productId": 1}, {"productId": 1}]}]
+~~END~~
+
+
+EXECUTE forjson_vu_p_5
+GO
+~~ERROR (Code: 13600)~~
+
+~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+
+
 SELECT forjson_vu_f_1()
 GO
 ~~START~~
