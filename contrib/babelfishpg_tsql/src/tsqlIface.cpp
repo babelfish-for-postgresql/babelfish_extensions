@@ -5812,6 +5812,8 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				if (grant->permission_object()->full_object_name()->object_name)
 				{
 					schema_name = stripQuoteFromId(grant->permission_object()->full_object_name()->object_name);
+					if (string_matches(schema_name.c_str(), "information_schema"))
+						schema_name = "information_schema_tsql";
 					result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 				}
 				List *grantee_list = NIL;

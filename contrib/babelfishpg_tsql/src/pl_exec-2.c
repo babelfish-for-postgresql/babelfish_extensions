@@ -3706,6 +3706,10 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 
 	if(schema_name)
 	{
+		/* Return immediately for shared schema. */
+		if(is_shared_schema(schema_name))
+			return PLTSQL_RC_OK;
+
 		schemaOid = LookupExplicitNamespace(schema_name, true);
 	}
 	else

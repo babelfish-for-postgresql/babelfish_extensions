@@ -3645,7 +3645,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 										return;
 								}
 							}
-							break;
+							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 						}
 						foreach(lc1, grant->privileges)
 						{
@@ -3734,7 +3734,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									return;
 							}
 						}
-						break;
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 					}
 					foreach(lc1, grant->privileges)
 					{

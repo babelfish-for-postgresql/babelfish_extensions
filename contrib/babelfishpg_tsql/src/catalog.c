@@ -2905,6 +2905,10 @@ update_privileges_of_object(const char *schema_name,
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 
+	/* Immediately return false, if SCHEMA name is NULL or it's a shared schema. */
+	if (schema_name == NULL || is_shared_schema(schema_name))
+		return;
+
 	/* Immediately return, if grantee is NULL or PUBLIC. */
 	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
 		return;
@@ -3011,8 +3015,8 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	bool	catalog_entry_exists = false;
 	int16	dbid = get_cur_db_id();
 
-	/* Immediately return false, if SCHEMA name is NULL. */
-	if (schema_name == NULL)
+	/* Immediately return false, if SCHEMA name is NULL or it's a shared schema. */
+	if (schema_name == NULL || is_shared_schema(schema_name))
 		return false;
 
 	if (!missing_ok)
@@ -3174,6 +3178,10 @@ remove_entry_from_bbf_schema_perms(const char *schema_name,
 	SysScanDesc scan;
 	int16	dbid = get_cur_db_id();
 
+	/* Immediately return false, if SCHEMA name is NULL or it's a shared schema. */
+	if (schema_name == NULL || is_shared_schema(schema_name))
+		return;
+
 	/* Immediately return, if grantee is NULL or PUBLIC. */
 	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
 		return;
@@ -3256,8 +3264,8 @@ clean_up_bbf_schema_permissions(const char *schema_name,
 	HeapTuple	tuple_bbf_schema;
 	int16	dbid = get_cur_db_id();
 
-	/* Immediately return if SCHEMA NAME is NULL. */
-	if (schema_name == NULL)
+	/* Immediately return false, if SCHEMA name is NULL or it's a shared schema. */
+	if (schema_name == NULL || is_shared_schema(schema_name))
 		return;
 
 	/* Fetch the relation */
