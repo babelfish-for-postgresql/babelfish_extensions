@@ -1924,7 +1924,6 @@ public:
 							|| single_perm->DELETE()
 							|| single_perm->REFERENCES())
 						{
-							clear_rewritten_query_fragment();
 							return;
 						}
 					}
@@ -1962,7 +1961,6 @@ public:
 							|| single_perm->DELETE()
 							|| single_perm->REFERENCES())
 						{
-							clear_rewritten_query_fragment();
 							return;
 						}
 					}
