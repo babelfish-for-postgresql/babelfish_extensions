@@ -165,6 +165,11 @@ INSERT INTO forjson_auto_vu_t_users VALUES (1, 'e', 'o', 'testemail3')
 go
 ~~START~~
 nvarchar
+[{"id": 1, "firstname": "j"}, {"id": 1, "firstname": "e"}, {"id": 1, "firstname": "e"}]
+~~END~~
+
+~~START~~
+nvarchar
 [{"users.userid": 1, "firstname": "e", "lastname": "l", "o": [{"order.productId": 1}, {"order.productId": 1}]}, {"users.userid": 1, "firstname": "j", "lastname": "o", "o": [{"order.productId": 1}, {"order.productId": 1}]}, {"users.userid": 1, "firstname": "e", "lastname": "o", "o": [{"order.productId": 1}, {"order.productId": 1}]}]
 ~~END~~
 

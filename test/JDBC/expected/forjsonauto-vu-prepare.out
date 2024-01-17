@@ -179,6 +179,13 @@ END
 GO
 
 CREATE TRIGGER forjson_vu_trigger_1 on forjson_auto_vu_t_users for insert as
+BEGIN
+    with cte (Id, firstname) as (select Id, firstname from forjson_auto_vu_t_users), cte2 (Id, firstname) as (select Id, firstname from cte) 
+    select * from cte2 for JSON AUTO
+END
+GO
+
+CREATE TRIGGER forjson_vu_trigger_2 on forjson_auto_vu_t_users for insert as
 begin
     select U.Id AS "users.userid",
            U.firstname as "firstname",

@@ -55,10 +55,14 @@ GO
 DROP PROCEDURE forjson_vu_p_5
 GO
 
+
 DROP FUNCTION forjson_vu_f_1()
 GO
 
 drop trigger forjson_vu_trigger_1;
+go
+
+drop trigger forjson_vu_trigger_2;
 go
 
 DROP TABLE forjson_auto_vu_t_users
