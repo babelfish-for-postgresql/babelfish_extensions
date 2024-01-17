@@ -2016,7 +2016,7 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
  * Helper function to generate GRANT on SCHEMA subcommands.
  */
 static List
-*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	StringInfoData query;
 	List	   *stmt_list;
@@ -2026,7 +2026,7 @@ static List
 	initStringInfo(&query);
 	if (is_grant)
 	{
-		if (strcmp(privilege, "execute") == 0)
+		if (privilege == ACL_EXECUTE)
 		{
 			if (with_grant_option)
 			{
@@ -2050,7 +2050,7 @@ static List
 	}
 	else
 	{
-		if (strcmp(privilege, "execute") == 0)
+		if (privilege == ACL_EXECUTE)
 		{
 			appendStringInfo(&query, "REVOKE dummy ON ALL FUNCTIONS IN SCHEMA dummy FROM dummy; ");
 			appendStringInfo(&query, "REVOKE dummy ON ALL PROCEDURES IN SCHEMA dummy FROM dummy; ");
@@ -2069,13 +2069,13 @@ static List
 						expected_stmts, list_length(stmt_list))));
 	/* Replace dummy elements in parsetree with real values */
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_GrantStmt(stmt, schema, NULL, rolname, privilege);
+	update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	if (strcmp(privilege, "execute") == 0)
-		update_GrantStmt(stmt, schema, NULL, rolname, privilege);
+	if (privilege == ACL_EXECUTE)
+		update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
 	else
-		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege);
+		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege_to_string(privilege));
 
 	pfree(query.data);
 	return stmt_list;
@@ -2087,7 +2087,7 @@ static List
  * inputs are sanitized to prevent unexpected behaviour.
  */
 void
-exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege)
+exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
 {
 	List		*parsetree_list;
 	ListCell	*parsetree_item;
@@ -2144,17 +2144,17 @@ privilege_to_string(AclMode privilege)
 	switch (privilege)
 	{
 		case ACL_INSERT:
-			return "INSERT";
+			return "insert";
 		case ACL_SELECT:
-			return "SELECT";
+			return "select";
 		case ACL_UPDATE:
-			return "UPDATE";
+			return "update";
 		case ACL_DELETE:
-			return "DELETE";
+			return "delete";
 		case ACL_REFERENCES:
-			return "REFERENCES";
+			return "references";
 		case ACL_EXECUTE:
-			return "EXECUTE";
+			return "execute";
 		default:
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}

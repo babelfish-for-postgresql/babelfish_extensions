@@ -5831,26 +5831,26 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
-				List *privilege_list = NIL;
+				int privileges = 0;
 				for (auto perm: grant->permissions()->permission())
 				{
 					auto single_perm = perm->single_permission();
 					if (single_perm->EXECUTE())
-						privilege_list = lappend(privilege_list, (void *)"execute");
+						privileges |= ACL_EXECUTE;
 					if (single_perm->EXEC())
-						privilege_list = lappend(privilege_list, (void *)"execute");
+						privileges |= ACL_EXECUTE;
 					if (single_perm->SELECT())
-						privilege_list = lappend(privilege_list, (void *)"select");
+						privileges |= ACL_SELECT;
 					if (single_perm->INSERT())
-						privilege_list = lappend(privilege_list, (void *)"insert");
+						privileges |= ACL_INSERT;
 					if (single_perm->UPDATE())
-						privilege_list = lappend(privilege_list, (void *)"update");
+						privileges |= ACL_UPDATE;
 					if (single_perm->DELETE())
-						privilege_list = lappend(privilege_list, (void *)"delete");
+						privileges |= ACL_DELETE;
 					if (single_perm->REFERENCES())
-						privilege_list = lappend(privilege_list, (void *)"references");
+						privileges |= ACL_REFERENCES;
 				}
-				result->privileges = privilege_list;
+				result->privileges = privileges;
 				if (grant->WITH())
 					result->with_grant_option = true;
 				result->grantees = grantee_list;
@@ -5924,26 +5924,26 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
-				List *privilege_list = NIL;
+				int privileges = 0;
 				for (auto perm: revoke->permissions()->permission())
 				{
 					auto single_perm = perm->single_permission();
 					if (single_perm->EXECUTE())
-						privilege_list = lappend(privilege_list, (void *)"execute");
+						privileges |= ACL_EXECUTE;
 					if (single_perm->EXEC())
-						privilege_list = lappend(privilege_list, (void *)"execute");
+						privileges |= ACL_EXECUTE;
 					if (single_perm->SELECT())
-						privilege_list = lappend(privilege_list, (void *)"select");
+						privileges |= ACL_SELECT;
 					if (single_perm->INSERT())
-						privilege_list = lappend(privilege_list, (void *)"insert");
+						privileges |= ACL_INSERT;
 					if (single_perm->UPDATE())
-						privilege_list = lappend(privilege_list, (void *)"update");
+						privileges |= ACL_UPDATE;
 					if (single_perm->DELETE())
-						privilege_list = lappend(privilege_list, (void *)"delete");
+						privileges |= ACL_DELETE;
 					if (single_perm->REFERENCES())
-						privilege_list = lappend(privilege_list, (void *)"references");
+						privileges |= ACL_REFERENCES;
 				}
-				result->privileges = privilege_list;
+				result->privileges = privileges;
 				result->grantees = grantee_list;
 				return (PLtsql_stmt *) result;
 			}

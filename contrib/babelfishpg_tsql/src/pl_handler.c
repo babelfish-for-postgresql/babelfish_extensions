@@ -3302,7 +3302,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Grant ALL schema privileges to the user.*/
 					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
 					{
-						char *permissions[] = {"select", "insert", "update", "references", "delete", "execute"};
+						int permissions[6] = {ACL_INSERT, ACL_SELECT, ACL_UPDATE, ACL_DELETE, ACL_REFERENCES, ACL_EXECUTE};
 						int i;
 						for (i = 0; i < 6; i++)
 						{

@@ -1076,7 +1076,7 @@ typedef struct PLtsql_stmt_grantschema
 	PLtsql_stmt_type cmd_type;
 	int			lineno;
 	bool		is_grant;
-	List		*privileges;		/* list of privileges */
+	int		privileges;
 	List		*grantees;		/* list of users */
 	bool 		with_grant_option;
 	char		*schema_name;	/* schema name */
@@ -2066,7 +2066,7 @@ extern char *get_fulltext_index_name(Oid relid, const char *table_name);
 extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 extern bool is_unique_index(Oid relid, const char *index_name);
-extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, const char *privilege);
+extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
