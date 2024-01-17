@@ -55,11 +55,16 @@ get_cur_db_name(void)
 void 
 set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 {
+	if (logical_db_name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"\" does not exist")));
+
 	int len = strlen(logical_db_name);
 
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
-	if(logical_db_name == NULL || !DbidIsValid(get_db_id(logical_db_name)))
+	if(!DbidIsValid(get_db_id(logical_db_name)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", logical_db_name)));
@@ -420,7 +425,12 @@ babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate)
 		bfps = (BabelfishFixedParallelState *) shm_toc_allocate(pcxt->toc, sizeof(BabelfishFixedParallelState));
 		current_db_name = get_cur_db_name();
 
-		if(current_db_name == NULL || !DbidIsValid(get_db_id(current_db_name)))
+		if (current_db_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					errmsg("database \"\" does not exist")));
+
+		if(!DbidIsValid(get_db_id(current_db_name)))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					errmsg("database \"%s\" does not exist", current_db_name)));
