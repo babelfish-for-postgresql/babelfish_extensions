@@ -1894,73 +1894,77 @@ public:
 	
 	void exitSecurity_statement(TSqlParser::Security_statementContext *ctx) override
 	{
-		if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
-								&& ctx->grant_statement()->permissions())
+		if (ctx->grant_statement())
 		{
-			for (auto perm : ctx->grant_statement()->permissions()->permission())
+			auto grant = ctx->grant_statement();
+			if (grant->TO() && !grant->permission_object() && grant->permissions())
 			{
-				auto single_perm = perm->single_permission();
-				if (single_perm->CONNECT())
-				{
-					clear_rewritten_query_fragment();
-					return;
-				}
-			}
-		}
-		else if (ctx->revoke_statement() && ctx->revoke_statement()->FROM() && !ctx->revoke_statement()->permission_object()
-										&& ctx->revoke_statement()->permissions())
-		{
-			for (auto perm : ctx->revoke_statement()->permissions()->permission())
-			{
-				auto single_perm = perm->single_permission();
-				if (single_perm->CONNECT())
-				{
-					clear_rewritten_query_fragment();
-					return;
-				}
-			}
-		}
-		else if (ctx->grant_statement() && ctx->grant_statement()->ON() && ctx->grant_statement()->permission_object()
-				&& ctx->grant_statement()->permission_object()->object_type() && ctx->grant_statement()->permission_object()->object_type()->SCHEMA())
-		{
-			if (ctx->grant_statement()->TO() && ctx->grant_statement()->principals() && ctx->grant_statement()->permissions())
-			{
-				for (auto perm: ctx->grant_statement()->permissions()->permission())
+				for (auto perm : grant->permissions()->permission())
 				{
 					auto single_perm = perm->single_permission();
-					if (single_perm->EXECUTE()
-						|| single_perm->EXEC()
-						|| single_perm->SELECT() 
-						|| single_perm->INSERT()
-						|| single_perm->UPDATE()
-						|| single_perm->DELETE()
-						|| single_perm->REFERENCES())
+					if (single_perm->CONNECT())
 					{
 						clear_rewritten_query_fragment();
-						return;	
+						return;
+					}
+				}
+			}
+			else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
+			{
+				if (grant->TO() && grant->principals() && grant->permissions())
+				{
+					for (auto perm: grant->permissions()->permission())
+					{
+						auto single_perm = perm->single_permission();
+						if (single_perm->EXECUTE()
+							|| single_perm->EXEC()
+							|| single_perm->SELECT()
+							|| single_perm->INSERT()
+							|| single_perm->UPDATE()
+							|| single_perm->DELETE()
+							|| single_perm->REFERENCES())
+						{
+							clear_rewritten_query_fragment();
+							return;
+						}
 					}
 				}
 			}
 		}
-
-		else if (ctx->revoke_statement() && ctx->revoke_statement()->ON() && ctx->revoke_statement()->permission_object()
-				&& ctx->revoke_statement()->permission_object()->object_type() && ctx->revoke_statement()->permission_object()->object_type()->SCHEMA())
+		else if (ctx->revoke_statement())
 		{
-			if (ctx->revoke_statement()->FROM() && ctx->revoke_statement()->principals() && ctx->revoke_statement()->permissions())
+			auto revoke = ctx->revoke_statement();
+			if (revoke->FROM() && !revoke->permission_object() && revoke->permissions())
 			{
-				for (auto perm: ctx->revoke_statement()->permissions()->permission())
+				for (auto perm : revoke->permissions()->permission())
 				{
 					auto single_perm = perm->single_permission();
-					if (single_perm->EXECUTE()
-						|| single_perm->EXEC()
-						|| single_perm->SELECT() 
-						|| single_perm->INSERT()
-						|| single_perm->UPDATE()
-						|| single_perm->DELETE()
-						|| single_perm->REFERENCES())
+					if (single_perm->CONNECT())
 					{
 						clear_rewritten_query_fragment();
-						return;	
+						return;
+					}
+				}
+			}
+
+			else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
+			{
+				if (revoke->FROM() && revoke->principals() && revoke->permissions())
+				{
+					for (auto perm: revoke->permissions()->permission())
+					{
+						auto single_perm = perm->single_permission();
+						if (single_perm->EXECUTE()
+							|| single_perm->EXEC()
+							|| single_perm->SELECT()
+							|| single_perm->INSERT()
+							|| single_perm->UPDATE()
+							|| single_perm->DELETE()
+							|| single_perm->REFERENCES())
+						{
+							clear_rewritten_query_fragment();
+							return;
+						}
 					}
 				}
 			}
@@ -5762,20 +5766,56 @@ makeKillStatement(TSqlParser::Kill_statementContext *ctx)
 PLtsql_stmt *
 makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 {
-	if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
-								&& ctx->grant_statement()->permissions())
+	if (ctx->grant_statement())
 	{
-		for (auto perm : ctx->grant_statement()->permissions()->permission())
+		auto grant = ctx->grant_statement();
+		if (grant->TO() && !grant->permission_object() && grant->permissions())
 		{
-			auto single_perm = perm->single_permission();
-			if (single_perm->CONNECT())
+			for (auto perm : grant->permissions()->permission())
 			{
-				PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
-				result->cmd_type = PLTSQL_STMT_GRANTDB;
-				result->lineno = getLineNo(ctx->grant_statement());
+				auto single_perm = perm->single_permission();
+				if (single_perm->CONNECT())
+				{
+					PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+					result->cmd_type = PLTSQL_STMT_GRANTDB;
+					result->lineno = getLineNo(grant);
+					result->is_grant = true;
+					List *grantee_list = NIL;
+					for (auto prin : grant->principals()->principal_id())
+					{
+						if (prin->id())
+						{
+							std::string id_str = ::getFullText(prin->id());
+							char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
+							grantee_list = lappend(grantee_list, grantee_name);
+						}
+						if (prin->PUBLIC())
+						{
+							char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
+							grantee_list = lappend(grantee_list, grantee_name);
+						}
+					}
+					result->grantees = grantee_list;
+					return (PLtsql_stmt *) result;
+				}
+			}
+		}
+		else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
+		{
+			if (grant->TO() && grant->principals() && grant->permissions())
+			{
+				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
+				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
+				result->lineno = getLineNo(grant);
 				result->is_grant = true;
+				std::string schema_name;
+				if (grant->permission_object()->full_object_name()->object_name)
+				{
+					schema_name = stripQuoteFromId(grant->permission_object()->full_object_name()->object_name);
+					result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+				}
 				List *grantee_list = NIL;
-				for (auto prin : ctx->grant_statement()->principals()->principal_id())
+				for (auto prin : grant->principals()->principal_id())
 				{
 					if (prin->id())
 					{
@@ -5789,26 +5829,86 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
+				List *privilege_list = NIL;
+				for (auto perm: grant->permissions()->permission())
+				{
+					auto single_perm = perm->single_permission();
+					if (single_perm->EXECUTE())
+						privilege_list = lappend(privilege_list, (void *)"execute");
+					if (single_perm->EXEC())
+						privilege_list = lappend(privilege_list, (void *)"execute");
+					if (single_perm->SELECT())
+						privilege_list = lappend(privilege_list, (void *)"select");
+					if (single_perm->INSERT())
+						privilege_list = lappend(privilege_list, (void *)"insert");
+					if (single_perm->UPDATE())
+						privilege_list = lappend(privilege_list, (void *)"update");
+					if (single_perm->DELETE())
+						privilege_list = lappend(privilege_list, (void *)"delete");
+					if (single_perm->REFERENCES())
+						privilege_list = lappend(privilege_list, (void *)"references");
+				}
+				result->privileges = privilege_list;
+				if (grant->WITH())
+					result->with_grant_option = true;
 				result->grantees = grantee_list;
 				return (PLtsql_stmt *) result;
 			}
 		}
 	}
-	if (ctx->revoke_statement() && ctx->revoke_statement()->FROM() && !ctx->revoke_statement()->permission_object()
-								&& ctx->revoke_statement()->permissions())
+
+	else if (ctx->revoke_statement())
 	{
-		for (auto perm : ctx->revoke_statement()->permissions()->permission())
+		auto revoke = ctx->revoke_statement();
+		if (revoke->FROM() && !revoke->permission_object() && revoke->permissions())
 		{
-			auto single_perm = perm->single_permission();
-			if (single_perm->CONNECT())
+			for (auto perm : revoke->permissions()->permission())
 			{
-				PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
-				result->cmd_type = PLTSQL_STMT_GRANTDB;
-				result->lineno = getLineNo(ctx->revoke_statement());
+				auto single_perm = perm->single_permission();
+				if (single_perm->CONNECT())
+				{
+					PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+					result->cmd_type = PLTSQL_STMT_GRANTDB;
+					result->lineno = getLineNo(revoke);
+					result->is_grant = false;
+					List *grantee_list = NIL;
+
+					for (auto prin : revoke->principals()->principal_id())
+					{
+						if (prin->id())
+						{
+							std::string id_str = ::getFullText(prin->id());
+							char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
+							grantee_list = lappend(grantee_list, grantee_name);
+						}
+						if (prin->PUBLIC())
+						{
+							char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
+							grantee_list = lappend(grantee_list, grantee_name);
+						}
+					}
+					result->grantees = grantee_list;
+					return (PLtsql_stmt *) result;
+				}
+			}
+		}
+
+		else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
+		{
+			if (revoke->FROM() && revoke->principals() && revoke->permissions())
+			{
+				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
+				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
+				result->lineno = getLineNo(revoke);
 				result->is_grant = false;
+				std::string schema_name;
+				if (revoke->permission_object()->full_object_name()->object_name)
+				{
+					schema_name = stripQuoteFromId(revoke->permission_object()->full_object_name()->object_name);
+					result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+				}
 				List *grantee_list = NIL;
-
-				for (auto prin : ctx->revoke_statement()->principals()->principal_id())
+				for (auto prin : revoke->principals()->principal_id())
 				{
 					if (prin->id())
 					{
@@ -5822,120 +5922,29 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
 				}
+				List *privilege_list = NIL;
+				for (auto perm: revoke->permissions()->permission())
+				{
+					auto single_perm = perm->single_permission();
+					if (single_perm->EXECUTE())
+						privilege_list = lappend(privilege_list, (void *)"execute");
+					if (single_perm->EXEC())
+						privilege_list = lappend(privilege_list, (void *)"execute");
+					if (single_perm->SELECT())
+						privilege_list = lappend(privilege_list, (void *)"select");
+					if (single_perm->INSERT())
+						privilege_list = lappend(privilege_list, (void *)"insert");
+					if (single_perm->UPDATE())
+						privilege_list = lappend(privilege_list, (void *)"update");
+					if (single_perm->DELETE())
+						privilege_list = lappend(privilege_list, (void *)"delete");
+					if (single_perm->REFERENCES())
+						privilege_list = lappend(privilege_list, (void *)"references");
+				}
+				result->privileges = privilege_list;
 				result->grantees = grantee_list;
 				return (PLtsql_stmt *) result;
 			}
-		}
-	}
-	if (ctx->grant_statement() && ctx->grant_statement()->ON() && ctx->grant_statement()->permission_object()
-			&& ctx->grant_statement()->permission_object()->object_type() && ctx->grant_statement()->permission_object()->object_type()->SCHEMA())
-	{
-		if (ctx->grant_statement()->TO() && ctx->grant_statement()->principals() && ctx->grant_statement()->permissions())
-		{
-			PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
-			result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
-			result->lineno = getLineNo(ctx->grant_statement());
-			result->is_grant = true;
-			std::string schema_name;
-			if (ctx->grant_statement()->permission_object()->full_object_name()->object_name)
-			{
-				schema_name = stripQuoteFromId(ctx->grant_statement()->permission_object()->full_object_name()->object_name);
-				result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-			}
-			List *grantee_list = NIL;
-			for (auto prin : ctx->grant_statement()->principals()->principal_id())
-			{
-				if (prin->id())
-				{
-					std::string id_str = ::getFullText(prin->id());
-					char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
-					grantee_list = lappend(grantee_list, grantee_name);
-				}
-				if (prin->PUBLIC())
-				{
-					char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
-					grantee_list = lappend(grantee_list, grantee_name);
-				}
-			}
-			List *privilege_list = NIL;
-			for (auto perm: ctx->grant_statement()->permissions()->permission())
-			{
-				auto single_perm = perm->single_permission();
-				if (single_perm->EXECUTE())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->EXEC())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->SELECT())
-					privilege_list = lappend(privilege_list, (void *)"select");
-				if (single_perm->INSERT())
-					privilege_list = lappend(privilege_list, (void *)"insert");
-				if (single_perm->UPDATE())
-					privilege_list = lappend(privilege_list, (void *)"update");
-				if (single_perm->DELETE())
-					privilege_list = lappend(privilege_list, (void *)"delete");
-				if (single_perm->REFERENCES())
-					privilege_list = lappend(privilege_list, (void *)"references");
-			}
-			result->privileges = privilege_list;
-			if (ctx->grant_statement()->WITH())
-				result->with_grant_option = true;
-			result->grantees = grantee_list;
-			return (PLtsql_stmt *) result;
-		}
-	}
-
-	if (ctx->revoke_statement() && ctx->revoke_statement()->ON() && ctx->revoke_statement()->permission_object()
-			&& ctx->revoke_statement()->permission_object()->object_type() && ctx->revoke_statement()->permission_object()->object_type()->SCHEMA())
-	{
-		if (ctx->revoke_statement()->FROM() && ctx->revoke_statement()->principals() && ctx->revoke_statement()->permissions())
-		{
-			PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
-			result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
-			result->lineno = getLineNo(ctx->revoke_statement());
-			result->is_grant = false;
-			std::string schema_name;
-			if (ctx->revoke_statement()->permission_object()->full_object_name()->object_name)
-			{
-				schema_name = stripQuoteFromId(ctx->revoke_statement()->permission_object()->full_object_name()->object_name);
-				result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
-			}
-			List *grantee_list = NIL;
-			for (auto prin : ctx->revoke_statement()->principals()->principal_id())
-			{
-				if (prin->id())
-				{
-					std::string id_str = ::getFullText(prin->id());
-					char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
-					grantee_list = lappend(grantee_list, grantee_name);
-				}
-				if (prin->PUBLIC())
-				{
-					char *grantee_name = pstrdup(PUBLIC_ROLE_NAME);
-					grantee_list = lappend(grantee_list, grantee_name);
-				}
-			}
-			List *privilege_list = NIL;
-			for (auto perm: ctx->revoke_statement()->permissions()->permission())
-			{
-				auto single_perm = perm->single_permission();
-				if (single_perm->EXECUTE())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->EXEC())
-					privilege_list = lappend(privilege_list, (void *)"execute");
-				if (single_perm->SELECT())
-					privilege_list = lappend(privilege_list, (void *)"select");
-				if (single_perm->INSERT())
-					privilege_list = lappend(privilege_list, (void *)"insert");
-				if (single_perm->UPDATE())
-					privilege_list = lappend(privilege_list, (void *)"update");
-				if (single_perm->DELETE())
-					privilege_list = lappend(privilege_list, (void *)"delete");
-				if (single_perm->REFERENCES())
-					privilege_list = lappend(privilege_list, (void *)"references");
-			}
-			result->privileges = privilege_list;
-			result->grantees = grantee_list;
-			return (PLtsql_stmt *) result;
 		}
 	}
 

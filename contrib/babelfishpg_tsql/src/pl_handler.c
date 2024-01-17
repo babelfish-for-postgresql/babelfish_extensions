@@ -3636,15 +3636,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true);
 								else
 								{
-									bool has_schema_perms = false;
 									/*
 									 * 1. If permission on schema exists, don't revoke any permission from the object.
 									 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 									 */
-									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
-										has_schema_perms = true;
 									update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-									if (has_schema_perms)
+									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
 										return;
 								}
 							}
@@ -3732,11 +3729,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 1. If permission on schema exists, don't revoke any permission from the object.
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
-								bool has_schema_perms = false;
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
-									has_schema_perms = true;
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
-								if (has_schema_perms)
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
 									return;
 							}
 						}
