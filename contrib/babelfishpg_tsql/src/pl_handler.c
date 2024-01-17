@@ -1380,8 +1380,8 @@ handleForJsonAuto(Query *query)
 							numTables++;
 						} else if(subqRte->rtekind == RTE_SUBQUERY) {
 							ereport(ERROR,
-									(errcode(ERRCODE_UNDEFINED_TABLE),
-										errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+										errmsg("Values for json auto is not currently supported ")));
 						}
 					}
 

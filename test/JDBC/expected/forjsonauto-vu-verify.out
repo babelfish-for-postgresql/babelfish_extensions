@@ -148,9 +148,9 @@ nvarchar
 
 EXECUTE forjson_vu_p_5
 GO
-~~ERROR (Code: 13600)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.)~~
+~~ERROR (Message: Values for json auto is not currently supported )~~
 
 
 SELECT forjson_vu_f_1()
