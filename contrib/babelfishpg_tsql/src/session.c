@@ -59,7 +59,7 @@ set_cur_db_name_for_parallel_worker(const char* logical_db_name)
 
 	Assert(len <= MAX_BBF_NAMEDATALEND);
 
-	if(current_db_name == NULL || !DbidIsValid(get_db_id(logical_db_name)))
+	if(logical_db_name == NULL || !DbidIsValid(get_db_id(logical_db_name)))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", logical_db_name)));
