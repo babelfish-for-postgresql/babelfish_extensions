@@ -893,7 +893,7 @@ TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int int
 }
 
 void
-TdsSetAtAtStatVariable(enum TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal)
+TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal)
 {
 	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
 

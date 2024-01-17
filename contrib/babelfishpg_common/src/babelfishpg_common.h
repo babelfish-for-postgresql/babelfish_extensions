@@ -27,7 +27,12 @@
 #define BBF_Pragma_IgnoreFloatConversionWarning_Pop \
     _Pragma("GCC diagnostic pop")
 
-enum TdsAtAtVarType {rcount_type, err_type, trancount_type};
+typedef enum TdsAtAtVarType 
+{
+  rcount_type, 
+  err_type, 
+  trancount_type
+} TdsAtAtVarType;
 
 typedef struct common_utility_plugin
 {
