@@ -9508,7 +9508,7 @@ exec_set_rowcount(uint64 rowno)
 	rowcount_var = rowno;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(rcount_type, 0, rowcount_var);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(RCOUNT_TYPE, 0, rowcount_var);
 }
 
 int			latest_error_code;
@@ -9523,7 +9523,7 @@ exec_set_error(PLtsql_execstate *estate, int error, int pg_error, bool error_map
 	last_error_mapping_failed = error_mapping_failed;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(err_type, latest_error_code, 0);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(ERR_TYPE, latest_error_code, 0);
 }
 
 /*

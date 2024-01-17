@@ -901,13 +901,13 @@ TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal)
 
   switch (at_at_var)
   {
-    case rcount_type:
+    case RCOUNT_TYPE:
       vtdsentry->rowcount = bigintVal;
       break;
-    case err_type:
+    case ERR_TYPE:
       vtdsentry->error = intVal;
       break;
-    case trancount_type:
+    case TRANCOUNT_TYPE:
       vtdsentry->trancount = intVal;
       break;
     default:

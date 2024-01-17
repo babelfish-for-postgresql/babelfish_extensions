@@ -29,9 +29,9 @@
 
 typedef enum TdsAtAtVarType 
 {
-  rcount_type, 
-  err_type, 
-  trancount_type
+  RCOUNT_TYPE, 
+  ERR_TYPE, 
+  TRANCOUNT_TYPE
 } TdsAtAtVarType;
 
 typedef struct common_utility_plugin
