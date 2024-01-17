@@ -58,6 +58,9 @@ GO
 DROP FUNCTION forjson_vu_f_1()
 GO
 
+drop trigger forjson_vu_trigger_1;
+go
+
 DROP TABLE forjson_auto_vu_t_users
 GO
 

@@ -178,3 +178,13 @@ BEGIN
 END
 GO
 
+CREATE TRIGGER forjson_vu_trigger_1 on forjson_auto_vu_t_users for insert as
+begin
+    select U.Id AS "users.userid",
+           U.firstname as "firstname",
+           U.lastname as "lastname",
+           O.productId AS "order.productId"
+    FROM forjson_auto_vu_t_users U JOIN forjson_auto_vu_t_orders O ON (U.id = O.userid) FOR JSON AUTO
+end;
+go
+

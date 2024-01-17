@@ -57,3 +57,6 @@ GO
 
 SELECT forjson_vu_f_1()
 GO
+
+INSERT INTO forjson_auto_vu_t_users VALUES (1, 'e', 'o', 'testemail3')
+go

@@ -160,3 +160,13 @@ nvarchar
 [{"users.userid": 1, "o": [{"өглөө": 1, "product.oid": 2, "p": [{"product.price": "20", "s": [{"totalsales": 50}, {"totalsales": 50}]}]}, {"өглөө": 1, "product.oid": 1, "p": [{"product.price": "30", "s": [{"totalsales": 100}, {"totalsales": 100}]}]}, {"өглөө": 1, "product.oid": 2, "p": [{"product.price": "30", "s": [{"totalsales": 100}, {"totalsales": 100}]}]}, {"өглөө": 1, "product.oid": 1, "p": [{"product.price": "20", "s": [{"totalsales": 50}, {"totalsales": 50}]}]}]}]
 ~~END~~
 
+
+INSERT INTO forjson_auto_vu_t_users VALUES (1, 'e', 'o', 'testemail3')
+go
+~~START~~
+nvarchar
+[{"users.userid": 1, "firstname": "e", "lastname": "l", "o": [{"order.productId": 1}, {"order.productId": 1}]}, {"users.userid": 1, "firstname": "j", "lastname": "o", "o": [{"order.productId": 1}, {"order.productId": 1}]}, {"users.userid": 1, "firstname": "e", "lastname": "o", "o": [{"order.productId": 1}, {"order.productId": 1}]}]
+~~END~~
+
+~~ROW COUNT: 1~~
+
