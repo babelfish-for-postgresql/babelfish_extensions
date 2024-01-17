@@ -28,8 +28,8 @@ public class JDBCTempTable {
         long startTime = System.nanoTime();
 
         try {
-            test_oid_buffer(bw, logger);
             check_oids_equal(bw);
+            test_oid_buffer(bw, logger);
             concurrency_test(bw);
             psql_test(bw, logger);
         } catch (Exception e) {
@@ -181,6 +181,9 @@ public class JDBCTempTable {
                 String queryString = "CREATE TABLE #tab" + i + " (a int)";
                 s.execute(queryString);
             }
+            /* If we reach this point, we created more tables than we should have been able to. */
+            bw.write("Created more tables than buffer should have allowed for");
+            bw.newLine();
         } catch (Exception e) {
             if (!e.getMessage().startsWith("Unable to allocate oid for temp table.")) {
                 bw.write(e.getMessage());
@@ -288,6 +291,12 @@ public class JDBCTempTable {
                 bw.newLine();
             }
         }
+
+        psql2.close();
+        c2.close();
+        psql.close();
+        c.close();
+        connection.close();
     }
 }
 

@@ -27,20 +27,23 @@ TestResult *test_pltsql_GetNewTempObjectId(void)
 
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         result = pltsql_GetNewTempObjectId();
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
     TEST_ASSERT_TESTCASE(result == FirstNormalObjectId, testResult);
     TEST_ASSERT(result == FirstNormalObjectId, testResult);
 
-    /* Check oidCount as well. */
+    /* Check nextOid and oidCount as well. */
     LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+    TEST_ASSERT_TESTCASE(ShmemVariableCache->nextOid == FirstNormalObjectId + 100, testResult);
+    TEST_ASSERT(ShmemVariableCache->nextOid == FirstNormalObjectId + 100, testResult);
+
     TEST_ASSERT_TESTCASE(ShmemVariableCache->oidCount == 900, testResult);
     TEST_ASSERT(ShmemVariableCache->oidCount == 900, testResult);
     LWLockRelease(OidGenLock);
@@ -71,17 +74,20 @@ TestResult *test_pltsql_GetNewTempObjectId_tempOidStartSet(void)
 
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         result = pltsql_GetNewTempObjectId();
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
     TEST_ASSERT_TESTCASE(result == 222222, testResult);
     TEST_ASSERT(result == 222222, testResult);
+
+    TEST_ASSERT_TESTCASE(BUFFER_START_TO_OID == 222222, testResult);
+    TEST_ASSERT(BUFFER_START_TO_OID == 222222, testResult);
 
     return testResult;
 }
@@ -103,18 +109,21 @@ TestResult *test_pltsql_GetNewTempObjectId_oidCount(void)
     temp_oid_buffer_size = 100;
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         pltsql_GetNewTempObjectId();
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
     LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
-    TEST_ASSERT_TESTCASE(ShmemVariableCache->oidCount == VAR_OID_PREFETCH, testResult);
-    TEST_ASSERT(ShmemVariableCache->oidCount == VAR_OID_PREFETCH, testResult);
+    TEST_ASSERT_TESTCASE(ShmemVariableCache->oidCount == GetVarOidPrefetch(), testResult);
+    TEST_ASSERT(ShmemVariableCache->oidCount == GetVarOidPrefetch(), testResult);
+
+    TEST_ASSERT_TESTCASE(ShmemVariableCache->nextOid == FirstNormalObjectId + 100, testResult);
+    TEST_ASSERT(ShmemVariableCache->nextOid == FirstNormalObjectId + 100, testResult);
     LWLockRelease(OidGenLock);
 
     return testResult;
@@ -139,17 +148,28 @@ TestResult *test_pltsql_GetNewTempObjectId_endWraparound(void)
 
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         result = pltsql_GetNewTempObjectId();
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
     TEST_ASSERT_TESTCASE(result == FirstNormalObjectId, testResult);
     TEST_ASSERT(result == FirstNormalObjectId, testResult);
+
+    TEST_ASSERT_TESTCASE(ShmemVariableCache->oidCount == GetVarOidPrefetch(), testResult);
+    TEST_ASSERT(ShmemVariableCache->oidCount == GetVarOidPrefetch(), testResult);
+
+    LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+    TEST_ASSERT_TESTCASE(ShmemVariableCache->nextOid == FirstNormalObjectId + 101, testResult);
+    TEST_ASSERT(ShmemVariableCache->nextOid == FirstNormalObjectId + 101, testResult);
+    LWLockRelease(OidGenLock);
+
+    TEST_ASSERT_TESTCASE(BUFFER_START_TO_OID == FirstNormalObjectId, testResult);
+    TEST_ASSERT(BUFFER_START_TO_OID == FirstNormalObjectId, testResult);
 
     return testResult;
 }
@@ -173,12 +193,12 @@ TestResult *test_pltsql_GetNewTempObjectId_endBuffer(void)
 
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         result = pltsql_GetNewTempObjectId();
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
@@ -192,12 +212,12 @@ TestResult *test_pltsql_GetNewTempObjectId_endBuffer(void)
     {
         PG_TRY();
         {
-            persist_temp_oid_buffer_start_disable_catalog_update = true;
+            TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
             result = pltsql_GetNewTempObjectId();
         }
         PG_FINALLY();
         {
-            persist_temp_oid_buffer_start_disable_catalog_update = false;
+            TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
         }
         PG_END_TRY();
     }
@@ -233,12 +253,12 @@ TestResult *test_pltsql_GetNewTempOidWithIndex(void)
     
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         result = pltsql_GetNewTempOidWithIndex(rel, ClassOidIndexId, Anum_pg_class_oid);
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
@@ -270,12 +290,12 @@ TestResult *test_pltsql_GetNewTempOidWithIndex_endBuffer(void)
 
     PG_TRY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = true;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
         result = pltsql_GetNewTempOidWithIndex(rel, ClassOidIndexId, Anum_pg_class_oid);
     }
     PG_FINALLY();
     {
-        persist_temp_oid_buffer_start_disable_catalog_update = false;
+        TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
     }
     PG_END_TRY();
 
@@ -289,12 +309,12 @@ TestResult *test_pltsql_GetNewTempOidWithIndex_endBuffer(void)
     {
         PG_TRY();
         {
-            persist_temp_oid_buffer_start_disable_catalog_update = true;
+            TEST_persist_temp_oid_buffer_start_disable_catalog_update = true;
             result = pltsql_GetNewTempOidWithIndex(rel, ClassOidIndexId, Anum_pg_class_oid);
         }
         PG_FINALLY();
         {
-            persist_temp_oid_buffer_start_disable_catalog_update = false;
+            TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
         }
         PG_END_TRY();
     }

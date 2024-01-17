@@ -86,7 +86,7 @@ extern bool pltsql_ansi_nulls;
 #define BUFFER_START_TO_OID 			((Oid) (temp_oid_buffer_start) - INT_MIN)
 
 /* For unit testing, to avoid concurrent heap update issues. */
-bool persist_temp_oid_buffer_start_disable_catalog_update = false;
+bool TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
 
 /*****************************************
  * 			Catalog Hooks
@@ -603,7 +603,8 @@ pltsql_GetNewTempObjectId()
 	 * temp_oid_buffer_size = 0 would indicate that the feature is 
 	 * disabled, so we shouldn't even reach this code.
 	 */
-	Assert(temp_oid_buffer_size > 0);
+	if (temp_oid_buffer_size <= 0)
+		elog(ERROR, "temp_oid_buffer use is disabled");
 
 	if (!OidIsValid(BUFFER_START_TO_OID)) /* InvalidOid means it needs assigning */
 	{
@@ -672,15 +673,17 @@ pltsql_GetNewTempObjectId()
 		 *	- We should be continuous (IE the end of the buffer shouldn't wrap around to restricted OID range)
 		 * 	- We should be separate from the normal OID range
 		 */
-		Assert(BUFFER_START_TO_OID >= FirstNormalObjectId);
-		Assert(((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) > BUFFER_START_TO_OID);
-		Assert(BUFFER_START_TO_OID != ShmemVariableCache->nextOid);
+		if ((BUFFER_START_TO_OID < FirstNormalObjectId)
+		 || (((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) < BUFFER_START_TO_OID))
+			elog(ERROR, "OID buffer start is invalid");
+		if (ShmemVariableCache->nextOid < ((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) && ShmemVariableCache->nextOid > BUFFER_START_TO_OID)
+			elog(ERROR, "Normal OID range and Temp OID buffer intersect");
 
 		/* If we run out of logged for use oids then we must log more */
 		if (ShmemVariableCache->oidCount == 0)
 		{
-			XLogPutNextOid(ShmemVariableCache->nextOid + VAR_OID_PREFETCH);
-			ShmemVariableCache->oidCount = VAR_OID_PREFETCH;
+			XLogPutNextOid(ShmemVariableCache->nextOid + GetVarOidPrefetch());
+			ShmemVariableCache->oidCount = GetVarOidPrefetch();
 		}
 		
 		LWLockRelease(OidGenLock);
@@ -4392,6 +4395,9 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 
 	babelfish_db_id = get_database_oid(babelfish_db_name, true);
 
+	if (!OidIsValid(babelfish_db_id))
+		return false;
+
 	new_oid_str = psprintf("%d", translated_oid);
 
 	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
@@ -4427,7 +4433,11 @@ static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
 	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
 									repl_val, repl_null, repl_repl);
 	
-	if (!persist_temp_oid_buffer_start_disable_catalog_update)
+	/*
+	 * During unit tests, this will crash if it's executed multiple times in the same transaction since
+	 * concurrent tuple updates are not allowed.
+	 */
+	if (!TEST_persist_temp_oid_buffer_start_disable_catalog_update)
 		CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
 
 	systable_endscan(scan);
