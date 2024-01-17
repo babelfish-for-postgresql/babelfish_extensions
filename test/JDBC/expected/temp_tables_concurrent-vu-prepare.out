@@ -1,0 +1,9 @@
+
+--tsql user=u1 password=123
+CREATE TABLE non_temp_table_1(a int)
+GO
+
+
+--tsql user=u2 password=123
+CREATE TABLE non_temp_table_2(a int)
+GO

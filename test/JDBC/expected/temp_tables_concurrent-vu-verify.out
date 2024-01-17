@@ -1,0 +1,45 @@
+--tsql user=u1 password=123
+CREATE TABLE #temp_table_t1(a int)
+GO
+
+CREATE TABLE #temp_table_t2(a int)
+GO
+
+declare @r1 int
+declare @r2 int
+select @r1 = oid FROM pg_class WHERE relname='non_temp_table_1';
+select @r2 = reloid FROM sys.babelfish_get_enr_list() WHERE relname='#temp_table_t1';
+select 1 where @r1 - @r2 > 65000
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP TABLE #temp_table_t1
+DROP TABLE #temp_table_t2
+GO
+
+--tsql user=u2 password=123
+CREATE TABLE #temp_table_t1(a int)
+GO
+
+CREATE TABLE #temp_table_t2(a int)
+GO
+
+declare @r1 int
+declare @r2 int
+select @r1 = oid FROM pg_class WHERE relname='non_temp_table_2';
+select @r2 = reloid FROM sys.babelfish_get_enr_list() WHERE relname='#temp_table_t1';
+select 1 where @r1 - @r2 > 65000
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP TABLE #temp_table_t1
+DROP TABLE #temp_table_t2
+GO

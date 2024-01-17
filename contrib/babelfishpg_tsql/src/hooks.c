@@ -1,8 +1,11 @@
 #include "postgres.h"
 
+#include <unistd.h>
+
 #include "access/genam.h"
 #include "access/htup.h"
 #include "access/table.h"
+#include "access/transam.h"
 #include "catalog/heap.h"
 #include "utils/pg_locale.h"
 #include "access/xact.h"
@@ -12,13 +15,16 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_db_role_setting.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_tablespace.h"
 #include "commands/copy.h"
+#include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
 #include "commands/view.h"
@@ -52,6 +58,7 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/ruleutils.h"
+#include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
@@ -75,6 +82,11 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 
+#define OID_TO_BUFFER_START(oid) 		((oid) + INT_MIN)
+#define BUFFER_START_TO_OID 			((Oid) (temp_oid_buffer_start) - INT_MIN)
+
+/* For unit testing, to avoid concurrent heap update issues. */
+bool TEST_persist_temp_oid_buffer_start_disable_catalog_update = false;
 
 /*****************************************
  * 			Catalog Hooks
@@ -143,6 +155,9 @@ static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_blo
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 static void pltsql_GetNewObjectId(VariableCache variableCache);
+static Oid  pltsql_GetNewTempObjectId(void);
+static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
 									  PlannedStmt *pstmt,
@@ -210,6 +225,8 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
+static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
+static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
@@ -322,6 +339,12 @@ InstallExtendedHooks(void)
 
 	prev_GetNewObjectId_hook = GetNewObjectId_hook;
 	GetNewObjectId_hook = pltsql_GetNewObjectId;
+
+	prev_GetNewTempObjectId_hook = GetNewTempObjectId_hook;
+	GetNewTempObjectId_hook = pltsql_GetNewTempObjectId;
+
+	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
+	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -438,6 +461,8 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
+	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
+	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
@@ -555,6 +580,191 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 
 	ShmemVariableCache->nextOid = minOid + 1;
 	ShmemVariableCache->oidCount = 0;
+}
+
+static Oid
+pltsql_GetNewTempObjectId()
+{
+	Oid			result;
+	Oid			tempOidStart;
+	static Oid 	nextTempOid = InvalidOid;
+
+	/* safety check, we should never get this far in a HS standby */
+	if (RecoveryInProgress())
+		elog(ERROR, "cannot assign OIDs during recovery");
+
+	/*
+	 * temp_oid_buffer_size = 0 would indicate that the feature is 
+	 * disabled, so we shouldn't even reach this code.
+	 */
+	if (temp_oid_buffer_size <= 0)
+		elog(ERROR, "temp_oid_buffer use is disabled");
+
+	if (!OidIsValid(BUFFER_START_TO_OID)) /* InvalidOid means it needs assigning */
+	{
+		/* First check to see if another connection has already picked a start, then update. */
+		LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
+		if (OidIsValid(ShmemVariableCache->tempOidStart))
+		{
+			/*
+			 * Persist the newfound value of temp_oid_buffer_start to disk (via pg_settings).
+			 *
+			 * If for whatever reason this fails, we will fallback to manually updating the GUC,
+			 * which won't be crash-resilient, but won't cause loss of functionality.
+			 */
+			if (!set_and_persist_temp_oid_buffer_start(ShmemVariableCache->tempOidStart))
+			{
+				elog(WARNING, "unable to persist temp_oid_buffer_start");
+				temp_oid_buffer_start = OID_TO_BUFFER_START(ShmemVariableCache->tempOidStart);
+			}
+			nextTempOid = ShmemVariableCache->tempOidStart;
+		}
+		else
+		{
+			/* We need to pick a new start for the buffer range. */
+			tempOidStart = ShmemVariableCache->nextOid;
+
+			/*
+			 * Decrement ShmemVariableCache->oidCount to take into account the new buffer we're allocating
+			 */
+			if (ShmemVariableCache->oidCount < temp_oid_buffer_size)
+				ShmemVariableCache->oidCount = 0;
+			else
+				ShmemVariableCache->oidCount -= temp_oid_buffer_size;
+
+			/*
+			 * If ShmemVariableCache->nextOid is below FirstNormalObjectId then we can start at FirstNormalObjectId here and
+			 * GetNewObjectId will return the right value on the next call.  
+			 */
+			if (tempOidStart < FirstNormalObjectId)
+				tempOidStart = FirstNormalObjectId;
+
+			/* If the OID range would wraparound, start from beginning instead. */
+			if (tempOidStart + temp_oid_buffer_size < tempOidStart)
+			{
+				tempOidStart = FirstNormalObjectId;
+
+				/* As in GetNewObjectId - wraparound in standalone mode (unlikely but possible) */
+				ShmemVariableCache->oidCount = 0;
+			}
+
+			if (!set_and_persist_temp_oid_buffer_start(tempOidStart))
+			{
+				elog(WARNING, "unable to persist temp_oid_buffer_start");
+				temp_oid_buffer_start = OID_TO_BUFFER_START(ShmemVariableCache->tempOidStart);
+			}
+			ShmemVariableCache->tempOidStart = tempOidStart;
+
+			nextTempOid = (Oid) tempOidStart;
+
+			/* Skip nextOid ahead to end of range here as well. */
+			ShmemVariableCache->nextOid = (Oid) (tempOidStart + temp_oid_buffer_size);
+		}
+
+		/*
+		 * Invariant checks:
+		 * 	- We should not be in the restricted OID range
+		 *	- We should be continuous (IE the end of the buffer shouldn't wrap around to restricted OID range)
+		 * 	- We should be separate from the normal OID range
+		 */
+		if ((BUFFER_START_TO_OID < FirstNormalObjectId)
+		 || (((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) < BUFFER_START_TO_OID))
+			elog(ERROR, "OID buffer start is invalid");
+		if (ShmemVariableCache->nextOid < ((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) && ShmemVariableCache->nextOid > BUFFER_START_TO_OID)
+			elog(ERROR, "Normal OID range and Temp OID buffer intersect");
+
+		/* If we run out of logged for use oids then we must log more */
+		if (ShmemVariableCache->oidCount == 0)
+		{
+			XLogPutNextOid(ShmemVariableCache->nextOid + GetVarOidPrefetch());
+			ShmemVariableCache->oidCount = GetVarOidPrefetch();
+		}
+		
+		LWLockRelease(OidGenLock);
+	}
+
+	/*
+	 * Check for wraparound of the temp OID buffer.
+	 */
+	if (nextTempOid >= (Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size) 
+			|| nextTempOid < BUFFER_START_TO_OID)
+	{
+		/*
+		 * Invariant checks:
+		 * 	- We should not be in the restricted OID range
+		 *	- We should be continuous (IE the end of the buffer shouldn't wrap around to restricted OID range)
+		 * 	- We should be separate from the normal OID range
+		 */
+		Assert(BUFFER_START_TO_OID >= FirstNormalObjectId);
+		Assert(((Oid) (BUFFER_START_TO_OID + temp_oid_buffer_size)) > BUFFER_START_TO_OID);
+		Assert(BUFFER_START_TO_OID != ShmemVariableCache->nextOid);
+	
+		nextTempOid = BUFFER_START_TO_OID;
+	}
+
+	result = nextTempOid;
+	nextTempOid++;
+
+	return result;
+}
+
+Oid
+pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
+{
+	Oid			newOid;
+	SysScanDesc scan;
+	ScanKeyData key;
+	bool		collides;
+	uint64		retries = 0;
+
+	/* Only system relations are supported */
+	Assert(IsSystemRelation(relation));
+
+	/*
+	 * We should never be asked to generate a new pg_type OID during
+	 * pg_upgrade; doing so would risk collisions with the OIDs it wants to
+	 * assign.  Hitting this assert means there's some path where we failed to
+	 * ensure that a type OID is determined by commands in the dump script.
+	 */
+	Assert(!IsBinaryUpgrade);
+
+	/*
+	 * temp_oid_buffer_size = 0 would indicate that the feature is 
+	 * disabled, so we shouldn't even reach this code.
+	 */
+	Assert(temp_oid_buffer_size > 0);
+
+	/* Generate new OIDs until we find one not in the table */
+	do
+	{
+		CHECK_FOR_INTERRUPTS();
+
+		newOid = pltsql_GetNewTempObjectId();
+
+		ScanKeyInit(&key,
+					oidcolumn,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(newOid));
+
+		/* see notes above about using SnapshotAny */
+		scan = systable_beginscan(relation, indexId, true,
+								  SnapshotAny, 1, &key);
+
+		collides = HeapTupleIsValid(systable_getnext(scan));
+
+		systable_endscan(scan);
+
+		/*
+		 * Provide a useful error message about temp table OID usage if the entire buffer is used. 
+		 */
+		if (retries >= temp_oid_buffer_size)
+			ereport(ERROR,
+				(errmsg("Unable to allocate oid for temp table. Drop some temporary tables or start a new session.")));
+
+		retries++;
+	} while (collides);
+
+	return newOid;
 }
 
 static void
@@ -4151,6 +4361,88 @@ pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 errmsg("The scale %d for \'%s\' datatype must be within the range 0 to precision %d",
 							scale[1], dataTypeName, scale[0])));
 	}
+}
+
+/*
+ * To properly persist a new value of temp_oid_buffer_start, we must set it
+ * in pg_settings, as it would in an ALTER DATABASE ... SET ... command.
+ *
+ * Returns true on success.
+ */
+static bool set_and_persist_temp_oid_buffer_start(Oid new_oid)
+{
+	HeapTuple	tuple, newtuple;
+	Relation	rel;
+	ScanKeyData scankey[2];
+	SysScanDesc scan;
+	const char *babelfish_db_name = NULL;
+	char 	   *new_oid_str = NULL;
+	Oid			babelfish_db_id = InvalidOid;
+	int 		translated_oid = OID_TO_BUFFER_START(new_oid);
+	Datum		repl_val[Natts_pg_db_role_setting];
+	bool		repl_null[Natts_pg_db_role_setting];
+	bool		repl_repl[Natts_pg_db_role_setting];
+	Datum		datum;
+	ArrayType  *a;
+
+	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
+	if (!babelfish_db_name)
+		return false;
+
+	babelfish_db_id = get_database_oid(babelfish_db_name, true);
+
+	if (!OidIsValid(babelfish_db_id))
+		return false;
+
+	new_oid_str = psprintf("%d", translated_oid);
+
+	rel = table_open(DbRoleSettingRelationId, RowExclusiveLock);
+	ScanKeyInit(&scankey[0],
+				Anum_pg_db_role_setting_setdatabase,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(babelfish_db_id));
+	ScanKeyInit(&scankey[1],
+				Anum_pg_db_role_setting_setrole,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+	scan = systable_beginscan(rel, DbRoleSettingDatidRolidIndexId, true,
+							  NULL, 2, scankey);
+	tuple = systable_getnext(scan);
+
+	/* temp_oid_buffer_start has a default setting, so it should be there already. */
+	if (!HeapTupleIsValid(tuple))
+		return false;
+
+	memset(repl_repl, false, sizeof(repl_repl));
+	repl_repl[Anum_pg_db_role_setting_setconfig - 1] = true;
+	repl_null[Anum_pg_db_role_setting_setconfig - 1] = false;
+
+	Assert(strlen(new_oid_str) > 0);
+	datum = CStringGetTextDatum(psprintf("%s=%s", "babelfishpg_tsql.temp_oid_buffer_start", new_oid_str));
+	a = construct_array(&datum, 1,
+							TEXTOID,
+							-1, false, TYPALIGN_INT);
+
+	repl_val[Anum_pg_db_role_setting_setconfig - 1] =
+		PointerGetDatum(a);
+
+	newtuple = heap_modify_tuple(tuple, RelationGetDescr(rel),
+									repl_val, repl_null, repl_repl);
+	
+	/*
+	 * During unit tests, this will crash if it's executed multiple times in the same transaction since
+	 * concurrent tuple updates are not allowed.
+	 */
+	if (!TEST_persist_temp_oid_buffer_start_disable_catalog_update)
+		CatalogTupleUpdate(rel, &tuple->t_self, newtuple);
+
+	systable_endscan(scan);
+
+	table_close(rel, RowExclusiveLock);
+
+	temp_oid_buffer_start = translated_oid;
+
+	return true;
 }
 
 /*
