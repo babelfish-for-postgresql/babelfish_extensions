@@ -30,12 +30,32 @@ POINT(22.349 -47.651)
 ~~END~~
 
 
+DECLARE @point geometry; 
+SET @point = geometry::Point(1.0, 2.0, 4326); 
+SELECT @point.STX AS XCoordinate;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+DECLARE @point2 geometry = geometry::Point(3.0, 4.0, 4326);
+SELECT @point1.STDistance(@point2) AS Distance;
+GO
+~~START~~
+float
+2.8284271247461903
+~~END~~
+
+
 DECLARE @point geometry;
 SET @point = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT stx(@point);
-SELECT sty(@point);
-SELECT @point.stx;
-SELECT @point.sty;
+SELECT STX(@point);
+SELECT STY(@point);
+SELECT @point.STX;
+SELECT @point.STY;
 Go
 ~~START~~
 float
@@ -60,10 +80,10 @@ float
 
 DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
-SELECT stx(@point);
-SELECT sty(@point);
-SELECT @point.stx;
-SELECT @point.sty;
+SELECT STX(@point);
+SELECT STY(@point);
+SELECT @point.STX;
+SELECT @point.STY;
 Go
 ~~START~~
 float
@@ -110,26 +130,24 @@ go
 ~~ROW COUNT: 1~~
 
 
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 select geometry::Point(@STX.STX, @STX.STY, 4326).STX, geometry::Point(@STX.STX, @STX.STY, 4326).STY;
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+float#!#float
+-122.349#!#47.651
+~~END~~
 
-~~ERROR (Message: syntax error at or near ".")~~
 
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @STX geometry;
 SET @STX = geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 select geometry::Point(@STX.STX, @STX.STY, 4326).STAsText(), geometry::Point(@STX.STX, @STX.STY, 4326).STAsBinary(), geometry::Point(@STX.STX, @STX.STY, 4326).STDistance(geometry::Point(@STX.STX, @STX.STY, 4326));
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+text#!#varbinary#!#float
+POINT(-122.349 47.651)#!#01010000007593180456965EC017D9CEF753D34740#!#0.0
+~~END~~
 
 
 -- Null test for Geospatial functions
@@ -196,7 +214,7 @@ SELECT location.LAT from SPATIALPOINTGEOM_dt;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function sys.lat(geometry) does not exist)~~
+~~ERROR (Message: column notation .lat applied to type geometry, which is not a composite type)~~
 
 
 SELECT * FROM GeomView;
@@ -436,7 +454,7 @@ float
 131.52562336670374
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: ST_Distance: Operation on mixed SRID geometries (Point, 0) != (Point, 4326))~~
+~~ERROR (Message: ST_Distance: Operation on mixed SRID geometries (Point, 4326) != (Point, 0))~~
 
 
 SELECT [SPATIALPOINTGEOM_dt].[location].[STX] from [SPATIALPOINTGEOM_dt];
@@ -491,6 +509,786 @@ E6100000010C000000000000F03F0000000000000040
 00000000010C17D9CEF753D34740D34D6210585936C0
 E6100000010C7593180456965EC017D9CEF753D34740
 ~~END~~
+
+
+SELECT PointColumn.STX AS XCoordinate FROM YourTable;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+SELECT * FROM YourTable WHERE PointColumn.STX > 3.0;
+GO
+~~START~~
+int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT * FROM YourTable WHERE PointColumn.STX > @point.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable;
+GO
+~~START~~
+int#!#float
+1#!#3.0
+2#!#5.0
+~~END~~
+
+
+SELECT ID, dbo.GetXCoordinate(PointColumn) AS XCoordinate FROM YourTable;
+GO
+~~START~~
+int#!#float
+1#!#3.0
+2#!#5.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT dbo.GetXCoordinate(@point);
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX = TableB.PointB.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX > @point.STX;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+~~END~~
+
+
+SELECT * FROM YourTable ORDER BY PointColumn.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT * FROM YourTable ORDER BY @point.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate,
+CASE WHEN PointColumn.STX > 3.0 THEN 'High X' 
+ELSE 'Low X' 
+END AS XCoordinateCategory FROM YourTable;
+GO
+~~START~~
+int#!#float#!#text
+1#!#3.0#!#Low X
+2#!#5.0#!#High X
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, PointColumn.STX AS XCoordinate,
+CASE WHEN @point.STX > 3.0 THEN 'High X' 
+ELSE 'Low X' 
+END AS XCoordinateCategory FROM YourTable;
+GO
+~~START~~
+int#!#float#!#text
+1#!#3.0#!#Low X
+2#!#5.0#!#Low X
+~~END~~
+
+
+WITH PointData AS ( SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ) 
+SELECT * FROM PointData WHERE XCoordinate > 3.0;
+GO
+~~START~~
+int#!#float
+2#!#5.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+WITH PointData AS ( SELECT ID, @point.STX AS XCoordinate FROM YourTable )
+SELECT * FROM PointData WHERE XCoordinate > 3.0;
+GO
+~~START~~
+int#!#float
+~~END~~
+
+
+SELECT PointColumn.STX AS XCoordinate, COUNT(*) AS PointCount 
+FROM YourTable GROUP BY PointColumn.STX;
+GO
+~~START~~
+float#!#int
+3.0#!#1
+5.0#!#1
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT @point.STX AS XCoordinate, COUNT(*) AS PointCount 
+FROM YourTable GROUP BY PointColumn.STX;
+GO
+~~START~~
+float#!#int
+1.0#!#1
+1.0#!#1
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate, 
+PointColumn.STX - LAG(PointColumn.STX) OVER (ORDER BY ID) AS XCoordinateDifference 
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#float
+1#!#3.0#!#<NULL>
+2#!#5.0#!#2.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, @point.STX AS XCoordinate, 
+@point.STX - LAG(@point.STX) OVER (ORDER BY ID) AS XCoordinateDifference 
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#float
+1#!#1.0#!#<NULL>
+2#!#1.0#!#0.0
+~~END~~
+
+
+DECLARE @XCoordinate FLOAT = 3.0;
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX));
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@point.STX AS NVARCHAR(MAX));
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000008400000000000001040
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+EXEC GetPointsByXCoordinate @XCoordinate = 4.0;
+GO
+~~START~~
+int#!#geometry
+~~END~~
+
+
+EXEC GetPointsByXCoordinate1 @XCoordinate = 4.0;
+GO
+~~START~~
+int#!#float
+~~END~~
+
+
+DECLARE @XCoordinate FLOAT = 3.0; 
+DECLARE @DynamicQuery NVARCHAR(MAX); 
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX)); 
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+2#!#E6100000010C00000000000014400000000000001840
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate, CASE WHEN PointColumn.STX < 0 
+THEN 'Negative X' WHEN PointColumn.STX = 0 THEN 'Zero X' 
+ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable;
+GO
+~~START~~
+int#!#float#!#text
+1#!#3.0#!#Positive X
+2#!#5.0#!#Positive X
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, @point.STX AS XCoordinate, CASE WHEN @point.STX < 0 
+THEN 'Negative X' WHEN @point.STX = 0 THEN 'Zero X' 
+ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable;
+GO
+~~START~~
+int#!#float#!#text
+1#!#1.0#!#Positive X
+2#!#1.0#!#Positive X
+~~END~~
+
+
+SELECT * FROM ( SELECT ID,
+CASE WHEN PointColumn.STX BETWEEN 0 AND 5 THEN '0-5'
+WHEN PointColumn.STX BETWEEN 5.1 AND 10 THEN '5.1-10'
+ELSE '10.1+'
+END AS XCoordRange
+FROM YourTable
+) AS Source
+PIVOT ( COUNT(ID) FOR XCoordRange IN ([0-5], [5.1-10], [10.1+])) AS PivotTable;
+GO
+~~START~~
+int#!#int#!#int
+2#!#0#!#0
+~~END~~
+
+
+SELECT ID, PointColumn.STX AS XCoordinate,
+JSON_QUERY('{"XCoordinate":' + CAST(PointColumn.STX AS NVARCHAR(MAX)) + '}') AS XCoordinateJson 
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#3.0#!#{"XCoordinate": 3}
+2#!#5.0#!#{"XCoordinate": 5}
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(3.0, 2.0, 4326);
+SELECT ID, @point.STX AS XCoordinate,
+JSON_QUERY('{"XCoordinate":' + CAST(@point.STX AS NVARCHAR(MAX)) + '}') AS XCoordinateJson 
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#3.0#!#{"XCoordinate": 3}
+2#!#3.0#!#{"XCoordinate": 3}
+~~END~~
+
+
+SELECT [PointColumn].[STX] AS XCoordinate FROM [YourTable];
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+DECLARE @point geometry = geometry::Point(3.0, 2.0, 4326);
+SELECT @point.[STX] AS XCoordinate
+GO
+~~START~~
+float
+3.0
+~~END~~
+
+
+SELECT PointColumn.STX AS XCoordinate FROM YourTable;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+SELECT YourTable.PointColumn.STX AS XCoordinate FROM YourTable;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+SELECT dbo.YourTable.PointColumn.STX AS XCoordinate FROM YourTable;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The multi-part identifier "dbo.YourTable.PointColumn.STX" could not be bound.)~~
+
+
+SELECT YourTable1.STX.STX AS XCoordinate FROM YourTable1;
+GO
+~~START~~
+float
+3.0
+5.0
+~~END~~
+
+
+DECLARE @result geometry;
+SET @result = dbo.GetGeometry();
+DECLARE @xCoordinate float;
+SET @xCoordinate = @result.STX;
+SELECT @result AS ResultGeometry, @xCoordinate AS XCoordinate;
+GO
+~~START~~
+geometry#!#float
+E6100000010C000000000000F03F0000000000000040#!#1.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
+UPDATE YourTable SET PointColumn = @referencePoint
+WHERE PointColumn.STX >= @referencePoint.STX;
+GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance FROM YourTable2;
+GO
+~~START~~
+int#!#float
+1#!#1.4142135623730951
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, PointColumn1.STDistance(@point1) AS Distance FROM YourTable2;
+GO
+~~START~~
+int#!#float
+1#!#2.8284271247461903
+~~END~~
+
+
+DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
+SELECT ID, @point1.STDistance(PointColumn2) AS Distance FROM YourTable2;
+GO
+~~START~~
+int#!#float
+1#!#4.242640687119285
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @maxDistance float = 5.0;
+SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @maxDistance;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable WHERE @referencePoint.STDistance(PointColumn) <= @referencePoint.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @referencePoint.STX;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+SELECT ID, dbo.CalculateDistance(PointColumn1, PointColumn2) AS Distance FROM YourTable2;
+GO
+~~START~~
+int#!#float
+1#!#1.4142135623730951
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, dbo.CalculateDistance(@referencePoint, PointColumn2) AS Distance FROM YourTable2;
+GO
+~~START~~
+int#!#float
+1#!#6.4031242374328485
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, dbo.CalculateDistance(PointColumn1, @referencePoint) AS Distance FROM YourTable2;
+GO
+~~START~~
+int#!#float
+1#!#5.0
+~~END~~
+
+
+SELECT * FROM TableA JOIN TableB ON PointA.STDistance(TableB.PointB) <= 5.0;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON @referencePoint.STDistance(TableB.PointB) <= 5.0;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON PointA.STDistance(@referencePoint) <= 5.0;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON TableB.PointB.STDistance(@referencePoint) <= 5.0;
+GO
+~~START~~
+int#!#geometry#!#int#!#geometry
+1#!#E6100000010C000000000000F03F0000000000000040#!#1#!#E6100000010C00000000000008400000000000001040
+~~END~~
+
+
+SELECT * FROM YourTable2 ORDER BY PointColumn1.STDistance(PointColumn2);
+GO
+~~START~~
+int#!#geometry#!#geometry
+1#!#E6100000010C00000000000008400000000000001040#!#E6100000010C00000000000010400000000000001440
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable ORDER BY PointColumn.STDistance(@referencePoint);
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM YourTable ORDER BY @referencePoint.STDistance(PointColumn);
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @thresholdDistance float = 3.0;
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS DistanceBetweenPoints,
+CASE WHEN PointColumn1.STDistance(PointColumn2) <= @thresholdDistance THEN 'Close' ELSE 'Far'
+END AS Proximity
+FROM YourTable2;
+GO
+~~START~~
+int#!#float#!#text
+1#!#1.4142135623730951#!#Close
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn1.STDistance(@referencePoint) AS DistanceBetweenPoints,
+CASE WHEN @referencePoint.STDistance(PointColumn2) <= @referencePoint.STX THEN 'Close' ELSE 'Far'
+END AS Proximity
+FROM YourTable2;
+GO
+~~START~~
+int#!#float#!#text
+1#!#5.0#!#Far
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+WITH DistanceCTE AS ( SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable)
+SELECT * FROM DistanceCTE WHERE Distance <= 3.0;
+GO
+~~START~~
+int#!#float
+1#!#0.0
+2#!#0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+WITH DistanceCTE AS ( SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance FROM YourTable)
+SELECT * FROM DistanceCTE WHERE Distance <= 3.0;
+GO
+~~START~~
+int#!#float
+1#!#0.0
+2#!#0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @distanceInterval float = 5.0;
+SELECT ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval AS DistanceGroup,
+COUNT(*) AS PointCount
+FROM YourTable
+GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval;
+GO
+~~START~~
+float#!#int
+0.0#!#2
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
+SELECT ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS DistanceGroup,
+COUNT(*) AS PointCount
+FROM YourTable
+GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX;
+GO
+~~START~~
+float#!#int
+1.0#!#2
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance,
+PointColumn1.STDistance(@referencePoint) - LAG(PointColumn1.STDistance(PointColumn2)) OVER (ORDER BY ID) AS DistanceDifference 
+FROM YourTable2;
+GO
+~~START~~
+int#!#float#!#float
+1#!#1.4142135623730951#!#<NULL>
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance,
+@referencePoint.STDistance(PointColumn) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS DistanceDifference
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#float
+1#!#0.0#!#<NULL>
+2#!#0.0#!#0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @maxDistance float = 3.0;
+EXEC GetPointsWithinDistance @referencePoint, @maxDistance;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @maxDistance float = 3.0;
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N'
+SELECT * FROM YourTable
+WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@maxDistance AS NVARCHAR(MAX));
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @DynamicQuery NVARCHAR(MAX);
+SET @DynamicQuery = N'
+SELECT * FROM YourTable
+WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@referencePoint.STX AS NVARCHAR(MAX));
+EXEC sp_executesql @DynamicQuery;
+GO
+~~START~~
+int#!#geometry
+1#!#E6100000010C00000000000000000000000000000000
+2#!#E6100000010C00000000000000000000000000000000
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @thresholdDistance float = 3.0;
+SELECT ID, PointColumn.STDistance(@referencePoint) AS DistanceToReferencePoint,
+CASE WHEN PointColumn.STDistance(@referencePoint) <= @thresholdDistance THEN 'Close'
+ELSE 'Far'
+END AS Proximity
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#text
+1#!#0.0#!#Close
+2#!#0.0#!#Close
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, @referencePoint.STDistance(PointColumn) AS DistanceToReferencePoint,
+CASE WHEN @referencePoint.STDistance(PointColumn) <= @referencePoint.STY THEN 'Close'
+ELSE 'Far'
+END AS Proximity
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#text
+1#!#0.0#!#Close
+2#!#0.0#!#Close
+~~END~~
+
+
+DECLARE @distanceRanges TABLE (MinDistance float, MaxDistance float);
+INSERT INTO @distanceRanges VALUES (0, 5), (5, 10), (10, 15);
+SELECT * FROM ( SELECT ID,
+CASE WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 0 AND 5 THEN '0-5'
+WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 5.1 AND 10 THEN '5.1-10'
+WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 10.1 AND 15 THEN '10.1-15'
+ELSE '15.1+'
+END AS DistanceRange
+FROM YourTable2
+) AS Source
+PIVOT ( COUNT(ID) FOR DistanceRange IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
+GO
+~~ROW COUNT: 3~~
+
+~~START~~
+int#!#int#!#int#!#int
+1#!#0#!#0#!#0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance,
+JSON_QUERY('{"Distance":' + CAST(PointColumn.STDistance(@referencePoint) AS NVARCHAR(MAX)) + '}') AS DistanceJson
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#0.0#!#{"Distance": 0}
+2#!#0.0#!#{"Distance": 0}
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance,
+JSON_QUERY('{"Distance":' + CAST(@referencePoint.STDistance(PointColumn) AS NVARCHAR(MAX)) + '}') AS DistanceJson
+FROM YourTable;
+GO
+~~START~~
+int#!#float#!#nvarchar
+1#!#0.0#!#{"Distance": 0}
+2#!#0.0#!#{"Distance": 0}
+~~END~~
+
+
+SELECT [PointColumn1].STDistance([PointColumn2]) AS distance FROM [YourTable2];
+GO
+~~START~~
+float
+1.4142135623730951
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+DECLARE @thresholdDistance float = 10.0;
+DECLARE @sql NVARCHAR(MAX);
+DECLARE @params NVARCHAR(MAX);
+SET @sql = N'
+SELECT ID, PointColumn.STDistance(@referencePoint) AS DistanceToReferencePoint,
+CASE WHEN PointColumn.STDistance(@referencePoint) <= @thresholdDistance THEN ''Close''
+ELSE ''Far''
+END AS Proximity
+FROM YourTable
+WHERE PointColumn.STDistance(@referencePoint) <= @thresholdDistance;';
+SET @params = N'@referencePoint geometry, @thresholdDistance float';
+EXEC sp_executesql @sql, @params, @referencePoint, @thresholdDistance;
+GO
+~~START~~
+int#!#float#!#text
+1#!#0.0#!#Close
+2#!#0.0#!#Close
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable;
+SELECT YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable;
+GO
+~~START~~
+float
+0.0
+0.0
+~~END~~
+
+~~START~~
+float
+0.0
+0.0
+~~END~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT dbo.YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Remote procedure/function reference with 4-part object name is not currently supported in Babelfish)~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
+UPDATE YourTable SET PointColumn = @referencePoint
+WHERE PointColumn.STDistance(@referencePoint) <= 2.0;
+GO
+~~ROW COUNT: 2~~
+
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
+UPDATE YourTable SET PointColumn = @referencePoint
+WHERE @referencePoint.STDistance(PointColumn) <= 2.0;
+GO
+~~ROW COUNT: 2~~
 
 
 -- Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
@@ -796,10 +1594,10 @@ POINT(-47.651 22.349)
 
 DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT long(@point);
-SELECT lat(@point);
-SELECT @point.long;
-SELECT @point.lat;
+SELECT LONG(@point);
+SELECT LAT(@point);
+SELECT @point.LONG;
+SELECT @point.LAT;
 Go
 ~~START~~
 float
@@ -824,10 +1622,10 @@ float
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT long(@point);
-SELECT lat(@point);
-SELECT @point.long;
-SELECT @point.lat;
+SELECT LONG(@point);
+SELECT LAT(@point);
+SELECT @point.LONG;
+SELECT @point.LAT;
 Go
 ~~START~~
 float
@@ -874,26 +1672,24 @@ go
 ~~ROW COUNT: 1~~
 
 
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @LAT geography;
 SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
 select geography::Point(@LAT.LONG, @LAT.LAT, 4326).LONG, geography::Point(@LAT.LONG, @LAT.LAT, 4326).LAT;
 go
-~~ERROR (Code: 33557097)~~
+~~START~~
+float#!#float
+47.651#!#-22.349
+~~END~~
 
-~~ERROR (Message: syntax error at or near ".")~~
 
-
--- Currently it is not supported
--- TODO: Need to support it and make it similar to TSQL
 DECLARE @LAT geography;
 SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
 select geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsText(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsBinary(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STDistance(geography::Point(@LAT.LONG, @LAT.LAT, 4326));
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error at or near ".")~~
+~~START~~
+text#!#varbinary#!#float
+POINT(47.651 -22.349)#!#010100000017D9CEF753D34740D34D6210585936C0#!#0.0
+~~END~~
 
 
 SELECT
@@ -903,7 +1699,7 @@ SELECT
 FROM
     SpatialData
 JOIN
-    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.long - SpatialData.SpatialLocation.lat <= 10;
+    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.LONG - SpatialData.SpatialLocation.LAT <= 10;
 GO
 ~~START~~
 int#!#float#!#float
@@ -937,15 +1733,15 @@ WITH RegionLocations AS (
     FROM
         SpatialData
     JOIN
-        SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.long - SpatialData.SpatialLocation.lat <= 10
+        SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.LONG - SpatialData.SpatialLocation.LAT <= 10
 )
 SELECT
-    lat,
+    LAT,
     COUNT(ID) AS LocationCount
 FROM
     RegionLocations
 GROUP BY
-    lat;
+    LAT;
 GO
 ~~START~~
 float#!#int
@@ -958,7 +1754,7 @@ float#!#int
 with mycte (a)
 as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt)
 select a.STAsText()
-				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.lat >= y.location.long;
+				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.LAT >= y.location.LONG;
 go
 ~~START~~
 text
@@ -991,7 +1787,7 @@ POINT(47.651 -22.349)
 
 -- Test with tvf
 select f.STAsText()
-                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.lat >= t.location.long;
+                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.LAT >= t.location.LONG;
 go
 ~~START~~
 text
@@ -1086,7 +1882,7 @@ SELECT location.STY from SPATIALPOINTGEOG_dt;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function sys.sty(geography) does not exist)~~
+~~ERROR (Message: column notation .sty applied to type geography, which is not a composite type)~~
 
 
 SELECT * FROM GeogView;
