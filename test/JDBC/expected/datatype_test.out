@@ -1,0 +1,221 @@
+
+-- tsql
+-- Create tables on both publisher and subscriber
+-- with all the supported datatypes.
+CREATE TABLE datatype_test_t1 (
+    c1  BIGINT  NOT NULL PRIMARY KEY
+    , c2    BINARY(20) NOT NULL
+    , c3    BIT NOT NULL
+    , c4    CHAR(20)   NOT NULL
+    , c5    DATE    NOT NULL
+    , c6    DATETIME    NOT NULL
+    , c7    DATETIME2   NOT NULL
+    , c8    DATETIMEOFFSET  NOT NULL
+    , c9    DECIMAL(8,4)    NOT NULL
+    , c10   FLOAT   NOT NULL
+    , c11   IMAGE   NOT NULL
+    , c12   INT NOT NULL
+    , c13   MONEY   NOT NULL
+    , c14   NCHAR(20)  NOT NULL
+    , c15   NTEXT   NOT NULL
+    , c16   NUMERIC(8,4)    NOT NULL
+    , c17   NVARCHAR(20)   NOT NULL
+    , c18   REAL    NOT NULL
+    , c19   SMALLDATETIME   NOT NULL
+    , c20   SMALLINT    NOT NULL
+    , c21   SMALLMONEY  NOT NULL
+    , c22   SQL_VARIANT  NOT NULL
+    , c23   SYSNAME NOT NULL
+    , c24   TEXT    NOT NULL
+    , c25   TIME    NOT NULL
+    , c26   TINYINT NOT NULL
+    , c27   UNIQUEIDENTIFIER    NOT NULL
+    , c28   VARBINARY(20)  NOT NULL
+    , c29   VARCHAR(20)    NOT NULL
+    , c30   XML NOT NULL)
+GO
+
+-- tsql port=8199
+CREATE TABLE datatype_test_t1 (
+    c1  BIGINT  NOT NULL PRIMARY KEY
+    , c2    BINARY(20) NOT NULL
+    , c3    BIT NOT NULL
+    , c4    CHAR(20)   NOT NULL
+    , c5    DATE    NOT NULL
+    , c6    DATETIME    NOT NULL
+    , c7    DATETIME2   NOT NULL
+    , c8    DATETIMEOFFSET  NOT NULL
+    , c9    DECIMAL(8,4)    NOT NULL
+    , c10   FLOAT   NOT NULL
+    , c11   IMAGE   NOT NULL
+    , c12   INT NOT NULL
+    , c13   MONEY   NOT NULL
+    , c14   NCHAR(20)  NOT NULL
+    , c15   NTEXT   NOT NULL
+    , c16   NUMERIC(8,4)    NOT NULL
+    , c17   NVARCHAR(20)   NOT NULL
+    , c18   REAL    NOT NULL
+    , c19   SMALLDATETIME   NOT NULL
+    , c20   SMALLINT    NOT NULL
+    , c21   SMALLMONEY  NOT NULL
+    , c22   SQL_VARIANT  NOT NULL
+    , c23   SYSNAME NOT NULL
+    , c24   TEXT    NOT NULL
+    , c25   TIME    NOT NULL
+    , c26   TINYINT NOT NULL
+    , c27   UNIQUEIDENTIFIER    NOT NULL
+    , c28   VARBINARY(20)  NOT NULL
+    , c29   VARCHAR(20)    NOT NULL
+    , c30   XML NOT NULL)
+GO
+
+-- tsql
+-- Insert some data into the source table before publishing it
+-- just to verify if initial data sync works fine.
+INSERT INTO datatype_test_t1
+    (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30)
+VALUES(1, 0x1A, 1, 'abc', '2000-06-01', '2000-06-01 00:00:00', '2000-06-01 00:00:00', '2000-06-01 00:00:00', 8.423, 1.43E19, 0x456, 1, $50, N'😊😋😎😍😅😆', N'😊😋😎😍😅😆',
+    8.423, N'😊😋😎😍😅😆', 1.43E19, '2000-06-01 00:00:00', 1, $50, CAST(123 AS INT), 'abc', 'abc', '01:01:12', 1, '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 0x1AB, 'abc', '<xml></xml>');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#binary#!#bit#!#char#!#date#!#datetime#!#datetime2#!#datetimeoffset#!#numeric#!#float#!#image#!#int#!#money#!#nchar#!#ntext#!#numeric#!#nvarchar#!#real#!#smalldatetime#!#smallint#!#smallmoney#!#sql_variant#!#varchar#!#text#!#time#!#tinyint#!#uniqueidentifier#!#varbinary#!#varchar#!#xml
+1#!#1A00000000000000000000000000000000000000#!#1#!#abc                 #!#2000-06-01#!#2000-06-01 00:00:00.0#!#2000-06-01 00:00:00.0000000#!#2000-06-01 00:00:00.0000000 +00:00#!#8.4230#!#1.43E19#!#0456#!#1#!#50.0000#!#😊😋😎😍😅😆        #!#😊😋😎😍😅😆#!#8.4230#!#😊😋😎😍😅😆#!#1.43E19#!#2000-06-01 00:00:00.0#!#1#!#50.0000#!#123#!#abc#!#abc#!#01:01:12.0000000#!#1#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0#!#01AB#!#abc#!#<xml></xml>
+~~END~~
+
+
+-- check sql_variant basetype
+SELECT c1, CAST(sql_variant_property(c22, 'basetype') AS VARCHAR(10)) FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#varchar
+1#!#int
+~~END~~
+
+
+-- tsql port=8199
+-- Should not see data yet in the subscriber table
+SELECT * FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#binary#!#bit#!#char#!#date#!#datetime#!#datetime2#!#datetimeoffset#!#numeric#!#float#!#image#!#int#!#money#!#nchar#!#ntext#!#numeric#!#nvarchar#!#real#!#smalldatetime#!#smallint#!#smallmoney#!#sql_variant#!#varchar#!#text#!#time#!#tinyint#!#uniqueidentifier#!#varbinary#!#varchar#!#xml
+~~END~~
+
+
+-- psql
+-- Add datatype_test_t1 table to publication
+ALTER PUBLICATION my_pub ADD TABLE master_dbo.datatype_test_t1;
+GO
+
+-- psql port=5433
+-- Refresh the subscription
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- Wait for data to get replicated
+select pg_sleep(2);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql port=8199
+-- Initial data should have replicated to subscriber now
+SELECT * FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#binary#!#bit#!#char#!#date#!#datetime#!#datetime2#!#datetimeoffset#!#numeric#!#float#!#image#!#int#!#money#!#nchar#!#ntext#!#numeric#!#nvarchar#!#real#!#smalldatetime#!#smallint#!#smallmoney#!#sql_variant#!#varchar#!#text#!#time#!#tinyint#!#uniqueidentifier#!#varbinary#!#varchar#!#xml
+1#!#1A00000000000000000000000000000000000000#!#1#!#abc                 #!#2000-06-01#!#2000-06-01 00:00:00.0#!#2000-06-01 00:00:00.0000000#!#2000-06-01 00:00:00.0000000 +00:00#!#8.4230#!#1.43E19#!#0456#!#1#!#50.0000#!#😊😋😎😍😅😆        #!#😊😋😎😍😅😆#!#8.4230#!#😊😋😎😍😅😆#!#1.43E19#!#2000-06-01 00:00:00.0#!#1#!#50.0000#!#123#!#abc#!#abc#!#01:01:12.0000000#!#1#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0#!#01AB#!#abc#!#<xml></xml>
+~~END~~
+
+
+-- check sql_variant basetype
+SELECT c1, CAST(sql_variant_property(c22, 'basetype') AS VARCHAR(10)) FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#varchar
+1#!#int
+~~END~~
+
+
+-- tsql
+-- Insert more data into publisher to see if replication works
+INSERT INTO datatype_test_t1
+    (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30)
+VALUES(2, 0x1A, 1, 'abc', '2000-06-01', '2000-06-01 00:00:00', '2000-06-01 00:00:00', '2000-06-01 00:00:00', 8.423, 1.43E19, 0x456, 1, $50, N'😊😋😎😍😅😆', N'😊😋😎😍😅😆',
+    8.423, N'😊😋😎😍😅😆', 1.43E19, '2000-06-01 00:00:00', 1, $50, CAST(1.234 AS FLOAT), 'abc', 'abc', '01:01:12', 1, '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 0x1AB, 'abc', '<xml></xml>');
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#binary#!#bit#!#char#!#date#!#datetime#!#datetime2#!#datetimeoffset#!#numeric#!#float#!#image#!#int#!#money#!#nchar#!#ntext#!#numeric#!#nvarchar#!#real#!#smalldatetime#!#smallint#!#smallmoney#!#sql_variant#!#varchar#!#text#!#time#!#tinyint#!#uniqueidentifier#!#varbinary#!#varchar#!#xml
+1#!#1A00000000000000000000000000000000000000#!#1#!#abc                 #!#2000-06-01#!#2000-06-01 00:00:00.0#!#2000-06-01 00:00:00.0000000#!#2000-06-01 00:00:00.0000000 +00:00#!#8.4230#!#1.43E19#!#0456#!#1#!#50.0000#!#😊😋😎😍😅😆        #!#😊😋😎😍😅😆#!#8.4230#!#😊😋😎😍😅😆#!#1.43E19#!#2000-06-01 00:00:00.0#!#1#!#50.0000#!#123#!#abc#!#abc#!#01:01:12.0000000#!#1#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0#!#01AB#!#abc#!#<xml></xml>
+2#!#1A00000000000000000000000000000000000000#!#1#!#abc                 #!#2000-06-01#!#2000-06-01 00:00:00.0#!#2000-06-01 00:00:00.0000000#!#2000-06-01 00:00:00.0000000 +00:00#!#8.4230#!#1.43E19#!#0456#!#1#!#50.0000#!#😊😋😎😍😅😆        #!#😊😋😎😍😅😆#!#8.4230#!#😊😋😎😍😅😆#!#1.43E19#!#2000-06-01 00:00:00.0#!#1#!#50.0000#!#1.234#!#abc#!#abc#!#01:01:12.0000000#!#1#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0#!#01AB#!#abc#!#<xml></xml>
+~~END~~
+
+
+-- check sql_variant basetype
+SELECT c1, CAST(sql_variant_property(c22, 'basetype') AS VARCHAR(10)) FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#varchar
+1#!#int
+2#!#float
+~~END~~
+
+
+-- psql
+-- Wait for data to get replicated
+select pg_sleep(2);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql port=8199
+SELECT * FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#binary#!#bit#!#char#!#date#!#datetime#!#datetime2#!#datetimeoffset#!#numeric#!#float#!#image#!#int#!#money#!#nchar#!#ntext#!#numeric#!#nvarchar#!#real#!#smalldatetime#!#smallint#!#smallmoney#!#sql_variant#!#varchar#!#text#!#time#!#tinyint#!#uniqueidentifier#!#varbinary#!#varchar#!#xml
+1#!#1A00000000000000000000000000000000000000#!#1#!#abc                 #!#2000-06-01#!#2000-06-01 00:00:00.0#!#2000-06-01 00:00:00.0000000#!#2000-06-01 00:00:00.0000000 +00:00#!#8.4230#!#1.43E19#!#0456#!#1#!#50.0000#!#😊😋😎😍😅😆        #!#😊😋😎😍😅😆#!#8.4230#!#😊😋😎😍😅😆#!#1.43E19#!#2000-06-01 00:00:00.0#!#1#!#50.0000#!#123#!#abc#!#abc#!#01:01:12.0000000#!#1#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0#!#01AB#!#abc#!#<xml></xml>
+2#!#1A00000000000000000000000000000000000000#!#1#!#abc                 #!#2000-06-01#!#2000-06-01 00:00:00.0#!#2000-06-01 00:00:00.0000000#!#2000-06-01 00:00:00.0000000 +00:00#!#8.4230#!#1.43E19#!#0456#!#1#!#50.0000#!#😊😋😎😍😅😆        #!#😊😋😎😍😅😆#!#8.4230#!#😊😋😎😍😅😆#!#1.43E19#!#2000-06-01 00:00:00.0#!#1#!#50.0000#!#1.234#!#abc#!#abc#!#01:01:12.0000000#!#1#!#1E984725-C51C-4BF4-9960-E1C80E27ABA0#!#01AB#!#abc#!#<xml></xml>
+~~END~~
+
+
+-- print sql_variant basetype
+SELECT c1, CAST(sql_variant_property(c22, 'basetype') AS VARCHAR(10)) FROM datatype_test_t1;
+GO
+~~START~~
+bigint#!#varchar
+1#!#int
+2#!#float
+~~END~~
+
+
+-- psql
+-- Cleanup
+ALTER PUBLICATION my_pub DROP TABLE master_dbo.datatype_test_t1;
+GO
+
+-- psql port=5433
+ALTER SUBSCRIPTION my_sub REFRESH PUBLICATION;
+GO
+
+-- tsql
+DROP TABLE datatype_test_t1;
+GO
+
+-- tsql port=8199
+DROP TABLE datatype_test_t1;
+GO

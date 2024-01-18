@@ -29,6 +29,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
 #include "instr.h"
+#include "replication/slot.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
@@ -78,6 +79,10 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	Oid			input_func;
 	Oid			typIOParam;
 	svhdr_5B_t *svhdr;
+
+	/* Input as a bytea instead if it is a walsender process. */
+	if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		PG_RETURN_DATUM(byteain(fcinfo));
 
 	getTypeInputInfo(type, &input_func, &typIOParam);
 	/* evalute input fuction */
@@ -129,6 +134,16 @@ sqlvariantout(PG_FUNCTION_ARGS)
 	bool		typIsVarlena;
 	size_t		data_len = VARSIZE_ANY_EXHDR(vlena) - svhdr_size;
 	Datum	   *output_datum = palloc0(SIZEOF_DATUM);
+
+	/*
+	 * Output as a bytea instead if we are in a logical decoding context.
+	 * There are two ways it possible:
+	 * 1. MyReplicationSlot is logical.
+	 * 2. This is a logical walsender process.
+	 */
+	if ((MyReplicationSlot != NULL && SlotIsLogical(MyReplicationSlot)) ||
+		am_db_walsender)
+		PG_RETURN_DATUM(byteaout(fcinfo));
 
 	if (!get_typbyval(type))	/* pass by reference */
 		*output_datum = SV_DATUM(vlena, svhdr_size);

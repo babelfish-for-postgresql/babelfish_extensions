@@ -31,6 +31,7 @@ public class JDBCCrossDialect {
     String newDatabase = null;
     String newPhysicalDatabase = null;
     String searchPath = null;
+    String newPort = null;
 
     JDBCCrossDialect (Connection connection) {
 
@@ -59,6 +60,8 @@ public class JDBCCrossDialect {
                 newDatabase = connAttribute.split("=")[1];
             } else if (connAttribute.contains("currentSchema=")) {
                 searchPath = connAttribute.split("=")[1];
+            } else if (connAttribute.contains("port=")) {
+                newPort = connAttribute.split("=")[1];
             }
         }
 
@@ -80,6 +83,8 @@ public class JDBCCrossDialect {
         newUser = null;
         newPassword = null;
         newDatabase = null;
+        searchPath = null;
+        newPort = null;
     }
 
     Connection getTsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
@@ -92,15 +97,18 @@ public class JDBCCrossDialect {
             // Use sqlserver JDBC driver
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
+            if (newPort == null)
+                newPort = tsql_port;
+
             // if we already have opened a tsql connection then reuse that
-            tsqlConnection = tsqlConnectionMap.get(newUser + newPassword + newDatabase);
+            tsqlConnection = tsqlConnectionMap.get(newUser + newPassword + newDatabase + newPort);
 
             if (tsqlConnection == null) {
                 // Create a new connection on tsql port and use that
-                String connectionString = createSQLServerConnectionString(URL, tsql_port, newDatabase, newUser, newPassword);
+                String connectionString = createSQLServerConnectionString(URL, newPort, newDatabase, newUser, newPassword);
                 tsqlConnection = DriverManager.getConnection(connectionString);
 
-                tsqlConnectionMap.put(newUser + newPassword + newDatabase, tsqlConnection);
+                tsqlConnectionMap.put(newUser + newPassword + newDatabase + newPort, tsqlConnection);
             }
 
         } catch (ClassNotFoundException e) {
@@ -124,19 +132,22 @@ public class JDBCCrossDialect {
             // Use postgresql JDBC driver
             Class.forName("org.postgresql.Driver");
 
+            if (newPort == null)
+                newPort = psql_port;
+
             // if we already have opened a psql connection then reuse that
-            psqlConnection = psqlConnectionMap.get(newUser + newPassword + newPhysicalDatabase + searchPath);
+            psqlConnection = psqlConnectionMap.get(newUser + newPassword + newPhysicalDatabase + searchPath + newPort);
 
             // Create a new connection on psql port and use that
             if (psqlConnection == null) {
-                String connectionString = createPostgreSQLConnectionString(URL, psql_port, newPhysicalDatabase, newUser, newPassword);
+                String connectionString = createPostgreSQLConnectionString(URL, newPort, newPhysicalDatabase, newUser, newPassword);
 
                 if (searchPath != null) {
                     connectionString += ("&currentSchema=" + searchPath);
                 }
                 psqlConnection = DriverManager.getConnection(connectionString);
 
-                psqlConnectionMap.put(newUser + newPassword + newPhysicalDatabase + searchPath, psqlConnection);
+                psqlConnectionMap.put(newUser + newPassword + newPhysicalDatabase + searchPath + newPort, psqlConnection);
             }
 
         } catch (ClassNotFoundException e) {
