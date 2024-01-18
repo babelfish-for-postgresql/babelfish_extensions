@@ -17,6 +17,7 @@
 #include "session.h"
 #include "pltsql.h"
 #include "guc.h"
+#include "storage/shm_toc.h"
 
 /* Core Session Properties */
 
@@ -51,6 +52,30 @@ get_cur_db_name(void)
 {
 	return pstrdup(current_db_name);
 }
+
+void 
+set_cur_db_name_for_parallel_worker(const char* logical_db_name)
+{
+	int len;
+
+	if (logical_db_name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"\" does not exist")));
+
+	len = strlen(logical_db_name);
+
+	Assert(len <= MAX_BBF_NAMEDATALEND);
+
+	if(!DbidIsValid(get_db_id(logical_db_name)))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", logical_db_name)));
+	
+	strncpy(current_db_name, logical_db_name, MAX_BBF_NAMEDATALEND);
+	current_db_name[len] = '\0';
+}
+
 
 void
 set_cur_db(int16 id, const char *name)
@@ -376,4 +401,60 @@ initialize_context_table()
 	hash_options.entrysize = sizeof(SessionCxtEntry);
 
 	session_context_table = hash_create("Session Context", 128, &hash_options, HASH_ELEM | HASH_STRINGS);
+}
+
+/* 
+* This function is responsible for estimating the size of the entry and the number of keys 
+* and insert into the DSM for parallel workers
+* The first argument is ParallelContext which contains the info related to TOC
+* The second argument indicates whether we want to estimate the space or
+* we want to insert the data into DSM
+*/
+void
+babelfixedparallelstate_insert(ParallelContext *pcxt, bool estimate)
+{
+	BabelfishFixedParallelState *bfps;
+	int len;
+	char* current_db_name;
+	if (estimate)
+	{
+		/* Allow space to store the babelfish fixed-size parallel state. */
+		shm_toc_estimate_chunk(&pcxt->estimator, sizeof(BabelfishFixedParallelState));
+		shm_toc_estimate_keys(&pcxt->estimator, 1);
+	}
+	else
+	{
+		/* Initialize babelfish fixed-size state in shared memory. */
+		bfps = (BabelfishFixedParallelState *) shm_toc_allocate(pcxt->toc, sizeof(BabelfishFixedParallelState));
+		current_db_name = get_cur_db_name();
+
+		if (current_db_name == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					errmsg("database \"\" does not exist")));
+
+		if(!DbidIsValid(get_db_id(current_db_name)))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					errmsg("database \"%s\" does not exist", current_db_name)));
+
+		len = strlen(current_db_name);
+		strncpy(bfps->logical_db_name, current_db_name, MAX_BBF_NAMEDATALEND);
+		bfps->logical_db_name[len] = '\0';
+		shm_toc_insert(pcxt->toc, BABELFISH_PARALLEL_KEY_FIXED, bfps);
+		pfree(current_db_name);
+	}
+}
+
+/* This function is responsible for restoring the babelfixedparallelstate*/
+void
+babelfixedparallelstate_restore(shm_toc *toc)
+{
+	BabelfishFixedParallelState *bfps;	
+
+	/* Get the babelfish fixed parallel state from DSM */
+	bfps = shm_toc_lookup(toc, BABELFISH_PARALLEL_KEY_FIXED, false);
+
+	/* Set the logcial db name for parallel workers */
+	set_cur_db_name_for_parallel_worker(bfps->logical_db_name);
 }
