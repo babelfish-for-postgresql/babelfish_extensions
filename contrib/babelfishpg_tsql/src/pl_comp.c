@@ -1538,7 +1538,7 @@ pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref)
 {
 	PLtsql_expr *expr = (PLtsql_expr *) pstate->p_ref_hook_state;
 
-	if (expr != NULL && expr->func->resolve_option == PLTSQL_RESOLVE_VARIABLE)
+	if (expr->func->resolve_option == PLTSQL_RESOLVE_VARIABLE)
 		return resolve_column_ref(pstate, expr, cref, false);
 	else
 		return NULL;
@@ -1551,12 +1551,12 @@ static Node *
 pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 {
 	PLtsql_expr *expr = (PLtsql_expr *) pstate->p_ref_hook_state;
-	Node	   *myvar = NULL;
+	Node	   *myvar;
 
-	if (expr != NULL && expr->func->resolve_option == PLTSQL_RESOLVE_VARIABLE)
+	if (expr->func->resolve_option == PLTSQL_RESOLVE_VARIABLE)
 		return NULL;			/* we already found there's no match */
 
-	if (expr != NULL && expr->func->resolve_option == PLTSQL_RESOLVE_COLUMN && var != NULL)
+	if (expr->func->resolve_option == PLTSQL_RESOLVE_COLUMN && var != NULL)
 		return NULL;			/* there's a table column, prefer that */
 
 	/*
@@ -1569,8 +1569,7 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	 * a conflict with a table name this could still be less than the most
 	 * helpful error message possible.)
 	 */
-	if(expr != NULL)
-		myvar = resolve_column_ref(pstate, expr, cref, (var == NULL));
+	myvar = resolve_column_ref(pstate, expr, cref, (var == NULL));
 
 	if (myvar != NULL && var != NULL)
 	{
@@ -1593,8 +1592,11 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	else if (var == NULL)
 	{
 		Node       *geovar;
-		if ((geovar = resolve_geospatial_col_ref(pstate, cref)) != NULL)
-			return geovar;
+		geovar = resolve_geospatial_col_ref(pstate, cref);
+		if(geovar != NULL){
+			printf("lol");
+		}
+			//return geovar;
 	}
 
 	return myvar;
@@ -1689,12 +1691,9 @@ pltsql_param_ref(ParseState *pstate, ParamRef *pref)
 
 	snprintf(pname, sizeof(pname), "$%d", pref->number);
 
-	if(expr != NULL)
-		nse = pltsql_ns_lookup(expr->ns, false,
-							pname, NULL, NULL,
-							NULL);
-	else
-		nse = NULL;
+	nse = pltsql_ns_lookup(expr->ns, false,
+						pname, NULL, NULL,
+						NULL);
 
 	if (nse == NULL)
 		return NULL;			/* name not known to pltsql */
@@ -1877,6 +1876,7 @@ resolve_geospatial_col_ref(ParseState *pstate, ColumnRef *cref)
 static List *
 resolve_geospatial_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
 {
+	return fargs;
 
 	if(list_length(fn->funcname) > 1 && list_length(fn->args) <= 1 
 		&& fn->agg_order == NULL && fn->agg_filter == NULL 
