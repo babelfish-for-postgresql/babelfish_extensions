@@ -4,7 +4,7 @@
 #define NULLVAL		PG_INT32_MIN
 #define NULLVAL_STR	"NULL"
 
-#define DATATYPE_INFO_TABLE_ROWS 37
+#define DATATYPE_INFO_TABLE_ROWS 38
 
 typedef struct DatatypeInfo
 {
@@ -487,6 +487,20 @@ static const DatatypeInfo datatype_info_table[DATATYPE_INFO_TABLE_ROWS] = {
 		"smalldatetime",
 		0, 0, 9, 3, NULLVAL, NULLVAL, 22, 16, 111,
 		"smalldatetime"
+	},
+	{
+		/* Dummy Entry for vector datatype since its not a TSQL datatype. */
+		"vector",
+		NULLVAL, NULLVAL, NULLVAL, NULLVAL,
+		0,
+		"'",
+		"'",
+		NULLVAL_STR,
+		1, 0, 0, NULLVAL, 0, NULLVAL,
+		"vector",
+		NULLVAL, NULLVAL, NULLVAL, NULLVAL, NULLVAL, NULLVAL, NULLVAL, NULLVAL, NULLVAL,
+		"vector"
+
 	}
 };
 

@@ -51,7 +51,8 @@ type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
 	{0, 1, "decimal", "decimal", 5, 30, 5},
 	{0, 1, "sysname", "sysname", 5, 31, 5},
 	{0, 1, "rowversion", "timestamp", 8, 32, 3},
-	{0, 1, "timestamp", "timestamp", 8, 33, 3}
+	{0, 1, "timestamp", "timestamp", 8, 33, 3},
+	{0, 1, "vector", "vector", 9, 34, 3}
 };
 
 /* Hash tables to help backward searching (from OID to Persist ID) */

@@ -1494,6 +1494,53 @@ on
 ~~END~~
 
 
+-- system metadata, all objects get their datatype info from one of:
+-- typecodes or datatype_info data we have created. Testing sys.types for typecodes
+-- and sp_sproc_columns_100 for datatype_info is enough
+select count(*) from sys.types where name = 'vector';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create procedure vector_proc_1 @a vector, @b varchar(max) as select @a as a, @b as b;
+go
+
+exec sp_sproc_columns_100 @procedure_name= 'vector_proc_1'
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+vector_db#!#dbo#!#vector_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+vector_db#!#dbo#!#vector_proc_1;1#!#@a#!#1#!#<NULL>#!#vector#!#0#!#-1#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>
+vector_db#!#dbo#!#vector_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+~~END~~
+
+
+drop procedure vector_proc_1;
+go
+
+create table t(a vector(3), b varchar(max))
+go
+select * from information_schema.columns where table_name = 't'
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+vector_db#!#dbo#!#t#!#a#!#1#!#<NULL>#!#YES#!#vector#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+vector_db#!#dbo#!#t#!#b#!#2#!#<NULL>#!#YES#!#varchar#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+select count(*) from sys.columns where object_id = sys.object_id('t')
+go
+~~START~~
+int
+2
+~~END~~
+
+drop table t;
+go
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 

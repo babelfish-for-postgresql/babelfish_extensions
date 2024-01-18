@@ -1787,7 +1787,7 @@ const allowed_extensions_data allowed_extns[] =
 	{"vector", true}
 };
 
-const int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extns[0]);
+const int allowed_extns_size = sizeof(allowed_extns) / sizeof(allowed_extensions_data);
 
 Datum
 sp_execute_postgresql(PG_FUNCTION_ARGS)
