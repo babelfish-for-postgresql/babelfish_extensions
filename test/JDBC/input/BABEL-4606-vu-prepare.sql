@@ -1,0 +1,55 @@
+create table babel_4606 (a int primary key, b int)
+go
+
+insert into babel_4606 (a, b) values (1,7),(2,8),(3,9),(4,10),(5,11),(6,12)
+go
+
+create trigger babel_4606_trigger
+on babel_4606
+after update
+AS
+begin
+	update t
+	set t.b = t.b + 1
+	from inserted as i
+	join babel_4606 as t
+		on t.a = i.a
+end
+go
+
+create table babel_4606_2 (a int primary key, b int)
+go
+
+insert into babel_4606_2 (a, b) values (1,7),(2,8),(3,9),(4,10),(5,11),(6,12)
+go
+
+create trigger babel_4606_2_trigger
+on babel_4606_2
+after update
+AS
+begin
+	update babel_4606_2
+	set babel_4606_2.b = babel_4606_2.b + 2
+	from inserted as i
+		where babel_4606_2.a = i.a
+end
+go
+
+create table babel_4606_3 (a int primary key, b int)
+go
+
+insert into babel_4606_3 (a, b) values (1,7),(2,8),(3,9),(4,10),(5,11),(6,12)
+go
+
+create trigger babel_4606_3_trigger
+on babel_4606_3
+after update
+AS
+begin
+	update babel_4606_3
+	set babel_4606_3.b = babel_4606_3.b + 200
+	from deleted as i
+		where babel_4606_3.a = i.a
+end
+go
+

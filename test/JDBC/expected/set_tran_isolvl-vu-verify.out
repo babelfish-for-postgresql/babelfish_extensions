@@ -1,0 +1,50 @@
+set transaction isolation level serializable
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Isolation level 'SERIALIZABLE' is not currently supported in Babelfish. Set 'babelfishpg_tsql.isolation_level_serializable' config option to 'pg_isolation' to get PG serializable isolation level.)~~
+
+
+set tran isolation level serializable
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Isolation level 'SERIALIZABLE' is not currently supported in Babelfish. Set 'babelfishpg_tsql.isolation_level_serializable' config option to 'pg_isolation' to get PG serializable isolation level.)~~
+
+
+set transaction isolation level read committed
+go
+
+set tran isolation level read committed
+go
+
+EXECUTE p1_set_tran_isolvl
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Isolation level 'REPEATABLE READ' is not currently supported in Babelfish. Set 'babelfishpg_tsql.isolation_level_repeatable_read' config option to 'pg_isolation' to get PG repeatable read isolation level.)~~
+
+
+EXECUTE p2_set_tran_isolvl 
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Isolation level 'REPEATABLE READ' is not currently supported in Babelfish. Set 'babelfishpg_tsql.isolation_level_repeatable_read' config option to 'pg_isolation' to get PG repeatable read isolation level.)~~
+
+
+EXECUTE('set transaction isolation level repeatable read')
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Isolation level 'REPEATABLE READ' is not currently supported in Babelfish. Set 'babelfishpg_tsql.isolation_level_repeatable_read' config option to 'pg_isolation' to get PG repeatable read isolation level.)~~
+
+
+EXECUTE('set tran isolation level repeatable read')
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Isolation level 'REPEATABLE READ' is not currently supported in Babelfish. Set 'babelfishpg_tsql.isolation_level_repeatable_read' config option to 'pg_isolation' to get PG repeatable read isolation level.)~~
+
+
+set transaction isolation level read committed
+go

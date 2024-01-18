@@ -414,7 +414,7 @@ tsql_check_param_readonly(const char *paramname, TypeName *typename, bool readon
 	TypeName   *typeclone = copyObjectImpl(typename);
 
 	/* work on the cloned object to avoid double rewriting */
-	rewrite_plain_name(typeclone->names);
+	typeclone->names = rewrite_plain_name(typeclone->names);
 	if (typeidTypeRelid(typenameTypeId(NULL, typeclone)) == InvalidOid)
 	{
 		/* Not table-valued parameter - must not be READONLY */

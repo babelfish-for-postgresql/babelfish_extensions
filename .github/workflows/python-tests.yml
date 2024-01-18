@@ -1,5 +1,5 @@
 name: Python Tests
-on: [push, pull_request]
+on: [workflow_call]
 
 jobs:
   run-babelfish-python-tests:
@@ -17,6 +17,9 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          install_dir: 'psql'
+          code_coverage: 'yes'
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -38,39 +41,39 @@ jobs:
         if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
-      - name: Install Python
-        id: install-python
-        if: always() && steps.install-extensions.outcome == 'success'
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-      
-      - name: Configure Python Environment
-        id: configure-python-environment
-        if: always() && steps.install-python.outcome == 'success'
-        run: |
-          cd ~
-          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
-          cd ~/work/babelfish_extensions/babelfish_extensions/test/python
-          mkdir sqltoolsservice
-          cd sqltoolsservice
-          wget https://github.com/microsoft/sqltoolsservice/releases/download/4.4.0.12/Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz && tar -xzvf Microsoft.SqlTools.ServiceLayer-rhel-x64-net6.0.tar.gz
-          cd ../
-          sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc==4.0.35 pymssql pytest pytest-xdist
-      
       - name: Run Python Tests
-        if: always() && steps.configure-python-environment.outcome == 'success'
-        run: | 
-          cd test/python
-          compareWithFile=true \
-            driver=pyodbc \
-            runInParallel=false \
-            testName=all \
-            provider="ODBC Driver 17 for SQL Server" \
-            fileGenerator_URL=localhost \
-            fileGenerator_port=1433 \
-            fileGenerator_databaseName=master \
-            fileGenerator_user=jdbc_user \
-            fileGenerator_password=12345678 \
-            pytest -s --tb=long -q .
+        id: run-python-tests
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-and-run-python
+
+      - name: Generate Code Coverage
+        id: generate-code-coverage
+        if: always() && steps.run-python-tests.outcome == 'success'
+        run: |
+          export PG_CONFIG=~/psql/bin/pg_config
+          export PG_SRC=~/work/postgresql_modified_for_babelfish
+          export cmake=$(which cmake)
+          cd contrib
+          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
+          do
+            cd $ext
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+            cd ..
+          done
+        shell: bash
+
+      - name: Summarize code coverage
+        id: code-coverage-summary
+        if: always() && steps.generate-code-coverage.outcome == 'success'
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o python-lcov.info
+          lcov --list python-lcov.info
+
+      - name: Upload Coverage Report for Babelfish Extensions
+        if: always() && steps.code-coverage-summary.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-babelfish-extensions-python
+          path: contrib/python-lcov.info
+          retention-days: 1

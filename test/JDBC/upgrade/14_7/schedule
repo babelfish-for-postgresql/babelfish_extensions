@@ -37,6 +37,7 @@ BABEL-1963
 BABEL-1994-CHAR
 BABEL-1994-VARCHAR
 BABEL-2086
+BABEL-2170
 BABEL-2203
 BABEL-2208
 BABEL-2257
@@ -63,7 +64,7 @@ BABEL-3118
 BABEL-3121
 BABEL-3144
 BABEL-3147
-BABEL-3166
+BABEL-3166-before-14_11-or-15_6
 BABEL-3192
 BABEL-3204
 BABEL-3213
@@ -297,7 +298,7 @@ sys-nestlevel-dep
 sys-numbered_procedures
 sys-objects
 sys-original_login
-sys-parsename
+sys-parsename-before-15_6-or-16_1
 sys-partitions
 sys-partitions-dep
 sys-plan_guides
@@ -413,4 +414,7 @@ AUTO_ANALYZE-before-15-5-or-14-10
 cast_eliminate
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
+operator_binary_whitespace-before-15_6-or-16_2
 BABEL-2999
+permission_restrictions_from_pg
+BABEL-730-before-15_6-or-16_1

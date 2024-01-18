@@ -1,0 +1,36 @@
+select cast(databasepropertyex('master','collation') as varchar(50))
+go
+~~START~~
+varchar
+chinese_prc_ci_as
+~~END~~
+
+create database mydb
+go
+use mydb
+go
+SELECT DB_NAME()
+go
+~~START~~
+nvarchar
+mydb
+~~END~~
+
+SELECT DATABASEPROPERTYEX('mydb', 'Collation')
+go
+~~START~~
+sql_variant
+chinese_prc_ci_as
+~~END~~
+
+SELECT CONVERT(VARCHAR(100), DATABASEPROPERTYEX(DB_NAME(), 'Collation'))
+go
+~~START~~
+varchar
+chinese_prc_ci_as
+~~END~~
+
+use master
+go
+drop database mydb
+go

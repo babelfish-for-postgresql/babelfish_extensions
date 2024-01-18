@@ -35,7 +35,7 @@
 
 #include "dynavec.h"
 #include "dynastack.h"
-#include "../../contrib/babelfishpg_common/src/babelfishpg_common.h"
+#include "../../babelfishpg_common/src/babelfishpg_common.h"
 
 /**********************************************************************
  * Definitions
@@ -61,6 +61,8 @@
 
 /* Max number of Args allowed for Prepared stmts. */
 #define PREPARE_STMT_MAX_ARGS 2100
+
+#define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
 
 /*
  * Compiler's namespace item types
@@ -2190,5 +2192,6 @@ extern int64 last_scope_identity_value(void);
  */
 void		GetOpenqueryTupdescFromMetadata(char *linked_server, char *query, TupleDesc *tupdesc);
 extern void 	exec_utility_cmd_helper(char *query_str);
+extern void	exec_alter_role_cmd(char *query_str, RoleSpec *role);
 
 #endif							/* PLTSQL_H */

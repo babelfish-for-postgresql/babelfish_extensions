@@ -1,0 +1,380 @@
+if 1=@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if 1<>@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1< >@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1!=@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1! =@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1>@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if 1<@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1>=@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if 1> =@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if 1<=@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1< =@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1!>@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1! >@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+if 1! <@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if 1!<@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if case when 1! <@@max_precision then 1 else 0 end=@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if case when 1>@@max_precision then 1 else 0 end>@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+if case when 1=@@max_precision then 1 else 0 end!=@@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+execute('if case when 1=@@max_precision then 1 else 0 end > 0 select ''yes'' else select ''no''')
+go
+~~START~~
+varchar
+no
+~~END~~
+
+select 1 where 1<@@max_precision 
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 1!=@@max_precision 
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 1<>@@max_precision 
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 1< >@@max_precision 
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 1!>@@max_precision 
+go
+~~START~~
+int
+1
+~~END~~
+
+select 1 where 1! >@@max_precision 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+if 1 = @@max_precision select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+
+declare @v int = 1 if 1=@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+declare @v int = 1 if 1<@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1>@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1<>@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1!=@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1 !=@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1 ! =@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1!>@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+declare @v int = 1 if 1!<@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+declare @v int = 1 if 1=@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+declare @v int = 1 if 1<@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1>@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1< >@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1! =@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+no
+~~END~~
+
+declare @v int = 1 if 1! >@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+declare @v int = 1 if 1! <@v select 'yes' else select 'no'
+go
+~~START~~
+varchar
+yes
+~~END~~
+
+
+select c=@@max_precision where 0< >@@max_precision
+go
+~~START~~
+tinyint
+38
+~~END~~
+
+
+select * from v1_operator_atatvar where 0! <@@max_precision
+go
+~~START~~
+tinyint
+~~END~~
+
+
+select * from v1_operator_atatvar where case when 1!=@@max_precision then 1 else @@max_precision end=@@max_precision
+go
+~~START~~
+tinyint
+~~END~~
+
+
+declare @v int
+set @v=1
+set @v+=@v
+select @v=@v+1
+select @v+=@v
+select @v
+go
+~~START~~
+int
+6
+~~END~~
+
+
+execute p2_operator_atatvar
+go
+~~START~~
+int
+38
+~~END~~
+
+
+p2_operator_atatvar
+go
+~~START~~
+int
+38
+~~END~~
+
+
+execute p3_operator_atatvar @p=@@max_precision
+go
+~~START~~
+int
+38
+~~END~~
+
+
+p3_operator_atatvar @p=@@max_precision
+go
+~~START~~
+int
+38
+~~END~~
+
+
+execute('p3_operator_atatvar @p=@@max_precision')
+go
+~~START~~
+int
+38
+~~END~~
+
+
+execute('execute p3_operator_atatvar @p=@@max_precision')
+go
+~~START~~
+int
+38
+~~END~~
+
+

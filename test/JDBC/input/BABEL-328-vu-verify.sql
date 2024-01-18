@@ -4,10 +4,10 @@ GO
 SELECT * FROM babel_328_vu_v2
 GO
 
-SELECT * FROM babel_328_vu_v3
+SELECT * FROM babel_328_vu_v3 ORDER BY NAME
 GO
 
-SELECT * FROM babel_328_vu_v4
+SELECT * FROM babel_328_vu_v4 ORDER BY NAME
 GO
 
 EXEC babel_328_vu_p1

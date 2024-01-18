@@ -13,17 +13,22 @@ inputs:
     description: "Current postgres intall directory"
     required: false
     default: psql_target
+  server_collation_name:
+    description: "Server collation name which need to be set in postgresql.conf"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
   steps:
     - name: Run pg_upgrade
       run: |
+        ulimit -c unlimited
         echo 'Starting pg_upgrade...'
         cd ~
         mkdir -p upgrade
         cd upgrade
-        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_old_dir }}//data stop
+        ~/${{ inputs.pg_old_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_old_dir }}//data stop
         export PATH="$HOME/${{ inputs.pg_new_dir }}/bin:$HOME/${{ inputs.pg_old_dir }}/bin:$PATH"
         export LD_LIBRARY_PATH="$HOME/${{ inputs.pg_new_dir }}/lib:$HOME/${{ inputs.pg_old_dir }}/lib:$LD_LIBRARY_PATH"
         ~/${{ inputs.pg_new_dir }}/bin/pg_upgrade -U runner -b ~/${{ inputs.pg_old_dir }}/bin -B ~/${{ inputs.pg_new_dir }}/bin \
@@ -31,13 +36,18 @@ runs:
         echo 'pg_upgrade completed!'
         echo 'Updating babelfish extensions...'
         cd ~/work/babelfish_extensions/babelfish_extensions/
-        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile14 start
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
+        ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data -l ~/${{ inputs.pg_new_dir }}/data/logfile start
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE;"
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_tsql UPDATE;"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
         echo 'Reset bbf database settings...'
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.pg_new_dir }}/data/postgresql.conf
+          ~/${{ inputs.pg_new_dir }}/bin/pg_ctl -c -D ~/${{ inputs.pg_new_dir }}/data/ -l ~/${{ inputs.pg_new_dir }}/data/logfile restart
+        fi
         export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash

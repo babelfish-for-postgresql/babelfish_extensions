@@ -278,7 +278,7 @@ static bool
 check_identity_insert(char** newval, void **extra, GucSource source)
 {
 	/*
-	 * Workers synchronize the parameter at the beginning of each parallel 
+	 * Workers synchronize the parameter at the beginning of each parallel
 	 * operation. Avoid performing parameter assignment uring parallel operation.
 	 */
 	if (IsParallelWorker() && !InitializingParallelWorker)
@@ -1041,8 +1041,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 												{
 													ColumnDef* def = (ColumnDef *) element;
 
-													if (strlen(def->colname) == colname_len && 
-														strncmp(def->colname, colname, colname_len) == 0 && 
+													if (strlen(def->colname) == colname_len &&
+														strncmp(def->colname, colname, colname_len) == 0 &&
 														has_nullable_constraint(def))
 													{
 														ereport(ERROR,
@@ -1050,9 +1050,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 															errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
 																"or add a NOT NULL constraint")));
 													}
-												}	
+												}
 											}
-										}		
+										}
 									}
 
 									if (rowversion_column_name)
@@ -2298,7 +2298,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (atstmt->relation->schemaname != NULL)
 							{
 								/*
-								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> ) 
+								* As syntax1 ( { ENABLE | DISABLE } TRIGGER <trigger> ON <table> )
 								* is mapped to syntax2 ( ALTER TABLE <table> { ENABLE | DISABLE } TRIGGER <trigger> ),
 								* objtype of atstmt for syntax1 is temporarily set to OBJECT_TRIGGER to identify whether the
 								* query was originally of syntax1 or syntax2, here astmt->objtype is reset back to OBJECT_TABLE
@@ -2658,6 +2658,13 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					else if (isuser || isrole)
 					{
+						const char *db_owner_name;
+
+						db_owner_name = get_db_owner_name(get_cur_db_name());
+						if (!has_privs_of_role(GetUserId(),get_role_oid(db_owner_name, false)))
+							ereport(ERROR,
+									(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+									 errmsg("User does not have permission to perform this action.")));
 						/*
 						 * check whether sql user name and role name contains
 						 * '\' or not
@@ -3360,10 +3367,18 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					const char *prev_current_user;
 					const char *session_user_name;
+					StringInfoData query;
+					RoleSpec   *spec;
 
 					check_alter_server_stmt(grant_role);
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+					spec = (RoleSpec *) linitial(grant_role->grantee_roles);
+					initStringInfo(&query);
+					if (grant_role->is_grant)
+						appendStringInfo(&query, "ALTER ROLE dummy WITH createrole createdb; ");
+					else
+						appendStringInfo(&query, "ALTER ROLE dummy WITH nocreaterole nocreatedb; ");
 
 					bbf_set_current_user(session_user_name);
 					PG_TRY();
@@ -3375,17 +3390,20 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						else
 							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 													queryEnv, dest, qc);
+						exec_alter_role_cmd(query.data, spec);
 
 					}
 					PG_CATCH();
 					{
 						/* Clean up. Restore previous state. */
 						bbf_set_current_user(prev_current_user);
+						pfree(query.data);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 					/* Clean up. Restore previous state. */
 					bbf_set_current_user(prev_current_user);
+					pfree(query.data);
 					return;
 				}
 				else if (is_alter_role_stmt(grant_role))
@@ -4075,10 +4093,11 @@ _PG_fini(void)
  */
 
 static void
-terminate_batch(bool send_error, bool compile_error)
+terminate_batch(bool send_error, bool compile_error, int SPI_depth)
 {
 	bool		error_mapping_failed = false;
 	int			rc;
+	int 		current_spi_stack_depth;
 
 	HOLD_INTERRUPTS();
 
@@ -4086,9 +4105,24 @@ terminate_batch(bool send_error, bool compile_error)
 
 	/*
 	 * Disconnect from SPI manager
+	 * Also cleanup remnant SPI connections
+	 * Ideally current depth should be same as 
+	 * when caller was connecting to SPI Manager
 	 */
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	current_spi_stack_depth = SPI_get_depth();
+	
+	if (current_spi_stack_depth < SPI_depth)
+		elog(FATAL, "SPI connection stack is inconsistent, spi stack depth" 
+			 "expected count:%d, current count:%d",
+			 SPI_depth, current_spi_stack_depth);
+	
+	if (current_spi_stack_depth > SPI_depth)
+		elog(WARNING, "SPI connection leak found, expected count:%d, current count:%d",
+			 SPI_depth, current_spi_stack_depth);
+		
+	while (current_spi_stack_depth-- >= SPI_depth)
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	if (send_error)
 	{
@@ -4237,6 +4271,8 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	Oid			prev_procid = InvalidOid;
 	int			save_pltsql_trigger_depth = pltsql_trigger_depth;
 	int			saved_dialect = sql_dialect;
+	int 		current_spi_stack_depth;
+	bool 		send_error = false;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -4261,8 +4297,9 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	if ((rc = SPI_connect_ext(nonatomic ? SPI_OPT_NONATOMIC : 0)) != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
-	if (support_tsql_trans)
-		SPI_setCurrentInternalTxnMode(true);
+
+	SPI_setCurrentInternalTxnMode(true);
+	current_spi_stack_depth = SPI_get_depth();
 
 	elog(DEBUG2, "TSQL TXN call handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
@@ -4326,18 +4363,20 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		PG_CATCH();
 		{
 			set_procid(prev_procid);
-			/* Decrement use-count, restore cur_estate, and propagate error */
 			pltsql_trigger_depth = save_pltsql_trigger_depth;
-			func->use_count--;
-			func->cur_estate = save_cur_estate;
-			pltsql_remove_current_query_env();
-			pltsql_revert_guc(save_nestlevel);
-			pltsql_revert_last_scope_identity(scope_level);
-			terminate_batch(true /* send_error */ , false /* compile_error */ );
-			sql_dialect = saved_dialect;
-			return retval;
+			
+			send_error = true;
 		}
 		PG_END_TRY();
+		
+		/* Decrement use-count, restore cur_estate, and propagate error */
+		func->use_count--;
+
+		func->cur_estate = save_cur_estate;
+
+		pltsql_remove_current_query_env();
+		pltsql_revert_guc(save_nestlevel);
+		pltsql_revert_last_scope_identity(scope_level);
 	}
 	PG_FINALLY();
 	{
@@ -4345,15 +4384,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	}
 	PG_END_TRY();
 
-	func->use_count--;
-
-	func->cur_estate = save_cur_estate;
-
-	pltsql_remove_current_query_env();
-	pltsql_revert_guc(save_nestlevel);
-	pltsql_revert_last_scope_identity(scope_level);
-
-	terminate_batch(false /* send_error */ , false /* compile_error */ );
+	terminate_batch(send_error /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 
 	return retval;
 }
@@ -4373,11 +4404,12 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	PLtsql_function *func;
 	FmgrInfo	flinfo;
 	EState	   *simple_eval_estate;
-	Datum		retval;
+	Datum		retval = 0;
 	int			rc;
 	int			saved_dialect = sql_dialect;
 	int			nargs = PG_NARGS();
 	int			i;
+	int 		current_spi_stack_depth;
 	MemoryContext savedPortalCxt;
 	FunctionCallInfo fake_fcinfo = palloc0(SizeForFunctionCallInfo(nargs));
 	bool		nonatomic;
@@ -4401,6 +4433,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* Set statement_timestamp() */
 	SetCurrentStatementStartTimestamp();
 
+	set_ps_display("active");
 	pgstat_report_activity(STATE_RUNNING, codeblock->source_text);
 
 	if (nargs > 1)
@@ -4418,8 +4451,8 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
-	if (support_tsql_trans)
-		SPI_setCurrentInternalTxnMode(true);
+	SPI_setCurrentInternalTxnMode(true);
+	current_spi_stack_depth = SPI_get_depth();
 
 	elog(DEBUG2, "TSQL TXN inline handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
@@ -4462,7 +4495,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	}
 	PG_CATCH();
 	{
-		terminate_batch(true /* send_error */ , true /* compile_error */ );
+		terminate_batch(true /* send_error */ , true /* compile_error */ , current_spi_stack_depth);
 		return retval;
 	}
 	PG_END_TRY();
@@ -4571,7 +4604,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		}
 		sql_dialect = saved_dialect;
 
-		terminate_batch(true /* send_error */ , false /* compile_error */ );
+		terminate_batch(true /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 		return retval;
 	}
 	PG_END_TRY();
@@ -4610,7 +4643,7 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	}
 	sql_dialect = saved_dialect;
 
-	terminate_batch(false /* send_error */ , false /* compile_error */ );
+	terminate_batch(false /* send_error */ , false /* compile_error */ , current_spi_stack_depth);
 
 	return retval;
 }
@@ -5391,7 +5424,7 @@ get_oid_type_string(int type_oid)
 	return type_string;
 }
 
-static int64 
+static int64
 get_identity_into_args(Node *node)
 {
 	int64 val = 0;
@@ -5803,7 +5836,7 @@ bbf_set_tran_isolation(char *new_isolation_level_str)
 
 	if(new_isolation_int_val != DefaultXactIsoLevel)
 	{
-		if(FirstSnapshotSet || IsSubTransaction() || 
+		if(FirstSnapshotSet || IsSubTransaction() ||
 				(new_isolation_int_val == XACT_SERIALIZABLE && RecoveryInProgress()))
 		{
 			if(escape_hatch_set_transaction_isolation_level == EH_IGNORE)

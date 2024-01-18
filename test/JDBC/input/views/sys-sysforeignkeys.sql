@@ -27,6 +27,12 @@ go
 select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2');
 GO
 
+select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2') and type='f';
+GO
+
+select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2') and type='F';
+GO
+
 USE master
 GO
 

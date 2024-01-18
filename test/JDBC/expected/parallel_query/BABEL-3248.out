@@ -1,0 +1,119 @@
+select set_config('babelfishpg_tsql.explain_costs', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_timing', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'off', false);
+go
+~~START~~
+text
+off
+~~END~~
+
+select current_setting('babelfishpg_tsql.escape_hatch_showplan_all');
+go
+~~START~~
+text
+strict
+~~END~~
+
+
+-- SHOWPLAN_ALL and STATISTICS PROFILE should be ignored
+set showplan_all on;
+go
+select 1;
+go
+~~START~~
+int
+1
+~~END~~
+
+set showplan_all off;
+go
+set statistics profile on;
+go
+select 1;
+go
+~~START~~
+int
+1
+~~END~~
+
+set statistics profile off;
+go
+
+-- SHOWPLAN_ALL and STATISTICS PROFILE should return BBF query plans
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_showplan_all', 'ignore';
+go
+
+set showplan_all on;
+go
+select 1;
+go
+~~START~~
+text
+Query Text: select 1
+Gather
+  Workers Planned: 1
+  Single Copy: true
+  ->  Result
+~~END~~
+
+set showplan_all off;
+go
+set statistics profile on;
+go
+select 1;
+go
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+text
+Query Text: select 1
+Gather (actual rows=1 loops=1)
+  Workers Planned: 1
+  Workers Launched: 1
+  Single Copy: true
+  ->  Result (actual rows=1 loops=1)
+~~END~~
+
+set statistics profile off;
+go
+
+-- clean up
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_showplan_all', 'strict';
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_timing', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+select set_config('babelfishpg_tsql.explain_summary', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+

@@ -80,8 +80,7 @@ tsql_query_to_json_sfunc(PG_FUNCTION_ARGS)
 		 * only state and root_name can be null, so check the other params for
 		 * safety
 		 */
-		if PG_ARGISNULL
-			(i)
+		if (PG_ARGISNULL(i))
 				PG_RETURN_NULL();
 	}
 	record = PG_GETARG_DATUM(1);

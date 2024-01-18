@@ -409,11 +409,22 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 								 &formattypmod);
 
 	if (formatisnull)
-		extval = "<NULL>";
+	{
+		// Printing NULL prints a single space in T-SQL 
+		extval = " ";
+	}
 	else
+	{
 		extval = convert_value_to_string(estate,
 										 formatdatum,
 										 formattypeid);
+	}
+
+	if (strlen(extval) == 0)
+	{
+		// Printing an empty string prints a single space in T-SQL
+		extval = " ";
+	}
 
 	ereport(INFO, errmsg_internal("%s", extval));
 
@@ -928,7 +939,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 		stmt->is_scalar_func = is_scalar_func;
 
-		/* T-SQL doens't allow call prcedure in function */
+		/* T-SQL doesn't allow call procedure in function */
 		if (estate->func && estate->func->fn_oid != InvalidOid && estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER /* check EXEC is running
 																																									 * in the body of
 																																									 * function */
@@ -1453,11 +1464,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	int32		restypmod;
 	char	   *querystr;
 	InlineCodeBlock *codeblock;
-	volatile LocalTransactionId before_lxid;
+	volatile LocalTransactionId before_lxid = 0;
 	LocalTransactionId after_lxid;
-	SimpleEcontextStackEntry *topEntry;
-	volatile int save_nestlevel;
-	volatile int scope_level;
+	SimpleEcontextStackEntry *topEntry = NULL;
+	volatile int save_nestlevel = 0;
+	volatile int scope_level = 0;
 	char	   *old_db_name = get_cur_db_name();
 	char	   *cur_db_name = NULL;
 
@@ -2127,11 +2138,13 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				int			save_nestlevel;
 				int			scope_level;
 				InlineCodeBlockArgs *args = NULL;
-
+				
 				batch = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
 				if (isnull)
-					ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-									errmsg("batch string argument of sp_executesql is null")));
+				{
+					// When called with a NULL argument, sp_executesql should take no action at all
+					break;
+				}
 
 				batchstr = convert_value_to_string(estate, batch, restype);
 
@@ -2276,7 +2289,7 @@ exec_stmt_deallocate(PLtsql_execstate *estate, PLtsql_stmt_deallocate *stmt)
 {
 	PLtsql_var *curvar;
 	Portal		portal;
-	char	   *curname;
+	char	   *curname = NULL;
 	MemoryContext oldcontext;
 
 	Assert(estate->datums[stmt->curvar]->dtype == PLTSQL_DTYPE_VAR);
@@ -2514,7 +2527,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 		 * be more than 2 since db name can not be a qualifier for a UDT and
 		 * error will be thrown in the parser itself.
 		 */
-		rewrite_plain_name(p->argType->names);
+		p->argType->names = rewrite_plain_name(p->argType->names);
 
 		typenameTypeIdAndMod(NULL, p->argType, &(args->argtypes[i]), &(args->argtypmods[i]));
 		i++;

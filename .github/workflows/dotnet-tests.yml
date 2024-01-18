@@ -1,5 +1,5 @@
 name: Dotnet Framework Tests
-on: [push, pull_request]
+on: [workflow_call]
 
 jobs:
   run-babelfish-dotnet-tests:
@@ -17,6 +17,9 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          install_dir: 'psql'
+          code_coverage: 'yes'
       
       - name: Compile ANTLR
         id: compile-antlr
@@ -38,39 +41,39 @@ jobs:
         if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
       
-      - name: Install MSSQL Tools
-        id: install-mssql-tools
-        if: always() && steps.install-mssql-tools.outcome == 'success'
-        run: |
-          curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-          curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
-          sudo apt-get update
-          sudo apt-get install mssql-tools unixodbc-dev
-          echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc
-          source ~/.bashrc
-      
-      - name: Install Dotnet
-        id: install-dotnet
-        if: always() && steps.install-extensions.outcome == 'success'
-        run: | 
-          cd ~
-          wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-          sudo dpkg -i packages-microsoft-prod.deb
-          rm packages-microsoft-prod.deb
-          sudo apt-get install -y apt-transport-https
-          sudo apt-get install -y dotnet-sdk-7.0
-          sudo apt-get install -y apt-transport-https
-          sudo apt-get install -y aspnetcore-runtime-7.0
-
       - name: Run Dotnet Tests
-        if: always() && steps.install-dotnet.outcome == 'success'
+        id: run-dotnet-tests
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-and-run-dotnet
+
+      - name: Generate Code Coverage
+        id: generate-code-coverage
+        if: always() && steps.run-dotnet-tests.outcome == 'success'
         run: |
-          cd test/dotnet
-          dotnet build
-          babel_URL=localhost \
-            babel_port=1433 \
-            babel_databaseName=master \
-            babel_user=jdbc_user \
-            babel_password=12345678 \
-            testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestAuthentication.txt;TestText.txt" \
-            dotnet test
+          export PG_CONFIG=~/psql/bin/pg_config
+          export PG_SRC=~/work/postgresql_modified_for_babelfish
+          export cmake=$(which cmake)
+          cd contrib
+          for ext in babelfishpg_common babelfishpg_money babelfishpg_tds babelfishpg_tsql  
+          do
+            cd $ext
+            /usr/bin/lcov --gcov-tool /usr/bin/gcov -q --no-external -c -d . -d ./ -o lcov_test.info
+            cd ..
+          done
+        shell: bash
+  
+      - name: Summarize code coverage
+        id: code-coverage-summary
+        if: always() && steps.generate-code-coverage.outcome == 'success'
+        run: |
+          cd contrib/
+          lcov -a babelfishpg_tsql/lcov_test.info -a babelfishpg_tds/lcov_test.info -a babelfishpg_common/lcov_test.info -a babelfishpg_money/lcov_test.info -o dotnet-lcov.info
+          lcov --list dotnet-lcov.info
+
+      - name: Upload Coverage Report for Babelfish Extensions
+        if: always() && steps.code-coverage-summary.outcome == 'success'
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-babelfish-extensions-dotnet
+          path: contrib/dotnet-lcov.info
+          retention-days: 1
