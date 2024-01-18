@@ -881,10 +881,394 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), delimit_identifier(ctx->id().back()))));
 	}
 
+	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
+	{
+		if (ctx->func_proc_name_server_database_schema() && ctx->func_proc_name_server_database_schema()->procedure)
+		{
+			std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+
+			/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
+			if (strcmp(proc_name.c_str(), "STDistance") == 0 && ctx->func_proc_name_server_database_schema()->schema && ctx->function_arg_list())
+			{
+				std::string func_ctx = ::getFullText(ctx);
+				std::string arg_ctx = ::getFullText(ctx->function_arg_list());
+				int index = (int) ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex() + 1; 
+				int length = (int) ctx->function_arg_list()->start->getStartIndex() - ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
+
+				/* Shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+				for (auto &entry : local_id_positions)
+				{
+					if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
+					{
+						size_t pos = entry.first;
+						size_t offset = ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex();
+						pos -= offset;
+						local_id_positions.emplace(std::make_pair(pos, entry.second));
+						local_id_positions.erase(entry.first);
+					}
+				}
+
+				/*
+				 * Rewriting the query as: table.col.STDistance(arg) -> STDistance(arg, table.col)
+				 */
+				arg_ctx += ",";
+				if (ctx->func_proc_name_server_database_schema()->database) arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database) + ".";
+				arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+				std::string rewritten_func = proc_name + func_ctx.substr(index, length) + arg_ctx + ")";
+				rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+			}
+			else if ((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && ctx->func_proc_name_server_database_schema()->schema && !ctx->function_arg_list())
+			{
+				std::string func_ctx = ::getFullText(ctx);
+				/* Space is provided to distinguish it from ALL | DISTINCT keywords */
+				std::string arg_ctx = " ";
+				int index = (int) ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex() + 1; 
+				int length = (int) ctx->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
+				/*
+				 * Rewriting the query as: table.col.STAsText() -> STAsText(table.col)
+				 */
+				if (ctx->func_proc_name_server_database_schema()->database) arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database) + ".";
+				arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+				std::string rewritten_func = proc_name + func_ctx.substr(index, length) + arg_ctx + ")";
+				rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+			}
+		}
+	}
+
+	void exitFunc_call_expr(TSqlParser::Func_call_exprContext *ctx) override
+	{
+		if(ctx != NULL && ctx->function_call() != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STX") == 0 || strcmp(proc_name.c_str(), "STY") == 0 || strcmp(proc_name.c_str(), "LAT") == 0 || strcmp(proc_name.c_str(), "LONG") == 0 ||
+					strcmp(proc_name.c_str(), "[STX]") == 0 || strcmp(proc_name.c_str(), "[STY]") == 0 || strcmp(proc_name.c_str(), "[LAT]") == 0 || strcmp(proc_name.c_str(), "[LONG]") == 0) && !method->spatial_methods()->LR_BRACKET() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int func_call_len = (int)ctx->function_call()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->function_call()->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->function_call()->start->getStartIndex() && entry.first <= ctx->function_call()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = "(" + expr.substr(0, func_call_len+offset1+1) + ")." + expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2 + 1);
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int func_call_len = (int)ctx->function_call()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->function_call()->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->function_call()->start->getStartIndex() && entry.first <= ctx->function_call()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + proc_name.size() + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr(0, func_call_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int func_call_len = (int)ctx->function_call()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->function_call()->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->function_call()->start->getStartIndex() && entry.first <= ctx->function_call()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 2, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+							else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->function_call()->stop->getStopIndex() - ctx->function_call()->start->getStartIndex() + 2;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
+	void exitBracket_expr(TSqlParser::Bracket_exprContext *ctx) override
+	{
+		if(!ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int expr_len = (int)ctx->expression()->stop->getStopIndex() - ctx->expression()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->expression()->stop->getStopIndex() + 1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->expression()->start->getStartIndex() && entry.first <= ctx->expression()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + proc_name.size(), entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr((int)ctx->expression()->start->getStartIndex() - ctx->start->getStartIndex(), expr_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int expr_len = (int)ctx->expression()->stop->getStopIndex() - ctx->expression()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->expression()->stop->getStopIndex()+1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->expression()->start->getStartIndex() && entry.first <= ctx->expression()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+							else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->expression()->stop->getStopIndex() - ctx->expression()->start->getStartIndex() + 4;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr((int)ctx->expression()->start->getStartIndex() - ctx->start->getStartIndex(), expr_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
+	void exitSubquery_expr(TSqlParser::Subquery_exprContext *ctx) override
+	{
+		if(!ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int subquery_len = (int)ctx->subquery()->stop->getStopIndex() - ctx->subquery()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->subquery()->stop->getStopIndex() + 1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->subquery()->start->getStartIndex() && entry.first <= ctx->subquery()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + proc_name.size() + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr(0, subquery_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int subquery_len = (int)ctx->subquery()->stop->getStopIndex() - ctx->subquery()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->subquery()->stop->getStopIndex()+1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->subquery()->start->getStartIndex() && entry.first <= ctx->subquery()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 2, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+							else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->subquery()->stop->getStopIndex() - ctx->subquery()->start->getStartIndex() + 2;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, subquery_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
 	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
 	{
 		GetCtxFunc<TSqlParser::Full_column_nameContext *> getSchema = [](TSqlParser::Full_column_nameContext *o) { return o->schema; };
 		GetCtxFunc<TSqlParser::Full_column_nameContext *> getTablename = [](TSqlParser::Full_column_nameContext *o) { return o->tablename; };
+		
+		/* This if clause rewrites the query in case of Geospatial function Call */
+		std::string func_name = stripQuoteFromId(ctx->column_name);
+		if ((strcmp(func_name.c_str(), "STX") == 0 || strcmp(func_name.c_str(), "STY") == 0 || strcmp(func_name.c_str(), "LAT") == 0 || strcmp(func_name.c_str(), "LONG") == 0 ||
+			strcmp(func_name.c_str(), "[STX]") == 0 || strcmp(func_name.c_str(), "[STY]") == 0 || strcmp(func_name.c_str(), "[LAT]") == 0 || strcmp(func_name.c_str(), "[LONG]") == 0) && ctx->tablename)
+		{
+			/* Throwing error similar to TSQL as we do not allow 4-Part name for geospatial function call */
+			if(ctx->server) throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("The multi-part identifier \"%s\" could not be bound.", ::getFullText(ctx).c_str()), getLineAndPos(ctx));
+			/*
+			 * Rewriting the query as: table.col.STX -> (table.col).STX
+			 */
+			std::string rewritten_func_name = "(";
+			if(ctx->schema) rewritten_func_name += stripQuoteFromId(ctx->schema) + ".";
+			rewritten_func_name += stripQuoteFromId(ctx->tablename) + ")." + func_name;
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func_name.c_str())));
+		}
 		std::string rewritten_name = rewrite_column_name_with_omitted_schema_name(ctx, getSchema, getTablename);
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 		if (!rewritten_name.empty())
@@ -1045,26 +1429,6 @@ public:
 		{
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 		}
-
-		#ifdef ENABLE_SPATIAL_TYPES
-		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
-		{
-			TSqlParser::IdContext *idctx = ctx->id()[0];
-			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
-			{
-				std::string idText = ::getFullText(idctx->id()[0]);
-				transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
-				size_t start = idText.find_first_not_of(" \n\r\t\f\v");
-				idText = (start == std::string::npos) ? "" : idText.substr(start);
-				size_t end = idText.find_last_not_of(" \n\r\t\f\v");
-				idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
-				if(idText == "geography" || idText == "geometry"){
-					rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), idText))); 
-					rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "__")));		
-				}
-			}
-		}
-		#endif
 		
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
@@ -2260,6 +2624,403 @@ public:
 		}
 	}
 
+	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
+	{
+		/* This if clause rewrites the query in case of Geospatial function Call */
+		std::string func_name = stripQuoteFromId(ctx->column_name);
+		if ((strcmp(func_name.c_str(), "STX") == 0 || strcmp(func_name.c_str(), "STY") == 0 || strcmp(func_name.c_str(), "LAT") == 0 || strcmp(func_name.c_str(), "LONG") == 0 ||
+			strcmp(func_name.c_str(), "[STX]") == 0 || strcmp(func_name.c_str(), "[STY]") == 0 || strcmp(func_name.c_str(), "[LAT]") == 0 || strcmp(func_name.c_str(), "[LONG]") == 0) && ctx->tablename)
+		{
+			/* Throwing error similar to TSQL as we do not allow 4-Part name for geospatial function call */
+			if(ctx->server) throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("The multi-part identifier \"%s\" could not be bound.", ::getFullText(ctx).c_str()), getLineAndPos(ctx));
+			/*
+			 * rewriting the query as: table.col.STX -> (table.col).STX
+			 */
+			std::string rewritten_func_name = "(";
+			if(ctx->schema) rewritten_func_name += stripQuoteFromId(ctx->schema) + ".";
+			rewritten_func_name += stripQuoteFromId(ctx->tablename) + ")." + func_name;
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func_name.c_str())));
+		}
+	}
+
+	void exitFunc_call_expr(TSqlParser::Func_call_exprContext *ctx) override
+	{
+		if(ctx != NULL && ctx->function_call() != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STX") == 0 || strcmp(proc_name.c_str(), "STY") == 0 || strcmp(proc_name.c_str(), "LAT") == 0 || strcmp(proc_name.c_str(), "LONG") == 0 ||
+					strcmp(proc_name.c_str(), "[STX]") == 0 || strcmp(proc_name.c_str(), "[STY]") == 0 || strcmp(proc_name.c_str(), "[LAT]") == 0 || strcmp(proc_name.c_str(), "[LONG]") == 0) && !method->spatial_methods()->LR_BRACKET() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int func_call_len = (int)ctx->function_call()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->function_call()->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->function_call()->start->getStartIndex() && entry.first <= ctx->function_call()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = "(" + expr.substr(0, func_call_len+offset1+1) + ")." + expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2 + 1);
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int func_call_len = (int)ctx->function_call()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->function_call()->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->function_call()->start->getStartIndex() && entry.first <= ctx->function_call()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + proc_name.size() + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr(0, func_call_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int func_call_len = (int)ctx->function_call()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->function_call()->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->function_call()->start->getStartIndex() && entry.first <= ctx->function_call()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 2, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+							else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->function_call()->stop->getStopIndex() - ctx->function_call()->start->getStartIndex() + 2;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
+	void exitLocal_id_expr(TSqlParser::Local_id_exprContext *ctx) override
+	{
+		if(ctx != NULL && ctx->local_id() != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i) // check this for => select @STX.STX.STAsText()
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> local_id.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STX") == 0 || strcmp(proc_name.c_str(), "STY") == 0 || strcmp(proc_name.c_str(), "LAT") == 0 || strcmp(proc_name.c_str(), "LONG") == 0 ||
+					strcmp(proc_name.c_str(), "[STX]") == 0 || strcmp(proc_name.c_str(), "[STY]") == 0 || strcmp(proc_name.c_str(), "[LAT]") == 0 || strcmp(proc_name.c_str(), "[LONG]") == 0) && !method->spatial_methods()->LR_BRACKET() )
+					{
+						std::string expr = ::getFullText(ctx);
+						int local_id_len = (int)ctx->local_id()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						local_id_positions.erase(ctx->local_id()->start->getStartIndex());
+						local_id_positions.emplace(std::make_pair(ctx->local_id()->start->getStartIndex() + 1, ::getFullText(ctx->local_id())));
+						std::string rewritten_exp = "(" + expr.substr(0, local_id_len+1) + ")." + expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex(),method_len+1);
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(expr.c_str(), rewritten_exp.c_str())));
+					}
+					else if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string expr = ::getFullText(ctx);
+						int local_id_len = (int)ctx->local_id()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						local_id_positions.erase(ctx->local_id()->start->getStartIndex());
+						local_id_positions.emplace(std::make_pair(ctx->local_id()->start->getStartIndex() + proc_name.size() + 1, ::getFullText(ctx->local_id())));
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex(),method_len) + expr.substr(0, local_id_len+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(expr.c_str(), rewritten_exp.c_str())));
+					}
+					else if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string expr = ::getFullText(ctx);
+						int local_id_len = (int)ctx->local_id()->stop->getStopIndex() - ctx->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						local_id_positions.erase(ctx->local_id()->start->getStartIndex());
+						local_id_positions.emplace(std::make_pair(ctx->local_id()->start->getStartIndex() + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 2, ::getFullText(ctx->local_id())));
+
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->local_id()->stop->getStopIndex() - ctx->local_id()->start->getStartIndex() + 2;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex(),method_len) + "," + expr.substr(0, local_id_len+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(expr.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
+	void exitBracket_expr(TSqlParser::Bracket_exprContext *ctx) override
+	{
+		if(!ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int expr_len = (int)ctx->expression()->stop->getStopIndex() - ctx->expression()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->expression()->stop->getStopIndex() + 1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->expression()->start->getStartIndex() && entry.first <= ctx->expression()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + proc_name.size(), entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr((int)ctx->expression()->start->getStartIndex() - ctx->start->getStartIndex(), expr_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int expr_len = (int)ctx->expression()->stop->getStopIndex() - ctx->expression()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->expression()->stop->getStopIndex()+1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->expression()->start->getStartIndex() && entry.first <= ctx->expression()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+							else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->expression()->stop->getStopIndex() - ctx->expression()->start->getStartIndex() + 4;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr((int)ctx->expression()->start->getStartIndex() - ctx->start->getStartIndex(), expr_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
+	void exitSubquery_expr(TSqlParser::Subquery_exprContext *ctx) override
+	{
+		if(!ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i=0; i<method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
+				if(method->spatial_methods())
+				{
+					std::string proc_name = stripQuoteFromId(method->spatial_methods()->method);
+					if((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && !method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int subquery_len = (int)ctx->subquery()->stop->getStopIndex() - ctx->subquery()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->subquery()->stop->getStopIndex() + 1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->subquery()->start->getStartIndex() && entry.first <= ctx->subquery()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + proc_name.size() + 1, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr(0, subquery_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+					if(strcmp(proc_name.c_str(), "STDistance") == 0 && method->spatial_methods()->expression_list() )
+					{
+						std::string ctx_str = ::getFullText(ctx);
+						int subquery_len = (int)ctx->subquery()->stop->getStopIndex() - ctx->subquery()->start->getStartIndex();
+						int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+						std::string expr = "";
+						int index = 0;
+						int offset1 = 0;
+						int offset2 = 0;
+						/* writting the previously rewritten Geospatial context */
+						for (auto &entry : rewritten_query_fragment)
+						{
+							if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+							{
+								expr+= ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+								index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+								rewritten_query_fragment.erase(entry.first);
+								if(entry.first <= ctx->subquery()->stop->getStopIndex()+1) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+								else offset2+= (int)entry.second.second.size() - entry.second.first.size();
+							}
+						}
+						/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+						for (auto &entry : local_id_positions)
+						{
+							if(entry.first >= ctx->subquery()->start->getStartIndex() && entry.first <= ctx->subquery()->stop->getStopIndex())
+							{
+								local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->method->start->getStartIndex() + 2, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+							else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+							{
+								size_t pos = entry.first;
+								size_t offset = ctx->subquery()->stop->getStopIndex() - ctx->subquery()->start->getStartIndex() + 2;
+								pos -= offset;
+								local_id_positions.emplace(std::make_pair(pos, entry.second));
+								local_id_positions.erase(entry.first);
+							}
+						}
+						expr+=ctx_str.substr(index);
+						std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, subquery_len+offset1+1) + ")";
+						rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+					}
+				}
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// function/procedure call analysis
 	//////////////////////////////////////////////////////////////////////////////
@@ -2381,6 +3142,52 @@ public:
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
 						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
+				}
+
+				/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
+				if (strcmp(proc_name.c_str(), "STDistance") == 0 && ctx->func_proc_name_server_database_schema()->schema && ctx->function_arg_list())
+				{
+					std::string func_ctx = ::getFullText(ctx);
+					std::string arg_ctx = ::getFullText(ctx->function_arg_list());
+					int index = (int) ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex() + 1; 
+					int length = (int) ctx->function_arg_list()->start->getStartIndex() - ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
+
+					/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+					for (auto &entry : local_id_positions)
+					{
+						if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
+						{
+							size_t pos = entry.first;
+							size_t offset = ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex();
+							pos -= offset;
+							local_id_positions.emplace(std::make_pair(pos, entry.second));
+							local_id_positions.erase(entry.first);
+						}
+					}
+
+					/*
+					* rewriting the query as: table.col.STDistance(arg) -> STDistance(arg, table.col)
+					*/
+					arg_ctx += ",";
+					if (ctx->func_proc_name_server_database_schema()->database) arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database) + ".";
+					arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+					std::string rewritten_func = proc_name + func_ctx.substr(index, length) + arg_ctx + ")";
+					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+				}
+				else if ((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && ctx->func_proc_name_server_database_schema()->schema && !ctx->function_arg_list())
+				{
+					std::string func_ctx = ::getFullText(ctx);
+					/* Space is provided to distinguish it from ALL | DISTINCT keywords */
+					std::string arg_ctx = " ";
+					int index = (int) ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex() + 1; 
+					int length = (int) ctx->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
+					/*
+					* rewriting the query as: table.col.STAsText() -> STAsText(table.col)
+					*/
+					if (ctx->func_proc_name_server_database_schema()->database) arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database) + ".";
+					arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+					std::string rewritten_func = proc_name + func_ctx.substr(index, length) + arg_ctx + ")";
+					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 				}
 			}
 		}
