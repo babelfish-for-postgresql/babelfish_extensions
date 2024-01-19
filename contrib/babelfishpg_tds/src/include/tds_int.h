@@ -330,7 +330,7 @@ extern void TdsDefineGucs(void);
 extern void tdsstat_initialize(void);
 extern void tdsstat_bestart(void);
 extern void TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int intVal);
-extern void TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 bigintVal);
+extern void TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal);
 extern void TdsSetDatabaseStatVariable(int16 db_id);
 extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
 extern void invalidate_stat_table(void);
