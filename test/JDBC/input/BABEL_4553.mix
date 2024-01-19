@@ -42,9 +42,11 @@ CREATE TABLE [bABeL_4544_6] (id int)
 GO
 
 SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'babel_4544%'
+ORDER BY TABLE_NAME ASC;
 GO
 
 SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'BABEL_4544%'
+ORDER BY TABLE_NAME ASC;
 GO
 
 USE master

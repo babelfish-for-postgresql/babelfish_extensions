@@ -47,27 +47,29 @@ CREATE TABLE [bABeL_4544_6] (id int)
 GO
 
 SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'babel_4544%'
+ORDER BY TABLE_NAME ASC;
 GO
 ~~START~~
 nvarchar
+babel_4544
 BABEL_4544_2
 bABeL_4544_3
 babel_4544_4
 BABEL_4544_5
-babel_4544
 bABeL_4544_6
 ~~END~~
 
 
 SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'BABEL_4544%'
+ORDER BY TABLE_NAME ASC;
 GO
 ~~START~~
 nvarchar
+babel_4544
 BABEL_4544_2
 bABeL_4544_3
 babel_4544_4
 BABEL_4544_5
-babel_4544
 bABeL_4544_6
 ~~END~~
 
