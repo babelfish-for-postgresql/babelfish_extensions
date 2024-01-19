@@ -1,0 +1,78 @@
+-- tsql
+CREATE DATABASE dms_test_target_db
+go
+USE dms_test_target_db
+GO
+
+CREATE TABLE [dbo].my_table (
+	mycol [DATETIME2](7) NULL
+) 
+GO
+
+-- psql
+CREATE TABLE IF NOT EXISTS dbo."my_Table"
+(
+    mycol CHARACTER VARYING(4) 
+);
+GO
+
+-- tsql
+USE dms_test_target_db
+GO
+
+EXEC sys.sp_columns_100 'my_table', 'dbo', NULL, NULL;
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+dms_test_target_db#!#dbo#!#my_table#!#mycol#!#93#!#datetime2#!#26#!#16#!#6#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#3#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
+
+CREATE TABLE babel_4544 (id int)
+GO
+
+CREATE TABLE BABEL_4544_2 (id int)
+GO
+
+CREATE TABLE bABeL_4544_3 (id int)
+GO
+
+CREATE TABLE [babel_4544_4] (id int)
+GO
+
+CREATE TABLE [BABEL_4544_5] (id int)
+GO
+
+CREATE TABLE [bABeL_4544_6] (id int)
+GO
+
+SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'babel_4544%'
+GO
+~~START~~
+nvarchar
+BABEL_4544_2
+bABeL_4544_3
+babel_4544_4
+BABEL_4544_5
+babel_4544
+bABeL_4544_6
+~~END~~
+
+
+SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'BABEL_4544%'
+GO
+~~START~~
+nvarchar
+BABEL_4544_2
+bABeL_4544_3
+babel_4544_4
+BABEL_4544_5
+babel_4544
+bABeL_4544_6
+~~END~~
+
+
+USE master
+GO
+DROP DATABASE dms_test_target_db
+GO
