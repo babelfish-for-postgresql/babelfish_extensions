@@ -183,8 +183,11 @@ public class JDBCCrossDialect {
     void terminateTsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
         getConnectionAttributes(strLine);
 
-        if (tsqlConnectionMap.containsKey(newUser + newPassword + newDatabase)) {
-            Connection connection = tsqlConnectionMap.get(newUser + newPassword + newDatabase);
+        if (newPort == null)
+            newPort = tsql_port;
+
+        if (tsqlConnectionMap.containsKey(newUser + newPassword + newDatabase + newPort)) {
+            Connection connection = tsqlConnectionMap.get(newUser + newPassword + newDatabase + newPort);
             if (connection != null) {
                 try {
                     connection.close();
@@ -193,7 +196,7 @@ public class JDBCCrossDialect {
                 }
             }
 
-            tsqlConnectionMap.remove(newUser + newPassword + newDatabase);
+            tsqlConnectionMap.remove(newUser + newPassword + newDatabase + newPort);
             resetConnectionAttributes();
         }
     }
@@ -202,8 +205,11 @@ public class JDBCCrossDialect {
     void terminatePsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
         getConnectionAttributes(strLine);
 
-        if (psqlConnectionMap.containsKey(newUser + newPassword + newPhysicalDatabase + searchPath)) {
-            Connection connection = psqlConnectionMap.get(newUser + newPassword + newPhysicalDatabase + searchPath);
+        if (newPort == null)
+            newPort = psql_port;
+
+        if (psqlConnectionMap.containsKey(newUser + newPassword + newPhysicalDatabase + searchPath + newPort)) {
+            Connection connection = psqlConnectionMap.get(newUser + newPassword + newPhysicalDatabase + searchPath + newPort);
             if (connection != null) {
                 try {
                     connection.close();
@@ -212,7 +218,7 @@ public class JDBCCrossDialect {
                 }
             }
 
-            psqlConnectionMap.remove(newUser + newPassword + newDatabase);
+            psqlConnectionMap.remove(newUser + newPassword + newDatabase + newPort);
             resetConnectionAttributes();
         }
     }
