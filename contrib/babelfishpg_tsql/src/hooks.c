@@ -327,6 +327,9 @@ InstallExtendedHooks(void)
 	drop_relation_refcnt_hook = pltsql_drop_relation_refcnt_hook;
 
 	select_common_type_hook = select_common_type_for_isnull;
+
+	bbf_InitializeParallelDSM_hook = babelfixedparallelstate_insert;
+	bbf_ParallelWorkerMain_hook = babelfixedparallelstate_restore;
 }
 
 void
@@ -378,6 +381,9 @@ UninstallExtendedHooks(void)
 	IsToastClassHook = PrevIsToastClassHook;
 	sortby_nulls_hook = prev_sortby_nulls_hook;
 	drop_relation_refcnt_hook = prev_drop_relation_refcnt_hook;
+	
+	bbf_InitializeParallelDSM_hook = NULL;
+	bbf_ParallelWorkerMain_hook = NULL;
 }
 
 /*****************************************
