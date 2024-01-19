@@ -27,6 +27,13 @@
 #define BBF_Pragma_IgnoreFloatConversionWarning_Pop \
     _Pragma("GCC diagnostic pop")
 
+typedef enum TdsAtAtVarType 
+{
+  RCOUNT_TYPE, 
+  ERR_TYPE, 
+  TRANCOUNT_TYPE
+} TdsAtAtVarType;
+
 typedef struct common_utility_plugin
 {
 	/* Function pointers set up by the plugin */
