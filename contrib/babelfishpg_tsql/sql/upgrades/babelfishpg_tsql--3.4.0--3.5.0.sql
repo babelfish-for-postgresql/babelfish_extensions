@@ -2767,6 +2767,8 @@ WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
 
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
+ALTER VIEW sys.spt_columns_view_managed RENAME TO spt_columns_view_managed_3_5_0;
+
 CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
 SELECT
     o.object_id                     AS OBJECT_ID,
@@ -2942,6 +2944,7 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_5_0
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'information_schema_tsql', 'columns');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_3_5_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
