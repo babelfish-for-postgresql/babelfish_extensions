@@ -643,12 +643,11 @@ int#!#float
 
 
 SELECT PointColumn.STX AS XCoordinate, COUNT(*) AS PointCount 
-FROM YourTable GROUP BY PointColumn.STX;
+FROM GeomTab GROUP BY PointColumn.STX;
 GO
 ~~START~~
 float#!#int
-3.0#!#1
-5.0#!#1
+3.0#!#2
 ~~END~~
 
 

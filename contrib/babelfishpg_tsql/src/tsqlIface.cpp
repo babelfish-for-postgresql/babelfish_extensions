@@ -884,188 +884,73 @@ public:
 
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
-		std::string schema_name;
-		if (ctx->NEXT() && ctx->full_object_name())
+		if (ctx->func_proc_name_server_database_schema() && ctx->func_proc_name_server_database_schema()->procedure)
 		{
-			TSqlParser::Full_object_nameContext *fctx = (TSqlParser::Full_object_nameContext *) ctx->full_object_name();
-			std::string seq_name = ::getFullText(fctx);
-			std::string nextval_string = "nextval('" + seq_name + "')";
-			if (fctx->schema)
+			std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
+			std::vector<size_t> keysToRemove;
+
+			/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
+			if (strcmp(proc_name.c_str(), "STDistance") == 0 && ctx->func_proc_name_server_database_schema()->schema && ctx->function_arg_list())
 			{
-				TSqlParser::IdContext *dctx = fctx->database;
-				TSqlParser::IdContext *sctx = fctx->schema;
-				TSqlParser::IdContext *octx = fctx->object_name;
-				char *database;
-				char *schema;
-
-				if(dctx)
-					database = pstrdup(stripQuoteFromId(dctx).c_str());
-				else
-					database = get_cur_db_name();
-
-				schema = get_physical_schema_name(database, stripQuoteFromId(sctx).c_str());
-
-				if(strcmp(schema, "") == 0)
-					nextval_string = "nextval('" + ::stripQuoteFromId(octx) + "')";
-				else
-					// Need to directly use the backend schema name since nextval is a postgres function
-					nextval_string = "nextval('" + std::string(schema) + '.' + ::stripQuoteFromId(octx) + "')";
-
-				pfree(database);
-			}
-
-			rewritten_query_fragment.emplace(std::make_pair(ctx->NEXT()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->NEXT()), "")));
-			rewritten_query_fragment.emplace(std::make_pair(ctx->VALUE()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->VALUE()), "")));
-			rewritten_query_fragment.emplace(std::make_pair(ctx->FOR()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->FOR()), "")));
-			rewritten_query_fragment.emplace(std::make_pair(ctx->full_object_name()->start->getStartIndex(), std::make_pair(::getFullText(ctx->full_object_name()), nextval_string)));
-		}
-		if (ctx->analytic_windowed_function())
-		{
-			auto actx = ctx->analytic_windowed_function();
-			Assert(actx);
-
-			if (actx->PERCENTILE_CONT() || actx->PERCENTILE_DISC())
-			{
-				if (actx->over_clause())
-				{
-					std::string funcName = actx->PERCENTILE_CONT() ? ::getFullText(actx->PERCENTILE_CONT()) : ::getFullText(actx->PERCENTILE_DISC());
-
-					if (actx->over_clause()->row_or_range_clause())
-						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have a window frame", funcName.c_str()), getLineAndPos(actx->over_clause()->row_or_range_clause()));
-					else if (actx->over_clause()->order_by_clause())
-						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have ORDER BY in OVER clause", funcName.c_str()), getLineAndPos(actx->over_clause()->order_by_clause()));
-				}
-			}
-		}
-
-		if (ctx->built_in_functions())
-		{
-			auto bctx = ctx->built_in_functions();
-
-			/* Re-write system_user to sys.system_user(). */
-			if (bctx->bif_no_brackets && bctx->SYSTEM_USER())
-				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SYSTEM_USER()), "sys.system_user()")));
-
-			/* Re-write session_user to sys.session_user(). */
-			if (bctx->bif_no_brackets && bctx->SESSION_USER())
-				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
-		}
-
-		/* analyze scalar function call */
-		if (ctx->func_proc_name_server_database_schema())
-		{
-			if (ctx->func_proc_name_server_database_schema()->schema)
-				schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
-
-			auto fpnsds = ctx->func_proc_name_server_database_schema();
-
-			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
-			{
-				auto id = fpnsds->id().back();
-
-				if (id->keyword()->NULLIF()) /* NULLIF */
-				{
-					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-					{
-						auto first_arg = ctx->function_arg_list()->expression().front();
-						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
-							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
-					}
-				}
-
-                              if (id->keyword()->CHECKSUM())
-                              {
-                                      if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
-                                      {
-                                              for (auto arg: ctx->function_arg_list()->expression())
-                                              {
-                                                      if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
-                                                              throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
-                                              }
-                                      }
-                              }
-
-			}
-
-			if (ctx->func_proc_name_server_database_schema()->procedure)
-			{
-				std::string proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
-				if (pg_strcasecmp(proc_name.c_str(), "identity") == 0) 
-				{
-					has_identity_function = true;
-				}
+				std::string func_ctx = ::getFullText(ctx);
+				int col_len = (int)ctx->func_proc_name_server_database_schema()->schema->stop->getStopIndex() - ctx->start->getStartIndex();
+				int method_len = (int)ctx->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex();
+				std::string expr = "";
+				int index = 0;
+				int offset1 = 0;
+				int offset2 = 0;
 				
-				if (pg_strcasecmp(proc_name.c_str(), "identity_into_bigint") == 0)
+				/* writting the previously rewritten Geospatial context */
+				for (auto &entry : rewritten_query_fragment)
 				{
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, 
-						format_errmsg("function %s does not exist", proc_name.c_str()), getLineAndPos(ctx));
-				}
-
-				std::vector<size_t> keysToRemove;
-
-				/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
-				if (strcmp(proc_name.c_str(), "STDistance") == 0 && ctx->func_proc_name_server_database_schema()->schema && ctx->function_arg_list())
-				{
-					std::string func_ctx = ::getFullText(ctx);
-					int col_len = (int)ctx->func_proc_name_server_database_schema()->schema->stop->getStopIndex() - ctx->start->getStartIndex();
-					int method_len = (int)ctx->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex();
-					std::string expr = "";
-					int index = 0;
-					int offset1 = 0;
-					int offset2 = 0;
-					
-					/* writting the previously rewritten Geospatial context */
-					for (auto &entry : rewritten_query_fragment)
+					if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
 					{
-						if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
-						{
-							expr+= func_ctx.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
-							index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
-							keysToRemove.push_back(entry.first);
-							if(entry.first <= ctx->func_proc_name_server_database_schema()->schema->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
-							else offset2+= (int)entry.second.second.size() - entry.second.first.size();
-						}
+						expr+= func_ctx.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+						index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+						keysToRemove.push_back(entry.first);
+						if(entry.first <= ctx->func_proc_name_server_database_schema()->schema->stop->getStopIndex()) offset1+= (int)entry.second.second.size() - entry.second.first.size();
+						else offset2+= (int)entry.second.second.size() - entry.second.first.size();
 					}
-					for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
-					keysToRemove.clear();
-					
-					/* Shifting the local id positions to new positions after rewriting the query since they will be quoted later */
-					for (auto &entry : local_id_positions)
-					{
-						if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
-						{
-							size_t pos = entry.first;
-							size_t offset = ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex();
-							pos -= offset;
-							keysToRemove.push_back(entry.first);
-							local_id_positions.emplace(std::make_pair(pos, entry.second));
-						}
-					}
-					for (const auto &key : keysToRemove) local_id_positions.erase(key);
-					keysToRemove.clear();
-
-					/*
-					 * Rewriting the query as: table.col.STDistance(arg) -> STDistance(arg, table.col)
-					 */
-					expr+=func_ctx.substr(index);
-					std::string rewritten_func = expr.substr((int)ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
-					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 				}
-				else if ((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && ctx->func_proc_name_server_database_schema()->schema && !ctx->function_arg_list())
+				for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+				keysToRemove.clear();
+				
+				/* Shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+				for (auto &entry : local_id_positions)
 				{
-					std::string func_ctx = ::getFullText(ctx);
-					
-					/* Space is provided to distinguish it from ALL | DISTINCT keywords */
-					std::string arg_ctx = " ";
-					int index = (int) ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex() + 1; 
-					int length = (int) ctx->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
-					
-					/* rewriting the query as: table.col.STAsText() -> STAsText(table.col) */
-					if (ctx->func_proc_name_server_database_schema()->database) arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database) + ".";
-					arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
-					std::string rewritten_func = proc_name + func_ctx.substr(index, length) + arg_ctx + ")";
-					rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+					if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
+					{
+						size_t pos = entry.first;
+						size_t offset = ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex();
+						pos -= offset;
+						keysToRemove.push_back(entry.first);
+						local_id_positions.emplace(std::make_pair(pos, entry.second));
+					}
 				}
+				for (const auto &key : keysToRemove) local_id_positions.erase(key);
+				keysToRemove.clear();
+
+				/*
+					* Rewriting the query as: table.col.STDistance(arg) -> STDistance(arg, table.col)
+					*/
+				expr+=func_ctx.substr(index);
+				std::string rewritten_func = expr.substr((int)ctx->func_proc_name_server_database_schema()->procedure->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+				rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+			}
+			else if ((strcmp(proc_name.c_str(), "STAsText") == 0 || strcmp(proc_name.c_str(), "STAsBinary") == 0) && ctx->func_proc_name_server_database_schema()->schema && !ctx->function_arg_list())
+			{
+				std::string func_ctx = ::getFullText(ctx);
+				
+				/* Space is provided to distinguish it from ALL | DISTINCT keywords */
+				std::string arg_ctx = " ";
+				int index = (int) ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->start->getStartIndex() + 1; 
+				int length = (int) ctx->stop->getStopIndex() - ctx->func_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
+				
+				/* rewriting the query as: table.col.STAsText() -> STAsText(table.col) */
+				if (ctx->func_proc_name_server_database_schema()->database) arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database) + ".";
+				arg_ctx += stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+				std::string rewritten_func = proc_name + func_ctx.substr(index, length) + arg_ctx + ")";
+				rewritten_query_fragment.emplace(std::make_pair(ctx->func_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 			}
 		}
 	}

@@ -82,6 +82,12 @@ INSERT INTO YourTable (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 432
 ~~ROW COUNT: 2~~
 
 
+CREATE TABLE GeomTab ( ID INT PRIMARY KEY, PointColumn geometry );
+
+INSERT INTO GeomTab (ID, PointColumn) VALUES (1, geometry::Point(3.0, 4.0, 4326)), (2, geometry::Point(3.0, 6.0, 4326));
+~~ROW COUNT: 2~~
+
+
 CREATE FUNCTION dbo.GetXCoordinate(@point geometry) RETURNS float AS BEGIN RETURN @point.STX; END; 
 
 CREATE TABLE TableA (ID INT PRIMARY KEY, PointA geometry); 

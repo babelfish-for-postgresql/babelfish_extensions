@@ -187,7 +187,7 @@ SELECT * FROM PointData WHERE XCoordinate > 3.0;
 GO
 
 SELECT PointColumn.STX AS XCoordinate, COUNT(*) AS PointCount 
-FROM YourTable GROUP BY PointColumn.STX;
+FROM GeomTab GROUP BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
