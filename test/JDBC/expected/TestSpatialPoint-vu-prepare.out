@@ -391,9 +391,9 @@ CREATE VIEW TextFromGeog AS SELECT STAsText(location) AS TextRepresentation FROM
 
 CREATE VIEW BinaryFromGeog AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOG_dt;
 
-CREATE VIEW CoordsFromGeog AS SELECT LONG(location), LAT(location)  AS Coordinates FROM SPATIALPOINTGEOG_dt;
+CREATE VIEW CoordsFromGeog AS SELECT Long(location), Lat(location)  AS Coordinates FROM SPATIALPOINTGEOG_dt;
 
-CREATE VIEW GeogView AS SELECT location.LONG, location.LAT AS Coordinates FROM SPATIALPOINTGEOG_dt;
+CREATE VIEW GeogView AS SELECT location.Long, location.Lat AS Coordinates FROM SPATIALPOINTGEOG_dt;
 
 CREATE FUNCTION func_getval() RETURNS TABLE AS RETURN ( SELECT location.STAsText() AS TextPoint FROM SPATIALPOINTGEOG_dt );
 

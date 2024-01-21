@@ -79,7 +79,7 @@ SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
 Go
 
-SELECT location.LAT from SPATIALPOINTGEOM_dt;
+SELECT location.Lat from SPATIALPOINTGEOM_dt;
 GO
 
 SELECT * FROM GeomView;
@@ -612,18 +612,18 @@ Go
 
 DECLARE @point geography;
 SET @point = geography::STPointFromText('POINT(-122.34900 47.65100)', 4326);
-SELECT LONG(@point);
-SELECT LAT(@point);
-SELECT @point.LONG;
-SELECT @point.LAT;
+SELECT Long(@point);
+SELECT Lat(@point);
+SELECT @point.Long;
+SELECT @point.Lat;
 Go
 
 DECLARE @point geography;
 SET @point = geography::POINT(22.34900, -47.65100, 4326);
-SELECT LONG(@point);
-SELECT LAT(@point);
-SELECT @point.LONG;
-SELECT @point.LAT;
+SELECT Long(@point);
+SELECT Lat(@point);
+SELECT @point.Long;
+SELECT @point.Lat;
 Go
 
 DECLARE @point1 geography, @point2 geography;
@@ -635,57 +635,57 @@ Go
 
 DECLARE @point geography;
 SET @point = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
-Insert INTO SPATIALPOINTGEOG_dt(location) VALUES(geography::point(@point.LONG, @point.LAT, 4326))
+Insert INTO SPATIALPOINTGEOG_dt(location) VALUES(geography::point(@point.Long, @point.Lat, 4326))
 go
 
-DECLARE @LAT geography;
-SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
-select geography::Point(@LAT.LONG, @LAT.LAT, 4326).LONG, geography::Point(@LAT.LONG, @LAT.LAT, 4326).LAT;
+DECLARE @Lat geography;
+SET @Lat = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+select geography::Point(@Lat.Long, @Lat.Lat, 4326).Long, geography::Point(@Lat.Long, @Lat.Lat, 4326).Lat;
 go
 
-DECLARE @LAT geography;
-SET @LAT = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
-select geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsText(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STAsBinary(), geography::Point(@LAT.LONG, @LAT.LAT, 4326).STDistance(geography::Point(@LAT.LONG, @LAT.LAT, 4326));
+DECLARE @Lat geography;
+SET @Lat = geography::STGeomFromText('POINT(-22.34900 47.65100)', 4326);
+select geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsText(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STAsBinary(), geography::Point(@Lat.Long, @Lat.Lat, 4326).STDistance(geography::Point(@Lat.Long, @Lat.Lat, 4326));
 go
 
 SELECT
     SpatialData.ID,
-    SPATIALPOINTGEOG_dt.location.LAT,
+    SPATIALPOINTGEOG_dt.location.Lat,
     SpatialLocation.STDistance(SPATIALPOINTGEOG_dt.location)
 FROM
     SpatialData
 JOIN
-    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.LONG - SpatialData.SpatialLocation.LAT <= 10;
+    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10;
 GO
 
 WITH RegionLocations AS (
     SELECT
         SpatialData.ID,
-        SPATIALPOINTGEOG_dt.location.LAT
+        SPATIALPOINTGEOG_dt.location.Lat
     FROM
         SpatialData
     JOIN
-        SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.LONG - SpatialData.SpatialLocation.LAT <= 10
+        SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10
 )
 SELECT
-    LAT,
+    Lat,
     COUNT(ID) AS LocationCount
 FROM
     RegionLocations
 GROUP BY
-    LAT;
+    Lat;
 GO
 
 -- Test with CTE
 with mycte (a)
 as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt)
 select a.STAsText()
-				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.LAT >= y.location.LONG;
+				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.Lat >= y.location.Long;
 go
 
 -- Test with tvf
 select f.STAsText()
-                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.LAT >= t.location.LONG;
+                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.Lat >= t.location.Long;
 go
 
 -- Null test for Geospatial functions
@@ -693,8 +693,8 @@ DECLARE @point1 geography, @point2 geography, @point3 geography;
 SET @point1 = geography::STPointFromText(null, 4326);
 SET @point2 = geography::STGeomFromText(null, 4326);
 SET @point3 = geography::POINT(22.34900, -47.65100, 4326);
-SELECT @point1.LONG;
-SELECT @point1.LAT;
+SELECT @point1.Long;
+SELECT @point1.Lat;
 SELECT @point1.STAsText();
 SELECT @point1.STAsBinary();
 SELECT @point1.STDistance(@point2);
@@ -736,10 +736,10 @@ GO
 SELECT * FROM point_distances_geog;
 GO
 
-SELECT location.LAT from SPATIALPOINTGEOG_dt;
+SELECT location.Lat from SPATIALPOINTGEOG_dt;
 GO
 
-SELECT SPATIALPOINTGEOG_dt.location.LONG from SPATIALPOINTGEOG_dt;
+SELECT SPATIALPOINTGEOG_dt.location.Long from SPATIALPOINTGEOG_dt;
 GO
 
 SELECT location.STAsText() from SPATIALPOINTGEOG_dt;
@@ -751,10 +751,10 @@ GO
 SELECT location.STDistance(geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOG_dt;
 GO
 
-SELECT [SPATIALPOINTGEOG_dt].[location].[LONG] from [SPATIALPOINTGEOG_dt];
+SELECT [SPATIALPOINTGEOG_dt].[location].[Long] from [SPATIALPOINTGEOG_dt];
 GO
 
-SELECT [location].[LAT] from [SPATIALPOINTGEOG_dt];
+SELECT [location].[Lat] from [SPATIALPOINTGEOG_dt];
 GO
 
 SELECT location FROM SPATIALPOINTGEOG_dt;
