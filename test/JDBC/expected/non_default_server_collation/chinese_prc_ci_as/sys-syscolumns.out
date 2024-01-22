@@ -1,0 +1,581 @@
+create database db1;
+go
+
+use db1;
+go
+
+-- create helper function to get datatype name given oid
+CREATE FUNCTION OidToDataType(@Oid integer)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+        DECLARE @datatype VARCHAR(50);
+        SET @datatype = (SELECT typname from pg_type where oid = @Oid);
+        RETURN @datatype;
+END;
+GO
+
+
+
+
+-- create helper function to get procedure/table name given oid
+CREATE FUNCTION OidToObject(@Oid integer)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+        DECLARE @object_name VARCHAR(50);
+        SET @object_name = (SELECT relname from pg_class where oid = @Oid);
+        IF (@object_name is null)
+        BEGIN
+                SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
+        END
+        RETURN @object_name
+END;
+GO
+
+-- create helper function to get collation name given oid
+CREATE FUNCTION OidToCollation(@Oid integer)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+        DECLARE @collation VARCHAR(50);
+        SET @collation = (SELECT collname from pg_collation where oid = @Oid);
+        RETURN @collation;
+END;
+GO
+
+-- Setup some procedures and tables
+create procedure syscolumns_demo_proc1 @firstparam NVARCHAR(50) as select 1
+GO
+
+create procedure syscolumns_demo_proc2 @firstparam NVARCHAR(50), @secondparam VARCHAR(50) OUT as select 2
+GO
+
+create table syscolumns_demo_table (col_a int, col_b bigint, col_c char(10), col_d numeric(5,4))
+GO
+
+select name, OidToObject(id), OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#smallint
+@firstparam#!#syscolumns_demo_proc1#!#nvarchar#!#0#!#<NULL>
+@firstparam#!#syscolumns_demo_proc2#!#nvarchar#!#0#!#<NULL>
+@secondparam#!#syscolumns_demo_proc2#!#varchar#!#0#!#<NULL>
+col_a#!#syscolumns_demo_table#!#int4#!#0#!#4
+col_b#!#syscolumns_demo_table#!#int8#!#0#!#8
+col_c#!#syscolumns_demo_table#!#bpchar#!#0#!#10
+col_d#!#syscolumns_demo_table#!#numeric#!#0#!#5
+~~END~~
+
+
+select name, OidToObject(id), OidToDataType(xtype), typestat, length from dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#tinyint#!#smallint
+@firstparam#!#syscolumns_demo_proc1#!#nvarchar#!#0#!#<NULL>
+@firstparam#!#syscolumns_demo_proc2#!#nvarchar#!#0#!#<NULL>
+@secondparam#!#syscolumns_demo_proc2#!#varchar#!#0#!#<NULL>
+col_a#!#syscolumns_demo_table#!#int4#!#0#!#4
+col_b#!#syscolumns_demo_table#!#int8#!#0#!#8
+col_c#!#syscolumns_demo_table#!#bpchar#!#0#!#10
+col_d#!#syscolumns_demo_table#!#numeric#!#0#!#5
+~~END~~
+
+
+select colid, cdefault, domain, number from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+smallint#!#int#!#int#!#smallint
+1#!#<NULL>#!#<NULL>#!#0
+1#!#<NULL>#!#<NULL>#!#0
+2#!#<NULL>#!#<NULL>#!#0
+1#!#0#!#0#!#0
+2#!#0#!#0#!#0
+3#!#0#!#0#!#0
+4#!#0#!#0#!#0
+~~END~~
+
+
+select colid, cdefault, domain, number from dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+smallint#!#int#!#int#!#smallint
+1#!#<NULL>#!#<NULL>#!#0
+1#!#<NULL>#!#<NULL>#!#0
+2#!#<NULL>#!#<NULL>#!#0
+1#!#0#!#0#!#0
+2#!#0#!#0#!#0
+3#!#0#!#0#!#0
+4#!#0#!#0#!#0
+~~END~~
+
+
+select OidToCollation(collationid), status, OidToDataType(type), prec, scale from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+varchar#!#tinyint#!#varchar#!#smallint#!#int
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
+<NULL>#!#8#!#int4#!#10#!#0
+<NULL>#!#8#!#int8#!#19#!#0
+chinese_prc_ci_as#!#8#!#bpchar#!#0#!#0
+<NULL>#!#8#!#numeric#!#5#!#4
+~~END~~
+
+
+select OidToCollation(collationid), status, OidToDataType(type), prec, scale from dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+varchar#!#tinyint#!#varchar#!#smallint#!#int
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
+<NULL>#!#8#!#int4#!#10#!#0
+<NULL>#!#8#!#int8#!#19#!#0
+chinese_prc_ci_as#!#8#!#bpchar#!#0#!#0
+<NULL>#!#8#!#numeric#!#5#!#4
+~~END~~
+
+
+select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+int#!#int#!#int#!#varchar
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#1#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#chinese_prc_ci_as
+0#!#0#!#1#!#<NULL>
+~~END~~
+
+
+select iscomputed, isoutparam, isnullable, collation from dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
+GO
+~~START~~
+int#!#int#!#int#!#varchar
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#1#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#chinese_prc_ci_as
+0#!#0#!#1#!#<NULL>
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT COUNT(*) FROM dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+6
+~~END~~
+
+
+use master;
+go
+
+create procedure syscolumns_demo_proc3 @thirdparam NVARCHAR(50) as select 3;
+go
+
+SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- syscolumns should also exist in dbo schema
+SELECT COUNT(*) FROM dbo.SySCOluMNs where name = '@thirdparam';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.sys.SySCOluMNs where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- In case of cross-db, syscolumns should also exist in dbo schema
+-- Cross-DB system view query is not currently supported in Babelfish.
+SELECT COUNT(*) FROM db1.DbO.SySCOluMNs where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+
+
+-- should not be visible here
+SELECT COUNT(*) FROM db1.sys.SySCOluMNs where name = '@thirdparam';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.dbo.SySCOluMNs where name = '@thirdparam';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross-DB system view query is not currently supported in Babelfish.)~~
+
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+0
+~~END~~
+
+
+use db1;
+go
+
+SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT COUNT(*) FROM dbo.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+~~START~~
+int
+6
+~~END~~
+
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
+go
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM dbo.syscolumns where name = '@thirdparam'
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- Cleanup
+DROP FUNCTION OidToDataType
+DROP FUNCTION OidToObject
+DROP FUNCTION OidToCollation
+DROP PROCEDURE syscolumns_demo_proc1
+DROP PROCEDURE syscolumns_demo_proc2
+DROP TABLE syscolumns_demo_table
+GO
+
+use master;
+go
+
+drop database db1;
+go
+
+DROP PROCEDURE syscolumns_demo_proc3
+go
+
+-- Tests for sys.columns catalog view
+-- Test precision and scale for all numeric datatypes
+create table t1(a int, b float, c bigint, d numeric, e smallint, f tinyint, g decimal, h money, i smallmoney);
+go
+select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1') order by name;
+go
+~~START~~
+varchar#!#int#!#tinyint#!#tinyint
+a#!#1#!#10#!#0
+b#!#2#!#53#!#0
+c#!#3#!#19#!#0
+d#!#4#!#18#!#0
+e#!#5#!#5#!#0
+f#!#6#!#3#!#0
+g#!#7#!#18#!#0
+h#!#8#!#19#!#4
+i#!#9#!#10#!#4
+~~END~~
+
+
+-- Test identity and computed columns
+create table t2(a int, b int IDENTITY(1,1), c as a * b);
+go
+select name, column_id, is_identity, is_computed from sys.columns where object_id=OBJECT_ID('t2') order by name;
+go
+~~START~~
+varchar#!#int#!#bit#!#bit
+a#!#1#!#0#!#0
+b#!#2#!#1#!#0
+c#!#3#!#0#!#1
+~~END~~
+
+
+-- Test ansi padded columns
+create table t3(a char(10), b nchar(10), c binary(10));
+go
+select name, column_id, is_ansi_padded from sys.columns where object_id=OBJECT_ID('t3') order by name;
+go
+~~START~~
+varchar#!#int#!#bit
+a#!#1#!#1
+b#!#2#!#1
+c#!#3#!#1
+~~END~~
+
+
+-- Test collation name
+create table t4(
+        c1 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CI_AI,
+        c2 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CI_AS,
+        c3 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CS_AI,
+        c4 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CS_AS,
+        c5 char(10) COLLATE SQL_LATIN1_GENERAL_CP1250_CI_AS
+);
+go
+select name, column_id, collation_name from sys.columns where object_id=OBJECT_ID('t4') order by name;
+go
+~~START~~
+varchar#!#int#!#varchar
+c1#!#1#!#bbf_unicode_cp1_ci_ai
+c2#!#2#!#bbf_unicode_cp1_ci_as
+c3#!#3#!#bbf_unicode_cp1_cs_ai
+c4#!#4#!#bbf_unicode_cp1_cs_as
+c5#!#5#!#bbf_unicode_cp1250_ci_as
+~~END~~
+
+
+-- Cleanup
+drop table t1;
+drop table t2;
+drop table t3;
+drop table t4;
+go
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
+CREATE TABLE test_columns (
+    c1  bigint  NOT NULL
+    , c2    binary(123) NOT NULL
+    , c3    bit NOT NULL
+    , c4    char(123)   NOT NULL
+    , c5    date    NOT NULL
+    , c6    datetime    NOT NULL
+    , c7    datetime2   NOT NULL
+    , c8    datetimeoffset  NOT NULL
+    , c9    decimal(8,4)    NOT NULL
+    , c10   float   NOT NULL
+    , c11   image   NOT NULL
+    , c12   int NOT NULL
+    , c13   money   NOT NULL
+    , c14   nchar(123)  NOT NULL
+    , c15   ntext   NOT NULL
+    , c16   numeric(8,4)    NOT NULL
+    , c17   nvarchar(123)   NOT NULL
+    , c18   real    NOT NULL
+    , c19   smalldatetime   NOT NULL
+    , c20   smallint    NOT NULL
+    , c21   smallmoney  NOT NULL
+    , c22   sql_variant NOT NULL
+    , c23   sysname NOT NULL
+    , c24   text    NOT NULL
+    , c25   time    NOT NULL
+    , c27   tinyint NOT NULL
+    , c28   uniqueidentifier    NOT NULL
+    , c29   varbinary(123)  NOT NULL
+    , c30   varchar(123)    NOT NULL
+    , c31   xml NOT NULL
+    , c32   rowversion)
+GO
+
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('test_columns') order by name;
+GO
+~~START~~
+varchar#!#smallint#!#tinyint#!#tinyint
+c1#!#8#!#19#!#0
+c10#!#8#!#53#!#0
+c11#!#16#!#0#!#0
+c12#!#4#!#10#!#0
+c13#!#8#!#19#!#4
+c14#!#246#!#0#!#0
+c15#!#16#!#0#!#0
+c16#!#5#!#8#!#4
+c17#!#246#!#0#!#0
+c18#!#4#!#24#!#0
+c19#!#4#!#16#!#0
+c2#!#123#!#0#!#0
+c20#!#2#!#5#!#0
+c21#!#4#!#10#!#4
+c22#!#8016#!#0#!#0
+c23#!#256#!#0#!#0
+c24#!#16#!#0#!#0
+c25#!#5#!#15#!#6
+c27#!#1#!#3#!#0
+c28#!#16#!#0#!#0
+c29#!#123#!#0#!#0
+c3#!#1#!#1#!#0
+c30#!#123#!#0#!#0
+c31#!#-1#!#0#!#0
+c32#!#8#!#0#!#0
+c4#!#123#!#0#!#0
+c5#!#3#!#10#!#0
+c6#!#8#!#23#!#3
+c7#!#8#!#26#!#6
+c8#!#10#!#33#!#6
+c9#!#5#!#8#!#4
+~~END~~
+
+
+drop table test_columns;
+GO
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
+
+CREATE TABLE t1(c1 datetime2(0)
+                , c2 datetime2(7)
+                , c3 datetimeoffset(0)
+                , c4 datetimeoffset(7)
+                , c5 time(0)
+                , c6 time(7))
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('t1') order by name;
+GO
+~~START~~
+varchar#!#smallint#!#tinyint#!#tinyint
+c1#!#6#!#19#!#0
+c2#!#8#!#26#!#6
+c3#!#8#!#26#!#0
+c4#!#10#!#33#!#6
+c5#!#3#!#8#!#0
+c6#!#5#!#15#!#6
+~~END~~
+
+
+drop table t1;
+GO
+
+CREATE TYPE type1 FROM INT NOT NULL
+GO
+CREATE TABLE t1( c1 type1, c2 int)
+GO
+
+select count(*) from sys.columns where object_id = OBJECT_ID('t1') and system_type_id <> user_type_id
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1') order by object_name(user_type_id);
+GO
+~~START~~
+varchar#!#varchar
+int4#!#int4
+int4#!#type1
+~~END~~
+
+
+drop table t1;
+GO
+
+drop type type1
+GO
+
+create type varchar_max from varchar(max)
+create type nvarchar_max from nvarchar(max)
+create type varbinary_max from varbinary(max)
+GO
+
+create table babel_2947 (a varchar_max
+                        , b varchar(max)
+                        , c varchar(10)
+                        , d nvarchar_max
+                        , e nvarchar(max)
+                        , f nvarchar(10)
+                        , g varbinary_max
+                        , h varbinary(max)
+                        , i varbinary(10))
+GO
+
+select name, max_length from sys.columns where object_id = OBJECT_ID('babel_2947') order by name;
+GO
+~~START~~
+varchar#!#smallint
+a#!#-1
+b#!#-1
+c#!#10
+d#!#-1
+e#!#-1
+f#!#20
+g#!#-1
+h#!#-1
+i#!#10
+~~END~~
+
+
+drop table babel_2947
+GO
+
+drop type varchar_max 
+drop type nvarchar_max 
+drop type varbinary_max 
+GO
+
+create table babel_2947 (a varchar(max)
+                        , b varchar(10)
+                        , c nvarchar(max)
+                        , d nvarchar(10)
+                        , e varbinary(max)
+                        , f varbinary(10))
+GO
+
+exec sys.sp_describe_undeclared_parameters N'insert into babel_2947 (a,b,c,d,e,f) values (@a,@b,@c,@d,@e,@f)'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@a#!#167#!#varchar(max)#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#65535
+2#!#@b#!#167#!#varchar(10)#!#10#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#167#!#10
+3#!#@c#!#231#!#nvarchar(max)#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#231#!#65535
+4#!#@d#!#231#!#nvarchar(10)#!#20#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#231#!#20
+5#!#@e#!#165#!#varbinary(max)#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#165#!#65535
+6#!#@f#!#165#!#varbinary(10)#!#10#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#165#!#10
+~~END~~
+
+
+drop table babel_2947
+GO
+

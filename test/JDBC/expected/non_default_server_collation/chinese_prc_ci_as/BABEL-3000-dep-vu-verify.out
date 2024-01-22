@@ -1,0 +1,8 @@
+exec babel_3000_dep_vu_prepare_p1
+go
+~~START~~
+bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
+0#!#1#!#a#!#1#!#25#!#text#!#-1#!#0#!#0#!#chinese_prc_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#35#!#16#!#13633540#!#0
+0#!#2#!#b#!#1#!#142#!#xml#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#241#!#8100#!#<NULL>#!#<NULL>
+~~END~~
+

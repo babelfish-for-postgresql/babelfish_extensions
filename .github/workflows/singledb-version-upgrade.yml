@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
          name: postgres-log-new
-         path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile14
+         path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile
 
       - name: Upload upgrade Log
         if: always() && steps.upgrade-and-verify.outcome == 'failure'

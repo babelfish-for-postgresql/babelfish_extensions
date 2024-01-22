@@ -1,0 +1,1374 @@
+create table t ( a varchar(30))
+GO
+
+insert into t values ('abc'),('bbc'),('cbc'),('=bc'),('Abc'),('a[bc'),('a]bc');
+GO
+~~ROW COUNT: 7~~
+
+
+select * from t where a like '[%' -- suppose not having any result
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select * from t where a like '[c-a]bc'
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select * from t where a like '[<->]bc'
+GO
+~~START~~
+varchar
+=bc
+~~END~~
+
+
+select * from t where a like '[0-a]bc';
+GO
+~~START~~
+varchar
+abc
+Abc
+~~END~~
+
+
+select * from t where a like '[abc]bc';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+Abc
+~~END~~
+
+
+select * from t where a like '[a-c]bc';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+Abc
+~~END~~
+
+
+select * from t where a like '[abc]_c';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+Abc
+~~END~~
+
+
+select * from t where a like '[a]%c';
+GO
+~~START~~
+varchar
+abc
+Abc
+a[bc
+a]bc
+~~END~~
+
+
+select * from t where a like '%[abc]c';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+=bc
+Abc
+a[bc
+a]bc
+~~END~~
+
+
+select * from t where a like '[%]bc';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select * from t where a like '[_]bc';
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select * from t where a like 'a[bc]c';
+GO
+~~START~~
+varchar
+abc
+Abc
+~~END~~
+
+
+select * from t where a like '[a-z][a-z]c';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+Abc
+~~END~~
+
+
+select * from t where a like '[^ a][a-z]c';
+GO
+~~START~~
+varchar
+bbc
+cbc
+=bc
+~~END~~
+
+
+select * from t where a like '[^ a-b][a-z]c';
+GO
+~~START~~
+varchar
+cbc
+=bc
+~~END~~
+
+
+select * from t where a like '%bc';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+=bc
+Abc
+a[bc
+a]bc
+~~END~~
+
+
+select * from t where a like '[0-9a-f][0-9a-f][0-9a-f]';
+GO
+~~START~~
+varchar
+abc
+bbc
+cbc
+Abc
+~~END~~
+
+
+insert into t values (']bc')
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t values ('[bc')
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t where a like ('[]]bc');
+GO
+~~START~~
+varchar
+~~END~~
+
+
+select * from t where a like ('[[]bc');
+GO
+~~START~~
+varchar
+[bc
+~~END~~
+
+
+select * from t where a like ']bc';
+GO
+~~START~~
+varchar
+]bc
+~~END~~
+
+
+insert into t values ('11.22');
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t where a like '[0-9][0-9].[0-9][0-9]'
+GO
+~~START~~
+varchar
+11.22
+~~END~~
+
+
+create table t2 ( b varchar(30) collate BBF_Unicode_General_CS_AS)
+GO
+
+insert into t2 values ('[abc]bc'),('[abc]_c'),('[]]bc'),('[[]bc'),('%[abc]c'),('[^ a-b][a-z]c'),('[0-9][0-9].[0-9][0-9]'),('[<->]bc')
+GO
+~~ROW COUNT: 8~~
+
+
+select * from t2 join t on a like b;
+GO
+~~START~~
+varchar#!#varchar
+[abc]bc#!#abc
+[abc]bc#!#bbc
+[abc]bc#!#cbc
+[abc]_c#!#abc
+[abc]_c#!#bbc
+[abc]_c#!#cbc
+[[]bc#!#[bc
+%[abc]c#!#abc
+%[abc]c#!#bbc
+%[abc]c#!#cbc
+%[abc]c#!#=bc
+%[abc]c#!#Abc
+%[abc]c#!#a[bc
+%[abc]c#!#a]bc
+%[abc]c#!#]bc
+%[abc]c#!#[bc
+[^ a-b][a-z]c#!#cbc
+[^ a-b][a-z]c#!#=bc
+[^ a-b][a-z]c#!#]bc
+[^ a-b][a-z]c#!#[bc
+[0-9][0-9].[0-9][0-9]#!#11.22
+[<->]bc#!#=bc
+~~END~~
+
+
+drop table t2;
+GO
+
+drop table t;
+GO
+
+DROP TABLE IF EXISTS t1
+GO
+CREATE TABLE t1 
+(
+ c1 int IDENTITY(1, 1)
+,string varchar(20) null
+,patt   varchar(20) null
+,esc    varchar(2) null
+)
+go
+insert t1 values
+(null,null,null),
+('ABCD', 'AB[C]D', 'X'),
+('ABCD', 'ABcD', null), 
+('AB[C]D', 'ABZ[C]D', 'Z'),
+('AB[C]D', 'ABZ[C]D', 'z')
+go
+~~ROW COUNT: 5~~
+
+-- returns 2,3,4 , babel return 2,4 BABEL-4271
+select c1 from t1 where string like patt escape esc 
+and c1 > 1 order by c1
+go
+~~START~~
+int
+2
+4
+~~END~~
+
+
+DROP TABLE IF EXISTS t1
+GO
+CREATE TABLE t1
+(
+ c1 int IDENTITY(1, 1)
+,string varchar(50) 
+)
+GO
+
+
+--Note: we rely on identity value being generated sequentially 
+--from 1 in same order as the values in INSERT
+INSERT INTO t1 (string) 
+VALUES
+ ('451201-7825')
+,('451201x7825')
+,('Andersson')
+,('Bertilsson')
+,('Carlson')
+,('Davidsson')
+,('Eriksson')
+,('Fredriksson')
+,('F')
+,('F.')
+,('Göransson')
+,('Karlsson')
+,('KarlsTon')
+,('Karlson')
+,('Persson')
+,('Uarlson')
+,('McDonalds')
+,('MacDonalds')
+,('15% off')
+,('15 % off')
+,('15 %off')
+,('15 %')
+,('15 % /off')
+,('My[String')
+,('My]String')
+,('My[]String')
+,('My][String')
+,('My[valid]String')
+--Swedish person-nummer(nnnnnn-nnnn); should return rows 1
+SELECT * FROM t1 WHERE string LIKE '[0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]' 
+go
+~~ROW COUNT: 28~~
+
+~~START~~
+int#!#varchar
+1#!#451201-7825
+~~END~~
+
+
+--As above, using REPLICATE; should return rows 1
+SELECT * FROM t1 WHERE string LIKE REPLICATE('[0-9]', 6) + '-' + REPLICATE('[0-9]', 4)
+go
+~~START~~
+int#!#varchar
+1#!#451201-7825
+~~END~~
+
+
+--First 6 characters are numbers, using REPLICATE; should return rows 1 and 2
+SELECT * FROM t1 WHERE SUBSTRING(string, 1, 6) LIKE REPLICATE('[0-9]', 6)
+go
+~~START~~
+int#!#varchar
+1#!#451201-7825
+2#!#451201x7825
+~~END~~
+
+
+--Enumeration, all Karlsson with C or K, one or two s should return rows: 5, 12, 14
+SELECT * FROM t1 WHERE string LIKE '[CK]arlson' OR string LIKE '[CK]arlsson'
+go
+~~START~~
+int#!#varchar
+5#!#Carlson
+12#!#Karlsson
+14#!#Karlson
+~~END~~
+
+
+--Negative enumeration, all Karlson except those with C or K; should return rows: 16
+SELECT * FROM t1 WHERE string LIKE '[^CK]arlson'
+go
+~~START~~
+int#!#varchar
+16#!#Uarlson
+~~END~~
+
+
+--Starts in range A-F; should return rows 3-10
+SELECT * FROM t1 WHERE string LIKE '[A-F]%' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+6#!#Davidsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+10#!#F.
+~~END~~
+
+
+--Two ranges, A-B and E-G; should return rows 3-4, 7-11
+SELECT * FROM t1 WHERE string LIKE '[A-BE-G]%' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+10#!#F.
+11#!#G?ransson
+~~END~~
+
+
+--Starts in range A-C and also starting with E and G; should return rows 3, 4, 5, 7, 11
+SELECT * FROM t1 WHERE string LIKE '[A-CEG]%' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+7#!#Eriksson
+11#!#G?ransson
+~~END~~
+
+
+--All Donalds starting with M, exclude following c; should return rows 18
+SELECT * FROM t1 WHERE string LIKE 'M[^c]%Donalds' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+18#!#MacDonalds
+~~END~~
+
+
+--15% off using ESCAPE; should return rows 19
+SELECT * FROM t1 WHERE string LIKE '15/% %' ESCAPE '/' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15% off using a different ESCAPE character; should return rows 19
+SELECT * FROM t1 WHERE string LIKE '15!% %' ESCAPE '!' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15% off using square brackets; should return rows 19
+SELECT * FROM t1 WHERE string LIKE '15[%] %'  ORDER BY c1
+go
+~~START~~
+int#!#varchar
+19#!#15% off
+~~END~~
+
+
+--15 % off ; should return rows 21
+SELECT * FROM t1 WHERE string LIKE '15 /%___' ESCAPE '/' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+21#!#15 %off
+~~END~~
+
+
+--Searching for the escape character itself; should return rows 23
+SELECT * FROM t1 WHERE string LIKE '15 [%] //off' ESCAPE '/' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+23#!#15 % /off
+~~END~~
+
+
+--Contains [; should return rows 24, 26, 27, 28
+SELECT * FROM t1 WHERE string LIKE '%[[]%'  ORDER BY c1
+go
+~~START~~
+int#!#varchar
+24#!#My[String
+26#!#My[]String
+27#!#My][String
+28#!#My[valid]String
+~~END~~
+
+
+--Contains ]; should return rows 25, 26, 27, 28
+SELECT * FROM t1 WHERE string LIKE '%]%'  ORDER BY c1
+go
+~~START~~
+int#!#varchar
+25#!#My]String
+26#!#My[]String
+27#!#My][String
+28#!#My[valid]String
+~~END~~
+
+
+--As above, but allow "ö", should return same as above, except row 11 (Göransson)
+SELECT * FROM t1 WHERE string LIKE '%[^a-zA-Z0-9öÖ]%' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+1#!#451201-7825
+10#!#F.
+19#!#15% off
+20#!#15 % off
+21#!#15 %off
+22#!#15 %
+23#!#15 % /off
+24#!#My[String
+25#!#My]String
+26#!#My[]String
+27#!#My][String
+28#!#My[valid]String
+~~END~~
+
+
+--Negate above, and exclude the numbers, i.e. "only clean letters". Should return 3-9, 11-18
+SELECT * FROM t1 WHERE string NOT LIKE '%[^a-zA-ZåÅäÄöÖ]%' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+6#!#Davidsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+11#!#G?ransson
+12#!#Karlsson
+13#!#KarlsTon
+14#!#Karlson
+15#!#Persson
+16#!#Uarlson
+17#!#McDonalds
+18#!#MacDonalds
+~~END~~
+
+
+--As above, but also allow for dot ".". Should return 3-18
+SELECT * FROM t1 WHERE string  NOT LIKE '%[^a-zA-ZåÅäÄöÖ.]%' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+6#!#Davidsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+10#!#F.
+11#!#G?ransson
+12#!#Karlsson
+13#!#KarlsTon
+14#!#Karlson
+15#!#Persson
+16#!#Uarlson
+17#!#McDonalds
+18#!#MacDonalds
+~~END~~
+
+
+--As above, but also allow for "[". Should return 3-18, 24
+SELECT * FROM t1 WHERE string  NOT LIKE '%[^a-zA-ZåÅäÄöÖ.[?[]%' ESCAPE '?' ORDER BY c1
+go
+~~START~~
+int#!#varchar
+3#!#Andersson
+4#!#Bertilsson
+5#!#Carlson
+6#!#Davidsson
+7#!#Eriksson
+8#!#Fredriksson
+9#!#F
+10#!#F.
+11#!#G?ransson
+12#!#Karlsson
+13#!#KarlsTon
+14#!#Karlson
+15#!#Persson
+16#!#Uarlson
+17#!#McDonalds
+18#!#MacDonalds
+24#!#My[String
+~~END~~
+
+
+
+--- test case with LIKE in a CHECK constraint  -----------------
+DROP TABLE IF EXISTS t1
+GO
+CREATE TABLE t1
+(
+ c1 int PRIMARY KEY
+,pnr char(11) CHECK (pnr LIKE '[0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9]')
+)
+GO
+--Verify it does its job
+INSERT INTO t1 (c1, pnr) VALUES(1, '451201-7825') --Should be OK
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 (c1, pnr) VALUES(1, '451d01-7825') --Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "t1" violates check constraint "t1_pnr_check")~~
+
+INSERT INTO t1 (c1, pnr) VALUES(1, '451201w7825') --Should fail
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "t1" violates check constraint "t1_pnr_check")~~
+
+
+drop table t1;
+GO
+
+DROP TABLE IF EXISTS IP_address
+GO
+CREATE TABLE IP_address
+(
+ c1 int IDENTITY(1, 1)
+,string varchar(50) 
+,is_valid bit
+)
+GO
+
+INSERT INTO IP_address (string, is_valid)
+VALUES
+--Valid:
+ ('131.107.2.201', 1)
+,('131.33.2.201', 1)
+,('131.33.2.202', 1)
+,('3.107.2.4', 1)
+,('3.107.3.169', 1)
+,('3.107.104.172', 1)
+,('22.107.202.123', 1)
+,('22.20.2.77', 1)
+,('22.156.9.91', 1)
+,('22.156.89.32', 1)
+--Not valid:
+,('22.356.89.32', 0)
+,('1.1.1.256', 0)
+,('1.1.1.1.1', 0)
+,('1.1.1', 0)
+,('1..1.1', 0)
+,('.1.1.1', 0)
+,('a.1.1.1', 0)
+go
+~~ROW COUNT: 17~~
+
+
+SELECT * FROM IP_address
+WHERE 
+	-- 3 periods and no empty octets
+    string LIKE '_%._%._%._%'
+  AND
+    -- not 4 periods or more
+    string NOT LIKE '%.%.%.%.%'
+  AND
+    -- no characters other than digits and periods
+    string NOT LIKE '%[^0-9.]%'
+  AND
+    -- not more than 3 digits per octet
+    string NOT LIKE '%[0-9][0-9][0-9][0-9]%'
+  AND
+    -- NOT 300 - 999
+    string NOT LIKE '%[3-9][0-9][0-9]%'
+  AND
+    -- NOT 260 - 299
+    string NOT LIKE '%2[6-9][0-9]%'
+  AND
+    -- NOT 256 - 259
+    string NOT LIKE '%25[6-9]%'
+ORDER BY c1
+go
+~~START~~
+int#!#varchar#!#bit
+1#!#131.107.2.201#!#1
+2#!#131.33.2.201#!#1
+3#!#131.33.2.202#!#1
+4#!#3.107.2.4#!#1
+5#!#3.107.3.169#!#1
+6#!#3.107.104.172#!#1
+7#!#22.107.202.123#!#1
+8#!#22.20.2.77#!#1
+9#!#22.156.9.91#!#1
+10#!#22.156.89.32#!#1
+~~END~~
+
+
+--Negate the full above predicate; should return rows 11-17
+SELECT * FROM IP_address
+WHERE NOT(
+	-- 3 periods and no empty octets
+    string LIKE '_%._%._%._%'
+  AND
+    -- not 4 periods or more
+    string NOT LIKE '%.%.%.%.%'
+  AND
+    -- no characters other than digits and periods
+    string NOT LIKE '%[^0-9.]%'
+  AND
+    -- not more than 3 digits per octet
+    string NOT LIKE '%[0-9][0-9][0-9][0-9]%'
+  AND
+    -- NOT 300 - 999
+    string NOT LIKE '%[3-9][0-9][0-9]%'
+  AND
+    -- NOT 260 - 299
+    string NOT LIKE '%2[6-9][0-9]%'
+  AND
+    -- NOT 256 - 259
+    string NOT LIKE '%25[6-9]%')
+ORDER BY c1
+go
+~~START~~
+int#!#varchar#!#bit
+11#!#22.356.89.32#!#0
+12#!#1.1.1.256#!#0
+13#!#1.1.1.1.1#!#0
+14#!#1.1.1#!#0
+15#!#1..1.1#!#0
+16#!#.1.1.1#!#0
+17#!#a.1.1.1#!#0
+~~END~~
+
+
+drop table IP_address
+GO
+
+select 1 where '9' like '[a-z0-9]'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where '9' like '[0-9'  -- no row 
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'b' like '[a-z0-9]'  -- 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where '7' like '[^a-z0-9]'  -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'D' like '[C-P5-7]'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'B' like '[C-P5-7]'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'B' like '[^C-P5-7]'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where '4' like '[C-P5-7]'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where '9' like '[C-P5-7]'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where '1357' like '[0-9][0-9][0-9][0-9]'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'a[abc]b' like 'a[abc]b'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'a[abc]b' like 'a[[]abc]b'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'a[abc]b' like 'a\[abc]b' escape '\'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'a[b' like 'a[%'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'a[b' like 'a[[]%'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where '$abc' like '[0-9!@#$.,;_]%'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where '$abc' like '[^0-9!@#$.,;_]%'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where '$abc' like '[^0-9!@#.,;_]%'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'abc_efgh' like 'abc[_]efg%'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'abcdefgh' like 'abc[_]efg%'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'abcdefgh' like 'abc[^_]efg%'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'd' like '[asdf]'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'e' like '[asdf]'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'e' like '[^asdf]'  -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'd' like '[^asdf]'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 where @v LIKE '%[%' escape '~' OR @v LIKE '%]%'                -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 where @v LIKE '%[[]%' OR @v LIKE '%[]]%'                       -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+SELECT 1 where @v LIKE '%~[%' escape '~' OR @v LIKE '%~]%' escape '~'   -- no row
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 where @v LIKE '%[%' escape '~' OR @v LIKE '%]%'                -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 where @v LIKE '%[[]%' OR @v LIKE '%[]]%'                       -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar = 'a[bc'
+set @v = 'a]bc'
+SELECT 1 where @v LIKE '%~[%' escape '~' OR @v LIKE '%~]%' escape '~'   -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '9'set @p = '[a-z0-9]'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '9'set @p = '[0-9'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'b'set @p = '[a-z0-9]'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '7'set @p = '[^a-z0-9]'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'D'set @p = '[C-P5-7]'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'B'set @p = '[C-P5-7]'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'B'set @p = '[^C-P5-7]'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '4'set @p = '[C-P5-7]'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '9'set @p = '[C-P5-7]'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a[abc]b'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a[[]abc]b'   -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[abc]b'set @p = 'a\[abc]b' set @esc = '\' -- 1
+select 1 where @v like @p escape @esc 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[b'set @p = 'a[%'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'a[b'set @p = 'a[[]%'  -- 1
+select 1 where @v like @p 
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '$abc'set @p = '[0-9!@#$.,;_]%'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = '$abc'set @p = '[^0-9!@#$.,;_]%'  -- no row
+select 1 where @v like @p 
+GO
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'abc_efgh' set @p = 'abc[_]efg%'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'abcdefgh' set @p = 'abc[_]efg%'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'abcdefgh' set @p = 'abc[^_]efg%'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'd' set @p = '[asdf]'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'e' set @p = '[asdf]'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'e' set @p = '[^asdf]'  -- 1
+select 1 where @v like @p 
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v varchar(20), @p varchar(20), @esc char(1)
+set @v = 'd' set @p = '[^asdf]'  -- no row
+select 1 where @v like @p 
+go
+~~START~~
+int
+~~END~~
+
+
+-- the following currently returns wrong result in BBF!
+select 1 where '_ab' like '\_ab'          -- no row, but returns 1  in BBF , BABEL-4270
+GO
+~~START~~
+int
+~~END~~
+
+
+select 1 where '%AAABBB%' like '\%AAA%'   -- no row, but returns 1  in BBF , BABEL-4270
+go
+~~START~~
+int
+~~END~~
+
+
+select 1 where '_ab' like '\_ab'  escape '\'         -- 1 
+select 1 where '%AAABBB%' like '\%AAA%' escape '\'   -- 1
+go
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'AB[C]D' LIKE 'AB~[C]D'             -- no row
+select 1 where 'AB[C]D' LIKE 'AB~[C]D' ESCAPE '~'  -- 1
+go
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'AB[C]D' LIKE 'AB\[C]D'             -- no row
+select 1 where 'AB[C]D' LIKE 'AB\[C]D' ESCAPE '\'  -- 1
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'AB[C]D' LIKE 'AB [C]D'             -- no row
+select 1 where 'AB[C]D' LIKE 'AB [C]D' ESCAPE ' '  -- 1
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where 'AB[C]D' LIKE 'AB[C]D' ESCAPE 'B'   -- no row
+select 1 where 'AB[C]D' LIKE 'ABB[C]D' ESCAPE 'B'  -- no row
+go
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+
+select 1 where 'AB[C]D' LIKE 'ABZ[C]D' ESCAPE 'Z'  -- 1
+select 1 where 'AB[C]D' LIKE 'ABZ[C]D' ESCAPE 'z'  -- no row! Note: SQL Server treats the escape as case-sensitive!
+select 1 where 'ABCD' LIKE 'ABcD'                  -- 1 : SQL Server treats normal LIKE pattern case-INsensitive
+go
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+select 1 where null like null -- no row
+go
+~~START~~
+int
+~~END~~
+
+select 1 where null like null escape null -- no row
+go
+~~START~~
+int
+~~END~~
+
+select 1 where null like 'ABC' -- no row
+go
+~~START~~
+int
+~~END~~
+
+select 1 where 'ABC' like null -- no row
+go
+~~START~~
+int
+~~END~~
+
+
+ 
+select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE ''  -- should raise error , BABEL-4271
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The invalid escape character "" was specified in a LIKE predicate.)~~
+
+select 1 where 'ABCD' LIKE 'AB[C]D' ESCAPE 'xy'  -- raise error
+go
+~~ERROR (Code: 506)~~
+
+~~ERROR (Message: invalid escape string)~~
+
+
+create table tt ( a bytea);
+go
+
+insert into tt values (0xdaa)
+GO
+~~ROW COUNT: 1~~
+
+
+select * from tt where a like 'da[%]';
+GO
+~~START~~
+varbinary
+~~END~~
+
+
+select * from tt where a not like 'da[%]';
+go
+~~START~~
+varbinary
+0DAA
+~~END~~
+
+
+drop table tt;
+GO
