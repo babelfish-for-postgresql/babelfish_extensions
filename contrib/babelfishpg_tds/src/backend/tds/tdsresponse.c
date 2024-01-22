@@ -2776,9 +2776,9 @@ TdsPrintTup(TupleTableSlot *slot, DestReceiver *self)
 
 		if (sendRowStat)
 			/* Extra bit for the ROWSTAT column */
-			nullMapSize = (natts >> 3) + 1;
+			nullMapSize = (natts + 1 + 7) >> 3;
 		else
-			nullMapSize = ((natts - 1) >> 3) + 1;
+			nullMapSize = (natts + 7) >> 3;
 
 		nullMap = palloc0(nullMapSize);
 		MemSet(nullMap, 0, nullMapSize * sizeof(int8_t));
