@@ -504,5 +504,6 @@ permission_restrictions_from_pg
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
+table_constraint_without_comma
 BABEL-730
 babel-4475

@@ -445,6 +445,7 @@ timefromparts
 triggers_with_transaction
 datetimeoffset-timezone
 BABEL-4046
+table_constraint_wo_comma-before-15_6-or-16_2
 host_id
 linked_srv_4229
 BABEL-4175
