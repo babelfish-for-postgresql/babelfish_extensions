@@ -198,7 +198,7 @@ DECLARE
   exception_message text;
 BEGIN
   -- Rename parsename for dependencies
-  ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_3_5_0;
+  ALTER FUNCTION sys.parsename(sys.VARCHAR, INT) RENAME TO parsename_deprecated_in_4_0_0;
 
 EXCEPTION WHEN OTHERS THEN
   GET STACKED DIAGNOSTICS
@@ -212,7 +212,7 @@ DECLARE
   exception_message text;
 BEGIN
   -- Rename sp_set_session_context for dependencies
-  ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_3_5_0;
+  ALTER PROCEDURE sys.sp_set_session_context(sys.SYSNAME, sys.SQL_VARIANT, sys.BIT) RENAME TO sp_set_session_context_deprecated_in_4_0_0;
 
 EXCEPTION WHEN OTHERS THEN
   GET STACKED DIAGNOSTICS
@@ -226,7 +226,7 @@ DECLARE
   exception_message text;
 BEGIN
   -- Rename session_context for dependencies
-  ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_3_5_0;
+  ALTER FUNCTION sys.session_context(sys.SYSNAME) RENAME TO session_context_deprecated_in_4_0_0;
 
 EXCEPTION WHEN OTHERS THEN
   GET STACKED DIAGNOSTICS
@@ -257,8 +257,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    -- === DROP parsename_deprecated_in_3_5_0
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_3_5_0');
+    -- === DROP parsename_deprecated_in_4_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'parsename_deprecated_in_4_0_0');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -271,8 +271,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    -- === DROP sp_set_session_context_deprecated_in_3_5_0
-    CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_3_5_0');
+    -- === DROP sp_set_session_context_deprecated_in_4_0_0
+    CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'sp_set_session_context_deprecated_in_4_0_0');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
@@ -285,8 +285,8 @@ DO $$
 DECLARE
     exception_message text;
 BEGIN
-    -- === DROP session_context_deprecated_in_3_5_0
-    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_3_5_0');
+    -- === DROP session_context_deprecated_in_4_0_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'session_context_deprecated_in_4_0_0');
 
 EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS
