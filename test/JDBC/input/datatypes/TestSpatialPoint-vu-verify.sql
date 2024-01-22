@@ -79,7 +79,7 @@ SET @point2 = 'Test_String';
 SELECT @point1.STDistance(@point2);
 Go
 
-SELECT location.Lat from SPATIALPOINTGEOM_dt;
+SELECT location.Lat from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
 SELECT * FROM GeomView;
@@ -106,55 +106,55 @@ GO
 SELECT * FROM point_distances_geom;
 GO
 
-SELECT location.STX from SPATIALPOINTGEOM_dt;
+SELECT location.STX from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt;
+SELECT SPATIALPOINTGEOM_dt.location.STY from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT location.STAsText() from SPATIALPOINTGEOM_dt;
+SELECT location.STAsText() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT location.STAsBinary() from SPATIALPOINTGEOM_dt;
+SELECT location.STAsBinary() from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT location.STDistance(geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOM_dt;
+SELECT location.STDistance(geometry::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT [SPATIALPOINTGEOM_dt].[location].[STX] from [SPATIALPOINTGEOM_dt];
+SELECT [SPATIALPOINTGEOM_dt].[location].[STX] from [SPATIALPOINTGEOM_dt] ORDER BY location.STX;
 GO
 
-SELECT [location].[STY] from [SPATIALPOINTGEOM_dt];
+SELECT [location].[STY] from [SPATIALPOINTGEOM_dt] ORDER BY location.STX;
 GO
 
-SELECT location FROM SPATIALPOINTGEOM_dt; 
+SELECT location FROM SPATIALPOINTGEOM_dt ORDER BY location.STX; 
 GO
 
-SELECT PointColumn.STX AS XCoordinate FROM YourTable;
+SELECT PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT * FROM YourTable WHERE PointColumn.STX > 3.0;
+SELECT * FROM YourTable WHERE PointColumn.STX > 3.0 ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT * FROM YourTable WHERE PointColumn.STX > @point.STX;
+SELECT * FROM YourTable WHERE PointColumn.STX > @point.STX ORDER BY PointColumn.STX;
 GO
 
-SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable;
+SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT ID, dbo.GetXCoordinate(PointColumn) AS XCoordinate FROM YourTable;
+SELECT ID, dbo.GetXCoordinate(PointColumn) AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT dbo.GetXCoordinate(@point);
 GO
 
-SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX = TableB.PointB.STX;
+SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX = TableB.PointB.STX ORDER BY TableA.PointA.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX > @point.STX;
+SELECT * FROM TableA JOIN TableB ON TableA.PointA.STX > @point.STX ORDER BY TableA.PointA.STX;
 GO
 
 SELECT * FROM YourTable ORDER BY PointColumn.STX;
@@ -167,55 +167,58 @@ GO
 SELECT ID, PointColumn.STX AS XCoordinate,
 CASE WHEN PointColumn.STX > 3.0 THEN 'High X' 
 ELSE 'Low X' 
-END AS XCoordinateCategory FROM YourTable;
+END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT ID, PointColumn.STX AS XCoordinate,
 CASE WHEN @point.STX > 3.0 THEN 'High X' 
 ELSE 'Low X' 
-END AS XCoordinateCategory FROM YourTable;
+END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 WITH PointData AS ( SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ) 
-SELECT * FROM PointData WHERE XCoordinate > 3.0;
+SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 WITH PointData AS ( SELECT ID, @point.STX AS XCoordinate FROM YourTable )
-SELECT * FROM PointData WHERE XCoordinate > 3.0;
+SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
 GO
 
 SELECT PointColumn.STX AS XCoordinate, COUNT(*) AS PointCount 
-FROM GeomTab GROUP BY PointColumn.STX;
+FROM GeomTab GROUP BY PointColumn.STX ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT @point.STX AS XCoordinate, COUNT(*) AS PointCount 
-FROM YourTable GROUP BY PointColumn.STX;
+FROM YourTable GROUP BY PointColumn.STX ORDER BY PointColumn.STX;
 GO
 
 SELECT ID, PointColumn.STX AS XCoordinate, 
 PointColumn.STX - LAG(PointColumn.STX) OVER (ORDER BY ID) AS XCoordinateDifference 
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT ID, @point.STX AS XCoordinate, 
 @point.STX - LAG(@point.STX) OVER (ORDER BY ID) AS XCoordinateDifference 
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @XCoordinate FLOAT = 3.0;
 DECLARE @DynamicQuery NVARCHAR(MAX);
-SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX));
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
 EXEC sp_executesql @DynamicQuery;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 DECLARE @DynamicQuery NVARCHAR(MAX);
-SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@point.STX AS NVARCHAR(MAX));
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@point.STX AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
 EXEC sp_executesql @DynamicQuery;
+GO
+
+EXEC GetDistanceByXCoordinate @xCoordinate = 6.0;
 GO
 
 EXEC GetPointsByXCoordinate @XCoordinate = 4.0;
@@ -226,19 +229,19 @@ GO
 
 DECLARE @XCoordinate FLOAT = 3.0; 
 DECLARE @DynamicQuery NVARCHAR(MAX); 
-SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX)); 
+SET @DynamicQuery = N' SELECT * FROM YourTable WHERE PointColumn.STX > ' + CAST(@XCoordinate AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX'; 
 EXEC sp_executesql @DynamicQuery;
 GO
 
 SELECT ID, PointColumn.STX AS XCoordinate, CASE WHEN PointColumn.STX < 0 
 THEN 'Negative X' WHEN PointColumn.STX = 0 THEN 'Zero X' 
-ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable;
+ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
 SELECT ID, @point.STX AS XCoordinate, CASE WHEN @point.STX < 0 
 THEN 'Negative X' WHEN @point.STX = 0 THEN 'Zero X' 
-ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable;
+ELSE 'Positive X' END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 SELECT * FROM ( SELECT ID,
@@ -246,39 +249,39 @@ CASE WHEN PointColumn.STX BETWEEN 0 AND 5 THEN '0-5'
 WHEN PointColumn.STX BETWEEN 5.1 AND 10 THEN '5.1-10'
 ELSE '10.1+'
 END AS XCoordRange
-FROM YourTable
+FROM YourTable ORDER BY PointColumn.STX
 ) AS Source
 PIVOT ( COUNT(ID) FOR XCoordRange IN ([0-5], [5.1-10], [10.1+])) AS PivotTable;
 GO
 
 SELECT ID, PointColumn.STX AS XCoordinate,
 JSON_QUERY('{"XCoordinate":' + CAST(PointColumn.STX AS NVARCHAR(MAX)) + '}') AS XCoordinateJson 
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(3.0, 2.0, 4326);
 SELECT ID, @point.STX AS XCoordinate,
 JSON_QUERY('{"XCoordinate":' + CAST(@point.STX AS NVARCHAR(MAX)) + '}') AS XCoordinateJson 
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT [PointColumn].[STX] AS XCoordinate FROM [YourTable];
+SELECT [PointColumn].[STX] AS XCoordinate FROM [YourTable] ORDER BY PointColumn.STX;
 GO
 
 DECLARE @point geometry = geometry::Point(3.0, 2.0, 4326);
 SELECT @point.[STX] AS XCoordinate
 GO
 
-SELECT PointColumn.STX AS XCoordinate FROM YourTable;
+SELECT PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT YourTable.PointColumn.STX AS XCoordinate FROM YourTable;
+SELECT YourTable.PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT dbo.YourTable.PointColumn.STX AS XCoordinate FROM YourTable;
+SELECT dbo.YourTable.PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT YourTable1.STX.STX AS XCoordinate FROM YourTable1;
+SELECT YourTable1.STX.STX AS XCoordinate FROM YourTable1 ORDER BY STX.STX;
 GO
 
 DECLARE @result geometry;
@@ -293,54 +296,54 @@ UPDATE YourTable SET PointColumn = @referencePoint
 WHERE PointColumn.STX >= @referencePoint.STX;
 GO
 
-SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance FROM YourTable2;
+SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, PointColumn1.STDistance(@point1) AS Distance FROM YourTable2;
+SELECT ID, PointColumn1.STDistance(@point1) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @point1 geometry = geometry::Point(1.0, 2.0, 4326);
-SELECT ID, @point1.STDistance(PointColumn2) AS Distance FROM YourTable2;
+SELECT ID, @point1.STDistance(PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @maxDistance float = 5.0;
-SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @maxDistance;
+SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @maxDistance ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable WHERE @referencePoint.STDistance(PointColumn) <= @referencePoint.STX;
+SELECT * FROM YourTable WHERE @referencePoint.STDistance(PointColumn) <= @referencePoint.STX ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @referencePoint.STX;
+SELECT * FROM YourTable WHERE PointColumn.STDistance(@referencePoint) <= @referencePoint.STX ORDER BY PointColumn.STX;
 GO
 
-SELECT ID, dbo.CalculateDistance(PointColumn1, PointColumn2) AS Distance FROM YourTable2;
-GO
-
-DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, dbo.CalculateDistance(@referencePoint, PointColumn2) AS Distance FROM YourTable2;
+SELECT ID, dbo.CalculateDistance(PointColumn1, PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT ID, dbo.CalculateDistance(PointColumn1, @referencePoint) AS Distance FROM YourTable2;
-GO
-
-SELECT * FROM TableA JOIN TableB ON PointA.STDistance(TableB.PointB) <= 5.0;
+SELECT ID, dbo.CalculateDistance(@referencePoint, PointColumn2) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON @referencePoint.STDistance(TableB.PointB) <= 5.0;
+SELECT ID, dbo.CalculateDistance(PointColumn1, @referencePoint) AS Distance FROM YourTable2 ORDER BY PointColumn1.STX;
+GO
+
+SELECT * FROM TableA JOIN TableB ON PointA.STDistance(TableB.PointB) <= 5.0 ORDER BY TableB.PointB.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON PointA.STDistance(@referencePoint) <= 5.0;
+SELECT * FROM TableA JOIN TableB ON @referencePoint.STDistance(TableB.PointB) <= 5.0 ORDER BY TableB.PointB.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT * FROM TableA JOIN TableB ON TableB.PointB.STDistance(@referencePoint) <= 5.0;
+SELECT * FROM TableA JOIN TableB ON PointA.STDistance(@referencePoint) <= 5.0 ORDER BY TableB.PointB.STX;
+GO
+
+DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
+SELECT * FROM TableA JOIN TableB ON TableB.PointB.STDistance(@referencePoint) <= 5.0 ORDER BY TableB.PointB.STX;
 GO
 
 SELECT * FROM YourTable2 ORDER BY PointColumn1.STDistance(PointColumn2);
@@ -358,23 +361,23 @@ DECLARE @thresholdDistance float = 3.0;
 SELECT ID, PointColumn1.STDistance(PointColumn2) AS DistanceBetweenPoints,
 CASE WHEN PointColumn1.STDistance(PointColumn2) <= @thresholdDistance THEN 'Close' ELSE 'Far'
 END AS Proximity
-FROM YourTable2;
+FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn1.STDistance(@referencePoint) AS DistanceBetweenPoints,
 CASE WHEN @referencePoint.STDistance(PointColumn2) <= @referencePoint.STX THEN 'Close' ELSE 'Far'
 END AS Proximity
-FROM YourTable2;
+FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH DistanceCTE AS ( SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable)
+WITH DistanceCTE AS ( SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX)
 SELECT * FROM DistanceCTE WHERE Distance <= 3.0;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-WITH DistanceCTE AS ( SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance FROM YourTable)
+WITH DistanceCTE AS ( SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance FROM YourTable ORDER BY PointColumn.STX)
 SELECT * FROM DistanceCTE WHERE Distance <= 3.0;
 GO
 
@@ -396,13 +399,13 @@ GO
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn1.STDistance(PointColumn2) AS Distance,
 PointColumn1.STDistance(@referencePoint) - LAG(PointColumn1.STDistance(PointColumn2)) OVER (ORDER BY ID) AS DistanceDifference 
-FROM YourTable2;
+FROM YourTable2 ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance,
 @referencePoint.STDistance(PointColumn) - LAG(@referencePoint.STX) OVER (ORDER BY ID) AS DistanceDifference
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -415,7 +418,7 @@ DECLARE @maxDistance float = 3.0;
 DECLARE @DynamicQuery NVARCHAR(MAX);
 SET @DynamicQuery = N'
 SELECT * FROM YourTable
-WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@maxDistance AS NVARCHAR(MAX));
+WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@maxDistance AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
 EXEC sp_executesql @DynamicQuery;
 GO
 
@@ -423,7 +426,7 @@ DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 DECLARE @DynamicQuery NVARCHAR(MAX);
 SET @DynamicQuery = N'
 SELECT * FROM YourTable
-WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@referencePoint.STX AS NVARCHAR(MAX));
+WHERE PointColumn.STDistance(geometry::STGeomFromText(' + QUOTENAME(@referencePoint.STAsText(), '''') + ', 4326)) <= ' + CAST(@referencePoint.STX AS NVARCHAR(MAX)) + ' ORDER BY PointColumn.STX';
 EXEC sp_executesql @DynamicQuery;
 GO
 
@@ -433,7 +436,7 @@ SELECT ID, PointColumn.STDistance(@referencePoint) AS DistanceToReferencePoint,
 CASE WHEN PointColumn.STDistance(@referencePoint) <= @thresholdDistance THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -441,7 +444,7 @@ SELECT ID, @referencePoint.STDistance(PointColumn) AS DistanceToReferencePoint,
 CASE WHEN @referencePoint.STDistance(PointColumn) <= @referencePoint.STY THEN 'Close'
 ELSE 'Far'
 END AS Proximity
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @distanceRanges TABLE (MinDistance float, MaxDistance float);
@@ -452,7 +455,7 @@ WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 5.1 AND 10 THEN '5.1-10'
 WHEN PointColumn1.STDistance(PointColumn2) BETWEEN 10.1 AND 15 THEN '10.1-15'
 ELSE '15.1+'
 END AS DistanceRange
-FROM YourTable2
+FROM YourTable2 ORDER BY PointColumn1.STX
 ) AS Source
 PIVOT ( COUNT(ID) FOR DistanceRange IN ([0-5], [5.1-10], [10.1-15], [15.1+])) AS PivotTable;
 GO
@@ -460,16 +463,16 @@ GO
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance,
 JSON_QUERY('{"Distance":' + CAST(PointColumn.STDistance(@referencePoint) AS NVARCHAR(MAX)) + '}') AS DistanceJson
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance,
 JSON_QUERY('{"Distance":' + CAST(@referencePoint.STDistance(PointColumn) AS NVARCHAR(MAX)) + '}') AS DistanceJson
-FROM YourTable;
+FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-SELECT [PointColumn1].STDistance([PointColumn2]) AS distance FROM [YourTable2];
+SELECT [PointColumn1].STDistance([PointColumn2]) AS distance FROM [YourTable2] ORDER BY PointColumn1.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -482,18 +485,18 @@ CASE WHEN PointColumn.STDistance(@referencePoint) <= @thresholdDistance THEN ''C
 ELSE ''Far''
 END AS Proximity
 FROM YourTable
-WHERE PointColumn.STDistance(@referencePoint) <= @thresholdDistance;';
+WHERE PointColumn.STDistance(@referencePoint) <= @thresholdDistance ORDER BY PointColumn.STX;';
 SET @params = N'@referencePoint geometry, @thresholdDistance float';
 EXEC sp_executesql @sql, @params, @referencePoint, @thresholdDistance;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable;
-SELECT YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable;
+SELECT PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX;
+SELECT YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
-SELECT dbo.YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable;
+SELECT dbo.YourTable.PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
@@ -655,7 +658,8 @@ SELECT
 FROM
     SpatialData
 JOIN
-    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10;
+    SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10
+ORDER BY location.Lat;
 GO
 
 WITH RegionLocations AS (
@@ -666,6 +670,7 @@ WITH RegionLocations AS (
         SpatialData
     JOIN
         SPATIALPOINTGEOG_dt ON SPATIALPOINTGEOG_dt.location.Long - SpatialData.SpatialLocation.Lat <= 10
+    ORDER BY location.Lat
 )
 SELECT
     Lat,
@@ -680,12 +685,12 @@ GO
 with mycte (a)
 as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt)
 select a.STAsText()
-				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.Lat >= y.location.Long;
+				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.Lat >= y.location.Long ORDER BY x.a.Lat;
 go
 
 -- Test with tvf
 select f.STAsText()
-                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.Lat >= t.location.Long;
+                from testspatial_tvf(1) f inner join SPATIALPOINTGEOG_dt t on f.location.Lat >= t.location.Long ORDER BY f.location.Lat;
 go
 
 -- Null test for Geospatial functions
@@ -709,10 +714,13 @@ SET @point2 = 'Test_String';
 SELECT @point2.STDistance(@point1);
 Go
 
-SELECT location.STY from SPATIALPOINTGEOG_dt;
+SELECT location.STY from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
 SELECT * FROM GeogView;
+GO
+
+SELECT * FROM SubqueryView;
 GO
 
 EXEC dbo.proc_getdata;
@@ -736,28 +744,28 @@ GO
 SELECT * FROM point_distances_geog;
 GO
 
-SELECT location.Lat from SPATIALPOINTGEOG_dt;
+SELECT location.Lat from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT SPATIALPOINTGEOG_dt.location.Long from SPATIALPOINTGEOG_dt;
+SELECT SPATIALPOINTGEOG_dt.location.Long from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT location.STAsText() from SPATIALPOINTGEOG_dt;
+SELECT location.STAsText() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT location.STAsBinary() from SPATIALPOINTGEOG_dt;
+SELECT location.STAsBinary() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT location.STDistance(geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOG_dt;
+SELECT location.STDistance(geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT [SPATIALPOINTGEOG_dt].[location].[Long] from [SPATIALPOINTGEOG_dt];
+SELECT [SPATIALPOINTGEOG_dt].[location].[Long] from [SPATIALPOINTGEOG_dt] ORDER BY location.Lat;
 GO
 
-SELECT [location].[Lat] from [SPATIALPOINTGEOG_dt];
+SELECT [location].[Lat] from [SPATIALPOINTGEOG_dt] ORDER BY location.Lat;
 GO
 
-SELECT location FROM SPATIALPOINTGEOG_dt;
+SELECT location FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
 SELECT * FROM GeogToVarbinary;
@@ -849,7 +857,7 @@ SELECT
     PrimaryKey,
     GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint
 FROM
-    SPATIALPOINT_dt;
+    SPATIALPOINT_dt ORDER BY GeomColumn.STX;
 GO
 
 DECLARE @sql NVARCHAR(MAX);
@@ -859,13 +867,21 @@ SET @sql =
     N'GeomColumn.STY AS YCoordinate, ' +
     N'PrimaryKey, ' +
     N'GeogColumn.STDistance(geography::Point(7, 8, 4326)) AS DistanceToFixedPoint ' +
-    N'FROM SPATIALPOINT_dt';
+    N'FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX';
 
 -- Execute the dynamic SQL
 EXEC sp_executesql @sql;
 GO
 
-SELECT * FROM SPATIALPOINT_dt;
+SELECT * FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX;
+GO
+
+-- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
+SELECT sch1.STDistance(sch1) from test
+GO
+
+-- Here we are testing ambiguity scenario for col_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
+SELECT STX.STX from STX
 GO
 
 INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
@@ -929,7 +945,7 @@ SET @sql =
     N'[SpatialPoint].[STX] AS XCoordinate, ' +
     N'[SpatialPoint].[STY] AS YCoordinate, ' +
     N'[PrimaryKey] ' +
-    N'FROM [db2].[dbo].[SpatialData]';
+    N'FROM [db2].[dbo].[SpatialData] ORDER BY SpatialPoint.STX';
 -- Execute the dynamic SQL
 EXEC sp_executesql @sql;
 GO
