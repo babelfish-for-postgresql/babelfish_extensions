@@ -215,6 +215,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
+forjsonauto
 format
 format-dep
 forxml

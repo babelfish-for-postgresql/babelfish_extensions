@@ -893,18 +893,26 @@ TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int int
 }
 
 void
-TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 bigintVal)
+TdsSetAtAtStatVariable(TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal)
 {
 	volatile TdsStatus *vtdsentry = MyTdsStatusEntry;
 
 	PGSTAT_BEGIN_WRITE_ACTIVITY(vtdsentry);
 
-	if (strcmp(at_at_var, "rowcount") == 0)
-		vtdsentry->rowcount = bigintVal;
-	else if (strcmp(at_at_var, "error") == 0)
-		vtdsentry->error = intVal;
-	else if (strcmp(at_at_var, "trancount") == 0)
-		vtdsentry->trancount = intVal;
+  switch (at_at_var)
+  {
+    case RCOUNT_TYPE:
+      vtdsentry->rowcount = bigintVal;
+      break;
+    case ERR_TYPE:
+      vtdsentry->error = intVal;
+      break;
+    case TRANCOUNT_TYPE:
+      vtdsentry->trancount = intVal;
+      break;
+    default:
+      break;
+  }
 
 	PGSTAT_END_WRITE_ACTIVITY(vtdsentry);
 }
