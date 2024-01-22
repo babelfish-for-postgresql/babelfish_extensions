@@ -2507,7 +2507,7 @@ int#!#geometry#!#geography
 
 
 -- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
-SELECT sch1.STDistance(sch1) from geometry_test
+SELECT geom_schema.STDistance(geom_schema) from geometry_test
 GO
 ~~START~~
 float

@@ -487,9 +487,9 @@ prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn, GeogColumn) values(
 ~~ROW COUNT: 1~~
 
 
-create schema sch1;
-CREATE FUNCTION sch1.STDistance(@point geometry) RETURNS nvarchar(max) AS BEGIN RETURN @point.STAsText(); END;
-create table geometry_test(sch1 geometry)
+create schema geom_schema;
+CREATE FUNCTION geom_schema.STDistance(@point geometry) RETURNS nvarchar(max) AS BEGIN RETURN @point.STAsText(); END;
+create table geometry_test(geom_schema geometry)
 Insert INTO geometry_test VALUES(geometry::STGeomFromText('Point(47.65100 -22.34900)', 0))
 ~~ROW COUNT: 1~~
 

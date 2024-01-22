@@ -106,8 +106,8 @@ Drop Table IF EXISTS babelfish_migration_mode_table
 
 DROP TABLE IF EXISTS geometry_test
 
-DROP FUNCTION IF EXISTS sch1.STDistance
+DROP FUNCTION IF EXISTS geom_schema.STDistance
 
-DROP SCHEMA IF EXISTS sch1
+DROP SCHEMA IF EXISTS geom_schema
 
 DROP TABLE IF EXISTS STX
