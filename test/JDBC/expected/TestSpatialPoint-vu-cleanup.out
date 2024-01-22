@@ -104,7 +104,7 @@ DROP TABLE IF EXISTS YourTable2
 
 Drop Table IF EXISTS babelfish_migration_mode_table
 
-DROP TABLE IF EXISTS test
+DROP TABLE IF EXISTS geometry_test
 
 DROP FUNCTION IF EXISTS sch1.STDistance
 

@@ -877,7 +877,7 @@ SELECT * FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX;
 GO
 
 -- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
-SELECT sch1.STDistance(sch1) from test
+SELECT sch1.STDistance(sch1) from geometry_test
 GO
 
 -- Here we are testing ambiguity scenario for col_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
