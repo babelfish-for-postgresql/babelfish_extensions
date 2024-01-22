@@ -181,3 +181,15 @@ begin
 end;
 go
 
+CREATE PROCEDURE forjson_vu_p_6 AS
+BEGIN
+    select top 10
+        U.id,
+        U.firstname,
+        (select O.productId from forjson_auto_vu_t_orders O where O.userid = U.id
+        for json auto)
+        as details
+        from forjson_auto_vu_t_users U 
+        for json auto
+END
+GO

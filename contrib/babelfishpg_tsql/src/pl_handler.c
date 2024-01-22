@@ -1381,7 +1381,7 @@ handleForJsonAuto(Query *query)
 						} else if(subqRte->rtekind == RTE_SUBQUERY) {
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										errmsg("Values for json auto is not currently supported ")));
+										errmsg("sub-select and values for json auto are not currently supported.")));
 						}
 					}
 

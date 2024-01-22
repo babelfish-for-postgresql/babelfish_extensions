@@ -150,7 +150,16 @@ EXECUTE forjson_vu_p_5
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Values for json auto is not currently supported )~~
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+
+
+EXECUTE forjson_vu_p_6
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
 
 
 SELECT forjson_vu_f_1()
