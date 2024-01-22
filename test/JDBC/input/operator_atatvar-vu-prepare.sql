@@ -2,6 +2,10 @@ create view v1_operator_atatvar as
 select c=@@max_precision where 0! =@@max_precision
 go
 
+create view v2_operator_atatvar as
+select c=@@max_precision where 0=@@max_precision
+go
+
 create procedure p1_operator_atatvar
 as
 if 1=@@max_precision select 'yes' else select 'no'
@@ -28,4 +32,17 @@ go
 create procedure p3_operator_atatvar @p int
 as
 select @p
+go
+
+create function f1_operator_atatvar(@p int) returns int
+as
+begin
+	if @p=@@spid return 1
+	else return 0
+end
+go
+
+create function f2_operator_atatvar(@p int) returns table
+as
+	return select 1 as c where @p=@@max_precision
 go

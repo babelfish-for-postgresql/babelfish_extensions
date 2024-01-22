@@ -189,6 +189,7 @@ static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx);
 static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
 static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
+static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -2132,47 +2133,6 @@ public:
 		// TO-DO
 	}
 
-	// NB: this is copied in tsqlMutator
-	void exitConstant(TSqlParser::ConstantContext *ctx) override
-	{	
-		// Check for floating-point number without exponent
-		handleFloatWithoutExponent(ctx);
-	}
-
-	void exitPredicate(TSqlParser::PredicateContext *ctx) override
-	{
-		// For comparison operators directly followed by an '@@' variable, insert a space 
-		// to avoid these being parsed incorrectly by PG; this applies to the following 
-		// character sequences: =@@, >@@, <@@ as well as !=@ (i.e. a single-@ variable)
-		// Note: this issue does not occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
-
-		if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
-		{
-			std::string op = getFullText(ctx->comparison_operator());		
-			if ((op.back() == '=') || 
-			    (op.back() == '>') || 
-			    (op.back() == '<'))
-			{
-				// The operator must be followed immediately by the variable without any character in between
-				Assert(ctx->expression(1));
-				size_t startPosition = ctx->expression(1)->start->getStartIndex();
-				if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
-				{
-					std::string var = getFullText(ctx->expression(1));
-					// The subsequent expression must be a variable starting with '@@'
-					if (var.front() == '@') 
-					{
-						if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
-						{
-							// Insert a space before the variable name
-							rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
-						}
-					}
-				}
-			}
-		}
-	}
-
 	void exitExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext *ctx) override
 	{
 		// Look for named arguments with an @@variable with no preceding whitespace, i.e. 'exec myproc @p=@@spid'
@@ -2195,8 +2155,18 @@ public:
 			}
 		}
 	}
-
-	// NB: this is copied in TsqlMutator
+	
+	// NB: the following are copied in tsqlMutator
+	void exitConstant(TSqlParser::ConstantContext *ctx) override
+	{	
+		// Check for floating-point number without exponent
+		handleFloatWithoutExponent(ctx);
+	}
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// Check for comparison operators directly followed by an '@@' variable, like =@@
+		handleAtAtVarInPredicate(ctx);
+	}		
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
@@ -2915,14 +2885,17 @@ public:
 		}
 	}
 
-	// NB: this is copied in tsqlBuilder
+	// NB: the following are copied in tsqlBuilder
 	void exitConstant(TSqlParser::ConstantContext *ctx) override
 	{
 		// Check for floating-point number without exponent
 		handleFloatWithoutExponent(ctx);
 	}
-
-	// NB: this is copied in tsqlBuilder
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// Check for comparison operators directly followed by an '@@' variable, like =@@
+		handleAtAtVarInPredicate(ctx);
+	}		
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
@@ -7987,3 +7960,39 @@ handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx)
 	}
 	return;
 }
+
+void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx)
+{	
+	// For comparison operators directly followed by an '@@' variable, insert a space 
+	// to avoid these being parsed incorrectly by PG; this applies to these following 
+	// character sequences: =@@, >@@, <@@ as well as !=@ (single-@ variable)
+	// Note: this issue does occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
+	// Note: parameter defaults and named parameters are handled separately
+
+	if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
+	{
+		std::string op = getFullText(ctx->comparison_operator());		
+		if ((op.back() == '=') || 
+		    (op.back() == '>') || 
+		    (op.back() == '<'))
+		{
+			// The operator must be followed immediately by the variable without any character in between
+			Assert(ctx->expression(1));
+			size_t startPosition = ctx->expression(1)->start->getStartIndex();
+			if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
+			{
+				std::string var = getFullText(ctx->expression(1));
+				// The subsequent expression must be a variable starting with '@@'
+				if (var.front() == '@') 
+				{
+					if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
+					{
+						// Insert a space before the variable name
+						rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+					}
+				}
+			}
+		}
+	}
+	return;
+}	
