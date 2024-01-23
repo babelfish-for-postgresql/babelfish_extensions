@@ -3657,3 +3657,81 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_procedure_params_100_managed(IN "@procedure_name" sys.sysname, 
+                                                                IN "@group_number" integer DEFAULT 1, 
+                                                                IN "@procedure_schema" sys.sysname DEFAULT 'dbo'::sys."varchar", 
+                                                                IN "@parameter_name" sys.sysname DEFAULT NULL::sys."varchar")
+AS $$
+
+BEGIN
+        SELECT 	CAST (v.column_name AS sys.sysname) AS [PARAMETER_NAME],
+				CAST (CASE
+						WHEN v.column_type = 5 THEN 4
+                        WHEN v.column_type = 3 THEN 4
+                        ELSE v.column_type END
+                     AS smallint) AS [PARAMETER_TYPE],
+        		CAST (CASE   
+						WHEN v.type_name = 'int' THEN 8
+                        WHEN v.type_name = 'nchar' THEN 10
+                        WHEN v.type_name = 'char' THEN 3
+                        WHEN v.type_name = 'date' THEN 31
+                        WHEN v.type_name = 'nvarchar' THEN 12
+                        WHEN v.type_name = 'varchar' THEN 22
+                        WHEN v.type_name = 'table' THEN 23
+                        WHEN v.type_name = 'datetime' THEN 4
+                        WHEN v.type_name = 'datetime2' THEN 33
+                        WHEN v.type_name = 'datetimeoffset' THEN 34
+                        WHEN v.type_name = 'smalldatetime' THEN 15
+						WHEN v.type_name = 'time' THEN 32
+                        WHEN v.type_name = 'decimal' THEN 5
+						WHEN v.type_name = 'numeric' THEN 5
+                        WHEN v.type_name = 'float' THEN 6
+                        WHEN v.type_name = 'real' THEN 13
+                        WHEN v.type_name = 'nchar' THEN 10
+                        WHEN v.type_name = 'flag' THEN 2
+                        WHEN v.type_name = 'money' THEN 9
+                        WHEN v.type_name = 'smallmoney' THEN 17
+                        WHEN v.type_name = 'tinyint' THEN 20
+                        WHEN v.type_name = 'smallint' THEN 16
+                        WHEN v.type_name = 'bigint' THEN 0
+                        WHEN v.type_name = 'bit' THEN 2
+						WHEN v.type_name = 'text' THEN 18
+						WHEN v.type_name = 'ntext' THEN 11
+						WHEN v.type_name = 'binary' THEN 1
+						WHEN v.type_name = 'varbinary' THEN 21
+						WHEN v.type_name = 'image' THEN 7
+                        ELSE 0 END
+                 	AS smallint) AS [MANAGED_DATA_TYPE],
+        		CAST (CASE 
+						WHEN v.type_name IN (N'nchar', N'nvarchar') AND p.max_length <> -1 THEN p.max_length / 2
+						WHEN v.type_name IN (N'char', N'varchar', N'binary', N'varbinary') AND p.max_length <> -1 THEN p.max_length
+						WHEN v.type_name IN (N'nvarchar', N'varchar', N'varbinary') AND p.max_length = -1 THEN 0
+                		WHEN v.type_name IN (N'text', N'image') THEN 2147483647
+                		WHEN v.type_name = 'ntext' THEN 1073741823
+                		ELSE NULL END AS INT) AS [CHARACTER_MAXIMUM_LENGTH],
+        		CAST(CASE 
+						WHEN v.type_name IN (N'int', N'smallint', N'bigint', N'tinyint', N'float', N'real', N'decimal', N'numeric', N'money', N'smallmoney') 
+							THEN v.PRECISION
+						ELSE NULL END AS smallint) AS [NUMERIC_PRECISION],
+        		CAST(CASE 
+						WHEN v.type_name IN (N'decimal', N'numeric') THEN v.SCALE 
+						ELSE NULL END AS smallint ) AS [NUMERIC_SCALE],
+        		CAST(NULL AS sys.sysname) AS [TYPE_CATALOG_NAME],
+        		CAST(NULL AS sys.sysname) AS [TYPE_SCHEMA_NAME],
+        		CAST(v.TYPE_NAME AS sys.nvarchar(128)) AS [TYPE_NAME],
+        		CAST(NULL AS sys.sysname) AS XML_CATALOGNAME,
+        		CAST(NULL AS sys.sysname) AS XML_SCHEMANAME,
+        		CAST(NULL AS sys.sysname) AS XML_SCHEMACOLLECTIONNAME,
+        		CAST(CASE
+						WHEN v.type_name = 'datetime' THEN 3
+                    	WHEN v.type_name IN (N'datetime2', N'datetimeoffset', N'time') THEN 7
+						WHEN v.type_name IN (N'date', N'smalldatetime') THEN 0
+                    	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
+   		FROM sys.sp_sproc_columns_view v
+   		LEFT OUTER JOIN sys.all_parameters AS p ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
+   		WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
+    	AND (@procedure_schema = '' OR procedure_owner LIKE @procedure_schema)
+    	ORDER BY PROCEDURE_owner, PROCEDURE_NAME, ORDINAL_POSITION;
+END;
+$$ LANGUAGE pltsql;
+GRANT ALL PRIVILEGES ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;

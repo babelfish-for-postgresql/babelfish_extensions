@@ -325,3 +325,4 @@ GRANT EXECUTE ON PROCEDURE sys.sp_dropextendedproperty TO PUBLIC;
 CREATE OR REPLACE PROCEDURE sys.sp_enum_oledb_providers()
 AS 'babelfishpg_tsql', 'sp_enum_oledb_providers_internal' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_enum_oledb_providers() TO PUBLIC;
+
