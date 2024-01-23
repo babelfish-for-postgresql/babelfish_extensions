@@ -162,6 +162,40 @@ nvarchar
 ~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
 
 
+EXECUTE forjson_vu_p_7
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "firstname": "j", "lastname": "o", "email": "testemail"}, {"Id": 1, "firstname": "e", "lastname": "l", "email": "testemail2"}]
+~~END~~
+
+
+EXECUTE forjson_vu_p_8
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+
+
+EXECUTE forjson_vu_p_9
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sub-select and values for json auto are not currently supported.)~~
+
+
+EXECUTE forjson_vu_p_10
+GO
+~~START~~
+nvarchar
+[{"Id": 1, "o": [{"orderdate": "2023-06-25"}]}]
+~~END~~
+
+
 SELECT forjson_vu_f_1()
 GO
 ~~START~~

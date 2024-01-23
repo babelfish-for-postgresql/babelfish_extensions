@@ -58,6 +58,18 @@ GO
 EXECUTE forjson_vu_p_6
 GO
 
+EXECUTE forjson_vu_p_7
+GO
+
+EXECUTE forjson_vu_p_8
+GO
+
+EXECUTE forjson_vu_p_9
+GO
+
+EXECUTE forjson_vu_p_10
+GO
+
 SELECT forjson_vu_f_1()
 GO
 
