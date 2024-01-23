@@ -5,7 +5,7 @@ USE dms_test_target_db
 GO
 
 CREATE TABLE [dbo].my_table (
-	mycol [DATETIME2](7) NULL
+	mycol sys.DATETIME2(7) NULL
 ) 
 GO
 
@@ -28,52 +28,125 @@ dms_test_target_db#!#dbo#!#my_table#!#mycol#!#93#!#datetime2#!#26#!#16#!#6#!#<NU
 ~~END~~
 
 
-CREATE TABLE babel_4544 (id int)
+-- psql
+DROP TABLE dbo."my_Table", dbo.my_table;
 GO
 
-CREATE TABLE BABEL_4544_2 (id int)
+-- tsql
+USE dms_test_target_db;
 GO
 
-CREATE TABLE bABeL_4544_3 (id int)
+CREATE TABLE babel_4544_1 (col_1 int)
 GO
 
-CREATE TABLE [babel_4544_4] (id int)
+CREATE TABLE BABEL_4544_2 (col2 int)
 GO
 
-CREATE TABLE [BABEL_4544_5] (id int)
+CREATE TABLE bABeL_4544_3 (col3 int)
 GO
 
-CREATE TABLE [bABeL_4544_6] (id int)
+CREATE TABLE [babel_4544_4] (col4 int)
 GO
 
-SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'babel_4544%'
-ORDER BY TABLE_NAME ASC;
+CREATE TABLE [BABEL_4544_5] (col5 int)
+GO
+
+CREATE TABLE [bABeL_4544_6] (col6 int)
+GO
+
+CREATE TABLE Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa (
+    col_int_63_tsql INT, col_varchar_63_tsql VARCHAR(11), col_datetime_63_tsql sys.DATETIME2(1)
+    );
+GO
+
+CREATE TABLE BaBeL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa (
+    col_int_64_tsql INT, col_varchar_64_tsql VARCHAR(12), col_datetime_64_tsql sys.DATETIME2(2)
+);
+GO
+
+CREATE TABLE bAbEl_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (
+    col_int_128_tsql INT, col_varchar_128_tsql VARCHAR(13), col_datetime_128_tsql sys.DATETIME2(3)
+);
+GO
+
+SELECT COUNT(*) FROM information_schema_tsql.columns WHERE TABLE_NAME like 'babel_4544%';
 GO
 ~~START~~
-nvarchar
-babel_4544
-BABEL_4544_2
-bABeL_4544_3
-babel_4544_4
-BABEL_4544_5
-bABeL_4544_6
+int
+15
 ~~END~~
 
 
-SELECT TABLE_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like 'BABEL_4544%'
-ORDER BY TABLE_NAME ASC;
+-- psql
+SET psql_logical_babelfish_db_name = 'dms_test_target_db';
+GO
+
+CREATE TABLE "babel_4544_1" (col_1_psql int)
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: relation "babel_4544_1" already exists
+    Server SQLState: 42P07)~~
+
+
+CREATE TABLE dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
+    col_int_63_psql INT, col_varchar_63_psql sys.VARCHAR(97), col_datetime_63_psql sys.DATETIME2(4)
+    );
+GO
+
+CREATE TABLE dbo."BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" (
+    col_int_64_psql INT, col_varchar_64_psql sys.VARCHAR(98), col_datetime_64_psql sys.DATETIME2(5)
+);
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: identifier "BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" will be truncated to "BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaa"  Server SQLState: 42622)~~
+
+
+CREATE TABLE dbo."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" (
+    col_int_128_psql INT, col_varchar_128_psql sys.VARCHAR(99), col_datetime_128_psql sys.DATETIME2(6)
+);
+GO
+~~WARNING (Code: 0)~~
+
+~~WARNING (Message: identifier "BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" will be truncated to "BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_a"  Server SQLState: 42622)~~
+
+
+-- verify JOIN condition and if data type, col name & typmod is correct for each entry 
+SELECT istc."TABLE_NAME", istc."COLUMN_NAME", istc."CHARACTER_MAXIMUM_LENGTH", istc."DATETIME_PRECISION" FROM pg_class c JOIN information_schema_tsql.columns_internal istc ON (c.oid = istc."TABLE_OID")
+    WHERE c.relname != 'sysdatabases'
+    ORDER BY istc."COLUMN_NAME";
 GO
 ~~START~~
-nvarchar
-babel_4544
-BABEL_4544_2
-bABeL_4544_3
-babel_4544_4
-BABEL_4544_5
-bABeL_4544_6
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#int2
+babel_4544_1#!#col_1#!#<NULL>#!#<NULL>
+BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_a#!#col_datetime_128_psql#!#<NULL>#!#6
+babel_4544_this_is_hundred_and_e319d68769733eed3eafd97258aa9a1a#!#col_datetime_128_tsql#!#<NULL>#!#3
+Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_datetime_63_psql#!#<NULL>#!#4
+Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_datetime_63_tsql#!#<NULL>#!#1
+BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaa#!#col_datetime_64_psql#!#<NULL>#!#5
+babel_4544_this_is_sixty_four_lca3b3f6a911242ab2b20137ae3030beb#!#col_datetime_64_tsql#!#<NULL>#!#2
+BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_a#!#col_int_128_psql#!#<NULL>#!#<NULL>
+babel_4544_this_is_hundred_and_e319d68769733eed3eafd97258aa9a1a#!#col_int_128_tsql#!#<NULL>#!#<NULL>
+Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_int_63_psql#!#<NULL>#!#<NULL>
+Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_int_63_tsql#!#<NULL>#!#<NULL>
+BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaa#!#col_int_64_psql#!#<NULL>#!#<NULL>
+babel_4544_this_is_sixty_four_lca3b3f6a911242ab2b20137ae3030beb#!#col_int_64_tsql#!#<NULL>#!#<NULL>
+BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_a#!#col_varchar_128_psql#!#99#!#<NULL>
+babel_4544_this_is_hundred_and_e319d68769733eed3eafd97258aa9a1a#!#col_varchar_128_tsql#!#13#!#<NULL>
+Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_varchar_63_psql#!#97#!#<NULL>
+Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_varchar_63_tsql#!#11#!#<NULL>
+BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaa#!#col_varchar_64_psql#!#98#!#<NULL>
+babel_4544_this_is_sixty_four_lca3b3f6a911242ab2b20137ae3030beb#!#col_varchar_64_tsql#!#12#!#<NULL>
+BABEL_4544_2#!#col2#!#<NULL>#!#<NULL>
+bABeL_4544_3#!#col3#!#<NULL>#!#<NULL>
+babel_4544_4#!#col4#!#<NULL>#!#<NULL>
+BABEL_4544_5#!#col5#!#<NULL>#!#<NULL>
+bABeL_4544_6#!#col6#!#<NULL>#!#<NULL>
 ~~END~~
 
 
+-- tsql
 USE master
 GO
 DROP DATABASE dms_test_target_db

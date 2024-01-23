@@ -2022,26 +2022,6 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
-SELECT
-CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
-CAST(seq AS smallint) AS KEY_SEQ,
-CAST(t5.conname AS sys.sysname) AS PK_NAME
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE C AND ext.orig_name = t4."TABLE_SCHEMA" )
-	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
-	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
-WHERE t5.contype = 'p'
-	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
-	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
-  AND ext.dbid = sys.db_id();
-
 -- Rename functions for dependencies
 DO $$
 DECLARE
@@ -2707,125 +2687,48 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_statistics_view AS
-SELECT
-CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
-CAST(NULL AS smallint) AS NON_UNIQUE,
-CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
-CAST(NULL AS sys.sysname) AS INDEX_NAME,
-CAST(0 AS smallint) AS TYPE,
-CAST(NULL AS smallint) AS SEQ_IN_INDEX,
-CAST(NULL AS sys.sysname) AS COLUMN_NAME,
-CAST(NULL AS sys.varchar(1)) AS COLLATION,
-CAST(t1.reltuples AS int) AS CARDINALITY,
-CAST(t1.relpages AS int) AS PAGES,
-CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
-FROM pg_catalog.pg_class t1
-    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" COLLATE C AND s1.name = t3."TABLE_SCHEMA")
-    , generate_series(0,31) seq -- SQL server has max 32 columns per index
-UNION
-SELECT
-CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
-CASE
-WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
-ELSE CAST(1 AS smallint)
-END AS NON_UNIQUE,
-CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
--- the index name created by CREATE INDEX is re-mapped, find it (by checking
--- the ones not in pg_constraint) and restoring it back before display
-CASE 
-WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
-ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
-END AS INDEX_NAME,
-CASE
-WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
-ELSE CAST(3 AS smallint)
-END AS TYPE,
-CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
-CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
-CAST('A' AS sys.varchar(1)) AS COLLATION,
-CAST(t7.n_distinct AS int) AS CARDINALITY,
-CAST(0 AS int) AS PAGES, --not supported
-CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
-FROM pg_catalog.pg_class t1
-    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE C AND s1.name = t4."TABLE_SCHEMA")
-	JOIN (pg_catalog.pg_index t5 JOIN
-		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
-	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
-	LEFT JOIN pg_catalog.pg_stats t7 ON (t1.relname = t7.tablename AND t7.schemaname = nsp.nspname)
-	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
-    , generate_series(0,31) seq -- SQL server has max 32 columns per index
-WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
-    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
+CREATE OR REPLACE VIEW information_schema_tsql.columns AS
+	SELECT
+		"TABLE_CATALOG",
+		"TABLE_SCHEMA",
+		"TABLE_NAME",
+		"COLUMN_NAME",
+		"ORDINAL_POSITION",
+		"COLUMN_DEFAULT",
+		"IS_NULLABLE",
+		"DATA_TYPE",
+		"CHARACTER_MAXIMUM_LENGTH",
+		"CHARACTER_OCTET_LENGTH",
+		"NUMERIC_PRECISION",
+		"NUMERIC_PRECISION_RADIX",
+		"NUMERIC_SCALE",
+		"DATETIME_PRECISION",
+		"CHARACTER_SET_CATALOG",
+		"CHARACTER_SET_SCHEMA",
+		"CHARACTER_SET_NAME",
+		"COLLATION_CATALOG",
+		"COLLATION_SCHEMA",
+		"COLLATION_NAME",
+		"DOMAIN_CATALOG",
+		"DOMAIN_SCHEMA",
+		"DOMAIN_NAME"
+	
+	FROM information_schema_tsql.columns_internal;
 
-GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
-ALTER VIEW sys.spt_columns_view_managed RENAME TO spt_columns_view_managed_3_5_0;
+CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
+    SELECT isc_col."DOMAIN_CATALOG",
+           isc_col."DOMAIN_SCHEMA" ,
+           CAST(isc_col."DOMAIN_NAME" AS sys.sysname),
+           isc_col."TABLE_CATALOG",
+           isc_col."TABLE_SCHEMA",
+           CAST(isc_col."TABLE_NAME" AS sys.sysname),
+           CAST(isc_col."COLUMN_NAME" AS sys.sysname)
 
-CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
-SELECT
-    o.object_id                     AS OBJECT_ID,
-    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
-    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
-    o.name                          AS TABLE_NAME,
-    c.name                          AS COLUMN_NAME,
-    isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
-    isc."COLUMN_DEFAULT"::information_schema.character_data              AS COLUMN_DEFAULT,
-    isc."IS_NULLABLE"::information_schema.yes_or_no                      AS IS_NULLABLE,
-    isc."DATA_TYPE"::information_schema.character_data                   AS DATA_TYPE,
+    FROM information_schema_tsql.columns AS isc_col
+    WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
 
-    CAST (CASE WHEN isc."CHARACTER_MAXIMUM_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_MAXIMUM_LENGTH" END
-		AS information_schema.cardinal_number) AS CHARACTER_MAXIMUM_LENGTH,
-
-    CAST (CASE WHEN isc."CHARACTER_OCTET_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_OCTET_LENGTH" END
-		AS information_schema.cardinal_number)      AS CHARACTER_OCTET_LENGTH,
-
-    CAST (CASE WHEN isc."NUMERIC_PRECISION" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION" END
-		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION,
-
-    CAST (CASE WHEN isc."NUMERIC_PRECISION_RADIX" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION_RADIX" END
-		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION_RADIX,
-
-    CAST (CASE WHEN isc."NUMERIC_SCALE" < 0 THEN 0 ELSE isc."NUMERIC_SCALE" END
-		AS information_schema.cardinal_number)      AS NUMERIC_SCALE,
-
-    CAST (CASE WHEN isc."DATETIME_PRECISION" < 0 THEN 0 ELSE isc."DATETIME_PRECISION" END
-		AS information_schema.cardinal_number)      AS DATETIME_PRECISION,
-
-    isc."CHARACTER_SET_CATALOG"::information_schema.sql_identifier       AS CHARACTER_SET_CATALOG,
-    isc."CHARACTER_SET_SCHEMA"::information_schema.sql_identifier        AS CHARACTER_SET_SCHEMA,
-    isc."CHARACTER_SET_NAME"::information_schema.sql_identifier          AS CHARACTER_SET_NAME,
-    isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
-    isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
-    c.collation_name                                                     AS COLLATION_NAME,
-    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
-    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
-    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
-    c.is_sparse                     AS IS_SPARSE,
-    c.is_column_set                 AS IS_COLUMN_SET,
-    c.is_filestream                 AS IS_FILESTREAM
-FROM
-    sys.objects o JOIN sys.columns c ON
-        (
-            c.object_id = o.object_id and
-            o.type in ('U', 'V')  -- limit columns to tables and views
-        )
-    LEFT JOIN information_schema_tsql.columns isc ON
-        (
-            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
-            o.name = CAST(isc."TABLE_NAME" as sys.sysname) and
-            c.name = isc."COLUMN_NAME"
-        )
-    WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
-
-GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT 
@@ -2897,7 +2800,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
      LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" COLLATE C AND ext.orig_name = t4."TABLE_SCHEMA")
+     JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
@@ -2910,21 +2813,145 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
     AND ext.dbid = sys.db_id();
 
-GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
-CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
-    SELECT isc_col."DOMAIN_CATALOG",
-           isc_col."DOMAIN_SCHEMA" ,
-           CAST(isc_col."DOMAIN_NAME" AS sys.sysname),
-           isc_col."TABLE_CATALOG",
-           isc_col."TABLE_SCHEMA",
-           CAST(isc_col."TABLE_NAME" AS sys.sysname),
-           CAST(isc_col."COLUMN_NAME" AS sys.sysname)
+CREATE OR REPLACE VIEW sys.sp_statistics_view AS
+SELECT
+CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CAST(NULL AS smallint) AS NON_UNIQUE,
+CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(NULL AS sys.sysname) AS INDEX_NAME,
+CAST(0 AS smallint) AS TYPE,
+CAST(NULL AS smallint) AS SEQ_IN_INDEX,
+CAST(NULL AS sys.sysname) AS COLUMN_NAME,
+CAST(NULL AS sys.varchar(1)) AS COLLATION,
+CAST(t1.reltuples AS int) AS CARDINALITY,
+CAST(t1.relpages AS int) AS PAGES,
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN information_schema_tsql.columns_internal t3 ON (t1.oid = t3."TABLE_OID")
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+UNION
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CASE
+WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
+ELSE CAST(1 AS smallint)
+END AS NON_UNIQUE,
+CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE 
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+END AS INDEX_NAME,
+CASE
+WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
+ELSE CAST(3 AS smallint)
+END AS TYPE,
+CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST('A' AS sys.varchar(1)) AS COLLATION,
+CAST(t7.n_distinct AS int) AS CARDINALITY,
+CAST(0 AS int) AS PAGES, --not supported
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+    JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
+	LEFT JOIN pg_catalog.pg_stats t7 ON (t1.relname = t7.tablename AND t7.schemaname = nsp.nspname)
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
+    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 
-    FROM information_schema_tsql.columns AS isc_col
-    WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
 
-GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
+CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST(seq AS smallint) AS KEY_SEQ,
+CAST(t5.conname AS sys.sysname) AS PK_NAME
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
+WHERE t5.contype = 'p'
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = sys.db_id();
+
+ALTER VIEW sys.spt_columns_view_managed RENAME TO spt_columns_view_managed_3_5_0;
+
+CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
+SELECT
+    o.object_id                     AS OBJECT_ID,
+    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
+    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
+    o.name                          AS TABLE_NAME,
+    c.name                          AS COLUMN_NAME,
+    isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
+    isc."COLUMN_DEFAULT"::information_schema.character_data              AS COLUMN_DEFAULT,
+    isc."IS_NULLABLE"::information_schema.yes_or_no                      AS IS_NULLABLE,
+    isc."DATA_TYPE"::information_schema.character_data                   AS DATA_TYPE,
+
+    CAST (CASE WHEN isc."CHARACTER_MAXIMUM_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_MAXIMUM_LENGTH" END
+		AS information_schema.cardinal_number) AS CHARACTER_MAXIMUM_LENGTH,
+
+    CAST (CASE WHEN isc."CHARACTER_OCTET_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_OCTET_LENGTH" END
+		AS information_schema.cardinal_number)      AS CHARACTER_OCTET_LENGTH,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION_RADIX" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION_RADIX" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION_RADIX,
+
+    CAST (CASE WHEN isc."NUMERIC_SCALE" < 0 THEN 0 ELSE isc."NUMERIC_SCALE" END
+		AS information_schema.cardinal_number)      AS NUMERIC_SCALE,
+
+    CAST (CASE WHEN isc."DATETIME_PRECISION" < 0 THEN 0 ELSE isc."DATETIME_PRECISION" END
+		AS information_schema.cardinal_number)      AS DATETIME_PRECISION,
+
+    isc."CHARACTER_SET_CATALOG"::information_schema.sql_identifier       AS CHARACTER_SET_CATALOG,
+    isc."CHARACTER_SET_SCHEMA"::information_schema.sql_identifier        AS CHARACTER_SET_SCHEMA,
+    isc."CHARACTER_SET_NAME"::information_schema.sql_identifier          AS CHARACTER_SET_NAME,
+    isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
+    isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
+    c.collation_name                                                     AS COLLATION_NAME,
+    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
+    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
+    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
+    c.is_sparse                     AS IS_SPARSE,
+    c.is_column_set                 AS IS_COLUMN_SET,
+    c.is_filestream                 AS IS_FILESTREAM
+FROM
+    sys.objects o JOIN sys.columns c ON
+        (
+            c.object_id = o.object_id and
+            o.type in ('U', 'V')  -- limit columns to tables and views
+        )
+    LEFT JOIN information_schema_tsql.columns_internal isc ON
+        (
+            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
+            o.name = isc."TABLE_NAME" and
+            c.name = isc."COLUMN_NAME"
+        )
+    WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
+GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
+
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5_0');
