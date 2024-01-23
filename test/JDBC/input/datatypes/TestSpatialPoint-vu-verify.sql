@@ -270,3 +270,21 @@ GO
 
 SELECT * FROM SPATIALPOINT_dt;
 GO
+
+select count(*) from sys.types where name = 'geometry';
+go
+
+select count(*) from sys.types where name = 'geography';
+go
+
+exec sp_sproc_columns_100 @procedure_name= 'geometry_proc_1'
+GO
+
+exec sp_sproc_columns_100 @procedure_name= 'geography_proc_1'
+GO
+
+select * from information_schema.columns where table_name = 'geo_view_test'
+GO
+
+select count(*) from sys.columns where object_id = sys.object_id('geo_view_test')
+GO

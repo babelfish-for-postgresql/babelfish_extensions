@@ -368,6 +368,7 @@ BEGIN
 			END IF;
 		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
 		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+    WHEN v_type in ('geometry', 'geography') THEN max_length = 0;
 		ELSE max_length = typemod;
 		END CASE;
 		RETURN max_length;

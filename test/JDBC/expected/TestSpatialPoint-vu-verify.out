@@ -904,3 +904,56 @@ int#!#geometry#!#geography
 6#!#E6100000010C000000000000F03F0000000000000040#!#E6100000010C0000000000000040000000000000F03F
 ~~END~~
 
+
+select count(*) from sys.types where name = 'geometry';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.types where name = 'geography';
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec sp_sproc_columns_100 @procedure_name= 'geometry_proc_1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#geometry_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#geometry_proc_1;1#!#@a#!#1#!#<NULL>#!#geometry#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>
+master#!#dbo#!#geometry_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+~~END~~
+
+
+exec sp_sproc_columns_100 @procedure_name= 'geography_proc_1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+master#!#dbo#!#geography_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+master#!#dbo#!#geography_proc_1;1#!#@a#!#1#!#<NULL>#!#geography#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>
+master#!#dbo#!#geography_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+~~END~~
+
+
+select * from information_schema.columns where table_name = 'geo_view_test'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#geo_view_test#!#a#!#1#!#<NULL>#!#YES#!#geometry#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#geo_view_test#!#b#!#2#!#<NULL>#!#YES#!#geography#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+select count(*) from sys.columns where object_id = sys.object_id('geo_view_test')
+GO
+~~START~~
+int
+2
+~~END~~
+
