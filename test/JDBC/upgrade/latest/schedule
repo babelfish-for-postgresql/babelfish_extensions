@@ -215,6 +215,7 @@ forjson
 forjson-datatypes
 forjson-subquery
 forjson-nesting
+forjsonauto
 format
 format-dep
 forxml
@@ -503,5 +504,6 @@ BABEL-4606
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
+table_constraint_without_comma
 BABEL-730
 babel-4475
