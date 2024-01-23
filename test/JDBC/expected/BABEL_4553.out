@@ -81,13 +81,8 @@ int
 SET psql_logical_babelfish_db_name = 'dms_test_target_db';
 GO
 
-CREATE TABLE "babel_4544_1" (col_1_psql int)
+CREATE TABLE dbo."bAbel_4544_1" (col_1_psql int)
 GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: relation "babel_4544_1" already exists
-    Server SQLState: 42P07)~~
-
 
 CREATE TABLE dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
     col_int_63_psql INT, col_varchar_63_psql sys.VARCHAR(97), col_datetime_63_psql sys.DATETIME2(4)
@@ -120,6 +115,7 @@ GO
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#int2
 babel_4544_1#!#col_1#!#<NULL>#!#<NULL>
+bAbel_4544_1#!#col_1_psql#!#<NULL>#!#<NULL>
 BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_a#!#col_datetime_128_psql#!#<NULL>#!#6
 babel_4544_this_is_hundred_and_e319d68769733eed3eafd97258aa9a1a#!#col_datetime_128_tsql#!#<NULL>#!#3
 Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa#!#col_datetime_63_psql#!#<NULL>#!#4

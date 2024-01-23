@@ -71,7 +71,7 @@ GO
 SET psql_logical_babelfish_db_name = 'dms_test_target_db';
 GO
 
-CREATE TABLE "babel_4544_1" (col_1_psql int)
+CREATE TABLE dbo."bAbel_4544_1" (col_1_psql int)
 GO
 
 CREATE TABLE dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
