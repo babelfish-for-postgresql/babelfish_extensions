@@ -60,10 +60,10 @@ go
 create proc babel_4344_s1.babel_4344_p3 as select 3;
 go
 
-CREATE FUNCTION babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.tables) END
+CREATE FUNCTION babel_4344_f1() returns int begin declare @a int; set @a = 1; return @a; end 
 go
 
-CREATE FUNCTION babel_4344_s1.babel_4344_f1() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
+CREATE FUNCTION babel_4344_s1.babel_4344_f1() returns int begin declare @a int; set @a = 1; return @a; END
 go
 
 grant SELECT on schema::babel_4344_S1 to public, αιώνια;
@@ -158,9 +158,9 @@ rollback transaction;
 go
 
 -- Mixed case
-grant Execute on Babel_4344_F1 to babel_4344_u1;
+grant Execute on Babel_4344_F1 to Babel_4344_u1;
 go
-grant execute on babel_4344_s1.babel_4344_f1 to babel_4344_u1;
+grant execute on BABEL_4344_s1.babel_4344_f1 to babEL_4344_u1;
 go
 -- Grant schema permission to its owner, should fail
 grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
@@ -176,7 +176,7 @@ go
 -- grant statement via a procedure
 create procedure grant_perm_proc as begin exec('grant select on schema::[] to guest') end;
 go
-exec grant_perm_proc; -- should fail
+exec grant_perm_proc; -- should fail, invalid GRANT statement
 go
 -- non-existing role
 grant SELECT on schema::dbo to guest, babel_4344_u3; -- should fail
@@ -206,9 +206,9 @@ exec babel_4344_s1.babel_4344_p1;
 go
 exec babel_4344_s1.babel_4344_p3; -- should fail, grant statement was rolled back
 go
-select * from babel_4344_f1();
+select * from BABEl_4344_f1();
 go
-select * from babel_4344_s1.babel_4344_f1();
+select * from babEL_4344_s1.babel_4344_f1();
 go
 -- Grant schema permission to its owner
 grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
@@ -224,6 +224,8 @@ go
 -- GRANT SCHEMA privilege
 use babel_4344_d1;
 go
+grant control on schema::babel_4344_s1 to babel_4344_u1; -- should fail, 'control' is not supported
+go
 grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
 go
 use master;
@@ -232,7 +234,25 @@ go
 -- psql
 -- GRANT statement add an entry to the catalog
 select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
-where schema_name = 'babel_4344_s1' collate "C" and object_name = 'ALL' collate "C" order by permission;
+where schema_name = 'babel_4344_s1' collate "C" order by permission; -- and object_name = 'ALL' collate "C"
+go
+
+-- tsql
+-- GRANT SCHEMA privilege again
+use babel_4344_d1;
+go
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+-- GRANT OBJECT privilege again
+grant select on babel_4344_s1.babel_4344_v1 to babel_4344_u1;
+go
+use master;
+go
+
+-- psql
+-- check the consistency of catalog
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+where schema_name = 'babel_4344_s1' collate "C" order by permission;
 go
 
 -- tsql user=babel_4344_l1 password=12345678
@@ -290,6 +310,8 @@ use babel_4344_d1;
 go
 -- Grant the permissions again
 grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+grant select, insert, execute on schema::information_schema to babel_4344_u1;
 go
 create table babel_4344_s1.babel_4344_t2(a int);
 go
