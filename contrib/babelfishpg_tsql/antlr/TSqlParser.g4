@@ -3760,7 +3760,8 @@ function_call
     : ranking_windowed_function                         
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
-    | ( spatial_proc_name_server_database_schema | func_proc_name_server_database_schema ) LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
+    | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
+    | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
     | NEXT VALUE FOR full_object_name		         
@@ -5155,7 +5156,7 @@ func_proc_name_database_schema
     ;
 
 spatial_proc_name_server_database_schema
-    : (((server=id? DOT)? database=id? DOT)? schema=id? DOT)? ( geospatial_func_no_arg | geospatial_func_arg )
+    : ((schema=id? DOT)? table=id? DOT)? column=id DOT ( geospatial_func_no_arg | geospatial_func_arg )
     ;
 
 func_proc_name_server_database_schema
@@ -5178,7 +5179,8 @@ collation
     ;
     
 full_column_name
-    : (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? ( geospatial_col | column_name=id )
+    : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
+    | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
     ;
 
 column_name_list_with_order

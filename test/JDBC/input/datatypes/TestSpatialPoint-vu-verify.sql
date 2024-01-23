@@ -8,6 +8,7 @@ DECLARE @point geometry;
 SET @point = geometry::POINT(22.34900, -47.65100, 4326);
 SELECT STAsText(@point);
 SELECT @point.STAsText();
+SELECT @point . STAsText ( );
 Go
 
 DECLARE @point geometry; 
@@ -33,6 +34,7 @@ SET @point = geometry::POINT(22.34900, -47.65100, 4326);
 SELECT STX(@point);
 SELECT STY(@point);
 SELECT @point.STX;
+SELECT @point . STX;
 SELECT @point.STY;
 Go
 
@@ -41,6 +43,7 @@ SET @point1 = geometry::STPointFromText('POINT(-122.34900 47.65100)', 4326);
 SET @point2 = geometry::STGeomFromText('POINT(-122.35000 47.65000)', 4326);
 SELECT STDistance(@point1, @point2);
 SELECT @point1.STDistance(@point2);
+SELECT @point1 . STDistance ( @point2 );
 Go
 
 DECLARE @point geometry;
