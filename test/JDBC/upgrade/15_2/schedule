@@ -414,6 +414,7 @@ timefromparts
 triggers_with_transaction
 datetimeoffset-timezone-before-15_3
 BABEL-4046
+table_constraint_wo_comma-before-15_6-or-16_2
 getdate
 BABEL_4330
 BABEL-4410

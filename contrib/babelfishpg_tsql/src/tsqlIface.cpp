@@ -192,6 +192,7 @@ static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix 
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
 static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
 static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx); 
+static void handleTableConstraintWithoutComma(TSqlParser::Column_def_table_constraintsContext *ctx);
 static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
 static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
@@ -2257,13 +2258,6 @@ public:
 		// TO-DO
 	}
 
-	// NB: this is copied in tsqlMutator
-	void exitConstant(TSqlParser::ConstantContext *ctx) override
-	{	
-		// Check for floating-point number without exponent
-		handleFloatWithoutExponent(ctx);
-	}
-
 	void exitPredicate(TSqlParser::PredicateContext *ctx) override
 	{
 		// For comparison operators directly followed by an '@@' variable, insert a space 
@@ -2321,6 +2315,19 @@ public:
 		}
 	}
 
+	// NB: this is copied in tsqlMutator
+	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
+	{
+		handleTableConstraintWithoutComma(ctx);
+	}
+	
+	// NB: this is copied in tsqlMutator
+	void exitConstant(TSqlParser::ConstantContext *ctx) override
+	{	
+		// Check for floating-point number without exponent
+		handleFloatWithoutExponent(ctx);
+	}
+  
 	// NB: this is copied in TsqlMutator
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
@@ -2667,31 +2674,6 @@ public:
 		has_identity_function = false;
 		if (statementMutator)
 			process_query_specification(ctx, statementMutator.get());
-	}
-
-	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
-	{
-		/*
-		 * It is not documented but it seems T-SQL allows that column-definition is followed by table-constraint without COMMA.
-		 * PG backend parser will throw a syntax error when this kind of query is inputted.
-		 * It is not easy to add a rule accepting this syntax to backend parser because of many shift/reduce conflicts.
-		 * To handle this case, add a compensation COMMA between column-definition and table-constraint here.
-		 *
-		 * This handling should be only applied to table-constraint following column-definition. Other cases (such as two column definitions without comma) should still throw a syntax error.
-		 */
-
-		ParseTree* prev_child = nullptr;
-		for (ParseTree* child : ctx->children)
-		{
-			TSqlParser::Column_def_table_constraintContext* cdtctx = dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(child);
-			if (cdtctx && cdtctx->table_constraint())
-			{
-				TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
-				if (prev_cdtctx && prev_cdtctx->column_definition())
-					rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
-			}
-			prev_child = child;
-		}
 	}
 
 	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
@@ -3177,7 +3159,13 @@ public:
 			}
 		}
 	}
-
+	
+	// NB: this is copied in tsqlBuilder
+	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
+	{
+		handleTableConstraintWithoutComma(ctx);
+	}
+	
 	// NB: this is copied in tsqlBuilder
 	void exitConstant(TSqlParser::ConstantContext *ctx) override
 	{
@@ -3185,7 +3173,7 @@ public:
 		handleFloatWithoutExponent(ctx);
 	}
 
-	// NB: this is copied in tsqlBuilder
+// NB: this is copied in tsqlBuilder
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
@@ -7257,8 +7245,6 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 {
 	if (ctx->column_def_table_constraints())
 	{
-		bool rewrite = false;
-
 		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())
 		{
 			/*
@@ -7272,17 +7258,22 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 				auto tctx = cdtctx->column_definition()->TIMESTAMP();
 				std::string rewritten_text = "timestamp " + ::getFullText(tctx);
 				rewritten_query_fragment.emplace(std::make_pair(tctx->getSymbol()->getStartIndex(), std::make_pair(::getFullText(tctx), rewritten_text)));
-				rewrite = true;
 			}
 		}
 
-		if (rewrite)
+		/*
+		 * Need to run the mutator to perform rewriting not only when items were added above,
+		 * but also if rewrite items were added earlier - for example, in exitColumn_def_table_constraints()
+		 * in case a table constraint was specified without a separator comma.
+		 */
+		if (rewritten_query_fragment.size() > 0)
 		{
 			PLtsql_expr *expr = makeTsqlExpr(ctx, false);
 			PLtsql_expr_query_mutator mutator(expr, ctx);
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 			char *rewritten_query = expr->query;
+			
 			// Save the rewritten column definition list
 			stmt->coldef = pstrdup(&rewritten_query[5]);
 		}
@@ -8475,6 +8466,34 @@ handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx)
 	return;
 }
 
+static void 
+handleTableConstraintWithoutComma(TSqlParser::Column_def_table_constraintsContext *ctx)
+{
+	/*
+	 * It is not documented but it seems T-SQL allows that column-definition is followed by table-constraint without COMMA.
+	 * PG backend parser will throw a syntax error when this kind of query is inputted.
+	 * It is not easy to add a rule accepting this syntax to backend parser because of many shift/reduce conflicts.
+	 * To handle this case, add a compensation COMMA between column-definition and table-constraint here.
+	 *
+	 * This handling should be only applied to table-constraint following column-definition. Other cases (such as two column definitions without comma) should still throw a syntax error.
+	 */
+	ParseTree* prev_child = nullptr;
+	for (ParseTree* child : ctx->children)
+	{
+		TSqlParser::Column_def_table_constraintContext* cdtctx = dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(child);
+		if (cdtctx && cdtctx->table_constraint())
+		{
+			TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
+			if (prev_cdtctx && prev_cdtctx->column_definition())
+			{
+				rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
+			}
+		}
+		prev_child = child;
+	}
+	return;
+}
+
 static void
 handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx)
 {
@@ -8510,3 +8529,4 @@ handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx)
 	}
 	return;
 }
+

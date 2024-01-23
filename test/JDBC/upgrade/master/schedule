@@ -167,6 +167,7 @@ dateadd
 datepart
 datetime2fromparts-after-15-2
 forjson
+forjsonauto
 forjson-datatypes
 forjson-subquery
 format
