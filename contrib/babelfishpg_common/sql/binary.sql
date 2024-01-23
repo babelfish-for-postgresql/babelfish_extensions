@@ -91,21 +91,21 @@ CREATE CAST (sys.BPCHAR AS sys.BBF_BINARY)
 WITH FUNCTION sys.bpcharbinary (sys.BPCHAR, integer, boolean) AS ASSIGNMENT;
 
 
-CREATE OR REPLACE FUNCTION sys.binarysysvarchar(sys.BBF_BINARY)
+CREATE OR REPLACE FUNCTION sys.binarysysvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_common', 'varbinaryvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.BBF_BINARY AS sys.VARCHAR)
-WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY) AS ASSIGNMENT;
+WITH FUNCTION sys.binarysysvarchar (sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
 
-CREATE OR REPLACE FUNCTION sys.binaryvarchar(sys.BBF_BINARY)
+CREATE OR REPLACE FUNCTION sys.binaryvarchar(sys.BBF_BINARY, integer, boolean)
 RETURNS pg_catalog.VARCHAR
 AS 'babelfishpg_common', 'varbinaryvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.BBF_BINARY AS pg_catalog.VARCHAR)
-WITH FUNCTION sys.binaryvarchar (sys.BBF_BINARY) AS ASSIGNMENT;
+WITH FUNCTION sys.binaryvarchar(sys.BBF_BINARY, integer, boolean) AS ASSIGNMENT;
 
 CREATE OR REPLACE FUNCTION sys.int2binary(INT2, integer, boolean)
 RETURNS sys.BBF_BINARY

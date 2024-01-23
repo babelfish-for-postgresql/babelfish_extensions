@@ -62,6 +62,8 @@
 /* Max number of Args allowed for Prepared stmts. */
 #define PREPARE_STMT_MAX_ARGS 2100
 
+#define TRIGGER_MAX_NEST_LEVEL 32 /* Maximum allowed trigger nesting level*/
+
 /*
  * Compiler's namespace item types
  */
@@ -1631,7 +1633,7 @@ typedef struct PLtsql_protocol_plugin
 								   bool terminate_batch);
 	char	       *(*get_login_domainname) (void);
 	void		(*set_guc_stat_var) (const char *guc, bool boolVal, const char *strVal, int intVal);
-	void		(*set_at_at_stat_var) (const char *at_at_var, int intVal, uint64 bigintVal);
+	void		(*set_at_at_stat_var) (TdsAtAtVarType at_at_var, int intVal, uint64 bigintVal);
 	void		(*set_db_stat_var) (int16 db_id);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);

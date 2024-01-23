@@ -100,21 +100,21 @@ CREATE CAST (sys.BPCHAR AS sys.ROWVERSION)
 WITH FUNCTION sys.bpcharrowversion (sys.BPCHAR, integer, boolean) AS ASSIGNMENT;
 
 
-CREATE OR REPLACE FUNCTION sys.rowversionsysvarchar(sys.ROWVERSION)
+CREATE OR REPLACE FUNCTION sys.rowversionsysvarchar(sys.ROWVERSION, integer, boolean)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_common', 'varbinaryvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.ROWVERSION AS sys.VARCHAR)
-WITH FUNCTION sys.rowversionsysvarchar (sys.ROWVERSION) AS ASSIGNMENT;
+WITH FUNCTION sys.rowversionsysvarchar(sys.ROWVERSION, integer, boolean) AS ASSIGNMENT;
 
-CREATE OR REPLACE FUNCTION sys.rowversionvarchar(sys.ROWVERSION)
+CREATE OR REPLACE FUNCTION sys.rowversionvarchar(sys.ROWVERSION, integer, boolean)
 RETURNS pg_catalog.VARCHAR
 AS 'babelfishpg_common', 'varbinaryvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.ROWVERSION AS pg_catalog.VARCHAR)
-WITH FUNCTION sys.rowversionvarchar (sys.ROWVERSION) AS ASSIGNMENT;
+WITH FUNCTION sys.rowversionvarchar (sys.ROWVERSION, integer, boolean) AS ASSIGNMENT;
 
 CREATE OR REPLACE FUNCTION sys.int2rowversion(INT2, integer, boolean)
 RETURNS sys.ROWVERSION

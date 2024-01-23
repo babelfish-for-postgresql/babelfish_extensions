@@ -1183,8 +1183,13 @@ DropStmt:
 				}
 			;
 
+tsql_DropIndexStmtSchema:
+            SCHEMA name     { $$ = $2;  }
+            | /* EMPTY */   { $$ = NULL; }
+            ;
+ 
 tsql_DropIndexStmt:
-			DROP object_type_any_name name ON name_list
+			DROP object_type_any_name name ON name_list tsql_DropIndexStmtSchema
 				{
 					DropStmt *n = makeNode(DropStmt);
 					if(sql_dialect != SQL_DIALECT_TSQL)
@@ -1203,12 +1208,21 @@ tsql_DropIndexStmt:
 					}
 					n->removeType = $2;
 					n->missing_ok = false;
-					n->objects = list_make1(list_make1(makeString(construct_unique_index_name($3, makeRangeVarFromAnyName($5, @5, yyscanner)->relname))));
+					if ($6 != NULL)
+					{
+						/* SCHEMA clause present, use it to qualify the index name */
+						n->objects = list_make1(list_make2(makeString($6), makeString(construct_unique_index_name($3, makeRangeVarFromAnyName($5, @5, yyscanner)->relname))));  
+					}
+					else 
+					{
+						/* SCHEMA clause not present */
+						n->objects = list_make1(list_make1(makeString(construct_unique_index_name($3, makeRangeVarFromAnyName($5, @5, yyscanner)->relname))));   
+					}
 					n->behavior = DROP_CASCADE;
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP object_type_any_name IF_P EXISTS name ON name_list
+			| DROP object_type_any_name IF_P EXISTS name ON name_list tsql_DropIndexStmtSchema
 				{
 					DropStmt *n = makeNode(DropStmt);
 					if(sql_dialect != SQL_DIALECT_TSQL)
@@ -1227,7 +1241,16 @@ tsql_DropIndexStmt:
 					}
 					n->removeType = $2;
 					n->missing_ok = true;
-					n->objects = list_make1(list_make1(makeString(construct_unique_index_name($5, makeRangeVarFromAnyName($7, @5, yyscanner)->relname))));
+					if ($8 != NULL)
+					{
+						/* SCHEMA clause present, use it to qualify the index name */
+						n->objects = list_make1(list_make2(makeString($8), makeString(construct_unique_index_name($5, makeRangeVarFromAnyName($7, @5, yyscanner)->relname))));  
+					}
+					else 
+					{
+						/* SCHEMA clause not present */
+						n->objects = list_make1(list_make1(makeString(construct_unique_index_name($5, makeRangeVarFromAnyName($7, @5, yyscanner)->relname))));   
+					}
 					n->behavior = DROP_CASCADE;
 					n->concurrent = false;
 					$$ = (Node *)n;
@@ -4161,7 +4184,7 @@ tsql_VariableSetStmt:
 					n->is_local = false;
 					$$ = (Node *) n;
 				}
-			| SET TRANSACTION tsql_IsolationLevel
+			| SET tsql_TranKeyword tsql_IsolationLevel
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->kind = VAR_SET_MULTI;

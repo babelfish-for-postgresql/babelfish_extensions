@@ -15,6 +15,21 @@ int
 ~~END~~
 
 
+SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1' and type='U';
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1' and type='u';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 SELECT COUNT(*) FROM sys.columns WHERE name COLLATE bbf_unicode_general_ci_as = 'rand_col1';
 GO
 ~~START~~
