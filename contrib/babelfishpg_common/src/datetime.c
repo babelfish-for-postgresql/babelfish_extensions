@@ -761,12 +761,13 @@ static bool containsInTextMonthFormat(int *ftype, char **field)
 /*
  * pltsql_time_in
  *		The function modifies the given input into valid form and
- *		stores the output to result. If there are any errors then
- *		an error message will be thrown.
+ *		stores the output to result. An error will be thrown if
+ *		not an valid form.
  * Returns
  * 		false - If the sql_dialect is not an TSQL and proceed with
  * 			the original behaviour
- * 		true - If the sql_dialect is an TSQL
+ * 		true - If the sql_dialect is an TSQL and successfully converted
+ * 			the input to time datatype
  */
 bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 {
@@ -794,7 +795,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 	/*
 	 * The below logic removes the space present before and after of ':', '/',
 	 * '.', '-' and also removes the multiple whitespaces to single whitespace.
-	 * For example converts the input from "    1  :     1" to " 1:1"
+	 * For example converts the input from " 2023-  12 - 12   1  :     1" to "2023-12-12 1:1"
 	 */
 	while (i < len_str)
 	{
@@ -826,7 +827,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 		if (nf >= 3)
 		{
 			/*
-			 * If the total no.of fields is >=3 then there is a possiblity that
+			 * If the no.of fields >= 3 then there is a possiblity that
 			 * the modified_str contains text month and can be of any format
 			 * {"DD MON YYYY", "DD YYYY MON", "MON DD YYYY", "MON YYYY DD",
 			 * "YYYY MON DD", "YYYY DD MON"} then convert the fields to an valid
@@ -863,9 +864,10 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 		 * Iterate through each fields and do pre-validation of that field,
 		 * throw error if the field is in invalid format.
 		 */
-		for (int i = 0; i < nf; i++)
+		for (i = 0; i < nf; i++)
 		{
-			int len;
+			int len, time_count = 0;
+			char* temp_time;
 			char* different_date_formats[] = {"/", ".", "-"};
 			temp_field = pstrdup(field[i]);
 			len = strlen(temp_field);
@@ -931,7 +933,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 							/*
 							 * For example if input is "101213" will be converted
 							 * to "2010-12-13", and input "20001118" will be
-							 * converted to "2000-11-18"
+							 * converted to "2000-11-18".
 							 */
 							res = makeStringInfo();
 							if (len == 6)
@@ -958,8 +960,8 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 				case DTK_DATE:
 					/*
 					 * If the modified_str is of format "<DATE>T<TIME>", then the
-					 * <DATE> should be of format "YYYY-MM-DD". If there are any
-					 * other date formats then an error will be thrown.
+					 * <DATE> should be of format "YYYY-MM-DD" and for all other
+					 * formats of date an error will be thrown.
 					 */
 					if (i == 0 && nf > 1 && field[1] && pg_strcasecmp(field[1], "t") == 0)
 					{
@@ -967,7 +969,7 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						 * For example an error will be thrown if field is "23-1990-11",
 						 * and no error will be thrown is field is "1990-11-23".
 						 */
-						pattern = "[1-9][0-9]{3}-(0?[1-9]|1[012])-([12][0-9]|3[01]|0?[1-9])$";
+						pattern = "^[0-9]{4}-(0?[1-9]|1[012])-([12][0-9]|3[01]|0?[1-9])$";
 						if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
 							ereport(ERROR,
 										(errcode(ERRCODE_INTERNAL_ERROR),
@@ -977,11 +979,13 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						regfree(&time_regex);
 					}
 					/*
-					 * If the date of modified_str is of any formats {"Mon{/.-}yyyy{/.-}dd",
-					 * "Mon{/.-}dd{/.-}yyyy", "DD{/.-}MM{/.-}YYYY", "DD{/.-}YYYY{/.-}MM"}
-					 * then these dates shouldn't be supported and an error should be thrown.
+					 * If the date part of modified_str is of any unsupported formats
+					 * {"Mon{/.-}yyyy{/.-}dd", "Mon{/.-}dd{/.-}yyyy", "DD{/.-}MM{/.-}YYYY",
+					 * "DD{/.-}YYYY{/.-}MM"} then an error should be thrown.
 					 * Supported date formats are {"DD-MON-YYYY", "YYYY-MON-DD",
 					 * "MM{-/.}DD{-/.}YYYY", "YYYY{-/.}MM{-/.}DD"}.
+					 *
+					 * Note: The year can be 1/2/4 digits.
 					 */
 					else
 					{
@@ -997,35 +1001,49 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 						 * an error should be thrown.
 						 * Note: We are checking if text month at start because the
 						 * function "containsInTextMonthFormat" will not be called
-						 * if the modified_str contains {/.-} in the date.
+						 * if the modified_str contains {/.-} in the date part.
 						 */
 						if (isTextMonthPresent(temp_field))
 							TIME_IN_ERROR();
 
-						/* If date is of format {"0YYYY-MON-0DD", "0DD-MON-0YYYY"} where 0's are
-						 * present at the start of year or day then the dates are valid.
-						 * But for the formats {"0MM{-/.}0DD{-/.}0YYYY", "0YYYY{-/.}0MM{-/.}0DD"}
-						 * where 0 are present at the start of year/month/day then the dates are invalid.
-						 *
+						/*
 						 * The below pattern will check whether text month is present in date and
 						 * if text month is not present then the date should be of format
 						 * {"MM{-/.}DD{-/.}YYYY", "YYYY{-/.}MM{-/.}DD"}
+						 * Note: The year can be 1/2/4 digits.
 						 */
 						pattern = "([a-z])";
 						if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
 							ereport(ERROR,
 										(errcode(ERRCODE_INTERNAL_ERROR),
 										errmsg("time format internal error")));
+
 						/* Text month not present */
 						if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
 						{
 							/*
 							 * For example an error will be thrown if field is "23-1990-11",
-							 * and no error will be thrown is field is "1990-11-23".
+							 * and no error will be thrown if field is "1990-11-23".
 							 */
-							pattern = "^([1-9][0-9]{3}|[0-9]{1,2})[-/.]([0-9]{1,2})[-/.]([1-9][0-9]{3}|[0-9]{1,2})$";
+							pattern = "^([0-9]{4}|[0-9]{1,2})[-/.]([0-9]{1,2})[-/.]([0-9]{4}|[0-9]{1,2})$";
 							regfree(&time_regex);
 							if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+								ereport(ERROR,
+											(errcode(ERRCODE_INTERNAL_ERROR),
+											errmsg("time format internal error")));
+							if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+								TIME_IN_ERROR();
+							regfree(&time_regex);
+						}
+						else
+						{
+							/*
+							 * If text month is present then supported date formats are
+							 * "DD-MON-YYYY", "YYYY-MON-DD".
+							 * Note: The year can be of 1/2/4 digits and DD can be of 1/2 digits.
+							 */
+							pattern = "^([0-9]{4}|[0-9]{1,2})[-/.]([a-z]*)[-/.]([0-9]{4}|[0-9]{1,2})$";
+							if (regcomp(&time_regex, pattern, 1) != 0)
 								ereport(ERROR,
 											(errcode(ERRCODE_INTERNAL_ERROR),
 											errmsg("time format internal error")));
@@ -1046,23 +1064,107 @@ bool pltsql_time_in(const char* str, int32 typmod, TimeADT *result)
 					 * and no error will be thrown if field is "11:59:59".
 					 */
 					if (i-1 == 1 && field[1] && pg_strcasecmp(field[1], "t") == 0)
-						pattern = "^([0-1][0-9]|2[0-3])(:[0-5]?[0-9]:([0-5]?[0-9]|[0-5]?[0-9]?.[0-9]{1,9}))?$";
+					{
+						pattern = "^([0-1][0-9]|2[0-3])(:[0-5]?[0-9]:([0-5]?[0-9]|[0-5]?[0-9].[0-9]{1,9}))?$";
+						if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+							ereport(ERROR,
+										(errcode(ERRCODE_INTERNAL_ERROR),
+										errmsg("time format internal error")));
+						if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+							TIME_IN_ERROR();
+						regfree(&time_regex);
+					}
 					/*
-					 * For all other time fields check if <TIME> is in hh:mm[:ss[.nnn]] format.
+					 * For all other time fields check if <TIME> is in hh:mm[:ss[[:.]nnn]] format.
 					 * For example if field is "2:3" then no error will be thrown,
-					 * and if the field is "2:3.4" then an erorr will be thrown because when
-					 * there is an microsecinds mentioned the hours field should also need to be mentioned.
+					 * and if the field is "2:3.4" then an error will be thrown because when
+					 * there is an microseconds mentioned then the hours field should also need to be mentioned.
 					 */
 					else
-						pattern = "^([0-1]?[0-9]|2[0-3]|[0-9])(:[0-5]?[0-9])(:[0-5]?[0-9]|:[0-5]?[0-9]?.[0-9]{1,9})?$";
+					{
+						pattern = "^([0-1]?[0-9]|2[0-3]|[0-9])(:[0-5]?[0-9])(:[0-5]?[0-9]|:[0-5]?[0-9][:.][0-9]{1,9})?$";
+						if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
+							ereport(ERROR,
+										(errcode(ERRCODE_INTERNAL_ERROR),
+										errmsg("time format internal error")));
+						if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
+							TIME_IN_ERROR();
+						regfree(&time_regex);
+						res = makeStringInfo();
+						/*
+						 * For inputs of format "HH:MM:SS:nnn" will be converted to "HH:MM:SS.nnn".
+						 * where nnn ranges from 0 to 999.
+						 */
+						for(j = 0; j <len; j++)
+						{
+							if(field[i][j]== ':')
+							{
+								time_count++;
+								if(time_count == 3)
+								{
+									field[i][j]='.';
+								}
+							}
+							if(time_count == 3 && field[i][j]!= '.')
+							{
+								appendStringInfo(res, "%c", field[i][j]);
+							}
+						}
+						temp_time = res->data;
+						pfree(res);
+						if(time_count >2)
+						{
+							temp_field = pstrdup(field[i]);
+							res = makeStringInfo();
+							appendStringInfo(res, "%s", strtok(temp_field, "."));
+							len = strlen(temp_time);
+							/*
+							 * If nnn if of length 1 then convert to '.00n'
+							 * else if lenght is 2 then convert to '.0nn'
+							 * else if lenght is >3 then an error should be thrown
+							 */
+							if(len == 1)
+							{
+								appendStringInfo(res, "%s%s%s", ".", "00", temp_time);
+								field[i]=res->data;
+							}
+							else if(len == 2)
+							{
+								appendStringInfo(res, "%s%s%s", ".", "0", temp_time);
+								field[i]=res->data;
+							}
+							else if(len != 3)
+								TIME_IN_ERROR();
+							pfree(res);
+						}
+					}
+					break;
 
-					if (regcomp(&time_regex, pattern, REG_EXTENDED) != 0)
-						ereport(ERROR,
-									(errcode(ERRCODE_INTERNAL_ERROR),
-									errmsg("time format internal error")));
-					if (regexec(&time_regex, field[i], 0, NULL, 0) != 0)
-						TIME_IN_ERROR();
-					regfree(&time_regex);
+				case DTK_STRING:
+					if (pg_strcasecmp(field[i], "z") == 0)
+					{
+						/*
+						 * If the modified_str contains the 'z' in it for example '<TIME> Z'
+						 * then the 'z' present in it should be 'Z'.
+						 */
+						pattern = "Z";
+						if (regcomp(&time_regex, pattern, 0) != 0)
+							ereport(ERROR,
+										(errcode(ERRCODE_INTERNAL_ERROR),
+										errmsg("time format internal error")));
+						if (regexec(&time_regex, modified_str, 0, NULL, 0))
+							TIME_IN_ERROR();
+						regfree(&time_regex);
+					}
+					if (pg_strcasecmp(field[i], "am") == 0 || pg_strcasecmp(field[i], "pm") == 0)
+					{
+						/*
+						 * If "am/pm" is present in the input then the previous field cannot be 'z'.
+						 * For example "1 pm Z" is valid but "1 Z pm" is invalid.
+						 */
+						if(i-1 >= 0 && ftype[i-1] == DTK_STRING &&  pg_strcasecmp(field[i-1], "z") == 0)
+							TIME_IN_ERROR();
+					}
 					break;
 
 				case DTK_TZ:
