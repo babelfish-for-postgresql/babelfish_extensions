@@ -2587,10 +2587,9 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || 
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
-ALTER VIEW information_schema_tsql.columns RENAME TO columns_3_5_0;
-
-CREATE OR REPLACE VIEW information_schema_tsql.columns AS
-	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
+	SELECT a.attrelid AS "TABLE_OID",
+      CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 			CAST(
 				CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
@@ -2685,7 +2684,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 									'SELECT, INSERT, UPDATE, REFERENCES'))
 		AND ext.dbid =sys.db_id();
 
-GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
+GRANT SELECT ON information_schema_tsql.columns_internal TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 	SELECT
@@ -2970,7 +2969,6 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_depr
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_5_0');
-CALL sys.babelfish_drop_deprecated_object('view', 'information_schema_tsql', 'columns');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_3_5_0');
 
 -- Drops the temporary procedure used by the upgrade script.
