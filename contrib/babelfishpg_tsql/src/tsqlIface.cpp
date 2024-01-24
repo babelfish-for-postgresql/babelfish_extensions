@@ -5807,7 +5807,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				{
 					if (prin->id())
 					{
-						std::string id_str = ::getFullText(prin->id());
+						std::string id_str = stripQuoteFromId(prin->id());
 						char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
 						grantee_list = lappend(grantee_list, grantee_name);
 					}
@@ -5900,7 +5900,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 				{
 					if (prin->id())
 					{
-						std::string id_str = ::getFullText(prin->id());
+						std::string id_str = stripQuoteFromId(prin->id());
 						char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
 						grantee_list = lappend(grantee_list, grantee_name);
 					}

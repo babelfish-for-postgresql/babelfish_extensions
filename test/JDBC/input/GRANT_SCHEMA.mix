@@ -18,19 +18,25 @@ go
 create user αιώνια for login αιώνια;
 go
 
-create login سعودي with password = '12345678'
+create login ログイン with password = '12345678'
 go
 
-create user سعودي for login سعودي;
+create user ログイン for login ログイン;
 go
 
 create schema babel_4344_s1;
 go
 
+create schema "BAbel_4344 S1";
+go
+
+create table "babel_4344 s1"."babel_4344 t1"(a int);
+go
+
 create schema αγάπη;
 go
 
-create schema كلب;
+create schema スキーマ;
 go
 
 create schema babel_4344_s2 authorization babel_4344_u1;
@@ -48,7 +54,7 @@ go
 create table αγάπη.abc(a int);
 go
 
-create table كلب.abc(a int);
+create table スキーマ.abc(a int);
 go
 
 create table babel_4344_t3(a int, b int);
@@ -78,23 +84,24 @@ go
 CREATE FUNCTION babel_4344_s1.babel_4344_f1() returns int begin declare @a int; set @a = 1; return @a; END
 go
 
-grant SELECT on schema::babel_4344_S1 to public, αιώνια, سعودي;
+-- tests with greek character (one byte) and japanese character (muti bytes)
+grant SELECT on schema::babel_4344_S1 to public, αιώνια, ログイン;
 go
 
-grant select on schema::αγάπη to αιώνια, سعودي;
+grant select on schema::αγάπη to αιώνια, ログイン;
 go
 
-grant select on schema::كلب to سعودي, αιώνια;
+grant select on schema::スキーマ to ログイン, αιώνια;
 go
 
--- tsql user=سعودي password=12345678 
+-- tsql user=ログイン password=12345678 
 use babel_4344_d1;
 go
 
 select * from αγάπη.abc;
 go
 
-select * from كلب.abc;
+select * from スキーマ.abc;
 go
 
 select * from babel_4344_S1.babel_4344_t1;
@@ -110,7 +117,7 @@ go
 select * from αγάπη.abc;
 go
 
-select * from كلب.abc;
+select * from スキーマ.abc;
 go
 
 select * from babel_4344_S1.babel_4344_t1;
@@ -132,9 +139,34 @@ use master;
 go
 
 -- tsql
+-- object names having more than 64 bytes
+create schema abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
+go
+
+create table abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz(a int);
+go
+
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+go
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz from babel_4344_u1;
+go
+
+grant select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+go
+
+revoke select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz from babel_4344_u1;
+go
+
+drop table abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
+go
+
+drop schema abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
+go
+
 use babel_4344_d1;
 go
-revoke select on schema::babel_4344_s1 from public, αιώνια, سعودي;
+revoke select on schema::babel_4344_s1 from public, αιώνια, ログイン;
 go
 
 -- tsql user=babel_4344_l1 password=12345678 
@@ -166,6 +198,8 @@ go
 -- tsql
 -- GRANT OBJECT privilege
 use babel_4344_d1;
+go
+grant SELECT on schema::"bAbel_4344 s1" to BABEL_4344_U1;
 go
 grant SELECT on "babel_4344_t1" to BABEL_4344_U1;
 go
@@ -372,12 +406,16 @@ exec babel_4344_s1.babel_4344_p2;
 go
 select * from babel_4344_s1.babel_4344_f2();
 go
+select * from "bAbel_4344 s1"."bAbel_4344 t1";
+go
 use master;
 go
 
 -- tsql
 -- REVOKE OBJECT privileges
 use babel_4344_d1;
+go
+REVOKE SELECT on schema::"bAbel_4344 s1" from "BABEL_4344_U1";
 go
 REVOKE all on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
 go
@@ -546,10 +584,16 @@ go
 drop schema αγάπη;
 go
 
-drop table كلب.abc;
+drop table スキーマ.abc;
 go
 
-drop schema كلب;
+drop schema スキーマ;
+go
+
+drop table "babel_4344 s1"."babel_4344 t1";
+go
+
+drop schema "BAbel_4344 s1";
 go
 
 drop user babel_4344_u1;
@@ -558,7 +602,7 @@ go
 drop user αιώνια;
 go
 
-drop user سعودي;
+drop user ログイン;
 go
 
 use master;
@@ -598,7 +642,7 @@ go
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) = 'سعودي' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) = 'ログイン' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 go
 
 -- Wait to sync with another session
@@ -606,5 +650,5 @@ SELECT pg_sleep(1);
 go
 
 -- tsql
-drop login سعودي;
+drop login ログイン;
 go
