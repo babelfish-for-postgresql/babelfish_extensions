@@ -2740,7 +2740,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 
     FROM information_schema_tsql.columns AS isc_col
     WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
-
+GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT 
@@ -2824,7 +2824,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      , sys.spt_datatype_info_table AS t5
   WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
     AND ext.dbid = sys.db_id();
-
+GRANT SELECT ON sys.sp_columns_100_view TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_statistics_view AS
 SELECT
@@ -2883,7 +2883,7 @@ FROM pg_catalog.pg_class t1
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
-
+GRANT SELECT ON sys.sp_statistics_view TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
@@ -2904,6 +2904,7 @@ WHERE t5.contype = 'p'
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
 	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
   AND ext.dbid = sys.db_id();
+GRANT SELECT ON sys.sp_pkeys_view TO PUBLIC;
 
 ALTER VIEW sys.spt_columns_view_managed RENAME TO spt_columns_view_managed_3_5_0;
 
