@@ -18,10 +18,19 @@ go
 create user αιώνια for login αιώνια;
 go
 
+create login سعودي with password = '12345678'
+go
+
+create user سعودي for login سعودي;
+go
+
 create schema babel_4344_s1;
 go
 
 create schema αγάπη;
+go
+
+create schema كلب;
 go
 
 create schema babel_4344_s2 authorization babel_4344_u1;
@@ -37,6 +46,9 @@ create table babel_4344_s2.babel_4344_t1(a int);
 go
 
 create table αγάπη.abc(a int);
+go
+
+create table كلب.abc(a int);
 go
 
 create table babel_4344_t3(a int, b int);
@@ -66,10 +78,41 @@ go
 CREATE FUNCTION babel_4344_s1.babel_4344_f1() returns int begin declare @a int; set @a = 1; return @a; END
 go
 
-grant SELECT on schema::babel_4344_S1 to public, αιώνια;
+grant SELECT on schema::babel_4344_S1 to public, αιώνια, سعودي;
 go
 
-grant select on schema::αγάπη to αιώνια;
+grant select on schema::αγάπη to αιώνια, سعودي;
+go
+
+grant select on schema::كلب to سعودي, αιώνια;
+go
+
+-- tsql user=سعودي password=12345678 
+use babel_4344_d1;
+go
+
+select * from αγάπη.abc;
+go
+~~START~~
+int
+~~END~~
+
+
+select * from كلب.abc;
+go
+~~START~~
+int
+~~END~~
+
+
+select * from babel_4344_S1.babel_4344_t1;
+go
+~~START~~
+int
+~~END~~
+
+
+use master;
 go
 
 -- tsql user=αιώνια password=12345678 
@@ -77,6 +120,13 @@ use babel_4344_d1;
 go
 
 select * from αγάπη.abc;
+go
+~~START~~
+int
+~~END~~
+
+
+select * from كلب.abc;
 go
 ~~START~~
 int
@@ -117,7 +167,7 @@ go
 -- tsql
 use babel_4344_d1;
 go
-revoke select on schema::babel_4344_s1 from public, αιώνια;
+revoke select on schema::babel_4344_s1 from public, αιώνια, سعودي;
 go
 
 -- tsql user=babel_4344_l1 password=12345678 
@@ -823,10 +873,19 @@ go
 drop schema αγάπη;
 go
 
+drop table كلب.abc;
+go
+
+drop schema كلب;
+go
+
 drop user babel_4344_u1;
 go
 
 drop user αιώνια;
+go
+
+drop user سعودي;
 go
 
 use master;
@@ -881,4 +940,28 @@ void
 
 -- tsql
 drop login αιώνια;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'سعودي' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login سعودي;
 go
