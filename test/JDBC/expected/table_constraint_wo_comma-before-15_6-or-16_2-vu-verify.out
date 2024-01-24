@@ -1,0 +1,72 @@
+EXECUTE p1_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+
+EXECUTE p2_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+
+EXECUTE p3_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+
+EXECUTE p4_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_a_b_key")~~
+
+EXECUTE p5_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+
+EXECUTE p6_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_pkey")~~
+
+EXECUTE p7_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_b_key")~~
+
+EXECUTE p8_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "@tv_1_a_key")~~
+
+EXECUTE p9_tv_nocomma
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "@tv_1" violates check constraint "@tv_1_a_check")~~
+
