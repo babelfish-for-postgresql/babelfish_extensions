@@ -1,3 +1,12 @@
+BEGIN TRANSACTION babel_4517
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', true)
+GO
+
+SELECT set_config('debug_parallel_query', '0', true)
+GO
+
 SET BABELFISH_SHOWPLAN_ALL on
 GO
 
@@ -20,4 +29,10 @@ select * from babel_4517 where datetime2_col <= cast('2023-08-31' as date) and d
 GO
 
 SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+COMMIT TRANSACTION babel_4517
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 GO
