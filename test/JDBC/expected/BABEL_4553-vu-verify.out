@@ -3,18 +3,18 @@ GO
 
 CREATE VIEW babel_4553_3
 AS
-    SELECT lower(TABLE_NAME), COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
     FROM sys.spt_columns_view_managed
     WHERE TABLE_NAME = 'BABEL_4553'
-    ORDER BY TABLE_NAME, COLUMN_NAME
+    ORDER BY TABLE_NAME COLLATE C, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
 GO
 
 -- Should return only 2 rows
 SELECT * FROM babel_4553_1
 GO
 ~~START~~
-text#!#varchar
-babel_4553#!#col_name
+varchar#!#varchar
+BABEL_4553#!#col_name
 babel_4553#!#col_name_tsql
 ~~END~~
 
@@ -23,8 +23,8 @@ babel_4553#!#col_name_tsql
 SELECT * FROM babel_4553_2
 GO
 ~~START~~
-text#!#varchar#!#smallint#!#varchar#!#int#!#int
-babel_4553#!#col_name#!#4#!#int#!#10#!#4
+varchar#!#varchar#!#smallint#!#varchar#!#int#!#int
+BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
 babel_4553#!#col_name#!#4#!#int#!#10#!#4
 babel_4553#!#col_name_tsql#!#12#!#varchar#!#7#!#7
 ~~END~~
@@ -34,8 +34,8 @@ babel_4553#!#col_name_tsql#!#12#!#varchar#!#7#!#7
 SELECT * FROM babel_4553_3
 GO
 ~~START~~
-text#!#varchar#!#varchar#!#int#!#int
-babel_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+varchar#!#varchar#!#varchar#!#int#!#int
+BABEL_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
 babel_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
 babel_4553#!#col_name_tsql#!#varchar#!#7#!#<NULL>
 ~~END~~
