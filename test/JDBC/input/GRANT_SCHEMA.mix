@@ -63,6 +63,9 @@ go
 create table babel_4344_s1.babel_4344_t3(a int, b int);
 go
 
+create schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
+go
+
 create view babel_4344_v1 as select 1;
 go
 
@@ -200,6 +203,8 @@ go
 use babel_4344_d1;
 go
 grant SELECT on schema::"bAbel_4344 s1" to BABEL_4344_U1;
+go
+grant SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" to BABEL_4344_U1;
 go
 grant SELECT on "babel_4344_t1" to BABEL_4344_U1;
 go
@@ -417,6 +422,8 @@ use babel_4344_d1;
 go
 REVOKE SELECT on schema::"bAbel_4344 s1" from "BABEL_4344_U1";
 go
+REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
+go
 REVOKE all on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
 go
 REVOKE select on babel_4344_s1.babel_4344_t3(a) FROM babel_4344_u1;
@@ -522,6 +529,9 @@ go
 -- tsql
 -- Drop objects
 use babel_4344_d1;
+go
+
+drop schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
 go
 
 drop table babel_4344_t1;
