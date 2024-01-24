@@ -1112,7 +1112,7 @@ CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
 CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
 CAST(t5.conname AS sys.sysname) AS PK_NAME

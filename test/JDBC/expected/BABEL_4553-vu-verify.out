@@ -15,7 +15,7 @@ GO
 ~~START~~
 varchar#!#varchar
 BABEL_4553#!#col_name
-babel_4553#!#col_name_tsql
+BABEL_4553#!#col_name_tsql
 ~~END~~
 
 
@@ -25,8 +25,8 @@ GO
 ~~START~~
 varchar#!#varchar#!#smallint#!#varchar#!#int#!#int
 BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
-babel_4553#!#col_name#!#4#!#int#!#10#!#4
-babel_4553#!#col_name_tsql#!#12#!#varchar#!#7#!#7
+BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
+BABEL_4553#!#col_name_tsql#!#12#!#varchar#!#7#!#7
 ~~END~~
 
 

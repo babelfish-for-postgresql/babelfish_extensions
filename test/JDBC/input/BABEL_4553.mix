@@ -89,7 +89,8 @@ CREATE TABLE dbo."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_
 );
 GO
 
--- verify JOIN condition and if data type, col name & typmod is correct for each entry 
+-- verify JOIN condition and if data type, col name & typmod is correct for each entry
+-- table_name and column name should return original name
 SELECT istc."TABLE_NAME", istc."COLUMN_NAME", istc."CHARACTER_MAXIMUM_LENGTH", istc."DATETIME_PRECISION" FROM pg_class c JOIN information_schema_tsql.columns_internal istc ON (c.oid = istc."TABLE_OID")
     WHERE c.relname != 'sysdatabases'
     ORDER BY istc."COLUMN_NAME";
@@ -98,5 +99,19 @@ GO
 -- tsql
 USE master
 GO
+
+CREATE TABLE bAbEL_4553_1 (col_VARCHAR VARCHAR(128))
+GO
+
+CREATE TABLE #bAbEL_4553_2 (col_VARCHAR VARCHAR(128))
+GO
+
+DECLARE @bAbEL_4553_3 TABLE (col_VARCHAR VARCHAR(128))
+SELECT TABLE_NAME, COLUMN_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like '%BABEL_4553_%'
+GO
+
+DROP TABLE bAbEL_4553_1
+GO
+
 DROP DATABASE dms_test_target_db
 GO
