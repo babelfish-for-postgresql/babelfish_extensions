@@ -916,7 +916,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
@@ -2422,7 +2422,7 @@ public:
 		if (does_object_name_need_delimiter(ctx->tablename))
 			rewritten_query_fragment.emplace(std::make_pair(ctx->tablename->start->getStartIndex(), std::make_pair(::getFullText(ctx->tablename), delimit_identifier(ctx->tablename))));
 
-		// qualified identifier doesn't need delimiter
+		/* qualified identifier doesn't need delimiter */
 		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->column_name))
 			rewritten_query_fragment.emplace(std::make_pair(ctx->column_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->column_name), delimit_identifier(ctx->column_name))));
 	}
@@ -8122,6 +8122,10 @@ rewrite_geospatial_query_helper(T ctx, TSqlParser::Method_callContext *method, s
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// End of Spatial Query Helper
+////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
 // Spatial Query Helper for Function Calls
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -8203,6 +8207,10 @@ rewrite_function_call_geospatial_func_ref_args(T ctx)
 	std::string rewritten_func = expr.substr((int)ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
 	rewritten_query_fragment.emplace(std::make_pair(ctx->spatial_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// End of Spatial Query Helper for Function Calls 
+////////////////////////////////////////////////////////////////////////////////
 
 static bool
 does_object_name_need_delimiter(TSqlParser::IdContext *id)
