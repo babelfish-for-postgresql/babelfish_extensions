@@ -736,9 +736,9 @@ static bool containsInTextMonthFormat(int *ftype, char **field)
 	if (count_number == 2 && count_string == 1)
 	{
 		/*
-		 * If the first field and third field is an string then swap with the second field
+		 * If the 1st field or 3rd field is a string then swap with the 2nd field
 		 * as when the date is given separatly then all different forms of
-		 * dates is supported. To avoid the conversion failure from `isTextMonthPresent`
+		 * dates is supported. To avoid the conversion failure in `isTextMonthPresent`
 		 * later we are swapping earlier. And convert to Supported date formats which are
 		 * {"DD-MON-YYYY", "YYYY-MON-DD"}
 		 *

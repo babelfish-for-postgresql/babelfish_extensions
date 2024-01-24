@@ -35417,6 +35417,14 @@ go
 ~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
 
 
+-- negative case for date with whitespace as separators
+select cast('2014 12 12' as time)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+
 SELECT * from babel_TIME_vu_prepare_t1
 GO
 ~~START~~

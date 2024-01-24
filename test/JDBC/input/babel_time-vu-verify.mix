@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 300000
 -- psql
 -- behaviour of casting to time in psql
 SELECT CAST('2012-02-23' AS TIME)
@@ -14370,6 +14371,10 @@ select cast('Nov  20   23  2:2:3:5 Z  PMM' as time);
 go
 
 select cast('Nov  20   23  2:2:3:5 Z  pm' as time);
+go
+
+-- negative case for date with whitespace as separators
+select cast('2014 12 12' as time)
 go
 
 SELECT * from babel_TIME_vu_prepare_t1
