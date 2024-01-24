@@ -492,25 +492,25 @@ static const DatatypeInfo datatype_info_table[DATATYPE_INFO_TABLE_ROWS] = {
 		"geometry",
 		-4, -4, -151, -151,
 		0,
-		"N'",
-		"'",
+		NULLVAL_STR,
+		NULLVAL_STR,
 		NULLVAL_STR,
 		1, 1, 0, NULLVAL, 0, NULLVAL,
 		"geometry",
 		NULLVAL, NULLVAL, -151, NULLVAL, NULLVAL, NULLVAL, 0, 2147483646, 23,
-		"geometry"
+		NULLVAL_STR
 	},
 	{
 		"geography",
-		-10, -10, -152, -152,
+		-4, -4, -151, -151,
 		0,
-		"N'",
-		"'",
+		NULLVAL_STR,
+		NULLVAL_STR,
 		NULLVAL_STR,
 		1, 1, 0, NULLVAL, 0, NULLVAL,
 		"geography",
-		NULLVAL, NULLVAL, -152, NULLVAL, NULLVAL, NULLVAL, 0, -1, 0,
-		"geography"
+		NULLVAL, NULLVAL, -151, NULLVAL, NULLVAL, NULLVAL, 0, 2147483646, 23,
+		NULLVAL_STR
 	}
 };
 

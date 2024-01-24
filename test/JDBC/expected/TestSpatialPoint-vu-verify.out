@@ -926,7 +926,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 master#!#dbo#!#geometry_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
-master#!#dbo#!#geometry_proc_1;1#!#@a#!#1#!#<NULL>#!#geometry#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>
+master#!#dbo#!#geometry_proc_1;1#!#@a#!#1#!#-151#!#geometry#!#0#!#-1#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#1#!#YES#!#23
 master#!#dbo#!#geometry_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
 ~~END~~
 
@@ -936,7 +936,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 master#!#dbo#!#geography_proc_1;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
-master#!#dbo#!#geography_proc_1;1#!#@a#!#1#!#<NULL>#!#geography#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#NO#!#<NULL>
+master#!#dbo#!#geography_proc_1;1#!#@a#!#1#!#-151#!#geography#!#0#!#-1#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-151#!#<NULL>#!#<NULL>#!#1#!#YES#!#23
 master#!#dbo#!#geography_proc_1;1#!#@b#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
 ~~END~~
 
@@ -945,8 +945,8 @@ select * from information_schema.columns where table_name = 'geo_view_test'
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#varchar#!#nvarchar#!#int#!#int#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#geo_view_test#!#a#!#1#!#<NULL>#!#YES#!#geometry#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-master#!#dbo#!#geo_view_test#!#b#!#2#!#<NULL>#!#YES#!#geography#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#geo_view_test#!#a#!#1#!#<NULL>#!#YES#!#geometry#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#dbo#!#geo_view_test#!#b#!#2#!#<NULL>#!#YES#!#geography#!#-1#!#-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 

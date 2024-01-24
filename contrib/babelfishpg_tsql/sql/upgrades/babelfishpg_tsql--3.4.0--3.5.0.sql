@@ -2697,7 +2697,7 @@ BEGIN
 			END IF;
 		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
 		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
-    WHEN v_type in ('geometry', 'geography') THEN max_length = 0;
+		WHEN v_type in ('geometry', 'geography') THEN max_length = -1;
 		ELSE max_length = typemod;
 		END CASE;
 		RETURN max_length;
@@ -2796,6 +2796,286 @@ BEGIN
 	RETURN tds_id;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(type text, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$SELECT
+	CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
+		THEN CASE WHEN typmod = -1 /* default typmod */
+			THEN -1
+			ELSE typmod - 4
+			END
+		WHEN type IN ('nchar', 'nvarchar')
+		THEN CASE WHEN typmod = -1 /* default typmod */
+			THEN -1
+			ELSE (typmod - 4) * 2
+			END
+		WHEN type IN ('text', 'image')
+		THEN 2147483647 /* 2^30 + 1 */
+		WHEN type = 'ntext'
+		THEN 2147483646 /* 2^30 */
+		WHEN type = 'sysname'
+		THEN 256
+		WHEN type = 'sql_variant'
+		THEN 0
+		WHEN type IN ('xml', 'geometry', 'geography')
+		THEN -1
+	   ELSE null
+  END$$;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length_for_routines(type text, typmod int4) RETURNS integer
+        LANGUAGE sql
+        IMMUTABLE
+        PARALLEL SAFE
+        RETURNS NULL ON NULL INPUT
+        AS
+$$SELECT
+        CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
+                THEN CASE WHEN typmod = -1
+                        THEN 1
+                        ELSE typmod - 4
+                        END
+                WHEN type IN ('text', 'image')
+                THEN 2147483647
+                WHEN type = 'ntext'
+                THEN 1073741823
+                WHEN type = 'sysname'
+                THEN 128
+                WHEN type IN ('xml', 'geometry', 'geography')
+                THEN -1
+                WHEN type = 'sql_variant'
+                THEN 0
+                ELSE null
+        END$$;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length_for_routines(type text, typmod int4) RETURNS integer
+        LANGUAGE sql
+        IMMUTABLE
+        PARALLEL SAFE
+        RETURNS NULL ON NULL INPUT
+        AS
+$$SELECT
+        CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
+                THEN CASE WHEN typmod = -1 /* default typmod */
+                        THEN 1
+                        ELSE typmod - 4
+                        END
+                WHEN type IN ('nchar', 'nvarchar')
+                THEN CASE WHEN typmod = -1 /* default typmod */
+                        THEN 2
+                        ELSE (typmod - 4) * 2
+                        END
+                WHEN type IN ('text', 'image')
+                THEN 2147483647 /* 2^30 + 1 */
+                WHEN type = 'ntext'
+                THEN 2147483646 /* 2^30 */
+                WHEN type = 'sysname'
+                THEN 256
+                WHEN type = 'sql_variant'
+                THEN 0
+                WHEN type IN ('xml', 'geometry', 'geography')
+                THEN -1
+           ELSE null
+  END$$;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_length_for_sp_columns_helper(IN type TEXT, IN typelen INT, IN typemod INT)
+RETURNS INT
+AS $$
+DECLARE
+  length INT;
+  precision INT;
+BEGIN
+  -- unknown tsql type
+  IF type IS NULL THEN
+    RETURN typelen::INT;
+  END IF;
+
+  IF typemod = -1 AND (type = 'varchar' OR type = 'nvarchar' OR type = 'varbinary') THEN
+    length = 0;
+    RETURN length;
+  END IF;
+
+  IF typelen != -1 THEN
+    CASE type
+    WHEN 'tinyint' THEN length = 1;
+    WHEN 'date' THEN length = 6;
+    WHEN 'smalldatetime' THEN length = 16;
+    WHEN 'smallmoney' THEN length = 12;
+    WHEN 'money' THEN length = 21;
+    WHEN 'datetime' THEN length = 16;
+    WHEN 'datetime2' THEN length = 16;
+    WHEN 'datetimeoffset' THEN length = 20;
+    WHEN 'time' THEN length = 12;
+    WHEN 'timestamp' THEN length = 8;
+    ELSE length = typelen;
+    END CASE;
+    RETURN length;
+  END IF;
+
+  CASE
+  WHEN type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN length = typemod - 4;
+  WHEN type in ('nchar', 'nvarchar') THEN length = (typemod - 4) * 2;
+  WHEN type in ('text', 'image') THEN length = 2147483647;
+  WHEN type = 'ntext' THEN length = 2147483646;
+  WHEN type = 'xml' THEN length = 0;
+  WHEN type IN ('geometry', 'geography') THEN length = -1;
+  WHEN type = 'sql_variant' THEN length = 8000;
+  WHEN type = 'money' THEN length = 21;
+  WHEN type = 'sysname' THEN length = (typemod - 4) * 2;
+  WHEN type in ('numeric', 'decimal') THEN
+    precision = ((typemod - 4) >> 16) & 65535;
+    length = precision + 2;
+  ELSE
+    length = typemod;
+  END CASE;
+  RETURN length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
+  SELECT 
+  CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+  CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+  CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+  CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+  CAST(t5.data_type AS smallint) AS DATA_TYPE,
+  CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
+
+  CASE WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
+    WHEN tsql_type_name = 'timestamp'
+    THEN 8
+    ELSE
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
+  END AS PRECISION,
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, a.atttypmod) AS int)
+    ELSE
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, t.typtypmod) AS int)
+  END AS LENGTH,
+
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", a.atttypmod, true)) AS smallint)
+    ELSE
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", t.typtypmod, true)) AS smallint)
+  END AS SCALE,
+
+
+  CAST(coalesce(t4."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(t4."DATA_TYPE")) AS smallint) AS RADIX,
+  case
+    when t4."IS_NULLABLE" = 'YES' then CAST(1 AS smallint)
+    else CAST(0 AS smallint)
+  end AS NULLABLE,
+
+  CAST(NULL AS varchar(254)) AS remarks,
+  CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
+  CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
+  CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
+
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+	WHEN t4."DATA_TYPE" = 'geometry' THEN -1::INT
+	WHEN t4."DATA_TYPE" = 'geography' THEN -1::INT
+    WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
+  END AS CHAR_OCTET_LENGTH,
+
+  CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
+  CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
+  CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
+  CAST(0 AS smallint) AS SS_IS_SPARSE,
+  CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
+  CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
+  CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
+  CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
+
+  FROM pg_catalog.pg_class t1
+     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+     JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
+     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
+     LEFT JOIN pg_type t ON t.oid = a.atttypid
+     LEFT JOIN sys.columns t6 ON
+     (
+      t1.oid = t6.object_id AND
+      t4."ORDINAL_POSITION" = t6.column_id
+     )
+     , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+     , sys.spt_datatype_info_table AS t5
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
+    AND ext.dbid = sys.db_id();
+
+GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
+
+CREATE TABLE sys.spt_datatype_info_table
+(TYPE_NAME VARCHAR(20), DATA_TYPE INT, PRECISION BIGINT,
+LITERAL_PREFIX VARCHAR(20), LITERAL_SUFFIX VARCHAR(20),
+CREATE_PARAMS CHAR(20), NULLABLE INT, CASE_SENSITIVE INT,
+SEARCHABLE INT, UNSIGNED_ATTRIBUTE INT, MONEY INT,
+AUTO_INCREMENT INT, LOCAL_TYPE_NAME VARCHAR(20),
+MINIMUM_SCALE INT, MAXIMUM_SCALE INT, SQL_DATA_TYPE INT,
+SQL_DATETIME_SUB INT, NUM_PREC_RADIX INT, INTERVAL_PRECISION INT,
+USERTYPE INT, LENGTH INT, SS_DATA_TYPE SYS.TINYINT, 
+-- below column is added in order to join information_schema.columns of PG for sys.sp_columns_100_view
+PG_TYPE_NAME VARCHAR(20)
+);
+GRANT SELECT ON sys.spt_datatype_info_table TO PUBLIC;
+
+INSERT INTO sys.spt_datatype_info_table VALUES (N'datetimeoffset', -155, 34, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'datetimeoffset', 0, 7, -155, 0, NULL, NULL, 0, 68, 0, 'datetimeoffset');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'time', -154, 16, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'time', 0, 7, -154, 0, NULL, NULL, 0, 32, 0, 'time');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'xml', -152, 0, N'N''', N'''', NULL, 1, 1, 0, NULL, 0, NULL, N'xml', NULL, NULL, -152, NULL, NULL, NULL, 0, 2147483646, 0, N'xml');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'sql_variant', -150, 8000, NULL, NULL, NULL, 1, 0, 2, NULL, 0, NULL, N'sql_variant', 0, 0, -150, NULL, 10, NULL, 0, 8000, 39, 'sql_variant');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'uniqueidentifier', -11, 36, N'''', N'''', NULL, 1, 0, 2, NULL, 0, NULL, N'uniqueidentifier', NULL, NULL, -11, NULL, NULL, NULL, 0, 16, 37, 'uniqueidentifier');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'ntext', -10, 1073741823, N'N''', N'''', NULL, 1, 1, 1, NULL, 0, NULL, N'ntext', NULL, NULL, -10, NULL, NULL, NULL, 0, 2147483646, 35, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'nvarchar', -9, 4000, N'N''', N'''', N'max length          ', 1, 1, 3, NULL, 0, NULL, N'nvarchar', NULL, NULL, -9, NULL, NULL, NULL, 0, 2, 39, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'sysname', -9, 128, N'N''', N'''', NULL, 0, 1, 3, NULL, 0, NULL, N'sysname', NULL, NULL, -9, NULL, NULL, NULL, 18, 256, 39, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'nchar', -8, 4000, N'N''', N'''', N'length              ', 1, 1, 3, NULL, 0, NULL, N'nchar', NULL, NULL, -8, NULL, NULL, NULL, 0, 2, 39, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'bit', -7, 1, NULL, NULL, NULL, 1, 0, 2, NULL, 0, NULL, N'bit', 0, 0, -7, NULL, NULL, NULL, 16, 1, 50, 'bit');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'tinyint', -6, 3, NULL, NULL, NULL, 1, 0, 2, 1, 0, 0, N'tinyint', 0, 0, -6, NULL, 10, NULL, 5, 1, 38, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'tinyint identity', -6, 3, NULL, NULL, NULL, 0, 0, 2, 1, 0, 1, N'tinyint identity', 0, 0, -6, NULL, 10, NULL, 5, 1, 38, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'bigint', -5, 19, NULL, NULL, NULL, 1, 0, 2, 0, 0, 0, N'bigint', 0, 0, -5, NULL, 10, NULL, 0, 8, 108, 'int8');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'bigint identity', -5, 19, NULL, NULL, NULL, 0, 0, 2, 0, 0, 1, N'bigint identity', 0, 0, -5, NULL, 10, NULL, 0, 8, 108, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'image', -4, 2147483647, N'0x', NULL, NULL, 1, 0, 0, NULL, 0, NULL, N'image', NULL, NULL, -4, NULL, NULL, NULL, 20, 2147483647, 34, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'varbinary', -3, 8000, N'0x', NULL, N'max length          ', 1, 0, 2, NULL, 0, NULL, N'varbinary', NULL, NULL, -3, NULL, NULL, NULL, 4, 1, 37, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'binary', -2, 8000, N'0x', NULL, N'length              ', 1, 0, 2, NULL, 0, NULL, N'binary', NULL, NULL, -2, NULL, NULL, NULL, 3, 1, 37, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'timestamp', -2, 8, N'0x', NULL, NULL, 0, 0, 2, NULL, 0, NULL, N'timestamp', NULL, NULL, -2, NULL, NULL, NULL, 80, 8, 45, 'timestamp');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'text', -1, 2147483647, N'''', N'''', NULL, 1, 1, 1, NULL, 0, NULL, N'text', NULL, NULL, -1, NULL, NULL, NULL, 19, 2147483647, 35, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'char', 1, 8000, N'''', N'''', N'length              ', 1, 1, 3, NULL, 0, NULL, N'char', NULL, NULL, 1, NULL, NULL, NULL, 1, 1, 39, N'bpchar');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'numeric', 2, 38, NULL, NULL, N'precision,scale     ', 1, 0, 2, 0, 0, 0, N'numeric', 0, 38, 2, NULL, 10, NULL, 10, 20, 108, 'numeric');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'numeric() identity', 2, 38, NULL, NULL, N'precision           ', 0, 0, 2, 0, 0, 1, N'numeric() identity', 0, 0, 2, NULL, 10, NULL, 10, 20, 108, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'decimal', 3, 38, NULL, NULL, N'precision,scale     ', 1, 0, 2, 0, 0, 0, N'decimal', 0, 38, 3, NULL, 10, NULL, 24, 20, 106, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'money', 3, 19, N'$', NULL, NULL, 1, 0, 2, 0, 1, 0, N'money', 4, 4, 3, NULL, 10, NULL, 11, 21, 110, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'smallmoney', 3, 10, N'$', NULL, NULL, 1, 0, 2, 0, 1, 0, N'smallmoney', 4, 4, 3, NULL, 10, NULL, 21, 12, 110, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'decimal() identity', 3, 38, NULL, NULL, N'precision           ', 0, 0, 2, 0, 0, 1, N'decimal() identity', 0, 0, 3, NULL, 10, NULL, 24, 20, 106, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'int', 4, 10, NULL, NULL, NULL, 1, 0, 2, 0, 0, 0, N'int', 0, 0, 4, NULL, 10, NULL, 7, 4, 38, N'int4');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'int identity', 4, 10, NULL, NULL, NULL, 0, 0, 2, 0, 0, 1, N'int identity', 0, 0, 4, NULL, 10, NULL, 7, 4, 38, N'');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'smallint', 5, 5, NULL, NULL, NULL, 1, 0, 2, 0, 0, 0, N'smallint', 0, 0, 5, NULL, 10, NULL, 6, 2, 38, 'int2');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'smallint identity', 5, 5, NULL, NULL, NULL, 0, 0, 2, 0, 0, 1, N'smallint identity', 0, 0, 5, NULL, 10, NULL, 6, 2, 38, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'float', 6, 53, NULL, NULL, NULL, 1, 0, 2, 0, 0, 0, N'float', NULL, NULL, 6, NULL, 2, NULL, 8, 8, 109, 'float8');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'real', 7, 24, NULL, NULL, NULL, 1, 0, 2, 0, 0, 0, N'real', NULL, NULL, 7, NULL, 2, NULL, 23, 4, 109, 'float4');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'varchar', 12, 8000, N'''', N'''', N'max length          ', 1, 1, 3, NULL, 0, NULL, N'varchar', NULL, NULL, 12, NULL, NULL, NULL, 2, 1, 39, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'date', 91, 10, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'date', NULL, 0, 9, 1, NULL, NULL, 0, 20, 0, 'date');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'datetime2', 93, 27, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'datetime2', 0, 7, 9, 3, NULL, NULL, 0, 54, 0, 'datetime2');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'datetime', 93, 23, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'datetime', 3, 3, 9, 3, NULL, NULL, 12, 16, 111, 'datetime');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'smalldatetime', 93, 16, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'smalldatetime', 0, 0, 9, 3, NULL, NULL, 22, 16, 111, 'smalldatetime');
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5_0');

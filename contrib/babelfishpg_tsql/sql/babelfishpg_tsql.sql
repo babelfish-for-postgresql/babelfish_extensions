@@ -157,6 +157,8 @@ GRANT SELECT ON sys.spt_datatype_info_table TO PUBLIC;
 INSERT INTO sys.spt_datatype_info_table VALUES (N'datetimeoffset', -155, 34, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'datetimeoffset', 0, 7, -155, 0, NULL, NULL, 0, 68, 0, 'datetimeoffset');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'time', -154, 16, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'time', 0, 7, -154, 0, NULL, NULL, 0, 32, 0, 'time');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'xml', -152, 0, N'N''', N'''', NULL, 1, 1, 0, NULL, 0, NULL, N'xml', NULL, NULL, -152, NULL, NULL, NULL, 0, 2147483646, 0, N'xml');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
 INSERT INTO sys.spt_datatype_info_table VALUES (N'sql_variant', -150, 8000, NULL, NULL, NULL, 1, 0, 2, NULL, 0, NULL, N'sql_variant', 0, 0, -150, NULL, 10, NULL, 0, 8000, 39, 'sql_variant');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'uniqueidentifier', -11, 36, N'''', N'''', NULL, 1, 0, 2, NULL, 0, NULL, N'uniqueidentifier', NULL, NULL, -11, NULL, NULL, NULL, 0, 16, 37, 'uniqueidentifier');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'ntext', -10, 1073741823, N'N''', N'''', NULL, 1, 1, 1, NULL, 0, NULL, N'ntext', NULL, NULL, -10, NULL, NULL, NULL, 0, 2147483646, 35, NULL);
@@ -283,6 +285,7 @@ BEGIN
   WHEN type in ('text', 'image') THEN length = 2147483647;
   WHEN type = 'ntext' THEN length = 2147483646;
   WHEN type = 'xml' THEN length = 0;
+  WHEN type IN ('geometry', 'geography') THEN length = -1;
   WHEN type = 'sql_variant' THEN length = 8000;
   WHEN type = 'money' THEN length = 21;
   WHEN type = 'sysname' THEN length = (typemod - 4) * 2;
@@ -345,6 +348,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 
   CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
     WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+	WHEN t4."DATA_TYPE" = 'geometry' THEN -1::INT
+	WHEN t4."DATA_TYPE" = 'geography' THEN -1::INT
     WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
     ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
   END AS CHAR_OCTET_LENGTH,
