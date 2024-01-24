@@ -1,3 +1,4 @@
+-- parallel_query_expected
 --babel-1149
 select * from table_variable_vu_prepareitvf_1(5);
 GO
