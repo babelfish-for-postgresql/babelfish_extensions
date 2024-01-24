@@ -431,6 +431,9 @@ InstallExtendedHooks(void)
 
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
 	exec_tsql_cast_value_hook = pltsql_exec_tsql_cast_value;
+
+	bbf_InitializeParallelDSM_hook = babelfixedparallelstate_insert;
+	bbf_ParallelWorkerMain_hook = babelfixedparallelstate_restore;
 }
 
 void
@@ -491,6 +494,9 @@ UninstallExtendedHooks(void)
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
+
+	bbf_InitializeParallelDSM_hook = NULL;
+	bbf_ParallelWorkerMain_hook = NULL;
 }
 
 /*****************************************
