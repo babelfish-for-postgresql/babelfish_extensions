@@ -2587,6 +2587,25 @@ left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || 
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        c.object_id                      AS object_id,
+        CAST(p.relnamespace AS int)      AS schema_id,
+        c.column_id                      AS colid,
+        CAST(c.name AS sys.varchar)      AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c
+        INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
+    WHERE
+        c.is_sparse = 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
 CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 	SELECT c.oid AS "TABLE_OID",
       CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
