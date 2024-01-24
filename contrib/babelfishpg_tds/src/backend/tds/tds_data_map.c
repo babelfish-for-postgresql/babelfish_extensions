@@ -222,7 +222,9 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
 	{"pg_catalog", "tid", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "inet", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "interval", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
-	{"pg_catalog", "bytea", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_INVALID}
+	{"pg_catalog", "bytea", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_INVALID},
+	{"pg_catalog", "record", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
+	{"pg_catalog", "_record", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID}
 };
 
 size_t		TdsIoFunctionRawData_datasize = lengthof(TdsIoFunctionRawData_data);
