@@ -2612,12 +2612,12 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
 			CAST(CASE
 			      WHEN c.reloptions[1] LIKE 'bbf_original_rel_name=%' THEN substring(c.reloptions[1], 23)
-			     	ELSE c.relname
+			      ELSE c.relname
 			     END AS sys.nvarchar(128)) AS "TABLE_NAME",
 
 			CAST(CASE
-			   	  WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
-			     	ELSE a.name 
+			      WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
+			      ELSE a.attname
 			     END AS sys.nvarchar(128)) AS "COLUMN_NAME",
 			
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
