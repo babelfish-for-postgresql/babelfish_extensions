@@ -6,23 +6,6 @@
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 # These tests are crashing/failing with parallel query mode is on. 
 
-#BABEL_2_X_DEV PROBLEMETIC TESTS
-
-# TIME-OUT
-ignore#!#TestSimpleErrorsWithImplicitTran
-ignore#!#babel_cursor
-ignore#!#TestDatetime-numeric-representation-vu-prepare
-ignore#!#TestDatetime-numeric-representation-vu-verify
-ignore#!#four-part-names-vu-verify
-ignore#!#sp_columns_100
-ignore#!#sys-has_perms_by_name-vu-verify
-
-
-#crashing
-ignore#!#sys-server_principals-vu-prepare
-ignore#!#sys-server_principals-vu-verify
-ignore#!#sys-server_principals-vu-cleanup
-
 #taking too much time to complete
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-prepare
 ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-verify
@@ -30,3 +13,4 @@ ignore#!#BABEL-SP_TABLE_PRIVILIGES-vu-cleanup
 ignore#!#BABEL-3013
 ignore#!#BABEL-SP_TABLE_PRIVILEGES
 ignore#!#ISC-Columns-vu-verify
+ignore#!#sys-has_perms_by_name-vu-verify
