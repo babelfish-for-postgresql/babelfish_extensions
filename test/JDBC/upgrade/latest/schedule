@@ -461,6 +461,7 @@ TestXML
 timefromparts
 todatetimeoffset-dep
 triggers_with_transaction
+order_by_offset_fetch_rows
 typeid-typename
 typeid-typename-dep
 print_null
