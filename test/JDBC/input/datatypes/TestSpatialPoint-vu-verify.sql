@@ -726,6 +726,12 @@ GO
 SELECT * FROM SubqueryView;
 GO
 
+SELECT * FROM BrackExprView;
+GO
+
+SELECT * FROM FuncExprView;
+GO
+
 EXEC dbo.proc_getdata;
 GO
 

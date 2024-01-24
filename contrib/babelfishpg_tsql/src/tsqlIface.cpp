@@ -940,7 +940,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> local_id.method_call */
@@ -964,7 +964,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
@@ -995,7 +995,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
@@ -2433,7 +2433,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
@@ -2454,7 +2454,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> local_id.method_call */
@@ -2475,7 +2475,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
@@ -2503,7 +2503,7 @@ public:
 		if(ctx != NULL && !ctx->DOT().empty())
 		{
 			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-			for (size_t i=0; i<method_calls.size(); ++i)
+			for (size_t i = 0; i < method_calls.size(); ++i)
 			{
 				TSqlParser::Method_callContext *method = method_calls[i];
 				/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
@@ -8164,7 +8164,7 @@ rewrite_function_call_geospatial_func_ref_args(T ctx)
 	std::vector<size_t> keysToRemove;
 	std::string func_ctx = ::getFullText(ctx);
 	int col_len = (int)ctx->spatial_proc_name_server_database_schema()->column->stop->getStopIndex() - ctx->start->getStartIndex();
-	int method_len = (int)ctx->stop->getStopIndex() - ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex(); //check this
+	int method_len = (int)ctx->stop->getStopIndex() - ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex();
 	std::string expr = "";
 	int index = 0;
 	int offset1 = 0;
@@ -8188,10 +8188,10 @@ rewrite_function_call_geospatial_func_ref_args(T ctx)
 	/* Shifting the local id positions to new positions after rewriting the query since they will be quoted later */
 	for (auto &entry : local_id_positions)
 	{
-		if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex()) //check this
+		if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
 		{
 			size_t pos = entry.first;
-			size_t offset = ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex() - ctx->spatial_proc_name_server_database_schema()->start->getStartIndex(); //check this
+			size_t offset = ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex() - ctx->spatial_proc_name_server_database_schema()->start->getStartIndex();
 			pos -= offset;
 			keysToRemove.push_back(entry.first);
 			local_id_positions.emplace(std::make_pair(pos, entry.second));

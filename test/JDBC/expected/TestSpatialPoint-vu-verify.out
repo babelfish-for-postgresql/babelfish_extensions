@@ -1934,6 +1934,22 @@ float
 ~~END~~
 
 
+SELECT * FROM BrackExprView;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
+SELECT * FROM FuncExprView;
+GO
+~~START~~
+float
+1.0
+~~END~~
+
+
 EXEC dbo.proc_getdata;
 GO
 ~~ROW COUNT: 9~~

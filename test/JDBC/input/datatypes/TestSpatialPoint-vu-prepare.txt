@@ -224,6 +224,10 @@ INSERT INTO test_table(geog) VALUES(geography::Point(1, 2, 4326));
 
 CREATE VIEW SubqueryView AS SELECT (select geog from test_table ORDER BY geog.Lat).Lat AS Latitude;
 
+CREATE VIEW BrackExprView AS SELECT ( geog ).Lat AS Latitude from test_table;
+
+CREATE VIEW FuncExprView AS SELECT geography::Point(1, 2, 4326).Lat AS Latitude from test_table;
+
 CREATE FUNCTION func_getval() RETURNS TABLE AS RETURN ( SELECT location.STAsText() AS TextPoint FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat );
 
 CREATE PROCEDURE dbo.proc_getdata AS BEGIN DECLARE @Data TABLE ( TextPoint text ); INSERT INTO @Data SELECT * FROM dbo.func_getval(); SELECT * FROM @Data; END;
