@@ -1,0 +1,77 @@
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+select * from view_4517_date;
+GO
+~~START~~
+text
+Query Text: select * from view_4517_date
+Bitmap Heap Scan on babel_4517  (cost=4.23..14.41 rows=8 width=20)
+  Recheck Cond: ((date_col <= '2023-08-31'::date) AND (date_col >= '2023-08-31'::date))
+  ->  Bitmap Index Scan on date_col_indxbabel_4517ff7ff8b3790b9274b0932920e1e110d9  (cost=0.00..4.23 rows=8 width=0)
+        Index Cond: ((date_col <= '2023-08-31'::date) AND (date_col >= '2023-08-31'::date))
+~~END~~
+
+
+select * from view_4517_datetime
+GO
+~~START~~
+text
+Query Text: select * from view_4517_datetime
+Bitmap Heap Scan on babel_4517  (cost=4.24..14.46 rows=8 width=20)
+  Recheck Cond: ((datetime_col <= ('2023-08-31'::date)::datetime) AND (datetime_col >= ('2023-08-31'::date)::datetime))
+  ->  Bitmap Index Scan on datetime_col_indxbabel_4517f212471e91ba8fdbefe418ea0d8f877d  (cost=0.00..4.24 rows=8 width=0)
+        Index Cond: ((datetime_col <= ('2023-08-31'::date)::datetime) AND (datetime_col >= ('2023-08-31'::date)::datetime))
+~~END~~
+
+
+select * from view_4517_datetime2
+GO
+~~START~~
+text
+Query Text: select * from view_4517_datetime2
+Bitmap Heap Scan on babel_4517  (cost=4.24..14.46 rows=8 width=20)
+  Recheck Cond: ((datetime2_col <= ('2023-08-31'::date)::datetime2) AND (datetime2_col >= ('2023-08-31'::date)::datetime2))
+  ->  Bitmap Index Scan on datetime2_col_indxbabel_451706006b35cf68c461b9e87edb9222fcdd  (cost=0.00..4.24 rows=8 width=0)
+        Index Cond: ((datetime2_col <= ('2023-08-31'::date)::datetime2) AND (datetime2_col >= ('2023-08-31'::date)::datetime2))
+~~END~~
+
+
+select * from babel_4517 where date_col <= cast('2023-08-31' as date) and date_col >= cast('2023-08-31' as date);
+GO
+~~START~~
+text
+Query Text: select * from babel_4517 where date_col <= cast('2023-08-31' as date) and date_col >= cast('2023-08-31' as date)
+Bitmap Heap Scan on babel_4517  (cost=4.23..14.41 rows=8 width=20)
+  Recheck Cond: ((date_col <= '2023-08-31'::date) AND (date_col >= '2023-08-31'::date))
+  ->  Bitmap Index Scan on date_col_indxbabel_4517ff7ff8b3790b9274b0932920e1e110d9  (cost=0.00..4.23 rows=8 width=0)
+        Index Cond: ((date_col <= '2023-08-31'::date) AND (date_col >= '2023-08-31'::date))
+~~END~~
+
+
+select * from babel_4517 where datetime_col <= cast('2023-08-31' as date) and datetime_col >= cast('2023-08-31' as date);
+GO
+~~START~~
+text
+Query Text: select * from babel_4517 where datetime_col <= cast('2023-08-31' as date) and datetime_col >= cast('2023-08-31' as date)
+Bitmap Heap Scan on babel_4517  (cost=4.24..14.46 rows=8 width=20)
+  Recheck Cond: ((datetime_col <= ('2023-08-31'::date)::datetime) AND (datetime_col >= ('2023-08-31'::date)::datetime))
+  ->  Bitmap Index Scan on datetime_col_indxbabel_4517f212471e91ba8fdbefe418ea0d8f877d  (cost=0.00..4.24 rows=8 width=0)
+        Index Cond: ((datetime_col <= ('2023-08-31'::date)::datetime) AND (datetime_col >= ('2023-08-31'::date)::datetime))
+~~END~~
+
+
+select * from babel_4517 where datetime2_col <= cast('2023-08-31' as date) and datetime2_col >= cast('2023-08-31' as date);
+GO
+~~START~~
+text
+Query Text: select * from babel_4517 where datetime2_col <= cast('2023-08-31' as date) and datetime2_col >= cast('2023-08-31' as date)
+Bitmap Heap Scan on babel_4517  (cost=4.24..14.46 rows=8 width=20)
+  Recheck Cond: ((datetime2_col <= ('2023-08-31'::date)::datetime2) AND (datetime2_col >= ('2023-08-31'::date)::datetime2))
+  ->  Bitmap Index Scan on datetime2_col_indxbabel_451706006b35cf68c461b9e87edb9222fcdd  (cost=0.00..4.24 rows=8 width=0)
+        Index Cond: ((datetime2_col <= ('2023-08-31'::date)::datetime2) AND (datetime2_col >= ('2023-08-31'::date)::datetime2))
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
