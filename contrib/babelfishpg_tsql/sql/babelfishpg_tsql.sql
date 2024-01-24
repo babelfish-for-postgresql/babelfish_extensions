@@ -798,8 +798,7 @@ FROM
         )
     LEFT JOIN information_schema_tsql.columns_internal isc ON
         (
-            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
-            o.name = isc."TABLE_NAME" and
+            o.object_id = isc."TABLE_OID" AND
             c.name = isc."COLUMN_NAME"
         )
     WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
