@@ -97,6 +97,19 @@ go
 grant select on schema::スキーマ to ログイン, αιώνια;
 go
 
+-- test special database roles
+grant SELECT on schema::babel_4344_S1 to db_owner; -- throws an error
+go
+
+grant SELECT on schema::babel_4344_S1 to sys; -- throws an error
+go
+
+grant SELECT on schema::babel_4344_S1 to information_schema; -- throws an error
+go
+
+grant SELECT on schema::babel_4344_S1 to dbo; -- throws an error
+go
+
 -- tsql user=ログイン password=12345678 
 use babel_4344_d1;
 go

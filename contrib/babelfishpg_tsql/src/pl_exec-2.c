@@ -3729,7 +3729,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		char	*rolname = NULL;
 		char	*grantee_name = (char *) lfirst(lc);
 		Oid	role_oid;
-		bool	grantee_is_db_owner = 0 == strcmp(grantee_name, db_owner);
 		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
 		if (!is_public)
 			rolname	= get_physical_user_name(dbname, grantee_name);
@@ -3737,11 +3736,25 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			rolname = pstrdup(PUBLIC_ROLE_NAME);
 		role_oid = get_role_oid(rolname, true);
 
-		if (!is_public && !OidIsValid(role_oid))
+		/* Special database roles should throw an error. */
+		if (strcmp(grantee_name, "db_owner") == 0)
 			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
+				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
 
-		if ((strcmp(rolname, user) == 0) || (!is_public && pg_namespace_ownercheck(schemaOid, role_oid)) || is_member_of_role(role_oid, get_sysadmin_oid()) || grantee_is_db_owner)
+		if (!is_public && !OidIsValid(role_oid))
+		{
+			/* sys or information_schema roles should throw an error. */
+			if ((strcmp(grantee_name, "sys") == 0) || (strcmp(grantee_name, "information_schema") == 0))
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
+			else
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
+		}
+
+		if ((strcmp(rolname, user) == 0) || (!is_public && pg_namespace_ownercheck(schemaOid, role_oid)) || is_member_of_role(role_oid, get_sysadmin_oid()))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
