@@ -2699,8 +2699,6 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
 									'SELECT, INSERT, UPDATE, REFERENCES'))
 		AND ext.dbid =sys.db_id();
 
-GRANT SELECT ON information_schema_tsql.columns_internal TO PUBLIC;
-
 CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 	SELECT
 		"TABLE_CATALOG",

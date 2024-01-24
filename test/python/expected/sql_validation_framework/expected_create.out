@@ -81,7 +81,7 @@ Could not find tests for view sys.all_sql_modules_internal
 Could not find tests for view sys.pg_namespace_ext
 Could not find tests for view sys.shipped_objects_not_in_sys
 Could not find tests for view sys.sp_column_privileges_view
-Could not find tests for view sys.sp_pkeys_view
+Could not find tests for view sys.sp_fkeys_view
 Could not find tests for view sys.sp_special_columns_view
 Could not find tests for view sys.sp_statistics_view
 Could not find tests for view sys.sp_stored_procedures_view
