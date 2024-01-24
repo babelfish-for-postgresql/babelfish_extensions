@@ -29,6 +29,8 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
 #include "instr.h"
+#include "replication/logicalworker.h"
+#include "replication/walsender_private.h"
 #include "replication/slot.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
@@ -80,8 +82,8 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	Oid			typIOParam;
 	svhdr_5B_t *svhdr;
 
-	/* Input as a bytea instead if it is a walsender process. */
-	if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+	/* Input as a bytea instead if it is logical replication applyworker. */
+	if (IsLogicalWorker())
 		PG_RETURN_DATUM(byteain(fcinfo));
 
 	getTypeInputInfo(type, &input_func, &typIOParam);
@@ -142,7 +144,7 @@ sqlvariantout(PG_FUNCTION_ARGS)
 	 * 2. This is a logical walsender process.
 	 */
 	if ((MyReplicationSlot != NULL && SlotIsLogical(MyReplicationSlot)) ||
-		am_db_walsender)
+		(MyWalSnd != NULL && MyWalSnd->kind == REPLICATION_KIND_LOGICAL))
 		PG_RETURN_DATUM(byteaout(fcinfo));
 
 	if (!get_typbyval(type))	/* pass by reference */

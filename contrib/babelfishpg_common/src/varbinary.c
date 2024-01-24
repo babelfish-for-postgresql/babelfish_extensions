@@ -18,7 +18,6 @@
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "collation.h"
-#include "commands/trigger.h"
 #include "common/int.h"
 #include "encoding/encoding.h"
 #include "lib/hyperloglog.h"
@@ -28,6 +27,7 @@
 #include "parser/scansup.h"
 #include "port/pg_bswap.h"
 #include "regex/regex.h"
+#include "replication/logicalworker.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/bytea.h"
@@ -182,11 +182,11 @@ varbinaryin(PG_FUNCTION_ARGS)
 	 * Assume that input string is already hex encoded for following cases:
 	 * 1. Typmode is TSQLHexConstTypmod
 	 * 2. dump_restore GUC is set.
-	 * 3. This is logical replication applyworker, i.e. replication role is replica
+	 * 3. This is logical replication applyworker.
 	 */
 	if (typmod == TSQLHexConstTypmod ||
 		(dump_restore && strcmp(dump_restore, "on") == 0) ||
-		 SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		 IsLogicalWorker())
 	{
 		/*
 		 * calculate length of the binary code e.g. 0xFF should be 1 byte
