@@ -144,7 +144,7 @@ $$SELECT
                 THEN 256
                 WHEN type = 'sql_variant'
                 THEN 0
-                WHEN type IN ('xml', 'geometry', 'geography')
+                WHEN type = 'xml'
                 THEN -1
            ELSE null
   END$$;
