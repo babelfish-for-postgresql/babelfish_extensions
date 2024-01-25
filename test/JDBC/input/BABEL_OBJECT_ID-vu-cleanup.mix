@@ -39,6 +39,9 @@ GO
 DROP SCHEMA [babel_object_id_schema .with .dot_and_spaces]
 GO
 
+DROP TYPE babel_object_id_type
+GO
+
 DROP TABLE [babel_object_id_t2 .with .dot_an_spaces]
 GO
 
