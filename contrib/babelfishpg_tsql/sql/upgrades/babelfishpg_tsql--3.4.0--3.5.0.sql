@@ -2746,7 +2746,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
            CAST(isc_col."TABLE_NAME" AS sys.sysname),
            CAST(isc_col."COLUMN_NAME" AS sys.sysname)
 
-    FROM information_schema_tsql.columns AS isc_col
+    FROM information_schema_tsql.columns_internal AS isc_col
     WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
 GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 
