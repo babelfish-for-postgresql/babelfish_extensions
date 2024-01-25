@@ -945,7 +945,6 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		char	   *params;
 		int			sql_dialect_value_old;
 
-		SelectStmt *select_stmt;
 		List	   *values_list;
 		ListCell   *lc;
 		int			numresults = 0;
@@ -954,6 +953,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		InsertStmt *insert_stmt = NULL;
 		UpdateStmt *update_stmt = NULL;
 		DeleteStmt *delete_stmt = NULL;
+		SelectStmt *select_stmt = NULL;
 		RangeVar   *relation;
 		Oid			relid;
 		Relation	r;
@@ -1104,6 +1104,23 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 				extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets);
 
 				cols = list_concat_copy(cols, extra_restargets);
+				break;
+			case T_SelectStmt:
+				/*
+				 * Select is not yet supported, but we can throw a mapped error message to avoid aborting the transaction in known cases.
+				 */
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				select_stmt = (SelectStmt *)parsetree->stmt;
+				if (!select_stmt->fromClause)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("The parameter type could not be uniquely deduced.")));
+				}
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 				break;
 			default:
 				ereport(ERROR,

@@ -142,6 +142,7 @@ uint8_t		override_txn_behaviour(PLtsql_stmt *stmt);
 #define SQL_ERROR_10727 10727
 #define SQL_ERROR_10733 10733
 #define SQL_ERROR_10793 10793
+#define SQL_ERROR_11506 11506
 #define SQL_ERROR_11555 11555
 #define SQL_ERROR_11700 11700
 #define SQL_ERROR_11701 11701
