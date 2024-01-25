@@ -47,6 +47,7 @@
 
 #include "collation.h"
 #include "datetimeoffset.h"
+#include "logical.h"
 #include "typecode.h"
 #include "numeric.h"
 #include "sqlvariant.h"
@@ -83,14 +84,8 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	Oid			typIOParam;
 	svhdr_5B_t *svhdr;
 
-	/*
-	 * Input as a bytea instead if it is logical replication applyworker.
-	 *    IsLogicalWorker() is sufficient for native PG applyworker but will
-	 *    not work with external providers like pglogical, so will rely on
-	 *    SessionReplicationRole being replica since most of the providers seem
-	 *    to set this GUC.
-	 */
-	if (IsLogicalWorker() || SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+	/* Input as a bytea instead if it is logical replication applyworker. */
+	if (IS_LOGICALREP_APPLYWORKER)
 		PG_RETURN_DATUM(byteain(fcinfo));
 
 	getTypeInputInfo(type, &input_func, &typIOParam);
@@ -150,8 +145,7 @@ sqlvariantout(PG_FUNCTION_ARGS)
 	 * 1. MyReplicationSlot is logical.
 	 * 2. This is a logical walsender process.
 	 */
-	if ((MyReplicationSlot != NULL && SlotIsLogical(MyReplicationSlot)) ||
-		(MyWalSnd != NULL && MyWalSnd->kind == REPLICATION_KIND_LOGICAL))
+	if (IS_LOGICALREP_WALSENDER)
 		PG_RETURN_DATUM(byteaout(fcinfo));
 
 	if (!get_typbyval(type))	/* pass by reference */
