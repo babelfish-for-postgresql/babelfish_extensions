@@ -1,0 +1,11 @@
+drop view view_4517_date
+GO
+
+drop view view_4517_datetime
+GO
+
+drop view view_4517_datetime2
+GO
+
+drop table babel_4517
+GO
