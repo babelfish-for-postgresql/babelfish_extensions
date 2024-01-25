@@ -1763,10 +1763,10 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 				continue;
 			else
 			{
-				unsupported_feature = "GRANT PERMISSION " + perm->getText();
+				unsupported_feature = "GRANT PERMISSION " + ::getFullText(single_perm);
+				std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
-
 		}
 	}
 
@@ -1774,9 +1774,12 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	{
 		auto perm_obj = grant->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && !obj_type->OBJECT())
+		if (grant->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(grant));
+		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "GRANT ON " + obj_type->getText();
+			std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
 		}
 	}
@@ -1856,10 +1859,10 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 				continue;
 			else
 			{
-				unsupported_feature = "REVOKE PERMISSION " + perm->getText();
+				unsupported_feature = "REVOKE PERMISSION " + ::getFullText(single_perm);
+				std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
 			}
-
 		}
 	}
 
@@ -1867,9 +1870,12 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 	{
 		auto perm_obj = revoke->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && !obj_type->OBJECT())
+		if (revoke->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(revoke));
+		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "REVOKE ON " + obj_type->getText();
+			std::transform(unsupported_feature.begin(), unsupported_feature.end(), unsupported_feature.begin(), ::toupper);
 			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
 		}
 	}

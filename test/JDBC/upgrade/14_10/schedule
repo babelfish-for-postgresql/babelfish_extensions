@@ -414,6 +414,7 @@ BABEL-4384
 default_params
 BABEL-3326
 cast_eliminate
+order_by_offset_fetch_rows-before-15_6-or-16_2
 TestDatatypeAggSort
 babel_index_nulls_order-before-15-5
 operator_binary_whitespace-before-15_6-or-16_2
@@ -424,5 +425,6 @@ sys-parsename-before-15_6-or-16_1
 permission_restrictions_from_pg
 BABEL-4529-before-15_6-or-14_11
 BABEL-730-before-15_6-or-16_1
+GRANT_SCHEMA
 babel-4475
 babel-3254

@@ -2281,6 +2281,17 @@ END;
 $$ LANGUAGE pltsql;
 GRANT ALL PRIVILEGES ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
 
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  permission INT NOT NULL,
+  grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_type CHAR(1) NOT NULL COLLATE sys.database_default,
+  PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
+);
+
 create or replace view sys.all_objects as
 select 
     name collate sys.database_default
