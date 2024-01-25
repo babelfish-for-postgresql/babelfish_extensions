@@ -70,6 +70,21 @@ GO
 EXECUTE forjson_vu_p_10
 GO
 
+EXECUTE forjson_vu_p_11
+GO
+
+EXECUTE forjson_vu_p_12
+GO
+
+EXECUTE forjson_vu_p_13
+GO
+
+EXECUTE forjson_vu_p_14
+GO
+
+EXECUTE forjson_vu_p_15
+GO
+
 SELECT forjson_vu_f_1()
 GO
 

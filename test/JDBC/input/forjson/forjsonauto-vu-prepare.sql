@@ -183,14 +183,7 @@ go
 
 CREATE PROCEDURE forjson_vu_p_6 AS
 BEGIN
-    select top 10
-        U.id,
-        U.firstname,
-        (select O.productId from forjson_auto_vu_t_orders O where O.userid = U.id
-        for json auto)
-        as details
-        from forjson_auto_vu_t_users U 
-        for json auto
+    select top 10 U.id, U.firstname, (select O.productId from forjson_auto_vu_t_orders O where O.userid = U.id for json auto) as details from forjson_auto_vu_t_users U for json auto
 END
 GO
 
@@ -230,5 +223,37 @@ BEGIN
         from forjson_auto_vu_t_users U INNER JOIN
             forjson_auto_vu_t_orders O ON U.Id = O.Id
         for json auto
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_11 AS
+BEGIN
+    select distinct top 10 U.id, (select distinct O.productId from forjson_auto_vu_t_orders O where O.userid = U.id for json auto) as details from forjson_auto_vu_t_users U group by U.id for json auto
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_12 AS
+BEGIN
+    select U.id, U.firstname, (select U.lastname, O.productId from forjson_auto_vu_t_orders O where O.userid = U.id for json auto) as details from forjson_auto_vu_t_users U for json auto
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_13 AS
+BEGIN
+    select * from forjson_auto_vu_t_users U where U.Id = (SELECT MAX(O.userid) from forjson_auto_vu_t_orders O) for json auto
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_14 AS
+BEGIN
+    select U.id, U.firstname, (select P.price, O.productId from forjson_auto_vu_t_orders O JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) for json auto) as "details" from forjson_auto_vu_t_users U for json auto
+END
+GO
+
+CREATE PROCEDURE forjson_vu_p_15 AS 
+    BEGIN 
+        DECLARE @json_string NVARCHAR(2000) 
+        SET @json_string = (select P.price, O.productId from forjson_auto_vu_t_orders O JOIN forjson_auto_vu_t_products P ON (P.id = O.productid) for json auto) 
+        select U.id, U.firstname, @json_string as details from forjson_auto_vu_t_users U for json auto
 END
 GO
