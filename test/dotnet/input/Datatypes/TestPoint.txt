@@ -40,9 +40,9 @@ INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65
 INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
 
-SELECT STAsText(location) FROM POINTGEOM_dt;
-SELECT STAsText(location) FROM POINTGEOG_dt;
-SELECT STAsText(geom), STAsText(geog) FROM POINT_dt;
+SELECT location.STAsText() FROM POINTGEOM_dt;
+SELECT location.STAsText() FROM POINTGEOG_dt;
+SELECT geom.STAsText(), geog.STAsText() FROM POINT_dt;
 
 DROP TABLE IF EXISTS POINTGEOM_dt;
 DROP TABLE IF EXISTS POINTGEOG_dt;
