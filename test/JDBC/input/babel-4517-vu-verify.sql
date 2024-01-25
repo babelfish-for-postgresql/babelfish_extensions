@@ -57,6 +57,9 @@ GO
 select * from babel_4517 where datetime2_col <= cast('2023-08-31' as date) and datetime2_col >= cast('2023-08-31' as date);
 GO
 
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
 COMMIT TRANSACTION babel_4517
 GO
 

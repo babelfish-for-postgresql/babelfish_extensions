@@ -208,19 +208,16 @@ Gather
 ~~END~~
 
 
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
 COMMIT TRANSACTION babel_4517
 GO
-~~START~~
-text
-Query Text: COMMIT TRANSACTION babel_4517
-~~END~~
-
 
 SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
 GO
 ~~START~~
 text
-Query Text: SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-Result
+on
 ~~END~~
 
