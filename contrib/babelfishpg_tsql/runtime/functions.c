@@ -1549,6 +1549,10 @@ object_id(PG_FUNCTION_ARGS)
 				{
 					result = enr->md.reliddesc;
 				}
+				else if (enr == NULL)
+				{
+					result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				}
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
 					 !strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
@@ -1614,6 +1618,10 @@ object_id(PG_FUNCTION_ARGS)
 			if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 			{
 				result = enr->md.reliddesc;
+			} 
+			else if (enr == NULL)
+			{
+				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
 			}
 		}
 		else
@@ -1644,11 +1652,6 @@ object_id(PG_FUNCTION_ARGS)
 				result = tsql_get_constraint_oid(object_name, schema_oid, user_id);
 			}
 		}
-	}
-
-	if (is_temp_object && !result)
-	{
-		result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
 	}
 
 	pfree(object_name);
