@@ -2275,7 +2275,8 @@ BEGIN
    		LEFT OUTER JOIN sys.all_parameters AS p ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
    		WHERE (@procedure_name = '' OR v.original_procedure_name = @procedure_name)
     	AND (@procedure_schema = '' OR v.procedure_owner = @procedure_schema)
-		AND (@parameter_name IS NULL OR column_name = @parameter_name)
+      AND (@parameter_name IS NULL OR column_name = @parameter_name)
+      AND @group_number = 1
     	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;
 END;
 $$ LANGUAGE pltsql;

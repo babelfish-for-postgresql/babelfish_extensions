@@ -3730,6 +3730,7 @@ BEGIN
    		WHERE (@procedure_name = '' OR v.original_procedure_name = @procedure_name)
     	AND (@procedure_schema = '' OR v.procedure_owner = @procedure_schema)
 		AND (@parameter_name IS NULL OR column_name = @parameter_name)
+		AND @group_number = 1
     	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;
 END;
 $$ LANGUAGE pltsql;
