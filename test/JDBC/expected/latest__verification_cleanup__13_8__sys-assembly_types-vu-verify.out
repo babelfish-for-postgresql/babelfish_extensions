@@ -1,9 +1,7 @@
 SELECT * FROM sys_assembly_types_view_vu_prepare
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
-geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
-geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+int#!#varchar
 ~~END~~
 
 
