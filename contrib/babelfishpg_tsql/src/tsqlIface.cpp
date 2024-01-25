@@ -309,6 +309,12 @@ getFullText(TerminalNode *node)
 }
 
 std::string
+getFullText(Token* token)
+{
+	return token->getText();
+}
+
+std::string
 stripQuoteFromId(TSqlParser::IdContext *ctx)
 {
 	if (ctx->DOUBLE_QUOTE_ID())
