@@ -2678,19 +2678,19 @@ int
 ~~END~~
 
 
-select count(*) from sys.types where name = 'geometry';
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry'
 go
 ~~START~~
-int
-1
+varchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+geometry#!#geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#0
 ~~END~~
 
 
-select count(*) from sys.types where name = 'geography';
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geography'
 go
 ~~START~~
-int
-1
+varchar#!#varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#bit
+geography#!#geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#0
 ~~END~~
 
 
@@ -2723,10 +2723,11 @@ master#!#dbo#!#geo_view_test#!#b#!#2#!#<NULL>#!#YES#!#geography#!#-1#!#-1#!#<NUL
 ~~END~~
 
 
-select count(*) from sys.columns where object_id = sys.object_id('geo_view_test')
+select name , column_id , max_length , precision , scale , collation_name ,is_nullable , is_ansi_padded , is_rowguidcol , is_identity ,is_computed , is_filestream , is_replicated , is_non_sql_subscribed , is_merge_published , is_dts_replicated , is_xml_document , xml_collection_id , default_object_id , rule_object_id , is_sparse , is_column_set , generated_always_type , generated_always_type_desc , encryption_type , encryption_type_desc , encryption_algorithm_name , column_encryption_key_id , column_encryption_key_database_name , is_hidden , is_masked , graph_type , graph_type_desc from sys.columns where object_id = object_id('geo_view_test') ORDER BY name;
 GO
 ~~START~~
-int
-2
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#bit#!#bit#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#varchar#!#int#!#varchar#!#bit#!#bit#!#int#!#nvarchar
+a#!#1#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>#!#<NULL>
+b#!#2#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>#!#<NULL>
 ~~END~~
 
