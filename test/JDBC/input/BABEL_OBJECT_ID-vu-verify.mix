@@ -104,6 +104,13 @@ GO
 SELECT OBJECT_NAME(OBJECT_ID('tempdb..#babel_object_id_temp_t1'))
 GO
 
+-- Test temp objects not in ENR
+CREATE TABLE #babel_object_id_temp_t2(a babel_object_id_type);
+GO
+
+SELECT OBJECT_NAME(OBJECT_ID('#babel_object_id_temp_t2'))
+GO
+
 -- We can also specify object_type as parameter
 SELECT OBJECT_NAME(OBJECT_ID('#babel_object_id_temp_t1', 'U'))
 GO

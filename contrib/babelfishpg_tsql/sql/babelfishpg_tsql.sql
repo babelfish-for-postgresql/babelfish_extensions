@@ -157,6 +157,8 @@ GRANT SELECT ON sys.spt_datatype_info_table TO PUBLIC;
 INSERT INTO sys.spt_datatype_info_table VALUES (N'datetimeoffset', -155, 34, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'datetimeoffset', 0, 7, -155, 0, NULL, NULL, 0, 68, 0, 'datetimeoffset');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'time', -154, 16, N'''', N'''', N'scale               ', 1, 0, 3, NULL, 0, NULL, N'time', 0, 7, -154, 0, NULL, NULL, 0, 32, 0, 'time');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'xml', -152, 0, N'N''', N'''', NULL, 1, 1, 0, NULL, 0, NULL, N'xml', NULL, NULL, -152, NULL, NULL, NULL, 0, 2147483646, 0, N'xml');
+INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
 INSERT INTO sys.spt_datatype_info_table VALUES (N'sql_variant', -150, 8000, NULL, NULL, NULL, 1, 0, 2, NULL, 0, NULL, N'sql_variant', 0, 0, -150, NULL, 10, NULL, 0, 8000, 39, 'sql_variant');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'uniqueidentifier', -11, 36, N'''', N'''', NULL, 1, 0, 2, NULL, 0, NULL, N'uniqueidentifier', NULL, NULL, -11, NULL, NULL, NULL, 0, 16, 37, 'uniqueidentifier');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'ntext', -10, 1073741823, N'N''', N'''', NULL, 1, 1, 1, NULL, 0, NULL, N'ntext', NULL, NULL, -10, NULL, NULL, NULL, 0, 2147483646, 35, NULL);
@@ -283,6 +285,7 @@ BEGIN
   WHEN type in ('text', 'image') THEN length = 2147483647;
   WHEN type = 'ntext' THEN length = 2147483646;
   WHEN type = 'xml' THEN length = 0;
+  WHEN type IN ('geometry', 'geography') THEN length = -1;
   WHEN type = 'sql_variant' THEN length = 8000;
   WHEN type = 'money' THEN length = 21;
   WHEN type = 'sysname' THEN length = (typemod - 4) * 2;
@@ -636,6 +639,8 @@ BEGIN
 		WHEN 'sql_variant' THEN tds_id = 98;
 		WHEN 'datetimeoffset' THEN tds_id = 43;
 		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'geometry' THEN tds_id = 240;
+		WHEN 'geography' THEN tds_id = 240;
 		ELSE tds_id = 0;
 	END CASE;
 	RETURN tds_id;
@@ -706,11 +711,10 @@ GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
-        o.object_id         AS object_id,
-        o.schema_id         AS schema_id,
-        c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.VARCHAR)
-			ELSE c.name COLLATE sys.database_default END AS name,
+        c.object_id                      AS object_id,
+        CAST(p.relnamespace AS int)      AS schema_id,
+        c.column_id                      AS colid,
+        CAST(c.name AS sys.varchar)      AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
@@ -718,11 +722,10 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(c.collation_name AS nvarchar(128)) AS collation_90,
         CAST(c.collation_name AS nvarchar(128)) AS collation_100
     FROM
-        sys.all_columns c INNER JOIN
-        sys.all_objects o ON (c.object_id = o.object_id) JOIN
-        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
+        sys.all_columns c
+        INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
     WHERE
-        c.is_sparse = 0 AND p.attnum >= 0;
+        c.is_sparse = 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
