@@ -117,6 +117,7 @@ int
 10727
 10733
 10793
+11506
 11555
 11700
 11701
@@ -317,6 +318,7 @@ int
 517
 13600
 13600
+11506
 ~~END~~
 
 
@@ -490,6 +492,7 @@ int
 517
 13600
 13600
+11506
 ~~END~~
 
 
@@ -497,6 +500,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-166
+167
 ~~END~~
 

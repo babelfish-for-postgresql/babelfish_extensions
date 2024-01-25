@@ -1,0 +1,44 @@
+sp_describe_undeclared_parameters N'SELECT @p1', NULL
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 11506)~~
+
+~~ERROR (Message: The parameter type could not be uniquely deduced.)~~
+
+
+sp_describe_undeclared_parameters N'SELECT @p1', 1
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "PROC")~~
+
+
+sp_describe_undeclared_parameters N'SELECT @p1', N'text_test'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "PROC")~~
+
+
+sp_describe_undeclared_parameters N'SELECT * FROM t1'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported use case in sp_describe_undeclared_parameters)~~
+
+
+sp_describe_undeclared_parameters N'SELECT COUNT(*) FROM sys.assemblies'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported use case in sp_describe_undeclared_parameters)~~
+
