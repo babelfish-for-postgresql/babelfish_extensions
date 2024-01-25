@@ -7929,7 +7929,7 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 			std::string str1 = getFullText(ctx);
 			size_t startPosition = ctx->start->getStartIndex();
 			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch
-			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str, str+"0")));
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str1, str1+"0")));
 		}
 	}
 	return;
