@@ -2927,14 +2927,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
-IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geometry')
+DO $$
 BEGIN
-    INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
-END
-IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geography')
-BEGIN
-    INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
-END
+  IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geometry') THEN
+    BEGIN
+        INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+    END;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geography') THEN
+    BEGIN
+        INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+    END;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5_0');
