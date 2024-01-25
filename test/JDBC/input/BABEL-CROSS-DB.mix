@@ -338,6 +338,12 @@ DROP PROCEDURE p1
 GO
 
 -- tsql
+USE db1;
+GO
+
+DROP TABLE db1_t1;
+GO
+
 USE master;
 GO
 
