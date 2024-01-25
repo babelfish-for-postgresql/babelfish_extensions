@@ -880,7 +880,12 @@ select
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_user_defined
-  , CAST(0 as sys.bit) as is_assembly_type
+  , CASE tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
   , CAST(0 as sys.bit) as is_table_type
@@ -913,7 +918,12 @@ select cast(t.typname as sys.sysname) as name
     as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , CAST(1 as sys.bit) as is_user_defined
-  , CAST(0 as sys.bit) as is_assembly_type
+  , CASE tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
   , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
