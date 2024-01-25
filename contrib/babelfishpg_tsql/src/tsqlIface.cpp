@@ -173,6 +173,12 @@ static void process_select_statement_standalone(TSqlParser::Select_statement_sta
 template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
 template <class T> static std::string rewrite_information_schema_to_information_schema_tsql(T ctx, GetCtxFunc<T> getSchema);
 template <class T> static std::string rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName);
+template <class T> static void rewrite_geospatial_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
+template <class T> static void rewrite_geospatial_col_ref_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
+template <class T> static void rewrite_geospatial_func_ref_no_arg_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
+template <class T> static void rewrite_geospatial_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index);
+template <class T> static void rewrite_function_call_geospatial_func_ref_args(T ctx);
+template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
 static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 static bool does_msg_exceeds_params_limit(const std::string& msg);
@@ -872,10 +878,149 @@ public:
 			rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), delimit_identifier(ctx->id().back()))));
 	}
 
+	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
+	{
+		/* Handles rewrite of geospatial function calls but inside body of CREATE/ALTER View, Procedure, Function */
+		if (ctx->spatial_proc_name_server_database_schema())
+		{
+			if (ctx->spatial_proc_name_server_database_schema()->schema) throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+
+			/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
+			if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())
+				rewrite_function_call_geospatial_func_ref_args(ctx);
+			else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg() && !ctx->function_arg_list())
+				rewrite_function_call_geospatial_func_ref_no_arg(ctx);
+		}
+	}
+
+	/* We are adding handling for Spatial Types in:
+	 * tsqlCommonMutator: for CREATE/ALTER View, Procedure, Function
+	 * tsqlBuilder: for other cases handling
+	 */
+	/* Here we are Rewriting Geospatial query query: Func_call DOT Geospatial_Func:
+	 * Func_call DOT Geospatial_col -> ( Func_call ) DOT Geospatial_col
+	 * Func_call DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, Func_call)
+	 */
+	void exitFunc_call_expr(TSqlParser::Func_call_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					if (i == 0) ind = ctx->function_call()->stop->getStopIndex();
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+ 
+	/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function:
+	 * local_id DOT Geospatial_col -> ( local_id ) DOT Geospatial_col
+	 * local_id DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, local_id)
+	 */
+	void exitLocal_id_expr(TSqlParser::Local_id_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> local_id.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					if (i == 0) ind = ctx->local_id()->stop->getStopIndex();
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
+	/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function:
+	 * bracket_expr DOT Geospatial_col -> ( bracket_expr ) DOT Geospatial_col
+	 * bracket_expr DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, bracket_expr)
+	 */
+	void exitBracket_expr(TSqlParser::Bracket_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					std::string context = ::getFullText(ctx);
+					size_t spaces = 0;
+					for (size_t x = ctx->expression()->stop->getStopIndex() + 1 - ctx->start->getStartIndex(); x <= ctx->stop->getStopIndex() - ctx->start->getStartIndex(); x++)
+					{
+						if(context[x] == ' ') spaces++;
+						else if(context[x] == ')') break;
+					}
+					if (i == 0) ind = ctx->expression()->stop->getStopIndex() + 1 + spaces;
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
+	/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function:
+	 * Subquery_expr DOT Geospatial_col -> ( Subquery_expr ) DOT Geospatial_col
+	 * Subquery_expr DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, Subquery_expr)
+	 */
+	void exitSubquery_expr(TSqlParser::Subquery_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					if (i == 0) ind = ctx->subquery()->stop->getStopIndex();
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
 	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
 	{
 		GetCtxFunc<TSqlParser::Full_column_nameContext *> getSchema = [](TSqlParser::Full_column_nameContext *o) { return o->schema; };
 		GetCtxFunc<TSqlParser::Full_column_nameContext *> getTablename = [](TSqlParser::Full_column_nameContext *o) { return o->tablename; };
+		
+		/* This if clause rewrites the query in case of Geospatial function Call */
+		std::string func_name;
+		/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function: */
+		if(ctx->column_name) func_name = stripQuoteFromId(ctx->column_name);
+		else if (ctx->geospatial_col())
+		{
+			/* Throwing error similar to TSQL as we do not allow 4-Part name for geospatial function call */
+			if(ctx->schema) throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("The multi-part identifier \"%s\" could not be bound.", ::getFullText(ctx).c_str()), getLineAndPos(ctx));
+			
+			/* Rewriting the query as: table.col.STX -> (table.col).STX */
+			std::string rewritten_func_name = "(";
+			if(ctx->table) rewritten_func_name += stripQuoteFromId(ctx->table) + ".";
+			rewritten_func_name += stripQuoteFromId(ctx->column) + ")." + ::getFullText(ctx->geospatial_col());
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func_name.c_str())));
+		}
+		
 		std::string rewritten_name = rewrite_column_name_with_omitted_schema_name(ctx, getSchema, getTablename);
 		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
 		if (!rewritten_name.empty())
@@ -1036,26 +1181,6 @@ public:
 		{
 			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
 		}
-
-		#ifdef ENABLE_SPATIAL_TYPES
-		if(!ctx->id().empty() && ctx->id()[0]->id().size() == 2)
-		{
-			TSqlParser::IdContext *idctx = ctx->id()[0];
-			if(idctx->id()[0] && idctx->colon_colon() && idctx->id()[1])
-			{
-				std::string idText = ::getFullText(idctx->id()[0]);
-				transform(idText.begin(), idText.end(), idText.begin(), ::tolower);
-				size_t start = idText.find_first_not_of(" \n\r\t\f\v");
-				idText = (start == std::string::npos) ? "" : idText.substr(start);
-				size_t end = idText.find_last_not_of(" \n\r\t\f\v");
-				idText = (end == std::string::npos) ? "" : idText.substr(0, end + 1);
-				if(idText == "geography" || idText == "geometry"){
-					rewritten_query_fragment.emplace(std::make_pair(idctx->start->getStartIndex(), std::make_pair(::getFullText(idctx->id()[0]), idText))); 
-					rewritten_query_fragment.emplace(std::make_pair(idctx->colon_colon()->start->getStartIndex(), std::make_pair(::getFullText(idctx->colon_colon()), "__")));		
-				}
-			}
-		}
-		#endif
 		
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
@@ -2237,6 +2362,132 @@ public:
 		}
 	}
 
+	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Full_column_nameContext *> getSchema = [](TSqlParser::Full_column_nameContext *o) { return o->schema; };
+		GetCtxFunc<TSqlParser::Full_column_nameContext *> getTablename = [](TSqlParser::Full_column_nameContext *o) { return o->tablename; };
+		
+		/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
+		std::string func_name;
+		if(ctx->column_name) func_name = stripQuoteFromId(ctx->column_name);
+		else if (ctx->geospatial_col())
+		{
+			/* Throwing error similar to TSQL as we do not allow 4-Part name for geospatial function call */
+			if(ctx->schema) throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("The multi-part identifier \"%s\" could not be bound.", ::getFullText(ctx).c_str()), getLineAndPos(ctx));
+			
+			/* Rewriting the query as: table.col.STX -> (table.col).STX */
+			std::string rewritten_func_name = "(";
+			if(ctx->table) rewritten_func_name += stripQuoteFromId(ctx->table) + ".";
+			rewritten_func_name += stripQuoteFromId(ctx->column) + ")." + ::getFullText(ctx->geospatial_col());
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func_name.c_str())));
+		}
+
+		std::string rewritten_name = rewrite_column_name_with_omitted_schema_name(ctx, getSchema, getTablename);
+		std::string rewritten_schema_name = rewrite_information_schema_to_information_schema_tsql(ctx, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+		if (pltsql_enable_tsql_information_schema && !rewritten_schema_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->schema->start->getStartIndex(), std::make_pair(::getFullText(ctx->schema), rewritten_schema_name)));
+
+		if (does_object_name_need_delimiter(ctx->tablename))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->tablename->start->getStartIndex(), std::make_pair(::getFullText(ctx->tablename), delimit_identifier(ctx->tablename))));
+
+		/* qualified identifier doesn't need delimiter */
+		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->column_name))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->column_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->column_name), delimit_identifier(ctx->column_name))));
+	}
+
+	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
+	void exitFunc_call_expr(TSqlParser::Func_call_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					if (i == 0) ind = ctx->function_call()->stop->getStopIndex();
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
+	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
+	void exitLocal_id_expr(TSqlParser::Local_id_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> local_id.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					if (i == 0) ind = ctx->local_id()->stop->getStopIndex();
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
+	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
+	void exitBracket_expr(TSqlParser::Bracket_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					std::string context = ::getFullText(ctx);
+					size_t spaces = 0;
+					for (size_t x = ctx->expression()->stop->getStopIndex() + 1 - ctx->start->getStartIndex(); x <= ctx->stop->getStopIndex() - ctx->start->getStartIndex(); x++)
+					{
+						if(context[x] == ' ') spaces++;
+						else if(context[x] == ')') break;
+					}
+					if (i == 0) ind = ctx->expression()->stop->getStopIndex() + 1 + spaces;
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
+	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
+	void exitSubquery_expr(TSqlParser::Subquery_exprContext *ctx) override
+	{
+		if(ctx != NULL && !ctx->DOT().empty())
+		{
+			std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
+			for (size_t i = 0; i < method_calls.size(); ++i)
+			{
+				TSqlParser::Method_callContext *method = method_calls[i];
+				/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
+				if(method->spatial_methods())
+				{
+					size_t ind;
+					if (i == 0) ind = ctx->subquery()->stop->getStopIndex();
+					else ind = method_calls[i-1]->stop->getStopIndex();
+					rewrite_geospatial_query_helper(ctx, method, ind);
+				}
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// function/procedure call analysis
 	//////////////////////////////////////////////////////////////////////////////
@@ -2308,6 +2559,18 @@ public:
 			/* Re-write session_user to sys.session_user(). */
 			if (bctx->bif_no_brackets && bctx->SESSION_USER())
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
+		}
+
+		/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
+		if (ctx->spatial_proc_name_server_database_schema())
+		{
+			if (ctx->spatial_proc_name_server_database_schema()->schema) throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
+
+			/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
+			if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())
+				rewrite_function_call_geospatial_func_ref_args(ctx);
+			else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg() && !ctx->function_arg_list())
+				rewrite_function_call_geospatial_func_ref_no_arg(ctx);
 		}
 
 		/* analyze scalar function call */
@@ -7651,6 +7914,274 @@ rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, Get
 	}
 	return "";
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Spatial Query Helper
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ * In this helper function we Rewrite the Query for Geospatial Handling
+ * For Col_Ref Functions (such as STX, STY, Lat, Long) : ColRef.Func_name  ->  (ColRef).Func_name
+ */
+template<class T>
+void
+rewrite_geospatial_col_ref_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index)
+{
+	std::vector<size_t> keysToRemove;
+	std::string ctx_str = ::getFullText(ctx);
+	int func_call_len = (int)geospatial_start_index - ctx->start->getStartIndex();
+	int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+	std::string expr = "";
+	int index = 0;
+	int offset1 = 0;
+	int offset2 = 0;
+	
+	/* writting the previously rewritten Geospatial context */
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+		{
+			expr += ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+			index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+			keysToRemove.push_back(entry.first);
+			if(entry.first <= geospatial_start_index) offset1 += (int)entry.second.second.size() - entry.second.first.size();
+			else offset2 += (int)entry.second.second.size() - entry.second.first.size();
+		}
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+	
+	/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+	for (auto &entry : local_id_positions)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= geospatial_start_index)
+		{
+			keysToRemove.push_back(entry.first);
+			local_id_positions.emplace(std::make_pair(entry.first + 1, entry.second));
+		}
+	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
+	expr += ctx_str.substr(index);
+	std::string rewritten_exp = "(" + expr.substr(0, func_call_len + offset1 + 1) + ")." + expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2 + 1);
+	if ((int)method->stop->getStopIndex() - ctx->start->getStartIndex() + 1 < ctx_str.size()) rewritten_exp += expr.substr(method->stop->getStopIndex() + offset1 - ctx->start->getStartIndex() + 1);
+	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+}
+
+/*
+ * In this helper function we Rewrite the Query for Geospatial Handling
+ * For Func_Ref Functions with no args (such as STAsText(), STAsBinary()) : ColRef.Func_name()  ->  Func_name(ColRef)
+ */
+template<class T>
+void
+rewrite_geospatial_func_ref_no_arg_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index)
+{
+	std::vector<size_t> keysToRemove;
+	std::string ctx_str = ::getFullText(ctx);
+	int func_call_len = (int)geospatial_start_index - ctx->start->getStartIndex();
+	int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+	std::string expr = "";
+	int index = 0;
+	int offset1 = 0;
+	int offset2 = 0;
+	
+	/* writting the previously rewritten Geospatial context */
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+		{
+			expr += ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+			index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+			keysToRemove.push_back(entry.first);
+			if(entry.first <= geospatial_start_index) offset1 += (int)entry.second.second.size() - entry.second.first.size();
+			else offset2 += (int)entry.second.second.size() - entry.second.first.size();
+		}
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+	
+	/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+	for (auto &entry : local_id_positions)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= geospatial_start_index)
+		{
+			keysToRemove.push_back(entry.first);
+			local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->geospatial_func_no_arg()->stop->getStopIndex() - method->spatial_methods()->geospatial_func_no_arg()->start->getStartIndex() + 1, entry.second));
+		}
+	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
+	expr += ctx_str.substr(index);
+	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + expr.substr(0, func_call_len + offset1 + 1) + ")";
+	if ((int)method->stop->getStopIndex() - ctx->start->getStartIndex() + 1 < ctx_str.size()) rewritten_exp += expr.substr(method->stop->getStopIndex() + offset1 - ctx->start->getStartIndex() + 1);
+	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+}
+
+/*
+ * In this helper function we Rewrite the Query for Geospatial Handling
+ * For Func_Ref Functions with args (such as STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ */
+template<class T>
+void
+rewrite_geospatial_func_ref_args_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index)
+{
+	std::vector<size_t> keysToRemove;
+	std::string ctx_str = ::getFullText(ctx);
+	int func_call_len = (int)geospatial_start_index - ctx->start->getStartIndex();
+	int method_len = (int)method->stop->getStopIndex() - method->start->getStartIndex();
+	std::string expr = "";
+	int index = 0;
+	int offset1 = 0;
+	int offset2 = 0;
+	
+	/* writting the previously rewritten Geospatial context */
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+		{
+			expr += ctx_str.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+			index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+			keysToRemove.push_back(entry.first);
+			if(entry.first <= geospatial_start_index) offset1 += (int)entry.second.second.size() - entry.second.first.size();
+			else offset2 += (int)entry.second.second.size() - entry.second.first.size();
+		}
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+	
+	/* shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+	for (auto &entry : local_id_positions)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= geospatial_start_index)
+		{
+			keysToRemove.push_back(entry.first);
+			local_id_positions.emplace(std::make_pair(entry.first + method->spatial_methods()->expression_list()->stop->getStopIndex() - method->spatial_methods()->geospatial_func_arg()->start->getStartIndex() + 2, entry.second));
+		}
+		else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
+		{
+			size_t pos = entry.first;
+			size_t offset = method->start->getStartIndex() - ctx->start->getStartIndex();
+			pos -= offset;
+			keysToRemove.push_back(entry.first);
+			local_id_positions.emplace(std::make_pair(pos, entry.second));
+		}
+	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
+	expr += ctx_str.substr(index);
+	std::string rewritten_exp = expr.substr((int)method->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, func_call_len + offset1 + 1) + ")";
+	if ((int)method->stop->getStopIndex() - ctx->start->getStartIndex() + 1 < ctx_str.size()) rewritten_exp += expr.substr(method->stop->getStopIndex() + offset1 - ctx->start->getStartIndex() + 1);
+	rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(ctx_str.c_str(), rewritten_exp.c_str())));
+}
+
+/*
+ * In this helper function we Rewrite the Query for Geospatial Handling
+ * For Col_Ref Functions (such as STX, STY, Lat, Long) : ColRef.Func_name  ->  (ColRef).Func_name
+ * For Func_Ref Functions (such as STAsText, STAsBinary, STDistance) : ColRef.Func_name (arg_list)  ->  Func_name (arg_list, ColRef)
+ */
+template<class T>
+void
+rewrite_geospatial_query_helper(T ctx, TSqlParser::Method_callContext *method, size_t geospatial_start_index)
+{	
+	/* Check whether it is a Col_Ref Function or a Func_Ref Function */
+	if(method->spatial_methods()->geospatial_col() && !method->spatial_methods()->LR_BRACKET() ) 
+		rewrite_geospatial_col_ref_query_helper(ctx, method, geospatial_start_index);
+	else if(method->spatial_methods()->geospatial_func_no_arg() && !method->spatial_methods()->expression_list() ) 
+		rewrite_geospatial_func_ref_no_arg_query_helper(ctx, method, geospatial_start_index);
+	else if(method->spatial_methods()->geospatial_func_arg() && method->spatial_methods()->expression_list() ) 
+		rewrite_geospatial_func_ref_args_query_helper(ctx, method, geospatial_start_index);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// End of Spatial Query Helper
+////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// Spatial Query Helper for Function Calls
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ * In this helper function we Rewrite the Query for Geospatial Handling
+ * This implementation is different for Function_Call Rule
+ * For Func_Ref Functions with no args (such as STAsText(), STAsBinary()) : ColRef.Func_name()  ->  Func_name(ColRef)
+ */
+template<class T>
+void
+rewrite_function_call_geospatial_func_ref_no_arg(T ctx)
+{
+	std::vector<size_t> keysToRemove;
+	std::string func_ctx = ::getFullText(ctx);
+
+	std::string arg_ctx = "";
+	int index = (int) ctx->spatial_proc_name_server_database_schema()->stop->getStopIndex() - ctx->spatial_proc_name_server_database_schema()->start->getStartIndex() + 1; 
+	int length = (int) ctx->stop->getStopIndex() - ctx->spatial_proc_name_server_database_schema()->stop->getStopIndex() - 1; 
+	
+	/* rewriting the query as: table.col.STAsText() -> STAsText(table.col) */
+	if (ctx->spatial_proc_name_server_database_schema()->table) arg_ctx += stripQuoteFromId(ctx->spatial_proc_name_server_database_schema()->table) + ".";
+	arg_ctx += stripQuoteFromId(ctx->spatial_proc_name_server_database_schema()->column);
+	std::string rewritten_func = ::getFullText(ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg()) + func_ctx.substr(index, length) + arg_ctx + ")";
+	rewritten_query_fragment.emplace(std::make_pair(ctx->spatial_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+}
+
+/*
+ * In this helper function we Rewrite the Query for Geospatial Handling
+ * This implementation is different for Function_Call Rule
+ * For Func_Ref Functions with args (such as STDistance(arg)) : ColRef.Func_name(arg_list)  ->  Func_name(arg_list, ColRef)
+ */
+template<class T>
+void
+rewrite_function_call_geospatial_func_ref_args(T ctx)
+{
+	std::vector<size_t> keysToRemove;
+	std::string func_ctx = ::getFullText(ctx);
+	int col_len = (int)ctx->spatial_proc_name_server_database_schema()->column->stop->getStopIndex() - ctx->start->getStartIndex();
+	int method_len = (int)ctx->stop->getStopIndex() - ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex();
+	std::string expr = "";
+	int index = 0;
+	int offset1 = 0;
+	int offset2 = 0;
+	
+	/* writting the previously rewritten Geospatial context */
+	for (auto &entry : rewritten_query_fragment)
+	{
+		if(entry.first >= ctx->start->getStartIndex() && entry.first <= ctx->stop->getStopIndex())
+		{
+			expr += func_ctx.substr(index, (int)entry.first - ctx->start->getStartIndex() - index) + entry.second.second;
+			index = (int)entry.first - ctx->start->getStartIndex() + entry.second.first.size();
+			keysToRemove.push_back(entry.first);
+			if(entry.first <= ctx->spatial_proc_name_server_database_schema()->column->stop->getStopIndex()) offset1 += (int)entry.second.second.size() - entry.second.first.size();
+			else offset2 += (int)entry.second.second.size() - entry.second.first.size();
+		}
+	}
+	for (const auto &key : keysToRemove) rewritten_query_fragment.erase(key);
+	keysToRemove.clear();
+	
+	/* Shifting the local id positions to new positions after rewriting the query since they will be quoted later */
+	for (auto &entry : local_id_positions)
+	{
+		if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
+		{
+			size_t pos = entry.first;
+			size_t offset = ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex() - ctx->spatial_proc_name_server_database_schema()->start->getStartIndex();
+			pos -= offset;
+			keysToRemove.push_back(entry.first);
+			local_id_positions.emplace(std::make_pair(pos, entry.second));
+		}
+	}
+	for (const auto &key : keysToRemove) local_id_positions.erase(key);
+	keysToRemove.clear();
+
+	/*
+	 * Rewriting the query as: table.col.STDistance(arg) -> STDistance(arg, table.col)
+	 */
+	expr += func_ctx.substr(index);
+	std::string rewritten_func = expr.substr((int)ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg()->start->getStartIndex() - ctx->start->getStartIndex() + offset1, method_len + offset2) + "," + expr.substr(0, col_len + offset1 + 1) + ")";
+	rewritten_query_fragment.emplace(std::make_pair(ctx->spatial_proc_name_server_database_schema()->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_func.c_str())));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// End of Spatial Query Helper for Function Calls 
+////////////////////////////////////////////////////////////////////////////////
 
 static bool
 does_object_name_need_delimiter(TSqlParser::IdContext *id)
