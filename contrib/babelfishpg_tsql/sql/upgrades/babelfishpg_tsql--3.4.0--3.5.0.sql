@@ -2208,42 +2208,42 @@ CREATE OR REPLACE PROCEDURE sys.sp_procedure_params_100_managed(IN "@procedure_n
 AS $$
 
 BEGIN
-        SELECT 	CAST (v.column_name AS sys.sysname) AS [PARAMETER_NAME],
-				CAST (CASE
-						WHEN v.column_type = 5 THEN 4
-                        WHEN v.column_type = 3 THEN 4
+        SELECT 	v.column_name AS [PARAMETER_NAME],
+				CAST (CASE v.column_type
+						WHEN 5 THEN 4
+                        WHEN 3 THEN 4
                         ELSE v.column_type END
                      AS smallint) AS [PARAMETER_TYPE],
-        		CAST (CASE   
-						WHEN v.type_name = 'int' THEN 8
-                        WHEN v.type_name = 'nchar' THEN 10
-                        WHEN v.type_name = 'char' THEN 3
-                        WHEN v.type_name = 'date' THEN 31
-                        WHEN v.type_name = 'nvarchar' THEN 12
-                        WHEN v.type_name = 'varchar' THEN 22
-                        WHEN v.type_name = 'table' THEN 23
-                        WHEN v.type_name = 'datetime' THEN 4
-                        WHEN v.type_name = 'datetime2' THEN 33
-                        WHEN v.type_name = 'datetimeoffset' THEN 34
-                        WHEN v.type_name = 'smalldatetime' THEN 15
-						WHEN v.type_name = 'time' THEN 32
-                        WHEN v.type_name = 'decimal' THEN 5
-						WHEN v.type_name = 'numeric' THEN 5
-                        WHEN v.type_name = 'float' THEN 6
-                        WHEN v.type_name = 'real' THEN 13
-                        WHEN v.type_name = 'nchar' THEN 10
-                        WHEN v.type_name = 'flag' THEN 2
-                        WHEN v.type_name = 'money' THEN 9
-                        WHEN v.type_name = 'smallmoney' THEN 17
-                        WHEN v.type_name = 'tinyint' THEN 20
-                        WHEN v.type_name = 'smallint' THEN 16
-                        WHEN v.type_name = 'bigint' THEN 0
-                        WHEN v.type_name = 'bit' THEN 2
-						WHEN v.type_name = 'text' THEN 18
-						WHEN v.type_name = 'ntext' THEN 11
-						WHEN v.type_name = 'binary' THEN 1
-						WHEN v.type_name = 'varbinary' THEN 21
-						WHEN v.type_name = 'image' THEN 7
+        		CAST (CASE v.type_name
+						WHEN 'int' THEN 8
+                        WHEN 'nchar' THEN 10
+                        WHEN 'char' THEN 3
+                        WHEN 'date' THEN 31
+                        WHEN 'nvarchar' THEN 12
+                        WHEN 'varchar' THEN 22
+                        WHEN 'table' THEN 23
+                        WHEN 'datetime' THEN 4
+                        WHEN 'datetime2' THEN 33
+                        WHEN 'datetimeoffset' THEN 34
+                        WHEN 'smalldatetime' THEN 15
+						WHEN 'time' THEN 32
+                        WHEN 'decimal' THEN 5
+						WHEN 'numeric' THEN 5
+                        WHEN 'float' THEN 6
+                        WHEN 'real' THEN 13
+                        WHEN 'nchar' THEN 10
+                        WHEN 'flag' THEN 2
+                        WHEN 'money' THEN 9
+                        WHEN 'smallmoney' THEN 17
+                        WHEN 'tinyint' THEN 20
+                        WHEN 'smallint' THEN 16
+                        WHEN 'bigint' THEN 0
+                        WHEN 'bit' THEN 2
+						WHEN 'text' THEN 18
+						WHEN 'ntext' THEN 11
+						WHEN 'binary' THEN 1
+						WHEN 'varbinary' THEN 21
+						WHEN 'image' THEN 7
                         ELSE 0 END
                  	AS smallint) AS [MANAGED_DATA_TYPE],
         		CAST (CASE 
@@ -2260,12 +2260,12 @@ BEGIN
         		CAST(CASE 
 						WHEN v.type_name IN (N'decimal', N'numeric') THEN v.SCALE 
 						ELSE NULL END AS smallint ) AS [NUMERIC_SCALE],
-        		CAST(NULL AS sys.sysname) AS [TYPE_CATALOG_NAME],
-        		CAST(NULL AS sys.sysname) AS [TYPE_SCHEMA_NAME],
+        		CAST(NULL AS sys.nvarchar(128)) AS [TYPE_CATALOG_NAME],
+        		CAST(NULL AS sys.nvarchar(128)) AS [TYPE_SCHEMA_NAME],
         		CAST(v.TYPE_NAME AS sys.nvarchar(128)) AS [TYPE_NAME],
-        		CAST(NULL AS sys.sysname) AS XML_CATALOGNAME,
-        		CAST(NULL AS sys.sysname) AS XML_SCHEMANAME,
-        		CAST(NULL AS sys.sysname) AS XML_SCHEMACOLLECTIONNAME,
+        		CAST(NULL AS sys.nvarchar(128)) AS XML_CATALOGNAME,
+        		CAST(NULL AS sys.nvarchar(128)) AS XML_SCHEMANAME,
+        		CAST(NULL AS sys.nvarchar(128)) AS XML_SCHEMACOLLECTIONNAME,
         		CAST(CASE
 						WHEN v.type_name = 'datetime' THEN 3
                     	WHEN v.type_name IN (N'datetime2', N'datetimeoffset', N'time') THEN 7
@@ -2273,9 +2273,10 @@ BEGIN
                     	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
    		FROM sys.sp_sproc_columns_view v
    		LEFT OUTER JOIN sys.all_parameters AS p ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
-   		WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
-    	AND (@procedure_schema = '' OR procedure_owner LIKE @procedure_schema)
-    	ORDER BY PROCEDURE_owner, PROCEDURE_NAME, ORDINAL_POSITION;
+   		WHERE (@procedure_name = '' OR v.original_procedure_name = @procedure_name)
+    	AND (@procedure_schema = '' OR v.procedure_owner = @procedure_schema)
+		AND (@parameter_name IS NULL OR column_name = @parameter_name)
+    	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;
 END;
 $$ LANGUAGE pltsql;
 GRANT ALL PRIVILEGES ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
