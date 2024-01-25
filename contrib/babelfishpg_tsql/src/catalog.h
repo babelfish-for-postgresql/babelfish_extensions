@@ -281,6 +281,51 @@ typedef struct FormData_bbf_function_ext
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 
 /*****************************************
+ *			SCHEMA_PERMISSIONS
+ *****************************************/
+#define BBF_SCHEMA_PERMS_TABLE_NAME "babelfish_schema_permissions"
+#define BBF_SCHEMA_PERMS_IDX_NAME "babelfish_schema_permissions_pkey"
+#define BBF_SCHEMA_PERMS_NUM_OF_COLS 6
+#define Anum_bbf_schema_perms_dbid 1
+#define Anum_bbf_schema_perms_schema_name 2
+#define Anum_bbf_schema_perms_object_name 3
+#define Anum_bbf_schema_perms_permission 4
+#define Anum_bbf_schema_perms_grantee 5
+#define Anum_bbf_schema_perms_object_type 6
+
+#define PUBLIC_ROLE_NAME "public"
+#define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
+#define ALL_PERMISSIONS_ON_RELATION 47 /* last 6 bits as 101111 represents ALL privileges on a relation. */
+#define ALL_PERMISSIONS_ON_FUNCTION 128 /* last 8 bits as 10000000 represents ALL privileges on a procedure/function. */
+#define OBJ_SCHEMA "s"
+#define OBJ_RELATION "r"
+#define OBJ_PROCEDURE "p"
+#define OBJ_FUNCTION "f"
+
+extern Oid bbf_schema_perms_oid;
+extern Oid bbf_schema_perms_idx_oid;
+
+typedef struct FormData_bbf_schema_perms
+{
+	int16		dbid;
+	VarChar	schema_name;
+	VarChar	object_name;
+	int32		permission;
+	VarChar	grantee;
+	char	object_type;
+} FormData_bbf_schema_perms;
+
+typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
+
+extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type);
+extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee, bool missing_ok);
+extern void update_privileges_of_object(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
+extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
+extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
+extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
+extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);
+
+/*****************************************
  *			DOMAIN MAPPING
  *****************************************/
 #define BBF_DOMAIN_MAPPING_TABLE_NAME "babelfish_domain_mapping"
