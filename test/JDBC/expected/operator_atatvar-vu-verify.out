@@ -317,6 +317,20 @@ tinyint
 ~~END~~
 
 
+select * from v2_operator_atatvar where 0!<@@max_precision
+go
+~~START~~
+tinyint
+~~END~~
+
+
+select * from v2_operator_atatvar where case when 1!=@@max_precision then 1 else @@max_precision end=@@max_precision
+go
+~~START~~
+tinyint
+~~END~~
+
+
 declare @v int
 set @v=1
 set @v+=@v
@@ -377,4 +391,34 @@ int
 38
 ~~END~~
 
+
+select dbo.f1_operator_atatvar(@@spid)
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select dbo.f1_operator_atatvar(@@spid-1)
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select * from dbo.f2_operator_atatvar(@@max_precision)
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from dbo.f2_operator_atatvar(@@max_precision-1)
+go
+~~START~~
+int
+~~END~~
 
