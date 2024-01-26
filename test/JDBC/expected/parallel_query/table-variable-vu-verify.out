@@ -1,0 +1,278 @@
+--babel-1149
+select * from table_variable_vu_prepareitvf_1(5);
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+
+select * from table_variable_vu_preparemstvf_1(10);
+GO
+~~START~~
+nvarchar#!#int#!#int
+hello1#!#1#!#100
+~~END~~
+
+
+select table_variable_vu_preparefunc_1(1);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec table_variable_vu_prepareproc_1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+--babel-2647
+SELECT * from dbo.table_variable_vu_preparemstvf_2();
+go
+~~START~~
+int
+0
+~~END~~
+
+
+--babel-2903
+use master;
+go
+
+select * from table_variable_vu_preparet1;
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+set BABELFISH_SHOWPLAN_ALL ON;
+go
+
+declare @a int = 5, @b int = 5;
+declare @c int;
+execute table_variable_vu_prepareouter_proc @a, @b;
+select @a, @b;
+go
+~~START~~
+text
+Query Text: ASSIGN @a = SELECT 5
+  Query Text: SELECT 5
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+Query Text: ASSIGN @b = SELECT 5
+  Query Text: SELECT 5
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+Query Text: EXEC    table_variable_vu_prepareouter_proc @a, @b
+  Query Text: DECLARE TABLE @t
+    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_1 (a int, b int)
+  Query Text: ASSIGN @a = SELECT 3
+    Query Text: SELECT 3
+    ->  Result  (cost=0.00..0.01 rows=1 width=4)
+  Query Text: insert into table_variable_vu_preparet1 values ("@a", "@b");
+  ->  Insert on table_variable_vu_preparet1  (cost=0.00..0.01 rows=0 width=0)
+        ->  Result  (cost=0.00..0.01 rows=1 width=8)
+  Query Text: EXEC table_variable_vu_prepareinner_proc @b
+    Query Text: ASSIGN @b = SELECT (select top 1 a+b from table_variable_vu_preparet1 order by b)
+      Query Text: SELECT (select top 1 a+b from table_variable_vu_preparet1 order by b)
+      ->  Result  (cost=49.55..49.56 rows=1 width=4)
+            InitPlan 1 (returns $0)
+              ->  Limit  (cost=49.55..49.55 rows=1 width=8)
+                    ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
+                          Sort Key: table_variable_vu_preparet1.b NULLS FIRST
+                          ->  Seq Scan on table_variable_vu_preparet1  (cost=0.00..38.25 rows=2260 width=8)
+    Query Text: insert into table_variable_vu_preparet1 values ("@b", "@b");
+    ->  Insert on table_variable_vu_preparet1  (cost=0.00..0.01 rows=0 width=0)
+          ->  Result  (cost=0.00..0.01 rows=1 width=8)
+  Query Text: insert into "@t" select * from table_variable_vu_preparet1;
+  ->  Insert on "@t_1"  (cost=0.00..32.60 rows=0 width=0)
+        ->  Seq Scan on table_variable_vu_preparet1  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: select * from "@t"
+  ->  Seq Scan on "@t_1"  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: DROP TABLE @t_1
+Query Text: select "@a", "@b"
+Gather  (cost=0.00..0.01 rows=1 width=8)
+  Workers Planned: 1
+  Single Copy: true
+  ->  Result  (cost=0.00..0.01 rows=1 width=8)
+~~END~~
+
+
+set BABELFISH_SHOWPLAN_ALL Off;
+go
+
+select * from table_variable_vu_preparet1;
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+--babel-3101
+select * from table_variable_vu_preparemy_splitstring('this,is,split')
+GO
+~~START~~
+nvarchar
+this
+is
+split
+~~END~~
+
+
+--babel-3088
+use table_variable_vu_preparedb
+go
+
+exec table_variable_vu_prepareproc_2 1;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+aaa
+~~END~~
+
+
+use master
+go
+
+--babel-2034
+SELECT count(*) FROM table_variable_vu_prepareCalculateEasDateTime();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select * from table_variable_vu_preparemstvf_3(1);
+GO
+~~START~~
+text#!#int#!#int
+hello1#!#1#!#100
+hello2#!#2#!#200
+~~END~~
+
+
+--babel-2676
+-- should return both rows
+select * from table_variable_vu_preparemstvf_conditional(0)
+go
+~~START~~
+text
+hello1
+hello2
+~~END~~
+
+
+-- should only return the first row
+select * from table_variable_vu_preparemstvf_conditional(1)
+go
+~~START~~
+text
+hello1
+~~END~~
+
+
+-- BABEL-3967 - table variable in sp_executesql
+declare @var1 table_variable_vu_type
+insert into @var1 values ('1', 2, 3, 4)
+exec sp_executesql N'EXEC table_variable_vu_proc1 @x = @p0', N'@p0 table_variable_vu_type readonly', @p0=@var1
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+
+declare @tableVar table_variable_vu_type;
+insert into @tableVar values('1', 2, 3, 4);
+declare @ret int;
+select @ret = table_variable_vu_tvp_function(@tableVar);
+select @ret 
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- double-check that the underlying type for table_variable_vu_type is pass-by-val
+select typbyval from pg_type where typname = 'table_variable_vu_type';
+go
+~~START~~
+bit
+1
+1
+~~END~~
+
+
+declare @tableVar table_variable_vu_schema.table_variable_vu_type
+insert into @tableVar values ('a', 'b'), ('c', 'd')
+select * from @tableVar
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+nvarchar#!#ntext
+a#!#b
+c#!#d
+~~END~~
+
+
+declare @tableVar as table (x int)
+insert into @tableVar values (1),(2),(3)
+select * from @tableVar
+select typbyval from pg_catalog.pg_type where typname like '@tablevar%';
+go
+~~ROW COUNT: 3~~
+
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+~~START~~
+bit
+1
+1
+1
+~~END~~
+
+
+select * from table_variable_vu_func2()
+select typbyval from pg_catalog.pg_type where typname like '@sometable_table_variable_vu_func2%';
+go
+~~START~~
+int#!#varchar
+1234#!#abcd
+~~END~~
+
+~~START~~
+bit
+1
+~~END~~
+
+
+-- BABEL-4337 - check nested TV for null; should not crash but throw an error
+SELECT * FROM tv_nested_func2(NULL)
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: table variable underlying typename is NULL. refname: @t)~~
+
