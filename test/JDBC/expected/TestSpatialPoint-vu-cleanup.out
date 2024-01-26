@@ -72,6 +72,12 @@ DROP TABLE IF EXISTS TypeToGeog
 
 DROP TABLE IF EXISTS SPATIALPOINT_dt
 
+drop procedure IF EXISTS geometry_proc_1;
+
+drop procedure IF EXISTS geography_proc_1;
+
+drop table IF EXISTS geo_view_test;
+
 DROP PROCEDURE IF EXISTS GetPointsByXCoordinate
 
 DROP PROCEDURE IF EXISTS GetPointsByXCoordinate1
