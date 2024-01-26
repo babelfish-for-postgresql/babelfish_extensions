@@ -197,6 +197,7 @@ static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
 static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
 static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
+static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -659,9 +660,14 @@ void PLtsql_expr_query_mutator::run()
 		const std::u32string& orig_text = utf8_to_utf32(entry.second.first.c_str());
 		const std::u32string& repl_text = utf8_to_utf32(entry.second.second.c_str());
 		if (isSelectFragment) offset += fragment_SELECT_prefix.length(); // because this is an expression prefixed with 'SELECT '
-			
+					
 		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
+			// Note: the test below does not work, and has never worked, because size_t will not be negative, 
+			// and the result of the subtraction is also of type size_t.
+			// This test has been in the code since day 1. 
+			// When making the test work, some test cases will start failing as they run into this condition 
+			// (test table_variable_xact_errors and two variants). Therefore, not touching the test for now.
 			if (offset - cursor < 0)
 				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to multiple mutations on the same position", 0, 0);
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
@@ -2281,7 +2287,12 @@ public:
 			}
 		}
 	}
-  
+
+	void exitOrder_by_clause(TSqlParser::Order_by_clauseContext *ctx) override
+	{
+		handleOrderByOffsetFetch(ctx);
+	}
+
 	// NB: the following are copied in tsqlMutator
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
 	{
@@ -8542,3 +8553,30 @@ void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx)
 	}
 	return;
 }
+
+static void
+handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx)
+{
+	// Add brackets around the expressions for OFFSET..ROWS and FETCH..ROWS
+	
+	if (ctx->offset_exp) 
+	{
+		// Do not rewrite the entire expression since that will break the logic in the mutator when there is something inside the
+		// expression that also needs rewriting (like a local variable @p which needs to be rewritten as "@p").
+		// Instead, insert an opening and closing bracket in the right places.
+		// Also, do not add a rewrite at the start position of the expression since there may be an '@' for a local var 
+		// at that position and the rewrite to double-quote the variable will be lost as a result.
+		rewritten_query_fragment.emplace(std::make_pair((ctx->offset_exp->start->getStartIndex() - 1), std::make_pair("", " (")));
+		rewritten_query_fragment.emplace(std::make_pair((ctx->offset_exp->stop->getStopIndex() + 1), std::make_pair("", ") ")));
+	}
+	
+	if (ctx->fetch_exp) 
+	{
+		// See comment for offset_exp above.
+		rewritten_query_fragment.emplace(std::make_pair((ctx->fetch_exp->start->getStartIndex() - 1), std::make_pair("", " (")));
+		rewritten_query_fragment.emplace(std::make_pair((ctx->fetch_exp->stop->getStopIndex() + 1), std::make_pair("", ") ")));
+	}
+
+	return;
+}
+
