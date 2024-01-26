@@ -94,6 +94,12 @@ go
 select * from v1_operator_atatvar where case when 1!=@@max_precision then 1 else @@max_precision end=@@max_precision
 go
 
+select * from v2_operator_atatvar where 0!<@@max_precision
+go
+
+select * from v2_operator_atatvar where case when 1!=@@max_precision then 1 else @@max_precision end=@@max_precision
+go
+
 declare @v int
 set @v=1
 set @v+=@v
@@ -120,3 +126,14 @@ go
 execute('execute p3_operator_atatvar @p=@@max_precision')
 go
 
+select dbo.f1_operator_atatvar(@@spid)
+go
+
+select dbo.f1_operator_atatvar(@@spid-1)
+go
+
+select * from dbo.f2_operator_atatvar(@@max_precision)
+go
+
+select * from dbo.f2_operator_atatvar(@@max_precision-1)
+go
