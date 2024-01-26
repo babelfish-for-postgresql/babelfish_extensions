@@ -461,6 +461,21 @@ AS
 SELECT * FROM StoreReceipt;
 GO
 
+-- Test create view for stmt with pivot operator
+CREATE VIEW pivot_view
+AS
+SELECT TOP(5) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
+FROM
+(
+    SELECT ManufactureID, ItemID, StoreID
+    FROM StoreReceipt
+)as srctable
+PIVOT (
+    COUNT (ItemID)
+    FOR StoreID in ([2], [3], [4], [5], [6])
+) AS pvt
+GO
+
 -- BABEL-4558 
 CREATE TABLE OSTable(
     [Oid] [int] NOT NULL,

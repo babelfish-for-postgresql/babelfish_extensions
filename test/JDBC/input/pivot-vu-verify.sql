@@ -293,20 +293,6 @@ PIVOT (
 ON p1.ManufactureID = p2.ManufactureID
 GO
 
--- Create VIEW ON PIVOT is not currently supported
-CREATE VIEW pivot_view AS
-SELECT TOP 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-
 -- WITH CTE stmt with usage of pivot operator is not currently supported
 WITH
 EmployeeData AS
@@ -337,7 +323,7 @@ PIVOT ( MAX(Scode) FOR [Type] IN ([1], [2], [3]))
         AS os_pivot
 GO
 
--- view usage in PIVOT data source
+-- Test view as a data source in a stmt with pivot operator
 SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
 FROM
 (
@@ -348,6 +334,11 @@ PIVOT (
     COUNT (ItemID)
     FOR StoreID IN ([2], [3], [4], [5], [6])
 ) AS pvt
+GO
+
+
+-- Test view of a stmt with pivot operator
+SELECT * FROM pivot_view
 GO
 
 -- aggregate string value, when no row is selected, should output NULL
