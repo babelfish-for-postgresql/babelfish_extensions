@@ -7214,8 +7214,6 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 {
 	if (ctx->column_def_table_constraints())
 	{
-		bool rewrite = false;
-
 		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())
 		{
 			/*
@@ -7229,17 +7227,22 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 				auto tctx = cdtctx->column_definition()->TIMESTAMP();
 				std::string rewritten_text = "timestamp " + ::getFullText(tctx);
 				rewritten_query_fragment.emplace(std::make_pair(tctx->getSymbol()->getStartIndex(), std::make_pair(::getFullText(tctx), rewritten_text)));
-				rewrite = true;
 			}
 		}
 
-		if (rewrite)
+		/*
+		 * Need to run the mutator to perform rewriting not only when items were added above,
+		 * but also if rewrite items were added earlier - for example, in exitColumn_def_table_constraints()
+		 * in case a table constraint was specified without a separator comma.
+		 */
+		if (rewritten_query_fragment.size() > 0)
 		{
 			PLtsql_expr *expr = makeTsqlExpr(ctx, false);
 			PLtsql_expr_query_mutator mutator(expr, ctx);
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 			char *rewritten_query = expr->query;
+			
 			// Save the rewritten column definition list
 			stmt->coldef = pstrdup(&rewritten_query[5]);
 		}
