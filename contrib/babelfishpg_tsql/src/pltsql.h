@@ -1824,8 +1824,8 @@ typedef struct tsql_pivot_fields
 {
 	RawStmt	*s_sql;
 	RawStmt	*c_sql;
-	char 	*sourcetext;
-	char	*funcName;
+	String 	*sourcetext;
+	String	*funcName;
 }tsql_pivot_fields;
 
 extern tsql_identity_insert_fields tsql_identity_insert;

@@ -1058,24 +1058,6 @@ GO
 ~~ERROR (Message: JOIN with PIVOT statement is not currently supported)~~
 
 
--- Create VIEW ON PIVOT is not currently supported
-CREATE VIEW pivot_view AS
-SELECT TOP 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Create view on stmt with PIVOT operator is not currently supported.)~~
-
-
 -- WITH CTE stmt with usage of pivot operator is not currently supported
 WITH
 EmployeeData AS
@@ -1124,7 +1106,7 @@ int#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
--- view usage in PIVOT data source
+-- Test view as a data source in a stmt with pivot operator
 SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
 FROM
 (
@@ -1143,6 +1125,20 @@ int#!#int#!#int#!#int#!#int#!#int
 202#!#1#!#0#!#0#!#0#!#0
 203#!#0#!#0#!#0#!#1#!#0
 204#!#0#!#1#!#0#!#0#!#1
+~~END~~
+
+
+
+-- Test view of a stmt with pivot operator
+SELECT * FROM pivot_view
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+1200#!#1#!#1#!#1#!#2#!#0
+1201#!#0#!#0#!#2#!#0#!#0
+1202#!#1#!#0#!#0#!#1#!#0
+1203#!#0#!#0#!#0#!#1#!#0
+1204#!#0#!#0#!#0#!#0#!#1
 ~~END~~
 
 

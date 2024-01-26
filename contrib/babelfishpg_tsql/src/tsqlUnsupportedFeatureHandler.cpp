@@ -89,7 +89,6 @@ protected:
 		bool throw_error = false;
 		int count = 0; /* record count to skip unnecessary visiting */
 		bool is_inside_trigger = false;
-		bool is_inside_view = false;
 		bool is_inside_with = false;
 		bool is_inside_join = false;
 
@@ -530,9 +529,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlP
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW_VIEW_METADATA_OPTION, option->VIEW_METADATA());
 	}
 
-	is_inside_view = true;
 	auto ret =  visitChildren(ctx);
-	is_inside_view = false;
 	
 	return ret;
 }
@@ -1375,13 +1372,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlPars
 {
 	if (ctx->PIVOT())
 	{
-		if (is_inside_view)
-		{
-			is_inside_view = false;
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Create view on stmt with PIVOT operator is not currently supported.", 0, 0);
-		}
-			
-
 		if (is_inside_with)
 		{
 			is_inside_with = false;

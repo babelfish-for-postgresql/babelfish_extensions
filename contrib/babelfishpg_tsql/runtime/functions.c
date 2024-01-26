@@ -4473,8 +4473,8 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	per_pivot_fields = (tsql_pivot_fields *) list_nth(tsql_outmost_estat->pivot_parsetree_list, 0);
 	bbf_pivot_src_sql = per_pivot_fields->s_sql;
 	bbf_pivot_cat_sql = per_pivot_fields->c_sql;
-	query_string = per_pivot_fields->sourcetext;
-	funcName = per_pivot_fields->funcName;
+	query_string = per_pivot_fields->sourcetext->sval;
+	funcName = per_pivot_fields->funcName->sval;
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);

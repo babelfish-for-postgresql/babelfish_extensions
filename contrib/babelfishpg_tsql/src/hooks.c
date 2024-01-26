@@ -134,10 +134,10 @@ static List* replace_pltsql_function_defaults(HeapTuple func_tuple, List *defaul
 static Node* optimize_explicit_cast(ParseState *pstate, Node *node);
 
 static ResTarget* make_restarget_from_cstr_list(List * l);
-static void transform_pivot_clause(ParseState *pstate, SelectStmt *stmt);
 static SortByNulls unique_constraint_nulls_ordering(ConstrType constraint_type,
 													SortByDir ordering);
-
+static void transform_pivot_clause(Query *qry, ParseState *pstate, SelectStmt *stmt);
+static void rewrite_pivot_view(Query *qry);
 /*****************************************
  * 			Commands Hooks
  *****************************************/
@@ -257,6 +257,7 @@ static drop_relation_refcnt_hook_type prev_drop_relation_refcnt_hook = NULL;
 static set_local_schema_for_func_hook_type prev_set_local_schema_for_func_hook = NULL;
 static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
+static rewrite_pivot_view_hook_type pre_rewrite_pivot_view_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
@@ -430,6 +431,9 @@ InstallExtendedHooks(void)
 	pre_transform_pivot_clause_hook = transform_pivot_clause_hook;
 	transform_pivot_clause_hook = transform_pivot_clause;
 
+	pre_rewrite_pivot_view_hook = rewrite_pivot_view_hook;
+	rewrite_pivot_view_hook = rewrite_pivot_view;
+
 	prev_optimize_explicit_cast_hook = optimize_explicit_cast_hook;
 	optimize_explicit_cast_hook = optimize_explicit_cast;
 
@@ -505,6 +509,7 @@ UninstallExtendedHooks(void)
 	set_local_schema_for_func_hook = prev_set_local_schema_for_func_hook;
 	bbf_get_sysadmin_oid_hook = prev_bbf_get_sysadmin_oid_hook;
 	transform_pivot_clause_hook = pre_transform_pivot_clause_hook;
+	rewrite_pivot_view_hook = pre_rewrite_pivot_view_hook;
 	optimize_explicit_cast_hook = prev_optimize_explicit_cast_hook;
 	called_from_tsql_insert_exec_hook = pre_called_from_tsql_insert_exec_hook;
 	pltsql_pgstat_end_function_usage_hook = prev_pltsql_pgstat_end_function_usage_hook;
@@ -4710,7 +4715,7 @@ make_restarget_from_cstr_list(List * l)
 }
 
 static void 
-transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
+transform_pivot_clause(Query *qry, ParseState *pstate, SelectStmt *stmt)
 {
 	Query		*temp_src_query;
 	List		*temp_src_targetlist;
@@ -4877,13 +4882,53 @@ transform_pivot_clause(ParseState *pstate, SelectStmt *stmt)
 	c_sql->stmt_location = 0;
 	c_sql->stmt_len = 0;
 
+	qry->isPivot = true;
+	qry->pivotInfoList = list_make4((Node *) copyObject(s_sql), 
+									(Node *) copyObject(c_sql),
+									makeString(pstrdup(pstate->p_sourcetext)),
+									makeString(pstrdup(funcName->sval))
+									);
+	
 	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
 	/* save rewrited sqls to global variable for later retrive */
 	pivot_fields = (tsql_pivot_fields *) palloc(sizeof(tsql_pivot_fields));
 	pivot_fields->s_sql = copyObject(s_sql);
 	pivot_fields->c_sql = copyObject(c_sql);
-	pivot_fields->sourcetext = pstrdup(pstate->p_sourcetext);
-	pivot_fields->funcName = pstrdup(funcName->sval);
+	pivot_fields->sourcetext = makeString(pstrdup(pstate->p_sourcetext));
+	pivot_fields->funcName = makeString(pstrdup(funcName->sval));
+	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, pivot_fields);
+	tsql_outmost_estat->pivot_number++;	
+	MemoryContextSwitchTo(oldContext);
+}
+
+static void
+rewrite_pivot_view(Query *qry)
+{
+	MemoryContext 		oldContext;
+	MemoryContext 		tsql_outmost_context;
+	PLtsql_execstate 	*tsql_outmost_estat;
+	tsql_pivot_fields	*pivot_fields;
+	int					nestlevel;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
+	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
+	if (!tsql_outmost_context)
+		ereport(ERROR,
+			(errcode(ERRCODE_SYNTAX_ERROR),
+				errmsg("pivot outer context not found")));
+
+	oldContext = MemoryContextSwitchTo(tsql_outmost_context);
+
+	/* Retrieve pivot info in saved Query struct and save to tsql_outmost_estat for later bbf_pivot() use */
+	pivot_fields = (tsql_pivot_fields *) palloc(sizeof(tsql_pivot_fields));
+	pivot_fields->s_sql = copyObject((RawStmt *) list_nth(qry->pivotInfoList, 0));
+	pivot_fields->c_sql = copyObject((RawStmt *) list_nth(qry->pivotInfoList, 1));
+	pivot_fields->sourcetext = copyObject((String *)list_nth(qry->pivotInfoList, 2));
+	pivot_fields->funcName 	= copyObject((String *)list_nth(qry->pivotInfoList, 3));
+	
 	tsql_outmost_estat->pivot_parsetree_list = lappend(tsql_outmost_estat->pivot_parsetree_list, pivot_fields);
 	tsql_outmost_estat->pivot_number++;	
 	MemoryContextSwitchTo(oldContext);
