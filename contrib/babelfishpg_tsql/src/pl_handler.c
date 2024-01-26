@@ -183,10 +183,11 @@ typedef struct {
 	int nestLevel;
 } forjson_table;
 
-static bool handleForJsonAuto(Query *query);
+static bool handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables);
 static bool isJsonAuto(List* target);
 static bool check_json_auto_walker(Node *node, ParseState *pstate);
-static TargetEntry* buildJsonEntry(forjson_table *table, TargetEntry* te);
+static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
+static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -1354,7 +1355,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 }
 
 static bool
-handleForJsonAuto(Query *query)
+handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
 {
 	Query* subq;
 	List* target = query->targetList;
@@ -1366,11 +1367,8 @@ handleForJsonAuto(Query *query)
 	RangeTblEntry* subqRte;
 	RangeTblEntry* queryRte;
 	Alias *colnameAlias;
-	forjson_table **tableInfoArr;
-	int numTables = 0;
-	int currTables = 0;
-	int currMax = 0;
-	int i = 0;
+	int newTables = 0;
+	int currTables = numTables;
 	
 	if(!isJsonAuto(target))
 		return false;
@@ -1384,24 +1382,30 @@ handleForJsonAuto(Query *query)
 			if(subq != NULL && (subq->cteList == NULL || list_length(subq->cteList) == 0)) {
 				subqRtable = (List*) subq->rtable;
 				if(subqRtable != NULL && list_length(subqRtable) > 0) {
+					forjson_table **tempArr;
 					foreach(lc, subqRtable) {
 						subqRte = castNode(RangeTblEntry, lfirst(lc));
 						if(subqRte->rtekind == RTE_RELATION) {
-							numTables++;
+							newTables++;
 						} else if(subqRte->rtekind == RTE_SUBQUERY) {
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										errmsg("Values for json auto is not currently supported ")));
+										errmsg("sub-select and values for json auto are not currently supported.")));
 						}
 					}
 
-					if(numTables == 0) {
+					if(numTables + newTables == 0) {
 						ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_TABLE),
 										errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
 					}
 
-					tableInfoArr = malloc(numTables * sizeof(forjson_table));
+					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
+					for(int j = 0; j < numTables; j++) {
+						tempArr[j] = tableInfoArr[j];
+					}
+					tableInfoArr = tempArr;
+					tempArr = NULL;
 					queryRte = linitial_node(RangeTblEntry, query->rtable);
 					colnameAlias = (Alias*) queryRte->eref;
 
@@ -1417,52 +1421,43 @@ handleForJsonAuto(Query *query)
 							currTables++;
 						}
 					}
-
-					foreach(lc, subq->targetList) {
-						TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-						int oid = te->resorigtbl;
-						for(int j = 0; j < numTables; j++) {
-							if(tableInfoArr[j]->oid == oid) {
-								// build entry
-								String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-								if(tableInfoArr[j]->nestLevel == -1) {
-									currMax++;
-									tableInfoArr[j]->nestLevel = currMax;
-								}
-								te = buildJsonEntry(tableInfoArr[j], te);
-								s->sval = te->resname;
-								break;
-							}
-						}
-						i++;
-					}
-					free(tableInfoArr);
+					numTables = numTables + newTables;
+					modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, false);
 					return true;
 				}
 			} else if(subq->cteList != NULL && list_length(subq->cteList) > 0) {
 				Query* ctequery;
 				CommonTableExpr* cte;
+				forjson_table **tempArr;
 				foreach(lc, subq->cteList) {
 					cte = castNode(CommonTableExpr, lfirst(lc));
 					ctequery = (Query*) cte->ctequery;
 					foreach(lc2, ctequery->rtable) {
 						subqRte = castNode(RangeTblEntry, lfirst(lc2));
 						if(subqRte->rtekind == RTE_RELATION)
-							numTables++;
+							newTables++;
 					}
 				}
 
-				if(numTables == 0) {
+				if(newTables == 0) {
 					forjson_table *table = palloc(sizeof(forjson_table));
-					tableInfoArr = malloc(sizeof(forjson_table));
+					tempArr = palloc((numTables + 1) * sizeof(forjson_table));
 					table->oid = 0;
 					table->nestLevel = -1;
 					table->alias = "cteplaceholder";
-					tableInfoArr[numTables] = table;
-					numTables++;
+					tempArr[numTables] = table;
+					newTables++;
 				} else {
-					tableInfoArr = malloc(numTables * sizeof(forjson_table));
+					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
 				}
+
+				for(int j = 0; j < numTables; j++) {
+					tempArr[j] = tableInfoArr[j];
+				}
+
+				tableInfoArr = tempArr;
+				tempArr = NULL;
+				numTables = numTables + newTables;
 				queryRte = linitial_node(RangeTblEntry, query->rtable);
 				colnameAlias = (Alias*) queryRte->eref;
 
@@ -1482,26 +1477,9 @@ handleForJsonAuto(Query *query)
 						}
 					}
 				}
+
+				modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, true);
 				
-				foreach(lc, subq->targetList) {
-					TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-					int oid = te->resorigtbl;
-					for(int j = 0; j < numTables; j++) {
-						if(tableInfoArr[j]->oid == oid) {
-							// build entry
-							String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-							if(tableInfoArr[j]->nestLevel == -1) {
-								currMax++;
-								tableInfoArr[j]->nestLevel = currMax;
-							}
-							te = buildJsonEntry(tableInfoArr[j], te);
-							s->sval = te->resname;
-							break;
-						}
-					}
-					i++;
-				}
-				free(tableInfoArr);
 				return true;
 			}
 		}
@@ -1541,35 +1519,79 @@ isJsonAuto(List* target)
 }
 
 static TargetEntry*
-buildJsonEntry(forjson_table *table, TargetEntry* te)
+buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 {
 	char nest[NAMEDATALEN]; // check size appropriate
 	StringInfo new_resname = makeStringInfo();
-	sprintf(nest, "%d", table->nestLevel);
+	sprintf(nest, "%d", nestLevel);
 	// Adding JSONAUTOALIAS prevents us from modifying
 	// a column more than once
 	if(!strcmp(te->resname, "\?column\?")) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
-	}
-	if(!strncmp(te->resname, "JSONAUTOALIAS", 13))
-		return te; 
+	} 
 	appendStringInfoString(new_resname, "JSONAUTOALIAS.");
 	appendStringInfoString(new_resname, nest);
 	appendStringInfoChar(new_resname, '.');
-	appendStringInfoString(new_resname, table->alias);
+	appendStringInfoString(new_resname, tableAlias);
 	appendStringInfoChar(new_resname, '.');
 	appendStringInfoString(new_resname, te->resname);
 	te->resname = new_resname->data;
 	return te;
 }
 
-static bool check_json_auto_walker(Node *node, ParseState *pstate) {
+static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve)
+{
+	int i = 0;
+	int currMax = 0;
+	ListCell* lc;
+	foreach(lc, targetList) {
+		TargetEntry* te = castNode(TargetEntry, lfirst(lc));
+		int oid = te->resorigtbl;
+		String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
+		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
+			SubLink *sl = castNode(SubLink, te->expr);
+			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
+				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
+					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+					iocoerce->arg = (Expr*) sl;
+					iocoerce->resulttype = T_JsonArrayQueryConstructor;
+					iocoerce->resultcollid = 0;
+					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
+					buildJsonEntry(1, "temp", te);
+					s->sval = te->resname;
+					te->expr = (Expr*) iocoerce;
+					continue;
+				}
+			}
+		}
+		for(int j = 0; j < numTables; j++) {
+			if(tableInfoArr[j]->oid == oid) {
+				// build entry
+				if(tableInfoArr[j]->nestLevel == -1) {
+					currMax++;
+					tableInfoArr[j]->nestLevel = currMax;
+				}
+				te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
+				s->sval = te->resname;
+				break;
+			} else if(!isCve && oid == 0 && j == numTables - 1) {
+				te = buildJsonEntry(1, "temp", te);
+				s->sval = te->resname;
+				break;
+			}
+		}
+		i++;
+	}
+}
+
+static bool check_json_auto_walker(Node *node, ParseState *pstate)
+{
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
-		if(handleForJsonAuto((Query*) node))
+		if(handleForJsonAuto((Query*) node, NULL, 0))
 			return true;
 		else {
 			return query_tree_walker((Query*) node,
