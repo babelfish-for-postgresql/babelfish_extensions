@@ -179,6 +179,7 @@ static bool handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int nu
 static bool isJsonAuto(List* target);
 static bool check_json_auto_walker(Node *node, ParseState *pstate);
 static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
+static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -1358,8 +1359,6 @@ handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
 	Alias *colnameAlias;
 	int newTables = 0;
 	int currTables = numTables;
-	int currMax = 0;
-	int i = 0;
 	
 	if(!isJsonAuto(target))
 		return false;
@@ -1412,52 +1411,8 @@ handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
 							currTables++;
 						}
 					}
-
 					numTables = numTables + newTables;
-
-					foreach(lc, subq->targetList) {
-						TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-						int oid = te->resorigtbl;
-						String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-						if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
-							SubLink *sl = castNode(SubLink, te->expr);
-							if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
-								if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
-									CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
-									iocoerce->arg = (Expr*) sl;
-									iocoerce->resulttype = T_JsonArrayQueryConstructor;
-									iocoerce->resultcollid = 0;
-									iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
-									buildJsonEntry(1, "temp", te);
-									s->sval = te->resname;
-									te->expr = (Expr*) iocoerce;
-									i++;
-									continue;
-
-									// Create new CoerceViaIO in te->expr
-									// where resulttype = 114 (T_JsonArrayQueryConstructor) and coerceformat = COERCE_EXPLICIT_CAST
-									// and the arg is the sublink
-								}
-							} 
-						}
-						for(int j = 0; j < numTables; j++) {
-							if(tableInfoArr[j]->oid == oid) {
-								// build entry
-								if(tableInfoArr[j]->nestLevel == -1) {
-									currMax++;
-									tableInfoArr[j]->nestLevel = currMax;
-								}
-								te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
-								s->sval = te->resname;
-								break;
-							} else if(oid == 0 && j == numTables - 1) {
-								te = buildJsonEntry(1, "temp", te);
-								s->sval = te->resname;
-								break;
-							}
-						}
-						i++;
-					}
+					modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, false);
 					return true;
 				}
 			} else if(subq->cteList != NULL && list_length(subq->cteList) > 0) {
@@ -1512,41 +1467,9 @@ handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
 						}
 					}
 				}
+
+				modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, true);
 				
-				foreach(lc, subq->targetList) {
-					TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-					int oid = te->resorigtbl;
-					String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-					if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
-						SubLink *sl = castNode(SubLink, te->expr);
-						if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
-							if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
-								CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
-								iocoerce->arg = (Expr*) sl;
-								iocoerce->resulttype = T_JsonArrayQueryConstructor;
-								iocoerce->resultcollid = 0;
-								iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
-								buildJsonEntry(1, "temp", te);
-								s->sval = te->resname;
-								te->expr = (Expr*) iocoerce;
-								continue;
-							}
-						}
-					}
-					for(int j = 0; j < numTables; j++) {
-						if(tableInfoArr[j]->oid == oid) {
-							// build entry
-							if(tableInfoArr[j]->nestLevel == -1) {
-								currMax++;
-								tableInfoArr[j]->nestLevel = currMax;
-							}
-							te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
-							s->sval = te->resname;
-							break;
-						}
-					}
-					i++;
-				}
 				return true;
 			}
 		}
@@ -1608,7 +1531,53 @@ buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 	return te;
 }
 
-static bool check_json_auto_walker(Node *node, ParseState *pstate) {
+static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve)
+{
+	int i = 0;
+	int currMax = 0;
+	ListCell* lc;
+	foreach(lc, targetList) {
+		TargetEntry* te = castNode(TargetEntry, lfirst(lc));
+		int oid = te->resorigtbl;
+		String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
+		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
+			SubLink *sl = castNode(SubLink, te->expr);
+			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
+				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
+					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+					iocoerce->arg = (Expr*) sl;
+					iocoerce->resulttype = T_JsonArrayQueryConstructor;
+					iocoerce->resultcollid = 0;
+					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
+					buildJsonEntry(1, "temp", te);
+					s->sval = te->resname;
+					te->expr = (Expr*) iocoerce;
+					continue;
+				}
+			}
+		}
+		for(int j = 0; j < numTables; j++) {
+			if(tableInfoArr[j]->oid == oid) {
+				// build entry
+				if(tableInfoArr[j]->nestLevel == -1) {
+					currMax++;
+					tableInfoArr[j]->nestLevel = currMax;
+				}
+				te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
+				s->sval = te->resname;
+				break;
+			} else if(!isCve && oid == 0 && j == numTables - 1) {
+				te = buildJsonEntry(1, "temp", te);
+				s->sval = te->resname;
+				break;
+			}
+		}
+		i++;
+	}
+}
+
+static bool check_json_auto_walker(Node *node, ParseState *pstate)
+{
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
