@@ -468,6 +468,7 @@ unquoted_string
 doublequoted_string
 operator_whitespace
 operator_atatvar
+operator_binary_whitespace
 alter_authorization_change_db_owner
 sp_changedbowner
 float_exponent
@@ -507,3 +508,4 @@ sys_availability_replicas
 table_constraint_without_comma
 BABEL-730
 babel-4475
+babel-4517
