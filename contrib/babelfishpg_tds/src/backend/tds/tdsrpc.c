@@ -151,6 +151,8 @@ static void SPPrepExec(TDSRequestSP req);
 static void SPCustomType(TDSRequestSP req);
 static void SPUnprepare(TDSRequestSP req);
 static void TDSLogStatementCursorHandler(TDSRequestSP req, char *stmt, int option);
+static void LogStatementNoError(const char *header, const int handle, const char *msg, const uint16 nparams);
+
 static InlineCodeBlockArgs *DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long options);
 List	   *tvp_lookup_list = NIL;
 bool		lockForFaultInjection = false;
@@ -580,35 +582,7 @@ SPExecuteSQL(TDSRequestSP req)
 	/* command type - execute (0xe0) */
 	TdsSendDone(TDS_TOKEN_DONEPROC, TDS_DONE_FINAL, 0xe0, 0);
 
-	/*
-	 * Log immediately if dictated by log_statement
-	 */
-	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
-	{
-
-		ErrorContextCallback *plerrcontext = error_context_stack;
-
-		error_context_stack = plerrcontext->previous;
-
-		/* In certain cases TVP can throw error for errdetail_params. */
-		PG_TRY();
-		{
-			ereport(LOG,
-					(errmsg("sp_executesql statement: %s", s.data),
-					errhidestmt(true),
-					errdetail_params(req->nTotalParams)));
-		}
-		PG_CATCH();
-		{
-			ereport(LOG,
-					(errmsg("sp_executesql statement: %s", s.data),
-					errhidestmt(true)));
-		}
-		PG_END_TRY();
-
-		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
-		error_context_stack = plerrcontext;
-	}
+	LogStatementNoError("sp_executesql:", -1, s.data, req->nTotalParams);
 
 	/*
 	 * Print TDS log duration, if log_duration is set
@@ -796,34 +770,7 @@ SPExecute(TDSRequestSP req)
 	/* Command type - execute (0xe0). */
 	TdsSendDone(TDS_TOKEN_DONEPROC, TDS_DONE_FINAL, 0xe0, 0);
 
-	/*
-	 * Log immediately if dictated by log_statement
-	 */
-	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
-	{
-		ErrorContextCallback *plerrcontext = error_context_stack;
-
-		error_context_stack = plerrcontext->previous;
-
-		/* In certain cases TVP can throw error for errdetail_params. */
-		PG_TRY();
-		{
-			ereport(LOG,
-					(errmsg("sp_execute handle: %d", req->handle),
-					errhidestmt(true),
-					errdetail_params(req->nTotalParams)));
-		}
-		PG_CATCH();
-		{
-			ereport(LOG,
-					(errmsg("sp_execute handle: %d", req->handle),
-					errhidestmt(true)));
-		}
-		PG_END_TRY();
-
-		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
-		error_context_stack = plerrcontext;
-	}
+	LogStatementNoError("sp_execute", req->handle, "", req->nTotalParams);
 
 	/*
 	 * Print TDS log duration, if log_duration is set
@@ -938,36 +885,7 @@ SPPrepExec(TDSRequestSP req)
 	/* command type - execute (0xe0) */
 	TdsSendDone(TDS_TOKEN_DONEPROC, TDS_DONE_FINAL, 0xe0, 0);
 
-	/*
-	 * Log immediately if dictated by log_statement
-	 */
-	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
-	{
-		ErrorContextCallback *plerrcontext = error_context_stack;
-
-		error_context_stack = plerrcontext->previous;
-
-		/* In certain cases TVP can throw error for errdetail_params. */
-		PG_TRY();
-		{
-			ereport(LOG,
-					(errmsg("sp_prepexec handle: %d, "
-							"statement: %s", req->handle, s.data),
-					errhidestmt(true),
-					errdetail_params(req->nTotalParams)));
-		}
-		PG_CATCH();
-		{
-			ereport(LOG,
-					(errmsg("sp_prepexec handle: %d, "
-							"statement: %s", req->handle, s.data),
-					errhidestmt(true)));
-		}
-		PG_END_TRY();
-
-		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
-		error_context_stack = plerrcontext;
-	}
+	LogStatementNoError("sp_prepexec", req->handle, s.data, req->nTotalParams);
 
 	/*
 	 * Print TDS log duration, if log_duration is set
@@ -1190,34 +1108,7 @@ SPCustomType(TDSRequestSP req)
 	/* command type - execute (0xe0) */
 	TdsSendDone(TDS_TOKEN_DONEPROC, TDS_DONE_FINAL, 0xe0, 0);
 
-	/*
-	 * Log immediately if dictated by log_statement
-	 */
-	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
-	{
-		ErrorContextCallback *plerrcontext = error_context_stack;
-
-		error_context_stack = plerrcontext->previous;
-
-		/* In certain cases TVP can throw error for errdetail_params. */
-		PG_TRY();
-		{
-			ereport(LOG,
-					(errmsg("stored procedure: %s", req->name.data),
-					errhidestmt(true),
-					errdetail_params(req->nTotalParams)));
-		}
-		PG_CATCH();
-		{
-			ereport(LOG,
-					(errmsg("stored procedure: %s", req->name.data),
-					errhidestmt(true)));
-		}
-		PG_END_TRY();
-
-		pltsql_plugin_handler_ptr->stmt_needs_logging = false;
-		error_context_stack = plerrcontext;
-	}
+	LogStatementNoError("stored procedure:", -1, req->name.data, req->nTotalParams);
 
 	/*
 	 * Print TDS log duration, if log_duration is set
@@ -3978,11 +3869,11 @@ TDSLogStatementCursorHandler(TDSRequestSP req, char *stmt, int option)
 	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
 	{
 		ErrorContextCallback *plerrcontext = error_context_stack;
-
 		error_context_stack = plerrcontext->previous;
 
 		switch (option)
 		{
+			
 			case PRINT_CURSOR_HANDLE:
 				ereport(LOG,
 						(errmsg("sp_cursor handle: %d; statement: %s",
@@ -4003,6 +3894,7 @@ TDSLogStatementCursorHandler(TDSRequestSP req, char *stmt, int option)
 								req->cursorHandle, req->cursorPreparedHandle, stmt),
 						 errhidestmt(true),
 						 errdetail_params(req->nTotalParams)));
+				
 				break;
 			default:
 				break;
@@ -4014,4 +3906,43 @@ TDSLogStatementCursorHandler(TDSRequestSP req, char *stmt, int option)
 
 	/* Print TDS log duration, if log_duration is set */
 	TDSLogDuration(stmt);
+}
+
+/*
+ * Log msg ignoring any error during ereport.
+ * This should only be called when it is safe to call FlushErrorState
+ * ie: ignoring any previous error that happened prior
+ * */
+static void LogStatementNoError(const char *header, const int handle, const char *msg, const uint16 nparams)
+{
+	MemoryContext curr = CurrentMemoryContext;
+
+	ErrorContextCallback *plerrcontext = error_context_stack;
+	error_context_stack = plerrcontext->previous;
+
+	if (pltsql_plugin_handler_ptr->stmt_needs_logging || TDS_DEBUG_ENABLED(TDS_DEBUG2))
+	{
+		PG_TRY();
+		{
+			ereport(LOG,
+					(errmsg("%s handle: %d "
+							"statement: %s",
+					header, handle, msg),
+					errhidestmt(true),
+					errdetail_params(nparams)));
+		}
+		PG_CATCH();
+		{
+			MemoryContextSwitchTo(curr);
+			FlushErrorState();
+
+			ereport(LOG,
+					(errmsg("%s statement: %s", header, msg),
+					errhidestmt(true)));
+		}
+		PG_END_TRY();
+	}
+
+	pltsql_plugin_handler_ptr->stmt_needs_logging = false;
+	error_context_stack = plerrcontext;
 }
