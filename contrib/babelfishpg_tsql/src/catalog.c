@@ -1583,7 +1583,7 @@ static void alter_guest_schema_for_db(const char *dbname);
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
 static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
-static void rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, const char *obj_type);
+static void rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type);
 
 static int get_privilege_of_object(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 
@@ -2626,19 +2626,19 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 	switch (stmt->renameType)
 	{
 		case OBJECT_TABLE:
-			rename_object_update_bbf_schema_permission_catalog(stmt, OBJ_RELATION);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_VIEW:
 			rename_view_update_bbf_catalog(stmt);
-			rename_object_update_bbf_schema_permission_catalog(stmt, OBJ_RELATION);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_PROCEDURE:
 			rename_procfunc_update_bbf_catalog(stmt);
-			rename_object_update_bbf_schema_permission_catalog(stmt, OBJ_PROCEDURE);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_FUNCTION:
 			rename_procfunc_update_bbf_catalog(stmt);
-			rename_object_update_bbf_schema_permission_catalog(stmt, OBJ_FUNCTION);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_SEQUENCE:
 			break;
@@ -2654,7 +2654,7 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 }
 
 static void
-rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, const char *obj_type)
+rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type)
 {
 	/* Update 'object_name' in 'babelfish_schema_permissions' */
 	Relation	bbf_schema_rel;
@@ -2662,12 +2662,13 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, const char 
 	ScanKeyData key[4];
 	HeapTuple	tuple_bbf_schema;
 	HeapTuple	new_tuple;
-	TableScanDesc tblscan;
+	SysScanDesc scan;
 	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {0};
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	const char *logical_schema_name;
 	const char *object_name;
+	char	*object_type;
 	int16		dbid = get_cur_db_id();
 	Node	   *schema;
 	ObjectWithArgs *objwargs;
@@ -2677,13 +2678,18 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, const char 
 	/* get the description of the table */
 	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
 
-	if (strcmp(obj_type, OBJ_RELATION) == 0)
+	if (rename_type == OBJECT_TABLE || rename_type == OBJECT_VIEW)
 	{
 		logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
 		object_name = stmt->relation->relname;
+		object_type = OBJ_RELATION;
 	}
-	else if (strcmp(obj_type, OBJ_PROCEDURE) == 0 || strcmp(obj_type, OBJ_FUNCTION) == 0)
+	else
 	{
+		if (rename_type == OBJECT_PROCEDURE)
+			object_type = OBJ_PROCEDURE;
+		else if (rename_type == OBJECT_FUNCTION)
+			object_type = OBJ_FUNCTION;
 		objwargs = (ObjectWithArgs *) stmt->object;
 		schema = (Node *) linitial(objwargs->objname);
 		logical_schema_name = strVal(schema);
@@ -2711,13 +2717,15 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, const char 
 				InvalidOid,
 				tsql_get_server_collation_oid_internal(false),
 				F_TEXTEQ,
-				CStringGetTextDatum(obj_type));
+				CStringGetTextDatum(object_type));
 
 	/* scan */
-	tblscan = table_beginscan_catalog(bbf_schema_rel, 4, key);
+	scan = systable_beginscan(bbf_schema_rel,
+			get_bbf_schema_perms_idx_oid(),
+			true, NULL, 4, key);
 
 	/* get the scan result -> original tuple */
-	tuple_bbf_schema = heap_getnext(tblscan, ForwardScanDirection);
+	tuple_bbf_schema = systable_getnext(scan);
 
 	if (HeapTupleIsValid(tuple_bbf_schema))
 	{
@@ -2736,7 +2744,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, const char 
 		heap_freetuple(new_tuple);
 	}
 
-	table_endscan(tblscan);
+	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
