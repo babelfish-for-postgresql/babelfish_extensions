@@ -2668,7 +2668,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	const char *logical_schema_name;
 	const char *object_name;
-	char	*object_type;
+	char	*object_type = NULL;
 	int16		dbid = get_cur_db_id();
 	Node	   *schema;
 	ObjectWithArgs *objwargs;
