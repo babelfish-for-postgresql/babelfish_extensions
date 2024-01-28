@@ -24,6 +24,7 @@ CREATE TABLE sys.babelfish_schema_permissions (
   permission INT NOT NULL,
   grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   object_type CHAR(1) NOT NULL COLLATE sys.database_default,
+  funcsignature TEXT COLLATE "C",
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
