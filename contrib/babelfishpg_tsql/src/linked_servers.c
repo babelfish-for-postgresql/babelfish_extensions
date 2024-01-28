@@ -861,6 +861,10 @@ linked_server_establish_connection(char *servername, LinkedServerProcess * lspro
 		}
 
 		LINKED_SERVER_DEBUG("LINKED SERVER: Connected to remote server");
+
+		LINKED_SERVER_DEBUG("Code coverage demo: debug log 1");
+		LINKED_SERVER_DEBUG("Code coverage demo: debug log 2");
+		LINKED_SERVER_DEBUG("Code coverage demo: debug log 3");
 	}
 	PG_CATCH();
 	{
