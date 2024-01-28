@@ -2727,7 +2727,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	/* get the scan result -> original tuple */
 	tuple_bbf_schema = systable_getnext(scan);
 
-	if (HeapTupleIsValid(tuple_bbf_schema))
+	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
 		/* create new tuple to substitute */
 		new_record_bbf_schema[Anum_bbf_schema_perms_object_name - 1] = CStringGetTextDatum(stmt->newname);
@@ -2742,6 +2742,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		CatalogTupleUpdate(bbf_schema_rel, &new_tuple->t_self, new_tuple);
 
 		heap_freetuple(new_tuple);
+		tuple_bbf_schema = systable_getnext(scan);
 	}
 
 	systable_endscan(scan);
