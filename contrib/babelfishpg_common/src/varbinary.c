@@ -188,7 +188,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 	 */
 	if (typmod == TSQLHexConstTypmod ||
 		(dump_restore && strcmp(dump_restore, "on") == 0) ||
-		 IS_LOGICALREP_APPLYWORKER)
+		 IS_LOGICAL_RECEIVER())
 	{
 		/*
 		 * calculate length of the binary code e.g. 0xFF should be 1 byte

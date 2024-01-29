@@ -85,7 +85,7 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	svhdr_5B_t *svhdr;
 
 	/* Input as a bytea instead if it is logical replication applyworker. */
-	if (IS_LOGICALREP_APPLYWORKER)
+	if (IS_LOGICAL_RECEIVER())
 		PG_RETURN_DATUM(byteain(fcinfo));
 
 	getTypeInputInfo(type, &input_func, &typIOParam);
@@ -139,13 +139,8 @@ sqlvariantout(PG_FUNCTION_ARGS)
 	size_t		data_len = VARSIZE_ANY_EXHDR(vlena) - svhdr_size;
 	Datum	   *output_datum = palloc0(SIZEOF_DATUM);
 
-	/*
-	 * Output as a bytea instead if we are in a logical decoding context.
-	 * There are two ways it possible:
-	 * 1. MyReplicationSlot is logical.
-	 * 2. This is a logical walsender process.
-	 */
-	if (IS_LOGICALREP_WALSENDER)
+	/* Output as a bytea instead if we are in a logical decoding context. */
+	if (IS_LOGICAL_SENDER())
 		PG_RETURN_DATUM(byteaout(fcinfo));
 
 	if (!get_typbyval(type))	/* pass by reference */
