@@ -62,7 +62,7 @@ runs:
           then
             printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        pg_old_dir: ${pg_old_dir}\n        pg_new_dir: ${pg_new_dir}\n        migration_mode: 'multi-db'\n        server_collation_name: ${{ inputs.server_collation_name }}\n\n"   >> $upgrade_version_dir_path/action.yml
           else
-            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        install_dir: ${pg_new_dir}\n\n"   >> $upgrade_version_dir_path/action.yml
+            printf "    - name: Upgrade Version to $upgrade_version\n      id: upgrade-version-$i\n      if: always() $temp\n      uses: ${uses_file}\n      with: \n        engine_branch: ${engine_branch}\n        extension_branch: ${extension_branch}\n        is_final_ver: ${is_final_ver}\n        install_dir: ${pg_new_dir}\n        server_collation_name: ${{ inputs.server_collation_name }}\n\n"   >> $upgrade_version_dir_path/action.yml
           fi
 
           previous_installed_version=$upgrade_version
