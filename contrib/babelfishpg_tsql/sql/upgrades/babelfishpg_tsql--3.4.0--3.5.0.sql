@@ -2219,7 +2219,7 @@ AS $$
 BEGIN
 	IF @procedure_schema IS NULL
 		BEGIN
-			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE login_name = suser_sname();
+			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
 		END
 
         SELECT 	v.column_name AS [PARAMETER_NAME],
