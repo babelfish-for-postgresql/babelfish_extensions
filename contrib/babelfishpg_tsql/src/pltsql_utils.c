@@ -175,7 +175,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	Node *trigStmt = NULL;
 	ObjectAddress tbltyp;
 	int origname_location = -1;
-					
+
 	pstate->p_sourcetext = queryString;
 
 	foreach(option, stmt->options)
@@ -202,6 +202,23 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	}
 	else
 	{	
+		ObjectWithArgs *func = NULL;
+		Oid func_oid = InvalidOid;
+
+		func = makeNode(ObjectWithArgs);
+		func->objname = stmt->funcname;
+		func->args_unspecified = true;
+
+		/* function, procedure */
+		func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
+
+		if (OidIsValid(func_oid))
+		{
+			/* Restrict duplicate procedure/function. */
+			ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+							errmsg("Function already exists")));
+		}
+
 		/* All event trigger calls are done only when isCompleteQuery is true */
 		needCleanup = isCompleteQuery && EventTriggerBeginCompleteQuery();
 
