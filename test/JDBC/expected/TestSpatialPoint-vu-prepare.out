@@ -491,6 +491,10 @@ prepst#!#INSERT INTO SPATIALPOINT_dt(PrimaryKey, GeomColumn, GeogColumn) values(
 ~~ROW COUNT: 1~~
 
 
+create procedure geometry_proc_1 @a geometry, @b varchar(max) as select @a as a, @b as b;
+create procedure geography_proc_1 @a geography, @b varchar(max) as select @a as a, @b as b;
+create table geo_view_test(a geometry, b geography)
+
 create schema geom_schema;
 CREATE FUNCTION geom_schema.STDistance(@point geometry) RETURNS nvarchar(max) AS BEGIN RETURN @point.STAsText(); END;
 create table geometry_test(geom_schema geometry)

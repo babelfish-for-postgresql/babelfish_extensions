@@ -197,6 +197,7 @@ static void handleTableConstraintWithoutComma(TSqlParser::Column_def_table_const
 static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
 static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
 static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
+static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
 static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
 
 /*
@@ -2313,40 +2314,6 @@ public:
 		// TO-DO
 	}
 
-	void exitPredicate(TSqlParser::PredicateContext *ctx) override
-	{
-		// For comparison operators directly followed by an '@@' variable, insert a space 
-		// to avoid these being parsed incorrectly by PG; this applies to the following 
-		// character sequences: =@@, >@@, <@@ as well as !=@ (i.e. a single-@ variable)
-		// Note: this issue does not occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
-
-		if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
-		{
-			std::string op = getFullText(ctx->comparison_operator());		
-			if ((op.back() == '=') || 
-			    (op.back() == '>') || 
-			    (op.back() == '<'))
-			{
-				// The operator must be followed immediately by the variable without any character in between
-				Assert(ctx->expression(1));
-				size_t startPosition = ctx->expression(1)->start->getStartIndex();
-				if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
-				{
-					std::string var = getFullText(ctx->expression(1));
-					// The subsequent expression must be a variable starting with '@@'
-					if (var.front() == '@') 
-					{
-						if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
-						{
-							// Insert a space before the variable name
-							rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
-						}
-					}
-				}
-			}
-		}
-	}
-
 	void exitExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext *ctx) override
 	{
 		// Look for named arguments with an @@variable with no preceding whitespace, i.e. 'exec myproc @p=@@spid'
@@ -2369,26 +2336,27 @@ public:
 			}
 		}
 	}
-
+	
 	void exitOrder_by_clause(TSqlParser::Order_by_clauseContext *ctx) override
 	{
 		handleOrderByOffsetFetch(ctx);
 	}
-
-	// NB: this is copied in tsqlMutator
+  
+	// NB: the following are copied in tsqlMutator
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
 	{
 		handleTableConstraintWithoutComma(ctx);
 	}
-	
-	// NB: this is copied in tsqlMutator
 	void exitConstant(TSqlParser::ConstantContext *ctx) override
 	{	
 		// Check for floating-point number without exponent
 		handleFloatWithoutExponent(ctx);
 	}
-  
-	// NB: this is copied in TsqlMutator
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// Check for comparison operators directly followed by an '@@' variable, like =@@
+		handleAtAtVarInPredicate(ctx);
+	}		
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
@@ -2723,6 +2691,38 @@ public:
 	void enterQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
 		has_identity_function = false;
+	}
+
+	void exitOrder_by_expression(TSqlParser::Order_by_expressionContext *ctx) override
+	{
+		/*
+		 * If there are multiple Order by clauses then we do not need to append
+		 * NULLS LAST since cummulative order bys do not choose an index scan.
+		 */
+		if (!(ctx->parent && ((TSqlParser::Order_by_clauseContext *)ctx->parent)->order_bys.size() == 1))
+			return;
+		/*
+		 * If the order by clause expression has a vector operator then we need to append
+		 * NULLS LAST as the sort option such that vector index types can be chosen. This
+		 * is done because the TSQL ordering is NULLS FIRST but for PG it's the opposite
+		 * and the order does not matter for bit indexes.
+		 */
+		if (statementMutator && ctx->vector_operator())
+		{
+			PLtsql_expr_query_mutator *mutator = statementMutator.get();
+			if (ctx->ASC())
+			{
+				mutator->add(ctx->ASC()->getSymbol()->getStopIndex()+1, "", " NULLS LAST");
+			}
+			else if (ctx->DESC())
+			{
+				mutator->add(ctx->DESC()->getSymbol()->getStopIndex()+1, "", " NULLS LAST");
+			}
+			else
+			{
+				mutator->add(ctx->expression()[1]->stop->getStopIndex()+1, "", " NULLS LAST");
+			}
+		}
 	}
 
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
@@ -3219,21 +3219,22 @@ public:
 			}
 		}
 	}
-	
-	// NB: this is copied in tsqlBuilder
+
+	// NB: the following are copied in tsqlBuilder
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
 	{
 		handleTableConstraintWithoutComma(ctx);
-	}
-	
-	// NB: this is copied in tsqlBuilder
+  }
 	void exitConstant(TSqlParser::ConstantContext *ctx) override
 	{
 		// Check for floating-point number without exponent
 		handleFloatWithoutExponent(ctx);
 	}
-
-// NB: this is copied in tsqlBuilder
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// Check for comparison operators directly followed by an '@@' variable, like =@@
+		handleAtAtVarInPredicate(ctx);
+	}	
 	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
 	{
 		handleBitNotOperator(ctx);
@@ -7332,7 +7333,7 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->NONCLUSTERED(), baseCtx);
 	if (ctx->COLUMNSTORE())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->COLUMNSTORE(), baseCtx);
-	if (ctx->with_index_options())
+	if (ctx->with_index_options() && !ctx->vector_index_method()) /* Vector indexes can have With clause. */
 		removeCtxStringFromQuery(stmt->sqlstmt, ctx->with_index_options(), baseCtx);
 
 	return false;
@@ -8727,6 +8728,42 @@ handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx)
 	return;
 }
 
+void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx)
+{	
+	// For comparison operators directly followed by an '@@' variable, insert a space 
+	// to avoid these being parsed incorrectly by PG; this applies to these following 
+	// character sequences: =@@, >@@, <@@ as well as !=@ (single-@ variable)
+	// Note: this issue does occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
+	// Note: parameter defaults and named parameters are handled separately
+
+	if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
+	{
+		std::string op = getFullText(ctx->comparison_operator());		
+		if ((op.back() == '=') || 
+		    (op.back() == '>') || 
+		    (op.back() == '<'))
+		{
+			// The operator must be followed immediately by the variable without any character in between
+			Assert(ctx->expression(1));
+			size_t startPosition = ctx->expression(1)->start->getStartIndex();
+			if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
+			{
+				std::string var = getFullText(ctx->expression(1));
+				// The subsequent expression must be a variable starting with '@@'
+				if (var.front() == '@') 
+				{
+					if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
+					{
+						// Insert a space before the variable name
+						rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+					}
+				}
+			}
+		}
+	}
+	return;
+}	
+
 static void
 handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx)
 {
@@ -8752,3 +8789,4 @@ handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx)
 
 	return;
 }
+

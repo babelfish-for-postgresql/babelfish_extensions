@@ -325,6 +325,11 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 
 		// Determine if the value should be inserted as a nested json object
 		parts = determine_parts(colname, &num);
+		if(strcmp(parts[0], "JSONAUTOALIAS") != 0) {
+			ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("sub-select and values for json auto are not currently supported.")));
+		}
 		colname = remove_index_and_alias(colname);
 		nestedVal = value;
 
