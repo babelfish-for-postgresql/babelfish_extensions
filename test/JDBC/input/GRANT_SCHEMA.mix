@@ -438,6 +438,8 @@ REVOKE SELECT on schema::"bAbel_4344 s1" from "BABEL_4344_U1";
 go
 REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
 go
+GRANT SELECT on babel_4344_t1 to BABEL_4344_U1;
+go
 
 -- psql
 -- should show original object names
@@ -446,6 +448,8 @@ go
 
 -- tsql
 -- rename the objects where permissions are already granted
+sp_rename 'babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
+go
 sp_rename 'babel_4344_s1.babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
 sp_rename 'babel_4344_s1.babel_4344_t3', 'babel_4344_t3_new', 'OBJECT';
@@ -481,6 +485,8 @@ go
 -- tsql user=babel_4344_l1 password=12345678
 -- User has SCHEMA privileges, should be accessible.
 use babel_4344_d1;
+go
+select * from babel_4344_t1_new;
 go
 select * from babel_4344_s1.babel_4344_t1_new
 go
@@ -575,7 +581,7 @@ go
 drop schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
 go
 
-drop table babel_4344_t1;
+drop table babel_4344_t1_new;
 go
 
 drop table babel_4344_s1.babel_4344_t1_new;
