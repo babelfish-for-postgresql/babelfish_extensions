@@ -143,5 +143,15 @@ CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'rowversionvarchar_
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
+CREATE OR REPLACE FUNCTION sys.date2datetime(DATE)
+RETURNS DATETIME
+AS 'babelfishpg_common', 'date_datetime'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.date2datetime2(DATE)
+RETURNS DATETIME2
+AS 'babelfishpg_common', 'date_datetime2'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
