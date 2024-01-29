@@ -13,9 +13,17 @@ go
 sp_procedure_params_100_managed 'babel_3254_p5'
 go
 
+-- will result no rows as babel_3254_p6 is in babel_3254_s1 schema
 sp_procedure_params_100_managed 'babel_3254_p6'
 go
 
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @procedure_schema = 'babel_3254_s1'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @group_number = 1
+go
+
+-- group number anything other than 1 should return no rows
 sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @group_number = 2
 go
 
@@ -46,9 +54,4 @@ go
 sp_procedure_params_100_managed @procedure_name = 'babel_3254_p5', @parameter_name = '@e'
 go
 
-sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @parameter_name = '@f'
-go
-
-sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @procedure_schema = 'dbo', @parameter_name = '@a'
-go
 

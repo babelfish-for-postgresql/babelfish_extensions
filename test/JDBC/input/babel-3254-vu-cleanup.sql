@@ -13,5 +13,8 @@ go
 drop procedure babel_3254_p5
 go
 
-drop procedure babel_3254_p6
+drop procedure babel_3254_s1.babel_3254_p6
+go
+
+drop schema babel_3254_s1
 go

@@ -57,8 +57,11 @@ create procedure babel_3254_p5 @a date,
 as select 1
 go
 
+create schema babel_3254_s1
+go
+
 -- money and smallmoney
-create procedure babel_3254_p6 @a money OUTPUT,
-                            @b smallmoney
+create procedure babel_3254_s1.babel_3254_p6 @a money OUTPUT,
+                                            @b smallmoney
 as select 1
 go

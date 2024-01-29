@@ -76,7 +76,15 @@ varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#
 ~~END~~
 
 
+-- will result no rows as babel_3254_p6 is in babel_3254_s1 schema
 sp_procedure_params_100_managed 'babel_3254_p6'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @procedure_schema = 'babel_3254_s1'
 go
 ~~START~~
 varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
@@ -86,6 +94,22 @@ varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#
 ~~END~~
 
 
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @group_number = 1
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@b#!#1#!#0#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@c#!#2#!#16#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@d#!#1#!#20#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@e#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@f#!#2#!#6#!#<NULL>#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#float#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@g#!#1#!#13#!#<NULL>#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- group number anything other than 1 should return no rows
 sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @group_number = 2
 go
 ~~START~~
@@ -160,19 +184,5 @@ varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#
 @e#!#1#!#15#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
-
-sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @parameter_name = '@f'
-go
-~~START~~
-varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
-~~END~~
-
-
-sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @procedure_schema = 'dbo', @parameter_name = '@a'
-go
-~~START~~
-varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
-@a#!#2#!#9#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-~~END~~
 
 
