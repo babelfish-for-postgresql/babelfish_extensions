@@ -63,7 +63,7 @@ runs:
           sudo echo "host    all             all             ::/0                     md5"
         } > pg_hba.conf
         if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
-          sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> /postgresql.conf
+          sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> postgresql.conf
         fi
         ~/${{inputs.install_dir}}/bin/pg_ctl -c -D ~/${{inputs.install_dir}}/$DATADIR/ -l logfile start
         cd ~/work/babelfish_extensions/babelfish_extensions/
