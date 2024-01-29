@@ -3663,11 +3663,15 @@ GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5
 
 CREATE OR REPLACE PROCEDURE sys.sp_procedure_params_100_managed(IN "@procedure_name" sys.sysname, 
                                                                 IN "@group_number" integer DEFAULT 1, 
-                                                                IN "@procedure_schema" sys.sysname DEFAULT 'dbo'::sys."varchar", 
+                                                                IN "@procedure_schema" sys.sysname DEFAULT NULL::sys."varchar", 
                                                                 IN "@parameter_name" sys.sysname DEFAULT NULL::sys."varchar")
 AS $$
-
 BEGIN
+	IF @procedure_schema IS NULL
+		BEGIN
+			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+		END
+
         SELECT 	v.column_name AS [PARAMETER_NAME],
 		CAST (CASE v.column_type
 			WHEN 5 THEN 4
@@ -3738,7 +3742,7 @@ BEGIN
    	LEFT OUTER JOIN sys.all_parameters AS p 
 	ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
    	WHERE (@procedure_name = '' OR v.original_procedure_name = @procedure_name)
-    	AND (@procedure_schema = '' OR v.procedure_owner = @procedure_schema)
+    	AND (@procedure_schema IS NULL OR v.procedure_owner = @procedure_schema)
 	AND (@parameter_name IS NULL OR column_name = @parameter_name)
 	AND @group_number = 1
     	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;

@@ -65,3 +65,19 @@ create procedure babel_3254_s1.babel_3254_p6 @a money OUTPUT,
                                             @b smallmoney
 as select 1
 go
+
+create login babel_3254_l1 with password = '12345678'
+go
+
+create user babel_3254_u1 for login babel_3254_l1 with default_schema = babel_3254_s1
+go
+
+-- psql
+grant all on schema master_babel_3254_s1 to master_babel_3254_u1;
+go
+
+-- tsql user=babel_3254_l1 password=12345678
+create procedure babel_3254_p7 @a int
+as select 1
+go
+

@@ -185,4 +185,41 @@ varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#
 ~~END~~
 
 
+-- tsql user=babel_3254_l1 password=12345678
+-- check for the user having non-default schema
+select default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+go
+~~START~~
+nvarchar
+babel_3254_s1
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- should return no rows as babel_3254_p7 is in babel_3254_s1 schema
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7', @procedure_schema = 'dbo'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+-- should return the result set as babel_3254_p7 is in babel_3254_s1 schema
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7', @procedure_schema = 'babel_3254_s1'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
 
