@@ -3773,6 +3773,7 @@ function_call
     : ranking_windowed_function                         
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
+    | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3857,11 +3858,34 @@ trigger_column_updated
     : UPDATE LR_BRACKET full_column_name RR_BRACKET
     ;
 
-spatial_methods  // we could expand the entire list here, but it is very long
-    : method=id (LR_BRACKET expression_list? RR_BRACKET)?
-    | NULL_P // no bracket
+spatial_methods
+    : ( geospatial_col | geospatial_func_no_arg | geospatial_func_arg ) (LR_BRACKET expression_list? RR_BRACKET)?
     ;
         
+geospatial_col
+    : STX
+    | STX_SQBRACKET
+    | STX_DOUBLE_QUOTE
+    | STY
+    | STY_SQBRACKET
+    | STY_DOUBLE_QUOTE
+    | LAT
+    | LAT_SQBRACKET
+    | LAT_DOUBLE_QUOTE
+    | LONG
+    | LONG_SQBRACKET
+    | LONG_DOUBLE_QUOTE
+    ;
+
+geospatial_func_no_arg
+    : STASTEXT
+    | STASBINARY
+    ;
+
+geospatial_func_arg
+    : STDISTANCE
+    ;
+
 hierarchyid_methods
     : method=( GETANCESTOR | GETDESCENDANT | GETLEVEL | ISDESCENDANTOF | READ | GETREPARENTEDVALUE | TOSTRING ) LR_BRACKET expression_list? RR_BRACKET
     ;
@@ -4598,6 +4622,9 @@ keyword
     | LANGUAGE
     | LAST
     | LAST_VALUE
+    | LAT
+    | LAT_DOUBLE_QUOTE
+    | LAT_SQBRACKET
     | LEAD
     | LEDGER
     | LEFT
@@ -4621,6 +4648,9 @@ keyword
     | LOG
     | LOG10
     | LOGIN
+    | LONG
+    | LONG_DOUBLE_QUOTE
+    | LONG_SQBRACKET
     | LOOP
     | LOW
     | MANUAL
@@ -4959,6 +4989,8 @@ keyword
     | STARTED
     | STARTUP_STATE
     | START_DATE
+    | STASBINARY
+    | STASTEXT
     | STATE
     | STATEMENT
     | STATIC
@@ -4969,6 +5001,7 @@ keyword
     | STATUSONLY
     | STDEV
     | STDEVP
+    | STDISTANCE
     | STOP
     | STOPAT
     | STOPATMARK
@@ -4979,6 +5012,12 @@ keyword
     | STRING_AGG
     | STRING_DELIMITER
     | STUFF
+    | STX
+    | STX_DOUBLE_QUOTE
+    | STX_SQBRACKET
+    | STY
+    | STY_DOUBLE_QUOTE
+    | STY_SQBRACKET
     | SUBJECT
     | SUBSCRIBE
     | SUBSCRIPTION
@@ -5129,6 +5168,10 @@ func_proc_name_database_schema
     | (schema=id? DOT)? procedure=id
     ;
 
+spatial_proc_name_server_database_schema
+    : ((schema=id? DOT)? table=id? DOT)? column=id DOT ( geospatial_func_no_arg | geospatial_func_arg )
+    ;
+
 func_proc_name_server_database_schema
     : (server=id? DOT)? database=id? DOT schema=id? DOT procedure=id
     | (schema=id? DOT)? procedure=id
@@ -5149,7 +5192,8 @@ collation
     ;
     
 full_column_name
-    : (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
+    : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
+    | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
     ;
 
 column_name_list_with_order

@@ -128,6 +128,14 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							   QueryEnvironment *queryEnv,
 							   DestReceiver *dest,
 							   QueryCompletion *qc);
+static void call_prev_ProcessUtility(PlannedStmt *pstmt,
+						 const char *queryString,
+						 bool readOnlyTree,
+						 ProcessUtilityContext context,
+						 ParamListInfo params,
+						 QueryEnvironment *queryEnv,
+						 DestReceiver *dest,
+						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
@@ -176,10 +184,11 @@ typedef struct {
 	int nestLevel;
 } forjson_table;
 
-static bool handleForJsonAuto(Query *query);
+static bool handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables);
 static bool isJsonAuto(List* target);
 static bool check_json_auto_walker(Node *node, ParseState *pstate);
-static TargetEntry* buildJsonEntry(forjson_table *table, TargetEntry* te);
+static TargetEntry* buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te);
+static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve);
 
 extern bool pltsql_ansi_defaults;
 extern bool pltsql_quoted_identifier;
@@ -1347,7 +1356,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 }
 
 static bool
-handleForJsonAuto(Query *query)
+handleForJsonAuto(Query *query, forjson_table **tableInfoArr, int numTables)
 {
 	Query* subq;
 	List* target = query->targetList;
@@ -1359,11 +1368,8 @@ handleForJsonAuto(Query *query)
 	RangeTblEntry* subqRte;
 	RangeTblEntry* queryRte;
 	Alias *colnameAlias;
-	forjson_table **tableInfoArr;
-	int numTables = 0;
-	int currTables = 0;
-	int currMax = 0;
-	int i = 0;
+	int newTables = 0;
+	int currTables = numTables;
 	
 	if(!isJsonAuto(target))
 		return false;
@@ -1377,24 +1383,30 @@ handleForJsonAuto(Query *query)
 			if(subq != NULL && (subq->cteList == NULL || list_length(subq->cteList) == 0)) {
 				subqRtable = (List*) subq->rtable;
 				if(subqRtable != NULL && list_length(subqRtable) > 0) {
+					forjson_table **tempArr;
 					foreach(lc, subqRtable) {
 						subqRte = castNode(RangeTblEntry, lfirst(lc));
 						if(subqRte->rtekind == RTE_RELATION) {
-							numTables++;
+							newTables++;
 						} else if(subqRte->rtekind == RTE_SUBQUERY) {
 							ereport(ERROR,
 									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-										errmsg("Values for json auto is not currently supported ")));
+										errmsg("sub-select and values for json auto are not currently supported.")));
 						}
 					}
 
-					if(numTables == 0) {
+					if(numTables + newTables == 0) {
 						ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_TABLE),
 										errmsg("FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.")));
 					}
 
-					tableInfoArr = malloc(numTables * sizeof(forjson_table));
+					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
+					for(int j = 0; j < numTables; j++) {
+						tempArr[j] = tableInfoArr[j];
+					}
+					tableInfoArr = tempArr;
+					tempArr = NULL;
 					queryRte = linitial_node(RangeTblEntry, query->rtable);
 					colnameAlias = (Alias*) queryRte->eref;
 
@@ -1410,52 +1422,43 @@ handleForJsonAuto(Query *query)
 							currTables++;
 						}
 					}
-
-					foreach(lc, subq->targetList) {
-						TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-						int oid = te->resorigtbl;
-						for(int j = 0; j < numTables; j++) {
-							if(tableInfoArr[j]->oid == oid) {
-								// build entry
-								String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-								if(tableInfoArr[j]->nestLevel == -1) {
-									currMax++;
-									tableInfoArr[j]->nestLevel = currMax;
-								}
-								te = buildJsonEntry(tableInfoArr[j], te);
-								s->sval = te->resname;
-								break;
-							}
-						}
-						i++;
-					}
-					free(tableInfoArr);
+					numTables = numTables + newTables;
+					modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, false);
 					return true;
 				}
 			} else if(subq->cteList != NULL && list_length(subq->cteList) > 0) {
 				Query* ctequery;
 				CommonTableExpr* cte;
+				forjson_table **tempArr;
 				foreach(lc, subq->cteList) {
 					cte = castNode(CommonTableExpr, lfirst(lc));
 					ctequery = (Query*) cte->ctequery;
 					foreach(lc2, ctequery->rtable) {
 						subqRte = castNode(RangeTblEntry, lfirst(lc2));
 						if(subqRte->rtekind == RTE_RELATION)
-							numTables++;
+							newTables++;
 					}
 				}
 
-				if(numTables == 0) {
+				if(newTables == 0) {
 					forjson_table *table = palloc(sizeof(forjson_table));
-					tableInfoArr = malloc(sizeof(forjson_table));
+					tempArr = palloc((numTables + 1) * sizeof(forjson_table));
 					table->oid = 0;
 					table->nestLevel = -1;
 					table->alias = "cteplaceholder";
-					tableInfoArr[numTables] = table;
-					numTables++;
+					tempArr[numTables] = table;
+					newTables++;
 				} else {
-					tableInfoArr = malloc(numTables * sizeof(forjson_table));
+					tempArr = palloc((numTables + newTables) * sizeof(forjson_table));
 				}
+
+				for(int j = 0; j < numTables; j++) {
+					tempArr[j] = tableInfoArr[j];
+				}
+
+				tableInfoArr = tempArr;
+				tempArr = NULL;
+				numTables = numTables + newTables;
 				queryRte = linitial_node(RangeTblEntry, query->rtable);
 				colnameAlias = (Alias*) queryRte->eref;
 
@@ -1475,26 +1478,9 @@ handleForJsonAuto(Query *query)
 						}
 					}
 				}
+
+				modifyColumnEntries(subq->targetList, tableInfoArr, numTables, colnameAlias, true);
 				
-				foreach(lc, subq->targetList) {
-					TargetEntry* te = castNode(TargetEntry, lfirst(lc));
-					int oid = te->resorigtbl;
-					for(int j = 0; j < numTables; j++) {
-						if(tableInfoArr[j]->oid == oid) {
-							// build entry
-							String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
-							if(tableInfoArr[j]->nestLevel == -1) {
-								currMax++;
-								tableInfoArr[j]->nestLevel = currMax;
-							}
-							te = buildJsonEntry(tableInfoArr[j], te);
-							s->sval = te->resname;
-							break;
-						}
-					}
-					i++;
-				}
-				free(tableInfoArr);
 				return true;
 			}
 		}
@@ -1534,35 +1520,79 @@ isJsonAuto(List* target)
 }
 
 static TargetEntry*
-buildJsonEntry(forjson_table *table, TargetEntry* te)
+buildJsonEntry(int nestLevel, char* tableAlias, TargetEntry* te)
 {
 	char nest[NAMEDATALEN]; // check size appropriate
 	StringInfo new_resname = makeStringInfo();
-	sprintf(nest, "%d", table->nestLevel);
+	sprintf(nest, "%d", nestLevel);
 	// Adding JSONAUTOALIAS prevents us from modifying
 	// a column more than once
 	if(!strcmp(te->resname, "\?column\?")) {
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					errmsg("column expressions and data sources without names or aliases cannot be formatted as JSON text using FOR JSON clause. Add alias to the unnamed column or table")));
-	}
-	if(!strncmp(te->resname, "JSONAUTOALIAS", 13))
-		return te; 
+	} 
 	appendStringInfoString(new_resname, "JSONAUTOALIAS.");
 	appendStringInfoString(new_resname, nest);
 	appendStringInfoChar(new_resname, '.');
-	appendStringInfoString(new_resname, table->alias);
+	appendStringInfoString(new_resname, tableAlias);
 	appendStringInfoChar(new_resname, '.');
 	appendStringInfoString(new_resname, te->resname);
 	te->resname = new_resname->data;
 	return te;
 }
 
-static bool check_json_auto_walker(Node *node, ParseState *pstate) {
+static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, int numTables, Alias *colnameAlias, bool isCve)
+{
+	int i = 0;
+	int currMax = 0;
+	ListCell* lc;
+	foreach(lc, targetList) {
+		TargetEntry* te = castNode(TargetEntry, lfirst(lc));
+		int oid = te->resorigtbl;
+		String* s = castNode(String, lfirst(list_nth_cell(colnameAlias->colnames, i)));
+		if(te->expr != NULL && nodeTag(te->expr) == T_SubLink) {
+			SubLink *sl = castNode(SubLink, te->expr);
+			if(sl->subselect != NULL && nodeTag(sl->subselect) == T_Query) {
+				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
+					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+					iocoerce->arg = (Expr*) sl;
+					iocoerce->resulttype = 114;
+					iocoerce->resultcollid = 0;
+					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
+					buildJsonEntry(1, "temp", te);
+					s->sval = te->resname;
+					te->expr = (Expr*) iocoerce;
+					continue;
+				}
+			}
+		}
+		for(int j = 0; j < numTables; j++) {
+			if(tableInfoArr[j]->oid == oid) {
+				// build entry
+				if(tableInfoArr[j]->nestLevel == -1) {
+					currMax++;
+					tableInfoArr[j]->nestLevel = currMax;
+				}
+				te = buildJsonEntry(tableInfoArr[j]->nestLevel, tableInfoArr[j]->alias, te);
+				s->sval = te->resname;
+				break;
+			} else if(!isCve && oid == 0 && j == numTables - 1) {
+				te = buildJsonEntry(1, "temp", te);
+				s->sval = te->resname;
+				break;
+			}
+		}
+		i++;
+	}
+}
+
+static bool check_json_auto_walker(Node *node, ParseState *pstate)
+{
 	if (node == NULL)
 		return false;
 	if (IsA(node, Query)) {
-		if(handleForJsonAuto((Query*) node))
+		if(handleForJsonAuto((Query*) node, NULL, 0))
 			return true;
 		else {
 			return query_tree_walker((Query*) node,
@@ -3486,6 +3516,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List	   *res;
 					GrantStmt  *stmt;
 					PlannedStmt *wrapper;
+					RoleSpec *rolspec = create_schema->authrole;
 
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
@@ -3534,7 +3565,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								   NULL);
 
 					CommandCounterIncrement();
-
+					/* Grant ALL schema privileges to the user.*/
+					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+					{
+						int permissions[6] = {ACL_INSERT, ACL_SELECT, ACL_UPDATE, ACL_DELETE, ACL_REFERENCES, ACL_EXECUTE};
+						int i;
+						for (i = 0; i < 6; i++)
+						{
+							/* Execute the GRANT SCHEMA subcommands. */
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
+						}
+					}
 					return;
 				}
 				else
@@ -3548,7 +3589,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						bbf_ExecDropStmt(drop_stmt);
-
 					break;
 				}
 
@@ -3560,10 +3600,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * database command.
 					 */
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+					char	   *cur_db = get_cur_db_name();
+					const char	*logicalschema = get_logical_schema_name(schemaname, true);
 
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
-						char	   *cur_db = get_cur_db_name();
 						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
 
 						if (strcmp(schemaname, guest_schema_name) == 0)
@@ -3576,6 +3617,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
+					clean_up_bbf_schema_permissions(logicalschema, NULL, true);
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3824,16 +3866,176 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				break;
 			}
+		case T_GrantStmt:
+			{
+				GrantStmt *grant = (GrantStmt *) parsetree;
+				char	   *dbname = get_cur_db_name();
+				const char *current_user = GetUserNameFromId(GetUserId(), false);
+				/* Ignore when GRANT statement has no specific named object. */
+				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
+					break;
+				Assert(list_length(grant->objects) == 1);
+				if (grant->objtype == OBJECT_SCHEMA)
+						break;
+				else if (grant->objtype == OBJECT_TABLE)
+				{
+					/* Ignore CREATE database subcommands */
+					if (strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
+					{
+						RangeVar   *rv = (RangeVar *) linitial(grant->objects);
+						const char *logical_schema = NULL;
+						char	   *obj = rv->relname;
+						ListCell   *lc;
+						ListCell	*lc1;
+						if (rv->schemaname != NULL)
+							logical_schema = get_logical_schema_name(rv->schemaname, true);
+						else
+							logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
+
+						/* If ALL PRIVILEGES is granted/revoked. */
+						if (list_length(grant->privileges) == 0)
+						{
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if (grant->is_grant)
+									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true);
+								else
+								{
+									/*
+									 * 1. If permission on schema exists, don't revoke any permission from the object.
+									 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
+									 */
+									update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
+									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+										return;
+								}
+							}
+							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+						}
+						foreach(lc1, grant->privileges)
+						{
+							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+							AclMode privilege = string_to_privilege(ap->priv_name);
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if (grant->is_grant)
+								{
+									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+									/* Don't add/update an entry, if the permission is granted on column list.*/
+									if (ap->cols == NULL)
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true);
+								}
+								else
+								{
+									/*
+									 * If permission on schema exists, don't revoke any permission from the object.
+									 */
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+									{
+										call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+									}
+									/* Don't update an entry, if the permission is granted on column list.*/
+									if (ap->cols == NULL)
+										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+								}
+							}
+						}
+						return;
+					}
+				}
+				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
+				{
+					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+					ListCell   *lc;
+					ListCell	*lc1;
+					const char *logicalschema = NULL;
+					char *funcname = NULL;
+					const char *obj_type = NULL;
+					if (grant->objtype == OBJECT_FUNCTION)
+						obj_type = OBJ_FUNCTION;
+					else
+						obj_type = OBJ_PROCEDURE;
+					if (list_length(ob->objname) == 1)
+					{
+						Node *func = (Node *) linitial(ob->objname);
+						funcname = strVal(func);
+						logicalschema = get_authid_user_ext_schema_name(dbname, current_user);
+					}
+					else
+					{
+						Node *schema = (Node *) linitial(ob->objname);
+						char *schemaname = strVal(schema);
+						Node *func = (Node *) lsecond(ob->objname);
+						logicalschema = get_logical_schema_name(schemaname, true);
+						funcname = strVal(func);
+					}
+
+					/* If ALL PRIVILEGES is granted/revoked. */
+					if (list_length(grant->privileges) == 0)
+					{
+						/*
+						 * Case: When ALL PRIVILEGES is revoked internally during create function.
+						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+						 */
+						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL, true))
+							return;
+						
+						foreach(lc, grant->grantees)
+						{
+							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+							if (grant->is_grant)
+							{
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true);
+							}
+							else
+							{
+								/*
+								 * 1. If permission on schema exists, don't revoke any permission from the object.
+								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
+								 */
+								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+									return;
+							}
+						}
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+					}
+					foreach(lc1, grant->privileges)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+						AclMode privilege = string_to_privilege(ap->priv_name);
+						foreach(lc, grant->grantees)
+						{
+							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+							if (grant->is_grant)
+							{
+								call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true);
+							}
+							else
+							{
+								/*
+									* If permission on schema exists, don't revoke any permission from the object.
+									*/
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+								{
+									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+								}
+								/* Update the privilege in the catalog. */
+								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
+							}
+						}
+					}
+					return;
+				}
+			}
 		default:
 			break;
 	}
 
-	if (prev_ProcessUtility)
-		prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-	else
-		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-								queryEnv, dest, qc);
+	call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 
 	/* Cleanup babelfish_server_options catalog when tds_fdw extension is dropped */
 	if (sql_dialect == SQL_DIALECT_PG && nodeTag(parsetree) == T_DropStmt)
@@ -3848,6 +4050,24 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		}
 	}
+}
+
+static void
+call_prev_ProcessUtility(PlannedStmt *pstmt,
+						 const char *queryString,
+						 bool readOnlyTree,
+						 ProcessUtilityContext context,
+						 ParamListInfo params,
+						 QueryEnvironment *queryEnv,
+						 DestReceiver *dest,
+						 QueryCompletion *qc)
+{
+	if (prev_ProcessUtility)
+		prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+							queryEnv, dest, qc);
+	else
+		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+								queryEnv, dest, qc);
 }
 
 /*
@@ -5931,6 +6151,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Relation		relation = NULL;
 	Oid				schema_oid;
 	ListCell		*cell;
+	const char *logicalschema = NULL;
 
 	db_id = get_cur_db_id();
 
@@ -5971,6 +6192,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5996,6 +6219,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 											 major_name, NULL);
 				}
 			}
+			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -6039,6 +6263,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -6052,6 +6278,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				delete_extended_property(db_id, type, schema_name, major_name,
 										 NULL);
 			}
+			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 }

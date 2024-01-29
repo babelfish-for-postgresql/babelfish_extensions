@@ -6,8 +6,6 @@
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 # These tests are crashing/failing with parallel query mode is on. 
 
-ignore#!#table-variable-vu-verify
-
 # These test should not get run in parallel query
 ignore#!#BABEL-1363
 

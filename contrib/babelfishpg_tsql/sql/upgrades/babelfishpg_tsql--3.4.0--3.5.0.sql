@@ -880,7 +880,12 @@ select
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_user_defined
-  , CAST(0 as sys.bit) as is_assembly_type
+  , CASE tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
   , CAST(0 as sys.bit) as is_table_type
@@ -913,7 +918,12 @@ select cast(t.typname as sys.sysname) as name
     as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , CAST(1 as sys.bit) as is_user_defined
-  , CAST(0 as sys.bit) as is_assembly_type
+  , CASE tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
   , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
@@ -2201,175 +2211,17 @@ AS SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.availability_groups TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
-RETURNS SMALLINT
-AS $$
-DECLARE
-	max_length SMALLINT;
-	precision INT;
-	v_type TEXT COLLATE sys.database_default := type;
-BEGIN
-	-- unknown tsql type
-	IF v_type IS NULL THEN
-		RETURN CAST(typelen as SMALLINT);
-	END IF;
 
-	-- if using typmod_array from pg_proc.probin
-	IF used_typmod_array THEN
-		IF v_type = 'sysname' THEN
-			RETURN 256;
-		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
-		THEN
-			IF typemod < 0 THEN -- max value. 
-				RETURN -1;
-			ELSIF v_type in ('nchar', 'nvarchar') THEN
-				RETURN (2 * typemod);
-			ELSE
-				RETURN typemod;
-			END IF;
-		END IF;
-	END IF;
-
-	IF typelen != -1 THEN
-		CASE v_type 
-		WHEN 'tinyint' THEN max_length = 1;
-		WHEN 'date' THEN max_length = 3;
-		WHEN 'smalldatetime' THEN max_length = 4;
-		WHEN 'smallmoney' THEN max_length = 4;
-		WHEN 'datetime2' THEN
-			IF typemod = -1 THEN max_length = 8;
-			ELSIF typemod <= 2 THEN max_length = 6;
-			ELSIF typemod <= 4 THEN max_length = 7;
-			ELSEIF typemod <= 7 THEN max_length = 8;
-			-- typemod = 7 is not possible for datetime2 in Babel
-			END IF;
-		WHEN 'datetimeoffset' THEN
-			IF typemod = -1 THEN max_length = 10;
-			ELSIF typemod <= 2 THEN max_length = 8;
-			ELSIF typemod <= 4 THEN max_length = 9;
-			ELSIF typemod <= 7 THEN max_length = 10;
-			-- typemod = 7 is not possible for datetimeoffset in Babel
-			END IF;
-		WHEN 'time' THEN
-			IF typemod = -1 THEN max_length = 5;
-			ELSIF typemod <= 2 THEN max_length = 3;
-			ELSIF typemod <= 4 THEN max_length = 4;
-			ELSIF typemod <= 7 THEN max_length = 5;
-			END IF;
-		WHEN 'timestamp' THEN max_length = 8;
-    WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
-		ELSE max_length = typelen;
-		END CASE;
-		RETURN max_length;
-	END IF;
-
-	IF typemod = -1 THEN
-		CASE 
-		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
-		WHEN v_type = 'sql_variant' THEN max_length = 8016;
-		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
-			IF for_sys_types THEN max_length = 8000;
-			ELSE max_length = -1;
-			END IF;
-		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
-		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
-		ELSE max_length = typemod;
-		END CASE;
-		RETURN max_length;
-	END IF;
-
-	CASE
-	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
-	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
-	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
-	WHEN v_type in ('numeric', 'decimal') THEN
-		precision = ((typemod - 4) >> 16) & 65535;
-		IF precision >= 1 and precision <= 9 THEN max_length = 5;
-		ELSIF precision <= 19 THEN max_length = 9;
-		ELSIF precision <= 28 THEN max_length = 13;
-		ELSIF precision <= 38 THEN max_length = 17;
-	ELSE max_length = typelen;
-	END IF;
-	ELSE
-		max_length = typemod;
-	END CASE;
-	RETURN max_length;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
-
-create or replace function sys.get_tds_id(
-	datatype sys.varchar(50)
-)
-returns INT
-AS $$
-DECLARE
-	tds_id INT;
-BEGIN
-	IF datatype IS NULL THEN
-		RETURN 0;
-	END IF;
-	CASE datatype
-		WHEN 'text' THEN tds_id = 35;
-		WHEN 'uniqueidentifier' THEN tds_id = 36;
-		WHEN 'tinyint' THEN tds_id = 38;
-		WHEN 'smallint' THEN tds_id = 38;
-		WHEN 'int' THEN tds_id = 38;
-		WHEN 'bigint' THEN tds_id = 38;
-		WHEN 'ntext' THEN tds_id = 99;
-		WHEN 'bit' THEN tds_id = 104;
-		WHEN 'float' THEN tds_id = 109;
-		WHEN 'real' THEN tds_id = 109;
-		WHEN 'varchar' THEN tds_id = 167;
-		WHEN 'nvarchar' THEN tds_id = 231;
-		WHEN 'nchar' THEN tds_id = 239;
-		WHEN 'money' THEN tds_id = 110;
-		WHEN 'smallmoney' THEN tds_id = 110;
-		WHEN 'char' THEN tds_id = 175;
-		WHEN 'date' THEN tds_id = 40;
-		WHEN 'datetime' THEN tds_id = 111;
-		WHEN 'smalldatetime' THEN tds_id = 111;
-		WHEN 'numeric' THEN tds_id = 108;
-		WHEN 'xml' THEN tds_id = 241;
-		WHEN 'decimal' THEN tds_id = 106;
-		WHEN 'varbinary' THEN tds_id = 165;
-		WHEN 'binary' THEN tds_id = 173;
-		WHEN 'image' THEN tds_id = 34;
-		WHEN 'time' THEN tds_id = 41;
-		WHEN 'datetime2' THEN tds_id = 42;
-		WHEN 'sql_variant' THEN tds_id = 98;
-		WHEN 'datetimeoffset' THEN tds_id = 43;
-		WHEN 'timestamp' THEN tds_id = 173;
-		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
-		ELSE tds_id = 0;
-	END CASE;
-	RETURN tds_id;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
-
-CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length(type text, typmod int4) RETURNS integer
-	LANGUAGE sql
-	IMMUTABLE
-	PARALLEL SAFE
-	RETURNS NULL ON NULL INPUT
-	AS
-$$SELECT
-	CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
-		THEN CASE WHEN typmod = -1
-			THEN -1
-			ELSE typmod - 4
-			END
-		WHEN type IN ('text', 'image')
-		THEN 2147483647
-		WHEN type = 'ntext'
-		THEN 1073741823
-		WHEN type = 'sysname'
-		THEN 128
-		WHEN type IN ('xml', 'vector')
-		THEN -1
-		WHEN type = 'sql_variant'
-		THEN 0
-		ELSE null
-	END$$;
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  permission INT NOT NULL,
+  grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_type CHAR(1) NOT NULL COLLATE sys.database_default,
+  PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
+);
 
 create or replace view sys.all_objects as
 select 
@@ -2776,6 +2628,322 @@ from sys.table_types tt
 left join sys.shipped_objects_not_in_sys nis on nis.name = ('TT_' || tt.name || '_' || tt.type_table_object_id)::name and nis.schemaid = tt.schema_id and nis.type = 'TT'
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        c.object_id                      AS object_id,
+        CAST(p.relnamespace AS int)      AS schema_id,
+        c.column_id                      AS colid,
+        CAST(c.name AS sys.varchar)      AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c
+        INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
+    WHERE
+        c.is_sparse = 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
+	END IF;
+
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
+
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+    WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type in ('geometry', 'geography') THEN max_length = -1;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length(type text, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$SELECT
+	CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
+		THEN CASE WHEN typmod = -1
+			THEN -1
+			ELSE typmod - 4
+			END
+		WHEN type IN ('text', 'image')
+		THEN 2147483647
+		WHEN type = 'ntext'
+		THEN 1073741823
+		WHEN type = 'sysname'
+		THEN 128
+		WHEN type IN ('xml', 'vector', 'geometry', 'geography')
+		THEN -1
+		WHEN type = 'sql_variant'
+		THEN 0
+		ELSE null
+	END$$;
+
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
+AS $$
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'geometry' THEN tds_id = 240;
+		WHEN 'geography' THEN tds_id = 240;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(type text, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$SELECT
+	CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
+		THEN CASE WHEN typmod = -1 /* default typmod */
+			THEN -1
+			ELSE typmod - 4
+			END
+		WHEN type IN ('nchar', 'nvarchar')
+		THEN CASE WHEN typmod = -1 /* default typmod */
+			THEN -1
+			ELSE (typmod - 4) * 2
+			END
+		WHEN type IN ('text', 'image')
+		THEN 2147483647 /* 2^30 + 1 */
+		WHEN type = 'ntext'
+		THEN 2147483646 /* 2^30 */
+		WHEN type = 'sysname'
+		THEN 256
+		WHEN type = 'sql_variant'
+		THEN 0
+		WHEN type IN ('xml', 'geometry', 'geography')
+		THEN -1
+	   ELSE null
+  END$$;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length_for_routines(type text, typmod int4) RETURNS integer
+        LANGUAGE sql
+        IMMUTABLE
+        PARALLEL SAFE
+        RETURNS NULL ON NULL INPUT
+        AS
+$$SELECT
+        CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
+                THEN CASE WHEN typmod = -1
+                        THEN 1
+                        ELSE typmod - 4
+                        END
+                WHEN type IN ('text', 'image')
+                THEN 2147483647
+                WHEN type = 'ntext'
+                THEN 1073741823
+                WHEN type = 'sysname'
+                THEN 128
+                WHEN type IN ('xml', 'geometry', 'geography')
+                THEN -1
+                WHEN type = 'sql_variant'
+                THEN 0
+                ELSE null
+        END$$;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_length_for_sp_columns_helper(IN type TEXT, IN typelen INT, IN typemod INT)
+RETURNS INT
+AS $$
+DECLARE
+  length INT;
+  precision INT;
+BEGIN
+  -- unknown tsql type
+  IF type IS NULL THEN
+    RETURN typelen::INT;
+  END IF;
+
+  IF typemod = -1 AND (type = 'varchar' OR type = 'nvarchar' OR type = 'varbinary') THEN
+    length = 0;
+    RETURN length;
+  END IF;
+
+  IF typelen != -1 THEN
+    CASE type
+    WHEN 'tinyint' THEN length = 1;
+    WHEN 'date' THEN length = 6;
+    WHEN 'smalldatetime' THEN length = 16;
+    WHEN 'smallmoney' THEN length = 12;
+    WHEN 'money' THEN length = 21;
+    WHEN 'datetime' THEN length = 16;
+    WHEN 'datetime2' THEN length = 16;
+    WHEN 'datetimeoffset' THEN length = 20;
+    WHEN 'time' THEN length = 12;
+    WHEN 'timestamp' THEN length = 8;
+    ELSE length = typelen;
+    END CASE;
+    RETURN length;
+  END IF;
+
+  CASE
+  WHEN type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN length = typemod - 4;
+  WHEN type in ('nchar', 'nvarchar') THEN length = (typemod - 4) * 2;
+  WHEN type in ('text', 'image') THEN length = 2147483647;
+  WHEN type = 'ntext' THEN length = 2147483646;
+  WHEN type = 'xml' THEN length = 0;
+  WHEN type IN ('geometry', 'geography') THEN length = -1;
+  WHEN type = 'sql_variant' THEN length = 8000;
+  WHEN type = 'money' THEN length = 21;
+  WHEN type = 'sysname' THEN length = (typemod - 4) * 2;
+  WHEN type in ('numeric', 'decimal') THEN
+    precision = ((typemod - 4) >> 16) & 65535;
+    length = precision + 2;
+  ELSE
+    length = typemod;
+  END CASE;
+  RETURN length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geometry') THEN
+    BEGIN
+        INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+    END;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geography') THEN
+    BEGIN
+        INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+    END;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5_0');

@@ -2091,6 +2091,10 @@ object_id(PG_FUNCTION_ARGS)
 				{
 					result = enr->md.reliddesc;
 				}
+				else if (enr == NULL)
+				{
+					result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
+				}
 			}
 			else if (!strcmp(object_type, "r") || !strcmp(object_type, "ec") || !strcmp(object_type, "pg") ||
 					 !strcmp(object_type, "sn") || !strcmp(object_type, "sq") || !strcmp(object_type, "tt"))
@@ -2156,6 +2160,10 @@ object_id(PG_FUNCTION_ARGS)
 			if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 			{
 				result = enr->md.reliddesc;
+			} 
+			else if (enr == NULL)
+			{
+				result = get_relname_relid((const char *) object_name, LookupNamespaceNoError("pg_temp"));
 			}
 		}
 		else
@@ -2187,6 +2195,7 @@ object_id(PG_FUNCTION_ARGS)
 			}
 		}
 	}
+
 	pfree(object_name);
 	if (object_type)
 		pfree(object_type);
@@ -2363,7 +2372,8 @@ object_name(PG_FUNCTION_ARGS)
 		if (!OidIsValid(schema_id) ||
 			is_schema_from_db(schema_id, database_id) ||
 			(schema_id == get_namespace_oid("sys", true)) ||
-			(schema_id == get_namespace_oid("information_schema_tsql", true)))
+			(schema_id == get_namespace_oid("information_schema_tsql", true)) ||
+			(isTempNamespace(schema_id)))
 		{
 			PG_RETURN_VARCHAR_P((VarChar *) result_text);
 		}
