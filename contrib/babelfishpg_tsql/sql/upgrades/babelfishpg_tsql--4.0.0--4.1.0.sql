@@ -2268,6 +2268,7 @@ BEGIN
 			ELSIF typemod <= 7 THEN max_length = 5;
 			END IF;
 		WHEN 'timestamp' THEN max_length = 8;
+		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
 		ELSE max_length = typelen;
 		END CASE;
 		RETURN max_length;
@@ -2326,7 +2327,7 @@ $$SELECT
 		THEN 1073741823
 		WHEN type = 'sysname'
 		THEN 128
-		WHEN type IN ('xml', 'geometry', 'geography')
+		WHEN type IN ('xml', 'vector', 'geometry', 'geography')
 		THEN -1
 		WHEN type = 'sql_variant'
 		THEN 0
@@ -2375,6 +2376,7 @@ BEGIN
 		WHEN 'sql_variant' THEN tds_id = 98;
 		WHEN 'datetimeoffset' THEN tds_id = 43;
 		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
 		WHEN 'geometry' THEN tds_id = 240;
 		WHEN 'geography' THEN tds_id = 240;
 		ELSE tds_id = 0;
