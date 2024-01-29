@@ -565,9 +565,9 @@ AS
     DELETE trgt FROM Discount trgt           -- Discount does not exist
     COMMIT
 go
-~~ERROR (Code: 2714)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function "usp_populatediscount" already exists with same argument types)~~
+~~ERROR (Message: There is already an object named 'usp_populatediscount' in the database.)~~
 
 
 EXECUTE usp_PopulateDiscount
@@ -591,9 +591,9 @@ BEGIN CATCH
     COMMIT
 END CATCH;
 GO
-~~ERROR (Code: 2714)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function "test" already exists with same argument types)~~
+~~ERROR (Message: There is already an object named 'test' in the database.)~~
 
 
 exec test

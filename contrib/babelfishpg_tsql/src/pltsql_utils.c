@@ -46,6 +46,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
                           ParamListInfo params);
 
 extern bool restore_tsql_tabletype;
+extern bool babelfish_dump_restore;
 extern char *get_cur_db_name(void);
 extern char *construct_unique_index_name(char *index_name, char *relation_name); 
 extern char *get_physical_schema_name(char *db_name, const char *schema_name);
@@ -201,23 +202,31 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 		return false;
 	}
 	else
-	{	
-		ObjectWithArgs *func = NULL;
-		Oid func_oid = InvalidOid;
+	{
+		if (!stmt->replace && !babelfish_dump_restore)
+		{
+			ObjectWithArgs *func = NULL;
+			Oid func_oid = InvalidOid;
+			char * funcname = NULL;
 
-		func = makeNode(ObjectWithArgs);
-		func->objname = stmt->funcname;
-		func->args_unspecified = true;
+			func = makeNode(ObjectWithArgs);
+			func->objname = stmt->funcname;
+			func->args_unspecified = true;
 
-		/* function, procedure */
-		if (!stmt->replace)
+			if (list_length(stmt->funcname) == 1)
+				funcname = strVal(linitial(stmt->funcname));
+			if (list_length(stmt->funcname) == 2)
+				funcname = strVal(lsecond(stmt->funcname));
+
+			/* function, procedure */
 			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
 
-		if (OidIsValid(func_oid))
-		{
-			/* Restrict duplicate procedure/function. */
-			ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
-							errmsg("Function already exists")));
+			if (OidIsValid(func_oid))
+			{
+				/* Restrict duplicate procedure/function. */
+				ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+								errmsg("There is already an object named '%s' in the database.", funcname)));
+			}
 		}
 
 		/* All event trigger calls are done only when isCompleteQuery is true */
