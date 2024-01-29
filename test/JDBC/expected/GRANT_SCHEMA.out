@@ -712,6 +712,21 @@ go
 REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
 go
 
+-- psql
+-- should show original object names
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1
+~~END~~
+
+
+-- tsql
 -- rename the objects where permissions are already granted
 sp_rename 'babel_4344_s1.babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
@@ -724,6 +739,21 @@ go
 sp_rename 'babel_4344_s1.babel_4344_f1', 'babel_4344_f1_new', 'OBJECT';
 go
 
+-- psql
+-- should show renamed objects
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_f1_new#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_p1_new#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_t1_new#!#47#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_v1_new#!#2#!#babel_4344_d1_babel_4344_u1
+~~END~~
+
+
+-- tsql
 -- permissions are transferred to the new objects 
 -- Revoke permissions from the new objects
 REVOKE all on babel_4344_s1.babel_4344_t1_new FROM babel_4344_u1;

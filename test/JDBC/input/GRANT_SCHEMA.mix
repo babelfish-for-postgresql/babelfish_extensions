@@ -439,6 +439,12 @@ go
 REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
 go
 
+-- psql
+-- should show original object names
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+
+-- tsql
 -- rename the objects where permissions are already granted
 sp_rename 'babel_4344_s1.babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
@@ -451,6 +457,12 @@ go
 sp_rename 'babel_4344_s1.babel_4344_f1', 'babel_4344_f1_new', 'OBJECT';
 go
 
+-- psql
+-- should show renamed objects
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+
+-- tsql
 -- permissions are transferred to the new objects 
 -- Revoke permissions from the new objects
 REVOKE all on babel_4344_s1.babel_4344_t1_new FROM babel_4344_u1;
