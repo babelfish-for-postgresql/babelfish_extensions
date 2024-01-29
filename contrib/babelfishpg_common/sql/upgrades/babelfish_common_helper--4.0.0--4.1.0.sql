@@ -187,6 +187,16 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION sys.date2datetime(DATE)
+RETURNS DATETIME
+AS 'babelfishpg_common', 'date_datetime'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.date2datetime2(DATE)
+RETURNS DATETIME2
+AS 'babelfishpg_common', 'date_datetime2'
+LANGUAGE C STABLE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

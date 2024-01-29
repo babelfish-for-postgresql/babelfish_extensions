@@ -976,3 +976,21 @@ DECLARE @mig_mode VARCHAR(10)
 SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_num = 1)
 SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO
+
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry'
+go
+
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geography'
+go
+
+exec sp_sproc_columns_100 @procedure_name= 'geometry_proc_1'
+GO
+
+exec sp_sproc_columns_100 @procedure_name= 'geography_proc_1'
+GO
+
+select * from information_schema.columns where table_name = 'geo_view_test'
+GO
+
+select name , column_id , max_length , precision , scale , collation_name ,is_nullable , is_ansi_padded , is_rowguidcol , is_identity ,is_computed , is_filestream , is_replicated , is_non_sql_subscribed , is_merge_published , is_dts_replicated , is_xml_document , xml_collection_id , default_object_id , rule_object_id , is_sparse , is_column_set , generated_always_type , generated_always_type_desc , encryption_type , encryption_type_desc , encryption_algorithm_name , column_encryption_key_id , column_encryption_key_database_name , is_hidden , is_masked , graph_type , graph_type_desc from sys.columns where object_id = object_id('geo_view_test') ORDER BY name;
+GO

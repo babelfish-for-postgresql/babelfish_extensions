@@ -192,6 +192,12 @@ static const std::string fragment_SELECT_prefix = "SELECT "; // fragment prefix 
 static const std::string fragment_EXEC_prefix   = "EXEC ";   // fragment prefix for execute_body_batch
 static PLtsql_stmt *makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx);
 static void handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx); 
+static void handleTableConstraintWithoutComma(TSqlParser::Column_def_table_constraintsContext *ctx);
+static void handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx);
+static void handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx);
+static void handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx);
+static void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx);
+static void handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -308,6 +314,12 @@ std::string
 getFullText(TerminalNode *node)
 {
 	return node->getText();
+}
+
+std::string
+getFullText(Token* token)
+{
+	return token->getText();
 }
 
 std::string
@@ -648,9 +660,14 @@ void PLtsql_expr_query_mutator::run()
 		const std::u32string& orig_text = utf8_to_utf32(entry.second.first.c_str());
 		const std::u32string& repl_text = utf8_to_utf32(entry.second.second.c_str());
 		if (isSelectFragment) offset += fragment_SELECT_prefix.length(); // because this is an expression prefixed with 'SELECT '
-			
+					
 		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
+			// Note: the test below does not work, and has never worked, because size_t will not be negative, 
+			// and the result of the subtraction is also of type size_t.
+			// This test has been in the code since day 1. 
+			// When making the test work, some test cases will start failing as they run into this condition 
+			// (test table_variable_xact_errors and two variants). Therefore, not touching the test for now.
 			if (offset - cursor < 0)
 				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to multiple mutations on the same position", 0, 0);
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
@@ -2248,47 +2265,6 @@ public:
 		// TO-DO
 	}
 
-	// NB: this is copied in tsqlMutator
-	void exitConstant(TSqlParser::ConstantContext *ctx) override
-	{	
-		// Check for floating-point number without exponent
-		handleFloatWithoutExponent(ctx);
-	}
-
-	void exitPredicate(TSqlParser::PredicateContext *ctx) override
-	{
-		// For comparison operators directly followed by an '@@' variable, insert a space 
-		// to avoid these being parsed incorrectly by PG; this applies to the following 
-		// character sequences: =@@, >@@, <@@ as well as !=@ (i.e. a single-@ variable)
-		// Note: this issue does not occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
-
-		if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
-		{
-			std::string op = getFullText(ctx->comparison_operator());		
-			if ((op.back() == '=') || 
-			    (op.back() == '>') || 
-			    (op.back() == '<'))
-			{
-				// The operator must be followed immediately by the variable without any character in between
-				Assert(ctx->expression(1));
-				size_t startPosition = ctx->expression(1)->start->getStartIndex();
-				if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
-				{
-					std::string var = getFullText(ctx->expression(1));
-					// The subsequent expression must be a variable starting with '@@'
-					if (var.front() == '@') 
-					{
-						if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
-						{
-							// Insert a space before the variable name
-							rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
-						}
-					}
-				}
-			}
-		}
-	}
-
 	void exitExecute_statement_arg_named(TSqlParser::Execute_statement_arg_namedContext *ctx) override
 	{
 		// Look for named arguments with an @@variable with no preceding whitespace, i.e. 'exec myproc @p=@@spid'
@@ -2310,6 +2286,39 @@ public:
 				}
 			}
 		}
+	}
+
+	void exitOrder_by_clause(TSqlParser::Order_by_clauseContext *ctx) override
+	{
+		handleOrderByOffsetFetch(ctx);
+	}
+
+	// NB: the following are copied in tsqlMutator
+	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
+	{
+		handleTableConstraintWithoutComma(ctx);
+	}
+	void exitConstant(TSqlParser::ConstantContext *ctx) override
+	{	
+		// Check for floating-point number without exponent
+		handleFloatWithoutExponent(ctx);
+	}
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// Check for comparison operators directly followed by an '@@' variable, like =@@
+		handleAtAtVarInPredicate(ctx);
+	}		
+	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
+	{
+		handleBitNotOperator(ctx);
+	}
+	void exitPlus_minus_bit_expr(TSqlParser::Plus_minus_bit_exprContext *ctx) override
+	{
+		handleBitOperators(ctx);
+	}
+	void exitMult_div_percent_expr(TSqlParser::Mult_div_percent_exprContext *ctx) override
+	{
+		handleModuloOperator(ctx);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -2644,31 +2653,6 @@ public:
 		has_identity_function = false;
 		if (statementMutator)
 			process_query_specification(ctx, statementMutator.get());
-	}
-
-	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
-	{
-		/*
-		 * It is not documented but it seems T-SQL allows that column-definition is followed by table-constraint without COMMA.
-		 * PG backend parser will throw a syntax error when this kind of query is inputted.
-		 * It is not easy to add a rule accepting this syntax to backend parser because of many shift/reduce conflicts.
-		 * To handle this case, add a compensation COMMA between column-definition and table-constraint here.
-		 *
-		 * This handling should be only applied to table-constraint following column-definition. Other cases (such as two column definitions without comma) should still throw a syntax error.
-		 */
-
-		ParseTree* prev_child = nullptr;
-		for (ParseTree* child : ctx->children)
-		{
-			TSqlParser::Column_def_table_constraintContext* cdtctx = dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(child);
-			if (cdtctx && cdtctx->table_constraint())
-			{
-				TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
-				if (prev_cdtctx && prev_cdtctx->column_definition())
-					rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
-			}
-			prev_child = child;
-		}
 	}
 
 	void exitDrop_relational_or_xml_or_spatial_index(TSqlParser::Drop_relational_or_xml_or_spatial_indexContext *ctx) override
@@ -3094,8 +3078,8 @@ public:
 			// parsed as a string by the backend parser
 			std::string str = getFullText(ctx);
 				
-			// When it's a bracketed identifier, remove the delimiters as T-SQL treats it as a string				
-			// When it's a quoted identifier, T-SQL also treats it as a string independent of the QUOTED_IDENTIFIER setting		
+			// When it's a bracketed identifier, remove the delimiters as T-SQL treats it as a string
+			// When it's a quoted identifier, T-SQL also treats it as a string independent of the QUOTED_IDENTIFIER setting
 			// (as we get here, it means QUOTED_IDENTIFIER=ON)
 			// When it none of the above, it is an unquoted string 
 			if (str.front() == '[') {
@@ -3110,19 +3094,19 @@ public:
 				str = rewriteDoubleQuotedString(str);
 			}
 			else if (str.front() == '"') {
-				Assert(str.back() == '"');				
+				Assert(str.back() == '"');
 				str = rewriteDoubleQuotedString(str);
 			}
 			else {
 				// Unquoted string, add quotes: there cannot be any quotes in the string otherwise it would 
 				// not have been parsed as an identifier
-				str = "'" + str + "'";				
+				str = "'" + str + "'";
 			}
 
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(getFullText(ctx), str)));
 		}
 	}
-	
+
 	// NB: similar code is in tsqlBuilder
 	void exitChar_string(TSqlParser::Char_stringContext *ctx) override
 	{
@@ -3143,7 +3127,7 @@ public:
 			else
 			{
 				// This is a double-quoted string used as parameter default.
-				// (as we get here, it means QUOTED_IDENTIFIER=OFF)				
+				// (as we get here, it means QUOTED_IDENTIFIER=OFF)	
 				
 				Assert(str.front() == '"');
 				Assert(str.back() == '"');
@@ -3155,12 +3139,34 @@ public:
 		}
 	}
 
-	// NB: this is copied in tsqlBuilder
+	// NB: the following are copied in tsqlBuilder
+	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
+	{
+		handleTableConstraintWithoutComma(ctx);
+  }
 	void exitConstant(TSqlParser::ConstantContext *ctx) override
-	{	
+	{
 		// Check for floating-point number without exponent
 		handleFloatWithoutExponent(ctx);
+	}
+	void exitPredicate(TSqlParser::PredicateContext *ctx) override
+	{
+		// Check for comparison operators directly followed by an '@@' variable, like =@@
+		handleAtAtVarInPredicate(ctx);
 	}	
+	void exitUnary_op_expr(TSqlParser::Unary_op_exprContext *ctx) override
+	{
+		handleBitNotOperator(ctx);
+	}
+	void exitPlus_minus_bit_expr(TSqlParser::Plus_minus_bit_exprContext *ctx) override
+	{
+		handleBitOperators(ctx);
+	}
+	void exitMult_div_percent_expr(TSqlParser::Mult_div_percent_exprContext *ctx) override
+	{
+		handleModuloOperator(ctx);
+	}
+
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -7219,8 +7225,6 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 {
 	if (ctx->column_def_table_constraints())
 	{
-		bool rewrite = false;
-
 		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())
 		{
 			/*
@@ -7234,17 +7238,22 @@ post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::T
 				auto tctx = cdtctx->column_definition()->TIMESTAMP();
 				std::string rewritten_text = "timestamp " + ::getFullText(tctx);
 				rewritten_query_fragment.emplace(std::make_pair(tctx->getSymbol()->getStartIndex(), std::make_pair(::getFullText(tctx), rewritten_text)));
-				rewrite = true;
 			}
 		}
 
-		if (rewrite)
+		/*
+		 * Need to run the mutator to perform rewriting not only when items were added above,
+		 * but also if rewrite items were added earlier - for example, in exitColumn_def_table_constraints()
+		 * in case a table constraint was specified without a separator comma.
+		 */
+		if (rewritten_query_fragment.size() > 0)
 		{
 			PLtsql_expr *expr = makeTsqlExpr(ctx, false);
 			PLtsql_expr_query_mutator mutator(expr, ctx);
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 			char *rewritten_query = expr->query;
+			
 			// Save the rewritten column definition list
 			stmt->coldef = pstrdup(&rewritten_query[5]);
 		}
@@ -8352,35 +8361,35 @@ makeChangeDbOwnerStatement(TSqlParser::Alter_authorizationContext *ctx)
 }
 
 // Look for '<number>E' : T-SQL allows the exponent to be omitted (defaults to 0), but PG raises an error 
-// The REAL token is generated by the lexer; check the actual string to see if this is REAL notation		
+// The REAL token is generated by the lexer; check the actual string to see if this is REAL notation	
 // Notes: 
 //  * the mantissa may also start with a '.', i.e. '.5e'
 //  * the exponent may just be a + or - sign (means '0'; 1e+ ==> 1e0 )
 void
 handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx) 
-{			
-	std::string str = getFullText(ctx);		
-			
-	// Check for case where exponent is only a sign: 2E+ , 2E-		
+{
+	std::string str = getFullText(ctx);
+
+	// Check for case where exponent is only a sign: 2E+ , 2E-
 	if ((str.back() == '+') || (str.back() == '-'))
 	{
 		// remove terminating sign	
-		str.pop_back();	
-						
+		str.pop_back();
+
 		if ((str.back() == 'E') || (str.back() == 'e'))
-		{		
+		{
 			// ends in 'E+' or 'E-', continue below
 		}
 		else 
 		{
-			// Whatever it is, it's not the notation we're looking for 	
+			// Whatever it is, it's not the notation we're looking for 
 			return;
 		}
 	}
-		
+
 	if ((str.back() == 'E') || (str.back() == 'e'))
 	{
-		// remove terminating E		
+		// remove terminating E
 		str.pop_back();
 
 		if ((str.front() == '+') || (str.front() == '-'))
@@ -8388,7 +8397,7 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 			 // remove leading sign
 			 str.erase(0,1);
 		}
-		
+
 		// Now check if this is a valid number. Note that it may start or end with '.' 
 		// but in both cases it must have at least one digit as well.  
 		size_t dot = str.find(".");
@@ -8398,14 +8407,14 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 			 str.erase(dot,1);
 		}
     
-    	// What we have left now should be all digits
-    	bool is_number = true;
-    	if (str.length() == 0) 
+		// What we have left now should be all digits
+		bool is_number = true;
+		if (str.length() == 0) 
 		{
 			is_number = false;
 		}
-		else        		
-    	{			
+		else
+    	{
 			for(size_t i = 0; i < str.length(); i++) 
 			{
 			    if (!isdigit(str[i])) 
@@ -8417,14 +8426,157 @@ handleFloatWithoutExponent(TSqlParser::ConstantContext *ctx)
 		}
 	
 		if (is_number)
-		{	
+		{
 			// Rewrite the exponent by adding a '0'
 			std::string str1 = getFullText(ctx);
 			size_t startPosition = ctx->start->getStartIndex();
-			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch  		
+			if (in_execute_body_batch_parameter) startPosition += fragment_EXEC_prefix.length(); // add length of prefix prepended internally for execute_body_batch
 			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(str1, str1+"0")));
-		}	
+		}
 	}
-	
 	return;
 }
+
+static void 
+handleTableConstraintWithoutComma(TSqlParser::Column_def_table_constraintsContext *ctx)
+{
+	/*
+	 * It is not documented but it seems T-SQL allows that column-definition is followed by table-constraint without COMMA.
+	 * PG backend parser will throw a syntax error when this kind of query is inputted.
+	 * It is not easy to add a rule accepting this syntax to backend parser because of many shift/reduce conflicts.
+	 * To handle this case, add a compensation COMMA between column-definition and table-constraint here.
+	 *
+	 * This handling should be only applied to table-constraint following column-definition. Other cases (such as two column definitions without comma) should still throw a syntax error.
+	 */
+	ParseTree* prev_child = nullptr;
+	for (ParseTree* child : ctx->children)
+	{
+		TSqlParser::Column_def_table_constraintContext* cdtctx = dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(child);
+		if (cdtctx && cdtctx->table_constraint())
+		{
+			TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
+			if (prev_cdtctx && prev_cdtctx->column_definition())
+			{
+				rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
+			}
+		}
+		prev_child = child;
+	}
+	return;
+}
+
+static void
+handleBitNotOperator(TSqlParser::Unary_op_exprContext *ctx)
+{
+	// For the bit negation unary operator ('~') always add a space ahead of it as there may be a '+' or '-' preceding it (but we cannot immediately tell from
+	// the current context). Also add a space behind it, depending on whether specific characters follow directly without an intervening space.
+	if (ctx->BIT_NOT())
+	{
+		std::string op   = getFullText(ctx->BIT_NOT()); // this is a bit redundant since it can only be '~', but keeping the same style as other rewrites
+		std::string expr = getFullText(ctx->expression());
+		std::string endSpace = "";
+		if ((expr.front() == '+') || (expr.front() == '-') || (expr.front() == '@')) endSpace = " ";
+		size_t startPosition = ctx->BIT_NOT()->getSymbol()->getStartIndex();
+		rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(op, " "+op+endSpace)));
+	}
+	return;
+}
+
+static void
+handleBitOperators(TSqlParser::Plus_minus_bit_exprContext *ctx)
+{
+	// For the bit operators AND, OR , XOR ('&', '|', '^') add a space behind it, depending on whether specific characters follow directly without an intervening space.
+	if (ctx->BIT_AND() || ctx->BIT_OR() || ctx->BIT_XOR())
+	{
+		Assert(ctx->expression(1));
+		std::string expr = getFullText(ctx->expression(1));
+		if ((expr.front() = '+') || (expr.front() = '-') || (expr.front() = '@')) 
+		{
+			std::string op = getFullText(ctx->op);
+			size_t startPosition = ctx->op->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(op, op+" ")));
+		}
+	}
+	return;
+}
+
+static void
+handleModuloOperator(TSqlParser::Mult_div_percent_exprContext *ctx)
+{
+	// For the modulo operator ('%') add a space behind it, depending on whether specific characters follow directly without an intervening space.
+	if (ctx->PERCENT_SIGN())
+	{
+		Assert(ctx->expression(1));	
+		std::string expr = getFullText(ctx->expression(1));
+		if ((expr.front() == '+') || (expr.front() == '-') || (expr.front() == '@')) 
+		{
+			std::string op = getFullText(ctx->PERCENT_SIGN()); // this is a bit redundant since it can only be '%', but keeping the same style as other rewrites
+			size_t startPosition = ctx->PERCENT_SIGN()->getSymbol()->getStartIndex();
+			rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(op, op+" ")));
+		}
+	}
+	return;
+}
+
+void handleAtAtVarInPredicate(TSqlParser::PredicateContext *ctx)
+{
+	// For comparison operators directly followed by an '@@' variable, insert a space 
+	// to avoid these being parsed incorrectly by PG; this applies to these following 
+	// character sequences: =@@, >@@, <@@ as well as !=@ (single-@ variable)
+	// Note: this issue does occur for assignments like 'SET @v=@@spid' or column aliases like 'SELECT a=@@spid'
+	// Note: parameter defaults and named parameters are handled separately
+
+	if ((ctx->comparison_operator()) && (ctx->expression().size() > 1))
+	{
+		std::string op = getFullText(ctx->comparison_operator());		
+		if ((op.back() == '=') || 
+		    (op.back() == '>') || 
+		    (op.back() == '<'))
+		{
+			// The operator must be followed immediately by the variable without any character in between
+			Assert(ctx->expression(1));
+			size_t startPosition = ctx->expression(1)->start->getStartIndex();
+			if ((startPosition - ctx->comparison_operator()->stop->getStopIndex()) == 1)
+			{
+				std::string var = getFullText(ctx->expression(1));
+				// The subsequent expression must be a variable starting with '@@'
+				if (var.front() == '@') 
+				{
+					if ((var.at(1) == '@') || (pg_strncasecmp(op.c_str(), "!=", 2) == 0))
+					{
+						// Insert a space before the variable name
+						rewritten_query_fragment.emplace(std::make_pair(startPosition, std::make_pair(var, " "+var)));
+					}
+				}
+			}
+		}
+	}
+	return;
+}
+
+static void
+handleOrderByOffsetFetch(TSqlParser::Order_by_clauseContext *ctx)
+{
+	// Add brackets around the expressions for OFFSET..ROWS and FETCH..ROWS
+	
+	if (ctx->offset_exp) 
+	{
+		// Do not rewrite the entire expression since that will break the logic in the mutator when there is something inside the
+		// expression that also needs rewriting (like a local variable @p which needs to be rewritten as "@p").
+		// Instead, insert an opening and closing bracket in the right places.
+		// Also, do not add a rewrite at the start position of the expression since there may be an '@' for a local var 
+		// at that position and the rewrite to double-quote the variable will be lost as a result.
+		rewritten_query_fragment.emplace(std::make_pair((ctx->offset_exp->start->getStartIndex() - 1), std::make_pair("", " (")));
+		rewritten_query_fragment.emplace(std::make_pair((ctx->offset_exp->stop->getStopIndex() + 1), std::make_pair("", ") ")));
+	}
+	
+	if (ctx->fetch_exp) 
+	{
+		// See comment for offset_exp above.
+		rewritten_query_fragment.emplace(std::make_pair((ctx->fetch_exp->start->getStartIndex() - 1), std::make_pair("", " (")));
+		rewritten_query_fragment.emplace(std::make_pair((ctx->fetch_exp->stop->getStopIndex() + 1), std::make_pair("", ") ")));
+	}
+
+	return;
+}
+

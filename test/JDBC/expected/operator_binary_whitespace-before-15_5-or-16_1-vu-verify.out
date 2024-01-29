@@ -1,0 +1,21 @@
+execute p1_bitop
+go
+~~START~~
+int
+-2
+~~END~~
+
+execute p1_bitop_not 
+go
+~~START~~
+int
+-3
+~~END~~
+
+exec p1_modulo_op
+go
+~~START~~
+int
+0
+~~END~~
+

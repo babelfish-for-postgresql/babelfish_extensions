@@ -48,6 +48,8 @@ datetime2
 datetimeoffset
 decimal
 float
+geography
+geometry
 image
 int
 money

@@ -461,6 +461,7 @@ alter_authorization_change_db_owner
 sp_changedbowner
 datetimeoffset-timezone
 BABEL-4046
+table_constraint_wo_comma-before-15_6-or-16_2
 host_id
 linked_srv_4229
 BABEL-4175
@@ -481,10 +482,14 @@ BABEL-4484
 pivot
 #AUTO_ANALYZE #uncomment this test when preparing for new minor version
 cast_eliminate
+order_by_offset_fetch_rows-before-15_6-or-16_2
 TestDatatypeAggSort
 babel_index_nulls_order
+operator_binary_whitespace-before-15_6-or-16_2
 BABEL-2999
+drop_index-before-15_6-or-16_2
 BABEL-4606
 permission_restrictions_from_pg
 BABEL-4529-before-15_6-or-14_11
 BABEL-730-before-15_6-or-16_1
+babel-4517
