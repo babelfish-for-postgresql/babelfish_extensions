@@ -9,8 +9,8 @@ EXEC sys_assembly_types_proc_vu_prepare
 GO
 ~~START~~
 varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
-geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
 
@@ -27,7 +27,7 @@ SELECT name, principal_id, max_length, precision, scale, collation_name, is_null
 GO
 ~~START~~
 varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
-geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
