@@ -712,11 +712,10 @@ GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
-        o.object_id         AS object_id,
-        o.schema_id         AS schema_id,
-        c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN CAST(split_part(p.attoptions[1], '=', 2) AS sys.VARCHAR)
-			ELSE c.name COLLATE sys.database_default END AS name,
+        c.object_id                      AS object_id,
+        CAST(p.relnamespace AS int)      AS schema_id,
+        c.column_id                      AS colid,
+        CAST(c.name AS sys.varchar)      AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
@@ -724,11 +723,10 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(c.collation_name AS nvarchar(128)) AS collation_90,
         CAST(c.collation_name AS nvarchar(128)) AS collation_100
     FROM
-        sys.all_columns c INNER JOIN
-        sys.all_objects o ON (c.object_id = o.object_id) JOIN
-        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
+        sys.all_columns c
+        INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
     WHERE
-        c.is_sparse = 0 AND p.attnum >= 0;
+        c.is_sparse = 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
