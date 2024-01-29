@@ -8,8 +8,8 @@ select indid, name from sys.sysindexes where id=OBJECT_ID('t1');
 go
 ~~START~~
 smallint#!#varchar
-0#!#<NULL>
 2#!#i1_t1t1f8997b05ff6c7614042919b25a8cc2e0
+0#!#<NULL>
 ~~END~~
 
 
@@ -17,8 +17,8 @@ select indid, name from dbo.sysindexes where id=OBJECT_ID('t1');
 go
 ~~START~~
 smallint#!#varchar
-0#!#<NULL>
 2#!#i1_t1t1f8997b05ff6c7614042919b25a8cc2e0
+0#!#<NULL>
 ~~END~~
 
 
