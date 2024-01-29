@@ -9,7 +9,7 @@ varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
 bigint#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 binary#!#0#!#8000#!#0#!#1#!#<NULL>#!#<NULL>
 bit#!#0#!#1#!#0#!#1#!#<NULL>#!#<NULL>
-char#!#0#!#8000#!#0#!#1#!#<NULL>#!#chinese_prc_ci_as
+char#!#0#!#8000#!#0#!#1#!#<NULL>#!#japanese_ci_as
 date#!#0#!#3#!#0#!#1#!#<NULL>#!#<NULL>
 datetime#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 datetime2#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
@@ -21,26 +21,26 @@ geometry#!#0#!#-1#!#0#!#1#!#<NULL>#!#<NULL>
 image#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
 int#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 money#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
-nchar#!#0#!#8000#!#0#!#1#!#<NULL>#!#chinese_prc_ci_as
-ntext#!#0#!#16#!#0#!#1#!#<NULL>#!#chinese_prc_ci_as
+nchar#!#0#!#8000#!#0#!#1#!#<NULL>#!#japanese_ci_as
+ntext#!#0#!#16#!#0#!#1#!#<NULL>#!#japanese_ci_as
 numeric#!#0#!#17#!#0#!#1#!#<NULL>#!#<NULL>
-nvarchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#chinese_prc_ci_as
+nvarchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#japanese_ci_as
 real#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 smalldatetime#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 smallint#!#0#!#2#!#0#!#1#!#<NULL>#!#<NULL>
 smallmoney#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
-sql_variant#!#0#!#8016#!#0#!#1#!#<NULL>#!#chinese_prc_ci_as
+sql_variant#!#0#!#8016#!#0#!#1#!#<NULL>#!#japanese_ci_as
 sys_systypes_type#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
-sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#chinese_prc_ci_as
-sysname#!#0#!#256#!#1#!#1#!#<NULL>#!#chinese_prc_ci_as
-text#!#0#!#16#!#0#!#1#!#<NULL>#!#chinese_prc_ci_as
+sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#japanese_ci_as
+sysname#!#0#!#256#!#1#!#1#!#<NULL>#!#japanese_ci_as
+text#!#0#!#16#!#0#!#1#!#<NULL>#!#japanese_ci_as
 time#!#0#!#5#!#0#!#1#!#<NULL>#!#<NULL>
 timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 timestamp#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 tinyint#!#0#!#1#!#0#!#1#!#<NULL>#!#<NULL>
 uniqueidentifier#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
 varbinary#!#0#!#8000#!#1#!#1#!#<NULL>#!#<NULL>
-varchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#chinese_prc_ci_as
+varchar#!#0#!#8000#!#1#!#1#!#<NULL>#!#japanese_ci_as
 xml#!#0#!#-1#!#0#!#1#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -71,7 +71,7 @@ SELECT * FROM sys_systypes_view4
 GO
 ~~START~~
 varchar#!#tinyint#!#smallint#!#bit#!#bit#!#varchar#!#varchar
-sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#chinese_prc_ci_as
+sys_systypes_type2#!#0#!#1#!#1#!#1#!#<NULL>#!#japanese_ci_as
 ~~END~~
 
 
