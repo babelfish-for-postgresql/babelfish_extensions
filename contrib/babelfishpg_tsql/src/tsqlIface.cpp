@@ -2644,6 +2644,38 @@ public:
 		has_identity_function = false;
 	}
 
+	void exitOrder_by_expression(TSqlParser::Order_by_expressionContext *ctx) override
+	{
+		/*
+		 * If there are multiple Order by clauses then we do not need to append
+		 * NULLS LAST since cummulative order bys do not choose an index scan.
+		 */
+		if (!(ctx->parent && ((TSqlParser::Order_by_clauseContext *)ctx->parent)->order_bys.size() == 1))
+			return;
+		/*
+		 * If the order by clause expression has a vector operator then we need to append
+		 * NULLS LAST as the sort option such that vector index types can be chosen. This
+		 * is done because the TSQL ordering is NULLS FIRST but for PG it's the opposite
+		 * and the order does not matter for bit indexes.
+		 */
+		if (statementMutator && ctx->vector_operator())
+		{
+			PLtsql_expr_query_mutator *mutator = statementMutator.get();
+			if (ctx->ASC())
+			{
+				mutator->add(ctx->ASC()->getSymbol()->getStopIndex()+1, "", " NULLS LAST");
+			}
+			else if (ctx->DESC())
+			{
+				mutator->add(ctx->DESC()->getSymbol()->getStopIndex()+1, "", " NULLS LAST");
+			}
+			else
+			{
+				mutator->add(ctx->expression()[1]->stop->getStopIndex()+1, "", " NULLS LAST");
+			}
+		}
+	}
+
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
 		// if select doesnt contains into but it contains identity we should throw error
@@ -7123,7 +7155,7 @@ post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_exec
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->NONCLUSTERED(), baseCtx);
 	if (ctx->COLUMNSTORE())
 		removeTokenStringFromQuery(stmt->sqlstmt, ctx->COLUMNSTORE(), baseCtx);
-	if (ctx->with_index_options())
+	if (ctx->with_index_options() && !ctx->vector_index_method()) /* Vector indexes can have With clause. */
 		removeCtxStringFromQuery(stmt->sqlstmt, ctx->with_index_options(), baseCtx);
 
 	return false;
