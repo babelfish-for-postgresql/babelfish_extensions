@@ -1109,7 +1109,7 @@ inner join type_code_list ti on t.typname = ti.pg_type_name
 left join pg_collation c on c.oid = t.typcollation
 ,cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
 where
-ti.tsql_type_name IS NOT NULL  
+ti.tsql_type_name IS NOT NULL
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
