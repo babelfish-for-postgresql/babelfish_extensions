@@ -113,6 +113,17 @@ TdsGucDefaultPacketSizeCheck(int *newvalue, void **extra, GucSource source)
 	return true;
 }
 
+static void
+set_newval_to_product_version(char **newval)
+{
+	free(*newval);
+	*newval = strdup(product_version);
+	if (*newval == NULL)
+			ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+}
+
 static bool
 check_version_number(char **newval, void **extra, GucSource source)
 {
@@ -134,7 +145,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		{
 			ereport(WARNING,
 					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by \'.\' ")));
-			*newval = product_version;
+			set_newval_to_product_version(newval);
 			return true;
 		}
 
@@ -143,7 +154,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		{
 			ereport(WARNING,
 					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid major version number between 11 and 16")));
-			*newval = product_version;
+			set_newval_to_product_version(newval);
 			return true;
 		}
 
@@ -155,7 +166,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		{
 			ereport(WARNING,
 					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid minor version number between 0 and 255")));
-			*newval = product_version;
+			set_newval_to_product_version(newval);
 			return true;
 		}
 
@@ -167,7 +178,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 		{
 			ereport(WARNING,
 					(errmsg("babelfishpg_tds.product_version cannot be set. Please enter a valid micro version number between 0 and 65535")));
-			*newval = product_version;
+			set_newval_to_product_version(newval);
 			return true;
 		}
 		part++;
@@ -177,7 +188,7 @@ check_version_number(char **newval, void **extra, GucSource source)
 	{
 		ereport(WARNING,
 				(errmsg("babelfishpg_tds.product_version cannot be set. Please enter 4 valid numbers separated by \'.\' ")));
-		*newval = product_version;
+		set_newval_to_product_version(newval);
 		return true;
 	}
 

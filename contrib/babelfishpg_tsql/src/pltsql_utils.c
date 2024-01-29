@@ -436,7 +436,7 @@ PLTsqlStartTransaction(char *txnName)
 	++NestedTranCount;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
 }
 
 void
@@ -460,7 +460,7 @@ PLTsqlCommitTransaction(QueryCompletion *qc, bool chain)
 	}
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
+		(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
 }
 
 void
@@ -475,7 +475,7 @@ PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain)
 		NestedTranCount = 0;
 
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_at_at_stat_var)
-			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var("trancount", NestedTranCount, 0);
+			(*pltsql_protocol_plugin_ptr)->set_at_at_stat_var(TRANCOUNT_TYPE, NestedTranCount, 0);
 	}
 	else
 	{
