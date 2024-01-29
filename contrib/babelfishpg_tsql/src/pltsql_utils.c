@@ -1293,27 +1293,6 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 	PG_RETURN_NULL();
 }
 
-const char
-*fetch_pltsql_function_signature(Oid func_oid)
-{
-	HeapTuple	proctup;
-	Form_pg_proc form_proctup;
-	const char *func_signature;
-
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(func_oid));
-	if (HeapTupleIsValid(proctup))
-	{
-		form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
-		func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
-																		 form_proctup->pronargs,
-																		 form_proctup->proargtypes.values);
-
-		ReleaseSysCache(proctup);
-		//PG_RETURN_TEXT_P(cstring_to_text(func_signature));
-	}
-	return func_signature;
-}
-
 void
 report_info_or_warning(int elevel, char *message)
 {

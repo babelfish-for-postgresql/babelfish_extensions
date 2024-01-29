@@ -292,7 +292,7 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define Anum_bbf_schema_perms_permission 4
 #define Anum_bbf_schema_perms_grantee 5
 #define Anum_bbf_schema_perms_object_type 6
-#define Anum_bbf_schema_perms_function_signature 7
+#define Anum_bbf_schema_perms_function_args 7
 
 #define PUBLIC_ROLE_NAME "public"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
@@ -314,7 +314,7 @@ typedef struct FormData_bbf_schema_perms
 	int32		permission;
 	VarChar	grantee;
 	char	object_type;
-	text	function_signature;
+	text	function_args;
 } FormData_bbf_schema_perms;
 
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
