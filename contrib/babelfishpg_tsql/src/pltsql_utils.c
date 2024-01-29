@@ -210,7 +210,8 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 		func->args_unspecified = true;
 
 		/* function, procedure */
-		func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
+		if (!stmt->replace)
+			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
 
 		if (OidIsValid(func_oid))
 		{
