@@ -3395,7 +3395,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA) != 0)
 		{
-			const char	*query;
+			const char	*query = NULL;
 			char			*schema;
 			List			*res;
 			GrantStmt		*grant;
