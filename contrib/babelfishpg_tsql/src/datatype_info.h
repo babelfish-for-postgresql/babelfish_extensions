@@ -4,7 +4,7 @@
 #define NULLVAL		PG_INT32_MIN
 #define NULLVAL_STR	"NULL"
 
-#define DATATYPE_INFO_TABLE_ROWS 37
+#define DATATYPE_INFO_TABLE_ROWS 39
 
 typedef struct DatatypeInfo
 {
@@ -487,6 +487,30 @@ static const DatatypeInfo datatype_info_table[DATATYPE_INFO_TABLE_ROWS] = {
 		"smalldatetime",
 		0, 0, 9, 3, NULLVAL, NULLVAL, 22, 16, 111,
 		"smalldatetime"
+	},
+	{
+		"geometry",
+		-4, -4, -151, -151,
+		0,
+		NULLVAL_STR,
+		NULLVAL_STR,
+		NULLVAL_STR,
+		1, 1, 0, NULLVAL, 0, NULLVAL,
+		"geometry",
+		NULLVAL, NULLVAL, -151, NULLVAL, NULLVAL, NULLVAL, 0, 2147483646, 23,
+		NULLVAL_STR
+	},
+	{
+		"geography",
+		-4, -4, -151, -151,
+		0,
+		NULLVAL_STR,
+		NULLVAL_STR,
+		NULLVAL_STR,
+		1, 1, 0, NULLVAL, 0, NULLVAL,
+		"geography",
+		NULLVAL, NULLVAL, -151, NULLVAL, NULLVAL, NULLVAL, 0, 2147483646, 23,
+		NULLVAL_STR
 	}
 };
 

@@ -16,6 +16,8 @@ datetime2#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
 datetimeoffset#!#0#!#10#!#0#!#1#!#<NULL>#!#<NULL>
 decimal#!#0#!#17#!#0#!#1#!#<NULL>#!#<NULL>
 float#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
+geography#!#0#!#-1#!#0#!#1#!#<NULL>#!#<NULL>
+geometry#!#0#!#-1#!#0#!#1#!#<NULL>#!#<NULL>
 image#!#0#!#16#!#0#!#1#!#<NULL>#!#<NULL>
 int#!#0#!#4#!#0#!#1#!#<NULL>#!#<NULL>
 money#!#0#!#8#!#0#!#1#!#<NULL>#!#<NULL>
