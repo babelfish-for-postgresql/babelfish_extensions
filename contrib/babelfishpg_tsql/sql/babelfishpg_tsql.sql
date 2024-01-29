@@ -639,6 +639,7 @@ BEGIN
 		WHEN 'sql_variant' THEN tds_id = 98;
 		WHEN 'datetimeoffset' THEN tds_id = 43;
 		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
 		WHEN 'geometry' THEN tds_id = 240;
 		WHEN 'geography' THEN tds_id = 240;
 		ELSE tds_id = 0;
