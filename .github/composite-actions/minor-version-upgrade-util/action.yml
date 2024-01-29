@@ -12,6 +12,10 @@ inputs:
   install_dir:
     description: "Install new version in this directory"
     required: true
+  server_collation_name:
+    description: "Server collation name"
+    required: false
+    default: "default"
 
 runs:
   using: "composite"
@@ -38,7 +42,8 @@ runs:
         cd ~
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
@@ -55,13 +60,16 @@ runs:
 
     - name: Run JDBC Verify Tests
       id: jdbc-verify-tests
-      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
+      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'     
       env:
         base_dir: ${{ matrix.upgrade-path.path[0] }}
         tar_dir: ${{ matrix.upgrade-path.last_version }}
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=false
+        if [[ ${{ inputs.server_collation_name }} != "default" ]]; then
+          export serverCollationName=${{ inputs.server_collation_name }}
+        fi
         base_dir=${{ matrix.upgrade-path.path[0] }}
         tar_dir=${{ matrix.upgrade-path.last_version }}
         if [[ "$base_dir" == *"latest"* ]]; then
