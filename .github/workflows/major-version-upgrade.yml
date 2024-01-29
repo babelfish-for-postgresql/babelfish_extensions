@@ -154,9 +154,16 @@ jobs:
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
+      - name: Build vector Extension
+        id: build-vector-extension
+        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
+        uses: ./.github/composite-actions/build-vector-extension
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
       - name: Build PostGIS Extension
         id: build-postgis-extension
-        if: always() && steps.build-tds_fdw-extension.outcome == 'success'
+        if: always() && steps.build-vector-extension.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}

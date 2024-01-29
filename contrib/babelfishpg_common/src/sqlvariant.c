@@ -21,6 +21,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_operator.h"
 #include "commands/dbcommands.h"
+#include "commands/trigger.h"
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "port.h"
@@ -29,6 +30,9 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_oper.h"
 #include "instr.h"
+#include "replication/logicalworker.h"
+#include "replication/walsender_private.h"
+#include "replication/slot.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
@@ -43,6 +47,7 @@
 
 #include "collation.h"
 #include "datetimeoffset.h"
+#include "logical.h"
 #include "typecode.h"
 #include "numeric.h"
 #include "sqlvariant.h"
@@ -78,6 +83,10 @@ sqlvariantin(PG_FUNCTION_ARGS)
 	Oid			input_func;
 	Oid			typIOParam;
 	svhdr_5B_t *svhdr;
+
+	/* Input as a bytea instead if it is logical replication applyworker. */
+	if (IS_LOGICAL_RECEIVER())
+		PG_RETURN_DATUM(byteain(fcinfo));
 
 	getTypeInputInfo(type, &input_func, &typIOParam);
 	/* evalute input fuction */
@@ -129,6 +138,10 @@ sqlvariantout(PG_FUNCTION_ARGS)
 	bool		typIsVarlena;
 	size_t		data_len = VARSIZE_ANY_EXHDR(vlena) - svhdr_size;
 	Datum	   *output_datum = palloc0(SIZEOF_DATUM);
+
+	/* Output as a bytea instead if we are in a logical decoding context. */
+	if (IS_LOGICAL_SENDER())
+		PG_RETURN_DATUM(byteaout(fcinfo));
 
 	if (!get_typbyval(type))	/* pass by reference */
 		*output_datum = SV_DATUM(vlena, svhdr_size);
