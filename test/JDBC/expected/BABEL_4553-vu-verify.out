@@ -1,0 +1,53 @@
+DROP VIEW babel_4553_3
+GO
+
+CREATE VIEW babel_4553_3
+AS
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
+    FROM sys.spt_columns_view_managed
+    WHERE TABLE_NAME = 'BABEL_4553'
+    ORDER BY TABLE_NAME COLLATE C, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
+GO
+
+-- Should return only 2 rows
+SELECT * FROM babel_4553_1
+GO
+~~START~~
+varchar#!#varchar
+BABEL_4553#!#col_name
+BABEL_4553#!#col_name_tsql
+~~END~~
+
+
+-- Should return only 3 rows
+SELECT * FROM babel_4553_2
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar#!#int#!#int
+BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
+BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
+BABEL_4553#!#col_name_tsql#!#12#!#varchar#!#7#!#7
+~~END~~
+
+
+-- Should return only 3 rows
+SELECT * FROM babel_4553_3
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#int#!#int
+BABEL_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+babel_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+babel_4553#!#col_name_tsql#!#varchar#!#7#!#<NULL>
+~~END~~
+
+
+DROP VIEW babel_4553_1, babel_4553_2, babel_4553_3;
+GO
+DROP INDEX babel_4553_index_1 ON BABEL_4553;
+GO
+DROP TABLE BABEL_4553
+GO
+
+-- psql
+DROP TABLE master_dbo."BABEL_4553"
+GO
