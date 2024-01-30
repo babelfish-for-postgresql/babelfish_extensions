@@ -2682,7 +2682,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	char		*logical_schema_name = NULL;
 	char		*object_name = NULL;
-	char		*object_type = NULL;
+	const char	*object_type = NULL;
 	int16		dbid = get_cur_db_id();
 	ObjectWithArgs *objwargs;
 
@@ -2765,6 +2765,11 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		heap_freetuple(new_tuple);
 		tuple_bbf_schema = systable_getnext(scan);
 	}
+
+	if (logical_schema_name != NULL)
+		pfree(logical_schema_name);
+	if (object_name != NULL)
+		pfree(object_name);
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
