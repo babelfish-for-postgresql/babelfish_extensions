@@ -85,28 +85,28 @@ Go
 SELECT location.Lat from SPATIALPOINTGEOM_dt ORDER BY location.STX;
 GO
 
-SELECT * FROM GeomView;
+SELECT * FROM GeomView ORDER BY Coordinates;
 GO
 
-SELECT * FROM ValFromGeom;
+SELECT * FROM ValFromGeom ORDER BY binary;
 GO
 
 EXEC dbo.p_getcoordinates;
 GO
 
-SELECT * FROM TextFromGeom;
+SELECT * FROM TextFromGeom ORDER BY TextRepresentation;
 GO
 
-SELECT * FROM BinaryFromGeom;
+SELECT * FROM BinaryFromGeom ORDER BY BinaryRepresentation;
 GO
 
-SELECT * FROM CoordsFromGeom;
+SELECT * FROM CoordsFromGeom ORDER BY Coordinates;
 GO
 
-SELECT * FROM equal_geom;
+SELECT * FROM equal_geom ORDER BY point.STX;
 GO
 
-SELECT * FROM point_distances_geom;
+SELECT * FROM point_distances_geom ORDER BY distance;
 GO
 
 SELECT location.STX from SPATIALPOINTGEOM_dt ORDER BY location.STX;
@@ -180,12 +180,12 @@ ELSE 'Low X'
 END AS XCoordinateCategory FROM YourTable ORDER BY PointColumn.STX;
 GO
 
-WITH PointData AS ( SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ) 
+WITH PointData AS ( SELECT ID, PointColumn.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX ) 
 SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
 GO
 
 DECLARE @point geometry = geometry::Point(1.0, 2.0, 4326);
-WITH PointData AS ( SELECT ID, @point.STX AS XCoordinate FROM YourTable )
+WITH PointData AS ( SELECT ID, @point.STX AS XCoordinate FROM YourTable ORDER BY PointColumn.STX )
 SELECT * FROM PointData WHERE XCoordinate > 3.0 ORDER BY XCoordinate;
 GO
 
@@ -291,7 +291,7 @@ DECLARE @result geometry;
 SET @result = dbo.GetGeometry();
 DECLARE @xCoordinate float;
 SET @xCoordinate = @result.STX;
-SELECT @result AS ResultGeometry, @xCoordinate AS XCoordinate;
+SELECT @result AS ResultGeometry, @xCoordinate AS XCoordinate ORDER BY XCoordinate;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326); 
@@ -376,12 +376,12 @@ GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 WITH DistanceCTE AS ( SELECT ID, PointColumn.STDistance(@referencePoint) AS Distance FROM YourTable ORDER BY PointColumn.STX)
-SELECT * FROM DistanceCTE WHERE Distance <= 3.0;
+SELECT * FROM DistanceCTE WHERE Distance <= 3.0 ORDER BY Distance;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
 WITH DistanceCTE AS ( SELECT ID, @referencePoint.STDistance(PointColumn) AS Distance FROM YourTable ORDER BY PointColumn.STX)
-SELECT * FROM DistanceCTE WHERE Distance <= 3.0;
+SELECT * FROM DistanceCTE WHERE Distance <= 3.0 ORDER BY Distance;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -389,14 +389,16 @@ DECLARE @distanceInterval float = 5.0;
 SELECT ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval AS DistanceGroup,
 COUNT(*) AS PointCount
 FROM YourTable
-GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval;
+GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @distanceInterval, 0) * @distanceInterval
+ORDER BY DistanceGroup;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(1.0, 0.0, 4326);
 SELECT ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX AS DistanceGroup,
 COUNT(*) AS PointCount
 FROM YourTable
-GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX;
+GROUP BY ROUND(PointColumn.STDistance(@referencePoint) / @referencePoint.STX, 0) * @referencePoint.STX
+ORDER BY DistanceGroup;
 GO
 
 DECLARE @referencePoint geometry = geometry::Point(0.0, 0.0, 4326);
@@ -514,16 +516,16 @@ GO
 
 -- Create Type Test Case currently Babelfish supports it but TSQL doesn't for spatial Types, Although it doesn't break anything
 -- TODO: Make it similar to T-SQL
-SELECT * FROM TypeTable;
+SELECT * FROM TypeTable ORDER BY ID;
 GO
 
-SELECT * FROM GeomToVarbinary;
+SELECT * FROM GeomToVarbinary ORDER BY p;
 GO
-SELECT * FROM GeomTochar;
+SELECT * FROM GeomTochar ORDER BY p;
 GO
-SELECT * FROM GeomToVarchar;
+SELECT * FROM GeomToVarchar ORDER BY p;
 GO
-SELECT * FROM TypeToGeom;
+SELECT * FROM TypeToGeom ORDER BY p.STX;
 GO
 
 -- Testing Explicit CASTs to and from Geometry data type
@@ -681,12 +683,13 @@ SELECT
 FROM
     RegionLocations
 GROUP BY
-    Lat;
+    Lat
+Order BY Lat;
 GO
 
 -- Test with CTE
 with mycte (a)
-as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt)
+as (select SPATIALPOINTGEOG_dt.location from SPATIALPOINTGEOG_dt Order BY location.Lat)
 select a.STAsText()
 				from mycte x inner join SPATIALPOINTGEOG_dt y on x.a.Lat >= y.location.Long ORDER BY x.a.Lat;
 go
@@ -720,37 +723,37 @@ Go
 SELECT location.STY from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT * FROM GeogView;
+SELECT * FROM GeogView ORDER BY Coordinates;
 GO
 
-SELECT * FROM SubqueryView;
+SELECT * FROM SubqueryView ORDER BY Latitude;
 GO
 
-SELECT * FROM BrackExprView;
+SELECT * FROM BrackExprView ORDER BY Latitude;
 GO
 
-SELECT * FROM FuncExprView;
+SELECT * FROM FuncExprView ORDER BY Latitude;
 GO
 
 EXEC dbo.proc_getdata;
 GO
 
-SELECT * FROM TextFromGeog;
+SELECT * FROM TextFromGeog ORDER BY TextRepresentation;
 GO
 
-SELECT * FROM BinaryFromGeog;
+SELECT * FROM BinaryFromGeog ORDER BY BinaryRepresentation;
 GO
 
-SELECT * FROM CoordsFromGeog;
+SELECT * FROM CoordsFromGeog ORDER BY Coordinates;
 GO
 
-SELECT * FROM TransformFromGeog;
+SELECT * FROM TransformFromGeog ORDER BY Modified_points.Lat;
 GO
 
-SELECT * FROM equal_geog;
+SELECT * FROM equal_geog ORDER BY point.Lat;
 GO
 
-SELECT * FROM point_distances_geog;
+SELECT * FROM point_distances_geog ORDER BY distance;
 GO
 
 SELECT location.Lat from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
@@ -777,13 +780,13 @@ GO
 SELECT location FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT * FROM GeogToVarbinary;
+SELECT * FROM GeogToVarbinary ORDER BY p;
 GO
-SELECT * FROM GeogTochar;
+SELECT * FROM GeogTochar ORDER BY p;
 GO
-SELECT * FROM GeogToVarchar;
+SELECT * FROM GeogToVarchar ORDER BY p;
 GO
-SELECT * FROM TypeToGeog;
+SELECT * FROM TypeToGeog ORDER BY p.Lat;
 GO
 
 -- Testing Explicit CASTs to and from Geography data type
@@ -886,11 +889,11 @@ SELECT * FROM SPATIALPOINT_dt ORDER BY GeomColumn.STX;
 GO
 
 -- Here we are testing ambiguity scenario for func_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
-SELECT geom_schema.STDistance(geom_schema) from geometry_test
+SELECT geom_schema.STDistance(geom_schema) from geometry_test ORDER BY geom_schema.STX
 GO
 
 -- Here we are testing ambiguity scenario for col_ref functions but we prioritize Geospatial Call in this case (Needs Documentation)
-SELECT STX.STX from STX
+SELECT STX.STX from STX ORDER BY STX.STX
 GO
 
 INSERT INTO babelfish_migration_mode_table SELECT current_setting('babelfishpg_tsql.migration_mode')
@@ -977,10 +980,10 @@ SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_table WHERE id_nu
 SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO
 
-SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry'
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geometry' ORDER BY name
 go
 
-SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geography'
+SELECT name, object_name(t.system_type_id), principal_id, max_length, precision, scale , collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, is_table_type from sys.types t WHERE name = 'geography' ORDER BY name
 go
 
 exec sp_sproc_columns_100 @procedure_name= 'geometry_proc_1'
@@ -989,7 +992,7 @@ GO
 exec sp_sproc_columns_100 @procedure_name= 'geography_proc_1'
 GO
 
-select * from information_schema.columns where table_name = 'geo_view_test'
+select * from information_schema.columns where table_name = 'geo_view_test' ORDER BY column_name
 GO
 
 select name , column_id , max_length , precision , scale , collation_name ,is_nullable , is_ansi_padded , is_rowguidcol , is_identity ,is_computed , is_filestream , is_replicated , is_non_sql_subscribed , is_merge_published , is_dts_replicated , is_xml_document , xml_collection_id , default_object_id , rule_object_id , is_sparse , is_column_set , generated_always_type , generated_always_type_desc , encryption_type , encryption_type_desc , encryption_algorithm_name , column_encryption_key_id , column_encryption_key_database_name , is_hidden , is_masked , graph_type , graph_type_desc from sys.columns where object_id = object_id('geo_view_test') ORDER BY name;
