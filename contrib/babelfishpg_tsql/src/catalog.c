@@ -2732,8 +2732,8 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 
 	/* scan */
 	scan = systable_beginscan(bbf_schema_rel,
-			get_bbf_schema_perms_idx_oid(),
-			true, NULL, 4, key);
+			get_bbf_schema_perms_oid(),
+			false, NULL, 4, key);
 
 	/* get the scan result -> original tuple */
 	tuple_bbf_schema = systable_getnext(scan);
