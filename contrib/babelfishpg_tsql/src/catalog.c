@@ -2625,6 +2625,14 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
 	{
+		/*
+		 * In case of renaming a table, view, procedure and function, modify the object
+		 * names present in all the Babelfish catalogs which stores these object names to
+		 * have consistency with the new names.
+		 *
+		 * List of catalogs which are updated here:
+		 * babelfish_schema_permissions, babelfish_function_ext, babelfish_view_def
+		 */
 		case OBJECT_TABLE:
 			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
@@ -2653,6 +2661,12 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 	}
 }
 
+/*
+ * rename_object_update_bbf_schema_permission_catalog
+ *
+ * In case of renaming a table, view, procedure and function, modify the 'object_name' in
+ * 'babelfish_schema_permissions' to have consistency with the new names.
+ */
 static void
 rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type)
 {
@@ -2666,11 +2680,10 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {0};
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
-	const char *logical_schema_name;
-	const char *object_name;
-	char	*object_type = NULL;
+	char		*logical_schema_name = NULL;
+	char		*object_name = NULL;
+	char		*object_type = NULL;
 	int16		dbid = get_cur_db_id();
-	Node	   *schema;
 	ObjectWithArgs *objwargs;
 
 	/* open the catalog table */
@@ -2680,7 +2693,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 
 	if (rename_type == OBJECT_TABLE || rename_type == OBJECT_VIEW)
 	{
-		logical_schema_name = get_logical_schema_name(stmt->relation->schemaname, true);
+		logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
 		object_name = stmt->relation->relname;
 		object_type = OBJ_RELATION;
 	}
@@ -2691,9 +2704,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		else if (rename_type == OBJECT_FUNCTION)
 			object_type = OBJ_FUNCTION;
 		objwargs = (ObjectWithArgs *) stmt->object;
-		schema = (Node *) linitial(objwargs->objname);
-		logical_schema_name = strVal(schema);
-		object_name = stmt->subname;
+		DeconstructQualifiedName(objwargs->objname, &logical_schema_name, &object_name);
 	}
 
 	/* search for the row for update => build the key */
@@ -2727,6 +2738,16 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	/* get the scan result -> original tuple */
 	tuple_bbf_schema = systable_getnext(scan);
 
+	/*
+	 * If a permission on the same object is granted to multiple grantees,
+	 * there can be multiple rows in the catalog corresponding to each grantee name.
+	 * All such rows need to be updated with the new name.
+	 *
+	 * It is OK to not throw an error if an entry is not found in 'babelfish_schema_permissions'.
+	 * Explaination: An entry is added to 'babelfish_schema_permissions' only if an object has an explicit GRANT on it.
+	 * It is not necessary that each RENAME on an object has a GRANT of that object too.
+	 * Hence, there can be missing entries.
+	 */
 	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
 		/* create new tuple to substitute */
