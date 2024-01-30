@@ -72,6 +72,9 @@ go
 create user babel_3254_u1 for login babel_3254_l1 with default_schema = babel_3254_s1
 go
 
+select rolname, login_name from sys.babelfish_authid_user_ext where login_name = 'babel_3254_l1'
+go
+
 -- psql
 grant all on schema master_babel_3254_s1 to master_babel_3254_u1;
 go

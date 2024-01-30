@@ -54,6 +54,9 @@ go
 sp_procedure_params_100_managed @procedure_name = 'babel_3254_p5', @parameter_name = '@e'
 go
 
+select rolname, login_name from sys.babelfish_authid_user_ext where login_name = 'babel_3254_l1'
+go
+
 -- check for the user having non-default schema
 -- tsql user=babel_3254_l1 password=12345678
 select default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
