@@ -1,3 +1,4 @@
+-- sla_for_parallel_query_enforced 45000
 use master
 go
 
