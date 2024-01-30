@@ -2868,7 +2868,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	new_record_bbf_schema[Anum_bbf_schema_perms_grantee - 1] = CStringGetTextDatum(pstrdup(grantee));
 	new_record_bbf_schema[Anum_bbf_schema_perms_object_type - 1] = CStringGetTextDatum(pstrdup(object_type));
 	if (func_args)
-		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(pstrdup(func_args));
+		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
 	else
 		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
 
@@ -3391,7 +3391,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
 		datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_function_args, dsc, &isnull);
 		if (!isnull)
-			func_args = pstrdup(TextDatumGetCString(datum));
+			func_args = TextDatumGetCString(datum);
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA) != 0)
 		{

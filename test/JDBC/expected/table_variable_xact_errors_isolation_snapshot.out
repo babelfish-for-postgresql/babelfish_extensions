@@ -585,7 +585,7 @@ AS
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: There is already an object named 'usp_populatediscount' in the database.)~~
+~~ERROR (Message: Function 'usp_populatediscount' already exists with the same name.)~~
 
 
 EXECUTE usp_PopulateDiscount
@@ -611,7 +611,7 @@ END CATCH;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: There is already an object named 'test' in the database.)~~
+~~ERROR (Message: Function 'test' already exists with the same name.)~~
 
 
 exec test
