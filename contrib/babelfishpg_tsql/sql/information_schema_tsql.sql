@@ -234,14 +234,23 @@ $$SELECT
 
 
 /*
- * COLUMNS view
+ * COLUMNS view internal
  */
 
-CREATE OR REPLACE VIEW information_schema_tsql.columns AS
-	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
+	SELECT c.oid AS "TABLE_OID",
+			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-			CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+			CAST(CASE
+				 	WHEN c.reloptions[1] LIKE 'bbf_original_rel_name=%' THEN substring(c.reloptions[1], 23)
+				 	ELSE c.relname
+			     END AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(CASE
+				 	WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
+				 	ELSE a.attname 
+			     END AS sys.nvarchar(128)) AS "COLUMN_NAME",
+			
 			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
 			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
 			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
@@ -328,6 +337,38 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
 		AND ext.dbid =sys.db_id();
+
+/*
+ * COLUMNS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.columns AS
+	SELECT
+		"TABLE_CATALOG",
+		"TABLE_SCHEMA",
+		"TABLE_NAME",
+		"COLUMN_NAME",
+		"ORDINAL_POSITION",
+		"COLUMN_DEFAULT",
+		"IS_NULLABLE",
+		"DATA_TYPE",
+		"CHARACTER_MAXIMUM_LENGTH",
+		"CHARACTER_OCTET_LENGTH",
+		"NUMERIC_PRECISION",
+		"NUMERIC_PRECISION_RADIX",
+		"NUMERIC_SCALE",
+		"DATETIME_PRECISION",
+		"CHARACTER_SET_CATALOG",
+		"CHARACTER_SET_SCHEMA",
+		"CHARACTER_SET_NAME",
+		"COLLATION_CATALOG",
+		"COLLATION_SCHEMA",
+		"COLLATION_NAME",
+		"DOMAIN_CATALOG",
+		"DOMAIN_SCHEMA",
+		"DOMAIN_NAME"
+	
+	FROM information_schema_tsql.columns_internal;
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
@@ -607,7 +648,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
            CAST(isc_col."TABLE_NAME" AS sys.sysname),
            CAST(isc_col."COLUMN_NAME" AS sys.sysname)
 
-    FROM information_schema_tsql.columns AS isc_col
+    FROM information_schema_tsql.columns_internal AS isc_col
     WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
 
 GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
