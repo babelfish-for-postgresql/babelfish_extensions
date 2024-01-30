@@ -1,0 +1,22 @@
+name: 'Build vector Extension'
+
+inputs:
+  install_dir:
+    description: 'Engine install directory'
+    required: no
+    default: psql
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build vector Extension
+      run: |
+        cd ..
+        export VECTOR_VERSION="0.5.1"
+        sudo apt-get install wget
+        wget https://github.com/pgvector/pgvector/archive/refs/tags/v${VECTOR_VERSION}.tar.gz
+        tar -xvzf v${VECTOR_VERSION}.tar.gz
+        cd pgvector-${VECTOR_VERSION}/
+        make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
+        sudo make USE_PGXS=1 PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config install
+      shell: bash
