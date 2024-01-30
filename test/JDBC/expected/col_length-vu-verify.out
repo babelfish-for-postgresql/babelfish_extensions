@@ -415,7 +415,7 @@ WHERE ColumnLength % 2 = 0;
 GO
 ~~START~~
 nvarchar#!#smallint
-id#!#4
+ID#!#4
 col_char#!#10
 col_varchar#!#20
 col_nchar#!#16
