@@ -2103,6 +2103,13 @@ AS 'babelfishpg_tsql', 'session_context'
 LANGUAGE C;
 GRANT EXECUTE ON FUNCTION sys.session_context TO PUBLIC;
 
+-- This function performs replacing special characters to their corresponding unique hashes
+-- in the search condition or the full text search CONTAINS predicate
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(IN phrase text) RETURNS TEXT AS 
+'babelfishpg_tsql', 'replace_special_chars_fts'
+LANGUAGE C IMMUTABLE STRICT;
+GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
+
 -- Update existing logins to remove createrole privilege
 CREATE OR REPLACE PROCEDURE sys.bbf_remove_createrole_from_logins()
 LANGUAGE C

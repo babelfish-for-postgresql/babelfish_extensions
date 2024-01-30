@@ -190,6 +190,7 @@ PG_FUNCTION_INFO_V1(datepart_internal_float);
 PG_FUNCTION_INFO_V1(datepart_internal_real);
 PG_FUNCTION_INFO_V1(datepart_internal_money);
 PG_FUNCTION_INFO_V1(datepart_internal_smallmoney);
+PG_FUNCTION_INFO_V1(replace_special_chars_fts);
 
 void	   *string_to_tsql_varchar(const char *input_str);
 void	   *get_servername_internal(void);
@@ -228,6 +229,7 @@ extern bool pltsql_case_insensitive_identifiers;
 extern bool inited_ht_tsql_cast_info;
 extern bool inited_ht_tsql_datatype_precedence_info;
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+extern char *replace_special_chars_FTS(char *input_str);
 
 char	   *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
@@ -2578,6 +2580,27 @@ type_name(PG_FUNCTION_ARGS)
         }
     }
     PG_RETURN_NULL();
+}
+
+Datum
+replace_special_chars_fts(PG_FUNCTION_ARGS)
+{
+    text		*input_text = PG_GETARG_TEXT_P(0);
+    char		*input_str = text_to_cstring(input_text);
+	char		*output_str;
+	text 		*result_text;
+
+    // Modify the input_str in place
+    output_str = replace_special_chars_FTS(input_str);
+
+    // Convert the modified input_str back to text
+    result_text = cstring_to_text(output_str);
+
+    // Free the memory allocated for input_str
+    pfree(input_str);
+	pfree(output_str);
+
+    PG_RETURN_TEXT_P(result_text);
 }
 
 Datum

@@ -41,17 +41,8 @@ GO
 EXEC fts_contains_vu_prepare_p1 '天'
 GO
 
-SELECT sys.babelfish_fts_rewrite('"one''two"')
-GO
-
-SELECT sys.babelfish_fts_rewrite('"one`two"')
-GO
-
 -- colons, semicolons, pipes, parenthesis, etc.
 EXEC fts_contains_vu_prepare_p1 '"one : two"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 '"one :)"'
 GO
 
 EXEC fts_contains_vu_prepare_p1 'one;two'
@@ -159,7 +150,6 @@ GO
 
 EXEC fts_contains_vu_prepare_p1 '"so-called"'
 GO
-
 
 EXEC fts_contains_vu_prepare_p1 '"stand up"'
 GO
