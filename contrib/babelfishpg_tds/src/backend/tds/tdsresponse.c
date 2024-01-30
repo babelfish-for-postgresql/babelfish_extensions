@@ -1858,12 +1858,14 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
-												atttypmod : (atttypmod - 4));
+												(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0x7fff) :
+												(atttypmod - 4));
 				break;
 			case TDS_SEND_NVARCHAR:
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
-												atttypmod : (atttypmod - 4) * 2);
+												(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0x7ffe) :
+												(atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_MONEY:
 				if (col->attNotNull)

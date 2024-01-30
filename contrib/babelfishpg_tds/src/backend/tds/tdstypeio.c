@@ -45,6 +45,7 @@
 #include "src/include/tds_typeio.h"
 #include "src/include/err_handler.h"
 #include "src/include/tds_instr.h"
+#include "src/include/tds_response.h"
 
 #include "tds_data_map.c"		/* include tables that used to initialize
 								 * hashmaps */
@@ -2711,6 +2712,17 @@ TdsSendPlpDataHelper(char *data, int len)
 	return rc;
 }
 
+static int
+TdsSendVarlenDataHelper(char *data, int len) {
+	int			rc;
+	if ((rc = TdsPutInt16LE(len)) == 0)
+	{
+		TdsPutbytes(data, len);
+		TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_COUNT, TDS_CMD_SELECT, 1);
+	}
+	return rc;
+}
+
 int
 TdsSendTypeXml(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
@@ -2789,7 +2801,10 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		TDSInstrumentation(INSTR_TDS_DATATYPE_VARCHAR_MAX);
 
-		rc = TdsSendPlpDataHelper(destBuf, actualLen);
+		if (GetClientTDSVersion() >= TDS_VERSION_7_2)
+			rc = TdsSendPlpDataHelper(destBuf, actualLen);
+		else
+			rc = TdsSendVarlenDataHelper(destBuf, actualLen);
 	}
 
 	pfree(buf);
@@ -2845,7 +2860,10 @@ TdsSendTypeVarbinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		TDSInstrumentation(INSTR_TDS_DATATYPE_VARBINARY_MAX);
 
-		rc = TdsSendPlpDataHelper(buf, len);
+		if (GetClientTDSVersion() >= TDS_VERSION_7_2)
+			rc = TdsSendPlpDataHelper(buf, len);
+		else
+			rc = TdsSendVarlenDataHelper(buf, len);
 	}
 	return rc;
 }
@@ -2984,7 +3002,10 @@ TdsSendTypeNVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	{
 		TDSInstrumentation(INSTR_TDS_DATATYPE_NVARCHAR_MAX);
 
-		rc = TdsSendPlpDataHelper(buf.data, buf.len);
+		if (GetClientTDSVersion() >= TDS_VERSION_7_2)
+			rc = TdsSendPlpDataHelper(buf.data, buf.len);
+		else
+			rc = TdsSendVarlenDataHelper(buf.data, buf.len);
 	}
 
 	pfree(buf.data);
