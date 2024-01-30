@@ -370,7 +370,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
      LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
+     JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
@@ -800,10 +800,9 @@ FROM
             c.object_id = o.object_id and
             o.type in ('U', 'V')  -- limit columns to tables and views
         )
-    LEFT JOIN information_schema_tsql.columns isc ON
+    LEFT JOIN information_schema_tsql.columns_internal isc ON
         (
-            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
-            o.name = isc."TABLE_NAME" and
+            o.object_id = isc."TABLE_OID" AND
             c.name = isc."COLUMN_NAME"
         )
     WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
@@ -1119,7 +1118,7 @@ CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
 CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
 CAST(t5.conname AS sys.sysname) AS PK_NAME
@@ -1127,7 +1126,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns t4 ON (cast(t1.relname as sys.nvarchar(128)) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA" )
+	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
@@ -1204,7 +1203,7 @@ CAST(t1.relpages AS int) AS PAGES,
 CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema_tsql.columns t3 ON (lower(t1.relname) = lower(t3."TABLE_NAME") COLLATE C AND s1.name = t3."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns_internal t3 ON (t1.oid = t3."TABLE_OID")
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 UNION
 SELECT
@@ -1235,7 +1234,7 @@ CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema_tsql.columns t4 ON (lower(t1.relname) = lower(t4."TABLE_NAME") COLLATE C AND s1.name = t4."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)

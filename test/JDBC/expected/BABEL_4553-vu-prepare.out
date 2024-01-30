@@ -1,0 +1,76 @@
+-- psql
+SET ROLE = 'master_dbo';
+GO
+
+CREATE TABLE master_dbo."BABEL_4553" (col_name int PRIMARY KEY);
+GO
+
+-- tsql
+CREATE TABLE dbo.BABEL_4553 (col_name_tsql VARCHAR(7) PRIMARY KEY, col_name int);
+GO
+
+CREATE INDEX babel_4553_index_1 ON BABEL_4553 (col_name);
+GO
+
+CREATE VIEW babel_4553_1
+AS
+    SELECT TABLE_NAME, COLUMN_NAME
+    FROM sys.sp_pkeys_view
+    WHERE TABLE_NAME = 'BABEL_4553'
+    ORDER BY TABLE_NAME COLLATE C, COLUMN_NAME
+GO
+
+CREATE VIEW babel_4553_2
+AS
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, TYPE_NAME, PRECISION, LENGTH
+    FROM sys.sp_columns_100_view
+    WHERE TABLE_NAME = 'BABEL_4553'
+    ORDER BY TABLE_NAME COLLATE C, COLUMN_NAME, DATA_TYPE, TYPE_NAME, PRECISION, LENGTH
+GO
+
+CREATE VIEW babel_4553_3
+AS
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
+    FROM sys.spt_columns_view_managed
+    WHERE TABLE_NAME = 'BABEL_4553'
+    ORDER BY TABLE_NAME COLLATE C, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, DATETIME_PRECISION
+GO
+
+-- should return only 2 rows
+SELECT * FROM babel_4553_1
+GO
+~~START~~
+varchar#!#varchar
+BABEL_4553#!#col_name
+BABEL_4553#!#col_name_tsql
+babel_4553#!#col_name
+babel_4553#!#col_name_tsql
+~~END~~
+
+
+-- should return only 3 rows
+SELECT * FROM babel_4553_2
+GO
+~~START~~
+varchar#!#varchar#!#smallint#!#varchar#!#int#!#int
+BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
+BABEL_4553#!#col_name#!#4#!#int#!#10#!#4
+babel_4553#!#col_name#!#4#!#int#!#10#!#4
+babel_4553#!#col_name#!#4#!#int#!#10#!#4
+babel_4553#!#col_name_tsql#!#12#!#<NULL>#!#7#!#<NULL>
+babel_4553#!#col_name_tsql#!#12#!#varchar#!#7#!#7
+~~END~~
+
+
+-- should return only 3 rows
+SELECT * FROM babel_4553_3
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#int#!#int
+BABEL_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+BABEL_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+babel_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+babel_4553#!#col_name#!#int#!#<NULL>#!#<NULL>
+babel_4553#!#col_name_tsql#!#varchar#!#7#!#<NULL>
+~~END~~
+
