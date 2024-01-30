@@ -2272,13 +2272,13 @@ BEGIN
    	LEFT OUTER JOIN sys.all_parameters AS p 
 	ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
    	WHERE v.original_procedure_name = @procedure_name
-    	AND (@procedure_schema IS NULL OR v.procedure_owner = @procedure_schema)
+    	AND v.procedure_owner = @procedure_schema
 	AND (@parameter_name IS NULL OR column_name = @parameter_name)
 	AND @group_number = 1
     	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;
 END;
 $$ LANGUAGE pltsql;
-GRANT ALL PRIVILEGES ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
+GRANT EXECUTE ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
 
 -- BABELFISH_SCHEMA_PERMISSIONS
 CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
