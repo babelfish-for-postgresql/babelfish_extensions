@@ -60,7 +60,7 @@ runs:
 
     - name: Run JDBC Verify Tests
       id: jdbc-verify-tests
-      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'     
+      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
       env:
         base_dir: ${{ matrix.upgrade-path.path[0] }}
         tar_dir: ${{ matrix.upgrade-path.last_version }}
