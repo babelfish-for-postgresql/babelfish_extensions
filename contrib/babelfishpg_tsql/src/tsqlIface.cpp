@@ -181,10 +181,7 @@ template <class T> static void rewrite_geospatial_func_ref_args_query_helper(T c
 template <class T> static void rewrite_function_call_geospatial_func_ref_args(T ctx);
 template <class T> static void rewrite_function_call_geospatial_func_ref_no_arg(T ctx);
 static void handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx);
-static void handleGeospatialFunctionsInFuncCallExpr(TSqlParser::Func_call_exprContext *ctx);
-static void handleGeospatialFunctionsInLocalIdExpr(TSqlParser::Local_id_exprContext *ctx);
-static void handleGeospatialFunctionsInBracketExpr(TSqlParser::Bracket_exprContext *ctx);
-static void handleGeospatialFunctionsInSubqueryExpr(TSqlParser::Subquery_exprContext *ctx);
+static void handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx);
 static void handleFullColumnNameCtx(TSqlParser::Full_column_nameContext *ctx);
 static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
@@ -907,44 +904,12 @@ public:
 		handleGeospatialFunctionsInFunctionCall(ctx);
 	}
 
-	/* We are adding handling for Spatial Types in:
-	 * tsqlCommonMutator: for CREATE/ALTER View, Procedure, Function
-	 * tsqlBuilder: for other cases handling
+	/* We are adding handling for CLR_UDT Types in:
+	 * tsqlCommonMutator: for cases CREATE/ALTER View, Procedure, Function
 	 */
-	/* Here we are Rewriting Geospatial query query: Func_call DOT Geospatial_Func:
-	 * Func_call DOT Geospatial_col -> ( Func_call ) DOT Geospatial_col
-	 * Func_call DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, Func_call)
-	 */
-	void exitFunc_call_expr(TSqlParser::Func_call_exprContext *ctx) override
+	void exitClr_udt_func_call(TSqlParser::Clr_udt_func_callContext *ctx) override
 	{
-		handleGeospatialFunctionsInFuncCallExpr(ctx);
-	}
- 
-	/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function:
-	 * local_id DOT Geospatial_col -> ( local_id ) DOT Geospatial_col
-	 * local_id DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, local_id)
-	 */
-	void exitLocal_id_expr(TSqlParser::Local_id_exprContext *ctx) override
-	{
-		handleGeospatialFunctionsInLocalIdExpr(ctx);
-	}
-
-	/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function:
-	 * bracket_expr DOT Geospatial_col -> ( bracket_expr ) DOT Geospatial_col
-	 * bracket_expr DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, bracket_expr)
-	 */
-	void exitBracket_expr(TSqlParser::Bracket_exprContext *ctx) override
-	{
-		handleGeospatialFunctionsInBracketExpr(ctx);
-	}
-
-	/* Handles rewrite of geospatial query but inside body of CREATE/ALTER View, Procedure, Function:
-	 * Subquery_expr DOT Geospatial_col -> ( Subquery_expr ) DOT Geospatial_col
-	 * Subquery_expr DOT Geospatial_func (arg_list) -> Geospatial_func (agr_list, Subquery_expr)
-	 */
-	void exitSubquery_expr(TSqlParser::Subquery_exprContext *ctx) override
-	{
-		handleGeospatialFunctionsInSubqueryExpr(ctx);
+		handleClrUdtFuncCall(ctx);
 	}
 
 	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
@@ -2323,28 +2288,12 @@ public:
 		handleFullColumnNameCtx(ctx);
 	}
 
-	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
-	void exitFunc_call_expr(TSqlParser::Func_call_exprContext *ctx) override
+	/* We are adding handling for CLR_UDT Types in:
+	 * tsqlBuilder: for cases other than inside CREATE/ALTER View, Procedure, Function
+	 */
+	void exitClr_udt_func_call(TSqlParser::Clr_udt_func_callContext *ctx) override
 	{
-		handleGeospatialFunctionsInFuncCallExpr(ctx);
-	}
-
-	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
-	void exitLocal_id_expr(TSqlParser::Local_id_exprContext *ctx) override
-	{
-		handleGeospatialFunctionsInLocalIdExpr(ctx);
-	}
-
-	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
-	void exitBracket_expr(TSqlParser::Bracket_exprContext *ctx) override
-	{
-		handleGeospatialFunctionsInBracketExpr(ctx);
-	}
-
-	/* Handles rewrite of geospatial query except inside body of CREATE/ALTER View, Procedure, Function: */
-	void exitSubquery_expr(TSqlParser::Subquery_exprContext *ctx) override
-	{
-		handleGeospatialFunctionsInSubqueryExpr(ctx);
+		handleClrUdtFuncCall(ctx);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -8248,90 +8197,27 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	}
 }
 
-static void
-handleGeospatialFunctionsInFuncCallExpr(TSqlParser::Func_call_exprContext *ctx)
+static void 
+handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 {
+	/* checking if CLR_UDT types */
 	if(ctx != NULL && !ctx->DOT().empty())
 	{
 		std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
 		for (size_t i = 0; i < method_calls.size(); ++i)
 		{
 			TSqlParser::Method_callContext *method = method_calls[i];
-			/* rewriting the query in case of Geospatial function Call -> function_call.method_call */
+			/* rewriting the query in case of Geospatial function Call */
 			if(method->spatial_methods())
 			{
-				size_t ind;
-				if (i == 0) ind = ctx->function_call()->stop->getStopIndex();
-				else ind = method_calls[i-1]->stop->getStopIndex();
-				rewrite_geospatial_query_helper(ctx, method, ind);
-			}
-		}
-	}
-}
-
-static void
-handleGeospatialFunctionsInLocalIdExpr(TSqlParser::Local_id_exprContext *ctx)
-{
-	if(ctx != NULL && !ctx->DOT().empty())
-	{
-		std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-		for (size_t i = 0; i < method_calls.size(); ++i)
-		{
-			TSqlParser::Method_callContext *method = method_calls[i];
-			/* rewriting the query in case of Geospatial function Call -> local_id.method_call */
-			if(method->spatial_methods())
-			{
-				size_t ind;
-				if (i == 0) ind = ctx->local_id()->stop->getStopIndex();
-				else ind = method_calls[i-1]->stop->getStopIndex();
-				rewrite_geospatial_query_helper(ctx, method, ind);
-			}
-		}
-	}
-}
-
-static void
-handleGeospatialFunctionsInBracketExpr(TSqlParser::Bracket_exprContext *ctx)
-{
-	if(ctx != NULL && !ctx->DOT().empty())
-	{
-		std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-		for (size_t i = 0; i < method_calls.size(); ++i)
-		{
-			TSqlParser::Method_callContext *method = method_calls[i];
-			/* rewriting the query in case of Geospatial function Call -> LR_BRACKET expression RR_BRACKET.method_call */
-			if(method->spatial_methods())
-			{
-				size_t ind;
-				std::string context = ::getFullText(ctx);
-				size_t spaces = 0;
-				for (size_t x = ctx->expression()->stop->getStopIndex() + 1 - ctx->start->getStartIndex(); x <= ctx->stop->getStopIndex() - ctx->start->getStartIndex(); x++)
+				size_t ind = -1;
+				if (i == 0)
 				{
-					if(isspace(context[x])) spaces++;
-					else if(context[x] == ')') break;
+					if(ctx->local_id()) ind = ctx->local_id()->stop->getStopIndex();
+					else if(ctx->subquery()) ind = ctx->subquery()->stop->getStopIndex();
+					else if(ctx->function_call()) ind = ctx->function_call()->stop->getStopIndex();
+					else if(ctx->RR_BRACKET()) ind = ctx->RR_BRACKET()->getSymbol()->getStartIndex();
 				}
-				if (i == 0) ind = ctx->expression()->stop->getStopIndex() + 1 + spaces;
-				else ind = method_calls[i-1]->stop->getStopIndex();
-				rewrite_geospatial_query_helper(ctx, method, ind);
-			}
-		}
-	}
-}
-
-static void
-handleGeospatialFunctionsInSubqueryExpr(TSqlParser::Subquery_exprContext *ctx)
-{
-	if(ctx != NULL && !ctx->DOT().empty())
-	{
-		std::vector<TSqlParser::Method_callContext *> method_calls = ctx->method_call();
-		for (size_t i = 0; i < method_calls.size(); ++i)
-		{
-			TSqlParser::Method_callContext *method = method_calls[i];
-			/* rewriting the query in case of Geospatial function Call -> subquery.method_call */
-			if(method->spatial_methods())
-			{
-				size_t ind;
-				if (i == 0) ind = ctx->subquery()->stop->getStopIndex();
 				else ind = method_calls[i-1]->stop->getStopIndex();
 				rewrite_geospatial_query_helper(ctx, method, ind);
 			}
