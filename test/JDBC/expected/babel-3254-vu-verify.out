@@ -185,6 +185,13 @@ varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#
 ~~END~~
 
 
+sp_procedure_params_100_managed @procedure_name = ''
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
 -- reset the login password
 ALTER LOGIN babel_3254_l1 WITH PASSWORD = '12345678'
 GO
