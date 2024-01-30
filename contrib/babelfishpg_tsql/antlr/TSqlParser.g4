@@ -1823,6 +1823,18 @@ create_index
     with_index_options?
     (ON storage_partition_clause)?
  SEMI?
+    |CREATE UNIQUE? clustered? COLUMNSTORE? INDEX id ON table_name (USING vector_index_method)? (LR_BRACKET column_name_list_with_order_for_vector RR_BRACKET)?
+    (INCLUDE LR_BRACKET column_name_list RR_BRACKET )?
+    (WHERE where=search_condition)?
+    with_index_options?
+    (ON storage_partition_clause)?
+ SEMI?
+    ;
+
+/* We introduce specific index methods so as to avoid PG syntax leaks. */
+vector_index_method
+    : HNSW
+    | IVFFLAT
     ;
 
 alter_index
@@ -3574,8 +3586,9 @@ xml_common_directives
     : COMMA (BINARY_KEYWORD BASE64 | TYPE | ROOT ( LR_BRACKET char_string RR_BRACKET )?)
     ;
 
-order_by_expression
+order_by_expression 
     : order_by=expression (ascending=ASC | descending=DESC)?
+    | order_by=expression vector_operator expression (ascending=ASC | descending=DESC)? 
     ;
 
 group_by_item
@@ -3760,6 +3773,7 @@ function_call
     : ranking_windowed_function                         
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
+    | spatial_proc_name_server_database_schema LR_BRACKET function_arg_list? RR_BRACKET 
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3844,11 +3858,34 @@ trigger_column_updated
     : UPDATE LR_BRACKET full_column_name RR_BRACKET
     ;
 
-spatial_methods  // we could expand the entire list here, but it is very long
-    : method=id (LR_BRACKET expression_list? RR_BRACKET)?
-    | NULL_P // no bracket
+spatial_methods
+    : ( geospatial_col | geospatial_func_no_arg | geospatial_func_arg ) (LR_BRACKET expression_list? RR_BRACKET)?
     ;
         
+geospatial_col
+    : STX
+    | STX_SQBRACKET
+    | STX_DOUBLE_QUOTE
+    | STY
+    | STY_SQBRACKET
+    | STY_DOUBLE_QUOTE
+    | LAT
+    | LAT_SQBRACKET
+    | LAT_DOUBLE_QUOTE
+    | LONG
+    | LONG_SQBRACKET
+    | LONG_DOUBLE_QUOTE
+    ;
+
+geospatial_func_no_arg
+    : STASTEXT
+    | STASBINARY
+    ;
+
+geospatial_func_arg
+    : STDISTANCE
+    ;
+
 hierarchyid_methods
     : method=( GETANCESTOR | GETDESCENDANT | GETLEVEL | ISDESCENDANTOF | READ | GETREPARENTEDVALUE | TOSTRING ) LR_BRACKET expression_list? RR_BRACKET
     ;
@@ -4585,6 +4622,9 @@ keyword
     | LANGUAGE
     | LAST
     | LAST_VALUE
+    | LAT
+    | LAT_DOUBLE_QUOTE
+    | LAT_SQBRACKET
     | LEAD
     | LEDGER
     | LEFT
@@ -4608,6 +4648,9 @@ keyword
     | LOG
     | LOG10
     | LOGIN
+    | LONG
+    | LONG_DOUBLE_QUOTE
+    | LONG_SQBRACKET
     | LOOP
     | LOW
     | MANUAL
@@ -4946,6 +4989,8 @@ keyword
     | STARTED
     | STARTUP_STATE
     | START_DATE
+    | STASBINARY
+    | STASTEXT
     | STATE
     | STATEMENT
     | STATIC
@@ -4956,6 +5001,7 @@ keyword
     | STATUSONLY
     | STDEV
     | STDEVP
+    | STDISTANCE
     | STOP
     | STOPAT
     | STOPATMARK
@@ -4966,6 +5012,12 @@ keyword
     | STRING_AGG
     | STRING_DELIMITER
     | STUFF
+    | STX
+    | STX_DOUBLE_QUOTE
+    | STX_SQBRACKET
+    | STY
+    | STY_DOUBLE_QUOTE
+    | STY_SQBRACKET
     | SUBJECT
     | SUBSCRIBE
     | SUBSCRIPTION
@@ -5116,6 +5168,10 @@ func_proc_name_database_schema
     | (schema=id? DOT)? procedure=id
     ;
 
+spatial_proc_name_server_database_schema
+    : ((schema=id? DOT)? table=id? DOT)? column=id DOT ( geospatial_func_no_arg | geospatial_func_arg )
+    ;
+
 func_proc_name_server_database_schema
     : (server=id? DOT)? database=id? DOT schema=id? DOT procedure=id
     | (schema=id? DOT)? procedure=id
@@ -5136,11 +5192,17 @@ collation
     ;
     
 full_column_name
-    : (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
+    : ((schema=id? DOT)? table=id? DOT)? column=id DOT geospatial_col
+    | (((server=id? DOT)? schema=id? DOT)? tablename=id? DOT)? column_name=id
     ;
 
 column_name_list_with_order
     : simple_column_name (ASC | DESC)? (COMMA simple_column_name (ASC | DESC)?)*
+    ;
+
+/* We introduce specific index methods so as to avoid PG syntax leaks. */
+column_name_list_with_order_for_vector
+    : simple_column_name (ASC | DESC)? (VECTOR_COSINE_OPS | VECTOR_IP_OPS | VECTOR_L2_OPS)? (COMMA simple_column_name (ASC | DESC)? (VECTOR_COSINE_OPS | VECTOR_IP_OPS | VECTOR_L2_OPS)?)*
     ;
 
 //For some reason, sql server allows any number of prefixes:  Here, h is the column: a.b.c.d.e.f.g.h
@@ -5183,7 +5245,11 @@ local_id
 // https://msdn.microsoft.com/en-us/library/ms188074.aspx
 // Spaces are allowed for comparison operators.
 comparison_operator
-    : EQUAL | GREATER | LESS | LESS EQUAL | GREATER EQUAL | LESS GREATER | EXCLAMATION EQUAL | EXCLAMATION GREATER | EXCLAMATION LESS | MULT_ASSIGN | EQUAL_STAR_OJ
+    : EQUAL | GREATER | LESS | LESS EQUAL | GREATER EQUAL | LESS GREATER | EXCLAMATION EQUAL | EXCLAMATION GREATER | EXCLAMATION LESS | MULT_ASSIGN | EQUAL_STAR_OJ | vector_operator
+    ;
+
+vector_operator
+    : VECTOR_COSINE | VECTOR_IP | VECTOR_L2
     ;
 
 assignment_operator

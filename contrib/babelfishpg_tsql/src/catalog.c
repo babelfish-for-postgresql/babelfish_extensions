@@ -514,7 +514,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	TupleDesc	dsc;
 	bool		isnull;
 
-	if (get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
+	if (!physical_schema_name || get_namespace_oid(physical_schema_name, missingOk) == InvalidOid)
 		return NULL;
 
 	rel = table_open(namespace_ext_oid, AccessShareLock);

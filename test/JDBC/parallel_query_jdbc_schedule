@@ -6,39 +6,7 @@
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 # These tests are crashing/failing with parallel query mode is on. 
 
-
-# Hangs with unknown cause
-ignore#!#sp_who-vu-prepare
-ignore#!#sp_who-vu-verify
-ignore#!#sp_who-vu-cleanup
-
-# Group 1: BABEL-4481
-ignore#!#Test-sp_addrolemember-vu-prepare
-ignore#!#Test-sp_addrolemember-vu-verify
-ignore#!#Test-sp_addrolemember-vu-cleanup
-ignore#!#Test-sp_droprolemember-vu-prepare
-ignore#!#Test-sp_droprolemember-vu-verify
-ignore#!#Test-sp_droprolemember-vu-cleanup
-
-ignore#!#table-variable-vu-verify
-
-# Other or mixed issues - JIRA-BABEL-4538
-# database "" does not exists. (calls is_member() functions)
-ignore#!#BABEL-1621
-# database "" does not exists. (calls schema_id())
-ignore#!#BABEL-741-vu-verify
-ignore#!#BABEL-2416
-ignore#!#BABEL-2833
-# database "" does not exists. (calls IS_ROLEMEMBER())
-ignore#!#BABEL-ROLE-MEMBER-vu-verify
-ignore#!#BABEL-ROLE-MEMBER
-
-# JIRA - BABEL-4421
-ignore#!#Test-sp_addrolemember-dep-vu-verify
-ignore#!#Test-sp_droprolemember-dep-vu-verify
-ignore#!#babel_table_type
-
-# These test should not get ran in parallel query
+# These test should not get run in parallel query
 ignore#!#BABEL-1363
 
 # Taking too much time to complete. (TIME-OUT FAILURES)

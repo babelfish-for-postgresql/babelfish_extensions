@@ -880,7 +880,12 @@ select
     END as collation_name
   , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
   , CAST(0 as sys.bit) as is_user_defined
-  , CAST(0 as sys.bit) as is_assembly_type
+  , CASE tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
   , CAST(0 as sys.bit) as is_table_type
@@ -913,7 +918,12 @@ select cast(t.typname as sys.sysname) as name
     as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , CAST(1 as sys.bit) as is_user_defined
-  , CAST(0 as sys.bit) as is_assembly_type
+  , CASE tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
   , CAST(0 as int) as default_object_id
   , CAST(0 as int) as rule_object_id
   , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
@@ -2023,26 +2033,6 @@ END;
 $$;
 GRANT EXECUTE on PROCEDURE sys.sp_rename(IN sys.nvarchar(776), IN sys.SYSNAME, IN sys.varchar(13)) TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
-SELECT
-CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
-CAST(seq AS smallint) AS KEY_SEQ,
-CAST(t5.conname AS sys.sysname) AS PK_NAME
-FROM pg_catalog.pg_class t1 
-	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
-	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns t4 ON (cast(t1.relname as sys.nvarchar(128)) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA" )
-	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
-	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
-WHERE t5.contype = 'p'
-	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
-	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
-  AND ext.dbid = sys.db_id();
-
 -- Rename functions for dependencies
 DO $$
 DECLARE
@@ -2209,6 +2199,691 @@ AS SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.availability_groups TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
+	END IF;
+
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
+
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type in ('geometry', 'geography') THEN max_length = -1;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length(type text, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$SELECT
+	CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
+		THEN CASE WHEN typmod = -1
+			THEN -1
+			ELSE typmod - 4
+			END
+		WHEN type IN ('text', 'image')
+		THEN 2147483647
+		WHEN type = 'ntext'
+		THEN 1073741823
+		WHEN type = 'sysname'
+		THEN 128
+		WHEN type IN ('xml', 'vector', 'geometry', 'geography')
+		THEN -1
+		WHEN type = 'sql_variant'
+		THEN 0
+		ELSE null
+	END$$;
+
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
+AS $$
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
+		WHEN 'geometry' THEN tds_id = 240;
+		WHEN 'geography' THEN tds_id = 240;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(type text, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$SELECT
+	CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
+		THEN CASE WHEN typmod = -1 /* default typmod */
+			THEN -1
+			ELSE typmod - 4
+			END
+		WHEN type IN ('nchar', 'nvarchar')
+		THEN CASE WHEN typmod = -1 /* default typmod */
+			THEN -1
+			ELSE (typmod - 4) * 2
+			END
+		WHEN type IN ('text', 'image')
+		THEN 2147483647 /* 2^30 + 1 */
+		WHEN type = 'ntext'
+		THEN 2147483646 /* 2^30 */
+		WHEN type = 'sysname'
+		THEN 256
+		WHEN type = 'sql_variant'
+		THEN 0
+		WHEN type IN ('xml', 'geometry', 'geography')
+		THEN -1
+	   ELSE null
+  END$$;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length_for_routines(type text, typmod int4) RETURNS integer
+        LANGUAGE sql
+        IMMUTABLE
+        PARALLEL SAFE
+        RETURNS NULL ON NULL INPUT
+        AS
+$$SELECT
+        CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
+                THEN CASE WHEN typmod = -1
+                        THEN 1
+                        ELSE typmod - 4
+                        END
+                WHEN type IN ('text', 'image')
+                THEN 2147483647
+                WHEN type = 'ntext'
+                THEN 1073741823
+                WHEN type = 'sysname'
+                THEN 128
+                WHEN type IN ('xml', 'geometry', 'geography')
+                THEN -1
+                WHEN type = 'sql_variant'
+                THEN 0
+                ELSE null
+        END$$;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_length_for_sp_columns_helper(IN type TEXT, IN typelen INT, IN typemod INT)
+RETURNS INT
+AS $$
+DECLARE
+  length INT;
+  precision INT;
+BEGIN
+  -- unknown tsql type
+  IF type IS NULL THEN
+    RETURN typelen::INT;
+  END IF;
+
+  IF typemod = -1 AND (type = 'varchar' OR type = 'nvarchar' OR type = 'varbinary') THEN
+    length = 0;
+    RETURN length;
+  END IF;
+
+  IF typelen != -1 THEN
+    CASE type
+    WHEN 'tinyint' THEN length = 1;
+    WHEN 'date' THEN length = 6;
+    WHEN 'smalldatetime' THEN length = 16;
+    WHEN 'smallmoney' THEN length = 12;
+    WHEN 'money' THEN length = 21;
+    WHEN 'datetime' THEN length = 16;
+    WHEN 'datetime2' THEN length = 16;
+    WHEN 'datetimeoffset' THEN length = 20;
+    WHEN 'time' THEN length = 12;
+    WHEN 'timestamp' THEN length = 8;
+    ELSE length = typelen;
+    END CASE;
+    RETURN length;
+  END IF;
+
+  CASE
+  WHEN type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN length = typemod - 4;
+  WHEN type in ('nchar', 'nvarchar') THEN length = (typemod - 4) * 2;
+  WHEN type in ('text', 'image') THEN length = 2147483647;
+  WHEN type = 'ntext' THEN length = 2147483646;
+  WHEN type = 'xml' THEN length = 0;
+  WHEN type IN ('geometry', 'geography') THEN length = -1;
+  WHEN type = 'sql_variant' THEN length = 8000;
+  WHEN type = 'money' THEN length = 21;
+  WHEN type = 'sysname' THEN length = (typemod - 4) * 2;
+  WHEN type in ('numeric', 'decimal') THEN
+    precision = ((typemod - 4) >> 16) & 65535;
+    length = precision + 2;
+  ELSE
+    length = typemod;
+  END CASE;
+  RETURN length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geometry') THEN
+    BEGIN
+        INSERT INTO sys.spt_datatype_info_table VALUES (N'geometry', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geometry', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+    END;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM sys.spt_datatype_info_table WHERE TYPE_NAME = N'geography') THEN
+    BEGIN
+        INSERT INTO sys.spt_datatype_info_table VALUES (N'geography', -151, 0, NULL, NULL, NULL, 1, 1, 0, NULL, 0, NULL, N'geography', NULL, NULL, -151, NULL, NULL, NULL, 0, 2147483646, 23, NULL);
+    END;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        c.object_id                      AS object_id,
+        CAST(p.relnamespace AS int)      AS schema_id,
+        c.column_id                      AS colid,
+        CAST(c.name AS sys.varchar)      AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c
+        INNER JOIN pg_catalog.pg_class p ON (c.object_id = p.oid)
+    WHERE
+        c.is_sparse = 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.columns_internal AS
+	SELECT c.oid AS "TABLE_OID",
+			CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+			CAST(CASE
+				 	WHEN c.reloptions[1] LIKE 'bbf_original_rel_name=%' THEN substring(c.reloptions[1], 23)
+				 	ELSE c.relname
+			     END AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(CASE
+				 	WHEN a.attoptions[1] LIKE 'bbf_original_name=%' THEN substring(a.attoptions[1], 19)
+				 	ELSE a.attname 
+			     END AS sys.nvarchar(128)) AS "COLUMN_NAME",
+			
+			CAST(a.attnum AS int) AS "ORDINAL_POSITION",
+			CAST(CASE WHEN a.attgenerated = '' THEN pg_get_expr(ad.adbin, ad.adrelid) END AS sys.nvarchar(4000)) AS "COLUMN_DEFAULT",
+			CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
+				AS varchar(3))
+				AS "IS_NULLABLE",
+
+			CAST(
+				CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+				WHEN tsql_type_name.tsql_type_name IS NULL THEN format_type(t.oid, NULL::integer)
+				ELSE tsql_type_name END
+				AS sys.nvarchar(128))
+				AS "DATA_TYPE",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_MAXIMUM_LENGTH",
+
+			CAST(
+				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
+				AS int)
+				AS "CHARACTER_OCTET_LENGTH",
+
+			CAST(
+				/* Handle Tinyint separately */
+				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
+				AS sys.tinyint)
+				AS "NUMERIC_PRECISION",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
+				AS smallint)
+				AS "NUMERIC_PRECISION_RADIX",
+
+			CAST(
+				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
+				AS int)
+				AS "NUMERIC_SCALE",
+
+			CAST(
+				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+				AS smallint)
+				AS "DATETIME_PRECISION",
+
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+			/*
+			 * TODO: We need to first create mapping of collation name to char-set name;
+			 * Until then return null.
+			 */
+			CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
+			CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+
+			/* Returns Babelfish specific collation name. */
+			CAST(co.collname AS sys.nvarchar(128)) AS "COLLATION_NAME",
+
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN nc.dbname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN ext.orig_name ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN t.typname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_NAME"
+
+	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		LEFT JOIN pg_collation co on co.oid = a.attcollation
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+		AND a.attnum > 0 AND NOT a.attisdropped
+		AND c.relkind IN ('r', 'v', 'p')
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_column_privilege(c.oid, a.attnum,
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid =sys.db_id();
+
+CREATE OR REPLACE VIEW information_schema_tsql.columns AS
+	SELECT
+		"TABLE_CATALOG",
+		"TABLE_SCHEMA",
+		"TABLE_NAME",
+		"COLUMN_NAME",
+		"ORDINAL_POSITION",
+		"COLUMN_DEFAULT",
+		"IS_NULLABLE",
+		"DATA_TYPE",
+		"CHARACTER_MAXIMUM_LENGTH",
+		"CHARACTER_OCTET_LENGTH",
+		"NUMERIC_PRECISION",
+		"NUMERIC_PRECISION_RADIX",
+		"NUMERIC_SCALE",
+		"DATETIME_PRECISION",
+		"CHARACTER_SET_CATALOG",
+		"CHARACTER_SET_SCHEMA",
+		"CHARACTER_SET_NAME",
+		"COLLATION_CATALOG",
+		"COLLATION_SCHEMA",
+		"COLLATION_NAME",
+		"DOMAIN_CATALOG",
+		"DOMAIN_SCHEMA",
+		"DOMAIN_NAME"
+	
+	FROM information_schema_tsql.columns_internal;
+
+GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
+
+CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
+    SELECT isc_col."DOMAIN_CATALOG",
+           isc_col."DOMAIN_SCHEMA" ,
+           CAST(isc_col."DOMAIN_NAME" AS sys.sysname),
+           isc_col."TABLE_CATALOG",
+           isc_col."TABLE_SCHEMA",
+           CAST(isc_col."TABLE_NAME" AS sys.sysname),
+           CAST(isc_col."COLUMN_NAME" AS sys.sysname)
+
+    FROM information_schema_tsql.columns_internal AS isc_col
+    WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
+
+GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
+  SELECT 
+  CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+  CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+  CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+  CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+  CAST(t5.data_type AS smallint) AS DATA_TYPE,
+  CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
+
+  CASE WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
+    WHEN tsql_type_name = 'timestamp'
+    THEN 8
+    ELSE
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
+  END AS PRECISION,
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, a.atttypmod) AS int)
+    ELSE
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, t.typtypmod) AS int)
+  END AS LENGTH,
+
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", a.atttypmod, true)) AS smallint)
+    ELSE
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", t.typtypmod, true)) AS smallint)
+  END AS SCALE,
+
+
+  CAST(coalesce(t4."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(t4."DATA_TYPE")) AS smallint) AS RADIX,
+  case
+    when t4."IS_NULLABLE" = 'YES' then CAST(1 AS smallint)
+    else CAST(0 AS smallint)
+  end AS NULLABLE,
+
+  CAST(NULL AS varchar(254)) AS remarks,
+  CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
+  CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
+  CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
+
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+    WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
+    ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
+  END AS CHAR_OCTET_LENGTH,
+
+  CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
+  CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
+  CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
+  CAST(0 AS smallint) AS SS_IS_SPARSE,
+  CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
+  CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
+  CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
+  CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
+
+  FROM pg_catalog.pg_class t1
+     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+     JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
+     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
+     LEFT JOIN pg_type t ON t.oid = a.atttypid
+     LEFT JOIN sys.columns t6 ON
+     (
+      t1.oid = t6.object_id AND
+      t4."ORDINAL_POSITION" = t6.column_id
+     )
+     , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+     , sys.spt_datatype_info_table AS t5
+  WHERE (t4."DATA_TYPE" = CAST(t5.TYPE_NAME AS sys.nvarchar(128)) OR (t4."DATA_TYPE" = 'bytea' AND t5.TYPE_NAME = 'image'))
+    AND ext.dbid = sys.db_id();
+
+GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_statistics_view AS
+SELECT
+CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CAST(NULL AS smallint) AS NON_UNIQUE,
+CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(NULL AS sys.sysname) AS INDEX_NAME,
+CAST(0 AS smallint) AS TYPE,
+CAST(NULL AS smallint) AS SEQ_IN_INDEX,
+CAST(NULL AS sys.sysname) AS COLUMN_NAME,
+CAST(NULL AS sys.varchar(1)) AS COLLATION,
+CAST(t1.reltuples AS int) AS CARDINALITY,
+CAST(t1.relpages AS int) AS PAGES,
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN information_schema_tsql.columns_internal t3 ON (t1.oid = t3."TABLE_OID")
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+UNION
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CASE
+WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
+ELSE CAST(1 AS smallint)
+END AS NON_UNIQUE,
+CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE 
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+END AS INDEX_NAME,
+CASE
+WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
+ELSE CAST(3 AS smallint)
+END AS TYPE,
+CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST('A' AS sys.varchar(1)) AS COLLATION,
+CAST(t7.n_distinct AS int) AS CARDINALITY,
+CAST(0 AS int) AS PAGES, --not supported
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+    JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
+	LEFT JOIN pg_catalog.pg_stats t7 ON (t1.relname = t7.tablename AND t7.schemaname = nsp.nspname)
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
+    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
+GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST(seq AS smallint) AS KEY_SEQ,
+CAST(t5.conname AS sys.sysname) AS PK_NAME
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
+WHERE t5.contype = 'p'
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = sys.db_id();
+
+GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
+
+ALTER VIEW sys.spt_columns_view_managed RENAME TO spt_columns_view_managed_4_0_0;
+
+CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
+SELECT
+    o.object_id                     AS OBJECT_ID,
+    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
+    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
+    o.name                          AS TABLE_NAME,
+    c.name                          AS COLUMN_NAME,
+    isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
+    isc."COLUMN_DEFAULT"::information_schema.character_data              AS COLUMN_DEFAULT,
+    isc."IS_NULLABLE"::information_schema.yes_or_no                      AS IS_NULLABLE,
+    isc."DATA_TYPE"::information_schema.character_data                   AS DATA_TYPE,
+
+    CAST (CASE WHEN isc."CHARACTER_MAXIMUM_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_MAXIMUM_LENGTH" END
+		AS information_schema.cardinal_number) AS CHARACTER_MAXIMUM_LENGTH,
+
+    CAST (CASE WHEN isc."CHARACTER_OCTET_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_OCTET_LENGTH" END
+		AS information_schema.cardinal_number)      AS CHARACTER_OCTET_LENGTH,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION_RADIX" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION_RADIX" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION_RADIX,
+
+    CAST (CASE WHEN isc."NUMERIC_SCALE" < 0 THEN 0 ELSE isc."NUMERIC_SCALE" END
+		AS information_schema.cardinal_number)      AS NUMERIC_SCALE,
+
+    CAST (CASE WHEN isc."DATETIME_PRECISION" < 0 THEN 0 ELSE isc."DATETIME_PRECISION" END
+		AS information_schema.cardinal_number)      AS DATETIME_PRECISION,
+
+    isc."CHARACTER_SET_CATALOG"::information_schema.sql_identifier       AS CHARACTER_SET_CATALOG,
+    isc."CHARACTER_SET_SCHEMA"::information_schema.sql_identifier        AS CHARACTER_SET_SCHEMA,
+    isc."CHARACTER_SET_NAME"::information_schema.sql_identifier          AS CHARACTER_SET_NAME,
+    isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
+    isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
+    c.collation_name                                                     AS COLLATION_NAME,
+    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
+    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
+    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
+    c.is_sparse                     AS IS_SPARSE,
+    c.is_column_set                 AS IS_COLUMN_SET,
+    c.is_filestream                 AS IS_FILESTREAM
+FROM
+    sys.objects o JOIN sys.columns c ON
+        (
+            c.object_id = o.object_id and
+            o.type in ('U', 'V')  -- limit columns to tables and views
+        )
+    LEFT JOIN information_schema_tsql.columns_internal isc ON
+        (
+            o.object_id = isc."TABLE_OID" AND
+            c.name = isc."COLUMN_NAME"
+        )
+    WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
+GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_3_5_0');
@@ -2226,6 +2901,7 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_depr
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_3_5_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'systypes_deprecated_3_5_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_4_0_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

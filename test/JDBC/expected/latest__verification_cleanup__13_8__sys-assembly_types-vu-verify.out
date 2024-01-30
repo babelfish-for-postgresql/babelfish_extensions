@@ -8,7 +8,9 @@ int#!#varchar
 EXEC sys_assembly_types_proc_vu_prepare
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
 
@@ -16,14 +18,16 @@ SELECT * FROM sys_assembly_types_func_vu_prepare()
 GO
 ~~START~~
 int
-0
+2
 ~~END~~
 
 
 -- Test from sys-assembly_types.sql
-SELECT * FROM sys.assembly_types
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, assembly_id, assembly_class, is_binary_ordered, is_fixed_length, prog_id, assembly_qualified_name, is_table_type FROM sys.assembly_types ORDER BY name DESC
 GO
 ~~START~~
-varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+geometry#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+geography#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 

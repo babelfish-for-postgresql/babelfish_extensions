@@ -207,6 +207,8 @@ XX000#!#The table-valued parameter "%s" must be declared with the READONLY optio
 22023#!#'%s' is not a recognized %s option#!##!#155
 22023#!#The datepart %s is not supported by date function %s for data type %s.#!##!#9810
 22008#!#Adding a value to a '%s' column caused an overflow.#!##!#517
+42P01#!#FOR JSON AUTO requires at least one table for generating JSON objects. Use FOR JSON PATH or add a FROM clause with a table name.#!##!#13600
+42P01#!#sub-select and values for json auto are not currently supported.#!##!#13600
 ~~END~~
 
 
