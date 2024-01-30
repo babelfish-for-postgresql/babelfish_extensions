@@ -370,7 +370,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
      LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns t4 ON (t1.relname::sys.nvarchar(128) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
+     JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname::sys.nvarchar(128) = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
@@ -639,6 +639,7 @@ BEGIN
 		WHEN 'sql_variant' THEN tds_id = 98;
 		WHEN 'datetimeoffset' THEN tds_id = 43;
 		WHEN 'timestamp' THEN tds_id = 173;
+		WHEN 'vector' THEN tds_id = 167; -- Same as varchar 
 		WHEN 'geometry' THEN tds_id = 240;
 		WHEN 'geography' THEN tds_id = 240;
 		ELSE tds_id = 0;
@@ -799,10 +800,9 @@ FROM
             c.object_id = o.object_id and
             o.type in ('U', 'V')  -- limit columns to tables and views
         )
-    LEFT JOIN information_schema_tsql.columns isc ON
+    LEFT JOIN information_schema_tsql.columns_internal isc ON
         (
-            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
-            o.name = isc."TABLE_NAME" and
+            o.object_id = isc."TABLE_OID" AND
             c.name = isc."COLUMN_NAME"
         )
     WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
@@ -1118,7 +1118,7 @@ CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
 CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
 CAST(t5.conname AS sys.sysname) AS PK_NAME
@@ -1126,7 +1126,7 @@ FROM pg_catalog.pg_class t1
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
   LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-	JOIN information_schema_tsql.columns t4 ON (cast(t1.relname as sys.nvarchar(128)) = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA" )
+	JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
@@ -1203,7 +1203,7 @@ CAST(t1.relpages AS int) AS PAGES,
 CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-    JOIN information_schema_tsql.columns t3 ON (lower(t1.relname) = lower(t3."TABLE_NAME") COLLATE C AND s1.name = t3."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns_internal t3 ON (t1.oid = t3."TABLE_OID")
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 UNION
 SELECT
@@ -1234,7 +1234,7 @@ CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema_tsql.columns t4 ON (lower(t1.relname) = lower(t4."TABLE_NAME") COLLATE C AND s1.name = t4."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns_internal t4 ON (t1.oid = t4."TABLE_OID")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	JOIN pg_catalog.pg_namespace nsp ON (t1.relnamespace = nsp.oid)
@@ -3660,3 +3660,91 @@ END
 $$;
 GRANT EXECUTE ON PROCEDURE sys.sp_changedbowner(IN sys.sysname, IN sys.VARCHAR(5)) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_procedure_params_100_managed(IN "@procedure_name" sys.sysname, 
+                                                                IN "@group_number" integer DEFAULT 1, 
+                                                                IN "@procedure_schema" sys.sysname DEFAULT NULL, 
+                                                                IN "@parameter_name" sys.sysname DEFAULT NULL)
+AS $$
+BEGIN
+	IF @procedure_schema IS NULL
+		BEGIN
+			SELECT @procedure_schema = default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+		END
+
+        SELECT 	v.column_name AS [PARAMETER_NAME],
+		CAST (CASE v.column_type
+			WHEN 5 THEN 4
+                        WHEN 3 THEN 4
+                        ELSE v.column_type END
+                     	AS smallint) AS [PARAMETER_TYPE],
+        	CAST (CASE v.type_name
+			WHEN 'int' THEN 8
+                        WHEN 'nchar' THEN 10
+                        WHEN 'char' THEN 3
+                        WHEN 'date' THEN 31
+                        WHEN 'nvarchar' THEN 12
+                        WHEN 'varchar' THEN 22
+                        WHEN 'table' THEN 23
+                        WHEN 'datetime' THEN 4
+                        WHEN 'datetime2' THEN 33
+                        WHEN 'datetimeoffset' THEN 34
+                        WHEN 'smalldatetime' THEN 15
+			WHEN 'time' THEN 32
+                        WHEN 'decimal' THEN 5
+			WHEN 'numeric' THEN 5
+                        WHEN 'float' THEN 6
+                        WHEN 'real' THEN 13
+                        WHEN 'nchar' THEN 10
+                        WHEN 'flag' THEN 2
+                        WHEN 'money' THEN 9
+                        WHEN 'smallmoney' THEN 17
+                        WHEN 'tinyint' THEN 20
+                        WHEN 'smallint' THEN 16
+                        WHEN 'bigint' THEN 0
+                        WHEN 'bit' THEN 2
+			WHEN 'text' THEN 18
+			WHEN 'ntext' THEN 11
+			WHEN 'binary' THEN 1
+			WHEN 'varbinary' THEN 21
+			WHEN 'image' THEN 7
+                        ELSE 0 END
+                	AS smallint) AS [MANAGED_DATA_TYPE],
+        	CAST (CASE 
+			WHEN v.type_name IN (N'nchar', N'nvarchar') AND p.max_length <> -1 THEN p.max_length / 2
+			WHEN v.type_name IN (N'char', N'varchar', N'binary', N'varbinary') AND p.max_length <> -1 THEN p.max_length
+			WHEN v.type_name IN (N'nvarchar', N'varchar', N'varbinary') AND p.max_length = -1 THEN 0
+                	WHEN v.type_name IN (N'text', N'image') THEN 2147483647
+                	WHEN v.type_name = 'ntext' THEN 1073741823
+                	ELSE NULL END 
+			AS INT) AS [CHARACTER_MAXIMUM_LENGTH],
+        	CAST(CASE 
+			WHEN v.type_name IN (N'int', N'smallint', N'bigint', N'tinyint', N'float', N'real', N'decimal', N'numeric', N'money', N'smallmoney') 
+				THEN v.PRECISION
+			ELSE NULL END 
+			AS smallint) AS [NUMERIC_PRECISION],
+        	CAST(CASE 
+			WHEN v.type_name IN (N'decimal', N'numeric') THEN v.SCALE 
+			ELSE NULL END 
+			AS smallint ) AS [NUMERIC_SCALE],
+        	CAST(NULL AS sys.nvarchar(128)) AS [TYPE_CATALOG_NAME],
+        	CAST(NULL AS sys.nvarchar(128)) AS [TYPE_SCHEMA_NAME],
+        	CAST(v.TYPE_NAME AS sys.nvarchar(128)) AS [TYPE_NAME],
+        	CAST(NULL AS sys.nvarchar(128)) AS XML_CATALOGNAME,
+        	CAST(NULL AS sys.nvarchar(128)) AS XML_SCHEMANAME,
+        	CAST(NULL AS sys.nvarchar(128)) AS XML_SCHEMACOLLECTIONNAME,
+        	CAST(CASE
+			WHEN v.type_name = 'datetime' THEN 3
+                    	WHEN v.type_name IN (N'datetime2', N'datetimeoffset', N'time') THEN 7
+			WHEN v.type_name IN (N'date', N'smalldatetime') THEN 0
+                    	ELSE NULL END AS int) AS [SS_DATETIME_PRECISION]
+   	FROM sys.sp_sproc_columns_view v
+   	LEFT OUTER JOIN sys.all_parameters AS p 
+	ON v.column_name = p.name AND p.object_id = object_id(CONCAT(@procedure_schema, '.', @procedure_name))
+   	WHERE v.original_procedure_name = @procedure_name
+    	AND v.procedure_owner = @procedure_schema
+	AND (@parameter_name IS NULL OR column_name = @parameter_name)
+	AND @group_number = 1
+    	ORDER BY PROCEDURE_OWNER, PROCEDURE_NAME, ORDINAL_POSITION;
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
