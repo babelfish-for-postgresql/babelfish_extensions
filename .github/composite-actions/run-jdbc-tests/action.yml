@@ -1,6 +1,12 @@
 name: 'Run JDBC Tests'
 description: 'Run Babel JDBC test framework'
 
+inputs:
+  input_dir:
+    description: 'Test input directory'
+    required: no
+    default: input
+
 runs:
   using: "composite"
   steps:
@@ -8,6 +14,7 @@ runs:
       run: |
           export PATH=~/${{env.INSTALL_DIR}}/bin:$PATH
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+          export inputFilesPath=${{inputs.input_dir}}
           cd test/JDBC/
           mvn test
       shell: bash

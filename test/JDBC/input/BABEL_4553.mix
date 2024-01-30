@@ -1,0 +1,117 @@
+-- tsql
+CREATE DATABASE dms_test_target_db
+go
+USE dms_test_target_db
+GO
+
+CREATE TABLE [dbo].my_table (
+	mycol sys.DATETIME2(7) NULL
+) 
+GO
+
+-- psql
+CREATE TABLE IF NOT EXISTS dbo."my_Table"
+(
+    mycol CHARACTER VARYING(4) 
+);
+GO
+
+-- tsql
+USE dms_test_target_db
+GO
+
+EXEC sys.sp_columns_100 'my_table', 'dbo', NULL, NULL;
+GO
+
+-- psql
+DROP TABLE dbo."my_Table", dbo.my_table;
+GO
+
+-- tsql
+USE dms_test_target_db;
+GO
+
+CREATE TABLE babel_4544_1 (col_1 int)
+GO
+
+CREATE TABLE BABEL_4544_2 (col2 int)
+GO
+
+CREATE TABLE bABeL_4544_3 (col3 int)
+GO
+
+CREATE TABLE [babel_4544_4] (col4 int)
+GO
+
+CREATE TABLE [BABEL_4544_5] (col5 int)
+GO
+
+CREATE TABLE [bABeL_4544_6] (col6 int)
+GO
+
+CREATE TABLE Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa (
+    col_int_63_tsql INT, col_varchar_63_tsql VARCHAR(11), col_datetime_63_tsql sys.DATETIME2(1)
+    );
+GO
+
+CREATE TABLE BaBeL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa (
+    col_int_64_tsql INT, col_varchar_64_tsql VARCHAR(12), col_datetime_64_tsql sys.DATETIME2(2)
+);
+GO
+
+CREATE TABLE bAbEl_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa (
+    col_int_128_tsql INT, col_varchar_128_tsql VARCHAR(13), col_datetime_128_tsql sys.DATETIME2(3)
+);
+GO
+
+SELECT COUNT(*) FROM information_schema_tsql.columns WHERE TABLE_NAME like 'babel_4544%';
+GO
+
+-- psql
+SET psql_logical_babelfish_db_name = 'dms_test_target_db';
+GO
+
+CREATE TABLE dbo."bAbel_4544_1" (col_1_psql int)
+GO
+
+CREATE TABLE dbo."Babel_4544_this_is_sixty_three_letters_long_word_aaaaaaaaaaaaaa" (
+    col_int_63_psql INT, col_varchar_63_psql sys.VARCHAR(97), col_datetime_63_psql sys.DATETIME2(4)
+    );
+GO
+
+CREATE TABLE dbo."BABEL_4544_this_is_sixty_four_letters_long_word_aaaaaaaaaaaaaaaa" (
+    col_int_64_psql INT, col_varchar_64_psql sys.VARCHAR(98), col_datetime_64_psql sys.DATETIME2(5)
+);
+GO
+
+CREATE TABLE dbo."BABEL_4544_this_is_hundred_and_twenty_eight_letters_long_word_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" (
+    col_int_128_psql INT, col_varchar_128_psql sys.VARCHAR(99), col_datetime_128_psql sys.DATETIME2(6)
+);
+GO
+
+-- verify JOIN condition and if data type, col name & typmod is correct for each entry
+-- table_name and column name should return original name
+SELECT istc."TABLE_NAME", istc."COLUMN_NAME", istc."CHARACTER_MAXIMUM_LENGTH", istc."DATETIME_PRECISION" FROM pg_class c JOIN information_schema_tsql.columns_internal istc ON (c.oid = istc."TABLE_OID")
+    WHERE c.relname != 'sysdatabases'
+    ORDER BY istc."COLUMN_NAME";
+GO
+
+-- tsql
+USE master
+GO
+
+CREATE TABLE bAbEL_4553_1 (col_VARCHAR VARCHAR(128))
+GO
+
+CREATE TABLE #bAbEL_4553_2 (col_VARCHAR VARCHAR(128))
+GO
+
+DECLARE @bAbEL_4553_3 TABLE (col_VARCHAR VARCHAR(128))
+SELECT TABLE_NAME, COLUMN_NAME FROM information_schema_tsql.columns WHERE TABLE_NAME like '%BABEL_4553_%'
+GO
+
+DROP TABLE bAbEL_4553_1
+GO
+
+DROP DATABASE dms_test_target_db
+GO

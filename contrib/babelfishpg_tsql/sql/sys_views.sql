@@ -358,6 +358,7 @@ BEGIN
 			ELSIF typemod <= 7 THEN max_length = 5;
 			END IF;
 		WHEN 'timestamp' THEN max_length = 8;
+		WHEN 'vector' THEN max_length = -1; -- dummy as varchar max
 		ELSE max_length = typelen;
 		END CASE;
 		RETURN max_length;
