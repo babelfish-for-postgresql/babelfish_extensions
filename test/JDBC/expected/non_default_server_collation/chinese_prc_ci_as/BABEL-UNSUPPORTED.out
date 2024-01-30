@@ -95,6 +95,13 @@ GO
 ~~ERROR (Message: 'DEADLOCK_PRIORITY' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
 
 
+SET CONTEXT_INFO 0;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'CONTEXT_INFO' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
 SET LANGUAGE 'english'
 GO
 ~~ERROR (Code: 33557097)~~
@@ -254,6 +261,8 @@ GO
 SET DATEFORMAT dmy;
 GO
 SET DEADLOCK_PRIORITY 0;
+GO
+SET CONTEXT_INFO 0;
 GO
 SET LANGUAGE 'english';
 GO
@@ -721,15 +730,9 @@ strict
 
 
 
+
 -- escape hatch: fulltext
 -- 'strict' is default
-CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'DEFAULT_FULLTEXT_LANGUAGE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_fulltext to ignore)~~
-
-
 CREATE TABLE t_unsupported_ft (a text);
 GO
 
@@ -743,6 +746,13 @@ GO
 DROP TABLE t_unsupported_ft;
 GO
 
+CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DEFAULT_FULLTEXT_LANGUAGE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_fulltext to ignore)~~
+
+
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'ignore', 'false')
 GO
 ~~START~~
@@ -751,46 +761,18 @@ ignore
 ~~END~~
 
 
+CREATE TABLE t_unsupported_ft (a text);
+GO
+
+CREATE FULLTEXT INDEX ON t_unsupported_ft(a) KEY INDEX ix_unsupported_ft;
+GO
+
+DROP TABLE t_unsupported_ft;
+GO
+
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
-
 DROP DATABASE db_unsupported_ft;
-GO
-
-CREATE SCHEMA t_unsupported_s_ft;
-GO
-
-CREATE TABLE t_unsupported_s_ft.t_unsupported_ft1 (id int not null, a text);
-GO
-
-CREATE UNIQUE INDEX ix_unsupported_ft1 ON t_unsupported_s_ft.t_unsupported_ft1(id);
-GO
-
-CREATE FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1(a) KEY INDEX ix_unsupported_ft1;
-GO
-
-DROP FULLTEXT INDEX ON t_unsupported_s_ft.t_unsupported_ft1;
-GO
-
-DROP TABLE t_unsupported_s_ft.t_unsupported_ft1;
-GO
-
-DROP SCHEMA t_unsupported_s_ft;
-GO
-
-CREATE TABLE t_unsupported_ft2 (id int not null, a text);
-GO
-
-CREATE UNIQUE INDEX ix_unsupported_ft2 ON t_unsupported_ft2(id);
-GO
-
-CREATE FULLTEXT INDEX ON t_unsupported_ft2(a) KEY INDEX ix_unsupported_ft2;
-GO
-
-DROP FULLTEXT INDEX ON t_unsupported_ft2;
-GO
-
-DROP TABLE t_unsupported_ft2;
 GO
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
@@ -2041,8 +2023,7 @@ babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
-babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext search
-babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDENTITY() in SELECT-INTO
+babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
@@ -2063,7 +2044,6 @@ babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch fo
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
 babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
 babelfishpg_tsql.escape_hatch_session_settings#!#strict#!#escape hatch for session settings
-babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
 babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
@@ -2077,8 +2057,6 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
-babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2110,8 +2088,7 @@ babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
-babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext search
-babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDENTITY() in SELECT-INTO
+babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
@@ -2132,7 +2109,6 @@ babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch fo
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
 babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
 babelfishpg_tsql.escape_hatch_session_settings#!#strict#!#escape hatch for session settings
-babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
 babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
@@ -2146,8 +2122,6 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
-babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2160,8 +2134,7 @@ babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
-babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext search
-babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDENTITY() in SELECT-INTO
+babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
@@ -2182,7 +2155,6 @@ babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch fo
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
 babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE VIEW
 babelfishpg_tsql.escape_hatch_session_settings#!#strict#!#escape hatch for session settings
-babelfishpg_tsql.escape_hatch_set_transaction_isolation_level#!#strict#!#escape hatch for SET TRANSACTION ISOLATION LEVEL
 babelfishpg_tsql.escape_hatch_showplan_all#!#strict#!#escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE
 babelfishpg_tsql.escape_hatch_storage_on_partition#!#strict#!#escape hatch for storage_on_partition option in CREATE/ALTER TABLE and CREATE INDEX
 babelfishpg_tsql.escape_hatch_storage_options#!#ignore#!#escape hatch for storage options option in CREATE/ALTER TABLE/INDEX
@@ -2196,8 +2168,6 @@ babelfishpg_tsql.explain_summary#!#on#!#Include summary information (e.g., total
 babelfishpg_tsql.explain_timing#!#on#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.isolation_level_repeatable_read#!#off#!#Select mapping for isolation level reapeatable read
-babelfishpg_tsql.isolation_level_serializable#!#off#!#Select mapping for isolation level serializable
 ~~END~~
 
 
@@ -2419,7 +2389,15 @@ ALTER AUTHORIZATION ON a1 TO SCHEMA OWNER;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ALTER AUTHORIZATION on object types other than DATABASE::' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'ALTER AUTHORIZATION ON' is not currently supported in Babelfish)~~
+
+
+-- kill (BABEL-2159)
+KILL 1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'KILL' is not currently supported in Babelfish)~~
 
 
 -- alter view (BABEL-2017)
@@ -2490,6 +2468,29 @@ GO
 DROP TABLE t4919;
 GO
 
+
+-- PIVOT (265, 488)
+CREATE TABLE t265 (c1 VARCHAR(50), c2 VARCHAR(50));
+GO
+SELECT * FROM (SELECT c1, c2 FROM t265) AS p PIVOT (COUNT(c1) FOR c2 IN (c1)) AS pv;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PIVOT' is not currently supported in Babelfish)~~
+
+DROP TABLE t265;
+GO
+
+CREATE TABLE t488(id text);
+GO
+SELECT * FROM (SELECT id from t488) p PIVOT( sum(id)FOR id in (["HI"])) s;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PIVOT' is not currently supported in Babelfish)~~
+
+DROP TABLE t488;
+GO
 
 
 -- CREATE DATBASE COLLATE (448)
@@ -2564,7 +2565,7 @@ DBCC CLONEDATABASE (d12608, d12608_clone);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: DBCC CLONEDATABASE is not currently supported in Babelfish)~~
+~~ERROR (Message: 'DBCC' is not currently supported in Babelfish)~~
 
 DROP DATABASE d12608;
 GO
@@ -2697,14 +2698,14 @@ select func1(DEFAULT);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function func1(unknown) does not exist)~~
+~~ERROR (Message: 'DEFAULT' is not currently supported in Babelfish)~~
 
 
 EXEC proc1 DEFAULT;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure proc1(unknown) does not exist)~~
+~~ERROR (Message: 'DEFAULT' is not currently supported in Babelfish)~~
 
 
 -- NATIONAL/VARYING (BABEL-2360/2361)
@@ -2809,6 +2810,30 @@ GO
 
 ~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
 
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+DROP TABLE test_unsupported_geography;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
+
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+DROP TABLE test_unsupported_geometry;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
+
 
 -- With escape_hatch_rowversion to ignore
 -- Should throw a simple error message saying the datatype does not exist
@@ -2835,6 +2860,30 @@ GO
 
 ~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
 
+CREATE TABLE test_unsupported_geography(a GEOGRAPHY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+DROP TABLE test_unsupported_geography;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_geography" does not exist)~~
+
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+DROP TABLE test_unsupported_geometry;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
+
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 GO
@@ -2854,6 +2903,27 @@ GO
 ~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
 
 
+CREATE TYPE [FolderGeography] AS TABLE( 
+	[FolderGeography_ID] UNIQUEIDENTIFIER NULL,
+	[FolderGeography_X] GEOGRAPHY NULL,
+	[FolderGeography_Y] GEOGRAPHY NULL
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+
+CREATE TYPE [FolderGeometry] AS TABLE( 
+	[FolderGeometry_ID] UNIQUEIDENTIFIER NULL,
+	[FolderGeometry_Geometry] Geometry NULL
+);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+
 -- Create Function: Should throw detailed error messages
 CREATE FUNCTION [func_hierarchyid]() RETURNS HIERARCHYID AS
 BEGIN
@@ -2863,6 +2933,31 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION [func_geography](@X float,@Y float) RETURNS GEOGRAPHY AS 
+BEGIN 
+IF (@X IS NULL OR @Y IS NULL OR (@X = 0 and @Y = 0)) RETURN NULL;
+IF (@X < -90) BEGIN SET @X=-90; END
+IF (@X > 90) BEGIN SET @X=90; END
+IF (@Y < -15069) BEGIN SET @Y=-15069; END
+IF (@Y > 15069) BEGIN SET @Y=15069; END
+RETURN GEOGRAPHY::Point(@X,@Y,4326);
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+
+CREATE FUNCTION [func_geometry]() RETURNS GEOMETRY AS
+BEGIN
+RETURN NULL;
+END
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
 
 
 -- Variable Declaration: Should throw detailed error messages
@@ -2884,6 +2979,18 @@ GO
 
 ~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish)~~
 
+DECLARE @var_geography GEOGRAPHY;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+DECLARE @var_geometry GEOMETRY;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
 
 -- Create Procedure: Should throw detailed error messages
 CREATE PROCEDURE proc_hierarchyid (@var_hierarchyid2 HIERARCHYID) AS BEGIN PRINT CAST(@var_hierarchyid2 AS VARCHAR(10)) END;
@@ -2897,4 +3004,28 @@ GO
 ~~ERROR (Code: 3701)~~
 
 ~~ERROR (Message: could not find a procedure named "proc_hierarchyid")~~
+
+CREATE PROCEDURE proc_geography (@var_geography2 GEOGRAPHY) AS BEGIN PRINT CAST(@var_geography2 AS VARCHAR(10)) END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOGRAPHY datatype' is not currently supported in Babelfish)~~
+
+DROP PROCEDURE proc_geography;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "proc_geography")~~
+
+CREATE PROCEDURE proc_geometry (@var_geometry2 GEOMETRY) AS BEGIN PRINT CAST(@var_geometry2 AS VARCHAR(10)) END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish)~~
+
+DROP PROCEDURE proc_geometry;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "proc_geometry")~~
 
