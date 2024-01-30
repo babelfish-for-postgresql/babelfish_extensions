@@ -185,6 +185,10 @@ varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#
 ~~END~~
 
 
+-- reset the login password
+ALTER LOGIN babel_3254_l1 WITH PASSWORD = '12345678'
+GO
+
 select rolname, login_name from sys.babelfish_authid_user_ext where login_name = 'babel_3254_l1'
 go
 ~~START~~
