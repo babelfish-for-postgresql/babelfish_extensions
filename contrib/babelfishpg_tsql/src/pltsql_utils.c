@@ -203,20 +203,20 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 	}
 	else
 	{
+		/* Do not check for duplicate function if REPLACE flag is set and during dump and restore. */
 		if (!stmt->replace && !babelfish_dump_restore)
 		{
 			ObjectWithArgs *func = NULL;
 			Oid func_oid = InvalidOid;
-			char * funcname = NULL;
+			char *schemaname = NULL;
+			char *funcname = NULL;
 
 			func = makeNode(ObjectWithArgs);
 			func->objname = stmt->funcname;
 			func->args_unspecified = true;
 
-			if (list_length(stmt->funcname) == 1)
-				funcname = strVal(linitial(stmt->funcname));
-			if (list_length(stmt->funcname) == 2)
-				funcname = strVal(lsecond(stmt->funcname));
+			/* Get the schema name and function name. */
+			DeconstructQualifiedName(stmt->funcname, &schemaname, &funcname);
 
 			/* function, procedure */
 			func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
