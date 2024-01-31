@@ -433,38 +433,72 @@ go
 -- REVOKE OBJECT privileges
 use babel_4344_d1;
 go
+
 REVOKE SELECT on schema::"bAbel_4344 s1" from "BABEL_4344_U1";
 go
 REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
 go
-REVOKE all on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
+GRANT SELECT on babel_4344_t1 to BABEL_4344_U1;
 go
-REVOKE select on babel_4344_s1.babel_4344_t3(a) FROM babel_4344_u1;
+
+-- psql
+-- should show original object names
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
-REVOKE select on babel_4344_s1.babel_4344_v1 FROM babel_4344_u1;
+
+-- tsql
+-- rename the objects where permissions are already granted
+sp_rename 'babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
-REVOKE execute on babel_4344_s1.babel_4344_p1 FROM babel_4344_u1;
+sp_rename 'babel_4344_s1.babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
-REVOKE execute on babel_4344_s1.babel_4344_f1 FROM babel_4344_u1;
+sp_rename 'babel_4344_s1.babel_4344_t3', 'babel_4344_t3_new', 'OBJECT';
 go
-REVOKE all on babel_4344_s1.babel_4344_f1 FROM babel_4344_u1;
+sp_rename 'babel_4344_s1.babel_4344_v1', 'babel_4344_v1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_p1', 'babel_4344_p1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_f1', 'babel_4344_f1_new', 'OBJECT';
+go
+
+-- psql
+-- should show renamed objects
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+
+-- tsql
+-- permissions are transferred to the new objects 
+-- Revoke permissions from the new objects
+REVOKE all on babel_4344_s1.babel_4344_t1_new FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_t3_new(a) FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_v1_new FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_p1_new FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_f1_new FROM babel_4344_u1;
+go
+REVOKE all on babel_4344_s1.babel_4344_f1_new FROM babel_4344_u1;
 go
 
 -- tsql user=babel_4344_l1 password=12345678
 -- User has SCHEMA privileges, should be accessible.
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1
+select * from babel_4344_t1_new;
 go
-insert into babel_4344_s1.babel_4344_t1 values(5);
+select * from babel_4344_s1.babel_4344_t1_new
 go
-select * from babel_4344_s1.babel_4344_t3;
+insert into babel_4344_s1.babel_4344_t1_new values(5);
 go
-select * from babel_4344_s1.babel_4344_v1;
+select * from babel_4344_s1.babel_4344_t3_new;
 go
-exec babel_4344_s1.babel_4344_p1;
+select * from babel_4344_s1.babel_4344_v1_new;
 go
-select * from babel_4344_s1.babel_4344_f1();
+exec babel_4344_s1.babel_4344_p1_new;
+go
+select * from babel_4344_s1.babel_4344_f1_new();
 go
 select * from babel_4344_s2.babel_4344_t1;
 go
@@ -489,24 +523,24 @@ go
 -- User has no privileges, shouldn't be accessible.
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1;
+select * from babel_4344_s1.babel_4344_t1_new;
 go
-insert into babel_4344_s1.babel_4344_t1 values(5);
+insert into babel_4344_s1.babel_4344_t1_new values(5);
 go
-select * from babel_4344_s1.babel_4344_t3;
+select * from babel_4344_s1.babel_4344_t3_new;
 go
-select * from babel_4344_s1.babel_4344_v1;
+select * from babel_4344_s1.babel_4344_v1_new;
 go
-exec babel_4344_s1.babel_4344_p1;
+exec babel_4344_s1.babel_4344_p1_new;
 go
-select * from babel_4344_s1.babel_4344_f1();
+select * from babel_4344_s1.babel_4344_f1_new();
 go
 use master;
 go
 
 -- psql
 -- grant object permission
-grant select on babel_4344_s1.babel_4344_t1 to babel_4344_d1_babel_4344_u1;
+grant select on babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
 go
 
 -- tsql
@@ -521,7 +555,7 @@ go
 -- tsql user=babel_4344_l1 password=12345678
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1; -- accessible
+select * from babel_4344_s1.babel_4344_t1_new; -- accessible
 go
 use master
 go
@@ -534,7 +568,7 @@ go
 -- tsql user=babel_4344_l1 password=12345678
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1; -- not accessible
+select * from babel_4344_s1.babel_4344_t1_new; -- not accessible
 go
 use master
 go
@@ -547,16 +581,16 @@ go
 drop schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
 go
 
-drop table babel_4344_t1;
+drop table babel_4344_t1_new;
 go
 
-drop table babel_4344_s1.babel_4344_t1;
+drop table babel_4344_s1.babel_4344_t1_new;
 go
 
 drop table babel_4344_t3;
 go
 
-drop table babel_4344_s1.babel_4344_t3;
+drop table babel_4344_s1.babel_4344_t3_new;
 go
 
 drop table babel_4344_s1.babel_4344_t2;
@@ -565,7 +599,7 @@ go
 drop view babel_4344_v1;
 go
 
-drop view babel_4344_s1.babel_4344_v1;
+drop view babel_4344_s1.babel_4344_v1_new;
 go
 
 drop view babel_4344_s1.babel_4344_v2;
@@ -574,7 +608,7 @@ go
 drop proc babel_4344_p1;
 go
 
-drop proc babel_4344_s1.babel_4344_p1;
+drop proc babel_4344_s1.babel_4344_p1_new;
 go
 
 drop proc babel_4344_s1.babel_4344_p2;
@@ -586,7 +620,7 @@ go
 drop function babel_4344_f1;
 go
 
-drop function babel_4344_s1.babel_4344_f1;
+drop function babel_4344_s1.babel_4344_f1_new;
 go
 
 drop function babel_4344_s1.babel_4344_f2;
