@@ -7996,12 +7996,12 @@ rewrite_geospatial_func_ref_args_query_helper(T ctx, TSqlParser::Method_callCont
 	keysToRemove.clear();
 	expr += ctx_str.substr(index);
 	
-	/* quoting Local ID's here so as to remove possibility of multiple rewrites in a single context */
+	/* quoting local_id here so as to remove possibility of multiple rewrites in a single context */
 	for (auto &entry : local_id_positions)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= geospatial_start_index)
 		{
-			/* Here we are quoting Local Id's which are before the function name */
+			/* Here we are quoting local_id which are before the function name */
 			int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1;
 			if(expr.substr(local_index, entry.second.size()) ==  entry.second)
 			{
@@ -8012,7 +8012,7 @@ rewrite_geospatial_func_ref_args_query_helper(T ctx, TSqlParser::Method_callCont
 		}
 		else if(entry.first >= method->spatial_methods()->expression_list()->start->getStartIndex() && entry.first <= method->spatial_methods()->expression_list()->stop->getStopIndex())
 		{
-			/* Here we are quoting Local Id's which are within the argument list of the function */
+			/* Here we are quoting local_id which are within the argument list of the function */
 			int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1 + local_id_end_offset;
 			for (size_t i = 0; i < arg_offset_list.size(); i++)
 			{
@@ -8123,12 +8123,12 @@ rewrite_function_call_geospatial_func_ref_args(T ctx)
 	keysToRemove.clear();
 	expr += func_ctx.substr(index);
 	
-	/* quoting Local ID's here so as to remove possibility of multiple rewrites in a single context */
+	/* quoting local_id here so as to remove possibility of multiple rewrites in a single context */
 	for (auto &entry : local_id_positions)
 	{
 		if(entry.first >= ctx->function_arg_list()->start->getStartIndex() && entry.first <= ctx->function_arg_list()->stop->getStopIndex())
 		{
-			/* Here we are quoting Local Id's which are within the argument list of the function */
+			/* Here we are quoting local_id which are within the argument list of the function */
 			int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1 + local_id_end_offset;
 			for (size_t i = 0; i < arg_offset_list.size(); i++)
 			{
@@ -8161,12 +8161,12 @@ template <class T>
 static void 
 handleLocalIdQuotingFuncRefNoArg(T ctx, size_t geospatial_start_index, int &offset1, std::string &expr, std::vector<size_t> keysToRemove)
 {
-	/* quoting Local ID's here so as to remove possibility of multiple rewrites in a single context */
+	/* quoting local_id here so as to remove possibility of multiple rewrites in a single context */
 	for (auto &entry : local_id_positions)
 	{
 		if(entry.first >= ctx->start->getStartIndex() && entry.first <= geospatial_start_index)
 		{
-			/* Here we are quoting Local Id's which are before the function name */
+			/* Here we are quoting local_id which are before the function name */
 			int local_index = (int)entry.first - ctx->start->getStartIndex() + offset1;
 			if(expr.substr(local_index, entry.second.size()) ==  entry.second)
 			{
@@ -8188,7 +8188,7 @@ handleGeospatialFunctionsInFunctionCall(TSqlParser::Function_callContext *ctx)
 	{
 		if (ctx->spatial_proc_name_server_database_schema()->schema) throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Remote procedure/function reference with 4-part object name is not currently supported in Babelfish", getLineAndPos(ctx));
 
-		/* This if-elseIf clause rewrites the query in case of Geospatial function Call */
+		/* This if-elseIf clause rewrites the query in case of geospatial function calls */
 		if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_arg() && ctx->function_arg_list())
 			rewrite_function_call_geospatial_func_ref_args(ctx);
 		else if (ctx->spatial_proc_name_server_database_schema()->geospatial_func_no_arg() && !ctx->function_arg_list())
@@ -8206,7 +8206,7 @@ handleClrUdtFuncCall(TSqlParser::Clr_udt_func_callContext *ctx)
 		for (size_t i = 0; i < method_calls.size(); ++i)
 		{
 			TSqlParser::Method_callContext *method = method_calls[i];
-			/* rewriting the query in case of Geospatial function Call */
+			/* rewriting the query in case of geospatial function calls */
 			if(method->spatial_methods())
 			{
 				size_t ind = -1;
@@ -8235,7 +8235,7 @@ handleFullColumnNameCtx(TSqlParser::Full_column_nameContext *ctx)
 	if(ctx->column_name) func_name = stripQuoteFromId(ctx->column_name);
 	else if (ctx->geospatial_col())
 	{
-		/* Throwing error similar to TSQL as we do not allow 4-Part name for geospatial function call */
+		/* Throwing error similar to TSQL as we do not allow 4-Part name for geospatial function calls */
 		if(ctx->schema) throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("The multi-part identifier \"%s\" could not be bound.", ::getFullText(ctx).c_str()), getLineAndPos(ctx));
 		
 		/* Rewriting the query as: table.col.STX -> (table.col).STX */
