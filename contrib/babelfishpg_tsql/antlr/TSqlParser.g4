@@ -3436,10 +3436,7 @@ constant_LOCAL_ID
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/expressions-transact-sql
 // Operator precendence: https://docs.microsoft.com/en-us/sql/t-sql/language-elements/operator-precedence-transact-sql
 expression
-    : local_id (DOT calls+=method_call)*                                        #local_id_expr
-    | subquery (DOT calls+=method_call)*                                        #subquery_expr
-    | LR_BRACKET expression RR_BRACKET (DOT calls+=method_call)*                #bracket_expr
-    | function_call (DOT calls+=method_call)*                                   #func_call_expr
+    : clr_udt_func_call                                                         #clr_udt_expr
     | expression collation                                                      #collate_expr
     | expression AT_KEYWORD TIME ZONE expression                                #time_zone_expr
     | op=(MINUS | PLUS | BIT_NOT) expression                                    #unary_op_expr
@@ -3455,6 +3452,13 @@ expression
     | odbc_literal                                                              #odbc_literal_expr
     | DOLLAR_ACTION                                                             #dollar_action_expr
     ;       
+
+clr_udt_func_call
+    : local_id (DOT calls+=method_call)*
+    | subquery (DOT calls+=method_call)*
+    | LR_BRACKET expression RR_BRACKET (DOT calls+=method_call)*
+    | function_call (DOT calls+=method_call)*
+    ;
 
 method_call
     : xml_methods
