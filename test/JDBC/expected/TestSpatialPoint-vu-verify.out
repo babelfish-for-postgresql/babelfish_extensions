@@ -2734,3 +2734,13 @@ a#!#1#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#
 b#!#2#!#-1#!#0#!#0#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#NOT_APPLICABLE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>#!#<NULL>
 ~~END~~
 
+
+SELECT name, principal_id, max_length, precision, scale, collation_name, is_nullable, is_user_defined, is_assembly_type, default_object_id, rule_object_id, assembly_id, assembly_class, is_binary_ordered, is_fixed_length, prog_id, assembly_qualified_name, is_table_type FROM sys.assembly_types
+WHERE user_type_id = TYPE_ID('dbo.GeospatialUDT')
+ORDER BY name DESC
+GO
+~~START~~
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+geospatialudt#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+~~END~~
+
