@@ -225,7 +225,7 @@ pltsql_createFunction(ParseState *pstate, PlannedStmt *pstmt, const char *queryS
 			{
 				/* Restrict duplicate procedure/function. */
 				ereport(ERROR, (errcode(ERRCODE_DUPLICATE_FUNCTION),
-								errmsg("Function '%s' already exists with the same name.", funcname)));
+								errmsg("Function '%s' already exists with the same name", funcname)));
 			}
 		}
 

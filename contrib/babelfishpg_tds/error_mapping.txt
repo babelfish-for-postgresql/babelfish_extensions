@@ -102,7 +102,7 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 22013 ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE	"frame ending offset must not be negative"	SQL_ERROR_102	15
 22013 ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE	"frame starting offset must not be negative"	SQL_ERROR_102	15
 42723 ERRCODE_DUPLICATE_FUNCTION	"function \"%s\" already exists with same argument types"	SQL_ERROR_2714	16
-42723 ERRCODE_DUPLICATE_FUNCTION	"Function '%s' already exists with the same name."	SQL_ERROR_2714	16
+42723 ERRCODE_DUPLICATE_FUNCTION	"Function '%s' already exists with the same name"	SQL_ERROR_2714	16
 54023 ERRCODE_TOO_MANY_ARGUMENTS	"functions cannot have more than %d argument" SQL_ERROR_180	15
 0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"GOTO target Label %s not defined"	SQL_ERROR_133 15
 23001 ERRCODE_RESTRICT_VIOLATION	"IDENTITY_INSERT is already ON for table \'%s.%s.%s\'"	SQL_ERROR_8107	16

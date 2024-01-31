@@ -7,14 +7,14 @@ CREATE FUNCTION OverloadedFunction() RETURNS INT AS BEGIN RETURN 2 END
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction' already exists with the same name)~~
 
 
 CREATE PROCEDURE OverloadedFunction AS BEGIN SELECT 1 END
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction' already exists with the same name)~~
 
 
 DROP FUNCTION OverloadedFunction;
@@ -28,14 +28,14 @@ CREATE FUNCTION OverloadedFunction_1(@num1 INT) RETURNS INT AS BEGIN RETURN @num
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name)~~
 
 
 CREATE FUNCTION OverloadedFunction_1(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 2 END
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name)~~
 
 
 DROP PROCEDURE OverloadedFunction_1;
@@ -49,7 +49,7 @@ CREATE PROCEDURE OverloadedProcedure @num1 INT AS BEGIN SELECT @num1 + 1 END
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedprocedure' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedprocedure' already exists with the same name)~~
 
 
 DROP PROCEDURE OverloadedProcedure;
@@ -66,7 +66,7 @@ CREATE FUNCTION OverloadedObject(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedobject' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedobject' already exists with the same name)~~
 
 
 DROP TABLE OverloadedObject;
@@ -83,14 +83,14 @@ CREATE FUNCTION OverloadedFunction_2(@num1 INT, @num2 INT) RETURNS INT AS BEGIN 
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name)~~
 
 
 CREATE PROCEDURE OverloadedFunction_2 AS BEGIN SELECT 1 END
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name)~~
 
 
 DROP FUNCTION OverloadedFunction_2;
@@ -104,7 +104,7 @@ CREATE FUNCTION OverloadedFunction_3(@num1 INT, @num2 FLOAT) RETURNS INT AS BEGI
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: Function 'overloadedfunction_3' already exists with the same name.)~~
+~~ERROR (Message: Function 'overloadedfunction_3' already exists with the same name)~~
 
 
 DROP FUNCTION OverloadedFunction_3;
