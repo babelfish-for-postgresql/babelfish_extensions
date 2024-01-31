@@ -1,0 +1,426 @@
+create table testing_collation (col varchar(20));
+go
+insert into testing_collation values ('JONES');
+insert into testing_collation values ('jones');
+insert into testing_collation values ('Jones');
+insert into testing_collation values ('JoNes');
+insert into testing_collation values ('JoNés');
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select * from testing_collation where col collate SQL_Latin1_General_CP1_CS_AS = 'JoNes';
+go
+~~START~~
+varchar
+JoNes
+~~END~~
+
+
+select * from testing_collation where col collate SQL_Latin1_General_CP1_CI_AS = 'JoNes';
+go
+~~START~~
+varchar
+JONES
+jones
+Jones
+JoNes
+~~END~~
+
+
+select * from testing_collation where col collate SQL_Latin1_General_CP1_CI_AI = 'JoNes';
+go
+~~START~~
+varchar
+JONES
+jones
+Jones
+JoNes
+JoNés
+~~END~~
+
+
+-- all the currently supported TSQL collations
+SELECT * from fn_helpcollations() order by name;
+go
+~~START~~
+varchar#!#varchar
+arabic_ci_ai#!#Arabic, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+arabic_ci_as#!#Arabic, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+arabic_cs_as#!#Arabic, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_bin2#!#Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_ci_ai#!#Default locale, code page 1250, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_ci_as#!#Default locale, code page 1250, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_cs_ai#!#Default locale, code page 1250, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1250_cs_as#!#Default locale, code page 1250, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_ci_ai#!#Default locale, code page 1251, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_ci_as#!#Default locale, code page 1251, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_cs_ai#!#Default locale, code page 1251, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1251_cs_as#!#Default locale, code page 1251, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_ci_ai#!#Default locale, code page 1253, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_ci_as#!#Default locale, code page 1253, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_cs_ai#!#Default locale, code page 1253, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1253_cs_as#!#Default locale, code page 1253, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_ci_ai#!#Default locale, code page 1254, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_ci_as#!#Default locale, code page 1254, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_cs_ai#!#Default locale, code page 1254, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1254_cs_as#!#Default locale, code page 1254, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_ci_ai#!#Default locale, code page 1255, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_ci_as#!#Default locale, code page 1255, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_cs_ai#!#Default locale, code page 1255, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1255_cs_as#!#Default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_ci_ai#!#Default locale, code page 1256, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_ci_as#!#Default locale, code page 1256, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_cs_ai#!#Default locale, code page 1256, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1256_cs_as#!#Default locale, code page 1256, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_ci_ai#!#Default locale, code page 1257, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_ci_as#!#Default locale, code page 1257, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_cs_ai#!#Default locale, code page 1257, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1257_cs_as#!#Default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_ci_ai#!#Default locale, code page 1258, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_ci_as#!#Default locale, code page 1258, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_cs_ai#!#Default locale, code page 1258, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1258_cs_as#!#Default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_ci_ai#!#Default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_ci_as#!#Default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_cs_ai#!#Default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp1_cs_as#!#Default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_ci_ai#!#Default locale, code page 847, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_ci_as#!#Default locale, code page 847, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_cs_ai#!#Default locale, code page 847, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_cp847_cs_as#!#Default locale, code page 847, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_ci_ai#!#Default locale, default code page, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_ci_as#!#Default locale, default code page, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_cs_ai#!#Default locale, default code page, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_cs_as#!#Default locale, default code page, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+bbf_unicode_general_pref_cs_as#!#Default locale, default code page, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1250_cs_as#!#Default locale, code page 1250, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1251_cs_as#!#Default locale, code page 1251, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1253_cs_as#!#Default locale, code page 1253, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1254_cs_as#!#Default locale, code page 1254, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1255_cs_as#!#Default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1256_cs_as#!#Default locale, code page 1256, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1257_cs_as#!#Default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1258_cs_as#!#Default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp1_cs_as#!#Default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+bbf_unicode_pref_cp847_cs_as#!#Default locale, code page 847, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+chinese_prc_ci_ai#!#Chinese-PRC, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+chinese_prc_ci_as#!#Chinese-PRC, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+chinese_prc_cs_as#!#Chinese-PRC, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+cyrillic_general_ci_ai#!#Cyrillic-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+cyrillic_general_ci_as#!#Cyrillic-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+cyrillic_general_cs_as#!#Cyrillic-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+estonian_ci_ai#!#Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+estonian_ci_as#!#Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+estonian_cs_as#!#Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+finnish_swedish_ci_ai#!#Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+finnish_swedish_ci_as#!#Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+finnish_swedish_cs_as#!#Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+french_ci_ai#!#French, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+french_ci_as#!#French, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+french_cs_as#!#French, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+greek_ci_ai#!#Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+greek_ci_as#!#Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+greek_cs_as#!#Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+hebrew_ci_ai#!#Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+hebrew_ci_as#!#Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitives
+hebrew_cs_as#!#Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+japanese_ci_ai#!#Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+japanese_ci_as#!#Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+japanese_cs_as#!#Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+korean_wansung_ci_ai#!#Korean-Wansung, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+korean_wansung_ci_as#!#Korean-Wansung, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+korean_wansung_cs_as#!#Korean-Wansung, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_100_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_140_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_90_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_bin2#!#Virtual, Unicode-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_ci_ai#!#Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+latin1_general_ci_as#!#Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+latin1_general_cs_ai#!#Virtual, default locale, code page 1252, case-sensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+latin1_general_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+modern_spanish_ci_ai#!#Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+modern_spanish_ci_as#!#Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+modern_spanish_cs_as#!#Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+mongolian_ci_ai#!#Mongolian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+mongolian_ci_as#!#Mongolian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+mongolian_cs_as#!#Mongolian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+polish_ci_ai#!#Polish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+polish_ci_as#!#Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+polish_cs_as#!#Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1250_ci_as#!#Virtual, default locale, code page 1250, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1250_cs_as#!#Virtual, default locale, code page 1250, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1251_ci_as#!#Virtual, default locale, code page 1251, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1251_cs_as#!#Virtual, default locale, code page 1251, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1253_ci_as#!#Virtual, default locale, code page 1253, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1253_cs_as#!#Virtual, default locale, code page 1253, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1254_ci_as#!#Virtual, default locale, code page 1254, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1254_cs_as#!#Virtual, default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1255_ci_as#!#Virtual, default locale, code page 1255, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1255_cs_as#!#Virtual, default locale, code page 1255, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1256_ci_as#!#Virtual, default locale, code page 1256, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1256_cs_as#!#Virtual, default locale, code page 1256, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1257_ci_as#!#Virtual, default locale, code page 1257, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1257_cs_as#!#Virtual, default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1258_ci_as#!#Virtual, default locale, code page 1258, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1258_cs_as#!#Virtual, default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_ci_ai#!#Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_ci_ai#!#Virtual, default locale, code page 1252, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_ci_as#!#Virtual, default locale, code page 1252, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp1_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp874_ci_as#!#Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp874_cs_as#!#Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_pref_cp1_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive, uppercase-first
+thai_ci_ai#!#Thai, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+thai_ci_as#!#Thai, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+thai_cs_as#!#Thai, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+traditional_spanish_ci_ai#!#Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+traditional_spanish_ci_as#!#Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+traditional_spanish_cs_as#!#Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+turkish_ci_ai#!#Turkish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+turkish_ci_as#!#Turkish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+turkish_cs_as#!#Turkish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+ukrainian_ci_ai#!#Ukrainian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+ukrainian_ci_as#!#Ukrainian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+ukrainian_cs_as#!#Ukrainian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+vietnamese_ci_ai#!#Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+vietnamese_ci_as#!#Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+vietnamese_cs_as#!#Vietnamese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+~~END~~
+
+
+select count(*) from fn_helpcollations();
+go
+~~START~~
+int
+141
+~~END~~
+
+
+-- BABEL-1697 Collation and Codepage information for DMS
+SELECT CAST( COLLATIONPROPERTY(Name, 'CodePage') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('master', 'Collation');
+go
+~~START~~
+int
+936
+~~END~~
+
+
+SELECT CAST( COLLATIONPROPERTY(Name, 'lcid') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('master', 'Collation');
+go
+~~START~~
+int
+2052
+~~END~~
+
+
+SELECT CASE WHEN 'a' = 'A' THEN 'case-insensitive' ELSE 'case-sensitive' END; -- expect case-insensitive
+go
+~~START~~
+text
+case-insensitive
+~~END~~
+
+
+DECLARE @str varchar(64)
+SELECT @str = 'a';
+SELECT CASE WHEN @str = 'A' THEN 'case-insensitive' ELSE 'case-sensitive' END; -- expect case-insensitive
+go
+~~START~~
+text
+case-insensitive
+~~END~~
+
+
+SELECT position = PATINDEX('%t_S%', 'Test String'); -- expect 1
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
+SELECT position = PATINDEX('%t S%', 'Test String'); -- expect 4
+go
+~~START~~
+bigint
+4
+~~END~~
+
+
+SELECT position = PATINDEX('%t_S%', 'Test String' COLLATE bbf_unicode_general_cs_as); -- expect 4
+go
+~~START~~
+bigint
+4
+~~END~~
+
+
+SELECT position = PATINDEX('%[^ 0-9A-Za-z]%', 'Please ensure the door is locked!'); -- expect 33
+go
+~~START~~
+bigint
+33
+~~END~~
+
+
+DECLARE @document VARCHAR(64);
+SELECT @document = 'Reflectors are vital safety' + ' components of your bicycle.';
+SELECT CHARINDEX('Vital', @document, 5); -- expect 16 (case-insensitive)
+go
+~~START~~
+int
+16
+~~END~~
+
+
+SELECT CHARINDEX('sql', 'SQL Server CHARINDEX') position; -- expect 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT CHARINDEX('SERVER', 'SQL Server CHARINDEX') position; -- expect 5
+go
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT 
+    CHARINDEX(
+        'SERVER', 
+        'SQL Server CHARINDEX SERVER' 
+        COLLATE latin1_general_bin2
+    ) position; -- expect 22 - case-sensitive search
+go
+~~START~~
+int
+22
+~~END~~
+
+
+SELECT 
+    CHARINDEX('is','This is a my sister',5) start_at_fifth, -- expect 6
+    CHARINDEX('is','This is a my sister',10) start_at_tenth; -- expect 15
+go
+~~START~~
+int#!#int
+6#!#15
+~~END~~
+
+
+DECLARE @haystack VARCHAR(100);  
+SELECT @haystack = 'This is a haystack';  
+SELECT CHARINDEX('', @haystack); -- empty string - expect 1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+DECLARE @haystack VARCHAR(100);  
+SELECT @haystack = 'This is a haystack';  
+SELECT CHARINDEX(NULL, @haystack); -- NULL string - expect NULL
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ');
+go
+~~START~~
+varchar
+Lorem
+ipsum
+dolor
+sit
+amet.
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT('a,b,c,d', ' ');
+go
+~~START~~
+varchar
+a,b,c,d
+~~END~~
+
+
+SELECT value FROM STRING_SPLIT('123abc456', 'abc'); -- expect 'invalid separator'
+go
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid separator: abc)~~
+
+
+
+
+
+DECLARE @tags NVARCHAR(400) = 'clothing,road,,touring,bike'  
+  
+SELECT value  
+FROM STRING_SPLIT(@tags, ',')  
+WHERE RTRIM(value) <> '';
+SELECT REPLACE('foo bar FooBar', 'foo', 'B A R');
+SELECT REPLACE('empty pattern', '', 'STR');
+SELECT REPLACE('null pattern', NULL, 'STR');
+SELECT REPLACE('null replacement', 'foo', NULL);
+SELECT REPLACE('foo bar FooBar' COLLATE SQL_Latin1_General_CP1_CS_AS, 'foo', 'bar'); -- 2nd Foo is not replaced
+SELECT REPLACE('nothing to do', 'none', 'should not see this');
+-- clean up
+drop table testing_collation;
+go
+~~START~~
+varchar
+clothing
+road
+touring
+bike
+~~END~~
+
+~~START~~
+text
+B A R bar B A RBar
+~~END~~
+
+~~START~~
+text
+empty pattern
+~~END~~
+
+~~START~~
+text
+<NULL>
+~~END~~
+
+~~START~~
+text
+<NULL>
+~~END~~
+
+~~START~~
+text
+bar bar FooBar
+~~END~~
+
+~~START~~
+text
+nothing to do
+~~END~~
+
