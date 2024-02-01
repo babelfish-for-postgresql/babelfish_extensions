@@ -25,9 +25,6 @@ go
 drop function test_sp_babelfish_volatility_duplicate()
 go
 
-drop function test_sp_babelfish_volatility_duplicate(@b int)
-go
-
 drop schema test_sp_babelfish_volatility_schema2
 go
 
