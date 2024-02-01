@@ -19,6 +19,7 @@ GO
 varchar#!#char#!#text#!#text
 @tab_babel_3010_vu_prepare#!#TT#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f2#!#FN#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_f3#!#FN#!#Valid create date!#!#Valid ref date!
 babel_3010_vu_prepare_p1#!#P #!#Valid create date!#!#Valid ref date!
