@@ -918,7 +918,7 @@ select cast(t.typname as sys.sysname) as name
     as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , CAST(1 as sys.bit) as is_user_defined
-  , CASE tsql_type_name
+  , CASE tsql_base_type_name
     -- CLR UDT have is_assembly_type = 1
     WHEN 'geometry' THEN CAST(1 as sys.bit)
     WHEN 'geography' THEN CAST(1 as sys.bit)

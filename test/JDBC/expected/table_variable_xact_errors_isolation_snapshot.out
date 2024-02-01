@@ -585,7 +585,7 @@ AS
 go
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: function "usp_populatediscount" already exists with same argument types)~~
+~~ERROR (Message: Function 'usp_populatediscount' already exists with the same name)~~
 
 
 EXECUTE usp_PopulateDiscount
@@ -611,7 +611,7 @@ END CATCH;
 GO
 ~~ERROR (Code: 2714)~~
 
-~~ERROR (Message: function "test" already exists with same argument types)~~
+~~ERROR (Message: Function 'test' already exists with the same name)~~
 
 
 exec test
