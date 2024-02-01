@@ -1,3 +1,66 @@
+sp_procedure_params_100_managed NULL
+go
+
+sp_procedure_params_100_managed ''
+go
+
+sp_procedure_params_100_managed 'bABEl_3254_p1'
+go
+
+sp_procedure_params_100_managed 'invalid_name'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p1          '
+go
+
+sp_procedure_params_100_managed '          babel_3254_p1'
+go
+
+sp_procedure_params_100_managed 'babel_    3254_p1'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema=NULL
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p1', @group_number=1, @procedure_schema=''
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='invalid_schema'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema=NULL
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1     '
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='      babel_3254_s1'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_    3254_s1'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name=NULL
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name=''
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@A'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@a    '
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='    @a'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@   a'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='invalid_name'
+go
+
 sp_procedure_params_100_managed 'babel_3254_p1'
 go
 
