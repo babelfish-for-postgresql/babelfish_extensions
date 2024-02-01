@@ -3785,7 +3785,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		if (stmt->is_grant)
 		{
 			/* For GRANT statement, add or update privileges in the catalog. */
-			add_or_update_object_in_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, true);
+			add_or_update_object_in_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, true, NULL);
 		}
 		else
 		{

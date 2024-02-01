@@ -3899,7 +3899,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								if (grant->is_grant)
-									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true);
+									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 								else
 								{
 									/*
@@ -3925,7 +3925,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 									/* Don't add/update an entry, if the permission is granted on column list.*/
 									if (ap->cols == NULL)
-										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true);
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
 								}
 								else
 								{
@@ -3953,6 +3953,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *logicalschema = NULL;
 					char *funcname = NULL;
 					const char *obj_type = NULL;
+					Oid func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, ob, true);
+					const char *func_args = NULL;
+					if (OidIsValid(func_oid))
+						func_args = gen_func_arg_list(func_oid);
 					if (grant->objtype == OBJECT_FUNCTION)
 						obj_type = OBJ_FUNCTION;
 					else
@@ -3987,7 +3991,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 							if (grant->is_grant)
 							{
-								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true);
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true, func_args);
 							}
 							else
 							{
@@ -4012,7 +4016,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (grant->is_grant)
 							{
 								call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true);
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true, func_args);
 							}
 							else
 							{

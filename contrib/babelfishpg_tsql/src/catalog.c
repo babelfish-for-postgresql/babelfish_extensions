@@ -2965,7 +2965,8 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 				const char *object_name,
 				int permission,
 				const char *grantee,
-				const char *object_type)
+				const char *object_type,
+				const char *func_args)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
@@ -2993,6 +2994,10 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	new_record_bbf_schema[Anum_bbf_schema_perms_permission - 1] = Int32GetDatum(permission);
 	new_record_bbf_schema[Anum_bbf_schema_perms_grantee - 1] = CStringGetTextDatum(pstrdup(grantee));
 	new_record_bbf_schema[Anum_bbf_schema_perms_object_type - 1] = CStringGetTextDatum(pstrdup(object_type));
+	if (func_args)
+		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
+	else
+		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -3370,10 +3375,11 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				int new_permission,
 				const char *grantee,
 				const char *object_type,
-				bool is_grant)
+				bool is_grant,
+				const char *func_args)
 {
 	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, false))
-		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type);
+		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
 }
@@ -3470,6 +3476,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	HeapTuple	tuple_bbf_schema;
 	const char	*object_name;
 	const char	*object_type;
+	const char	*func_args = NULL;
 	int			current_permission;
 	ScanKeyData scanKey[3];
 	int16		dbid = get_cur_db_id();
@@ -3505,41 +3512,43 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
 		bool isnull;
+		Datum datum;
 		object_name = pstrdup(TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_name, dsc, &isnull)));
 		object_type = pstrdup(TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_type, dsc, &isnull)));
 		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
-
+		datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_function_args, dsc, &isnull);
+		if (!isnull)
+			func_args = TextDatumGetCString(datum);
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA) != 0)
 		{
-			StringInfoData	query;
+			const char	*query = NULL;
 			char			*schema;
 			List			*res;
-			Node			*res_stmt;
+			GrantStmt		*grant;
 			PlannedStmt		*wrapper;
 			const char		*priv_name;
 
 			schema = get_physical_schema_name((char *)db_name, schema_name);
-			initStringInfo(&query);
 			/* Check if the permission to be REVOKED on SCHEMA exists on the OBJECT. */
 
 			if (current_permission & permission)
 			{
 				priv_name = privilege_to_string(permission);
 				if (strcmp(object_type, OBJ_RELATION) == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
+					query = psprintf("GRANT %s ON [%s].[%s] TO %s", priv_name, schema, object_name, grantee);
 				else if (strcmp(object_type, OBJ_FUNCTION) == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
+					query = psprintf("GRANT %s ON FUNCTION [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
 				else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
-				res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-				res_stmt = ((RawStmt *) linitial(res))->stmt;
+					query = psprintf("GRANT %s ON PROCEDURE [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
+				res = raw_parser(query, RAW_PARSE_DEFAULT);
+				grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 
 				/* need to make a wrapper PlannedStmt */
 				wrapper = makeNode(PlannedStmt);
 				wrapper->commandType = CMD_UTILITY;
 				wrapper->canSetTag = false;
-				wrapper->utilityStmt = res_stmt;
+				wrapper->utilityStmt = (Node *) grant;
 				wrapper->stmt_location = 0;
 				wrapper->stmt_len = 1;
 
