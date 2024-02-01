@@ -16,9 +16,6 @@ GO
 DROP FUNCTION babel_3010_vu_prepare_f1(int);
 GO
 
-DROP FUNCTION babel_3010_vu_prepare_f1(int, varchar);
-GO
-
 DROP FUNCTION babel_3010_vu_prepare_f2;
 GO
 
