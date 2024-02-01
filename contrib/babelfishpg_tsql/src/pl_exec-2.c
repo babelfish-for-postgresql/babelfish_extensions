@@ -3755,7 +3755,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
 		}
 
-		if ((strcmp(rolname, user) == 0) || (!is_public && pg_namespace_ownercheck(schemaOid, role_oid)) || is_member_of_role(role_oid, get_sysadmin_oid()))
+		if ((strcmp(rolname, user) == 0) || (!is_public && object_ownercheck(NamespaceRelationId, schemaOid, role_oid)) || is_member_of_role(role_oid, get_sysadmin_oid()))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
@@ -3764,7 +3764,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		 * If the login is not the db owner or the login is not the member of
 		 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
 		 */
-		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !pg_namespace_ownercheck(schemaOid, GetUserId()))
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId,schemaOid, GetUserId()))
 			ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
