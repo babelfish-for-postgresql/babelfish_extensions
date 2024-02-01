@@ -125,6 +125,7 @@ XX000#!#CREATE FUNCTION failed because a column name is not specified for column
 22013#!#frame ending offset must not be negative#!##!#102
 22013#!#frame starting offset must not be negative#!##!#102
 42723#!#function "%s" already exists with same argument types#!##!#2714
+42723#!#Function '%s' already exists with the same name#!##!#2714
 54023#!#functions cannot have more than %d argument#!##!#180
 0A000#!#GOTO target Label %s not defined#!##!#133
 23001#!#IDENTITY_INSERT is already ON for table '%s.%s.%s'#!##!#8107
