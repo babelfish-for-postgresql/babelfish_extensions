@@ -1,3 +1,182 @@
+sp_procedure_params_100_managed NULL
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed ''
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed 'bABEl_3254_p1'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@b#!#1#!#0#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@c#!#2#!#16#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@d#!#1#!#20#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@e#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@f#!#2#!#6#!#<NULL>#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#float#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@g#!#1#!#13#!#<NULL>#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed 'invalid_name'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed 'babel_3254_p1          '
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@b#!#1#!#0#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@c#!#2#!#16#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@d#!#1#!#20#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@e#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@f#!#2#!#6#!#<NULL>#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#float#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@g#!#1#!#13#!#<NULL>#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed '          babel_3254_p1'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed 'babel_    3254_p1'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema=NULL
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p1', @group_number=1, @procedure_schema=''
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@b#!#1#!#0#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@c#!#2#!#16#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@d#!#1#!#20#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@e#!#1#!#2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@f#!#2#!#6#!#<NULL>#!#53#!#<NULL>#!#<NULL>#!#<NULL>#!#float#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@g#!#1#!#13#!#<NULL>#!#24#!#<NULL>#!#<NULL>#!#<NULL>#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='invalid_schema'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema=NULL
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1     '
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#2#!#9#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@b#!#1#!#17#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#smallmoney#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='      babel_3254_s1'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_    3254_s1'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name=NULL
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@RETURN_VALUE#!#4#!#8#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#2#!#9#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@b#!#1#!#17#!#<NULL>#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#smallmoney#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name=''
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@A'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@a#!#2#!#9#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@a    '
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+@a#!#2#!#9#!#<NULL>#!#19#!#<NULL>#!#<NULL>#!#<NULL>#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='    @a'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@   a'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='invalid_name'
+go
+~~START~~
+varchar#!#smallint#!#smallint#!#int#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+~~END~~
+
+
 sp_procedure_params_100_managed 'babel_3254_p1'
 go
 ~~START~~
