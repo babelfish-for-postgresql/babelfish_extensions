@@ -1,0 +1,319 @@
+
+-- tsql
+-- migrate test man-5592 to to test prallel query
+SELECT set_config('max_parallel_workers_per_gather', 8, false);
+GO
+~~START~~
+text
+8
+~~END~~
+
+
+CREATE TABLE man5592_t (id BIGINT, val DOUBLE PRECISION);
+GO
+INSERT INTO man5592_t
+  SELECT * FROM (
+    SELECT generate_series(1, 500000) AS id, random() AS val
+  ) q ORDER BY random();
+GO
+~~ROW COUNT: 500000~~
+
+CREATE INDEX man5592_unique ON man5592_t(id);
+GO
+
+-- psql
+VACUUM ANALYZE master_dbo.man5592_t;
+GO
+
+-- tsql
+-- Manfred-7171: Test temp-TABLE read concurrent with non-temp TABLE prefetch.
+CREATE TABLE #man5592_temp_t (id bigint);
+GO
+INSERT INTO #man5592_temp_t SELECT id FROM man5592_t;
+GO
+~~ROW COUNT: 500000~~
+
+DROP TABLE #man5592_temp_t;
+GO
+
+SELECT set_config('enable_seqscan', 'on', false);
+SELECT set_config('enable_indexscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+
+-- [MAN-5552] heap scans
+SELECT SUM(id) FROM man5592_t;
+GO
+~~START~~
+bigint
+125000250000
+~~END~~
+
+SELECT COUNT(val) FROM man5592_t;
+GO
+~~START~~
+int
+500000
+~~END~~
+
+SELECT SUM(id) FROM man5592_t WHERE id > 1000 and id < 99999;
+GO
+~~START~~
+bigint
+4999349501
+~~END~~
+
+
+-- [MAN-2626] index-only and index (+heap) scans
+-- force scans to use our index.
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+
+-- [MAN-2626] index-only scan, large range
+SELECT SUM(id) FROM man5592_t WHERE id > 5000;
+GO
+~~START~~
+bigint
+124987747500
+~~END~~
+
+SELECT COUNT(id) FROM man5592_t WHERE id < 495000;
+GO
+~~START~~
+int
+494999
+~~END~~
+
+
+-- [MAN-2626] index-only scan, medium range
+SELECT COUNT(id) FROM man5592_t WHERE id > 30000;
+GO
+~~START~~
+int
+470000
+~~END~~
+
+SELECT SUM(id) FROM man5592_t WHERE id < 30000;
+GO
+~~START~~
+bigint
+449985000
+~~END~~
+
+
+-- [MAN-2626] index-only scan, small range
+SELECT COUNT(id) FROM man5592_t WHERE id > 495000;
+GO
+~~START~~
+int
+5000
+~~END~~
+
+SELECT COUNT(id) FROM man5592_t WHERE id < 5000;
+GO
+~~START~~
+int
+4999
+~~END~~
+
+
+-- [MAN-2626] index-only scan, backward, large range
+SELECT COUNT(col) FROM
+  (SELECT id AS col FROM man5592_t WHERE id > 5000 GROUP BY id ORDER BY id DESC) tab;
+GO
+~~START~~
+int
+495000
+~~END~~
+
+
+-- [MAN-2626] index-only scan, backward, small range
+SELECT COUNT(col) FROM
+  (SELECT id AS col FROM man5592_t WHERE id > 495000 GROUP BY id ORDER BY id DESC) tab;
+GO
+~~START~~
+int
+5000
+~~END~~
+
+SELECT COUNT(col) FROM
+  (SELECT id AS col FROM man5592_t WHERE id < 5000 GROUP BY id ORDER BY id DESC) tab;
+GO
+~~START~~
+int
+4999
+~~END~~
+
+
+-- [MAN-2626] index-only scan, whole index
+SELECT COUNT(id) FROM man5592_t;
+GO
+~~START~~
+int
+500000
+~~END~~
+
+
+-- [MAN-2626] index scan, large range
+SELECT COUNT(val) FROM man5592_t WHERE id > 5000;
+GO
+~~START~~
+int
+495000
+~~END~~
+
+SELECT COUNT(val) FROM man5592_t WHERE id < 495000;
+GO
+~~START~~
+int
+494999
+~~END~~
+
+
+-- [MAN-2626] index scan, medium range
+SELECT COUNT(val) FROM man5592_t WHERE id > 30000;
+GO
+~~START~~
+int
+470000
+~~END~~
+
+SELECT COUNT(val) FROM man5592_t WHERE id < 30000;
+GO
+~~START~~
+int
+29999
+~~END~~
+
+
+-- [MAN-2626] index scan, small range
+SELECT COUNT(val) FROM man5592_t WHERE id > 495000;
+GO
+~~START~~
+int
+5000
+~~END~~
+
+SELECT COUNT(val) FROM man5592_t WHERE id < 5000;
+GO
+~~START~~
+int
+4999
+~~END~~
+
+
+-- [MAN-7161] index scan, in-list
+SELECT COUNT(val) FROM man5592_t
+WHERE id IN (1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
+      11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000, 20000,
+      21000, 22000, 23000, 24000, 25000, 26000, 27000, 28000, 29000, 30000,
+      31000, 32000, 33000, 34000, 35000, 36000, 37000, 38000, 39000, 40000,
+      500000, 450000, 400000, 350000, 300000, 250000, 200000, 150000, 100000);
+GO
+~~START~~
+int
+49
+~~END~~
+
+
+-- [MAN-7589] bitmap heap scans
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'off', false);
+SELECT set_config('enable_bitmapscan', 'on', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+SELECT SUM(id) FROM man5592_t WHERE id > 5000;
+GO
+~~START~~
+bigint
+124987747500
+~~END~~
+
+SELECT COUNT(id) FROM man5592_t WHERE id < 495000;
+GO
+~~START~~
+int
+494999
+~~END~~
+
+
+DROP INDEX IF EXISTS man5592_unique ON man5592_t;
+GO
+CREATE INDEX man8040_index ON man5592_t(id);
+GO
+
+-- psql
+VACUUM ANALYZE master_dbo.man5592_t;
+GO
+
+-- tsql
+SELECT set_config('enable_seqscan', 'off', false);
+SELECT set_config('enable_indexscan', 'on', false);
+SELECT set_config('enable_bitmapscan', 'off', false);
+SELECT SUM(id), COUNT(val) FROM man5592_t WHERE id > 5000;
+GO
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+text
+on
+~~END~~
+
+~~START~~
+text
+off
+~~END~~
+
+~~START~~
+bigint#!#int
+124987747500#!#495000
+~~END~~
+
+
+-- Cleanup
+DROP INDEX IF EXISTS man8040_index ON man5592_t;
+DROP TABLE IF EXISTS man5592_t;
+GO
