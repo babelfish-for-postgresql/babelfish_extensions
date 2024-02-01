@@ -128,6 +128,14 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							   QueryEnvironment *queryEnv,
 							   DestReceiver *dest,
 							   QueryCompletion *qc);
+static void call_prev_ProcessUtility(PlannedStmt *pstmt,
+						 const char *queryString,
+						 bool readOnlyTree,
+						 ProcessUtilityContext context,
+						 ParamListInfo params,
+						 QueryEnvironment *queryEnv,
+						 DestReceiver *dest,
+						 QueryCompletion *qc);
 static void set_pgtype_byval(List *name, bool byval);
 static bool pltsql_truncate_identifier(char *ident, int len, bool warn);
 static Name pltsql_cstr_to_name(char *s, int len);
@@ -3481,6 +3489,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					List	   *res;
 					GrantStmt  *stmt;
 					PlannedStmt *wrapper;
+					RoleSpec *rolspec = create_schema->authrole;
 
 					if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 						&& context == PROCESS_UTILITY_SUBCOMMAND)
@@ -3529,7 +3538,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								   NULL);
 
 					CommandCounterIncrement();
-
+					/* Grant ALL schema privileges to the user.*/
+					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
+					{
+						int permissions[6] = {ACL_INSERT, ACL_SELECT, ACL_UPDATE, ACL_DELETE, ACL_REFERENCES, ACL_EXECUTE};
+						int i;
+						for (i = 0; i < 6; i++)
+						{
+							/* Execute the GRANT SCHEMA subcommands. */
+							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
+						}
+					}
 					return;
 				}
 				else
@@ -3543,7 +3562,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					if (sql_dialect == SQL_DIALECT_TSQL)
 						bbf_ExecDropStmt(drop_stmt);
-
 					break;
 				}
 
@@ -3555,10 +3573,11 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * database command.
 					 */
 					const char *schemaname = strVal(lfirst(list_head(drop_stmt->objects)));
+					char	   *cur_db = get_cur_db_name();
+					const char	*logicalschema = get_logical_schema_name(schemaname, true);
 
 					if (strcmp(queryString, "(DROP DATABASE )") != 0)
 					{
-						char	   *cur_db = get_cur_db_name();
 						char	   *guest_schema_name = get_physical_schema_name(cur_db, "guest");
 
 						if (strcmp(schemaname, guest_schema_name) == 0)
@@ -3571,6 +3590,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					bbf_ExecDropStmt(drop_stmt);
 					del_ns_ext_info(schemaname, drop_stmt->missing_ok);
+					clean_up_bbf_schema_permissions(logicalschema, NULL, true);
 
 					if (prev_ProcessUtility)
 						prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
@@ -3814,16 +3834,176 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				break;
 			}
+		case T_GrantStmt:
+			{
+				GrantStmt *grant = (GrantStmt *) parsetree;
+				char	   *dbname = get_cur_db_name();
+				const char *current_user = GetUserNameFromId(GetUserId(), false);
+				/* Ignore when GRANT statement has no specific named object. */
+				if (sql_dialect != SQL_DIALECT_TSQL || grant->targtype != ACL_TARGET_OBJECT)
+					break;
+				Assert(list_length(grant->objects) == 1);
+				if (grant->objtype == OBJECT_SCHEMA)
+						break;
+				else if (grant->objtype == OBJECT_TABLE)
+				{
+					/* Ignore CREATE database subcommands */
+					if (strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
+					{
+						RangeVar   *rv = (RangeVar *) linitial(grant->objects);
+						const char *logical_schema = NULL;
+						char	   *obj = rv->relname;
+						ListCell   *lc;
+						ListCell	*lc1;
+						if (rv->schemaname != NULL)
+							logical_schema = get_logical_schema_name(rv->schemaname, true);
+						else
+							logical_schema = get_authid_user_ext_schema_name(dbname, current_user);
+
+						/* If ALL PRIVILEGES is granted/revoked. */
+						if (list_length(grant->privileges) == 0)
+						{
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if (grant->is_grant)
+									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true);
+								else
+								{
+									/*
+									 * 1. If permission on schema exists, don't revoke any permission from the object.
+									 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
+									 */
+									update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
+									if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+										return;
+								}
+							}
+							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+						}
+						foreach(lc1, grant->privileges)
+						{
+							AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+							AclMode privilege = string_to_privilege(ap->priv_name);
+							foreach(lc, grant->grantees)
+							{
+								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+								if (grant->is_grant)
+								{
+									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+									/* Don't add/update an entry, if the permission is granted on column list.*/
+									if (ap->cols == NULL)
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true);
+								}
+								else
+								{
+									/*
+									 * If permission on schema exists, don't revoke any permission from the object.
+									 */
+									if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+									{
+										call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+									}
+									/* Don't update an entry, if the permission is granted on column list.*/
+									if (ap->cols == NULL)
+										update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+								}
+							}
+						}
+						return;
+					}
+				}
+				else if ((grant->objtype == OBJECT_PROCEDURE) || (grant->objtype == OBJECT_FUNCTION))
+				{
+					ObjectWithArgs  *ob = (ObjectWithArgs *) linitial(grant->objects);
+					ListCell   *lc;
+					ListCell	*lc1;
+					const char *logicalschema = NULL;
+					char *funcname = NULL;
+					const char *obj_type = NULL;
+					if (grant->objtype == OBJECT_FUNCTION)
+						obj_type = OBJ_FUNCTION;
+					else
+						obj_type = OBJ_PROCEDURE;
+					if (list_length(ob->objname) == 1)
+					{
+						Node *func = (Node *) linitial(ob->objname);
+						funcname = strVal(func);
+						logicalschema = get_authid_user_ext_schema_name(dbname, current_user);
+					}
+					else
+					{
+						Node *schema = (Node *) linitial(ob->objname);
+						char *schemaname = strVal(schema);
+						Node *func = (Node *) lsecond(ob->objname);
+						logicalschema = get_logical_schema_name(schemaname, true);
+						funcname = strVal(func);
+					}
+
+					/* If ALL PRIVILEGES is granted/revoked. */
+					if (list_length(grant->privileges) == 0)
+					{
+						/*
+						 * Case: When ALL PRIVILEGES is revoked internally during create function.
+						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+						 */
+						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL, true))
+							return;
+						
+						foreach(lc, grant->grantees)
+						{
+							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+							if (grant->is_grant)
+							{
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true);
+							}
+							else
+							{
+								/*
+								 * 1. If permission on schema exists, don't revoke any permission from the object.
+								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
+								 */
+								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+									return;
+							}
+						}
+						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+					}
+					foreach(lc1, grant->privileges)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc1);
+						AclMode privilege = string_to_privilege(ap->priv_name);
+						foreach(lc, grant->grantees)
+						{
+							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+							if (grant->is_grant)
+							{
+								call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true);
+							}
+							else
+							{
+								/*
+									* If permission on schema exists, don't revoke any permission from the object.
+									*/
+								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+								{
+									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
+								}
+								/* Update the privilege in the catalog. */
+								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);
+							}
+						}
+					}
+					return;
+				}
+			}
 		default:
 			break;
 	}
 
-	if (prev_ProcessUtility)
-		prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-							queryEnv, dest, qc);
-	else
-		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
-								queryEnv, dest, qc);
+	call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 
 	/* Cleanup babelfish_server_options catalog when tds_fdw extension is dropped */
 	if (sql_dialect == SQL_DIALECT_PG && nodeTag(parsetree) == T_DropStmt)
@@ -3838,6 +4018,24 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		}
 	}
+}
+
+static void
+call_prev_ProcessUtility(PlannedStmt *pstmt,
+						 const char *queryString,
+						 bool readOnlyTree,
+						 ProcessUtilityContext context,
+						 ParamListInfo params,
+						 QueryEnvironment *queryEnv,
+						 DestReceiver *dest,
+						 QueryCompletion *qc)
+{
+	if (prev_ProcessUtility)
+		prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+							queryEnv, dest, qc);
+	else
+		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+								queryEnv, dest, qc);
 }
 
 /*
@@ -5921,6 +6119,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 	Relation		relation = NULL;
 	Oid				schema_oid;
 	ListCell		*cell;
+	const char *logicalschema = NULL;
 
 	db_id = get_cur_db_id();
 
@@ -5961,6 +6160,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -5986,6 +6187,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 											 major_name, NULL);
 				}
 			}
+			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 	else if (stmt->removeType == OBJECT_PROCEDURE ||
@@ -6029,6 +6231,8 @@ bbf_ExecDropStmt(DropStmt *stmt)
 			schema_oid = get_object_namespace(&address);
 			if (OidIsValid(schema_oid))
 				schema_name = get_namespace_name(schema_oid);
+			if (schema_name != NULL)
+				logicalschema = get_logical_schema_name(schema_name, true);
 
 			if (schema_name && major_name)
 			{
@@ -6042,6 +6246,7 @@ bbf_ExecDropStmt(DropStmt *stmt)
 				delete_extended_property(db_id, type, schema_name, major_name,
 										 NULL);
 			}
+			clean_up_bbf_schema_permissions(logicalschema, major_name, false);
 		}
 	}
 }

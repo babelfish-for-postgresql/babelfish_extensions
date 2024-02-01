@@ -1,0 +1,711 @@
+-- tsql
+-- create objects
+create database babel_4344_d1;
+go
+
+use babel_4344_d1;
+go
+
+create login babel_4344_l1 with password = '12345678'
+go
+
+create user babel_4344_u1 for login babel_4344_l1;
+go
+
+create login αιώνια with password = '12345678'
+go
+
+create user αιώνια for login αιώνια;
+go
+
+create login ログイン with password = '12345678'
+go
+
+create user ログイン for login ログイン;
+go
+
+create schema babel_4344_s1;
+go
+
+create schema "BAbel_4344 S1";
+go
+
+create table "babel_4344 s1"."babel_4344 t1"(a int);
+go
+
+create schema αγάπη;
+go
+
+create schema スキーマ;
+go
+
+create schema babel_4344_s2 authorization babel_4344_u1;
+go
+
+create table babel_4344_t1(a int);
+go
+
+create table babel_4344_s1.babel_4344_t1(a int);
+go
+
+create table babel_4344_s2.babel_4344_t1(a int);
+go
+
+create table αγάπη.abc(a int);
+go
+
+create table スキーマ.abc(a int);
+go
+
+create table babel_4344_t3(a int, b int);
+go
+
+create table babel_4344_s1.babel_4344_t3(a int, b int);
+go
+
+create schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
+go
+
+create view babel_4344_v1 as select 1;
+go
+
+create view babel_4344_s1.babel_4344_v1 as select 2;
+go
+
+create proc babel_4344_p1 as select 1;
+go
+
+create proc babel_4344_s1.babel_4344_p1 as select 2;
+go
+
+create proc babel_4344_s1.babel_4344_p3 as select 3;
+go
+
+CREATE FUNCTION babel_4344_f1() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+CREATE FUNCTION babel_4344_s1.babel_4344_f1() returns int begin declare @a int; set @a = 1; return @a; END
+go
+
+-- tests with greek character (one byte) and japanese character (muti bytes)
+grant SELECT on schema::babel_4344_S1 to public, αιώνια, ログイン;
+go
+
+grant select on schema::αγάπη to αιώνια, ログイン;
+go
+
+grant select on schema::スキーマ to ログイン, αιώνια;
+go
+
+-- test special database roles
+grant SELECT on schema::babel_4344_S1 to db_owner; -- throws an error
+go
+
+grant SELECT on schema::babel_4344_S1 to sys; -- throws an error
+go
+
+grant SELECT on schema::babel_4344_S1 to information_schema; -- throws an error
+go
+
+grant SELECT on schema::babel_4344_S1 to dbo; -- throws an error
+go
+
+-- tsql user=ログイン password=12345678 
+use babel_4344_d1;
+go
+
+select * from αγάπη.abc;
+go
+
+select * from スキーマ.abc;
+go
+
+select * from babel_4344_S1.babel_4344_t1;
+go
+
+use master;
+go
+
+-- tsql user=αιώνια password=12345678 
+use babel_4344_d1;
+go
+
+select * from αγάπη.abc;
+go
+
+select * from スキーマ.abc;
+go
+
+select * from babel_4344_S1.babel_4344_t1;
+go
+
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678 
+use babel_4344_d1;
+go
+
+-- User has select privileges, tables and views be accessible
+select * from babel_4344_s1.babel_4344_t1
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+use master;
+go
+
+-- tsql
+-- object names having more than 64 bytes
+create schema abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
+go
+
+create table abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz(a int);
+go
+
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+go
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz from babel_4344_u1;
+go
+
+grant select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+go
+
+revoke select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz from babel_4344_u1;
+go
+
+drop table abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
+go
+
+drop schema abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz
+go
+
+use babel_4344_d1;
+go
+revoke select on schema::babel_4344_s1 from public, αιώνια, ログイン;
+go
+
+-- tsql user=babel_4344_l1 password=12345678 
+use babel_4344_d1;
+go
+
+-- User doesn't have any privileges, objects should not be accessible
+select * from babel_4344_t1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+insert into babel_4344_s1.babel_4344_t1 values(1);
+go
+select * from babel_4344_v1;
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_p1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_f1();
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+use master;
+go
+
+-- tsql
+-- GRANT OBJECT privilege
+use babel_4344_d1;
+go
+grant SELECT on schema::"bAbel_4344 s1" to BABEL_4344_U1;
+go
+grant SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" to BABEL_4344_U1;
+go
+grant SELECT on "babel_4344_t1" to BABEL_4344_U1;
+go
+grant SELECT on "babel_4344_s1".babel_4344_t1 to babel_4344_u1;
+go
+grant all on babel_4344_s1.babel_4344_t1 to "babel_4344_u1";
+go
+grant select on babel_4344_t3(a) to babel_4344_u1; -- column privilege
+go
+grant select on babel_4344_s1.babel_4344_t3(a) to babel_4344_u1; -- column privilege
+go
+grant select on babel_4344_v1 to babel_4344_u1;
+go
+grant select on babel_4344_s1.babel_4344_v1 to babel_4344_u1;
+go
+grant execute on babel_4344_p1 to babel_4344_u1;
+go
+grant execute on babel_4344_s1.babel_4344_p1 to babel_4344_u1;
+go
+-- inside a transaction, permission will not be granted since it is rolled back
+begin transaction;
+exec sp_executesql N'grant execute on babel_4344_s1.babel_4344_p3 to babel_4344_u1;';
+rollback transaction;
+go
+
+-- Mixed case
+grant Execute on Babel_4344_F1 to Babel_4344_u1;
+go
+grant execute on BABEL_4344_s1.babel_4344_f1 to babEL_4344_u1;
+go
+-- Grant schema permission to its owner, should fail
+grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
+go
+grant select on schema::babel_4344_s2 to jdbc_user; -- should fail
+go
+grant SELECT on schema::"babel_4344_s2" to guest; -- should pass 
+go
+grant select on schema::"" to guest; -- should fail 
+go
+grant select on schema::non_existing_schema to guest; -- should fail 
+go
+-- grant statement via a procedure
+create procedure grant_perm_proc as begin exec('grant select on schema::[] to guest') end;
+go
+exec grant_perm_proc; -- should fail, invalid GRANT statement
+go
+-- non-existing role
+grant SELECT on schema::dbo to guest, babel_4344_u3; -- should fail
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_t1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+insert into babel_4344_s1.babel_4344_t1 values(2);
+go
+select * from babel_4344_t3; -- not accessible, only column privilege is granted
+go
+select * from babel_4344_s1.babel_4344_t3 -- not accessible, only column privilege is granted
+go
+select * from babel_4344_v1;
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_p1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+exec babel_4344_s1.babel_4344_p3; -- should fail, grant statement was rolled back
+go
+select * from BABEl_4344_f1();
+go
+select * from babEL_4344_s1.babel_4344_f1();
+go
+-- Grant schema permission to its owner
+grant select on schema::babel_4344_s2 to babel_4344_u1; -- should fail
+go
+grant select on schema::babel_4344_s2 to guest; -- should pass 
+go
+grant select on schema::babel_4344_s1 to babel_4344_u1; -- should fail
+go
+use master;
+go
+
+-- tsql
+-- GRANT SCHEMA privilege
+use babel_4344_d1;
+go
+grant control on schema::babel_4344_s1 to babel_4344_u1; -- should fail, 'control' is not supported
+go
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+use master;
+go
+
+-- psql
+-- GRANT statement add an entry to the catalog
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+where schema_name = 'babel_4344_s1' collate "C" order by permission; -- and object_name = 'ALL' collate "C"
+go
+
+-- tsql
+-- GRANT SCHEMA privilege again
+use babel_4344_d1;
+go
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+-- GRANT OBJECT privilege again
+grant select on babel_4344_s1.babel_4344_v1 to babel_4344_u1;
+go
+use master;
+go
+
+-- psql
+-- check the consistency of catalog
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+where schema_name = 'babel_4344_s1' collate "C" order by permission;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT and SCHEMA privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+insert into babel_4344_s1.babel_4344_t1 values(3);
+go
+select * from babel_4344_s1.babel_4344_t3
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+use master;
+go
+
+-- tsql
+-- REVOKE SCHEMA privilege
+use babel_4344_d1;
+go
+revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has OBJECT privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1
+go
+insert into babel_4344_s1.babel_4344_t1 values(3); 
+go
+select * from babel_4344_s1.babel_4344_t3 -- not accessible
+go
+select * from babel_4344_s1.babel_4344_v1;
+go
+exec babel_4344_s1.babel_4344_p1;
+go
+select * from babel_4344_s1.babel_4344_f1();
+go
+select * from babel_4344_s2.babel_4344_t1;
+go
+use master;
+go
+
+-- tsql
+-- create new objects in same schema
+use babel_4344_d1;
+go
+-- Grant the permissions again
+grant select, insert, execute on schema::babel_4344_s1 to babel_4344_u1;
+go
+grant select, insert, execute on schema::information_schema to babel_4344_u1;
+go
+create table babel_4344_s1.babel_4344_t2(a int);
+go
+create view babel_4344_s1.babel_4344_v2 as select 2;
+go
+create proc babel_4344_s1.babel_4344_p2 as select 2;
+go
+CREATE FUNCTION babel_4344_s1.babel_4344_f2() RETURNS INT AS BEGIN RETURN (SELECT COUNT(*) FROM sys.objects) END
+go
+use master;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has SCHEMA privileges,objects should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t2
+go
+insert into babel_4344_s1.babel_4344_t1 values(4);
+go
+select * from babel_4344_s1.babel_4344_v2;
+go
+exec babel_4344_s1.babel_4344_p2;
+go
+select * from babel_4344_s1.babel_4344_f2();
+go
+select * from "bAbel_4344 s1"."bAbel_4344 t1";
+go
+use master;
+go
+
+-- tsql
+-- REVOKE OBJECT privileges
+use babel_4344_d1;
+go
+
+REVOKE SELECT on schema::"bAbel_4344 s1" from "BABEL_4344_U1";
+go
+REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
+go
+GRANT SELECT on babel_4344_t1 to BABEL_4344_U1;
+go
+
+-- psql
+-- should show original object names
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+
+-- tsql
+-- rename the objects where permissions are already granted
+sp_rename 'babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_t3', 'babel_4344_t3_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_v1', 'babel_4344_v1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_p1', 'babel_4344_p1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_f1', 'babel_4344_f1_new', 'OBJECT';
+go
+
+-- psql
+-- should show renamed objects
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+
+-- tsql
+-- permissions are transferred to the new objects 
+-- Revoke permissions from the new objects
+REVOKE all on babel_4344_s1.babel_4344_t1_new FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_t3_new(a) FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_v1_new FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_p1_new FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_f1_new FROM babel_4344_u1;
+go
+REVOKE all on babel_4344_s1.babel_4344_f1_new FROM babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has SCHEMA privileges, should be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_t1_new;
+go
+select * from babel_4344_s1.babel_4344_t1_new
+go
+insert into babel_4344_s1.babel_4344_t1_new values(5);
+go
+select * from babel_4344_s1.babel_4344_t3_new;
+go
+select * from babel_4344_s1.babel_4344_v1_new;
+go
+exec babel_4344_s1.babel_4344_p1_new;
+go
+select * from babel_4344_s1.babel_4344_f1_new();
+go
+select * from babel_4344_s2.babel_4344_t1;
+go
+use master;
+go
+
+-- tsql
+-- REVOKE SCHEMA privileges
+use babel_4344_d1;
+go
+revoke select, insert, execute on schema::babel_4344_s1 from babel_4344_u1;
+go
+use master;
+go
+
+-- psql
+-- REVOKE on schema removes the entry from the catalog
+select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+-- User has no privileges, shouldn't be accessible.
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1_new;
+go
+insert into babel_4344_s1.babel_4344_t1_new values(5);
+go
+select * from babel_4344_s1.babel_4344_t3_new;
+go
+select * from babel_4344_s1.babel_4344_v1_new;
+go
+exec babel_4344_s1.babel_4344_p1_new;
+go
+select * from babel_4344_s1.babel_4344_f1_new();
+go
+use master;
+go
+
+-- psql
+-- grant object permission
+grant select on babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
+go
+
+-- tsql
+-- grant schema permission
+use babel_4344_d1;
+go
+grant select on schema::babel_4344_s1 to babel_4344_u1;
+go
+use master
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1_new; -- accessible
+go
+use master
+go
+
+-- psql
+-- revoke schema permission
+revoke select on all tables in schema babel_4344_s1 from babel_4344_d1_babel_4344_u1;
+go
+
+-- tsql user=babel_4344_l1 password=12345678
+use babel_4344_d1;
+go
+select * from babel_4344_s1.babel_4344_t1_new; -- not accessible
+go
+use master
+go
+
+-- tsql
+-- Drop objects
+use babel_4344_d1;
+go
+
+drop schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
+go
+
+drop table babel_4344_t1_new;
+go
+
+drop table babel_4344_s1.babel_4344_t1_new;
+go
+
+drop table babel_4344_t3;
+go
+
+drop table babel_4344_s1.babel_4344_t3_new;
+go
+
+drop table babel_4344_s1.babel_4344_t2;
+go
+
+drop view babel_4344_v1;
+go
+
+drop view babel_4344_s1.babel_4344_v1_new;
+go
+
+drop view babel_4344_s1.babel_4344_v2;
+go
+
+drop proc babel_4344_p1;
+go
+
+drop proc babel_4344_s1.babel_4344_p1_new;
+go
+
+drop proc babel_4344_s1.babel_4344_p2;
+go
+
+drop proc babel_4344_s1.babel_4344_p3;
+go
+
+drop function babel_4344_f1;
+go
+
+drop function babel_4344_s1.babel_4344_f1_new;
+go
+
+drop function babel_4344_s1.babel_4344_f2;
+go
+
+drop schema babel_4344_s1;
+go
+
+drop table babel_4344_s2.babel_4344_t1;
+go
+
+drop schema babel_4344_s2;
+go
+
+drop table αγάπη.abc;
+go
+
+drop schema αγάπη;
+go
+
+drop table スキーマ.abc;
+go
+
+drop schema スキーマ;
+go
+
+drop table "babel_4344 s1"."babel_4344 t1";
+go
+
+drop schema "BAbel_4344 s1";
+go
+
+drop user babel_4344_u1;
+go
+
+drop user αιώνια;
+go
+
+drop user ログイン;
+go
+
+use master;
+go
+
+drop database babel_4344_d1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4344_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login babel_4344_l1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'αιώνια' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login αιώνια;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'ログイン' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login ログイン;
+go

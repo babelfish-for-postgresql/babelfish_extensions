@@ -51,6 +51,9 @@ ignore#!#FULLTEXT_INDEX-vu-verify
 ignore#!#FULLTEXT_INDEX-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
+ignore#!#GRANT_SCHEMA-vu-prepare
+ignore#!#GRANT_SCHEMA-vu-verify
+ignore#!#GRANT_SCHEMA-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare

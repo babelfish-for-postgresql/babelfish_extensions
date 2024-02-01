@@ -2863,6 +2863,17 @@ END;
 $$ LANGUAGE pltsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
 
+-- BABELFISH_SCHEMA_PERMISSIONS
+CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  permission INT NOT NULL,
+  grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_type CHAR(1) NOT NULL COLLATE sys.database_default,
+  PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
+);
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_4_1_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_4_1_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_4_1_0');
