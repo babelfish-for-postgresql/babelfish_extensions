@@ -888,7 +888,8 @@ where t.relkind = 'r'
 -- filter to get all the objects that belong to sys or babelfish schemas
 and (nsp.nspname = 'sys' or ext.nspname is not null)
 and has_schema_privilege(t.relnamespace, 'USAGE')
-and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
 CREATE OR replace view sys.key_constraints AS

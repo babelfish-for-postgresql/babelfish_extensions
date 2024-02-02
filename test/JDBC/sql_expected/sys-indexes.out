@@ -68,9 +68,9 @@ SELECT type, type_desc FROM sys.indexes WHERE object_id = OBJECT_ID('t_sys_index
 GO
 ~~START~~
 tinyint#!#nvarchar
-2#!#NONCLUSTERED
-2#!#NONCLUSTERED
 0#!#HEAP
+2#!#NONCLUSTERED
+2#!#NONCLUSTERED
 ~~END~~
 
 
@@ -145,8 +145,8 @@ SELECT type_desc, is_unique_constraint FROM sys.indexes WHERE object_id = OBJECT
 GO
 ~~START~~
 nvarchar#!#bit
-NONCLUSTERED#!#0
 HEAP#!#0
+NONCLUSTERED#!#0
 ~~END~~
 
 
@@ -160,8 +160,8 @@ SELECT type_desc, is_unique_constraint FROM sys.indexes WHERE object_id = OBJECT
 GO
 ~~START~~
 nvarchar#!#bit
-NONCLUSTERED#!#1
 HEAP#!#0
+NONCLUSTERED#!#1
 ~~END~~
 
 
