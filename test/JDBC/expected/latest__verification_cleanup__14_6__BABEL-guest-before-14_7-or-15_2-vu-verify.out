@@ -55,3 +55,5 @@ guest
 
 
 
+drop schema guest;
+go
