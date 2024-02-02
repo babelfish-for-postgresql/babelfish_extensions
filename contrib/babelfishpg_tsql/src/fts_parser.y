@@ -1,10 +1,6 @@
 %{
 #include "postgres.h"
 #include "lib/stringinfo.h"
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include "fts_data.h"
 
 /* All grammar constructs return strings */
