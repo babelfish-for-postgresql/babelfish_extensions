@@ -2866,3 +2866,29 @@ int
 ~~END~~
 
 
+REVOKE ALL ON t_perms_by_name FROM user_perms_by_name;
+GO
+
+REVOKE ALL ON [.t perms.by.name.] FROM user_perms_by_name;
+GO
+
+REVOKE ALL ON [ t.perms by name ] FROM user_perms_by_name;
+GO
+
+REVOKE ALL ON v_perms_by_name FROM user_perms_by_name;
+GO
+
+REVOKE ALL ON scalar_function_perms_by_name FROM user_perms_by_name;
+GO
+
+REVOKE ALL ON table_function_perms_by_name FROM user_perms_by_name;
+GO
+
+REVOKE ALL ON proc_perms_by_name FROM user_perms_by_name;
+GO
+
+select * from babelfish_schema_permissions;
+go
+~~START~~
+smallint#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#char#!#text
+~~END~~
