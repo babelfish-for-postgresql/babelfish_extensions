@@ -3,7 +3,6 @@
 ALTER LOGIN user_perms_by_name WITH PASSWORD='test';
 GO
 
--- tsql user=user_perms_by_name password=test
 USE db_perms_by_name;
 GO
 
@@ -26,6 +25,10 @@ GRANT ALL ON table_function_perms_by_name TO user_perms_by_name;
 GO
 
 GRANT ALL ON proc_perms_by_name TO user_perms_by_name;
+GO
+
+-- tsql user=user_perms_by_name password=test
+USE db_perms_by_name;
 GO
 
 SELECT CURRENT_USER;
