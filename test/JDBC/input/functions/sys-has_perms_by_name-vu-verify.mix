@@ -4,7 +4,6 @@
 ALTER LOGIN user_perms_by_name WITH PASSWORD='test';
 GO
 
-
 USE db_perms_by_name;
 GO
 
