@@ -2890,6 +2890,10 @@ int
 ~~END~~
 
 
+-- tsql
+USE db_perms_by_name;
+GO
+
 REVOKE ALL ON t_perms_by_name FROM user_perms_by_name;
 GO
 
