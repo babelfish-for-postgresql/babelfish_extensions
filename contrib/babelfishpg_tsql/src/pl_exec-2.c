@@ -55,6 +55,7 @@ static int	exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int	exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int	exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int	exec_stmt_fulltextindex(PLtsql_execstate *estate, PLtsql_stmt_fulltextindex *stmt);
+static int	exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt);
 static int	exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int	exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 static int	exec_stmt_dbcc(PLtsql_execstate *estate, PLtsql_stmt_dbcc *stmt);
@@ -3686,6 +3687,135 @@ int
 get_insert_bulk_kilobytes_per_batch()
 {
 	return insert_bulk_kilobytes_per_batch;
+}
+
+static int
+exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
+{
+	char		*dbname = get_cur_db_name();
+	char		*login = GetUserNameFromId(GetSessionUserId(), false);
+	bool		login_is_db_owner;
+	char		*schema_name;
+	ListCell	*lc;
+	Oid		schemaOid;
+	char		*user = GetUserNameFromId(GetUserId(), false);
+	const char	*db_owner = get_owner_of_db(dbname);
+
+	login_is_db_owner = 0 == strcmp(login, db_owner);
+	schema_name = get_physical_schema_name(dbname, stmt->schema_name);
+
+	if(schema_name)
+	{
+		/* Return immediately for shared schema. */
+		if(is_shared_schema(schema_name))
+			return PLTSQL_RC_OK;
+
+		schemaOid = LookupExplicitNamespace(schema_name, true);
+	}
+	else
+	{
+		ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as \"\" or [] are not allowed. Change the alias to a valid name.")));
+	}
+
+	if (!OidIsValid(schemaOid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist",
+							stmt->schema_name)));
+
+	foreach(lc, stmt->grantees)
+	{
+		char	*rolname = NULL;
+		char	*grantee_name = (char *) lfirst(lc);
+		Oid	role_oid;
+		bool	is_public = 0 == strcmp(grantee_name, PUBLIC_ROLE_NAME);
+		if (!is_public)
+			rolname	= get_physical_user_name(dbname, grantee_name);
+		else
+			rolname = pstrdup(PUBLIC_ROLE_NAME);
+		role_oid = get_role_oid(rolname, true);
+
+		/* Special database roles should throw an error. */
+		if (strcmp(grantee_name, "db_owner") == 0)
+			ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Cannot grant, deny or revoke permissions to or from special roles.")));
+
+		if (!is_public && !OidIsValid(role_oid))
+		{
+			/* sys or information_schema roles should throw an error. */
+			if ((strcmp(grantee_name, "sys") == 0) || (strcmp(grantee_name, "information_schema") == 0))
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
+			else
+				ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						errmsg("Cannot find the principal '%s', because it does not exist or you do not have permission.", grantee_name)));
+		}
+
+		if ((strcmp(rolname, user) == 0) || (!is_public && object_ownercheck(NamespaceRelationId, schemaOid, role_oid)) || is_member_of_role(role_oid, get_sysadmin_oid()))
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("Cannot grant, deny, or revoke permissions to sa, dbo, entity owner, information_schema, sys, or yourself.")));
+
+		/*
+		 * If the login is not the db owner or the login is not the member of
+		 * sysadmin or login is not the schema owner, then it doesn't have the permission to GRANT/REVOKE.
+		 */
+		if (!is_member_of_role(GetSessionUserId(), get_sysadmin_oid()) && !login_is_db_owner && !object_ownercheck(NamespaceRelationId,schemaOid, GetUserId()))
+			ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
+
+		/* Execute the GRANT SCHEMA subcommands. */
+		if (stmt->privileges & ACL_EXECUTE)
+			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_EXECUTE);
+		if (stmt->privileges & ACL_SELECT)
+			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_SELECT);
+		if (stmt->privileges & ACL_INSERT)
+			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_INSERT);
+		if (stmt->privileges & ACL_UPDATE)
+			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_UPDATE);
+		if (stmt->privileges & ACL_DELETE)
+			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_DELETE);
+		if (stmt->privileges & ACL_REFERENCES)
+			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_REFERENCES);
+
+		if (stmt->is_grant)
+		{
+			/* For GRANT statement, add or update privileges in the catalog. */
+			add_or_update_object_in_bbf_schema(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, true);
+		}
+		else
+		{
+			/* For REVOKE statement, update privileges in the catalog. */
+			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname, false))
+			{
+				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
+				if (stmt->privileges & ACL_EXECUTE)
+					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_EXECUTE, rolname);
+				if (stmt->privileges & ACL_SELECT)
+					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_SELECT, rolname);
+				if (stmt->privileges & ACL_INSERT)
+					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_INSERT, rolname);
+				if (stmt->privileges & ACL_UPDATE)
+					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_UPDATE, rolname);
+				if (stmt->privileges & ACL_DELETE)
+					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_DELETE, rolname);
+				if (stmt->privileges & ACL_REFERENCES)
+					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_REFERENCES, rolname);
+				update_privileges_of_object(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, false);
+			}
+		}
+		pfree(rolname);
+	}
+	pfree(user);
+	pfree(schema_name);
+	pfree(dbname);
+	pfree(login);
+	return PLTSQL_RC_OK;
 }
 
 /*
