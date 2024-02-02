@@ -8,6 +8,27 @@ GO
 USE db_perms_by_name;
 GO
 
+GRANT ALL ON t_perms_by_name TO user_perms_by_name;
+GO
+
+GRANT ALL ON [.t perms.by.name.] TO user_perms_by_name;
+GO
+
+GRANT ALL ON [ t.perms by name ] TO user_perms_by_name;
+GO
+
+GRANT ALL ON v_perms_by_name TO user_perms_by_name;
+GO
+
+GRANT ALL ON scalar_function_perms_by_name TO user_perms_by_name;
+GO
+
+GRANT ALL ON table_function_perms_by_name TO user_perms_by_name;
+GO
+
+GRANT ALL ON proc_perms_by_name TO user_perms_by_name;
+GO
+
 SELECT CURRENT_USER;
 GO
 
