@@ -2886,9 +2886,3 @@ GO
 
 REVOKE ALL ON proc_perms_by_name FROM user_perms_by_name;
 GO
-
-select * from babelfish_schema_permissions;
-go
-~~START~~
-smallint#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#char#!#text
-~~END~~
