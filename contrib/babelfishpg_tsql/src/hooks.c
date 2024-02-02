@@ -196,7 +196,6 @@ static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot 
 static object_access_hook_type prev_object_access_hook = NULL;
 static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 static void revoke_func_permission_from_public(Oid objectId);
-static char *gen_func_arg_list(Oid objectId);
 
 /*****************************************
  * 			Planner Hook
@@ -2806,7 +2805,7 @@ revoke_func_permission_from_public(Oid objectId)
 	/* Command Counter will be increased by validator */
 }
 
-static char *
+char *
 gen_func_arg_list(Oid objectId)
 {
 	Oid		   *argtypes;
