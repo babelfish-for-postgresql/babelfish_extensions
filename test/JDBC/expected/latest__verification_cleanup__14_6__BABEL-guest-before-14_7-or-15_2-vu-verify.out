@@ -42,9 +42,6 @@ int#!#int
 ~~END~~
 
 
-drop table guest.babel_2571_table_t1;
-go
-
 use babel_2571_db_no_guest;
 go
 
