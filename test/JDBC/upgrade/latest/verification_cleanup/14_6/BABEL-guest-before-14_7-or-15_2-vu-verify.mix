@@ -35,5 +35,4 @@ go
 select schema_name()
 go
 
-drop schema guest;
-go
+
