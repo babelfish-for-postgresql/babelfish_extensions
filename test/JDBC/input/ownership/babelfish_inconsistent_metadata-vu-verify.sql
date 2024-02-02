@@ -1,3 +1,6 @@
+select * from babelfish_schema_permissions
+go
+
 SELECT * FROM babelfish_inconsistent_metadata_vu_prepare_view
 GO
 

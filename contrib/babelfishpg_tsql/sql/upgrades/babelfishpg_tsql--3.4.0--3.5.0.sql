@@ -2292,6 +2292,8 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
+GRANT SELECT on sys.babelfish_schema_permissions TO PUBLIC;
+
 create or replace view sys.all_objects as
 select 
     name collate sys.database_default
