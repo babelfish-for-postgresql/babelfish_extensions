@@ -15,6 +15,12 @@ GO
 DROP VIEW fts_contains_pgconfig_v1
 GO
 
+drop fulltext index on test_special_char_t;
+go
+
+drop table test_special_char_t;
+go
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

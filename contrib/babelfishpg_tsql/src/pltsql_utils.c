@@ -1804,79 +1804,79 @@ check_fulltext_exist(const char *schema_name, const char *table_name)
 }
 
 /*
- * replace_special_chars_FTS
+ * replace_special_chars_fts_impl
  * Replace special characters in the input string with the unique hash
  */
 char
-*replace_special_chars_FTS(char *input_str) {
-    size_t 		input_len = strlen(input_str);
-    char		*result;
-    char 		*replacement = NULL;
-    char 		*unique_hashes[4];
-    const char 	*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
-    StringInfoData output_str;
+*replace_special_chars_fts_impl(char *input_str) {
+	size_t		input_len = strlen(input_str);
+	char		*replacement = NULL;
+	char		*result;
+	char		*unique_hashes[4];
+	const char	*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
+	StringInfoData	output_str;
+	
+	for (int i = 0; i < 4; i++) {
+		unique_hashes[i] = construct_unique_index_name("specialChars", psprintf("cat%d", i + 1));
+	}
+	
+	initStringInfo(&output_str);
 
-    for (int i = 0; i < 4; i++) {
-        unique_hashes[i] = construct_unique_index_name("specialChars", psprintf("cat%d", i + 1));
-    }
+	for (size_t i = 0; i < input_len; i++) {
+		replacement = NULL;
 
-    initStringInfo(&output_str);
+		for (int j = 0; j < 4; j++) {
+			if (strchr(special_chars[j], input_str[i]) != NULL) {
+				replacement = unique_hashes[j];
+				break;
+			}
+		}
 
-    for (size_t i = 0; i < input_len; i++) {
-        replacement = NULL;
+		if (replacement != NULL) {
+			/* Remove leading and trailing spaces around special characters */
+			size_t start = i;
+			size_t end = i;
 
-        for (int j = 0; j < 4; j++) {
-            if (strchr(special_chars[j], input_str[i]) != NULL) {
-                replacement = unique_hashes[j];
-                break;
-            }
-        }
+			/* Look for leading spaces */
+			while (start > 0 && isspace((unsigned char)input_str[start - 1])) {
+				start--;
+			}
 
-        if (replacement != NULL) {
-            // Remove leading and trailing spaces around special characters
-            size_t start = i;
-            size_t end = i;
+			/* Look for trailing spaces */
+			while (end < input_len - 1 && isspace((unsigned char)input_str[end + 1])) {
+				end++;
+			}
 
-            // Look for leading spaces
-            while (start > 0 && isspace((unsigned char)input_str[start - 1])) {
-                start--;
-            }
+			/* Copy the replacement with removed spaces */
+			appendStringInfo(&output_str, "-%s-" ,replacement);
 
-            // Look for trailing spaces
-            while (end < input_len - 1 && isspace((unsigned char)input_str[end + 1])) {
-                end++;
-            }
+			/* Move the index to the end of the processed sequence */
+			i = end; 
 
-            // Copy the replacement with removed spaces
-            appendStringInfoString(&output_str, replacement);
-            i = end; // Move the index to the end of the processed sequence
-
-			// skip multiple special characters in a row
+			/* skip multiple special characters in a row */
 			for (int j = 0; j < 4; j++) {
 				while (i < input_len - 1 && strchr(special_chars[j], input_str[i + 1]) != NULL) {
 					i++;
 				}
 			}
-        } else {
-            appendStringInfoChar(&output_str, input_str[i]);
-        }
-    }
+		} else {
+			appendStringInfoChar(&output_str, input_str[i]);
+		}
+	}
 
-    // Null-terminate the output string
-    appendStringInfoChar(&output_str, '\0');
+	/* Null-terminate the output string */
+	appendStringInfoChar(&output_str, '\0');
 
-    // Duplicate the string before freeing the memory
-    result = pstrdup(output_str.data);
+	/* Duplicate the string before freeing the memory */
+    	result = pstrdup(output_str.data);
+	/* Free the allocated memory */
+	for (int i = 0; i < 4; i++) {
+		pfree(unique_hashes[i]);
+	}
 
-    // Free the allocated memory
-    for (int i = 0; i < 4; i++) {
-        pfree(unique_hashes[i]);
-    }
-
-    pfree(output_str.data);
-    resetStringInfo(&output_str);
-
-    return result;
+	pfree(output_str.data);
+	resetStringInfo(&output_str);
+	return result;
 }
 
 /*

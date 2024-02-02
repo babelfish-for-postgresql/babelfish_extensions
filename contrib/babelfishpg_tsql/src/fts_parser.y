@@ -21,14 +21,14 @@
 #define YYpALLOC palloc
 #define YYFREE   pfree
 
-extern char *replace_special_chars_FTS(char *input_str);
+extern char     *replace_special_chars_fts_impl(char *input_str);
 
-static char *scanbuf;
-static int	scanbuflen;
+static char     *scanbuf;
+static int      scanbuflen;
 
-static char *translate_simple_term(const char* s);
-static char *trim(char *s, bool insideQuotes);
-static void replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool isEnclosedInQuotes);
+static char     *translate_simple_term(const char* s);
+static char     *trim(char *s, bool insideQuotes);
+static void     replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool isEnclosedInQuotes);
 
 %}
 
@@ -123,80 +123,82 @@ simple_term_list:
  */
 static char 
 *translate_simple_term(const char* inputStr) {
-    int             inputLength;
-    StringInfoData  output;
-    const char*     inputPtr;
-    char*           trimmedInputStr;
-    char*           leftStr;
-    char*           rightStr;
-    bool            isEnclosedInQuotes = false;
+        int             inputLength;
+        StringInfoData  output;
+        const char      *inputPtr;
+        char            *trimmedInputStr;
+        char            *leftStr;
+        char            *rightStr;
+        bool            isEnclosedInQuotes = false;
 
-    // Check for empty input - this should not be possible based on lexer rules, but check just in case
-    if (!inputStr || !(inputLength = strlen(inputStr))) {
-        ereport(ERROR,
-			(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Null or empty full-text predicate.")));
-    }
+        /* Check for empty input - this should not be possible based on lexer rules, but check just in case */
+        if (!inputStr || !(inputLength = strlen(inputStr))) {
+                ereport(ERROR,
+                        (errcode(ERRCODE_INTERNAL_ERROR),
+                        errmsg("Null or empty full-text predicate.")));
+        }
 
-    trimmedInputStr = pstrdup(inputStr);
+        trimmedInputStr = pstrdup(inputStr);
 
-    // removing trailing and leading spaces
-    trim(trimmedInputStr, false);
-    inputLength = strlen(trimmedInputStr);
+        /* removing trailing and leading spaces */
+        trim(trimmedInputStr, false);
+        inputLength = strlen(trimmedInputStr);
 
-    // Check if the input is a phrase enclosed in double quotes
-    if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
-        trim(trimmedInputStr, true);
-        isEnclosedInQuotes = true;
-    }
+        /* Check if the input is a phrase enclosed in double quotes */
+        if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
+                trim(trimmedInputStr, true);
+                isEnclosedInQuotes = true;
+        }
 
-    // Rewriting the query in format one<->two | oneUniqueHashtwo in order to handle special characters
-    leftStr = pstrdup(trimmedInputStr);
-    rightStr = pstrdup(trimmedInputStr);
+        /* Rewriting the query in format one<->two | oneUniqueHashtwo in order to handle special characters */
+        leftStr = pstrdup(trimmedInputStr);
+        rightStr = pstrdup(trimmedInputStr);
 
-    replaceMultipleSpacesAndSpecialChars(trimmedInputStr, &leftStr, &rightStr, isEnclosedInQuotes);
-    
-    inputLength = strlen(leftStr);
+        replaceMultipleSpacesAndSpecialChars(trimmedInputStr, &leftStr, &rightStr, isEnclosedInQuotes);
+        
+        inputLength = strlen(leftStr);
 
-    initStringInfo(&output);
-    appendStringInfoString(&output, "");
+        initStringInfo(&output);
+        appendStringInfoString(&output, "");
 
-    // for strings with special characters `, ', and _ (these result in exact matches)
-    if(strpbrk("`'_", leftStr) != NULL) {
-        appendStringInfoString(&output, replace_special_chars_FTS(leftStr));
+        /* for strings with special characters `, ', and _ (these result in exact matches) */
+        if(strpbrk("`'_", leftStr) != NULL) {
+                appendStringInfoString(&output, replace_special_chars_fts_impl(leftStr));
+                pfree(leftStr);
+                pfree(rightStr);
+                pfree(trimmedInputStr);
+
+                return output.data;
+        }
+
+        /* Initialize pointers for input and output */
+        for (inputPtr = leftStr; *inputPtr != '\0'; inputPtr++) {
+                if (isspace((unsigned char)*inputPtr)) {
+                /* Replace space with "<->" */
+                while (isspace((unsigned char)*(inputPtr + 1))) {
+                        /* Handle multiples spaces between words and skip over additional spaces */
+                        inputPtr++;
+                }
+                appendStringInfoString(&output, "<->");
+                } else {
+                /* Copy the character */
+                appendStringInfoChar(&output, *inputPtr);
+                }
+        }
+
+        /* check for empty strings i.e. "" */
+        if (output.len > 0) {
+                appendStringInfoString(&output, " | ");
+                appendStringInfoString(&output, replace_special_chars_fts_impl(rightStr));
+        }
+
+        appendStringInfoChar(&output, '\0');
+
         pfree(leftStr);
         pfree(rightStr);
         pfree(trimmedInputStr);
 
         return output.data;
-    }
-
-    // Initialize pointers for input and output
-    for (inputPtr = leftStr; *inputPtr != '\0'; inputPtr++) {
-        if (isspace((unsigned char)*inputPtr)) {
-            // Replace space with "<->"
-            while (isspace((unsigned char)*(inputPtr + 1))) {
-                // Handle multiples spaces between words and skip over additional spaces
-                inputPtr++;
-            }
-            appendStringInfoString(&output, "<->");
-        } else {
-            // Copy the character
-            appendStringInfoChar(&output, *inputPtr);
-        }
-    }
-
-    // check for empty strings i.e. ""
-    if (output.len > 0) {
-        appendStringInfoString(&output, " | ");
-        appendStringInfoString(&output, replace_special_chars_FTS(rightStr));
-    }
-
-    pfree(leftStr);
-    pfree(rightStr);
-    pfree(trimmedInputStr);
-
-    return output.data;
 }
 
 /* Helper function to generate two strings on the basis of the input string
@@ -208,100 +210,119 @@ static char
  */
 static void 
 replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool isEnclosedInQuotes) {
-    size_t inputLen = strlen(input);
-    size_t i;
-    int inSpace = 0;
-    StringInfoData resultSpaceSeparated;
-    StringInfoData resultAmpersandSeparated;
-    StringInfoData modifiedInput;
-    const char* specialChars = "~!&|@#$%^*+=\\;:<>?.\\/";
-    const char* boolOperators = "&!|";
-    const char* forbiddenChars = "([{]})";
+        size_t inputLen = strlen(input);
+        size_t i;
+        bool inSpace = false;
+        StringInfoData resultSpaceSeparated;
+        StringInfoData resultAmpersandSeparated;
+        StringInfoData modifiedInput;
+        const char *specialChars = "~!&|@#$%^*+=\\;:<>?.\\/";
+        const char *boolOperators = "&!|";
+        const char *forbiddenChars = "([{]})";
+        const char *charInForbiddenChars;
+        const char *charInSpecialChars;
+        const char *charInBoolOperators;
 
-    // Additional forbidden characters when in quotes
-    const char* forbiddenCharsInQuotes = "(){}[],";
+        /* Additional forbidden characters when in quotes */
+        const char *forbiddenCharsInQuotes = "(){}[],";
 
-    initStringInfo(&resultSpaceSeparated);
-    initStringInfo(&resultAmpersandSeparated);
-
-    if (isEnclosedInQuotes) {
+        initStringInfo(&resultSpaceSeparated);
+        initStringInfo(&resultAmpersandSeparated);
         initStringInfo(&modifiedInput);
-        appendStringInfoString(&modifiedInput, "");
+
+        if (isEnclosedInQuotes) {
+                for (i = 0; i < inputLen; i++) {
+                        /* character " in between a phrase should throw syntax error */
+                        if (i != 0 && i != inputLen - 1 && input[i] == '"') {
+                                ereport(ERROR,
+                                    (errcode(ERRCODE_SYNTAX_ERROR),
+                                     errmsg("Syntax error near '%s' in the full-text search condition '%s'.", input + i + 1, input)));
+                        }
+
+                        if (strchr(forbiddenCharsInQuotes, input[i]) != NULL) {
+                                /* Replace forbiddenCharsInQuotes characters based on the position */
+                                while (i + 1 < inputLen && strchr(forbiddenCharsInQuotes, input[i + 1]) != NULL) {
+                                    appendStringInfoString(&modifiedInput, "");
+                                    i++;
+                                }
+                                if (i < inputLen - 1) {
+                                        appendStringInfoString(&modifiedInput, " ");
+                                }
+                        } else {
+                                if (strchr(specialChars, input[i]) != NULL) {
+                                        while (i + 1 < inputLen && isspace(input[i + 1])) {
+                                                i++;
+                                        }
+                                        if (i + 1 < inputLen && strchr(specialChars, input[i + 1]) != NULL) {
+                                                ereport(ERROR,
+                                                        (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                                                         errmsg("Concurrent special characters in the full-text search condition are not currently supported in Babelfish")));
+                                        } 
+                                }
+                                appendStringInfoChar(&modifiedInput, input[i]);
+                        }
+                }
+                /* Null-terminate the modified input string */
+                appendStringInfoChar(&modifiedInput, '\0');
+        } else {
+                appendStringInfoString(&modifiedInput, input);
+        }
+
+        inputLen = strlen(modifiedInput.data);
 
         for (i = 0; i < inputLen; i++) {
+                char currentChar = modifiedInput.data[i];
 
-            // character " in between a phrase should throw syntax error
-            if (i != 0 && i != inputLen - 1 && input[i] == '"') {
-                ereport(ERROR,
-                    (errcode(ERRCODE_SYNTAX_ERROR),
-                     errmsg("Syntax error near '%s' in the full-text search condition '%s'.", input + i + 1, input)));
-            }
+                /* Store the result of strchr to avoid calling it multiple times */
+                charInForbiddenChars = strchr(forbiddenChars, currentChar);
+                charInSpecialChars = strchr(specialChars, currentChar);
+                charInBoolOperators = strchr(boolOperators, currentChar);
 
-            if (strchr(forbiddenCharsInQuotes, input[i]) != NULL) {
-                // Replace forbiddenCharsInQuotes characters based on the position
-                if (i + 1 < inputLen && strchr(forbiddenCharsInQuotes, input[i + 1]) != NULL) {
-                    appendStringInfoString(&modifiedInput, "");
-                } else {
-                    if (i == inputLen - 1) {
-                        appendStringInfoString(&modifiedInput, "");
-                    } else {
-                        appendStringInfoString(&modifiedInput, " ");
-                    }
+                if (currentChar == '~') {
+                        ereport(ERROR,
+                                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                                 errmsg("Proximity term is not currently supported in Babelfish")));
                 }
-                continue;
-            }
-            appendStringInfoChar(&modifiedInput, input[i]);
-        }
 
-        // Null-terminate the modified input string
-        appendStringInfoChar(&modifiedInput, '\0');
+                if (charInBoolOperators != NULL) {
+                        ereport(ERROR,
+                                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                                 errmsg("Full-text search conditions with boolean operators are not currently supported in Babelfish")));
+                }
 
-        // Replace the input with the modified input string
-        strncpy(input, modifiedInput.data, modifiedInput.len);
-        inputLen = strlen(input);
-    }
+                /* Check for forbidden characters when not in quotes */
+                if (!isEnclosedInQuotes && charInForbiddenChars != NULL) {
+                        ereport(ERROR,
+                                (errcode(ERRCODE_SYNTAX_ERROR),
+                                 errmsg("Syntax error near '%c' in the full-text search condition '%s'.", currentChar, input)));
+                }
 
-    for (i = 0; i < inputLen; i++) {
-        char currentChar = input[i];
-        if (currentChar == '~') {
-            ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Proximity term is not currently supported in Babelfish")));
-        }
+                /* Check for consecutive special characters */
+                if (charInSpecialChars != NULL && i + 1 < inputLen && strchr(specialChars, modifiedInput.data[i + 1]) != NULL) {
+                        ereport(ERROR,
+                                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                                 errmsg("Concurrent special characters in the full-text search condition are not currently supported in Babelfish")));
+                } else if (isspace(currentChar) || charInSpecialChars != NULL || (isEnclosedInQuotes && strchr("`'_", currentChar) != NULL)) {
+                        if (!inSpace) {
+                                if (i != 0 && i != inputLen - 1)
+                                        appendStringInfoChar(&resultSpaceSeparated, ' ');
+                                appendStringInfoChar(&resultAmpersandSeparated, '@');
+                                inSpace = true;
+                        }
+                } else {
+                        appendStringInfoChar(&resultSpaceSeparated, currentChar);
+                        appendStringInfoChar(&resultAmpersandSeparated, currentChar);
+                        inSpace = false;
+                }
+        } 
 
-        if (strchr(boolOperators, currentChar) != NULL) {
-            ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Full-text search conditions with boolean operators are not currently supported in Babelfish")));
-        }
+        /* Null-terminate the result strings */
+        appendStringInfoChar(&resultSpaceSeparated, '\0');
+        appendStringInfoChar(&resultAmpersandSeparated, '\0');
 
-        // Check for forbidden characters when not in quotes
-        if (!isEnclosedInQuotes && strchr(forbiddenChars, currentChar) != NULL) {
-            ereport(ERROR,
-                (errcode(ERRCODE_SYNTAX_ERROR),
-                 errmsg("Syntax error near '%c' in the full-text search condition '%s'.", currentChar, input)));
-        }
-
-        if (isspace(currentChar) || strchr(specialChars, currentChar) != NULL || (isEnclosedInQuotes && strchr("`'_", currentChar) != NULL)) {
-            if (!inSpace) {
-                appendStringInfoChar(&resultSpaceSeparated, ' ');
-                appendStringInfoChar(&resultAmpersandSeparated, '@');
-                inSpace = 1;
-            }
-        } else {
-            appendStringInfoChar(&resultSpaceSeparated, currentChar);
-            appendStringInfoChar(&resultAmpersandSeparated, currentChar);
-            inSpace = 0;
-        }
-    }
-
-    // Null-terminate the result strings
-    appendStringInfoChar(&resultSpaceSeparated, '\0');
-    appendStringInfoChar(&resultAmpersandSeparated, '\0');
-
-    // Assign the pointers in the main function to the result strings
-    *str1 = resultSpaceSeparated.data;
-    *str2 = resultAmpersandSeparated.data;
+        /* Assign the pointers in the main function to the result strings */
+        *str1 = resultSpaceSeparated.data;
+        *str2 = resultAmpersandSeparated.data;
 }
 
 
@@ -333,23 +354,23 @@ static char
         end--;
     }
 
-    // Trim leading spaces
+    /* Trim leading spaces */
     while (start < length && isspace(s[start])) {
         start++;
     }
 
-    // Trim trailing spaces
+    /* Trim trailing spaces */
     while (end > start && isspace(s[end])) {
         end--;
     }
 
-    // Calculate the new length
+    /* Calculate the new length */
     newLength = end - start + 1;
 
-    // Shift the non-space part to the beginning of the string
+    /* Shift the non-space part to the beginning of the string */
     memmove(s, s + start, newLength);
 
-    // Null-terminate the result
+    /* Null-terminate the result */
     s[newLength] = '\0';
 
     return s;
