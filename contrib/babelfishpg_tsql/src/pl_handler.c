@@ -6095,14 +6095,28 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 void
 pltsql_remove_current_query_env(void)
 {
-	ENRDropTempTables(currentQueryEnv);
-	remove_queryEnv();
+	bool old_abort_curr_txn = AbortCurTransaction;
 
-	if (!currentQueryEnv ||
-		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
+	PG_TRY();
 	{
-		destroy_failed_transactions_map();
+		// see pltsql_clean_table_variables()
+		AbortCurTransaction = false;
+
+		ENRDropTempTables(currentQueryEnv);
 	}
+	PG_FINALLY();
+	{
+		remove_queryEnv();
+
+		if (!currentQueryEnv ||
+			(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
+		{
+			destroy_failed_transactions_map();
+		}
+	
+		AbortCurTransaction = old_abort_curr_txn;
+	}
+	PG_END_TRY();
 }
 
 /*
