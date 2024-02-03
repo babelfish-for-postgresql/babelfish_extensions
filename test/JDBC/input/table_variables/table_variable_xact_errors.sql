@@ -428,3 +428,65 @@ GO
 
 exec test
 go
+
+DROP PROCEDURE usp_PopulateDiscount
+GO
+
+DROP PROCEDURE test
+GO
+
+-------------------------------------------------------------------------------
+-- BABEL-4737: Error during subtxn should not cause crash
+-------------------------------------------------------------------------------
+DROP TABLE IF EXISTS mytab
+GO
+
+CREATE TABLE mytab(a VARCHAR(30) NULL) 
+GO
+
+CREATE PROC myproc
+AS
+BEGIN
+    DECLARE @tv TABLE(a int)
+
+    BEGIN TRANSACTION
+    SAVE TRANSACTION savept1
+
+    UPDATE mytab
+    SET a = 'x'
+    OUTPUT i.Item INTO @tv
+    FROM
+    (SELECT 'b' AS Item) AS i
+
+     COMMIT
+END
+go
+
+CREATE PROC myproc2
+AS
+BEGIN
+	BEGIN TRANSACTION
+	SAVE TRANSACTION savept0
+		EXEC myproc
+	COMMIT
+END
+GO
+
+EXECUTE myproc
+GO
+
+EXECUTE myproc
+GO
+
+EXECUTE myproc2
+GO
+
+EXECUTE myproc2
+GO
+
+DROP PROCEDURE myproc
+GO
+
+DROP PROCEDURE myproc2
+GO
+
