@@ -1844,7 +1844,6 @@ char
 *replace_special_chars_fts_impl(char *input_str) {
 	size_t		input_len = strlen(input_str);
 	char		*replacement = NULL;
-	char		*result;
 	char		*unique_hashes[4];
 	const char	*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
 	StringInfoData	output_str;
@@ -1900,16 +1899,12 @@ char
 	/* Null-terminate the output string */
 	appendStringInfoChar(&output_str, '\0');
 
-	/* Duplicate the string before freeing the memory */
-    	result = pstrdup(output_str.data);
 	/* Free the allocated memory */
 	for (int i = 0; i < 4; i++) {
 		pfree(unique_hashes[i]);
 	}
 
-	pfree(output_str.data);
-	resetStringInfo(&output_str);
-	return result;
+	return  pstrdup(output_str.data);;
 }
 
 /*

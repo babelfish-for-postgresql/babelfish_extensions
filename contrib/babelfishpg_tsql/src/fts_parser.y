@@ -170,15 +170,15 @@ static char
         /* Initialize pointers for input and output */
         for (inputPtr = leftStr; *inputPtr != '\0'; inputPtr++) {
                 if (isspace((unsigned char)*inputPtr)) {
-                /* Replace space with "<->" */
-                while (isspace((unsigned char)*(inputPtr + 1))) {
-                        /* Handle multiples spaces between words and skip over additional spaces */
-                        inputPtr++;
-                }
-                appendStringInfoString(&output, "<->");
+                        /* Replace space with "<->" */
+                        while (isspace((unsigned char)*(inputPtr + 1))) {
+                                /* Handle multiples spaces between words and skip over additional spaces */
+                                inputPtr++;
+                        }
+                        appendStringInfoString(&output, "<->");
                 } else {
-                /* Copy the character */
-                appendStringInfoChar(&output, *inputPtr);
+                        /* Copy the character */
+                        appendStringInfoChar(&output, *inputPtr);
                 }
         }
 
@@ -206,21 +206,19 @@ static char
  */
 static void 
 replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool isEnclosedInQuotes) {
-        size_t inputLen = strlen(input);
-        size_t i;
-        bool inSpace = false;
-        StringInfoData resultSpaceSeparated;
-        StringInfoData resultAmpersandSeparated;
-        StringInfoData modifiedInput;
-        const char *specialChars = "~!&|@#$%^*+=\\;:<>?.\\/";
-        const char *boolOperators = "&!|";
-        const char *forbiddenChars = "([{]})";
-        const char *charInForbiddenChars;
-        const char *charInSpecialChars;
-        const char *charInBoolOperators;
-
-        /* Additional forbidden characters when in quotes */
-        const char *forbiddenCharsInQuotes = "(){}[],";
+        size_t          inputLen = strlen(input);
+        size_t          i;
+        bool            inSpace = false;
+        StringInfoData  resultSpaceSeparated;
+        StringInfoData  resultAmpersandSeparated;
+        StringInfoData  modifiedInput;
+        const char      *specialChars = "~!&|@#$%^*+=\\;:<>?.\\/";
+        const char      *boolOperators = "&!|";
+        const char      *forbiddenChars = "([{]})";
+        const char      *charInForbiddenChars;
+        const char      *charInSpecialChars;
+        const char      *charInBoolOperators;
+        const char      *forbiddenCharsInQuotes = "(){}[],"; /* Additional forbidden characters when in quotes */
 
         initStringInfo(&resultSpaceSeparated);
         initStringInfo(&resultAmpersandSeparated);
@@ -231,14 +229,13 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
                         /* character " in between a phrase should throw syntax error */
                         if (i != 0 && i != inputLen - 1 && input[i] == '"') {
                                 ereport(ERROR,
-                                    (errcode(ERRCODE_SYNTAX_ERROR),
-                                     errmsg("Syntax error near '%s' in the full-text search condition '%s'.", input + i + 1, input)));
+                                        (errcode(ERRCODE_SYNTAX_ERROR),
+                                         errmsg("Syntax error near '%s' in the full-text search condition '%s'.", input + i + 1, input)));
                         }
 
                         if (strchr(forbiddenCharsInQuotes, input[i]) != NULL) {
                                 /* Replace forbiddenCharsInQuotes characters based on the position */
                                 while (i + 1 < inputLen && strchr(forbiddenCharsInQuotes, input[i + 1]) != NULL) {
-                                    appendStringInfoString(&modifiedInput, "");
                                     i++;
                                 }
                                 if (i < inputLen - 1) {
@@ -264,10 +261,8 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
                 appendStringInfoString(&modifiedInput, input);
         }
 
-        inputLen = strlen(modifiedInput.data);
-
-        for (i = 0; i < inputLen; i++) {
-                char currentChar = modifiedInput.data[i];
+        for (const char *currentCharPtr = modifiedInput.data; *currentCharPtr; ++currentCharPtr) {
+                char currentChar = *currentCharPtr;
 
                 /* Store the result of strchr to avoid calling it multiple times */
                 charInForbiddenChars = strchr(forbiddenChars, currentChar);
@@ -294,13 +289,13 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
                 }
 
                 /* Check for consecutive special characters */
-                if (charInSpecialChars != NULL && i + 1 < inputLen && strchr(specialChars, modifiedInput.data[i + 1]) != NULL) {
+                if (charInSpecialChars != NULL && *(currentCharPtr + 1) && strchr(specialChars, *(currentCharPtr + 1)) != NULL) {
                         ereport(ERROR,
                                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                                  errmsg("Concurrent special characters in the full-text search condition are not currently supported in Babelfish")));
                 } else if (isspace(currentChar) || charInSpecialChars != NULL || (isEnclosedInQuotes && strchr("`'_", currentChar) != NULL)) {
                         if (!inSpace) {
-                                if (i != 0 && i != inputLen - 1)
+                                if (currentCharPtr != modifiedInput.data && *(currentCharPtr + 1))
                                         appendStringInfoChar(&resultSpaceSeparated, ' ');
                                 appendStringInfoChar(&resultAmpersandSeparated, '@');
                                 inSpace = true;
@@ -310,7 +305,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
                         appendStringInfoChar(&resultAmpersandSeparated, currentChar);
                         inSpace = false;
                 }
-        } 
+        }
 
         /* Null-terminate the result strings */
         appendStringInfoChar(&resultSpaceSeparated, '\0');
