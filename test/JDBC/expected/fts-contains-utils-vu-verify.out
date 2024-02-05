@@ -26,7 +26,7 @@ SELECT * FROM replace_special_chars_fts_prepare_v1;
 GO
 ~~START~~
 text
-"one-specialCharscat2e09616b53f5138735a7d0a79e78e804e-two"
+"onespecialCharscat2e09616b53f5138735a7d0a79e78e804etwo"
 ~~END~~
 
 

@@ -1609,7 +1609,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1620,14 +1619,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two
@@ -1644,7 +1641,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1655,14 +1651,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two
@@ -1679,7 +1673,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1690,14 +1683,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two
@@ -1714,7 +1705,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1725,14 +1715,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two
@@ -1749,7 +1737,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1760,14 +1747,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two
@@ -1784,7 +1769,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1795,14 +1779,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two
@@ -1819,7 +1801,6 @@ int#!#text
 1#!#one two three
 2#!#two three one
 3#!#one
-6#!#one`two
 7#!#one~two
 8#!#one!two
 9#!#one@two
@@ -1830,14 +1811,12 @@ int#!#text
 14#!#one&two
 15#!#one*two
 16#!#one-two
-17#!#one_two
 18#!#one+two
 19#!#one=two
 20#!#one\two
 21#!#one|two
 22#!#one;two
 23#!#one:two
-24#!#one'two
 25#!#one<two
 26#!#one>two
 27#!#one.two

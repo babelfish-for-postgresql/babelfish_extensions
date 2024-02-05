@@ -1842,10 +1842,10 @@ check_fulltext_exist(const char *schema_name, const char *table_name)
  */
 char
 *replace_special_chars_fts_impl(char *input_str) {
-	size_t		input_len = strlen(input_str);
-	char		*replacement = NULL;
-	char		*unique_hashes[4];
-	const char	*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
+	size_t			input_len = strlen(input_str);
+	char			*replacement = NULL;
+	char            *unique_hashes[4];
+	const char		*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
 	StringInfoData	output_str;
 	
 	for (int i = 0; i < 4; i++) {
@@ -1865,14 +1865,8 @@ char
 		}
 
 		if (replacement != NULL) {
-			/* Remove leading and trailing spaces around special characters */
-			size_t start = i;
+			/* Remove trailing spaces for special characters */
 			size_t end = i;
-
-			/* Look for leading spaces */
-			while (start > 0 && isspace((unsigned char)input_str[start - 1])) {
-				start--;
-			}
 
 			/* Look for trailing spaces */
 			while (end < input_len - 1 && isspace((unsigned char)input_str[end + 1])) {
@@ -1880,7 +1874,11 @@ char
 			}
 
 			/* Copy the replacement with removed spaces */
-			appendStringInfo(&output_str, "-%s-" ,replacement);
+			if (strchr("`'_", input_str[i]) != NULL) { 
+				appendStringInfoString(&output_str, replacement);
+			} else {
+				appendStringInfo(&output_str, "-%s-" ,replacement);
+			}
 
 			/* Move the index to the end of the processed sequence */
 			i = end; 
