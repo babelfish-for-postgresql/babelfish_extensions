@@ -757,14 +757,17 @@ GO
 
 ~~ERROR (Message: 'DEFAULT FULLTEXT LANGUAGE' is not currently supported in Babelfish)~~
 
- 
+
 DROP DATABASE db_unsupported_ft;
 GO
 ~~ERROR (Code: 911)~~
 
 ~~ERROR (Message: database "db_unsupported_ft" does not exist)~~
 
- 
+
+CREATE SCHEMA t_unsupported_s_ft;
+GO
+
 CREATE TABLE t_unsupported_s_ft.t_unsupported_ft1 (id int not null, a text);
 GO
 
