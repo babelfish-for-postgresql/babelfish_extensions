@@ -515,7 +515,7 @@ BEGIN
         RESTRICT = eqsel
     );
 
-EXCEPTION WHEN duplicate_object THEN
+EXCEPTION WHEN duplicate_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -546,7 +546,7 @@ BEGIN
         COMMUTATOR = <>
     );
 
-EXCEPTION WHEN duplicate_object THEN
+EXCEPTION WHEN duplicate_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -1189,7 +1189,7 @@ BEGIN
         RESTRICT = eqsel
     );
 
-EXCEPTION WHEN duplicate_object THEN
+EXCEPTION WHEN duplicate_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -1220,7 +1220,7 @@ BEGIN
         COMMUTATOR = <>
     );
 
-EXCEPTION WHEN duplicate_object THEN
+EXCEPTION WHEN duplicate_function THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
