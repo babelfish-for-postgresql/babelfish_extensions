@@ -55,7 +55,7 @@ BEGIN
         STORAGE = main
     );
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -74,7 +74,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.GEOMETRY, integer, boolean) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -97,7 +97,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS point) WITH FUNCTION sys.point(sys.GEOMETRY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -110,7 +110,7 @@ DECLARE
 BEGIN
     CREATE CAST (point AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(point);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -292,7 +292,7 @@ DECLARE
 BEGIN
     CREATE CAST (text AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(text, integer, boolean) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -305,7 +305,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS text) WITH FUNCTION sys.text(sys.GEOMETRY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -318,7 +318,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.bpchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bpchar) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -331,7 +331,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOMETRY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -344,7 +344,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.varchar AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.varchar) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -357,7 +357,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOMETRY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -370,7 +370,7 @@ DECLARE
 BEGIN
     CREATE CAST (bytea AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(bytea) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -383,7 +383,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS bytea) WITH FUNCTION sys.bytea(sys.GEOMETRY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -396,7 +396,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.bbf_varbinary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_varbinary) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -409,7 +409,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOMETRY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOMETRY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -422,7 +422,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.bbf_binary AS sys.GEOMETRY) WITH FUNCTION sys.GEOMETRY(sys.bbf_binary) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -515,7 +515,7 @@ BEGIN
         RESTRICT = eqsel
     );
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -546,7 +546,7 @@ BEGIN
         COMMUTATOR = <>
     );
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -643,7 +643,7 @@ BEGIN
         ALIGNMENT      = double
     );
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -661,7 +661,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOGRAPHY AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.GEOGRAPHY, integer, boolean) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -889,7 +889,7 @@ DECLARE
 BEGIN
     CREATE CAST (text AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(text, integer, boolean) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -902,7 +902,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOGRAPHY AS text) WITH FUNCTION sys.text(sys.GEOGRAPHY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -915,7 +915,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.bpchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bpchar) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -928,7 +928,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOGRAPHY AS sys.bpchar) WITH FUNCTION sys.bpchar(sys.GEOGRAPHY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -941,7 +941,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.varchar AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.varchar) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -954,7 +954,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOGRAPHY AS sys.varchar) WITH FUNCTION sys.varchar(sys.GEOGRAPHY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -967,7 +967,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.bbf_binary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_binary) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -980,7 +980,7 @@ DECLARE
 BEGIN
     CREATE CAST (bytea AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(bytea) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -993,7 +993,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOGRAPHY AS bytea) WITH FUNCTION sys.bytea(sys.GEOGRAPHY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -1006,7 +1006,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.bbf_varbinary AS sys.GEOGRAPHY) WITH FUNCTION sys.GEOGRAPHY(sys.bbf_varbinary) AS IMPLICIT;
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -1019,7 +1019,7 @@ DECLARE
 BEGIN
     CREATE CAST (sys.GEOGRAPHY AS sys.bbf_varbinary) WITH FUNCTION sys.bbf_varbinary(sys.GEOGRAPHY);
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -1189,7 +1189,7 @@ BEGIN
         RESTRICT = eqsel
     );
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
@@ -1220,7 +1220,7 @@ BEGIN
         COMMUTATOR = <>
     );
 
-EXCEPTION WHEN OTHERS THEN
+EXCEPTION WHEN duplicate_object THEN
     GET STACKED DIAGNOSTICS
     exception_message = MESSAGE_TEXT;
     RAISE WARNING '%', exception_message;
