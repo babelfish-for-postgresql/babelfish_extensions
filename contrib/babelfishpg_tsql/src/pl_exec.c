@@ -484,6 +484,9 @@ extern void exec_save_simple_expr(PLtsql_expr *expr, CachedPlan *cplan);
 extern int
 			execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamListInfo paramLI);
 
+static void
+pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
+
 /* ----------
  * pltsql_exec_function	Called by the call handler for
  *				function execution.
@@ -860,23 +863,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	}
 	PG_CATCH();
 	{
-		/*
-		 * The purpose of this try-catch to call clean-up routines for estate.
-		 * Errors will be re-thrwon.
-		 */
-
-		/* Close/Deallocate LOCAL cursors */
-		pltsql_cleanup_local_cursors(&estate);
-
-		/* Drop the tables linked to table variables */
-		pltsql_clean_table_variables(&estate, func);
-
-		/* Clean up any leftover temporary memory */
-		pltsql_destroy_econtext(&estate);
-		exec_eval_cleanup(&estate);
-
-		pltsql_estate_cleanup();
-
+		pltsql_exec_function_cleanup(&estate, func, NULL);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -889,22 +876,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (*pltsql_plugin_ptr && (*pltsql_plugin_ptr)->func_end)
 		((*pltsql_plugin_ptr)->func_end) (&estate, func);
 
-	/* Close/Deallocate LOCAL cursors */
-	pltsql_cleanup_local_cursors(&estate);
-
-	/* Drop the tables linked to table variables */
-	pltsql_clean_table_variables(&estate, func);
-
-	/* Clean up any leftover temporary memory */
-	pltsql_destroy_econtext(&estate);
-	exec_eval_cleanup(&estate);
-	pltsql_estate_cleanup();
-	/* stmt_mcontext will be destroyed when function's main context is */
-
-	/*
-	 * Pop the error context stack
-	 */
-	error_context_stack = plerrcontext.previous;
+	pltsql_exec_function_cleanup(&estate, func, &plerrcontext);
 
 	/*
 	 * Return the function's result
@@ -10105,9 +10077,17 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	bool		old_pltsql_explain_only = pltsql_explain_only;
 	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
+	bool old_abort_curr_txn = AbortCurTransaction;
 
 	PG_TRY();
 	{
+		/*
+		* Temporarily set this to false to allow DROP to continue.
+		* Othewise, DROP would not be allowed to acquire xlock on the
+		* relation.
+		*/
+		AbortCurTransaction = false;
+
 		foreach(lc, func->table_varnos)
 		{
 			n = lfirst_int(lc);
@@ -10134,11 +10114,18 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 				append_explain_info(NULL, query);
 			}
 		}
+
+		Assert(!AbortCurTransaction); /* engine should not change this value */
+		AbortCurTransaction = old_abort_curr_txn;
 	}
 	PG_CATCH();
 	{
+		Assert(!AbortCurTransaction); /* engine should not change this value */
+		AbortCurTransaction = old_abort_curr_txn;
+
 		pltsql_explain_only = old_pltsql_explain_only;	/* Recover EXPLAIN ONLY
 														 * mode */
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -10347,4 +10334,32 @@ char *
 get_original_query_string(void)
 {
 	return original_query_string;
+}
+
+static void
+pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext)
+{
+	PG_TRY();
+	{
+		/* Close/Deallocate LOCAL cursors */
+		pltsql_cleanup_local_cursors(estate);
+
+		/* Drop the tables linked to table variables */
+		pltsql_clean_table_variables(estate, func);
+	}
+	PG_FINALLY();
+	{
+		/* These should be executed no matter what*/
+
+		/* Clean up any leftover temporary memory */
+		pltsql_destroy_econtext(estate);
+		exec_eval_cleanup(estate);
+
+		pltsql_estate_cleanup();
+
+		if (plerrcontext)
+			error_context_stack = plerrcontext->previous;
+
+	}
+	PG_END_TRY();
 }
