@@ -547,6 +547,29 @@ go
 drop table t;
 go
 
+-- Testing with different typmod 
+CREATE TABLE document_embeddings (
+    id int PRIMARY KEY,
+    embedding vector(4) NOT NULL
+);
+go
+CREATE INDEX document_embeddings_embedding_idx ON document_embeddings USING hnsw (embedding vector_l2_ops);
+go
+INSERT INTO document_embeddings(id, embedding) VALUES(1, CAST('[21,-2,0,2.5]' as vector));
+INSERT INTO document_embeddings(id, embedding) VALUES(2, CAST('[5, 10000, -9.75, 8]' as vector));
+INSERT INTO document_embeddings(id, embedding) VALUES(3, CAST('[-0.02,23,3.14,00]' as vector));
+WITH cte AS (
+    SELECT CAST(2e2 AS real) a, 80 b, CAST('-3e05' AS real) c, -1 d
+)
+INSERT INTO document_embeddings(id, embedding) SELECT 4, CAST(CONCAT('[',a, ',', b, ',', c, ',', d, ']') as vector) FROM cte; 
+go
+SELECT * FROM document_embeddings;
+go
+SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '[3,1,2,4]';
+go
+Drop table document_embeddings
+go
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
