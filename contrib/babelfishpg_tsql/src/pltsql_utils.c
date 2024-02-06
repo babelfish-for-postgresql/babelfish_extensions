@@ -1863,32 +1863,38 @@ char
 				break;
 			}
 		}
-
 		if (replacement != NULL) {
-			/* Remove trailing spaces for special characters */
-			size_t end = i;
+			/* Check if the current special character is the only one in a sequence */
+			bool is_single = true;
+			size_t next_char_index = i + 1;
 
-			/* Look for trailing spaces */
-			while (end < input_len - 1 && isspace((unsigned char)input_str[end + 1])) {
-				end++;
+			if (next_char_index < input_len) {
+				for (int k = 0; k < 4; k++) {
+					char *is_special_char = strchr(special_chars[k], input_str[next_char_index]);
+					while ((next_char_index < input_len && isspace((unsigned char)input_str[next_char_index])) || (next_char_index < input_len && is_special_char != NULL)) {
+						if (is_special_char != NULL) {
+							is_single = false;
+						}
+						next_char_index++;
+						is_special_char = next_char_index < input_len ? strchr(special_chars[k], input_str[next_char_index]) : NULL;
+					}
+				}
 			}
 
-			/* Copy the replacement with removed spaces */
-			if (strchr("`'_", input_str[i]) != NULL) { 
-				appendStringInfoString(&output_str, replacement);
+			if (is_single) {
+				/* Copy the replacement with removed spaces */
+				if (strchr("`'_", input_str[i]) != NULL) { 
+					appendStringInfoString(&output_str, replacement);
+				} else {
+					appendStringInfo(&output_str, "-%s-", replacement);
+				}
 			} else {
-				appendStringInfo(&output_str, "-%s-" ,replacement);
+				/* Append consecutive special characters group as they are */
+				appendBinaryStringInfo(&output_str, &input_str[i], next_char_index - i);
 			}
 
 			/* Move the index to the end of the processed sequence */
-			i = end; 
-
-			/* skip multiple special characters in a row */
-			for (int j = 0; j < 4; j++) {
-				while (i < input_len - 1 && strchr(special_chars[j], input_str[i + 1]) != NULL) {
-					i++;
-				}
-			}
+			i = next_char_index - 1; 
 		} else {
 			appendStringInfoChar(&output_str, input_str[i]);
 		}

@@ -15,3 +15,9 @@ GO
 
 SELECT replace_special_chars_fts_prepare_f1();
 GO
+
+select sys.replace_special_chars_fts('"one @ @ @ @ two"');
+go
+
+select sys.babelfish_fts_rewrite('"one @ @ @ @ two"');
+go

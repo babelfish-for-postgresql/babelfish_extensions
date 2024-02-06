@@ -621,6 +621,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -670,6 +671,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -699,6 +701,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -728,6 +731,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -757,6 +761,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -786,6 +791,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -823,6 +829,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -852,6 +859,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -881,6 +889,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -910,6 +919,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -939,6 +949,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -968,6 +979,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -997,6 +1009,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1026,6 +1039,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1055,6 +1069,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1084,6 +1099,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1113,6 +1129,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1207,6 +1224,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1236,6 +1254,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1265,6 +1284,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1294,6 +1314,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1323,6 +1344,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1352,6 +1374,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1381,6 +1404,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1410,6 +1434,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1439,6 +1464,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1483,6 +1509,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1512,6 +1539,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1541,6 +1569,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1570,6 +1599,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1599,6 +1629,7 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1631,6 +1662,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1663,6 +1695,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1695,6 +1728,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1727,6 +1761,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1759,6 +1794,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1791,6 +1827,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1823,6 +1860,7 @@ int#!#text
 28#!#one?two
 29#!#one/two
 101#!#one :) two
+100#!#one @ @ @ @ two
 ~~END~~
 
 
@@ -1830,35 +1868,35 @@ select * from test_special_char_t where contains(name, 'one@#$two');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Concurrent special characters in the full-text search condition are not currently supported in Babelfish)~~
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
 
 
 select * from test_special_char_t where contains(name, '"one $%#! two"');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Concurrent special characters in the full-text search condition are not currently supported in Babelfish)~~
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
 
 
 select * from test_special_char_t where contains(name, '"one # $ % ^ two"');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Concurrent special characters in the full-text search condition are not currently supported in Babelfish)~~
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
 
 
 select * from test_special_char_t where contains(name, '"one #        $ %    ^      two"');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Concurrent special characters in the full-text search condition are not currently supported in Babelfish)~~
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
 
 
 select * from test_special_char_t where contains(name, '"one$two three %$@ four"');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Concurrent special characters in the full-text search condition are not currently supported in Babelfish)~~
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
 
 
 -- disable FULLTEXT

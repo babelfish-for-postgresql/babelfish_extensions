@@ -45,3 +45,18 @@ varchar
 "one -specialCharscat1e09616b53f5138735a7d0a79e78e804e-two"
 ~~END~~
 
+
+select sys.replace_special_chars_fts('"one @ @ @ @ two"');
+go
+~~START~~
+text
+"one @ @ @ @ two"
+~~END~~
+
+
+select sys.babelfish_fts_rewrite('"one @ @ @ @ two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+

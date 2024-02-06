@@ -248,7 +248,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
                     if (i + 1 < inputLen && strchr(specialChars, input[i + 1]) != NULL) {
                         ereport(ERROR,
                             (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                             errmsg("Concurrent special characters in the full-text search condition are not currently supported in Babelfish")));
+                             errmsg("Consecutive special characters in the full-text search condition are not currently supported in Babelfish")));
                     } 
                 }
                 appendStringInfoChar(&modifiedInput, input[i]);
@@ -291,7 +291,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
         if (charInSpecialChars != NULL && *(currentCharPtr + 1) && strchr(specialChars, *(currentCharPtr + 1)) != NULL) {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("Concurrent special characters in the full-text search condition are not currently supported in Babelfish")));
+                 errmsg("Consecutive special characters in the full-text search condition are not currently supported in Babelfish")));
         } else if (isspace(currentChar) || charInSpecialChars != NULL || (isEnclosedInQuotes && strchr("`'_", currentChar) != NULL)) {
             if (!inSpace) {
                 if (currentCharPtr != modifiedInput.data && *(currentCharPtr + 1))
