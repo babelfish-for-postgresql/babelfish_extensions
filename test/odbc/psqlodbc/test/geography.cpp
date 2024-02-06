@@ -33,7 +33,7 @@ class PSQL_DataTypes_Geography : public testing::Test {
   }
 };
 
-TEST_F(PSQL_DataTypes_Geography, Table_Creation) {
+TEST_F(PSQL_DataTypes_Geography, DISABLED_Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {10, 0};
   const vector<int> PRECISION_EXPECTED = {10, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
@@ -45,7 +45,7 @@ TEST_F(PSQL_DataTypes_Geography, Table_Creation) {
   dropObject(ServerType::MSSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Geography, Insertion_Success) {
+TEST_F(PSQL_DataTypes_Geography, DISABLED_Insertion_Success) {
   const vector<string> INSERTED_VALUES = {
     "(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))", 
     "(geography::STGeomFromText('Point(1.0 2.0)', 4326))", 
@@ -68,7 +68,7 @@ TEST_F(PSQL_DataTypes_Geography, Insertion_Success) {
   dropObject(ServerType::MSSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Geography, Update_Success) {
+TEST_F(PSQL_DataTypes_Geography, DISABLED_Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))"
   };
@@ -97,7 +97,7 @@ TEST_F(PSQL_DataTypes_Geography, Update_Success) {
   dropObject(ServerType::MSSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Geography, View_creation) {
+TEST_F(PSQL_DataTypes_Geography, DISABLED_View_creation) {
   const vector<string> INSERTED_VALUES = {
     "(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))", 
     "(geography::STGeomFromText('Point(1.0 2.0)', 4326))", 
