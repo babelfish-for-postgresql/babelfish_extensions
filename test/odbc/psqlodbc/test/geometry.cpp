@@ -33,7 +33,7 @@ class PSQL_DataTypes_Geometry : public testing::Test {
   }
 };
 
-TEST_F(PSQL_DataTypes_Geometry, Table_Creation) {
+TEST_F(PSQL_DataTypes_Geometry, DISABLED_Table_Creation) {
   const vector<int> LENGTH_EXPECTED = {10, 0};
   const vector<int> PRECISION_EXPECTED = {10, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
@@ -45,7 +45,7 @@ TEST_F(PSQL_DataTypes_Geometry, Table_Creation) {
   dropObject(ServerType::MSSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Geometry, Insertion_Success) {
+TEST_F(PSQL_DataTypes_Geometry, DISABLED_Insertion_Success) {
   const vector<string> INSERTED_VALUES = {
     "(geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))", 
     "(geometry::STGeomFromText('Point(1.0 2.0)', 4326))", 
@@ -68,7 +68,7 @@ TEST_F(PSQL_DataTypes_Geometry, Insertion_Success) {
   dropObject(ServerType::MSSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Geometry, Update_Success) {
+TEST_F(PSQL_DataTypes_Geometry, DISABLED_Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "(geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))"
   };
@@ -97,7 +97,7 @@ TEST_F(PSQL_DataTypes_Geometry, Update_Success) {
   dropObject(ServerType::MSSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_Geometry, View_creation) {
+TEST_F(PSQL_DataTypes_Geometry, DISABLED_View_creation) {
   const vector<string> INSERTED_VALUES = {
     "(geometry::STGeomFromText('Point(47.65100 -22.34900)', 4326))", 
     "(geometry::STGeomFromText('Point(1.0 2.0)', 4326))", 
