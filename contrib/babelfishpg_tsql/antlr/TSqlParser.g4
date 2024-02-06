@@ -3464,6 +3464,8 @@ method_call
     : xml_methods
     | hierarchyid_methods
     | spatial_methods
+    | method=id (LR_BRACKET expression_list? RR_BRACKET)?
+    | NULL_P // no bracket
     ;
 
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/case-transact-sql
