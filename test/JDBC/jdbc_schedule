@@ -12,6 +12,11 @@ all
 
 # BABEL-SP_FKEYS test is very slow and causing github action timeout.
 
+# Geospatial Datatypes are disabled
+ignore#!#TestSpatialPoint-vu-prepare
+ignore#!#TestSpatialPoint-vu-cleanup
+ignore#!#TestSpatialPoint-vu-verify
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant

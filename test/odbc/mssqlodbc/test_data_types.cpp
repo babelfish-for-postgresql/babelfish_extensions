@@ -455,7 +455,7 @@ TEST_F(MSSQL_Data_Types, Varchar) {
 // 2. the way the INSERTED_VALUES are inserted - loop through the 'literal' inserted values since they 'hard code' the 'order of insertions' values
 // The reason it was done this way is because in SQL Server you have to call function to convert wkt to geometry type so it contains additional '()' which causes error while processing parameters
 // For example, if I had to insert Point(1.0 2.0) it will be done using geometry::STGeomFromText('Point(1.0 2.0)', 4326), which causes error in processInsertedValuesString.
-TEST_F(MSSQL_Data_Types, Geometry) {
+TEST_F(MSSQL_Data_Types, DISABLED_Geometry) {
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   
   const string TEST_TABLE = "POINTGEOM_dt";
@@ -500,7 +500,7 @@ TEST_F(MSSQL_Data_Types, Geometry) {
 // 2. the way the INSERTED_VALUES are inserted - loop through the 'literal' inserted values since they 'hard code' the 'order of insertions' values
 // The reason it was done this way is because in SQL Server you have to call function to convert wkt to geography type so it contains additional '()' which causes error while processing parameters
 // For example, if I had to insert Point(1.0 2.0) it will be done using geography::STGeomFromText('Point(1.0 2.0)', 4326), which causes error in processInsertedValuesString.
-TEST_F(MSSQL_Data_Types, Geography) {
+TEST_F(MSSQL_Data_Types, DISABLED_Geography) {
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   
   const string TEST_TABLE = "POINTGEOG_dt";
