@@ -146,7 +146,7 @@ static char
         isEnclosedInQuotes = true;
     }
 
-    /* Rewriting the query in format one<->two | oneUniqueHashtwo in order to handle special characters */
+    /* Rewriting the query in format one<->two | ('one UniqueHash two') in order to handle special characters */
     leftStr = pstrdup(trimmedInputStr);
     rightStr = pstrdup(trimmedInputStr);
 
@@ -159,7 +159,7 @@ static char
 
     /* for strings with special characters `, ', and _ (these result in exact matches) */
     if(strpbrk("`'_", leftStr) != NULL) {
-        appendStringInfoString(&output, replace_special_chars_fts_impl(leftStr));
+        appendStringInfo(&output, "('%s')", replace_special_chars_fts_impl(leftStr));
         pfree(leftStr);
         pfree(rightStr);
         pfree(trimmedInputStr);
@@ -183,8 +183,7 @@ static char
 
     /* check for empty strings i.e. "" */
     if (output.len > 0) {
-        appendStringInfoString(&output, " | ");
-        appendStringInfoString(&output, replace_special_chars_fts_impl(rightStr));
+        appendStringInfo(&output, " | ('%s')", replace_special_chars_fts_impl(rightStr));
     }
 
     appendStringInfoChar(&output, '\0');

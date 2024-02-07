@@ -21,3 +21,35 @@ go
 
 select sys.babelfish_fts_rewrite('"one @ @ @ @ two"');
 go
+
+select sys.replace_special_chars_fts('"one @ two"');
+go
+
+select sys.replace_special_chars_fts('"one   @ two    ^ three"');
+go
+
+select sys.replace_special_chars_fts('"one:"');
+go
+
+select sys.replace_special_chars_fts('Arts '' grand-opening in 1987');
+go
+
+select sys.babelfish_fts_rewrite('"one   @ two    ^ three"');
+go
+
+select sys.babelfish_fts_rewrite('"one @ two"');
+go
+
+select sys.babelfish_fts_rewrite(':one');
+select sys.babelfish_fts_rewrite('one:');
+select sys.babelfish_fts_rewrite('one:  ');
+select sys.babelfish_fts_rewrite('  :one');
+select sys.babelfish_fts_rewrite('"one    :"');
+select sys.babelfish_fts_rewrite('"one    :  "');
+select sys.babelfish_fts_rewrite('":    one"');
+select sys.babelfish_fts_rewrite('"    :     one"');
+select sys.babelfish_fts_rewrite('"much of the"');
+go
+
+select sys.replace_special_chars_fts('one`two');
+go

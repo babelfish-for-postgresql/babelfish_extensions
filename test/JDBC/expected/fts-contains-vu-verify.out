@@ -393,13 +393,6 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '"much of the"'
-GO
-~~START~~
-int#!#text
-~~END~~
-
-
 EXEC fts_contains_vu_prepare_p1 '"due to"'
 GO
 ~~START~~
@@ -621,7 +614,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -671,7 +667,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -701,7 +700,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -731,7 +733,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -761,7 +766,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -791,7 +799,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -829,7 +840,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -859,7 +873,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -889,7 +906,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -919,7 +939,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -949,7 +972,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -979,7 +1005,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1009,7 +1038,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1039,7 +1071,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1069,7 +1104,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1099,7 +1137,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1129,7 +1170,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1224,7 +1268,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1254,7 +1301,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1284,7 +1334,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1314,7 +1367,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1344,7 +1400,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1374,7 +1433,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1404,7 +1466,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1434,7 +1499,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1464,7 +1532,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1473,6 +1544,7 @@ go
 ~~START~~
 int#!#text
 1#!#one two three
+102#!#one   @ two    ^ three
 ~~END~~
 
 
@@ -1483,7 +1555,7 @@ go
 ~~ERROR (Message: Syntax error near 'two' in the full-text search condition 'one"two'.)~~
 
 
-select * from test_special_char_t where contains(name, '"one ` two"');
+select * from test_special_char_t where contains(name, '"one      `  two"');
 go
 ~~START~~
 int#!#text
@@ -1509,7 +1581,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1539,7 +1614,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1569,7 +1647,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1599,7 +1680,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1629,7 +1713,10 @@ int#!#text
 27#!#one.two
 28#!#one?two
 29#!#one/two
+101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1663,6 +1750,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1696,6 +1785,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1729,6 +1820,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1762,6 +1855,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1795,6 +1890,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1828,6 +1925,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1861,6 +1960,8 @@ int#!#text
 29#!#one/two
 101#!#one :) two
 100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
 ~~END~~
 
 
@@ -1897,6 +1998,42 @@ go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, 'one@two@three');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   @  two * three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   @  two * three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+~~END~~
 
 
 -- disable FULLTEXT

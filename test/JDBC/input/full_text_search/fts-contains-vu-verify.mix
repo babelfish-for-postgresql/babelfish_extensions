@@ -139,9 +139,6 @@ GO
 EXEC fts_contains_vu_prepare_p1 '"  come          back    "'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '"much of the"'
-GO
-
 EXEC fts_contains_vu_prepare_p1 '"due to"'
 GO
 
@@ -324,7 +321,7 @@ go
 select * from test_special_char_t where contains(name, '"one"two"');
 go
 
-select * from test_special_char_t where contains(name, '"one ` two"');
+select * from test_special_char_t where contains(name, '"one      `  two"');
 go
 
 select * from test_special_char_t where contains(name, '"one '' two"');
@@ -373,6 +370,18 @@ select * from test_special_char_t where contains(name, '"one #        $ %    ^  
 go
 
 select * from test_special_char_t where contains(name, '"one$two three %$@ four"');
+go
+
+select * from test_special_char_t where contains(name, 'one@two@three');
+go
+
+select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   @  two * three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   @  two * three"');
 go
 
 -- disable FULLTEXT

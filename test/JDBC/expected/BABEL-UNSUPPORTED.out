@@ -717,10 +717,6 @@ strict
 -- 'strict' is default
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'DEFAULT FULLTEXT LANGUAGE' is not currently supported in Babelfish)~~
-
 
 CREATE TABLE t_unsupported_ft (a text);
 GO
@@ -747,15 +743,11 @@ CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DEFAULT FULLTEXT LANGUAGE' is not currently supported in Babelfish)~~
+~~ERROR (Message: Database 'db_unsupported_ft' already exists. Choose a different database name.)~~
 
 
 DROP DATABASE db_unsupported_ft;
 GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "db_unsupported_ft" does not exist)~~
-
 
 CREATE SCHEMA t_unsupported_s_ft;
 GO

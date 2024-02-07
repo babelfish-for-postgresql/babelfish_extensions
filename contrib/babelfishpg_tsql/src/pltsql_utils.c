@@ -1882,11 +1882,28 @@ char
 			}
 
 			if (is_single) {
+				/* Remove trailing whitespaces from output_str */
+				while (output_str.len > 0 && isspace((unsigned char)output_str.data[output_str.len - 1])) {
+					output_str.len--;
+					output_str.data[output_str.len] = '\0';
+				}
+
 				/* Copy the replacement with removed spaces */
-				if (strchr("`'_", input_str[i]) != NULL) { 
-					appendStringInfoString(&output_str, replacement);
+				if (strchr("`'_", input_str[i]) != NULL) {
+					bool is_prev_space = (i > 0 && isspace((unsigned char)input_str[i - 1]));
+                    bool is_next_space = (i + 1 < input_len && isspace((unsigned char)input_str[i + 1]));
+
+                    if (is_prev_space && is_next_space) {
+                        appendStringInfo(&output_str, " %s ", replacement);
+                    } else if (is_prev_space) {
+                        appendStringInfo(&output_str, " %s", replacement);
+                    } else if (is_next_space) {
+                        appendStringInfo(&output_str, "%s ", replacement);
+                    } else {
+                        appendStringInfoString(&output_str, replacement);
+                    }
 				} else {
-					appendStringInfo(&output_str, "-%s-", replacement);
+					appendStringInfo(&output_str, " %s ", replacement);
 				}
 			} else {
 				/* Append consecutive special characters group as they are */
@@ -1908,7 +1925,7 @@ char
 		pfree(unique_hashes[i]);
 	}
 
-	return  pstrdup(output_str.data);;
+	return output_str.data;
 }
 
 /*
