@@ -2448,7 +2448,7 @@ public:
 		 * is done because the TSQL ordering is NULLS FIRST but for PG it's the opposite
 		 * and the order does not matter for bit indexes.
 		 */
-		if (statementMutator && ctx->vector_operator())
+		if (statementMutator && ctx->expression() && ((TSqlParser::Vector_exprContext *) ctx->expression())->vector_operator())
 		{
 			PLtsql_expr_query_mutator *mutator = statementMutator.get();
 			if (ctx->ASC())
@@ -2461,7 +2461,7 @@ public:
 			}
 			else
 			{
-				mutator->add(ctx->expression()[1]->stop->getStopIndex()+1, "", " NULLS LAST");
+				mutator->add(ctx->expression()->stop->getStopIndex()+1, "", " NULLS LAST");
 			}
 		}
 	}
