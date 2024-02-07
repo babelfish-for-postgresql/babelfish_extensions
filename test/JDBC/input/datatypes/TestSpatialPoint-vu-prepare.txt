@@ -195,6 +195,12 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(147.65100, 
 #Tests for Geography type Prepared Statements
 prepst#!#INSERT INTO SPATIALPOINTGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(290.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234):4326
 #Negative Test for STGeomFromText for Geography with SRID 0
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90

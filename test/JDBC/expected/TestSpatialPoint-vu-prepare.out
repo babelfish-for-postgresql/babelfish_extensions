@@ -347,6 +347,24 @@ prepst#!#INSERT INTO SPATIALPOINTGEOG_dt(location) values(?) #!#GEOGRAPHY|-|loca
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
 ~~ROW COUNT: 1~~
 
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(290.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
 #Negative Test for STGeomFromText for Geography with SRID 0
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
 ~~ERROR (Code: 33557097)~~
