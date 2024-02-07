@@ -375,13 +375,67 @@ go
 select * from test_special_char_t where contains(name, 'one@two@three');
 go
 
+-- Tests for 2 special characters combination strings
 select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
 go
 
 select * from test_special_char_t where contains(name, '"one   @  two * three"');
 go
 
-select * from test_special_char_t where contains(name, '"one   @  two * three"');
+select * from test_special_char_t where contains(name, '"one   ^  two ` three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   %  two _ three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   #  two '' three"');
+go
+
+-- Tests for 3 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four');
+go
+
+select * from test_special_char_t where contains(name, 'one@two`three_four');
+go
+
+select * from test_special_char_t where contains(name, 'one''two`three_four');
+go
+
+select * from test_special_char_t where contains(name, 'one#two''three`four');
+go
+
+select * from test_special_char_t where contains(name, '"one @ two @ three @ four"');
+go
+
+select * from test_special_char_t where contains(name, '"one   # two ` three _ four"');
+go
+
+select * from test_special_char_t where contains(name, '"one * two '' three ` four"');
+go
+
+select * from test_special_char_t where contains(name, '"one _ two % three # four"');
+go
+
+-- Tests for 4 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four@five');
+go
+
+select * from test_special_char_t where contains(name, 'one`two-three_four''five');
+go
+
+select * from test_special_char_t where contains(name, 'one_two`three*four%five');
+go
+
+select * from test_special_char_t where contains(name, '"one @ two ` three _ four '' five "');
+go
+
+select * from test_special_char_t where contains(name, '"one % two '' three - four ` five"');
+go
+
+select * from test_special_char_t where contains(name, '"one * two < three > four : five"');
+go
+
+select * from test_special_char_t where contains(name, '"one < two _ three '' four `     five"');
 go
 
 -- disable FULLTEXT

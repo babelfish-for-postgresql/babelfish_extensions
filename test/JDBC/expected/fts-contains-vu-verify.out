@@ -618,6 +618,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -671,6 +676,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -704,6 +714,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -737,6 +752,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -770,6 +790,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -803,6 +828,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -844,6 +874,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -877,6 +912,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -910,6 +950,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -943,6 +988,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -976,6 +1026,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1009,6 +1064,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1042,6 +1102,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1075,6 +1140,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1108,6 +1178,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1141,6 +1216,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1174,6 +1254,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1272,6 +1357,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1305,6 +1395,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1338,6 +1433,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1371,6 +1471,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1404,6 +1509,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1437,6 +1547,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1470,6 +1585,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1503,6 +1623,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1536,6 +1661,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1545,6 +1675,10 @@ go
 int#!#text
 1#!#one two three
 102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1585,6 +1719,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1618,6 +1757,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1651,6 +1795,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1684,6 +1833,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1717,6 +1871,11 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1752,6 +1911,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1787,6 +1955,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1822,6 +1999,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1857,6 +2043,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1892,6 +2087,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1927,6 +2131,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -1962,6 +2175,15 @@ int#!#text
 100#!#one @ @ @ @ two
 102#!#one   @ two    ^ three
 103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -2006,15 +2228,24 @@ go
 int#!#text
 1#!#one two three
 102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
+-- Tests for 2 special characters combination strings
 select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
 go
 ~~START~~
 int#!#text
 1#!#one two three
 102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
@@ -2024,15 +2255,188 @@ go
 int#!#text
 1#!#one two three
 102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
-select * from test_special_char_t where contains(name, '"one   @  two * three"');
+select * from test_special_char_t where contains(name, '"one   ^  two ` three"');
 go
 ~~START~~
 int#!#text
 1#!#one two three
 102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   %  two _ three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   #  two '' three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+-- Tests for 3 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one@two`three_four');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one''two`three_four');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one#two''three`four');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one @ two @ three @ four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   # two ` three _ four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one * two '' three ` four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one _ two % three # four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+-- Tests for 4 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four@five');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one`two-three_four''five');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one_two`three*four%five');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one @ two ` three _ four '' five "');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one % two '' three - four ` five"');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one * two < three > four : five"');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one < two _ three '' four `     five"');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
 ~~END~~
 
 
