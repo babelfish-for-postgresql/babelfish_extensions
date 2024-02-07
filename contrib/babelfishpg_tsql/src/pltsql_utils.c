@@ -1891,17 +1891,16 @@ char
 				/* Copy the replacement with removed spaces */
 				if (strchr("`'_", input_str[i]) != NULL) {
 					bool is_prev_space = (i > 0 && isspace((unsigned char)input_str[i - 1]));
-                    bool is_next_space = (i + 1 < input_len && isspace((unsigned char)input_str[i + 1]));
-
-                    if (is_prev_space && is_next_space) {
-                        appendStringInfo(&output_str, " %s ", replacement);
-                    } else if (is_prev_space) {
-                        appendStringInfo(&output_str, " %s", replacement);
-                    } else if (is_next_space) {
-                        appendStringInfo(&output_str, "%s ", replacement);
-                    } else {
-                        appendStringInfoString(&output_str, replacement);
-                    }
+					bool is_next_space = (i + 1 < input_len && isspace((unsigned char)input_str[i + 1]));
+					if (is_prev_space && is_next_space) {
+						appendStringInfo(&output_str, " %s ", replacement);
+					} else if (is_prev_space) {
+						appendStringInfo(&output_str, " %s", replacement);
+					} else if (is_next_space) {
+						appendStringInfo(&output_str, "%s ", replacement);
+					} else {
+						appendStringInfoString(&output_str, replacement);
+					}
 				} else {
 					appendStringInfo(&output_str, " %s ", replacement);
 				}
