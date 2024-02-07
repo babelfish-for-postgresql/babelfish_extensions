@@ -168,6 +168,12 @@ go
 revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 with grant option;
+go
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 cascade;
+go
+
 grant select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
