@@ -567,6 +567,24 @@ SELECT * FROM document_embeddings;
 go
 SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '[3,1,2,4]';
 go
+-- extending PG syntax to have generic vector expression support
+SELECT embedding <-> '[3,1,2,0]' FROM document_embeddings;
+SELECT embedding <=> '[3,1,2,0]' FROM document_embeddings;
+SELECT embedding <#> '[3,1,2,0]' FROM document_embeddings; 
+go
+
+-- WHERE clause expressions
+SELECT * FROM document_embeddings WHERE embedding <-> '[3,20, 1,-2.5]' < 5;
+SELECT * FROM document_embeddings WHERE embedding <=> '[3,20, 1,-2.5]' < 5;
+SELECT * FROM document_embeddings WHERE embedding <#> '[3,20, 1,-2.5]' < 5; 
+go
+
+SELECT AVG(embedding) FROM document_embeddings;
+go
+
+SELECT id, AVG(embedding) FROM document_embeddings GROUP BY id;
+go
+
 Drop table document_embeddings
 go
 
