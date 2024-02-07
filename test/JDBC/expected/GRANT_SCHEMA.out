@@ -217,6 +217,20 @@ go
 revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 with grant option;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: GRANT on SCHEMA .. WITH GRANT OPTION is not yet supported in Babelfish.)~~
+
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 cascade;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REVOKE on SCHEMA .. CASCADE is not yet supported in Babelfish.)~~
+
+
 grant select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
