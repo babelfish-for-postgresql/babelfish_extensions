@@ -345,6 +345,9 @@ go
 select * from test_special_char_t where contains(name, ':one');
 go
 
+select * from test_special_char_t where contains(name, ':one:');
+go
+
 select * from test_special_char_t where contains(name, '":one"');
 go
 
