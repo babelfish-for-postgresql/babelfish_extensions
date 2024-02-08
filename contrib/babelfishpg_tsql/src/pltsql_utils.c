@@ -1837,6 +1837,97 @@ check_fulltext_exist(const char *schema_name, const char *table_name)
 }
 
 /*
+ * replace_special_chars_fts_impl
+ * Replace special characters in the input string with the unique hash
+ */
+char
+*replace_special_chars_fts_impl(char *input_str) {
+	size_t			input_len = strlen(input_str);
+	char			*replacement = NULL;
+	char            *unique_hashes[4];
+	const char		*special_chars[4] = {"~!&|@#$%^*+=\\;:<>?./", "`", "'", "_"};
+	StringInfoData	output_str;
+	
+	for (int i = 0; i < 4; i++) {
+		unique_hashes[i] = construct_unique_index_name("specialChars", psprintf("cat%d", i + 1));
+	}
+	
+	initStringInfo(&output_str);
+
+	for (size_t i = 0; i < input_len; i++) {
+		replacement = NULL;
+
+		for (int j = 0; j < 4; j++) {
+			if (strchr(special_chars[j], input_str[i]) != NULL) {
+				replacement = unique_hashes[j];
+				break;
+			}
+		}
+		if (replacement != NULL) {
+			/* Check if the current special character is the only one in a sequence */
+			bool is_single = true;
+			size_t next_char_index = i + 1;
+
+			if (next_char_index < input_len) {
+				for (int k = 0; k < 4; k++) {
+					char *is_special_char = strchr(special_chars[k], input_str[next_char_index]);
+					while ((next_char_index < input_len && isspace((unsigned char)input_str[next_char_index])) || (next_char_index < input_len && is_special_char != NULL)) {
+						if (is_special_char != NULL) {
+							is_single = false;
+						}
+						next_char_index++;
+						is_special_char = next_char_index < input_len ? strchr(special_chars[k], input_str[next_char_index]) : NULL;
+					}
+				}
+			}
+
+			if (is_single) {
+				/* Remove trailing whitespaces from output_str */
+				while (output_str.len > 0 && isspace((unsigned char)output_str.data[output_str.len - 1])) {
+					output_str.len--;
+					output_str.data[output_str.len] = '\0';
+				}
+
+				/* Copy the replacement with removed spaces */
+				if (strchr("`'_", input_str[i]) != NULL) {
+					bool is_prev_space = (i > 0 && isspace((unsigned char)input_str[i - 1]));
+					bool is_next_space = (i + 1 < input_len && isspace((unsigned char)input_str[i + 1]));
+					if (is_prev_space && is_next_space) {
+						appendStringInfo(&output_str, " %s ", replacement);
+					} else if (is_prev_space) {
+						appendStringInfo(&output_str, " %s", replacement);
+					} else if (is_next_space) {
+						appendStringInfo(&output_str, "%s ", replacement);
+					} else {
+						appendStringInfoString(&output_str, replacement);
+					}
+				} else {
+					appendStringInfo(&output_str, " %s ", replacement);
+				}
+			} else {
+				/* Append consecutive special characters group as they are */
+				appendBinaryStringInfo(&output_str, &input_str[i], next_char_index - i);
+			}
+
+			/* Move the index to the end of the processed sequence */
+			i = next_char_index - 1; 
+		} else {
+			appendStringInfoChar(&output_str, input_str[i]);
+		}
+	}
+
+	/* Null-terminate the output string */
+	appendStringInfoChar(&output_str, '\0');
+
+	/* Free the allocated memory */
+	for (int i = 0; i < 4; i++) {
+		pfree(unique_hashes[i]);
+	}
+
+	return output_str.data;
+}
+
+/*
  * get_fulltext_index_name
  * Get the fulltext index name of a relation specified by OID
  */
@@ -1947,7 +2038,7 @@ char
 	 * We prepare the following query to create a fulltext index.
 	 *
 	 * CREATE INDEX <index_name> ON <table_name> 
-	 * USING gin(to_tsvector('fts_contains_simple', <column_name>));
+	 * USING gin(to_tsvector('fts_contains_simple', sys.replace_special_chars_fts(<column_name>)));
 	 *
 	 */
 	appendStringInfo(&query, "CREATE INDEX \"%s\" ON ", index_name);
@@ -1961,7 +2052,7 @@ char
 	{
 		char *col_name = (char *) list_nth(column_name, i);
 		// Add column name
-		appendStringInfo(&query, "to_tsvector('fts_contains_simple', \"%s\")", col_name);
+		appendStringInfo(&query, "to_tsvector('fts_contains_simple', sys.replace_special_chars_fts(\"%s\"))", col_name);
 		if (i != list_length(column_name) - 1)
 			appendStringInfo(&query, ", ");
 	}

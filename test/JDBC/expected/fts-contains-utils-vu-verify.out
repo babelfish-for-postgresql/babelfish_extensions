@@ -1,0 +1,174 @@
+SELECT * FROM fts_rewrite_prepare_v1;
+GO
+~~START~~
+text
+one<->two<->three | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three')
+~~END~~
+
+
+EXEC fts_rewrite_prepare_p1;
+GO
+~~START~~
+text
+one | ('one')
+~~END~~
+
+
+SELECT fts_rewrite_prepare_f1();
+GO
+~~START~~
+varchar
+one<->two | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two')
+~~END~~
+
+
+SELECT * FROM replace_special_chars_fts_prepare_v1;
+GO
+~~START~~
+text
+"onespecialCharscat2e09616b53f5138735a7d0a79e78e804etwo"
+~~END~~
+
+
+EXEC replace_special_chars_fts_prepare_p1;
+GO
+~~START~~
+text
+ specialCharscat1e09616b53f5138735a7d0a79e78e804e one
+~~END~~
+
+
+SELECT replace_special_chars_fts_prepare_f1();
+GO
+~~START~~
+varchar
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e two"
+~~END~~
+
+
+select sys.replace_special_chars_fts('"one @ @ @ @ two"');
+go
+~~START~~
+text
+"one @ @ @ @ two"
+~~END~~
+
+
+select sys.babelfish_fts_rewrite('"one @ @ @ @ two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select sys.replace_special_chars_fts('"one @ two"');
+go
+~~START~~
+text
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e two"
+~~END~~
+
+
+select sys.replace_special_chars_fts('"one   @ two    ^ three"');
+go
+~~START~~
+text
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three"
+~~END~~
+
+
+select sys.replace_special_chars_fts('"one:"');
+go
+~~START~~
+text
+"one specialCharscat1e09616b53f5138735a7d0a79e78e804e "
+~~END~~
+
+
+select sys.replace_special_chars_fts('Arts '' grand-opening in 1987');
+go
+~~START~~
+text
+Arts specialCharscat3e09616b53f5138735a7d0a79e78e804e grand-opening in 1987
+~~END~~
+
+
+select sys.babelfish_fts_rewrite('"one   @ two    ^ three"');
+go
+~~START~~
+text
+one<->two<->three | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two specialCharscat1e09616b53f5138735a7d0a79e78e804e three')
+~~END~~
+
+
+select sys.babelfish_fts_rewrite('"one @ two"');
+go
+~~START~~
+text
+one<->two | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e two')
+~~END~~
+
+
+select sys.babelfish_fts_rewrite(':one');
+select sys.babelfish_fts_rewrite('one:');
+select sys.babelfish_fts_rewrite('one:  ');
+select sys.babelfish_fts_rewrite('  :one');
+select sys.babelfish_fts_rewrite('"one    :"');
+select sys.babelfish_fts_rewrite('"one    :  "');
+select sys.babelfish_fts_rewrite('":    one"');
+select sys.babelfish_fts_rewrite('"    :     one"');
+select sys.babelfish_fts_rewrite('"much of the"');
+go
+~~START~~
+text
+one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+~~END~~
+
+~~START~~
+text
+one | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+~~END~~
+
+~~START~~
+text
+one | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+~~END~~
+
+~~START~~
+text
+one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+~~END~~
+
+~~START~~
+text
+one<-> | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+~~END~~
+
+~~START~~
+text
+one<-> | ('one specialCharscat1e09616b53f5138735a7d0a79e78e804e ')
+~~END~~
+
+~~START~~
+text
+one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+~~END~~
+
+~~START~~
+text
+one | (' specialCharscat1e09616b53f5138735a7d0a79e78e804e one')
+~~END~~
+
+~~START~~
+text
+much<->of<->the | ('much specialCharscat1e09616b53f5138735a7d0a79e78e804e of specialCharscat1e09616b53f5138735a7d0a79e78e804e the')
+~~END~~
+
+
+select sys.replace_special_chars_fts('one`two');
+go
+~~START~~
+text
+onespecialCharscat2e09616b53f5138735a7d0a79e78e804etwo
+~~END~~
+

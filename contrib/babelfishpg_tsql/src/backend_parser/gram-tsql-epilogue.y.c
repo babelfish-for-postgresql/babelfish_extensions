@@ -748,16 +748,24 @@ TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
     return (Node *)fts;
 }
 
-/* Transform column_name into to_tsvector(pgconfig, column_name) */
+/* Transform column_name into to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
 static Node *
 makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
     Node *col;
     List *args;
+    Node *replaceSpecialCharsFunc;
+    List *replaceSpecialCharsArgs;
 
+    /* Create a ColumnRef node for the column */
     col = makeColumnRef(colId, NIL, -1, yyscanner);
 
-    args = list_make2(pgconfig, col);
+    /* Create a function call for replace_special_chars_fts(column_name) */
+    replaceSpecialCharsArgs = list_make1(col);
+    replaceSpecialCharsFunc = (Node *) makeFuncCall(TsqlSystemFuncName("replace_special_chars_fts"), replaceSpecialCharsArgs, COERCE_EXPLICIT_CALL, -1);
+
+    /* Create the final function call to_tsvector(pgconfig, replace_special_chars_fts(column_name)) */
+    args = list_make2(pgconfig, replaceSpecialCharsFunc);
 
     return (Node *) makeFuncCall(list_make1(makeString("to_tsvector")), args, COERCE_EXPLICIT_CALL, -1);
 }
@@ -772,7 +780,6 @@ makeToTSQueryFuncCall(Node *search_expr, Node *pgconfig)
 
     args_rewrite = list_make1(search_expr);
     result_rewrite = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_fts_rewrite"), args_rewrite, COERCE_EXPLICIT_CALL, -1);
-
 
     args = list_make2(pgconfig, result_rewrite);
     return (Node *) makeFuncCall(list_make1(makeString("to_tsquery")), args, COERCE_EXPLICIT_CALL, -1);

@@ -34,12 +34,12 @@ static YY_BUFFER_STATE scanbufhandle;
 [ \t\r\n]+      { yylval = " "; return WS_TOKEN; }
 
 
-FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\)				{ yylval = yytext; yyerror(NULL, "Generation term is not currently supported in Babelfish"); yylval = yytext; return GENERATION_TERM_TOKEN; }  // Handle FORMSOF generation term
-\"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  // Handle prefix terms
-\"[^"]*\"                																							{ yylval = yytext; return TEXT_TOKEN; }  // Handle double-quoted phrases
-[a-zA-Z0-9]+ 																										{ yylval = yytext; return WORD_TOKEN; }  // Handle individual words
+FORMSOF\s*\(\s*(INFLECTIONAL|THESAURUS)\s*,\s*((\w+)|(\"[\w\s]+\"))(\s*,\s*((\w+)|(\"[\w\s]+\")))*\s*\)			    { yylval = yytext; yyerror(NULL, "Generation term is not currently supported in Babelfish"); return GENERATION_TERM_TOKEN; }  /* Handle FORMSOF generation term */
+\"[^"]+\*\"               																							{ if (yytext[strlen(yytext)-2] == ' ') { yyerror(NULL, "Syntax error, space is not allowed before *"); } yylval = yytext; return PREFIX_TERM_TOKEN; }  /* Handle prefix terms */
+\"[^"]*\"                																						    { yylval = yytext; return TEXT_TOKEN; }  /* Handle double-quoted phrases */
+[a-zA-Z0-9~`!@#$%^&*()+_\-={[}\]\|\\:;"'<,>.?/]+ 																	{ if (strncasecmp(yytext, "FORMSOF(", strlen("FORMSOF(")) == 0) { yyerror(NULL, "Generation term is not currently supported in Babelfish"); } yylval = yytext; return WORD_TOKEN; }  /* Handle individual words */
 
-.               																									{ return yytext[0]; }  // Other characters are returned as-is
+.               																									{ return yytext[0]; }  /* Other characters are returned as-is */
 
 %%
 
@@ -73,9 +73,9 @@ fts_scanner_init(const char *str)
 		yyerror(NULL, "Null or empty full-text predicate.");
 	}
 
-	// Check for Non-English Language, if true, throw unsupported error
-	if(isNonEnglishString(str)) {
-		yyerror(NULL, "Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish");
+	/* Check for Non-English Language, if true, throw unsupported error */
+	if (isNonEnglishString(str)) {
+		yyerror(NULL, "Full-text search conditions with languages other than English are not currently supported in Babelfish");
 	}
 
 	/*
@@ -106,7 +106,7 @@ fts_scanner_finish(void)
 bool
 isNonEnglishString(const char *str) {
 	for (const char *p = str; *p; p++) {
-		// Ignore non-breaking space character
+		/* Ignore non-breaking space character */
 		if ((*p == '\302' && *p == -62 ) || (*p == '\240' && *p == -96)) {
 			continue;
 		}
