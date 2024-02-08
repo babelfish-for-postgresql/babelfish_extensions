@@ -261,6 +261,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
 
     for (const char *currentCharPtr = modifiedInput.data; *currentCharPtr; ++currentCharPtr) {
         char currentChar = *currentCharPtr;
+        char nextChar = *(currentCharPtr + 1);
 
         /* Store the result of strchr to avoid calling it multiple times */
         charInForbiddenChars = strchr(forbiddenChars, currentChar);
@@ -287,7 +288,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
         }
 
         /* Check for consecutive special characters */
-        if (charInSpecialChars != NULL && *(currentCharPtr + 1) && strchr(specialChars, *(currentCharPtr + 1)) != NULL) {
+        if (nextChar && ((charInSpecialChars != NULL && strchr(specialChars, nextChar) != NULL) || (strchr("`'_", currentChar) != NULL && strchr("`'_", nextChar) != NULL))) {
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                  errmsg("Consecutive special characters in the full-text search condition are not currently supported in Babelfish")));

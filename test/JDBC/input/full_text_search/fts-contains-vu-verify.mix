@@ -384,6 +384,12 @@ go
 select * from test_special_char_t where contains(name, '"one `'' two __` three"');
 go
 
+select * from test_special_char_t where contains(name, 'one``two');
+go
+
+select * from test_special_char_t where contains(name, 'one__two');
+go
+
 -- Tests for 2 special characters combination strings
 select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
 go

@@ -2412,6 +2412,20 @@ go
 ~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
 
 
+select * from test_special_char_t where contains(name, 'one``two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, 'one__two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
 -- Tests for 2 special characters combination strings
 select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
 go
