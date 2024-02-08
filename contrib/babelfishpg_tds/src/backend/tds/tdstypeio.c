@@ -48,8 +48,6 @@
 #include "tds_data_map.c"		/* include tables that used to initialize
 								 * hashmaps */
 
-#include "spatialtypes.c"		/* include GSERIALIZED structure for spatial handling */
-
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
 #define VARCHAR_MAX 2147483647
@@ -135,6 +133,15 @@ Datum		TdsTypeSqlVariantToDatum(StringInfo buf);
 Datum		TdsTypeSpatialToDatum(StringInfo buf);
 
 static void FetchTvpTypeOid(const ParameterToken token, char *tvpName);
+
+/* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
+typedef struct
+{
+    uint32_t size; /* For PgSQL use only, use VAR* macros to manipulate. */
+    uint8_t srid[3]; /* 24 bits of SRID */
+    uint8_t gflags; /* HasZ, HasM, HasBBox, IsGeodetic */
+    uint8_t data[1]; /* See gserialized.txt */
+} GSERIALIZED;
 
 /* Local structures for the Function Cache by TDS Type ID */
 typedef struct FunctionCacheByTdsIdKey
