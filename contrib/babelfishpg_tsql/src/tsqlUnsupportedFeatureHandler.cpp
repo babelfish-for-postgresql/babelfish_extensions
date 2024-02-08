@@ -1894,6 +1894,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(revoke));
 			if (revoke->CASCADE())
 				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE on SCHEMA .. CASCADE is not yet supported in Babelfish.", getLineAndPos(revoke));
+			if (revoke->GRANT())
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE GRANT OPTION FOR .. on SCHEMA is not yet supported in Babelfish.", getLineAndPos(revoke));
 		}
 		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{

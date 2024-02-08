@@ -168,10 +168,14 @@ go
 revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
+-- unsupported features
 grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 with grant option;
 go
 
 revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 cascade;
+go
+
+revoke grant option for select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
 grant select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
