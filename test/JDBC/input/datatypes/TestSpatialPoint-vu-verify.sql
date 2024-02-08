@@ -94,7 +94,7 @@ GO
 EXEC dbo.p_getcoordinates;
 GO
 
-SELECT * FROM TextFromGeom ORDER BY TextRepresentation;
+SELECT * FROM TextFromGeom ORDER BY XCoord;
 GO
 
 SELECT * FROM BinaryFromGeom ORDER BY BinaryRepresentation;
@@ -726,6 +726,9 @@ GO
 SELECT * FROM GeogView ORDER BY Coordinates;
 GO
 
+select * from geoginTable ORDER BY a.Lat;
+GO
+
 SELECT * FROM SubqueryView ORDER BY Latitude;
 GO
 
@@ -738,7 +741,16 @@ GO
 EXEC dbo.proc_getdata;
 GO
 
-SELECT * FROM TextFromGeog ORDER BY TextRepresentation;
+geoginTest 'POINT(1 2)'
+GO
+
+geoginTest 'POINT(1 200)'
+GO
+
+geoginTest 'POINT(1000 20)'
+GO
+
+SELECT * FROM TextFromGeog ORDER BY Latitude;
 GO
 
 SELECT * FROM BinaryFromGeog ORDER BY BinaryRepresentation;
@@ -799,6 +811,8 @@ Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS varbinary(MAX)
 GO
 Select CAST(CAST ('POINT(1 2)' AS char) as geography)
 GO
+Select CAST(CAST ('POINT(200 2)' AS char) as geography).Long
+GO
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS char)
 GO
 Select CAST(CAST ('POINT(1 2)' AS nchar) as geography)
@@ -806,6 +820,8 @@ GO
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS nchar)
 GO
 Select CAST(CAST ('POINT(1 2)' AS varchar) as geography)
+GO
+Select CAST(CAST ('POINT(200 2)' AS varchar) as geography).Long
 GO
 Select CAST (geography::STGeomFromText('POINT(1.0 2.0)', 4326) AS varchar)
 GO

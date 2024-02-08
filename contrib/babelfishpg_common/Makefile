@@ -35,6 +35,7 @@ OBJS += src/uniqueidentifier.o
 OBJS += src/datetime.o
 OBJS += src/datetime2.o
 OBJS += src/smalldatetime.o
+OBJS += src/spatialtypes.o
 OBJS += src/datetimeoffset.o
 OBJS += src/sqlvariant.o
 OBJS += src/coerce.o

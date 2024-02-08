@@ -4,7 +4,7 @@
 
 CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
     RETURNS sys.GEOMETRY
-    AS '$libdir/postgis-3', 'LWGEOM_in'
+    AS 'babelfishpg_common', 'LWGEOM_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geometryout(sys.GEOMETRY)
@@ -166,8 +166,11 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+    AS $$
+	BEGIN
+		RETURN (SELECT sys.geomTocharhelper($1));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 	RETURNS sys.varchar
@@ -176,8 +179,11 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		RETURN (SELECT sys.geomTocharhelper($1));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
     RETURNS sys.GEOMETRY
@@ -590,9 +596,31 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.geographyin(cstring, oid, integer)
+CREATE OR REPLACE FUNCTION sys.geomTocharhelper(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY; 
+	BEGIN
+		-- Call the underlying function after preprocessing
+		geom = (SELECT sys.stgeomfromtext_helper($1, 0));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+		IF Geomtype = 'ST_Point' THEN
+			IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				RAISE EXCEPTION 'Unsupported flags';
+			ELSE
+				RETURN geom;
+			END IF;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geographyin(cstring)
     RETURNS sys.GEOGRAPHY
-    AS '$libdir/postgis-3','geography_in'
+    AS 'babelfishpg_common','geography_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geographyout(sys.GEOGRAPHY)
@@ -853,7 +881,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.bpcharToGeography_helper($1, 4326));
+		geog := (SELECT sys.geogTocharhelper($1));
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
@@ -876,7 +904,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.varcharToGeography_helper($1, 4326));
+		geog := (SELECT sys.geogTocharhelper($1));
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
@@ -1298,3 +1326,32 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.geogTocharhelper(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geog sys.GEOGRAPHY;
+		lat float8;
+	BEGIN
+		geog = (SELECT sys.bpcharToGeography_helper($1, 4326));
+		Geomtype = (SELECT sys.ST_GeometryType(geog));
+		IF Geomtype = 'ST_Point' THEN
+			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, 4326))));
+			IF lat >= -90.0 AND lat <= 90.0 THEN
+				-- Call the underlying function after preprocessing
+				-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+				IF (SELECT sys.ST_Zmflag(geog)) = 1 OR (SELECT sys.ST_Zmflag(geog)) = 2 OR (SELECT sys.ST_Zmflag(geog)) = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
+					RETURN geog;
+				END IF;
+			ELSEIF lat < -90.0 OR lat > 90.0 THEN
+				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
+			END IF;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
