@@ -1143,11 +1143,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		auto create_schema = ctx->create_schema();
 		if (create_schema->grant_statement().size() > 0)
 		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GRANT inside CREATE SCHEMA is not yet supported in Babelfish", getLineAndPos(ctx));
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GRANT inside CREATE SCHEMA is not yet supported in Babelfish.", getLineAndPos(ctx));
 		}
 		if (create_schema->revoke_statement().size() > 0)
 		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE inside CREATE SCHEMA is not yet supported in Babelfish", getLineAndPos(ctx));
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE inside CREATE SCHEMA is not yet supported in Babelfish.", getLineAndPos(ctx));
 		}
 		return visitChildren(ctx);
 	}
