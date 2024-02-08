@@ -1108,7 +1108,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->create_fulltext_index()
 	 || ctx->create_index()
 	 || ctx->create_login()
-	 //|| ctx->create_schema()
 	 || ctx->create_sequence()
 	 || (ctx->create_server_role() && pltsql_allow_antlr_to_unsupported_grammar_for_testing)
 	 || ctx->create_table()
