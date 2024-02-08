@@ -2398,6 +2398,20 @@ int#!#text
 ~~END~~
 
 
+select * from test_special_char_t where contains(name, '"one _?` two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, '"one `'' two __` three"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
 -- Tests for 2 special characters combination strings
 select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
 go

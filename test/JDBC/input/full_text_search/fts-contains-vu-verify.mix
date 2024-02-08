@@ -378,6 +378,12 @@ go
 select * from test_special_char_t where contains(name, 'one@two@three');
 go
 
+select * from test_special_char_t where contains(name, '"one _?` two"');
+go
+
+select * from test_special_char_t where contains(name, '"one `'' two __` three"');
+go
+
 -- Tests for 2 special characters combination strings
 select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
 go

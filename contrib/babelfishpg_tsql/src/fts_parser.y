@@ -240,11 +240,11 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
                     appendStringInfoString(&modifiedInput, " ");
                 }
             } else {
-                if (strchr(specialChars, input[i]) != NULL) {
+                if (strchr(specialChars, input[i]) != NULL || strchr("`'_", input[i]) != NULL) {
                     while (i + 1 < inputLen && isspace(input[i + 1])) {
                             i++;
                     }
-                    if (i + 1 < inputLen && strchr(specialChars, input[i + 1]) != NULL) {
+                    if (i + 1 < inputLen && (strchr(specialChars, input[i + 1]) != NULL || strchr("`'_", input[i + 1]) != NULL)) {
                         ereport(ERROR,
                             (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                              errmsg("Consecutive special characters in the full-text search condition are not currently supported in Babelfish")));
