@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION sys.geographyin(cstring)
+CREATE OR REPLACE FUNCTION sys.geographyin(cstring, oid, integer)
     RETURNS sys.GEOGRAPHY
     AS 'babelfishpg_common','geography_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
@@ -240,7 +240,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.geogTocharhelper($1));
+		geog := (SELECT sys.charTogeoghelper($1));
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
@@ -263,7 +263,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.geogTocharhelper($1));
+		geog := (SELECT sys.charTogeoghelper($1));
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
@@ -533,7 +533,7 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOGRAPHY)
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.geogTocharhelper(sys.bpchar)
+CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
 	RETURNS sys.GEOGRAPHY
 	AS $$
 	DECLARE

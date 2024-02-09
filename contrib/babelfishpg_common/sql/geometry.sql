@@ -119,7 +119,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	RETURNS sys.GEOMETRY
     AS $$
 	BEGIN
-		RETURN (SELECT sys.geomTocharhelper($1));
+		RETURN (SELECT sys.charTogeomhelper($1));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -132,7 +132,7 @@ CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	RETURNS sys.GEOMETRY
 	AS $$
 	BEGIN
-		RETURN (SELECT sys.geomTocharhelper($1));
+		RETURN (SELECT sys.charTogeomhelper($1));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
@@ -393,7 +393,7 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.geomTocharhelper(sys.bpchar)
+CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
 	RETURNS sys.GEOMETRY
 	AS $$
 	DECLARE

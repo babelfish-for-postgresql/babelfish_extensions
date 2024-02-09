@@ -12,11 +12,20 @@
 #include "utils/geo_decls.h"
 #include "utils/builtins.h"
 
+/* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
+typedef struct
+{
+    uint32_t size; /* For PgSQL use only, use VAR* macros to manipulate. */
+    uint8_t srid[3]; /* 24 bits of SRID */
+    uint8_t gflags; /* HasZ, HasM, HasBBox, IsGeodetic */
+    uint8_t data[1]; /* See gserialized.txt */
+} GSERIALIZED;
+
 typedef Datum (*LWGEOM_in_t)(PG_FUNCTION_ARGS);
 static LWGEOM_in_t LWGEOM_in_p;
 
-typedef Datum (*geography_in_t)(PG_FUNCTION_ARGS);
-static geography_in_t geography_in_p;
+typedef Datum (*gserialized_set_srid_t)(PG_FUNCTION_ARGS);
+static gserialized_set_srid_t gserialized_set_srid_p;
 
 typedef Datum (*ST_FLIP_COORD_t)(PG_FUNCTION_ARGS);
 static ST_FLIP_COORD_t ST_FLIP_COORD_p;
@@ -26,15 +35,6 @@ static lwgeom_x_t lwgeom_x_p;
 
 PG_FUNCTION_INFO_V1(LWGEOM_in);
 PG_FUNCTION_INFO_V1(geography_in);
-
-/* This is copy of a struct from POSTGIS so that we could store and use the following values directly */
-typedef struct
-{
-    uint32_t size; /* For PgSQL use only, use VAR* macros to manipulate. */
-    uint8_t srid[3]; /* 24 bits of SRID */
-    uint8_t gflags; /* HasZ, HasM, HasBBox, IsGeodetic */
-    uint8_t data[1]; /* See gserialized.txt */
-} GSERIALIZED;
 
 Datum
 LWGEOM_in(PG_FUNCTION_ARGS)
@@ -74,19 +74,23 @@ geography_in(PG_FUNCTION_ARGS)
 {
     Datum geom_datum;
     GSERIALIZED *geom; /* Used to Store the bytes in the Format which is stored in PostGIS */
-    char *input_str = PG_GETARG_CSTRING(0);
     float8 lat;
 
-    /* Ensure geography_in_p is properly initialized before using it */
-    if (geography_in_p == NULL) geography_in_p = (geography_in_t) load_external_function("$libdir/postgis-3", "LWGEOM_from_text", true, NULL);
+    /* Ensure LWGEOM_in_p is properly initialized before using it */
+    if (LWGEOM_in_p == NULL) LWGEOM_in_p = (LWGEOM_in_t) load_external_function("$libdir/postgis-3", "LWGEOM_in", true, NULL);
 
-    fcinfo->args[0].value = CStringGetTextDatum(input_str);
-    fcinfo->args[1].value = Int32GetDatum(4326); /* 4326 -> Default SRID for geography datatype */
-
-    /* Call the LWGEOM_from_text function via the function pointer */
-    geom_datum = geography_in_p(fcinfo);
+    /* Call the LWGEOM_in function via the function pointer */
+    geom_datum = LWGEOM_in_p(fcinfo);
 
     geom = (GSERIALIZED*)PG_DETOAST_DATUM(geom_datum);
+
+    if (gserialized_set_srid_p == NULL) gserialized_set_srid_p = (gserialized_set_srid_t) load_external_function("$libdir/postgis-3", "LWGEOM_set_srid", true, NULL);
+    
+    fcinfo->args[0].value = geom_datum;
+    fcinfo->args[1].value = Int32GetDatum(4326);
+    
+    /* Setting deafault SRID for geography datatype = 4326 */
+    geom_datum = gserialized_set_srid_p(fcinfo);
 
     /* check if it is a 2-D point type */
     if(*((uint32_t*)geom->data) != 1) ereport(ERROR,
