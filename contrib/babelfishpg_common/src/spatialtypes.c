@@ -74,7 +74,11 @@ geography_in(PG_FUNCTION_ARGS)
 {
     Datum geom_datum;
     GSERIALIZED *geom; /* Used to Store the bytes in the Format which is stored in PostGIS */
+    char *input_str = PG_GETARG_CSTRING(0);
     float8 lat;
+    bool isBinary = false;
+
+    if(input_str[0] == '0') isBinary = true;
 
     /* Ensure LWGEOM_in_p is properly initialized before using it */
     if (LWGEOM_in_p == NULL) LWGEOM_in_p = (LWGEOM_in_t) load_external_function("$libdir/postgis-3", "LWGEOM_in", true, NULL);
@@ -109,7 +113,7 @@ geography_in(PG_FUNCTION_ARGS)
 
             fcinfo->args[0].value = geom_datum;
             /* Flipping the coordinates since Geography Datatype stores the point in Reverse Order i.e. (long, lat)  */
-            geom_datum = ST_FLIP_COORD_p(fcinfo);
+            if (!isBinary) geom_datum = ST_FLIP_COORD_p(fcinfo);
 
             fcinfo->args[0].value = geom_datum;
             lat = DatumGetFloat8(lwgeom_x_p(fcinfo));
