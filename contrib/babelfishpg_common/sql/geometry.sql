@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
     RETURNS sys.GEOMETRY
-    AS '$libdir/postgis-3', 'LWGEOM_in'
+    AS 'babelfishpg_common', 'LWGEOM_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geometryout(sys.GEOMETRY)
@@ -117,8 +117,11 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		RETURN (SELECT sys.charTogeomhelper($1));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 	RETURNS sys.varchar
@@ -127,8 +130,11 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		RETURN (SELECT sys.charTogeomhelper($1));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
     RETURNS sys.GEOMETRY
@@ -386,4 +392,26 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOMETRY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY; 
+	BEGIN
+		-- Call the underlying function after preprocessing
+		geom = (SELECT sys.stgeomfromtext_helper($1, 0));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+		IF Geomtype = 'ST_Point' THEN
+			IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				RAISE EXCEPTION 'Unsupported flags';
+			ELSE
+				RETURN geom;
+			END IF;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 

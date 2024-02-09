@@ -2,9 +2,36 @@
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
     RETURNS sys.GEOMETRY
-    AS '$libdir/postgis-3', 'LWGEOM_in'
+    AS 'babelfishpg_common', 'LWGEOM_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geometryout(sys.GEOMETRY)
@@ -166,8 +193,11 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		RETURN (SELECT sys.charTogeomhelper($1));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 	RETURNS sys.varchar
@@ -176,8 +206,11 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.varchar)
 	RETURNS sys.GEOMETRY
-	AS '$libdir/postgis-3','parse_WKT_lwgeom'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+	AS $$
+	BEGIN
+		RETURN (SELECT sys.charTogeomhelper($1));
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(bytea)
     RETURNS sys.GEOMETRY
@@ -590,9 +623,31 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOMETRY)
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
+	RETURNS sys.GEOMETRY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geom sys.GEOMETRY; 
+	BEGIN
+		-- Call the underlying function after preprocessing
+		geom = (SELECT sys.stgeomfromtext_helper($1, 0));
+		Geomtype = (SELECT sys.ST_GeometryType(geom));
+		IF Geomtype = 'ST_Point' THEN
+			IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				RAISE EXCEPTION 'Unsupported flags';
+			ELSE
+				RETURN geom;
+			END IF;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.geographyin(cstring, oid, integer)
     RETURNS sys.GEOGRAPHY
-    AS '$libdir/postgis-3','geography_in'
+    AS 'babelfishpg_common','geography_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geographyout(sys.GEOGRAPHY)
@@ -853,7 +908,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.bpcharToGeography_helper($1, 4326));
+		geog := (SELECT sys.charTogeoghelper($1));
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
@@ -876,7 +931,7 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.varcharToGeography_helper($1, 4326));
+		geog := (SELECT sys.charTogeoghelper($1));
 		-- Call the underlying function after preprocessing
 		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
@@ -1284,10 +1339,44 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY_helper(bytea)
 	AS '$libdir/postgis-3','LWGEOM_from_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename bpcharToGeography_helper function for dependencies
+    ALTER FUNCTION sys.bpcharToGeography_helper(sys.bpchar) RENAME TO bpcharToGeography_helper_deprecated_4_1_0;
+
+    -- === DROP bpcharToGeography_helper_deprecated_4_1_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bpcharToGeography_helper_deprecated_4_1_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer)
 	RETURNS sys.GEOGRAPHY
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename varcharToGeography_helper function for dependencies
+    ALTER FUNCTION sys.varcharToGeography_helper(sys.varchar) RENAME TO varcharToGeography_helper_deprecated_4_1_0;
+
+    -- === DROP varcharToGeography_helper_deprecated_4_1_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varcharToGeography_helper_deprecated_4_1_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.varcharToGeography_helper(sys.varchar, integer)
 	RETURNS sys.GEOGRAPHY
@@ -1298,3 +1387,36 @@ CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geog sys.GEOGRAPHY;
+		lat float8;
+	BEGIN
+		geog = (SELECT sys.bpcharToGeography_helper($1, 4326));
+		Geomtype = (SELECT sys.ST_GeometryType(geog));
+		IF Geomtype = 'ST_Point' THEN
+			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, 4326))));
+			IF lat >= -90.0 AND lat <= 90.0 THEN
+				-- Call the underlying function after preprocessing
+				-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+				IF (SELECT sys.ST_Zmflag(geog)) = 1 OR (SELECT sys.ST_Zmflag(geog)) = 2 OR (SELECT sys.ST_Zmflag(geog)) = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
+					RETURN geog;
+				END IF;
+			ELSEIF lat < -90.0 OR lat > 90.0 THEN
+				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
+			END IF;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

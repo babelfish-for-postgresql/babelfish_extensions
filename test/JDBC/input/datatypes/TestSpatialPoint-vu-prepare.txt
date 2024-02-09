@@ -99,7 +99,7 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 
-CREATE VIEW TextFromGeom AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
+CREATE VIEW TextFromGeom AS SELECT STX(location) AS XCoord, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
 CREATE VIEW BinaryFromGeom AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
@@ -217,7 +217,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 
-CREATE VIEW TextFromGeog AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
 CREATE VIEW BinaryFromGeog AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -228,6 +228,14 @@ CREATE VIEW GeogView AS SELECT location.Long, location.Lat AS Coordinates FROM S
 CREATE TABLE test_table (geog geography)
 INSERT INTO test_table(geog) VALUES(geography::Point(1, 2, 4326));
 
+create table geoginTable (a geography);
+Insert into geoginTable values('POINT(1 2)');
+Insert into geoginTable values('POINT(1 2 3)');
+Insert into geoginTable values('POINT(1 2 3 4)');
+Insert into geoginTable values('LINESTRING(1 2,3 4)');
+Insert into geoginTable values('POINT(1000 2000)');
+Insert into geoginTable values('POINT(123 34)');
+
 CREATE VIEW SubqueryView AS SELECT (select geog from test_table ORDER BY geog.Lat).Lat AS Latitude ORDER BY Latitude;
 
 CREATE VIEW BrackExprView AS SELECT ( geog ).Lat AS Latitude from test_table ORDER BY geog.Lat;
@@ -237,6 +245,8 @@ CREATE VIEW FuncExprView AS SELECT geography::Point(1, 2, 4326).Lat AS Latitude 
 CREATE FUNCTION func_getval() RETURNS TABLE AS RETURN ( SELECT location.STAsText() AS TextPoint FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat );
 
 CREATE PROCEDURE dbo.proc_getdata AS BEGIN DECLARE @Data TABLE ( TextPoint text ); INSERT INTO @Data SELECT * FROM dbo.func_getval() ORDER BY TextPoint; SELECT * FROM @Data ORDER BY TextPoint; END;
+
+create procedure geoginTest @a geography as select @a.Lat as Latitude, @a.Long as Longitude ORDER BY @a.Lat;
 
 CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified_points FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
