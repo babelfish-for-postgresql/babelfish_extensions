@@ -3042,6 +3042,18 @@ GO
 INSERT INTO fts_contains_vu_t VALUES (1000, 'Last month , scientists from the Hebrew University of Jerusalem reported that washing down red meat with a glass of red can actually prevent the build-up of cholesterol in the body ')
 GO
 
+create table test_special_char_t(id int not null, name text);
+go
+
+insert into test_special_char_t values (1, 'one two three'), (2, 'two three one'), (3, 'one'), (4, 'two'), (5, 'three'), (6, 'one`two'), (7, 'one~two'), (8, 'one!two'),(9, 'one@two'), (10, 'one#two'), (11, 'one$two'),(12, 'one%two'), (13, 'one^two'), (14, 'one&two'), (15, 'one*two'), (16, 'one-two'), (17, 'one_two'), (18, 'one+two'), (19, 'one=two'), (20, 'one\two'), (21, 'one|two'), (22, 'one;two'), (23, 'one:two'), (24, 'one''two'), (25, 'one<two'), (26, 'one>two'), (27, 'one.two'), (28, 'one?two'), (29, 'one/two'), (101, 'one :) two'), (100, 'one @ @ @ @ two'), (102, 'one   @ two    ^ three'), (103, 'one     @    two'), (104, 'one    ` two  @ three'), (105, 'one @ two @ three @ four'), (106, 'one ` two _ three '' four'), (107, 'one # two '' three ` four'), (108, 'one    @ two    $ three ^ four * five'), (109, 'one ` two _ three '' four # five'), (110, 'one ` two _ three ^ four : five'), (111, 'one $ two % three * four * five'), (112, 'one # two : three < four > five'), (113, ': one two three'), (114, 'one: two'), (115, ':one two:');
+GO
+
+create unique index test_special_char_t_idx on test_special_char_t(id);
+go
+
+create fulltext index on test_special_char_t(name) key index test_special_char_t_idx;
+go
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

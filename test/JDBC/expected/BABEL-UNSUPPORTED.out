@@ -717,10 +717,6 @@ strict
 -- 'strict' is default
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'DEFAULT_FULLTEXT_LANGUAGE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_fulltext to ignore)~~
-
 
 CREATE TABLE t_unsupported_ft (a text);
 GO
@@ -729,7 +725,7 @@ CREATE FULLTEXT INDEX ON t_unsupported_ft(a) KEY INDEX ix_unsupported_ft;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'CREATE FULLTEXT INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_fulltext to ignore)~~
+~~ERROR (Message: '"ix_unsupported_ft"' is not a valid index to enforce a full-text search key. A full-text search key must be a unique, non-nullable, single-column index which is not offline, is not defined on a non-deterministic or imprecise nonpersisted computed column, does not have a filter, and has maximum size of 900 bytes. Choose another index for the full-text key.)~~
 
 
 DROP TABLE t_unsupported_ft;
@@ -745,6 +741,10 @@ ignore
 
 CREATE DATABASE db_unsupported_ft WITH DEFAULT_FULLTEXT_LANGUAGE = English;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database 'db_unsupported_ft' already exists. Choose a different database name.)~~
+
 
 DROP DATABASE db_unsupported_ft;
 GO
@@ -784,6 +784,20 @@ GO
 
 DROP TABLE t_unsupported_ft2;
 GO
+
+CREATE SCHEMA t_unsupported_schema GRANT SELECT on schema::t_unsupported_schema TO guest;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: GRANT inside CREATE SCHEMA is not yet supported in Babelfish.)~~
+
+
+CREATE SCHEMA t_unsupported_schema REVOKE SELECT on schema::t_unsupported_schema TO guest;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REVOKE inside CREATE SCHEMA is not yet supported in Babelfish.)~~
+
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

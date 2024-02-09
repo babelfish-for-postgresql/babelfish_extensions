@@ -3451,6 +3451,7 @@ expression
     | over_clause                                                               #over_clause_expr
     | odbc_literal                                                              #odbc_literal_expr
     | DOLLAR_ACTION                                                             #dollar_action_expr
+    | expression vector_operator expression                                     #vector_expr
     ;       
 
 clr_udt_func_call
@@ -3594,7 +3595,6 @@ xml_common_directives
 
 order_by_expression 
     : order_by=expression (ascending=ASC | descending=DESC)?
-    | order_by=expression vector_operator expression (ascending=ASC | descending=DESC)? 
     ;
 
 group_by_item

@@ -41,17 +41,8 @@ GO
 EXEC fts_contains_vu_prepare_p1 '天'
 GO
 
-SELECT sys.babelfish_fts_rewrite('"one''two"')
-GO
-
-SELECT sys.babelfish_fts_rewrite('"one`two"')
-GO
-
 -- colons, semicolons, pipes, parenthesis, etc.
 EXEC fts_contains_vu_prepare_p1 '"one : two"'
-GO
-
-EXEC fts_contains_vu_prepare_p1 '"one :)"'
 GO
 
 EXEC fts_contains_vu_prepare_p1 'one;two'
@@ -148,9 +139,6 @@ GO
 EXEC fts_contains_vu_prepare_p1 '"  come          back    "'
 GO
 
-EXEC fts_contains_vu_prepare_p1 '"much of the"'
-GO
-
 EXEC fts_contains_vu_prepare_p1 '"due to"'
 GO
 
@@ -159,7 +147,6 @@ GO
 
 EXEC fts_contains_vu_prepare_p1 '"so-called"'
 GO
-
 
 EXEC fts_contains_vu_prepare_p1 '"stand up"'
 GO
@@ -211,6 +198,260 @@ GO
 
 EXEC fts_contains_vu_prepare_p1 'test AND love';
 GO
+
+-- Special Character cases
+select * from test_special_char_t where contains(name, '"one           two"');
+go
+
+select * from test_special_char_t where contains(name, 'one''two');
+select * from test_special_char_t where contains(name, 'one`two');
+select * from test_special_char_t where contains(name, 'one_two');
+go
+
+select * from test_special_char_t where contains(name, 'one@two');
+go
+
+select * from test_special_char_t where contains(name, 'one#two');
+go
+
+select * from test_special_char_t where contains(name, 'one$two');
+go
+
+select * from test_special_char_t where contains(name, 'one%two');
+go
+
+select * from test_special_char_t where contains(name, 'one*two');
+go
+
+select * from test_special_char_t where contains(name, 'one-two');
+go
+
+select * from test_special_char_t where contains(name, 'one+two');
+go
+
+select * from test_special_char_t where contains(name, 'one=two');
+go
+
+select * from test_special_char_t where contains(name, 'one\two');
+go
+
+select * from test_special_char_t where contains(name, 'one;two');
+go
+
+select * from test_special_char_t where contains(name, 'one<two');
+go
+
+select * from test_special_char_t where contains(name, 'one>two');
+go
+
+select * from test_special_char_t where contains(name, 'one.two');
+go
+
+select * from test_special_char_t where contains(name, 'one?two');
+go
+
+select * from test_special_char_t where contains(name, 'one/two');
+go
+
+select * from test_special_char_t where contains(name, 'one:two');
+go
+
+select * from test_special_char_t where contains(name, '"one: two"');
+go
+
+-- syntax error test_special_char_ts
+select * from test_special_char_t where contains(name, 'one(two');
+go
+
+select * from test_special_char_t where contains(name, 'one)two');
+go
+
+select * from test_special_char_t where contains(name, 'one{two');
+go
+
+select * from test_special_char_t where contains(name, 'one}two');
+go
+
+select * from test_special_char_t where contains(name, 'one[two');
+go
+
+select * from test_special_char_t where contains(name, 'one]two');
+go
+
+select * from test_special_char_t where contains(name, 'one(two)');
+go
+
+select * from test_special_char_t where contains(name, 'one{two}');
+go
+
+select * from test_special_char_t where contains(name, 'one[two]');
+go
+
+-- double quotes test_special_char_t
+select * from test_special_char_t where contains(name, '"one(two"');
+go
+
+select * from test_special_char_t where contains(name, '"one)two"');
+go
+
+select * from test_special_char_t where contains(name, '"one{two"');
+go
+
+select * from test_special_char_t where contains(name, '"one}two"');
+go
+
+select * from test_special_char_t where contains(name, '"one[two"');
+go
+
+select * from test_special_char_t where contains(name, '"one]two"');
+go
+
+select * from test_special_char_t where contains(name, '"one(two)"');
+go
+
+select * from test_special_char_t where contains(name, '"one{two}"');
+go
+
+select * from test_special_char_t where contains(name, '"one[two]"');
+go
+
+select * from test_special_char_t where contains(name, '"one(two)(}[]three"');
+go
+
+select * from test_special_char_t where contains(name, '"one"two"');
+go
+
+select * from test_special_char_t where contains(name, '"one      `  two"');
+go
+
+select * from test_special_char_t where contains(name, '"one '' two"');
+go
+
+select * from test_special_char_t where contains(name, '"one _ two"');
+go
+
+select * from test_special_char_t where contains(name, '"one : two"');
+go
+
+select * from test_special_char_t where contains(name, '"one(two)"');
+go
+
+select * from test_special_char_t where contains(name, 'one');
+go
+
+select * from test_special_char_t where contains(name, 'one:');
+go
+
+select * from test_special_char_t where contains(name, ':one');
+go
+
+select * from test_special_char_t where contains(name, ':one:');
+go
+
+select * from test_special_char_t where contains(name, '":one"');
+go
+
+select * from test_special_char_t where contains(name, '" :one"');
+go
+
+select * from test_special_char_t where contains(name, '"one:"');
+go
+
+select * from test_special_char_t where contains(name, '"one: "');
+go
+
+select * from test_special_char_t where contains(name, 'one@#$two');
+go
+
+select * from test_special_char_t where contains(name, '"one $%#! two"');
+go
+
+select * from test_special_char_t where contains(name, '"one # $ % ^ two"');
+go
+
+select * from test_special_char_t where contains(name, '"one #        $ %    ^      two"');
+go
+
+select * from test_special_char_t where contains(name, '"one$two three %$@ four"');
+go
+
+select * from test_special_char_t where contains(name, 'one@two@three');
+go
+
+select * from test_special_char_t where contains(name, '"one _?` two"');
+go
+
+select * from test_special_char_t where contains(name, '"one `'' two __` three"');
+go
+
+select * from test_special_char_t where contains(name, 'one``two');
+go
+
+select * from test_special_char_t where contains(name, 'one__two');
+go
+
+-- Tests for 2 special characters combination strings
+select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   @  two * three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   ^  two ` three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   %  two _ three"');
+go
+
+select * from test_special_char_t where contains(name, '"one   #  two '' three"');
+go
+
+-- Tests for 3 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four');
+go
+
+select * from test_special_char_t where contains(name, 'one@two`three_four');
+go
+
+select * from test_special_char_t where contains(name, 'one''two`three_four');
+go
+
+select * from test_special_char_t where contains(name, 'one#two''three`four');
+go
+
+select * from test_special_char_t where contains(name, '"one @ two @ three @ four"');
+go
+
+select * from test_special_char_t where contains(name, '"one   # two ` three _ four"');
+go
+
+select * from test_special_char_t where contains(name, '"one * two '' three ` four"');
+go
+
+select * from test_special_char_t where contains(name, '"one _ two % three # four"');
+go
+
+-- Tests for 4 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four@five');
+go
+
+select * from test_special_char_t where contains(name, 'one`two-three_four''five');
+go
+
+select * from test_special_char_t where contains(name, 'one_two`three*four%five');
+go
+
+select * from test_special_char_t where contains(name, '"one @ two ` three _ four '' five "');
+go
+
+select * from test_special_char_t where contains(name, '"one % two '' three - four ` five"');
+go
+
+select * from test_special_char_t where contains(name, '"one * two < three > four : five"');
+go
+
+select * from test_special_char_t where contains(name, '"one < two _ three '' four `     five"');
+go
 
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')

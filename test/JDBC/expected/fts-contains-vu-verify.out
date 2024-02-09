@@ -67,127 +67,106 @@ EXEC fts_contains_vu_prepare_p1 '天'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 N'שלום'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one 天 two"'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 'Tópicos'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '天'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
-
-
-SELECT sys.babelfish_fts_rewrite('"one''two"')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
-
-
-SELECT sys.babelfish_fts_rewrite('"one`two"')
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with languages other than English are not currently supported in Babelfish)~~
 
 
 -- colons, semicolons, pipes, parenthesis, etc.
 EXEC fts_contains_vu_prepare_p1 '"one : two"'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
-
-
-EXEC fts_contains_vu_prepare_p1 '"one :)"'
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 'one;two'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 'one|two'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one (two)"'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one * two"'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one<two"'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one&two"'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one~two"'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Proximity term is not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one|two"'
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
 
 
 EXEC fts_contains_vu_prepare_p1 '"one$two"'
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Full-text search conditions with special characters or languages other than English are not currently supported in Babelfish)~~
+~~START~~
+int#!#text
+~~END~~
 
 
 EXEC fts_contains_vu_prepare_p1 'love'
@@ -414,13 +393,6 @@ int#!#text
 ~~END~~
 
 
-EXEC fts_contains_vu_prepare_p1 '"much of the"'
-GO
-~~START~~
-int#!#text
-~~END~~
-
-
 EXEC fts_contains_vu_prepare_p1 '"due to"'
 GO
 ~~START~~
@@ -464,7 +436,6 @@ int#!#text
 561#!#None of these is inherently inappropriate , but they are risky , in much the same way that so-called subprime mortgage lending is risky 
 861#!#The results suggest that adult brains are for more plastic than expected and , aided by so-called neuro-prosthetic devices , can quickly develop new sensory modalities that operate on top of the conventional five senses 
 ~~END~~
-
 
 
 EXEC fts_contains_vu_prepare_p1 '"stand up"'
@@ -614,6 +585,2055 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Full-text search conditions with boolean operators are not currently supported in Babelfish)~~
+
+
+-- Special Character cases
+select * from test_special_char_t where contains(name, '"one           two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one''two');
+select * from test_special_char_t where contains(name, 'one`two');
+select * from test_special_char_t where contains(name, 'one_two');
+go
+~~START~~
+int#!#text
+24#!#one'two
+~~END~~
+
+~~START~~
+int#!#text
+6#!#one`two
+~~END~~
+
+~~START~~
+int#!#text
+17#!#one_two
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one@two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one#two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one$two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one%two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one*two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one-two');
+go
+~~START~~
+int#!#text
+16#!#one-two
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one+two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one=two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one\two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one;two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one<two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one>two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one.two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one?two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one/two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one:two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one: two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+-- syntax error test_special_char_ts
+select * from test_special_char_t where contains(name, 'one(two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '(' in the full-text search condition 'one(two'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one)two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near ')' in the full-text search condition 'one)two'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one{two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '{' in the full-text search condition 'one{two'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one}two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '}' in the full-text search condition 'one}two'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one[two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '[' in the full-text search condition 'one[two'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one]two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near ']' in the full-text search condition 'one]two'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one(two)');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '(' in the full-text search condition 'one(two)'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one{two}');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '{' in the full-text search condition 'one{two}'.)~~
+
+
+select * from test_special_char_t where contains(name, 'one[two]');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '[' in the full-text search condition 'one[two]'.)~~
+
+
+-- double quotes test_special_char_t
+select * from test_special_char_t where contains(name, '"one(two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one)two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one{two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one}two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one[two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one]two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one(two)"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one{two}"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one[two]"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one(two)(}[]three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one"two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near 'two' in the full-text search condition 'one"two'.)~~
+
+
+select * from test_special_char_t where contains(name, '"one      `  two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one '' two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one _ two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one : two"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one(two)"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+105#!#one @ two @ three @ four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one:');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, ':one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, ':one:');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '":one"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '" :one"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one:"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one: "');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one@#$two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, '"one $%#! two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, '"one # $ % ^ two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, '"one #        $ %    ^      two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, '"one$two three %$@ four"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, 'one@two@three');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one _?` two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, '"one `'' two __` three"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, 'one``two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+select * from test_special_char_t where contains(name, 'one__two');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Consecutive special characters in the full-text search condition are not currently supported in Babelfish)~~
+
+
+-- Tests for 2 special characters combination strings
+select * from test_special_char_t where contains(name, '"one   @  two      @ three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   @  two * three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   ^  two ` three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   %  two _ three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   #  two '' three"');
+go
+~~START~~
+int#!#text
+1#!#one two three
+102#!#one   @ two    ^ three
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+~~END~~
+
+
+-- Tests for 3 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one@two`three_four');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one''two`three_four');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one#two''three`four');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one @ two @ three @ four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one   # two ` three _ four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one * two '' three ` four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one _ two % three # four"');
+go
+~~START~~
+int#!#text
+105#!#one @ two @ three @ four
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+-- Tests for 4 special characters combination strings
+select * from test_special_char_t where contains(name, 'one@two@three@four@five');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one`two-three_four''five');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, 'one_two`three*four%five');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one @ two ` three _ four '' five "');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one % two '' three - four ` five"');
+go
+~~START~~
+int#!#text
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one * two < three > four : five"');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
+
+
+select * from test_special_char_t where contains(name, '"one < two _ three '' four `     five"');
+go
+~~START~~
+int#!#text
+108#!#one    @ two    $ three ^ four * five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+~~END~~
 
 
 -- disable FULLTEXT

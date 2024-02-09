@@ -896,6 +896,13 @@ CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEG
 'babelfishpg_tsql', 'has_dbaccess'
 LANGUAGE C STABLE STRICT;
 
+-- This function performs replacing special characters to their corresponding unique hashes
+-- in the search condition or the full text search CONTAINS predicate
+CREATE OR REPLACE FUNCTION sys.replace_special_chars_fts(IN phrase text) RETURNS TEXT AS 
+'babelfishpg_tsql', 'replace_special_chars_fts'
+LANGUAGE C IMMUTABLE STRICT;
+GRANT EXECUTE ON FUNCTION sys.replace_special_chars_fts TO PUBLIC;
+
 -- This function performs string rewriting for the full text search CONTAINS predicate
 -- in Babelfish
 -- For example, a T-SQL query 
