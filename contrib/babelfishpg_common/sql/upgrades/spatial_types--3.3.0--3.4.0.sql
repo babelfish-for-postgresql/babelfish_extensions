@@ -2,6 +2,33 @@
 ---- Include changes related to spatial types here ----
 -------------------------------------------------------
 
+-- Drops an object if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_common drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
     RETURNS sys.GEOMETRY
     AS 'babelfishpg_common', 'LWGEOM_in'
@@ -617,6 +644,23 @@ CREATE OR REPLACE FUNCTION sys.geomTocharhelper(sys.bpchar)
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename geographyin function for dependencies
+    ALTER FUNCTION sys.geographyin(cstring, oid, integer) RENAME TO geographyin_deprecated_3_4_0;
+
+    -- === DROP geographyin_deprecated_3_4_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'geographyin_deprecated_3_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.geographyin(cstring)
     RETURNS sys.GEOGRAPHY
@@ -1312,10 +1356,44 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY_helper(bytea)
 	AS '$libdir/postgis-3','LWGEOM_from_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename bpcharToGeography_helper function for dependencies
+    ALTER FUNCTION sys.bpcharToGeography_helper(sys.bpchar) RENAME TO bpcharToGeography_helper_deprecated_3_4_0;
+
+    -- === DROP bpcharToGeography_helper_deprecated_3_4_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'bpcharToGeography_helper_deprecated_3_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer)
 	RETURNS sys.GEOGRAPHY
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+DO $$
+DECLARE
+    exception_message text;
+BEGIN
+    -- Rename varcharToGeography_helper function for dependencies
+    ALTER FUNCTION sys.varcharToGeography_helper(sys.varchar) RENAME TO varcharToGeography_helper_deprecated_3_4_0;
+
+    -- === DROP varcharToGeography_helper_deprecated_3_4_0
+    CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'varcharToGeography_helper_deprecated_3_4_0');
+
+EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS
+    exception_message = MESSAGE_TEXT;
+    RAISE WARNING '%', exception_message;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION sys.varcharToGeography_helper(sys.varchar, integer)
 	RETURNS sys.GEOGRAPHY
@@ -1355,3 +1433,7 @@ CREATE OR REPLACE FUNCTION sys.geogTocharhelper(sys.bpchar)
 		END IF;
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
