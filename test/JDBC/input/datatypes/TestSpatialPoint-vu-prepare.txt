@@ -87,6 +87,12 @@ CREATE TRIGGER trg_LogDistanceChange ON YourTable AFTER UPDATE AS BEGIN DECLARE 
 prepst#!#INSERT INTO SPATIALPOINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(290.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-120.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-720.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234):4326
 #Negative Test for STGeomFromText when SRID >= 10^6
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
 #Negative Test for STGeomFromText with SRID < 0
@@ -98,6 +104,16 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 #Negative Test when an unsupported feature in queried
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
+
+create table geominTable (a geometry);
+Insert into geominTable values('POINT(1 2)');
+Insert into geominTable values('POINT(1 2 3)');
+Insert into geominTable values('POINT(1 2 3 4)');
+Insert into geominTable values('LINESTRING(1 2,3 4)');
+Insert into geominTable values('POINT(1000 2000)');
+Insert into geominTable values('POINT(123 34)');
+
+create procedure geominTest @a geometry as select @a.STX as Xcoord, @a.STY as Ycoord ORDER BY @a.STX;
 
 CREATE VIEW TextFromGeom AS SELECT STX(location) AS XCoord, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
