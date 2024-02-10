@@ -88,10 +88,22 @@ GO
 SELECT * FROM GeomView ORDER BY Coordinates;
 GO
 
+select * from geominTable ORDER BY a.STX;
+GO
+
 SELECT * FROM ValFromGeom ORDER BY binary;
 GO
 
 EXEC dbo.p_getcoordinates;
+GO
+
+geominTest 'POINT(1 2)'
+GO
+
+geominTest 'POINT(1 200)'
+GO
+
+geominTest 'POINT(1000 20)'
 GO
 
 SELECT * FROM TextFromGeom ORDER BY XCoord;
@@ -538,6 +550,8 @@ Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS varbinary(MAX))
 GO
 Select CAST(CAST ('POINT(1 2)' AS char) as geometry)
 GO
+Select CAST(CAST ('POINT(200 2)' AS char) as geometry).STY
+GO
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS char)
 GO
 Select CAST(CAST ('POINT(1 2)' AS nchar) as geometry)
@@ -545,6 +559,8 @@ GO
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS nchar)
 GO
 Select CAST(CAST ('POINT(1 2)' AS varchar) as geometry)
+GO
+Select CAST(CAST ('POINT(200 2)' AS varchar) as geometry).STY
 GO
 Select CAST (geometry::STGeomFromText('POINT(1.0 2.0)', 4326) AS varchar)
 GO

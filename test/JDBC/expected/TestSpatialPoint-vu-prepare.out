@@ -139,6 +139,24 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
 ~~ROW COUNT: 1~~
 
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(290.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-720.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234):4326
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234):4326
+~~ROW COUNT: 1~~
+
 #Negative Test for STGeomFromText when SRID >= 10^6
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
 ~~ERROR (Code: 33557097)~~
@@ -174,6 +192,34 @@ prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 
 ~~ERROR (Message: Unsupported geometry type)~~
 
+
+create table geominTable (a geometry);
+Insert into geominTable values('POINT(1 2)');
+~~ROW COUNT: 1~~
+
+Insert into geominTable values('POINT(1 2 3)');
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported flags)~~
+
+Insert into geominTable values('POINT(1 2 3 4)');
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported flags)~~
+
+Insert into geominTable values('LINESTRING(1 2,3 4)');
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: ST_LineString is not supported)~~
+
+Insert into geominTable values('POINT(1000 2000)');
+~~ROW COUNT: 1~~
+
+Insert into geominTable values('POINT(123 34)');
+~~ROW COUNT: 1~~
+
+
+create procedure geominTest @a geometry as select @a.STX as Xcoord, @a.STY as Ycoord ORDER BY @a.STX;
 
 CREATE VIEW TextFromGeom AS SELECT STX(location) AS XCoord, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
@@ -443,7 +489,7 @@ Insert into geoginTable values('POINT(1 2 3 4)');
 Insert into geoginTable values('LINESTRING(1 2,3 4)');
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Currently only Point type is supported)~~
+~~ERROR (Message: ST_LineString is not supported)~~
 
 Insert into geoginTable values('POINT(1000 2000)');
 ~~ERROR (Code: 33557097)~~

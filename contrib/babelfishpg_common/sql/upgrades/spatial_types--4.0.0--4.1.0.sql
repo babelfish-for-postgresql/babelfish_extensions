@@ -31,7 +31,7 @@ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION sys.geometryin(cstring)
     RETURNS sys.GEOMETRY
-    AS 'babelfishpg_common', 'LWGEOM_in'
+    AS 'babelfishpg_common', 'geometry_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geometryout(sys.GEOMETRY)
