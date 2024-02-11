@@ -50,7 +50,13 @@ jobs:
         if: always() && steps.build-babelfishpg_unit.outcome == 'success'
         timeout-minutes: 60
         run: |
-          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -f .github/scripts/unit_tests.sql > >(tee ~/psql/output.out) 
+          sudo ~/psql/bin/psql -d jdbc_testdb -U runner -f .github/scripts/unit_tests.sql > >(tee ~/psql/output.out)
+          if sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'babelfishpg_unit'" | grep -q "babelfishpg_unit"; then
+            echo "babelfishpg_unit extension is installed"
+          else
+            echo "babelfishpg_unit extension is not installed. Check the stderr for more details."
+            exit 1
+          fi
           count=$(awk -F '|' '$2 ~ /fail/'  ~/psql/output.out  | wc -l)
           if [ "$count" -gt 0 ]; then
             echo "Tests failed: $count"
