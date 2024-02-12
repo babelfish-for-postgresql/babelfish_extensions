@@ -320,7 +320,8 @@ tsql_auto_row_to_json(JsonbValue* jsonbArray, Datum record, bool include_null_va
 			// Extract the colummn value in the correct format
 			value = palloc(sizeof(JsonbValue));
 			jsonb_get_value(colval, isnull, value, datatype_oid);
-			value = &value->val.array.elems[0];
+			if(datatype_oid != JSONOID)
+				value = &value->val.array.elems[0];
 		}
 
 		// Determine if the value should be inserted as a nested json object
