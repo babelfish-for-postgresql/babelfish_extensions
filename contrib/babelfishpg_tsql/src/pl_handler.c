@@ -31,6 +31,7 @@
 #include "commands/createas.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/extension.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
@@ -1556,7 +1557,7 @@ static void modifyColumnEntries(List* targetList, forjson_table **tableInfoArr, 
 				if(handleForJsonAuto(castNode(Query, sl->subselect), tableInfoArr, numTables)) {
 					CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
 					iocoerce->arg = (Expr*) sl;
-					iocoerce->resulttype = T_JsonArrayQueryConstructor;
+					iocoerce->resulttype = 114;
 					iocoerce->resultcollid = 0;
 					iocoerce->coerceformat = COERCE_EXPLICIT_CAST;
 					buildJsonEntry(1, "temp", te);
@@ -3898,7 +3899,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								if (grant->is_grant)
-									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true);
+									add_or_update_object_in_bbf_schema(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, true, NULL);
 								else
 								{
 									/*
@@ -3924,7 +3925,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 									/* Don't add/update an entry, if the permission is granted on column list.*/
 									if (ap->cols == NULL)
-										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true);
+										add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
 								}
 								else
 								{
@@ -3952,6 +3953,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					const char *logicalschema = NULL;
 					char *funcname = NULL;
 					const char *obj_type = NULL;
+					Oid func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, ob, true);
+					const char *func_args = NULL;
+					if (OidIsValid(func_oid))
+						func_args = gen_func_arg_list(func_oid);
 					if (grant->objtype == OBJECT_FUNCTION)
 						obj_type = OBJ_FUNCTION;
 					else
@@ -3986,7 +3991,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 							if (grant->is_grant)
 							{
-								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true);
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true, func_args);
 							}
 							else
 							{
@@ -4011,7 +4016,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (grant->is_grant)
 							{
 								call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true);
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true, func_args);
 							}
 							else
 							{
@@ -4265,6 +4270,9 @@ _PG_init(void)
 	/* Fixme: Handle loading of pgtsql_common_library_name library cleanly. */
 	load_libraries("babelfishpg_common", NULL, false);
 	init_and_check_common_utility();
+
+	if (OidIsValid(get_extension_oid("vector", true)))
+		load_libraries("vector", NULL, false);
 
 	pg_bindtextdomain(TEXTDOMAIN);
 
@@ -6123,14 +6131,28 @@ set_current_query_is_create_tbl_check_constraint(Node *expr)
 void
 pltsql_remove_current_query_env(void)
 {
-	ENRDropTempTables(currentQueryEnv);
-	remove_queryEnv();
+	bool old_abort_curr_txn = AbortCurTransaction;
 
-	if (!currentQueryEnv ||
-		(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
+	PG_TRY();
 	{
-		destroy_failed_transactions_map();
+		// see pltsql_clean_table_variables()
+		AbortCurTransaction = false;
+
+		ENRDropTempTables(currentQueryEnv);
 	}
+	PG_FINALLY();
+	{
+		remove_queryEnv();
+
+		if (!currentQueryEnv ||
+			(currentQueryEnv == topLevelQueryEnv && get_namedRelList() == NIL))
+		{
+			destroy_failed_transactions_map();
+		}
+	
+		AbortCurTransaction = old_abort_curr_txn;
+	}
+	PG_END_TRY();
 }
 
 /*

@@ -1,0 +1,198 @@
+-- tsql
+-- Overloaded function with no argument
+CREATE FUNCTION OverloadedFunction() RETURNS INT AS BEGIN RETURN 1 END
+GO
+
+CREATE FUNCTION OverloadedFunction() RETURNS INT AS BEGIN RETURN 2 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction' already exists with the same name)~~
+
+
+CREATE PROCEDURE OverloadedFunction AS BEGIN SELECT 1 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction' already exists with the same name)~~
+
+
+DROP FUNCTION OverloadedFunction;
+GO
+
+-- Overloaded function with same number of argument and same argument type
+CREATE PROCEDURE OverloadedFunction_1 @num1 INT AS BEGIN SELECT @num1 + 1 END
+GO
+
+CREATE FUNCTION OverloadedFunction_1(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 1 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name)~~
+
+
+CREATE FUNCTION OverloadedFunction_1(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 2 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction_1' already exists with the same name)~~
+
+
+DROP PROCEDURE OverloadedFunction_1;
+GO
+
+-- Overloaded procedures
+CREATE PROCEDURE OverloadedProcedure AS BEGIN SELECT 1 END
+GO
+
+CREATE PROCEDURE OverloadedProcedure @num1 INT AS BEGIN SELECT @num1 + 1 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedprocedure' already exists with the same name)~~
+
+
+DROP PROCEDURE OverloadedProcedure;
+GO
+
+-- Objects with same name table, function and procedure
+CREATE TABLE OverloadedObject(a int);
+GO
+
+CREATE PROCEDURE OverloadedObject AS BEGIN SELECT 1 END
+GO
+
+CREATE FUNCTION OverloadedObject(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 1 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedobject' already exists with the same name)~~
+
+
+DROP TABLE OverloadedObject;
+GO
+
+DROP PROCEDURE OverloadedObject;
+GO
+
+-- Overloaded function with different number of arguments
+CREATE FUNCTION OverloadedFunction_2(@num1 INT) RETURNS INT AS BEGIN RETURN @num1 + 1 END
+GO
+
+CREATE FUNCTION OverloadedFunction_2(@num1 INT, @num2 INT) RETURNS INT AS BEGIN RETURN @num1 + @num2 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name)~~
+
+
+CREATE PROCEDURE OverloadedFunction_2 AS BEGIN SELECT 1 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction_2' already exists with the same name)~~
+
+
+DROP FUNCTION OverloadedFunction_2;
+GO
+
+-- Overloaded function with same number of arguments but different types
+CREATE FUNCTION OverloadedFunction_3(@num1 INT, @num2 INT) RETURNS INT AS BEGIN RETURN @num1 + @num2 END
+GO
+
+CREATE FUNCTION OverloadedFunction_3(@num1 INT, @num2 FLOAT) RETURNS INT AS BEGIN RETURN @num1 + @num2 END
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: Function 'overloadedfunction_3' already exists with the same name)~~
+
+
+DROP FUNCTION OverloadedFunction_3;
+GO
+
+-- psql
+-- Not restricting function overloading via PG port
+-- create Overloaded function with same number of arguments
+CREATE FUNCTION OverloadedFunction(integer, integer)
+RETURNS integer
+AS
+$$
+BEGIN
+RETURN $1 + $2;
+END;
+$$
+LANGUAGE plpgsql;
+GO
+
+CREATE FUNCTION OverloadedFunction(float, float)
+RETURNS float
+AS
+$$
+BEGIN
+RETURN $1 + $2;
+END;
+$$
+LANGUAGE plpgsql;
+GO
+
+DROP FUNCTION OverloadedFunction(integer, integer);
+GO
+
+DROP FUNCTION OverloadedFunction(float, float);
+GO
+
+-- Create or replace function names via PG port
+CREATE OR REPLACE FUNCTION OverloadedFunction(integer, integer)
+RETURNS integer
+AS
+$$
+BEGIN
+RETURN $1 + $2;
+END;
+$$
+LANGUAGE plpgsql;
+GO
+
+CREATE OR REPLACE FUNCTION OverloadedFunction(float, float)
+RETURNS float
+AS
+$$
+BEGIN
+RETURN $1 + $2;
+END;
+$$
+LANGUAGE plpgsql;
+GO
+
+DROP FUNCTION OverloadedFunction(integer, integer);
+GO
+
+DROP FUNCTION OverloadedFunction(float, float);
+GO
+
+-- Overloaded procedures via PG port
+CREATE OR REPLACE PROCEDURE OverloadedProcedure(IN a FLOAT, IN b FLOAT, OUT c FLOAT)
+LANGUAGE plpgsql
+AS 
+$$
+BEGIN 
+c := a + b;
+END;
+$$;
+GO
+
+CREATE OR REPLACE PROCEDURE OverloadedProcedure(IN a INT, IN b INT, OUT c INT)
+LANGUAGE plpgsql
+AS 
+$$
+BEGIN
+c := a + b;
+END;
+$$;
+GO
+
+DROP PROCEDURE OverloadedProcedure(integer, integer);
+GO
+
+DROP PROCEDURE OverloadedProcedure(float, float);
+GO

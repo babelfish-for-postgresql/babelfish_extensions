@@ -1,0 +1,146 @@
+sp_procedure_params_100_managed NULL
+go
+
+sp_procedure_params_100_managed ''
+go
+
+sp_procedure_params_100_managed 'bABEl_3254_p1'
+go
+
+sp_procedure_params_100_managed 'invalid_name'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p1          '
+go
+
+sp_procedure_params_100_managed '          babel_3254_p1'
+go
+
+sp_procedure_params_100_managed 'babel_    3254_p1'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema=NULL
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p1', @group_number=1, @procedure_schema=''
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='invalid_schema'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema=NULL
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1     '
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='      babel_3254_s1'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_    3254_s1'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name=NULL
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name=''
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@A'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@a    '
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='    @a'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='@   a'
+go
+
+sp_procedure_params_100_managed @procedure_name='babel_3254_p6', @group_number=1, @procedure_schema='babel_3254_s1', @parameter_name='invalid_name'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p1'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p2'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p3'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p4'
+go
+
+sp_procedure_params_100_managed 'babel_3254_p5'
+go
+
+-- will result no rows as babel_3254_p6 is in babel_3254_s1 schema
+sp_procedure_params_100_managed 'babel_3254_p6'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p6', @procedure_schema = 'babel_3254_s1'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @group_number = 1
+go
+
+-- group number anything other than 1 should return no rows
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @group_number = 2
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p2', @group_number = 3
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p3', @group_number = 4
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p4', @group_number = 5
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p5', @group_number = 6
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p1', @parameter_name = '@a'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p2', @parameter_name = '@b'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p3', @parameter_name = '@c'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p4', @parameter_name = '@d'
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p5', @parameter_name = '@e'
+go
+
+sp_procedure_params_100_managed @procedure_name = ''
+go
+
+-- reset the login password
+ALTER LOGIN babel_3254_l1 WITH PASSWORD = '12345678'
+GO
+
+select rolname, login_name from sys.babelfish_authid_user_ext where login_name = 'babel_3254_l1'
+go
+
+-- check for the user having non-default schema
+-- tsql user=babel_3254_l1 password=12345678
+select default_schema_name from sys.babelfish_authid_user_ext WHERE orig_username = user_name() AND database_name = db_name();
+go
+
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7'
+go
+
+-- should return no rows as babel_3254_p7 is in babel_3254_s1 schema
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7', @procedure_schema = 'dbo'
+go
+
+-- should return the result set as babel_3254_p7 is in babel_3254_s1 schema
+sp_procedure_params_100_managed @procedure_name = 'babel_3254_p7', @procedure_schema = 'babel_3254_s1'
+go
+
+

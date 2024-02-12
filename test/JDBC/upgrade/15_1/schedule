@@ -55,7 +55,7 @@ BABEL-2944
 BABEL-2955
 BABEL-3000
 BABEL-3000-dep
-BABEL-3010
+BABEL-3010-before-15_6
 BABEL-3116
 BABEL-3117
 BABEL-3118
@@ -400,3 +400,4 @@ drop_index-before-15_6-or-16_2
 BABEL-4606
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
+babel-4517

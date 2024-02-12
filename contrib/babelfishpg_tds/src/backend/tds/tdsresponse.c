@@ -125,6 +125,8 @@ static bool markErrorFlag = false;
 static TdsColumnMetaData *colMetaData = NULL;
 static List *relMetaDataInfoList = NULL;
 
+static Oid sys_vector_oid = InvalidOid;
+
 static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
@@ -132,6 +134,7 @@ static void ResetTdsEstateErrorData(void);
 static void SetAttributesForColmetada(TdsColumnMetaData *col);
 static int32 resolve_numeric_typmod_from_exp(Plan *plan, Node *expr);
 static int32 resolve_numeric_typmod_outer_var(Plan *plan, AttrNumber attno);
+static bool is_sys_vector_datatype(Oid oid);
 
 static inline void
 SendPendingDone(bool more)
@@ -1086,6 +1089,9 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 0xFFFF;
 			break;
 		case TDS_SEND_VARCHAR:
+			/* If this is vector datatype, we should adjust the typmod */
+			if (is_sys_vector_datatype(col->pgTypeOid))
+				atttypmod = -1;
 			SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 											attcollation, (atttypmod == -1) ?
 											atttypmod : (atttypmod - 4));
@@ -1845,6 +1851,10 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 												att->attcollation, (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_VARCHAR:
+				/* If this is vector datatype, we should adjust the typmod */
+				if (is_sys_vector_datatype(col->pgTypeOid))
+					atttypmod = -1;
+
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
 												atttypmod : (atttypmod - 4));
@@ -3528,4 +3538,19 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 
 		ReleaseSysCache(tp);
 	}
+}
+
+static bool
+is_sys_vector_datatype(Oid oid)
+{
+	Oid nspoid;
+	if (sys_vector_oid == InvalidOid)
+	{
+		nspoid = get_namespace_oid("sys", true);
+		if (nspoid == InvalidOid)
+			return false;
+
+		sys_vector_oid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("vector"), ObjectIdGetDatum(nspoid));
+	}
+	return sys_vector_oid == oid;
 }

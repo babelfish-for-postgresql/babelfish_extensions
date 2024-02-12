@@ -116,6 +116,8 @@ Drop Table IF EXISTS babelfish_migration_mode_table
 
 DROP TABLE IF EXISTS geometry_test
 
+DROP TYPE IF EXISTS dbo.GeospatialUDT;
+
 DROP FUNCTION IF EXISTS geom_schema.STDistance
 
 DROP SCHEMA IF EXISTS geom_schema

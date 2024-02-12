@@ -214,8 +214,30 @@ go
 grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
 
-revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz from babel_4344_u1;
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
+
+-- unsupported features
+grant select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 with grant option;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: GRANT on SCHEMA .. WITH GRANT OPTION is not yet supported in Babelfish.)~~
+
+
+revoke select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1 cascade;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REVOKE on SCHEMA .. CASCADE is not yet supported in Babelfish.)~~
+
+
+revoke grant option for select on schema::abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: REVOKE GRANT OPTION FOR .. on SCHEMA is not yet supported in Babelfish.)~~
+
 
 grant select on abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz.abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwzyzabcdefghijklmnopqrstuvwzyz to babel_4344_u1;
 go
@@ -706,28 +728,84 @@ go
 -- REVOKE OBJECT privileges
 use babel_4344_d1;
 go
+
 REVOKE SELECT on schema::"bAbel_4344 s1" from "BABEL_4344_U1";
 go
 REVOKE SELECT on schema::"update pg_class set oid = 0 where relname = 'babel_4344_t1'" from BABEL_4344_U1;
 go
-REVOKE all on babel_4344_s1.babel_4344_t1 FROM babel_4344_u1;
+GRANT SELECT on babel_4344_t1 to BABEL_4344_U1;
 go
-REVOKE select on babel_4344_s1.babel_4344_t3(a) FROM babel_4344_u1;
+
+-- psql
+-- should show original object names
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
-REVOKE select on babel_4344_s1.babel_4344_v1 FROM babel_4344_u1;
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1
+~~END~~
+
+
+-- tsql
+-- rename the objects where permissions are already granted
+sp_rename 'babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
-REVOKE execute on babel_4344_s1.babel_4344_p1 FROM babel_4344_u1;
+sp_rename 'babel_4344_s1.babel_4344_t1', 'babel_4344_t1_new', 'OBJECT';
 go
-REVOKE execute on babel_4344_s1.babel_4344_f1 FROM babel_4344_u1;
+sp_rename 'babel_4344_s1.babel_4344_t3', 'babel_4344_t3_new', 'OBJECT';
 go
-REVOKE all on babel_4344_s1.babel_4344_f1 FROM babel_4344_u1;
+sp_rename 'babel_4344_s1.babel_4344_v1', 'babel_4344_v1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_p1', 'babel_4344_p1_new', 'OBJECT';
+go
+sp_rename 'babel_4344_s1.babel_4344_f1', 'babel_4344_f1_new', 'OBJECT';
+go
+
+-- psql
+-- should show renamed objects
+select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_f1_new#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_p1_new#!#128#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_t1_new#!#47#!#babel_4344_d1_babel_4344_u1
+babel_4344_s1#!#babel_4344_v1_new#!#2#!#babel_4344_d1_babel_4344_u1
+~~END~~
+
+
+-- tsql
+-- permissions are transferred to the new objects 
+-- Revoke permissions from the new objects
+REVOKE all on babel_4344_s1.babel_4344_t1_new FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_t3_new(a) FROM babel_4344_u1;
+go
+REVOKE select on babel_4344_s1.babel_4344_v1_new FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_p1_new FROM babel_4344_u1;
+go
+REVOKE execute on babel_4344_s1.babel_4344_f1_new FROM babel_4344_u1;
+go
+REVOKE all on babel_4344_s1.babel_4344_f1_new FROM babel_4344_u1;
 go
 
 -- tsql user=babel_4344_l1 password=12345678
 -- User has SCHEMA privileges, should be accessible.
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1
+select * from babel_4344_t1_new;
+go
+~~START~~
+int
+~~END~~
+
+select * from babel_4344_s1.babel_4344_t1_new
 go
 ~~START~~
 int
@@ -737,31 +815,31 @@ int
 4
 ~~END~~
 
-insert into babel_4344_s1.babel_4344_t1 values(5);
+insert into babel_4344_s1.babel_4344_t1_new values(5);
 go
 ~~ROW COUNT: 1~~
 
-select * from babel_4344_s1.babel_4344_t3;
+select * from babel_4344_s1.babel_4344_t3_new;
 go
 ~~START~~
 int#!#int
 ~~END~~
 
-select * from babel_4344_s1.babel_4344_v1;
+select * from babel_4344_s1.babel_4344_v1_new;
 go
 ~~START~~
 int
 2
 ~~END~~
 
-exec babel_4344_s1.babel_4344_p1;
+exec babel_4344_s1.babel_4344_p1_new;
 go
 ~~START~~
 int
 2
 ~~END~~
 
-select * from babel_4344_s1.babel_4344_f1();
+select * from babel_4344_s1.babel_4344_f1_new();
 go
 ~~START~~
 int
@@ -791,7 +869,7 @@ go
 select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
 go
 ~~START~~
-int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
 ~~END~~
 
 
@@ -799,48 +877,48 @@ int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar
 -- User has no privileges, shouldn't be accessible.
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1;
+select * from babel_4344_s1.babel_4344_t1_new;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel_4344_t1)~~
+~~ERROR (Message: permission denied for table babel_4344_t1_new)~~
 
-insert into babel_4344_s1.babel_4344_t1 values(5);
+insert into babel_4344_s1.babel_4344_t1_new values(5);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel_4344_t1)~~
+~~ERROR (Message: permission denied for table babel_4344_t1_new)~~
 
-select * from babel_4344_s1.babel_4344_t3;
+select * from babel_4344_s1.babel_4344_t3_new;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel_4344_t3)~~
+~~ERROR (Message: permission denied for table babel_4344_t3_new)~~
 
-select * from babel_4344_s1.babel_4344_v1;
+select * from babel_4344_s1.babel_4344_v1_new;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for view babel_4344_v1)~~
+~~ERROR (Message: permission denied for view babel_4344_v1_new)~~
 
-exec babel_4344_s1.babel_4344_p1;
+exec babel_4344_s1.babel_4344_p1_new;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for procedure babel_4344_p1)~~
+~~ERROR (Message: permission denied for procedure babel_4344_p1_new)~~
 
-select * from babel_4344_s1.babel_4344_f1();
+select * from babel_4344_s1.babel_4344_f1_new();
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for function babel_4344_f1)~~
+~~ERROR (Message: permission denied for function babel_4344_f1_new)~~
 
 use master;
 go
 
 -- psql
 -- grant object permission
-grant select on babel_4344_s1.babel_4344_t1 to babel_4344_d1_babel_4344_u1;
+grant select on babel_4344_s1.babel_4344_t1_new to babel_4344_d1_babel_4344_u1;
 go
 
 -- tsql
@@ -855,7 +933,7 @@ go
 -- tsql user=babel_4344_l1 password=12345678
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1; -- accessible
+select * from babel_4344_s1.babel_4344_t1_new; -- accessible
 go
 ~~START~~
 int
@@ -877,11 +955,11 @@ go
 -- tsql user=babel_4344_l1 password=12345678
 use babel_4344_d1;
 go
-select * from babel_4344_s1.babel_4344_t1; -- not accessible
+select * from babel_4344_s1.babel_4344_t1_new; -- not accessible
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table babel_4344_t1)~~
+~~ERROR (Message: permission denied for table babel_4344_t1_new)~~
 
 use master
 go
@@ -894,16 +972,16 @@ go
 drop schema "update pg_class set oid = 0 where relname = 'babel_4344_t1'";
 go
 
-drop table babel_4344_t1;
+drop table babel_4344_t1_new;
 go
 
-drop table babel_4344_s1.babel_4344_t1;
+drop table babel_4344_s1.babel_4344_t1_new;
 go
 
 drop table babel_4344_t3;
 go
 
-drop table babel_4344_s1.babel_4344_t3;
+drop table babel_4344_s1.babel_4344_t3_new;
 go
 
 drop table babel_4344_s1.babel_4344_t2;
@@ -912,7 +990,7 @@ go
 drop view babel_4344_v1;
 go
 
-drop view babel_4344_s1.babel_4344_v1;
+drop view babel_4344_s1.babel_4344_v1_new;
 go
 
 drop view babel_4344_s1.babel_4344_v2;
@@ -921,7 +999,7 @@ go
 drop proc babel_4344_p1;
 go
 
-drop proc babel_4344_s1.babel_4344_p1;
+drop proc babel_4344_s1.babel_4344_p1_new;
 go
 
 drop proc babel_4344_s1.babel_4344_p2;
@@ -933,7 +1011,7 @@ go
 drop function babel_4344_f1;
 go
 
-drop function babel_4344_s1.babel_4344_f1;
+drop function babel_4344_s1.babel_4344_f1_new;
 go
 
 drop function babel_4344_s1.babel_4344_f2;

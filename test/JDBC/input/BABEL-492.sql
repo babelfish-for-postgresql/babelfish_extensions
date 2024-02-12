@@ -8,31 +8,21 @@ CREATE PROC p492 @a INT, @b FLOAT AS
 SELECT @a, @b;
 GO
 
-CREATE PROC p492 @a INT, @b DECIMAL AS
-SELECT @a, @b;
-GO
-
 EXEC p492 4;
 GO
 
 DROP PROC p492(INT, FLOAT);
-DROP PROC p492(INT, DECIMAL);
 GO
 
--- Multiple procedures with different number of parameters
+-- Procedures with different number of parameters
 CREATE PROC p492 @a INT AS -- Accepts 1 parameter
 SELECT @a;
-GO
-
-CREATE PROC p492 @a INT, @b FLOAT, @c DECIMAL AS -- Accepts 3 parameters
-SELECT @a, @b;
 GO
 
 EXEC p492 1, 2; -- 2 arguments supplied
 GO
 
 DROP PROC p492(INT);
-DROP PROC p492(INT, FLOAT, DECIMAL);
 GO
 
 -- Test for unique functions/procedures (Only one definition exists)

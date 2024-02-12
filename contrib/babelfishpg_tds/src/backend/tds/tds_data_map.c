@@ -188,6 +188,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
 	/* Mapping TDS listener sender to basic Postgres datatypes. */
 	{"pg_catalog", "oid", TDS_TYPE_INTEGER, 4, 1, TDS_SEND_INTEGER, TDS_RECV_INVALID},
 	{"pg_catalog", "sql_identifier", TDS_TYPE_VARCHAR, -1, 1, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
+	{"sys", "vector", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_VARCHAR},
 	{"pg_catalog", "name", TDS_TYPE_VARCHAR, -1, 1, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "character_data", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "bool", TDS_TYPE_BIT, 1, 1, TDS_SEND_BIT, TDS_RECV_INVALID},
@@ -221,7 +222,9 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
 	{"pg_catalog", "tid", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "inet", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
 	{"pg_catalog", "interval", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
-	{"pg_catalog", "bytea", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_INVALID}
+	{"pg_catalog", "bytea", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_INVALID},
+	{"pg_catalog", "record", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID},
+	{"pg_catalog", "_record", TDS_TYPE_VARCHAR, -1, 2, TDS_SEND_VARCHAR, TDS_RECV_INVALID}
 };
 
 size_t		TdsIoFunctionRawData_datasize = lengthof(TdsIoFunctionRawData_data);

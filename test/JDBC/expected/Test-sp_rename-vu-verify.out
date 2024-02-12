@@ -700,7 +700,7 @@ ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-[sp_rename_vu_td1_col1_mixed]#!#dbo#!#sp_rename_vu_table_delim
+[SP_rename_vu_td1_col1_MIXED]#!#dbo#!#sp_rename_vu_table_delim
 sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
 ~~END~~
 
@@ -714,7 +714,7 @@ ORDER BY COLUMN_NAME, TABLE_SCHEMA, TABLE_NAME;
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-[  sp_rename_vu_td1_col1_mixed_spaces   ]#!#dbo#!#sp_rename_vu_table_delim
+[  SP_rename_vu_td1_col1_MIXED_spaces   ]#!#dbo#!#sp_rename_vu_table_delim
 sp_rename_vu_td1_col2#!#dbo#!#sp_rename_vu_table_delim
 ~~END~~
 

@@ -191,6 +191,10 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME, sys_schema_oid);
 
+	/* bbf_schema_perms */
+	bbf_schema_perms_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME, sys_schema_oid);
+	bbf_schema_perms_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME, sys_schema_oid);
+
 	/* bbf_servers_def */
 	bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME, sys_schema_oid);
@@ -1559,6 +1563,8 @@ static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
 
 /* Condition function declaration */
@@ -1583,6 +1589,7 @@ static void alter_guest_schema_for_db(const char *dbname);
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
 static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
+static void rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type);
 
 static int get_privilege_of_object(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 
@@ -1703,6 +1710,14 @@ Rule		must_match_rules_function[] =
 	"pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
 };
 
+/* babelfish_schema_permissions */
+Rule		must_match_rules_schema_permission[] =
+{
+	{"<schema_name> in babelfish_schema_permissions must also exist in babelfish_namespace_ext",
+	"babelfish_namespace_ext", "nspname", NULL, get_perms_schema_name, NULL, check_exist, NULL},
+	{"<grantee> in babelfish_schema_permissions must also exist in pg_authid",
+	"pg_authid", "rolname", NULL, get_perms_grantee_name, NULL, check_exist, NULL}
+};
 
 /* babelfish_server_options */
 Rule		must_match_rules_srv_options[] =
@@ -1800,6 +1815,7 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t		num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
 	size_t		num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
 	size_t		num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
+	size_t		num_must_match_rules_schema_permission = sizeof(must_match_rules_schema_permission) / sizeof(must_match_rules_schema_permission[0]);
 	size_t		num_must_match_rules_srv_options = sizeof(must_match_rules_srv_options) / sizeof(must_match_rules_srv_options[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
@@ -1829,6 +1845,9 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_function, num_must_match_rules_function,
 								 bbf_function_ext_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_schema_permission, num_must_match_rules_schema_permission,
+								 bbf_schema_perms_oid, res_tupstore, res_tupdesc))
 		||
 		!(check_must_match_rules(must_match_rules_srv_options, num_must_match_rules_srv_options,
 								 bbf_servers_def_oid, res_tupstore, res_tupdesc))
@@ -2115,6 +2134,24 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
 
 	return NameGetDatum(&(func->funcname));
+}
+
+static Datum
+get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		isNull;
+	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
+
+	return schema_name;
+}
+
+static Datum
+get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
+{
+	bool		isNull;
+	Datum		grantee_name = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
+
+	return grantee_name;
 }
 
 static Datum
@@ -2624,16 +2661,28 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
 	{
+		/*
+		 * In case of renaming a table, view, procedure and function, modify the object
+		 * names present in all the Babelfish catalogs which stores these object names to
+		 * have consistency with the new names.
+		 *
+		 * List of catalogs which are updated here:
+		 * babelfish_schema_permissions, babelfish_function_ext, babelfish_view_def
+		 */
 		case OBJECT_TABLE:
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_VIEW:
 			rename_view_update_bbf_catalog(stmt);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_PROCEDURE:
 			rename_procfunc_update_bbf_catalog(stmt);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_FUNCTION:
 			rename_procfunc_update_bbf_catalog(stmt);
+			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_SEQUENCE:
 			break;
@@ -2646,6 +2695,120 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 		default:
 			break;
 	}
+}
+
+/*
+ * rename_object_update_bbf_schema_permission_catalog
+ *
+ * In case of renaming a table, view, procedure and function, modify the 'object_name' in
+ * 'babelfish_schema_permissions' to have consistency with the new names.
+ */
+static void
+rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type)
+{
+	/* Update 'object_name' in 'babelfish_schema_permissions' */
+	Relation	bbf_schema_rel;
+	TupleDesc	bbf_schema_dsc;
+	ScanKeyData key[4];
+	HeapTuple	tuple_bbf_schema;
+	HeapTuple	new_tuple;
+	SysScanDesc scan;
+	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {0};
+	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
+	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
+	char		*logical_schema_name = NULL;
+	char		*object_name = NULL;
+	const char	*object_type = NULL;
+	int16		dbid = get_cur_db_id();
+	ObjectWithArgs *objwargs;
+
+	/* open the catalog table */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
+	/* get the description of the table */
+	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
+
+	if (rename_type == OBJECT_TABLE || rename_type == OBJECT_VIEW)
+	{
+		logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
+		object_name = stmt->relation->relname;
+		object_type = OBJ_RELATION;
+	}
+	else
+	{
+		if (rename_type == OBJECT_PROCEDURE)
+			object_type = OBJ_PROCEDURE;
+		else if (rename_type == OBJECT_FUNCTION)
+			object_type = OBJ_FUNCTION;
+		objwargs = (ObjectWithArgs *) stmt->object;
+		DeconstructQualifiedName(objwargs->objname, &logical_schema_name, &object_name);
+	}
+
+	/* search for the row for update => build the key */
+	ScanKeyInit(&key[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&key[1], 0,
+				Anum_bbf_schema_perms_schema_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
+	ScanKeyEntryInitialize(&key[2], 0,
+				Anum_bbf_schema_perms_object_name,
+				BTEqualStrategyNumber, InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ, CStringGetTextDatum(object_name));
+	ScanKeyEntryInitialize(&key[3], 0,
+				Anum_bbf_schema_perms_object_type,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(object_type));
+
+	/* scan */
+	scan = systable_beginscan(bbf_schema_rel,
+			get_bbf_schema_perms_oid(),
+			false, NULL, 4, key);
+
+	/* get the scan result -> original tuple */
+	tuple_bbf_schema = systable_getnext(scan);
+
+	/*
+	 * If a permission on the same object is granted to multiple grantees,
+	 * there can be multiple rows in the catalog corresponding to each grantee name.
+	 * All such rows need to be updated with the new name.
+	 *
+	 * It is OK to not throw an error if an entry is not found in 'babelfish_schema_permissions'.
+	 * Explaination: An entry is added to 'babelfish_schema_permissions' only if an object has an explicit GRANT on it.
+	 * It is not necessary that each RENAME on an object has a GRANT of that object too.
+	 * Hence, there can be missing entries.
+	 */
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		/* create new tuple to substitute */
+		new_record_bbf_schema[Anum_bbf_schema_perms_object_name - 1] = CStringGetTextDatum(stmt->newname);
+		new_record_repl_bbf_schema[Anum_bbf_schema_perms_object_name - 1] = true;
+
+		new_tuple = heap_modify_tuple(tuple_bbf_schema,
+									bbf_schema_dsc,
+									new_record_bbf_schema,
+									new_record_nulls_bbf_schema,
+									new_record_repl_bbf_schema);
+
+		CatalogTupleUpdate(bbf_schema_rel, &new_tuple->t_self, new_tuple);
+
+		heap_freetuple(new_tuple);
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+
+	if (logical_schema_name != NULL)
+		pfree(logical_schema_name);
+	if (object_name != NULL)
+		pfree(object_name);
+
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
 static void
@@ -2838,7 +3001,8 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 				const char *object_name,
 				int permission,
 				const char *grantee,
-				const char *object_type)
+				const char *object_type,
+				const char *func_args)
 {
 	Relation	bbf_schema_rel;
 	TupleDesc	bbf_schema_dsc;
@@ -2866,6 +3030,10 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	new_record_bbf_schema[Anum_bbf_schema_perms_permission - 1] = Int32GetDatum(permission);
 	new_record_bbf_schema[Anum_bbf_schema_perms_grantee - 1] = CStringGetTextDatum(pstrdup(grantee));
 	new_record_bbf_schema[Anum_bbf_schema_perms_object_type - 1] = CStringGetTextDatum(pstrdup(object_type));
+	if (func_args)
+		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
+	else
+		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -3243,10 +3411,11 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				int new_permission,
 				const char *grantee,
 				const char *object_type,
-				bool is_grant)
+				bool is_grant,
+				const char *func_args)
 {
 	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, false))
-		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type);
+		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
 }
@@ -3343,6 +3512,7 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	HeapTuple	tuple_bbf_schema;
 	const char	*object_name;
 	const char	*object_type;
+	const char	*func_args = NULL;
 	int			current_permission;
 	ScanKeyData scanKey[3];
 	int16		dbid = get_cur_db_id();
@@ -3378,41 +3548,43 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	while (HeapTupleIsValid(tuple_bbf_schema))
 	{
 		bool isnull;
+		Datum datum;
 		object_name = pstrdup(TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_name, dsc, &isnull)));
 		object_type = pstrdup(TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_type, dsc, &isnull)));
 		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
-
+		datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_function_args, dsc, &isnull);
+		if (!isnull)
+			func_args = TextDatumGetCString(datum);
 		/* For each object, grant the permission explicitly. */
 		if (strcmp(object_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA) != 0)
 		{
-			StringInfoData	query;
+			const char	*query = NULL;
 			char			*schema;
 			List			*res;
-			Node			*res_stmt;
+			GrantStmt		*grant;
 			PlannedStmt		*wrapper;
 			const char		*priv_name;
 
 			schema = get_physical_schema_name((char *)db_name, schema_name);
-			initStringInfo(&query);
 			/* Check if the permission to be REVOKED on SCHEMA exists on the OBJECT. */
 
 			if (current_permission & permission)
 			{
 				priv_name = privilege_to_string(permission);
 				if (strcmp(object_type, OBJ_RELATION) == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
+					query = psprintf("GRANT %s ON [%s].[%s] TO %s", priv_name, schema, object_name, grantee);
 				else if (strcmp(object_type, OBJ_FUNCTION) == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON FUNCTION \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
+					query = psprintf("GRANT %s ON FUNCTION [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
 				else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
-					appendStringInfo(&query, "GRANT \"%s\" ON PROCEDURE \"%s\".\"%s\" TO \"%s\"; ", priv_name, schema, object_name, grantee);
-				res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-				res_stmt = ((RawStmt *) linitial(res))->stmt;
+					query = psprintf("GRANT %s ON PROCEDURE [%s].[%s](%s) TO %s", priv_name, schema, object_name, func_args, grantee);
+				res = raw_parser(query, RAW_PARSE_DEFAULT);
+				grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 
 				/* need to make a wrapper PlannedStmt */
 				wrapper = makeNode(PlannedStmt);
 				wrapper->commandType = CMD_UTILITY;
 				wrapper->canSetTag = false;
-				wrapper->utilityStmt = res_stmt;
+				wrapper->utilityStmt = (Node *) grant;
 				wrapper->stmt_location = 0;
 				wrapper->stmt_len = 1;
 
