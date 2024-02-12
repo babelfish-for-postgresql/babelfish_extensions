@@ -796,7 +796,7 @@ GO
 SELECT location.STAsBinary() from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
-SELECT location.STDistance(geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326)) from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+SELECT location.STDistance(location) from SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 GO
 
 SELECT [SPATIALPOINTGEOG_dt].[location].[Long] from [SPATIALPOINTGEOG_dt] ORDER BY location.Lat;
