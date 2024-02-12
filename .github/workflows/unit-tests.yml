@@ -51,8 +51,7 @@ jobs:
         timeout-minutes: 60
         run: |
           sudo ~/psql/bin/psql -d jdbc_testdb -U runner -f .github/scripts/unit_tests.sql > >(tee ~/psql/output.out) 2>&1
-          err=$(awk -F '|' '$2 ~ /ERROR:  schema \x22babelfishpg_unit\x22 does not exist/'  ~/psql/output.out  | wc -l)
-          if [ "$err" -gt 0 ]; then
+          if grep -w "ERROR:  schema \x22babelfishpg_unit\x22 does not exist" ~/psql/output.out; then
             echo "babelfishpg_unit extension is not installed. Check the stderr for more details."
             exit 1
           fi
