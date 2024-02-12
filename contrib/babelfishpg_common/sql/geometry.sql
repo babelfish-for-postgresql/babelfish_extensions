@@ -75,14 +75,19 @@ CREATE OR REPLACE FUNCTION sys.Geometry__stgeomfromtext(text, integer)
 		srid integer;
 		Geomtype text;
 		geom sys.GEOMETRY; 
+		Zmflag smallint;
 	BEGIN
 		srid := $2;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
 			geom = (SELECT sys.stgeomfromtext_helper($1, $2));
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
+			Zmflag = (SELECT sys.ST_Zmflag(geom));
 			IF Geomtype = 'ST_Point' THEN
-				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				-- if the point instance has z flag only then Zmflag = 1
+				-- if the point instance has m flag only then Zmflag = 2
+				-- if the point instance has both z and m flags then Zmflag = 3
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
 					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN geom;
@@ -117,7 +122,7 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOMETRY)
 
 CREATE OR REPLACE FUNCTION sys.GEOMETRY(sys.bpchar)
 	RETURNS sys.GEOMETRY
-    AS $$
+	AS $$
 	BEGIN
 		RETURN (SELECT sys.charTogeomhelper($1));
 	END;
@@ -284,14 +289,19 @@ CREATE OR REPLACE FUNCTION sys.Geometry__STPointFromText(text, integer)
 		srid integer;
 		Geomtype text;
 		geom sys.GEOMETRY;
+		Zmflag smallint;
 	BEGIN
 		srid := $2;
 		IF srid >= 0 AND srid <= 999999 THEN
 			-- Call the underlying function after preprocessing
 			geom = (SELECT sys.stgeomfromtext_helper($1, $2));
 			Geomtype = (SELECT sys.ST_GeometryType(geom));
+			Zmflag = (SELECT sys.ST_Zmflag(geom));
 			IF Geomtype = 'ST_Point' THEN
-				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				-- if the point instance has z flag only then Zmflag = 1
+				-- if the point instance has m flag only then Zmflag = 2
+				-- if the point instance has both z and m flags then Zmflag = 3
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
 					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
 					RETURN geom;
@@ -399,12 +409,17 @@ CREATE OR REPLACE FUNCTION sys.charTogeomhelper(sys.bpchar)
 	DECLARE
 		Geomtype text;
 		geom sys.GEOMETRY; 
+		Zmflag smallint;
 	BEGIN
 		-- Call the underlying function after preprocessing
 		geom = (SELECT sys.stgeomfromtext_helper($1, 0));
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
-			IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+			-- if the point instance has z flag only then Zmflag = 1
+			-- if the point instance has m flag only then Zmflag = 2
+			-- if the point instance has both z and m flags then Zmflag = 3
+			IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
 				RAISE EXCEPTION 'Unsupported flags';
 			ELSE
 				RETURN geom;
