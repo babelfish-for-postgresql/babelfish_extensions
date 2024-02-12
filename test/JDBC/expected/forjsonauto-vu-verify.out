@@ -157,7 +157,7 @@ EXECUTE forjson_vu_p_6
 GO
 ~~START~~
 nvarchar
-[{"id": 1, "firstname": "j", "details": {"productId": 1}}, {"id": 1, "firstname": "e", "details": {"productId": 1}}]
+[{"id": 1, "firstname": "j", "details": [{"productId": 1}, {"productId": 1}]}, {"id": 1, "firstname": "e", "details": [{"productId": 1}, {"productId": 1}]}]
 ~~END~~
 
 
@@ -198,7 +198,7 @@ EXECUTE forjson_vu_p_11
 GO
 ~~START~~
 nvarchar
-[{"id": 1, "details": {"productId": 1}}]
+[{"id": 1, "details": [{"productId": 1}]}]
 ~~END~~
 
 
@@ -206,7 +206,7 @@ EXECUTE forjson_vu_p_12
 GO
 ~~START~~
 nvarchar
-[{"id": 1, "firstname": "j", "details": {"lastname": "o", "productId": 1}}, {"id": 1, "firstname": "e", "details": {"lastname": "l", "productId": 1}}]
+[{"id": 1, "firstname": "j", "details": [{"lastname": "o", "productId": 1}, {"lastname": "o", "productId": 1}]}, {"id": 1, "firstname": "e", "details": [{"lastname": "l", "productId": 1}, {"lastname": "l", "productId": 1}]}]
 ~~END~~
 
 
@@ -222,7 +222,7 @@ EXECUTE forjson_vu_p_14
 GO
 ~~START~~
 nvarchar
-[{"id": 1, "firstname": "j", "details": {"o": [{"productId": 1}, {"productId": 1}], "price": "30"}}, {"id": 1, "firstname": "e", "details": {"o": [{"productId": 1}, {"productId": 1}], "price": "30"}}]
+[{"id": 1, "firstname": "j", "details": [{"o": [{"productId": 1}, {"productId": 1}], "price": "30"}, {"o": [{"productId": 1}, {"productId": 1}], "price": "20"}]}, {"id": 1, "firstname": "e", "details": [{"o": [{"productId": 1}, {"productId": 1}], "price": "30"}, {"o": [{"productId": 1}, {"productId": 1}], "price": "20"}]}]
 ~~END~~
 
 
