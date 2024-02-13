@@ -1356,11 +1356,6 @@ CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer)
 	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.varcharToGeography_helper(sys.varchar, integer)
-	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3','LWGEOM_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
 CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
