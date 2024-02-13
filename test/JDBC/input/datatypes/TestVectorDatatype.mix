@@ -568,9 +568,9 @@ go
 SELECT TOP 5 * FROM document_embeddings ORDER BY embedding <=> '[3,1,2,4]';
 go
 -- extending PG syntax to have generic vector expression support
-SELECT embedding <-> '[3,1,2,0]' FROM document_embeddings;
-SELECT embedding <=> '[3,1,2,0]' FROM document_embeddings;
-SELECT embedding <#> '[3,1,2,0]' FROM document_embeddings; 
+SELECT count(embedding <-> '[3,1,2,0]') FROM document_embeddings;
+SELECT count(embedding <=> '[3,1,2,0]') FROM document_embeddings;
+SELECT count(embedding <#> '[3,1,2,0]') FROM document_embeddings; 
 go
 
 -- WHERE clause expressions

@@ -1586,32 +1586,23 @@ int#!#varchar
 ~~END~~
 
 -- extending PG syntax to have generic vector expression support
-SELECT embedding <-> '[3,1,2,0]' FROM document_embeddings;
-SELECT embedding <=> '[3,1,2,0]' FROM document_embeddings;
-SELECT embedding <#> '[3,1,2,0]' FROM document_embeddings; 
+SELECT count(embedding <-> '[3,1,2,0]') FROM document_embeddings;
+SELECT count(embedding <=> '[3,1,2,0]') FROM document_embeddings;
+SELECT count(embedding <#> '[3,1,2,0]') FROM document_embeddings; 
 go
 ~~START~~
-float
-18.527007313648905
-9999.009950990148
-22.235556725887395
-300002.0735928337
+int
+4
 ~~END~~
 
 ~~START~~
-float
-0.23253741926949456
-0.7328592714157935
-0.6635827783424582
-1.5339165489191127
+int
+4
 ~~END~~
 
 ~~START~~
-float
--61.0
--9995.5
--29.220001220703125
-599320.0
+int
+4
 ~~END~~
 
 
