@@ -752,13 +752,39 @@ TsqlExpressionContains(char *colId, Node *search_expr, core_yyscan_t yyscanner)
 static Node *
 makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 {
-    Node *col;
-    List *args;
-    Node *replaceSpecialCharsFunc;
-    List *replaceSpecialCharsArgs;
+    Node	*col;
+    List	*args;
+    Node	*replaceSpecialCharsFunc;
+    List	*replaceSpecialCharsArgs;
+	char 	*tableName = NULL;
+    char 	*columnName = NULL;
+	size_t	tableNameLength;
+	char 	*dot;
 
-    /* Create a ColumnRef node for the column */
-    col = makeColumnRef(colId, NIL, -1, yyscanner);
+    /* Parse the column reference for alias table */
+    dot = strchr(colId, '.');
+    if (dot) {
+        columnName = dot + 1; /* Column name after the dot */
+
+		/* Determine the length of the table alias */
+		tableNameLength = dot - colId;
+
+		/* Allocate memory for the table alias and copy it */
+		tableName = (char *) palloc(tableNameLength + 1);
+		strncpy(tableName, colId, tableNameLength);
+		tableName[tableNameLength] = '\0'; // Null-terminate the string
+    } else {
+        columnName = colId;
+    }
+
+    if (tableName) {
+		/* If a table alias is present, create column reference to the alias table first and then append the column name */
+		col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
+		((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+    } else {
+		/* Create a ColumnRef node for the column */
+		col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
+	}
 
     /* Create a function call for replace_special_chars_fts(column_name) */
     replaceSpecialCharsArgs = list_make1(col);

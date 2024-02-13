@@ -453,6 +453,15 @@ go
 select * from test_special_char_t where contains(name, '"one < two _ three '' four `     five"');
 go
 
+select t.name from test_special_char_t t where contains(t.name, '"one two"');
+go
+
+select * from test_special_char_t t where contains(t.name, 'one');
+go
+
+select * from test_special_char_t t where contains(t.name, 'two');
+go
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
