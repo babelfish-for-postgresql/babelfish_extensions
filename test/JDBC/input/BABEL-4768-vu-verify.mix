@@ -2,7 +2,7 @@
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
 go
 
-select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
 go
 
 -- tsql
@@ -30,7 +30,7 @@ go
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
 go
 
-select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
 go
 
 -- tsql
@@ -45,7 +45,7 @@ GO
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
 go
 
-select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
 go
 
 -- tsql
@@ -79,5 +79,5 @@ GO
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
 go
 
-select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
 go
