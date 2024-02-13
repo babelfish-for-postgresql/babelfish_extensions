@@ -23,13 +23,25 @@ go
 create proc babel_4768_p1 as select 1;
 go
 
-create proc babel_4768_s1.babel_4768_p1 as select 2;
+create proc babel_4768_s1.babel_4768_p1 @k numeric(25,0) as select 2;
+go
+
+create proc babel_4768_p2 @l datetimeoffset(2) as select 1;
+go
+
+create proc babel_4768_s1.babel_4768_p2 @m text, @n sql_variant as select 2;
 go
 
 CREATE FUNCTION babel_4768_f1() returns int begin declare @a int; set @a = 1; return @a; end 
 go
 
-CREATE FUNCTION babel_4768_s1.babel_4768_f1() returns int begin declare @a int; set @a = 1; return @a; END
+CREATE FUNCTION babel_4768_s1.babel_4768_f1(@k smalldatetime) returns int begin declare @a int; set @a = 1; return @a; END
+go
+
+CREATE FUNCTION babel_4768_f2(@l int) returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+CREATE FUNCTION babel_4768_s1.babel_4768_f2(@m varchar(30), @n float) returns int begin declare @a int; set @a = 1; return @a; END
 go
 
 -- tsql
@@ -52,10 +64,22 @@ GO
 GRANT EXECUTE ON babel_4768_s1.babel_4768_p1 TO babel_4768_u1
 GO
 
+GRANT EXECUTE ON babel_4768_p2 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_s1.babel_4768_p2 TO babel_4768_u1
+GO
+
 GRANT EXECUTE ON babel_4768_f1 TO babel_4768_u1
 GO
 
 GRANT EXECUTE ON babel_4768_s1.babel_4768_f1 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_f2 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_s1.babel_4768_f2 TO babel_4768_u1
 GO
 
 -- GRANT schema level access to babel_4768_u1
@@ -71,8 +95,10 @@ go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
 babel_4768_s1#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>
-babel_4768_s1#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!#
-babel_4768_s1#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!#
+babel_4768_s1#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!#sys.smalldatetime
+babel_4768_s1#!#babel_4768_f2#!#128#!#master_babel_4768_u1#!#f#!#sys.varchar, pg_catalog.float8
+babel_4768_s1#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!#pg_catalog.numeric
+babel_4768_s1#!#babel_4768_p2#!#128#!#master_babel_4768_u1#!#p#!#pg_catalog.text, sys.sql_variant
 babel_4768_s1#!#babel_4768_t1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>
 babel_4768_s1#!#babel_4768_v1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>
 ~~END~~
@@ -84,7 +110,9 @@ go
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
 dbo#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>
 dbo#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!#
+dbo#!#babel_4768_f2#!#128#!#master_babel_4768_u1#!#f#!#pg_catalog.int4
 dbo#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!#
+dbo#!#babel_4768_p2#!#128#!#master_babel_4768_u1#!#p#!#sys.datetimeoffset
 dbo#!#babel_4768_t1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>
 dbo#!#babel_4768_v1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>
 ~~END~~

@@ -13,7 +13,11 @@ sp_rename 'babel_4768_s1.babel_4768_v1', 'babel_4768_v1_new', 'OBJECT';
 go
 sp_rename 'babel_4768_s1.babel_4768_p1', 'babel_4768_p1_new', 'OBJECT';
 go
+sp_rename 'babel_4768_s1.babel_4768_p2', 'babel_4768_p2_new', 'OBJECT';
+go
 sp_rename 'babel_4768_s1.babel_4768_f1', 'babel_4768_f1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_s1.babel_4768_f2', 'babel_4768_f2_new', 'OBJECT';
 go
 
 sp_rename 'babel_4768_t1', 'babel_4768_t1_new', 'OBJECT';
@@ -22,7 +26,11 @@ sp_rename 'babel_4768_v1', 'babel_4768_v1_new', 'OBJECT';
 go
 sp_rename 'babel_4768_p1', 'babel_4768_p1_new', 'OBJECT';
 go
+sp_rename 'babel_4768_p2', 'babel_4768_p2_new', 'OBJECT';
+go
 sp_rename 'babel_4768_f1', 'babel_4768_f1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_f2', 'babel_4768_f2_new', 'OBJECT';
 go
 
 -- psql
@@ -68,10 +76,22 @@ GO
 REVOKE EXECUTE ON babel_4768_s1.babel_4768_p1_new TO babel_4768_u1
 GO
 
+REVOKE EXECUTE ON babel_4768_p2_new TO babel_4768_u1
+GO
+
+REVOKE EXECUTE ON babel_4768_s1.babel_4768_p2_new TO babel_4768_u1
+GO
+
 REVOKE EXECUTE ON babel_4768_f1_new TO babel_4768_u1
 GO
 
 REVOKE EXECUTE ON babel_4768_s1.babel_4768_f1_new TO babel_4768_u1
+GO
+
+REVOKE EXECUTE ON babel_4768_f2_new TO babel_4768_u1
+GO
+
+REVOKE EXECUTE ON babel_4768_s1.babel_4768_f2_new TO babel_4768_u1
 GO
 
 -- psql

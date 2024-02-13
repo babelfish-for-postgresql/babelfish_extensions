@@ -19,10 +19,22 @@ go
 drop proc babel_4768_s1.babel_4768_p1_new
 go
 
+drop proc babel_4768_p2_new
+go
+
+drop proc babel_4768_s1.babel_4768_p2_new
+go
+
 drop FUNCTION babel_4768_f1_new
 go
 
 drop FUNCTION babel_4768_s1.babel_4768_f1_new
+go
+
+drop FUNCTION babel_4768_f2_new
+go
+
+drop FUNCTION babel_4768_s1.babel_4768_f2_new
 go
 
 -- psql
