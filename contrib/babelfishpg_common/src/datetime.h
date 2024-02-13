@@ -43,4 +43,6 @@ extern bool int32_multiply_add(int32 val, int32 multiplier, int32 *sum);
 
 extern Datum datetime_in_str(char *str);
 
+extern bool pltsql_time_in(const char *str, int32 typmod, TimeADT *result);
+
 #endif							/* PLTSQL_DATETIME_H */

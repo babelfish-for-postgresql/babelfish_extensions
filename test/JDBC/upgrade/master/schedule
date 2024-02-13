@@ -147,6 +147,7 @@ BABEL-SP_STORED_PROCEDURES-dep
 babel_sqlvariant_cast_compare
 BABEL-SQUARE
 BABEL-TABLEOPTIONS
+babel_time
 babel_trigger
 babel_try_parse
 babel_varbinary_int4_div
