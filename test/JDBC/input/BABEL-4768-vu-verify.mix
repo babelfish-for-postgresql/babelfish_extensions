@@ -1,0 +1,83 @@
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
+go
+
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+go
+
+-- tsql
+-- rename the objects where permissions are already granted
+sp_rename 'babel_4768_s1.babel_4768_t1', 'babel_4768_t1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_s1.babel_4768_v1', 'babel_4768_v1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_s1.babel_4768_p1', 'babel_4768_p1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_s1.babel_4768_f1', 'babel_4768_f1_new', 'OBJECT';
+go
+
+sp_rename 'babel_4768_t1', 'babel_4768_t1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_v1', 'babel_4768_v1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_p1', 'babel_4768_p1_new', 'OBJECT';
+go
+sp_rename 'babel_4768_f1', 'babel_4768_f1_new', 'OBJECT';
+go
+
+-- psql
+-- catalog should show new object names
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
+go
+
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+go
+
+-- tsql
+REVOKE SELECT, EXECUTE ON SCHEMA :: dbo TO babel_4768_u1
+GO
+
+REVOKE SELECT, EXECUTE ON SCHEMA :: babel_4768_s1 TO babel_4768_u1
+GO
+
+-- psql
+-- catalog entry ALL should be gone now
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
+go
+
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+go
+
+-- tsql
+-- REVOKE individual object access from babel_4768_u1
+REVOKE SELECT ON dbo.babel_4768_t1_new TO babel_4768_u1
+go
+
+REVOKE SELECT ON babel_4768_s1.babel_4768_t1_new TO babel_4768_u1
+go
+
+REVOKE SELECT ON dbo.babel_4768_v1_new TO babel_4768_u1
+go
+
+REVOKE SELECT ON babel_4768_s1.babel_4768_v1_new TO babel_4768_u1
+go
+
+REVOKE EXECUTE ON babel_4768_p1_new TO babel_4768_u1
+GO
+
+REVOKE EXECUTE ON babel_4768_s1.babel_4768_p1_new TO babel_4768_u1
+GO
+
+REVOKE EXECUTE ON babel_4768_f1_new TO babel_4768_u1
+GO
+
+REVOKE EXECUTE ON babel_4768_s1.babel_4768_f1_new TO babel_4768_u1
+GO
+
+-- psql
+-- catalog should be empty now
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
+go
+
+select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' collate sys.database_default order by object_name;
+go
