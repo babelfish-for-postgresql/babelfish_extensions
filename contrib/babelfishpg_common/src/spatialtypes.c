@@ -17,9 +17,8 @@ static void load_functions();
 /*
  * Macros for identifying Z and M flags
  */
-#define FLAG_Z         0x01
-#define FLAG_M         0x02
-#define FLAG_ZM        0x03
+#define FLAG_Z         1 << 0
+#define FLAG_M         1 << 1
 
 /* Copied from PostGIS */
 typedef struct
@@ -54,7 +53,7 @@ PG_FUNCTION_INFO_V1(geography_in);
 static void
 load_functions()
 {
-	if (lwgeom_in_p == NULL)
+    if (lwgeom_in_p == NULL)
         lwgeom_in_p = (lwgeom_in_t) load_external_function("$libdir/postgis-3", "LWGEOM_in", true, NULL);
 
     if (geometry_type_p == NULL)
@@ -84,7 +83,7 @@ geometry_in(PG_FUNCTION_ARGS)
     InitFunctionCallInfoData(*fcinfo_local, NULL, 1, PG_GET_COLLATION(), NULL, NULL);
 
     fcinfo_local->args[0].value = fcinfo->args[0].value;
-	fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[0].isnull = false;
 
     /* Call the LWGEOM_in function via the function pointer */
     geom_datum = lwgeom_in_p(fcinfo_local);
@@ -102,7 +101,7 @@ geometry_in(PG_FUNCTION_ARGS)
             errmsg("%s is not supported", geometry_name)));
     else
     {
-        if ((geom->gflags & FLAG_Z) || (geom->gflags & FLAG_M) || (geom->gflags & FLAG_ZM) )
+        if ((geom->gflags & FLAG_Z) || (geom->gflags & FLAG_M) || (geom->gflags & (FLAG_Z | FLAG_M)) )
         {
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -138,11 +137,11 @@ geography_in(PG_FUNCTION_ARGS)
     InitFunctionCallInfoData(*fcinfo_local, NULL, 3, PG_GET_COLLATION(), NULL, NULL);
 
     fcinfo_local->args[0].value = fcinfo->args[0].value;
-	fcinfo_local->args[0].isnull = false;
+    fcinfo_local->args[0].isnull = false;
     fcinfo_local->args[1].value = fcinfo->args[1].value;
-	fcinfo_local->args[1].isnull = false;
+    fcinfo_local->args[1].isnull = false;
     fcinfo_local->args[2].value = fcinfo->args[2].value;
-	fcinfo_local->args[2].isnull = false;
+    fcinfo_local->args[2].isnull = false;
 
     /* Call the LWGEOM_in function via the function pointer */
     geom_datum = lwgeom_in_p(fcinfo_local);
@@ -166,7 +165,7 @@ geography_in(PG_FUNCTION_ARGS)
             errmsg("%s is not supported", geometry_name)));
     else
     {
-        if ((geom->gflags & FLAG_Z) || (geom->gflags & FLAG_M) || (geom->gflags & FLAG_ZM) )
+        if ((geom->gflags & FLAG_Z) || (geom->gflags & FLAG_M) || (geom->gflags & (FLAG_Z | FLAG_M)) )
             ereport(ERROR,
                 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                 errmsg("Unsupported flags")));
