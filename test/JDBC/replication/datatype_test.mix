@@ -32,7 +32,9 @@ CREATE TABLE datatype_test_t1 (
     , c27   UNIQUEIDENTIFIER    NOT NULL
     , c28   VARBINARY(20)  NOT NULL
     , c29   VARCHAR(20)    NOT NULL
-    , c30   XML NOT NULL)
+    , c30   XML NOT NULL
+    , c31   GEOMETRY NOT NULL
+    , c32   GEOGRAPHY NOT NULL)
 GO
 
 CREATE TABLE datatype_test_t2 (
@@ -81,7 +83,9 @@ CREATE TABLE datatype_test_t1 (
     , c27   UNIQUEIDENTIFIER    NOT NULL
     , c28   VARBINARY(20)  NOT NULL
     , c29   VARCHAR(20)    NOT NULL
-    , c30   XML NOT NULL)
+    , c30   XML NOT NULL
+    , c31   GEOMETRY NOT NULL
+    , c32   GEOGRAPHY NOT NULL)
 GO
 
 -- column datatypes are kept slightly different in this table
@@ -105,9 +109,9 @@ GO
 -- just to verify if initial data sync works fine.
 -- tsql
 INSERT INTO datatype_test_t1
-    (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30)
+    (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31, c32)
 VALUES(1, 0x1A, 1, 'abc', '2000-06-01', '2000-06-01 00:00:00', '2000-06-01 00:00:00', '2000-06-01 00:00:00', 8.423, 1.43E19, 0x456, 1, $50, N'😊😋😎😍😅😆', N'😊😋😎😍😅😆',
-    8.423, N'😊😋😎😍😅😆', 1.43E19, '2000-06-01 00:00:00', 1, $50, CAST(123 AS INT), 'abc', 'abc', '01:01:12', 1, '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 0x1AB, 'abc', '<xml></xml>');
+    8.423, N'😊😋😎😍😅😆', 1.43E19, '2000-06-01 00:00:00', 1, $50, CAST(123 AS INT), 'abc', 'abc', '01:01:12', 1, '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 0x1AB, 'abc', '<xml></xml>', geometry::STPointFromText('POINT(0.0 0.0)', 4326), geography::STPointFromText('POINT(0.0 0.0)', 4326));
 GO
 
 INSERT INTO datatype_test_t2
@@ -115,7 +119,7 @@ INSERT INTO datatype_test_t2
 VALUES(1, 0x1A, 'abc', '2000-06-01', 8.423, 1, $50, 'abc', '01:01:12', 1, 0x1AB, 'abc');
 GO
 
-SELECT * FROM datatype_test_t1;
+SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31.STAsText(), c32.STAsText() FROM datatype_test_t1;
 GO
 
 -- check sql_variant basetype
@@ -149,7 +153,7 @@ GO
 
 -- Initial data should have replicated to subscriber now
 -- tsql port=8199
-SELECT * FROM datatype_test_t1;
+SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31.STAsText(), c32.STAsText() FROM datatype_test_t1;
 GO
 
 -- check sql_variant basetype
@@ -162,9 +166,9 @@ GO
 -- Insert more data into publisher to see if replication works
 -- tsql
 INSERT INTO datatype_test_t1
-    (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30)
+    (c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31, c32)
 VALUES(2, 0x1A, 1, 'abc', '2000-06-01', '2000-06-01 00:00:00', '2000-06-01 00:00:00', '2000-06-01 00:00:00', 8.423, 1.43E19, 0x456, 1, $50, N'😊😋😎😍😅😆', N'😊😋😎😍😅😆',
-    8.423, N'😊😋😎😍😅😆', 1.43E19, '2000-06-01 00:00:00', 1, $50, CAST(1.234 AS FLOAT), 'abc', 'abc', '01:01:12', 1, '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 0x1AB, 'abc', '<xml></xml>');
+    8.423, N'😊😋😎😍😅😆', 1.43E19, '2000-06-01 00:00:00', 1, $50, CAST(1.234 AS FLOAT), 'abc', 'abc', '01:01:12', 1, '1E984725-C51C-4BF4-9960-E1C80E27ABA0', 0x1AB, 'abc', '<xml></xml>', geometry::STPointFromText('POINT(0.0 0.0)', 4326), geography::STPointFromText('POINT(0.0 0.0)', 4326));
 GO
 
 INSERT INTO datatype_test_t2
@@ -172,7 +176,7 @@ INSERT INTO datatype_test_t2
 VALUES(2, 0x1A, 'abc', '2000-06-01', 8.423, 1, $50, 'abc', '01:01:12', 1, 0x1AB, 'abc');
 GO
 
-SELECT * FROM datatype_test_t1;
+SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31.STAsText(), c32.STAsText() FROM datatype_test_t1;
 GO
 
 -- check sql_variant basetype
@@ -188,7 +192,7 @@ select pg_sleep(2);
 GO
 
 -- tsql port=8199
-SELECT * FROM datatype_test_t1;
+SELECT c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11, c12, c13, c14, c15, c16, c17, c18, c19, c20, c21, c22, c23, c24, c25, c26, c27, c28, c29, c30, c31.STAsText(), c32.STAsText() FROM datatype_test_t1;
 GO
 
 -- print sql_variant basetype

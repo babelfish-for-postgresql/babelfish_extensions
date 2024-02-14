@@ -869,7 +869,7 @@ go
 select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
 go
 ~~START~~
-int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
 ~~END~~
 
 
