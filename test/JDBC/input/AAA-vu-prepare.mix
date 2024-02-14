@@ -81,11 +81,3 @@ GO
 
 GRANT EXECUTE ON babel_4768_s1.babel_4768_f2 TO babel_4768_u1
 GO
-
--- tsql
--- GRANT schema level access to babel_4768_u1
-GRANT SELECT, EXECUTE ON SCHEMA :: dbo TO babel_4768_u1
-GO
-
-GRANT SELECT, EXECUTE ON SCHEMA :: babel_4768_s1 TO babel_4768_u1
-GO
