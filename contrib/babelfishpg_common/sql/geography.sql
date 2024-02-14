@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION sys.geographyin(cstring, oid, integer)
     RETURNS sys.GEOGRAPHY
-    AS '$libdir/postgis-3','geography_in'
+    AS 'babelfishpg_common','geography_in'
     LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.geographyout(sys.GEOGRAPHY)
@@ -110,10 +110,12 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(bytea)
         varBin := $1;
         len := LENGTH(varBin);
         IF len >= 22 THEN
-			-- General Logic: We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (for 2-D Point Type) Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geography Type). It is expected by the driver
+			-- General Logic: We are preprocessing it by removing 2 constant Geometry Type bytes -> 01 0c (for 2-D Point Type) 
+			-- Then adding 5 Bytes -> 01 (little endianess) + 4 Bytes (Geography Type). It is expected by the driver
 			-- Here we are calculating SRID which is initially in little endian order
 			srid := (get_byte(varBin, 3) << 24) | (get_byte(varBin, 2) << 16) | (get_byte(varBin, 1) << 8) | get_byte(varBin, 0);
-			-- Here we are calculating value of latitude which is initially in little endian order to check if it lies in the range [-90, 90]
+			-- Here we are calculating value of latitude which is initially in little endian order
+			-- check if it lies in the range [-90, 90]
 			WHILE i > 6 LOOP
 				reversed_bytea := reversed_bytea || substring(varBin from i for 1);
 				i = i - 1;
@@ -158,7 +160,8 @@ CREATE OR REPLACE FUNCTION sys.bytea(sys.GEOGRAPHY)
 	BEGIN
 		-- Here the received bytes are -> 1 byte (endianness) + 4 bytes (type) + 4 bytes (SRID) + 16 bytes * npoints
 		byte := (SELECT sys.bytea_helper($1));
-		-- Checking the Geometry type currently we support only POINT type -> type = 1 (01000020 [here last byte represents presence of SRID]) 
+		-- Checking the Geometry type currently we support only POINT type -> type = 1 
+		-- (01000020 [here last byte represents presence of SRID]) 
 		IF encode(substring(byte from 2 for 4), 'hex') = encode(E'\\x01000020', 'hex') THEN
 			-- Here we are taking bytes from SRID only for driver expected format -> 4 bytes (SRID) + 16 bytes * npoints
 			byte := substring(byte from 6);
@@ -229,7 +232,8 @@ CREATE OR REPLACE FUNCTION sys.bpchar(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN sys.bpchar((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -240,9 +244,10 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.bpchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.bpcharToGeography_helper($1));
+		geog := (SELECT sys.charTogeoghelper($1));
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -252,7 +257,8 @@ CREATE OR REPLACE FUNCTION sys.varchar(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN sys.varchar((SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1))));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -263,9 +269,10 @@ CREATE OR REPLACE FUNCTION sys.GEOGRAPHY(sys.varchar)
 	DECLARE
 		geog sys.GEOGRAPHY;
 	BEGIN
-		geog := (SELECT sys.varcharToGeography_helper($1));
+		geog := (SELECT sys.charTogeoghelper($1));
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN (SELECT sys.Geography__STFlipCoordinates(geog));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -297,21 +304,28 @@ CREATE OR REPLACE FUNCTION sys.Geography__stgeomfromtext(text, integer)
 		geom sys.GEOGRAPHY;
 		valid_srids integer[];
 		lat float8;
+		Zmflag smallint;
 	BEGIN
 		-- Call the function to retrieve the valid SRIDs
 		SELECT sys.get_valid_srids() INTO valid_srids;
 		srid := $2;
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		geom = (SELECT sys.stgeogfromtext_helper($1, $2));
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
 			IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 				-- Call the underlying function after preprocessing
-				-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
-				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				-- if the point instance has z flag only then Zmflag = 1
+				-- if the point instance has m flag only then Zmflag = 2
+				-- if the point instance has both z and m flags then Zmflag = 3
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
 					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
+					-- Here we are flipping the coordinates 
+					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
 				END IF;
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
@@ -330,7 +344,8 @@ CREATE OR REPLACE FUNCTION sys.STAsText(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN (SELECT sys.STAsText_helper(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -368,7 +383,8 @@ CREATE OR REPLACE FUNCTION sys.STAsBinary(sys.GEOGRAPHY)
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN (SELECT sys.STAsBinary_helper(sys.Geography__STFlipCoordinates($1)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -382,21 +398,28 @@ CREATE OR REPLACE FUNCTION sys.Geography__STPointFromText(text, integer)
 		geom sys.GEOGRAPHY;
 		valid_srids integer[];
 		lat float8;
+		Zmflag smallint;
 	BEGIN
 		-- Call the function to retrieve the valid SRIDs
 		SELECT sys.get_valid_srids() INTO valid_srids;
 		srid := $2;
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		geom = (SELECT sys.stgeogfromtext_helper($1, $2));
 		Geomtype = (SELECT sys.ST_GeometryType(geom));
+		Zmflag = (SELECT sys.ST_Zmflag(geom));
 		IF Geomtype = 'ST_Point' THEN
 			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, $2))));
 			IF srid = ANY(valid_srids) AND lat >= -90.0 AND lat <= 90.0 THEN
 				-- Call the underlying function after preprocessing
-				-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
-				IF (SELECT sys.ST_Zmflag(geom)) = 1 OR (SELECT sys.ST_Zmflag(geom)) = 2 OR (SELECT sys.ST_Zmflag(geom)) = 3 THEN
+				-- if the point instance has z flag only then Zmflag = 1
+				-- if the point instance has m flag only then Zmflag = 2
+				-- if the point instance has both z and m flags then Zmflag = 3
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
 					RAISE EXCEPTION 'Unsupported flags';
 				ELSE
+					-- Here we are flipping the coordinates 
+					-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 					RETURN (SELECT sys.Geography__STFlipCoordinates(geom));
 				END IF;
 			ELSEIF lat < -90.0 OR lat > 90.0 THEN
@@ -467,7 +490,8 @@ CREATE OR REPLACE FUNCTION sys.STDistance(geog1 sys.GEOGRAPHY, geog2 sys.GEOGRAP
 	AS $$
 	BEGIN
 		-- Call the underlying function after preprocessing
-		-- Here we are flipping the coordinates since Geography Datatype stores the point from STGeomFromText and STPointFromText in Reverse Order i.e. (long, lat) 
+		-- Here we are flipping the coordinates 
+		-- since Geography Datatype stores the point supplied as string in Reverse Order i.e. (long, lat)
 		RETURN (SELECT sys.STDistance_helper(sys.Geography__STFlipCoordinates($1), sys.Geography__STFlipCoordinates($2)));
 	END;
 	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
@@ -515,21 +539,49 @@ CREATE OR REPLACE FUNCTION sys.STDistance_helper(geog1 sys.GEOGRAPHY, geog2 sys.
 
 CREATE OR REPLACE FUNCTION sys.GEOGRAPHY_helper(bytea)
 	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3','geography_from_binary'
+	AS '$libdir/postgis-3','LWGEOM_from_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar)
+CREATE OR REPLACE FUNCTION sys.bpcharToGeography_helper(sys.bpchar, integer)
 	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3','geography_from_text'
-	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
-
-CREATE OR REPLACE FUNCTION sys.varcharToGeography_helper(sys.varchar)
-	RETURNS sys.GEOGRAPHY
-	AS '$libdir/postgis-3','geography_from_text'
+	AS '$libdir/postgis-3','LWGEOM_from_text'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.bytea_helper(sys.GEOGRAPHY)
 	RETURNS bytea
 	AS '$libdir/postgis-3','LWGEOM_to_bytea'
 	LANGUAGE 'c' IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.charTogeoghelper(sys.bpchar)
+	RETURNS sys.GEOGRAPHY
+	AS $$
+	DECLARE
+		Geomtype text;
+		geog sys.GEOGRAPHY;
+		lat float8;
+		Zmflag smallint;
+	BEGIN
+		geog = (SELECT sys.bpcharToGeography_helper($1, 4326));
+		Geomtype = (SELECT sys.ST_GeometryType(geog));
+		Zmflag = (SELECT sys.ST_Zmflag(geog));
+		IF Geomtype = 'ST_Point' THEN
+			lat = (SELECT sys.lat(sys.Geography__STFlipCoordinates(sys.stgeogfromtext_helper($1, 4326))));
+			IF lat >= -90.0 AND lat <= 90.0 THEN
+				-- Call the underlying function after preprocessing
+				-- if the point instance has z flag only then Zmflag = 1
+				-- if the point instance has m flag only then Zmflag = 2
+				-- if the point instance has both z and m flags then Zmflag = 3
+				IF Zmflag = 1 OR Zmflag = 2 OR Zmflag = 3 THEN
+					RAISE EXCEPTION 'Unsupported flags';
+				ELSE
+					RETURN geog;
+				END IF;
+			ELSEIF lat < -90.0 OR lat > 90.0 THEN
+				RAISE EXCEPTION 'Latitude values must be between -90 and 90 degrees';
+			END IF;
+		ELSE
+			RAISE EXCEPTION '% is not supported', Geomtype;
+		END IF;
+	END;
+	$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
