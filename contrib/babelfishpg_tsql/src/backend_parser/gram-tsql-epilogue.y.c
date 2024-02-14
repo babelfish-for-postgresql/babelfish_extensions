@@ -767,52 +767,52 @@ makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
     
     if (dot1)
     {
-    	if (dot2)
-    	{
-    		/* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
-    		 * Parse the schema name, table name, and column name accordingly
-    		 */
-    		*dot1 = '\0';
-    		*dot2 = '\0';
-    		schemaName = colId;
-    		tableName = dot1 + 1;
-    		columnName = dot2 + 1;
-    	} 
-    	else
-    	{
-    		/* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
-    		 * Parse the table name and column name accordingly
-    		 */
-    		*dot1 = '\0';
-    		tableName = colId;
-    		columnName = dot1 + 1;
-    	}
+        if (dot2)
+        {
+            /* If two dots are found, then the input is in the format "schema_name.table_name.column_name"
+             * Parse the schema name, table name, and column name accordingly
+             */
+            *dot1 = '\0';
+            *dot2 = '\0';
+            schemaName = colId;
+            tableName = dot1 + 1;
+            columnName = dot2 + 1;
+        } 
+        else
+        {
+            /* If only one dot is found, then the input is in the format "table_name.column_name" or "alias_table.column_name"
+             * Parse the table name and column name accordingly
+             */
+            *dot1 = '\0';
+            tableName = colId;
+            columnName = dot1 + 1;
+        }
     }
     else
     {
-    	/* If no dots are found, then the input is just the column name
-    	 * Set the column name directly
-    	 */
-    	columnName = colId;
+        /* If no dots are found, then the input is just the column name
+         * Set the column name directly
+         */
+        columnName = colId;
     }
     
     if (schemaName)
     {
-    	/* If a schema name is present, create column reference to the schema first then append the table name and column name */
-    	col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
-    	((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
-    	((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+        /* If a schema name is present, create column reference to the schema first then append the table name and column name */
+        col = (Node *) makeColumnRef(schemaName, NIL, -1, yyscanner);
+        ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(tableName));
+        ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
     }
     else if (tableName)
     {
-    	/* If a table name is present, create column reference to the table first then append the column name */
-    	col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
-    	((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
+        /* If a table name is present, create column reference to the table first then append the column name */
+        col = (Node *) makeColumnRef(tableName, NIL, -1, yyscanner);
+        ((ColumnRef *) col)->fields = lappend(((ColumnRef *) col)->fields, makeString(columnName));
     }
     else
     {
-    	/* Create a ColumnRef node for the column */
-    	col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
+        /* Create a ColumnRef node for the column */
+        col = (Node *) makeColumnRef(columnName, NIL, -1, yyscanner);
     }
 
     /* Create a function call for replace_special_chars_fts(column_name) */

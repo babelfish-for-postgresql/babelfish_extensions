@@ -3019,6 +3019,36 @@ go
 ~~ERROR (Message: column "txt" does not exist)~~
 
 
+select * from new_schema_fts_t.test t where contains(t.name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+~~END~~
+
+
+select * from new_schema_fts_t.test t where contains(new_schema_fts_t.t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "t")~~
+
+
+select * from new_schema_fts_t.test t where contains(new_schema_fts_t.test.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "test")~~
+
+
+select * from new_schema_fts_t.test where contains(name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+~~END~~
+
+
 use fts_test_db;
 go
 

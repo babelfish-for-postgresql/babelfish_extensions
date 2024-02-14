@@ -5065,6 +5065,24 @@ go
 create fulltext index on test_special_char_t(name) key index test_special_char_t_idx;
 go
 
+create schema new_schema_fts_t
+go
+
+create table new_schema_fts_t.test(id int not null, name text)
+go
+
+create unique index test_idx on new_schema_fts_t.test(id);
+go
+
+insert into new_schema_fts_t.test values(1, 'one two three');
+go
+~~ROW COUNT: 1~~
+
+
+create fulltext index on new_schema_fts_t.test(name) key index test_idx;
+go
+
+
 create database fts_test_db;
 go
 

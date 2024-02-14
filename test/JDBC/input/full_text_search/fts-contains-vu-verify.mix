@@ -519,6 +519,18 @@ go
 select name as txt from test_special_char_t where contains(txt, 'hello');
 go
 
+select * from new_schema_fts_t.test t where contains(t.name, 'one');
+go
+
+select * from new_schema_fts_t.test t where contains(new_schema_fts_t.t.name, 'one');
+go
+
+select * from new_schema_fts_t.test t where contains(new_schema_fts_t.test.name, 'one');
+go
+
+select * from new_schema_fts_t.test where contains(name, 'one');
+go
+
 use fts_test_db;
 go
 
