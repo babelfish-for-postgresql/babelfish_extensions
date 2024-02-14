@@ -430,6 +430,5 @@ drop_index-before-15_6-or-16_2
 BABEL-4606
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
-GRANT_SCHEMA
 babel-4475
 babel-4517
