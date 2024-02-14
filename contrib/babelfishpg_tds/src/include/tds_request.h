@@ -848,7 +848,7 @@ SetColMetadataForGeometryType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t 
 {
 	col->sizeLen = 1;
 	col->metaLen = sizeof(col->metaEntry.type7);
-	col->metaEntry.type7.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	col->metaEntry.type7.flags = TDS_COL_METADATA_COMPUTED_FLAGS;
 	col->metaEntry.type7.tdsTypeId = tdsType;
 	col->metaEntry.type7.maxSize = maxSize;
 	col->isSpatialType = true;
@@ -861,7 +861,7 @@ SetColMetadataForGeographyType(TdsColumnMetaData *col, uint8_t tdsType, uint16_t
 {
 	col->sizeLen = 1;
 	col->metaLen = sizeof(col->metaEntry.type7);
-	col->metaEntry.type7.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	col->metaEntry.type7.flags = TDS_COL_METADATA_COMPUTED_FLAGS;
 	col->metaEntry.type7.tdsTypeId = tdsType;
 	col->metaEntry.type7.maxSize = maxSize;
 	col->isSpatialType = true;

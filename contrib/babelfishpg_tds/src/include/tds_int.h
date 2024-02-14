@@ -60,6 +60,10 @@
 /* default server name */
 #define TDS_DEFAULT_SERVER_NAME "Microsoft SQL Server"
 
+/* Assembly type name for Geospatial types */
+#define TDS_ASSEMBLY_TYPE_NAME_GEOMETRY "Microsoft.SqlServer.Types.SqlGeometry, Microsoft.SqlServer.Types"
+#define TDS_ASSEMBLY_TYPE_NAME_GEOGRAPHY "Microsoft.SqlServer.Types.SqlGeography, Microsoft.SqlServer.Types"
+
 /* default compatibility version */
 #define BABEL_COMPATIBILITY_VERSION "12.0.2000.8"
 

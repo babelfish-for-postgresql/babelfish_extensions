@@ -2062,10 +2062,10 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				}
 				break;
 			case TDS_SEND_GEOMETRY:
-				SetColMetadataForGeometryType(col, TDS_TYPE_CLRUDT, TDS_MAXLEN_POINT, "", "geometry");
+				SetColMetadataForGeometryType(col, TDS_TYPE_CLRUDT, TDS_MAXLEN_POINT, TDS_ASSEMBLY_TYPE_NAME_GEOMETRY, "geometry");
 				break;
 			case TDS_SEND_GEOGRAPHY:
-				SetColMetadataForGeographyType(col, TDS_TYPE_CLRUDT, TDS_MAXLEN_POINT, "", "geography");
+				SetColMetadataForGeographyType(col, TDS_TYPE_CLRUDT, TDS_MAXLEN_POINT, TDS_ASSEMBLY_TYPE_NAME_GEOGRAPHY, "geography");
 				break;
 			default:
 

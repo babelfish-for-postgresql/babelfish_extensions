@@ -40,6 +40,11 @@ INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65
 INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
 INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
 
+SELECT location, location.STX, location.STY FROM POINTGEOM_dt;
+SELECT location, location.Lat, location.Long FROM POINTGEOG_dt;
+SELECT * FROM  POINT_dt;
+select geometry::Point(10,500,4326);
+select geography::Point(10,500,4326);
 SELECT location.STAsText() FROM POINTGEOM_dt;
 SELECT location.STAsText() FROM POINTGEOG_dt;
 SELECT geom.STAsText(), geog.STAsText() FROM POINT_dt;
