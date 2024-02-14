@@ -37,3 +37,6 @@ CREATE TABLE master_dbo.tbl_creation_should_succeed (
           AND ((a)::text < ('11'::text || '￿'::text COLLATE sys.bbf_unicode_cp1_ci_as))))))
 );
 GO
+
+GRANT SELECT on master_dbo.tbl_creation_should_succeed to master_dbo;
+GO
