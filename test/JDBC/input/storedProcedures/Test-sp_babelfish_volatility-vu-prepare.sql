@@ -31,6 +31,9 @@ GO
 create function test_sp_babelfish_volatility_duplicate() returns int begin declare @a int; set @a = 1; return @a; end
 go
 
+create function test_sp_babelfish_volatility_duplicate(@b int) returns int begin declare @a int; set @a = 1; return @a; end
+go
+
 create function test_sp_babelfish_volatility_schema2.test_sp_babelfish_volatility_f1() returns int begin declare @a int; set @a = 1; return @a; end
 GO
 

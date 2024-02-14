@@ -233,7 +233,6 @@ int
 102
 102
 2714
-2714
 180
 133
 8107
@@ -407,7 +406,6 @@ int
 102
 102
 2714
-2714
 180
 133
 8107
@@ -499,6 +497,6 @@ EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
 GO
 ~~START~~
 int
-167
+166
 ~~END~~
 

@@ -11,6 +11,10 @@ GO
 CREATE FUNCTION babel_3010_vu_prepare_f1(@a INT) RETURNS INT AS BEGIN RETURN @a END;
 GO
 
+-- Overloaded function
+CREATE FUNCTION babel_3010_vu_prepare_f1(@a int, @b varchar(10)) RETURNS INT AS BEGIN RETURN @a END;
+GO
+
 -- ITVF
 CREATE FUNCTION babel_3010_vu_prepare_f2(@a INT)
 RETURNS TABLE

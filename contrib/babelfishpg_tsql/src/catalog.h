@@ -285,14 +285,13 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
  *****************************************/
 #define BBF_SCHEMA_PERMS_TABLE_NAME "babelfish_schema_permissions"
 #define BBF_SCHEMA_PERMS_IDX_NAME "babelfish_schema_permissions_pkey"
-#define BBF_SCHEMA_PERMS_NUM_OF_COLS 7
+#define BBF_SCHEMA_PERMS_NUM_OF_COLS 6
 #define Anum_bbf_schema_perms_dbid 1
 #define Anum_bbf_schema_perms_schema_name 2
 #define Anum_bbf_schema_perms_object_name 3
 #define Anum_bbf_schema_perms_permission 4
 #define Anum_bbf_schema_perms_grantee 5
 #define Anum_bbf_schema_perms_object_type 6
-#define Anum_bbf_schema_perms_function_args 7
 
 #define PUBLIC_ROLE_NAME "public"
 #define PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA "ALL"
@@ -314,16 +313,15 @@ typedef struct FormData_bbf_schema_perms
 	int32		permission;
 	VarChar	grantee;
 	char	object_type;
-	text	function_args;
 } FormData_bbf_schema_perms;
 
 typedef FormData_bbf_schema_perms *Form_bbf_schema_perms;
 
-extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type, const char *func_args);
+extern void add_entry_to_bbf_schema_perms(const char *schema_name, const char *object_name, int permission, const char *grantee, const char *object_type);
 extern bool privilege_exists_in_bbf_schema_permissions(const char *schema_name, const char *object_name, const char *grantee, bool missing_ok);
 extern void update_privileges_of_object(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern void remove_entry_from_bbf_schema_perms(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
-extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant, const char *func_args);
+extern void add_or_update_object_in_bbf_schema(const char *schema_name, const char *object_name, int new_permission, const char *grantee, const char *object_type, bool is_grant);
 extern void clean_up_bbf_schema_permissions(const char *schema_name, const char *object_name, bool is_schema);
 extern void grant_perms_to_objects_in_schema(const char *schema_name, int permission, const char *grantee);
 
