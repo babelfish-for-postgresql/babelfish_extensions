@@ -121,7 +121,7 @@ GO
 -- psql
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
 go
-+~~START~~
+~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
 babel_4768_s1#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>
 babel_4768_s1#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!#sys.smalldatetime
