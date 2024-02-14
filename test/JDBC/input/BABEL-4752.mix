@@ -59,6 +59,22 @@ DROP LOGIN babel_object_id_login2;
 GO
 
 -- tsql
+USE master;
+GO
+
+CREATE LOGIN babel_object_id_login3 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_id_master_user3 FOR LOGIN babel_object_id_login1;
+GO
+
+CREATE LOGIN babel_object_id_login4 WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_object_id_master_user4 FOR LOGIN babel_object_id_login1;
+GO
+
+-- tsql      user=babel_object_id_login3 password=12345678
 
 -- Test Table Variables
 DECLARE @OrderTable TABLE (ID INT, OrderNumber INT DEFAULT 1)
@@ -76,16 +92,15 @@ ALTER TABLE defaultTest ADD CONSTRAINT df_ProductName DEFAULT 'item' FOR Product
 GO
 
 INSERT into defaultTest (ID) VALUES (2)
-GO
 
 BEGIN TRANSACTION
 ALTER TABLE defaultTest ADD CONSTRAINT df_ProductName DEFAULT 'service' FOR ProductName
 INSERT into defaultTest (ID) VALUES (3)
 select * from defaultTest
 ROLLBACK
-GO
 
 INSERT into defaultTest (ID) VALUES (4)
+
 select * from defaultTest
 go
 
@@ -116,6 +131,7 @@ GO
 EXEC babel_4752_p1
 GO
 
+-- tsql      user=babel_object_id_login4 password=12345678
 CREATE TABLE #temp(a INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'Whoops!') 
 EXEC babel_4752_p1
 go
@@ -130,8 +146,11 @@ GO
 EXEC babel_4752_p2
 GO
 
+
+-- tsql      user=babel_object_id_login3 password=12345678
 DROP PROCEDURE babel_4752_p1
 GO
 
+-- tsql      user=babel_object_id_login4 password=12345678
 DROP PROCEDURE babel_4752_p2
 GO
