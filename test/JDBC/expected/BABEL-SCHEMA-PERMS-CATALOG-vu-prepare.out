@@ -82,11 +82,40 @@ GO
 GRANT EXECUTE ON babel_4768_s1.babel_4768_f2 TO babel_4768_u1
 GO
 
+-- psql
+-- This is needed so that MVU passes
+DO $$
+BEGIN 
+    IF EXISTS (SELECT 1 FROM
+information_schema.tables WHERE
+table_name = 'tbl_creation_should_succeed' AND
+table_schema = 'master_dbo') THEN
+        EXECUTE 'GRANT ALL ON
+master_dbo.tbl_creation_should_succeed TO master_dbo';
+    END IF;
+END $$;
+GO
+
+-- tsql
 -- GRANT schema level access to babel_4768_u1
 GRANT SELECT, EXECUTE ON SCHEMA :: dbo TO babel_4768_u1
 GO
 
 GRANT SELECT, EXECUTE ON SCHEMA :: babel_4768_s1 TO babel_4768_u1
+GO
+
+-- psql
+-- This is needed so that MVU passes
+DO $$
+BEGIN 
+    IF EXISTS (SELECT 1 FROM
+information_schema.tables WHERE
+table_name = 'tbl_creation_should_succeed' AND
+table_schema = 'master_dbo') THEN
+        EXECUTE 'REVOKE ALL ON
+master_dbo.tbl_creation_should_succeed TO master_dbo';
+    END IF;
+END $$;
 GO
 
 -- psql
