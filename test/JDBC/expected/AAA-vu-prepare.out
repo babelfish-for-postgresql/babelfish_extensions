@@ -82,20 +82,11 @@ GO
 GRANT EXECUTE ON babel_4768_s1.babel_4768_f2 TO babel_4768_u1
 GO
 
--- tsql
--- GRANT schema level access to babel_4768_u1
-GRANT SELECT, EXECUTE ON SCHEMA :: dbo TO babel_4768_u1
-GO
-
-GRANT SELECT, EXECUTE ON SCHEMA :: babel_4768_s1 TO babel_4768_u1
-GO
-
 -- psql
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
-babel_4768_s1#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>
 babel_4768_s1#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!#sys.smalldatetime
 babel_4768_s1#!#babel_4768_f2#!#128#!#master_babel_4768_u1#!#f#!#sys.varchar, pg_catalog.float8
 babel_4768_s1#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!#pg_catalog.numeric
@@ -109,7 +100,6 @@ select schema_name, object_name, permission, grantee, object_type, function_args
 go
 ~~START~~
 "sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
-dbo#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>
 dbo#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!#
 dbo#!#babel_4768_f2#!#128#!#master_babel_4768_u1#!#f#!#pg_catalog.int4
 dbo#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!#
