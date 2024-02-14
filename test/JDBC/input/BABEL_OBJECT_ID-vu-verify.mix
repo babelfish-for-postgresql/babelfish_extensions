@@ -1,5 +1,8 @@
 -- test table, trigger, procedure, function
 -- tsql
+select proname, pronamespace, proowner, proacl from pg_proc where proname in ('babel_object_id_proc1','babel_object_id_func1');
+GO
+
 SELECT * FROM babel_object_id_t1_view
 GO
 

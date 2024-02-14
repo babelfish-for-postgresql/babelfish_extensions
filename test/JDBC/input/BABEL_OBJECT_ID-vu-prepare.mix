@@ -97,3 +97,7 @@ GO
 
 USE babel_object_id_db;
 GO
+
+select proname, pronamespace, proowner, proacl from pg_proc where proname in ('babel_object_id_proc1','babel_object_id_func1');
+GO
+
