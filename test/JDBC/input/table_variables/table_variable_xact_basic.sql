@@ -419,6 +419,55 @@ DROP TABLE numbers
 GO
 
 -------------------------------------------------------------------------------
+-- Test 15: BABEL-4752 Tables and Table Variables with Default Columns
+-------------------------------------------------------------------------------
+
+-- Test Table Variables
+DECLARE @OrderTable TABLE (ID INT, OrderNumber INT DEFAULT 1)
+INSERT into @OrderTable (ID) VALUES (1), (2)
+
+select * from @OrderTable
+go
+
+-- Test Table and alter default
+CREATE TABLE defaultTest (ID INT, ProductName varchar(20) DEFAULT 'product')
+INSERT into defaultTest (ID) VALUES (1)
+GO
+
+ALTER TABLE defaultTest ADD CONSTRAINT df_ProductName DEFAULT 'item' FOR ProductName
+GO
+
+INSERT into defaultTest (ID) VALUES (2)
+
+BEGIN TRANSACTION
+ALTER TABLE defaultTest ADD CONSTRAINT df_ProductName DEFAULT 'service' FOR ProductName
+INSERT into defaultTest (ID) VALUES (3)
+select * from defaultTest
+ROLLBACK
+
+INSERT into defaultTest (ID) VALUES (4)
+
+select * from defaultTest
+go
+
+DROP TABLE defaultTest
+GO
+
+-- Test table type
+CREATE TYPE tv_table_constraint AS
+TABLE(a VARCHAR(15), b CHAR(15) DEFAULT 'Whoops!')
+GO
+
+DECLARE @tv1 tv_table_constraint;
+INSERT INTO @tv1 (a) VALUES('1')
+
+select * from @tv1
+GO
+
+DROP TYPE tv_table_constraint
+GO
+
+-------------------------------------------------------------------------------
 -- Cleanup
 -------------------------------------------------------------------------------
 DROP VIEW enr_view
