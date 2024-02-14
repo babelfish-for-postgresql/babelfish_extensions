@@ -1,0 +1,239 @@
+-- tsql
+-- create a deep nested procedure call
+-- we will run this after all the test to
+-- force utilize all the free memory in the session
+-- if there was any corruption of pg_stat before
+-- we might catch it while executing this
+
+CREATE PROCEDURE babel_4740_nested_1 @in INT
+AS SELECT @in;
+GO
+
+DECLARE @i int = 2;
+while (@i <= 100)
+BEGIN
+    DECLARE @query NVARCHAR(max);
+    SET @query = N'
+        CREATE PROCEDURE babel_4740_nested_' + cast(@i as VARCHAR(4)) + ' @in INT
+        AS SET @in = @in + 1; EXEC babel_4740_nested_' + cast((@i-1) as VARCHAR(4)) + ' @in;';
+    EXEC(@query);
+    SET @i = @i + 1;
+END;
+GO
+-- terminate-tsql-conn
+
+-- tsql
+CREATE PROCEDURE babel_4740_p1
+AS 
+        SELECT 'dropping myself and committing top transaction';
+        DROP PROCEDURE babel_4740_p1;
+        COMMIT;
+        BEGIN TRAN;
+GO
+
+
+BEGIN TRAN
+GO
+EXEC babel_4740_p1
+GO
+COMMIT
+GO
+EXEC babel_4740_nested_100 1
+GO
+-- terminate-tsql-conn
+
+-- tsql
+CREATE TABLE babel_4740_t (id INT)
+GO
+
+CREATE TRIGGER babel_4740_trigger1
+ON babel_4740_t
+AFTER INSERT
+AS 
+        SELECT 'executing trigger and dropping itself';
+        DROP TRIGGER babel_4740_trigger1
+GO
+
+INSERT INTO babel_4740_t VALUES (1), (2)
+GO
+
+DROP TABLE babel_4740_t
+GO
+
+EXEC babel_4740_nested_100 1
+GO
+-- terminate-tsql-conn
+
+-- tsql
+CREATE PROCEDURE babel_4740_p1 AS EXEC babel_4740_p2;
+GO
+CREATE PROCEDURE babel_4740_p2 AS SELECT 'commited procedure';
+GO
+
+
+BEGIN TRAN
+GO
+SAVE TRAN sp1;
+GO
+DROP PROCEDURE babel_4740_p1
+GO
+CREATE PROCEDURE babel_4740_p1 AS SELECT 'not yet commited procedure'; ROLLBACK TRAN sp1;
+GO
+EXEC babel_4740_p1;
+GO
+EXEC babel_4740_p1
+GO
+COMMIT
+GO
+SELECT @@trancount
+GO
+
+
+CREATE PROCEDURE babel_4740_p3 AS SELECT 'stats shuld exists for this procedure with call count as 1'; ROLLBACK; BEGIN TRAN;
+GO
+BEGIN TRAN
+GO
+EXEC babel_4740_p3
+GO
+COMMIT
+GO
+
+SELECT @@trancount
+GO
+
+
+BEGIN TRAN
+GO
+CREATE PROCEDURE babel_4740_p4 AS SELECT 'rollback to savepoint plus but stat should exists for this procedure with call count 1'; ROLLBACK TRAN sp1;
+GO
+SAVE TRAN sp1
+GO
+EXEC babel_4740_p4
+GO
+COMMIT
+GO
+SELECT @@trancount
+GO
+
+
+
+BEGIN TRAN
+GO
+CREATE PROCEDURE babel_4740_p5 AS SELECT 'rollback to savepoint but stat should not exists because of overall rollback'; ROLLBACK TRAN sp1;
+GO
+SAVE TRAN sp1
+GO
+EXEC babel_4740_p5
+GO
+ROLLBACK
+GO
+SELECT @@trancount
+GO
+
+
+
+BEGIN TRAN
+GO
+SAVE TRAN sp1
+GO
+CREATE PROCEDURE babel_4740_p6 AS SELECT 'rollback to savepoint but stat should not exists because of rolling back create proc'; ROLLBACK TRAN sp1;
+GO
+EXEC babel_4740_p6
+GO
+COMMIT
+GO
+SELECT @@trancount
+GO
+
+
+CREATE PROCEDURE babel_4740_p7 AS DROP PROCEDURE babel_4740_p7
+GO
+
+BEGIN TRAN
+GO
+EXEC babel_4740_p7
+GO
+COMMIT
+GO
+
+CREATE PROCEDURE babel_4740_p8 AS DROP PROCEDURE babel_4740_p8
+GO
+
+-- Execute this procedure 64 times
+DECLARE @i INT = 0;
+WHILE @i < 64
+BEGIN
+        BEGIN TRAN
+        EXEC babel_4740_p8
+        ROLLBACK
+        SET @i = @i + 1;
+END
+GO
+
+
+-- Original entry for procedure 8 should still exists even if we 
+-- drop and recreate a new procedure inside a txn & rollback the txn
+BEGIN TRAN
+GO
+DROP PROCEDURE babel_4740_p8
+GO
+CREATE PROCEDURE babel_4740_p8 AS DROP PROCEDURE babel_4740_p8
+GO
+EXEC babel_4740_p8
+GO
+ROLLBACK
+GO
+
+EXEC babel_4740_nested_100 1
+GO
+
+-- terminate-tsql-conn
+
+
+-- tsql
+
+-- Use new session to make sure pg_stats are updated to latest
+-- Calls count 1 indicates we entered pgstat_end_function_usage
+-- and successfully increamented numcalls count
+-- Procedure 1, 2, 3, 4 are executed once and still exists
+-- So their entry should exists with count 1
+-- Procedure 8 dropped itslef but that txn was rolled back
+
+SELECT funcname, calls
+        FROM pg_stat_user_functions 
+        WHERE funcname LIKE 'babel_4740_p%'
+        ORDER BY funcname;
+GO
+
+DROP PROCEDURE IF EXISTS babel_4740_p1, babel_4740_p2,
+        babel_4740_p3, babel_4740_p4, babel_4740_p5,
+        babel_4740_p6, babel_4740_p7, babel_4740_p8
+GO
+
+-- terminate-tsql-conn
+
+-- tsql
+SELECT funcname, calls
+        FROM pg_stat_user_functions 
+        WHERE funcname LIKE 'babel_4740_p%'
+        ORDER BY funcname;
+GO
+
+DECLARE @i int = 100;
+while (@i >= 1)
+BEGIN
+    DECLARE @query NVARCHAR(max);
+    SET @query = N'DROP PROCEDURE babel_4740_nested_' + cast(@i as VARCHAR(4));
+    EXEC(@query);
+    SET @i = @i - 1;
+END;
+GO
+-- terminate-tsql-conn
+
+-- tsql
+-- check if we have cleaned up everything
+SELECT funcname, calls
+        FROM pg_stat_user_functions 
+        WHERE funcname LIKE 'babel_4740_%'
+        ORDER BY funcname;
+GO
