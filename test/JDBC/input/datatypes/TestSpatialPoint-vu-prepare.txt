@@ -87,6 +87,12 @@ CREATE TRIGGER trg_LogDistanceChange ON YourTable AFTER UPDATE AS BEGIN DECLARE 
 prepst#!#INSERT INTO SPATIALPOINTGEOM_dt(location) values(@location) #!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):0
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-91.0 -35.0):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(290.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-120.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(-720.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(220.345 45.1234):4326
+prepst#!#exec#!#GEOMETRY|-|location|-|Point(120.345 45.1234):4326
 #Negative Test for STGeomFromText when SRID >= 10^6
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(47.65100 -22.34900):1000000000
 #Negative Test for STGeomFromText with SRID < 0
@@ -99,7 +105,17 @@ prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOMETRY|-|location|-|LINESTRING(1 2, 3 4):4326
 
-CREATE VIEW TextFromGeom AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
+create table geominTable (a geometry);
+Insert into geominTable values('POINT(1 2)');
+Insert into geominTable values('POINT(1 2 3)');
+Insert into geominTable values('POINT(1 2 3 4)');
+Insert into geominTable values('LINESTRING(1 2,3 4)');
+Insert into geominTable values('POINT(1000 2000)');
+Insert into geominTable values('POINT(123 34)');
+
+create procedure geominTest @a geometry as select @a.STX as Xcoord, @a.STY as Ycoord ORDER BY @a.STX;
+
+CREATE VIEW TextFromGeom AS SELECT STX(location) AS XCoord, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
 CREATE VIEW BinaryFromGeom AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOM_dt ORDER BY location.STX;
 
@@ -195,6 +211,12 @@ INSERT INTO SPATIALPOINTGEOG_dt (location) VALUES ( geography::Point(147.65100, 
 #Tests for Geography type Prepared Statements
 prepst#!#INSERT INTO SPATIALPOINTGEOG_dt(location) values(@location) #!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-91.0 -35.0):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(290.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-120.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(-720.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(220.345 45.1234):4326
+prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(120.345 45.1234):4326
 #Negative Test for STGeomFromText for Geography with SRID 0
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(47.65100 -22.34900):0
 #Negative Test for STGeomFromText for Geography when lat > 90 or < -90
@@ -211,7 +233,7 @@ prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 ):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|Point(1.0 2.0 3.0 4.0):4326
 prepst#!#exec#!#GEOGRAPHY|-|location|-|LINESTRING(1 2, 3 4):4326
 
-CREATE VIEW TextFromGeog AS SELECT STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
+CREATE VIEW TextFromGeog AS SELECT Lat(location) AS Latitude, STAsText(location) AS TextRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
 CREATE VIEW BinaryFromGeog AS SELECT STAsBinary(location) AS BinaryRepresentation FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
@@ -222,6 +244,14 @@ CREATE VIEW GeogView AS SELECT location.Long, location.Lat AS Coordinates FROM S
 CREATE TABLE test_table (geog geography)
 INSERT INTO test_table(geog) VALUES(geography::Point(1, 2, 4326));
 
+create table geoginTable (a geography);
+Insert into geoginTable values('POINT(1 2)');
+Insert into geoginTable values('POINT(1 2 3)');
+Insert into geoginTable values('POINT(1 2 3 4)');
+Insert into geoginTable values('LINESTRING(1 2,3 4)');
+Insert into geoginTable values('POINT(1000 2000)');
+Insert into geoginTable values('POINT(123 34)');
+
 CREATE VIEW SubqueryView AS SELECT (select geog from test_table ORDER BY geog.Lat).Lat AS Latitude ORDER BY Latitude;
 
 CREATE VIEW BrackExprView AS SELECT ( geog ).Lat AS Latitude from test_table ORDER BY geog.Lat;
@@ -231,6 +261,8 @@ CREATE VIEW FuncExprView AS SELECT geography::Point(1, 2, 4326).Lat AS Latitude 
 CREATE FUNCTION func_getval() RETURNS TABLE AS RETURN ( SELECT location.STAsText() AS TextPoint FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat );
 
 CREATE PROCEDURE dbo.proc_getdata AS BEGIN DECLARE @Data TABLE ( TextPoint text ); INSERT INTO @Data SELECT * FROM dbo.func_getval() ORDER BY TextPoint; SELECT * FROM @Data ORDER BY TextPoint; END;
+
+create procedure geoginTest @a geography as select @a.Lat as Latitude, @a.Long as Longitude ORDER BY @a.Lat;
 
 CREATE VIEW TransformFromGeog AS SELECT ST_Transform(location, 4326) AS Modified_points FROM SPATIALPOINTGEOG_dt ORDER BY location.Lat;
 
