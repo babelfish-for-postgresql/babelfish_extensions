@@ -24,6 +24,33 @@
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::STGeomFromText('Point(47.65100 -22.34900)', 4326))
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::STPointFromText('Point(47.65100 -22.34900)', 4326))
 #Q#INSERT INTO POINTGEOG_dt(location) values(geography::Point(47.65100, -22.34900, 4326))
+#Q#SELECT location, location.STX, location.STY FROM POINTGEOM_dt;
+#D#master.sys.geometry#!#float#!#float
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (1 2)#!#1#!#2
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+POINT (47.651 -22.349)#!#47.651#!#-22.349
+#Q#SELECT location, location.Lat, location.Long FROM POINTGEOG_dt;
+#D#master.sys.geography#!#float#!#float
+POINT (47.651 -22.349)#!#-22.349#!#47.651
+POINT (1 2)#!#2#!#1
+POINT (47.651 -22.349)#!#-22.349#!#47.651
+POINT (47.651 -22.349)#!#-22.349#!#47.651
+POINT (-22.349 47.651)#!#47.651#!#-22.349
+#Q#SELECT * FROM  POINT_dt;
+#D#master.sys.geometry#!#master.sys.geography
+POINT (47.651 -22.349)#!#
+#!#POINT (47.651 -22.349)
+POINT (1 2)#!#POINT (1 2)
+#Q#select geometry::Point(10,500,4326);
+#D#master.sys.geometry
+POINT (10 500)
+#Q#select geography::Point(10,500,4326);
+#D#master.sys.geography
+POINT (500 10)
 #Q#SELECT location.STAsText() FROM POINTGEOM_dt;
 #D#text
 POINT(47.651 -22.349)
