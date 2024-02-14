@@ -85,11 +85,39 @@ dbo#!#babel_4768_v1_new#!#2#!#master_babel_4768_u1#!#r#!#<NULL>
 ~~END~~
 
 
+-- psql
+-- This is needed so that MVU passes
+DO $$
+BEGIN 
+    IF EXISTS (SELECT 1 FROM
+information_schema.tables WHERE
+table_name = 'tbl_creation_should_succeed' AND
+table_schema = 'master_dbo') THEN
+        EXECUTE 'GRANT ALL ON
+master_dbo.tbl_creation_should_succeed TO master_dbo';
+    END IF;
+END $$;
+GO
+
 -- tsql
 REVOKE SELECT, EXECUTE ON SCHEMA :: dbo TO babel_4768_u1
 GO
 
 REVOKE SELECT, EXECUTE ON SCHEMA :: babel_4768_s1 TO babel_4768_u1
+GO
+
+-- psql
+-- This is needed so that MVU passes
+DO $$
+BEGIN 
+    IF EXISTS (SELECT 1 FROM
+information_schema.tables WHERE
+table_name = 'tbl_creation_should_succeed' AND
+table_schema = 'master_dbo') THEN
+        EXECUTE 'REVOKE ALL ON
+master_dbo.tbl_creation_should_succeed FROM master_dbo';
+    END IF;
+END $$;
 GO
 
 -- psql
