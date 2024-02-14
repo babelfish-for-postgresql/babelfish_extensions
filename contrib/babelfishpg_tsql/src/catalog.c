@@ -1583,7 +1583,6 @@ static void alter_guest_schema_for_db(const char *dbname);
 /* Helper function Rename BBF catalog update*/
 static void rename_view_update_bbf_catalog(RenameStmt *stmt);
 static void rename_procfunc_update_bbf_catalog(RenameStmt *stmt);
-static void rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type);
 
 static int get_privilege_of_object(const char *schema_name, const char *object_name, const char *grantee, const char *object_type);
 
@@ -2625,28 +2624,16 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 {
 	switch (stmt->renameType)
 	{
-		/*
-		 * In case of renaming a table, view, procedure and function, modify the object
-		 * names present in all the Babelfish catalogs which stores these object names to
-		 * have consistency with the new names.
-		 *
-		 * List of catalogs which are updated here:
-		 * babelfish_schema_permissions, babelfish_function_ext, babelfish_view_def
-		 */
 		case OBJECT_TABLE:
-			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_VIEW:
 			rename_view_update_bbf_catalog(stmt);
-			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_PROCEDURE:
 			rename_procfunc_update_bbf_catalog(stmt);
-			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_FUNCTION:
 			rename_procfunc_update_bbf_catalog(stmt);
-			rename_object_update_bbf_schema_permission_catalog(stmt, stmt->renameType);
 			break;
 		case OBJECT_SEQUENCE:
 			break;
@@ -2659,120 +2646,6 @@ rename_update_bbf_catalog(RenameStmt *stmt)
 		default:
 			break;
 	}
-}
-
-/*
- * rename_object_update_bbf_schema_permission_catalog
- *
- * In case of renaming a table, view, procedure and function, modify the 'object_name' in
- * 'babelfish_schema_permissions' to have consistency with the new names.
- */
-static void
-rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_type)
-{
-	/* Update 'object_name' in 'babelfish_schema_permissions' */
-	Relation	bbf_schema_rel;
-	TupleDesc	bbf_schema_dsc;
-	ScanKeyData key[4];
-	HeapTuple	tuple_bbf_schema;
-	HeapTuple	new_tuple;
-	SysScanDesc scan;
-	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {0};
-	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
-	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
-	char		*logical_schema_name = NULL;
-	char		*object_name = NULL;
-	const char	*object_type = NULL;
-	int16		dbid = get_cur_db_id();
-	ObjectWithArgs *objwargs;
-
-	/* open the catalog table */
-	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(), RowExclusiveLock);
-	/* get the description of the table */
-	bbf_schema_dsc = RelationGetDescr(bbf_schema_rel);
-
-	if (rename_type == OBJECT_TABLE || rename_type == OBJECT_VIEW)
-	{
-		logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
-		object_name = stmt->relation->relname;
-		object_type = OBJ_RELATION;
-	}
-	else
-	{
-		if (rename_type == OBJECT_PROCEDURE)
-			object_type = OBJ_PROCEDURE;
-		else if (rename_type == OBJECT_FUNCTION)
-			object_type = OBJ_FUNCTION;
-		objwargs = (ObjectWithArgs *) stmt->object;
-		DeconstructQualifiedName(objwargs->objname, &logical_schema_name, &object_name);
-	}
-
-	/* search for the row for update => build the key */
-	ScanKeyInit(&key[0],
-				Anum_bbf_schema_perms_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
-	ScanKeyEntryInitialize(&key[1], 0,
-				Anum_bbf_schema_perms_schema_name,
-				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
-				F_TEXTEQ, CStringGetTextDatum(logical_schema_name));
-	ScanKeyEntryInitialize(&key[2], 0,
-				Anum_bbf_schema_perms_object_name,
-				BTEqualStrategyNumber, InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
-				F_TEXTEQ, CStringGetTextDatum(object_name));
-	ScanKeyEntryInitialize(&key[3], 0,
-				Anum_bbf_schema_perms_object_type,
-				BTEqualStrategyNumber,
-				InvalidOid,
-				tsql_get_server_collation_oid_internal(false),
-				F_TEXTEQ,
-				CStringGetTextDatum(object_type));
-
-	/* scan */
-	scan = systable_beginscan(bbf_schema_rel,
-			get_bbf_schema_perms_oid(),
-			false, NULL, 4, key);
-
-	/* get the scan result -> original tuple */
-	tuple_bbf_schema = systable_getnext(scan);
-
-	/*
-	 * If a permission on the same object is granted to multiple grantees,
-	 * there can be multiple rows in the catalog corresponding to each grantee name.
-	 * All such rows need to be updated with the new name.
-	 *
-	 * It is OK to not throw an error if an entry is not found in 'babelfish_schema_permissions'.
-	 * Explaination: An entry is added to 'babelfish_schema_permissions' only if an object has an explicit GRANT on it.
-	 * It is not necessary that each RENAME on an object has a GRANT of that object too.
-	 * Hence, there can be missing entries.
-	 */
-	while (HeapTupleIsValid(tuple_bbf_schema))
-	{
-		/* create new tuple to substitute */
-		new_record_bbf_schema[Anum_bbf_schema_perms_object_name - 1] = CStringGetTextDatum(stmt->newname);
-		new_record_repl_bbf_schema[Anum_bbf_schema_perms_object_name - 1] = true;
-
-		new_tuple = heap_modify_tuple(tuple_bbf_schema,
-									bbf_schema_dsc,
-									new_record_bbf_schema,
-									new_record_nulls_bbf_schema,
-									new_record_repl_bbf_schema);
-
-		CatalogTupleUpdate(bbf_schema_rel, &new_tuple->t_self, new_tuple);
-
-		heap_freetuple(new_tuple);
-		tuple_bbf_schema = systable_getnext(scan);
-	}
-
-	if (logical_schema_name != NULL)
-		pfree(logical_schema_name);
-	if (object_name != NULL)
-		pfree(object_name);
-
-	systable_endscan(scan);
-	table_close(bbf_schema_rel, RowExclusiveLock);
 }
 
 static void
