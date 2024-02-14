@@ -113,7 +113,7 @@ information_schema.tables WHERE
 table_name = 'tbl_creation_should_succeed' AND
 table_schema = 'master_dbo') THEN
         EXECUTE 'REVOKE ALL ON
-master_dbo.tbl_creation_should_succeed TO master_dbo';
+master_dbo.tbl_creation_should_succeed FROM master_dbo';
     END IF;
 END $$;
 GO
