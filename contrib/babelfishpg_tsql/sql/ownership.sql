@@ -28,8 +28,6 @@ CREATE TABLE sys.babelfish_schema_permissions (
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_schema_permissions', '');
-
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
