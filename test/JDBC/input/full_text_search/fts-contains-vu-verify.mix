@@ -462,6 +462,63 @@ go
 select * from test_special_char_t t where contains(t.name, 'two');
 go
 
+select t.* from test_special_char_t t where contains(t.name, 'one');
+go
+
+select t.name from test_special_char_t t where contains(.t.name, 'one');
+go
+
+select * from test_special_char_t t where contains(t..name, 'one');
+go
+
+select t..name from test_special_char_t t where contains(t.name, 'one');
+go
+
+select t.name from test_special_char_t where contains(t.name, 'one');
+go
+
+select t.name from test_special_char_t t where contains(x.name, 'one');
+go
+
+select t.name from test_special_char_t t where contains(x.t.name, 'one');
+go
+
+select t.name from test_special_char_t t where contains(t,name, 'one');
+go
+
+select t.name from test_special_char_t t where contains(.name, 'one');
+go
+
+select t.name from test_special_char_t t where contains(t., 'one');
+go
+
+select t.name from test_special_char_t t where contains(t.., 'one');
+go
+
+select t.name from test_special_char_t t where contains(, 'one');
+go
+
+select t.name from test_special_char_t t where contains(t.txt, 'one');
+go
+
+select t.name from test_special_char_t t where contains(b, 'one');
+go
+
+select t.name from test_special_char_t t where .t.name = 'one';
+go
+
+select t.name from test_special_char_t t where contains('t.name', '"one two"');
+go
+
+select t.name from test_special_char_t t where contains("t.name", '"one two"');
+go
+
+select * from new_schema_fts.test where contains(name, 'one');
+go
+
+select * from new_schema_fts.test where contains(new_schema_fts.test.name, 'one');
+go
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO

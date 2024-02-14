@@ -26,6 +26,15 @@ go
 drop table test_special_char_t;
 go
 
+drop fulltext index on new_schema_fts.test;
+go
+
+drop table new_schema_fts.test;
+go
+
+drop schema new_schema_fts;
+go
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
