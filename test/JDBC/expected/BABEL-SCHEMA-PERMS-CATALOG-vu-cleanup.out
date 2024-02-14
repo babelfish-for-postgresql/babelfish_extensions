@@ -1,0 +1,67 @@
+-- tsql
+
+-- Cleanup
+drop table babel_4768_t1_new
+go
+
+drop table babel_4768_s1.babel_4768_t1_new
+go
+
+drop view babel_4768_v1_new
+go
+
+drop view babel_4768_s1.babel_4768_v1_new
+go
+
+drop proc babel_4768_p1_new
+go
+
+drop proc babel_4768_s1.babel_4768_p1_new
+go
+
+drop proc babel_4768_p2_new
+go
+
+drop proc babel_4768_s1.babel_4768_p2_new
+go
+
+drop FUNCTION babel_4768_f1_new
+go
+
+drop FUNCTION babel_4768_s1.babel_4768_f1_new
+go
+
+drop FUNCTION babel_4768_f2_new
+go
+
+drop FUNCTION babel_4768_s1.babel_4768_f2_new
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_4768_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login babel_4768_l1;
+go
+
+drop user babel_4768_u1
+go
+
+drop schema babel_4768_s1
+go
