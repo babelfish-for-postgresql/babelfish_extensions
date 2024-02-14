@@ -3,30 +3,6 @@
 ALTER LOGIN user_perms_by_name WITH PASSWORD='test';
 GO
 
-USE db_perms_by_name;
-GO
-
-GRANT ALL ON t_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON [.t perms.by.name.] TO user_perms_by_name;
-GO
-
-GRANT ALL ON [ t.perms by name ] TO user_perms_by_name;
-GO
-
-GRANT ALL ON v_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON scalar_function_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON table_function_perms_by_name TO user_perms_by_name;
-GO
-
-GRANT ALL ON proc_perms_by_name TO user_perms_by_name;
-GO
-
 -- tsql user=user_perms_by_name password=test
 USE db_perms_by_name;
 GO
@@ -2890,27 +2866,3 @@ int
 ~~END~~
 
 
--- tsql
-USE db_perms_by_name;
-GO
-
-REVOKE ALL ON t_perms_by_name FROM user_perms_by_name;
-GO
-
-REVOKE ALL ON [.t perms.by.name.] FROM user_perms_by_name;
-GO
-
-REVOKE ALL ON [ t.perms by name ] FROM user_perms_by_name;
-GO
-
-REVOKE ALL ON v_perms_by_name FROM user_perms_by_name;
-GO
-
-REVOKE ALL ON scalar_function_perms_by_name FROM user_perms_by_name;
-GO
-
-REVOKE ALL ON table_function_perms_by_name FROM user_perms_by_name;
-GO
-
-REVOKE ALL ON proc_perms_by_name FROM user_perms_by_name;
-GO
