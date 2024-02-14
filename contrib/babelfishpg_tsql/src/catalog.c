@@ -2717,6 +2717,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	bool		new_record_repl_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS] = {false};
 	char		*logical_schema_name = NULL;
+	char		*physical_schema_name = NULL;
 	char		*object_name = NULL;
 	const char	*object_type = NULL;
 	int16		dbid = get_cur_db_id();
@@ -2740,7 +2741,8 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		else if (rename_type == OBJECT_FUNCTION)
 			object_type = OBJ_FUNCTION;
 		objwargs = (ObjectWithArgs *) stmt->object;
-		DeconstructQualifiedName(objwargs->objname, &logical_schema_name, &object_name);
+		DeconstructQualifiedName(objwargs->objname, &physical_schema_name, &object_name);
+		logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
 	}
 
 	/* search for the row for update => build the key */
@@ -2802,6 +2804,8 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 		tuple_bbf_schema = systable_getnext(scan);
 	}
 
+	if (physical_schema_name != NULL)
+		pfree(physical_schema_name);
 	if (logical_schema_name != NULL)
 		pfree(logical_schema_name);
 	if (object_name != NULL)
