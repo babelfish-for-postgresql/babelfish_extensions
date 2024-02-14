@@ -794,7 +794,7 @@ makeToTSVectorFuncCall(char *colId, core_yyscan_t yyscanner, Node *pgconfig)
 		 * Set the column name directly
 		 */
 		columnName = colId;
-    }
+	}
 	
 	if (schemaName)
 	{

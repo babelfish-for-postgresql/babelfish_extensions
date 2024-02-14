@@ -3054,6 +3054,12 @@ go
 create fulltext index on test_special_char_t(name) key index test_special_char_t_idx;
 go
 
+create database fts_test_db;
+go
+
+use fts_test_db;
+go
+
 create schema new_schema_fts
 go
 
@@ -3068,7 +3074,6 @@ go
 
 create fulltext index on new_schema_fts.test(name) key index test_idx;
 go
-
 
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')

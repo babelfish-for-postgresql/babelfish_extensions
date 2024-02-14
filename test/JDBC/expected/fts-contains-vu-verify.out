@@ -2636,6 +2636,13 @@ int#!#text
 ~~END~~
 
 
+select * from test_special_char_t where contains(name, '"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '"' in the full-text search condition '"'.)~~
+
+
 select t.name from test_special_char_t t where contains(t.name, '"one two"');
 go
 ~~START~~
@@ -3005,7 +3012,17 @@ one: two
 ~~END~~
 
 
-select * from new_schema_fts.test where contains(name, 'one');
+select name as txt from test_special_char_t where contains(txt, 'hello');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "txt" does not exist)~~
+
+
+use fts_test_db;
+go
+
+select * from fts_test_db.new_schema_fts.test t where contains(t.name, 'one');
 go
 ~~START~~
 int#!#text
@@ -3013,12 +3030,26 @@ int#!#text
 ~~END~~
 
 
-select * from new_schema_fts.test where contains(new_schema_fts.test.name, 'one');
+select * from fts_test_db.new_schema_fts.test t where contains(fts_test_db.new_schema_fts.t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "new_schema_fts")~~
+
+
+select * from fts_test_db.new_schema_fts.test where contains(name, 'one');
 go
 ~~START~~
 int#!#text
 1#!#one two three
 ~~END~~
+
+
+select * from fts_test_db.new_schema_fts.test where contains(fts_test_db.new_schema_fts.test.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "new_schema_fts")~~
 
 
 -- disable FULLTEXT

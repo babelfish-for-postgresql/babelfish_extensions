@@ -453,6 +453,9 @@ go
 select * from test_special_char_t where contains(name, '"one < two _ three '' four `     five"');
 go
 
+select * from test_special_char_t where contains(name, '"');
+go
+
 select t.name from test_special_char_t t where contains(t.name, '"one two"');
 go
 
@@ -513,10 +516,22 @@ go
 select t.name from test_special_char_t t where contains("t.name", '"one two"');
 go
 
-select * from new_schema_fts.test where contains(name, 'one');
+select name as txt from test_special_char_t where contains(txt, 'hello');
 go
 
-select * from new_schema_fts.test where contains(new_schema_fts.test.name, 'one');
+use fts_test_db;
+go
+
+select * from fts_test_db.new_schema_fts.test t where contains(t.name, 'one');
+go
+
+select * from fts_test_db.new_schema_fts.test t where contains(fts_test_db.new_schema_fts.t.name, 'one');
+go
+
+select * from fts_test_db.new_schema_fts.test where contains(name, 'one');
+go
+
+select * from fts_test_db.new_schema_fts.test where contains(fts_test_db.new_schema_fts.test.name, 'one');
 go
 
 -- disable FULLTEXT
