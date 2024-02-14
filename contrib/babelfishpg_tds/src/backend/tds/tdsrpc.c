@@ -1777,13 +1777,13 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 					/* Set column metadata for given CLR-UDT type depending upon the underlying typename. */
 					if (pg_strcasecmp(typeName.data, "geometry") == 0)
 					{
-						SetColMetadataForGeometryType(&temp->paramMeta, tdsType, TDS_MAXLEN_POINT, "", "geometry");
+						SetColMetadataForGeometryType(&temp->paramMeta, tdsType, TDS_MAXLEN_POINT, TDS_ASSEMBLY_TYPE_NAME_GEOMETRY, "geometry");
 						temp->type = TDS_TYPE_GEOMETRY;
 						tdsType = TDS_TYPE_GEOMETRY;
 					}
 					else
 					{
-						SetColMetadataForGeographyType(&temp->paramMeta, tdsType, TDS_MAXLEN_POINT, "", "geography");
+						SetColMetadataForGeographyType(&temp->paramMeta, tdsType, TDS_MAXLEN_POINT, TDS_ASSEMBLY_TYPE_NAME_GEOGRAPHY, "geography");
 						temp->type = TDS_TYPE_GEOGRAPHY;
 						tdsType = TDS_TYPE_GEOGRAPHY;
 					}
