@@ -1,5 +1,5 @@
 -- psql
-select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
+select * from sys.babelfish_schema_permissions;
 go
 
 select schema_name, object_name, permission, grantee, object_type, function_args from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
