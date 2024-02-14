@@ -6661,17 +6661,21 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		}
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
 	}
-
-	// check for freetext predicate CONTAINS()
-	if(is_freetext_predicate)
+	
+	/* check for freetext predicate CONTAINS() */
+	if (is_freetext_predicate)
 	{
 		std::string schema_name = extractSchemaName(nullptr, ctx);
 		
-		const char * t_name = downcase_truncate_identifier(table_name.c_str(), table_name.length(), true);
-		const char * s_name = downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true);
+		/* Use the alias name if available, otherwise use the original table name */
+		if (alias_to_table_mapping.find(table_name) != alias_to_table_mapping.end())
+			table_name = alias_to_table_mapping[table_name];
 		
-		// check if full-text index exist for the table, if not throw error
-		if(!check_fulltext_exist(const_cast <char *>(s_name), const_cast <char *>(t_name)))
+		const char *t_name = downcase_truncate_identifier(table_name.c_str(), table_name.length(), true);
+		const char *s_name = downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true);
+		
+		/* Check if full-text index exists for the table, if not throw an error */
+		if (!check_fulltext_exist(const_cast<char *>(s_name), const_cast<char *>(t_name)))
 			throw PGErrorWrapperException(ERROR, ERRCODE_RAISE_EXCEPTION, format_errmsg("Cannot use a CONTAINS or FREETEXT predicate on table or indexed view '%s' because it is not full-text indexed.", table_name.c_str()), getLineAndPos(ctx));
 	}
 }

@@ -2075,7 +2075,7 @@ func_expr_common_subexpr:
 							parser_errposition(@1)));
 					}
 				}
-			| TSQL_CONTAINS '(' ColId ',' tsql_contains_search_condition ')'
+			| TSQL_CONTAINS '(' var_name ',' tsql_contains_search_condition ')'
 				{
 					$$ = TsqlExpressionContains($3, $5, yyscanner);
 				}

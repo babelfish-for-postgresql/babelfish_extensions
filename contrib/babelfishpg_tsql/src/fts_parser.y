@@ -141,7 +141,7 @@ static char
     inputLength = strlen(trimmedInputStr);
 
     /* Check if the input is a phrase enclosed in double quotes */
-    if (trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
+    if (inputLength >= 2 && trimmedInputStr[0] == '"' && trimmedInputStr[inputLength - 1] == '"') {
         trim(trimmedInputStr, true);
         isEnclosedInQuotes = true;
     }
@@ -212,7 +212,7 @@ replaceMultipleSpacesAndSpecialChars(char* input, char **str1, char **str2, bool
     StringInfoData  modifiedInput;
     const char      *specialChars = "~!&|@#$%^*+=\\;:<>?.\\/";
     const char      *boolOperators = "&!|";
-    const char      *forbiddenChars = "([{]})";
+    const char      *forbiddenChars = "([{]})\"";
     const char      *charInForbiddenChars;
     const char      *charInSpecialChars;
     const char      *charInBoolOperators;
