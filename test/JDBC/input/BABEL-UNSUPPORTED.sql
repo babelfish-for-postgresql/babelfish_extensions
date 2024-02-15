@@ -488,12 +488,6 @@ GO
 DROP TABLE t_unsupported_ft2;
 GO
 
-CREATE SCHEMA t_unsupported_schema GRANT SELECT on schema::t_unsupported_schema TO guest;
-GO
-
-CREATE SCHEMA t_unsupported_schema REVOKE SELECT on schema::t_unsupported_schema TO guest;
-GO
-
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
 

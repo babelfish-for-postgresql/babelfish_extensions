@@ -1108,6 +1108,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->create_fulltext_index()
 	 || ctx->create_index()
 	 || ctx->create_login()
+	 || ctx->create_schema()
 	 || ctx->create_sequence()
 	 || (ctx->create_server_role() && pltsql_allow_antlr_to_unsupported_grammar_for_testing)
 	 || ctx->create_table()
@@ -1135,20 +1136,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 )
 	{
 		// supported DDL or DDL which need special handling
-		return visitChildren(ctx);
-	}
-
-	if (ctx->create_schema())
-	{
-		auto create_schema = ctx->create_schema();
-		if (create_schema->grant_statement().size() > 0)
-		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GRANT inside CREATE SCHEMA is not yet supported in Babelfish.", getLineAndPos(ctx));
-		}
-		if (create_schema->revoke_statement().size() > 0)
-		{
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE inside CREATE SCHEMA is not yet supported in Babelfish.", getLineAndPos(ctx));
-		}
 		return visitChildren(ctx);
 	}
 
@@ -1787,13 +1774,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 	{
 		auto perm_obj = grant->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && obj_type->SCHEMA())
-		{
-			if (grant->ALL())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(grant));
-			if (grant->WITH())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GRANT on SCHEMA .. WITH GRANT OPTION is not yet supported in Babelfish.", getLineAndPos(grant));
-		}
+		if (grant->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(grant));
 		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "GRANT ON " + obj_type->getText();
@@ -1888,15 +1870,8 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 	{
 		auto perm_obj = revoke->permission_object();
 		auto obj_type = perm_obj->object_type();
-		if (obj_type && obj_type->SCHEMA())
-		{
-			if (revoke->ALL())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(revoke));
-			if (revoke->CASCADE())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE on SCHEMA .. CASCADE is not yet supported in Babelfish.", getLineAndPos(revoke));
-			if (revoke->GRANT())
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "REVOKE GRANT OPTION FOR .. on SCHEMA is not yet supported in Babelfish.", getLineAndPos(revoke));
-		}
+		if (revoke->ALL() && obj_type && obj_type->SCHEMA())
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "The all permission has been deprecated and is not available for this class of entity.", getLineAndPos(revoke));
 		if (obj_type && !(obj_type->OBJECT() || obj_type->SCHEMA()))
 		{
 			unsupported_feature = "REVOKE ON " + obj_type->getText();
