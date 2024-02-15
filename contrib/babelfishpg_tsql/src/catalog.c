@@ -191,10 +191,6 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME, sys_schema_oid);
 
-	/* bbf_schema_perms */
-	bbf_schema_perms_oid = get_relname_relid(BBF_SCHEMA_PERMS_TABLE_NAME, sys_schema_oid);
-	bbf_schema_perms_idx_oid = get_relname_relid(BBF_SCHEMA_PERMS_IDX_NAME, sys_schema_oid);
-
 	/* bbf_servers_def */
 	bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME, sys_schema_oid);
@@ -1563,8 +1559,6 @@ static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
-static Datum get_perms_schema_name(HeapTuple tuple, TupleDesc dsc);
-static Datum get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_server_name(HeapTuple tuple, TupleDesc dsc);
 
 /* Condition function declaration */
@@ -1710,14 +1704,6 @@ Rule		must_match_rules_function[] =
 	"pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
 };
 
-/* babelfish_schema_permissions */
-Rule		must_match_rules_schema_permission[] =
-{
-	{"<schema_name> in babelfish_schema_permissions must also exist in babelfish_namespace_ext",
-	"babelfish_namespace_ext", "nspname", NULL, get_perms_schema_name, NULL, check_exist, NULL},
-	{"<grantee> in babelfish_schema_permissions must also exist in pg_authid",
-	"pg_authid", "rolname", NULL, get_perms_grantee_name, NULL, check_exist, NULL}
-};
 
 /* babelfish_server_options */
 Rule		must_match_rules_srv_options[] =
@@ -1815,7 +1801,6 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t		num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
 	size_t		num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
 	size_t		num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
-	size_t		num_must_match_rules_schema_permission = sizeof(must_match_rules_schema_permission) / sizeof(must_match_rules_schema_permission[0]);
 	size_t		num_must_match_rules_srv_options = sizeof(must_match_rules_srv_options) / sizeof(must_match_rules_srv_options[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
@@ -1845,9 +1830,6 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_function, num_must_match_rules_function,
 								 bbf_function_ext_oid, res_tupstore, res_tupdesc))
-		||
-		!(check_must_match_rules(must_match_rules_schema_permission, num_must_match_rules_schema_permission,
-								 bbf_schema_perms_oid, res_tupstore, res_tupdesc))
 		||
 		!(check_must_match_rules(must_match_rules_srv_options, num_must_match_rules_srv_options,
 								 bbf_servers_def_oid, res_tupstore, res_tupdesc))
@@ -2134,24 +2116,6 @@ get_function_name(HeapTuple tuple, TupleDesc dsc)
 	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
 
 	return NameGetDatum(&(func->funcname));
-}
-
-static Datum
-get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
-{
-	bool		isNull;
-	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
-
-	return schema_name;
-}
-
-static Datum
-get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
-{
-	bool		isNull;
-	Datum		grantee_name = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
-
-	return grantee_name;
 }
 
 static Datum
