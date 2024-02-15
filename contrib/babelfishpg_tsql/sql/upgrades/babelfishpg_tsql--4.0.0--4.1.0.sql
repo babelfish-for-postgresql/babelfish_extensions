@@ -2872,6 +2872,241 @@ END;
 $$ LANGUAGE pltsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_procedure_params_100_managed TO PUBLIC;
 
+create or replace view sys.table_types_internal as
+SELECT pt.typrelid
+    FROM pg_catalog.pg_type pt
+    INNER JOIN sys.schemas sch on pt.typnamespace = sch.schema_id
+    INNER JOIN pg_catalog.pg_depend dep ON pt.typrelid = dep.objid
+    INNER JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i'  AND pc.relkind = 'r';
+
+create or replace view sys.tables as
+with tt_internal as MATERIALIZED
+(
+  select * from sys.table_types_internal
+)
+select
+  CAST(t.relname as sys._ci_sysname) as name
+  , CAST(t.oid as int) as object_id
+  , CAST(NULL as int) as principal_id
+  , CAST(t.relnamespace  as int) as schema_id
+  , 0 as parent_object_id
+  , CAST('U' as sys.bpchar(2)) as type
+  , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as create_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , case reltoastrelid when 0 then 0 else 1 end as lob_data_space_id
+  , CAST(NULL as int) as filestream_data_space_id
+  , CAST(relnatts as int) as max_column_id_used
+  , CAST(0 as sys.bit) as lock_on_bulk_load
+  , CAST(1 as sys.bit) as uses_ansi_nulls
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as has_replication_filter
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_sync_tran_subscribed
+  , CAST(0 as sys.bit) as has_unchecked_assembly_data
+  , 0 as text_in_row_limit
+  , CAST(0 as sys.bit) as large_value_types_out_of_row
+  , CAST(0 as sys.bit) as is_tracked_by_cdc
+  , CAST(0 as sys.tinyint) as lock_escalation
+  , CAST('TABLE' as sys.nvarchar(60)) as lock_escalation_desc
+  , CAST(0 as sys.bit) as is_filetable
+  , CAST(0 as sys.tinyint) as durability
+  , CAST('SCHEMA_AND_DATA' as sys.nvarchar(60)) as durability_desc
+  , CAST(0 as sys.bit) is_memory_optimized
+  , case relpersistence when 't' then CAST(2 as sys.tinyint) else CAST(0 as sys.tinyint) end as temporal_type
+  , case relpersistence when 't' then CAST('SYSTEM_VERSIONED_TEMPORAL_TABLE' as sys.nvarchar(60)) else CAST('NON_TEMPORAL_TABLE' as sys.nvarchar(60)) end as temporal_type_desc
+  , CAST(null as integer) as history_table_id
+  , CAST(0 as sys.bit) as is_remote_data_archive_enabled
+  , CAST(0 as sys.bit) as is_external
+from pg_class t
+inner join sys.schemas sch on sch.schema_id = t.relnamespace
+left join tt_internal tt on t.oid = tt.typrelid
+where tt.typrelid is null
+and t.relkind = 'r'
+and has_schema_privilege(t.relnamespace, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.tables TO PUBLIC;
+
+create or replace view sys.types As
+with RECURSIVE type_code_list as
+(
+    select distinct  pg_typname as pg_type_name, tsql_typname as tsql_type_name
+    from sys.babelfish_typecode_list()
+),
+tt_internal as MATERIALIZED
+(
+  select * from sys.table_types_internal
+)
+-- For System types
+select
+  CAST(ti.tsql_type_name as sys.sysname) as name
+  , cast(t.oid as int) as system_type_id
+  , cast(t.oid as int) as user_type_id
+  , cast(s.oid as int) as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(ti.tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , sys.tsql_type_precision_helper(ti.tsql_type_name, t.typtypmod) as precision
+  , sys.tsql_type_scale_helper(ti.tsql_type_name, t.typtypmod, false) as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  CAST(c.collname as sys.sysname)
+    END as collation_name
+  , case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end as is_nullable
+  , CAST(0 as sys.bit) as is_user_defined
+  , CASE ti.tsql_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
+  , CAST(0 as int) as default_object_id
+  , CAST(0 as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+inner join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+,cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
+where
+ti.tsql_type_name IS NOT NULL
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as sys.sysname) as name
+  , cast(t.typbasetype as int) as system_type_id
+  , cast(t.oid as int) as user_type_id
+  , cast(t.typnamespace as int) as schema_id
+  , null::integer as principal_id
+  , case when tt.typrelid is not null then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) end as precision
+  , case when tt.typrelid is not null then 0::sys.tinyint else sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) end as scale
+  , CASE c.collname
+    WHEN 'default' THEN default_collation_name
+    ELSE  CAST(c.collname as sys.sysname)
+    END as collation_name
+  , case when tt.typrelid is not null then cast(0 as sys.bit)
+         else case when typnotnull then cast(0 as sys.bit) else cast(1 as sys.bit) end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , CAST(1 as sys.bit) as is_user_defined
+  , CASE tsql_base_type_name
+    -- CLR UDT have is_assembly_type = 1
+    WHEN 'geometry' THEN CAST(1 as sys.bit)
+    WHEN 'geography' THEN CAST(1 as sys.bit)
+    ELSE  CAST(0 as sys.bit)
+    END as is_assembly_type
+  , CAST(0 as int) as default_object_id
+  , CAST(0 as int) as rule_object_id
+  , case when tt.typrelid is not null then CAST(1 as sys.bit) else CAST(0 as sys.bit) end as is_table_type
+from pg_type t
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join type_code_list ti on t.typname = ti.pg_type_name
+left join pg_collation c on c.oid = t.typcollation
+left join tt_internal tt on t.typrelid = tt.typrelid
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, cast(current_setting('babelfishpg_tsql.server_collation_name') as sys.sysname) as default_collation_name
+-- we want to show details of user defined datatypes created under babelfish database
+where 
+ ti.tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    tt.typrelid is not null  
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
+
+create or replace view sys.indexes as
+-- Get all indexes from all system and user tables
+select
+  cast(X.indrelid as int) as object_id
+  , cast(I.relname as sys.sysname) as name
+  , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
+  , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
+  , cast(case when X.indisunique then 1 else 0 end as sys.bit) as is_unique
+  , cast(I.reltablespace as int) as data_space_id
+  , cast(0 as sys.bit) as ignore_dup_key
+  , cast(case when X.indisprimary then 1 else 0 end as sys.bit) as is_primary_key
+  , cast(case when const.oid is null then 0 else 1 end as sys.bit) as is_unique_constraint
+  , cast(0 as sys.tinyint) as fill_factor
+  , cast(case when X.indpred is null then 0 else 1 end as sys.bit) as is_padded
+  , cast(case when X.indisready then 0 else 1 end as sys.bit) as is_disabled
+  , cast(0 as sys.bit) as is_hypothetical
+  , cast(1 as sys.bit) as allow_row_locks
+  , cast(1 as sys.bit) as allow_page_locks
+  , cast(0 as sys.bit) as has_filter
+  , cast(null as sys.nvarchar) as filter_definition
+  , cast(0 as sys.bit) as auto_created
+  , index_map.index_id
+from pg_index X 
+inner join pg_class I on I.oid = X.indexrelid and I.relkind = 'i'
+inner join pg_namespace nsp on nsp.oid = I.relnamespace
+left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
+-- check if index is a unique constraint
+left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
+-- use rownumber to get index_id scoped on each objects
+inner join 
+(select indexrelid, cast(case when indisclustered then 1 else 1+row_number() over(partition by indrelid) end as int) 
+ as index_id from pg_index) as index_map on index_map.indexrelid = X.indexrelid
+where has_schema_privilege(I.relnamespace, 'USAGE')
+-- index is active
+and X.indislive 
+-- filter to get all the objects that belong to sys or babelfish schemas
+and (nsp.nspname = 'sys' or ext.nspname is not null)
+
+union all 
+-- Create HEAP entries for each system and user table
+select
+  cast(t.oid as int) as object_id
+  , cast(null as sys.sysname) as name
+  , cast(0 as sys.tinyint) as type
+  , cast('HEAP' as sys.nvarchar(60)) as type_desc
+  , cast(0 as sys.bit) as is_unique
+  , cast(1 as int) as data_space_id
+  , cast(0 as sys.bit) as ignore_dup_key
+  , cast(0 as sys.bit) as is_primary_key
+  , cast(0 as sys.bit) as is_unique_constraint
+  , cast(0 as sys.tinyint) as fill_factor
+  , cast(0 as sys.bit) as is_padded
+  , cast(0 as sys.bit) as is_disabled
+  , cast(0 as sys.bit) as is_hypothetical
+  , cast(1 as sys.bit) as allow_row_locks
+  , cast(1 as sys.bit) as allow_page_locks
+  , cast(0 as sys.bit) as has_filter
+  , cast(null as sys.nvarchar) as filter_definition
+  , cast(0 as sys.bit) as auto_created
+  , cast(0 as int) as index_id
+from pg_class t
+inner join pg_namespace nsp on nsp.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
+where t.relkind = 'r'
+-- filter to get all the objects that belong to sys or babelfish schemas
+and (nsp.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(t.relnamespace, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+order by object_id, type_desc;
+GRANT SELECT ON sys.indexes TO PUBLIC;
+
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_4_1_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated_4_1_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_4_1_0');
