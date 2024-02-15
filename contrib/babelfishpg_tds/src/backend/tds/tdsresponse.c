@@ -1858,13 +1858,13 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
 												att->attcollation, (atttypmod == -1) ?
-												(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0x7fff) :
+												(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0xfffe) :
 												(atttypmod - 4));
 				break;
 			case TDS_SEND_NVARCHAR:
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NVARCHAR,
 												att->attcollation, (atttypmod == -1) ?
-												(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0x7ffe) :
+												(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0xfffe) :
 												(atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_MONEY:
@@ -1979,7 +1979,8 @@ PrepareRowDescription(TupleDesc typeinfo, PlannedStmt *plannedstmt, List *target
 				if (atttypmod == -1 && tle != NULL)
 					atttypmod = resolve_varbinary_typmod_from_exp((Node *) tle->expr);
 				SetColMetadataForBinaryType(col, TDS_TYPE_VARBINARY, (atttypmod == -1) ?
-											atttypmod : atttypmod - VARHDRSZ);
+											(tdsVersion >= TDS_VERSION_7_2 ? atttypmod : 0xfffe) :
+											atttypmod - VARHDRSZ);
 				break;
 			case TDS_SEND_UNIQUEIDENTIFIER:
 				SetColMetadataForFixedType(col, TDS_TYPE_UNIQUEIDENTIFIER, TDS_MAXLEN_UNIQUEIDENTIFIER);
