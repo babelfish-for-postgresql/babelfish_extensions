@@ -77,7 +77,7 @@ runs:
         echo 'Database dump complete.'
 
         # Create and initialise Babelfish extensions in the new server to perform restore.
-        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -f .github/scripts/create_extension.sql
+        sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -v tsql_port="1433" -f .github/scripts/create_extension.sql
         echo 'Restoring from pg_dumpall'
         sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
         echo 'Restoring from pg_dump'
