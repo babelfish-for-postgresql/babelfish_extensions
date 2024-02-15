@@ -565,10 +565,6 @@ AS
     DELETE trgt FROM Discount trgt           -- Discount does not exist
     COMMIT
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "usp_populatediscount" already exists with same argument types)~~
-
 
 EXECUTE usp_PopulateDiscount
 go
@@ -591,10 +587,6 @@ BEGIN CATCH
     COMMIT
 END CATCH;
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "test" already exists with same argument types)~~
-
 
 exec test
 go
