@@ -395,10 +395,9 @@ test_sp_babelfish_volatility_schema2#!#test_sp_babelfish_volatility_f1#!#immutab
 /* test with duplicate function name */
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_duplicate'
 go
-~~START~~
-nvarchar#!#varchar#!#text
-dbo#!#test_sp_babelfish_volatility_duplicate#!#stable
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: multiple functions with same function name exits)~~
 
 /* test with long names */
 exec sys.sp_babelfish_volatility 'test_sp_babelfish_volatility_function_very_long_with_length_greater_than_63_but_less_equal_than_128_random_text_aaaaaaaaaaaaaaaa'
@@ -470,6 +469,7 @@ exec sys.sp_babelfish_volatility
 go
 ~~START~~
 nvarchar#!#varchar#!#text
+dbo#!#test_sp_babelfish_volatility_duplicate#!#stable
 dbo#!#test_sp_babelfish_volatility_duplicate#!#stable
 dbo#!#test_sp_babelfish_volatility_f2#!#stable
 dbo#!#test_sp_babelfish_volatility_fu563bc8b23212e981e53906bdf6df41d7#!#volatile
