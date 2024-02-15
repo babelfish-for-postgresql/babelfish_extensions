@@ -70,7 +70,7 @@ jobs:
         id: cleanup
         if: always() && steps.install-extensions.outcome == 'success'
         run: |
-          sudo ~/psql/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+          sudo ~/psql/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
 
       - name: Upload Log
         if: always() && steps.jdbc.outcome == 'failure'
