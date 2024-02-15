@@ -1894,7 +1894,7 @@ public:
 		if (ctx->grant_statement())
 		{
 			auto grant = ctx->grant_statement();
-			if (!grant->permission_object() && grant->permissions())
+			if (grant->TO() && !grant->permission_object() && grant->permissions())
 			{
 				for (auto perm : grant->permissions()->permission())
 				{
@@ -1908,7 +1908,7 @@ public:
 			}
 			else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
 			{
-				if (grant->principals() && grant->permissions())
+				if (grant->TO() && grant->principals() && grant->permissions())
 				{
 					for (auto perm: grant->permissions()->permission())
 					{
@@ -1930,7 +1930,7 @@ public:
 		else if (ctx->revoke_statement())
 		{
 			auto revoke = ctx->revoke_statement();
-			if (!revoke->permission_object() && revoke->permissions())
+			if (revoke->FROM() && !revoke->permission_object() && revoke->permissions())
 			{
 				for (auto perm : revoke->permissions()->permission())
 				{
@@ -1945,7 +1945,7 @@ public:
 
 			else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
 			{
-				if (revoke->principals() && revoke->permissions())
+				if (revoke->FROM() && revoke->principals() && revoke->permissions())
 				{
 					for (auto perm: revoke->permissions()->permission())
 					{
@@ -5771,7 +5771,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 	if (ctx->grant_statement())
 	{
 		auto grant = ctx->grant_statement();
-		if (!grant->permission_object() && grant->permissions())
+		if (grant->TO() && !grant->permission_object() && grant->permissions())
 		{
 			for (auto perm : grant->permissions()->permission())
 			{
@@ -5804,7 +5804,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 		}
 		else if (grant->ON() && grant->permission_object() && grant->permission_object()->object_type() && grant->permission_object()->object_type()->SCHEMA())
 		{
-			if (grant->principals() && grant->permissions())
+			if (grant->TO() && grant->principals() && grant->permissions())
 			{
 				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
 				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
@@ -5864,7 +5864,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 	else if (ctx->revoke_statement())
 	{
 		auto revoke = ctx->revoke_statement();
-		if (!revoke->permission_object() && revoke->permissions())
+		if (revoke->FROM() && !revoke->permission_object() && revoke->permissions())
 		{
 			for (auto perm : revoke->permissions()->permission())
 			{
@@ -5899,7 +5899,7 @@ makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
 
 		else if (revoke->ON() && revoke->permission_object() && revoke->permission_object()->object_type() && revoke->permission_object()->object_type()->SCHEMA())
 		{
-			if (revoke->principals() && revoke->permissions())
+			if (revoke->FROM() && revoke->principals() && revoke->permissions())
 			{
 				PLtsql_stmt_grantschema *result = (PLtsql_stmt_grantschema *) palloc0(sizeof(PLtsql_stmt_grantschema));
 				result->cmd_type = PLTSQL_STMT_GRANTSCHEMA;
