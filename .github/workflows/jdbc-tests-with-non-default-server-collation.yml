@@ -82,8 +82,8 @@ jobs:
         id: setup-pub-sub
         if: always() && steps.start-secondary.outcome == 'success'
         run: |
-          ~/${{env.INSTALL_DIR}}/bin/psql -d jdbc_testdb -U runner -c "CREATE PUBLICATION my_pub;"
-          ~/${{env.INSTALL_DIR}}/bin/psql -d jdbc_testdb -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=jdbc_testdb password=12345678' PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CREATE PUBLICATION my_pub;"
+          ~/${{env.INSTALL_DIR}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -p 5433 -c "CREATE SUBSCRIPTION my_sub CONNECTION 'host=localhost port=5432 user=jdbc_user dbname=jdbc_testdb password=12345678' PUBLICATION my_pub;"
 
       - name: Run Replication Tests
         id: replication
