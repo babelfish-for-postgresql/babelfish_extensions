@@ -1468,6 +1468,10 @@ TdsTypeSpatialToDatum(StringInfo buf)
 	 */
 	/* We are copying first 4 Byte SRID from buf */
 	appendBinaryStringInfo(destBuf, buf->data + buf->cursor, 4);
+	/* Swapping first 3 bytes of SRID as the driver expects SRID to be in little endian order
+	 * 4th byte is always 0
+	 */
+	SwapData(destBuf, destBuf->cursor + 0, destBuf->cursor + 2);
 	
 	npoints = (buf->len - buf->cursor - 6)/16;
 	nbytes = buf->len - buf->cursor + 6;

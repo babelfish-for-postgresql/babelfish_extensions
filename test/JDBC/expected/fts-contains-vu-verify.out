@@ -2636,6 +2636,452 @@ int#!#text
 ~~END~~
 
 
+select * from test_special_char_t where contains(name, '"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Syntax error near '"' in the full-text search condition '"'.)~~
+
+
+select t.name from test_special_char_t t where contains(t.name, '"one two"');
+go
+~~START~~
+text
+one two three
+one~two
+one!two
+one@two
+one#two
+one$two
+one%two
+one^two
+one&two
+one*two
+one-two
+one+two
+one=two
+one\two
+one|two
+one;two
+one:two
+one<two
+one>two
+one.two
+one?two
+one/two
+one :) two
+one @ @ @ @ two
+one   @ two    ^ three
+one     @    two
+one @ two @ three @ four
+one # two ' three ` four
+one    @ two    $ three ^ four * five
+one $ two % three * four * five
+one # two : three < four > five
+: one two three
+one: two
+:one two:
+~~END~~
+
+
+select * from test_special_char_t t where contains(t.name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select * from test_special_char_t t where contains(t.name, 'two');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+4#!#two
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select t.* from test_special_char_t t where contains(t.name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+2#!#two three one
+3#!#one
+7#!#one~two
+8#!#one!two
+9#!#one@two
+10#!#one#two
+11#!#one$two
+12#!#one%two
+13#!#one^two
+14#!#one&two
+15#!#one*two
+16#!#one-two
+18#!#one+two
+19#!#one=two
+20#!#one\two
+21#!#one|two
+22#!#one;two
+23#!#one:two
+25#!#one<two
+26#!#one>two
+27#!#one.two
+28#!#one?two
+29#!#one/two
+101#!#one :) two
+100#!#one @ @ @ @ two
+102#!#one   @ two    ^ three
+103#!#one     @    two
+104#!#one    ` two  @ three
+105#!#one @ two @ three @ four
+106#!#one ` two _ three ' four
+107#!#one # two ' three ` four
+108#!#one    @ two    $ three ^ four * five
+109#!#one ` two _ three ' four # five
+110#!#one ` two _ three ^ four : five
+111#!#one $ two % three * four * five
+112#!#one # two : three < four > five
+113#!#: one two three
+114#!#one: two
+115#!#:one two:
+~~END~~
+
+
+select t.name from test_special_char_t t where contains(.t.name, 'one');
+go
+~~START~~
+text
+one two three
+two three one
+one
+one~two
+one!two
+one@two
+one#two
+one$two
+one%two
+one^two
+one&two
+one*two
+one-two
+one+two
+one=two
+one\two
+one|two
+one;two
+one:two
+one<two
+one>two
+one.two
+one?two
+one/two
+one :) two
+one @ @ @ @ two
+one   @ two    ^ three
+one     @    two
+one    ` two  @ three
+one @ two @ three @ four
+one ` two _ three ' four
+one # two ' three ` four
+one    @ two    $ three ^ four * five
+one ` two _ three ' four # five
+one ` two _ three ^ four : five
+one $ two % three * four * five
+one # two : three < four > five
+: one two three
+one: two
+:one two:
+~~END~~
+
+
+select * from test_special_char_t t where contains(t..name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "..")~~
+
+
+select t..name from test_special_char_t t where contains(t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "..")~~
+
+
+select t.name from test_special_char_t where contains(t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "t")~~
+
+
+select t.name from test_special_char_t t where contains(x.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "x")~~
+
+
+select t.name from test_special_char_t t where contains(x.t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "t")~~
+
+
+select t.name from test_special_char_t t where contains(t,name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 41)~~
+
+
+select t.name from test_special_char_t t where contains(.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ".")~~
+
+
+select t.name from test_special_char_t t where contains(t., 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 41)~~
+
+
+select t.name from test_special_char_t t where contains(t.., 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 41)~~
+
+
+select t.name from test_special_char_t t where contains(, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 41)~~
+
+
+select t.name from test_special_char_t t where contains(t.txt, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column t.txt does not exist)~~
+
+
+select t.name from test_special_char_t t where contains(b, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" does not exist)~~
+
+
+select t.name from test_special_char_t t where .t.name = 'one';
+go
+~~START~~
+text
+one
+~~END~~
+
+
+select t.name from test_special_char_t t where contains('t.name', '"one two"');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'where' at line 1 and character position 41)~~
+
+
+select t.name from test_special_char_t t where contains("t.name", '"one two"');
+go
+~~START~~
+text
+one two three
+one~two
+one!two
+one@two
+one#two
+one$two
+one%two
+one^two
+one&two
+one*two
+one-two
+one+two
+one=two
+one\two
+one|two
+one;two
+one:two
+one<two
+one>two
+one.two
+one?two
+one/two
+one :) two
+one @ @ @ @ two
+one   @ two    ^ three
+one     @    two
+one @ two @ three @ four
+one # two ' three ` four
+one    @ two    $ three ^ four * five
+one $ two % three * four * five
+one # two : three < four > five
+: one two three
+one: two
+:one two:
+~~END~~
+
+
+select name as txt from test_special_char_t where contains(txt, 'hello');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "txt" does not exist)~~
+
+
+select * from new_schema_fts_t.test t where contains(t.name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+~~END~~
+
+
+select * from new_schema_fts_t.test t where contains(new_schema_fts_t.t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "t")~~
+
+
+select * from new_schema_fts_t.test t where contains(new_schema_fts_t.test.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid reference to FROM-clause entry for table "test")~~
+
+
+select * from new_schema_fts_t.test where contains(name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+~~END~~
+
+
+use fts_test_db;
+go
+
+select * from fts_test_db.new_schema_fts.test t where contains(t.name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+~~END~~
+
+
+select * from fts_test_db.new_schema_fts.test t where contains(fts_test_db.new_schema_fts.t.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "new_schema_fts")~~
+
+
+select * from fts_test_db.new_schema_fts.test where contains(name, 'one');
+go
+~~START~~
+int#!#text
+1#!#one two three
+~~END~~
+
+
+select * from fts_test_db.new_schema_fts.test where contains(fts_test_db.new_schema_fts.test.name, 'one');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: missing FROM-clause entry for table "new_schema_fts")~~
+
+
 -- disable FULLTEXT
 SELECT set_config('babelfishpg_tsql.escape_hatch_fulltext', 'strict', 'false')
 GO
