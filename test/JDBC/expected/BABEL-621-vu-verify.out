@@ -1,6 +1,3 @@
-EXECUTE sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore'
-go
-
 select a, value from babel_621_vu_prepare_table_8 order by a;
 go
 ~~START~~

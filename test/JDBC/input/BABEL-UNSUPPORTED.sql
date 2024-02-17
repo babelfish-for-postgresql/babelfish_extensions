@@ -561,38 +561,6 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_index_clustering', 'ignore', 'false')
 GO
 
--- BABEL-1484
--- escape hatch escape_hatch_unique_constraint
--- 'strict' is default
--- Test UNIQUE CONSTRAINT is not allowed on nullable column
--- this includes: create unique index, alter table add constraint unique
--- and create table with column constraint
-CREATE TABLE t_unsupported_uc1(a int, b int NOT NULL, c int NOT NULL);
-GO
-CREATE UNIQUE INDEX i_unsupported_uc1 on t_unsupported_uc1(a);
-GO
-ALTER TABLE t_unsupported_uc1 ADD CONSTRAINT UQ_a UNIQUE (a);
-GO
-CREATE TABLE t_unsupported_uc2(a int UNIQUE, b int);
-GO
-
--- Test UNIQUE CONSTRAINT is allowed on NOT NULL column
-CREATE UNIQUE INDEX i_unsupported_uc1 on t_unsupported_uc1(b);
-GO
-ALTER TABLE t_unsupported_uc1 ADD CONSTRAINT UQ_c UNIQUE (c);
-GO
-CREATE TABLE t_unsupported_uc2(a int UNIQUE NOT NULL, b int NOT NULL UNIQUE);
-GO
-
-DROP TABLE t_unsupported_uc1;
-DROP TABLE t_unsupported_uc2;
-GO
-
--- test UNIQUE INDEX/CONSTRAINT is allowed on nullable column
--- if escap_hatch_unique_constraint is set to ignore
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 CREATE TABLE t_unsupported_uc1(a int, b varchar(10));
 GO
 

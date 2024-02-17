@@ -3247,6 +3247,7 @@ tsql_IndexStmt:
 					n->accessMethod = $10;
 					n->indexParams = $12;
 					n->indexIncludingParams = $14;
+					n->nulls_not_distinct = true;
 					n->whereClause = $15;
 					n->options = $16;
 					n->excludeOpNames = NIL;
@@ -4343,6 +4344,7 @@ tsql_ColConstraintElem: /* nullable */
 					Constraint *n = makeNode(Constraint);
 					n->contype = CONSTR_UNIQUE;
 					n->location = @1;
+					n->nulls_not_distinct = true;
 					n->keys = NULL;
 					n->options = $3;
 					n->indexname = NULL;

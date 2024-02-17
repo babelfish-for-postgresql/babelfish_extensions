@@ -1250,7 +1250,6 @@ int			escape_hatch_table_hints = EH_IGNORE;
 int			escape_hatch_query_hints = EH_IGNORE;
 int			escape_hatch_join_hints = EH_IGNORE;
 int			escape_hatch_session_settings = EH_IGNORE;
-int			escape_hatch_unique_constraint = EH_STRICT;
 int			escape_hatch_ignore_dup_key = EH_STRICT;
 int			escape_hatch_rowversion = EH_STRICT;
 int			escape_hatch_showplan_all = EH_STRICT;
@@ -1542,16 +1541,6 @@ define_escape_hatch_variables(void)
 							 NULL,
 							 &escape_hatch_session_settings,
 							 EH_IGNORE,
-							 escape_hatch_options,
-							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, NULL, NULL);
-
-	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_unique_constraint",
-							 gettext_noop("escape hatch for unique constraint"),
-							 NULL,
-							 &escape_hatch_unique_constraint,
-							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,
 							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
