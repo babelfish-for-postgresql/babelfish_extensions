@@ -485,13 +485,6 @@ pltsql_predicate_transformer(Node *expr)
 		}
 		else if (IsA(expr, BoolExpr))
 		{
-			if (boolexpr->boolop != AND_EXPR &&
-				boolexpr->boolop != OR_EXPR)
-				return expression_tree_mutator(
-											   expr,
-											   pgtsql_expression_tree_mutator,
-											   NULL);
-
 			predicates = boolexpr->args;
 		}
 		else if (IsA(expr, FuncExpr))
@@ -519,7 +512,7 @@ pltsql_predicate_transformer(Node *expr)
 		{
 			Node	   *qual = (Node *) lfirst(lc);
 
-			if (is_andclause(qual) || is_orclause(qual))
+			if (IsA(expr, BoolExpr))
 			{
 				new_predicates = lappend(new_predicates,
 										 pltsql_predicate_transformer(qual));
