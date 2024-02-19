@@ -40,22 +40,32 @@ GO
 
 SELECT COUNT(*) FROM babel_4566
 WHERE 1=1
-    AND NOT like_in_function(id, CAST('%Blah%' AS VARCHAR(30))) = 1
+    AND NOT like_in_function(id, '%Blah%') = 1
 GO
 
 SELECT COUNT(*) FROM babel_4566
 WHERE 
-    NOT 1>1 AND ((NOT like_in_function(id, CAST('%Blah%' AS VARCHAR(30))) = 1) AND like_in_function(id, CAST('%4566%' AS VARCHAR(30))) = 1)
+    NOT 1>1 AND ((NOT like_in_function(id, '%Blah%') = 1) AND like_in_function(id, '%4566%') = 1)
 GO
 
 SELECT COUNT(*) FROM babel_4566
 WHERE 
-    1>1 OR ((NOT like_in_function(id, CAST('%Blah%' AS VARCHAR(30))) = 1) AND (NOT like_in_function(id, CAST('%Blah%' AS VARCHAR(30))) = 1))
+    1>1 OR ((NOT like_in_function(id, '%Blah%') = 1) AND (NOT like_in_function(id, '%Blah%') = 1))
 GO
 
 SELECT COUNT(*) FROM babel_4566
 WHERE 
-    (1=1 AND (NOT like_in_function(id, CAST('%Blah%' AS VARCHAR(30))) = 1)) OR ((NOT 2<1) AND (NOT like_in_function(id, CAST('%Blah%' AS VARCHAR(30))) = 1))
+    (1=1 AND (NOT like_in_function(id, '%Blah%') = 1)) OR ((NOT 2<1) AND (NOT like_in_function(id, '%Blah%') = 1))
+GO
+
+SELECT COUNT(*) FROM babel_4566
+WHERE 1=1
+    AND NOT (SELECT COUNT(*) FROM babel_4566 WHERE (1=1 AND (NOT like_in_function(id, '%Blah%') = 1))) != 2
+GO
+
+SELECT COUNT(*) FROM babel_4566
+WHERE 1=1
+    AND NOT (SELECT COUNT(*) FROM babel_4566 WHERE 1=1 AND NOT OBJECT_NAME(id) LIKE '%Blah%') != 2
 GO
 
 DROP TABLE babel_4566, bábèl_4566
