@@ -512,7 +512,7 @@ pltsql_predicate_transformer(Node *expr)
 		{
 			Node	   *qual = (Node *) lfirst(lc);
 
-			if (IsA(expr, BoolExpr))
+			if (IsA(qual, BoolExpr))
 			{
 				new_predicates = lappend(new_predicates,
 										 pltsql_predicate_transformer(qual));
