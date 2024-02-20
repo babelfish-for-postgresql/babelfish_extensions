@@ -49,7 +49,7 @@ public class JDBCStatement {
                 handleSQLExceptionWithFile(e, bw, logger);
                 resultsProcessed++;
             }
-            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist,logger);
+            CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }

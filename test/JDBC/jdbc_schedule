@@ -305,6 +305,9 @@ ignore#!#babel_4328_datetime2-before-16_3-vu-cleanup
 ignore#!#babel_4328_datetimeoffset-before-16_3-vu-prepare
 ignore#!#babel_4328_datetimeoffset-before-16_3-vu-verify
 ignore#!#babel_4328_datetimeoffset-before-16_3-vu-cleanup
-
 ignore#!#BABEL-3513_before_15_8_or_16_4-vu-prepare
 ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
+
+# These tests are for jTDS driver
+ignore#!#jtds-varchar-max-length-check
+ignore#!#jtds-nvarchar-max-length-check

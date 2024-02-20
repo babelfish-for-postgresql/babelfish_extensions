@@ -1,0 +1,7 @@
+# Schedule file for JDBC Test Framework running with jTDS driver instead of
+# mssql-jdbc driver. When 'useJTDSInsteadOfMSSQLJDBC' config option is set to
+# 'true' this file is used instead of 'jdbc_schedule' file.
+
+TestBinary
+jtds-varchar-max-length-check
+jtds-nvarchar-max-length-check
