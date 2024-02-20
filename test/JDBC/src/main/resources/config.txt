@@ -42,6 +42,9 @@ isParallelQueryMode = false
 # WHETHER TEST MODE HAS NON-DEFAULT-SERVER-COLLATION-NAME
 serverCollationName = default
 
+# WHETHER TO USE JTDS DRIVER FOR TDS CONNECTIONS
+useJTDSInsteadOfMSSQLJDBC = false
+
 # Where to find the input, output, expected, etc.
 testFileRoot = ./
 

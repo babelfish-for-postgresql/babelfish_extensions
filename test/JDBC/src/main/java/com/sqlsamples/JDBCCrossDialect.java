@@ -95,7 +95,7 @@ public class JDBCCrossDialect {
 
         try {
             // Use sqlserver JDBC driver
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            Class.forName(tdsConnectionDriverClassName());
 
             if (newPort == null)
                 newPort = tsql_port;

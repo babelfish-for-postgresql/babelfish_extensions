@@ -218,3 +218,7 @@ ignore#!#temp_tables_concurrent-vu-verify
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
+
+# These tests are for JTDS driver
+ignore#!#jtds-varchar-max-length-check
+ignore#!#jtds-nvarchar-max-length-check
