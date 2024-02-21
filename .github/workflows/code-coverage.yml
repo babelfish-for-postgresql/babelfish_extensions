@@ -1,5 +1,7 @@
 name: Code Coverage
-on: [push, pull_request]
+on:
+  schedule:
+    - cron: '0 0 * * *'  # runs every midnight
   
 jobs:
   run-code-coverage-tests:
