@@ -1,0 +1,14 @@
+SELECT * FROM udd_dt1;
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#3#!#Whoops!                  #!#Happy😀             #!#1900-02-28 23:59:59.99#!#342.5
+~~END~~
+
+SELECT * FROM udd_dt2;
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#2000-12-13 12:58:23.123#!#123.1
+Orange#!#<NULL>#!#5#!#Whoops!                  #!#Happy😀             #!#1900-02-28 23:59:59.99#!#342.5
+~~END~~
+

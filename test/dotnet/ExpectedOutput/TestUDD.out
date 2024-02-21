@@ -1,4 +1,3 @@
-#Q#EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
 #Q#CREATE TYPE udd_varchar from varchar(15);
 #Q#CREATE TYPE udd_nvarchar from nvarchar(15);
 #Q#CREATE TYPE udd_int from int;

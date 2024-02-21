@@ -1,5 +1,4 @@
 #1 CREATE TABLE with primary and unique keyword
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
 CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
 INSERT INTO tmp(a,b) values(1,1);
 INSERT INTO tmp(a,b) values(2,2);
@@ -231,4 +230,3 @@ SELECT * FROM DATE_dt;
 ALTER TABLE DATE_dt ALTER COLUMN a DATETIME;
 SELECT * FROM DATE_dt;
 DROP TABLE DATE_dt;
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';

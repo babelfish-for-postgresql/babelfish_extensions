@@ -6,7 +6,6 @@ CREATE TYPE udd_nchar from nchar(20) NOT NULL;
 CREATE TYPE udd_datetime from datetime;
 CREATE TYPE udd_numeric from numeric(4,1);
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
 CREATE TABLE udd_dt (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
 
 INSERT INTO udd_dt VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);

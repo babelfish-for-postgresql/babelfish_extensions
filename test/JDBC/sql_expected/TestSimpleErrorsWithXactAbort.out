@@ -1,9 +1,6 @@
 SET XACT_ABORT ON
 GO
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 CREATE TABLE simpleErrorTable (a varchar(15) UNIQUE, b nvarchar(25), c int PRIMARY KEY, d char(15) DEFAULT 'Whoops!', e nchar(25), f datetime, g numeric(4,1) CHECK (g >= 103.5))
 GO
 
@@ -558,7 +555,7 @@ INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happ
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -582,7 +579,7 @@ commit tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -612,7 +609,7 @@ rollback tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -644,7 +641,7 @@ rollback tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -678,7 +675,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -706,7 +703,7 @@ commit tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -744,7 +741,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -781,7 +778,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -826,7 +823,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -865,7 +862,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -911,7 +908,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -967,7 +964,7 @@ int
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -1016,7 +1013,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -1068,7 +1065,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 67391682)~~
+~~ERROR (Code: 547)~~
 
 ~~ERROR (Message: new row for relation "simpleerrortable" violates check constraint "simpleerrortable_g_check")~~
 
@@ -2187,7 +2184,7 @@ INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happ
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2211,7 +2208,7 @@ commit tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2254,7 +2251,7 @@ rollback tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2299,7 +2296,7 @@ rollback tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2346,7 +2343,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2374,7 +2371,7 @@ commit tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2438,7 +2435,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2501,7 +2498,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2546,7 +2543,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2598,7 +2595,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2657,7 +2654,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2713,7 +2710,7 @@ int
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2762,7 +2759,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2827,7 +2824,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 208)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: relation "simpleerrortable1" does not exist)~~
 
@@ -2871,7 +2868,7 @@ INSERT INTO simpleErrorTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '
 UPDATE1 simpleErrorTable SET c = NULL WHERE c = 1;
 INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 4 and character position 8)~~
 
@@ -2892,7 +2889,7 @@ begin tran;
     INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5); 
 commit tran;
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 5 and character position 12)~~
 
@@ -2920,7 +2917,7 @@ begin tran;
     INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5); 
 rollback tran;
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 5 and character position 12)~~
 
@@ -2950,7 +2947,7 @@ begin tran;
     rollback tran sp1;
 rollback tran;
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 6 and character position 12)~~
 
@@ -2980,13 +2977,13 @@ begin
     INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5); 
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 7 and character position 12)~~
 
 exec simpleErrorProc1
 GO
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3015,7 +3012,7 @@ begin tran;
     INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5); 
 commit tran;
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 6 and character position 16)~~
 
@@ -3049,13 +3046,13 @@ begin
     commit tran; 
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 9 and character position 24)~~
 
 exec simpleErrorProc1
 GO
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3092,13 +3089,13 @@ begin
         INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 8 and character position 16)~~
 
 exec simpleErrorProc1
 GO
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3141,7 +3138,7 @@ begin
     commit tran;
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 7 and character position 12)~~
 
@@ -3149,7 +3146,7 @@ begin tran
 GO
 exec simpleErrorProc1
 GO
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3199,7 +3196,7 @@ begin
     rollback tran;
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 7 and character position 12)~~
 
@@ -3207,7 +3204,7 @@ begin tran
 GO
 exec simpleErrorProc1
 GO
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3256,7 +3253,7 @@ begin
     INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 7 and character position 12)~~
 
@@ -3272,7 +3269,7 @@ exec simpleErrorProc2
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3304,7 +3301,7 @@ begin
     INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 7 and character position 12)~~
 
@@ -3333,7 +3330,7 @@ int
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3369,7 +3366,7 @@ begin
     commit tran;
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 8 and character position 16)~~
 
@@ -3387,7 +3384,7 @@ exec simpleErrorProc2
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3427,7 +3424,7 @@ begin
     rollback tran;
 end
 GO
-~~ERROR (Code: 16801924)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: syntax error near 'simpleErrorTable' at line 8 and character position 16)~~
 
@@ -3445,7 +3442,7 @@ exec simpleErrorProc2
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 52461700)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: procedure simpleerrorproc1() does not exist)~~
 
@@ -3482,7 +3479,7 @@ INSERT INTO simpleErrorTable(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happ
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3506,7 +3503,7 @@ commit tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3536,7 +3533,7 @@ rollback tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3568,7 +3565,7 @@ rollback tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3602,7 +3599,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3630,7 +3627,7 @@ commit tran;
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3668,7 +3665,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3705,7 +3702,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3750,7 +3747,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3789,7 +3786,7 @@ exec simpleErrorProc1
 GO
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3835,7 +3832,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3886,7 +3883,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3935,7 +3932,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -3987,7 +3984,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ERROR (Code: 33685634)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type integer: "abc")~~
 
@@ -4018,5 +4015,4 @@ GO
 drop table simpleErrorTable
 GO
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
-GO
+

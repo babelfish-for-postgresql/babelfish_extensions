@@ -1,6 +1,3 @@
-EXECUTE sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore'
-go
-
 create table babel_621_vu_prepare_table_1 (a int);
 go
 create table babel_621_vu_prepare_table_2 (a int);
