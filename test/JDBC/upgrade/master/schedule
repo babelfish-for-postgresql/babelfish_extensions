@@ -122,6 +122,7 @@ babel_context_info
 babel_datatype_sqlvariant
 babel_datetime
 BABEL-EXECUTE_AS_CALLER
+BABEL-EXTENDED-PROPERTY-v3
 BABEL-EXTENDEDPROPERTY
 babel_int4_varbinary_div
 babelfish_cast_floor
