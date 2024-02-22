@@ -99,5 +99,5 @@ SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v
 GO
 
 -- list all extended properties
-SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties;
+SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties ORDER BY class, class_desc, name, value;
 GO
