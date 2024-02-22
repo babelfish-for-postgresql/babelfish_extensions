@@ -137,7 +137,6 @@ BABEL-CROSS-DB
 babel_datatype_sqlvariant
 Babel_domain_mapping_test
 BABEL-EXECUTE_AS_CALLER
-BABEL-EXTENDED-PROPERTY-v3
 BABEL-EXTENDEDPROPERTY
 BABEL-EXTENDEDPROPERTY-v2
 babel_int4_varbinary_div
