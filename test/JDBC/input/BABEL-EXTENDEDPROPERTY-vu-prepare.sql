@@ -40,7 +40,7 @@ GO
 
 -- view
 CREATE VIEW babel_extended_property_v3_schema.babel_extended_property_v3_view AS
-    SELECT * FROM babel_extended_property_v3_schema.babel_extended_property_v3_table
+    SELECT * FROM fn_listextendedproperty() ORDER BY objtype, objname, name, value;
 GO
 
 EXEC sp_addextendedproperty 'view property1', 'view property1 value', 'schema', 'babel_extended_property_v3_schema', 'view', 'babel_extended_property_v3_view'

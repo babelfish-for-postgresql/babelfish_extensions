@@ -1,4 +1,4 @@
-SELECT * FROM fn_listextendedproperty() ORDER BY objtype, objname, name, value;
+SELECT * FROM babel_extended_property_v3_schema.babel_extended_property_v3_view;
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#sql_variant
