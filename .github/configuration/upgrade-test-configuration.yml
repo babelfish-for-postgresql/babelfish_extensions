@@ -101,18 +101,6 @@ upgrade-version: [{
 {
   upgrade-path: [
     {
-      version: '14.11',
-      upgrade-type: null
-    },
-    { 
-      version: target.latest,
-      upgrade-type: major
-    }
-  ],
-},
-{
-  upgrade-path: [
-    {
       version: '14.12',
       upgrade-type: null
     },
