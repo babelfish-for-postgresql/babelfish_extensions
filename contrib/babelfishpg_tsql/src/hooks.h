@@ -18,6 +18,7 @@ pg_locale_t *collation_cache_entry_hook_function(Oid ,pg_locale_t *);
 extern bool output_update_transformation;
 extern bool output_into_insert_transformation;
 extern char *extract_identifier(const char *start);
+extern char *gen_func_arg_list(Oid objectId);
 extern void pltsql_store_func_default_positions(ObjectAddress address,
                                                 List *parameters,
                                                 const char *queryString,
