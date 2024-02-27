@@ -38,6 +38,38 @@ LANGUAGE plpgsql;
  * final behaviour.
  */
 
+CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.upper(sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.upper(sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
