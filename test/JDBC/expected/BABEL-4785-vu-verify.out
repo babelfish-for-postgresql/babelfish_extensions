@@ -1,0 +1,18 @@
+SELECT schemaname, indexname FROM pg_indexes WHERE tablename='table.test' AND indexname LIKE 'ft_index%';
+GO
+~~START~~
+varchar#!#varchar
+master_fts.test#!#ft_indextable.test14dc211cf58dcb9fe2047eb8aa8a5bc0
+master_fts .schema with dots .and spaces#!#ft_indextable.test14dc211cf58dcb9fe2047eb8aa8a5bc0
+master_fts_schema_test#!#ft_indextable.test14dc211cf58dcb9fe2047eb8aa8a5bc0
+~~END~~
+
+
+SELECT schemaname, indexname FROM pg_indexes WHERE tablename='test_table' AND indexname LIKE 'ft_index%';
+GO
+~~START~~
+varchar#!#varchar
+master_fts.test#!#ft_indextest_table14dc211cf58dcb9fe2047eb8aa8a5bc0
+master_fts .schema with dots .and spaces#!#ft_indextest_table14dc211cf58dcb9fe2047eb8aa8a5bc0
+~~END~~
+

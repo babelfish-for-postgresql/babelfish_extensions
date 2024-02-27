@@ -6803,7 +6803,6 @@ post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsq
 std::tuple<std::string, std::string, std::string> 
 getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 {
-	std::string table_info = ::getFullText(tctx);
 	std::string table_name = "";
 	std::string schema_name = "";
 	std::string db_name = "";
@@ -6816,8 +6815,8 @@ getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 		table_name = stripQuoteFromId(tctx->table);
 
 	return std::make_tuple(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true),
-							downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true),
-								downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+	                        downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true),
+	                        downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
 }
 
 PLtsql_stmt *
