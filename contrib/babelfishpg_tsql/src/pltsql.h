@@ -1064,6 +1064,7 @@ typedef struct PLtsql_stmt_fulltextindex
 	List		*column_name;  /* column name */
 	char		*index_name;   /* index name */
 	char		*schema_name;  /* schema name */
+	char		*db_name;      /* database name */
 	bool		is_create;     /* flag for create index */		
 } PLtsql_stmt_fulltextindex;
 
