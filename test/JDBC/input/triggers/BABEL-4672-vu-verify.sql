@@ -343,3 +343,94 @@ GO
 
 DROP TRIGGER IF EXISTS tr_vw_emp_salary_instead_delete;
 GO
+
+----Section 6 AFTER Triggers with Disabled IOT Trigger BABEL-4801
+-- DISABLED IOT INSERT TRIGGER -> AFTER INSERT TRIGGER
+TRUNCATE TABLE tbl_emp_salary;
+GO
+
+CREATE TRIGGER tr_emp_salary_instead_insert ON emp_salary
+INSTEAD OF INSERT
+AS
+INSERT INTO emp_salary VALUES(2, 2000);
+GO
+
+CREATE TRIGGER tr_emp_salary_after_insert ON emp_salary
+AFTER INSERT
+AS
+INSERT INTO emp_salary VALUES(3, 3000);
+GO
+
+DISABLE trigger tr_emp_salary_instead_insert ON emp_salary;
+GO
+
+INSERT INTO emp_salary VALUES (1,1000);
+GO
+
+SELECT emp_id, salary FROM emp_salary ORDER BY emp_id;
+GO
+
+DROP TRIGGER tr_emp_salary_after_insert;
+GO
+
+DROP TRIGGER tr_emp_salary_instead_insert;
+GO
+
+-- DISABLED IOT UPDATE TRIGGER  -> AFTER UPDATE TRIGGER
+CREATE TRIGGER tr_emp_salary_instead_update ON emp_salary
+INSTEAD OF UPDATE
+AS
+UPDATE emp_salary SET salary = salary + 999 where emp_id = 1;
+GO
+
+CREATE TRIGGER tr_emp_salary_after_update ON emp_salary
+AFTER UPDATE
+AS
+UPDATE emp_salary SET salary = salary + 9999 where emp_id = 1;
+GO
+
+DISABLE trigger tr_emp_salary_instead_update ON emp_salary;
+GO
+
+UPDATE emp_salary SET salary = salary + 9999 where emp_id = 1;
+GO
+
+SELECT emp_id, salary FROM emp_salary ORDER BY emp_id;
+GO
+
+DROP TRIGGER tr_emp_salary_after_update;
+GO
+
+DROP TRIGGER tr_emp_salary_instead_update;
+GO
+
+-- DISABLED IOT DELETE TRIGGER  -> AFTER DELETE TRIGGER
+INSERT INTO emp_salary VALUES(2, 2000);
+GO
+
+CREATE TRIGGER tr_emp_salary_instead_delete ON emp_salary
+INSTEAD OF DELETE
+AS
+DELETE FROM emp_salary where emp_id = 1;
+GO
+
+CREATE TRIGGER tr_emp_salary_after_delete ON emp_salary
+AFTER DELETE
+AS
+DELETE FROM emp_salary where emp_id = 2;
+GO
+
+DISABLE trigger tr_emp_salary_instead_delete ON emp_salary;
+GO
+
+DELETE FROM emp_salary where emp_id = 3;
+GO
+
+SELECT emp_id, salary FROM emp_salary ORDER BY emp_id;
+GO
+
+DROP TRIGGER tr_emp_salary_after_delete;
+GO
+
+DROP TRIGGER tr_emp_salary_instead_delete;
+GO
