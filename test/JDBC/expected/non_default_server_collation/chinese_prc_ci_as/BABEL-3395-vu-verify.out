@@ -1,0 +1,197 @@
+DECLARE @class NCHAR(30) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE (@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal '
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal '
+GO
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+nvarchar
+[Anikait Agrawal               ]
+~~END~~
+
+
+DECLARE @class CHAR(30) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE (@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'Anikait Agrawal '
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'Anikait Agrawal '
+GO
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+~~START~~
+varchar
+[Anikait Agrawal               ]
+~~END~~
+
+
+DECLARE @class NCHAR = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+GO
+~~START~~
+nvarchar
+~~END~~
+
+~~START~~
+nvarchar
+~~END~~
+
+
+DECLARE @class CHAR = N'Anikait Agrawal'
+SELECT '[' + @class + ']' WHERE upper(@class) = N'ANIKAIT AGRAWAL'
+SELECT '[' + @class + ']' WHERE lower(@class) = N'anikait agrawal'
+GO
+~~START~~
+varchar
+~~END~~
+
+~~START~~
+varchar
+~~END~~
+
+
+declare @string1 nvarchar(30) = N'比尔·拉';
+select UPPER(@string1)
+select LOWER(@string1)
+GO
+~~START~~
+nvarchar
+比尔·拉
+~~END~~
+
+~~START~~
+nvarchar
+比尔·拉
+~~END~~
+
+
+declare @string1 char(30) = N'比尔·拉';
+select UPPER(@string1)
+select LOWER(@string1)
+GO
+~~START~~
+varchar
+比尔·拉                      
+~~END~~
+
+~~START~~
+varchar
+比尔·拉                      
+~~END~~
+
+
+declare @string1 varchar(30) = N'比尔·拉';
+select UPPER(@string1)
+select LOWER(@string1)
+GO
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+SELECT * from upper_lower_dt;
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+ANIKAIT #!#agrawal #!#anikait             #!#AGRAWAL                 
+ ANIKAIT#!# agrawal#!# anikait            #!# AGRAWAL                
+   A#!#   🤣😃#!#   a                #!#   🤣😃                 
+ #!# #!#                    #!#                        
+ #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆            
+#!##!#                    #!#                        
+A#!#a#!#A                   #!#a                       
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+~~END~~
+
+SELECT * from upper_lower_dt where UPPER(a) = N'Anikait';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+ANIKAIT #!#agrawal #!#anikait             #!#AGRAWAL                 
+~~END~~
+
+SELECT * from upper_lower_dt where LOWER(c) = N'比尔·拉';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+~~END~~
+
+SELECT * from upper_lower_dt where LOWER(d) = N'比尔·拉';
+GO
+~~START~~
+varchar#!#nvarchar#!#char#!#nchar
+比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+~~END~~
+

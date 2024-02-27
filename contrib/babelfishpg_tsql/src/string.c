@@ -32,7 +32,6 @@ PG_FUNCTION_INFO_V1(formatmessage);
 PG_FUNCTION_INFO_V1(tsql_varchar_substr);
 PG_FUNCTION_INFO_V1(tsql_upper);
 PG_FUNCTION_INFO_V1(tsql_lower);
-PG_FUNCTION_INFO_V1(tsql_ltrim);
 PG_FUNCTION_INFO_V1(float_str);
 
 /*
