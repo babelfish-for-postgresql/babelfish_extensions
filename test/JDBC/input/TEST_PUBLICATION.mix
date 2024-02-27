@@ -1,0 +1,60 @@
+-- psql
+-- Unsupported cases
+CREATE PUBLICATION catalog_pub FOR TABLE sys.assemblies;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_login_ext;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_user_ext;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_configurations;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_extended_properties;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_function_ext;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_helpcollation;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_namespace_ext;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_server_options;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_sysdatabases;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_syslanguages;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_view_def;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.service_settings;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.spt_datatype_info_table;
+GO
+
+-- Supported cases
+SET client_min_messages TO error;
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
+RESET client_min_messages;
+GO
+
+DROP PUBLICATION catalog_pub;
+GO
+
+SET client_min_messages TO error;
+CREATE PUBLICATION catalog_pub FOR TABLE sys.versions;
+RESET client_min_messages;
+GO
+
+DROP PUBLICATION catalog_pub;
+GO

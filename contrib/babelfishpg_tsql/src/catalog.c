@@ -99,6 +99,13 @@ Oid			bbf_extended_properties_idx_oid = InvalidOid;
  * 			Catalog General
  *****************************************/
 
+static Oid bbf_assemblies_oid = InvalidOid;
+static Oid bbf_configurations_oid = InvalidOid;
+static Oid bbf_helpcollation_oid = InvalidOid;
+static Oid bbf_syslanguages_oid = InvalidOid;
+static Oid bbf_service_settings_oid = InvalidOid;
+static Oid spt_datatype_info_table_oid = InvalidOid;
+
 static bool tsql_syscache_inited = false;
 extern bool babelfish_dump_restore;
 extern char *orig_proc_funcname;
@@ -189,6 +196,18 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME, sys_schema_oid);
 
+	/* bbf_extended_properties */
+	bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME, sys_schema_oid);
+	bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME, sys_schema_oid);
+
+	/* general catalog */
+	bbf_assemblies_oid = get_relname_relid(BBF_ASSEMBLIES_TABLE_NAME, sys_schema_oid);
+	bbf_configurations_oid = get_relname_relid(BBF_CONFIGURATIONS_TABLE_NAME, sys_schema_oid);
+	bbf_helpcollation_oid = get_relname_relid(BBF_HELPCOLLATION_TABLE_NAME, sys_schema_oid);
+	bbf_syslanguages_oid = get_relname_relid(BBF_SYSLANGUAGES_TABLE_NAME, sys_schema_oid);
+	bbf_service_settings_oid = get_relname_relid(BBF_SERVICE_SETTINGS_TABLE_NAME, sys_schema_oid);
+	spt_datatype_info_table_oid = get_relname_relid(SPT_DATATYPE_INFO_TABLE_NAME, sys_schema_oid);
+
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
 
@@ -214,7 +233,13 @@ initTsqlSyscache()
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
+	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid ||
+		relationId == namespace_ext_oid || relationId == bbf_authid_login_ext_oid ||
+		relationId == bbf_authid_user_ext_oid || relationId == bbf_view_def_oid ||
+		relationId == bbf_servers_def_oid || relationId == bbf_extended_properties_oid ||
+		relationId == bbf_assemblies_oid || relationId == bbf_configurations_oid ||
+		relationId == bbf_helpcollation_oid || relationId == bbf_syslanguages_oid ||
+		relationId == bbf_service_settings_oid || relationId == spt_datatype_info_table_oid)
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -1282,6 +1307,7 @@ clean_up_bbf_server_def()
 {
 	char 			*query_str;
 	StringInfoData 	query;
+	bool prev_allowSystemTableMods = allowSystemTableMods;
 
 	initStringInfo(&query);
 
@@ -1289,7 +1315,16 @@ clean_up_bbf_server_def()
 
 	query_str = query.data;
 
-	exec_utility_cmd_helper(query_str);
+	PG_TRY();
+	{
+		allowSystemTableMods = true;
+		exec_utility_cmd_helper(query_str);
+	}
+	PG_FINALLY();
+	{
+		allowSystemTableMods = prev_allowSystemTableMods;
+	}
+	PG_END_TRY();
 
 	pfree(query.data);
 }
