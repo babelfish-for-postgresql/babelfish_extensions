@@ -67,6 +67,21 @@ GO
 DROP SCHEMA IF EXISTS [fts_test  .schema];
 GO
 
+DROP FULLTEXT INDEX ON "fts_test .db".[fts_test  .schema with / {} special characters #$%].fts_test_table;
+GO
+
+DROP TABLE IF EXISTS "fts_test .db".[fts_test  .schema with / {} special characters #$%].fts_test_table;
+GO
+
+DROP FULLTEXT INDEX ON "fts_test .db".[fts_test  .schema with / {} special characters #$%]."fts test table with / {} special [] characters";
+GO
+
+DROP TABLE IF EXISTS "fts_test .db".[fts_test  .schema with / {} special characters #$%]."fts test table with / {} special [] characters";
+GO
+
+DROP SCHEMA IF EXISTS [fts_test  .schema with / {} special characters #$%]
+GO
+
 USE master;
 GO
 

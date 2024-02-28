@@ -94,3 +94,18 @@ GO
 
 CREATE FULLTEXT INDEX ON "fts_test .db".[fts_test  .schema].fts_test_table(name) KEY INDEX pk_mytexts;
 GO
+
+CREATE SCHEMA [fts_test  .schema with / {} special characters #$%]
+GO
+
+CREATE TABLE "fts_test .db".[fts_test  .schema with / {} special characters #$%].fts_test_table(id int not null constraint fti_schema_test10 primary key, name text)
+GO
+
+CREATE FULLTEXT INDEX ON "fts_test .db".[fts_test  .schema with / {} special characters #$%].fts_test_table(name) KEY INDEX fti_schema_test10;
+GO
+
+CREATE TABLE "fts_test .db".[fts_test  .schema with / {} special characters #$%]."fts test table with / {} special [] characters"(id int not null constraint fti_schema_test11 primary key, name text)
+GO
+
+CREATE FULLTEXT INDEX ON "fts_test .db".[fts_test  .schema with / {} special characters #$%]."fts test table with / {} special [] characters"(name) KEY INDEX fti_schema_test11;
+GO
