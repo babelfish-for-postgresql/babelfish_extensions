@@ -150,22 +150,22 @@ SELECT LOWER(@string1) COLLATE chinese_prc_ci_as
 go
 ~~START~~
 varchar
-比尔·拉                          
+比尔·拉                      
 ~~END~~
 
 ~~START~~
 varchar
-比尔·拉                          
+比尔·拉                      
 ~~END~~
 
 ~~START~~
 varchar
-比尔·拉                          
+比尔·拉                      
 ~~END~~
 
 ~~START~~
 varchar
-比尔·拉                          
+比尔·拉                      
 ~~END~~
 
 
@@ -220,12 +220,12 @@ select LOWER(@string1)
 GO
 ~~START~~
 nvarchar
-比尔·拉                          
+比尔·拉                      
 ~~END~~
 
 ~~START~~
 nvarchar
-比尔·拉                          
+比尔·拉                      
 ~~END~~
 
 
