@@ -1,5 +1,4 @@
 -- psql
--- Unsupported cases
 CREATE PUBLICATION catalog_pub FOR TABLE sys.assemblies;
 GO
 ~~ERROR (Code: 0)~~
@@ -32,6 +31,15 @@ GO
 ~~ERROR (Code: 0)~~
 
 ~~ERROR (Message: ERROR: cannot add relation "babelfish_configurations" to publication
+  Detail: This operation is not supported for system tables.
+    Server SQLState: 22023)~~
+
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: cannot add relation "babelfish_domain_mapping" to publication
   Detail: This operation is not supported for system tables.
     Server SQLState: 22023)~~
 
@@ -126,19 +134,11 @@ GO
     Server SQLState: 22023)~~
 
 
--- Supported cases
-SET client_min_messages TO error;
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
-RESET client_min_messages;
-GO
-
-DROP PUBLICATION catalog_pub;
-GO
-
-SET client_min_messages TO error;
 CREATE PUBLICATION catalog_pub FOR TABLE sys.versions;
-RESET client_min_messages;
 GO
+~~ERROR (Code: 0)~~
 
-DROP PUBLICATION catalog_pub;
-GO
+~~ERROR (Message: ERROR: cannot add relation "versions" to publication
+  Detail: This operation is not supported for system tables.
+    Server SQLState: 22023)~~
+

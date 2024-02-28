@@ -1,5 +1,4 @@
 -- psql
--- Unsupported cases
 CREATE PUBLICATION catalog_pub FOR TABLE sys.assemblies;
 GO
 
@@ -10,6 +9,9 @@ CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_user_ext;
 GO
 
 CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_configurations;
+GO
+
+CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
 GO
 
 CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_extended_properties;
@@ -42,19 +44,5 @@ GO
 CREATE PUBLICATION catalog_pub FOR TABLE sys.spt_datatype_info_table;
 GO
 
--- Supported cases
-SET client_min_messages TO error;
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
-RESET client_min_messages;
-GO
-
-DROP PUBLICATION catalog_pub;
-GO
-
-SET client_min_messages TO error;
 CREATE PUBLICATION catalog_pub FOR TABLE sys.versions;
-RESET client_min_messages;
-GO
-
-DROP PUBLICATION catalog_pub;
 GO
