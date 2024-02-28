@@ -114,6 +114,121 @@ varchar
 ~~END~~
 
 
+-- different result from TSQL, should be fixed under BABEL-4807
+declare @string1 varchar(30) = N'比尔·拉' COLLATE chinese_prc_ci_as
+SELECT UPPER(@string1)
+SELECT UPPER(@string1) COLLATE chinese_prc_ci_as
+SELECT LOWER(@string1)
+SELECT LOWER(@string1) COLLATE chinese_prc_ci_as
+go
+~~START~~
+varchar
+??·?
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+~~START~~
+varchar
+??·?
+~~END~~
+
+~~START~~
+varchar
+比尔·拉
+~~END~~
+
+
+declare @string1 char(30) = N'比尔·拉' COLLATE chinese_prc_ci_as
+SELECT UPPER(@string1)
+SELECT UPPER(@string1) COLLATE chinese_prc_ci_as
+SELECT LOWER(@string1)
+SELECT LOWER(@string1) COLLATE chinese_prc_ci_as
+go
+~~START~~
+varchar
+??·?                          
+~~END~~
+
+~~START~~
+varchar
+??·?                          
+~~END~~
+
+~~START~~
+varchar
+??·?                          
+~~END~~
+
+~~START~~
+varchar
+??·?                          
+~~END~~
+
+
+SELECT UPPER(NULL)
+SELECT LOWER(NULL)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+DECLARE @inputString BINARY(30) = 0x4142434445
+SELECT UPPER(@inputString)
+SELECT LOWER(@inputString)
+GO
+~~START~~
+varchar
+ABCDE
+~~END~~
+
+~~START~~
+varchar
+abcde
+~~END~~
+
+
+DECLARE @inputString VARBINARY(30) = 0x4142434445
+SELECT UPPER(@inputString)
+SELECT LOWER(@inputString)
+GO
+~~START~~
+varchar
+ABCDE
+~~END~~
+
+~~START~~
+varchar
+abcde
+~~END~~
+
+
+-- different result from TSQL, should be fixed under BABEL-4803
+declare @string1 nchar(30) = N'比尔·拉';
+select UPPER(@string1)
+select LOWER(@string1)
+GO
+~~START~~
+nvarchar
+??·?                          
+~~END~~
+
+~~START~~
+nvarchar
+??·?                          
+~~END~~
+
+
 declare @string1 nvarchar(30) = N'比尔·拉';
 select UPPER(@string1)
 select LOWER(@string1)

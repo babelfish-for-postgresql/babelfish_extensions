@@ -3061,6 +3061,30 @@ CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.upper(sys.VARBINARY)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT sys.upper(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.upper(sys.BINARY)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT sys.upper(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
@@ -3076,6 +3100,30 @@ AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.upper(sys.VARCHAR)
 RETURNS sys.VARCHAR
 AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.VARBINARY)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT sys.lower(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower(sys.BINARY)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT sys.lower(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
 RETURNS sys.NVARCHAR
