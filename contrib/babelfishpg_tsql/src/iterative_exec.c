@@ -31,6 +31,7 @@ static void read_throw_params(PLtsql_execstate *estate, List *params,
 static int	read_throw_params_explain(List *params);
 static char *get_proc_name(PLtsql_execstate *estate);
 static bool is_seterror_on(PLtsql_stmt *stmt);
+static void send_env_change_token_on_txn_abort(void);
 
 static void process_explain(PLtsql_execstate *estate);
 static void process_explain_analyze(PLtsql_execstate *estate);
@@ -1151,6 +1152,7 @@ handle_error(PLtsql_execstate *estate,
 		elog(DEBUG1, "TSQL TXN Mark transaction for rollback error mapping failed : %d", last_error_mapping_failed);
 		RESUME_INTERRUPTS();
 		AbortCurTransaction = true;
+		send_env_change_token_on_txn_abort();
 	}
 
 	/* Recreate evaluation context in case needed */
@@ -2023,4 +2025,13 @@ is_seterror_on(PLtsql_stmt *stmt)
 	if (!((PLtsql_stmt_raiserror *) stmt)->seterror)
 		return false;
 	return true;
+}
+
+static
+void
+send_env_change_token_on_txn_abort(void)
+{
+	uint64_t	txnId = (uint64_t) MyProc->lxid;
+
+	((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (10, NULL, 0, &txnId, sizeof(uint64_t));
 }

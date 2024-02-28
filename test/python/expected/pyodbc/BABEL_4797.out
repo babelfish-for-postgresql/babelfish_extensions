@@ -1,0 +1,97 @@
+CREATE TABLE babel_4794(ID INT);
+
+# Doing tds BEGIN make python test framework into autocommit=false 
+# mode & remains in autocommit mode untill a tds rollback/commit
+# When autcommit mode is off pyodbc manages the user transaction
+# for user. So on error it should implicitly start a new user txn
+
+# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> rollback
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4794 VALUES (1)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4794 VALUES ('a')
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLExecDirectW))~~
+
+INSERT INTO babel_4794 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4794 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4794
+~~START~~
+int
+~~END~~
+
+
+# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> commit
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4794 VALUES (1)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4794 VALUES ('a')
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLExecDirectW))~~
+
+INSERT INTO babel_4794 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4794 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4794
+~~START~~
+int
+2
+3
+~~END~~
+
+
+DROP TABLE babel_4794;
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
