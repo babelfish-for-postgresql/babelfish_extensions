@@ -173,12 +173,12 @@ SELECT UPPER(NULL)
 SELECT LOWER(NULL)
 GO
 ~~START~~
-varchar
+text
 <NULL>
 ~~END~~
 
 ~~START~~
-varchar
+text
 <NULL>
 ~~END~~
 
@@ -601,14 +601,14 @@ point(1 2)
 Select UPPER(a), LOWER(a) from upper_lower_text
 GO
 ~~START~~
-varchar#!#varchar
+text#!#text
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 
 Select UPPER(a), LOWER(a) from upper_lower_ntext
 GO
 ~~START~~
-varchar#!#varchar
+text#!#text
 6F9619FF-8B86-D011-B42D-00C04FC964FF#!#6f9619ff-8b86-d011-b42d-00c04fc964ff
 ~~END~~
 
@@ -705,31 +705,31 @@ varchar#!#nvarchar#!#char#!#nchar
 SELECT * from dep_view_upper
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
-ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 #!#<NULL>
- ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                #!#<NULL>
-   A#!#   🤣😃#!#   A                #!#   🤣😃                   #!#<NULL>
- #!# #!#                    #!#                        #!#<NULL>
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  #!#<NULL>
-#!##!#                    #!#                        #!#<NULL>
-A#!#A#!#A                   #!#A                       #!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    #!#<NULL>
+varchar#!#nvarchar#!#varchar#!#nvarchar
+ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
+ ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                
+   A#!#   🤣😃#!#   A                #!#   🤣😃                   
+ #!# #!#                    #!#                        
+ #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
+#!##!#                    #!#                        
+A#!#A#!#A                   #!#A                       
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    
 ~~END~~
 
 EXEC dep_proc_upper
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
-ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 #!#<NULL>
- ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                #!#<NULL>
-   A#!#   🤣😃#!#   A                #!#   🤣😃                   #!#<NULL>
- #!# #!#                    #!#                        #!#<NULL>
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  #!#<NULL>
-#!##!#                    #!#                        #!#<NULL>
-A#!#A#!#A                   #!#A                       #!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    #!#<NULL>
+varchar#!#nvarchar#!#varchar#!#nvarchar
+ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
+ ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                
+   A#!#   🤣😃#!#   A                #!#   🤣😃                   
+ #!# #!#                    #!#                        
+ #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
+#!##!#                    #!#                        
+A#!#A#!#A                   #!#A                       
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    
 ~~END~~
 
 select dbo.dep_func_upper()
@@ -743,31 +743,31 @@ A
 SELECT * from dep_view_lower
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
-ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 #!#<NULL>
- ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                #!#<NULL>
-   A#!#   🤣😃#!#   A                #!#   🤣😃                   #!#<NULL>
- #!# #!#                    #!#                        #!#<NULL>
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  #!#<NULL>
-#!##!#                    #!#                        #!#<NULL>
-A#!#A#!#A                   #!#A                       #!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    #!#<NULL>
+varchar#!#nvarchar#!#varchar#!#nvarchar
+ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
+ ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                
+   A#!#   🤣😃#!#   A                #!#   🤣😃                   
+ #!# #!#                    #!#                        
+ #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
+#!##!#                    #!#                        
+A#!#A#!#A                   #!#A                       
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    
 ~~END~~
 
 EXEC dep_proc_lower
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
-anikait #!#agrawal #!#anikait             #!#agrawal                 #!#<NULL>
- anikait#!# agrawal#!# anikait            #!# agrawal                #!#<NULL>
-   a#!#   🤣😃#!#   a                #!#   🤣😃                   #!#<NULL>
- #!# #!#                    #!#                        #!#<NULL>
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  #!#<NULL>
-#!##!#                    #!#                        #!#<NULL>
-a#!#a#!#a                   #!#a                       #!#<NULL>
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    #!#<NULL>
+varchar#!#nvarchar#!#varchar#!#nvarchar
+anikait #!#agrawal #!#anikait             #!#agrawal                 
+ anikait#!# agrawal#!# anikait            #!# agrawal                
+   a#!#   🤣😃#!#   a                #!#   🤣😃                   
+ #!# #!#                    #!#                        
+ #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
+#!##!#                    #!#                        
+a#!#a#!#a                   #!#a                       
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+??·?#!#比尔·拉#!#??·?                #!#比尔·拉                    
 ~~END~~
 
 select dbo.dep_func_lower()
