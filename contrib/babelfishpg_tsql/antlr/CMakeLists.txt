@@ -6,7 +6,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-dir)
 # compiler must be 11 or 14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -O2 -ggdb -w -Wno-deprecated")
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fPIC -O2 -ggdb -w -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O2 -ggdb -w -Wno-deprecated")
 
 message(STATUS "CMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
 
