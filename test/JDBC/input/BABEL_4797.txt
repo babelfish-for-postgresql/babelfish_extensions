@@ -1,11 +1,16 @@
+# BABEL-4797 does not affect JDBC driver
+# adding test cases just for assurance
+
+# txn#!#begin does not actually call begin tran
+# It simply sets autocommit to false
+# Changing autocommit send set implicit_transactions on to Server
+# the server now takes care of the transactions, unlike pyodbc
+
 CREATE TABLE babel_4794(ID INT);
 
-# default value of autcommit is false in python test framework
-# txn#!#begin does not actually run begin tran
-# instead it just set autocommit = false & let driver handle the txn
-
-# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> rollback
 txn#!#begin
+SELECT @@trancount
+SELECT * FROM babel_4794
 SELECT @@trancount
 INSERT INTO babel_4794 VALUES (1)
 INSERT INTO babel_4794 VALUES ('a')

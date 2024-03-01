@@ -1,10 +1,26 @@
+# BABEL-4797 does not affect JDBC driver
+# adding test cases just for assurance
+
+# txn#!#begin does not actually call begin tran
+# It simply sets autocommit to false
+# Changing autocommit send set implicit_transactions on to Server
+# the server now takes care of the transactions, unlike pyodbc
+
 CREATE TABLE babel_4794(ID INT);
 
-# default value of autcommit is false in python test framework
-# txn#!#begin does not actually run begin tran
-# instead it just set autocommit = false & let driver handle the txn
+txn#!#begin
+~~SUCCESS~~
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
 
-# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> rollback
+SELECT * FROM babel_4794
+~~START~~
+int
+~~END~~
+
 SELECT @@trancount
 ~~START~~
 int
@@ -16,7 +32,8 @@ INSERT INTO babel_4794 VALUES (1)
 
 INSERT INTO babel_4794 VALUES ('a')
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLExecDirectW))~~
+
+~~ERROR (Message: invalid input syntax for type integer: "a")~~
 
 INSERT INTO babel_4794 VALUES (2)
 ~~ROW COUNT: 1~~
@@ -30,6 +47,8 @@ int
 1
 ~~END~~
 
+txn#!#rollback
+~~SUCCESS~~
 
 SELECT @@trancount
 ~~START~~
@@ -45,6 +64,8 @@ int
 
 
 # begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> commit
+txn#!#begin
+~~SUCCESS~~
 SELECT @@trancount
 ~~START~~
 int
@@ -56,7 +77,8 @@ INSERT INTO babel_4794 VALUES (1)
 
 INSERT INTO babel_4794 VALUES ('a')
 ~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLExecDirectW))~~
+
+~~ERROR (Message: invalid input syntax for type integer: "a")~~
 
 INSERT INTO babel_4794 VALUES (2)
 ~~ROW COUNT: 1~~
@@ -70,6 +92,8 @@ int
 1
 ~~END~~
 
+txn#!#commit
+~~SUCCESS~~
 
 SELECT @@trancount
 ~~START~~
