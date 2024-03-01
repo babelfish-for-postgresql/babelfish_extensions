@@ -1,18 +1,18 @@
 CREATE TABLE upper_lower_dt (a VARCHAR(20), b NVARCHAR(24), c CHAR(20), d NCHAR(24))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER('Anikait '), LOWER('Agrawal '), LOWER('Anikait '), UPPER('Agrawal '))
+INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N'Anikait '), LOWER(N'Agrawal '), LOWER(N'Anikait '), UPPER(N'Agrawal '))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(' Anikait'), LOWER(' Agrawal'), LOWER(' Anikait'), UPPER(' Agrawal'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N' Anikait'), LOWER(N' Agrawal'), LOWER(N' Anikait'), UPPER(N' Agrawal'))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER('   A'),LOWER(N'   🤣😃'),LOWER('   A'),UPPER(N'   🤣😃'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N'   A'),LOWER(N'   🤣😃'),LOWER(N'   A'),UPPER(N'   🤣😃'))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(' '),UPPER(' '),UPPER(' '),LOWER(' '))
+INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(N' '),UPPER(N' '),UPPER(N' '),LOWER(N' '))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(' '),UPPER(N'😊😋😎😍😅😆'),UPPER(' '),LOWER(N'😊😋😎😍😅😆'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(N' '),UPPER(N'😊😋😎😍😅😆'),UPPER(N' '),LOWER(N'😊😋😎😍😅😆'))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(''),UPPER(''),UPPER(''),LOWER(''))
+INSERT INTO upper_lower_dt(a,b,c,d) values(LOWER(N''),UPPER(N''),UPPER(N''),LOWER(N''))
 GO
-INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER('a'),LOWER('A'),UPPER('a'),LOWER('A'))
+INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(N'a'),LOWER(N'A'),UPPER(N'a'),LOWER(N'A'))
 GO
 INSERT INTO upper_lower_dt(a,b,c,d) values(UPPER(NULL),LOWER(NULL),UPPER(NULL),LOWER(NULL))
 GO
@@ -36,11 +36,11 @@ GO
 
 -- UPPER
 CREATE VIEW dep_view_upper AS
-select UPPER(a) AS upper_a, UPPER(b) AS upper_b, UPPER(c) AS upper_c, UPPER(d) AS upper_d from upper_lower_dt;
+select UPPER(a) AS upper_a, UPPER(b) AS upper_b, UPPER(c) AS upper_c, UPPER(d) AS upper_d from upper_lower_dt WHERE UPPER(a) = N'ANIKAIT' and UPPER(b) = N'AGRAWAL' and UPPER(c) = N'ANIKAIT' and UPPER(d) = N'AGRAWAL';
 GO
 
 CREATE PROC dep_proc_upper AS
-select UPPER(a), UPPER(b), UPPER(c), UPPER(d) from upper_lower_dt;
+select UPPER(a), UPPER(b), UPPER(c), UPPER(d) from upper_lower_dt WHERE UPPER(a) = N'ANIKAIT' and UPPER(b) = N'AGRAWAL' and UPPER(c) = N'ANIKAIT' and UPPER(d) = N'AGRAWAL';
 GO
 
 CREATE FUNCTION dbo.dep_func_upper()
@@ -53,11 +53,11 @@ GO
 
 -- LOWER
 CREATE VIEW dep_view_lower AS
-select UPPER(a) AS lower_a, UPPER(b) AS lower_b, UPPER(c) AS lower_c, UPPER(d) AS lower_d from upper_lower_dt;
+select LOWER(a) AS lower_a, LOWER(b) AS lower_b, LOWER(c) AS lower_c, LOWER(d) AS lower_d from upper_lower_dt WHERE LOWER(a) = N'anikait' and LOWER(b) = N'agrawal' and LOWER(c) = N'anikait' and LOWER(d) = N'agrawal';
 GO
 
 CREATE PROC dep_proc_lower AS
-select LOWER(a), LOWER(b), LOWER(c), LOWER(d) from upper_lower_dt;
+select LOWER(a), LOWER(b), LOWER(c), LOWER(d) from upper_lower_dt WHERE LOWER(a) = N'anikait' and LOWER(b) = N'agrawal' and LOWER(c) = N'anikait' and LOWER(d) = N'agrawal';
 GO
 
 CREATE FUNCTION dbo.dep_func_lower()

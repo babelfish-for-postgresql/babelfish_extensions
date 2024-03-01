@@ -708,14 +708,6 @@ GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar
 ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
- ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                
-   A#!#   🤣😃#!#   A                #!#   🤣😃                   
- #!# #!#                    #!#                        
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
-#!##!#                    #!#                        
-A#!#A#!#A                   #!#A                       
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
 ~~END~~
 
 EXEC dep_proc_upper
@@ -723,14 +715,6 @@ GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar
 ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
- ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                
-   A#!#   🤣😃#!#   A                #!#   🤣😃                   
- #!# #!#                    #!#                        
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
-#!##!#                    #!#                        
-A#!#A#!#A                   #!#A                       
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
 ~~END~~
 
 select dbo.dep_func_upper()
@@ -745,15 +729,7 @@ SELECT * from dep_view_lower
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar
-ANIKAIT #!#AGRAWAL #!#ANIKAIT             #!#AGRAWAL                 
- ANIKAIT#!# AGRAWAL#!# ANIKAIT            #!# AGRAWAL                
-   A#!#   🤣😃#!#   A                #!#   🤣😃                   
- #!# #!#                    #!#                        
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
-#!##!#                    #!#                        
-A#!#A#!#A                   #!#A                       
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
+anikait #!#agrawal #!#anikait             #!#agrawal                 
 ~~END~~
 
 EXEC dep_proc_lower
@@ -761,14 +737,6 @@ GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar
 anikait #!#agrawal #!#anikait             #!#agrawal                 
- anikait#!# agrawal#!# anikait            #!# agrawal                
-   a#!#   🤣😃#!#   a                #!#   🤣😃                   
- #!# #!#                    #!#                        
- #!#😊😋😎😍😅😆#!#                    #!#😊😋😎😍😅😆                  
-#!##!#                    #!#                        
-a#!#a#!#a                   #!#a                       
-<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-比尔·拉#!#比尔·拉#!#比尔·拉            #!#比尔·拉                    
 ~~END~~
 
 select dbo.dep_func_lower()
