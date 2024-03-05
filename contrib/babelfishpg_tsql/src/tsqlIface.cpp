@@ -118,7 +118,7 @@ PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 PLtsql_stmt	*makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx);
 PLtsql_stmt	*makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx);
-std::pair<std::string, std::string> getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx);
+std::tuple<std::string, std::string, std::string> getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
 void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, const char* repl, ParserRuleContext *baseCtx);
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
@@ -6800,24 +6800,23 @@ post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsq
 	return false;
 }
 
-std::pair<std::string, std::string> 
-getTableNameAndSchemaName(TSqlParser::Table_nameContext* ctx)
+std::tuple<std::string, std::string, std::string> 
+getDatabaseSchemaAndTableName(TSqlParser::Table_nameContext* tctx)
 {
-    std::string table_info = ::getFullText(ctx);
-    std::string table_name = "";
-    std::string schema_name = "";
-    size_t pos = table_info.find(".");
-    if (pos != std::string::npos) {
-        // Extract the schema name before the "."
-        schema_name = table_info.substr(0, pos);
-        // Extract the table name after the "."
-        table_name = table_info.substr(pos + 1);
-    } else {
-        // No "." character found, set first to the entire string
-        table_name = table_info;
-    }
-    return std::make_pair(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true),
-                           downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	std::string table_name = "";
+	std::string schema_name = "";
+	std::string db_name = "";
+
+	if (tctx->database)
+		db_name = stripQuoteFromId(tctx->database);
+	if (tctx->schema)
+		schema_name = stripQuoteFromId(tctx->schema);
+	if (tctx->table)
+		table_name = stripQuoteFromId(tctx->table);
+
+	return std::make_tuple(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true),
+	                        downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true),
+	                        downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
 }
 
 PLtsql_stmt *
@@ -6829,16 +6828,17 @@ makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 	stmt->is_create = true;
 
 	if (ctx->table_name())
-	{ 
-		auto table_info = getTableNameAndSchemaName(ctx->table_name());
-        stmt->table_name = pstrdup(table_info.first.c_str());
-        stmt->schema_name = pstrdup(table_info.second.c_str());
+	{
+		auto table_info = getDatabaseSchemaAndTableName(ctx->table_name());
+		stmt->db_name = pstrdup(get<0>(table_info).c_str());
+		stmt->schema_name = pstrdup(get<1>(table_info).c_str());
+		stmt->table_name = pstrdup(get<2>(table_info).c_str());
 	}
 	List *column_name_list = NIL;
-    if (ctx->fulltext_index_column().size() > 0)
-    {
-        for (auto column : ctx->fulltext_index_column())
-        {
+	if (ctx->fulltext_index_column().size() > 0)
+	{
+		for (auto column : ctx->fulltext_index_column())
+		{
 			if (column->TYPE() && column->COLUMN())
 				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'TYPE COLUMN' option is not currently supported in Babelfish", getLineAndPos(column->TYPE()));
 			else if (column->LANGUAGE())
@@ -6851,10 +6851,9 @@ makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 				char *column_name = pstrdup(downcase_truncate_identifier(column_name_str.c_str(), column_name_str.length(), true));
 				column_name_list = lappend(column_name_list, column_name);
 			}
-
-        }
+		}
 		stmt->column_name = column_name_list;
-    }
+	}
 	if (ctx->catalog_filegroup_option())
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "'CATALOG FILEGROUP OPTION' is not currently supported in Babelfish", getLineAndPos(ctx));
 	if (ctx->fulltext_with_option().size() > 0)
@@ -6865,7 +6864,7 @@ makeCreateFulltextIndexStmt(TSqlParser::Create_fulltext_indexContext *ctx)
 		stmt->index_name = pstrdup(downcase_truncate_identifier(index_name.c_str(), index_name.length(), true));
 	}
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
-    return (PLtsql_stmt *) stmt;
+	return (PLtsql_stmt *) stmt;
 }
 
 PLtsql_stmt *
@@ -6875,11 +6874,13 @@ makeDropFulltextIndexStmt(TSqlParser::Drop_fulltext_indexContext *ctx)
 	stmt->cmd_type = PLTSQL_STMT_FULLTEXTINDEX;
 	stmt->lineno = getLineNo(ctx);
 	stmt->is_create = false;
+
 	if (ctx->table_name())
 	{
-		auto table_info = getTableNameAndSchemaName(ctx->table_name());
-        stmt->table_name = pstrdup(table_info.first.c_str());
-        stmt->schema_name = pstrdup(table_info.second.c_str());
+		auto table_info = getDatabaseSchemaAndTableName(ctx->table_name());
+		stmt->db_name = pstrdup(get<0>(table_info).c_str());
+		stmt->schema_name = pstrdup(get<1>(table_info).c_str());
+		stmt->table_name = pstrdup(get<2>(table_info).c_str());
 	}
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
 	return (PLtsql_stmt *) stmt;
