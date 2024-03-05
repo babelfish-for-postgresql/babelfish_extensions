@@ -1,48 +1,25 @@
 -- psql
-CREATE PUBLICATION catalog_pub FOR TABLE sys.assemblies;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_login_ext;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_user_ext;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_configurations;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_extended_properties;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_function_ext;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_helpcollation;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_namespace_ext;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_server_options;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_sysdatabases;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_syslanguages;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_view_def;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.service_settings;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.spt_datatype_info_table;
-GO
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.versions;
+DO
+$$
+DECLARE
+    is_publishable BOOL = TRUE;
+    tab TEXT;
+    tab_names TEXT = '';
+BEGIN
+    FOR tab IN
+        SELECT relname FROM pg_class WHERE relnamespace = 'sys'::regnamespace AND relkind = 'r' ORDER BY relname
+    LOOP
+        BEGIN
+            is_publishable = TRUE;
+            EXECUTE 'CREATE PUBLICATION catalog_pub FOR TABLE sys.' || tab;
+        EXCEPTION WHEN invalid_parameter_value THEN
+            tab_names = tab_names || E'\n' || 'sys.' || tab;
+            is_publishable = FALSE;
+        END;
+        IF is_publishable THEN
+            RAISE EXCEPTION 'Babelfish extended catalog table sys.% is not marked as a catalog relation.', tab;
+        END IF;
+    END LOOP;
+    RAISE WARNING 'cannot add relations to publication: %', tab_names;
+END $$;
 GO

@@ -1318,7 +1318,7 @@ clean_up_bbf_server_def()
 {
 	char 			*query_str;
 	StringInfoData 	query;
-	bool prev_allowSystemTableMods = allowSystemTableMods;
+	int save_nestlevel;
 
 	initStringInfo(&query);
 
@@ -1326,16 +1326,11 @@ clean_up_bbf_server_def()
 
 	query_str = query.data;
 
-	PG_TRY();
-	{
-		allowSystemTableMods = true;
-		exec_utility_cmd_helper(query_str);
-	}
-	PG_FINALLY();
-	{
-		allowSystemTableMods = prev_allowSystemTableMods;
-	}
-	PG_END_TRY();
+	save_nestlevel = NewGUCNestLevel();
+	SetConfigOption("allow_system_table_mods", "on",
+					GUC_CONTEXT_CONFIG, PGC_S_SESSION);
+	exec_utility_cmd_helper(query_str);
+	AtEOXact_GUC(false, save_nestlevel);
 
 	pfree(query.data);
 }

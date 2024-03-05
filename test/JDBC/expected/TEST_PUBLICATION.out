@@ -1,144 +1,45 @@
 -- psql
-CREATE PUBLICATION catalog_pub FOR TABLE sys.assemblies;
+DO
+$$
+DECLARE
+    is_publishable BOOL = TRUE;
+    tab TEXT;
+    tab_names TEXT = '';
+BEGIN
+    FOR tab IN
+        SELECT relname FROM pg_class WHERE relnamespace = 'sys'::regnamespace AND relkind = 'r' ORDER BY relname
+    LOOP
+        BEGIN
+            is_publishable = TRUE;
+            EXECUTE 'CREATE PUBLICATION catalog_pub FOR TABLE sys.' || tab;
+        EXCEPTION WHEN invalid_parameter_value THEN
+            tab_names = tab_names || E'\n' || 'sys.' || tab;
+            is_publishable = FALSE;
+        END;
+        IF is_publishable THEN
+            RAISE EXCEPTION 'Babelfish extended catalog table sys.% is not marked as a catalog relation.', tab;
+        END IF;
+    END LOOP;
+    RAISE WARNING 'cannot add relations to publication: %', tab_names;
+END $$;
 GO
-~~ERROR (Code: 0)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: ERROR: cannot add relation "assemblies" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_login_ext;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_authid_login_ext" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_authid_user_ext;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_authid_user_ext" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_configurations;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_configurations" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_domain_mapping;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_domain_mapping" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_extended_properties;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_extended_properties" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_function_ext;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_function_ext" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_helpcollation;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_helpcollation" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_namespace_ext;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_namespace_ext" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_server_options;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_server_options" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_sysdatabases;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_sysdatabases" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_syslanguages;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_syslanguages" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.babelfish_view_def;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "babelfish_view_def" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.service_settings;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "service_settings" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.spt_datatype_info_table;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "spt_datatype_info_table" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
-
-
-CREATE PUBLICATION catalog_pub FOR TABLE sys.versions;
-GO
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: cannot add relation "versions" to publication
-  Detail: This operation is not supported for system tables.
-    Server SQLState: 22023)~~
+~~WARNING (Message: cannot add relations to publication: 
+sys.assemblies
+sys.babelfish_authid_login_ext
+sys.babelfish_authid_user_ext
+sys.babelfish_configurations
+sys.babelfish_domain_mapping
+sys.babelfish_extended_properties
+sys.babelfish_function_ext
+sys.babelfish_helpcollation
+sys.babelfish_namespace_ext
+sys.babelfish_server_options
+sys.babelfish_sysdatabases
+sys.babelfish_syslanguages
+sys.babelfish_view_def
+sys.service_settings
+sys.spt_datatype_info_table
+sys.versions  Server SQLState: 01000)~~
 
