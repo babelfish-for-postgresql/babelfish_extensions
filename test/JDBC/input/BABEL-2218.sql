@@ -36,5 +36,33 @@ SET @ret = f2218();
 SELECT @ret;
 
 DROP FUNCTION f2218;
+GO
+
+-- Throw error if cursor for select doesn't have a destination(INTO @variable) inside a function BABEL-4586
+CREATE FUNCTION f_getval()RETURNS INTEGER
+AS
+BEGIN
+DECLARE temp_cursor CURSOR FOR SELECT a FROM t2218
+  OPEN temp_cursor
+  FETCH NEXT FROM temp_cursor
+  CLOSE temp_cursor
+  RETURN 1
+  END
+go
+
+-- cursor for select work if the destination(INTO @variable) is provided inside a function BABEL-4586
+CREATE FUNCTION f_getval() RETURNS INTEGER
+AS
+BEGIN
+DECLARE @my_var int
+DECLARE temp_cursor CURSOR FOR SELECT a FROM t2218
+  OPEN temp_cursor
+  FETCH NEXT FROM temp_cursor INTO @my_var
+  CLOSE temp_cursor
+  RETURN @my_var
+  END
+go
+
+DROP FUNCTION f_getval;
 DROP TABLE t2218;
 GO
