@@ -2087,7 +2087,7 @@ object_id(PG_FUNCTION_ARGS)
 				 * search in list of ENRs registered in the current query
 				 * environment by name
 				 */
-				EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
+				EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name, true);
 
 				if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 				{
@@ -2157,7 +2157,7 @@ object_id(PG_FUNCTION_ARGS)
 			 * search in list of ENRs registered in the current query
 			 * environment by name
 			 */
-			EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name);
+			EphemeralNamedRelation enr = get_ENR(currentQueryEnv, object_name, true);
 
 			if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 			{
@@ -2258,7 +2258,7 @@ object_name(PG_FUNCTION_ARGS)
 	 * search in list of ENRs registered in the current query environment by
 	 * object_id
 	 */
-	enr = get_ENR_withoid(currentQueryEnv, object_id, ENR_TSQL_TEMP);
+	enr = get_ENR_withoid(currentQueryEnv, object_id, ENR_TSQL_TEMP, true);
 	if (enr != NULL && enr->md.enrtype == ENR_TSQL_TEMP)
 	{
 		PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(enr->md.name));
