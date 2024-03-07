@@ -3010,6 +3010,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 	Datum		new_record_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	bool		new_record_nulls_bbf_schema[BBF_SCHEMA_PERMS_NUM_OF_COLS];
 	int16	dbid = get_cur_db_id();
+	char	*user = GetUserNameFromId(GetUserId(), true);
 
 	/* Immediately return, if grantee is NULL or PUBLIC. */
 	if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
@@ -3034,6 +3035,7 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 		new_record_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = CStringGetTextDatum(func_args);
 	else
 		new_record_nulls_bbf_schema[Anum_bbf_schema_perms_function_args - 1] = true;
+	new_record_bbf_schema[Anum_bbf_schema_perms_grantor - 1] = CStringGetTextDatum(pstrdup(user));
 
 	tuple_bbf_schema = heap_form_tuple(bbf_schema_dsc,
 									new_record_bbf_schema,
@@ -3598,6 +3600,98 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 							None_Receiver,
 							NULL);
 			}
+		}
+		tuple_bbf_schema = systable_getnext(scan);
+	}
+	systable_endscan(scan);
+	table_close(bbf_schema_rel, AccessShareLock);
+}
+
+void
+exec_internal_grant_on_function(const char *logicalschema,
+								const char *object_name,
+								const char *object_type)
+{
+	SysScanDesc scan;
+	Relation	bbf_schema_rel;
+	TupleDesc	dsc;
+	HeapTuple	tuple_bbf_schema;
+	const char	*grantee = NULL;
+	int			current_permission;
+	ScanKeyData scanKey[3];
+	int16		dbid = get_cur_db_id();
+	const char *db_name = get_cur_db_name();
+
+	/* Fetch the relation */
+	bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
+									AccessShareLock);
+	dsc = RelationGetDescr(bbf_schema_rel);
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_schema_perms_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+	ScanKeyEntryInitialize(&scanKey[1], 0,
+				Anum_bbf_schema_perms_schema_name,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(logicalschema));
+	ScanKeyEntryInitialize(&scanKey[2], 0,
+				Anum_bbf_schema_perms_object_name,
+				BTEqualStrategyNumber,
+				InvalidOid,
+				tsql_get_server_collation_oid_internal(false),
+				F_TEXTEQ,
+				CStringGetTextDatum(PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA));
+
+	scan = systable_beginscan(bbf_schema_rel, get_bbf_schema_perms_idx_oid(),
+							true, NULL, 3, scanKey);
+	tuple_bbf_schema = systable_getnext(scan);
+
+	while (HeapTupleIsValid(tuple_bbf_schema))
+	{
+		bool isnull;
+		Datum datum;
+		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
+		datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_grantee, dsc, &isnull);
+		if (!isnull)
+			grantee = TextDatumGetCString(datum);
+		/* For each object, grant the permission explicitly. */
+		if (current_permission & ALL_PERMISSIONS_ON_FUNCTION)
+		{
+			const char	*query = NULL;
+			char			*schema;
+			List			*res;
+			GrantStmt		*grant;
+			PlannedStmt		*wrapper;
+
+			schema = get_physical_schema_name((char *)db_name, logicalschema);
+
+			if (strcmp(object_type, OBJ_FUNCTION) == 0)
+				query = psprintf("GRANT ALL ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
+			else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
+				query = psprintf("GRANT ALL ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
+			res = raw_parser(query, RAW_PARSE_DEFAULT);
+			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = (Node *) grant;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 1;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						"(GRANT STATEMENT )",
+						false,
+						PROCESS_UTILITY_SUBCOMMAND,
+						NULL,
+						NULL,
+						None_Receiver,
+						NULL);
 		}
 		tuple_bbf_schema = systable_getnext(scan);
 	}

@@ -514,16 +514,16 @@ go
 
 -- psql
 -- GRANT statement add an entry to the catalog
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where schema_name = 'babel_4344_s1' collate "C" order by permission; -- and object_name = 'ALL' collate "C"
 go
 ~~START~~
-"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
-babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1#!#dbo
 ~~END~~
 
 
@@ -541,16 +541,16 @@ go
 
 -- psql
 -- check the consistency of catalog
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where schema_name = 'babel_4344_s1' collate "C" order by permission;
 go
 ~~START~~
-"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
-babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1#!#dbo
 ~~END~~
 
 
@@ -738,15 +738,15 @@ go
 
 -- psql
 -- should show original object names
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
 ~~START~~
-"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
-babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_f1#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_p1#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_t1#!#47#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_v1#!#2#!#babel_4344_d1_babel_4344_u1#!#dbo
 ~~END~~
 
 
@@ -767,15 +767,15 @@ go
 
 -- psql
 -- should show renamed objects
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
 ~~START~~
-"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"
-babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_f1_new#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_p1_new#!#128#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_t1_new#!#47#!#babel_4344_d1_babel_4344_u1
-babel_4344_s1#!#babel_4344_v1_new#!#2#!#babel_4344_d1_babel_4344_u1
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#"sys"."varchar"
+babel_4344_s1#!#ALL#!#131#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_f1_new#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_p1_new#!#128#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_t1_new#!#47#!#babel_4344_d1_babel_4344_u1#!#dbo
+babel_4344_s1#!#babel_4344_v1_new#!#2#!#babel_4344_d1_babel_4344_u1#!#dbo
 ~~END~~
 
 
@@ -869,7 +869,7 @@ go
 select * from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default;
 go
 ~~START~~
-int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text
+int2#!#"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
 ~~END~~
 
 

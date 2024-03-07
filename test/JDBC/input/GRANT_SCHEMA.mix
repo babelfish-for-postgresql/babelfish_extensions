@@ -329,7 +329,7 @@ go
 
 -- psql
 -- GRANT statement add an entry to the catalog
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where schema_name = 'babel_4344_s1' collate "C" order by permission; -- and object_name = 'ALL' collate "C"
 go
 
@@ -347,7 +347,7 @@ go
 
 -- psql
 -- check the consistency of catalog
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions
 where schema_name = 'babel_4344_s1' collate "C" order by permission;
 go
 
@@ -453,7 +453,7 @@ go
 
 -- psql
 -- should show original object names
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
 
 -- tsql
@@ -473,7 +473,7 @@ go
 
 -- psql
 -- should show renamed objects
-select schema_name, object_name, permission, grantee from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
+select schema_name, object_name, permission, grantee, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4344_s1' collate sys.database_default order by object_name;
 go
 
 -- tsql
