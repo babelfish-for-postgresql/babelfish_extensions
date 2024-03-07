@@ -207,7 +207,7 @@ GO
 select * from y where concat("A",substring(a,3,1),"Ā") like '%b%';
 
 
- --- FOR QUERY LIKE THIS SQL SERVER DOES NOT RETURN ANYTHING
+ --- FOR QUERY LIKE THIS NO OUTPUT IS OBTAINED
 declare @b varchar='ShÅmeEm'
 select * from y where @b LIKE concat("'%",substring(a,3,1),"%'")
 GO
