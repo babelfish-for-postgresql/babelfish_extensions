@@ -137,17 +137,17 @@ runs:
           sudo echo "babelfishpg_tsql.server_collation_name = '${{ inputs.server_collation_name }}'" >> ~/${{ inputs.install_dir }}/data/postgresql.conf
         fi
         ~/${{ inputs.install_dir }}/bin/pg_ctl -c -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "set allow_system_table_mods = on;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER USER jdbc_user CREATEDB;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "CALL sys.initialize_babelfish('jdbc_user');"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "set allow_system_table_mods = on;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER USER jdbc_user CREATEDB;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "CALL sys.initialize_babelfish('jdbc_user');"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "\dx"
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
@@ -157,8 +157,8 @@ runs:
       id: change-migration-mode
       if: ${{ inputs.migration_mode == 'multi-db' }} && always()
       run: |
-        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
       shell: bash
 
     - name: Run JDBC Upgrade Tests
