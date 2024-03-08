@@ -254,6 +254,8 @@ go
 create trigger s1.tr1 ON s1.t1 for insert as begin 
 select 'insert successful' end
 go
+create sequence s1.sq1 start with 1 increment by 1 ;
+go
 
 -- tsql user=l1 password=123
 -- Test Group 2 [users have no default permission]
@@ -271,6 +273,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -315,6 +323,12 @@ go
 
 ~~ERROR (Message: permission denied for table t1)~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 select * from s1.v1;
 go
 ~~ERROR (Code: 33557097)~~
@@ -341,6 +355,8 @@ grant insert on schema::s1 to u1;
 go
 grant delete on schema::s1 to u1;
 go
+grant update on schema::s1 to u1;
+go
 
 -- tsql user=l1 password=123
 -- Test Group 2 [user u1 has select, insert, delete privilege on the schema]
@@ -365,6 +381,12 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -405,6 +427,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -463,6 +491,12 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -504,6 +538,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -642,6 +682,8 @@ revoke insert on schema::s1 from u1;
 go
 revoke delete on schema::s1 from u1;
 go
+revoke update on schema::s1 from u1;
+go
 
 -- tsql user=l1 password=123
 -- Test Group 5 [user u1 has execute privilege on the schema]
@@ -659,6 +701,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -737,41 +785,41 @@ varchar
 u2
 ~~END~~
 
-select * from s1.t2;
+select * from s1.t1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table t2)~~
+~~ERROR (Message: permission denied for table t1)~~
 
-insert into s1.t2 values (1);
+insert into s1.t1 values (1);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table t2)~~
+~~ERROR (Message: permission denied for table t1)~~
 
-delete from s1.t2 where a = 1;
+delete from s1.t1 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table t2)~~
+~~ERROR (Message: permission denied for table t1)~~
 
-select * from s1.v2;
+select * from s1.v1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for view v2)~~
+~~ERROR (Message: permission denied for view v1)~~
 
-exec s1.p2;
+exec s1.p1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for procedure p2)~~
+~~ERROR (Message: permission denied for procedure p1)~~
 
-select * from s1.f2()
+select * from s1.f1()
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for function f2)~~
+~~ERROR (Message: permission denied for function f1)~~
 
 select * from s1.t2;
 go
@@ -830,6 +878,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -911,6 +965,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -1014,6 +1074,12 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -2096,6 +2162,8 @@ go
 use master
 go
 drop trigger s1.tr1;
+go
+drop sequence s1.sq1;
 go
 drop table s1.t1;
 go

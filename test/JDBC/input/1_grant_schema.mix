@@ -140,6 +140,8 @@ go
 create trigger s1.tr1 ON s1.t1 for insert as begin 
 select 'insert successful' end
 go
+create sequence s1.sq1 start with 1 increment by 1 ;
+go
 
 -- Test Group 2 [users have no default permission]
 -- tsql user=l1 password=123
@@ -148,6 +150,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 select * from s1.v1;
 go
@@ -163,6 +167,8 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
 select * from s1.v1;
 go
 exec s1.p1;
@@ -177,6 +183,8 @@ grant insert on schema::s1 to u1;
 go
 grant delete on schema::s1 to u1;
 go
+grant update on schema::s1 to u1;
+go
 
 -- Test Group 2 [user u1 has select, insert, delete privilege on the schema]
 -- tsql user=l1 password=123
@@ -185,6 +193,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 delete from s1.t1 where a = 1;
 go
@@ -201,6 +211,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 delete from s1.t1 where a = 1;
 go
@@ -223,6 +235,8 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -238,6 +252,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 delete from s1.t1 where a = 1;
 go
@@ -299,6 +315,8 @@ revoke insert on schema::s1 from u1;
 go
 revoke delete on schema::s1 from u1;
 go
+revoke update on schema::s1 from u1;
+go
 
 -- Test Group 5 [user u1 has execute privilege on the schema]
 -- tsql user=l1 password=123
@@ -307,6 +325,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 delete from s1.t1 where a = 1;
 go
@@ -332,17 +352,17 @@ go
 -- tsql user=l2 password=123
 select current_user;
 go
-select * from s1.t2;
+select * from s1.t1;
 go
-insert into s1.t2 values (1);
+insert into s1.t1 values (1);
 go
-delete from s1.t2 where a = 1;
+delete from s1.t1 where a = 1;
 go
-select * from s1.v2;
+select * from s1.v1;
 go
-exec s1.p2;
+exec s1.p1;
 go
-select * from s1.f2()
+select * from s1.f1()
 go
 select * from s1.t2;
 go
@@ -369,6 +389,8 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -396,6 +418,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 delete from s1.t1 where a = 1;
 go
@@ -439,6 +463,8 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
 go
 delete from s1.t1 where a = 1;
 go
@@ -894,6 +920,8 @@ go
 use master
 go
 drop trigger s1.tr1;
+go
+drop sequence s1.sq1;
 go
 drop table s1.t1;
 go
