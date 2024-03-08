@@ -3,6 +3,7 @@ go
 
 CREATE TABLE t2218(c1 INT)
 INSERT INTO t2218 VALUES (2218);
+INSERT INTO t2218 VALUES (2219);
 GO
 
 -- should throw an error
@@ -64,5 +65,38 @@ DECLARE temp_cursor CURSOR FOR SELECT a FROM t2218
 go
 
 DROP FUNCTION f_getval;
+GO
+
+-- cursor for select work with multiple fetch if the destination(INTO @variable) is provided inside a function BABEL-4586
+CREATE FUNCTION f_getval() RETURNS INTEGER
+AS
+BEGIN
+DECLARE @my_var int
+DECLARE temp_cursor CURSOR FOR SELECT a FROM t2218
+  OPEN temp_cursor
+  FETCH NEXT FROM temp_cursor INTO @my_var
+  FETCH NEXT FROM temp_cursor INTO @my_var
+  CLOSE temp_cursor
+  RETURN @my_var
+  END
+go
+
+DROP FUNCTION f_getval;
+GO
+
+-- cursor for select should throw error even if one fetch tries to return results to client
+CREATE FUNCTION f_getval() RETURNS INTEGER
+AS
+BEGIN
+DECLARE @my_var int
+DECLARE temp_cursor CURSOR FOR SELECT a FROM t2218
+  OPEN temp_cursor
+  FETCH NEXT FROM temp_cursor INTO @my_var
+  FETCH NEXT FROM temp_cursor
+  CLOSE temp_cursor
+  RETURN @my_var
+  END
+go
+
 DROP TABLE t2218;
 GO
