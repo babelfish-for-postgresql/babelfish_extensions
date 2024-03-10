@@ -2251,3 +2251,679 @@ go
 
 drop login l2;
 go
+
+-- tsql
+-- Test group 18 [nested tests]
+-- create objects
+create schema s1;
+go
+create schema s2;
+go
+create login l3 with password = '123'
+go
+create user u3 for login l3
+go
+create login l4 with password = '123'
+go
+create user u4 for login l4
+go
+create table s1.t1(a int);
+go
+create view s2.v1 as select a from s1.t1; -- table inside a view
+go
+create proc s2.p1 as select a from s1.t1; -- table inside a proc
+go
+create function s2.f1() returns table as return (select * from s1.t1); -- table inside a function
+go
+create proc s1.p1 as select * from s2.v1; -- view inside a proc
+go
+create function s1.f1() returns table as return (select * from s2.v1); -- view inside a function
+go
+-- calling a user defined stored proc inside a view is not allowed
+-- calling a user defined stored proc inside a function is not allowed
+create view s2.v2 as select * from s1.f1(); -- function inside a view
+go
+create proc s2.p2 as select * from s1.f1(); -- function inside a proc
+go
+
+-- tsql user=l3 password=123
+-- [u3 and u4 have no privilege]
+select current_user;
+go
+~~START~~
+varchar
+u3
+~~END~~
+
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql user=l4 password=123
+select current_user;
+go
+~~START~~
+varchar
+u4
+~~END~~
+
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql
+grant select on schema::s1 to u3;
+go
+grant execute on schema::s1 to u3;
+go
+
+-- tsql user=l3 password=123
+-- u3 has select and execute privilege on s1
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql user=l4 password=123
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql
+revoke select on schema::s1 to u3;
+go
+revoke execute on schema::s1 to u3;
+go
+grant select on schema::s2 to u3;
+go
+grant execute on schema::s2 to u3;
+go
+
+-- tsql user=l3 password=123
+-- u3 has select and execute privilege on s2
+select * from s2.v1
+go
+~~START~~
+int
+~~END~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+
+-- tsql user=l4 password=123
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql
+grant select on schema::s1 to u3;
+go
+grant execute on schema::s1 to u3;
+go
+
+-- tsql user=l3 password=123
+-- u3 has select and execute privilege on s1 and s2
+select * from s2.v1
+go
+~~START~~
+int
+~~END~~
+
+select * from s2.v2
+go
+~~START~~
+int
+~~END~~
+
+exec s1.p1;
+go
+~~START~~
+int
+~~END~~
+
+exec s2.p1;
+go
+~~START~~
+int
+~~END~~
+
+exec s2.p2;
+go
+~~START~~
+int
+~~END~~
+
+select s1.f1();
+go
+~~START~~
+int
+~~END~~
+
+select s2.f1();
+go
+~~START~~
+int
+~~END~~
+
+
+-- tsql user=l4 password=123
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql
+revoke select on schema::s2 to u3;
+go
+revoke execute on schema::s2 to u3;
+go
+revoke select on schema::s1 to u3;
+go
+revoke execute on schema::s1 to u3;
+go
+
+-- tsql user=l3 password=123
+-- u3 has select and execute privilege
+select * from s2.v1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v1)~~
+
+select * from s2.v2
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view v2)~~
+
+exec s1.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p1)~~
+
+exec s2.p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure p2)~~
+
+select s1.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+select s2.f1();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for function f1)~~
+
+
+-- tsql
+-- drop objects
+use master
+go
+drop view s2.v1;
+go
+drop procedure s1.p1;
+go
+drop procedure s2.p1;
+go
+drop view s2.v2;
+go
+drop table s1.t1;
+go
+drop function s1.f1;
+go
+drop function s2.f1;
+go
+drop procedure s2.p2;
+go
+drop schema s1;
+go
+drop schema s2;
+go
+drop user u3;
+go
+drop user u4;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login l3;
+go
+
+drop login l4;
+go
+
+-- tsql
+-- Test Group 19 [Where grantor is dbo, but it doesn’t have sysadmin role]
+create login l5 with password = '123';
+go
+create login l6 with password = '123';
+go
+alter role sysadmin add member l5;
+go
+
+-- tsql user=l5 password=123
+create database db1
+go
+use db1
+go
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+create schema s1;
+go
+create table s1.t1(a int);
+go
+use master
+go
+
+-- tsql
+alter role sysadmin drop member l5;
+go
+
+-- tsql user=l5 password=123
+use db1
+go
+select current_user
+go
+~~START~~
+varchar
+dbo
+~~END~~
+
+grant select on schema::s1 to guest;
+go
+use master
+go
+
+-- tsql user=l6 password=123
+use db1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "l6" is not able to access the database "db1" under the current security context)~~
+
+
+-- tsql user=l5 password=123
+use db1
+go
+drop table s1.t1;
+go
+drop schema s1;
+go
+use master
+go
+
+-- tsql
+use master
+go
+drop database db1
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l5' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'l6' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login l5;
+go
+drop login l6;
+go
