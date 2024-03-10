@@ -4704,7 +4704,7 @@ pltsql_persist_holdable_cursor_executor(Portal portal, QueryDesc *queryDesc,
 
 			pltsql_update_cursor_error_data(portal->name);
 
-			pop_top_error_stack();
+			pop_error_stack();
 
 			InterruptHoldoffCount = saveInterruptHoldoffCount;
 			QueryCancelHoldoffCount = saveQueryCancelHoldoffCount;
