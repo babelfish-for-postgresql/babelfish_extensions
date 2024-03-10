@@ -4689,6 +4689,9 @@ pltsql_persist_holdable_cursor_executor(Portal portal, QueryDesc *queryDesc,
 		}
 		PG_CATCH();
 		{
+			InterruptHoldoffCount = saveInterruptHoldoffCount;
+			QueryCancelHoldoffCount = saveQueryCancelHoldoffCount;
+
 			/*
 			 * Portal resources are transferred to current transaction resource
 			 * owner so transaction abort will handle the executor cleanup
@@ -4705,9 +4708,6 @@ pltsql_persist_holdable_cursor_executor(Portal portal, QueryDesc *queryDesc,
 			pltsql_update_cursor_error_data(portal->name);
 
 			pop_error_stack();
-
-			InterruptHoldoffCount = saveInterruptHoldoffCount;
-			QueryCancelHoldoffCount = saveQueryCancelHoldoffCount;
 
 			pltsql_non_tsql_proc_entry_count = 0;
 			pltsql_sys_func_entry_count = 0;
