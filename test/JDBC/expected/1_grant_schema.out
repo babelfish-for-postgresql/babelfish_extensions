@@ -359,7 +359,7 @@ grant update on schema::s1 to u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 2 [user u1 has select, insert, delete privilege on the schema]
+-- Test Group 3 [user u1 has select, insert, delete privilege on the schema]
 select current_user;
 go
 ~~START~~
@@ -468,7 +468,7 @@ grant execute on schema::s1 to u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 3 [user u1 has select, insert, delete and execute privilege on the schema]
+-- Test Group 4 [user u1 has select, insert, delete and execute privilege on the schema]
 select current_user;
 go
 ~~START~~
@@ -586,7 +586,7 @@ create function s1.f2() returns int begin declare @a int; set @a = 1; return @a;
 go
 
 -- tsql user=l1 password=123
--- Test Group 4 [user u1 has select and execute privilege on the schema]
+-- Test Group 5[user u1 has select and execute privilege on the schema]
 select current_user;
 go
 ~~START~~
@@ -686,7 +686,7 @@ revoke update on schema::s1 from u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 5 [user u1 has execute privilege on the schema]
+-- Test Group 6 [user u1 has execute privilege on the schema]
 select current_user;
 go
 ~~START~~
@@ -863,7 +863,7 @@ revoke execute on schema::s1 from u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 6 [user u1 and u2 have no privilege on the schema]
+-- Test Group 7 [user u1 and u2 have no privilege on the schema]
 select current_user;
 go
 ~~START~~
@@ -1052,7 +1052,7 @@ grant execute on s1.f1 to u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 7 [user u1 has select, insert, execute privilege on these objects]
+-- Test Group 8 [user u1 has select, insert, execute privilege on these objects]
 select current_user;
 go
 ~~START~~
@@ -1165,7 +1165,7 @@ grant execute on s1.f1 to PUBLIC;
 go
 
 -- tsql user=l1 password=123
--- Test Group 8 [select, insert, execute privilege on these objects to PUBLIC]
+-- Test Group 9 [select, insert, execute privilege on these objects to PUBLIC]
 -- [Also, u1 has select, insert and execute privilege on these objects]
 select current_user;
 go
@@ -1277,7 +1277,7 @@ revoke execute on s1.f1 from u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 9 [select, insert, delete, execute privilege on these objects to PUBLIC]
+-- Test Group 10 [select, insert, delete, execute privilege on these objects to PUBLIC]
 select current_user;
 go
 ~~START~~
@@ -1400,7 +1400,7 @@ revoke execute on s1.f1 from public;
 go
 
 -- tsql user=l1 password=123
--- Test Group 10 [select, insert, delete, execute privilege on these objects to u1]
+-- Test Group 11 [select, insert, delete, execute privilege on these objects to u1]
 select current_user;
 go
 ~~START~~
@@ -1501,7 +1501,7 @@ grant select, insert, delete, execute on schema::s1 to u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 11
+-- Test Group 12
 -- [select, insert, delete, execute privilege on these objects to u1]
 -- [select, insert, delete, execute privilege on schema to public]
 select current_user;
@@ -1606,7 +1606,7 @@ revoke select, insert, delete, execute on schema::s1 from u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 12
+-- Test Group 13
 -- [select, insert, delete, execute privilege on these objects to u1]
 -- [select, insert, delete, execute privilege on schema to public, u1]
 select current_user;
@@ -1719,7 +1719,7 @@ revoke execute on s1.f1 from u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 13
+-- Test Group 14
 -- [select, insert, delete, execute privilege on schema to public, u1]
 select current_user;
 go
@@ -1823,7 +1823,7 @@ revoke select, insert, delete, execute on schema::s1 from u1;
 go
 
 -- tsql user=l1 password=123
--- Test Group 14
+-- Test Group 15
 -- [select, insert, delete, execute privilege on schema to public]
 select current_user;
 go
@@ -1927,7 +1927,7 @@ revoke select, insert, delete, execute on schema::s1 from public;
 go
 
 -- tsql user=l1 password=123
--- Test Group 15 [No privilege on these objects]
+-- Test Group 16 [No privilege on these objects]
 select current_user;
 go
 ~~START~~
@@ -2018,7 +2018,7 @@ go
 
 
 -- tsql
--- Test Group 16 [Cross database queries]
+-- Test Group 17 [Cross database queries]
 create database db1
 go
 use db1
