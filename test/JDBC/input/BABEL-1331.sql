@@ -2,7 +2,7 @@ create table t_babel_1331 (a int, b int);
 insert into t_babel_1331 values (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);
 go
 
-declare cur cursor for select * from t_babel_1331
+DECLARE cur CURSOR SCROLL FOR SELECT * FROM t_babel_1331
 open cur
 fetch cur
 fetch next from cur

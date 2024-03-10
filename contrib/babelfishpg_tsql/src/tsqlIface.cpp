@@ -5467,6 +5467,10 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	for (auto pctx : ctx->declare_cursor_options())
 			cursor_option = read_extended_cursor_option(pctx, cursor_option);
 
+	/* Default type should be FORWARD_ONLY */
+	if ((cursor_option & TSQL_CURSOR_OPT_SCROLL) == 0)
+		cursor_option |= (CURSOR_OPT_NO_SCROLL | TSQL_CURSOR_OPT_FORWARD_ONLY);
+
 	/* ANSI grammar */
 	if (ctx->SCROLL())
 	{

@@ -58,11 +58,13 @@ typedef struct cursorhashent
 	int16		last_operation;
 	uint64		row_count;
 	int32		cursor_handle;
+	bool 		cursor_state;   /* is cursor open ? */
 	bool		api_cursor;		/* only used in cursor_list now. can be
 								 * deprecated once we supprot global cursor */
 	TupleDesc	tupdesc;
 	Tuplestorestate *fetch_buffer;
-	char	   *textptr_only_bitmap;
+	ErrorData	*error;         /* Incase of forward only cursors we store error data */
+	char     	*textptr_only_bitmap;
 } CursorHashEnt;
 
 static HTAB *CursorHashTable = NULL;
@@ -513,6 +515,8 @@ pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_expr, int cursor
 	hentry->tupdesc = NULL;
 	hentry->fetch_buffer = NULL;
 	hentry->textptr_only_bitmap = NULL;
+	hentry->error = NULL;
+	hentry->cursor_state = false;
 
 	return hentry;
 }
@@ -541,6 +545,12 @@ pltsql_delete_cursor_entry(char *curname, bool missing_ok)
 		hentry->textptr_only_bitmap = NULL;
 	}
 
+	if (hentry && hentry->error)
+	{
+		FreeErrorData(hentry->error);
+		hentry->error = NULL;
+	}
+
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_REMOVE, NULL);
 	if (!missing_ok && hentry == NULL)
 		elog(WARNING, "trying to delete cursor name that does not exist");
@@ -561,6 +571,57 @@ pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_expr, int *cu
 	{
 		*explicit_expr = NULL;
 		*cursor_options = 0;
+	}
+}
+
+bool
+pltsql_is_cursor_open(const char *curname)
+{
+	CursorHashEnt *hentry;
+
+	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
+	return (hentry != NULL) ? hentry->cursor_state : false;
+}
+
+ErrorData *
+pltsql_get_cursor_error_data(const char *curname)
+{
+	CursorHashEnt *hentry;
+
+	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
+	return (hentry != NULL && hentry->cursor_state) ? hentry->error : NULL;
+}
+
+void 
+pltsql_update_cursor_state(const char *curname, bool is_cursor_open)
+{
+	CursorHashEnt *hentry;
+
+	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
+	if (hentry)
+	{
+		hentry->cursor_state = is_cursor_open;
+		if (!is_cursor_open && hentry->error)
+		{
+			FreeErrorData(hentry->error);
+			hentry->error = NULL;
+		}
+	}
+
+}
+
+void 
+pltsql_update_cursor_error_data(const char *curname)
+{
+	MemoryContext old_context;
+	CursorHashEnt *hentry;
+
+	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
+	if (hentry && (hentry->cursor_options & CURSOR_OPT_NO_SCROLL) && !hentry->error)
+	{
+		old_context = MemoryContextSwitchTo(CursorHashtabContext);
+		hentry->error = CopyErrorData();
+		MemoryContextSwitchTo(old_context);
 	}
 }
 

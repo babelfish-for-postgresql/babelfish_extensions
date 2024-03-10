@@ -4,7 +4,7 @@ go
 ~~ROW COUNT: 5~~
 
 
-declare cur cursor for select * from t_babel_1331
+DECLARE cur CURSOR SCROLL FOR SELECT * FROM t_babel_1331
 open cur
 fetch cur
 fetch next from cur

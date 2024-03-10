@@ -475,7 +475,6 @@ extern void pltsql_get_cursor_definition(char *curname, PLtsql_expr **explicit_e
 extern void pltsql_update_cursor_fetch_status(char *curname, int fetch_status);
 extern void pltsql_update_cursor_row_count(char *curname, int64 row_count);
 extern void pltsql_update_cursor_last_operation(char *curname, int last_operation);
-extern char *pltsql_demangle_curname(char *curname);
 
 extern bool suppress_string_truncation_error;
 
@@ -491,6 +490,7 @@ extern int
 
 static void
 pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, ErrorContextCallback *plerrcontext);
+static bool hold_portal_for_pltsql_txnstmt(PLtsql_txn_data *txn_data);
 
 /* ----------
  * pltsql_exec_function	Called by the call handler for
@@ -4403,15 +4403,17 @@ execute_txn_command(PLtsql_execstate *estate, PLtsql_stmt_execsql *stmt)
  * rollbck/rollback to savepoint
  */
 static void
-commit_stmt(PLtsql_execstate *estate, bool txnStarted)
+commit_stmt(PLtsql_execstate *estate, bool txnStarted, PLtsql_txn_data *txn_data)
 {
 	SimpleEcontextStackEntry *topEntry = simple_econtext_stack;
 	MemoryContext oldcontext = CurrentMemoryContext;
 
 	elog(DEBUG4, "TSQL TXN Auto commit transaction");
 
-	/* Hold portals to make sure that cursors work */
-	HoldPinnedPortals();
+	if ((txnStarted || !IsTransactionBlockActive()) && txn_data == NULL)
+	{
+		HoldPinnedPortals();
+	}
 
 	if (txnStarted)
 	{
@@ -4687,6 +4689,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				stmt->sqlstmt->query = pstrdup(query.data);
 			}
 			prepare_stmt_execsql(estate, estate->func, stmt, true);
+		}
+
+		/* For txn_data hold pinned portals before executing stmt */
+		if (hold_portal_for_pltsql_txnstmt(stmt->txn_data))
+		{
+			HoldPinnedPortals();
 		}
 
 		/*
@@ -5061,7 +5069,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			  strcmp(estate->func->fn_signature, "inline_code_block") != 0) &&
 			!estate->insert_exec)
 		{
-			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED));
+			commit_stmt(estate, (estate->tsql_trigger_flags & TSQL_TRAN_STARTED),
+						stmt->txn_data);
 
 			if (stmt->txn_data != NULL &&
 				(stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK ||
@@ -6032,7 +6041,10 @@ exec_stmt_open(PLtsql_execstate *estate, PLtsql_stmt_open *stmt)
 
 	/* Pin portal to handle transaction commands for open cursor */
 	if (IS_TDS_CLIENT())
+	{
 		PinPortal(portal);
+		pltsql_update_cursor_state(portal->name, true);
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -6048,10 +6060,11 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 	PLtsql_var *curvar;
 	long		how_many = stmt->how_many;
 	SPITupleTable *tuptab;
-	Portal		portal;
-	char	   *curname;
+	Portal  	portal;
+	char    	*curname;
 	uint64		n;
 	MemoryContext oldcontext;
+	ErrorData	*edata = NULL;
 
 	/* ----------
 	 * Get the portal of the cursor by name
@@ -6067,12 +6080,18 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
 	curname = TextDatumGetCString(curvar->value);
 	MemoryContextSwitchTo(oldcontext);
+	edata = pltsql_get_cursor_error_data(curname);
 
 	portal = SPI_cursor_find(curname);
 	if (portal == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_CURSOR),
-				 errmsg("cursor \"%s\" does not exist", pltsql_demangle_curname(curname))));
+	{
+		if (edata)
+			ThrowErrorData(edata);
+		else
+			ereport(ERROR,
+				    (errcode(ERRCODE_UNDEFINED_CURSOR),
+				     errmsg("cursor \"%s\" does not exist", pltsql_demangle_curname(curname))));
+	}
 
 	/* Calculate position for FETCH_RELATIVE or FETCH_ABSOLUTE */
 	if (stmt->expr)
@@ -6090,54 +6109,70 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 		exec_eval_cleanup(estate);
 	}
 
-	if (!stmt->is_move)
+	PG_TRY();
 	{
-		PLtsql_variable *target;
-
-
-		if (stmt->target)		/* target is given */
+		if (!stmt->is_move)
 		{
-			/* ----------
-			 * Fetch 1 tuple from the cursor
-			 * ----------
-			 */
-			SPI_scroll_cursor_fetch(portal, stmt->direction, how_many);
-			tuptab = SPI_tuptable;
-			n = SPI_processed;
+			PLtsql_variable *target;
 
-			/* ----------
-			 * Set the target appropriately.
-			 * ----------
-			 */
-			target = (PLtsql_variable *) estate->datums[stmt->target->dno];
-			if (n == 0)
-				exec_move_row(estate, target, NULL, tuptab->tupdesc);
-			else
-				exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
+
+			if (stmt->target)		/* target is given */
+			{
+				/* ----------
+				* Fetch 1 tuple from the cursor
+				* ----------
+				*/
+				SPI_scroll_cursor_fetch(portal, stmt->direction, how_many);
+				tuptab = SPI_tuptable;
+				n = SPI_processed;
+
+				/* ----------
+				* Set the target appropriately.
+				* ----------
+				*/
+				target = (PLtsql_variable *) estate->datums[stmt->target->dno];
+				if (n == 0)
+					exec_move_row(estate, target, NULL, tuptab->tupdesc);
+				else
+					exec_move_row(estate, target, tuptab->vals[0], tuptab->tupdesc);
+			}
+			else					/* no target. push the result to client */
+			{
+				DestReceiver *receiver;
+
+				receiver = CreateDestReceiver(DestRemote);
+				SetRemoteDestReceiverParams(receiver, portal);
+
+				SPI_scroll_cursor_fetch_dest(portal, stmt->direction, how_many, receiver);
+				tuptab = SPI_tuptable;
+				n = SPI_processed;
+
+				receiver->rDestroy(receiver);
+			}
+
+			exec_eval_cleanup(estate);
+			SPI_freetuptable(tuptab);
 		}
-		else					/* no target. push the result to client */
+		else
 		{
-			DestReceiver *receiver;
-
-			receiver = CreateDestReceiver(DestRemote);
-			SetRemoteDestReceiverParams(receiver, portal);
-
-			SPI_scroll_cursor_fetch_dest(portal, stmt->direction, how_many, receiver);
-			tuptab = SPI_tuptable;
+			/* Move the cursor */
+			SPI_scroll_cursor_move(portal, stmt->direction, how_many);
 			n = SPI_processed;
-
-			receiver->rDestroy(receiver);
 		}
-
-		exec_eval_cleanup(estate);
-		SPI_freetuptable(tuptab);
 	}
-	else
+	PG_CATCH();
 	{
-		/* Move the cursor */
-		SPI_scroll_cursor_move(portal, stmt->direction, how_many);
-		n = SPI_processed;
+		if (portal && portal->status == PORTAL_FAILED
+		    && portal->portalPinned)
+			UnpinPortal(portal);
+
+		if (portal->cursorOptions & CURSOR_OPT_NO_SCROLL)
+			pltsql_update_cursor_error_data(curname);
+		
+		exec_set_fetch_status(estate, -1);
+		PG_RE_THROW();
 	}
+	PG_END_TRY();
 
 	/* Set the ROW_COUNT and the global FOUND variable appropriately. */
 	estate->eval_processed = n;
@@ -6150,6 +6185,9 @@ exec_stmt_fetch(PLtsql_execstate *estate, PLtsql_stmt_fetch *stmt)
 	pltsql_update_cursor_row_count(curname, n);
 	pltsql_update_cursor_last_operation(curname, 2);
 
+	if (n==0 && edata)
+		ThrowErrorData(edata);
+	
 	return PLTSQL_RC_OK;
 }
 
@@ -6181,23 +6219,25 @@ exec_stmt_close(PLtsql_execstate *estate, PLtsql_stmt_close *stmt)
 	MemoryContextSwitchTo(oldcontext);
 
 	portal = SPI_cursor_find(curname);
-	if (portal == NULL)
+
+	if (portal == NULL && !pltsql_is_cursor_open(curname))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
 				 errmsg("cursor \"%s\" does not exist", pltsql_demangle_curname(curname))));
 
-	if (IS_TDS_CLIENT() && portal->portalPinned)
-		UnpinPortal(portal);
-	/* ----------
-	 * And close it.
-	 * ----------
-	 */
-	SPI_cursor_close(portal);
+	if (IS_TDS_CLIENT() && portal != NULL)
+	{
+		if (portal->portalPinned)
+			UnpinPortal(portal);
+		
+		SPI_cursor_close(portal);
+	}
 
 	exec_set_rowcount(0);
 
 	pltsql_update_cursor_row_count(curname, 0);
 	pltsql_update_cursor_last_operation(curname, 6);
+	pltsql_update_cursor_state(curname, false);
 
 	return PLTSQL_RC_OK;
 }
@@ -10445,4 +10485,26 @@ pltsql_exec_function_cleanup(PLtsql_execstate *estate, PLtsql_function *func, Er
 
 	}
 	PG_END_TRY();
+}
+
+static bool
+hold_portal_for_pltsql_txnstmt(PLtsql_txn_data *txn_data)
+{
+	if (txn_data == NULL)
+		return false;
+
+	switch (txn_data->stmt_kind)
+	{
+		case TRANS_STMT_COMMIT:
+			{
+				return NestedTranCount == 1;
+			}
+		case TRANS_STMT_ROLLBACK:
+		case TRANS_STMT_ROLLBACK_TO:
+			{
+				return IsTransactionBlockActive();
+			}
+		default:
+			return false;
+	}
 }

@@ -84,7 +84,6 @@ static void get_param_mode(List *params, int paramno, char **modes);
 extern void pltsql_update_cursor_row_count(char *curname, int64 row_count);
 extern void pltsql_update_cursor_last_operation(char *curname, int last_operation);
 extern bool pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr *explicit_expr, int cursor_options);
-extern char *pltsql_demangle_curname(char *curname);
 
 extern void enable_sp_cursor_find_param_hook(void);
 extern void disable_sp_cursor_find_param_hook(void);

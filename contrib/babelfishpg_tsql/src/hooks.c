@@ -20,6 +20,7 @@
 #include "catalog/pg_operator.h"
 #include "commands/copy.h"
 #include "commands/explain.h"
+#include "commands/portalcmds.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
@@ -170,6 +171,9 @@ extern bool called_from_tsql_insert_exec();
 extern Datum pltsql_exec_tsql_cast_value(Datum value, bool *isnull,
 							 Oid valtype, int32 valtypmod,
 							 Oid reqtype, int32 reqtypmod);
+static void pltsql_persist_holdable_cursor_executor(Portal portal, 
+													QueryDesc *queryDesc,
+													ScanDirection direction);
 static void is_function_pg_stat_valid(FunctionCallInfo fcinfo,
 									  PgStat_FunctionCallUsage *fcu,
 									  char prokind, bool finalize);
@@ -241,6 +245,7 @@ static bbf_get_sysadmin_oid_hook_type prev_bbf_get_sysadmin_oid_hook = NULL;
 static transform_pivot_clause_hook_type pre_transform_pivot_clause_hook = NULL;
 static called_from_tsql_insert_exec_hook_type pre_called_from_tsql_insert_exec_hook = NULL;
 static exec_tsql_cast_value_hook_type pre_exec_tsql_cast_value_hook = NULL;
+static persist_holdable_cursor_executor_hook_type prev_persist_holdable_cursor_executor_hook = NULL;
 static pltsql_pgstat_end_function_usage_hook_type prev_pltsql_pgstat_end_function_usage_hook = NULL;
 
 /*****************************************
@@ -413,6 +418,9 @@ InstallExtendedHooks(void)
 
 	pre_exec_tsql_cast_value_hook = exec_tsql_cast_value_hook;
 	exec_tsql_cast_value_hook = pltsql_exec_tsql_cast_value;
+
+	prev_persist_holdable_cursor_executor_hook = persist_holdable_cursor_executor_hook;
+	persist_holdable_cursor_executor_hook = pltsql_persist_holdable_cursor_executor;
 
 	bbf_InitializeParallelDSM_hook = babelfixedparallelstate_insert;
 	bbf_ParallelWorkerMain_hook = babelfixedparallelstate_restore;
@@ -4642,6 +4650,105 @@ static Node* optimize_explicit_cast(ParseState *pstate, Node *node)
 		}
 	}
 	return node;
+}
+
+/* 
+ * Portals caches the entire or remaining result set on transaction 
+ * boundaries. Transaction commands will fail if this portal fetch
+ * fails. To handle this we silently fail and close SCROLL cursors
+ * although for NO_SCROLL cursors we make do with whatever is fetched.
+ * We also need to restore to the correct interrupt count value as we
+ * could already be inside a interrupt holdoff section. If this being
+ * called from error handler, abort transaction takes care of clean up
+ * otherwise we run it inside an internal subtransaction.
+ */
+static void
+pltsql_persist_holdable_cursor_executor(Portal portal, QueryDesc *queryDesc,
+										ScanDirection direction)
+{
+	uint32          saveInterruptHoldoffCount = InterruptHoldoffCount;
+	uint32	        saveQueryCancelHoldoffCount = QueryCancelHoldoffCount;
+	int             subtxn_started = false;
+
+	if (pltsql_support_tsql_transactions() && portal->name != NULL
+	    && (portal->cursorOptions & CURSOR_OPT_NO_SCROLL)
+	    && pltsql_is_cursor_open(portal->name))
+	{	
+		PG_TRY();
+		{
+			PLExecStateCallStack *top_es_entry = exec_state_call_stack;
+
+			if (top_es_entry && top_es_entry->estate && top_es_entry->estate->err_stmt 
+			    && top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+			{
+				BeginInternalSubTransaction(NULL);
+				CurrentResourceOwner = portal->resowner;
+				subtxn_started = true;
+			}
+			ExecutorRun(queryDesc, direction, 0L, false);
+		}
+		PG_CATCH();
+		{
+			/*
+			 * Portal resources are transferred to current transaction resource
+			 * owner so transaction abort will handle the executor cleanup
+			 */
+			ResourceOwnerNewParent(portal->resowner, CurTransactionResourceOwner);
+			portal->queryDesc = NULL;
+
+			if (subtxn_started)
+			{
+				RollbackAndReleaseCurrentSubTransaction();
+				subtxn_started = false;
+			}
+
+			pltsql_update_cursor_error_data(portal->name);
+
+			pop_top_error_stack();
+
+			InterruptHoldoffCount = saveInterruptHoldoffCount;
+			QueryCancelHoldoffCount = saveQueryCancelHoldoffCount;
+
+			pltsql_non_tsql_proc_entry_count = 0;
+			pltsql_sys_func_entry_count = 0;
+		}
+		PG_END_TRY();
+
+		if (subtxn_started)
+		{
+			ReleaseCurrentSubTransaction();
+			CurrentResourceOwner = portal->resowner;
+		}
+		MemoryContextSwitchTo(portal->portalContext);
+	}
+	else
+	{
+		PG_TRY();	
+		{
+			ExecutorRun(queryDesc, direction, 0L, false);
+		}
+		PG_CATCH();
+		{
+			ErrorData *errorData;
+			char *curname;
+
+			if (portal->portalPinned)
+				UnpinPortal(portal);
+			if (pltsql_is_cursor_open(portal->name))
+				pltsql_update_cursor_state(portal->name, false);
+
+			MemoryContextSwitchTo(portal->portalContext);
+			curname = pstrdup(portal->name);
+			errorData = CopyErrorData();
+			FlushErrorState();
+
+			ereport(ERROR,
+			        (errcode(errorData->sqlerrcode),
+			         errmsg("Cursor error: %s, closing %s",
+					        errorData->message, pltsql_demangle_curname(curname))));
+		}
+		PG_END_TRY();
+	}
 }
 
 /*

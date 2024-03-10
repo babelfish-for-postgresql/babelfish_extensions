@@ -2153,6 +2153,16 @@ int			execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
 int			execute_sp_cursorclose(int cursor_handle);
 
 /*
+ * Utility functions for cursor hash tab
+ */
+extern bool pltsql_is_cursor_open(const char *curname);
+extern void pltsql_update_cursor_state(const char *curname, bool is_cursor_open);
+extern void pltsql_update_cursor_error_data(const char *curname);
+extern ErrorData *pltsql_get_cursor_error_data(const char *curname);
+extern char *pltsql_demangle_curname(char *curname);
+
+
+/*
  * Functions in string.c
  */
 void		prepare_format_string(StringInfo buf, char *msg_string, int nargs,
