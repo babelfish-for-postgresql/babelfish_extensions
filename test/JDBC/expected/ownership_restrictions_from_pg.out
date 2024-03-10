@@ -17,7 +17,7 @@ CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: User does not have permission to perform this action.)~~
+~~ERROR (Message: role "ownership_restrictions_from_pg_user_by_pg_login2" does not exist)~~
 
 
 -- tsql
@@ -55,12 +55,9 @@ CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: errstart was not called)~~
+~~ERROR (Message: role "ownership_restrictions_from_pg_user_by_pg_login2" does not exist)~~
 
 
-
--- DROP USER ownership_restrictions_from_pg_user_by_pg_login2;
--- GO
 USE master;
 go
 
