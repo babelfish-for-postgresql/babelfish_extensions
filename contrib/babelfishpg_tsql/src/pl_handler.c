@@ -2341,6 +2341,34 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									location = defel->location;
 									user_options = lappend(user_options, defel);
 								}
+								else if (strcmp(defel->defname, "rolemembers") == 0)
+								{
+									RoleSpec   *login = (RoleSpec *) linitial((List *) defel->arg);
+
+									if (strchr(login->rolename, '\\') != NULL)
+									{
+										/*
+										 * If login->rolename contains '\'
+										 * then treat it as windows login.
+										 */
+										char	   *upn_login = convertToUPN(login->rolename);
+
+										if (upn_login != login->rolename)
+										{
+											pfree(login->rolename);
+											login->rolename = upn_login;
+										}
+										from_windows = true;
+										if (!pltsql_allow_windows_login)
+											ereport(ERROR,
+													(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+													 errmsg("Windows login is not supported in babelfish")));
+									}
+									/* If login is a member of sysadmin, creating user for that login should not be allowed. */
+									if (has_privs_of_role(get_role_oid(login->rolename, false), get_sysadmin_oid()))
+										ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+														errmsg("Cannot create user for sysadmin role.")));
+								}
 							}
 
 							foreach(option, user_options)
