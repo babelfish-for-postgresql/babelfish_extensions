@@ -17,7 +17,7 @@ CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: User does not have permission to perform this action.)~~
+~~ERROR (Message: role "ownership_restrictions_from_pg_user_by_pg_login2" does not exist)~~
 
 
 -- tsql
@@ -50,7 +50,6 @@ GO
 DROP ROLE ownership_restrictions_from_pg_role_by_pg_login2;
 GO
 
--- This is a temporary failure, it will be fixed with BABEL-4652.
 CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
 GO
 ~~ERROR (Code: 33557097)~~
@@ -58,9 +57,6 @@ GO
 ~~ERROR (Message: role "ownership_restrictions_from_pg_user_by_pg_login2" does not exist)~~
 
 
-
--- DROP USER ownership_restrictions_from_pg_user_by_pg_login2;
--- GO
 USE master;
 go
 
