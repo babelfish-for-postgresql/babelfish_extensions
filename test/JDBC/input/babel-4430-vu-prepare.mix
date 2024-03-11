@@ -1,0 +1,14 @@
+-- tsql
+-- run as sysadmin
+create login babel_4430_l1 with password= '123'
+go
+create database babel_4430_db
+go
+alter server role sysadmin add member babel_4430_l1;
+go
+
+-- tsql user=babel_4430_l1 password=123
+use babel_4430_db
+go
+select db_name(), suser_name(), user_name()
+go

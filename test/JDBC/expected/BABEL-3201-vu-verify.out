@@ -798,6 +798,10 @@ USE MASTER
 GO
 CREATE USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh FOR LOGIN babel_3201_log1
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot create user for sysadmin role.)~~
+
 
 -- tsql user=babel_3201_log1 password=12345678
 USE babel_3201_db1;
@@ -814,6 +818,4 @@ GO
 
 -- tsql
 USE master;
-GO
-DROP USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh
 GO

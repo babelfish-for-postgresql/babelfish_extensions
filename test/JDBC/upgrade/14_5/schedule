@@ -100,7 +100,7 @@ BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
 babel_datetime
-BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor

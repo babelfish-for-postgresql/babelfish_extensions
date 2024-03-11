@@ -474,7 +474,6 @@ pltsql_predicate_transformer(Node *expr)
 		 * Nonsingleton predicate, which could either a BoolExpr with a list
 		 * of predicates or a simple List of predicates.
 		 */
-		BoolExpr   *boolexpr = (BoolExpr *) expr;
 		ListCell   *lc;
 		List	   *new_predicates = NIL;
 		List	   *predicates;
@@ -485,14 +484,7 @@ pltsql_predicate_transformer(Node *expr)
 		}
 		else if (IsA(expr, BoolExpr))
 		{
-			if (boolexpr->boolop != AND_EXPR &&
-				boolexpr->boolop != OR_EXPR)
-				return expression_tree_mutator(
-											   expr,
-											   pgtsql_expression_tree_mutator,
-											   NULL);
-
-			predicates = boolexpr->args;
+			predicates = ((BoolExpr *)expr)->args;
 		}
 		else if (IsA(expr, FuncExpr))
 		{
@@ -519,7 +511,8 @@ pltsql_predicate_transformer(Node *expr)
 		{
 			Node	   *qual = (Node *) lfirst(lc);
 
-			if (is_andclause(qual) || is_orclause(qual))
+			/* For bool expr recall pltsql_predicate_transformer on its args */
+			if (IsA(qual, BoolExpr))
 			{
 				new_predicates = lappend(new_predicates,
 										 pltsql_predicate_transformer(qual));
@@ -536,7 +529,7 @@ pltsql_predicate_transformer(Node *expr)
 
 		if (IsA(expr, BoolExpr))
 		{
-			boolexpr->args = new_predicates;
+			((BoolExpr *)expr)->args = new_predicates;
 			return expr;
 		}
 		else
