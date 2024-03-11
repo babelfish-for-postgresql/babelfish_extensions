@@ -2341,6 +2341,15 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 									location = defel->location;
 									user_options = lappend(user_options, defel);
 								}
+								else if (strcmp(defel->defname, "rolemembers") == 0)
+								{
+									RoleSpec   *login = (RoleSpec *) linitial((List *) defel->arg);
+
+									/* If login is a member of sysadmin, creating user for that login should not be allowed. */
+									if (has_privs_of_role(get_role_oid(login->rolename, false), get_role_oid("sysadmin", false)))
+										ereport(ERROR, (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+														errmsg("Cannot create user for sysadmin role.")));
+								}
 							}
 
 							foreach(option, user_options)

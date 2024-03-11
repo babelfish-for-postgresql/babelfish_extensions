@@ -37,12 +37,8 @@ GO
 DROP ROLE ownership_restrictions_from_pg_role_by_pg_login2;
 GO
 
--- This is a temporary failure, it will be fixed with BABEL-4652.
 CREATE USER ownership_restrictions_from_pg_user_by_pg_login2;
 GO
-
--- DROP USER ownership_restrictions_from_pg_user_by_pg_login2;
--- GO
 
 USE master;
 go
