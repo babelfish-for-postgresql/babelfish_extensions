@@ -1,32 +1,30 @@
--- For now, will always return empty result set because sys.extended_properties 
--- is always empty before the support of sp_[add/drop/update]extendedproperty (BABEL-280)
-select * FROM fn_listextendedproperty('COLUMN', 'schema', N'dbo', 'table', N'BABEL_EXTENDEDPROPERTY_vu_t1', 'column', N'a');
-go
+SELECT * FROM babel_extended_property_v3_schema.babel_extended_property_v3_view;
+GO
 
-select * FROM fn_listextendedproperty(NULL, 'schema', N'dbo', 'table', N'BABEL_EXTENDEDPROPERTY_vu_t1', NULL, NULL);
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', NULL, NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
--- Failed query in BABEL-1784
-exec [sys].sp_columns_100 N't23',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'table', NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
-select * from BABEL_EXTENDEDPROPERTY_vu_v1
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'table', 'babel_extended_property_v3_table', 'column', NULL) ORDER BY objtype, objname, name, value;
+GO
 
-drop view BABEL_EXTENDEDPROPERTY_vu_v1
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'view', NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
-select * from BABEL_EXTENDEDPROPERTY_vu_f1(N'BABEL_EXTENDEDPROPERTY_vu_t1')
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'sequence', NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
-drop function BABEL_EXTENDEDPROPERTY_vu_f1
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'procedure', NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
-exec BABEL_EXTENDEDPROPERTY_vu_p1
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'function', NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
-drop proc BABEL_EXTENDEDPROPERTY_vu_p1
-go
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', 'babel_extended_property_v3_schema', 'type', NULL, NULL, NULL) ORDER BY objtype, objname, name, value;
+GO
 
-drop table BABEL_EXTENDEDPROPERTY_vu_t1
-go
+-- list all extended properties
+SELECT class, class_desc, IIF(major_id > 0, 1, 0) AS major_id, minor_id, name, value FROM sys.extended_properties ORDER BY class, class_desc, name, value;
+GO

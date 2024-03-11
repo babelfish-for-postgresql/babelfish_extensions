@@ -189,6 +189,10 @@ init_catalog(PG_FUNCTION_ARGS)
 	bbf_servers_def_oid = get_relname_relid(BBF_SERVERS_DEF_TABLE_NAME, sys_schema_oid);
 	bbf_servers_def_idx_oid = get_relname_relid(BBF_SERVERS_DEF_IDX_NAME, sys_schema_oid);
 
+	/* bbf_extended_properties */
+	bbf_extended_properties_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_TABLE_NAME, sys_schema_oid);
+	bbf_extended_properties_idx_oid = get_relname_relid(BBF_EXTENDED_PROPERTIES_IDX_NAME, sys_schema_oid);
+
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
 
