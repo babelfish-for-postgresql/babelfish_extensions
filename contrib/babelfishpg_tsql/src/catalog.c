@@ -3615,6 +3615,11 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	table_close(bbf_schema_rel, AccessShareLock);
 }
 
+/*
+ * For a new object(function/procedure) belonging to a schema where EXECUTE privilege has been
+ * granted explicitly to any user, this function grants the EXECUTE permission to those users
+ * implicitly at the time of CREATE function/procedure.
+ */
 void
 exec_internal_grant_on_function(const char *logicalschema,
 								const char *object_name,
@@ -3677,9 +3682,9 @@ exec_internal_grant_on_function(const char *logicalschema,
 			schema = get_physical_schema_name((char *)db_name, logicalschema);
 
 			if (strcmp(object_type, OBJ_FUNCTION) == 0)
-				query = psprintf("GRANT ALL ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
 			else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
-				query = psprintf("GRANT ALL ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 

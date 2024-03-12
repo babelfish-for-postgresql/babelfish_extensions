@@ -3986,7 +3986,9 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						/*
 						 * Case: When ALL PRIVILEGES is revoked internally during create function.
-						 * Check if schema entry exists in the catalog, do not revoke any permission if exists.
+						 * pstmt->stmt_len = 0 means it is an implicit REVOKE statement issued at the time of create function/procedure.
+						 * For more details, please refer revoke_func_permission_from_public().
+						 * If schema entry exists in the catalog, implicitly grant permission on the new object to the user.
 						 */
 						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL, true))
 						{
@@ -3998,6 +4000,10 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						foreach(lc, grant->grantees)
 						{
 							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+							/*
+							 * If it is an implicit GRANT issued by exec_internal_grant_on_function, then we should not add catalog
+							 * entry. Catalog entry is supposed to be added only by explicit GRANTs.
+							 */
 							if (strcmp("(GRANT STATEMENT )", queryString) != 0)
 							{
 								if (grant->is_grant)
