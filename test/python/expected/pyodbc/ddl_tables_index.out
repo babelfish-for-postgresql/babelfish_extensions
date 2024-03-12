@@ -3,7 +3,7 @@ SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[babel_4817_t1](
 	[col1] [int] NULL,
 	[col2] [int] NOT NULL,
-	[col3]  AS (col1 * col2),
+	[col3]  AS (col1 * col2) PERSISTED NOT NULL,
 	[col4] [int] NULL,
 	[col5] [int] NULL,
 	[col6] [int] NULL,
@@ -28,7 +28,7 @@ SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[babel_4817_t2](
 	[col1] [int] NULL,
 	[col2] [int] NOT NULL,
-	[col3]  AS (col1 * col2),
+	[col3]  AS (col1 * col2) PERSISTED NOT NULL,
 	[col4] [int] NULL,
 	[col5] [int] NULL,
 	[col6] [int] NULL,
@@ -49,7 +49,7 @@ CREATE TABLE [dbo].[babel_4817_t3](
 	[col1] [int] IDENTITY(1,1) NOT NULL,
 	[col2] [int] NULL,
 	[col3] [int] NULL,
-	[col5]  AS (col1 * col2),
+	[col5]  AS (col1 * col2) PERSISTED,
 	[col6] [varchar](30) NULL,
 	[col4] [int] NULL
 ) ON [PRIMARY]

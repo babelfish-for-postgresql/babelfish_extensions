@@ -40,7 +40,7 @@ SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[sys_computed_columns_vu_prepare_t1](
 	[scc_first_number] [smallint] NULL,
 	[scc_second_number] [money] NULL,
-	[scc_multiplied]  AS (scc_first_number * scc_second_number)
+	[scc_multiplied]  AS (scc_first_number * scc_second_number) PERSISTED
 ) ON [PRIMARY]
 
 GO
