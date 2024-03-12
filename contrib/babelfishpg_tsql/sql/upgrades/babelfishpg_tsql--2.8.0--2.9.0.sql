@@ -119,7 +119,7 @@ BEGIN
                  WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
             WHEN 'ordinal' COLLATE sys.database_default THEN
                 (SELECT b.count FROM (SELECT attname, row_number() OVER () AS count FROM pg_catalog.pg_attribute a
-                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0) AS b WHERE b.attname = property COLLATE sys.database_default)
+                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0 ORDER BY a.attnum) AS b WHERE b.attname = property COLLATE sys.database_default)
             WHEN 'isidentity' COLLATE sys.database_default THEN (SELECT
                 CASE
                     WHEN char_length(a.attidentity) > 0 THEN 1
@@ -182,6 +182,78 @@ INNER JOIN pg_attribute a ON sc.out_object_id = a.attrelid AND sc.out_name = a.a
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
+
+create or replace view sys.indexes as
+-- Get all indexes from all system and user tables
+select
+  cast(X.indrelid as int) as object_id
+  , cast(I.relname as sys.sysname) as name
+  , cast(case when X.indisclustered then 1 else 2 end as sys.tinyint) as type
+  , cast(case when X.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as sys.nvarchar(60)) as type_desc
+  , cast(case when X.indisunique then 1 else 0 end as sys.bit) as is_unique
+  , cast(I.reltablespace as int) as data_space_id
+  , cast(0 as sys.bit) as ignore_dup_key
+  , cast(case when X.indisprimary then 1 else 0 end as sys.bit) as is_primary_key
+  , cast(case when const.oid is null then 0 else 1 end as sys.bit) as is_unique_constraint
+  , cast(0 as sys.tinyint) as fill_factor
+  , cast(case when X.indpred is null then 0 else 1 end as sys.bit) as is_padded
+  , cast(case when X.indisready then 0 else 1 end as sys.bit) as is_disabled
+  , cast(0 as sys.bit) as is_hypothetical
+  , cast(1 as sys.bit) as allow_row_locks
+  , cast(1 as sys.bit) as allow_page_locks
+  , cast(0 as sys.bit) as has_filter
+  , cast(null as sys.nvarchar) as filter_definition
+  , cast(0 as sys.bit) as auto_created
+  , index_map.index_id
+from pg_index X 
+inner join pg_class I on I.oid = X.indexrelid and I.relkind = 'i'
+inner join pg_namespace nsp on nsp.oid = I.relnamespace
+left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
+-- check if index is a unique constraint
+left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
+-- use rownumber to get index_id scoped on each objects
+inner join 
+(select indexrelid, cast(case when indisclustered then 1 else 1+row_number() over(partition by indrelid order by indexrelid) end as int) 
+ as index_id from pg_index) as index_map on index_map.indexrelid = X.indexrelid
+where has_schema_privilege(I.relnamespace, 'USAGE')
+-- index is active
+and X.indislive 
+-- filter to get all the objects that belong to sys or babelfish schemas
+and (nsp.nspname = 'sys' or ext.nspname is not null)
+
+union all 
+-- Create HEAP entries for each system and user table
+select
+  cast(t.oid as int) as object_id
+  , cast(null as sys.sysname) as name
+  , cast(0 as sys.tinyint) as type
+  , cast('HEAP' as sys.nvarchar(60)) as type_desc
+  , cast(0 as sys.bit) as is_unique
+  , cast(1 as int) as data_space_id
+  , cast(0 as sys.bit) as ignore_dup_key
+  , cast(0 as sys.bit) as is_primary_key
+  , cast(0 as sys.bit) as is_unique_constraint
+  , cast(0 as sys.tinyint) as fill_factor
+  , cast(0 as sys.bit) as is_padded
+  , cast(0 as sys.bit) as is_disabled
+  , cast(0 as sys.bit) as is_hypothetical
+  , cast(1 as sys.bit) as allow_row_locks
+  , cast(1 as sys.bit) as allow_page_locks
+  , cast(0 as sys.bit) as has_filter
+  , cast(null as sys.nvarchar) as filter_definition
+  , cast(0 as sys.bit) as auto_created
+  , cast(0 as int) as index_id
+from pg_class t
+inner join pg_namespace nsp on nsp.oid = t.relnamespace
+left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
+where t.relkind = 'r'
+-- filter to get all the objects that belong to sys or babelfish schemas
+and (nsp.nspname = 'sys' or ext.nspname is not null)
+and has_schema_privilege(t.relnamespace, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+order by object_id, type_desc;
+GRANT SELECT ON sys.indexes TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

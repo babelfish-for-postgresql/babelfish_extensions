@@ -2781,7 +2781,7 @@ BEGIN
                  WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
             WHEN 'ordinal' COLLATE sys.database_default THEN
                 (SELECT b.count FROM (SELECT attname, row_number() OVER () AS count FROM pg_catalog.pg_attribute a
-                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0) AS b WHERE b.attname = property COLLATE sys.database_default)
+                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0 ORDER BY a.attnum) AS b WHERE b.attname = property COLLATE sys.database_default)
             WHEN 'isidentity' COLLATE sys.database_default THEN (SELECT
                 CASE
                     WHEN char_length(a.attidentity) > 0 THEN 1
