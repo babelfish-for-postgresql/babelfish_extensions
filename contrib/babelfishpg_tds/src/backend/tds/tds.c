@@ -749,6 +749,35 @@ tdsstat_read_current_status(void)
 	isLocalStatusTableValid = true;
 }
 
+// what is current backend?
+bool
+get_tds_database_backend_count(int16 db_id)
+{
+	TdsStatus  *tdsentry;
+	LocalTdsStatus *local_tdsentry;
+
+	/* Read the latest activity from the shared mem. */
+	tdsstat_read_current_status();
+
+	for (int i = 0; i < localNumBackends; i++)
+	{
+		local_tdsentry = &localTdsStatusTable[i];
+
+		if (!local_tdsentry)
+			return false;
+
+		tdsentry = &local_tdsentry->tdsStatus;
+
+		/*
+		 * Return true if we find the first backend connected to
+		 * this database. Also sanity check that the pid is valid.
+		 */
+		if (tdsentry->client_pid != 0 && tdsentry->database_id == db_id)
+			return true;
+	}
+	return false;
+}
+
 bool
 tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend)
 {

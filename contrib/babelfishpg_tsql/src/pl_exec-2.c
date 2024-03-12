@@ -22,7 +22,9 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
+#include "miscadmin.h"
 #include "pl_explain.h"
+#include "rolecmds.h"
 #include "session.h"
 
 /* helper function to get current T-SQL estate */
@@ -3769,14 +3771,66 @@ exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 
 	// char *query = " ";
 	// int rc = 0;
-	int xactStarted = IsTransactionOrTransactionBlock();
+	// int xactStarted = IsTransactionOrTransactionBlock();
+	Oid save_userid = 0;
+	int save_sec_context = 0;
+	int dbid = get_db_id(stmt->old_db_name);
+	bool res = false;
 
-	if (!xactStarted)
-		StartTransactionCommand();
-	PushActiveSnapshot(GetTransactionSnapshot());
+	// while (!pltsql_plugin_handler_ptr->get_tds_database_backend_count(get_db_id(stmt->old_db_name)))
+	// {
+	// 	Sleep for stmt timeout
+	// }
+
+	Assert (*pltsql_protocol_plugin_ptr);
+
+	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
+	for (int tries = 0; tries < 50; tries++)
+	{
+		if (!(*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count(dbid))
+		{
+			res = true;
+			break;
+		}
+		/* sleep, then try again */
+		pg_usleep(100 * 1000L); /* 100ms */
+		(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
+		/* timed out, still conflicts */
+	}
+
+	if (!res)
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_IN_USE),
+				errmsg("The database could not be exclusively locked to perform the operation.")));
+
+	/*
+	 * Get a roe exclusive lock on the new logical database we are
+	 * trying to rename.
+	 */
+	if (!TryLockLogicalDatabaseForSession(dbid, RowExclusiveLock))
+		ereport(ERROR,
+			(errcode(ERRCODE_CHECK_VIOLATION),
+				errmsg("The database could not be exclusively locked to perform the operation.")));
+
+	/* Check permission on the given database. */
+	// DO FIRST
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))
+			|| strncmp(GetUserNameFromId(GetSessionUserId(), true), get_owner_of_db(stmt->old_db_name), NAMEDATALEN))
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Current login %s does not have permission to create new login",
+					GetUserNameFromId(GetSessionUserId(), true))));
+
+	// if (!xactStarted)
+	// 	StartTransactionCommand();
+	// PushActiveSnapshot(GetTransactionSnapshot());
 	
 	PG_TRY();
 	{
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
 	RenameSchema(old_dbo_schema_name, new_dbo_schema_name);
 	RenameSchema(old_guest_schema_name, new_guest_schema_name);
 
@@ -3813,22 +3867,27 @@ exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 	// 	elog(ERROR, "Failed SPI: %d", rc);
 	// }
 
+
 	RenameRole(old_dbo_schema_name, new_dbo_schema_name);
 	RenameRole(old_guest_schema_name, new_guest_schema_name);
 	RenameRole(old_db_owner_role_name, new_db_owner_role_name);
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
 	PG_CATCH();
 	{
-		PopActiveSnapshot();
-		if (!xactStarted)
-			CommitTransactionCommand();
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		// PopActiveSnapshot();
+		// if (!xactStarted)
+		// 	CommitTransactionCommand();
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
-	PopActiveSnapshot();
-	if (!xactStarted)
-		CommitTransactionCommand();
+	// PopActiveSnapshot();
+	// if (!xactStarted)
+	// 	CommitTransactionCommand();
+
+	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 
 	return PLTSQL_RC_OK;
 }
