@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_schema_permissions', '');
+
 -- Please add your SQLs here
 /*
  * Note: These SQL statements may get executed multiple times specially when some features get backpatched.
