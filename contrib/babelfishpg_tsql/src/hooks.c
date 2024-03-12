@@ -4307,7 +4307,8 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 	 */
 	if (relid == sysdatabases_oid ||
 		relid == namespace_ext_oid ||
-		relid == bbf_view_def_oid)
+		relid == bbf_view_def_oid ||
+		relid == bbf_extended_properties_oid)
 	{
 		AttrNumber	attnum;
 

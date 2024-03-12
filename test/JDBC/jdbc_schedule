@@ -183,6 +183,8 @@ ignore#!#select-strip-parens-before-15_5-vu-verify
 ignore#!#select-strip-parens-before-15_5-vu-cleanup
 ignore#!#permission_restrictions_from_pg-vu-prepare
 ignore#!#permission_restrictions_from_pg-vu-verify
+ignore#!#BABEL-EXTENDEDPROPERTY-before-15_4-vu-prepare
+ignore#!#BABEL-EXTENDEDPROPERTY-before-15_4-vu-verify
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare

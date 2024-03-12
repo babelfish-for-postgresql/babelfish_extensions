@@ -1,0 +1,44 @@
+-- tsql
+-- run as sysadmin
+use babel_4430_db
+go
+create user babel_4430_l1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot create user for sysadmin role.)~~
+
+use master
+go
+
+-- tsql user=babel_4430_l1 password=123
+use babel_4430_db
+go
+select db_name(), suser_name(), user_name()
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar
+babel_4430_db#!#babel_4430_l1#!#dbo
+~~END~~
+
+use master
+go
+
+-- tsql
+drop database babel_4430_db
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_4430_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+drop login babel_4430_l1
+go
