@@ -24,6 +24,8 @@ DROP TABLE IF EXISTS test_null
 GO
 DROP TABLE IF EXISTS test_upper
 GO
+DROP TABLE IF EXISTS babel_4817_t1, babel_4817_t2, babel_4817_t3, babel_4817_t4, babel_4817_t5;
+GO
 Create table table_unique (a int NOT NULL UNIQUE , b int NOT NULL,c int )
 GO
 Create table table_primary (a int NOT NULL , b int NOT NULL,c int, PRIMARY KEY(a) )
@@ -86,11 +88,43 @@ ALTER TABLE babel_4817_t3 DROP COLUMN col4
 GO
 ALTER TABLE babel_4817_t3 ADD col4 INT
 GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[babel_4817_t4](
+    [id] [int] NULL,
+    [filename] [varchar](200) NOT NULL,
+    [commited_dt] [datetime] NOT NULL,
+    [commited_sql] [ntext] NULL,
+PRIMARY KEY CLUSTERED 
+(
+    [filename] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[babel_4817_t5]
+(
+  [id] [int] NOT NULL,
+  [filename] [varchar](200) NOT NULL,
+  [commited_dt] [datetime] NOT NULL,
+  [commited_sql] [ntext] NULL,
+  PRIMARY KEY CLUSTERED
+(
+              [filename] ASC, [ID] DESC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+CREATE NONCLUSTERED INDEX ix_test ON [dbo].[babel_4817_t5] ([filename]) INCLUDE ([id],[commited_dt])
+GO
+
 --DROP
 
 DROP TABLE IF EXISTS babel_4817_3, babel_4817_4;
 GO
-DROP TABLE IF EXISTS babel_4817_t1, babel_4817_t2, babel_4817_t3;
+DROP TABLE IF EXISTS babel_4817_t1, babel_4817_t2, babel_4817_t3, babel_4817_t4, babel_4817_t5;
 GO
 DROP TABLE IF EXISTS table_check
 GO
