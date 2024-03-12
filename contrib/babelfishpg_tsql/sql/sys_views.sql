@@ -843,7 +843,7 @@ left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.
 left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
 -- use rownumber to get index_id scoped on each objects
 inner join 
-(select indexrelid, cast(case when indisclustered then 1 else 1+row_number() over(partition by indrelid) end as int) 
+(select indexrelid, cast(case when indisclustered then 1 else 1+row_number() over(partition by indrelid order by indexrelid) end as int) 
  as index_id from pg_index) as index_map on index_map.indexrelid = X.indexrelid
 where has_schema_privilege(I.relnamespace, 'USAGE')
 -- index is active
@@ -2083,7 +2083,7 @@ SELECT out_object_id as object_id
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_object_id = a.attrelid AND sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
@@ -2102,22 +2102,41 @@ SELECT CAST('TSQL Default TCP' AS sys.sysname) AS name
   , CAST(0 AS sys.bit) AS is_admin_endpoint;
 GRANT SELECT ON sys.endpoints TO PUBLIC;
 
-create or replace view sys.index_columns
-as
-select i.indrelid::integer as object_id
-  , CAST(CASE WHEN i.indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY c.oid) END AS INTEGER) AS index_id
-  , a.attrelid::integer as index_column_id
-  , a.attnum::integer as column_id
-  , a.attnum::sys.tinyint as key_ordinal
-  , 0::sys.tinyint as partition_ordinal
-  , 0::sys.bit as is_descending_key
-  , 1::sys.bit as is_included_column
-from pg_index as i
-inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid
-inner join pg_class c on i.indrelid = c.oid
-inner join sys.schemas sch on sch.schema_id = c.relnamespace
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+CREATE OR REPLACE VIEW sys.index_columns
+AS
+SELECT
+    CAST(i.indrelid AS INT) AS object_id,
+    -- should match index_id of sys.indexes 
+    CAST(CASE
+            WHEN i.indisclustered THEN 1
+            ELSE 1 + dense_rank() OVER(PARTITION BY i.indrelid ORDER BY i.indexrelid)
+         END AS INT) AS index_id,
+    CAST(a.index_column_id AS INT) AS index_column_id,
+    CAST(a.attnum AS INT) AS column_id,
+    CAST(CASE
+            WHEN a.index_column_id <= i.indnkeyatts THEN a.index_column_id
+            ELSE 0
+         END AS SYS.TINYINT) AS key_ordinal,
+    CAST(0 AS SYS.TINYINT) AS partition_ordinal,
+    CAST(CASE
+            WHEN i.indoption[a.index_column_id-1] & 1 = 1 THEN 1
+            ELSE 0 
+         END AS SYS.BIT) AS is_descending_key,
+    CAST(CASE
+            WHEN a.index_column_id > i.indnkeyatts THEN 1
+            ELSE 0
+         END AS SYS.BIT) AS is_included_column
+FROM
+    pg_index i
+    INNER JOIN pg_class c ON i.indrelid = c.oid
+    INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
+    LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
+    LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true
+WHERE
+    has_schema_privilege(c.relnamespace, 'USAGE') AND
+    has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
+    (nsp.nspname = 'sys' OR ext.nspname is not null) AND
+    i.indislive;
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
 -- internal function that returns relevant info needed

@@ -2750,37 +2750,53 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
-RETURNS integer
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT)
+RETURNS INTEGER
 LANGUAGE plpgsql
 STABLE STRICT
 AS $$
-
-declare extra_bytes CONSTANT integer := 4;
-declare return_value integer;
-begin
-	return_value := (
-					select 
-						case  LOWER(property_name)
-							when 'charmaxlen' COLLATE sys.database_default then 
-								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
-							when 'allowsnull' COLLATE sys.database_default then
-								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
-							else
-								null
-						end
-					);
-	
-  RETURN return_value::integer;
+DECLARE
+    extra_bytes CONSTANT INTEGER := 4;
+    return_value INTEGER;
+BEGIN
+	return_value:=
+        CASE LOWER(property_name)
+            WHEN 'charmaxlen' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes
+                    ELSE NULL
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'allowsnull' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.attnotnull THEN 0
+                    ELSE 1
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'iscomputed' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN a.attgenerated != '' THEN 1
+                    ELSE 0
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id and (a.attname = property COLLATE sys.database_default))
+            WHEN 'columnid' COLLATE sys.database_default THEN
+                (SELECT a.attnum FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND (a.attname = property COLLATE sys.database_default))
+            WHEN 'ordinal' COLLATE sys.database_default THEN
+                (SELECT b.count FROM (SELECT attname, row_number() OVER () AS count FROM pg_catalog.pg_attribute a
+                 WHERE a.attrelid = object_id AND attisdropped = false AND attnum > 0) AS b WHERE b.attname = property COLLATE sys.database_default)
+            WHEN 'isidentity' COLLATE sys.database_default THEN (SELECT
+                CASE
+                    WHEN char_length(a.attidentity) > 0 THEN 1
+                    ELSE 0
+                END FROM pg_catalog.pg_attribute a WHERE a.attrelid = object_id and (a.attname = property COLLATE sys.database_default))
+            ELSE
+                NULL
+        END;
+    RETURN return_value::INTEGER;
 EXCEPTION 
 	WHEN others THEN
  		RETURN NULL;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
-
-COMMENT ON FUNCTION sys.columnproperty 
-IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id OID, property NAME, property_name TEXT) TO PUBLIC;
 
 -- substring --
 CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
