@@ -3682,9 +3682,9 @@ exec_internal_grant_on_function(const char *logicalschema,
 			schema = get_physical_schema_name((char *)db_name, logicalschema);
 
 			if (strcmp(object_type, OBJ_FUNCTION) == 0)
-				query = psprintf("GRANT ALL ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON FUNCTION [%s].[%s] TO %s", schema, object_name, grantee);
 			else if (strcmp(object_type, OBJ_PROCEDURE) == 0)
-				query = psprintf("GRANT ALL ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
+				query = psprintf("GRANT EXECUTE ON PROCEDURE [%s].[%s] TO %s", schema, object_name, grantee);
 			res = raw_parser(query, RAW_PARSE_DEFAULT);
 			grant = (GrantStmt *) parsetree_nth_stmt(res, 0);
 

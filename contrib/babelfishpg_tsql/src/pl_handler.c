@@ -4000,26 +4000,19 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						foreach(lc, grant->grantees)
 						{
 							RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-							/*
-							 * If it is an implicit GRANT issued by exec_internal_grant_on_function, then we should not add catalog
-							 * entry. Catalog entry is supposed to be added only by explicit GRANTs.
-							 */
-							if (strcmp("(GRANT STATEMENT )", queryString) != 0)
+							if (grant->is_grant)
 							{
-								if (grant->is_grant)
-								{
-									add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true, func_args);
-								}
-								else
-								{
-									/*
-									* 1. If permission on schema exists, don't revoke any permission from the object.
-									* 2. If permission on object exists, update the privilege in the catalog and revoke permission.
-									*/
-									update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
-									if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
-										return;
-								}
+								add_or_update_object_in_bbf_schema(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, true, func_args);
+							}
+							else
+							{
+								/*
+								 * 1. If permission on schema exists, don't revoke any permission from the object.
+								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
+								 */
+								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION,  rol_spec->rolename, obj_type, false);
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+									return;
 							}
 						}
 						call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
@@ -4034,7 +4027,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 							if (grant->is_grant)
 							{
 								call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
-								add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true, func_args);
+								/*
+								 * If it is an implicit GRANT issued by exec_internal_grant_on_function, then we should not add catalog
+								 * entry. Catalog entry is supposed to be added only by explicit GRANTs.
+								 */
+								if (strcmp("(GRANT STATEMENT )", queryString) != 0)
+									add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true, func_args);
 							}
 							else
 							{
