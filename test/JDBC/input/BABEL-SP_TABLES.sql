@@ -129,6 +129,31 @@ go
 exec [sys].sp_tables N't_sptables',N'dbo',NULL,N'''TABLE''',@fUsePattern=1;
 go
 
+-- table_type list
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'',''VIEW'''
+go
+-- table_type list with unsupported type
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'',''VIEW'',''SYSTEM TABLE'''
+go
+-- table_type list without tables
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''VIEW'',''SYSTEM TABLE'''
+go
+-- table_type list without views
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'',''SYSTEM TABLE'''
+go
+-- table_type list with double-escaping
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''''''TABLE'''',''''VIEW'''',''''SYSTEM TABLE'''''''
+go
+-- table_type list with unbalanced quotes
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'''''',''''VIEW'',''SYSTEM TABLE'''
+go
+-- table_type list with spaces
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE '','' VIEW'',''SYSTEM TABLE'''
+go
+-- table_type list with mixed case
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''Table'',''View'',''System Table'''
+go
+
 drop view t_sptables5
 go
 drop table t_sptables

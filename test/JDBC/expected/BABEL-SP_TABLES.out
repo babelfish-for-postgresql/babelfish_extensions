@@ -291,6 +291,81 @@ db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
 ~~END~~
 
 
+-- table_type list
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'',''VIEW'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+-- table_type list with unsupported type
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'',''VIEW'',''SYSTEM TABLE'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+-- table_type list without tables
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''VIEW'',''SYSTEM TABLE'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+-- table_type list without views
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'',''SYSTEM TABLE'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
+~~END~~
+
+-- table_type list with double-escaping
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''''''TABLE'''',''''VIEW'''',''''SYSTEM TABLE'''''''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+-- table_type list with unbalanced quotes
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE'''''',''''VIEW'',''SYSTEM TABLE'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+-- table_type list with spaces
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''TABLE '','' VIEW'',''SYSTEM TABLE'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+-- table_type list with mixed case
+exec [sys].sp_tables 't_sptable%','dbo',NULL,'''Table'',''View'',''System Table'''
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables2#!#TABLE#!#<NULL>
+db1#!#dbo#!#t_sptables5#!#VIEW#!#<NULL>
+~~END~~
+
+
 drop view t_sptables5
 go
 drop table t_sptables
