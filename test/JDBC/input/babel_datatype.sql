@@ -1209,3 +1209,7 @@ drop table testing6;
 GO
 drop table test_sysname;
 GO
+drop table s1.test1;
+GO
+drop schema s1;
+GO
