@@ -16,6 +16,14 @@
 #include "parser/parse_type.h"
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
+#include "nodes/nodes.h"
+
+// #ifdef USE_ICU
+// #include "contrib/unaccent/unaccent.h"
+// #include <unicode/translit.h>
+#include <unicode/utrans.h>
+// #endif
+
 
 #include "pltsql.h"
 #include "src/collation.h"
@@ -274,6 +282,517 @@ transform_funcexpr(Node *node)
  * Case 3: if the pattern doesn't have a constant prefix
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
+
+// sample function to remove accents using ICU provided APIs
+
+PG_FUNCTION_INFO_V1(remove_accents);
+Datum
+remove_accents(PG_FUNCTION_ARGS)
+{
+	text *arg1 = PG_GETARG_TEXT_PP(0);
+	char *input = text_to_cstring(arg1);
+	UChar *rules; // Rule to remove diacritics 
+	UChar *utf16_intput;
+	int32_t len_uchar,
+			len_uinput,
+			limit,
+			capacity,
+			len_result;
+	UErrorCode status = U_ZERO_ERROR;
+	char *result;
+	UTransliterator *transliterator;
+	// char* TRANSLITERATE_ID = "NFD; Any-Latin; NFC";
+	// char* NORMALIZE_ID = "NFD; [:Nonspacing Mark:] Remove; NFC";
+	// char* MY_ID = "NFD; Any-Latin; [:Nonspacing Mark:] Remove; NFC";
+	// char* MY_ID = "[:Latin:];Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC";
+	// char* MY_ID = "[:Latin:];Latin-ASCII";
+	// char* MY_ID = "NFD; [:Nonspacing Mark:] Remove; NFC";
+	// char* MY_ID = "[[:Lu:][:Ll:][:Lt:]]Any-ASCII";
+	char* MY_ID = "[[:Latin:][:Nd:]]; Latin-ASCII";
+	// char* MY_ID = "[[:Latin:][:Nd:][:Nl:]] und-u-ks-level1";
+
+#ifdef USE_ICU
+	// len_uchar = icu_to_uchar(&rules, "NFD; [:Nonspacing Mark:] Remove; NFC", strlen("NFD; [:Nonspacing Mark:] Remove; NFC"));
+	// len_uchar = icu_to_uchar(&rules, "Any-Latin; Latin-ASCII", strlen("Any-Latin; Latin-ASCII"));
+	len_uchar = icu_to_uchar(&rules, MY_ID, strlen(MY_ID));
+	len_uinput = icu_to_uchar(&utf16_intput, input, strlen(input));
+	
+	// Open a transliterator for conversion
+	transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
+	if (U_FAILURE(status))
+	{
+		elog(ERROR, "Error opening transliterator: %s", u_errorName(status));
+		return 1;
+	}
+
+	limit = len_uinput;
+	capacity = len_uinput + 10;
+
+	utrans_transUChars(transliterator,
+						utf16_intput,
+						&len_uinput,
+						capacity,
+						0,
+						&limit,
+						&status);
+
+	if (U_FAILURE(status))
+	{
+		elog(ERROR, "Error normalising the input string: %s", u_errorName(status));
+	}
+
+	len_result = icu_from_uchar(&result, utf16_intput, len_uinput);
+
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(result, len_result+1));
+#endif
+	PG_RETURN_NULL();
+}
+
+static Node *
+transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+{
+	Node	   *leftop = (Node *) linitial(op->args);
+	Node	   *rightop = (Node *) lsecond(op->args);
+	Oid			ltypeId = exprType(leftop);
+	Oid			rtypeId = exprType(rightop);
+	char	   *op_str;
+	Node	   *ret;
+	Const	   *patt;
+	Const	   *prefix;
+	Operator	optup;
+	Pattern_Prefix_Status pstatus;
+	int			collidx_of_cs_as;
+
+	tsql_get_server_collation_oid_internal(true);
+
+	if (!OidIsValid(server_collation_oid))
+		return node;
+
+	/*
+	 * Find the CS_AS collation corresponding to the CI_AS collation
+	 * Change the collation of the ILIKE op to the CS_AS collation
+	 */
+	collidx_of_cs_as =
+		tsql_find_cs_as_collation_internal(
+											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+
+
+	/*
+	 * A CS_AS collation should always exist unless a Babelfish CS_AS
+	 * collation was dropped or the lookup tables were not defined in
+	 * lexicographic order.  Program defensively here and just do no
+	 * transformation in this case, which will generate a
+	 * 'nondeterministic collation not supported' error.
+	 */
+	if (NOT_FOUND == collidx_of_cs_as)
+		return node;
+	/* Change the opno and oprfuncid to ILIKE */
+	op->opno = like_entry.ilike_oid;
+	op->opfuncid = like_entry.ilike_opfuncid;
+
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+	/* no constant prefix found in pattern, or pattern is not constant */
+	if (IsA(leftop, Const) || !IsA(rightop, Const) ||
+		((Const *) rightop)->constisnull)
+	{
+		return node;
+	}
+
+	patt = (Const *) rightop;
+
+	/* extract pattern */
+	pstatus = pattern_fixed_prefix_wrapper(patt, 1, server_collation_oid,
+											&prefix, NULL);
+
+	/* If there is no constant prefix then there's nothing more to do */
+	if (pstatus == Pattern_Prefix_None)
+	{
+		return node;
+	}
+
+	/*
+	 * If we found an exact-match pattern, generate an "=" indexqual.
+	 */
+	if (pstatus == Pattern_Prefix_Exact)
+	{
+		op_str = like_entry.is_not_match ? "<>" : "=";
+		optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+
+		ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
+											(Expr *) leftop, (Expr *) prefix,
+											InvalidOid, server_collation_oid, oprfuncid(optup)));
+
+		ReleaseSysCache(optup);
+		return ret;
+	}
+	else
+	{
+		Expr	   *greater_equal,
+					*less_equal,
+					*concat_expr;
+		Node	   *constant_suffix;
+		Const	   *highest_sort_key;
+
+		/* construct leftop >= pattern */
+		optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+		greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
+											(Expr *) leftop, (Expr *) prefix,
+											InvalidOid, server_collation_oid, oprfuncid(optup));
+		ReleaseSysCache(optup);
+		/* construct pattern||E'\uFFFF' */
+		highest_sort_key = makeConst(TEXTOID, -1, server_collation_oid, -1,
+										PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
+
+		optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+		concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
+										(Expr *) prefix, (Expr *) highest_sort_key,
+										InvalidOid, server_collation_oid, oprfuncid(optup));
+		ReleaseSysCache(optup);
+		/* construct leftop < pattern */
+		optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+								true, -1);
+		if (optup == (Operator) NULL)
+			return node;
+
+		less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
+										(Expr *) leftop, (Expr *) concat_expr,
+										InvalidOid, server_collation_oid, oprfuncid(optup));
+		constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+		if (like_entry.is_not_match)
+		{
+			constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
+			ret = make_or_qual(node, constant_suffix);
+		}
+		else
+		{
+			constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
+			ret = make_and_qual(node, constant_suffix);
+		}
+		ReleaseSysCache(optup);
+		return ret;
+	}
+}
+
+static Node *
+transform_likenode_for_AI(Node *node, OpExpr *op)
+{
+	Node       *leftop = (Node *) linitial(op->args);
+	Node       *rightop = (Node *) lsecond(op->args);
+
+	/* Handle left node*/
+	if (IsA(leftop, Const))
+	{
+		Const        *lcon = (Const *) leftop;
+		lcon->constvalue = DirectFunctionCall1(remove_accents, lcon->constvalue);
+	}
+	else if (IsA(leftop, FuncExpr))
+	{
+		FuncExpr    *lfunc = (FuncExpr *) leftop;
+		// Oid            funcargtypes[1] = {CHAROID};
+		Oid funcargtypes[1] = {TEXTOID};
+
+		/* Create a new FuncExpr node for the 'remove_accents' function */
+		FuncExpr *newFuncExpr = makeNode(FuncExpr);
+		newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), -1, funcargtypes, true);
+		// newFuncExpr->funcid = (Oid) 18097;
+		newFuncExpr->funcresulttype = lfunc->funcresulttype;
+
+		/* Set the arguments of the new FuncExpr node */
+		newFuncExpr->args = list_make1(lfunc);
+
+		/* Replace 'leftop' with 'newFuncExpr' */
+		// leftop = (Node *) newFuncExpr;
+		linitial(op->args) = (Node *)newFuncExpr;
+	}
+	else if (IsA(leftop, RelabelType))
+	{
+		RelabelType        *lrelabel = (RelabelType *) leftop;
+		if (IsA(lrelabel->arg, Var))
+		{
+			Var        *lvar = (Var *) lrelabel->arg;
+
+			/* Upadate the col to remove_accents(col) */
+			FuncExpr *newlFuncExpr = makeNode(FuncExpr);
+			newlFuncExpr->funcid = (Oid) 18097;
+			newlFuncExpr->funcresulttype = lvar->vartype;
+			newlFuncExpr->args = list_make1(lvar);
+
+			/* Update the left node */
+			linitial(op->args) = (Node *)newlFuncExpr;
+		}
+		else if (IsA(lrelabel->arg, FuncExpr))
+		{
+			FuncExpr    *lfunc = (FuncExpr *) lrelabel->arg;
+			// Oid            funcargtypes[1] = {TEXTOID};
+
+			/* Create a new FuncExpr node for the 'remove_accents' function */
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = lfunc->funcresulttype;
+
+			/* Set the arguments of the new FuncExpr node */
+			newFuncExpr->args = list_make1(lfunc);
+
+			/* Replace 'leftop' with 'newFuncExpr' */
+			// leftop = (Node *) newFuncExpr;
+			linitial(op->args) = (Node *)newFuncExpr;
+		}
+		else if (IsA(lrelabel->arg, Param))
+		{
+			Param    *lparam = (Param *) lrelabel->arg;
+			/* Construct the new FuncExpr using the Param */
+			FuncExpr *newlFuncExpr = makeNode(FuncExpr);
+			newlFuncExpr->funcid = (Oid) 18097;
+			newlFuncExpr->funcresulttype = lparam->paramtype;
+			newlFuncExpr->args = list_make1(lparam);
+
+			/* Update the left node */
+			linitial(op->args) = (Node *) newlFuncExpr;    
+		}
+	}
+	else if (IsA(leftop, CollateExpr))
+	{
+		CollateExpr        *lcoll = (CollateExpr *) leftop;
+		if (IsA(lcoll->arg, RelabelType))
+		{
+			RelabelType        *lrelabel = (RelabelType *) lcoll->arg;
+			if (IsA(lrelabel->arg, Var))
+			{
+				Var        *lvar = (Var *) lrelabel->arg;
+				/* Upadate the col to remove_accents(col) */
+				FuncExpr *newlFuncExpr = makeNode(FuncExpr);
+				newlFuncExpr->funcid = (Oid) 18097;
+				newlFuncExpr->funcresulttype = lvar->vartype;
+				newlFuncExpr->args = list_make1(lvar);
+
+				/* Update the left node */
+				linitial(op->args) = (Node *)newlFuncExpr;
+			}
+			else if (IsA(lrelabel->arg, Param))
+			{
+				Param    *lparam = (Param *) lrelabel->arg;
+				/* Construct the new FuncExpr using the Param */
+				FuncExpr *newlFuncExpr = makeNode(FuncExpr);
+				newlFuncExpr->funcid = (Oid) 18097;
+				newlFuncExpr->funcresulttype = lparam->paramtype;
+				newlFuncExpr->args = list_make1(lparam);
+
+				/* Update the left node */
+				linitial(op->args) = (Node *) newlFuncExpr;    
+			}
+		}
+		else if (IsA(lcoll->arg, Const))
+		{
+			Const        *lcon = (Const *) lcoll->arg;
+			lcon->constvalue = DirectFunctionCall1(remove_accents, lcon->constvalue);
+		}
+		else if (IsA(lcoll->arg, FuncExpr))
+		{
+			FuncExpr    *lfunc = (FuncExpr *) lcoll->arg;
+			// Oid            funcargtypes[1] = {TEXTOID};
+
+			/* Create a new FuncExpr node for the 'remove_accents' function */
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = lfunc->funcresulttype;
+
+			/* Set the arguments of the new FuncExpr node */
+			newFuncExpr->args = list_make1(lfunc);
+
+			/* Replace 'leftop' with 'newFuncExpr' */
+			// leftop = (Node *) newFuncExpr;
+			linitial(op->args) = (Node *)newFuncExpr;
+		}
+	}
+	else if (IsA(leftop, Param))
+	{
+		Param    *lparam = (Param *) leftop;
+		/* Construct the new FuncExpr using the Param */
+		FuncExpr *newlFuncExpr = makeNode(FuncExpr);
+		newlFuncExpr->funcid = (Oid) 18097;
+		newlFuncExpr->funcresulttype = lparam->paramtype;
+		newlFuncExpr->args = list_make1(lparam);
+
+		/* Update the left node */
+		linitial(op->args) = (Node *) newlFuncExpr;    
+	}
+
+
+	/* Handle right node*/
+	if (IsA(rightop, CollateExpr))
+	{
+		CollateExpr        *rcoll = (CollateExpr *) rightop;
+		if (IsA(rcoll->arg, Const))
+		{
+			Const        *rcon = (Const *) rcoll->arg;
+			rcon->constvalue = DirectFunctionCall1(remove_accents, rcon->constvalue);
+		}
+		else if (IsA(rcoll->arg, RelabelType))
+		{
+			RelabelType        *rrelabel = (RelabelType *) rcoll->arg;
+			if (IsA(rrelabel->arg, Var))
+			{
+				Var        *rvar = (Var *) rcoll->arg;
+				/* Upadate the col to remove_accents(col) */
+				FuncExpr *newrFuncExpr = makeNode(FuncExpr);
+				newrFuncExpr->funcid = (Oid) 18097;
+				newrFuncExpr->funcresulttype = rvar->vartype;
+				newrFuncExpr->args = list_make1(rvar);
+
+				/* Update the left node */
+				lsecond(op->args) = (Node *)newrFuncExpr;
+			}
+			else if (IsA(rrelabel->arg, Param))
+			{
+				Param    *rparam = (Param *) rrelabel->arg;
+				/* Construct the new FuncExpr using the Param */
+				FuncExpr *newrFuncExpr = makeNode(FuncExpr);
+				newrFuncExpr->funcid = (Oid) 18097;
+				newrFuncExpr->funcresulttype = rparam->paramtype;
+				newrFuncExpr->args = list_make1(rparam);
+
+				/* Update the left node */
+				lsecond(op->args) = (Node *) newrFuncExpr;    
+			}
+		}
+		else if (IsA(rcoll->arg, FuncExpr))
+		{
+			FuncExpr    *rfunc = (FuncExpr *) rcoll->arg;
+			// Oid            funcargtypes[1] = {TEXTOID};
+
+			/* Create a new FuncExpr node for the 'remove_accents' function */
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = rfunc->funcresulttype;
+
+			/* Set the arguments of the new FuncExpr node */
+			newFuncExpr->args = list_make1(rfunc);
+
+			/* Replace 'leftop' with 'newFuncExpr' */
+			// leftop = (Node *) newFuncExpr;
+			lsecond(op->args) = (Node *)newFuncExpr;
+		}
+	}
+	else if (IsA(rightop, Const))
+	{
+		Const        *rcon = (Const *) rightop;
+		rcon->constvalue = DirectFunctionCall1(remove_accents, rcon->constvalue);
+	}
+	else if (IsA(rightop, RelabelType))
+	{
+		RelabelType        *rrelabel = (RelabelType *) rightop;
+		if (IsA(rrelabel->arg, Var))
+		{
+			Var        *rvar = (Var *) rrelabel->arg;
+
+			/* Upadate the col to remove_accents(col) */
+			FuncExpr *newrFuncExpr = makeNode(FuncExpr);
+			newrFuncExpr->funcid = (Oid) 18097;
+			newrFuncExpr->funcresulttype = rvar->vartype;
+			newrFuncExpr->args = list_make1(rvar);
+
+			/* Update the right node */
+			lsecond(op->args) = (Node *)newrFuncExpr;
+		}
+		else if (IsA(rrelabel->arg, FuncExpr))
+		{
+			FuncExpr    *rfunc = (FuncExpr *) rrelabel->arg;
+			// Oid            funcargtypes[1] = {TEXTOID};
+
+			/* Create a new FuncExpr node for the 'remove_accents' function */
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = rfunc->funcresulttype;
+
+			/* Set the arguments of the new FuncExpr node */
+			newFuncExpr->args = list_make1(rfunc);
+
+			/* Replace 'leftop' with 'newFuncExpr' */
+			// leftop = (Node *) newFuncExpr;
+			lsecond(op->args) = (Node *)newFuncExpr;
+		}
+		else if (IsA(rrelabel->arg, Param))
+		{
+			Param    *rparam = (Param *) rrelabel->arg;
+			/* Construct the new FuncExpr using the Param */
+			FuncExpr *newrFuncExpr = makeNode(FuncExpr);
+			newrFuncExpr->funcid = (Oid) 18097;
+			newrFuncExpr->funcresulttype = rparam->paramtype;
+			newrFuncExpr->args = list_make1(rparam);
+
+			/* Update the right node */
+			lsecond(op->args) = (Node *) newrFuncExpr;    
+		}
+	}
+	else if (IsA(rightop, FuncExpr))
+	{
+		FuncExpr    *rfunc = (FuncExpr *) rightop;
+		// Oid            funcargtypes[1] = {TEXTOID};
+
+		/* Create a new FuncExpr node for the 'remove_accents' function */
+		FuncExpr *newFuncExpr = makeNode(FuncExpr);
+		// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
+		newFuncExpr->funcid = (Oid) 18097;
+		newFuncExpr->funcresulttype = rfunc->funcresulttype;
+
+		/* Set the arguments of the new FuncExpr node */
+		newFuncExpr->args = list_make1(rfunc);
+
+		/* Replace 'leftop' with 'newFuncExpr' */
+		// leftop = (Node *) newFuncExpr;
+		lsecond(op->args) = (Node *)newFuncExpr;
+	}
+	return node;
+}
+
+static Node *
+transform_from_cs_ai(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
+{
+	int			collidx_of_cs_as;
+
+	tsql_get_server_collation_oid_internal(true);
+
+	if (!OidIsValid(server_collation_oid))
+		return node;
+
+	/*
+	 * Find the CS_AS collation corresponding to the CS_AI collation
+	 */
+	collidx_of_cs_as =
+		tsql_find_cs_as_collation_internal(
+											tsql_find_collation_internal(coll_info_of_inputcollid.collname));
+
+
+	/*
+	 * A CS_AS collation should always exist unless a Babelfish CS_AS
+	 * collation was dropped or the lookup tables were not defined in
+	 * lexicographic order.  Program defensively here and just do no
+	 * transformation in this case, which will generate a
+	 * 'nondeterministic collation not supported' error.
+	 */
+	if (NOT_FOUND == collidx_of_cs_as)
+		return node;
+
+	op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
+
+	return transform_likenode_for_AI(node, op);	
+}
+
+
 static Node *
 transform_likenode(Node *node)
 {
@@ -317,141 +836,26 @@ transform_likenode(Node *node)
 			}
 		}
 
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
+		{
+			transform_from_cs_ai(node, op, like_entry, coll_info_of_inputcollid);
+		}
+
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
+		{
+			transform_from_ci_as(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+		}
+
 		/* check if this is LIKE expr, and collation is CI_AS */
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			Node	   *leftop = (Node *) linitial(op->args);
-			Node	   *rightop = (Node *) lsecond(op->args);
-			Oid			ltypeId = exprType(leftop);
-			Oid			rtypeId = exprType(rightop);
-			char	   *op_str;
-			Node	   *ret;
-			Const	   *patt;
-			Const	   *prefix;
-			Operator	optup;
-			Pattern_Prefix_Status pstatus;
-			int			collidx_of_cs_as;
-
-			tsql_get_server_collation_oid_internal(true);
-
-			if (!OidIsValid(server_collation_oid))
-				return node;
-
-			/*
-			 * Find the CS_AS collation corresponding to the CI_AS collation
-			 * Change the collation of the ILIKE op to the CS_AS collation
-			 */
-			collidx_of_cs_as =
-				tsql_find_cs_as_collation_internal(
-												   tsql_find_collation_internal(coll_info_of_inputcollid.collname));
-
-
-			/*
-			 * A CS_AS collation should always exist unless a Babelfish CS_AS
-			 * collation was dropped or the lookup tables were not defined in
-			 * lexicographic order.  Program defensively here and just do no
-			 * transformation in this case, which will generate a
-			 * 'nondeterministic collation not supported' error.
-			 */
-			if (NOT_FOUND == collidx_of_cs_as)
-				return node;
-			/* Change the opno and oprfuncid to ILIKE */
-			op->opno = like_entry.ilike_oid;
-			op->opfuncid = like_entry.ilike_opfuncid;
-
-			op->inputcollid = tsql_get_oid_from_collidx(collidx_of_cs_as);
-
-			/* no constant prefix found in pattern, or pattern is not constant */
-			if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-				((Const *) rightop)->constisnull)
-			{
-				return node;
-			}
-
-			patt = (Const *) rightop;
-
-			/* extract pattern */
-			pstatus = pattern_fixed_prefix_wrapper(patt, 1, server_collation_oid,
-												   &prefix, NULL);
-
-			/* If there is no constant prefix then there's nothing more to do */
-			if (pstatus == Pattern_Prefix_None)
-			{
-				return node;
-			}
-
-			/*
-			 * If we found an exact-match pattern, generate an "=" indexqual.
-			 */
-			if (pstatus == Pattern_Prefix_Exact)
-			{
-				op_str = like_entry.is_not_match ? "<>" : "=";
-				optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-
-				ret = (Node *) (make_op_with_func(oprid(optup), BOOLOID, false,
-												  (Expr *) leftop, (Expr *) prefix,
-												  InvalidOid, server_collation_oid, oprfuncid(optup)));
-
-				ReleaseSysCache(optup);
-				return ret;
-			}
-			else
-			{
-				Expr	   *greater_equal,
-						   *less_equal,
-						   *concat_expr;
-				Node	   *constant_suffix;
-				Const	   *highest_sort_key;
-
-				/* construct leftop >= pattern */
-				optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-				greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-												  (Expr *) leftop, (Expr *) prefix,
-												  InvalidOid, server_collation_oid, oprfuncid(optup));
-				ReleaseSysCache(optup);
-				/* construct pattern||E'\uFFFF' */
-				highest_sort_key = makeConst(TEXTOID, -1, server_collation_oid, -1,
-											 PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
-
-				optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-				concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
-												(Expr *) prefix, (Expr *) highest_sort_key,
-												InvalidOid, server_collation_oid, oprfuncid(optup));
-				ReleaseSysCache(optup);
-				/* construct leftop < pattern */
-				optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
-										true, -1);
-				if (optup == (Operator) NULL)
-					return node;
-
-				less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-											   (Expr *) leftop, (Expr *) concat_expr,
-											   InvalidOid, server_collation_oid, oprfuncid(optup));
-				constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-				if (like_entry.is_not_match)
-				{
-					constant_suffix = (Node *) make_notclause((Expr *) constant_suffix);
-					ret = make_or_qual(node, constant_suffix);
-				}
-				else
-				{
-					constant_suffix = make_and_qual((Node *) greater_equal, (Node *) less_equal);
-					ret = make_and_qual(node, constant_suffix);
-				}
-				ReleaseSysCache(optup);
-				return ret;
-			}
+			transform_from_ci_as(node, op, like_entry, coll_info_of_inputcollid);
 		}
 	}
 	return node;
