@@ -87,7 +87,7 @@ exec dbo.p1;
 go
 select * from dbo.f1()
 go
-select * from dbo.f2() -- Needs fix, should not be accessible
+select * from dbo.f2()
 go
 
 -- tsql
@@ -156,6 +156,8 @@ insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
 go
+update s1.t1 set a = 2 where a = 1;
+go
 select * from s1.v1;
 go
 exec s1.p1;
@@ -171,6 +173,8 @@ go
 insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 select * from s1.v1;
 go
@@ -199,7 +203,9 @@ insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
 go
-delete from s1.t1 where a = 1;
+update s1.t1 set a = 2 where a = 1;
+go
+delete from s1.t1 where a = 2;
 go
 select * from s1.v1;
 go
@@ -216,6 +222,8 @@ go
 insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -240,7 +248,9 @@ insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
 go
-delete from s1.t1 where a = 1;
+update s1.t1 set a = 2 where a = 1;
+go
+delete from s1.t1 where a = 2;
 go
 select * from s1.v1;
 go
@@ -257,6 +267,8 @@ go
 insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -286,7 +298,9 @@ select * from s1.t2;
 go
 insert into s1.t2 values (1);
 go
-delete from s1.t2 where a = 1;
+update s1.t2 set a = 2 where a = 1;
+go
+delete from s1.t2 where a = 2;
 go
 select * from s1.v2;
 go
@@ -301,6 +315,8 @@ go
 select * from s1.t2;
 go
 insert into s1.t2 values (1);
+go
+update s1.t2 set a = 2 where a = 1;
 go
 delete from s1.t2 where a = 1;
 go
@@ -332,7 +348,9 @@ insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
 go
-delete from s1.t1 where a = 1;
+update s1.t1 set a = 2 where a = 1;
+go
+delete from s1.t1 where a = 2;
 go
 select * from s1.v1;
 go
@@ -359,6 +377,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -396,6 +418,8 @@ insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
 go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -425,6 +449,8 @@ go
 insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -471,6 +497,8 @@ insert into s1.t1 values (1);
 go
 insert into s1.t1 (a) values (next value for s1.sq1);
 go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -486,6 +514,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -517,6 +549,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -532,6 +568,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -562,6 +602,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -577,6 +621,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -619,6 +667,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -634,6 +686,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -660,6 +716,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -675,6 +735,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -699,6 +763,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -714,6 +782,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -745,6 +817,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -760,6 +836,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go
@@ -782,6 +862,10 @@ select * from s1.t1;
 go
 insert into s1.t1 values (1);
 go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
+go
 delete from s1.t1 where a = 1;
 go
 select * from s1.v1;
@@ -797,6 +881,10 @@ go
 select * from s1.t1;
 go
 insert into s1.t1 values (1);
+go
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+update s1.t1 set a = 2 where a = 1;
 go
 delete from s1.t1 where a = 1;
 go

@@ -187,7 +187,7 @@ go
 
 ~~ERROR (Message: permission denied for function f1)~~
 
-select * from dbo.f2() -- Needs fix, should not be accessible
+select * from dbo.f2()
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -287,6 +287,12 @@ go
 
 ~~ERROR (Message: permission denied for table t1)~~
 
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 select * from s1.v1;
 go
 ~~ERROR (Code: 33557097)~~
@@ -327,6 +333,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -391,7 +403,11 @@ go
 
 ~~ERROR (Message: permission denied for sequence sq1)~~
 
-delete from s1.t1 where a = 1;
+update s1.t1 set a = 2 where a = 1;
+go
+~~ROW COUNT: 1~~
+
+delete from s1.t1 where a = 2;
 go
 ~~ROW COUNT: 1~~
 
@@ -436,6 +452,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -500,7 +522,11 @@ go
 
 ~~ERROR (Message: permission denied for sequence sq1)~~
 
-delete from s1.t1 where a = 1;
+update s1.t1 set a = 2 where a = 1;
+go
+~~ROW COUNT: 1~~
+
+delete from s1.t1 where a = 2;
 go
 ~~ROW COUNT: 1~~
 
@@ -547,6 +573,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -607,7 +639,11 @@ insert into s1.t2 values (1);
 go
 ~~ROW COUNT: 1~~
 
-delete from s1.t2 where a = 1;
+update s1.t2 set a = 2 where a = 1;
+go
+~~ROW COUNT: 1~~
+
+delete from s1.t2 where a = 2;
 go
 ~~ROW COUNT: 1~~
 
@@ -648,6 +684,12 @@ go
 ~~ERROR (Message: permission denied for table t2)~~
 
 insert into s1.t2 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t2)~~
+
+update s1.t2 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -716,7 +758,13 @@ go
 
 ~~ERROR (Message: permission denied for table t1)~~
 
-delete from s1.t1 where a = 1;
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+delete from s1.t1 where a = 2;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -796,6 +844,18 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -894,6 +954,12 @@ go
 
 ~~ERROR (Message: permission denied for table t1)~~
 
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
@@ -976,6 +1042,12 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -1086,6 +1158,12 @@ go
 
 ~~ERROR (Message: permission denied for sequence sq1)~~
 
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1127,6 +1205,18 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -1194,6 +1284,18 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1242,6 +1344,18 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -1305,6 +1419,18 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1353,6 +1479,18 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -1428,6 +1566,18 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1469,6 +1619,18 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -1531,6 +1693,18 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1579,6 +1753,18 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -1636,6 +1822,18 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1684,6 +1882,18 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -1748,6 +1958,18 @@ insert successful
 
 ~~ROW COUNT: 1~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ROW COUNT: 1~~
@@ -1796,6 +2018,18 @@ insert successful
 ~~END~~
 
 ~~ROW COUNT: 1~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for sequence sq1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
 
 delete from s1.t1 where a = 1;
 go
@@ -1848,6 +2082,18 @@ go
 
 ~~ERROR (Message: permission denied for table t1)~~
 
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
 delete from s1.t1 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
@@ -1888,6 +2134,18 @@ go
 ~~ERROR (Message: permission denied for table t1)~~
 
 insert into s1.t1 values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+insert into s1.t1 (a) values (next value for s1.sq1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table t1)~~
+
+update s1.t1 set a = 2 where a = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
