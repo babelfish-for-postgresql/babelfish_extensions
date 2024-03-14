@@ -29,7 +29,7 @@ inputs:
   dump_format:
     description: "Dump format (plain/custom/tar/directory)"
     required: true
-  dump_type:
+  type:
     description: "Dump type full or combination of schema-only and data-only"
     required: false
     default: 'full'
