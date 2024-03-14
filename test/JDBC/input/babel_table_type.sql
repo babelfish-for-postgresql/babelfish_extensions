@@ -449,7 +449,73 @@ GO
 drop function mstvf_constraints;
 GO
 
+--BABEL-3311 TVF name truncation
+
+-- function name longer than 63 characters
+CREATE FUNCTION a_very_long_function_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(@id INT)
+RETURNS @a_short_table_name TABLE (result INT)
+AS
+BEGIN
+	INSERT INTO @a_short_table_name
+		SELECT @id;
+	RETURN;
+END;
+GO
+
+SELECT * FROM a_very_long_function_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(1);
+GO
+
+-- table name longer than 63 characters
+CREATE FUNCTION a_short_function_name(@id INT)
+RETURNS @a_very_long_table_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa TABLE (result INT)
+AS
+BEGIN
+	INSERT INTO @a_very_long_table_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+		SELECT @id;
+	RETURN;
+END;
+GO
+
+SELECT * FROM a_short_function_name(1);
+GO
+
+-- both function name and table name longer than 63 characters
+CREATE FUNCTION a_very_long_function_name_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(@id INT)
+RETURNS @a_very_long_table_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa TABLE (result INT)
+AS
+BEGIN
+	INSERT INTO @a_very_long_table_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+		SELECT @id;
+	RETURN;
+END;
+GO
+
+SELECT * FROM a_very_long_function_name_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb(1);
+GO
+
+-- each shorter than 63 characters, but combined are longer than 63 characters
+CREATE FUNCTION a_medium_function_name_aaaaaaaaaaaaaaaaa(@id INT)
+RETURNS @a_medium_table_name_aaaaaaaaaaaaaaaaaaaa TABLE (result INT)
+AS
+BEGIN
+	INSERT INTO @a_medium_table_name_aaaaaaaaaaaaaaaaaaaa
+		SELECT @id;
+	RETURN;
+END;
+GO
+
+SELECT * FROM a_medium_function_name_aaaaaaaaaaaaaaaaa(1);
+GO
+
 -- cleanup
+DROP FUNCTION a_very_long_function_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
+GO
+DROP FUNCTION a_short_function_name;
+GO
+DROP FUNCTION a_very_long_function_name_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;
+GO
+DROP FUNCTION a_medium_function_name_aaaaaaaaaaaaaaaaa;
+GO
 DROP TYPE tableType;
 GO
 DROP TABLE test_table;

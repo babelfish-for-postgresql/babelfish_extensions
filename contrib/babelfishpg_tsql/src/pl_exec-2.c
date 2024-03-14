@@ -1366,6 +1366,8 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 		}
 
 		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
+		if (strlen(tblname) > 63)
+			tblname[63] = '\0';
 		if (stmt->tbltypname)
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
 							 tblname, stmt->tbltypname);

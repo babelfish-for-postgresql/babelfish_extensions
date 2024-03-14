@@ -3910,7 +3910,7 @@ tsql_CreateFunctionStmt:
 								 parser_errposition(@1)));
 
 					tbltyp = list_truncate(tbltyp, list_length(tbltyp) - 1);
-					tbltyp = lappend(tbltyp, makeString(tbltyp_name));
+					tbltyp = lappend(tbltyp, makeString(downcase_truncate_identifier(tbltyp_name, strlen(tbltyp_name), true)));
 					n1->relation = makeRangeVarFromAnyName(tbltyp, @4, yyscanner);
 					n1->tableElts = $10;
 					n1->inhRelations = NIL;
