@@ -70,3 +70,6 @@ babel_4206_vu_prepare_role1#!#R#!#babel_4206_vu_prepare_user1#!#S
 babel_4206_vu_prepare_role2#!#R#!#babel_4206_vu_prepare_user2#!#S
 ~~END~~
 
+
+GRANT EXECUTE ON babel_4206_vu_prepare_proc TO babel_4206_vu_prepare_user2;
+GO
