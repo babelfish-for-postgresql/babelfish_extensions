@@ -37,5 +37,5 @@ select schema_name, object_name, permission, grantee, object_type, function_args
 go
 
 -- tsql
-REVOKE EXECUTE ON babel_4206_vu_prepare_proc FROM babel_4206_vu_prepare_user2;
+REVOKE EXECUTE ON babel_4206_vu_prepare_user_ext FROM babel_4206_vu_prepare_user2;
 GO

@@ -77,3 +77,7 @@ GO
 -- psql
 select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4206_vu_prepare_user2' collate sys.database_default order by object_name;
 go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+dbo#!#babel_4206_vu_prepare_user_ext#!#128#!#master_babel_4206_vu_prepare_user2#!#p#!##!#master_dbo
+~~END~~
