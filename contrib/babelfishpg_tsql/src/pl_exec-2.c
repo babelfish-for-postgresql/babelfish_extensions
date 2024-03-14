@@ -3726,6 +3726,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 
 	foreach(lc, stmt->grantees)
 	{
+		int i;
 		char	*rolname = NULL;
 		char	*grantee_name = (char *) lfirst(lc);
 		Oid	role_oid;
@@ -3769,18 +3770,11 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 					errmsg("Cannot find the schema \"%s\", because it does not exist or you do not have permission.", stmt->schema_name)));
 
 		/* Execute the GRANT SCHEMA subcommands. */
-		if (stmt->privileges & ACL_EXECUTE)
-			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_EXECUTE);
-		if (stmt->privileges & ACL_SELECT)
-			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_SELECT);
-		if (stmt->privileges & ACL_INSERT)
-			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_INSERT);
-		if (stmt->privileges & ACL_UPDATE)
-			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_UPDATE);
-		if (stmt->privileges & ACL_DELETE)
-			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_DELETE);
-		if (stmt->privileges & ACL_REFERENCES)
-			exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, ACL_REFERENCES);
+		for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
+		{
+			if (stmt->privileges & permissions[i])
+				exec_grantschema_subcmds(schema_name, rolname, stmt->is_grant, stmt->with_grant_option, permissions[i]);
+		}
 
 		if (stmt->is_grant)
 		{
@@ -3793,18 +3787,11 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 			if (privilege_exists_in_bbf_schema_permissions(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rolname, false))
 			{
 				/* If any object in the schema has the OBJECT level permission. Then, internally grant that permission back. */
-				if (stmt->privileges & ACL_EXECUTE)
-					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_EXECUTE, rolname);
-				if (stmt->privileges & ACL_SELECT)
-					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_SELECT, rolname);
-				if (stmt->privileges & ACL_INSERT)
-					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_INSERT, rolname);
-				if (stmt->privileges & ACL_UPDATE)
-					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_UPDATE, rolname);
-				if (stmt->privileges & ACL_DELETE)
-					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_DELETE, rolname);
-				if (stmt->privileges & ACL_REFERENCES)
-					grant_perms_to_objects_in_schema(stmt->schema_name, ACL_REFERENCES, rolname);
+				for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
+				{
+					if (stmt->privileges & permissions[i])
+						grant_perms_to_objects_in_schema(stmt->schema_name, permissions[i], rolname);
+				}
 				update_privileges_of_object(stmt->schema_name, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, stmt->privileges, rolname, OBJ_SCHEMA, false);
 			}
 		}

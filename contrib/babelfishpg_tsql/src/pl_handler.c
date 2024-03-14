@@ -3574,9 +3574,8 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Grant ALL schema privileges to the user.*/
 					if (rolspec && strcmp(queryString, "(CREATE LOGICAL DATABASE )") != 0)
 					{
-						int permissions[6] = {ACL_INSERT, ACL_SELECT, ACL_UPDATE, ACL_DELETE, ACL_REFERENCES, ACL_EXECUTE};
 						int i;
-						for (i = 0; i < 6; i++)
+						for (i = 0; i < NUMBER_OF_PERMISSIONS; i++)
 						{
 							/* Execute the GRANT SCHEMA subcommands. */
 							exec_grantschema_subcmds(create_schema->schemaname, rolspec->rolename, true, false, permissions[i]);
@@ -3885,7 +3884,12 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						break;
 				else if (grant->objtype == OBJECT_TABLE)
 				{
-					/* Ignore CREATE database subcommands */
+					/*
+					 * Ignore GRANT statements that are executed implicitly as a part of
+					 * CREATE database statements. Refer: create_bbf_db_internal().
+					 * These GRANT statement are just executed at the end, without checking any
+					 * schema permission or adding catalog entry.
+					 */
 					if (strcmp("(CREATE LOGICAL DATABASE )", queryString) != 0)
 					{
 						RangeVar   *rv = (RangeVar *) linitial(grant->objects);

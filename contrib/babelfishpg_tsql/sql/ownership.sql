@@ -21,7 +21,7 @@ CREATE TABLE sys.babelfish_schema_permissions (
   dbid smallint NOT NULL,
   schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   object_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
-  permission INT NOT NULL,
+  permission INT CHECK(permission > 0),
   grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
   object_type CHAR(1) NOT NULL COLLATE sys.database_default,
   function_args TEXT COLLATE "C",

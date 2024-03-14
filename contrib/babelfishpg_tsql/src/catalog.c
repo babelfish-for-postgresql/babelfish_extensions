@@ -89,6 +89,8 @@ Oid			bbf_function_ext_idx_oid;
 Oid			bbf_schema_perms_oid;
 Oid			bbf_schema_perms_idx_oid;
 
+int			permissions[NUMBER_OF_PERMISSIONS] = {ACL_INSERT, ACL_SELECT, ACL_UPDATE, ACL_DELETE, ACL_REFERENCES, ACL_EXECUTE};
+
 /*****************************************
  *			DOMAIN MAPPING
  *****************************************/
@@ -2146,6 +2148,10 @@ get_perms_schema_name(HeapTuple tuple, TupleDesc dsc)
 	bool		isNull;
 	Datum		schema_name = heap_getattr(tuple, Anum_bbf_schema_perms_schema_name, dsc, &isNull);
 
+	if (isNull)
+		ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("schema name should not be null.")));
 	return schema_name;
 }
 
@@ -2154,7 +2160,10 @@ get_perms_grantee_name(HeapTuple tuple, TupleDesc dsc)
 {
 	bool		isNull;
 	Datum		grantee_name = heap_getattr(tuple, Anum_bbf_schema_perms_grantee, dsc, &isNull);
-
+	if (isNull)
+		ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					errmsg("grantee name should not be null.")));
 	return grantee_name;
 }
 
@@ -2734,7 +2743,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 
 	if (rename_type == OBJECT_TABLE || rename_type == OBJECT_VIEW)
 	{
-		logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, true);
+		logical_schema_name = (char *) get_logical_schema_name(stmt->relation->schemaname, false);
 		object_name = stmt->relation->relname;
 		object_type = OBJ_RELATION;
 	}
@@ -2746,7 +2755,7 @@ rename_object_update_bbf_schema_permission_catalog(RenameStmt *stmt, int rename_
 			object_type = OBJ_FUNCTION;
 		objwargs = (ObjectWithArgs *) stmt->object;
 		DeconstructQualifiedName(objwargs->objname, &physical_schema_name, &object_name);
-		logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, true);
+		logical_schema_name = (char *) get_logical_schema_name(physical_schema_name, false);
 	}
 
 	/* search for the row for update => build the key */
@@ -3054,9 +3063,6 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 
 	/* Close bbf_authid_user_ext, but keep lock till commit */
 	table_close(bbf_schema_rel, RowExclusiveLock);
-
-	/* Advance cmd counter to make the insert visible */
-	CommandCounterIncrement();
 }
 
 /*
@@ -3185,7 +3191,7 @@ bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
 							const char *grantee,
-							bool missing_ok)
+							bool ignore_grantee)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3197,7 +3203,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	if (schema_name == NULL || is_shared_schema(schema_name))
 		return false;
 
-	if (!missing_ok)
+	if (!ignore_grantee)
 	{
 		ScanKeyData	scanKey[4];
 		/* Immediately return false, if grantee is NULL or PUBLIC. */
@@ -3520,10 +3526,6 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	Relation	bbf_schema_rel;
 	TupleDesc	dsc;
 	HeapTuple	tuple_bbf_schema;
-	const char	*object_name;
-	const char	*object_type;
-	const char	*func_args = NULL;
-	int			current_permission;
 	ScanKeyData scanKey[3];
 	int16		dbid = get_cur_db_id();
 	const char *db_name = get_cur_db_name();
@@ -3559,8 +3561,12 @@ grant_perms_to_objects_in_schema(const char *schema_name,
 	{
 		bool isnull;
 		Datum datum;
-		object_name = pstrdup(TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_name, dsc, &isnull)));
-		object_type = pstrdup(TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_type, dsc, &isnull)));
+		const char	*object_name;
+		const char	*object_type;
+		const char	*func_args = NULL;
+		int		current_permission;
+		object_name = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_name, dsc, &isnull));
+		object_type = TextDatumGetCString(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_object_type, dsc, &isnull));
 		current_permission = DatumGetInt32(heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_permission, dsc, &isnull));
 		datum = heap_getattr(tuple_bbf_schema, Anum_bbf_schema_perms_function_args, dsc, &isnull);
 		if (!isnull)

@@ -303,6 +303,9 @@ typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 #define OBJ_RELATION "r"
 #define OBJ_PROCEDURE "p"
 #define OBJ_FUNCTION "f"
+#define NUMBER_OF_PERMISSIONS 6
+
+extern int permissions[];
 
 extern Oid bbf_schema_perms_oid;
 extern Oid bbf_schema_perms_idx_oid;
