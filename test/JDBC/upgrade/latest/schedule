@@ -146,6 +146,7 @@ babel_int4_varbinary_div
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
+babelfish_inconsistent_metadata
 babelfish_integrity_checker
 babelfish_migration_mode
 babelfish_namespace_ext
@@ -510,5 +511,4 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
-babelfish_inconsistent_metadata
 1_GRANT_SCHEMA

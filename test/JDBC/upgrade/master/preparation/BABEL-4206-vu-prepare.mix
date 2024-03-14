@@ -56,7 +56,7 @@ GO
 EXEC babel_4206_vu_prepare_role_members;
 GO
 
-GRANT EXECUTE ON babel_4206_vu_prepare_proc TO babel_4206_vu_prepare_user2;
+GRANT EXECUTE ON babel_4206_vu_prepare_user_ext TO babel_4206_vu_prepare_user2;
 GO
 
 -- psql

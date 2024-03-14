@@ -71,5 +71,9 @@ babel_4206_vu_prepare_role2#!#R#!#babel_4206_vu_prepare_user2#!#S
 ~~END~~
 
 
-GRANT EXECUTE ON babel_4206_vu_prepare_proc TO babel_4206_vu_prepare_user2;
+GRANT EXECUTE ON babel_4206_vu_prepare_user_ext TO babel_4206_vu_prepare_user2;
 GO
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4206_vu_prepare_user2' collate sys.database_default order by object_name;
+go
