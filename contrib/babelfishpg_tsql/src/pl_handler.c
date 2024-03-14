@@ -2351,8 +2351,6 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 								 * until table-type is supported in ANTLR
 								 * parser */
 				return relid;
-				// ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-				// 				errmsg("table variable underlying typename is NULL. refname: %s", tbl->refname)));
 			return get_relname_relid(tbl->tblname, relnamespace);
 		}
 	}
