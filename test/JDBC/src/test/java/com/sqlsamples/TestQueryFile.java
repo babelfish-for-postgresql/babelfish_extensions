@@ -126,7 +126,7 @@ public class TestQueryFile {
         if (command[1].equalsIgnoreCase("sqlserver")) {
             /* if are trying to execute a t-sql command but we are using postgres driver */
             if(JDBCDriver.equalsIgnoreCase("postgresql")) {
-                Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");     //use sql server driver
+                Class.forName(tdsConnectionDriverClassName());     //use sql server driver
             }
             connectionString = createSQLServerConnectionString(URL, tsql_port, databaseName, user, password);
             summaryLogger.info("Execute T-SQL Command: " + command[2]);
@@ -156,14 +156,15 @@ public class TestQueryFile {
         if (JDBCDriver.equalsIgnoreCase("postgresql")) {
             Class.forName("org.postgresql.Driver");
         } else if (JDBCDriver.equalsIgnoreCase("sqlserver")) {
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            Class.forName(tdsConnectionDriverClassName());
         } else throw new ClassNotFoundException("Driver not found for: " + JDBCDriver +". Choose from either 'sqlserver' or 'postgresql'");
     }
 
     // test data is seeded from here
     static Stream<String> inputFileNames() {
         File dir = new File(inputFilesDirectoryPath);
-        File scheduleFile = new File(scheduleFileName);
+        String scheduleFileNameToUse = useJTDSInsteadOfMSSQLJDBC ? jTDSScheduleFileName : scheduleFileName;
+        File scheduleFile = new File(scheduleFileNameToUse);
         File parallelQueryTestIgnoreFile = new File(parallelQueryTestIgnoreFileName);
         
         try (BufferedReader br = new BufferedReader(new FileReader(scheduleFile))) {
