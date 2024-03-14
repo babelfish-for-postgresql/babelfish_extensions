@@ -2345,12 +2345,8 @@ bbf_table_var_lookup(const char *relname, Oid relnamespace)
 			continue;
 
 		tbl = (PLtsql_tbl *) estate->datums[n];
-		if (strcmp(relname, tbl->refname) == 0)
+		if (strcmp(relname, tbl->refname) == 0 && tbl->tblname)
 		{
-			if (!tbl->tblname)	/* FIXME: throwing an error instead of a crash
-								 * until table-type is supported in ANTLR
-								 * parser */
-				return relid;
 			return get_relname_relid(tbl->tblname, relnamespace);
 		}
 	}
