@@ -3,13 +3,13 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null
+    database-level: false
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null
+    database-level: false
   }
 ],
 [
@@ -17,13 +17,13 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: custom,
-    logical-database: master
+    database-level: true
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: custom,
-    logical-database: master
+    database-level: true
   }
 ],
 [
@@ -31,13 +31,13 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    logical-database: null
+    database-level: false
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    logical-database: null
+    database-level: false
   }
 ],
 [
@@ -45,26 +45,12 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    logical-database: master
+    database-level: true
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    logical-database: master
-  }
-],
-[
-  {
-    version: source.latest,
-    dump-data-as: copy,
-    dump-format: plain,
-    logical-database: database_1
-  },
-  {
-    version: target.latest,
-    dump-data-as: copy,
-    dump-format: plain,
-    logical-database: database_1
+    database-level: true
   }
 ]]
