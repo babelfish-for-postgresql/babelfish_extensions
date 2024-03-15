@@ -3709,7 +3709,7 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 		if(is_shared_schema(schema_name))
 			return PLTSQL_RC_OK;
 
-		schemaOid = LookupExplicitNamespace(schema_name, true);
+		schemaOid = LookupExplicitNamespace(schema_name, false);
 	}
 	else
 	{
@@ -3717,12 +3717,6 @@ exec_stmt_grantschema(PLtsql_execstate *estate, PLtsql_stmt_grantschema *stmt)
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
 					 errmsg("An object or column name is missing or empty. For SELECT INTO statements, verify each column has a name. For other statements, look for empty alias names. Aliases defined as \"\" or [] are not allowed. Change the alias to a valid name.")));
 	}
-
-	if (!OidIsValid(schemaOid))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_SCHEMA),
-					 errmsg("schema \"%s\" does not exist",
-							stmt->schema_name)));
 
 	foreach(lc, stmt->grantees)
 	{
