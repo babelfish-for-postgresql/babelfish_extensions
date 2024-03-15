@@ -3183,7 +3183,7 @@ update_privileges_of_object(const char *schema_name,
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
 
-	/* make sure later steps can see the object created here */
+	/* make sure later steps can see the object updated here */
 	CommandCounterIncrement();
 }
 
