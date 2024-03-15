@@ -27,6 +27,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
@@ -119,6 +120,7 @@ static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
+static List *pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs);
 static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
@@ -142,6 +144,8 @@ static void pltsql_HashTableInsert(PLtsql_function *function,
 								   PLtsql_func_hashkey *func_key);
 static void pltsql_HashTableDelete(PLtsql_function *function);
 static void delete_function(PLtsql_function *func);
+static Node *resolve_geospatial_func_ref(ParseState *pstate, ColumnRef *cref);
+static List *resolve_geospatial_func_ref_2(ParseState *pstate, FuncCall *fn, List *fargs);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char *prosrc);
@@ -1479,6 +1483,7 @@ pltsql_parser_setup(struct ParseState *pstate, PLtsql_expr *expr)
 {
 	pstate->p_pre_columnref_hook = pltsql_pre_column_ref;
 	pstate->p_post_columnref_hook = pltsql_post_column_ref;
+	pstate->p_post_funcref_hook = pltsql_post_func_ref;
 	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
 	pstate->p_paramref_hook = pltsql_param_ref;
 	/* no need to use p_coerce_param_hook */
@@ -1507,6 +1512,7 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 {
 	PLtsql_expr *expr = (PLtsql_expr *) pstate->p_ref_hook_state;
 	Node	   *myvar;
+	Node       *geovar;
 
 	if (expr->func->resolve_option == PLTSQL_RESOLVE_VARIABLE)
 		return NULL;			/* we already found there's no match */
@@ -1524,6 +1530,9 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	 * a conflict with a table name this could still be less than the most
 	 * helpful error message possible.)
 	 */
+	if ((geovar = resolve_geospatial_func_ref(pstate, cref)) != NULL)
+		return geovar;
+
 	myvar = resolve_column_ref(pstate, expr, cref, (var == NULL));
 
 	if (myvar != NULL && var != NULL)
@@ -1543,6 +1552,98 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	return myvar;
 }
 
+static List *
+pltsql_post_func_ref(ParseState *pstate, FuncCall *fn, List *fargs)
+{
+	List *ret = resolve_geospatial_func_ref_2(pstate, fn, fargs);
+	if (ret)
+	{
+		elog(WARNING, "got some rets %d", ret->length);
+		return ret;
+	}
+	return fargs;
+}
+
+static Node *
+resolve_geospatial_func_ref(ParseState *pstate, ColumnRef *cref)
+{
+       Node       *last_field;
+       Node       *col;
+	   Oid		   typoid;
+
+       if (list_length(cref->fields) <= 1)
+               return NULL;
+
+		// Get the OID of internal geom or geog types
+       last_field = (Node *) llast(cref->fields);
+       if (IsA(last_field, String) &&
+               (pg_strcasecmp(strVal(last_field), "stx") == 0 ||
+                pg_strcasecmp(strVal(last_field), "sty") == 0))
+       {
+               FuncExpr   *funcexpr = makeNode(FuncExpr);
+               char *name = strVal(last_field);
+               Oid funcid;
+
+			   typoid = typenameTypeId(NULL, makeTypeName("geometry"));
+
+               cref->fields = list_delete_last(cref->fields);
+               col = transformExpr(pstate, (Node *) cref, pstate->p_expr_kind);
+               funcid = LookupFuncName(list_make2(makeString("sys"), makeString(name)), 1, &typoid, false);
+               funcexpr->funcid = funcid;
+               funcexpr->funcresulttype = get_func_rettype(funcid);
+               funcexpr->funcretset = false;
+               funcexpr->funcvariadic = false;
+               funcexpr->funcformat = COERCE_EXPLICIT_CALL;
+               funcexpr->args = list_make1(col);
+               funcexpr->location = cref->location;
+
+               return (Node *) funcexpr;
+       }
+
+       return NULL;
+}
+
+static List *resolve_geospatial_func_ref_2(ParseState *pstate, FuncCall *fn, List *fargs)
+{
+	Node *schema;
+	Node *fname;
+
+	switch(list_length(fn->funcname))
+	{
+		case 2:
+			schema = linitial(fn->funcname);
+			fname = lsecond(fn->funcname);
+			if (pg_strcasecmp(strVal(fname), "stdistance") == 0)
+			{
+				// We have to do some work here to turn the schema (which is T_String) into an actual Node. 
+				Node *node;
+				ColumnRef *cr = makeNode(ColumnRef);
+
+				/* Fix schema, since 'master_' may have been prepended during parsing. */
+				if (pg_strncasecmp(strVal(schema), "master_", 7) == 0)
+				{
+					char *schema_cstr = ((String *)schema)->sval;
+					size_t len = strlen(schema_cstr) - 7;
+					strncpy(schema_cstr, schema_cstr + 7, len);
+					memset(schema_cstr + len, 0, 7);
+				}
+
+				/* Check edge cases if arg is not necessarily ColumnRef */
+				cr->fields = list_make1(schema);
+				cr->location = -1;
+				node = transformExpr(pstate, (Node *)cr, pstate->p_expr_kind);
+
+				fargs = lcons(node, fargs);
+				fn->funcname = list_make1(fname);
+
+				return fargs;
+			}
+		default:
+			break;
+	}
+
+	return NULL;
+}
 
 /*
  * Call this hook only when expanding a SELECT * or relation.* to its individual column names
