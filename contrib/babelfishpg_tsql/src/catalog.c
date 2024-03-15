@@ -3063,6 +3063,9 @@ add_entry_to_bbf_schema_perms(const char *schema_name,
 
 	/* Close bbf_authid_user_ext, but keep lock till commit */
 	table_close(bbf_schema_rel, RowExclusiveLock);
+
+	/* make sure later steps can see the entry added here */
+	CommandCounterIncrement();
 }
 
 /*
@@ -3182,9 +3185,6 @@ update_privileges_of_object(const char *schema_name,
 
 	systable_endscan(scan);
 	table_close(bbf_schema_rel, RowExclusiveLock);
-
-	/* make sure later steps can see the object updated here */
-	CommandCounterIncrement();
 }
 
 /*
