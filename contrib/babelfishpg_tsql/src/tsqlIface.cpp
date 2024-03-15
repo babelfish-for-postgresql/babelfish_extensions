@@ -629,7 +629,7 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 		}					
 	}	
 						
-	if ((orig_text.front() == '"') && (orig_text.back() == '"') && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
+	if (!orig_text.empty() && (orig_text.front() == '"') && (orig_text.back() == '"') && !repl_text.empty() && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
 	{
 		// Do not validate the positions of strings as these are not replaced by their positions
 	}
