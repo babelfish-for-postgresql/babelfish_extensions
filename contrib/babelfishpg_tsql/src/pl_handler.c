@@ -3922,7 +3922,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logical_schema, obj, ALL_PERMISSIONS_ON_RELATION, rol_spec->rolename, OBJ_RELATION, false);
-								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+								if (privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 									return;
 							}
 						}
@@ -3935,28 +3935,32 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (grant->is_grant)
 						{
 							exec_pg_command = true;
-							foreach(lc, grant->grantees)
+							/* Don't add/update an entry, if the permission is granted on column list.*/
+							if (ap->cols == NULL)
 							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								/* Don't add/update an entry, if the permission is granted on column list.*/
-								if (ap->cols == NULL)
+								foreach(lc, grant->grantees)
+								{
+									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									add_or_update_object_in_bbf_schema(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, true, NULL);
+								}
 							}
 						}
 						else
 						{
-							foreach(lc, grant->grantees)
+							/* Don't update an entry, if the permission is granted on column list.*/
+							if (ap->cols == NULL)
 							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
-								/*
-								 * If permission on schema exists, don't revoke any permission from the object.
-								 */
-								if (!privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
-									exec_pg_command = true;
+								foreach(lc, grant->grantees)
+								{
+									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
+									/*
+									 * If permission on schema exists, don't revoke any permission from the object.
+									 */
+									if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logical_schema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
+										exec_pg_command = true;
 
-								/* Don't update an entry, if the permission is granted on column list.*/
-								if (ap->cols == NULL)
 									update_privileges_of_object(logical_schema, obj, privilege, rol_spec->rolename, OBJ_RELATION, false);
+								}
 							}
 						}
 					}
@@ -4005,7 +4009,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						 * For more details, please refer revoke_func_permission_from_public().
 						 * If schema entry exists in the catalog, implicitly grant permission on the new object to the user.
 						 */
-						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL, true))
+						if ((pstmt->stmt_len == 0) && privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, NULL))
 						{
 							call_prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc);
 							exec_internal_grant_on_function(logicalschema, funcname, obj_type);
@@ -4030,7 +4034,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								 * 2. If permission on object exists, update the privilege in the catalog and revoke permission.
 								 */
 								update_privileges_of_object(logicalschema, funcname, ALL_PERMISSIONS_ON_FUNCTION, rol_spec->rolename, obj_type, false);
-								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+								if (privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 									return;
 							}
 						}
@@ -4043,15 +4047,17 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 						if (grant->is_grant)
 						{
 							exec_pg_command = true;
-							foreach(lc, grant->grantees)
+							if (strcmp("(GRANT STATEMENT )", queryString) != 0)
 							{
-								RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 								/*
 								 * If it is an implicit GRANT issued by exec_internal_grant_on_function, then we should not add catalog
 								 * entry. Catalog entry is supposed to be added only by explicit GRANTs.
 								 */
-								if (strcmp("(GRANT STATEMENT )", queryString) != 0)
+								foreach(lc, grant->grantees)
+								{
+									RoleSpec	   *rol_spec = (RoleSpec *) lfirst(lc);
 									add_or_update_object_in_bbf_schema(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, true, func_args);
+								}
 							}
 						}
 						else
@@ -4063,7 +4069,7 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 								/*
 								 * If permission on schema exists, don't revoke any permission from the object.
 								 */
-								if (!privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename, false))
+								if (!exec_pg_command && !privilege_exists_in_bbf_schema_permissions(logicalschema, PERMISSIONS_FOR_ALL_OBJECTS_IN_SCHEMA, rol_spec->rolename))
 									exec_pg_command = true;
 								/* Update the privilege in the catalog. */
 								update_privileges_of_object(logicalschema, funcname, privilege, rol_spec->rolename, obj_type, false);

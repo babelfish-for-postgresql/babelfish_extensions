@@ -3196,8 +3196,7 @@ update_privileges_of_object(const char *schema_name,
 bool
 privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 							const char *object_name,
-							const char *grantee,
-							bool ignore_grantee)
+							const char *grantee)
 {
 	Relation	bbf_schema_rel;
 	HeapTuple	tuple_bbf_schema;
@@ -3209,11 +3208,11 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	if (schema_name == NULL || is_shared_schema(schema_name))
 		return false;
 
-	if (!ignore_grantee)
+	if (grantee != NULL)
 	{
 		ScanKeyData	scanKey[4];
 		/* Immediately return false, if grantee is NULL or PUBLIC. */
-		if ((grantee == NULL) || (strcmp(grantee, PUBLIC_ROLE_NAME) == 0))
+		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
 			return false;
 
 		bbf_schema_rel = table_open(get_bbf_schema_perms_oid(),
@@ -3436,7 +3435,7 @@ add_or_update_object_in_bbf_schema(const char *schema_name,
 				bool is_grant,
 				const char *func_args)
 {
-	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee, false))
+	if (!privilege_exists_in_bbf_schema_permissions(schema_name, object_name, grantee))
 		add_entry_to_bbf_schema_perms(schema_name, object_name, new_permission, grantee, object_type, func_args);
 	else
 		update_privileges_of_object(schema_name, object_name, new_permission, grantee, object_type, is_grant);
