@@ -1366,8 +1366,15 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 		}
 
 		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
+
 		if (strlen(tblname) > 63)
-			tblname[63] = '\0';
+		{
+			// truncate tblname to fit the "_#" nestlevel suffix
+			tblname[63-(strlen(tblname)-63)] = '\0';
+			// previous palloc of tblname will be cleaned up with the memory context
+			tblname = psprintf("%s_%d", tblname, estate->nestlevel);
+		}
+		
 		if (stmt->tbltypname)
 			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
 							 tblname, stmt->tbltypname);

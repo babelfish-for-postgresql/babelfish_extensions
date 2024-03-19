@@ -507,7 +507,23 @@ GO
 SELECT * FROM a_medium_function_name_aaaaaaaaaaaaaaaaa(1);
 GO
 
+-- nesting TVFs using the same long table variable name
+CREATE FUNCTION a_nested_function(@id INT)
+RETURNS @a_very_long_table_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa TABLE (result INT)
+AS
+BEGIN
+	INSERT INTO @a_very_long_table_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+		SELECT result FROM a_short_function_name(@id);
+	RETURN;
+END;
+GO
+
+SELECT * FROM a_nested_function(1);
+GO
+
 -- cleanup
+DROP FUNCTION a_nested_function;
+GO
 DROP FUNCTION a_very_long_function_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;
 GO
 DROP FUNCTION a_short_function_name;
