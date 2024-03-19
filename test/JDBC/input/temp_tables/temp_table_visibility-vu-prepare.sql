@@ -1,8 +1,9 @@
--- This is the original case from BABEL-4778
+-- This is the original case from BABEL-4788
 -- Test Object ID called on inner proc then examine outer proc. 
 CREATE PROCEDURE object_id_inner_proc
 AS
     if OBJECT_ID('#tmp') is not null 
+    begin
         print 'end inner_proc'
     end
 go
@@ -44,7 +45,8 @@ go
 -- This is the case from BABEL-4122, which has the same root cause. 
 create proc babel_4122_proc @tabname varchar(30) as
     if object_id(@tabname) is not null
+    begin
         execute('select * from ' + @tabname)
-    go
+    end
 go
 

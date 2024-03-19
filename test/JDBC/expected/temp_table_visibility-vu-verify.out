@@ -1,8 +1,12 @@
 EXEC object_id_outer_proc
 go
-~~ERROR (Code: 33557097)~~
+~~WARNING (Code: 0)~~
 
-~~ERROR (Message: procedure object_id_inner_proc() does not exist)~~
+~~WARNING (Message: end inner_proc  Server SQLState: S0001)~~~~WARNING (Message: after inner_proc  Server SQLState: S0001)~~
+
+~~START~~
+int
+~~END~~
 
 
 EXEC enr_list_outer_outer_proc
@@ -35,4 +39,10 @@ go
 if object_id('#t') is null
     print 'fail'
 go
+
+exec babel_4122_proc
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_4122_proc expects parameter "@tabname", which was not supplied.)~~
 

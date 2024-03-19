@@ -15,4 +15,5 @@ if object_id('#t') is null
     print 'fail'
 go
 
-exec babel_4122_proc 
+exec babel_4122_proc
+go
