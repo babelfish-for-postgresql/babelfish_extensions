@@ -4436,14 +4436,10 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	MemoryContext 	per_query_ctx;
 	MemoryContext 	oldcontext;
 	HTAB	   	   	*bbf_pivot_hash;
-	MemoryContext 		tsql_outmost_context;
-	PLtsql_execstate 	*tsql_outmost_estat;
-	RawStmt	   			*bbf_pivot_src_sql;
-	RawStmt	   			*bbf_pivot_cat_sql;
-	int					nestlevel;
-	tsql_pivot_fields	*per_pivot_fields;
-	char				*query_string;
-	char				*funcName;
+	RawStmt	   		*bbf_pivot_src_sql;
+	RawStmt	   		*bbf_pivot_cat_sql;
+	char			*query_string;
+	char			*funcName;
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -4455,26 +4451,11 @@ bbf_pivot(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* 
-	* Previously we saved two raw parsetrees in tsql outermost context
-	* here we are retrieve those raw parsetree for pivot execution
-	*/
-	tsql_outmost_estat = get_outermost_tsql_estate(&nestlevel);
-	tsql_outmost_context = tsql_outmost_estat->stmt_mcontext_parent;
 	
-	if (!tsql_outmost_context)
-		ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-				errmsg("pivot outer context not found")));
-	
-	Assert(tsql_outmost_estat->pivot_parsetree_list && list_length(tsql_outmost_estat->pivot_parsetree_list) > 0);
-
-	per_pivot_fields = (tsql_pivot_fields *) list_nth(tsql_outmost_estat->pivot_parsetree_list, 0);
-	bbf_pivot_src_sql = per_pivot_fields->s_sql;
-	bbf_pivot_cat_sql = per_pivot_fields->c_sql;
-	query_string = per_pivot_fields->sourcetext->sval;
-	funcName = per_pivot_fields->funcName->sval;
+	bbf_pivot_src_sql = (RawStmt *) list_nth(fcinfo->pivot_parsetree, 0);
+	bbf_pivot_cat_sql = (RawStmt *) list_nth(fcinfo->pivot_parsetree, 1);
+	query_string = ((String *) list_nth(fcinfo->pivot_extrainfo, 0))->sval;
+	funcName = ((String *) list_nth(fcinfo->pivot_extrainfo, 1))->sval;
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -4518,9 +4499,6 @@ bbf_pivot(PG_FUNCTION_ARGS)
 	 */
 	rsinfo->setDesc = tupdesc;
 
-	oldcontext = MemoryContextSwitchTo(tsql_outmost_context);
-	tsql_outmost_estat->pivot_parsetree_list = list_delete_nth_cell(tsql_outmost_estat->pivot_parsetree_list, 0);
-	tsql_outmost_estat->pivot_number--;
 	MemoryContextSwitchTo(oldcontext);
 	return (Datum) 0;
 }
