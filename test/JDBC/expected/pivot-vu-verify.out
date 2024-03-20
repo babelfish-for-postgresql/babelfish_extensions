@@ -999,11 +999,11 @@ PIVOT (
 GO
 ~~START~~
 int#!#int#!#int#!#int#!#int#!#int
-1200#!#0#!#0#!#0#!#1#!#0
-1200#!#0#!#0#!#0#!#0#!#0
-1200#!#0#!#0#!#0#!#0#!#0
-1200#!#0#!#0#!#1#!#0#!#0
-1200#!#0#!#0#!#0#!#0#!#0
+1200#!#1#!#1#!#1#!#2#!#0
+1201#!#0#!#0#!#2#!#0#!#0
+1202#!#1#!#0#!#0#!#1#!#0
+1203#!#0#!#0#!#0#!#1#!#0
+1204#!#0#!#0#!#0#!#0#!#1
 ~~END~~
 
 
@@ -1053,9 +1053,14 @@ PIVOT (
 ) AS pvt2) AS p2
 ON p1.ManufactureID = p2.ManufactureID
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: JOIN with PIVOT statement is not currently supported)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+1200#!#1#!#1#!#1200#!#1#!#2
+1201#!#0#!#0#!#1201#!#2#!#0
+1202#!#1#!#0#!#1202#!#0#!#1
+1203#!#0#!#0#!#1203#!#0#!#1
+1204#!#0#!#0#!#1204#!#0#!#0
+~~END~~
 
 
 -- WITH CTE stmt with usage of pivot operator is not currently supported
@@ -1076,9 +1081,14 @@ EmployeeData AS
 SELECT *
 FROM EmployeeData;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: WITH CTE stmt with usage of PIVOT operator is not currently supported)~~
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
+200#!#0#!#0#!#2#!#0#!#0
+201#!#0#!#0#!#0#!#0#!#0
+202#!#1#!#0#!#0#!#0#!#0
+203#!#0#!#0#!#0#!#1#!#0
+204#!#0#!#1#!#0#!#0#!#1
+~~END~~
 
 
 -- Join stmts inside PIVOT statment (BABEL-4558)
