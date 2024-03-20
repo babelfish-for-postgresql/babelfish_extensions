@@ -93,13 +93,11 @@ rewrite_object_refs(Node *stmt)
 				/*
 				 * For INSERT ... EXECUTE, rewrite the schema name
 				*/
-				if ((nodeTag(stmt) == T_InsertStmt && ((InsertStmt *)stmt)->execStmt))
+				if ((nodeTag(stmt) == T_InsertStmt && ((InsertStmt *)stmt)->execStmt)
+					&& nodeTag(((InsertStmt *)stmt)->execStmt) == T_CallStmt)
 				{
-					if(nodeTag(((InsertStmt *)stmt)->execStmt) == T_CallStmt)
-					{
-						CallStmt   *call = (CallStmt *) ((InsertStmt *)stmt)->execStmt;
-						call->funccall->funcname = rewrite_plain_name(call->funccall->funcname);
-					}
+					CallStmt   *call = (CallStmt *) ((InsertStmt *)stmt)->execStmt;
+					call->funccall->funcname = rewrite_plain_name(call->funccall->funcname);
 				}
 
 				/* walker supported stmts */
