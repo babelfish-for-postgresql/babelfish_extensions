@@ -3211,7 +3211,7 @@ privilege_exists_in_bbf_schema_permissions(const char *schema_name,
 	if (grantee != NULL)
 	{
 		ScanKeyData	scanKey[4];
-		/* Immediately return false, if grantee is NULL or PUBLIC. */
+		/* Immediately return false, if grantee is PUBLIC. */
 		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
 			return false;
 
