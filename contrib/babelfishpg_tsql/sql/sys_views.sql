@@ -2083,7 +2083,7 @@ SELECT out_object_id as object_id
   , 1::sys.bit AS uses_database_collation
   , 1::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_object_id = a.attrelid AND sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_object_id = a.attrelid AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
@@ -2107,10 +2107,7 @@ AS
 SELECT
     CAST(i.indrelid AS INT) AS object_id,
     -- should match index_id of sys.indexes 
-    CAST(CASE
-            WHEN i.indisclustered THEN 1
-            ELSE 1 + dense_rank() OVER(PARTITION BY i.indrelid ORDER BY i.indexrelid)
-         END AS INT) AS index_id,
+    index_map.index_id,
     CAST(a.index_column_id AS INT) AS index_column_id,
     CAST(a.attnum AS INT) AS column_id,
     CAST(CASE
@@ -2132,6 +2129,8 @@ FROM
     INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
     LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true
+    INNER JOIN (SELECT indexrelid, CAST(CASE WHEN indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY indrelid ORDER BY indexrelid) END AS INT)
+                AS index_id FROM pg_index) AS index_map ON index_map.indexrelid = i.indexrelid
 WHERE
     has_schema_privilege(c.relnamespace, 'USAGE') AND
     has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
