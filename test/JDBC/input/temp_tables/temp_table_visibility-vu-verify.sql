@@ -6,14 +6,15 @@ go
 
 
 -- 4122 test case
-create table #t (a int)
-insert #t values(123)
-insert #t values(456)
+create table #t4122 (a int)
+insert #t4122 values(123)
+insert #t4122 values(456)
 go
 
-if object_id('#t') is null
+-- Sanity check to ensure object_id is able to return an OID.
+if object_id('#t4122') is null
     print 'fail'
 go
 
-exec babel_4122_proc
+exec babel_4122_proc '#t4122'
 go
