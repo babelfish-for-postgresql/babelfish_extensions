@@ -20,14 +20,14 @@ dump-restore-version: [[
     dump-data-as: copy,
     dump-format: plain,
     logical-database: null,
-    type: schema_only
+    type: schema-cum-data-only
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
     logical-database: null,
-    type: schema_only
+    type: schema-cum-data-only
   }
 ],
 [
@@ -68,14 +68,14 @@ dump-restore-version: [[
     dump-data-as: inserts,
     dump-format: custom,
     logical-database: master,
-    type: schema_only
+    type: schema-cum-data-only
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: custom,
     logical-database: master,
-    type: schema_only
+    type: schema-cum-data-only
   }
 ],
 [
