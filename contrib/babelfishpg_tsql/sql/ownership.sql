@@ -14,6 +14,21 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
+-- BABELFISH_SCHEMA_PERMISSIONS
+-- This catalog is implemented specially to support GRANT/REVOKE .. ON SCHEMA ..
+-- Please avoid using this catalog anywhere else.
+CREATE TABLE sys.babelfish_schema_permissions (
+  dbid smallint NOT NULL,
+  schema_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_name sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  permission INT CHECK(permission > 0),
+  grantee sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  object_type CHAR(1) NOT NULL COLLATE sys.database_default,
+  function_args TEXT COLLATE "C",
+  grantor sys.NVARCHAR(128) NOT NULL COLLATE sys.database_default,
+  PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
+);
+
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
@@ -376,6 +391,7 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_db_seq', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_schema_permissions', '');
 
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS
