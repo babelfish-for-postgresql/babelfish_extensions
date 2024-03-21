@@ -834,17 +834,13 @@ select
   , cast(0 as sys.bit) as has_filter
   , cast(null as sys.nvarchar) as filter_definition
   , cast(0 as sys.bit) as auto_created
-  , index_map.index_id
+  , cast(case when X.indisclustered then 1 else (SELECT count(*)+2 FROM pg_index ind where ind.indrelid = X.indrelid and ind.indexrelid < X.indexrelid and ind.indisclustered = false) end as int) as index_id
 from pg_index X 
 inner join pg_class I on I.oid = X.indexrelid and I.relkind = 'i'
 inner join pg_namespace nsp on nsp.oid = I.relnamespace
 left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
 -- check if index is a unique constraint
 left join pg_constraint const on const.conindid = I.oid and const.contype = 'u'
--- use rownumber to get index_id scoped on each objects
-inner join 
-(select indexrelid, cast(case when indisclustered then 1 else 1+row_number() over(partition by indrelid order by indexrelid) end as int) 
- as index_id from pg_index) as index_map on index_map.indexrelid = X.indexrelid
 where has_schema_privilege(I.relnamespace, 'USAGE')
 -- index is active
 and X.indislive 
@@ -2107,7 +2103,10 @@ AS
 SELECT
     CAST(i.indrelid AS INT) AS object_id,
     -- should match index_id of sys.indexes 
-    index_map.index_id,
+    CAST(CASE
+            WHEN i.indisclustered THEN 1
+            ELSE (SELECT COUNT(*)+2 FROM pg_index ind WHERE ind.indrelid = i.indrelid AND ind.indexrelid < i.indexrelid AND ind.indisclustered = false)
+         END AS INT) AS index_id,
     CAST(a.index_column_id AS INT) AS index_column_id,
     CAST(a.attnum AS INT) AS column_id,
     CAST(CASE
@@ -2129,8 +2128,6 @@ FROM
     INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
     LEFT JOIN unnest(i.indkey) WITH ORDINALITY AS a(attnum, index_column_id) ON true
-    INNER JOIN (SELECT indexrelid, CAST(CASE WHEN indisclustered THEN 1 ELSE 1+row_number() OVER(PARTITION BY indrelid ORDER BY indexrelid) END AS INT)
-                AS index_id FROM pg_index) AS index_map ON index_map.indexrelid = i.indexrelid
 WHERE
     has_schema_privilege(c.relnamespace, 'USAGE') AND
     has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER') AND
