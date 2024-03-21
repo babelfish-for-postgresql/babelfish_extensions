@@ -60,3 +60,16 @@ master_babel_4206_vu_prepare_user1#!#babel_4206_vu_prepare_login1#!#S#!#babel_42
 master_babel_4206_vu_prepare_user2#!#babel_4206_vu_prepare_login2#!#S#!#babel_4206_vu_prepare_user2#!#master
 ~~END~~
 
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4206_vu_prepare_user2' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+dbo#!#babel_4206_vu_prepare_user_ext#!#128#!#master_babel_4206_vu_prepare_user2#!#p#!##!#master_dbo
+~~END~~
+
+
+-- tsql
+REVOKE EXECUTE ON babel_4206_vu_prepare_user_ext FROM babel_4206_vu_prepare_user2;
+GO

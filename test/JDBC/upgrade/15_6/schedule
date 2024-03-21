@@ -502,6 +502,7 @@ TestDatatypeAggSort
 babel_index_nulls_order-15_5-or-15_6-or-16_1-or-16_2
 BABEL-2999
 BABEL-4606
+BABEL-4672
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
@@ -510,3 +511,4 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
+GRANT_SCHEMA-before-15_7-16_3

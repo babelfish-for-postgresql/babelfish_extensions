@@ -1,0 +1,118 @@
+-- tsql
+create schema babel_4768_s1
+go
+
+create login babel_4768_l1 with password = '12345678'
+go
+
+create user babel_4768_u1 for login babel_4768_l1
+go
+
+create table babel_4768_t1(a int, b int);
+go
+
+create table babel_4768_s1.babel_4768_t1(a int, b int);
+go
+
+create view babel_4768_v1 as select 1;
+go
+
+create view babel_4768_s1.babel_4768_v1 as select 2;
+go
+
+create proc babel_4768_p1 as select 1;
+go
+
+create proc babel_4768_s1.babel_4768_p1 as select 1;
+go
+
+create proc babel_4768_p2 @l datetimeoffset(2) as select 1;
+go
+
+create proc babel_4768_s1.babel_4768_p2 @l datetimeoffset(2) as select 1;
+go
+
+CREATE FUNCTION babel_4768_f1() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+CREATE FUNCTION babel_4768_s1.babel_4768_f1() returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+CREATE FUNCTION babel_4768_f2(@l int) returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+CREATE FUNCTION babel_4768_s1.babel_4768_f2(@l int) returns int begin declare @a int; set @a = 1; return @a; end 
+go
+
+-- tsql
+-- GRANT individual object access to babel_4768_u1
+GRANT SELECT ON dbo.babel_4768_t1 TO babel_4768_u1
+go
+
+GRANT SELECT ON babel_4768_s1.babel_4768_t1 TO babel_4768_u1
+go
+
+GRANT SELECT ON dbo.babel_4768_v1 TO babel_4768_u1
+go
+
+GRANT SELECT ON babel_4768_s1.babel_4768_v1 TO babel_4768_u1
+go
+
+GRANT EXECUTE ON dbo.babel_4768_p1 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_s1.babel_4768_p1 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON dbo.babel_4768_p2 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_s1.babel_4768_p2 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON dbo.babel_4768_f1 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_s1.babel_4768_f1 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON dbo.babel_4768_f2 TO babel_4768_u1
+GO
+
+GRANT EXECUTE ON babel_4768_s1.babel_4768_f2 TO babel_4768_u1
+GO
+
+GRANT SELECT, EXECUTE ON SCHEMA::dbo TO babel_4768_u1
+GO
+
+GRANT SELECT, EXECUTE ON SCHEMA::babel_4768_s1 TO babel_4768_u1
+GO
+
+-- psql
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'babel_4768_s1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+babel_4768_s1#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>#!#master_dbo
+babel_4768_s1#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!##!#master_dbo
+babel_4768_s1#!#babel_4768_f2#!#128#!#master_babel_4768_u1#!#f#!#pg_catalog.int4#!#master_dbo
+babel_4768_s1#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!##!#master_dbo
+babel_4768_s1#!#babel_4768_p2#!#128#!#master_babel_4768_u1#!#p#!#sys.datetimeoffset#!#master_dbo
+babel_4768_s1#!#babel_4768_t1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>#!#master_dbo
+babel_4768_s1#!#babel_4768_v1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>#!#master_dbo
+~~END~~
+
+
+select schema_name, object_name, permission, grantee, object_type, function_args, grantor from sys.babelfish_schema_permissions where schema_name = 'dbo' and grantee like '%babel_4768_u1' collate sys.database_default order by object_name;
+go
+~~START~~
+"sys"."varchar"#!#"sys"."varchar"#!#int4#!#"sys"."varchar"#!#bpchar#!#text#!#"sys"."varchar"
+dbo#!#ALL#!#130#!#master_babel_4768_u1#!#s#!#<NULL>#!#master_dbo
+dbo#!#babel_4768_f1#!#128#!#master_babel_4768_u1#!#f#!##!#master_dbo
+dbo#!#babel_4768_f2#!#128#!#master_babel_4768_u1#!#f#!#pg_catalog.int4#!#master_dbo
+dbo#!#babel_4768_p1#!#128#!#master_babel_4768_u1#!#p#!##!#master_dbo
+dbo#!#babel_4768_p2#!#128#!#master_babel_4768_u1#!#p#!#sys.datetimeoffset#!#master_dbo
+dbo#!#babel_4768_t1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>#!#master_dbo
+dbo#!#babel_4768_v1#!#2#!#master_babel_4768_u1#!#r#!#<NULL>#!#master_dbo
+~~END~~
+

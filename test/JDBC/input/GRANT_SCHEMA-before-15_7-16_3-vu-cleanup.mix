@@ -1,0 +1,66 @@
+-- tsql
+-- Drop objects
+use grant_schema_d1;
+go
+
+drop table grant_schema_s1.grant_schema_t1;
+go
+
+drop table grant_schema_s1.grant_schema_t2;
+go
+
+drop table grant_schema_s1.grant_schema_t3;
+go
+
+drop view grant_schema_s1.grant_schema_v1;
+go
+
+drop view grant_schema_s1.grant_schema_v2;
+go
+
+drop proc grant_schema_s1.grant_schema_p1;
+go
+
+drop proc grant_schema_s1.grant_schema_p2;
+go
+
+drop function grant_schema_s1.grant_schema_f1;
+go
+
+drop function grant_schema_s1.grant_schema_f2;
+go
+
+drop schema grant_schema_s1;
+go
+
+drop table grant_schema_s2.grant_schema_t1;
+go
+
+drop table grant_schema_s2.grant_schema_t2;
+go
+
+drop schema grant_schema_s2;
+go
+
+drop user grant_schema_u1;
+go
+
+use master;
+go
+
+drop database grant_schema_d1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'grant_schema_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+go
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+go
+
+-- tsql
+drop login grant_schema_l1;
+go

@@ -1,0 +1,179 @@
+-- tsql user=grant_schema_l1 password=12345678
+-- User has OBJECT privileges, should be accessible.
+use grant_schema_d1;
+go
+
+select * from grant_schema_s1.grant_schema_t1;
+go
+
+select * from grant_schema_s1.grant_schema_t2; -- case 1: has no permission
+go
+
+select * from grant_schema_s1.grant_schema_v1;
+go
+
+exec grant_schema_s1.grant_schema_p1;
+go
+
+select * from grant_schema_s1.grant_schema_f1();
+go
+
+-- tsql
+-- REVOKE OBJECT privilege
+use grant_schema_d1;
+go
+revoke select on grant_schema_s1.grant_schema_t1 from grant_schema_u1;
+go
+revoke select on grant_schema_s1.grant_schema_v1 from grant_schema_u1;
+go
+revoke execute on grant_schema_s1.grant_schema_p1 from grant_schema_u1;
+go
+revoke execute on grant_schema_s1.grant_schema_f1 from grant_schema_u1;
+go
+
+-- tsql user=grant_schema_l1 password=12345678
+-- User has no privileges, should not be accessible.
+use grant_schema_d1;
+go
+
+select * from grant_schema_s1.grant_schema_t1;
+go
+
+select * from grant_schema_s1.grant_schema_v1;
+go
+
+exec grant_schema_s1.grant_schema_p1;
+go
+
+select * from grant_schema_s1.grant_schema_f1();
+go
+
+-- tsql
+-- GRANT SCHEMA privilege
+use grant_schema_d1;
+go
+grant select, execute on schema::grant_schema_s1 to grant_schema_u1;
+go
+use master;
+go
+
+-- tsql user=grant_schema_l1 password=12345678
+-- User has SCHEMA privileges, should be accessible.
+use grant_schema_d1;
+go
+
+select * from grant_schema_s1.grant_schema_t1;
+go
+
+select * from grant_schema_s1.grant_schema_t2;
+go
+
+select * from grant_schema_s1.grant_schema_v1;
+go
+
+exec grant_schema_s1.grant_schema_p1;
+go
+
+select * from grant_schema_s1.grant_schema_f1();
+go
+
+-- User has OBJECT and SCHEMA privileges, should be accessible.
+use grant_schema_d1;
+go
+
+select * from grant_schema_s1.grant_schema_t3;
+go
+
+select * from grant_schema_s1.grant_schema_v2;
+go
+
+exec grant_schema_s1.grant_schema_p2;
+go
+
+select * from grant_schema_s1.grant_schema_f2();
+go
+
+-- tsql
+-- Case 6: User has SCHEMA privilege, REVOKE OBJECT privilege
+use grant_schema_d1;
+go
+revoke select on grant_schema_s1.grant_schema_t3 from grant_schema_u1;
+go
+revoke select on grant_schema_s1.grant_schema_v2 from grant_schema_u1;
+go
+revoke execute on grant_schema_s1.grant_schema_p2 from grant_schema_u1;
+go
+revoke execute on grant_schema_s1.grant_schema_f2 from grant_schema_u1;
+go
+
+-- tsql user=grant_schema_l1 password=12345678
+-- User has SCHEMA privileges, should be accessible.
+use grant_schema_d1;
+go
+
+select * from grant_schema_s1.grant_schema_t3;
+go
+
+select * from grant_schema_s1.grant_schema_v2;
+go
+
+exec grant_schema_s1.grant_schema_p2;
+go
+
+select * from grant_schema_s1.grant_schema_f2();
+go
+
+-- tsql
+-- User has OBJECT privilege, REVOKE OBJECT privilege
+-- case 7: User has no privileges, should not be accessible. 
+use grant_schema_d1;
+go
+revoke select on grant_schema_s2.grant_schema_t2 from grant_schema_u1;
+go
+use master;
+go
+
+-- tsql user=grant_schema_l1 password=12345678
+use grant_schema_d1;
+go
+
+select * from grant_schema_s2.grant_schema_t2;
+go
+
+-- tsql
+-- User has OBJECT privilege, REVOKE SCHEMA privilege
+-- case 8: User has OBJECT privileges, would not be accessible. 
+use grant_schema_d1;
+go
+revoke select on schema::grant_schema_s2 from grant_schema_u1; 
+go
+use master;
+go
+
+-- tsql user=grant_schema_l1 password=12345678
+use grant_schema_d1;
+go
+
+select * from grant_schema_s2.grant_schema_t1;
+go
+
+-- tsql
+-- User has OBJECT privilege, GRANT and REVOKE SCHEMA privilege
+-- case 5: User has OBJECT privileges, would not be accessible. 
+use grant_schema_d1;
+go
+grant  select on schema::grant_schema_s2 to grant_schema_u1;
+go
+
+revoke select on schema::grant_schema_s2 from grant_schema_u1; 
+go
+use master;
+go
+
+-- tsql user=grant_schema_l1 password=12345678
+use grant_schema_d1;
+go
+
+select * from grant_schema_s2.grant_schema_t1;
+go
+

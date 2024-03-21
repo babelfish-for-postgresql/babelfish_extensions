@@ -1,0 +1,67 @@
+-- tsql
+
+create table tab1(id1 int)
+go
+
+create trigger trig1 on tab1
+for update
+as begin
+  return;
+end
+go
+
+
+-- psql
+
+create table tab2(id2 int)
+go
+
+create or replace function func2()
+  returns "trigger" as
+'begin
+    return NEW;
+end;'
+  language 'plpgsql' volatile
+go
+
+create trigger trig2 before update
+  on tab2 for each row
+  execute procedure func2();
+go
+
+comment on trigger trig1 on master_dbo.tab1 is 'hello1'
+go
+comment on trigger trig2 on tab2 is 'hello2'
+go
+
+select description 
+from pg_description 
+join pg_trigger
+on pg_description.objoid = pg_trigger.oid 
+where tgname = 'trig1'
+or tgname = 'trig2'
+go
+~~START~~
+text
+hello1
+hello2
+~~END~~
+
+
+
+-- tsql
+
+drop trigger trig1
+go
+drop table tab1
+go
+
+
+-- psql
+
+drop trigger trig2 on tab2
+go
+drop function func2
+go
+drop table tab2
+go
