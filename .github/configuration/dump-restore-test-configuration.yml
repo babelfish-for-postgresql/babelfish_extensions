@@ -3,13 +3,31 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null
+    logical-database: null,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null
+    logical-database: null,
+    type: full
+  }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: copy,
+    dump-format: plain,
+    logical-database: null,
+    type: schema-cum-data-only
+  },
+  {
+    version: target.latest,
+    dump-data-as: copy,
+    dump-format: plain,
+    logical-database: null,
+    type: schema-cum-data-only
   }
 ],
 [
@@ -17,13 +35,15 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: custom,
-    logical-database: master
+    logical-database: master,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: custom,
-    logical-database: master
+    logical-database: master,
+    type: full
   }
 ],
 [
@@ -31,13 +51,31 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    logical-database: null
+    logical-database: null,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    logical-database: null
+    logical-database: null,
+    type: full
+  }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: inserts,
+    dump-format: custom,
+    logical-database: master,
+    type: schema-cum-data-only
+  },
+  {
+    version: target.latest,
+    dump-data-as: inserts,
+    dump-format: custom,
+    logical-database: master,
+    type: schema-cum-data-only
   }
 ],
 [
@@ -45,13 +83,15 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    logical-database: master
+    logical-database: master,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    logical-database: master
+    logical-database: master,
+    type: full
   }
 ],
 [
@@ -59,12 +99,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: database_1
+    logical-database: database_1,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: database_1
+    logical-database: database_1,
+    type: full
   }
 ]]

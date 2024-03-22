@@ -34,9 +34,6 @@ insert into tab_varbinary
 values (0xBAADF00D, 1234)
 GO
 
-create index ix_tab_binary_b on tab_varbinary (a)
-GO
-
 create procedure babel_3939_vu_prepare_p2 AS BEGIN
 select * from tab_varbinary where a = 0xBAADF00D;
 select * from tab_varbinary where a = cast(0xBAADF00D as binary);
