@@ -3,13 +3,31 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    database-level: false
+    database-level: false,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    database-level: false
+    database-level: false,
+    type: full
+  }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: copy,
+    dump-format: plain,
+    database-level: false,
+    type: schema-cum-data-only
+  },
+  {
+    version: target.latest,
+    dump-data-as: copy,
+    dump-format: plain,
+    database-level: false,
+    type: schema-cum-data-only
   }
 ],
 [
@@ -17,13 +35,15 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: custom,
-    database-level: true
+    database-level: true,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: custom,
-    database-level: true
+    database-level: true,
+    type: full
   }
 ],
 [
@@ -31,13 +51,31 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    database-level: false
+    database-level: false,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    database-level: false
+    database-level: false,
+    type: full
+  }
+],
+[
+  {
+    version: source.latest,
+    dump-data-as: inserts,
+    dump-format: custom,
+    database-level: false,
+    type: schema-cum-data-only
+  },
+  {
+    version: target.latest,
+    dump-data-as: inserts,
+    dump-format: custom,
+    database-level: false,
+    type: schema-cum-data-only
   }
 ],
 [
@@ -45,12 +83,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    database-level: true
+    database-level: true,
+    type: full
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    database-level: true
+    database-level: true,
+    type: full
   }
 ]]
