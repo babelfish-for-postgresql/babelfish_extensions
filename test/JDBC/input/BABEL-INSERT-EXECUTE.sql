@@ -242,6 +242,33 @@ insert into @a execute('select * from t1; select 3');
 select * from @a;
 go
 
+create schema user_defined_sch;
+go
+
+create type user_defined_sch.test_tbl_type as table (a int, b varchar(10))
+go
+
+create table user_defined_sch.test_tbl (a int, b varchar(10))
+go
+
+insert into user_defined_sch.test_tbl values (1, 'AAA'), (2, 'Bbb');
+go
+
+create procedure user_defined_sch.test_proc
+as
+begin
+    select * from user_defined_sch.test_tbl;
+end;
+go
+
+exec user_defined_sch.test_proc
+go
+
+declare @tbl_var user_defined_sch.test_tbl_type
+insert into @tbl_var (a,b) exec user_defined_sch.test_proc
+select * from @tbl_var
+go
+
 -- clean up
 drop table t1
 go
@@ -269,4 +296,12 @@ go
 drop procedure sp_select_mismatch_after_subtran
 go
 drop procedure sp_select_param
+go
+drop procedure user_defined_sch.test_proc
+go
+drop table user_defined_sch.test_tbl
+go
+drop type user_defined_sch.test_tbl_type
+go
+drop schema user_defined_sch
 go
