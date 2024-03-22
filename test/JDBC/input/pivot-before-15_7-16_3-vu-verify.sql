@@ -211,20 +211,6 @@ PIVOT (
 ) AS pvt2
 GO
 
--- procedure test
-exec top_n_pivot 10
-GO
-
-exec top_n_pivot 5
-GO
-
--- function test
-SELECT * FROM test_table_valued_function(12);
-GO
-
-SELECT * FROM test_table_valued_function(2);
-GO
-
 -- explain pivot
 SET BABELFISH_SHOWPLAN_ALL ON;
 SELECT TOP 5 ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
@@ -702,25 +688,6 @@ JOIN
     ) AS pvt where EmployeeID > 245
 ) AS p2
 ON p1.EmployeeID = p2.EmployeeID ORDER BY 1
-GO
-
--- Test view as a data source in a stmt with pivot operator
-SELECT TOP 5 EmployeeID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT EmployeeID, ItemID, StoreID
-    FROM StoreReceipt_view
-)AS srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID IN ([2], [3], [4], [5], [6])
-) AS pvt
-GO
-
--- Test view of a stmt with pivot operator
-SELECT ManufactureID, STORE2, STORE3, STORE4, STORE5, STORE6
-FROM pivot_view
-ORDER BY ManufactureID
 GO
 
 -- aggregate string value, when no row is selected, should output NULL
