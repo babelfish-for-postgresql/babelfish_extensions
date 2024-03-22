@@ -618,63 +618,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-
 create table pivot_insert_into(ManufactureID int, EmployeeID int, p1 int, p2 int, p3 int, p4 int, p5 int);
-GO
-
-CREATE PROCEDURE top_n_pivot
-    (
-    @Number int = 5
-    )
-AS
-BEGIN
-    SELECT TOP(@Number) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT ManufactureID, ItemID, StoreID
-        FROM StoreReceipt
-    )as srctable
-    PIVOT (
-        COUNT (ItemID)
-        FOR StoreID in ([2], [3], [4], [5], [6])
-    ) AS pvt2
-END;
-GO
-
-CREATE FUNCTION test_table_valued_function(@Number int)
-RETURNS TABLE
-AS
-RETURN
-    SELECT TOP(@Number) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-    FROM
-    (
-        SELECT ManufactureID, ItemID, StoreID
-        FROM StoreReceipt
-    )as srctable
-    PIVOT (
-        COUNT (ItemID)
-        FOR StoreID in ([2], [3], [4], [5], [6])
-    ) AS pvt2
-GO
-
-CREATE VIEW StoreReceipt_view
-AS
-SELECT * FROM StoreReceipt;
-GO
-
--- Test create view for stmt with pivot operator
-CREATE VIEW pivot_view
-AS
-SELECT TOP(5) ManufactureID, [2] AS STORE2, [3] AS STORE3, [4] AS STORE4, [5] AS STORE5, [6] AS STORE6
-FROM
-(
-    SELECT ManufactureID, ItemID, StoreID
-    FROM StoreReceipt
-)as srctable
-PIVOT (
-    COUNT (ItemID)
-    FOR StoreID in ([2], [3], [4], [5], [6])
-) AS pvt
 GO
 
 -- BABEL-4558 
@@ -683,7 +627,6 @@ CREATE TABLE OSTable(
     [Sid] [int] NOT NULL
 )
 GO
-
 
 CREATE TABLE STable(
     [Id] [int] IDENTITY(1,1) NOT NULL,

@@ -4452,6 +4452,11 @@ bbf_pivot(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
 	
+	if (!IsA(fcinfo->pivot_parsetree, List) || !IsA(fcinfo->pivot_extrainfo, List))
+		ereport(ERROR,
+			(errcode(ERRCODE_CHECK_VIOLATION),
+				errmsg("Babelfish PIVOT is not properly initialized.")));
+
 	bbf_pivot_src_sql = (RawStmt *) list_nth(fcinfo->pivot_parsetree, 0);
 	bbf_pivot_cat_sql = (RawStmt *) list_nth(fcinfo->pivot_parsetree, 1);
 	query_string = ((String *) list_nth(fcinfo->pivot_extrainfo, 0))->sval;
