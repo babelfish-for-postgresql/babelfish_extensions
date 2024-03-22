@@ -4625,6 +4625,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		char	   *login = GetUserNameFromId(GetSessionUserId(), false);
 		char	   *user = get_user_for_database(stmt->db_name);
 
+		if (stmt->insert_exec)
+		{
+			estate->db_name = stmt->db_name;
+		}
+
 		if (user)
 			SetCurrentRoleId(GetSessionUserId(), false);
 		else
@@ -4660,8 +4665,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			int			ret = exec_stmt_insert_execute_select(estate, expr);
 
 			if (stmt->is_cross_db)
-				SetCurrentRoleId(current_user_id, false);
+			{
+				if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+					set_session_properties(cur_dbname);
 
+				SetCurrentRoleId(current_user_id, false);
+			}
+			if (reset_session_properties)
+			{
+				set_session_properties(cur_dbname);
+				SetCurrentRoleId(current_user_id, false);
+			}
 			return ret;
 		}
 
@@ -10255,7 +10269,11 @@ reset_search_path(PLtsql_stmt_execsql *stmt, char **old_search_path, bool *reset
 		 * call stack, update the search path accordingly.
 		 */
 		if (top_es_entry->estate && top_es_entry->estate->err_stmt &&
-			top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC)
+			(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC || 
+			(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL && 
+			  ((PLtsql_stmt_execsql*)top_es_entry->estate->err_stmt)->insert_exec &&
+			  ((PLtsql_stmt_execsql*)top_es_entry->estate->err_stmt)->is_cross_db)
+			))
 		{
 			if (top_es_entry->estate->schema_name != NULL && stmt->is_dml)
 			{
