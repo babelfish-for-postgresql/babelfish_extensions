@@ -506,7 +506,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 	char	   *tempString;
 	int			i = 0;
 	char	   *messageData = message->data;
-	StringInfo	tempStringInfo = palloc(sizeof(StringInfoData));
+	StringInfoData	tempStringInfo;
 	uint32_t	collation;
 
 	/* Database-Name.Schema-Name.TableType-Name */
@@ -524,19 +524,21 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 								"has a non-zero length database name specified. Database name is not allowed with a table-valued parameter, "
 								"only schema name and type name are valid.",
 								temp->paramOrdinal + 1, temp->paramMeta.colName.data, 1, 1, temp->type)));
-			initStringInfo(tempStringInfo);
+			initStringInfo(&tempStringInfo);
+			
+			memset(tempStringInfo.data, 0, tempStringInfo.maxlen);
 
 			tempString = palloc0(len * 2);
 			memcpy(tempString, &messageData[*offset], len * 2);
-			TdsUTF16toUTF8StringInfo(tempStringInfo, tempString, len * 2);
+			TdsUTF16toUTF8StringInfo(&tempStringInfo, tempString, len * 2);
 
 			*offset += len * 2;
 			temp->len += len;
 
 			if (i == 1)
-				temp->tvpInfo->tvpTypeSchemaName = tempStringInfo->data;
+				temp->tvpInfo->tvpTypeSchemaName = tempStringInfo.data;
 			else
-				temp->tvpInfo->tvpTypeName = tempStringInfo->data;
+				temp->tvpInfo->tvpTypeName = tempStringInfo.data;
 
 		}
 		else if (i == 2)
@@ -550,7 +552,7 @@ SetColMetadataForTvp(ParameterToken temp, const StringInfo message, uint64_t *of
 		}
 	}
 
-	temp->tvpInfo->tableName = tempStringInfo->data;
+	temp->tvpInfo->tableName = tempStringInfo.data;
 	i = 0;
 
 	memcpy(&isTvpNull, &messageData[*offset], sizeof(uint16));
