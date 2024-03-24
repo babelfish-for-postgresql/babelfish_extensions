@@ -1,8 +1,9 @@
+-- error should not have been thrown, should be fixed under BABEL-1710
 SELECT c_comp FROM BABEL_3147_vu_prepare_t_1
 GO
-~~START~~
-char
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "babel_3147_vu_prepare_t_1" does not exist)~~
 
 
 -- Test ISNULL with numeric columns
