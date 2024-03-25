@@ -7,6 +7,8 @@
 #include "dynastack.h"
 #include "table_variable_mvcc.h"
 
+#define ENVCHANGE_ROLLBACKTXN		0x0a
+
 /***************************************************************************************
  *                         Execution Actions
  **************************************************************************************/
@@ -2034,5 +2036,5 @@ send_env_change_token_on_txn_abort(void)
 	uint64_t	txnId = (uint64_t) MyProc->lxid;
 
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change_binary)
-		((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (10, NULL, 0, &txnId, sizeof(uint64_t));
+		((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (ENVCHANGE_ROLLBACKTXN, NULL, 0, &txnId, sizeof(uint64_t));
 }

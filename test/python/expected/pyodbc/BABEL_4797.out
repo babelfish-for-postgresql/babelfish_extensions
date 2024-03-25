@@ -212,7 +212,7 @@ int
 ~~END~~
 
 
-# begin tran -> error in proc (should rollback txn) -> driver should implicitly spawn new txn -> commit
+# begin tran -> error in proc (statement abort error) -> commit
 # Using a mapped statement aborting error inside a procedure
 
 CREATE PROCEDURE babel_4797_p AS BEGIN TRY INSERT INTO babel_4797 VALUES (10); SELECT 1/0; INSERT INTO babel_4797 VALUES (20); END TRY BEGIN CATCH SELECT 'in exception block'; END CATCH;
