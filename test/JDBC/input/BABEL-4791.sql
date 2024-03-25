@@ -211,3 +211,43 @@ select * from y where concat("A",substring(a,3,1),"Ā") like '%b%';
 declare @b varchar='ShÅmeEm'
 select * from y where @b LIKE concat("'%",substring(a,3,1),"%'")
 GO
+
+
+-- SUB QUERY
+create table t1(a nvarchar(51) collate Latin1_General_CI_AI, b nvarchar(51) collate Latin1_General_CI_AI)
+go
+create table t2(c nvarchar(51) collate Latin1_General_CI_AI)
+go
+insert into t1 values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
+go
+insert into t2 values (N'RaŊdom') , (N'Shameem')
+go
+-- returns 1 row
+select a from t1 where b in (select c from t2 where c like '%a%')
+go
+-- returns 1 row
+select a from t1 where b in (select c from t2 where c like '%s%')
+go
+insert into t2 values (N'BleȘȘing')
+go
+-- returns 2 rows
+select a from t1 where b in (select c from t2 where c like '%s%')
+go
+
+-- CASE
+create table t1(a nvarchar(51) collate Latin1_General_CI_AI)
+insert into t1 values (N'RaŊdom'),(N'Random'),(N'Ŋecessary'),(N'necessary')
+go
+-- returns 4 rows of 1
+select case when a like '%n%' then 1 else 2 end from t1
+go
+
+-- COMPLEX CASE WITH SUB QUERY
+create table t1(a nvarchar(51) collate Latin1_General_CI_AI, b nvarchar(51) collate Latin1_General_CI_AI)
+insert into t1 values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
+GO
+-- returns 2 rows
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a%' ELSE '%y' END);
+
+-- returns 1 row
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%') = 1 THEN '%a%' ELSE '%y' END);
