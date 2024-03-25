@@ -29,6 +29,7 @@
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
+#include "commands/typecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
 #include "common/logging.h"
@@ -165,6 +166,14 @@ static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bo
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static Oid	pltsql_AssignTempTypeArrayOid(void);
+static ObjectAddress pltsql_AddNewTempRelationType(const char *typeName,
+				   Oid typeNamespace,
+				   Oid new_rel_oid,
+				   char new_rel_kind,
+				   Oid ownerid,
+				   Oid new_row_type,
+				   Oid new_array_type);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static bool pltsql_is_local_only_inval_msg(const SharedInvalidationMessage *msg);
 static EphemeralNamedRelation pltsql_get_tsql_enr_from_oid(Oid oid);
@@ -246,6 +255,8 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
+static AssignTempTypeArrayOid_hook_type prev_AssignTempTypeArrayOid_hook = NULL;
+static AddNewTempRelationType_hook_type prev_AddNewTempRelationType_hook = NULL;
 static pltsql_is_local_only_inval_msg_hook_type prev_pltsql_is_local_only_inval_msg_hook = NULL;
 static pltsql_get_tsql_enr_from_oid_hook_type prev_pltsql_get_tsql_enr_from_oid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
@@ -375,6 +386,12 @@ InstallExtendedHooks(void)
 
 	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
 	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
+
+	prev_AssignTempTypeArrayOid_hook = AssignTempTypeArrayOid_hook;
+	AssignTempTypeArrayOid_hook = pltsql_AssignTempTypeArrayOid;
+
+	prev_AddNewTempRelationType_hook = AddNewTempRelationType_hook;
+	AddNewTempRelationType_hook = pltsql_AddNewTempRelationType;
 
 	prev_pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg_hook;
 	pltsql_is_local_only_inval_msg_hook = pltsql_is_local_only_inval_msg;
@@ -531,6 +548,8 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
+	AssignTempTypeArrayOid_hook = prev_AssignTempTypeArrayOid_hook;
+	AddNewTempRelationType_hook = prev_AddNewTempRelationType_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
@@ -846,6 +865,84 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	} while (collides);
 
 	return newOid;
+}
+
+static Oid
+pltsql_AssignTempTypeArrayOid()
+{
+	Oid			type_array_oid;
+	Relation	pg_type;
+
+	/* We should not be creating TSQL Temp Tables in pg_upgrade. */
+	Assert (!IsBinaryUpgrade);
+
+	pg_type = table_open(TypeRelationId, AccessShareLock);
+
+	type_array_oid = pltsql_GetNewTempOidWithIndex(pg_type, TypeOidIndexId, Anum_pg_type_oid);
+
+	table_close(pg_type, AccessShareLock);
+
+	return type_array_oid;
+}
+
+static ObjectAddress
+pltsql_AddNewTempRelationType(const char *typeName,
+				   Oid typeNamespace,
+				   Oid new_rel_oid,
+				   char new_rel_kind,
+				   Oid ownerid,
+				   Oid new_row_type,
+				   Oid new_array_type)
+{
+	Relation	pg_type;
+
+	/* Again, we should not be creating TSQL Temp Tables in pg_upgrade. */
+	Assert (!IsBinaryUpgrade);
+
+	/* We force the oid if reltypeid is not set. */
+	if (!OidIsValid(new_row_type))
+	{
+		pg_type = table_open(TypeRelationId, AccessShareLock);
+
+		new_row_type = pltsql_GetNewTempOidWithIndex(pg_type, TypeOidIndexId,
+												Anum_pg_type_oid);
+
+		table_close(pg_type, AccessShareLock);
+	}
+
+	return
+		TypeCreate(new_row_type,	/* optional predetermined OID */
+				   typeName,	/* type name */
+				   typeNamespace,	/* type namespace */
+				   new_rel_oid, /* relation oid */
+				   new_rel_kind,	/* relation kind */
+				   ownerid,		/* owner's ID */
+				   -1,			/* internal size (varlena) */
+				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
+				   TYPCATEGORY_COMPOSITE,	/* type-category (ditto) */
+				   false,		/* composite types are never preferred */
+				   DEFAULT_TYPDELIM,	/* default array delimiter */
+				   F_RECORD_IN, /* input procedure */
+				   F_RECORD_OUT,	/* output procedure */
+				   F_RECORD_RECV,	/* receive procedure */
+				   F_RECORD_SEND,	/* send procedure */
+				   InvalidOid,	/* typmodin procedure - none */
+				   InvalidOid,	/* typmodout procedure - none */
+				   InvalidOid,	/* analyze procedure - default */
+				   InvalidOid,	/* subscript procedure - none */
+				   InvalidOid,	/* array element type - irrelevant */
+				   false,		/* this is not an array type */
+				   new_array_type,	/* array type if any */
+				   InvalidOid,	/* domain base type - irrelevant */
+				   NULL,		/* default value - none */
+				   NULL,		/* default binary representation */
+				   false,		/* passed by reference */
+				   TYPALIGN_DOUBLE, /* alignment - must be the largest! */
+				   TYPSTORAGE_EXTENDED, /* fully TOASTable */
+				   -1,			/* typmod */
+				   0,			/* array dimensions for typBaseType */
+				   false,		/* Type NOT NULL */
+				   InvalidOid); /* rowtypes never have a collation */
 }
 
 static AclResult
