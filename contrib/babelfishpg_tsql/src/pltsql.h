@@ -1637,6 +1637,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*send_done) (int tag, int status,
 							  int curcmd, uint64_t nprocessed);
 	void		(*send_env_change) (int envid, const char *new_val, const char *old_val);
+	void		(*send_env_change_binary) (int envid, void *newValue, int newNbytes, void *oldValue, int oldNbytes);
 	bool		(*get_tsql_error) (ErrorData *edata,
 								   int *tsql_error_code,
 								   int *tsql_error_severity,
