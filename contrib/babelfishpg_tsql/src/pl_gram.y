@@ -7492,19 +7492,16 @@ read_tsql_extended_cursor_options(void)
 
 	/* [ FORWARD_ONLY | SCROLL ] */
 	tok = yylex();
-	if (tok_is_keyword(tok, &yylval, K_FORWARD_ONLY, "forward_only"))
-	{
-		/* just mark TSQL_CURSOR_OPT_FORWARD_ONLY to indicate query explicitly specifies the option */
-		extended_cursor_options |= (CURSOR_OPT_NO_SCROLL | TSQL_CURSOR_OPT_FORWARD_ONLY);
-	}
-	else if (tok_is_keyword(tok, &yylval, K_SCROLL, "scroll"))
+	if (tok_is_keyword(tok, &yylval, K_SCROLL, "scroll"))
 	{
 		/* just mark TSQL_CURSOR_OPT_SCROLL to indicate query explicitly specifies the option */
 		extended_cursor_options |= (CURSOR_OPT_SCROLL | TSQL_CURSOR_OPT_SCROLL);
 	}
 	else
 	{
-		pltsql_push_back_token(tok);
+		/* just mark TSQL_CURSOR_OPT_FORWARD_ONLY to indicate query explicitly specifies the option */
+		/* not specifying anything should default to NO_SCROLL or FORWARD_ONLY */
+		extended_cursor_options |= (CURSOR_OPT_NO_SCROLL | TSQL_CURSOR_OPT_FORWARD_ONLY);
 	}
 
 	/* [ STATIC | KEYSET | DYNAMIC | FAST_FORWARD ] */
