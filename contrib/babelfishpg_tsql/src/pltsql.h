@@ -197,6 +197,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_CHANGE_DBOWNER,
 	PLTSQL_STMT_DBCC,
 	PLTSQL_STMT_FULLTEXTINDEX,
+	PLTSQL_STMT_GRANTSCHEMA
 } PLtsql_stmt_type;
 
 /*
@@ -1069,6 +1070,20 @@ typedef struct PLtsql_stmt_fulltextindex
 } PLtsql_stmt_fulltextindex;
 
 /*
+ *	Grant on schema stmt
+ */
+typedef struct PLtsql_stmt_grantschema
+{
+	PLtsql_stmt_type cmd_type;
+	int			lineno;
+	bool		is_grant;
+	int		privileges;
+	List		*grantees;		/* list of users */
+	bool 		with_grant_option;
+	char		*schema_name;	/* schema name */
+} PLtsql_stmt_grantschema;
+
+/*
  * ASSERT statement
  */
 typedef struct PLtsql_stmt_assert
@@ -1623,6 +1638,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*send_done) (int tag, int status,
 							  int curcmd, uint64_t nprocessed);
 	void		(*send_env_change) (int envid, const char *new_val, const char *old_val);
+	void		(*send_env_change_binary) (int envid, void *newValue, int newNbytes, void *oldValue, int oldNbytes);
 	bool		(*get_tsql_error) (ErrorData *edata,
 								   int *tsql_error_code,
 								   int *tsql_error_severity,
@@ -1989,6 +2005,8 @@ extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 extern int	get_insert_bulk_rows_per_batch(void);
 extern int	get_insert_bulk_kilobytes_per_batch(void);
 extern char *get_original_query_string(void);
+extern AclMode string_to_privilege(const char *privname);
+extern const char *privilege_to_string(AclMode privilege);
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -2051,6 +2069,7 @@ extern const char *gen_schema_name_for_fulltext_index(const char *schema_name);
 extern bool check_fulltext_exist(const char *schema_name, const char *table_name);
 extern char *replace_special_chars_fts_impl(char *input_str);
 extern bool is_unique_index(Oid relid, const char *index_name);
+extern void exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege);
 extern int	TsqlUTF8LengthInUTF16(const void *vin, int len);
 extern void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int charlen, bool isExplicit);
 extern void TsqlCheckUTF16Length_varchar(const char *s, int32 len, int32 maxlen, bool isExplicit);
@@ -2089,7 +2108,7 @@ extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);
-extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee);
+extern void update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv);
 extern void update_RenameStmt(Node *n, const char *old_name, const char *new_name);
 extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName *typeName, int32 *typmod, bool is_cast);
