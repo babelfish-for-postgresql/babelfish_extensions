@@ -449,7 +449,7 @@ GO
 drop function mstvf_constraints;
 GO
 
---BABEL-3311 TVF name truncation
+-- BABEL-3311 TVF name truncation
 
 -- function name longer than 63 characters
 CREATE FUNCTION a_very_long_function_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(@id INT)
