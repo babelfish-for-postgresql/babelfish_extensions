@@ -1,0 +1,69 @@
+
+create table dbmeta_tab1(col1 int primary key, col2 nvarchar(max) not null)
+create table dbmeta_tab2(fcol1 int not null, foreign key (fcol1) references dbmeta_tab1(col1))
+create function dbmeta_func1() returns int as begin return 1 end
+create function dbmeta_func2(@par1 int) returns table return select cast(@par1 as int) as col1, cast ('foo' as nvarchar(max)) as col2
+create index idx1 on dbmeta_tab1(col2)
+create unique index idx2 on dbmeta_tab1(col2)
+create procedure dbmeta_proc1 as begin return end
+create procedure dbmeta_proc2 @par1 int as select cast(@par1 as int) as col1, cast ('foo' as nvarchar(max)) as col2
+
+dbmeta#!#getCatalogs
+
+dbmeta#!#getColumnPrivileges#!#master|dbo|dbmeta_tab1|col1
+
+dbmeta#!#getTables#!#master|dbo|dbmeta_%
+dbmeta#!#getTables#!#master|dbo|dbmeta_%|TABLE|VIEW
+
+dbmeta#!#getColumns#!#master|dbo|dbmeta_tab1
+dbmeta#!#getColumns#!#master|dbo|dbmeta_tab1|col1
+
+dbmeta#!#getFunctions#!#master|dbo|dbmeta_%
+dbmeta#!#getFunctions#!#master|dbo|dbmeta_func1
+
+dbmeta#!#getFunctionColumns#!#master|dbo|dbmeta_%
+dbmeta#!#getFunctionColumns#!#master|dbo|dbmeta_func2|@par1
+
+dbmeta#!#getBestRowIdentifier#!#master|dbo|dbmeta_tab1|1|true
+
+dbmeta#!#getCrossReference#!#master|dbo|dbmeta_tab1|master|dbo|dbmeta_tab2
+
+dbmeta#!#getExportedKeys#!#master|dbo|dbmeta_tab1
+dbmeta#!#getExportedKeys#!#master|dbo|dbmeta_tab2
+
+dbmeta#!#getImportedKeys#!#master|dbo|dbmeta_tab1
+dbmeta#!#getImportedKeys#!#master|dbo|dbmeta_tab2
+
+dbmeta#!#getIndexInfo#!#master|dbo|dbmeta_tab1|false|true
+dbmeta#!#getIndexInfo#!#master|dbo|dbmeta_tab2|true|true
+
+dbmeta#!#getMaxConnections
+
+dbmeta#!#getPrimaryKeys#!#master|dbo|dbmeta_tab1
+dbmeta#!#getPrimaryKeys#!#master|dbo|dbmeta_tab2
+
+dbmeta#!#getProcedureColumns#!#master|dbo|dbmeta_%
+dbmeta#!#getProcedureColumns#!#master|dbo|dbmeta_proc2|@par1
+
+dbmeta#!#getProcedures#!#master|dbo|dbmeta_%
+dbmeta#!#getProcedures#!#master|dbo|dbmeta_proc1
+
+# Assertion '!empty()' failed, todo: enable after gh-2431 is fixed
+#dbmeta#!#getSchemas#!#master
+#dbmeta#!#getSchemas#!#master|dbo
+
+dbmeta#!#getTablePrivileges#!#master|dbo|dbmeta_tab1
+
+dbmeta#!#getTypeInfo
+
+dbmeta#!#getUserName
+
+# sp_special_columns called with @col_type = 'V'
+dbmeta#!#getVersionColumns#!#master|dbo|dbmeta_tab1
+
+drop table dbmeta_tab2
+drop table dbmeta_tab1
+drop function dbmeta_func1
+drop function dbmeta_func2
+drop procedure dbmeta_proc1
+drop procedure dbmeta_proc2
