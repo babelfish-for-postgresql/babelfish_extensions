@@ -86,6 +86,7 @@ BABEL-4078-before-14_8-or-15_3
 babel_417
 BABEL-493
 BABEL_539
+BABEL-4672
 BABEL-621
 BABEL-728
 BABEL-741
@@ -333,3 +334,4 @@ drop_index-before-15_6-or-16_2
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 babel-4517
+GRANT_SCHEMA-before-15_7-16_3

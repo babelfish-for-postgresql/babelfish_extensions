@@ -200,7 +200,6 @@ static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot 
 static object_access_hook_type prev_object_access_hook = NULL;
 static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
 static void revoke_func_permission_from_public(Oid objectId);
-static char *gen_func_arg_list(Oid objectId);
 
 /*****************************************
  * 			Planner Hook
@@ -2815,7 +2814,7 @@ revoke_func_permission_from_public(Oid objectId)
 	/* Command Counter will be increased by validator */
 }
 
-static char *
+char *
 gen_func_arg_list(Oid objectId)
 {
 	Oid		   *argtypes;
@@ -4597,7 +4596,8 @@ fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *nulls)
 	if (relid == sysdatabases_oid ||
 		relid == namespace_ext_oid ||
 		relid == bbf_view_def_oid ||
-		relid == bbf_extended_properties_oid)
+		relid == bbf_extended_properties_oid ||
+		relid == bbf_schema_perms_oid)
 	{
 		AttrNumber	attnum;
 
