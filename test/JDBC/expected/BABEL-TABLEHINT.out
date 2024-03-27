@@ -206,7 +206,7 @@ select * from t1 (tablock, index(i1)) order by id; -- syntax error
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near ',' at line 1 and character position 25)~~
+~~ERROR (Message: syntax error near 'index' at line 1 and character position 27)~~
 
 -- BABEL-1263: syntax "FROM [table] ([table_hint]) [alias]" should be supported
 Select * FROM t1 n1 (Nolock) WHERE (Select Count(*) FROM t1 (Nolock) n2) <= 0;
