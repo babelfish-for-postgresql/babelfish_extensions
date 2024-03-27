@@ -9,4 +9,3 @@ DROP TYPE udd_char
 DROP TYPE udd_nchar
 DROP TYPE udd_datetime
 DROP TYPE udd_numeric
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';

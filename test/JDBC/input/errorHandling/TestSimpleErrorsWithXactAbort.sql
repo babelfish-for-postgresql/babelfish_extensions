@@ -2,9 +2,6 @@
 SET XACT_ABORT ON
 GO
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
-GO
-
 CREATE TABLE simpleErrorTable (a varchar(15) UNIQUE, b nvarchar(25), c int PRIMARY KEY, d char(15) DEFAULT 'Whoops!', e nchar(25), f datetime, g numeric(4,1) CHECK (g >= 103.5))
 GO
 
@@ -2376,5 +2373,4 @@ GO
 drop table simpleErrorTable
 GO
 
-EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
-GO
+

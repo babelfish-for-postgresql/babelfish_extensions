@@ -228,6 +228,7 @@ protected:
 		antlrcpp::Any visitData_type(TSqlParser::Data_typeContext *ctx) override;
 
 		antlrcpp::Any visitSnapshot_option(TSqlParser::Snapshot_optionContext *ctx) override;
+		antlrcpp::Any visitTable_type_definition(TSqlParser::Table_type_definitionContext* ctx) override;
 
 	/* helpers */
 	void handle_storage_partition(TSqlParser::Storage_partition_clauseContext *ctx);
@@ -639,6 +640,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_definition(TSqlPars
 	if (ctx->ROWGUIDCOL())
 		handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_ROWGUIDCOL, ctx->ROWGUIDCOL(), &st_escape_hatch_rowguidcol_column);
 
+	if (ctx->inline_index())
+		handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(ctx->inline_index()));
+
 	return visitChildren(ctx);
 }
 
@@ -745,15 +749,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 
 	// ctx->column_definition() will be handled by visitColumn_definition(). do nothing here.
 
-	for (auto ictx : ctx->inline_index())
-	{
-		if (ictx->ON())
-			if (ictx->storage_partition_clause().size() > 0)
-			    handle_storage_partition(ictx->storage_partition_clause()[0]);
+	if (!ctx->inline_index().empty())
+		handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(ctx->inline_index()[0]));
 
-		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
-			handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ictx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
-	}
 	for (auto ictx : ctx->table_constraint())
 	{
 		if (ictx->ON())
@@ -938,6 +936,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_type(TSqlParser::Cr
 {
 	if (ctx->table_options() && ctx->table_options()->WITH())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_TYPE_TABLE_OPTION, "table option in CREATE TYPE", getLineAndPos(ctx->table_options()->WITH()));
+	if (!ctx->inline_index().empty())
+		handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(ctx->inline_index()[0]));
 	return visitChildren(ctx);
 }
 
@@ -1907,4 +1907,15 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 
 	if (revoke->AS())
 		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE AS", getLineAndPos(revoke->AS()));
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_type_definition(TSqlParser::Table_type_definitionContext* ctx)
+{
+	for (auto tctx : ctx->table_type_indices())
+	{
+		if (tctx->inline_index())
+			handle(INSTR_UNSUPPORTED_TSQL_INLINE_INDEX, "INLINE INDEX", getLineAndPos(tctx->inline_index()));
+	}
+
+	return visitChildren(ctx);
 }
