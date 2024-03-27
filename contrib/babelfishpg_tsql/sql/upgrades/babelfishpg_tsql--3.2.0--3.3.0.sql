@@ -96,7 +96,9 @@ RETURNS date
 AS 'babelfishpg_tsql', 'EOMONTH'
 LANGUAGE C STABLE PARALLEL SAFE;
 
+SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_server_options ADD COLUMN IF NOT EXISTS connect_timeout INT;
+RESET allow_system_table_mods;
 
 CREATE OR REPLACE VIEW sys.servers
 AS

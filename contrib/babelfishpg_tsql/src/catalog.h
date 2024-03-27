@@ -13,6 +13,13 @@
  *****************************************/
 extern Datum init_catalog(PG_FUNCTION_ARGS);
 extern void rename_update_bbf_catalog(RenameStmt *stmt);
+#define BBF_ASSEMBLIES_TABLE_NAME "assemblies"
+#define BBF_CONFIGURATIONS_TABLE_NAME "babelfish_configurations"
+#define BBF_HELPCOLLATION_TABLE_NAME "babelfish_helpcollation"
+#define BBF_SYSLANGUAGES_TABLE_NAME "babelfish_syslanguages"
+#define BBF_SERVICE_SETTINGS_TABLE_NAME "service_settings"
+#define SPT_DATATYPE_INFO_TABLE_NAME "spt_datatype_info_table"
+#define BBF_VERSIONS_TABLE_NAME "versions"
 
 /*****************************************
  * 			Catalog Hooks

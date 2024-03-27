@@ -2120,11 +2120,15 @@ END;
 $$ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_linkedservers TO PUBLIC;
 
+SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_authid_login_ext ADD COLUMN IF NOT EXISTS orig_loginname SYS.NVARCHAR(128);
+RESET allow_system_table_mods;
 
 UPDATE sys.babelfish_authid_login_ext SET orig_loginname = rolname WHERE orig_loginname IS NULL;
 
+SET allow_system_table_mods = on;
 ALTER TABLE sys.babelfish_authid_login_ext ALTER COLUMN orig_loginname SET NOT NULL;
+RESET allow_system_table_mods;
 
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
