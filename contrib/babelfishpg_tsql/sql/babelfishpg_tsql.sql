@@ -3094,6 +3094,13 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.babelfish_sp_rename_word_parse(IN sys.nvarchar(776), IN sys.varchar(13), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776), INOUT sys.nvarchar(776)) TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_renamedb(
+	IN "@objname" sys.SYSNAME,
+	IN "@newname" sys.SYSNAME
+)
+AS 'babelfishpg_tsql', 'sp_renamedb_internal'
+LANGUAGE C;
+
 CREATE OR REPLACE PROCEDURE sys.sp_rename(
 	IN "@objname" sys.nvarchar(776) = NULL,
 	IN "@newname" sys.SYSNAME = NULL,
@@ -3102,6 +3109,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_rename(
 LANGUAGE 'pltsql'
 AS $$
 BEGIN
+	SET @objtype = TRIM(@objtype);
 	If @objtype IS NULL
 		BEGIN
 			THROW 33557097, N'Please provide @objtype that is supported in Babelfish', 1;
@@ -3113,6 +3121,10 @@ BEGIN
 	ELSE IF @objtype = 'STATISTICS'
 		BEGIN
 			THROW 33557097, N'Feature not supported: renaming object type Statistics', 1;
+		END
+	ELSE IF @objtype = 'DATABASE'
+		BEGIN
+			exec sys.sp_renamedb @objname, @newname;
 		END
 	ELSE
 		BEGIN

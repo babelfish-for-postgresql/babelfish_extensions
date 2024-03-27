@@ -78,6 +78,7 @@ PG_FUNCTION_INFO_V1(sp_babelfish_volatility);
 PG_FUNCTION_INFO_V1(sp_rename_internal);
 PG_FUNCTION_INFO_V1(sp_execute_postgresql);
 PG_FUNCTION_INFO_V1(sp_enum_oledb_providers_internal);
+PG_FUNCTION_INFO_V1(sp_renamedb_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -3493,6 +3494,50 @@ sp_babelfish_volatility(PG_FUNCTION_ARGS)
 }
 
 extern bool pltsql_quoted_identifier;
+
+Datum
+sp_renamedb_internal(PG_FUNCTION_ARGS)
+{
+	char		*old_db_name = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char		*new_db_name = PG_ARGISNULL(1) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(1));
+	char	  **splited_object_name;
+
+	if (!old_db_name)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			errmsg("The database '(null)' does not exist. Supply a valid database name. To see available databases, use sys.databases.")));
+	if(!new_db_name)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((null)).")));
+
+	/* Sanity checks. */
+	splited_object_name = split_object_name(old_db_name);
+	if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "")
+			|| strcmp(splited_object_name[2], "") || strcmp(splited_object_name[3], "") == 0)
+		ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("The value for the @objname parameter contains invalid characters or violates a basic restriction ((%s)).", old_db_name)));
+
+	pfree(old_db_name);
+	old_db_name = !pltsql_case_insensitive_identifiers ?
+					splited_object_name[3] :
+					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
+
+	splited_object_name = split_object_name(new_db_name);
+	if (strcmp(splited_object_name[0], "") || strcmp(splited_object_name[1], "")
+			|| strcmp(splited_object_name[2], "") || strcmp(splited_object_name[3], "") == 0)
+		ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("The value for the @newname parameter contains invalid characters or violates a basic restriction ((%s)).", new_db_name)));
+
+	pfree(new_db_name);
+	new_db_name = !pltsql_case_insensitive_identifiers ?
+					splited_object_name[3] :
+					downcase_identifier(splited_object_name[3], strlen(splited_object_name[3]), false, false);
+
+	rename_tsql_db(old_db_name, new_db_name);
+
+	PG_RETURN_VOID();
+}
 
 Datum
 sp_rename_internal(PG_FUNCTION_ARGS)

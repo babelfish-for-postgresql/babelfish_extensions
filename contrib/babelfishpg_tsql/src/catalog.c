@@ -13,6 +13,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
+#include "commands/schemacmds.h"
+#include "commands/user.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "tcop/utility.h"
@@ -3035,18 +3037,15 @@ update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name)
 /*
  * Update the name of a physical schema name in the babelfish_namespace_ext catalog.
  */
-void // todo use sys
-update_babelfish_namespace_ext_nsp_name(const char *old_nsp_name, const char *new_nsp_name)
+List* // todo use sys
+update_babelfish_namespace_ext_nsp_name(int16 db_id, char *new_db_name)
 {
 	volatile		Relation namespace_rel;
 	TupleDesc		namespace_rel_descr;
 	ScanKeyData		key;
-	HeapTuple		tuple, db_found;
+	HeapTuple		old_tuple;
 	SysScanDesc		tblscan;
-		
-	Datum		values[NAMESPACE_EXT_NUM_COLS];
-	bool		nulls[NAMESPACE_EXT_NUM_COLS];
-	bool		replaces[NAMESPACE_EXT_NUM_COLS];
+	List			*list_of_schemas_to_rename = NIL;
 
 
 	namespace_rel = table_open(namespace_ext_oid, RowExclusiveLock);
@@ -3054,23 +3053,24 @@ update_babelfish_namespace_ext_nsp_name(const char *old_nsp_name, const char *ne
 
 
 	ScanKeyInit(&key,
-				Anum_namespace_ext_namespace,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(old_nsp_name));
+				Anum_namespace_ext_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(db_id));
 
-	tblscan = systable_beginscan(namespace_rel, namespace_ext_idx_oid_oid, true,
+	tblscan = systable_beginscan(namespace_rel, namespace_ext_oid, false,
 							  NULL, 1, &key);
 
-	db_found = systable_getnext(tblscan);
-	if (!HeapTupleIsValid(db_found))
+	while (HeapTupleIsValid(old_tuple = systable_getnext(tblscan)))
 	{
-		systable_endscan(tblscan);
-		table_close(namespace_rel, AccessShareLock);
-		// if (!missingOk)
-			ereport(ERROR,
-					(errcode(ERRCODE_INTERNAL_ERROR),
-					 errmsg("Could not find logical schema name for: \"%s\"", old_nsp_name)));
-	}
+	HeapTuple	new_tuple;
+	Datum		values[NAMESPACE_EXT_NUM_COLS];
+	bool		nulls[NAMESPACE_EXT_NUM_COLS];
+	bool		replaces[NAMESPACE_EXT_NUM_COLS];
+	bool		isNull;
+	char		*schema_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_namespace_ext_orig_name, namespace_rel_descr, &isNull));
+	// char		*nspname = NameStr(DatumGetName(get_nspname(old_tuple, namespace_rel_descr)));
+	
+	list_of_schemas_to_rename = lappend(list_of_schemas_to_rename, pstrdup(schema_name));
 
 	/* Build a tuple */
 	MemSet(values, 0, sizeof(values));
@@ -3078,38 +3078,47 @@ update_babelfish_namespace_ext_nsp_name(const char *old_nsp_name, const char *ne
 	MemSet(replaces, false, sizeof(replaces));
 
 	/* Set up the new namespace. */
-	values[Anum_namespace_ext_namespace - 1]   = CStringGetDatum(new_nsp_name);
+	values[Anum_namespace_ext_namespace - 1] = CStringGetDatum(get_physical_schema_name(new_db_name, schema_name));
 	replaces[Anum_namespace_ext_namespace - 1] = true;	
 								  
-	tuple = heap_modify_tuple(db_found,
+	new_tuple = heap_modify_tuple(old_tuple,
 							  namespace_rel_descr,
 							  values,
 							  nulls,
 							  replaces);							  
 
 	/* Perform the actual catalog update. */
-	CatalogTupleUpdate(namespace_rel, &tuple->t_self, tuple);
-	
+	CatalogTupleUpdate(namespace_rel, &new_tuple->t_self, new_tuple);
+	heap_freetuple(new_tuple);
+	}
+
 	/* Cleanup. */
-	heap_freetuple(tuple);
-	systable_endscan(tblscan);	
-	table_close(namespace_rel, RowExclusiveLock);	
+	systable_endscan(tblscan);
+	table_close(namespace_rel, AccessShareLock);
+	// if (!missingOk)
+		// ereport(ERROR,
+		// 		(errcode(ERRCODE_INTERNAL_ERROR),
+		// 			errmsg("Could not find logical schema name for: \"%s\"", old_nsp_name)));
+	
+	return list_of_schemas_to_rename;
 }
 
 /*
  * Update the name of a database in the babelfish_authid_user_ext catalog.
  */
-void // todo use sys
+List* // todo use sys
 update_babelfish_authid_user_ext_db_name(
-	const char *old_user_name,
-	const char *new_role_name,
+	// const char *old_user_name,
+	// const char *new_role_name,
+	const char *old_db_name,
 	const char *new_db_name)
 {
 	volatile 		Relation bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;
 	ScanKeyData		key;
-	HeapTuple		tuple, db_found;
+	HeapTuple		new_tuple, old_tuple;
 	SysScanDesc		tblscan;
+	List *list_of_roles_to_rename = NIL;
 		
 	Datum		values[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool		nulls[BBF_AUTHID_USER_EXT_NUM_COLS];
@@ -3130,32 +3139,31 @@ update_babelfish_authid_user_ext_db_name(
 	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);	
 
 	ScanKeyInit(&key,
-				Anum_bbf_authid_user_ext_rolname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(old_user_name));
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(old_db_name));
 
 	tblscan = systable_beginscan(bbf_authid_user_ext_rel,
-							  get_authid_user_ext_idx_oid(),
-							  true, NULL, 1, &key);
+							  get_authid_user_ext_oid(),
+							  false, NULL, 1, &key);
 
 	/* Build a tuple to insert */
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, false, sizeof(nulls));
 	MemSet(replaces, false, sizeof(replaces));
 
-	db_found = systable_getnext(tblscan);
-
-	if (!HeapTupleIsValid(db_found))
+	while (HeapTupleIsValid(old_tuple = systable_getnext(tblscan)))
 	{
-		systable_endscan(tblscan);
-		table_close(bbf_authid_user_ext_rel, AccessShareLock);
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", old_user_name)));
-	}
+	bool isNull;
+	char		*role_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_bbf_authid_user_ext_orig_username, bbf_authid_user_ext_dsc, &isNull));
+	// VARDATA_ANY(&(((Form_authid_user_ext) GETSTRUCT(new_tuple))->orig_username));
+	// char		*schema_name = TextDatumGetCString(heap_getattr(old_tuple, Anum_namespace_ext_orig_name, namespace_rel_descr, &isNull));
+	// char		*nspname = NameStr(DatumGetName(get_nspname(old_tuple, namespace_rel_descr)));
+	
+	list_of_roles_to_rename = lappend(list_of_roles_to_rename, pstrdup(role_name));
 
 	/* Set up the new role name. */
-	values[Anum_bbf_authid_user_ext_rolname - 1]   = CStringGetDatum(new_role_name);
+	values[Anum_bbf_authid_user_ext_rolname - 1]   = CStringGetDatum(get_physical_user_name((char *)new_db_name, role_name, true)); // Name dataype, change datum type
 	replaces[Anum_bbf_authid_user_ext_rolname - 1] = true;
 
 	values[Anum_bbf_authid_user_ext_database_name - 1]   = CStringGetTextDatum(new_db_name);
@@ -3164,16 +3172,144 @@ update_babelfish_authid_user_ext_db_name(
 	values[Anum_bbf_authid_user_ext_database_name - 3]   = TimestampTzGetDatum(GetCurrentStatementStartTimestamp());
 	replaces[Anum_bbf_authid_user_ext_database_name - 3] = true;
 
-	tuple = heap_modify_tuple(db_found,
+	new_tuple = heap_modify_tuple(old_tuple,
 								bbf_authid_user_ext_dsc,
 								values,
 								nulls,
 								replaces);
 
-	CatalogTupleUpdate(bbf_authid_user_ext_rel, &tuple->t_self, tuple);
+	CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
 
-	heap_freetuple(tuple);
-
+	heap_freetuple(new_tuple);
+	}
+	// {
+	// 	systable_endscan(tblscan);
+	// 	table_close(bbf_authid_user_ext_rel, AccessShareLock);
+	// 	ereport(ERROR,
+	// 			(errcode(ERRCODE_UNDEFINED_OBJECT),
+	// 			 errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", old_user_name)));
+	// }
 	systable_endscan(tblscan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	return list_of_roles_to_rename;
+}
+
+void
+rename_tsql_db(char *old_db_name, char *new_db_name)
+{
+	int xactStarted = IsTransactionOrTransactionBlock();
+	Oid save_userid = 0;
+	int save_sec_context = 0;
+	int dbid = get_db_id(old_db_name);
+	int tries;
+
+	/* Alter database is not allowed inside a transaction. */
+	PreventInTransactionBlock(true, "ALTER DATABASE");
+
+	/*
+	 * Check that db_name is not "master", "tempdb", or "msdb",
+	 * IDs 1-4 are reserved for these native system databases.
+	 */
+	if (dbid == 0)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Database %s does not exist. Make sure that the name is entered correctly.", old_db_name)));
+	if (dbid && dbid <= 4)
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("Cannot change the name of the system database %s.", old_db_name)));
+
+	Assert (*pltsql_protocol_plugin_ptr);
+	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
+	for (tries = 0; tries < 50; tries++)
+	{
+		if (!(*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count(dbid))
+			break;
+
+		/* sleep, then try again */
+		pg_usleep(100 * 1000L); /* 100ms */
+		(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
+		/* timed out, still conflicts */
+	}
+
+	if (tries == 50)
+		ereport(ERROR,
+			(errcode(ERRCODE_OBJECT_IN_USE),
+				errmsg("The database could not be exclusively locked to perform the operation.")));
+
+	/* Check permission on the given database. */
+	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))
+			|| strncmp(GetUserNameFromId(GetSessionUserId(), true), get_owner_of_db(old_db_name), NAMEDATALEN))
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Current login %s does not have permission to create new login",
+					GetUserNameFromId(GetSessionUserId(), true))));
+
+	/*
+	 * Get a row exclusive lock on the new logical database we are
+	 * trying to rename.
+	 */
+	if (!TryLockLogicalDatabaseForSession(dbid, RowExclusiveLock))
+		ereport(ERROR,
+			(errcode(ERRCODE_CHECK_VIOLATION),
+				errmsg("The database could not be exclusively locked to perform the operation.")));
+
+	if (!xactStarted)
+		StartTransactionCommand();
+	
+	PG_TRY();
+	{
+	List *list_of_schemas_to_rename;
+	List *list_of_roles_to_rename;
+	ListCell *lc;
+
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
+
+	/* sys.babelfish_sysdatabases */
+	update_sysdatabases_db_name(old_db_name, new_db_name);
+
+	/*
+	 * No need to rename schemas and roles for single-db mode.
+	 */
+	if (MULTI_DB == get_migration_mode())
+	{
+	/* sys.babelfish_namespace_ext */
+	list_of_schemas_to_rename = update_babelfish_namespace_ext_nsp_name(dbid, new_db_name);
+	foreach (lc, list_of_schemas_to_rename)
+	{
+		char *sch = (char *) lfirst(lc);
+		char *old_schema_name = get_physical_schema_name(old_db_name, sch);
+		char *new_schema_name = get_physical_schema_name(new_db_name, sch);
+
+		RenameSchema(old_schema_name, new_schema_name);
+	}
+	
+	/* sys.babelfish_authid_user_ext */
+	list_of_roles_to_rename = update_babelfish_authid_user_ext_db_name(old_db_name, new_db_name);
+	foreach (lc, list_of_roles_to_rename)
+	{
+		char *role = (char *) lfirst(lc);
+		char *old_role_name = get_physical_schema_name(old_db_name, role);
+		char *new_role_name = get_physical_schema_name(new_db_name, role);
+
+		RenameRole(old_role_name, new_role_name);
+	}
+	}
+
+	SetUserIdAndSecContext(save_userid, save_sec_context);
+	}
+	PG_CATCH();
+	{
+		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
+		SetUserIdAndSecContext(save_userid, save_sec_context);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	// PopActiveSnapshot();
+	if (!xactStarted)
+		CommitTransactionCommand();
+
+	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
 }

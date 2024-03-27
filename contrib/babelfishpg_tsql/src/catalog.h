@@ -151,8 +151,9 @@ extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name
 extern bool guest_role_exists_for_db(const char *dbname);
 extern void update_db_owner(const char *new_owner_name, const char *db_name);
 extern void update_sysdatabases_db_name(const char *old_db_name, const char *new_db_name);
-extern void update_babelfish_namespace_ext_nsp_name(const char *old_nsp_name, const char *new_nsp_name);
-extern void update_babelfish_authid_user_ext_db_name(const char *old_user_name, const char *new_role_name, const char *new_db_name);
+extern List *update_babelfish_namespace_ext_nsp_name(int16 db_id, char *new_db_name);
+extern List *update_babelfish_authid_user_ext_db_name(const char *old_db_name, const char *new_db_name);
+extern void rename_tsql_db(char *old_db_name, char *new_db_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

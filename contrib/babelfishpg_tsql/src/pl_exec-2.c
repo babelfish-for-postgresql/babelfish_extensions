@@ -10,8 +10,6 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
 #include "commands/proclang.h"
-#include "commands/schemacmds.h"
-#include "commands/user.h"
 #include "executor/tstoreReceiver.h"
 #include "nodes/parsenodes.h"
 #include "utils/acl.h"
@@ -22,9 +20,7 @@
 
 #include "catalog.h"
 #include "dbcmds.h"
-#include "miscadmin.h"
 #include "pl_explain.h"
-#include "rolecmds.h"
 #include "session.h"
 
 /* helper function to get current T-SQL estate */
@@ -3757,138 +3753,16 @@ exec_stmt_change_dbowner(PLtsql_execstate *estate, PLtsql_stmt_change_dbowner *s
 	return PLTSQL_RC_OK;
 }
 
+// TODO explain
 static int
 exec_stmt_alter_db(PLtsql_execstate *estate, PLtsql_stmt_alter_db *stmt)
 {
-	char *old_dbo_schema_name = get_physical_schema_name(stmt->old_db_name, "dbo");
-	char *new_dbo_schema_name = get_physical_schema_name(stmt->new_db_name, "dbo");
-
-	char *old_guest_schema_name = get_physical_schema_name(stmt->old_db_name, "guest");
-	char *new_guest_schema_name = get_physical_schema_name(stmt->new_db_name, "guest");
-
-	char *old_db_owner_role_name = get_physical_user_name(stmt->old_db_name, "db_owner", false);
-	char *new_db_owner_role_name = get_physical_user_name(stmt->new_db_name, "db_owner", true);
-
-	// char *query = " ";
-	// int rc = 0;
-	// int xactStarted = IsTransactionOrTransactionBlock();
-	Oid save_userid = 0;
-	int save_sec_context = 0;
-	int dbid = get_db_id(stmt->old_db_name);
-	bool res = false;
-
-	// while (!pltsql_plugin_handler_ptr->get_tds_database_backend_count(get_db_id(stmt->old_db_name)))
-	// {
-	// 	Sleep for stmt timeout
-	// }
-
-	Assert (*pltsql_protocol_plugin_ptr);
-
-	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
-	for (int tries = 0; tries < 50; tries++)
-	{
-		if (!(*pltsql_protocol_plugin_ptr)->get_tds_database_backend_count(dbid))
-		{
-			res = true;
-			break;
-		}
-		/* sleep, then try again */
-		pg_usleep(100 * 1000L); /* 100ms */
-		(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
-		/* timed out, still conflicts */
-	}
-
-	if (!res)
-		ereport(ERROR,
-			(errcode(ERRCODE_OBJECT_IN_USE),
-				errmsg("The database could not be exclusively locked to perform the operation.")));
-
 	/*
-	 * Get a roe exclusive lock on the new logical database we are
-	 * trying to rename.
+	 * Currently Babelfish only support rename, when we extend
+	 * the support at that time we can add a boolean to the stmt
+	 * to identify for rename and conditionally call rename_tsql_db
 	 */
-	if (!TryLockLogicalDatabaseForSession(dbid, RowExclusiveLock))
-		ereport(ERROR,
-			(errcode(ERRCODE_CHECK_VIOLATION),
-				errmsg("The database could not be exclusively locked to perform the operation.")));
-
-	/* Check permission on the given database. */
-	// DO FIRST
-	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))
-			|| strncmp(GetUserNameFromId(GetSessionUserId(), true), get_owner_of_db(stmt->old_db_name), NAMEDATALEN))
-		ereport(ERROR,
-			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				errmsg("Current login %s does not have permission to create new login",
-					GetUserNameFromId(GetSessionUserId(), true))));
-
-	// if (!xactStarted)
-	// 	StartTransactionCommand();
-	// PushActiveSnapshot(GetTransactionSnapshot());
-	
-	PG_TRY();
-	{
-
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(get_bbf_role_admin_oid(), save_sec_context | SECURITY_LOCAL_USERID_CHANGE);
-
-	RenameSchema(old_dbo_schema_name, new_dbo_schema_name);
-	RenameSchema(old_guest_schema_name, new_guest_schema_name);
-
-	/* sys.babelfish_namespace_ext */
-	update_babelfish_namespace_ext_nsp_name(old_dbo_schema_name, new_dbo_schema_name);
-	update_babelfish_namespace_ext_nsp_name(old_guest_schema_name, new_guest_schema_name);
-
-	// query = psprintf("UPDATE sys.babelfish_namespace_ext SET nspname = \'%s\' where nspname = \'%s\';", new_dbo_schema_name, old_dbo_schema_name);
-	// query = psprintf("%s UPDATE sys.babelfish_namespace_ext SET nspname = \'%s\' where nspname = \'%s\';", query, new_guest_schema_name, old_guest_schema_name);
-
-	/* sys.babelfish_sysdatabases */
-	update_sysdatabases_db_name(stmt->old_db_name, stmt->new_db_name);
-	// query = psprintf("%s UPDATE sys.babelfish_sysdatabases SET name = \'%s\' WHERE name = \'%s\';", query, stmt->new_db_name, stmt->old_db_name);
-	
-	/* sys.babelfish_authid_user_ext */
-	update_babelfish_authid_user_ext_db_name(old_dbo_schema_name, new_dbo_schema_name, stmt->new_db_name);
-	update_babelfish_authid_user_ext_db_name(old_guest_schema_name, new_guest_schema_name, stmt->new_db_name);
-	update_babelfish_authid_user_ext_db_name(old_db_owner_role_name, new_db_owner_role_name, stmt->new_db_name);
-	// query = psprintf("%s UPDATE sys.babelfish_authid_user_ext SET rolname = \'%s\', database_name = \'%s\', modify_date = NOW() WHERE rolname = \'%s\';",
-	// 			query, new_dbo_schema_name, stmt->new_db_name, old_dbo_schema_name);
-	// query = psprintf("%s UPDATE sys.babelfish_authid_user_ext SET rolname = \'%s\', database_name = \'%s\', modify_date = NOW() WHERE rolname = \'%s\';",
-	// 			query, new_guest_schema_name, stmt->new_db_name, old_guest_schema_name);
-	// query = psprintf("%s UPDATE sys.babelfish_authid_user_ext SET rolname = \'%s\', database_name = \'%s\', modify_date = NOW() WHERE rolname = \'%s\';",
-	// 			query, new_db_owner_role_name, stmt->new_db_name, old_db_owner_role_name);
-
-	// rc = SPI_execute(query, false, 1);
-
-	// if (rc != SPI_OK_UTILITY)
-	// {
-	// 	/* Reset dialect. */
-	// 	// set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-	// 	// 				  GUC_CONTEXT_CONFIG,
-	// 	// 				  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-	// 	elog(ERROR, "Failed SPI: %d", rc);
-	// }
-
-
-	RenameRole(old_dbo_schema_name, new_dbo_schema_name);
-	RenameRole(old_guest_schema_name, new_guest_schema_name);
-	RenameRole(old_db_owner_role_name, new_db_owner_role_name);
-	SetUserIdAndSecContext(save_userid, save_sec_context);
-	}
-	PG_CATCH();
-	{
-		SetUserIdAndSecContext(save_userid, save_sec_context);
-		// PopActiveSnapshot();
-		// if (!xactStarted)
-		// 	CommitTransactionCommand();
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	// PopActiveSnapshot();
-	// if (!xactStarted)
-	// 	CommitTransactionCommand();
-
-	UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
-
+	rename_tsql_db(stmt->old_db_name, stmt->new_db_name);
 	return PLTSQL_RC_OK;
 }
 
