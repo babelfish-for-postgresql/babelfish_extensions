@@ -678,6 +678,25 @@ us_english
 --go
 -- PG procedure/function calls should not be affected by the T-SQL fix 
 -- for unquoted strings in BABEL-334
+CREATE OR REPLACE PROCEDURE unqStr_pgproc_1(par1 varchar(20))
+LANGUAGE plpgsql
+AS $$
+begin
+raise notice 'arg=[%]', par1;
+end
+$$;
+go
+
+CREATE OR REPLACE function unqStr_pgfunc_1(par1 varchar(20)) 
+returns varchar(20)
+LANGUAGE plpgsql
+AS $$
+begin
+return par1;
+end
+$$;
+go
+
 -- should print 'aBc':
 CALL unqStr_pgproc_1('aBc');
 go
