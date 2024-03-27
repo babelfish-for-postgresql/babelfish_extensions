@@ -35,6 +35,7 @@ sys.babelfish_extended_properties
 sys.babelfish_function_ext
 sys.babelfish_helpcollation
 sys.babelfish_namespace_ext
+sys.babelfish_schema_permissions
 sys.babelfish_server_options
 sys.babelfish_sysdatabases
 sys.babelfish_syslanguages

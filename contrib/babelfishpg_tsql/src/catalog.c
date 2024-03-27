@@ -258,11 +258,12 @@ IsPLtsqlExtendedCatalog(Oid relationId)
 	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid ||
 		relationId == namespace_ext_oid || relationId == bbf_authid_login_ext_oid ||
 		relationId == bbf_authid_user_ext_oid || relationId == bbf_view_def_oid ||
-		relationId == bbf_servers_def_oid || relationId == bbf_domain_mapping_oid ||
-		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
-		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
-		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
-		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid)
+		relationId == bbf_servers_def_oid || relationId == bbf_schema_perms_oid ||
+		relationId == bbf_domain_mapping_oid || relationId == bbf_extended_properties_oid ||
+		relationId == bbf_assemblies_oid || relationId == bbf_configurations_oid ||
+		relationId == bbf_helpcollation_oid || relationId == bbf_syslanguages_oid ||
+		relationId == bbf_service_settings_oid || relationId == spt_datatype_info_table_oid ||
+		relationId == bbf_versions_oid)
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
