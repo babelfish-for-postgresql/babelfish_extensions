@@ -245,7 +245,7 @@ IsPltsqlToastRelationHook(Relation relation)
 	* Match IsToastRelation() such that return true for locally owned toast relation only.
 	*/
 	if (strstr(RelationGetRelationName(relation), "@pg_toast"))
-		return get_ENR(currentQueryEnv, RelationGetRelationName(relation));
+		return get_ENR(currentQueryEnv, RelationGetRelationName(relation), true);
 
 	return IsToastNamespace(RelationGetNamespace(relation));
 }
@@ -257,7 +257,7 @@ bool IsPltsqlToastClassHook(Form_pg_class pg_class_tup)
 	*/
 	char *relname = NameStr((pg_class_tup)->relname);
 	if (strstr(relname, "@pg_toast"))
-		return get_ENR(currentQueryEnv, relname);
+		return get_ENR(currentQueryEnv, relname, true);
 
 	return IsToastNamespace(pg_class_tup->relnamespace);
 }
