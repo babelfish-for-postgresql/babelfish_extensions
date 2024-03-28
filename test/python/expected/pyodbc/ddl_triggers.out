@@ -14,7 +14,7 @@ CREATE TABLE [dbo].[babel_1654_vu_prepare_employeedata](
 	[f] [varchar](50) NULL,
  CONSTRAINT [babel_1654_vu_prepare_employeedata_pkey] PRIMARY KEY NONCLUSTERED 
 (
-	[id]
+	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 ) ON [PRIMARY]
 
@@ -29,7 +29,7 @@ CREATE TABLE [dbo].[babel_1654_vu_prepare_t](
 	[b] [varchar](50) NULL,
  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
 (
-	[id]
+	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 ) ON [PRIMARY]
 
@@ -40,20 +40,20 @@ SET QUOTED_IDENTIFIER ON
 CREATE TABLE [dbo].[sys_computed_columns_vu_prepare_t1](
 	[scc_first_number] [smallint] NULL,
 	[scc_second_number] [money] NULL,
-	[scc_multiplied]  AS (scc_first_number * scc_second_number)
+	[scc_multiplied]  AS (scc_first_number * scc_second_number) PERSISTED
 ) ON [PRIMARY]
 
 GO
 
 ALTER TABLE [dbo].[babel_1654_vu_prepare_employeedata] ADD  CONSTRAINT [babel_1654_vu_prepare_employeedata_pkey] PRIMARY KEY NONCLUSTERED 
 (
-	[id]
+	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 GO
 
 ALTER TABLE [dbo].[babel_1654_vu_prepare_t] ADD  CONSTRAINT [babel_1654_vu_prepare_t_pkey] PRIMARY KEY NONCLUSTERED 
 (
-	[id]
+	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON)
 GO
 
