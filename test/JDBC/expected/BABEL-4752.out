@@ -75,10 +75,6 @@ GO
 
 CREATE LOGIN babel_object_id_login3 WITH PASSWORD = '12345678';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The Server principal 'babel_object_id_login3' already exists)~~
-
 
 CREATE USER babel_object_id_master_user3 FOR LOGIN babel_object_id_login1;
 GO
@@ -89,10 +85,6 @@ GO
 
 CREATE LOGIN babel_object_id_login4 WITH PASSWORD = '12345678';
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The Server principal 'babel_object_id_login4' already exists)~~
-
 
 CREATE USER babel_object_id_master_user4 FOR LOGIN babel_object_id_login1;
 GO
@@ -238,4 +230,35 @@ GO
 
 -- tsql      user=babel_object_id_login4 password=12345678
 DROP PROCEDURE babel_4752_p2
+GO
+
+-- psql
+-- Cleanup
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_object_id_login4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_object_id_login3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql     
+USE master;
+GO
+
+DROP LOGIN babel_object_id_login4
+GO
+
+DROP LOGIN babel_object_id_login3
 GO

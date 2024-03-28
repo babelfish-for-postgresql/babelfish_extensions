@@ -154,3 +154,24 @@ GO
 -- tsql      user=babel_object_id_login4 password=12345678
 DROP PROCEDURE babel_4752_p2
 GO
+
+-- Cleanup
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_object_id_login4' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_object_id_login3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql     
+USE master;
+GO
+
+DROP LOGIN babel_object_id_login4
+GO
+
+DROP LOGIN babel_object_id_login3
+GO
