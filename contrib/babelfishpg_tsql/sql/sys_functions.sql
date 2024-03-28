@@ -3061,6 +3061,67 @@ CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+-- helper functions for upper and lower --
+CREATE OR REPLACE FUNCTION sys.upper_helper(sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.lower_helper(sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- upper --
+CREATE OR REPLACE FUNCTION sys.upper(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
+    END IF;
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT sys.upper_helper(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.upper(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_upper' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- lower --
+CREATE OR REPLACE FUNCTION sys.lower(ANYELEMENT)
+RETURNS sys.VARCHAR
+AS $$
+DECLARE
+    varch sys.varchar;
+BEGIN
+    IF pg_typeof($1) IN ('image'::regtype, 'sql_variant'::regtype, 'xml'::regtype, 'geometry'::regtype, 'geography'::regtype) THEN
+        RAISE EXCEPTION 'Argument data type % is invalid for argument 1 of upper function.', pg_typeof($1);
+    END IF;
+    varch := (SELECT CAST ($1 AS sys.varchar));
+    -- Call the underlying function after preprocessing
+    RETURN (SELECT sys.lower_helper(varch));
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;
+
+-- Function to handle NCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- Function to handle NVARCHAR because of return type NVARCHAR
+CREATE OR REPLACE FUNCTION sys.lower(sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_lower' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- For getting host os from PG_VERSION_STR
 CREATE OR REPLACE FUNCTION sys.get_host_os()
 RETURNS sys.NVARCHAR

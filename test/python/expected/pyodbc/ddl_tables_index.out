@@ -148,7 +148,7 @@ CREATE TABLE [dbo].[test_upper](
 	[a] [char](1) NULL
 ) ON [PRIMARY]
 
-ALTER TABLE [dbo].[test_upper]  WITH CHECK ADD  CONSTRAINT [test_upper_a_check] CHECK  (((upper(a) IN ('A', 'B'))))
+ALTER TABLE [dbo].[test_upper]  WITH CHECK ADD  CONSTRAINT [test_upper_a_check] CHECK  (((sys.upper(a) IN ('A', 'B'))))
 ALTER TABLE [dbo].[test_upper] CHECK CONSTRAINT [test_upper_a_check]
 GO
 
