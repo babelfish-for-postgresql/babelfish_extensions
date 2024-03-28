@@ -1,0 +1,25 @@
+
+-- BABEL-4119
+
+-- psql
+VACUUM FULL pg_index;
+GO
+
+-- psql currentSchema=master_dbo,public
+VACUUM FULL pg_index;
+GO
+
+-- Confirm we are able to connect still
+-- psql currentSchema=sys
+SELECT oid, relname FROM pg_class WHERE oid=2679;
+GO
+
+-- vacuum full all tables
+-- psql
+VACUUM FULL;
+GO
+
+-- psql currentSchema=sys
+SELECT oid, relname FROM pg_class WHERE oid=2679;
+GO
+
