@@ -27,6 +27,7 @@
 #include "commands/dbcommands.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
+#include "commands/typecmds.h"
 #include "commands/trigger.h"
 #include "commands/view.h"
 #include "common/logging.h"
@@ -158,6 +159,7 @@ static int	print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bo
 static void pltsql_GetNewObjectId(VariableCache variableCache);
 static Oid  pltsql_GetNewTempObjectId(void);
 static Oid 	pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn);
+static Oid	pltsql_AssignTempTypeOid(void);
 static bool set_and_persist_temp_oid_buffer_start(Oid new_oid);
 static void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ);
 static bool pltsql_bbfCustomProcessUtility(ParseState *pstate,
@@ -230,6 +232,7 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static GetNewTempObjectId_hook_type prev_GetNewTempObjectId_hook = NULL;
 static GetNewTempOidWithIndex_hook_type prev_GetNewTempOidWithIndex_hook = NULL;
+static AssignTempTypeOid_hook_type prev_AssignTempTypeOid_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static bbfViewHasInsteadofTrigger_hook_type prev_bbfViewHasInsteadofTrigger_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
@@ -349,6 +352,9 @@ InstallExtendedHooks(void)
 
 	prev_GetNewTempOidWithIndex_hook = GetNewTempOidWithIndex_hook;
 	GetNewTempOidWithIndex_hook = pltsql_GetNewTempOidWithIndex;
+
+	prev_AssignTempTypeOid_hook = AssignTempTypeOid_hook;
+	AssignTempTypeOid_hook = pltsql_AssignTempTypeOid;
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
@@ -473,6 +479,7 @@ UninstallExtendedHooks(void)
 	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	GetNewTempObjectId_hook = prev_GetNewTempObjectId_hook;
 	GetNewTempOidWithIndex_hook = prev_GetNewTempOidWithIndex_hook;
+	AssignTempTypeOid_hook = prev_AssignTempTypeOid_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	bbfViewHasInsteadofTrigger_hook = prev_bbfViewHasInsteadofTrigger_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
@@ -779,6 +786,24 @@ pltsql_GetNewTempOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolu
 	} while (collides);
 
 	return newOid;
+}
+
+static Oid
+pltsql_AssignTempTypeOid()
+{
+	Oid			typoid;
+	Relation	pg_type;
+
+	/* We should not be creating TSQL Temp Tables in pg_upgrade. */
+	Assert (!IsBinaryUpgrade);
+
+	pg_type = table_open(TypeRelationId, AccessShareLock);
+
+	typoid = pltsql_GetNewTempOidWithIndex(pg_type, TypeOidIndexId, Anum_pg_type_oid);
+
+	table_close(pg_type, AccessShareLock);
+
+	return typoid;
 }
 
 static void
