@@ -155,7 +155,7 @@ babelfish_inconsistent_metadata
 babelfish_migration_mode
 schema_resolution_func
 select-strip-parens-before-14-10
-BABEL-3147
+BABEL-3147-before-16_3-or-15_7-or-14_12
 collation_tests_arabic
 collation_tests_greek
 collation_tests_mongolian
@@ -342,3 +342,4 @@ AUTO_ANALYZE-before-15-5-or-14-10
 BABEL_4389
 permission_restrictions_from_pg
 babel-4517
+BABEL-4641-before-16_3-or-15_7-or-14_12

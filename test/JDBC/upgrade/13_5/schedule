@@ -256,3 +256,4 @@ orderby-before-14_8-or-15_3
 AUTO_ANALYZE-before-15-5-or-14-10
 permission_restrictions_from_pg
 # babel-4517 created : BABEL-4727 to track the issue
+BABEL-4641-before-16_3-or-15_7-or-14_12

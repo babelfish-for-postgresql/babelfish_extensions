@@ -1,3 +1,4 @@
+-- error should not have been thrown, should be fixed under BABEL-1710
 SELECT c_comp FROM BABEL_3147_vu_prepare_t_1
 GO
 
