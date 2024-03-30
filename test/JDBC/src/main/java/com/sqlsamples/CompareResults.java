@@ -259,6 +259,13 @@ public class CompareResults {
         } else return 0;
     }
 
+    static int remapSQLTypeForJTDS(int type) {
+        switch (type) {
+            case NCHAR: return CHAR;
+            default: return type;
+        }
+    }
+
     // function to parse SQL data type to Java data type
     static Object parse_data(String result, String datatype, Logger logger) {
 

@@ -78,7 +78,11 @@ public class JDBCPreparedStatement {
             try{
                 /* TODO: Add more data types here as we support them */
                 if(parameter[2].equalsIgnoreCase("<NULL>")){
-                    pstmt.setNull(j - 1, CompareResults.SQLtoJDBCDataTypeMapping(parameter[0]));
+                    int sqlType = CompareResults.SQLtoJDBCDataTypeMapping(parameter[0]);
+                    if ("JtdsPreparedStatement".equals(pstmt.getClass().getSimpleName())) {
+                        sqlType = CompareResults.remapSQLTypeForJTDS(sqlType);
+                    }
+                    pstmt.setNull(j - 1, sqlType);
                 } else if (parameter[0].equalsIgnoreCase("int")) {
                     // if there is decimal point, remove everything after the point
                     if (parameter[2].indexOf('.') != -1) parameter[2] = parameter[2].substring(0, parameter[2].indexOf('.') - 1);
@@ -223,6 +227,10 @@ public class JDBCPreparedStatement {
                 logger.error("Parse Exception: " + e.getMessage(), e);
             } catch (NumberFormatException e) {
                 logger.error("Number Format Exception: " + e.getMessage(), e);
+            } catch (AbstractMethodError e) {
+                logger.error("Abstract Method Error: " + e.getMessage(), e);
+            } catch (NullPointerException e) {
+                logger.error("Null Pointer Exception: " + e.getMessage(), e);
             }
         }
     }

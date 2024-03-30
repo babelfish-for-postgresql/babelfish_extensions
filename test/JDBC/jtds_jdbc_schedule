@@ -2,7 +2,80 @@
 # mssql-jdbc driver. When 'useJTDSInsteadOfMSSQLJDBC' config option is set to
 # 'true' this file is used instead of 'jdbc_schedule' file.
 
+# datatypes
+TestInt
+TestSmallInt
+# Failure: Message: Data truncation
+# TestTinyInt
+TestBigInt
+TestBIT
+# Failure: discrepancy in jTDS behaviour between MSSQL and Babelfish
+# TestDecimal
+TestNumeric
+TestMoney
+TestFloat
+TestReal
+# jTDS reports out of range error on stmt.execute() instead of rs.next()
+# thus columns headers are not printed on error.
+jtds-TestDatetime
+# jTDS date handling differs with mssql-jdbc, behavior on MSSQL and Babelfish is the same
+jtds-TestDate
+# Failure: jTDS behaviour differs from mssql-jdbc on both MSSQL and Babelfish in different way
+# TestDatetime2
+TestSmallDatetime
+# Failure: jTDS behaviour differs from mssql-jdbc on both MSSQL and Babelfish in different way
+# TestTime
+# Failure: FATAL:  UTF16 output of varchar/bpchar exceeds max length
+# TestDatetimeoffset-vu-prepare
+# TestDatetimeoffset-vu-verify
+# TestDatetimeoffset-vu-cleanup
+# java.lang.StringIndexOutOfBoundsException: offset 0, count -17238, length 255
+# TestVarChar
+# Failures: stmt.setCharacterStream() is not supported in jTDS
+# TestText
+TestChar
 TestBinary
+TestImage-vu-prepare
+TestImage-vu-verify
+TestImage-vu-cleanup
+# Failure: Message: Data truncation
+# TestSQLVariant-vu-prepare
+# TestSQLVariant-vu-verify
+# TestSQLVariant-vu-cleanup
+# Failure: conn.createSQLXML() is not supported in jTDS
+# TestXML
+# Failure: select output differs on jTDS
+# TestTableType-vu-prepare
+# TestTableType-vu-verify
+# TestTableType-vu-cleanup
+TestUniqueIdentifier
+
+# sqlBatch
+# jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
+jtds-TestSQLQueries
+
+# errorHandling
+# Failure: error reporting is defferent on jTDS
+# TestSimpleErrors
+# Failure: error reporting is defferent on jTDS
+# TestErrorsWithTryCatch
+
+# storedProcedures
+# jTDS reports column type as nvarchar instead of date, behavior on MSSQL and Babelfish is the same
+jtds-TestStoredProcedures
+
+# cursors
+# Failure: The CLOSE_CURSORS_AT_COMMIT option is not currently supported by the setHoldability method
+# TestCursorFetchNext
+# Failure: The CLOSE_CURSORS_AT_COMMIT option is not currently supported by the setHoldability method
+# TestCursorPrepExecFetchNext
+
+# transactions
+TestTransactionsSQLBatch
+# Failure: error reporting is defferent on jTDS
+# TestTransactionSupportForProcedure
+
+# temporary
 jtds-varchar-max-length-check
 jtds-nvarchar-max-length-check
 jtds-nvarchar-max-length-check2

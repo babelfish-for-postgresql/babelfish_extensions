@@ -1,0 +1,558 @@
+# PROCEDURE WITH NO BODY
+#create procedure sp_test AS BEGIN END;
+# PROCEDURE WITH NO PARAMS
+create table temp_sp2(a int);
+CREATE PROCEDURE sp_test AS BEGIN insert into temp_sp2 values(1); END;
+storedproc#!#prep#!#sp_test#!#
+~~ROW COUNT: 1~~
+
+SELECT * FROM temp_sp2;
+~~START~~
+int
+1
+~~END~~
+
+drop table temp_sp2;
+drop Procedure sp_test;
+# PROCEDURE WITH INPUT PARAMETER
+#drop table temp_sp;
+create table temp_sp(a int);
+Create Procedure stored_proc1 (@a int) As Begin insert into temp_sp values(@a) End;
+# NOT WORKING FOR BABEL,RAISED JIRA 444
+storedproc#!#prep#!#stored_proc1#!#int|-|a|-|-100|-|input
+~~ROW COUNT: 1~~
+
+# MISMATCH IN RETURN VALUES
+exec stored_proc1 -200
+~~ROW COUNT: 1~~
+
+exec stored_proc1 0
+~~ROW COUNT: 1~~
+
+exec stored_proc1 -1
+~~ROW COUNT: 1~~
+
+exec stored_proc1 2
+~~ROW COUNT: 1~~
+
+# filed Jira on this, doesnt work for babel
+#exec stored_proc1 2.2
+SELECT * FROM temp_sp;
+~~START~~
+int
+-100
+-200
+0
+-1
+2
+~~END~~
+
+DROP table temp_sp;
+DROP Procedure stored_proc1
+# input parameter
+CREATE PROCEDURE sp_test1 (@a  INT) AS BEGIN SET @a=100; Select @a as a; END;
+exec sp_test1 2
+~~START~~
+int
+100
+~~END~~
+
+Declare @a int;Set @a=1; exec sp_test1 @a;select @a as a;
+~~START~~
+int
+100
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+storedproc#!#prep#!#sp_test1#!#int|-|a|-|1|-|input
+~~START~~
+int
+100
+~~END~~
+
+storedproc#!#prep#!#sp_test1#!#int|-|a|-|10|-|input
+~~START~~
+int
+100
+~~END~~
+
+DROP PROCEDURE sp_test1
+# TESTING OUT PARAMETERS FOR ALL THE DATATYPES
+# int
+CREATE PROCEDURE sp_test1 (@a  INT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#Declare @a int;Set @a=1; exec sp_test1 @a;select @a as a;
+storedproc#!#prep#!#sp_test1#!#int|-|a|-|1|-|output
+~~START~~
+int
+100
+~~END~~
+
+storedproc#!#prep#!#sp_test1#!#int|-|a|-|1|-|inputoutput
+~~START~~
+int
+100
+~~END~~
+
+DROP PROCEDURE sp_test1
+# smallint
+CREATE PROCEDURE sp_test2 (@a SMALLINT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#Declare @a smallint;Set @a=1; exec sp_test2 @a;select @a as a;
+storedproc#!#prep#!#sp_test2#!#smallint|-|a|-|10|-|output
+~~START~~
+smallint
+100
+~~END~~
+
+storedproc#!#prep#!#sp_test2#!#smallint|-|a|-|10|-|inputoutput
+~~START~~
+smallint
+100
+~~END~~
+
+DROP PROCEDURE sp_test2
+# bigint
+CREATE PROCEDURE sp_test3 (@a BIGINT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+storedproc#!#prep#!#sp_test3#!#bigint|-|a|-|10|-|output
+~~START~~
+bigint
+100
+~~END~~
+
+storedproc#!#prep#!#sp_test3#!#bigint|-|a|-|10|-|inputoutput
+~~START~~
+bigint
+100
+~~END~~
+
+DROP PROCEDURE sp_test3
+# tinyint
+#CREATE PROCEDURE sp_test4 (@a tinyint OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#storedproc#!#prep#!#sp_test4#!#tinyint|-|a|-|10|-|output
+#storedproc#!#prep#!#sp_test4#!#tinyint|-|a|-|10|-|inputoutput
+#DROP PROCEDURE sp_test4
+# float
+CREATE PROCEDURE sp_test5 (@a float OUTPUT) AS BEGIN SET @a=100.12; Select @a as a; END;
+#Declare @a float;Set @a=1.1; exec sp_test5 @a;select @a as a;
+storedproc#!#prep#!#sp_test5#!#float|-|a|-|10.1|-|output
+~~START~~
+float
+100.12
+~~END~~
+
+storedproc#!#prep#!#sp_test5#!#float|-|a|-|10.1|-|inputoutput
+~~START~~
+float
+100.12
+~~END~~
+
+DROP PROCEDURE sp_test5
+# varchar
+#CREATE PROCEDURE sp_test6 (@a varchar OUTPUT) AS BEGIN SET @a='helloworld'; Select @a as a; END;
+#storedproc#!#prep#!#sp_test6#!#varchar|-|a|-|hello|-|output
+#storedproc#!#prep#!#sp_test6#!#varchar|-|a|-|hello|-|inputoutput
+#DROP PROCEDURE sp_test6
+# char BABEL-705
+#CREATE PROCEDURE sp_test7 (@a char OUTPUT) AS BEGIN SET @a='b'; Select @a as a; END;
+#Declare @a varchar;Set @a='h'; exec sp_test7 @a;select @a as a;
+#storedproc#!#prep#!#sp_test7#!#char|-|a|-|t|-|output
+#storedproc#!#prep#!#sp_test7#!#char|-|a|-|t|-|inputoutput
+#DROP PROCEDURE sp_test7
+# nvarchar
+#CREATE PROCEDURE sp_test9 (@a nvarchar OUTPUT) AS BEGIN SET @a='helloworld'; Select @a as a; END;
+#Declare @a nvarchar;Set @a='hello'; exec sp_test9 @a;select @a as a;
+#storedproc#!#prep#!#sp_test9#!#varchar|-|a|-|hello|-|output
+#storedproc#!#prep#!#sp_test9#!#varchar|-|a|-|hello|-|inputoutput
+#DROP PROCEDURE sp_test9
+# numeric 
+CREATE PROCEDURE sp_test10 (@a numeric(10,4) OUTPUT) AS BEGIN SET @a=100.41; Select @a as a; END;
+#Declare @a numeric(10,4);Set @a=10.04; exec sp_test10 @a;select @a as a;
+#storedproc#!#prep#!#sp_test10#!#numeric|-|a|-|123|-|10|-|3|-|output
+#storedproc#!#prep#!#sp_test10#!#numeric|-|a|-|123|-|10|-|2|-|inputoutput
+DROP PROCEDURE sp_test10
+# decimal 
+CREATE PROCEDURE sp_test11 (@a decimal(10,4) OUTPUT) AS BEGIN SET @a=100.41; Select @a as a; END;
+#Declare @a decimal(10,4);Set @a=10.04; exec sp_test11 @a;select @a as a;
+#storedproc#!#prep#!#sp_test11#!#decimal|-|a|-|123|-|10|-|3|-|output
+#storedproc#!#prep#!#sp_test11#!#decimal|-|a|-|123|-|10|-|2|-|inputoutput
+DROP PROCEDURE sp_test11
+# binary 
+#CREATE PROCEDURE sp_test12 (@a binary OUTPUT) AS BEGIN SET @a=0x121; Select @a as a; END;
+#exec sp_test12 0x122
+#Declare @a binary;Set @a=0x121; exec sp_test12 @a;select @a as a;
+#storedproc#!#prep#!#sp_test12#!#binary|-|a|-|0x122|-|output
+#storedproc#!#prep#!#sp_test12#!#binary|-|a|-|0x122|-|inputoutput
+#DROP PROCEDURE sp_test12
+# varbinary BABEL-701
+#CREATE PROCEDURE sp_test13 (@a varbinary OUTPUT) AS BEGIN SET @a=0x121; Select @a as a; END;
+#exec sp_test13 0x122
+#Declare @a varbinary;Set @a=0x122; exec sp_test13 @a;select @a as a;
+#storedproc#!#prep#!#sp_test13#!#varbinary|-|a|-|0x122|-|output
+#storedproc#!#prep#!#sp_test13#!#varbinary|-|a|-|0x122|-|inputoutput
+#DROP PROCEDURE sp_test13
+# date
+CREATE PROCEDURE sp_test14 (@a date output) AS BEGIN SET @a='1999-1-3'; Select @a as a; END;
+#Declare @a DATE;Set @a='9999-12-31'; exec sp_test14 @a;select @a as a;
+storedproc#!#prep#!#sp_test14#!#DATE|-|a|-|9999-12-31|-|output
+~~START~~
+nvarchar
+1999-01-03
+~~END~~
+
+storedproc#!#prep#!#sp_test14#!#DATE|-|a|-|9999-12-31|-|inputoutput
+~~START~~
+nvarchar
+1999-01-03
+~~END~~
+
+DROP PROCEDURE sp_test14
+# time
+#CREATE PROCEDURE sp_test15 (@a time(4) OUTPUT) AS BEGIN SET @a='11:25:07.123'; Select @a as a; END;
+#Declare @a Time;Set @a='12:45:37.123'; exec sp_test15 @a;select @a as a;
+#storedproc#!#prep#!#sp_test15#!#Time|-|a|-|12:45:37.123|-|3|-|output
+#storedproc#!#prep#!#sp_test15#!#Time|-|a|-|12:45:37.123|-|3|-|inputoutput
+#DROP PROCEDURE sp_test15
+# dateime BABEL-694
+#CREATE PROCEDURE sp_test16 (@a datetime output) AS BEGIN SET @a='2004-05-18 13:59:59.995'; Select @a as a; END;
+#Declare @a DATETIME;Set @a='2000-02-28 23:59:59.995'; exec sp_test16 @a;select @a as a;
+#storedproc#!#prep#!#sp_test16#!#DATETIME|-|a|-|2000-02-28 23:59:59.995|-|output
+#storedproc#!#prep#!#sp_test16#!#DATETIME|-|a|-|2000-02-28 23:59:59.995|-|inputoutput
+#DROP PROCEDURE sp_test16
+# datetime2
+#CREATE PROCEDURE sp_test17 (@a datetime2(5) OUTPUT) AS BEGIN SET @a='2014-10-2 1:45:37.123456'; Select @a as a; END;
+#Declare @a Datetime2;Set @a='2016-10-23 12:45:37.123456'; exec sp_test17 @a;select @a as a;
+#storedproc#!#prep#!#sp_test17#!#Datetime2|-|a|-|2016-10-23 12:45:37.123456|-|5|-|output
+#storedproc#!#prep#!#sp_test17#!#Datetime2|-|a|-|2016-10-23 12:45:37.123456|-|5|-|inputoutput
+#DROP PROCEDURE sp_test17
+# smalldatetime BABEL-694
+#CREATE PROCEDURE sp_test18 (@a smalldatetime output) AS BEGIN SET @a='2010-02-03 12:58:23'; Select @a as a; END;
+#Declare @a SMALLDATETIME;Set @a='2000-12-13 12:58:23'; exec sp_test18 @a;select @a as a;
+#storedproc#!#prep#!#sp_test18#!#SMALLDATETIME|-|a|-|2000-12-13 12:58:23|-|output
+#storedproc#!#prep#!#sp_test18#!#SMALLDATETIME|-|a|-|2000-12-13 12:58:23|-|inputoutput
+#DROP PROCEDURE sp_test18
+# UID
+#CREATE PROCEDURE sp_test19 (@a uniqueidentifier OUTPUT) AS BEGIN SET @a='ce8af10a-2709-43b0-9e4e-a02753929d17'; Select @a as a; END;
+#Declare @a uniqueidentifier;Set @a='5b7c2e8d-6d90-411d-8e19-9a81067e6f6c'; exec sp_test19 @a;select @a as a;
+#storedproc#!#prep#!#sp_test19#!#uniqueidentifier|-|a|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c|-|output
+#storedproc#!#prep#!#sp_test19#!#uniqueidentifier|-|a|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c|-|inputoutput
+#DROP PROCEDURE sp_test19
+
+CREATE PROCEDURE sp_test20 (@a INT, @b INT OUTPUT) AS BEGIN SET @b=100; SET @a=1000; Select @a as a, @b as b; END;
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b OUT, @a=@a;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b, @a=@a OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b OUT, @a=@a OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @b=@b, @a=@a;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a, @b=@b;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a, @b=@b OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a OUT, @b=@b;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a=@a OUT, @b=@b OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @a int;Declare @b int;Set @a=20;Set @b=10; exec sp_test20 @a OUT, @b OUT;select @a as a, @b as b;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|output#!#int|-|b|-|10|-|input
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|input
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|output#!#int|-|b|-|10|-|output
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|inputoutput#!#int|-|b|-|10|-|inputoutput
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+storedproc#!#prep#!#sp_test20#!#int|-|a|-|20|-|inputoutput#!#int|-|b|-|10|-|input
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+DROP PROCEDURE sp_test20
+
+CREATE PROCEDURE sp_test21 (@a INT, @b INT OUTPUT, @d INT, @c INT OUTPUT) AS BEGIN SET @a=100; SET @b=200; SET @c=300; SET @d=400; Select @a as a, @b as b, @c as c, @d as d; END;
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @b=@b OUT, @c=@c OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#200#!#300#!#30
+~~END~~
+
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @b=@b, @c=@c, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @c=@c OUT, @b=@b OUT, @a=@a, @d=@d; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#200#!#300#!#30
+~~END~~
+
+Declare @a int;Declare @b int;Declare @c int;Declare @d int;Set @a=20;Set @b=10;Set @c=5;Set @d=30; exec sp_test21 @c=@c, @b=@b, @a=@a OUT, @d=@d OUT; Select @a as a, @b as b, @c as c, @d as d;
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#int
+20#!#10#!#5#!#30
+~~END~~
+
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|inputoutput
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|output
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|output#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|inputoutput
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+storedproc#!#prep#!#sp_test21#!#int|-|a|-|20|-|input#!#int|-|b|-|10|-|inputoutput#!#int|-|c|-|10|-|input#!#int|-|d|-|10|-|output
+~~START~~
+int#!#int#!#int#!#int
+100#!#200#!#300#!#400
+~~END~~
+
+DROP PROCEDURE sp_test21
+
+CREATE PROCEDURE sp_test22 (@MixedCaseArg_1 INT, @MixedCaseArg_2 INT OUTPUT) AS BEGIN SET @MixedCaseArg_2=100; SET @MixedCaseArg_1=1000; Select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2; END;
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2 OUT, @MixedCaseArg_1=@MixedCaseArg_1;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2, @MixedCaseArg_1=@MixedCaseArg_1 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2 OUT, @MixedCaseArg_1=@MixedCaseArg_1 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_2=@MixedCaseArg_2, @MixedCaseArg_1=@MixedCaseArg_1;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1, @MixedCaseArg_2=@MixedCaseArg_2;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1, @MixedCaseArg_2=@MixedCaseArg_2 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1 OUT, @MixedCaseArg_2=@MixedCaseArg_2;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#10
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1=@MixedCaseArg_1 OUT, @MixedCaseArg_2=@MixedCaseArg_2 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+Declare @MixedCaseArg_1 int;Declare @MixedCaseArg_2 int;Set @MixedCaseArg_1=20;Set @MixedCaseArg_2=10; exec sp_test22 @MixedCaseArg_1 OUT, @MixedCaseArg_2 OUT;select @MixedCaseArg_1 as MixedCaseArg_1, @MixedCaseArg_2 as MixedCaseArg_2;
+~~START~~
+int#!#int
+1000#!#100
+~~END~~
+
+~~START~~
+int#!#int
+20#!#100
+~~END~~
+
+DROP PROCEDURE sp_test22

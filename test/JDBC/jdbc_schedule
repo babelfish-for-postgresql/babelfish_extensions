@@ -309,6 +309,10 @@ ignore#!#BABEL-3513_before_15_8_or_16_4-vu-prepare
 ignore#!#BABEL-3513_before_15_8_or_16_4-vu-verify
 
 # These tests are for jTDS driver
-ignore#!#jtds-varchar-max-length-check
 ignore#!#jtds-nvarchar-max-length-check
 ignore#!#jtds-nvarchar-max-length-check2
+ignore#!#jtds-TestDate
+ignore#!#jtds-TestDatetime
+ignore#!#jtds-TestSQLQueries
+ignore#!#jtds-TestStoredProcedures
+ignore#!#jtds-varchar-max-length-check

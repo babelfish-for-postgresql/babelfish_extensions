@@ -52,6 +52,8 @@ public class JDBCStatement {
             CompareResults.processResults(stmt_bbl, bw, resultsProcessed, resultSetExist, warningExist, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
+        } catch (IllegalStateException e) {
+            logger.error("Illegal State Exception: " + e.getMessage(), e);
         }
     }
 }

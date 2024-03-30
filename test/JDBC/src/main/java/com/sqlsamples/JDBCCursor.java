@@ -99,6 +99,8 @@ public class JDBCCursor {
             handleSQLExceptionWithFile(e, bw, logger);
         } catch (IOException ioe) {
             logger.error("IO Exception: " + ioe.getMessage(), ioe);
+        } catch (NullPointerException e) {
+            logger.error("Null Pointer Exception: " + e.getMessage(), e);
         }
     }
 

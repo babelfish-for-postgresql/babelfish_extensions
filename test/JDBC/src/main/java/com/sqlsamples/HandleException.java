@@ -64,7 +64,7 @@ public class HandleException {
                     bw.write("~~ERROR (Message: " + e.getMessage() + ")~~");
                 }
                 else { // JTDS throws plain SQLServerException
-                    bw.write("~~ERROR (Message: "+ e.getMessage() + "  Server SQLState: " + e.getSQLState() + ")~~");
+                    bw.write("~~ERROR (Message: "+ e.getMessage() + ")~~");
                 }
             } else {
                 bw.write("~~ERROR~~");
