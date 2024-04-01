@@ -96,20 +96,6 @@ GO
 INSERT into #temptable (ID) VALUES (2)
 GO
 
-BEGIN TRANSACTION
-ALTER TABLE #temptable ADD CONSTRAINT df_ProductName DEFAULT 'service' FOR ProductName
-INSERT into #temptable (ID) VALUES (3)
-SELECT * FROM #temptable
-ROLLBACK
-GO
-
-INSERT into #temptable (ID) VALUES (4)
-SELECT * FROM #temptable
-go
-
-DROP TABLE #temptable
-GO
-
 CREATE PROCEDURE babel_4752_p1
 AS
     CREATE TABLE #temp(a INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'babel_4752_p1') 

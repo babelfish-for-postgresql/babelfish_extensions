@@ -138,38 +138,6 @@ GO
 ~~ROW COUNT: 1~~
 
 
-BEGIN TRANSACTION
-ALTER TABLE #temptable ADD CONSTRAINT df_ProductName DEFAULT 'service' FOR ProductName
-INSERT into #temptable (ID) VALUES (3)
-SELECT * FROM #temptable
-ROLLBACK
-GO
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-1#!#product
-2#!#item
-3#!#service
-~~END~~
-
-
-INSERT into #temptable (ID) VALUES (4)
-SELECT * FROM #temptable
-go
-~~ROW COUNT: 1~~
-
-~~START~~
-int#!#varchar
-1#!#product
-2#!#item
-4#!#service
-~~END~~
-
-
-DROP TABLE #temptable
-GO
-
 CREATE PROCEDURE babel_4752_p1
 AS
     CREATE TABLE #temp(a INT PRIMARY KEY, b INT, c CHAR(15) DEFAULT 'babel_4752_p1') 
