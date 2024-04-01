@@ -124,12 +124,12 @@ fi
 
 restart() {
     cd $1/postgres
-    bin/pg_ctl -D data/ -l logfile restart
+    bin/pg_ctl -c -D data/ -l logfile restart
 }
 
 stop() {
     cd $1/postgres
-    bin/pg_ctl -D data/ -l logfile stop
+    bin/pg_ctl -c -D data/ -l logfile stop
 }
 
 build_pg() {
@@ -162,7 +162,7 @@ init_db() {
         kill -9 $PID
     fi
     sleep 1
-    bin/pg_ctl -D data/ -l logfile start
+    bin/pg_ctl -c -D data/ -l logfile start
     cd data
     sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
     sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds, pg_stat_statements'/g" postgresql.conf
@@ -384,7 +384,7 @@ elif [ "$1" == "pg_upgrade" ]; then
 
     ./delete_old_cluster.sh
     cd $TARGET_WS/postgres
-    bin/pg_ctl -D data/ -l logfile start
+    bin/pg_ctl -c -D data/ -l logfile start
 
     echo ""
     echo 'Updating babelfish extensions...'
