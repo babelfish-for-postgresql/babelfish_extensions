@@ -309,6 +309,7 @@ remove_accents(PG_FUNCTION_ARGS)
 	// char* MY_ID = "NFD; [:Nonspacing Mark:] Remove; NFC";
 	// char* MY_ID = "[[:Lu:][:Ll:][:Lt:]]Any-ASCII";
 	char* MY_ID = "[[:Latin:][:Nd:]]; Latin-ASCII";
+	// char* MY_ID = "[[:Latin:][:Nd:]]; [:punct:] remove";
 	// char* MY_ID = "[[:Latin:][:Nd:][:Nl:]] und-u-ks-level1";
 
 #ifdef USE_ICU
@@ -489,6 +490,13 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	Node       *leftop = (Node *) linitial(op->args);
 	Node       *rightop = (Node *) lsecond(op->args);
 
+	// /* Handle left node*/
+	// leftop = expression_tree_mutator(leftop, transform_likenode_for_AI, NULL);
+
+	// /* Handle right node*/
+	// rightop = expression_tree_mutator(rightop, transform_likenode_for_AI, NULL);
+
+
 	/* Handle left node*/
 	if (IsA(leftop, Const))
 	{
@@ -560,6 +568,22 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 			/* Update the left node */
 			linitial(op->args) = (Node *) newlFuncExpr;    
 		}
+		else if (IsA(lrelabel->arg, CaseExpr))
+		{
+			CaseExpr *case_expr = (CaseExpr *)lrelabel->arg;
+
+			// Construct arguments for the new FuncExpr
+			List *args = list_make1(case_expr);
+
+			// Create a new FuncExpr node representing the desired function call
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+			newFuncExpr->args = args;
+
+			// Replace the CaseExpr node with the new FuncExpr node
+			linitial(op->args) = (Node *)newFuncExpr;
+		}
 	}
 	else if (IsA(leftop, CollateExpr))
 	{
@@ -591,6 +615,22 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 				/* Update the left node */
 				linitial(op->args) = (Node *) newlFuncExpr;    
 			}
+			else if (IsA(lrelabel->arg, CaseExpr))
+			{
+				CaseExpr *case_expr = (CaseExpr *)lrelabel->arg;
+
+				// Construct arguments for the new FuncExpr
+				List *args = list_make1(case_expr);
+
+				// Create a new FuncExpr node representing the desired function call
+				FuncExpr *newFuncExpr = makeNode(FuncExpr);
+				newFuncExpr->funcid = (Oid) 18097;
+				newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+				newFuncExpr->args = args;
+
+				// Replace the CaseExpr node with the new FuncExpr node
+				linitial(op->args) = (Node *)newFuncExpr;
+			}
 		}
 		else if (IsA(lcoll->arg, Const))
 		{
@@ -615,6 +655,22 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 			// leftop = (Node *) newFuncExpr;
 			linitial(op->args) = (Node *)newFuncExpr;
 		}
+		else if (IsA(lcoll->arg, CaseExpr))
+		{
+			CaseExpr *case_expr = (CaseExpr *)lcoll->arg;
+
+			// Construct arguments for the new FuncExpr
+			List *args = list_make1(case_expr);
+
+			// Create a new FuncExpr node representing the desired function call
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+			newFuncExpr->args = args;
+
+			// Replace the CaseExpr node with the new FuncExpr node
+			linitial(op->args) = (Node *)newFuncExpr;
+		}
 	}
 	else if (IsA(leftop, Param))
 	{
@@ -628,7 +684,23 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 		/* Update the left node */
 		linitial(op->args) = (Node *) newlFuncExpr;    
 	}
+	else if (IsA(leftop, CaseExpr))
+	{
+		CaseExpr *case_expr = (CaseExpr *)leftop;
 
+		// Construct arguments for the new FuncExpr
+		List *args = list_make1(case_expr);
+
+		// Create a new FuncExpr node representing the desired function call
+		FuncExpr *newFuncExpr = makeNode(FuncExpr);
+		newFuncExpr->funcid = (Oid) 18097;
+		newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+		newFuncExpr->args = args;
+
+		// Replace the CaseExpr node with the new FuncExpr node
+		linitial(op->args) = (Node *)newFuncExpr;
+	}
+	// leftop = expression_tree_mutator(leftop, transform_likenode_for_AI, NULL);
 
 	/* Handle right node*/
 	if (IsA(rightop, CollateExpr))
@@ -666,6 +738,22 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 				/* Update the left node */
 				lsecond(op->args) = (Node *) newrFuncExpr;    
 			}
+			else if (IsA(rrelabel->arg, CaseExpr))
+			{
+				CaseExpr *case_expr = (CaseExpr *)rrelabel->arg;
+
+				// Construct arguments for the new FuncExpr
+				List *args = list_make1(case_expr);
+
+				// Create a new FuncExpr node representing the desired function call
+				FuncExpr *newFuncExpr = makeNode(FuncExpr);
+				newFuncExpr->funcid = (Oid) 18097;
+				newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+				newFuncExpr->args = args;
+
+				// Replace the CaseExpr node with the new FuncExpr node
+				lsecond(op->args) = (Node *)newFuncExpr;
+			}
 		}
 		else if (IsA(rcoll->arg, FuncExpr))
 		{
@@ -683,6 +771,22 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 
 			/* Replace 'leftop' with 'newFuncExpr' */
 			// leftop = (Node *) newFuncExpr;
+			lsecond(op->args) = (Node *)newFuncExpr;
+		}
+		else if (IsA(rcoll->arg, CaseExpr))
+		{
+			CaseExpr *case_expr = (CaseExpr *)rcoll->arg;
+
+			// Construct arguments for the new FuncExpr
+			List *args = list_make1(case_expr);
+
+			// Create a new FuncExpr node representing the desired function call
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+			newFuncExpr->args = args;
+
+			// Replace the CaseExpr node with the new FuncExpr node
 			lsecond(op->args) = (Node *)newFuncExpr;
 		}
 	}
@@ -737,6 +841,22 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 			/* Update the right node */
 			lsecond(op->args) = (Node *) newrFuncExpr;    
 		}
+		else if (IsA(rrelabel->arg, CaseExpr))
+		{
+			CaseExpr *case_expr = (CaseExpr *)rrelabel->arg;
+
+			// Construct arguments for the new FuncExpr
+			List *args = list_make1(case_expr);
+
+			// Create a new FuncExpr node representing the desired function call
+			FuncExpr *newFuncExpr = makeNode(FuncExpr);
+			newFuncExpr->funcid = (Oid) 18097;
+			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+			newFuncExpr->args = args;
+
+			// Replace the CaseExpr node with the new FuncExpr node
+			lsecond(op->args) = (Node *)newFuncExpr;
+		}
 	}
 	else if (IsA(rightop, FuncExpr))
 	{
@@ -756,6 +876,24 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 		// leftop = (Node *) newFuncExpr;
 		lsecond(op->args) = (Node *)newFuncExpr;
 	}
+	else if (IsA(rightop, CaseExpr))
+	{
+		CaseExpr *case_expr = (CaseExpr *)rightop;
+
+		// Construct arguments for the new FuncExpr
+		List *args = list_make1(case_expr);
+
+		// Create a new FuncExpr node representing the desired function call
+		FuncExpr *newFuncExpr = makeNode(FuncExpr);
+		newFuncExpr->funcid = (Oid) 18097;
+		newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+		newFuncExpr->args = args;
+
+		// Replace the CaseExpr node with the new FuncExpr node
+		lsecond(op->args) = (Node *)newFuncExpr;
+	}
+	
+	// rightop = expression_tree_mutator(rightop, transform_likenode_for_AI, NULL);
 	return node;
 }
 

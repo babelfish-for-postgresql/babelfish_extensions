@@ -247,7 +247,23 @@ create table t1(a nvarchar(51) collate Latin1_General_CI_AI, b nvarchar(51) coll
 insert into t1 values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
 GO
 -- returns 2 rows
-SELECT * FROM t1 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a%' ELSE '%y' END);
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%m' ELSE '%y' END);
+
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'ahameem' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%a%' ELSE '%y' END);
 
 -- returns 1 row
 SELECT * FROM t1 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%') = 1 THEN '%a%' ELSE '%y' END);
+
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN 1 = 1 THEN '%m' ELSE '%y' END);
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN 2 = 1 THEN '%m' ELSE '%y' END);
+SELECT * FROM t1 WHERE a LIKE (CASE WHEN 1 = 1 THEN '%m%' ELSE '%y' END);
+
+-- test for CI_AS
+-- COMPLEX CASE WITH SUB QUERY
+create table t(a nvarchar(51) collate Latin1_General_CI_AS, b nvarchar(51) collate Latin1_General_CI_AS)
+insert into t values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
+GO
+-- returns 2 rows
+SELECT * FROM t WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'S%' COLLATE Latin1_General_CI_AS) = 1 THEN '%m' ELSE '%y' END);
+
+SELECT * FROM t WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'ahameem' LIKE 'S%' COLLATE Latin1_General_CI_AS) = 1 THEN '%m%' ELSE '%y' END);
