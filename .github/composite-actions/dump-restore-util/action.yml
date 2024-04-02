@@ -122,7 +122,7 @@ runs:
               ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --schema-only --verbose --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
               ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --verbose --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_so.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
 
-              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --file="pg_dump_"$db_trimmed"_do.archive" --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --file=pg_dump_"$db_trimmed"_do.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
             fi
           done < <(tail -n +3 databases_file.txt | head -n -2)
         fi
