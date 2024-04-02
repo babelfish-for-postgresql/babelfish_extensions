@@ -4,6 +4,7 @@ GO
 SELECT set_config('debug_parallel_query', '1', true)
 SELECT set_config('parallel_setup_cost', '0', true)
 SELECT set_config('parallel_tuple_cost', '0', true)
+select set_config('max_parallel_workers_per_gather', '1', true);
 SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
 GO
 ~~START~~
@@ -19,6 +20,11 @@ text
 ~~START~~
 text
 0
+~~END~~
+
+~~START~~
+text
+1
 ~~END~~
 
 ~~START~~
