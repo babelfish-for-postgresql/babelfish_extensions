@@ -174,7 +174,7 @@ runs:
                 ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
               fi
             else
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals_"$db_trimmed".sql 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
               if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
                 sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
                 sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
