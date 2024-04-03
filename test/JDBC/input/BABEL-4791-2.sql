@@ -96,118 +96,118 @@ select 1 where 'ShÅmeEm'  collate Latin1_General_CS_AI like '%Ä%' collate Lati
 GO
 
 -- CASE 4: T_ReLabelType (T_Var) LIKE T_Const
-create table t4(a varchar(11) collate Latin1_General_CS_AI)
+create table t4c(a varchar(11) collate Latin1_General_CS_AI)
 GO
 
-insert into t4 values ('SHaemEEm'),('ShÅmeEm')
+insert into t4c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t4 where a like '%Æ%'
+select * from t4c where a like '%Æ%'
 GO
 
-select * from t4 where a like '%Ä%'
+select * from t4c where a like '%Ä%'
 GO
 
 -- CASE 5: T_Const LIKE T_ReLabelType(T_Var) --> NEED TO THINK OF CASES [SHOULD WORK]
-create table t5(a varchar(11) collate Latin1_General_CS_AI);
+create table t5c(a varchar(11) collate Latin1_General_CS_AI);
 GO
 
-insert into t5 values ('SHaemEEm'),('ShÅmeEm');
+insert into t5c values ('SHaemEEm'),('ShÅmeEm');
 GO
 
-select * from t5 where '%Æ%' LIKE a; 
+select * from t5c where '%Æ%' LIKE a; 
 GO
 
-select * from t5 where '%Ä%' LIKE a;
+select * from t5c where '%Ä%' LIKE a;
 GO
 
 -- CASE 6: T_ReLabelType(T_Var) LIKE T_CollateExpr(T_Const)
-create table t6(a varchar(11) collate Latin1_General_CS_AI)
+create table t6c(a varchar(11) collate Latin1_General_CS_AI)
 GO
 
-insert into t6 values ('SHaemEEm'),('ShÅmeEm')
+insert into t6c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t6 where a like '%Æ%' collate Latin1_General_CS_AI
+select * from t6c where a like '%Æ%' collate Latin1_General_CS_AI
 GO
 
-select * from t6 where a like '%Ä%' collate Latin1_General_CS_AI
+select * from t6c where a like '%Ä%' collate Latin1_General_CS_AI
 GO
 
 -- CASE 7: T_CollateExpr(T_Const) LIKE T_ReLabelType(T_Var)
-create table t7(a varchar(11) collate Latin1_General_CS_AI)
+create table t7c(a varchar(11) collate Latin1_General_CS_AI)
 GO
 
-insert into t7 values ('SHaemEEm'),('ShÅmeEm')
+insert into t7c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t7 where '%Æ%' collate Latin1_General_CS_AI like a;
+select * from t7c where '%Æ%' collate Latin1_General_CS_AI like a;
 GO
 
-select * from t7 where '%Ä%' collate Latin1_General_CS_AI like a;
+select * from t7c where '%Ä%' collate Latin1_General_CS_AI like a;
 GO
 
 
 -- CASE 8: T_ReLabelType(T_Var) LIKE T_ReLabelType(T_Var)
-create table t8(a varchar(11) collate Latin1_General_CS_AI, b varchar(11) collate Latin1_General_CS_AI)
+create table t8c(a varchar(11) collate Latin1_General_CS_AI, b varchar(11) collate Latin1_General_CS_AI)
 GO
 
-insert into t8 values ('SHaemEEm', 'ShÅmeEm'),('Ahmed', 'ÃĥɱêÐ'),('Ahmed','ShÅmeEm'),('Shameem','ShÅmeEm')
+insert into t8c values ('SHaemEEm', 'ShÅmeEm'),('Ahmed', 'ÃĥɱêÐ'),('Ahmed','ShÅmeEm'),('Shameem','ShÅmeEm')
 GO
 
-SELECT * FROM t8 WHERE a LIKE b
+SELECT * FROM t8c WHERE a LIKE b
 GO
 
 -- CASE 9: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_Const
-create table t9(a varchar(11))
+create table t9c(a varchar(11))
 GO
 
-insert into t9 values ('SHaemEEm'),('ShÅmeEm')
+insert into t9c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t9 where a collate Latin1_General_CS_AI like '%Æ%'
+select * from t9c where a collate Latin1_General_CS_AI like '%Æ%'
 GO
 
-select * from t9 where a collate Latin1_General_CS_AI like '%Ä%'
+select * from t9c where a collate Latin1_General_CS_AI like '%Ä%'
 GO
 
 -- CASE 10: T_CollateExpr(T_ReLabel(T_Var)) LIKE T_CollateExpr(T_Const)
-create table t10(a varchar(11))
+create table t10c(a varchar(11))
 GO
 
-insert into t10 values ('SHaemEEm'),('ShÅmeEm')
+insert into t10c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t10 where a collate Latin1_General_CS_AI like '%Æ%' collate Latin1_General_CS_AI
+select * from t10c where a collate Latin1_General_CS_AI like '%Æ%' collate Latin1_General_CS_AI
 GO
 
-select * from t10 where a collate Latin1_General_CS_AI like '%Ä%' collate Latin1_General_CS_AI
+select * from t10c where a collate Latin1_General_CS_AI like '%Ä%' collate Latin1_General_CS_AI
 GO
 
 -- CASE 11:
-create table t11(a varchar(11))
+create table t11c(a varchar(11))
 GO
 
-insert into t11 values ('SHaemEEm'),('ShÅmeEm')
+insert into t11c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t11 where '%Æ%' like a collate Latin1_General_CS_AI
+select * from t11c where '%Æ%' like a collate Latin1_General_CS_AI
 GO
 
-select * from t11 where '%Ä%' like a collate Latin1_General_CS_AI
+select * from t11c where '%Ä%' like a collate Latin1_General_CS_AI
 GO
 
 -- CASE 12:
-create table t12(a varchar(11))
+create table t12c(a varchar(11))
 GO
 
-insert into t12 values ('SHaemEEm'),('ShÅmeEm')
+insert into t12c values ('SHaemEEm'),('ShÅmeEm')
 GO
 
-select * from t12 where '%Æ%' collate Latin1_General_CS_AI like a collate Latin1_General_CS_AI
+select * from t12c where '%Æ%' collate Latin1_General_CS_AI like a collate Latin1_General_CS_AI
 GO
 
-select * from t12 where '%Ä%' collate Latin1_General_CS_AI like a collate Latin1_General_CS_AI
+select * from t12c where '%Ä%' collate Latin1_General_CS_AI like a collate Latin1_General_CS_AI
 GO
 
 
@@ -225,34 +225,34 @@ select 1 where SUBSTRING('SHaemEEm',2,3) like '%Æ%' collate Latin1_General_CS_A
 GO
 
 -- CASE Y: func(col) LIKE T_const
-create table y(a varchar(11) collate Latin1_General_CS_AI);
+create table yc(a varchar(11) collate Latin1_General_CS_AI);
 GO
 
-insert into y values ('SHaemEEm'), ('ShÅmeEm'), ('Shameem');
+insert into yc values ('SHaemEEm'), ('ShÅmeEm'), ('Shameem');
 GO
 
-select * from y where UPPER(a) LIKE '%Ä%';
+select * from yc where UPPER(a) LIKE '%Ä%';
 GO
 
-select * from y where UPPER(a) LIKE '%Æ%';
+select * from yc where UPPER(a) LIKE '%Æ%';
 GO
 
-select * from y where SUBSTRING(a, 2, 3) LIKE '%Ä%';
+select * from yc where SUBSTRING(a, 2, 3) LIKE '%Ä%';
 GO
 
-select * from y where SUBSTRING(a, 2, 3) LIKE '%Æ%';
+select * from yc where SUBSTRING(a, 2, 3) LIKE '%Æ%';
 GO
 
-select * from y where UPPER(SUBSTRING(a, 2, 3)) LIKE '%Ä%';
+select * from yc where UPPER(SUBSTRING(a, 2, 3)) LIKE '%Ä%';
 GO
 
-select * from y where SUBSTRING(UPPER(a),2,3) LIKE '%Ä%';
+select * from yc where SUBSTRING(UPPER(a),2,3) LIKE '%Ä%';
 GO
 
-select * from y where concat("A",substring(a,3,1),"Ā") like '%ā%';
+select * from yc where concat("A",substring(a,3,1),"Ā") like '%ā%';
 GO
 
-select * from y where concat("A",substring(a,3,1),"Ā") like '%b%';
+select * from yc where concat("A",substring(a,3,1),"Ā") like '%b%';
 
 
  --- FOR QUERY LIKE THIS SQL SERVER DOES NOT RETURN ANYTHING
@@ -261,53 +261,63 @@ select * from y where @b LIKE concat("'%",substring(a,3,1),"%'")
 GO
 
 -- SUB QUERY
-create table t1(a nvarchar(51) collate Latin1_General_CS_AI, b nvarchar(51) collate Latin1_General_CS_AI)
+create table t1xc(a nvarchar(51) collate Latin1_General_CS_AI, b nvarchar(51) collate Latin1_General_CS_AI)
 go
-create table t2(c nvarchar(51) collate Latin1_General_CS_AI)
+create table t2xc(c nvarchar(51) collate Latin1_General_CS_AI)
 go
-insert into t1 values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
+insert into t1xc values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
 go
-insert into t2 values (N'RaŊdom') , (N'Shameem')
-go
--- returns 1 row
-select a from t1 where b in (select c from t2 where c like '%a%')
+insert into t2xc values (N'RaŊdom') , (N'Shameem')
 go
 -- returns 1 row
-select a from t1 where b in (select c from t2 where c like '%s%')
+select a from t1xc where b in (select c from t2xc where c like '%a%')
 go
-insert into t2 values (N'BleȘȘing')
+-- returns 1 row
+select a from t1xc where b in (select c from t2xc where c like '%s%')
+go
+insert into t2xc values (N'BleȘȘing')
 go
 -- returns 0 rows
-select a from t1 where b in (select c from t2 where c like '%s%')
+select a from t1xc where b in (select c from t2xc where c like '%s%')
 go
 
 -- CASE
-create table t1(a nvarchar(51) collate Latin1_General_CS_AI)
-insert into t1 values (N'RaŊdom'),(N'Random'),(N'Ŋecessary'),(N'necessary')
+create table t1yc(a nvarchar(51) collate Latin1_General_CS_AI)
+insert into t1yc values (N'RaŊdom'),(N'Random'),(N'Ŋecessary'),(N'necessary')
 go
 -- returns 2 rows of 1
-select case when a like '%n%' then 1 else 2 end from t1
+select case when a like '%n%' then 1 else 2 end from t1yc
 go
 
 -- COMPLEX CASE WITH SUB QUERY
-create table t100(a nvarchar(51) collate Latin1_General_CS_AI, b nvarchar(51) collate Latin1_General_CS_AI)
-insert into t100 values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
+create table tzc(a nvarchar(51) collate Latin1_General_CS_AI, b nvarchar(51) collate Latin1_General_CS_AI)
+insert into tzc values (N'RaŊdom',N'Shameem'),( N'Ŋecessary',N'BleȘȘing')
 GO
 -- returns 0 rows --> should return 1 rows, but not, why??
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%m' ELSE '%y' END);
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%m' ELSE '%y' END);
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'ahameem' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%m%' ELSE '%y' END);
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%m' ELSE '%y' END);
+GO
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%m' ELSE '%y' END);
+GO
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'ahameem' LIKE 'Ș%' COLLATE Latin1_General_CI_AI) = 1 THEN '%m%' ELSE '%y' END);
+GO
 
 -- returns 2 rows
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a%' ELSE '%y' END);
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a%' ELSE '%y' END);
+GO
 
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%y' END);
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'Ș%' COLLATE Latin1_General_CS_AI) = 1 THEN '%a' ELSE '%y' END);
+GO
 
 -- returns 0 row
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'S%') = 1 THEN '%a%' ELSE '%y' END);
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'shameem' LIKE 'S%') = 1 THEN '%a%' ELSE '%y' END);
+GO
 
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'S%') = 1 THEN '%a%' ELSE '%y' END);
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN (SELECT 1 WHERE 'Shameem' LIKE 'S%') = 1 THEN '%a%' ELSE '%y' END);
+GO
 
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN 1 = 1 THEN '%m' ELSE '%y' END);
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN 2 = 1 THEN '%m' ELSE '%y' END);
-SELECT * FROM t100 WHERE a LIKE (CASE WHEN 1 = 1 THEN '%m%' ELSE '%y' END);
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN 1 = 1 THEN '%m' ELSE '%y' END);
+GO
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN 2 = 1 THEN '%m' ELSE '%y' END);
+GO
+SELECT * FROM tzc WHERE a LIKE (CASE WHEN 1 = 1 THEN '%m%' ELSE '%y' END);
+GO

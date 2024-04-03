@@ -17,12 +17,7 @@
 #include "parser/parse_oper.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodes.h"
-
-// #ifdef USE_ICU
-// #include "contrib/unaccent/unaccent.h"
-// #include <unicode/translit.h>
 #include <unicode/utrans.h>
-// #endif
 
 
 #include "pltsql.h"
@@ -34,6 +29,8 @@
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
 extern bool babelfish_dump_restore;
+
+// static Oid remove_accents_oid;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
@@ -283,7 +280,6 @@ transform_funcexpr(Node *node)
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
 
-// sample function to remove accents using ICU provided APIs
 
 PG_FUNCTION_INFO_V1(remove_accents);
 Datum
@@ -301,21 +297,11 @@ remove_accents(PG_FUNCTION_ARGS)
 	UErrorCode status = U_ZERO_ERROR;
 	char *result;
 	UTransliterator *transliterator;
-	// char* TRANSLITERATE_ID = "NFD; Any-Latin; NFC";
-	// char* NORMALIZE_ID = "NFD; [:Nonspacing Mark:] Remove; NFC";
-	// char* MY_ID = "NFD; Any-Latin; [:Nonspacing Mark:] Remove; NFC";
-	// char* MY_ID = "[:Latin:];Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC";
-	// char* MY_ID = "[:Latin:];Latin-ASCII";
-	// char* MY_ID = "NFD; [:Nonspacing Mark:] Remove; NFC";
-	// char* MY_ID = "[[:Lu:][:Ll:][:Lt:]]Any-ASCII";
-	char* MY_ID = "[[:Latin:][:Nd:]]; Latin-ASCII";
-	// char* MY_ID = "[[:Latin:][:Nd:]]; [:punct:] remove";
-	// char* MY_ID = "[[:Latin:][:Nd:][:Nl:]] und-u-ks-level1";
+
+	char* rule = "[[:Latin:][:Nd:]]; Latin-ASCII";
 
 #ifdef USE_ICU
-	// len_uchar = icu_to_uchar(&rules, "NFD; [:Nonspacing Mark:] Remove; NFC", strlen("NFD; [:Nonspacing Mark:] Remove; NFC"));
-	// len_uchar = icu_to_uchar(&rules, "Any-Latin; Latin-ASCII", strlen("Any-Latin; Latin-ASCII"));
-	len_uchar = icu_to_uchar(&rules, MY_ID, strlen(MY_ID));
+	len_uchar = icu_to_uchar(&rules, rule, strlen(rule));
 	len_uinput = icu_to_uchar(&utf16_intput, input, strlen(input));
 	
 	// Open a transliterator for conversion
@@ -344,7 +330,7 @@ remove_accents(PG_FUNCTION_ARGS)
 
 	len_result = icu_from_uchar(&result, utf16_intput, len_uinput);
 
-	PG_RETURN_TEXT_P(cstring_to_text_with_len(result, len_result+1));
+	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result+1));
 #endif
 	PG_RETURN_NULL();
 }
@@ -484,416 +470,247 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	}
 }
 
+
+static Node *
+ConvertNodeToFuncExpr(Node *node)
+{
+	FuncExpr *newFuncExpr = makeNode(FuncExpr);
+	Oid funcargtypes[1] = {CHAROID};
+	newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), -1, funcargtypes, true);;
+
+	if (node == NULL)
+		return node;
+
+	switch (nodeTag(node))
+	{
+		case T_Const:
+			{
+				Const *con = (Const *) node;
+				newFuncExpr->funcresulttype = con->consttype;
+				newFuncExpr->args = list_make1(makeConst(con->consttype, -1, InvalidOid, con->constlen, con->constvalue, false, true));;
+				break;
+			}
+		case T_FuncExpr:
+			{
+				FuncExpr *func = (FuncExpr *) node;
+				newFuncExpr->funcresulttype = func->funcresulttype;
+				newFuncExpr->args = list_make1(func);
+				break;
+			}
+		case T_Var:
+			{
+				Var *var = (Var *) node;
+				newFuncExpr->funcresulttype = var->vartype;
+				newFuncExpr->args = list_make1(var);
+				break;
+			}
+		case T_Param:
+			{
+				Param *param = (Param *) node;
+				newFuncExpr->funcresulttype = param->paramtype;
+				newFuncExpr->args = list_make1(param);
+				break;
+			}
+		case T_CaseExpr:
+			{
+				CaseExpr *case_expr = (CaseExpr *) node;
+				newFuncExpr->funcresulttype = exprType((Node *)case_expr);
+				newFuncExpr->args = list_make1(case_expr);
+				break;
+			}
+		case T_RelabelType:
+			{
+				RelabelType        *relabel = (RelabelType *) node;
+				newFuncExpr->funcresulttype = relabel->resulttype;
+				newFuncExpr->args = list_make1(relabel->arg);
+				break;
+			}
+		default:
+			return expression_tree_mutator(node, ConvertNodeToFuncExpr, NULL);
+	}
+
+	return (Node *) newFuncExpr;
+}
+
+
 static Node *
 transform_likenode_for_AI(Node *node, OpExpr *op)
 {
 	Node       *leftop = (Node *) linitial(op->args);
 	Node       *rightop = (Node *) lsecond(op->args);
 
-	// /* Handle left node*/
-	// leftop = expression_tree_mutator(leftop, transform_likenode_for_AI, NULL);
-
-	// /* Handle right node*/
-	// rightop = expression_tree_mutator(rightop, transform_likenode_for_AI, NULL);
-
-
-	/* Handle left node*/
-	if (IsA(leftop, Const))
-	{
-		Const        *lcon = (Const *) leftop;
-		lcon->constvalue = DirectFunctionCall1(remove_accents, lcon->constvalue);
-	}
-	else if (IsA(leftop, FuncExpr))
-	{
-		FuncExpr    *lfunc = (FuncExpr *) leftop;
-		// Oid            funcargtypes[1] = {CHAROID};
-		Oid funcargtypes[1] = {TEXTOID};
-
-		/* Create a new FuncExpr node for the 'remove_accents' function */
-		FuncExpr *newFuncExpr = makeNode(FuncExpr);
-		newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), -1, funcargtypes, true);
-		// newFuncExpr->funcid = (Oid) 18097;
-		newFuncExpr->funcresulttype = lfunc->funcresulttype;
-
-		/* Set the arguments of the new FuncExpr node */
-		newFuncExpr->args = list_make1(lfunc);
-
-		/* Replace 'leftop' with 'newFuncExpr' */
-		// leftop = (Node *) newFuncExpr;
-		linitial(op->args) = (Node *)newFuncExpr;
-	}
-	else if (IsA(leftop, RelabelType))
-	{
-		RelabelType        *lrelabel = (RelabelType *) leftop;
-		if (IsA(lrelabel->arg, Var))
-		{
-			Var        *lvar = (Var *) lrelabel->arg;
-
-			/* Upadate the col to remove_accents(col) */
-			FuncExpr *newlFuncExpr = makeNode(FuncExpr);
-			newlFuncExpr->funcid = (Oid) 18097;
-			newlFuncExpr->funcresulttype = lvar->vartype;
-			newlFuncExpr->args = list_make1(lvar);
-
-			/* Update the left node */
-			linitial(op->args) = (Node *)newlFuncExpr;
-		}
-		else if (IsA(lrelabel->arg, FuncExpr))
-		{
-			FuncExpr    *lfunc = (FuncExpr *) lrelabel->arg;
-			// Oid            funcargtypes[1] = {TEXTOID};
-
-			/* Create a new FuncExpr node for the 'remove_accents' function */
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = lfunc->funcresulttype;
-
-			/* Set the arguments of the new FuncExpr node */
-			newFuncExpr->args = list_make1(lfunc);
-
-			/* Replace 'leftop' with 'newFuncExpr' */
-			// leftop = (Node *) newFuncExpr;
-			linitial(op->args) = (Node *)newFuncExpr;
-		}
-		else if (IsA(lrelabel->arg, Param))
-		{
-			Param    *lparam = (Param *) lrelabel->arg;
-			/* Construct the new FuncExpr using the Param */
-			FuncExpr *newlFuncExpr = makeNode(FuncExpr);
-			newlFuncExpr->funcid = (Oid) 18097;
-			newlFuncExpr->funcresulttype = lparam->paramtype;
-			newlFuncExpr->args = list_make1(lparam);
-
-			/* Update the left node */
-			linitial(op->args) = (Node *) newlFuncExpr;    
-		}
-		else if (IsA(lrelabel->arg, CaseExpr))
-		{
-			CaseExpr *case_expr = (CaseExpr *)lrelabel->arg;
-
-			// Construct arguments for the new FuncExpr
-			List *args = list_make1(case_expr);
-
-			// Create a new FuncExpr node representing the desired function call
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-			newFuncExpr->args = args;
-
-			// Replace the CaseExpr node with the new FuncExpr node
-			linitial(op->args) = (Node *)newFuncExpr;
-		}
-	}
-	else if (IsA(leftop, CollateExpr))
+	if (IsA(leftop, CollateExpr))
 	{
 		CollateExpr        *lcoll = (CollateExpr *) leftop;
-		if (IsA(lcoll->arg, RelabelType))
-		{
-			RelabelType        *lrelabel = (RelabelType *) lcoll->arg;
-			if (IsA(lrelabel->arg, Var))
-			{
-				Var        *lvar = (Var *) lrelabel->arg;
-				/* Upadate the col to remove_accents(col) */
-				FuncExpr *newlFuncExpr = makeNode(FuncExpr);
-				newlFuncExpr->funcid = (Oid) 18097;
-				newlFuncExpr->funcresulttype = lvar->vartype;
-				newlFuncExpr->args = list_make1(lvar);
-
-				/* Update the left node */
-				linitial(op->args) = (Node *)newlFuncExpr;
-			}
-			else if (IsA(lrelabel->arg, Param))
-			{
-				Param    *lparam = (Param *) lrelabel->arg;
-				/* Construct the new FuncExpr using the Param */
-				FuncExpr *newlFuncExpr = makeNode(FuncExpr);
-				newlFuncExpr->funcid = (Oid) 18097;
-				newlFuncExpr->funcresulttype = lparam->paramtype;
-				newlFuncExpr->args = list_make1(lparam);
-
-				/* Update the left node */
-				linitial(op->args) = (Node *) newlFuncExpr;    
-			}
-			else if (IsA(lrelabel->arg, CaseExpr))
-			{
-				CaseExpr *case_expr = (CaseExpr *)lrelabel->arg;
-
-				// Construct arguments for the new FuncExpr
-				List *args = list_make1(case_expr);
-
-				// Create a new FuncExpr node representing the desired function call
-				FuncExpr *newFuncExpr = makeNode(FuncExpr);
-				newFuncExpr->funcid = (Oid) 18097;
-				newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-				newFuncExpr->args = args;
-
-				// Replace the CaseExpr node with the new FuncExpr node
-				linitial(op->args) = (Node *)newFuncExpr;
-			}
-		}
-		else if (IsA(lcoll->arg, Const))
-		{
-			Const        *lcon = (Const *) lcoll->arg;
-			lcon->constvalue = DirectFunctionCall1(remove_accents, lcon->constvalue);
-		}
-		else if (IsA(lcoll->arg, FuncExpr))
-		{
-			FuncExpr    *lfunc = (FuncExpr *) lcoll->arg;
-			// Oid            funcargtypes[1] = {TEXTOID};
-
-			/* Create a new FuncExpr node for the 'remove_accents' function */
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = lfunc->funcresulttype;
-
-			/* Set the arguments of the new FuncExpr node */
-			newFuncExpr->args = list_make1(lfunc);
-
-			/* Replace 'leftop' with 'newFuncExpr' */
-			// leftop = (Node *) newFuncExpr;
-			linitial(op->args) = (Node *)newFuncExpr;
-		}
-		else if (IsA(lcoll->arg, CaseExpr))
-		{
-			CaseExpr *case_expr = (CaseExpr *)lcoll->arg;
-
-			// Construct arguments for the new FuncExpr
-			List *args = list_make1(case_expr);
-
-			// Create a new FuncExpr node representing the desired function call
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-			newFuncExpr->args = args;
-
-			// Replace the CaseExpr node with the new FuncExpr node
-			linitial(op->args) = (Node *)newFuncExpr;
-		}
+		linitial(op->args) = ConvertNodeToFuncExpr((Node*)lcoll->arg);
 	}
-	else if (IsA(leftop, Param))
+	else
 	{
-		Param    *lparam = (Param *) leftop;
-		/* Construct the new FuncExpr using the Param */
-		FuncExpr *newlFuncExpr = makeNode(FuncExpr);
-		newlFuncExpr->funcid = (Oid) 18097;
-		newlFuncExpr->funcresulttype = lparam->paramtype;
-		newlFuncExpr->args = list_make1(lparam);
-
-		/* Update the left node */
-		linitial(op->args) = (Node *) newlFuncExpr;    
+		linitial(op->args) = ConvertNodeToFuncExpr(leftop);
 	}
-	else if (IsA(leftop, CaseExpr))
-	{
-		CaseExpr *case_expr = (CaseExpr *)leftop;
 
-		// Construct arguments for the new FuncExpr
-		List *args = list_make1(case_expr);
-
-		// Create a new FuncExpr node representing the desired function call
-		FuncExpr *newFuncExpr = makeNode(FuncExpr);
-		newFuncExpr->funcid = (Oid) 18097;
-		newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-		newFuncExpr->args = args;
-
-		// Replace the CaseExpr node with the new FuncExpr node
-		linitial(op->args) = (Node *)newFuncExpr;
-	}
-	// leftop = expression_tree_mutator(leftop, transform_likenode_for_AI, NULL);
-
-	/* Handle right node*/
 	if (IsA(rightop, CollateExpr))
 	{
 		CollateExpr        *rcoll = (CollateExpr *) rightop;
-		if (IsA(rcoll->arg, Const))
-		{
-			Const        *rcon = (Const *) rcoll->arg;
-			rcon->constvalue = DirectFunctionCall1(remove_accents, rcon->constvalue);
-		}
-		else if (IsA(rcoll->arg, RelabelType))
-		{
-			RelabelType        *rrelabel = (RelabelType *) rcoll->arg;
-			if (IsA(rrelabel->arg, Var))
-			{
-				Var        *rvar = (Var *) rcoll->arg;
-				/* Upadate the col to remove_accents(col) */
-				FuncExpr *newrFuncExpr = makeNode(FuncExpr);
-				newrFuncExpr->funcid = (Oid) 18097;
-				newrFuncExpr->funcresulttype = rvar->vartype;
-				newrFuncExpr->args = list_make1(rvar);
-
-				/* Update the left node */
-				lsecond(op->args) = (Node *)newrFuncExpr;
-			}
-			else if (IsA(rrelabel->arg, Param))
-			{
-				Param    *rparam = (Param *) rrelabel->arg;
-				/* Construct the new FuncExpr using the Param */
-				FuncExpr *newrFuncExpr = makeNode(FuncExpr);
-				newrFuncExpr->funcid = (Oid) 18097;
-				newrFuncExpr->funcresulttype = rparam->paramtype;
-				newrFuncExpr->args = list_make1(rparam);
-
-				/* Update the left node */
-				lsecond(op->args) = (Node *) newrFuncExpr;    
-			}
-			else if (IsA(rrelabel->arg, CaseExpr))
-			{
-				CaseExpr *case_expr = (CaseExpr *)rrelabel->arg;
-
-				// Construct arguments for the new FuncExpr
-				List *args = list_make1(case_expr);
-
-				// Create a new FuncExpr node representing the desired function call
-				FuncExpr *newFuncExpr = makeNode(FuncExpr);
-				newFuncExpr->funcid = (Oid) 18097;
-				newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-				newFuncExpr->args = args;
-
-				// Replace the CaseExpr node with the new FuncExpr node
-				lsecond(op->args) = (Node *)newFuncExpr;
-			}
-		}
-		else if (IsA(rcoll->arg, FuncExpr))
-		{
-			FuncExpr    *rfunc = (FuncExpr *) rcoll->arg;
-			// Oid            funcargtypes[1] = {TEXTOID};
-
-			/* Create a new FuncExpr node for the 'remove_accents' function */
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = rfunc->funcresulttype;
-
-			/* Set the arguments of the new FuncExpr node */
-			newFuncExpr->args = list_make1(rfunc);
-
-			/* Replace 'leftop' with 'newFuncExpr' */
-			// leftop = (Node *) newFuncExpr;
-			lsecond(op->args) = (Node *)newFuncExpr;
-		}
-		else if (IsA(rcoll->arg, CaseExpr))
-		{
-			CaseExpr *case_expr = (CaseExpr *)rcoll->arg;
-
-			// Construct arguments for the new FuncExpr
-			List *args = list_make1(case_expr);
-
-			// Create a new FuncExpr node representing the desired function call
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-			newFuncExpr->args = args;
-
-			// Replace the CaseExpr node with the new FuncExpr node
-			lsecond(op->args) = (Node *)newFuncExpr;
-		}
+		lsecond(op->args) = ConvertNodeToFuncExpr((Node*)rcoll->arg);
 	}
-	else if (IsA(rightop, Const))
+	else
 	{
-		Const        *rcon = (Const *) rightop;
-		rcon->constvalue = DirectFunctionCall1(remove_accents, rcon->constvalue);
+		lsecond(op->args) = ConvertNodeToFuncExpr(rightop);
 	}
-	else if (IsA(rightop, RelabelType))
-	{
-		RelabelType        *rrelabel = (RelabelType *) rightop;
-		if (IsA(rrelabel->arg, Var))
-		{
-			Var        *rvar = (Var *) rrelabel->arg;
 
-			/* Upadate the col to remove_accents(col) */
-			FuncExpr *newrFuncExpr = makeNode(FuncExpr);
-			newrFuncExpr->funcid = (Oid) 18097;
-			newrFuncExpr->funcresulttype = rvar->vartype;
-			newrFuncExpr->args = list_make1(rvar);
+	/* Handle left node*/
+	// if (IsA(leftop, Const))
+	// {
+	// 	linitial(op->args) = ConvertNodeToFuncExpr(leftop);
+	// }
+	// else if (IsA(leftop, FuncExpr))
+	// {
+	// 	linitial(op->args) = ConvertNodeToFuncExpr(leftop);
+	// }
+	// else if (IsA(leftop, RelabelType))
+	// {
+	// 	// RelabelType        *lrelabel = (RelabelType *) leftop;
+	// 	// if (IsA(lrelabel->arg, Var))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);
+	// 	// }
+	// 	// else if (IsA(lrelabel->arg, FuncExpr))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);
+	// 	// }
+	// 	// else if (IsA(lrelabel->arg, Param))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);    
+	// 	// }
+	// 	// else if (IsA(lrelabel->arg, CaseExpr))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);
+	// 	// }
+	// 	linitial(op->args) = ConvertNodeToFuncExpr(leftop);
+	// }
+	// else if (IsA(leftop, CollateExpr))
+	// {
+	// 	CollateExpr        *lcoll = (CollateExpr *) leftop;
+	// 	// if (IsA(lcoll->arg, RelabelType))
+	// 	// {
+	// 	// 	RelabelType        *lrelabel = (RelabelType *) lcoll->arg;
+	// 	// 	if (IsA(lrelabel->arg, Var))
+	// 	// 	{
+	// 	// 		linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);
+	// 	// 	}
+	// 	// 	else if (IsA(lrelabel->arg, Param))
+	// 	// 	{
+	// 	// 		linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);    
+	// 	// 	}
+	// 	// 	else if (IsA(lrelabel->arg, FuncExpr))
+	// 	// 	{
+	// 	// 		linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);
+	// 	// 	}
+	// 	// 	else if (IsA(lrelabel->arg, CaseExpr))
+	// 	// 	{
+	// 	// 		linitial(op->args) = ConvertNodeToFuncExpr(lrelabel->arg);
+	// 	// 	}
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lcoll->arg);
+	// 	// }
+	// 	// else if (IsA(lcoll->arg, Const))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lcoll->arg);
+	// 	// }
+	// 	// else if (IsA(lcoll->arg, FuncExpr))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lcoll->arg);
+	// 	// }
+	// 	// else if (IsA(lcoll->arg, CaseExpr))
+	// 	// {
+	// 	// 	linitial(op->args) = ConvertNodeToFuncExpr(lcoll->arg);
+	// 	// }
+	// 	linitial(op->args) = ConvertNodeToFuncExpr((Node*)lcoll->arg);
+	// }
+	// else if (IsA(leftop, Param))
+	// {
+	// 	linitial(op->args) = ConvertNodeToFuncExpr(leftop);    
+	// }
+	// else if (IsA(leftop, CaseExpr))
+	// {
+	// 	linitial(op->args) = ConvertNodeToFuncExpr(leftop);
+	// }
 
-			/* Update the right node */
-			lsecond(op->args) = (Node *)newrFuncExpr;
-		}
-		else if (IsA(rrelabel->arg, FuncExpr))
-		{
-			FuncExpr    *rfunc = (FuncExpr *) rrelabel->arg;
-			// Oid            funcargtypes[1] = {TEXTOID};
 
-			/* Create a new FuncExpr node for the 'remove_accents' function */
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = rfunc->funcresulttype;
+	// /* Handle right node*/
+	// if (IsA(rightop, CollateExpr))
+	// {
+	// 	CollateExpr        *rcoll = (CollateExpr *) rightop;
+	// 	// if (IsA(rcoll->arg, Const))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rcoll->arg);
+	// 	// }
+	// 	// else if (IsA(rcoll->arg, RelabelType))
+	// 	// {
+	// 	// 	RelabelType        *rrelabel = (RelabelType *) rcoll->arg;
+	// 	// 	if (IsA(rrelabel->arg, Var))
+	// 	// 	{
+	// 	// 		lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);
+	// 	// 	}
+	// 	// 	else if (IsA(rrelabel->arg, Param))
+	// 	// 	{
+	// 	// 		lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);    
+	// 	// 	}
+	// 	// 	else if (IsA(rrelabel->arg, FuncExpr))
+	// 	// 	{
+	// 	// 		lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);
+	// 	// 	}
+	// 	// 	else if (IsA(rrelabel->arg, CaseExpr))
+	// 	// 	{
+	// 	// 		lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);
+	// 	// 	}
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rcoll->arg);
+	// 	// }
+	// 	// else if (IsA(rcoll->arg, FuncExpr))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rcoll->arg);
+	// 	// }
+	// 	// else if (IsA(rcoll->arg, CaseExpr))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rcoll->arg);
+	// 	// }
+	// 	lsecond(op->args) = ConvertNodeToFuncExpr((Node*)rcoll->arg);
+	// }
+	// else if (IsA(rightop, Const))
+	// {
+	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rightop);
+	// }
+	// else if (IsA(rightop, RelabelType))
+	// {
+	// 	// RelabelType        *rrelabel = (RelabelType *) rightop;
 
-			/* Set the arguments of the new FuncExpr node */
-			newFuncExpr->args = list_make1(rfunc);
-
-			/* Replace 'leftop' with 'newFuncExpr' */
-			// leftop = (Node *) newFuncExpr;
-			lsecond(op->args) = (Node *)newFuncExpr;
-		}
-		else if (IsA(rrelabel->arg, Param))
-		{
-			Param    *rparam = (Param *) rrelabel->arg;
-			/* Construct the new FuncExpr using the Param */
-			FuncExpr *newrFuncExpr = makeNode(FuncExpr);
-			newrFuncExpr->funcid = (Oid) 18097;
-			newrFuncExpr->funcresulttype = rparam->paramtype;
-			newrFuncExpr->args = list_make1(rparam);
-
-			/* Update the right node */
-			lsecond(op->args) = (Node *) newrFuncExpr;    
-		}
-		else if (IsA(rrelabel->arg, CaseExpr))
-		{
-			CaseExpr *case_expr = (CaseExpr *)rrelabel->arg;
-
-			// Construct arguments for the new FuncExpr
-			List *args = list_make1(case_expr);
-
-			// Create a new FuncExpr node representing the desired function call
-			FuncExpr *newFuncExpr = makeNode(FuncExpr);
-			newFuncExpr->funcid = (Oid) 18097;
-			newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-			newFuncExpr->args = args;
-
-			// Replace the CaseExpr node with the new FuncExpr node
-			lsecond(op->args) = (Node *)newFuncExpr;
-		}
-	}
-	else if (IsA(rightop, FuncExpr))
-	{
-		FuncExpr    *rfunc = (FuncExpr *) rightop;
-		// Oid            funcargtypes[1] = {TEXTOID};
-
-		/* Create a new FuncExpr node for the 'remove_accents' function */
-		FuncExpr *newFuncExpr = makeNode(FuncExpr);
-		// newFuncExpr->funcid = LookupFuncName(list_make1(makeString("remove_accents")), 1, funcargtypes, true);
-		newFuncExpr->funcid = (Oid) 18097;
-		newFuncExpr->funcresulttype = rfunc->funcresulttype;
-
-		/* Set the arguments of the new FuncExpr node */
-		newFuncExpr->args = list_make1(rfunc);
-
-		/* Replace 'leftop' with 'newFuncExpr' */
-		// leftop = (Node *) newFuncExpr;
-		lsecond(op->args) = (Node *)newFuncExpr;
-	}
-	else if (IsA(rightop, CaseExpr))
-	{
-		CaseExpr *case_expr = (CaseExpr *)rightop;
-
-		// Construct arguments for the new FuncExpr
-		List *args = list_make1(case_expr);
-
-		// Create a new FuncExpr node representing the desired function call
-		FuncExpr *newFuncExpr = makeNode(FuncExpr);
-		newFuncExpr->funcid = (Oid) 18097;
-		newFuncExpr->funcresulttype = exprType((Node *)case_expr);
-		newFuncExpr->args = args;
-
-		// Replace the CaseExpr node with the new FuncExpr node
-		lsecond(op->args) = (Node *)newFuncExpr;
-	}
+	// 	// if (IsA(rrelabel->arg, Var))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);
+	// 	// }
+	// 	// else if (IsA(rrelabel->arg, FuncExpr))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);
+	// 	// }
+	// 	// else if (IsA(rrelabel->arg, Param))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);    
+	// 	// }
+	// 	// else if (IsA(rrelabel->arg, CaseExpr))
+	// 	// {
+	// 	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rrelabel->arg);
+	// 	// }
+	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rightop);
+	// }
+	// else if (IsA(rightop, FuncExpr))
+	// {
+	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rightop);
+	// }
+	// else if (IsA(rightop, CaseExpr))
+	// {
+	// 	lsecond(op->args) = ConvertNodeToFuncExpr(rightop);
+	// }
 	
-	// rightop = expression_tree_mutator(rightop, transform_likenode_for_AI, NULL);
 	return node;
 }
 
