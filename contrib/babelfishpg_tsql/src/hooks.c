@@ -134,7 +134,7 @@ static void fill_missing_values_in_copyfrom(Relation rel, Datum *values, bool *n
 /*****************************************
  * 			Utility Hooks
  *****************************************/
-static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
+static void pltsql_report_proc_not_found_error(List *names, List *argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern PLtsql_execstate *get_current_tsql_estate();
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
@@ -2196,7 +2196,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool o
 
 /* Generate similar error message with SQL Server when function/procedure is not found if possible. */
 void
-pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs, ParseState *pstate, int location, bool proc_call)
+pltsql_report_proc_not_found_error(List *names, List *given_argnames, Oid *input_typeids, int nargs, ParseState *pstate, int location, bool proc_call)
 {
 	FuncCandidateList candidates = NULL,
 				current_candidate = NULL;
@@ -2204,6 +2204,8 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 	int			min_nargs = INT_MAX;
 	int			ncandidates = 0;
 	bool		found = false;
+	char	   *schemaname;
+	char	   *funcname;
 	const char *obj_type = proc_call ? "procedure" : "function";
 
 	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true);	/* search all possible
@@ -2243,6 +2245,18 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 		 */
 		if (found)
 		{
+			if (!proc_call)
+			{
+				/* deconstruct the names list */
+				DeconstructQualifiedName(names, &schemaname, &funcname);
+
+				/* 
+				 * Check whether function is an exception function or not, and 
+				 * report appropriate error if applicable 
+				 */
+				validate_exception_fuction(schemaname, funcname, nargs, input_typeids);
+			}
+
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
 					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),

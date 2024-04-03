@@ -371,6 +371,30 @@ tsql_precedence_info_t tsql_precedence_infos[] =
 
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
 
+#define EFUNC_MAX_ARGS 2
+#define EFUNC_MAX_VALID_TYPES 4
+
+typedef struct tsql_valid_type
+{
+	int		len;
+	char   *valid_types[EFUNC_MAX_VALID_TYPES];
+} tsql_valid_type_t;
+
+typedef struct tsql_exception_function
+{
+	const char		   *nsp;
+	const char		   *funcname;
+	int					nargs;
+	tsql_valid_type_t	valid_arg_types[EFUNC_MAX_ARGS];
+} tsql_exception_function_t;
+
+tsql_exception_function_t tsql_exception_function_list[] = 
+{
+	{"sys", "trim", 2, {{4, {"bpchar","varchar","nchar","nvarchar"}}, {4, {"bpchar","varchar","nchar","nvarchar"}}}}
+};
+
+#define TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT (sizeof(tsql_exception_function_list)/sizeof(tsql_exception_function_list[0]))
+
 /* T-SQL Cast */
 typedef struct tsql_cast_info_key
 {
@@ -885,6 +909,176 @@ run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList 
 	return new_candidates;
 }
 
+/*
+ * For a given function details, validate whether it is in exception function list
+ * and also validate the input argument data types.
+ */
+bool validate_exception_fuction(char *func_nsname, char *func_name, int nargs, Oid *input_typeids)
+{
+	tsql_exception_function_t  *exception_func = NULL;
+	int							i;
+	bool						type_match;
+	Oid							typId;
+
+	/* Sanity checks */
+	if (func_name == NULL || (nargs != 0 && input_typeids == NULL))
+		return false;
+
+	/* 
+	 * Exception function handling is only for system functions.
+	 * If func_nsname is NULL, consider it to be a sys.
+	 */
+	if (func_nsname != NULL &&
+		(strlen(func_nsname) != 3 || strncmp(func_nsname, "sys", 3) != 0))
+		return false;
+
+	/* Get Exception function details */
+	for (i = 0; i < TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT; i++)
+	{
+		exception_func = &tsql_exception_function_list[i];
+		if (strcmp(func_name, exception_func->funcname) == 0
+			&& nargs == exception_func->nargs)
+				break;
+		exception_func = NULL;
+	}
+
+	/* If function is not an exception function no additional handling required */
+	if (i >= TOTAL_TSQL_EXCEPTION_FUNCTION_COUNT
+		|| exception_func == NULL)
+	{
+		return false;
+	}
+
+	/* Report error in case of invalid argument datatype */
+	for (i = 0; i < exception_func->nargs; i++)
+	{
+		if (input_typeids[i] == UNKNOWNOID)
+			continue;
+
+		type_match = false;
+		for (int j = 0; j < exception_func->valid_arg_types[i].len; j++)
+		{
+			typId = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) (exception_func->valid_arg_types[i].valid_types[j]);
+			if (input_typeids[i] == typId)
+			{
+				type_match = true;
+				break;
+			}
+		}
+		if (!type_match)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("Argument data type %s is invalid for argument %d of %s function.", 
+				 		 format_type_be(input_typeids[i]), i+1, exception_func->funcname)));
+		}
+	}
+
+	return true;
+}
+
+/*
+ * tsql_func_select_candidate_for_exception()
+ *
+ * For functions present in exception function list, and try to find best candidate 
+ * based on matching return type. Also throw error in case of invalid argument data type.
+ */
+static FuncCandidateList
+tsql_func_select_candidate_for_exception(int nargs, Oid *input_typeids, FuncCandidateList candidates)
+{
+	FuncCandidateList			current_candidate;
+	HeapTuple					tuple;
+	Oid 						expr_result_type;
+	Form_pg_proc 				procform, pform;
+	Oid							proc_ns;
+	char					   *proc_nsname = NULL;
+	char					   *proc_name = NULL;
+	bool						is_func_validated;
+
+	/* 
+	 * Get function name and its namespace from candidate list 
+	 * if namespace of all candidates are same then proc_namespace should be that namespace
+	 * else if atleast 2 of function candidate have different proc_namespace value then it means
+	 * namespace was not provided during function call hence by default we will use "sys" as namespace
+	 */
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+
+	procform = (Form_pg_proc) GETSTRUCT(tuple);
+	proc_ns = procform->pronamespace;
+	proc_name = NameStr(procform->proname);
+	ReleaseSysCache(tuple);
+
+	for (current_candidate = candidates->next;
+			current_candidate != NULL;
+			current_candidate = current_candidate->next)
+	{
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(current_candidate->oid));
+		if (!HeapTupleIsValid(tuple))
+			continue;
+
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+		if (proc_ns != procform->pronamespace)
+		{
+			proc_nsname = pstrdup("sys");
+			break;
+		}
+		ReleaseSysCache(tuple);
+	}
+	if (proc_nsname == NULL)
+		proc_nsname = get_namespace_name(proc_ns);
+
+	is_func_validated = validate_exception_fuction(proc_nsname, proc_name, nargs, input_typeids);
+
+	/* Return NULL if function is not an exception function */
+	if (!is_func_validated)
+		return NULL;
+
+	/* function based logic to decide return type */
+	expr_result_type = -1;
+	if (strcmp(proc_name,"trim") == 0)
+	{
+		if ((*common_utility_plugin_ptr->is_tsql_nvarchar_datatype)(input_typeids[0])
+			|| (*common_utility_plugin_ptr->is_tsql_nchar_datatype)(input_typeids[0]))
+		{
+			expr_result_type = (*common_utility_plugin_ptr->lookup_tsql_datatype_oid) ("nvarchar");	
+		}
+		else if ((*common_utility_plugin_ptr->is_tsql_varchar_datatype)(input_typeids[0])
+				|| (*common_utility_plugin_ptr->is_tsql_bpchar_datatype)(input_typeids[0])
+				|| input_typeids[0] == UNKNOWNOID)
+		{
+			expr_result_type = get_sys_varcharoid();
+		}
+	}
+
+	if (expr_result_type == -1)
+	{
+		return NULL;
+	}
+
+	/* Get the candidate with matching return type */
+	for (current_candidate = candidates;
+			current_candidate != NULL;
+			current_candidate = current_candidate->next)
+	{
+		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(current_candidate->oid));
+		if (!HeapTupleIsValid(tuple))
+			continue;
+
+		pform = (Form_pg_proc) GETSTRUCT(tuple);
+		if (expr_result_type == pform->prorettype)
+		{
+			current_candidate->next = NULL;
+			ReleaseSysCache(tuple);
+			break;
+		}
+		ReleaseSysCache(tuple);
+	}
+	
+	return current_candidate;
+}
+
 static FuncCandidateList
 tsql_func_select_candidate(int nargs,
 						   Oid *input_typeids,
@@ -896,6 +1090,12 @@ tsql_func_select_candidate(int nargs,
 	FuncCandidateList another_candidate;
 	int			i;
 	bool			  candidates_are_opers = false;
+	FuncCandidateList result;
+
+	result = tsql_func_select_candidate_for_exception(nargs, input_typeids, candidates);
+
+	if(result)
+		return result;
 
 	if (unknowns_resolved)
 	{
@@ -939,6 +1139,14 @@ tsql_func_select_candidate(int nargs,
 		 * find the candidate
 		 */
 		return func_select_candidate(nargs, new_input_typeids, candidates);
+	}
+	else
+	{
+		for (i = 0; i < nargs; i++)
+		{
+			if (input_typeids[i] == UNKNOWNOID)
+				return NULL;
+		}
 	}
 
 	new_candidates = run_tsql_best_match_heuristics(nargs, input_typeids, candidates);
