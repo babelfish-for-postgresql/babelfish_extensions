@@ -32,6 +32,7 @@ extern bool babelfish_dump_restore;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
+Node *ConvertNodeToFuncExpr(Node *node);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -469,7 +470,7 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 }
 
 
-static Node *
+Node *
 ConvertNodeToFuncExpr(Node *node)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
