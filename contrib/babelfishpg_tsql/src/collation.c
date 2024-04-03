@@ -32,7 +32,7 @@ extern bool babelfish_dump_restore;
 
 static Node *pgtsql_expression_tree_mutator(Node *node, void *context);
 static void init_and_check_collation_callbacks(void);
-Node *ConvertNodeToFuncExpr(Node *node);
+static Node *ConvertNodeToFuncExpr(Node *node, void *context);
 
 extern int	pattern_fixed_prefix_wrapper(Const *patt,
 										 int ptype,
@@ -470,8 +470,8 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 }
 
 
-Node *
-ConvertNodeToFuncExpr(Node *node)
+static Node *
+ConvertNodeToFuncExpr(Node *node, void *context)
 {
 	FuncExpr *newFuncExpr = makeNode(FuncExpr);
 	Oid funcargtypes[1] = {CHAROID};
@@ -541,21 +541,21 @@ transform_likenode_for_AI(Node *node, OpExpr *op)
 	if (IsA(leftop, CollateExpr))
 	{
 		CollateExpr        *lcoll = (CollateExpr *) leftop;
-		linitial(op->args) = ConvertNodeToFuncExpr((Node*)lcoll->arg);
+		linitial(op->args) = ConvertNodeToFuncExpr((Node*)lcoll->arg, NULL);
 	}
 	else
 	{
-		linitial(op->args) = ConvertNodeToFuncExpr(leftop);
+		linitial(op->args) = ConvertNodeToFuncExpr(leftop, NULL);
 	}
 
 	if (IsA(rightop, CollateExpr))
 	{
 		CollateExpr        *rcoll = (CollateExpr *) rightop;
-		lsecond(op->args) = ConvertNodeToFuncExpr((Node*)rcoll->arg);
+		lsecond(op->args) = ConvertNodeToFuncExpr((Node*)rcoll->arg, NULL);
 	}
 	else
 	{
-		lsecond(op->args) = ConvertNodeToFuncExpr(rightop);
+		lsecond(op->args) = ConvertNodeToFuncExpr(rightop, NULL);
 	}
 	
 	return node;
