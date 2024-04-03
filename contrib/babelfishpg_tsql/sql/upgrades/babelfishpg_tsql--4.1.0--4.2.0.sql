@@ -37,6 +37,10 @@ LANGUAGE plpgsql;
  * So make sure that any SQL statement (DDL/DML) being added here can be executed multiple times without affecting
  * final behaviour.
  */
+create or replace function sys.remove_accents(IN sys.NVARCHAR) RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'remove_accents'
+LANGUAGE C
+IMMUTABLE STRICT PARALLEL SAFE;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
