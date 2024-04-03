@@ -54,4 +54,9 @@ guest
 ~~END~~
 
 
+-- tsql
+use babel_2571_db_guest;
+go
 
+drop table guest.babel_2571_table_t1;
+go

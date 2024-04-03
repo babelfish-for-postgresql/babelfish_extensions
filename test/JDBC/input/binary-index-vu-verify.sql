@@ -1,4 +1,7 @@
 -- parallel_query_expected
+create index ix_tab_binary_b on tab_varbinary (a)
+GO
+
 select set_config('enable_bitmapscan', 'off', false);
 GO
 

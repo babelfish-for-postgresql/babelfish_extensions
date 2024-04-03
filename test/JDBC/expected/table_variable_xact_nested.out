@@ -494,7 +494,7 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 5~~
+~~ROW COUNT: 13~~
 
 ~~ROW COUNT: 1~~
 
@@ -504,11 +504,11 @@ GO
 
 ~~ROW COUNT: 1~~
 
-~~ROW COUNT: 5~~
+~~ROW COUNT: 13~~
 
 ~~ROW COUNT: 2~~
 
-~~ROW COUNT: 5~~
+~~ROW COUNT: 8~~
 
 ~~ROW COUNT: 1~~
 
@@ -541,9 +541,20 @@ int#!#text
 3#!#@table_variable_in_trigger_3
 3#!#@pg_toast_#oid_masked#
 3#!#@pg_toast_#oid_masked#_index
+3#!#inserted
+3#!#deleted
+3#!#@table_variable_in_trigger_2
+3#!#@pg_toast_#oid_masked#
+3#!#@pg_toast_#oid_masked#_index
+3#!#@tv_1
+3#!#@pg_toast_#oid_masked#
+3#!#@pg_toast_#oid_masked#_index
 2#!#inserted
 2#!#deleted
 2#!#@table_variable_in_trigger_2
+2#!#@pg_toast_#oid_masked#
+2#!#@pg_toast_#oid_masked#_index
+2#!#@tv_1
 2#!#@pg_toast_#oid_masked#
 2#!#@pg_toast_#oid_masked#_index
 1#!#@tv_1

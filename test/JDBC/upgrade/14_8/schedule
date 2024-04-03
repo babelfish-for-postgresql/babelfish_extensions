@@ -108,6 +108,7 @@ BABEL-4078
 BABEL-4098
 babel_417
 BABEL-493
+BABEL-4672
 BABEL_539
 BABEL-621
 BABEL-728
@@ -123,7 +124,7 @@ BABEL-CROSS-DB
 babel_datatype_sqlvariant
 babel_datetime
 BABEL-EXECUTE_AS_CALLER
-BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor

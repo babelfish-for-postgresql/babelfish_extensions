@@ -180,6 +180,7 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->send_info = &TdsSendInfo;
 	pltsql_plugin_handler_ptr->send_done = &TdsSendDone;
 	pltsql_plugin_handler_ptr->send_env_change = &TdsSendEnvChange;
+	pltsql_plugin_handler_ptr->send_env_change_binary = &TdsSendEnvChangeBinary;
 	pltsql_plugin_handler_ptr->get_tsql_error = &get_tsql_error_details;
 	pltsql_plugin_handler_ptr->stmt_beg = TDSStatementBeginCallback;
 	pltsql_plugin_handler_ptr->stmt_end = TDSStatementEndCallback;
