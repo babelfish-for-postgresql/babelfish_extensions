@@ -411,6 +411,15 @@ PG_FUNCTION_INFO_V1(bigint_avg);
 PG_FUNCTION_INFO_V1(int4int2_sum);
 PG_FUNCTION_INFO_V1(int4int2_avg);
 
+/* Implementation of various oprators between int and numeric */
+PG_FUNCTION_INFO_V1(int4_numeric_cmp);
+PG_FUNCTION_INFO_V1(int4_numeric_eq);
+PG_FUNCTION_INFO_V1(int4_numeric_neq);
+PG_FUNCTION_INFO_V1(int4_numeric_lt);
+PG_FUNCTION_INFO_V1(int4_numeric_lte);
+PG_FUNCTION_INFO_V1(int4_numeric_gt);
+PG_FUNCTION_INFO_V1(int4_numeric_gte);
+
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
 static const char *set_var_from_str(const char *str, const char *cp,
@@ -1115,4 +1124,60 @@ Datum
 bigint_avg(PG_FUNCTION_ARGS)
 {
 	return bigint_poly_aggr_final(fcinfo, TSQL_AVG);
+}
+
+Datum
+int4_numeric_eq(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_eq, arg1_numeric, arg2_numeric);
+}
+
+Datum
+int4_numeric_cmp(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_cmp, arg1_numeric, arg2_numeric);
+}
+
+Datum
+int4_numeric_neq(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_ne, arg1_numeric, arg2_numeric);
+}
+
+Datum
+int4_numeric_lt(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_lt, arg1_numeric, arg2_numeric);
+}
+
+Datum
+int4_numeric_lte(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_le, arg1_numeric, arg2_numeric);
+}
+
+Datum
+int4_numeric_gt(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_gt, arg1_numeric, arg2_numeric);
+}
+
+Datum
+int4_numeric_gte(PG_FUNCTION_ARGS)
+{
+	Datum arg1_numeric = DirectFunctionCall1(int4_numeric, PG_GETARG_DATUM(0));
+	Datum arg2_numeric = PG_GETARG_DATUM(1);
+	return DirectFunctionCall2(numeric_ge, arg1_numeric, arg2_numeric);
 }
