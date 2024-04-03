@@ -77,20 +77,4 @@ dump-restore-version: [[
     database-level: false,
     type: schema-cum-data-only
   }
-],
-[
-  {
-    version: source.latest,
-    dump-data-as: inserts,
-    dump-format: directory,
-    database-level: true,
-    type: schema-cum-data-only
-  },
-  {
-    version: target.latest,
-    dump-data-as: inserts,
-    dump-format: directory,
-    database-level: true,
-    type: schema-cum-data-only
-  }
 ]]
