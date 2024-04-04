@@ -74,7 +74,7 @@ CREATE OPERATOR sys.< (
     LEFTARG = int,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_lt,
-    COMMUTATOR = <,
+    COMMUTATOR = >,
     NEGATOR = >=,
     RESTRICT = scalarltsel,
     JOIN = scalarltjoinsel
@@ -84,7 +84,7 @@ CREATE OPERATOR sys.< (
     LEFTARG = numeric,
     RIGHTARG = int,
     FUNCTION = sys.numeric_int4_lt,
-    COMMUTATOR = <,
+    COMMUTATOR = >,
     NEGATOR = >=,
     RESTRICT = scalarltsel,
     JOIN = scalarltjoinsel
@@ -94,7 +94,7 @@ CREATE OPERATOR sys.<= (
     LEFTARG = int,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_lte,
-    COMMUTATOR = <=,
+    COMMUTATOR = >=,
     NEGATOR = >,
     RESTRICT = scalarlesel,
     JOIN = scalarlejoinsel
@@ -104,7 +104,7 @@ CREATE OPERATOR sys.<= (
     LEFTARG = numeric,
     RIGHTARG = int,
     FUNCTION = sys.numeric_int4_lte,
-    COMMUTATOR = <=,
+    COMMUTATOR = >=,
     NEGATOR = >,
     RESTRICT = scalarlesel,
     JOIN = scalarlejoinsel
@@ -114,7 +114,7 @@ CREATE OPERATOR sys.> (
     LEFTARG = int,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_gt,
-    COMMUTATOR = >,
+    COMMUTATOR = <,
     NEGATOR = <=,
     RESTRICT = scalargtsel,
     JOIN = scalargtjoinsel
@@ -124,7 +124,7 @@ CREATE OPERATOR sys.> (
     LEFTARG = numeric,
     RIGHTARG = int,
     FUNCTION = sys.numeric_int4_gt,
-    COMMUTATOR = >,
+    COMMUTATOR = <,
     NEGATOR = <=,
     RESTRICT = scalargtsel,
     JOIN = scalargtjoinsel
@@ -134,7 +134,7 @@ CREATE OPERATOR sys.>= (
     LEFTARG = int,
     RIGHTARG = numeric,
     FUNCTION = sys.int4_numeric_gte,
-    COMMUTATOR = >=,
+    COMMUTATOR = <=,
     NEGATOR = <,
     RESTRICT = scalargesel,
     JOIN = scalargejoinsel
@@ -144,7 +144,7 @@ CREATE OPERATOR sys.>= (
     LEFTARG = numeric,
     RIGHTARG = int,
     FUNCTION = sys.numeric_int4_gte,
-    COMMUTATOR = >=,
+    COMMUTATOR = <=,
     NEGATOR = <,
     RESTRICT = scalargesel,
     JOIN = scalargejoinsel

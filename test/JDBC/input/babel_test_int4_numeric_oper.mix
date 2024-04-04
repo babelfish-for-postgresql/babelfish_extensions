@@ -35,27 +35,51 @@ GO
 select count(*) from test_int_numeric where a <> 5.0;
 GO
 
+select count(*) from test_int_numeric where 5.0 <> a;
+GO
+
 -- index scan on < and >
 select count(*) from test_int_numeric where a < 5.0;
+GO
+
+select count(*) from test_int_numeric where 5.0 > a;
 GO
 
 select count(*) from test_int_numeric where a < -2147483648.0;
 GO
 
+select count(*) from test_int_numeric where -2147483648.0 > a;
+GO
+
 select count(*) from test_int_numeric where a <= 5.0;
+GO
+
+select count(*) from test_int_numeric where 5.0 >= a;
 GO
 
 select count(*) from test_int_numeric where a > 999995.0;
 GO
 
+select count(*) from test_int_numeric where 999995.0 < a;
+GO
+
 select count(*) from test_int_numeric where a >= 999995.0;
+GO
+
+select count(*) from test_int_numeric where 999995.0 <= a;
 GO
 
 select count(*) from test_int_numeric where a > 2147483647.0;
 go
 
+select count(*) from test_int_numeric where 2147483647.0 < a;
+go
+
 -- seq scan on < and >
 select count(*) from test_int_numeric where a > 5.0;
+GO
+
+select count(*) from test_int_numeric where 5.0 < a;
 GO
 
 -- index scan for BETWEEN
@@ -71,6 +95,9 @@ select count(*) from test_int_numeric where (a between 5.0 and 999999.0) and a =
 GO
 
 select count(*) from test_int_numeric where a > 5.0 and a < 7;
+Go
+
+select count(*) from test_int_numeric where 5.0 < a and 7 > a;
 Go
 
 -- shouldn't be any regression on int op int operators
@@ -122,27 +149,51 @@ GO
 select count(*) from test_int_numeric where a <> 5.0;
 GO
 
+select count(*) from test_int_numeric where 5.0 <> a;
+GO
+
 -- index scan on < and >
 select count(*) from test_int_numeric where a < 5.0;
+GO
+
+select count(*) from test_int_numeric where 5.0 > a;
 GO
 
 select count(*) from test_int_numeric where a < -2147483648.0;
 GO
 
+select count(*) from test_int_numeric where -2147483648.0 > a;
+GO
+
 select count(*) from test_int_numeric where a <= 5.0;
+GO
+
+select count(*) from test_int_numeric where 5.0 >= a;
 GO
 
 select count(*) from test_int_numeric where a > 999995.0;
 GO
 
+select count(*) from test_int_numeric where 999995.0 < a;
+GO
+
 select count(*) from test_int_numeric where a >= 999995.0;
+GO
+
+select count(*) from test_int_numeric where 999995.0 <= a;
 GO
 
 select count(*) from test_int_numeric where a > 2147483647.0;
 go
 
+select count(*) from test_int_numeric where 2147483647.0 < a;
+go
+
 -- seq scan on < and >
 select count(*) from test_int_numeric where a > 5.0;
+GO
+
+select count(*) from test_int_numeric where 5.0 < a;
 GO
 
 -- index scan for BETWEEN
@@ -158,6 +209,9 @@ select count(*) from test_int_numeric where (a between 5.0 and 999999.0) and a =
 GO
 
 select count(*) from test_int_numeric where a > 5.0 and a < 7;
+Go
+
+select count(*) from test_int_numeric where 5.0 < a and 7 > a;
 Go
 
 -- shouldn't be any regression on int op int operators

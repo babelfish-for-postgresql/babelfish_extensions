@@ -70,12 +70,34 @@ Aggregate
 ~~END~~
 
 
+select count(*) from test_int_numeric where 5.0 <> a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 5.0 <> a
+Aggregate
+  ->  Seq Scan on test_int_numeric
+        Filter: (5.0 <> a)
+~~END~~
+
+
 -- index scan on < and >
 select count(*) from test_int_numeric where a < 5.0;
 GO
 ~~START~~
 text
 Query Text: select count(*) from test_int_numeric where a < 5.0
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: (a < 5.0)
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 > a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 5.0 > a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a < 5.0)
@@ -93,11 +115,33 @@ Aggregate
 ~~END~~
 
 
+select count(*) from test_int_numeric where -2147483648.0 > a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where -2147483648.0 > a
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: (a < '-2147483648.0'::numeric)
+~~END~~
+
+
 select count(*) from test_int_numeric where a <= 5.0;
 GO
 ~~START~~
 text
 Query Text: select count(*) from test_int_numeric where a <= 5.0
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: (a <= 5.0)
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 >= a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 5.0 >= a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a <= 5.0)
@@ -115,11 +159,33 @@ Aggregate
 ~~END~~
 
 
+select count(*) from test_int_numeric where 999995.0 < a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 999995.0 < a
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: (a > 999995.0)
+~~END~~
+
+
 select count(*) from test_int_numeric where a >= 999995.0;
 GO
 ~~START~~
 text
 Query Text: select count(*) from test_int_numeric where a >= 999995.0
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: (a >= 999995.0)
+~~END~~
+
+
+select count(*) from test_int_numeric where 999995.0 <= a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 999995.0 <= a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: (a >= 999995.0)
@@ -137,6 +203,17 @@ Aggregate
 ~~END~~
 
 
+select count(*) from test_int_numeric where 2147483647.0 < a;
+go
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 2147483647.0 < a
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: (a > 2147483647.0)
+~~END~~
+
+
 -- seq scan on < and >
 select count(*) from test_int_numeric where a > 5.0;
 GO
@@ -146,6 +223,17 @@ Query Text: select count(*) from test_int_numeric where a > 5.0
 Aggregate
   ->  Seq Scan on test_int_numeric
         Filter: (a > 5.0)
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 < a;
+GO
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 5.0 < a
+Aggregate
+  ->  Seq Scan on test_int_numeric
+        Filter: (5.0 < a)
 ~~END~~
 
 
@@ -190,6 +278,17 @@ Go
 ~~START~~
 text
 Query Text: select count(*) from test_int_numeric where a > 5.0 and a < 7
+Aggregate
+  ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
+        Index Cond: ((a > 5.0) AND (a < 7))
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 < a and 7 > a;
+Go
+~~START~~
+text
+Query Text: select count(*) from test_int_numeric where 5.0 < a and 7 > a
 Aggregate
   ->  Index Only Scan using test_int_numeric_idxtest_int_nu72fc1a67b46827b2c8511b931e7e1f4b on test_int_numeric
         Index Cond: ((a > 5.0) AND (a < 7))
@@ -335,8 +434,24 @@ int
 ~~END~~
 
 
+select count(*) from test_int_numeric where 5.0 <> a;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+
 -- index scan on < and >
 select count(*) from test_int_numeric where a < 5.0;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 > a;
 GO
 ~~START~~
 int
@@ -352,7 +467,23 @@ int
 ~~END~~
 
 
+select count(*) from test_int_numeric where -2147483648.0 > a;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
 select count(*) from test_int_numeric where a <= 5.0;
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 >= a;
 GO
 ~~START~~
 int
@@ -368,7 +499,23 @@ int
 ~~END~~
 
 
+select count(*) from test_int_numeric where 999995.0 < a;
+GO
+~~START~~
+int
+6
+~~END~~
+
+
 select count(*) from test_int_numeric where a >= 999995.0;
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+select count(*) from test_int_numeric where 999995.0 <= a;
 GO
 ~~START~~
 int
@@ -384,8 +531,24 @@ int
 ~~END~~
 
 
+select count(*) from test_int_numeric where 2147483647.0 < a;
+go
+~~START~~
+int
+0
+~~END~~
+
+
 -- seq scan on < and >
 select count(*) from test_int_numeric where a > 5.0;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 < a;
 GO
 ~~START~~
 int
@@ -421,6 +584,14 @@ int
 
 
 select count(*) from test_int_numeric where a > 5.0 and a < 7;
+Go
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from test_int_numeric where 5.0 < a and 7 > a;
 Go
 ~~START~~
 int
