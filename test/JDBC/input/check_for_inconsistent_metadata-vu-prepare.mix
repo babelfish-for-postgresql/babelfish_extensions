@@ -1,0 +1,20 @@
+CREATE TABLE check_for_inconsistent_metadata_table(a BOOLEAN)
+GO
+
+CREATE VIEW check_for_inconsistent_metadata_vu_prepare_view
+AS
+SELECT sys.check_for_inconsistent_metadata()
+GO
+
+CREATE PROCEDURE check_for_inconsistent_metadata_vu_prepare_proc
+AS
+SELECT sys.check_for_inconsistent_metadata()
+GO
+
+CREATE FUNCTION check_for_inconsistent_metadata_vu_prepare_func()
+RETURNS BOOLEAN
+AS
+BEGIN
+RETURN (SELECT sys.check_for_inconsistent_metadata())
+END
+GO
