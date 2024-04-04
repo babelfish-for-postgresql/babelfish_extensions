@@ -65,6 +65,44 @@ go
 select * from babel_4815_18;
 go
 
+select * from babel_4815_19;
+go
+
+select * from babel_4815_20;
+go
+
+select * from babel_4815_21;
+go
+
+select * from babel_4815_22;
+go
+
+select * from babel_4815_23;
+go
+
+select * from babel_4815_24;
+go
+
+select * from babel_4815_25;
+go
+
+select * from babel_4815_26;
+go
+
+select * from babel_4815_27;
+go
+
+select * from babel_4815_28;
+go
+
+select * from babel_4815_29;
+go
+
+select * from babel_4815_30;
+go
+
+select * from babel_4815_31;
+go
 
 SET BABELFISH_SHOWPLAN_ALL off
 go

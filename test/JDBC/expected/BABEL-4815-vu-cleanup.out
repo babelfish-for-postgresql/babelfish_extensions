@@ -52,5 +52,44 @@ go
 drop view babel_4815_18;
 go
 
+drop view babel_4815_19;
+go
+
+drop view babel_4815_20;
+go
+
+drop view babel_4815_21;
+go
+
+drop view babel_4815_22;
+go
+
+drop view babel_4815_23;
+go
+
+drop view babel_4815_24;
+go
+
+drop view babel_4815_25;
+go
+
+drop view babel_4815_26;
+go
+
+drop view babel_4815_27;
+go
+
+drop view babel_4815_28;
+go
+
+drop view babel_4815_29;
+go
+
+drop view babel_4815_30;
+go
+
+drop view babel_4815_31;
+go
+
 drop table babel_4815;
 go
