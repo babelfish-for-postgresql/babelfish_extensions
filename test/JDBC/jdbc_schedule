@@ -43,6 +43,9 @@ ignore#!#sys-types-before-dep-vu-cleanup
 ignore#!#sys-table_types-before-dep-vu-prepare
 ignore#!#sys-table_types-before-dep-vu-verify
 ignore#!#sys-table_types-before-dep-vu-cleanup
+ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-prepare
+ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-verify
+ignore#!#GRANT_SCHEMA-before-15_7-16_3-vu-cleanup
 ignore#!#BABEL_4553-vu-prepare
 ignore#!#BABEL_4553-vu-verify
 
@@ -184,6 +187,8 @@ ignore#!#select-strip-parens-before-15_5-vu-verify
 ignore#!#select-strip-parens-before-15_5-vu-cleanup
 ignore#!#permission_restrictions_from_pg-vu-prepare
 ignore#!#permission_restrictions_from_pg-vu-verify
+ignore#!#BABEL-EXTENDEDPROPERTY-before-15_4-vu-prepare
+ignore#!#BABEL-EXTENDEDPROPERTY-before-15_4-vu-verify
 
 # These tests are meant for upgrade scenario prior to (potential) 14_8 or 15_3 release
 ignore#!#BABEL-4078-before-14_8-or-15_3-vu-prepare

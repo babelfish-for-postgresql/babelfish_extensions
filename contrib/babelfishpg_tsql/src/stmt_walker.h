@@ -91,6 +91,7 @@ typedef bool (*Stmt_change_dbowner_act) ACTION_SIGNITURE(change_dbowner);
 typedef bool (*Stmt_alter_db_act) ACTION_SIGNITURE(alter_db);
 typedef bool (*Stmt_dbcc_act) ACTION_SIGNITURE(dbcc);
 typedef bool (*Stmt_fulltextindex_act) ACTION_SIGNITURE(fulltextindex);
+typedef bool (*Stmt_grantschema_act) ACTION_SIGNITURE(grantschema);
 
  /* TSQL-only executable node */
 typedef bool (*Stmt_save_ctx) ACTION_SIGNITURE(save_ctx);
@@ -145,6 +146,7 @@ typedef struct Walker_context
 	Stmt_alter_db_act alter_db_act;
 	Stmt_dbcc_act dbcc_act;
 	Stmt_fulltextindex_act fulltextindex_act;
+	Stmt_grantschema_act grantschema_act;
 
 	/* TSQL-only executable node */
 	Stmt_save_ctx save_ctx_act;

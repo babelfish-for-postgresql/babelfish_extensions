@@ -88,6 +88,7 @@ BABEL-405
 BABEL-4078-before-14_8-or-15_3
 babel_417
 BABEL-493
+BABEL-4672
 BABEL_539
 BABEL-621
 BABEL-728
@@ -99,7 +100,7 @@ babel_char
 BABEL-CHECK-CONSTRAINT-before-14_6
 BABEL-CROSS-DB
 babel_datatype_sqlvariant
-BABEL-EXTENDEDPROPERTY
+BABEL-EXTENDEDPROPERTY-before-15_4
 babelfish_authid_login_ext
 babelfish_authid_user_ext
 babelfish_cast_floor
@@ -334,3 +335,5 @@ BABEL-2999
 drop_index-before-15_6-or-16_2
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
+GRANT_SCHEMA-before-15_7-16_3
+babel-4517

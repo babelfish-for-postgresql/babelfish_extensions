@@ -1048,7 +1048,7 @@ update_GrantRoleStmt(Node *n, List *privs, List *roles)
 }
 
 void
-update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee)
+update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char *grantee, const char *priv)
 {
 	GrantStmt  *stmt = (GrantStmt *) n;
 
@@ -1060,15 +1060,48 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 	else if (obj_schema && stmt->objects)
 	{
 		RangeVar   *tmp = (RangeVar *) llast(stmt->objects);
-
 		tmp->schemaname = pstrdup(obj_schema);
 	}
 
 	if (grantee && stmt->grantees)
 	{
 		RoleSpec   *tmp = (RoleSpec *) llast(stmt->grantees);
-
+		if (strcmp(grantee, PUBLIC_ROLE_NAME) == 0)
+		{
+			tmp->roletype = ROLESPEC_PUBLIC;
+		}
 		tmp->rolename = pstrdup(grantee);
+	}
+
+	if (priv && stmt->privileges)
+	{
+		AccessPriv *tmp = (AccessPriv *) llast(stmt->privileges);
+		tmp->priv_name = pstrdup(priv);
+	}
+}
+
+static void
+update_AlterDefaultPrivilegesStmt(Node *n, const char *object, const char *grantee, const char *priv)
+{
+	AlterDefaultPrivilegesStmt *stmt = (AlterDefaultPrivilegesStmt *) n;
+	ListCell *lc;
+
+	if (!IsA(stmt, AlterDefaultPrivilegesStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a AlterDefaultPrivilegesStmt")));
+
+	if (grantee && priv && stmt->action)
+	{
+		update_GrantStmt((Node *)(stmt->action), NULL, NULL, grantee, priv);
+	}
+
+	foreach(lc, stmt->options)
+	{
+		if (object)
+		{
+			DefElem *tmp = (DefElem *) lfirst(lc);
+			tmp->defname = pstrdup("schemas");
+			tmp->arg = (Node *)list_make1(makeString((char *)object));
+		}
 	}
 }
 
@@ -2096,4 +2129,153 @@ exec_alter_role_cmd(char *query_str, RoleSpec *role)
 
 	/* make sure later steps can see the object created here */
 	CommandCounterIncrement();
+}
+
+/*
+ * Helper function to generate GRANT on SCHEMA subcommands.
+ */
+static List
+*gen_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
+{
+	StringInfoData query;
+	List	   *stmt_list;
+	Node	   *stmt;
+	int			expected_stmts = 2;
+	int			i = 0;
+	initStringInfo(&query);
+	if (is_grant)
+	{
+		if (privilege == ACL_EXECUTE)
+		{
+			if (with_grant_option)
+			{
+				appendStringInfo(&query, "GRANT dummy ON ALL FUNCTIONS IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
+				appendStringInfo(&query, "GRANT dummy ON ALL PROCEDURES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
+			}
+			else
+			{
+				appendStringInfo(&query, "GRANT dummy ON ALL FUNCTIONS IN SCHEMA dummy TO dummy; ");
+				appendStringInfo(&query, "GRANT dummy ON ALL PROCEDURES IN SCHEMA dummy TO dummy; ");
+			}
+		}
+		else
+		{
+			if (with_grant_option)
+				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy WITH GRANT OPTION; ");
+			else
+				appendStringInfo(&query, "GRANT dummy ON ALL TABLES IN SCHEMA dummy TO dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy GRANT dummy ON TABLES TO dummy; ");
+		}
+	}
+	else
+	{
+		if (privilege == ACL_EXECUTE)
+		{
+			appendStringInfo(&query, "REVOKE dummy ON ALL FUNCTIONS IN SCHEMA dummy FROM dummy; ");
+			appendStringInfo(&query, "REVOKE dummy ON ALL PROCEDURES IN SCHEMA dummy FROM dummy; ");
+		}
+		else
+		{
+			appendStringInfo(&query, "REVOKE dummy ON ALL TABLES IN SCHEMA dummy FROM dummy; ");
+			appendStringInfo(&query, "ALTER DEFAULT PRIVILEGES IN SCHEMA dummy REVOKE dummy ON TABLES FROM dummy; ");
+		}
+	}
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
+	if (list_length(stmt_list) != expected_stmts)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	if (privilege == ACL_EXECUTE)
+		update_GrantStmt(stmt, schema, NULL, rolname, privilege_to_string(privilege));
+	else
+		update_AlterDefaultPrivilegesStmt(stmt, schema, rolname, privilege_to_string(privilege));
+
+	pfree(query.data);
+	return stmt_list;
+}
+
+/*
+ * Helper function to execute GRANT on SCHEMA subcommands using
+ * ProcessUtility(). Caller should make sure their
+ * inputs are sanitized to prevent unexpected behaviour.
+ */
+void
+exec_grantschema_subcmds(const char *schema, const char *rolname, bool is_grant, bool with_grant_option, AclMode privilege)
+{
+	List		*parsetree_list;
+	ListCell	*parsetree_item;
+
+	parsetree_list = gen_grantschema_subcmds(schema, rolname, is_grant, with_grant_option, privilege);
+	/* Run all subcommands */
+	foreach(parsetree_item, parsetree_list)
+	{
+		Node		*stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+		PlannedStmt *wrapper;
+
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = stmt;
+		wrapper->stmt_location = 0;
+		wrapper->stmt_len = 0;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					"(GRANT SCHEMA )",
+					false,
+					PROCESS_UTILITY_SUBCOMMAND,
+					NULL,
+					NULL,
+					None_Receiver,
+					NULL);
+	}
+}
+
+AclMode
+string_to_privilege(const char *privname)
+{
+	if (strcmp(privname, "insert") == 0)
+		return ACL_INSERT;
+	if (strcmp(privname, "select") == 0)
+		return ACL_SELECT;
+	if (strcmp(privname, "update") == 0)
+		return ACL_UPDATE;
+	if (strcmp(privname, "delete") == 0)
+		return ACL_DELETE;
+	if (strcmp(privname, "references") == 0)
+		return ACL_REFERENCES;
+	if (strcmp(privname, "execute") == 0)
+		return ACL_EXECUTE;
+	else
+		return 0;
+}
+
+const char *
+privilege_to_string(AclMode privilege)
+{
+	switch (privilege)
+	{
+		case ACL_INSERT:
+			return "insert";
+		case ACL_SELECT:
+			return "select";
+		case ACL_UPDATE:
+			return "update";
+		case ACL_DELETE:
+			return "delete";
+		case ACL_REFERENCES:
+			return "references";
+		case ACL_EXECUTE:
+			return "execute";
+		default:
+			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
+	}
+	return NULL;
 }

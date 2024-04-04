@@ -111,6 +111,7 @@ stmt_walker(PLtsql_stmt *stmt, WalkerFunc walker, void *context)
 		case PLTSQL_STMT_FULLTEXTINDEX:
 		case PLTSQL_STMT_DBCC:
 		case PLTSQL_STMT_ALTER_DB:
+		case PLTSQL_STMT_GRANTSCHEMA:
 			break;
 			/* TSQL-only executable node */
 		case PLTSQL_STMT_SAVE_CTX:
@@ -213,6 +214,7 @@ general_walker_func(PLtsql_stmt *stmt, void *context)
 				DISPATCH(DBCC, dbcc)
 				DISPATCH(ALTER_DB, alter_db)
 				DISPATCH(FULLTEXTINDEX, fulltextindex)
+				DISPATCH(GRANTSCHEMA, grantschema)
 
 			/* TSQL-only executable node */
 				DISPATCH(SAVE_CTX, save_ctx)

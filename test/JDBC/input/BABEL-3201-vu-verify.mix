@@ -485,5 +485,3 @@ GO
 -- tsql
 USE master;
 GO
-DROP USER babel_3201_db1_log1_user_name_longer_then_64_char_abdhcdjddjdhskdsh
-GO

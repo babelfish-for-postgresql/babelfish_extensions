@@ -7,6 +7,8 @@
 #include "dynastack.h"
 #include "table_variable_mvcc.h"
 
+#define ENVCHANGE_ROLLBACKTXN		0x0a
+
 /***************************************************************************************
  *                         Execution Actions
  **************************************************************************************/
@@ -31,6 +33,7 @@ static void read_throw_params(PLtsql_execstate *estate, List *params,
 static int	read_throw_params_explain(List *params);
 static char *get_proc_name(PLtsql_execstate *estate);
 static bool is_seterror_on(PLtsql_stmt *stmt);
+static void send_env_change_token_on_txn_abort(void);
 
 static void process_explain(PLtsql_execstate *estate);
 static void process_explain_analyze(PLtsql_execstate *estate);
@@ -809,6 +812,9 @@ dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			}
 			exec_stmt_change_dbowner(estate, (PLtsql_stmt_change_dbowner *) stmt);
 			break;
+		case PLTSQL_STMT_GRANTSCHEMA:
+			exec_stmt_grantschema(estate, (PLtsql_stmt_grantschema *) stmt);
+			break;
 		case PLTSQL_STMT_FULLTEXTINDEX:
 			if (pltsql_explain_only)
 			{
@@ -1160,6 +1166,7 @@ handle_error(PLtsql_execstate *estate,
 		elog(DEBUG1, "TSQL TXN Mark transaction for rollback error mapping failed : %d", last_error_mapping_failed);
 		RESUME_INTERRUPTS();
 		AbortCurTransaction = true;
+		send_env_change_token_on_txn_abort();
 	}
 
 	/* Recreate evaluation context in case needed */
@@ -2032,4 +2039,14 @@ is_seterror_on(PLtsql_stmt *stmt)
 	if (!((PLtsql_stmt_raiserror *) stmt)->seterror)
 		return false;
 	return true;
+}
+
+static
+void
+send_env_change_token_on_txn_abort(void)
+{
+	uint64_t	txnId = (uint64_t) MyProc->lxid;
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change_binary)
+		((*pltsql_protocol_plugin_ptr)->send_env_change_binary) (ENVCHANGE_ROLLBACKTXN, NULL, 0, &txnId, sizeof(uint64_t));
 }
