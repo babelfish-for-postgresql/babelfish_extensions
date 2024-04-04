@@ -4059,7 +4059,7 @@ update_babelfish_authid_user_ext_db_name(
 	// 			 errmsg("Cannot change the owner of the master, model, tempdb or distribution database.")));
 	// }
 
-	bbf_authid_user_ext_rel = table_open(bbf_authid_user_ext_oid, RowExclusiveLock);
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(), RowExclusiveLock);
 	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);	
 
 	ScanKeyInit(&key,
@@ -4116,6 +4116,145 @@ update_babelfish_authid_user_ext_db_name(
 	systable_endscan(tblscan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 	return list_of_roles_to_rename;
+}
+
+/*
+ * Update the name of a database in the babelfish_authid_login_ext catalog.
+ */
+static void // todo use sys
+update_babelfish_authid_login_ext_db_name(
+	// const char *old_user_name,
+	// const char *new_role_name,
+	const char *old_db_name,
+	const char *new_db_name)
+{
+	Relation	bbf_authid_login_ext_rel;
+	TupleDesc	bbf_authid_login_ext_dsc;
+	HeapTuple	new_tuple, old_tuple;
+	// HeapTuple	auth_tuple;
+	Datum		values[BBF_AUTHID_LOGIN_EXT_NUM_COLS];
+	bool		nulls[BBF_AUTHID_LOGIN_EXT_NUM_COLS];
+	bool		replaces[BBF_AUTHID_LOGIN_EXT_NUM_COLS];
+	ScanKeyData scanKey;
+	SysScanDesc scan;
+
+	/* Fetch pg_authid and roleid */
+	// auth_tuple = get_rolespec_tuple(stmt->role);
+	// authform = (Form_pg_authid) GETSTRUCT(auth_tuple);
+
+	/* Fetch the relation */
+	bbf_authid_login_ext_rel = table_open(get_authid_login_ext_oid(),
+										  RowExclusiveLock);
+	bbf_authid_login_ext_dsc = RelationGetDescr(bbf_authid_login_ext_rel);
+
+
+	/* Search and obtain the tuple on the role name */
+	ScanKeyInit(&scanKey,
+				LOGIN_EXT_DEFAULT_DATABASE_NAME + 1,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(old_db_name));
+
+	scan = systable_beginscan(bbf_authid_login_ext_rel,
+							  get_authid_login_ext_oid(),
+							  false, NULL, 1, &scanKey);
+
+	/* Build a tuple to insert */
+	MemSet(values, 0, sizeof(values));
+	MemSet(nulls, false, sizeof(nulls));
+	MemSet(replaces, false, sizeof(replaces));
+
+	while (HeapTupleIsValid(old_tuple = systable_getnext(scan)))
+	{
+		/* update modify_date */
+		values[LOGIN_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetCurrentStatementStartTimestamp());
+		replaces[LOGIN_EXT_MODIFY_DATE] = true;
+
+		values[LOGIN_EXT_DEFAULT_DATABASE_NAME] = CStringGetTextDatum(new_db_name);
+		replaces[LOGIN_EXT_DEFAULT_DATABASE_NAME] = true;
+
+		new_tuple = heap_modify_tuple(old_tuple,
+									bbf_authid_login_ext_dsc,
+									values,
+									nulls,
+									replaces);
+
+		CatalogTupleUpdate(bbf_authid_login_ext_rel, &old_tuple->t_self, new_tuple);
+		heap_freetuple(new_tuple);
+	}
+
+	// ReleaseSysCache(auth_tuple);
+	systable_endscan(scan);
+
+	/* Close bbf_authid_login_ext, but keep lock till commit */
+	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
+}
+
+static char
+*gen_renameschema_cmds(char *old_db_name, char *new_db_name)
+{
+	StringInfoData query;
+	initStringInfo(&query);
+	/*
+	 * We prepare the following query to Rename a schema
+	 *
+	 * ALTER SCHEMA <index_name>
+	 *
+	 */
+	appendStringInfo(&query, "ALTER SCHEMA ");
+
+	appendStringInfo(&query, "%s RENAME TO %s", old_db_name, new_db_name);
+	return query.data;
+}
+
+static char
+*gen_renamerole_cmds(char *old_role_name, char *new_role_name)
+{
+	StringInfoData query;
+	initStringInfo(&query);
+	/*
+	 * We prepare the following query to Rename a schema
+	 *
+	 * ALTER SCHEMA <index_name>
+	 *
+	 */
+	appendStringInfo(&query, "ALTER ROLE ");
+
+	appendStringInfo(&query, "%s RENAME TO %s", old_role_name, new_role_name);
+	return query.data;
+}
+
+static void
+exec_rename_db(char *old_db_name, char *new_db_name, bool is_schema)
+{
+	char *query_str = is_schema ? gen_renameschema_cmds(old_db_name, new_db_name) :
+							gen_renamerole_cmds(old_db_name, new_db_name);
+	List		*res;
+	Node	   	*res_stmt;
+	PlannedStmt *wrapper;
+	/* The above query will be
+	 * executed using ProcessUtility()
+	 */
+	res = raw_parser(query_str, RAW_PARSE_DEFAULT);
+	res_stmt = ((RawStmt *) linitial(res))->stmt;
+
+	/* need to make a wrapper PlannedStmt */
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = res_stmt;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 0;
+
+	ProcessUtility(wrapper,
+				is_schema ? "(RENAME SCHEMA )" : "(RENAME ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+	pfree(query_str);
 }
 
 void
@@ -4206,7 +4345,7 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		char *old_schema_name = get_physical_schema_name(old_db_name, sch);
 		char *new_schema_name = get_physical_schema_name(new_db_name, sch);
 
-		RenameSchema(old_schema_name, new_schema_name);
+		exec_rename_db(old_schema_name, new_schema_name, true);
 	}
 	
 	/* sys.babelfish_authid_user_ext */
@@ -4217,9 +4356,11 @@ rename_tsql_db(char *old_db_name, char *new_db_name)
 		char *old_role_name = get_physical_schema_name(old_db_name, role);
 		char *new_role_name = get_physical_schema_name(new_db_name, role);
 
-		RenameRole(old_role_name, new_role_name);
+		exec_rename_db(old_role_name, new_role_name, false);
 	}
 	}
+
+	update_babelfish_authid_login_ext_db_name(old_db_name, new_db_name);
 
 	SetUserIdAndSecContext(save_userid, save_sec_context);
 	}
