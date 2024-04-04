@@ -815,6 +815,15 @@ GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
 create or replace view sys.indexes as
 -- Get all indexes from all system and user tables
+with index_id_map as MATERIALIZED(
+  select
+    indexrelid,
+    case
+      when indisclustered then 1
+      else 1+row_number() over(partition by indrelid order by indexrelid)
+    end as index_id
+  from pg_index
+)
 select
   cast(X.indrelid as int) as object_id
   , cast(I.relname as sys.sysname) as name
@@ -834,8 +843,9 @@ select
   , cast(0 as sys.bit) as has_filter
   , cast(null as sys.nvarchar) as filter_definition
   , cast(0 as sys.bit) as auto_created
-  , cast(case when X.indisclustered then 1 else (SELECT count(*)+2 FROM pg_index ind where ind.indrelid = X.indrelid and ind.indexrelid < X.indexrelid and ind.indisclustered = false) end as int) as index_id
+  , cast(imap.index_id as int) as index_id
 from pg_index X 
+inner join index_id_map imap on imap.indexrelid = X.indexrelid
 inner join pg_class I on I.oid = X.indexrelid and I.relkind = 'i'
 inner join pg_namespace nsp on nsp.oid = I.relnamespace
 left join sys.babelfish_namespace_ext ext on (nsp.nspname = ext.nspname and ext.dbid = sys.db_id())
@@ -2100,13 +2110,19 @@ GRANT SELECT ON sys.endpoints TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.index_columns
 AS
+WITH index_id_map AS MATERIALIZED (
+  SELECT
+    indexrelid,
+    CASE
+      WHEN indisclustered THEN 1
+      ELSE 1+row_number() OVER(PARTITION BY indrelid ORDER BY indexrelid)
+    END AS index_id
+  FROM pg_index
+)
 SELECT
     CAST(i.indrelid AS INT) AS object_id,
     -- should match index_id of sys.indexes 
-    CAST(CASE
-            WHEN i.indisclustered THEN 1
-            ELSE (SELECT COUNT(*)+2 FROM pg_index ind WHERE ind.indrelid = i.indrelid AND ind.indexrelid < i.indexrelid AND ind.indisclustered = false)
-         END AS INT) AS index_id,
+    CAST(imap.index_id AS INT) AS index_id,
     CAST(a.index_column_id AS INT) AS index_column_id,
     CAST(a.attnum AS INT) AS column_id,
     CAST(CASE
@@ -2124,6 +2140,7 @@ SELECT
          END AS SYS.BIT) AS is_included_column
 FROM
     pg_index i
+    INNER JOIN index_id_map imap ON imap.indexrelid = i.indexrelid
     INNER JOIN pg_class c ON i.indrelid = c.oid
     INNER JOIN pg_namespace nsp ON nsp.oid = c.relnamespace
     LEFT JOIN sys.babelfish_namespace_ext ext ON (nsp.nspname = ext.nspname AND ext.dbid = sys.db_id())
