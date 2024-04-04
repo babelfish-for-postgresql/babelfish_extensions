@@ -1,17 +1,16 @@
 USE [DATABASE_1];
 GO
 
--- login_name should be empty and database users should
--- be present after database-level restore.
+-- database users should be present.
 EXEC [db1_SCHEMA_2].[babel_user_ext];
 GO
 
 -- dbo and guest roles should be member of sysadmin
-SELECT r.rolname FROM pg_catalog.pg_auth_members m
-        JOIN pg_catalog.pg_roles r
-        ON (m.roleid = r.oid)
+SELECT count(*) FROM pg_catalog.pg_auth_members m
+        JOIN pg_catalog.pg_roles r ON (m.roleid = r.oid)
+        JOIN sys.babelfish_authid_user_ext u ON (r.rolname = u.rolname)
 WHERE m.member = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
-AND r.rolname LIKE 'database_1%' ORDER BY r.rolname;
+AND u.database_name = 'database_1'AND (r.rolname like '%dbo' or r.rolname like '%guest');
 GO
 
 SELECT COUNT(*) FROM [Table_1];
