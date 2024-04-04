@@ -183,8 +183,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jones'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=1 width=32)
-  Filter: ((c1)::text ~~* 'jones'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=3 width=32)
+  Filter: ((c1)::text = 'jones'::text COLLATE "default")
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -194,8 +194,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'Jon%'
-Bitmap Heap Scan on testing4  (cost=11.41..29.53 rows=26 width=32)
-  Filter: ((c1)::text ~~* 'Jon%'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'Jon%'::text COLLATE "default") AND ((c1)::text >= 'Jon'::text COLLATE "default") AND ((c1)::text < 'Jon?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -205,8 +205,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'jone_'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=1 width=32)
-  Filter: ((c1)::text ~~* 'jone_'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'jone_'::text COLLATE "default") AND ((c1)::text >= 'jone'::text COLLATE "default") AND ((c1)::text < 'jone?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -239,8 +239,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ab%'
-Bitmap Heap Scan on testing4  (cost=11.43..29.56 rows=130 width=32)
-  Filter: ((c1)::text ~~* 'ab%'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'ab%'::text COLLATE "default") AND ((c1)::text >= 'ab'::text COLLATE "default") AND ((c1)::text < 'ab?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -249,8 +249,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'äb%'
-Bitmap Heap Scan on testing4  (cost=11.41..29.53 rows=26 width=32)
-  Filter: ((c1)::text ~~* 'äb%'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'äb%'::text COLLATE "default") AND ((c1)::text >= 'äb'::text COLLATE "default") AND ((c1)::text < 'äb?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -259,8 +259,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE 'ä??_'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=1 width=32)
-  Filter: ((c1)::text ~~* 'ä??_'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'ä??_'::text COLLATE "default") AND ((c1)::text >= 'ä??'::text COLLATE "default") AND ((c1)::text < 'ä???'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -271,8 +271,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jones'
-Bitmap Heap Scan on testing4  (cost=11.56..29.69 rows=650 width=32)
-  Filter: ((c1)::text !~~* 'jones'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.56..29.69 rows=647 width=32)
+  Filter: ((c1)::text <> 'jones'::text COLLATE "default")
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -282,8 +282,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'jone%'
-Bitmap Heap Scan on testing4  (cost=11.56..29.69 rows=645 width=32)
-  Filter: ((c1)::text !~~* 'jone%'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.56..32.94 rows=648 width=32)
+  Filter: (((c1)::text !~~* 'jone%'::text COLLATE "default") OR ((c1)::text < 'jone'::text COLLATE "default") OR ((c1)::text >= 'jone?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -293,8 +293,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 NOT LIKE 'ä%'
-Bitmap Heap Scan on testing4  (cost=11.53..29.66 rows=520 width=32)
-  Filter: ((c1)::text !~~* 'ä%'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.55..32.92 rows=592 width=32)
+  Filter: (((c1)::text !~~* 'ä%'::text COLLATE "default") OR ((c1)::text < 'ä'::text COLLATE "default") OR ((c1)::text >= 'ä?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -306,8 +306,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\%ones'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=1 width=32)
-  Filter: ((c1)::text ~~* '\%ones'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* '\%ones'::text COLLATE "default") AND ((c1)::text >= '\'::text COLLATE "default") AND ((c1)::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -317,8 +317,8 @@ GO
 ~~START~~
 text
 Query Text: select c1 from testing4 where c1 LIKE '\_ones'
-Bitmap Heap Scan on testing4  (cost=11.40..29.53 rows=1 width=32)
-  Filter: ((c1)::text ~~* '\_ones'::text COLLATE "default")
+Bitmap Heap Scan on testing4  (cost=11.40..32.78 rows=1 width=32)
+  Filter: (((c1)::text ~~* '\_ones'::text COLLATE "default") AND ((c1)::text >= '\'::text COLLATE "default") AND ((c1)::text < '\?'::text))
   ->  Bitmap Index Scan on c1_idxtesting49a168d73f3ba5aacdfd495b931b8d187  (cost=0.00..11.40 rows=650 width=0)
 ~~END~~
 
@@ -522,8 +522,8 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE French_CI_AS like 'jo%'
-Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=272 width=32)
-  Filter: ((c1)::text ~~* 'jo%'::text COLLATE "default")
+Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
 ~~END~~
 
 SET babelfish_showplan_all OFF;
@@ -543,8 +543,8 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM testing5 where c1 COLLATE Chinese_PRC_CI_AS like 'jo%'
-Seq Scan on testing5  (cost=10000000000.00..10000000027.00 rows=272 width=32)
-  Filter: ((c1)::text ~~* 'jo%'::text COLLATE "default")
+Seq Scan on testing5  (cost=10000000000.00..10000000033.80 rows=1 width=32)
+  Filter: (((c1)::text ~~* 'jo%'::text COLLATE "default") AND ((c1)::text >= 'jo'::text COLLATE "default") AND ((c1)::text < 'jo?'::text))
 ~~END~~
 
 SET babelfish_showplan_all OFF;
