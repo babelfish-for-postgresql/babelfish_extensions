@@ -2038,7 +2038,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
-babelfishpg_tsql.escape_hatch_insert_bulk_options#!#strict#!#escape hatch for unsupported INSERT BULK OPTIONS
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
 babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords
@@ -2108,7 +2108,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
-babelfishpg_tsql.escape_hatch_insert_bulk_options#!#strict#!#escape hatch for unsupported INSERT BULK OPTIONS
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
 babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords
@@ -2159,7 +2159,7 @@ babelfishpg_tsql.escape_hatch_identity_function#!#strict#!#escape hatch for IDEN
 babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
-babelfishpg_tsql.escape_hatch_insert_bulk_options#!#strict#!#escape hatch for unsupported INSERT BULK OPTIONS
+babelfishpg_tsql.escape_hatch_insert_bulk_options#!#ignore#!#escape hatch for unsupported INSERT BULK OPTIONS
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
 babelfishpg_tsql.escape_hatch_language_non_english#!#strict#!#escape hatch for non-english language
 babelfishpg_tsql.escape_hatch_login_hashed_password#!#strict#!#escape hatch for login hashed passwords

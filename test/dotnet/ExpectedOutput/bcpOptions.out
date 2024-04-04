@@ -223,6 +223,9 @@ bcp -h "CHECK_CONSTRAINTS"#!#in#!#bcp_source#!#destinationTable2
 1#!#1
 2#!#2
 #Q#Select * from destinationTable2
+#D#bigint#!#bigint
+1#!#1
+2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#drop table destinationTable2
@@ -243,6 +246,9 @@ bcp -h "FIRE_TRIGGERS"#!#in#!#bcp_source#!#destinationTable2
 1#!#1
 2#!#2
 #Q#Select * from destinationTable2
+#D#bigint#!#bigint
+1#!#1
+2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#drop table destinationTable2
@@ -283,6 +289,9 @@ bcp -h "TABLOCK"#!#in#!#bcp_source#!#destinationTable2
 1#!#1
 #!#2
 #Q#Select * from destinationTable2
+#D#bigint#!#bigint
+1#!#1
+#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#drop table destinationTable2

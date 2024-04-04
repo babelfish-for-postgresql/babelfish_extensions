@@ -1259,7 +1259,7 @@ int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
 int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
-int			escape_hatch_insert_bulk_options = EH_IGNORE;
+int 		escape_hatch_insert_bulk_options = EH_IGNORE;
 
 void
 define_escape_hatch_variables(void)
