@@ -1166,6 +1166,7 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 		decStringOrig = decString;
 		len = strlen(decString) - 1;
 		pfree(tempString);
+		pfree(zeros);
 	}
 	if (num != 0)
 	{
