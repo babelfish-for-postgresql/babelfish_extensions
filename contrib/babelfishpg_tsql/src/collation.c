@@ -413,7 +413,6 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 											InvalidOid, server_collation_oid, oprfuncid(optup)));
 
 		ReleaseSysCache(optup);
-		return ret;
 	}
 	else
 	{
@@ -465,8 +464,8 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 			ret = make_and_qual(node, constant_suffix);
 		}
 		ReleaseSysCache(optup);
-		return ret;
 	}
+	return ret;
 }
 
 
@@ -642,14 +641,14 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000e /* CS_AI  */ )
 		{
-			transform_from_cs_ai(node, op, like_entry, coll_info_of_inputcollid);
+			return transform_from_cs_ai(node, op, like_entry, coll_info_of_inputcollid);
 		}
 
 		if (OidIsValid(like_entry.like_oid) &&
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000f /* CI_AI  */ )
 		{
-			transform_from_ci_as(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
+			return transform_from_ci_as(transform_likenode_for_AI(node, op), op, like_entry, coll_info_of_inputcollid);
 		}
 
 		/* check if this is LIKE expr, and collation is CI_AS */
@@ -657,7 +656,7 @@ transform_likenode(Node *node)
 			OidIsValid(coll_info_of_inputcollid.oid) &&
 			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
 		{
-			transform_from_ci_as(node, op, like_entry, coll_info_of_inputcollid);
+			return transform_from_ci_as(node, op, like_entry, coll_info_of_inputcollid);
 		}
 	}
 	return node;
