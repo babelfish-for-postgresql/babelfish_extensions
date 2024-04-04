@@ -630,7 +630,7 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 		}					
 	}	
 						
-	if ((orig_text.front() == '"') && (orig_text.back() == '"') && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
+	if (!orig_text.empty() && (orig_text.front() == '"') && (orig_text.back() == '"') && !repl_text.empty() && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
 	{
 		// Do not validate the positions of strings as these are not replaced by their positions
 	}
@@ -1688,6 +1688,29 @@ public:
 			ctx->insert_statement() &&
 			ctx->insert_statement()->insert_statement_value() &&
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
+
+		if (stmt->insert_exec)
+		{
+			TSqlParser::Func_proc_name_server_database_schemaContext *ctx_name = nullptr;
+			TSqlParser::Execute_bodyContext *body = nullptr;
+
+			TSqlParser::Execute_statementContext *ctxES = ctx->insert_statement()->insert_statement_value()->execute_statement();
+			body = ctxES->execute_body();
+			Assert(body);
+			
+			ctx_name       = body->func_proc_name_server_database_schema();
+			if (ctx_name) 
+			{				
+				if (ctx_name->database)
+				{
+					db_name = stripQuoteFromId(ctx_name->database);
+					if (!string_matches(db_name.c_str(), get_cur_db_name()))
+					{
+						is_cross_db = true;
+					}
+				}
+			}
+		}
 
 		// record whether stmt is cross-db
 		if (is_cross_db)

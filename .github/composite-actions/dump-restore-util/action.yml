@@ -54,7 +54,8 @@ runs:
         echo 'Starting dump...'
         cd ~
         mkdir -p upgrade
-        cd upgrade
+        mkdir -p upgrade/dump
+        cd upgrade/dump
         export PGPASSWORD=12345678
         export PATH=/opt/mssql-tools/bin:$PATH
 
@@ -86,28 +87,28 @@ runs:
                 pg_has_role(rolname, 'sysadmin', 'member') AS is_sysadmin_member \
                 FROM sys.babelfish_authid_login_ext \
                 WHERE rolname NOT IN ('jdbc_user', 'sysadmin', 'bbf_role_admin', 'test@ABC');"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > logins_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/logins_file.txt
 
           # Get the list of Babelfish user and login mapping in a file
           query="SELECT u.orig_username, l.orig_loginname, database_name \
                 FROM sys.babelfish_authid_user_ext u INNER JOIN sys.babelfish_authid_login_ext l \
                 ON u.login_name = l.rolname WHERE u.login_name != '' ORDER BY orig_username;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > users_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/users_file.txt
 
           # Get the list of domain mappings in a file
           query="SELECT netbios_domain_name, fq_domain_name FROM sys.babelfish_domain_mapping;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > domains_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/domains_file.txt
 
           # Get the list of all foreign servers in a file
           query="SELECT fs.srvname, fs.srvoptions, um.umoptions, so.query_timeout, so.connect_timeout \
                 FROM pg_foreign_server fs \
                 INNER JOIN sys.babelfish_server_options so ON fs.srvname = so.servername \
                 LEFT JOIN pg_user_mappings um ON fs.srvname = um.srvname;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > servers_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/servers_file.txt
 
           # Get the list of all the Babelfish logical datababses in a file
           query="SELECT name FROM sys.babelfish_sysdatabases;"
-          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > databases_file.txt
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/databases_file.txt
 
           # Loop through the list of all the Babelfish logical database and dump them one by one.
           while IFS= read -r db; do
@@ -122,9 +123,9 @@ runs:
               ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --schema-only --verbose --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
               ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --verbose --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_so.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
 
-              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --file=pg_dump_"$db_trimmed"_do.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_do.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
             fi
-          done < <(tail -n +3 databases_file.txt | head -n -2)
+          done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
         fi
 
         # Stop old server and start the new.
@@ -140,23 +141,23 @@ runs:
           echo "Starting to restore whole Babelfish physical database"
           if [[ '${{ inputs.type }}' == 'full' ]];then
             echo 'Restoring from pg_dumpall'
-            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals.sql 2>&1 | tee -a ~/upgrade/error.log
+            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals.sql 2>&1 | tee -a ~/upgrade/error.log
             echo 'Restoring from pg_dump'
             if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump.archive 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump.archive 2>&1 | tee -a ~/upgrade/error.log
             else
-              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump.archive 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump.archive 2>&1 | tee -a ~/upgrade/error.log
             fi
           else
             echo 'Restoring from pg_dumpall'
-            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals_so.sql 2>&1 | tee -a ~/upgrade/error.log
+            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_so.sql 2>&1 | tee -a ~/upgrade/error.log
             echo 'Restoring from pg_dump'
             if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_so.archive 2>&1 | tee -a ~/upgrade/error.log
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_do.archive 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_so.archive 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_do.archive 2>&1 | tee -a ~/upgrade/error.log
             else
-              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_so.archive 2>&1 | tee -a ~/upgrade/error.log
-              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_do.archive 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_so.archive 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_do.archive 2>&1 | tee -a ~/upgrade/error.log
             fi
           fi
         else
@@ -167,20 +168,20 @@ runs:
             db_trimmed="$(echo -e "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
             echo "Restoring $db_trimmed"
             if [[ '${{ inputs.type }}' == 'full' ]];then
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals_"$db_trimmed".sql 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed".sql 2>&1 | tee -a ~/upgrade/error.log
               if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
               else
-                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
+                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
               fi
             else
-              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
               if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
-                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
               else
-                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
-                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
+                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
+                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
               fi
             fi
           done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
@@ -300,6 +301,7 @@ runs:
           done < <(tail -n +3 ~/upgrade/servers_file.txt | head -n -2)
         fi
         echo 'Database restore complete.'
+        rm -rf ~/upgrade/dump
 
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
