@@ -20,29 +20,29 @@ Sales
 ~~END~~
 
 
-SELECT * FROM babel_328_vu_v3
+SELECT * FROM babel_328_vu_v3 ORDER BY NAME
 GO
 ~~START~~
 varchar
-Engineering
 Administration
-Sales
-Sales
+Engineering
 Finance
 Marketing
+Sales
+Sales
 ~~END~~
 
 
-SELECT * FROM babel_328_vu_v4
+SELECT * FROM babel_328_vu_v4 ORDER BY NAME
 GO
 ~~START~~
 varchar
-Engineering
 Administration
-Sales
-Sales
+Engineering
 Finance
 Marketing
+Sales
+Sales
 ~~END~~
 
 
