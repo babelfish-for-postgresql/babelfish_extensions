@@ -1,4 +1,3 @@
--- parallel_query_expected
 -- tsql
 -- typmod associated with NULL will be -1 so this will throw an error
 SELECT CAST('1' AS CHAR(10)) AS Col1
@@ -15,21 +14,25 @@ GO
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION 
 SELECT CAST(NULL AS CHAR(10)) AS Col1
+ORDER BY Col1
 GO
 
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION ALL
 SELECT CONVERT(CHAR(10), NULL) AS Col1
+ORDER BY Col1
 GO
 
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION ALL
 SELECT CAST(NULL AS CHAR(10)) AS Col1
+ORDER BY Col1
 GO
 
 SELECT CAST('1' AS CHAR(10)) AS Col1
 UNION 
 SELECT CONVERT(CHAR(10), NULL) AS Col1
+ORDER BY Col1
 GO
 
 -- psql
