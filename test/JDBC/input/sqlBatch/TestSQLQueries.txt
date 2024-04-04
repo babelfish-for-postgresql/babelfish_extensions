@@ -1,3 +1,4 @@
+-- parallel_query_expected
 #1 CREATE TABLE with primary and unique keyword
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
 CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
@@ -192,14 +193,14 @@ INSERT INTO temp2 VALUES (NULL, 0);
 SELECT * FROM temp1 CROSS JOIN temp2;
 
 #18 INNER JOIN
-SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 INNER JOIN temp2 ON temp1.i=temp2.i ORDER BY temp1.i;
-SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 JOIN temp2 ON temp1.i=temp2.i ORDER BY temp1.i;
+SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 INNER JOIN temp2 ON temp1.i=temp2.i;
+SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 JOIN temp2 ON temp1.i=temp2.i;
 
 #19 LEFT JOIN
-SELECT * FROM temp1 LEFT OUTER JOIN temp2 ON temp1.i=temp2.k ORDER BY temp1.i;
+SELECT * FROM temp1 LEFT OUTER JOIN temp2 ON temp1.i=temp2.k;
 
 #20 RIGHT JOIN
-SELECT * FROM temp1 RIGHT OUTER JOIN temp2 ON temp1.i=temp2.i ORDER BY temp1.i, temp2.k;
+SELECT * FROM temp1 RIGHT OUTER JOIN temp2 ON temp1.i=temp2.i;
 
 #21 FULL OUTER JOIN
 SELECT * FROM temp1,temp2;

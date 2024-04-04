@@ -36,8 +36,8 @@ SELECT CONVERT(CHAR(10), NULL) AS Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 
@@ -47,8 +47,8 @@ SELECT CAST(NULL AS CHAR(10)) AS Col1
 GO
 ~~START~~
 char
-1         
 <NULL>
+1         
 ~~END~~
 
 

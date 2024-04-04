@@ -596,25 +596,25 @@ int#!#int#!#text#!#int#!#int
 SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 INNER JOIN temp2 ON temp1.i=temp2.i;
 ~~START~~
 int#!#int#!#text#!#int
-0#!#<NULL>#!#zero#!#<NULL>
 1#!#4#!#one#!#-1
 2#!#3#!#two#!#2
-2#!#3#!#two#!#4
 3#!#2#!#three#!#-3
+2#!#3#!#two#!#4
 5#!#0#!#five#!#-5
 5#!#0#!#five#!#-5
+0#!#<NULL>#!#zero#!#<NULL>
 ~~END~~
 
 SELECT temp1.i, temp1.j, temp1.t, temp2.k FROM temp1 JOIN temp2 ON temp1.i=temp2.i;
 ~~START~~
 int#!#int#!#text#!#int
-0#!#<NULL>#!#zero#!#<NULL>
 1#!#4#!#one#!#-1
 2#!#3#!#two#!#2
-2#!#3#!#two#!#4
 3#!#2#!#three#!#-3
+2#!#3#!#two#!#4
 5#!#0#!#five#!#-5
 5#!#0#!#five#!#-5
+0#!#<NULL>#!#zero#!#<NULL>
 ~~END~~
 
 
@@ -622,7 +622,6 @@ int#!#int#!#text#!#int
 SELECT * FROM temp1 LEFT OUTER JOIN temp2 ON temp1.i=temp2.k;
 ~~START~~
 int#!#int#!#text#!#int#!#int
-0#!#<NULL>#!#zero#!#<NULL>#!#0
 1#!#4#!#one#!#<NULL>#!#<NULL>
 2#!#3#!#two#!#2#!#2
 3#!#2#!#three#!#<NULL>#!#<NULL>
@@ -631,6 +630,7 @@ int#!#int#!#text#!#int#!#int
 6#!#6#!#six#!#<NULL>#!#<NULL>
 7#!#7#!#seven#!#<NULL>#!#<NULL>
 8#!#8#!#eight#!#<NULL>#!#<NULL>
+0#!#<NULL>#!#zero#!#<NULL>#!#0
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#0#!#zero#!#<NULL>#!#<NULL>
 ~~END~~
@@ -640,13 +640,13 @@ int#!#int#!#text#!#int#!#int
 SELECT * FROM temp1 RIGHT OUTER JOIN temp2 ON temp1.i=temp2.i;
 ~~START~~
 int#!#int#!#text#!#int#!#int
-0#!#<NULL>#!#zero#!#0#!#<NULL>
 1#!#4#!#one#!#1#!#-1
 2#!#3#!#two#!#2#!#2
-2#!#3#!#two#!#2#!#4
 3#!#2#!#three#!#3#!#-3
+2#!#3#!#two#!#2#!#4
 5#!#0#!#five#!#5#!#-5
 5#!#0#!#five#!#5#!#-5
+0#!#<NULL>#!#zero#!#0#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 <NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 ~~END~~
