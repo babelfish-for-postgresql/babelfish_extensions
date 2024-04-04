@@ -1259,7 +1259,6 @@ int			escape_hatch_set_transaction_isolation_level = EH_STRICT;
 int			pltsql_isolation_level_repeatable_read = ISOLATION_OFF;
 int 		pltsql_isolation_level_serializable = ISOLATION_OFF;
 int 		escape_hatch_identity_function = EH_STRICT;
-int			escape_hatch_insert_bulk_options = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1638,16 +1637,6 @@ define_escape_hatch_variables(void)
 							 gettext_noop("escape hatch for IDENTITY() in SELECT-INTO"),
 							 NULL,
 							 &escape_hatch_identity_function,
-							 EH_STRICT,
-							 escape_hatch_options,
-							 PGC_USERSET,
-							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-							 NULL, NULL, NULL);
-
-	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_insert_bulk_options",
-							 gettext_noop("escape hatch for unsupported INSERT BULK OPTIONS"),
-							 NULL,
-							 &escape_hatch_insert_bulk_options,
 							 EH_STRICT,
 							 escape_hatch_options,
 							 PGC_USERSET,

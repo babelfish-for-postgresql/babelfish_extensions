@@ -24,7 +24,6 @@ extern char *pltsql_psql_logical_babelfish_db_name;
 extern int  pltsql_isolation_level_repeatable_read;
 extern int  pltsql_isolation_level_serializable;
 extern int escape_hatch_identity_function;
-extern int escape_hatch_insert_bulk_options;
 
 extern void define_custom_variables(void);
 extern void pltsql_validate_set_config_function(char *name, char *value);
