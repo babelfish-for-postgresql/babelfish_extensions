@@ -368,3 +368,4 @@ permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 GRANT_SCHEMA-before-15_7-16_3
 babel-4517
+BABEL-4815
