@@ -1144,10 +1144,10 @@ BEGIN
 
         result := (SELECT input_expr_tmz AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
-        if LEFT(tz_diff,1) <> '-' THEN
+        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
             tz_diff := concat('+',tz_diff);
         END IF;
-        tz_offset := left(tz_diff,6);
+        tz_offset := PG_CATALOG.left(tz_diff,6);
         input_expr_tx := concat(input_expr_tx,tz_offset);
         return cast(input_expr_tx as sys.datetimeoffset);
     ELSIF  pg_typeof(input_expr) = 'sys.DATETIMEOFFSET'::regtype THEN
@@ -1155,10 +1155,10 @@ BEGIN
         input_expr_tmz := input_expr_tx :: TIMESTAMPTZ;
         result := (SELECT input_expr_tmz  AT TIME ZONE tz_name)::TEXT;
         tz_diff := (SELECT result::TIMESTAMPTZ - input_expr_tmz)::TEXT;
-        if LEFT(tz_diff,1) <> '-' THEN
+        if PG_CATALOG.LEFT(tz_diff,1) <> '-' THEN
             tz_diff := concat('+',tz_diff);
         END IF;
-        tz_offset := left(tz_diff,6);
+        tz_offset := PG_CATALOG.left(tz_diff,6);
         result := concat(result,tz_offset);
         return cast(result as sys.datetimeoffset);
     ELSE
@@ -1557,13 +1557,13 @@ begin
   if pattern is null or expression is null then
     return null;
   end if;
-  if left(pattern, 1) = '%' collate sys.database_default then
+  if PG_CATALOG.left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');
   else
     v_regexp_pattern := '#"' || pattern;
   end if;
 
-  if right(pattern, 1) = '%' collate sys.database_default then
+  if PG_CATALOG.right(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i');
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
@@ -2732,11 +2732,11 @@ BEGIN
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
     -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
-    cs_as_securable = lower(rtrim(cs_as_securable));
-    cs_as_securable_class = lower(rtrim(cs_as_securable_class));
-    cs_as_permission = lower(rtrim(cs_as_permission));
-    cs_as_sub_securable = lower(rtrim(cs_as_sub_securable));
-    cs_as_sub_securable_class = lower(rtrim(cs_as_sub_securable_class));
+    cs_as_securable = lower(PG_CATALOG.rtrim(cs_as_securable));
+    cs_as_securable_class = lower(PG_CATALOG.rtrim(cs_as_securable_class));
+    cs_as_permission = lower(PG_CATALOG.rtrim(cs_as_permission));
+    cs_as_sub_securable = lower(PG_CATALOG.rtrim(cs_as_sub_securable));
+    cs_as_sub_securable_class = lower(PG_CATALOG.rtrim(cs_as_sub_securable_class));
 
     -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
     IF cs_as_sub_securable IS NOT NULL AND cs_as_sub_securable_class IS NULL THEN
@@ -4031,7 +4031,7 @@ CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
 RETURNS SYS.SQL_VARIANT
 AS $$
 BEGIN
-	property := RTRIM(LOWER(COALESCE(property, '')));
+	property := PG_CATALOG.RTRIM(LOWER(COALESCE(property, '')));
 	
 	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
 	THEN
@@ -4584,7 +4584,7 @@ BEGIN
         -- Here, converting TIMESTAMP into datetimeoffset datatype with the same timezone as of date argument.
         IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
             timezone = sys.babelfish_get_datetimeoffset_tzoffset(date)::INTEGER;
-            offset_string = right(date::PG_CATALOG.TEXT, 6);
+            offset_string = PG_CATALOG.right(date::PG_CATALOG.TEXT, 6);
             result_date = result_date + make_interval(mins => timezone);
             RETURN concat(result_date, ' ', offset_string)::sys.datetimeoffset;
         ELSE
@@ -4707,8 +4707,8 @@ BEGIN
             input_expr_timestamp = date::timestamp;
             -- preserving offset_string value in the case of datetimeoffset datatype before converting it to timestamps 
             IF date_arg_datatype = 'sys.datetimeoffset'::regtype THEN
-                offset_string = RIGHT(date::PG_CATALOG.TEXT, 6);
-                input_expr_timestamp := LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
+                offset_string = PG_CATALOG.RIGHT(date::PG_CATALOG.TEXT, 6);
+                input_expr_timestamp := PG_CATALOG.LEFT(date::PG_CATALOG.TEXT, -6)::timestamp;
             END IF;
             CASE
                 WHEN datepart IN ('year', 'quarter', 'month', 'week', 'hour', 'minute', 'second', 'millisecond', 'microsecond')  THEN

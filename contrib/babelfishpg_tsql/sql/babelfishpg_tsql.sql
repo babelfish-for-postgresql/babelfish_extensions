@@ -2122,7 +2122,7 @@ BEGIN
 		BEGIN
 			IF EXISTS ( -- Search in the sys schema 
 					SELECT * FROM sys.sp_stored_procedures_view
-					WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
 						AND (LOWER(procedure_owner) = 'sys'))
 			BEGIN
 				SELECT PROCEDURE_QUALIFIER,
@@ -2133,13 +2133,13 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'sys')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
 			ELSE IF EXISTS ( 
 				SELECT * FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 					)
 			BEGIN
@@ -2151,7 +2151,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2165,7 +2165,7 @@ BEGIN
 				NUM_RESULT_SETS,
 				REMARKS,
 				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
 					AND (LOWER(procedure_owner) = 'dbo')
 				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 			END
@@ -2182,7 +2182,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+			WHERE (LOWER(PG_CATALOG.LEFT(procedure_name, -2)) = LOWER(@sp_name))
 				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
@@ -2197,7 +2197,7 @@ BEGIN
 			NUM_RESULT_SETS,
 			REMARKS,
 			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
-			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(PG_CATALOG.LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
 				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
 		END
