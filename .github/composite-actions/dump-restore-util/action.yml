@@ -18,10 +18,10 @@ inputs:
   migration_mode:
     description: "Database migration mode for Babelfish"
     required: true
-  logical_database:
-    description: "Logical Babelfish database to dump and restore"
+  database_level:
+    description: "Whether to perform database-level or Instance-level dump/restore"
     required: false
-    default: 'null'
+    default: false
   dump_data_as:
     description: "Dump table data using COPY or INSERT"
     required: false
@@ -54,8 +54,10 @@ runs:
         echo 'Starting dump...'
         cd ~
         mkdir -p upgrade
-        cd upgrade
+        mkdir -p upgrade/dump
+        cd upgrade/dump
         export PGPASSWORD=12345678
+        export PATH=/opt/mssql-tools/bin:$PATH
 
         if [[ '${{ inputs.dump_data_as }}' == 'inserts' ]];then
           export DUMP_OPTS='--column-inserts'
@@ -63,24 +65,67 @@ runs:
           export DUMP_OPTS=''
         fi
         export DUMP_OPTS="$DUMP_OPTS --format=${{ inputs.dump_format }}"
-        export DUMPALL_OPTS=""
 
-        if [[ '${{ inputs.logical_database }}' != 'null' ]];then
-          export DUMP_OPTS="$DUMP_OPTS --bbf-database-name=${{ inputs.logical_database }}"
-          export DUMPALL_OPTS="$DUMPALL_OPTS --bbf-database-name=${{ inputs.logical_database }}"
-        fi
+        if [[ ${{ inputs.database_level }} == false ]];then
+          echo "Starting to dump whole Babelfish physical database"
+          if [[ '${{ inputs.type }}' == 'full' ]];then
+            # Perform the complete dump
+            ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --verbose --no-role-passwords -f pg_dump_globals.sql 2>&1 | tee -a ~/upgrade/error.log
+            ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --verbose --file="pg_dump.archive" --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+          else
+            # First perform the schema-only dump and then perform the data-only dump to produce a complete dump
+            ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --schema-only --verbose --no-role-passwords -f pg_dump_globals_so.sql 2>&1 | tee -a ~/upgrade/error.log
+            ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --verbose --file="pg_dump_so.archive" --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
 
-        echo 'Starting to dump the Babelfish database'
-        if [[ '${{ inputs.type }}' == 'full' ]];then
-          # Perform the complete dump
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user $DUMPALL_OPTS --roles-only --quote-all-identifiers --verbose --no-role-passwords -f pg_dump_globals.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --verbose --file="pg_dump.archive" --dbname=jdbc_testdb 2>>error.log
+            ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --file="pg_dump_do.archive" --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+          fi
         else
-          # First perform the schema-only dump and then perform the data-only dump to produce a complete dump
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user $DUMPALL_OPTS --roles-only --quote-all-identifiers --schema-only --verbose --no-role-passwords -f pg_dump_globals_so.sql 2>>error.log
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --verbose --file="pg_dump_so.archive" --dbname=jdbc_testdb 2>>error.log
+          echo "Starting to dump all the Babelfish logical databases"
 
-          ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --file="pg_dump_do.archive" --dbname=jdbc_testdb 2>>error.log
+          # Get the list of all the Babelfish logins in a file
+          query="SELECT orig_loginname, default_database_name, default_language_name, type, \
+                pg_has_role(rolname, 'sysadmin', 'member') AS is_sysadmin_member \
+                FROM sys.babelfish_authid_login_ext \
+                WHERE rolname NOT IN ('jdbc_user', 'sysadmin', 'bbf_role_admin', 'test@ABC');"
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/logins_file.txt
+
+          # Get the list of Babelfish user and login mapping in a file
+          query="SELECT u.orig_username, l.orig_loginname, database_name \
+                FROM sys.babelfish_authid_user_ext u INNER JOIN sys.babelfish_authid_login_ext l \
+                ON u.login_name = l.rolname WHERE u.login_name != '' ORDER BY orig_username;"
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/users_file.txt
+
+          # Get the list of domain mappings in a file
+          query="SELECT netbios_domain_name, fq_domain_name FROM sys.babelfish_domain_mapping;"
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/domains_file.txt
+
+          # Get the list of all foreign servers in a file
+          query="SELECT fs.srvname, fs.srvoptions, um.umoptions, so.query_timeout, so.connect_timeout \
+                FROM pg_foreign_server fs \
+                INNER JOIN sys.babelfish_server_options so ON fs.srvname = so.servername \
+                LEFT JOIN pg_user_mappings um ON fs.srvname = um.srvname;"
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/servers_file.txt
+
+          # Get the list of all the Babelfish logical datababses in a file
+          query="SELECT name FROM sys.babelfish_sysdatabases ORDER BY name DESC;"
+          ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "$query" > ~/upgrade/databases_file.txt
+
+          # Loop through the list of all the Babelfish logical database and dump them one by one.
+          while IFS= read -r db; do
+            # Remove leading and trailing spaces
+            db_trimmed="$(echo "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            if [[ '${{ inputs.type }}' == 'full' ]];then
+              # Perform the complete dump
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --verbose --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed".sql 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --verbose --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed".archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+            else
+              # First perform the schema-only dump and then perform the data-only dump to produce a complete dump
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dumpall -h localhost --database jdbc_testdb --username jdbc_user --roles-only --quote-all-identifiers --schema-only --verbose --no-role-passwords --bbf-database-name="$db_trimmed" -f pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --schema-only --verbose --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_so.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+
+              ~/${{ inputs.pg_new_dir }}/bin/pg_dump -h localhost --username jdbc_user $DUMP_OPTS --quote-all-identifiers --data-only --verbose --bbf-database-name="$db_trimmed" --file=pg_dump_"$db_trimmed"_do.archive --dbname=jdbc_testdb 2>&1 | tee -a ~/upgrade/error.log
+            fi
+          done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
         fi
 
         # Stop old server and start the new.
@@ -92,31 +137,172 @@ runs:
         # Create and initialise Babelfish extensions in the new server to perform restore.
         sudo ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -v migration_mode=${{inputs.migration_mode}} -v tsql_port="1433" -f .github/scripts/create_extension.sql
 
-        echo 'Starting to restore the Babelfish database'
-        if [[ '${{ inputs.type }}' == 'full' ]];then
-          echo 'Restoring from pg_dumpall'
-          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals.sql 2>> ~/upgrade/error.log
-          echo 'Restoring from pg_dump'
-          if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump.archive 2>> ~/upgrade/error.log
+        if [[ ${{ inputs.database_level }} == false ]];then
+          echo "Starting to restore whole Babelfish physical database"
+          if [[ '${{ inputs.type }}' == 'full' ]];then
+            echo 'Restoring from pg_dumpall'
+            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals.sql 2>&1 | tee -a ~/upgrade/error.log
+            echo 'Restoring from pg_dump'
+            if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump.archive 2>&1 | tee -a ~/upgrade/error.log
+            else
+              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump.archive 2>&1 | tee -a ~/upgrade/error.log
+            fi
           else
-            ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump.archive 2>> ~/upgrade/error.log
+            echo 'Restoring from pg_dumpall'
+            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_so.sql 2>&1 | tee -a ~/upgrade/error.log
+            echo 'Restoring from pg_dump'
+            if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_so.archive 2>&1 | tee -a ~/upgrade/error.log
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_do.archive 2>&1 | tee -a ~/upgrade/error.log
+            else
+              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_so.archive 2>&1 | tee -a ~/upgrade/error.log
+              ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_do.archive 2>&1 | tee -a ~/upgrade/error.log
+            fi
           fi
         else
-          echo 'Restoring from pg_dumpall'
-          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_globals_so.sql 2>> ~/upgrade/error.log
-          echo 'Restoring from pg_dump'
-          if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
-            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_so.archive 2>> ~/upgrade/error.log
-            sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/pg_dump_do.archive 2>> ~/upgrade/error.log
-          else
-            ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_so.archive 2>> ~/upgrade/error.log
-            ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/pg_dump_do.archive 2>> ~/upgrade/error.log
-          fi
+          echo "Starting to restore all the Babelfish logical databases"
+
+          # Loop through the list of all the Babelfish logical database and restore them one by one.
+          while IFS= read -r db; do
+            db_trimmed="$(echo -e "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            echo "Restoring $db_trimmed"
+            if [[ '${{ inputs.type }}' == 'full' ]];then
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed".sql 2>&1 | tee -a ~/upgrade/error.log
+              if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
+                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
+              else
+                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed".archive 2>&1 | tee -a ~/upgrade/error.log
+              fi
+            else
+              sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_globals_"$db_trimmed"_so.sql 2>&1 | tee -a ~/upgrade/error.log
+              if [[ '${{ inputs.dump_format }}' == 'plain' ]];then
+                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
+                sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user --single-transaction -f ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
+              else
+                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_so.archive 2>&1 | tee -a ~/upgrade/error.log
+                ~/${{ inputs.pg_new_dir }}/bin/pg_restore -h localhost -d jdbc_testdb -U jdbc_user --single-transaction ~/upgrade/dump/pg_dump_"$db_trimmed"_do.archive 2>&1 | tee -a ~/upgrade/error.log
+              fi
+            fi
+          done < <(tail -n +3 ~/upgrade/databases_file.txt | head -n -2)
+
+          # Create rds_ad role
+          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE ROLE rds_ad NOSUPERUSER NOLOGIN NOCREATEROLE INHERIT NOREPLICATION;"
+
+          # Create tds_fdw extension
+          sudo PGPASSWORD=12345678 ~/${{ inputs.pg_new_dir }}/bin/psql -v ON_ERROR_STOP=1 -h localhost -d jdbc_testdb -U jdbc_user -c "CREATE EXTENSION IF NOT EXISTS tds_fdw;"
+
+          # Re-create windows login [abc\test]
+          # This is the only special role which needs to created before re-creating
+          # domain mappings, all other roles are created after domain mappings.
+          sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "CREATE LOGIN [abc\test] FROM WINDOWS;"
+
+          # Re-create domain mappings
+          while IFS='|' read -r nb fqdn; do
+            # Remove leading and trailing spaces
+            netbios="$(echo "${nb}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            fqdn_name="$(echo "${fqdn}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sys.babelfish_add_domain_mapping_entry '$netbios', '$fqdn_name';"
+          done < <(tail -n +3 ~/upgrade/domains_file.txt | head -n -2)
+
+          # Loop through the list of all the Babelfish logins and create them one by one.
+          while IFS='|' read -r name db lang type sa; do
+            # Remove leading and trailing spaces
+            orig_loginname="$(echo "${name}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            def_db="$(echo "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            def_lang="$(echo "${lang}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            login_type="$(echo "${type}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            is_sysadmin_member="$(echo "${sa}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            if [[ $login_type == 'U' ]];then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "CREATE LOGIN [$orig_loginname] FROM WINDOWS WITH default_database = [$def_db], default_language = [$def_lang];"
+            else
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "CREATE LOGIN [$orig_loginname] WITH PASSWORD = '12345678', default_database = [$def_db], default_language = [$def_lang];"
+            fi
+            if [[ $is_sysadmin_member == 't' ]];then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "ALTER ROLE sysadmin ADD MEMBER [$orig_loginname];"
+            fi
+          done < <(tail -n +3 ~/upgrade/logins_file.txt | head -n -2)
+          
+          # Link the orphaned users to logins
+          while IFS='|' read -r name login db; do
+            # Remove leading and trailing spaces
+            orig_username="$(echo "${name}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            login_name="$(echo "${login}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            database_name="$(echo "${db}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            sqlcmd -S localhost -U jdbc_user -d "$database_name" -P 12345678 -Q "ALTER USER [$orig_username] WITH LOGIN = [$login_name];"
+          done < <(tail -n +3 ~/upgrade/users_file.txt | head -n -2)
+
+          # Re-create foreign servers and user mappings
+          while IFS='|' read -r name soptions uoptions qt ct; do
+            # Remove leading and trailing spaces
+            srvname="$(echo "${name}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            srvoptions="$(echo "${soptions}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            umappings="$(echo "${uoptions}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            query_timeout="$(echo "${qt}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            connect_timeout="$(echo "${ct}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+            # Form the create linked server query
+            query="EXEC sp_addlinkedserver  @server = N'$srvname', @provider=N'tds_fdw'"
+
+            # Remove the curly braces at the beginning and end of the srvoptions
+            srvoptions="${srvoptions#"{"}"
+            srvoptions="${srvoptions%"}"}"
+
+            # Split the options by comma and iterate over each key-value pair
+            IFS=',' read -r -a pairs <<< "$srvoptions"
+            for pair in "${pairs[@]}"; do
+              pair=$(echo -e "$pair" | sed 's/\\"/"/g' | sed 's/"//g')
+              # Split the pair by '=' to get the key and value
+              IFS='=' read -r key value <<< "$pair"
+              if [[ $key == 'servername' ]]; then
+                query="$query, @datasrc=N'$value'"
+              fi
+              if [[ $key == 'database' ]]; then
+                query="$query, @catalog=N'$value'"
+              fi
+            done
+            # Execute the query to create the linked server
+            sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "$query;"
+
+            # Update the query_timeout and connect_timeout
+            if [[ "$query_timeout" -ne 0 ]]; then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sp_serveroption @server='$srvname', @optname='query timeout', @optvalue='$query_timeout';"
+            fi
+            if [[ "$connect_timeout" -ne 0 ]]; then
+              sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "EXEC sp_serveroption @server='$srvname', @optname='connect timeout', @optvalue='$connect_timeout';"
+            fi
+
+            if [ "$umappings" == '' ]; then
+              continue
+            fi
+
+            # Form the query to add user mapping
+            query="EXEC sp_addlinkedsrvlogin @rmtsrvname = '$srvname', @useself = 'FALSE'"
+
+            # Remove the curly braces at the beginning and end of the umappings
+            umappings="${umappings#"{"}"
+            umappings="${umappings%"}"}"
+
+            # Split the options by comma and iterate over each key-value pair
+            IFS=',' read -r -a pairs <<< "$umappings"
+            for pair in "${pairs[@]}"; do
+              pair=$(echo -e "$pair" | sed 's/\\"/"/g' | sed 's/"//g')
+              # Split the pair by '=' to get the key and value
+              IFS='=' read -r key value <<< "$pair"
+              if [[ $key == 'username' ]]; then
+                query="$query, @rmtuser = '$value'"
+              fi
+              if [[ $key == 'password' ]]; then
+                query="$query, @rmtpassword = '$value'"
+              fi
+            done
+            # Execute the query to create the user mapping
+            sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "$query;"
+          done < <(tail -n +3 ~/upgrade/servers_file.txt | head -n -2)
         fi
         echo 'Database restore complete.'
+        rm -rf ~/upgrade/dump
 
-        export PATH=/opt/mssql-tools/bin:$PATH
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
@@ -127,4 +313,3 @@ runs:
         is_final_ver: ${{ inputs.is_final_ver }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
         migration_mode: ${{ inputs.migration_mode }}
-        logical_database: ${{ inputs.logical_database }}
