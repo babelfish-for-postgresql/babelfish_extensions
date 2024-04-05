@@ -24,9 +24,19 @@ jobs:
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
 
+      - name: Check Babelfish metadata inconsistency before Major Version Upgrade
+        id: check-babelfish-inconsistency
+        if: always() && steps.setup-base-version.outcome == 'success'
+        run: |
+          output=$(~/psql/bin/psql -d jdbc_testdb -U jdbc_user -t -c "SELECT sys.check_for_inconsistent_metadata();")
+          echo "::set-output name=check_result::$output"
+
       - name: Upgrade to latest version and run verify-cleanup tests
         id: upgrade-and-verify
-        if: always() && steps.setup-base-version.outcome == 'success'
+        if: |
+          always() && steps.setup-base-version.outcome == 'success' 
+          && steps.check-babelfish-inconsistency.outcome == 'success' 
+          && steps.check-babelfish-inconsistency.outputs.check_result == 'f'
         uses: ./.github/composite-actions/major-version-upgrade-util
         with:
           engine_branch: latest
