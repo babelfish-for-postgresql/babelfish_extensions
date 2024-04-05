@@ -1727,7 +1727,7 @@ typedef struct PLtsql_protocol_plugin
 	int		   *(*get_mapped_tsql_error_code_list) (void);
 
 	uint64		(*bulk_load_callback) (int ncol, int nrow,
-									   Datum *Values, bool *Nulls);
+									   Datum *Values, bool *Nulls, bool *ValueAllocFlags);
 
 	int			(*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
@@ -1980,7 +1980,7 @@ extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern uint64 execute_bulk_load_insert(int ncol, int nrow,
-									   Datum *Values, bool *Nulls);
+									   Datum *Values, bool *Nulls, bool *ValueAllocFlags);
 
 /*
  * Functions in pl_exec.c

@@ -273,7 +273,17 @@ typedef struct BulkLoadRowData
 	/* Array of length col count, holds value of each column in that row. */
 	Datum	   *columnValues;
 
+	/* 
+	 * Array of length col count, holds true value if corresponding column is
+	 * null in that row.
+	 */
 	bool	   *isNull;
+
+	/* 
+	 * Array of length col count, holds true value if corresponding column's
+	 * Datum in that row was allocated on heap with palloc.
+	 */
+	bool	   *isAllocated;
 } BulkLoadRowData;
 
 /* Map TVP to its underlying table, either by relid or by table name. */
