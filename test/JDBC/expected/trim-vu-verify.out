@@ -1175,6 +1175,7 @@ body><fruit/></body
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0), @charSet VARCHAR(10) = '(1 2)';
 SELECT TRIM(@charSet FROM CAST(@inputString AS VARCHAR(50)))
 GO
+~~START~~
 varchar
 POINT
 ~~END~~

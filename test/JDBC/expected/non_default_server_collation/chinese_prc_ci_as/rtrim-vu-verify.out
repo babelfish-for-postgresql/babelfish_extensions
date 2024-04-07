@@ -386,6 +386,8 @@ varchar
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT RTRIM(@inputString)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of rtrim function.)~~
@@ -394,6 +396,8 @@ GO
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT RTRIM(@inputString)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of rtrim function.)~~
@@ -420,7 +424,8 @@ varchar
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT RTRIM(CAST(@inputString AS VARCHAR(50)))
 GO
+~~START~~
 varchar
-POINT (1 2)
+POINT(1 2)
 ~~END~~
 

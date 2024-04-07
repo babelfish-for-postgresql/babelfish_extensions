@@ -496,6 +496,8 @@ varchar
 DECLARE @inputString geometry = geometry::STGeomFromText('POINT (1 2)', 0);
 SELECT LEFT(@inputString, 3)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geometry is invalid for argument 1 of left function.)~~
@@ -504,6 +506,8 @@ GO
 DECLARE @inputString geography = geography::STGeomFromText('POINT(-122.34900 47.65100)', 4326);
 SELECT LEFT(@inputString, 3)
 GO
+~~START~~
+varchar
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Argument data type geography is invalid for argument 1 of left function.)~~
