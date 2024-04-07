@@ -25,6 +25,7 @@
 
 #define NOT_FOUND -1
 #define SORT_KEY_STR "\357\277\277\0"
+#define VARCHAR_MAX_SCALE 8000
 
 Oid			server_collation_oid = InvalidOid;
 collation_callbacks *collation_callbacks_ptr = NULL;
@@ -279,61 +280,6 @@ transform_funcexpr(Node *node)
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
 
-
-PG_FUNCTION_INFO_V1(remove_accents);
-Datum
-remove_accents(PG_FUNCTION_ARGS)
-{
-	text *arg1 = PG_GETARG_TEXT_PP(0);
-	char *input = text_to_cstring(arg1);
-	UChar *rules; // Rule to remove diacritics 
-	UChar *utf16_intput;
-	int32_t len_uchar,
-			len_uinput,
-			limit,
-			capacity,
-			len_result;
-	UErrorCode status = U_ZERO_ERROR;
-	char *result;
-	UTransliterator *transliterator;
-
-	char* rule = "[[:Latin:][:Nd:]]; Latin-ASCII";
-
-#ifdef USE_ICU
-	len_uchar = icu_to_uchar(&rules, rule, strlen(rule));
-	len_uinput = icu_to_uchar(&utf16_intput, input, strlen(input));
-	
-	// Open a transliterator for conversion
-	transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
-	if (U_FAILURE(status))
-	{
-		elog(ERROR, "Error opening transliterator: %s", u_errorName(status));
-		return 1;
-	}
-
-	limit = len_uinput;
-	capacity = len_uinput + 10;
-
-	utrans_transUChars(transliterator,
-						utf16_intput,
-						&len_uinput,
-						capacity,
-						0,
-						&limit,
-						&status);
-
-	if (U_FAILURE(status))
-	{
-		elog(ERROR, "Error normalising the input string: %s", u_errorName(status));
-	}
-
-	len_result = icu_from_uchar(&result, utf16_intput, len_uinput);
-
-	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result+1));
-#endif
-	PG_RETURN_NULL();
-}
-
 static Node *
 transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_info_t coll_info_of_inputcollid)
 {
@@ -468,6 +414,68 @@ transform_from_ci_as(Node *node, OpExpr *op, like_ilike_info_t like_entry, coll_
 	return ret;
 }
 
+/*
+ * Function responsible for obtaining unaccented version of input
+ * string with the help of ICU provided APIs. 
+ * We use a transformation rule to transliterate the string
+ */
+
+PG_FUNCTION_INFO_V1(remove_accents);
+Datum
+remove_accents(PG_FUNCTION_ARGS)
+{
+	text *arg1 = PG_GETARG_TEXT_PP(0);
+	char *input = text_to_cstring(arg1);
+	UChar *rules; // Rule to remove diacritics 
+	UChar *utf16_intput;
+	int32_t len_uchar,
+			len_uinput,
+			limit,
+			capacity,
+			len_result;
+	UErrorCode status = U_ZERO_ERROR;
+	char *result;
+	UTransliterator *transliterator;
+
+	/* Rule applied to transliterate Latin and general category Nd character 
+	 * then convert the Latin (source) char to ASCII (destination) representation
+	 */
+	char* rule = "[[:Latin:][:Nd:]]; Latin-ASCII";
+
+#ifdef USE_ICU
+	len_uchar = icu_to_uchar(&rules, rule, strlen(rule));
+	len_uinput = icu_to_uchar(&utf16_intput, input, strlen(input));
+	
+	// Open a transliterator for conversion
+	transliterator = utrans_openU(rules, len_uchar, UTRANS_FORWARD, NULL, 0, NULL, &status);
+	if (U_FAILURE(status))
+	{
+		elog(ERROR, "Error opening transliterator: %s", u_errorName(status));
+		return 1;
+	}
+
+	limit = len_uinput;
+	capacity = VARCHAR_MAX_SCALE;
+
+	utrans_transUChars(transliterator,
+						utf16_intput,
+						&len_uinput,
+						capacity,
+						0,
+						&limit,
+						&status);
+
+	if (U_FAILURE(status))
+	{
+		elog(ERROR, "Error normalising the input string: %s", u_errorName(status));
+	}
+
+	len_result = icu_from_uchar(&result, utf16_intput, len_uinput);
+
+	PG_RETURN_VARCHAR_P(cstring_to_text_with_len(result, len_result+1));
+#endif
+	PG_RETURN_NULL();
+}
 
 static Node *
 ConvertNodeToFuncExpr(Node *node, void *context)
