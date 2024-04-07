@@ -3198,7 +3198,9 @@ BEGIN
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
         string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype  THEN
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype  THEN
             RAISE 'Argument data type % is invalid for argument 1 of ltrim function.', string_arg_datatype;
     END IF;
 
@@ -3301,7 +3303,9 @@ BEGIN
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
         string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype  THEN
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype  THEN
             RAISE 'Argument data type % is invalid for argument 1 of rtrim function.', string_arg_datatype;
     END IF;
 
@@ -3404,7 +3408,9 @@ BEGIN
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
         string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype THEN
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype THEN
             RAISE 'Argument data type % is invalid for argument 1 of left function.', string_arg_datatype;
     END IF;
     
@@ -3527,7 +3533,9 @@ BEGIN
         string_arg_datatype = 'ntext'::regtype OR
         string_arg_datatype = 'sys.image'::regtype OR
         string_arg_datatype = 'sys.sql_variant'::regtype OR
-        string_arg_datatype = 'xml'::regtype THEN
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype THEN
             RAISE 'Argument data type % is invalid for argument 1 of right function.', string_arg_datatype;
     END IF;
 
