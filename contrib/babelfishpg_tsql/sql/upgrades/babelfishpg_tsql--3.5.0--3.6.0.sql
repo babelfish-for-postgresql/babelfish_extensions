@@ -331,6 +331,576 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 $$
 LANGUAGE plpgsql STABLE;
 
+-- TRIM
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS 
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+DECLARE
+    string_arg_datatype regtype;
+BEGIN
+    string_arg_datatype := pg_typeof(string);
+
+    IF string_arg_datatype != 'sys.varchar'::regtype AND
+        string_arg_datatype != 'sys.bpchar'::regtype AND
+        string_arg_datatype != 'sys.nchar'::regtype AND
+        string_arg_datatype != 'sys.nvarchar'::regtype THEN
+            RAISE 'Argument data type % is invalid for argument 1 of Trim function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.NVARCHAR, characters sys.VARCHAR)
+RETURNS sys.NVARCHAR
+AS 
+$BODY$
+BEGIN
+    IF string IS NULL OR characters IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text, characters::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.TRIM(string sys.VARCHAR, characters sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 
+$BODY$
+BEGIN
+    IF string IS NULL OR characters IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.btrim(string::text, characters::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+-- LTRIM
+CREATE OR REPLACE FUNCTION sys.LTRIM(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype regtype;
+BEGIN
+    string_arg_datatype := pg_typeof(string);
+
+    IF string_arg_datatype = 'text'::regtype OR
+        string_arg_datatype = 'ntext'::regtype OR
+        string_arg_datatype = 'sys.image'::regtype OR
+        string_arg_datatype = 'sys.sql_variant'::regtype OR
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype  THEN
+            RAISE 'Argument data type % is invalid for argument 1 of ltrim function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.ltrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.ltrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.ltrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.ltrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.ltrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RAISE 'Argument data type text is invalid for argument 1 of ltrim function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LTRIM(string NTEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RAISE 'Argument data type ntext is invalid for argument 1 of ltrim function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+-- RTRIM
+CREATE OR REPLACE FUNCTION sys.RTRIM(string ANYELEMENT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype regtype;
+BEGIN
+    string_arg_datatype := pg_typeof(string);
+
+    IF string_arg_datatype = 'text'::regtype OR
+        string_arg_datatype = 'ntext'::regtype OR
+        string_arg_datatype = 'sys.image'::regtype OR
+        string_arg_datatype = 'sys.sql_variant'::regtype OR
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype  THEN
+            RAISE 'Argument data type % is invalid for argument 1 of rtrim function.', string_arg_datatype;
+    END IF;
+
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.rtrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.BPCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.rtrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.rtrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.rtrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF string IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.rtrim(string::text);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string TEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RAISE 'Argument data type text is invalid for argument 1 of rtrim function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RTRIM(string NTEXT)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    RAISE 'Argument data type ntext is invalid for argument 1 of rtrim function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+-- LEFT
+CREATE OR REPLACE FUNCTION sys.LEFT(string ANYELEMENT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype regtype;
+BEGIN
+    string_arg_datatype := pg_typeof(string);
+
+    IF string_arg_datatype = 'text'::regtype OR
+        string_arg_datatype = 'ntext'::regtype OR
+        string_arg_datatype = 'sys.image'::regtype OR
+        string_arg_datatype = 'sys.sql_variant'::regtype OR
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype THEN
+            RAISE 'Argument data type % is invalid for argument 1 of left function.', string_arg_datatype;
+    END IF;
+    
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.BPCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.VARCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string sys.NVARCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the left function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.left(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string TEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+   RAISE 'Argument data type text is invalid for argument 1 of left function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.LEFT(string NTEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+   RAISE 'Argument data type ntext is invalid for argument 1 of left function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+-- RIGHT
+CREATE OR REPLACE FUNCTION sys.RIGHT(string ANYELEMENT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+DECLARE
+    string_arg_datatype regtype;
+BEGIN
+    string_arg_datatype := pg_typeof(string);
+
+    IF string_arg_datatype = 'text'::regtype OR
+        string_arg_datatype = 'ntext'::regtype OR
+        string_arg_datatype = 'sys.image'::regtype OR
+        string_arg_datatype = 'sys.sql_variant'::regtype OR
+        string_arg_datatype = 'xml'::regtype OR
+        string_arg_datatype = 'geometry'::regtype OR
+        string_arg_datatype = 'geography'::regtype THEN
+            RAISE 'Argument data type % is invalid for argument 1 of right function.', string_arg_datatype;
+    END IF;
+
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN sys.RIGHT(string::sys.VARCHAR, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.BPCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.VARCHAR, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string sys.NVARCHAR, i INTEGER)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+BEGIN
+    IF i < 0 THEN
+        RAISE 'Invalid length parameter passed to the right function.';
+    END IF;
+
+    IF string IS NULL or i IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN PG_CATALOG.right(string::text, i);
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string TEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+   RAISE 'Argument data type text is invalid for argument 1 of right function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION sys.RIGHT(string NTEXT, i INTEGER)
+RETURNS sys.VARCHAR
+AS
+$BODY$
+BEGIN
+   RAISE 'Argument data type ntext is invalid for argument 1 of right function.';
+END;
+$BODY$
+LANGUAGE plpgsql STABLE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
