@@ -895,27 +895,6 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (query->commandType == CMD_UTILITY && nodeTag((Node *) (query->utilityStmt)) == T_CreateStmt)
 		set_current_query_is_create_tbl_check_constraint(query->utilityStmt);
 
-	/*
-	 * Block INSERT/UPDATE/DELETE on a Babelfish catalog table unless the
-	 * current user is superuser or it is a restore process.
-	 */
-	if (query->commandType == CMD_INSERT ||
-		query->commandType == CMD_UPDATE ||
-		query->commandType == CMD_DELETE)
-	{
-		char *schema_name = get_namespace_name(RelationGetNamespace(pstate->p_target_relation));
-
-		if (!superuser() && strcmp(schema_name, "sys") == 0)
-		{
-			if (!babelfish_dump_restore)
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied for table %s", RelationGetRelationName(pstate->p_target_relation))));
-		}
-
-		pfree(schema_name);
-	}
-
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 	
@@ -2482,40 +2461,6 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 
 		return;                                 /* Don't execute anything */
-	}
-
-	/*
-	 * Block COPY into a Babelfish catalog table unless the current user is superuser
-	 * or it is a restore process.
-	 */
-	if (nodeTag(parsetree) == T_CopyStmt && ((CopyStmt *) parsetree)->is_from)
-	{
-		CopyStmt *stmt = (CopyStmt *) parsetree;
-		Oid relid = RangeVarGetRelid(stmt->relation, NoLock, true);
-
-		if (OidIsValid(relid))
-		{
-			char *schema_name;
-			HeapTuple reltup;
-			Form_pg_class relform;
-
-			reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-			if (!HeapTupleIsValid(reltup))
-				elog(ERROR, "cache lookup failed for relation %u", relid);
-
-			relform = (Form_pg_class) GETSTRUCT(reltup);
-			schema_name = get_namespace_name(relform->relnamespace);
-			if (!superuser() && strcmp(schema_name, "sys") == 0)
-			{
-				if (!babelfish_dump_restore)
-					ereport(ERROR,
-							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-							 errmsg("permission denied for table %s", NameStr(relform->relname))));
-			}
-
-			ReleaseSysCache(reltup);
-			pfree(schema_name);
-		}
 	}
 
 	/*
