@@ -427,7 +427,7 @@ public class TestQueryFile {
             JDBCTempTable.runTest(bw, logger);
             sla = defaultSLA*1000000L * 2; /* Increase SLA to avoid flakiness */
         } else {
-            batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
+            batch_run.batch_run_sql(connection_bbl, bw, testFilePath, outputFilesDirectoryPath, logger);
         }
         bw.close();
         if(sla == 0){

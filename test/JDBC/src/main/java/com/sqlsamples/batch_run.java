@@ -17,7 +17,7 @@ import static com.sqlsamples.Config.checkParallelQueryExpected;
 public class batch_run {
 
     // method that iterates through an input file and writes output to corresponding .out file.
-    static void batch_run_sql(Connection con_bbl, BufferedWriter bw, String testFilePath, Logger logger) {
+    static void batch_run_sql(Connection con_bbl, BufferedWriter bw, String testFilePath, String outputDirPath, Logger logger) {
 
         boolean isSQLFile = testFilePath.contains(".sql");
         boolean isCrossDialectFile = false;
@@ -221,7 +221,7 @@ public class batch_run {
                     String filePath = new File(result[1]).getAbsolutePath();
 
                     // Run the iterative parse and compare loop for test file
-                    batch_run_sql(con_bbl, bw, filePath, logger);
+                    batch_run_sql(con_bbl, bw, filePath, outputDirPath, logger);
 
                 } else if (strLine.startsWith("insertbulk")) {
                     bw.write(strLine);
@@ -292,6 +292,15 @@ public class batch_run {
                         checkParallelQueryExpected = true;
                         continue;
                     }
+
+                    if (strLine.toLowerCase().startsWith("-- backend_memory_profile")){
+                        BackendMemoryProfiler mprof = new BackendMemoryProfiler(con_bbl, testFilePath, outputDirPath, logger);
+                        Thread th = new Thread(mprof);
+                        th.setDaemon(false);
+                        th.start();
+                        continue;
+                    }
+
                     // execute statement as a normal SQL statement
                     if (isSQLFile) {
                         if (!strLine.equalsIgnoreCase("GO")) {
