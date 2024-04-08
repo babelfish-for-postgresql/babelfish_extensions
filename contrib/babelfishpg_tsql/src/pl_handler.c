@@ -895,6 +895,23 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (query->commandType == CMD_UTILITY && nodeTag((Node *) (query->utilityStmt)) == T_CreateStmt)
 		set_current_query_is_create_tbl_check_constraint(query->utilityStmt);
 
+	if (query->commandType == CMD_INSERT ||
+		query->commandType == CMD_UPDATE ||
+		query->commandType == CMD_DELETE)
+	{
+		char *schema_name = get_namespace_name(RelationGetNamespace(pstate->p_target_relation));
+
+		if (!superuser() && strcmp(schema_name, "sys") == 0)
+		{
+			if (!babelfish_dump_restore)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied for table %s", RelationGetRelationName(pstate->p_target_relation))));
+		}
+
+		pfree(schema_name);
+	}
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 	

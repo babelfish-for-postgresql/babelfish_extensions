@@ -13,6 +13,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_foreign_server.h"
 #include "catalog/namespace.h"
+#include "commands/extension.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "tcop/utility.h"
@@ -2475,6 +2476,13 @@ update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 	TableScanDesc scan;
 	HeapTuple	tuple;
 	bool		is_null;
+
+	/* We only allow this to be called from an extension's SQL script. */
+	if (!creating_extension)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s can only be called from an SQL script executed by CREATE/ALTER EXTENSION",
+						"update_user_catalog_for_guest()")));
 
 	db_rel = table_open(sysdatabases_oid, AccessShareLock);
 	scan = table_beginscan_catalog(db_rel, 0, NULL);
