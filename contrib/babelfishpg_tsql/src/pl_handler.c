@@ -895,6 +895,10 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 	if (query->commandType == CMD_UTILITY && nodeTag((Node *) (query->utilityStmt)) == T_CreateStmt)
 		set_current_query_is_create_tbl_check_constraint(query->utilityStmt);
 
+	/*
+	 * Block INSERT/UPDATE/DELETE on a Babelfish catalog table unless the
+	 * current user is superuser or it is a restore process.
+	 */
 	if (query->commandType == CMD_INSERT ||
 		query->commandType == CMD_UPDATE ||
 		query->commandType == CMD_DELETE)
@@ -2478,6 +2482,28 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 
 		return;                                 /* Don't execute anything */
+	}
+
+	/*
+	 * Block COPY into a Babelfish catalog table unless the current user is superuser
+	 * or it is a restore process.
+	 */
+	if (nodeTag(parsetree) == T_CopyStmt && ((CopyStmt *) parsetree)->is_from)
+	{
+		CopyStmt *stmt = (CopyStmt *) parsetree;
+		Relation rel = table_openrv(stmt->relation, NoLock);
+		char *schema_name = get_namespace_name(RelationGetNamespace(rel));
+
+		table_close(rel, NoLock);
+		if (!superuser() && strcmp(schema_name, "sys") == 0)
+		{
+			if (!babelfish_dump_restore)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied for table %s", stmt->relation->relname)));
+		}
+
+		pfree(schema_name);
 	}
 
 	/*
