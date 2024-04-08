@@ -223,6 +223,9 @@ bcp -h "CHECK_CONSTRAINTS"#!#in#!#bcp_source#!#destinationTable2
 1#!#1
 2#!#2
 #Q#Select * from destinationTable2
+#D#bigint#!#bigint
+1#!#1
+2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#drop table destinationTable2
@@ -243,6 +246,9 @@ bcp -h "FIRE_TRIGGERS"#!#in#!#bcp_source#!#destinationTable2
 1#!#1
 2#!#2
 #Q#Select * from destinationTable2
+#D#bigint#!#bigint
+1#!#1
+2#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#drop table destinationTable2
@@ -283,6 +289,9 @@ bcp -h "TABLOCK"#!#in#!#bcp_source#!#destinationTable2
 1#!#1
 #!#2
 #Q#Select * from destinationTable2
+#D#bigint#!#bigint
+1#!#1
+#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#drop table destinationTable2
@@ -499,3 +508,24 @@ bcp#!#in#!#bcp_source#!#destinationTable
 01/01/2000 00:00:00#!#01/01/2060 00:00:00
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(tablock);
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(check_constraints);
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(fire_triggers);
+#Q#insert bulk dbo.ct_depreciacao_gerencial_valores ([r_e_c_n_o_] Int, [acumulado] Decimal(19,6), [centro_custo] VarChar(20) COLLATE SQL_Latin1_General_CP1_CI_AS, [data] VarChar(8) COLLATE SQL_Latin1_General_CP1_CI_AS, [diasdeprec] Decimal(19,6), [fator] Decimal(19,6), [grupo_bem] Int, [nlanc] Int, [percentual] Decimal(19,6), [recno_bem] Int, [taxa_grupo] Decimal(19,6), [valor] Decimal(19,6), [valorresidual] Decimal(19,6), [manual] VarChar(1) COLLATE SQL_Latin1_General_CP1_CI_AS, [credito_pis] Decimal(19,2), [credito_cofins] Decimal(19,2), [id] UniqueIdentifier) with (KEEP_NULLS, TABLOCK);
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(hello);
+#E#invalid insert bulk option hello
+#Q#SELECT current_setting('babelfishpg_tsql.escape_hatch_insert_bulk_options');
+#D#text
+ignore
+#Q#EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_insert_bulk_options', 'strict';
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(tablock);
+#E#insert bulk option tablock is not yet supported in babelfish
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(check_constraints);
+#E#insert bulk option check_constraints is not yet supported in babelfish
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(fire_triggers);
+#E#insert bulk option fire_triggers is not yet supported in babelfish
+#Q#insert bulk dbo.ct_depreciacao_gerencial_valores ([r_e_c_n_o_] Int, [acumulado] Decimal(19,6), [centro_custo] VarChar(20) COLLATE SQL_Latin1_General_CP1_CI_AS, [data] VarChar(8) COLLATE SQL_Latin1_General_CP1_CI_AS, [diasdeprec] Decimal(19,6), [fator] Decimal(19,6), [grupo_bem] Int, [nlanc] Int, [percentual] Decimal(19,6), [recno_bem] Int, [taxa_grupo] Decimal(19,6), [valor] Decimal(19,6), [valorresidual] Decimal(19,6), [manual] VarChar(1) COLLATE SQL_Latin1_General_CP1_CI_AS, [credito_pis] Decimal(19,2), [credito_cofins] Decimal(19,2), [id] UniqueIdentifier) with (KEEP_NULLS, TABLOCK);
+#E#insert bulk option tablock is not yet supported in babelfish
+#Q#Insert Bulk destinationTable ([a] bigint,[b] bigint) with(hello);
+#E#invalid insert bulk option hello
+#Q#EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_insert_bulk_options', 'ignore';
