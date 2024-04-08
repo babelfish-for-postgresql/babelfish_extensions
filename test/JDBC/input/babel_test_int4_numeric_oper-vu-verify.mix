@@ -13,171 +13,171 @@ GO
 SET BABELFISH_SHOWPLAN_ALL on
 GO
 
-select * from test_int_numeric_v1;
+exec test_int_numeric_p1;
 GO
-select * from test_int_numeric_v2;
+exec test_int_numeric_p2;
 GO
-select * from test_int_numeric_v3;
+exec test_int_numeric_p3;
 GO
-select * from test_int_numeric_v4;
+exec test_int_numeric_p4;
 GO
-select * from test_int_numeric_v5;
+exec test_int_numeric_p5;
 GO
-select * from test_int_numeric_v6;
+exec test_int_numeric_p6;
 GO
-select * from test_int_numeric_v7;
+exec test_int_numeric_p7;
 GO
-select * from test_int_numeric_v8;
+exec test_int_numeric_p8;
 GO
-select * from test_int_numeric_v9;
+exec test_int_numeric_p9;
 GO
-select * from test_int_numeric_v10;
+exec test_int_numeric_p10;
 GO
-select * from test_int_numeric_v11;
+exec test_int_numeric_p11;
 GO
-select * from test_int_numeric_v12;
+exec test_int_numeric_p12;
 GO
-select * from test_int_numeric_v13;
+exec test_int_numeric_p13;
 GO
-select * from test_int_numeric_v14;
+exec test_int_numeric_p14;
 GO
-select * from test_int_numeric_v15;
+exec test_int_numeric_p15;
 GO
-select * from test_int_numeric_v16;
+exec test_int_numeric_p16;
 GO
-select * from test_int_numeric_v17;
+exec test_int_numeric_p17;
 GO
-select * from test_int_numeric_v18;
+exec test_int_numeric_p18;
 GO
-select * from test_int_numeric_v19;
+exec test_int_numeric_p19;
 GO
-select * from test_int_numeric_v20;
+exec test_int_numeric_p20;
 GO
-select * from test_int_numeric_v21;
+exec test_int_numeric_p21;
 GO
-select * from test_int_numeric_v22;
+exec test_int_numeric_p22;
 GO
-select * from test_int_numeric_v23;
+exec test_int_numeric_p23;
 GO
-select * from test_int_numeric_v24;
+exec test_int_numeric_p24;
 GO
-select * from test_int_numeric_v25;
+exec test_int_numeric_p25;
 GO
-select * from test_int_numeric_v26;
+exec test_int_numeric_p26;
 GO
-select * from test_int_numeric_v27;
+exec test_int_numeric_p27;
 GO
-select * from test_int_numeric_v28;
+exec test_int_numeric_p28;
 GO
-select * from test_int_numeric_v29;
+exec test_int_numeric_p29;
 GO
-select * from test_int_numeric_v30;
+exec test_int_numeric_p30;
 GO
-select * from test_int_numeric_v31;
+exec test_int_numeric_p31;
 GO
-select * from test_int_numeric_v32;
+exec test_int_numeric_p32;
 GO
 
 SET BABELFISH_SHOWPLAN_ALL off
 GO
 
-select * from test_int_numeric_v1;
+exec test_int_numeric_p1;
 GO
-select * from test_int_numeric_v2;
+exec test_int_numeric_p2;
 GO
-select * from test_int_numeric_v3;
+exec test_int_numeric_p3;
 GO
-select * from test_int_numeric_v4;
+exec test_int_numeric_p4;
 GO
-select * from test_int_numeric_v5;
+exec test_int_numeric_p5;
 GO
-select * from test_int_numeric_v6;
+exec test_int_numeric_p6;
 GO
-select * from test_int_numeric_v7;
+exec test_int_numeric_p7;
 GO
-select * from test_int_numeric_v8;
+exec test_int_numeric_p8;
 GO
-select * from test_int_numeric_v9;
+exec test_int_numeric_p9;
 GO
-select * from test_int_numeric_v10;
+exec test_int_numeric_p10;
 GO
-select * from test_int_numeric_v11;
+exec test_int_numeric_p11;
 GO
-select * from test_int_numeric_v12;
+exec test_int_numeric_p12;
 GO
-select * from test_int_numeric_v13;
+exec test_int_numeric_p13;
 GO
-select * from test_int_numeric_v14;
+exec test_int_numeric_p14;
 GO
-select * from test_int_numeric_v15;
+exec test_int_numeric_p15;
 GO
-select * from test_int_numeric_v16;
+exec test_int_numeric_p16;
 GO
-select * from test_int_numeric_v17;
+exec test_int_numeric_p17;
 GO
-select * from test_int_numeric_v18;
+exec test_int_numeric_p18;
 GO
-select * from test_int_numeric_v19;
+exec test_int_numeric_p19;
 GO
-select * from test_int_numeric_v20;
+exec test_int_numeric_p20;
 GO
-select * from test_int_numeric_v21;
+exec test_int_numeric_p21;
 GO
-select * from test_int_numeric_v22;
+exec test_int_numeric_p22;
 GO
-select * from test_int_numeric_v23;
+exec test_int_numeric_p23;
 GO
-select * from test_int_numeric_v24;
+exec test_int_numeric_p24;
 GO
-select * from test_int_numeric_v25;
+exec test_int_numeric_p25;
 GO
-select * from test_int_numeric_v26;
+exec test_int_numeric_p26;
 GO
-select * from test_int_numeric_v27;
+exec test_int_numeric_p27;
 GO
-select * from test_int_numeric_v28;
+exec test_int_numeric_p28;
 GO
-select * from test_int_numeric_v29;
+exec test_int_numeric_p29;
 GO
-select * from test_int_numeric_v30;
+exec test_int_numeric_p30;
 GO
-select * from test_int_numeric_v31;
+exec test_int_numeric_p31;
 GO
-select * from test_int_numeric_v32;
+exec test_int_numeric_p32;
 GO
 
-drop view test_int_numeric_v1;
-drop view test_int_numeric_v2;
-drop view test_int_numeric_v3;
-drop view test_int_numeric_v4;
-drop view test_int_numeric_v5;
-drop view test_int_numeric_v6;
-drop view test_int_numeric_v7;
-drop view test_int_numeric_v8;
-drop view test_int_numeric_v9;
-drop view test_int_numeric_v10;
-drop view test_int_numeric_v11;
-drop view test_int_numeric_v12;
-drop view test_int_numeric_v13;
-drop view test_int_numeric_v14;
-drop view test_int_numeric_v15;
-drop view test_int_numeric_v16;
-drop view test_int_numeric_v17;
-drop view test_int_numeric_v18;
-drop view test_int_numeric_v19;
-drop view test_int_numeric_v20;
-drop view test_int_numeric_v21;
-drop view test_int_numeric_v22;
-drop view test_int_numeric_v23;
-drop view test_int_numeric_v24;
-drop view test_int_numeric_v25;
-drop view test_int_numeric_v26;
-drop view test_int_numeric_v27;
-drop view test_int_numeric_v28;
-drop view test_int_numeric_v29;
-drop view test_int_numeric_v30;
-drop view test_int_numeric_v31;
-drop view test_int_numeric_v32;
+drop procedure test_int_numeric_p1;
+drop procedure test_int_numeric_p2;
+drop procedure test_int_numeric_p3;
+drop procedure test_int_numeric_p4;
+drop procedure test_int_numeric_p5;
+drop procedure test_int_numeric_p6;
+drop procedure test_int_numeric_p7;
+drop procedure test_int_numeric_p8;
+drop procedure test_int_numeric_p9;
+drop procedure test_int_numeric_p10;
+drop procedure test_int_numeric_p11;
+drop procedure test_int_numeric_p12;
+drop procedure test_int_numeric_p13;
+drop procedure test_int_numeric_p14;
+drop procedure test_int_numeric_p15;
+drop procedure test_int_numeric_p16;
+drop procedure test_int_numeric_p17;
+drop procedure test_int_numeric_p18;
+drop procedure test_int_numeric_p19;
+drop procedure test_int_numeric_p20;
+drop procedure test_int_numeric_p21;
+drop procedure test_int_numeric_p22;
+drop procedure test_int_numeric_p23;
+drop procedure test_int_numeric_p24;
+drop procedure test_int_numeric_p25;
+drop procedure test_int_numeric_p26;
+drop procedure test_int_numeric_p27;
+drop procedure test_int_numeric_p28;
+drop procedure test_int_numeric_p29;
+drop procedure test_int_numeric_p30;
+drop procedure test_int_numeric_p31;
+drop procedure test_int_numeric_p32;
 GO
 
 drop table test_int_numeric_vu;
