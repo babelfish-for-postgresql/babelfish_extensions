@@ -247,23 +247,23 @@ initTsqlSyscache()
 /*****************************************
  * 			Catalog Hooks
  *****************************************/
-
+/*
+ * The assumption of parent function is that it should not perform any
+ * catalog accesses.
+ */
 bool
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	/*
-	 * The assumption of parent function is that it should not perform any
-	 * catalog accesses.
-	 */
-	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid ||
-		relationId == namespace_ext_oid || relationId == bbf_authid_login_ext_oid ||
-		relationId == bbf_authid_user_ext_oid || relationId == bbf_view_def_oid ||
-		relationId == bbf_servers_def_oid || relationId == bbf_schema_perms_oid ||
-		relationId == bbf_domain_mapping_oid || relationId == bbf_extended_properties_oid ||
-		relationId == bbf_assemblies_oid || relationId == bbf_configurations_oid ||
-		relationId == bbf_helpcollation_oid || relationId == bbf_syslanguages_oid ||
-		relationId == bbf_service_settings_oid || relationId == spt_datatype_info_table_oid ||
-		relationId == bbf_versions_oid)
+	/* Skip during Babelfish restore */
+	if (!babelfish_dump_restore && (relationId == sysdatabases_oid ||
+		relationId == bbf_function_ext_oid || relationId == namespace_ext_oid ||
+		relationId == bbf_authid_login_ext_oid || relationId == bbf_authid_user_ext_oid ||
+		relationId == bbf_view_def_oid || relationId == bbf_servers_def_oid ||
+		relationId == bbf_schema_perms_oid || relationId == bbf_domain_mapping_oid ||
+		relationId == bbf_extended_properties_oid || relationId == bbf_assemblies_oid ||
+		relationId == bbf_configurations_oid || relationId == bbf_helpcollation_oid ||
+		relationId == bbf_syslanguages_oid || relationId == bbf_service_settings_oid ||
+		relationId == spt_datatype_info_table_oid || relationId == bbf_versions_oid))
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook) (relationId);
@@ -1331,7 +1331,7 @@ clean_up_bbf_server_def()
 {
 	char 			*query_str;
 	StringInfoData 	query;
-	int save_nestlevel;
+	const char *prev_sys_tab_mod = GetConfigOption("allow_system_table_mods", true, false);
 
 	initStringInfo(&query);
 
@@ -1339,11 +1339,18 @@ clean_up_bbf_server_def()
 
 	query_str = query.data;
 
-	save_nestlevel = NewGUCNestLevel();
-	SetConfigOption("allow_system_table_mods", "on",
-					GUC_CONTEXT_CONFIG, PGC_S_SESSION);
-	exec_utility_cmd_helper(query_str);
-	AtEOXact_GUC(false, save_nestlevel);
+	PG_TRY();
+	{
+		SetConfigOption("allow_system_table_mods", "on",
+						GUC_CONTEXT_CONFIG, PGC_S_SESSION);
+		exec_utility_cmd_helper(query_str);
+	}
+	PG_FINALLY();
+	{
+		SetConfigOption("allow_system_table_mods", prev_sys_tab_mod,
+						GUC_CONTEXT_CONFIG, PGC_S_SESSION);
+	}
+	PG_END_TRY();
 
 	pfree(query.data);
 }
