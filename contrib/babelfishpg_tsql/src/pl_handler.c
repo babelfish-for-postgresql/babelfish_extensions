@@ -2491,19 +2491,31 @@ bbf_ProcessUtility(PlannedStmt *pstmt,
 	if (nodeTag(parsetree) == T_CopyStmt && ((CopyStmt *) parsetree)->is_from)
 	{
 		CopyStmt *stmt = (CopyStmt *) parsetree;
-		Relation rel = table_openrv(stmt->relation, NoLock);
-		char *schema_name = get_namespace_name(RelationGetNamespace(rel));
+		Oid relid = RangeVarGetRelid(stmt->relation, NoLock, true);
 
-		table_close(rel, NoLock);
-		if (!superuser() && strcmp(schema_name, "sys") == 0)
+		if (OidIsValid(relid))
 		{
-			if (!babelfish_dump_restore)
-				ereport(ERROR,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied for table %s", stmt->relation->relname)));
-		}
+			char *schema_name;
+			HeapTuple reltup;
+			Form_pg_class relform;
 
-		pfree(schema_name);
+			reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+			if (!HeapTupleIsValid(reltup))
+				elog(ERROR, "cache lookup failed for relation %u", relid);
+
+			relform = (Form_pg_class) GETSTRUCT(reltup);
+			schema_name = get_namespace_name(relform->relnamespace);
+			if (!superuser() && strcmp(schema_name, "sys") == 0)
+			{
+				if (!babelfish_dump_restore)
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("permission denied for table %s", NameStr(relform->relname))));
+			}
+
+			ReleaseSysCache(reltup);
+			pfree(schema_name);
+		}
 	}
 
 	/*
