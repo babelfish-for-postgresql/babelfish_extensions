@@ -3453,7 +3453,7 @@ BEGIN
 	-- This is for informational purposes only
 	SELECT pid, query INTO #sp_who_tmp FROM pg_stat_activity pgsa
 	
-	UPDATE #sp_who_tmp SET query = ' ' + TRIM(UPPER(query))
+	UPDATE #sp_who_tmp SET query = ' ' + TRIM(CAST(UPPER(query) AS sys.VARCHAR(MAX)))
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(9), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(10), ' ')
 	UPDATE #sp_who_tmp SET query = sys.REPLACE(query,  chr(13), ' ')
@@ -3484,7 +3484,7 @@ BEGIN
 
 	-- The executing spid is always shown as doing a SELECT
 	UPDATE #sp_who_tmp SET query = 'SELECT' WHERE pid = @@spid
-	UPDATE #sp_who_tmp SET query = TRIM(query)
+	UPDATE #sp_who_tmp SET query = TRIM(CAST(query AS sys.VARCHAR(MAX)))
 
 	-- Get all current connections
 	SELECT 
