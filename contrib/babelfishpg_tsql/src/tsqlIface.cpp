@@ -630,7 +630,7 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 		}					
 	}	
 						
-	if ((orig_text.front() == '"') && (orig_text.back() == '"') && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
+	if (!orig_text.empty() && (orig_text.front() == '"') && (orig_text.back() == '"') && !repl_text.empty() && (repl_text.front() == '\'') && (repl_text.back() == '\'')) 
 	{
 		// Do not validate the positions of strings as these are not replaced by their positions
 	}
@@ -5466,14 +5466,23 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 					stmt->keep_nulls = true;
 
 				else if (pg_strcasecmp("CHECK_CONSTRAINTS", ::getFullText(option_list[i]->id()).c_str()) == 0)
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option check_constraints is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
-
+				{
+					/* Throw Unsupported error only when escape hatch is set to strict. */
+					if (escape_hatch_insert_bulk_options == EH_STRICT)
+						throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option check_constraints is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+				}
 				else if (pg_strcasecmp("FIRE_TRIGGERS", ::getFullText(option_list[i]->id()).c_str()) == 0)
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option fire_triggers is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
-
+				{
+					/* Throw Unsupported error only when escape hatch is set to strict. */
+					if (escape_hatch_insert_bulk_options == EH_STRICT)
+						throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option fire_triggers is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+				}
 				else if (pg_strcasecmp("TABLOCK", ::getFullText(option_list[i]->id()).c_str()) == 0)
-					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option tablock is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
-
+				{
+					/* Throw Unsupported error only when escape hatch is set to strict. */
+					if (escape_hatch_insert_bulk_options == EH_STRICT)
+						throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option tablock is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+				}
 				else
 					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid insert bulk option %s", ::getFullText(option_list[i]->id()).c_str()), getLineAndPos(bulk_ctx->WITH()));
 			}
