@@ -1,0 +1,207 @@
+SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_id' AS CHAR(7)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
+SELECT CAST(i.name AS CHAR(30)), CAST(c.index_id AS CHAR(7)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
+    FROM
+        sys.index_columns AS c
+        INNER JOIN sys.indexes i ON (i.object_id = c.object_id AND i.index_id = c.index_id)
+    WHERE
+        c.object_id = OBJECT_ID('babel_4817_t1') AND i.type_desc != 'HEAP'
+    ORDER BY c.index_id ASC, c.column_id ASC;
+GO
+~~START~~
+char#!#char#!#char#!#char#!#char#!#char#!#char
+Index Name fetched from sys.in#!#index_i#!#index_column_i#!#column_i#!#key_ordina#!#is_descending_k#!#is_included_col
+~~END~~
+
+~~START~~
+char#!#char#!#char#!#char#!#char#!#char#!#char
+babel_4817_t1_pkey            #!#2      #!#1             #!#3       #!#1         #!#0              #!#0              
+babel_4817_t1_pkey            #!#2      #!#2             #!#7       #!#2         #!#1              #!#0              
+babel_4817_t1_col2_col8_key   #!#3      #!#1             #!#2       #!#1         #!#1              #!#0              
+babel_4817_t1_col2_col8_key   #!#3      #!#2             #!#8       #!#2         #!#0              #!#0              
+babel_4817_t1_idx_1babel_4817_#!#4      #!#2             #!#1       #!#0         #!#0              #!#1              
+babel_4817_t1_idx_1babel_4817_#!#4      #!#1             #!#5       #!#1         #!#0              #!#0              
+babel_4817_t1_idx_psql        #!#5      #!#1             #!#0       #!#1         #!#0              #!#0              
+babel_4817_t1_idx_psql        #!#5      #!#2             #!#1       #!#0         #!#0              #!#1              
+~~END~~
+
+
+
+SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_id' AS CHAR(7)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
+SELECT CAST(i.name AS CHAR(30)), CAST(c.index_id AS CHAR(7)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
+    FROM
+        sys.index_columns AS c
+        INNER JOIN sys.indexes i ON (i.object_id = c.object_id AND i.index_id = c.index_id)
+    WHERE
+        c.object_id = OBJECT_ID('babel_4817_t2') AND i.type_desc != 'HEAP'
+    ORDER BY c.index_id ASC, c.column_id ASC;
+GO
+~~START~~
+char#!#char#!#char#!#char#!#char#!#char#!#char
+Index Name fetched from sys.in#!#index_i#!#index_column_i#!#column_i#!#key_ordina#!#is_descending_k#!#is_included_col
+~~END~~
+
+~~START~~
+char#!#char#!#char#!#char#!#char#!#char#!#char
+babel_4817_t2_pkbabel_4817_t24#!#2      #!#1             #!#3       #!#1         #!#0              #!#0              
+babel_4817_t2_pkbabel_4817_t24#!#2      #!#2             #!#7       #!#2         #!#0              #!#0              
+babel_4817_t2_unique_indexbabe#!#3      #!#1             #!#2       #!#1         #!#1              #!#0              
+babel_4817_t2_unique_indexbabe#!#3      #!#3             #!#4       #!#0         #!#0              #!#1              
+babel_4817_t2_unique_indexbabe#!#3      #!#2             #!#8       #!#2         #!#0              #!#0              
+babel_4817_t2_idxbabel_4817_t2#!#4      #!#2             #!#1       #!#0         #!#0              #!#1              
+babel_4817_t2_idxbabel_4817_t2#!#4      #!#1             #!#5       #!#1         #!#0              #!#0              
+~~END~~
+
+
+
+
+SELECT 'col1 --> is_computed? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col1', 'iscomputed')
+SELECT 'col2 --> is_computed? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col2', 'iscomputed')
+SELECT 'col3 --> is_computed? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col3', 'iscomputed')
+SELECT 'col4 --> is_computed? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col4', 'iscomputed')
+SELECT 'col5 --> is_computed? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col5', 'iscomputed')
+SELECT 'col6 --> is_computed? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col6', 'iscomputed')
+GO
+~~START~~
+varchar#!#int
+col1 --> is_computed? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col2 --> is_computed? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col3 --> is_computed? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col4 --> is_computed? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col5 --> is_computed? #!#1
+~~END~~
+
+~~START~~
+varchar#!#int
+col6 --> is_computed? #!#0
+~~END~~
+
+
+SELECT 'col1 --> columnid= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col1', 'columnid')
+SELECT 'col2 --> columnid= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col2', 'columnid')
+SELECT 'col3 --> columnid= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col3', 'columnid')
+SELECT 'col4 --> columnid= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col4', 'columnid')
+SELECT 'col5 --> columnid= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col5', 'columnid')
+SELECT 'col6 --> columnid= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col6', 'columnid')
+GO
+~~START~~
+varchar#!#int
+col1 --> columnid= #!#1
+~~END~~
+
+~~START~~
+varchar#!#int
+col2 --> columnid= #!#2
+~~END~~
+
+~~START~~
+varchar#!#int
+col3 --> columnid= #!#3
+~~END~~
+
+~~START~~
+varchar#!#int
+col4 --> columnid= #!#7
+~~END~~
+
+~~START~~
+varchar#!#int
+col5 --> columnid= #!#5
+~~END~~
+
+~~START~~
+varchar#!#int
+col6 --> columnid= #!#6
+~~END~~
+
+
+SELECT 'col1 --> ordinal= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col1', 'ordinal')
+SELECT 'col2 --> ordinal= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col2', 'ordinal')
+SELECT 'col3 --> ordinal= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col3', 'ordinal')
+SELECT 'col4 --> ordinal= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col4', 'ordinal')
+SELECT 'col5 --> ordinal= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col5', 'ordinal')
+SELECT 'col6 --> ordinal= ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col6', 'ordinal')
+GO
+~~START~~
+varchar#!#int
+col1 --> ordinal= #!#1
+~~END~~
+
+~~START~~
+varchar#!#int
+col2 --> ordinal= #!#2
+~~END~~
+
+~~START~~
+varchar#!#int
+col3 --> ordinal= #!#3
+~~END~~
+
+~~START~~
+varchar#!#int
+col4 --> ordinal= #!#6
+~~END~~
+
+~~START~~
+varchar#!#int
+col5 --> ordinal= #!#4
+~~END~~
+
+~~START~~
+varchar#!#int
+col6 --> ordinal= #!#5
+~~END~~
+
+
+SELECT 'col1 --> isidentity? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col1', 'isidentity')
+SELECT 'col3 --> isidentity? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col3', 'isidentity')
+SELECT 'col2 --> isidentity? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col2', 'isidentity')
+SELECT 'col4 --> isidentity? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col4', 'isidentity')
+SELECT 'col5 --> isidentity? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col5', 'isidentity')
+SELECT 'col6 --> isidentity? ', columnproperty(OBJECT_ID('babel_4817_t3'), 'col6', 'isidentity')
+GO
+~~START~~
+varchar#!#int
+col1 --> isidentity? #!#1
+~~END~~
+
+~~START~~
+varchar#!#int
+col3 --> isidentity? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col2 --> isidentity? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col4 --> isidentity? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col5 --> isidentity? #!#0
+~~END~~
+
+~~START~~
+varchar#!#int
+col6 --> isidentity? #!#0
+~~END~~
+
