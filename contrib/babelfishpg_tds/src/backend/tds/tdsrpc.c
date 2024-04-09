@@ -188,7 +188,6 @@ DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long optio
 	ParameterToken token = NULL;
 	int			i = 0,
 				index = 0;
-	bool		resolveParamNames = false;
 	char	   *tmp = NULL,
 			   *fToken = NULL;
 
@@ -214,14 +213,10 @@ DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long optio
 	args->argmodes = (char *) palloc(sizeof(char) * args->numargs);
 
 	/*
-	 * We have the assumption that either all parameters will have names or
-	 * none of them will have. So, check the parameter name for the first
-	 * token and set the flag. If above assumption is invalid, then we will
-	 * raise the error in below for loop.
+	 * Check the parameter name for the first token and set the flag.
 	 */
 	if (req->dataParameter->paramMeta.colName.len == 0)
 	{
-		resolveParamNames = true;
 		if (req->metaDataParameterValue->len)
 		{
 			tmp = pnstrdup(req->metaDataParameterValue->data,
@@ -273,16 +268,17 @@ DeclareVariables(TDSRequestSP req, FunctionCallInfo *fcinfo, unsigned long optio
 		 * varchar))to the pltsql ? Also, maybe we can use the raw_parser()
 		 * directly for getting the parameter names
 		 */
-		if (resolveParamNames && (name->len))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("not all Parameters have names")));
-		else if (resolveParamNames)
+		/*
+		 * When the client driver doesn't specify the
+		 * parameter name along with the parameter token
+		 * then we need to generate the parameter name.
+		 */
+		if (!name->len)
 		{
 			char		buf[10];
 
 			snprintf(buf, sizeof(buf), "@p%d", i);
-			paramName = pnstrdup(buf, strlen(buf));;
+			paramName = pnstrdup(buf, strlen(buf));
 		}
 		else
 			paramName = downcase_truncate_identifier(name->data,
