@@ -1,6 +1,7 @@
 
 create table dbmeta_tab1(col1 int primary key, col2 nvarchar(max) not null)
 create table dbmeta_tab2(fcol1 int not null, foreign key (fcol1) references dbmeta_tab1(col1))
+create view dbmeta_view1 as select * from dbmeta_tab1
 create function dbmeta_func1() returns int as begin return 1 end
 create function dbmeta_func2(@par1 int) returns table return select cast(@par1 as int) as col1, cast ('foo' as nvarchar(max)) as col2
 create index idx1 on dbmeta_tab1(col2)
@@ -32,11 +33,15 @@ dbmeta#!#getTables#!#master|dbo|dbmeta_%
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
 master#!#dbo#!#dbmeta_tab1#!#TABLE#!#<NULL>
 master#!#dbo#!#dbmeta_tab2#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_view1#!#VIEW#!#<NULL>
 ~~END~~
 
 dbmeta#!#getTables#!#master|dbo|dbmeta_%|TABLE|VIEW
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#dbmeta_tab1#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_tab2#!#TABLE#!#<NULL>
+master#!#dbo#!#dbmeta_view1#!#VIEW#!#<NULL>
 ~~END~~
 
 
@@ -194,9 +199,19 @@ master#!#dbo#!#dbmeta_proc1;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
 ~~END~~
 
 
-# Assertion '!empty()' failed, todo: enable after gh-2431 is fixed
-#dbmeta#!#getSchemas#!#master
-#dbmeta#!#getSchemas#!#master|dbo
+dbmeta#!#getSchemas#!#master
+~~START~~
+varchar#!#text
+dbo#!#<NULL>
+guest#!#<NULL>
+~~END~~
+
+dbmeta#!#getSchemas#!#master|dbo
+~~START~~
+varchar#!#text
+dbo#!#<NULL>
+~~END~~
+
 
 dbmeta#!#getTablePrivileges#!#master|dbo|dbmeta_tab1
 ~~START~~
@@ -268,6 +283,7 @@ dbmeta#!#getVersionColumns#!#master|dbo|dbmeta_tab1
 ~~ERROR (Message: TIMESTAMP datatype is not currently supported in Babelfish)~~
 
 
+drop view dbmeta_view1
 drop table dbmeta_tab2
 drop table dbmeta_tab1
 drop function dbmeta_func1

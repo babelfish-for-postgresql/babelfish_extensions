@@ -261,7 +261,7 @@ public class JDBCMetadata {
         if (parts.length == 3) {
             procedure = parts[2];
         }
-        ResultSet rs = dbmeta.getFunctions(catalog, schema, procedure);
+        ResultSet rs = dbmeta.getProcedures(catalog, schema, procedure);
         CompareResults.writeResultSetToFile(bw, rs, logger);
     }
 
