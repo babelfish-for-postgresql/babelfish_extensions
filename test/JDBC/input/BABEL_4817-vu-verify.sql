@@ -1,3 +1,9 @@
+ALTER TABLE babel_4817_t3 DROP COLUMN col4
+GO
+
+ALTER TABLE babel_4817_t3 ADD col4 INT
+GO
+
 SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
 SELECT CAST(i.name AS CHAR(30)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
     FROM
