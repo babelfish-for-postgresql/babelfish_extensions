@@ -25,9 +25,3 @@ GO
 
 CREATE TABLE babel_4817_t3 (col1 INT IDENTITY, col2 INT, col3 INT, col4 INT, col5 AS col1*col2, col6 VARCHAR(30))
 GO
-
-ALTER TABLE babel_4817_t3 DROP COLUMN col4
-GO
-
-ALTER TABLE babel_4817_t3 ADD col4 INT
-GO

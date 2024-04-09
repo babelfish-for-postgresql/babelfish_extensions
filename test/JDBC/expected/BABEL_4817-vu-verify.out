@@ -116,7 +116,7 @@ col3 --> columnid= #!#3
 
 ~~START~~
 varchar#!#int
-col4 --> columnid= #!#7
+col4 --> columnid= #!#4
 ~~END~~
 
 ~~START~~
@@ -154,17 +154,17 @@ col3 --> ordinal= #!#3
 
 ~~START~~
 varchar#!#int
-col4 --> ordinal= #!#6
+col4 --> ordinal= #!#4
 ~~END~~
 
 ~~START~~
 varchar#!#int
-col5 --> ordinal= #!#4
+col5 --> ordinal= #!#5
 ~~END~~
 
 ~~START~~
 varchar#!#int
-col6 --> ordinal= #!#5
+col6 --> ordinal= #!#6
 ~~END~~
 
 
