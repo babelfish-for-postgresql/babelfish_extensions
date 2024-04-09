@@ -1,5 +1,5 @@
-SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_id' AS CHAR(7)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
-SELECT CAST(i.name AS CHAR(30)), CAST(c.index_id AS CHAR(7)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
+SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
+SELECT CAST(i.name AS CHAR(30)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
     FROM
         sys.index_columns AS c
         INNER JOIN sys.indexes i ON (i.object_id = c.object_id AND i.index_id = c.index_id)
@@ -9,8 +9,8 @@ SELECT CAST(i.name AS CHAR(30)), CAST(c.index_id AS CHAR(7)), CAST(c.index_colum
 GO
 
 
-SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_id' AS CHAR(7)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
-SELECT CAST(i.name AS CHAR(30)), CAST(c.index_id AS CHAR(7)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
+SELECT CAST('Index Name fetched from sys.indexes' AS CHAR(30)), CAST('index_column_id' AS CHAR(14)), CAST('column_id' AS CHAR(8)), CAST('key_ordinal' AS CHAR(10)), CAST('is_descending_key' AS CHAR(15)), CAST('is_included_column' AS CHAR(15));
+SELECT CAST(i.name AS CHAR(30)), CAST(c.index_column_id AS CHAR(14)), CAST(c.column_id AS CHAR(8)), CAST(c.key_ordinal AS CHAR(10)), CAST(c.is_descending_key AS CHAR(15)), CAST(c.is_included_column AS CHAR(15))
     FROM
         sys.index_columns AS c
         INNER JOIN sys.indexes i ON (i.object_id = c.object_id AND i.index_id = c.index_id)
