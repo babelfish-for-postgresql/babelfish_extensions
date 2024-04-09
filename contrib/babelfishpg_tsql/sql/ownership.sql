@@ -665,8 +665,6 @@ RETURNS table (
   detail jsonb
 ) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C STABLE;
 
--- Wrapper function for integrity checks during Babelfish version upgrades
--- Will be used from CP side
 CREATE OR REPLACE FUNCTION sys.check_for_inconsistent_metadata()
 RETURNS BOOLEAN AS $$
 DECLARE

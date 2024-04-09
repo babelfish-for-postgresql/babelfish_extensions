@@ -1,4 +1,4 @@
--- psql user=jdbc_user password=12345678
+-- psql
 
 
 
@@ -30,15 +30,7 @@ master_dbo#!#check_for_inconsistent_metadata_vu_prepare_func
 
 
 -- tsql
-EXEC check_for_inconsistent_metadata_vu_prepare_proc
-GO
-~~START~~
-bit
-1
-~~END~~
-
-
-SELECT * FROM check_for_inconsistent_metadata_vu_prepare_view
+SELECT sys.check_for_inconsistent_metadata();
 GO
 ~~START~~
 bit

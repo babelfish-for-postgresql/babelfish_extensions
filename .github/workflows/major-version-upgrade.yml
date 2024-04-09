@@ -192,9 +192,7 @@ jobs:
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency
         if: always() && steps.setup-new-datadir.outcome == 'success'
-        run: |
-          output=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT sys.check_for_inconsistent_metadata() GO" | tail -n +2)
-          echo "check_result=$output" >> "$GITHUB_OUTPUT"
+        uses: ./.github/composite-actions/check-babelfish-inconsistency
 
       - name: Run pg_upgrade
         id: run-pg_upgrade

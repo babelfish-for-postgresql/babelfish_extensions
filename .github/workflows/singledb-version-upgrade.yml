@@ -27,9 +27,7 @@ jobs:
       - name: Check Babelfish metadata inconsistency before Major Version Upgrade
         id: check-babelfish-inconsistency
         if: always() && steps.setup-base-version.outcome == 'success'
-        run: |
-          output=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT sys.check_for_inconsistent_metadata() GO" | tail -n +2)
-          echo "check_result=$output" >> "$GITHUB_OUTPUT"
+        uses: ./.github/composite-actions/check-babelfish-inconsistency
 
       - name: Upgrade to latest version and run verify-cleanup tests
         id: upgrade-and-verify

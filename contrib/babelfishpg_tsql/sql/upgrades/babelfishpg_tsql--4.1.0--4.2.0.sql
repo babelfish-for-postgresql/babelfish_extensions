@@ -44,8 +44,6 @@ CREATE TABLE IF NOT EXISTS sys.babelfish_schema_permissions (
   PRIMARY KEY(dbid, schema_name, object_name, grantee, object_type)
 );
 
--- Wrapper function for integrity checks during Babelfish version upgrades
--- Will be used from CP side
 CREATE OR REPLACE FUNCTION sys.check_for_inconsistent_metadata()
 RETURNS BOOLEAN AS $$
 DECLARE

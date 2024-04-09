@@ -1,5 +1,5 @@
 -- Deleting one entry from pg_proc pg catalog so that metadata inconsistency fails during check against babelfish_function_ext babelfish catalog
--- psql user=jdbc_user password=12345678
+-- psql
 WITH r1 AS (
     SELECT * FROM pg_catalog.pg_proc WHERE proname = 'check_for_inconsistent_metadata_vu_prepare_func'
 )
@@ -14,10 +14,7 @@ SELECT nspname, funcname FROM sys.babelfish_function_ext WHERE funcname = 'check
 GO
 
 -- tsql
-EXEC check_for_inconsistent_metadata_vu_prepare_proc
-GO
-
-SELECT * FROM check_for_inconsistent_metadata_vu_prepare_view
+SELECT sys.check_for_inconsistent_metadata();
 GO
 
 -- should fail since the function is removed from the catalog
