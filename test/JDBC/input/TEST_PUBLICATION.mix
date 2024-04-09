@@ -12,7 +12,7 @@ BEGIN
         BEGIN
             is_publishable = TRUE;
             EXECUTE 'CREATE PUBLICATION catalog_pub FOR TABLE sys.' || tab;
-        EXCEPTION WHEN invalid_parameter_value THEN
+        EXCEPTION WHEN invalid_parameter_value or insufficient_privilege THEN
             tab_names = tab_names || E'\n' || 'sys.' || tab;
             is_publishable = FALSE;
         END;

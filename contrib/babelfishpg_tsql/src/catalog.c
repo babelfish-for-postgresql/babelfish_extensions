@@ -1334,6 +1334,7 @@ clean_up_bbf_server_def()
 	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
 	/* Truncate the relation */
 	heap_truncate_one_rel(bbf_servers_def_rel);
+	table_close(bbf_servers_def_rel, RowExclusiveLock);
 }
 
 /*****************************************
