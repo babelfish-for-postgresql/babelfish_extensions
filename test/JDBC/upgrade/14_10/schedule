@@ -437,4 +437,8 @@ BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
 BABEL-4863-before-16_3-or-15_7-or-14_12
 babel_726-before-14_12-or-15_7-or-16_3
+<<<<<<< HEAD
 BABEL-4869
+=======
+BABEL-4815
+>>>>>>> 904982f20 (dateadd/datediff funcions should be parallel safe (#2446))
