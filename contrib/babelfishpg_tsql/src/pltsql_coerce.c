@@ -43,6 +43,7 @@
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
+extern func_select_candidate_for_exception_hook_type func_select_candidate_for_exception_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 extern select_common_type_hook_type select_common_type_hook;
 extern select_common_typmod_hook_type select_common_typmod_hook;
@@ -926,7 +927,7 @@ bool validate_exception_fuction(char *func_nsname, char *func_name, int nargs, O
 
 	/* 
 	 * Exception function handling is only for system functions.
-	 * If func_nsname is NULL, consider it to be a sys.
+	 * If func_nsname is NULL, consider it to be a "sys".
 	 */
 	if (func_nsname != NULL &&
 		(strlen(func_nsname) != 3 || strncmp(func_nsname, "sys", 3) != 0))
@@ -984,50 +985,25 @@ bool validate_exception_fuction(char *func_nsname, char *func_name, int nargs, O
  * based on matching return type. Also throw error in case of invalid argument data type.
  */
 static FuncCandidateList
-tsql_func_select_candidate_for_exception(int nargs, Oid *input_typeids, FuncCandidateList candidates)
+tsql_func_select_candidate_for_exception(List *names, int nargs, Oid *input_typeids, FuncCandidateList candidates)
 {
 	FuncCandidateList			current_candidate;
 	HeapTuple					tuple;
 	Oid 						expr_result_type;
-	Form_pg_proc 				procform, pform;
-	Oid							proc_ns;
-	char					   *proc_nsname = NULL;
-	char					   *proc_name = NULL;
+	Form_pg_proc 				procform;
+	char					   *proc_nsname;
+	char					   *proc_name;
 	bool						is_func_validated;
 
-	/* 
-	 * Get function name and its namespace from candidate list 
-	 * if namespace of all candidates are same then proc_namespace should be that namespace
-	 * else if atleast 2 of function candidate have different proc_namespace value then it means
-	 * namespace was not provided during function call hence by default we will use "sys" as namespace
-	 */
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
-	if (!HeapTupleIsValid(tuple))
-		return NULL;
+	if (nargs > FUNC_MAX_ARGS)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
+				 errmsg_plural("cannot pass more than %d argument to a function",
+								"cannot pass more than %d arguments to a function",
+								FUNC_MAX_ARGS,
+								FUNC_MAX_ARGS)));
 
-	procform = (Form_pg_proc) GETSTRUCT(tuple);
-	proc_ns = procform->pronamespace;
-	proc_name = NameStr(procform->proname);
-	ReleaseSysCache(tuple);
-
-	for (current_candidate = candidates->next;
-			current_candidate != NULL;
-			current_candidate = current_candidate->next)
-	{
-		tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(current_candidate->oid));
-		if (!HeapTupleIsValid(tuple))
-			continue;
-
-		procform = (Form_pg_proc) GETSTRUCT(tuple);
-		if (proc_ns != procform->pronamespace)
-		{
-			proc_nsname = pstrdup("sys");
-			break;
-		}
-		ReleaseSysCache(tuple);
-	}
-	if (proc_nsname == NULL)
-		proc_nsname = get_namespace_name(proc_ns);
+	DeconstructQualifiedName(names, &proc_nsname, &proc_name);
 
 	is_func_validated = validate_exception_fuction(proc_nsname, proc_name, nargs, input_typeids);
 
@@ -1066,8 +1042,8 @@ tsql_func_select_candidate_for_exception(int nargs, Oid *input_typeids, FuncCand
 		if (!HeapTupleIsValid(tuple))
 			continue;
 
-		pform = (Form_pg_proc) GETSTRUCT(tuple);
-		if (expr_result_type == pform->prorettype)
+		procform = (Form_pg_proc) GETSTRUCT(tuple);
+		if (expr_result_type == procform->prorettype)
 		{
 			current_candidate->next = NULL;
 			ReleaseSysCache(tuple);
@@ -1090,12 +1066,6 @@ tsql_func_select_candidate(int nargs,
 	FuncCandidateList another_candidate;
 	int			i;
 	bool			  candidates_are_opers = false;
-	FuncCandidateList result;
-
-	result = tsql_func_select_candidate_for_exception(nargs, input_typeids, candidates);
-
-	if(result)
-		return result;
 
 	if (unknowns_resolved)
 	{
@@ -1139,14 +1109,6 @@ tsql_func_select_candidate(int nargs,
 		 * find the candidate
 		 */
 		return func_select_candidate(nargs, new_input_typeids, candidates);
-	}
-	else
-	{
-		for (i = 0; i < nargs; i++)
-		{
-			if (input_typeids[i] == UNKNOWNOID)
-				return NULL;
-		}
 	}
 
 	new_candidates = run_tsql_best_match_heuristics(nargs, input_typeids, candidates);
@@ -1581,6 +1543,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
+	func_select_candidate_for_exception_hook = tsql_func_select_candidate_for_exception;
 	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 	select_common_type_hook = tsql_select_common_type_hook;
 	select_common_typmod_hook = tsql_select_common_typmod_hook;
