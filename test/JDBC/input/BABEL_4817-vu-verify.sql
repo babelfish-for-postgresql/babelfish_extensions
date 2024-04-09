@@ -5,7 +5,7 @@ SELECT CAST(i.name AS CHAR(30)), CAST(c.index_column_id AS CHAR(14)), CAST(c.col
         INNER JOIN sys.indexes i ON (i.object_id = c.object_id AND i.index_id = c.index_id)
     WHERE
         c.object_id = OBJECT_ID('babel_4817_t1') AND i.type_desc != 'HEAP'
-    ORDER BY c.index_id ASC, c.column_id ASC;
+    ORDER BY i.name ASC, c.column_id ASC;
 GO
 
 
@@ -16,7 +16,7 @@ SELECT CAST(i.name AS CHAR(30)), CAST(c.index_column_id AS CHAR(14)), CAST(c.col
         INNER JOIN sys.indexes i ON (i.object_id = c.object_id AND i.index_id = c.index_id)
     WHERE
         c.object_id = OBJECT_ID('babel_4817_t2') AND i.type_desc != 'HEAP'
-    ORDER BY c.index_id ASC, c.column_id ASC;
+    ORDER BY i.name ASC, c.column_id ASC;
 GO
 
 
