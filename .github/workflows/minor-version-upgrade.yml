@@ -125,7 +125,7 @@ jobs:
         if: always() && steps.build-extensions-newer.outcome == 'success'
         uses: ./.github/composite-actions/build-postgis-extension
       
-      - name: Check Babelfish metadata inconsistency before Major Version Upgrade
+      - name: Check Babelfish metadata inconsistency before Minor Version Upgrade
         id: check-babelfish-inconsistency
         if: always() && steps.build-postgis-extension.outcome == 'success'
         uses: ./.github/composite-actions/check-babelfish-inconsistency
@@ -133,7 +133,7 @@ jobs:
       - name: Update extensions
         if: |
           always() && steps.check-babelfish-inconsistency.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outputs.check_result == 0
+          && steps.check-babelfish-inconsistency.outputs.check_result == 'f'
         run: |
           ulimit -c unlimited
           cd ~

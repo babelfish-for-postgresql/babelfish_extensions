@@ -199,7 +199,7 @@ jobs:
         if: |
           always() && steps.setup-new-datadir.outcome == 'success' 
           && steps.check-babelfish-inconsistency.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outputs.check_result == 0
+          && steps.check-babelfish-inconsistency.outputs.check_result == 'f'
         uses: ./.github/composite-actions/run-pg-upgrade
 
       - name: Disable TDS fault injection tests in release mode
@@ -207,7 +207,7 @@ jobs:
         if: |
           always() && steps.setup-new-datadir.outcome == 'success' 
           && steps.check-babelfish-inconsistency.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outputs.check_result == 0
+          && steps.check-babelfish-inconsistency.outputs.check_result == 'f'
         run: |
           cd test/JDBC/
           echo 'ignore#!#babel_tds_fault_injection' >> jdbc_schedule

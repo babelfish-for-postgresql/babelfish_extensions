@@ -29,27 +29,27 @@ master_dbo#!#check_for_inconsistent_metadata_vu_prepare_func
 ~~END~~
 
 
--- tsql
 SELECT sys.check_for_inconsistent_metadata();
 GO
 ~~START~~
-bit
-1
+bool
+t
 ~~END~~
 
 
+SELECT sys.babelfish_inconsistent_metadata()
+GO
+~~START~~
+record
+(name,pg_catalog,proname,"{""Rule"": ""<funcname> in babelfish_function_ext must also exist in pg_proc""}")
+~~END~~
+
+
+-- tsql
 -- should fail since the function is removed from the catalog
 SELECT check_for_inconsistent_metadata_vu_prepare_func()
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: function check_for_inconsistent_metadata_vu_prepare_func() does not exist)~~
-
-
-SELECT sys.babelfish_inconsistent_metadata()
-GO
-~~START~~
-varchar
-(name,pg_catalog,proname,"{""Rule"": ""<funcname> in babelfish_function_ext must also exist in pg_proc""}")
-~~END~~
 
