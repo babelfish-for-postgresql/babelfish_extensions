@@ -7,6 +7,7 @@
 #include "access/stratnum.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
+#include "catalog/heap.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
@@ -1329,30 +1330,10 @@ get_timeout_from_server_name(char *servername, int attnum)
 void
 clean_up_bbf_server_def()
 {
-	char 			*query_str;
-	StringInfoData 	query;
-	const char *prev_sys_tab_mod = GetConfigOption("allow_system_table_mods", true, false);
-
-	initStringInfo(&query);
-
-	appendStringInfo(&query, "TRUNCATE TABLE sys.babelfish_server_options CASCADE");
-
-	query_str = query.data;
-
-	PG_TRY();
-	{
-		SetConfigOption("allow_system_table_mods", "on",
-						GUC_CONTEXT_CONFIG, PGC_S_SESSION);
-		exec_utility_cmd_helper(query_str);
-	}
-	PG_FINALLY();
-	{
-		SetConfigOption("allow_system_table_mods", prev_sys_tab_mod,
-						GUC_CONTEXT_CONFIG, PGC_S_SESSION);
-	}
-	PG_END_TRY();
-
-	pfree(query.data);
+	/* Fetch the relation */
+	Relation bbf_servers_def_rel = table_open(get_bbf_servers_def_oid(), RowExclusiveLock);
+	/* Truncate the relation */
+	heap_truncate_one_rel(bbf_servers_def_rel);
 }
 
 /*****************************************
