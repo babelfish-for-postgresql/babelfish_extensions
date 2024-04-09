@@ -3,14 +3,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null,
+    database-level: false,
     type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null,
+    database-level: false,
     type: full
   }
 ],
@@ -19,14 +19,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null,
+    database-level: false,
     type: schema-cum-data-only
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: plain,
-    logical-database: null,
+    database-level: false,
     type: schema-cum-data-only
   }
 ],
@@ -35,14 +35,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: copy,
     dump-format: custom,
-    logical-database: master,
+    database-level: true,
     type: full
   },
   {
     version: target.latest,
     dump-data-as: copy,
     dump-format: custom,
-    logical-database: master,
+    database-level: true,
     type: full
   }
 ],
@@ -51,14 +51,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    logical-database: null,
+    database-level: false,
     type: full
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: tar,
-    logical-database: null,
+    database-level: false,
     type: full
   }
 ],
@@ -67,14 +67,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: custom,
-    logical-database: master,
+    database-level: false,
     type: schema-cum-data-only
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: custom,
-    logical-database: master,
+    database-level: false,
     type: schema-cum-data-only
   }
 ],
@@ -83,30 +83,14 @@ dump-restore-version: [[
     version: source.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    logical-database: master,
-    type: full
+    database-level: true,
+    type: schema-cum-data-only
   },
   {
     version: target.latest,
     dump-data-as: inserts,
     dump-format: directory,
-    logical-database: master,
-    type: full
-  }
-],
-[
-  {
-    version: source.latest,
-    dump-data-as: copy,
-    dump-format: plain,
-    logical-database: database_1,
-    type: full
-  },
-  {
-    version: target.latest,
-    dump-data-as: copy,
-    dump-format: plain,
-    logical-database: database_1,
-    type: full
+    database-level: true,
+    type: schema-cum-data-only
   }
 ]]
