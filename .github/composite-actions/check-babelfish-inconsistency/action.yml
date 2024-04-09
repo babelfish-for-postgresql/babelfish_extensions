@@ -1,4 +1,4 @@
-name: Check Babelfish metadata inconsistency
+name: 'Check Babelfish metadata inconsistency'
 description: Check for Babelfish metadata inconsistency before Major Version Upgrade
 runs:
   using: 'composite'
@@ -8,3 +8,4 @@ runs:
       run: |
         output=$(sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT sys.check_for_inconsistent_metadata() GO" | tail -n +2)
         echo "check_result=$output" >> "$GITHUB_OUTPUT"
+      shell: bash
