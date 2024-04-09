@@ -223,3 +223,6 @@ ignore#!#temp_tables_concurrent-vu-verify
 ignore#!#BABEL-4279-vu-prepare
 ignore#!#BABEL-4279-vu-verify
 ignore#!#BABEL-4279-vu-cleanup
+
+ignore#!#babel_test_int4_numeric_oper_before_16_2-vu-prepare
+ignore#!#babel_test_int4_numeric_oper_before_16_2-vu-verify
