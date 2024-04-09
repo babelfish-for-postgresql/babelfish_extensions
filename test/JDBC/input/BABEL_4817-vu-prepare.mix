@@ -1,0 +1,33 @@
+-- tsql
+CREATE TABLE babel_4817_t1 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT IDENTITY, col8 INT NOT NULL, PRIMARY KEY NONCLUSTERED(col3, col7 ASC), UNIQUE (col2 ASC, col8));
+GO
+
+CREATE NONCLUSTERED INDEX babel_4817_t1_idx_1 ON dbo.babel_4817_t1 (col5) INCLUDE (col1);
+GO
+
+-- psql
+-- do not fail if index on expression is created from psql endpoint
+CREATE INDEX babel_4817_t1_idx_psql ON master_dbo.babel_4817_t1 ((col6*2)) INCLUDE (col1);
+GO
+
+
+-- tsql
+CREATE TABLE babel_4817_t2 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT NOT NULL IDENTITY, col8 INT NOT NULL)
+GO
+ALTER TABLE babel_4817_t2 ADD CONSTRAINT babel_4817_t2_pk PRIMARY KEY NONCLUSTERED (col3, col7);
+GO
+-- clustered is ignored
+CREATE UNIQUE NONCLUSTERED INDEX babel_4817_t2_unique_index ON dbo.babel_4817_t2 (col2 DESC, col8) INCLUDE (col4);
+GO
+CREATE NONCLUSTERED INDEX babel_4817_t2_idx ON dbo.babel_4817_t2 (col5) INCLUDE (col1);;
+GO
+
+
+CREATE TABLE babel_4817_t3 (col1 INT IDENTITY, col2 INT, col3 INT, col4 INT, col5 AS col1*col2, col6 VARCHAR(30))
+GO
+
+ALTER TABLE babel_4817_t3 DROP COLUMN col4
+GO
+
+ALTER TABLE babel_4817_t3 ADD col4 INT
+GO
