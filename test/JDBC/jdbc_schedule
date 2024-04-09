@@ -214,7 +214,6 @@ ignore#!#load_road
 ignore#!#load_tenk
 ignore#!#load_stud_emp
 ignore#!#load_student
-ignore#!#temp_table_jdbc
 ignore#!#temp_tables_concurrent-vu-cleanup
 ignore#!#temp_tables_concurrent-vu-prepare
 ignore#!#temp_tables_concurrent-vu-verify
