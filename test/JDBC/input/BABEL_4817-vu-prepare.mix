@@ -1,5 +1,5 @@
 -- tsql
-CREATE TABLE babel_4817_t1 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT IDENTITY, col8 INT NOT NULL, PRIMARY KEY NONCLUSTERED(col3, col7 DESC), UNIQUE (col2 DESC, col8));
+CREATE TABLE babel_4817_t1 (col1 INT, col2 INT NOT NULL, col3 AS col1*col2, col4 INT, col5 INT, col6 INT, col7 INT IDENTITY, col8 INT NOT NULL, PRIMARY KEY NONCLUSTERED(col3, col7 ASC), UNIQUE (col2 ASC, col8));
 GO
 
 CREATE NONCLUSTERED INDEX babel_4817_t1_idx_1 ON dbo.babel_4817_t1 (col5) INCLUDE (col1);

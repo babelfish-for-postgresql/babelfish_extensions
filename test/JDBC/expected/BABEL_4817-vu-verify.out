@@ -15,8 +15,8 @@ Index Name fetched from sys.in#!#index_i#!#index_column_i#!#column_i#!#key_ordin
 ~~START~~
 char#!#char#!#char#!#char#!#char#!#char#!#char
 babel_4817_t1_pkey            #!#2      #!#1             #!#3       #!#1         #!#0              #!#0              
-babel_4817_t1_pkey            #!#2      #!#2             #!#7       #!#2         #!#1              #!#0              
-babel_4817_t1_col2_col8_key   #!#3      #!#1             #!#2       #!#1         #!#1              #!#0              
+babel_4817_t1_pkey            #!#2      #!#2             #!#7       #!#2         #!#0              #!#0              
+babel_4817_t1_col2_col8_key   #!#3      #!#1             #!#2       #!#1         #!#0              #!#0              
 babel_4817_t1_col2_col8_key   #!#3      #!#2             #!#8       #!#2         #!#0              #!#0              
 babel_4817_t1_idx_1babel_4817_#!#4      #!#2             #!#1       #!#0         #!#0              #!#1              
 babel_4817_t1_idx_1babel_4817_#!#4      #!#1             #!#5       #!#1         #!#0              #!#0              
