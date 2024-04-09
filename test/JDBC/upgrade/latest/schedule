@@ -516,3 +516,8 @@ babel-4517
 BABEL-4707
 BABEL_4817
 BABEL-4641
+trim
+ltrim
+rtrim
+left
+right

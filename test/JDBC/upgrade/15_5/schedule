@@ -502,3 +502,8 @@ BABEL-492-before-15_6
 GRANT_SCHEMA-before-15_7-16_3
 BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
+trim
+ltrim
+rtrim
+left
+right
