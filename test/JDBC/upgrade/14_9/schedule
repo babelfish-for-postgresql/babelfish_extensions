@@ -141,6 +141,7 @@ BABEL-3646
 BABEL-3748
 BABEL-383
 BABEL-405
+BABEL-4516
 BABEL-937
 forjson
 forjson-subquery
@@ -427,3 +428,4 @@ sys-parsename-before-15_6-or-16_1
 permission_restrictions_from_pg
 BABEL-730-before-15_6-or-16_1
 babel-4517
+BABEL-4815
