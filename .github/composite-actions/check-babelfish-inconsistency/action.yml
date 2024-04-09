@@ -6,7 +6,9 @@ runs:
     - name: Check Babelfish metadata inconsistency
       id: check-babelfish-inconsistency
       run: |
-        ~/psql/bin/pg_ctl -D ~/psql/data/ -l logfile restart
+        ulimit -c unlimited
+        cd ~
+        ~/psql/bin/pg_ctl -c -D ~/psql/data/ -l logfile restart
         output=$(~/psql/bin/psql -v ON_ERROR_STOP=1 -d jdbc_testdb -U runner -c "SELECT sys.check_for_inconsistent_metadata();")
         echo "check_result=$output" >> "$GITHUB_OUTPUT"
       shell: bash
