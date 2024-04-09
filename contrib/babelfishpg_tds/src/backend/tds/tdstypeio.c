@@ -2525,12 +2525,12 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 								  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "Failed to insert in the underlying table for table-valued parameter: %d", rc);
 			}
-
-			SPI_finish();
-			PopActiveSnapshot();
-			if (!xactStarted)
-				CommitTransactionCommand();
 		}
+
+		SPI_finish();
+		PopActiveSnapshot();
+		if (!xactStarted)
+			CommitTransactionCommand();
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 						  GUC_CONTEXT_CONFIG,
