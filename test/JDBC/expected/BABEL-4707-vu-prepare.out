@@ -1,0 +1,17 @@
+CREATE TYPE dbo.dtTaxRate AS TABLE ( a int, b smallint );
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL, @taxRates dtTaxRate READONLY) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode1] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL, @taxRates dtTaxRate READONLY, @id BIGINT = NULL) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode2] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL, @taxRates dtTaxRate READONLY, @id BIGINT = NULL, @taxRates1 dtTaxRate READONLY) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode3] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode4] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY, @taxCodeId BIGINT) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode5] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY, @taxCodeId BIGINT, @taxRates3 dtTaxRate READONLY) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode6] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY, @taxCodeId BIGINT, @taxRates3 dtTaxRate READONLY, @Id BIGINT) AS BEGIN SELECT 1; END;
+
+CREATE PROCEDURE [dbo].[spUpdateTaxCode7] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY) AS BEGIN SELECT 1; END;

@@ -1,21 +1,3 @@
-CREATE TYPE dbo.dtTaxRate AS TABLE ( a int, b smallint );
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL, @taxRates dtTaxRate READONLY) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode1] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL, @taxRates dtTaxRate READONLY, @id BIGINT = NULL) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode2] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL, @taxRates dtTaxRate READONLY, @id BIGINT = NULL, @taxRates1 dtTaxRate READONLY) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode3] ( @taxCodeId BIGINT, @code VARCHAR(80), @countryId BIGINT, @taxRateTypeId INT, @description VARCHAR(MAX) = NULL, @lastUpdatedBy VARCHAR(80), @editorId BIGINT = NULL) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode4] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY, @taxCodeId BIGINT) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode5] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY, @taxCodeId BIGINT, @taxRates3 dtTaxRate READONLY) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode6] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY, @taxCodeId BIGINT, @taxRates3 dtTaxRate READONLY, @Id BIGINT) AS BEGIN SELECT 1; END;
-
-CREATE PROCEDURE [dbo].[spUpdateTaxCode7] ( @taxRates dtTaxRate READONLY, @taxRates1 dtTaxRate READONLY, @taxRates2 dtTaxRate READONLY) AS BEGIN SELECT 1; END;
-
 prepst#!#spUpdateTaxCode ?, ?, ?, ?, ?, ?, ?, ? #!#BIGINT|-|taxCodeId|-|236223201910#!#VARCHAR|-|code|-|"DIVIDEND"#!#BIGINT|-|countryId|-|42949673205#!#INT|-|taxRateTypeId|-|10#!#VARCHAR|-|description|-|"Test_desc"#!#VARCHAR|-|lastUpdatedBy|-|"TestProcess"#!#BIGINT|-|editorId|-|289#!#TVP|-|dtTaxRate|-|utils/tvp-dotnet.csv|-|utils/tvp-dotnet.csv
 ~~START~~
 int
@@ -167,13 +149,3 @@ int
 1
 ~~END~~
 
-
-DROP Procedure IF EXISTS spUpdateTaxCode;
-DROP Procedure IF EXISTS spUpdateTaxCode1;
-DROP Procedure IF EXISTS spUpdateTaxCode2;
-DROP Procedure IF EXISTS spUpdateTaxCode3;
-DROP Procedure IF EXISTS spUpdateTaxCode4;
-DROP Procedure IF EXISTS spUpdateTaxCode5;
-DROP Procedure IF EXISTS spUpdateTaxCode6;
-DROP Procedure IF EXISTS spUpdateTaxCode7;
-DROP Type IF EXISTS dtTaxRate;
