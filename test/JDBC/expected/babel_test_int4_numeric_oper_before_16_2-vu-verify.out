@@ -1,0 +1,650 @@
+-- psql
+analyse;
+GO
+
+-- tsql
+select set_config('max_parallel_workers_per_gather', '0', false);
+GO
+~~START~~
+text
+0
+~~END~~
+
+SELECT set_config('debug_parallel_query', '0', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false)
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL on
+GO
+
+exec test_int_numeric_p1;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p1
+  Query Text: select count(*) from test_int_numeric_vu where a IS NULL
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a IS NULL)
+~~END~~
+
+exec test_int_numeric_p2;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p2
+  Query Text: select count(*) from test_int_numeric_vu where a <> 5.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric <> 5.0)
+~~END~~
+
+exec test_int_numeric_p3;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p3
+  Query Text: select count(*) from test_int_numeric_vu where 5.0 <> a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (5.0 <> (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p4;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p4
+  Query Text: select count(*) from test_int_numeric_vu where a < 5.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric < 5.0)
+~~END~~
+
+exec test_int_numeric_p5;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p5
+  Query Text: select count(*) from test_int_numeric_vu where 5.0 > a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (5.0 > (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p6;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p6
+  Query Text: select count(*) from test_int_numeric_vu where a < -2147483648.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric < '-2147483648.0'::numeric)
+~~END~~
+
+exec test_int_numeric_p7;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p7
+  Query Text: select count(*) from test_int_numeric_vu where -2147483648.0 > a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ('-2147483648.0'::numeric > (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p8;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p8
+  Query Text: select count(*) from test_int_numeric_vu where a <= 5.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric <= 5.0)
+~~END~~
+
+exec test_int_numeric_p9;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p9
+  Query Text: select count(*) from test_int_numeric_vu where 5.0 >= a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (5.0 >= (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p10;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p10
+  Query Text: select count(*) from test_int_numeric_vu where a > 999995.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric > 999995.0)
+~~END~~
+
+exec test_int_numeric_p11;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p11
+  Query Text: select count(*) from test_int_numeric_vu where 999995.0 < a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (999995.0 < (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p12;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p12
+  Query Text: select count(*) from test_int_numeric_vu where a >= 999995.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric >= 999995.0)
+~~END~~
+
+exec test_int_numeric_p13;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p13
+  Query Text: select count(*) from test_int_numeric_vu where 999995.0 <= a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (999995.0 <= (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p14;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p14
+  Query Text: select count(*) from test_int_numeric_vu where a > 2147483647.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric > 2147483647.0)
+~~END~~
+
+exec test_int_numeric_p15;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p15
+  Query Text: select count(*) from test_int_numeric_vu where 2147483647.0 < a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (2147483647.0 < (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p16;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p16
+  Query Text: select count(*) from test_int_numeric_vu where a > 5.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a)::numeric > 5.0)
+~~END~~
+
+exec test_int_numeric_p17;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p17
+  Query Text: select count(*) from test_int_numeric_vu where 5.0 < a
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (5.0 < (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p18;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p18
+  Query Text: select count(*) from test_int_numeric_vu where a between 5.0 and 10.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 10.0))
+~~END~~
+
+exec test_int_numeric_p19;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p19
+  Query Text: select count(*) from test_int_numeric_vu where a between 5.0 and 999999.0
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+~~END~~
+
+exec test_int_numeric_p20;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p20
+  Query Text: select count(*) from test_int_numeric_vu where (a between 5.0 and 999999.0) and a = 10
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a = 10)
+              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+~~END~~
+
+exec test_int_numeric_p21;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p21
+  Query Text: select count(*) from test_int_numeric_vu where a > 5.0 and a < 7
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < 7)
+              Filter: ((a)::numeric > 5.0)
+~~END~~
+
+exec test_int_numeric_p22;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p22
+  Query Text: select count(*) from test_int_numeric_vu where 5.0 < a and 7 > a
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < 7)
+              Filter: (5.0 < (a)::numeric)
+~~END~~
+
+exec test_int_numeric_p23;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p23
+  Query Text: select count(*) from test_int_numeric_vu where a <> 5
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (a <> 5)
+~~END~~
+
+exec test_int_numeric_p24;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p24
+  Query Text: select count(*) from test_int_numeric_vu where a < 5
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < 5)
+~~END~~
+
+exec test_int_numeric_p25;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p25
+  Query Text: select count(*) from test_int_numeric_vu where a < -2147483648
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < '-2147483648'::integer)
+~~END~~
+
+exec test_int_numeric_p26;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p26
+  Query Text: select count(*) from test_int_numeric_vu where a <= 5
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a <= 5)
+~~END~~
+
+exec test_int_numeric_p27;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p27
+  Query Text: select count(*) from test_int_numeric_vu where a > 999995
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a > 999995)
+~~END~~
+
+exec test_int_numeric_p28;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p28
+  Query Text: select count(*) from test_int_numeric_vu where a >= 999995
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a >= 999995)
+~~END~~
+
+exec test_int_numeric_p29;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p29
+  Query Text: select count(*) from test_int_numeric_vu where a > 2147483647
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a > 2147483647)
+~~END~~
+
+exec test_int_numeric_p30;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p30
+  Query Text: select count(*) from test_int_numeric_vu where a > 5
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: (a > 5)
+~~END~~
+
+exec test_int_numeric_p31;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p31
+  Query Text: select count(*) from test_int_numeric_vu where a between 5 and 10
+  ->  Aggregate
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: ((a >= 5) AND (a <= 10))
+~~END~~
+
+exec test_int_numeric_p32;
+GO
+~~START~~
+text
+Query Text: EXEC test_int_numeric_p32
+  Query Text: select count(*) from test_int_numeric_vu where a between 5 and 999999
+  ->  Aggregate
+        ->  Seq Scan on test_int_numeric_vu
+              Filter: ((a >= 5) AND (a <= 999999))
+~~END~~
+
+
+SET BABELFISH_SHOWPLAN_ALL off
+GO
+
+exec test_int_numeric_p1;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int_numeric_p2;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+exec test_int_numeric_p3;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+exec test_int_numeric_p4;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec test_int_numeric_p5;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec test_int_numeric_p6;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int_numeric_p7;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int_numeric_p8;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p9;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p10;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p11;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p12;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec test_int_numeric_p13;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec test_int_numeric_p14;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int_numeric_p15;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int_numeric_p16;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+exec test_int_numeric_p17;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+exec test_int_numeric_p18;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p19;
+GO
+~~START~~
+int
+999995
+~~END~~
+
+exec test_int_numeric_p20;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int_numeric_p21;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int_numeric_p22;
+GO
+~~START~~
+int
+1
+~~END~~
+
+exec test_int_numeric_p23;
+GO
+~~START~~
+int
+1000001
+~~END~~
+
+exec test_int_numeric_p24;
+GO
+~~START~~
+int
+5
+~~END~~
+
+exec test_int_numeric_p25;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int_numeric_p26;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p27;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p28;
+GO
+~~START~~
+int
+7
+~~END~~
+
+exec test_int_numeric_p29;
+GO
+~~START~~
+int
+0
+~~END~~
+
+exec test_int_numeric_p30;
+GO
+~~START~~
+int
+999996
+~~END~~
+
+exec test_int_numeric_p31;
+GO
+~~START~~
+int
+6
+~~END~~
+
+exec test_int_numeric_p32;
+GO
+~~START~~
+int
+999995
+~~END~~
+
+
+drop procedure test_int_numeric_p1;
+drop procedure test_int_numeric_p2;
+drop procedure test_int_numeric_p3;
+drop procedure test_int_numeric_p4;
+drop procedure test_int_numeric_p5;
+drop procedure test_int_numeric_p6;
+drop procedure test_int_numeric_p7;
+drop procedure test_int_numeric_p8;
+drop procedure test_int_numeric_p9;
+drop procedure test_int_numeric_p10;
+drop procedure test_int_numeric_p11;
+drop procedure test_int_numeric_p12;
+drop procedure test_int_numeric_p13;
+drop procedure test_int_numeric_p14;
+drop procedure test_int_numeric_p15;
+drop procedure test_int_numeric_p16;
+drop procedure test_int_numeric_p17;
+drop procedure test_int_numeric_p18;
+drop procedure test_int_numeric_p19;
+drop procedure test_int_numeric_p20;
+drop procedure test_int_numeric_p21;
+drop procedure test_int_numeric_p22;
+drop procedure test_int_numeric_p23;
+drop procedure test_int_numeric_p24;
+drop procedure test_int_numeric_p25;
+drop procedure test_int_numeric_p26;
+drop procedure test_int_numeric_p27;
+drop procedure test_int_numeric_p28;
+drop procedure test_int_numeric_p29;
+drop procedure test_int_numeric_p30;
+drop procedure test_int_numeric_p31;
+drop procedure test_int_numeric_p32;
+GO
+
+drop table test_int_numeric_vu;
+GO
