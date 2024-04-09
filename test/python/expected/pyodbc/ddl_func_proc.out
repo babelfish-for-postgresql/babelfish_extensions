@@ -201,7 +201,7 @@ CREATE TYPE [dbo].[@myrettable_routines_fc7] AS TABLE(
 	[a] [int] NOT NULL,
 	PRIMARY KEY NONCLUSTERED 
 (
-	[a]
+	[a] ASC
 )WITH (IGNORE_DUP_KEY = OFF)
 )
 GO
