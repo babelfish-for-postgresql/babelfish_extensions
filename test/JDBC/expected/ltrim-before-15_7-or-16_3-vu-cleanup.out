@@ -1,0 +1,23 @@
+DROP FUNCTION babel_4489_ltrim_func
+GO
+
+DROP PROCEDURE babel_4489_ltrim_proc
+GO
+
+DROP VIEW babel_4489_ltrim_view
+GO
+
+DROP TABLE babel_4489_ltrim_text
+GO
+
+DROP TABLE babel_4489_ltrim_image
+GO
+
+DROP TABLE babel_4489_ltrim_t3
+GO
+
+DROP TABLE babel_4489_ltrim_t2
+GO
+
+DROP TABLE babel_4489_ltrim_t1
+GO

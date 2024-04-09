@@ -201,6 +201,26 @@ ignore#!#BABEL-730-before-15_6-or-16_1-vu-prepare
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-verify
 ignore#!#BABEL-730-before-15_6-or-16_1-vu-cleanup
 
+# These tests are meant for upgrade scenario prior to (potential) 15_7 or 16_3 release
+ignore#!#sys-host_name-before-15_7-or-16_3-vu-prepare
+ignore#!#sys-host_name-before-15_7-or-16_3-vu-verify
+ignore#!#sys-host_name-before-15_7-or-16_3-vu-cleanup
+ignore#!#left-before-15_7-or-16_3-vu-prepare
+ignore#!#left-before-15_7-or-16_3-vu-verify
+ignore#!#left-before-15_7-or-16_3-vu-cleanup
+ignore#!#right-before-15_7-or-16_3-vu-prepare
+ignore#!#right-before-15_7-or-16_3-vu-verify
+ignore#!#right-before-15_7-or-16_3-vu-cleanup
+ignore#!#ltrim-before-15_7-or-16_3-vu-prepare
+ignore#!#ltrim-before-15_7-or-16_3-vu-verify
+ignore#!#ltrim-before-15_7-or-16_3-vu-cleanup
+ignore#!#rtrim-before-15_7-or-16_3-vu-prepare
+ignore#!#rtrim-before-15_7-or-16_3-vu-verify
+ignore#!#rtrim-before-15_7-or-16_3-vu-cleanup
+ignore#!#trim-before-15_7-or-16_3-vu-prepare
+ignore#!#trim-before-15_7-or-16_3-vu-verify
+ignore#!#trim-before-15_7-or-16_3-vu-cleanup
+
 # These are bash scripts that should not be executed
 ignore#!#load_aggtest
 ignore#!#load_emp

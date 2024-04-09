@@ -59,7 +59,7 @@ column_domain_usage
 constraint_column_usage
 select-strip-parens-before-15_5
 sp_describe_first_result_set
-sys-host_name
+sys-host_name-before-15_7-or-16_3
 SYSTEM_USER
 indexproperty
 sys-all_parameters
@@ -432,8 +432,8 @@ babel-3254
 babel-4517
 BABEL_4817
 BABEL-4641-before-16_3-or-15_7-or-14_12
-trim
-ltrim
-rtrim
-left
-right
+trim-before-15_7-or-16_3
+ltrim-before-15_7-or-16_3
+rtrim-before-15_7-or-16_3
+left-before-15_7-or-16_3
+right-before-15_7-or-16_3
