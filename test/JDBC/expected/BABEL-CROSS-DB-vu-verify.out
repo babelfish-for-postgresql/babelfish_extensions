@@ -161,9 +161,7 @@ GO
 INSERT INTO dbo.babel_cross_db_vu_prepare_db1_t1 (a)
 EXECUTE master.dbo.babel_cross_db_vu_prepare_master_p1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: cross-database references are not implemented: master.dbo.babel_cross_db_vu_prepare_master_p1)~~
+~~ROW COUNT: 4~~
 
 
 EXECUTE master.dbo.babel_cross_db_vu_prepare_master_p1;

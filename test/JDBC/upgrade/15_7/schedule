@@ -120,6 +120,7 @@ BABEL-405
 BABEL-4078
 BABEL-4098
 BABEL-4214
+BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
@@ -499,9 +500,11 @@ TestDatatypeAggSort
 babel_index_nulls_order
 BABEL-2999
 BABEL-4606
+BABEL-4672
 BABEL-4529
 sys_availability_groups
 sys_availability_replicas
 BABEL-730
 babel-4475
 babel-4517
+BABEL-4815

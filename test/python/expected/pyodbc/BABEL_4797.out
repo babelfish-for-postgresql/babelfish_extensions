@@ -1,0 +1,276 @@
+CREATE TABLE babel_4797(ID INT);
+
+# default value of autcommit is false in python test framework
+# txn#!#begin does not actually run begin tran
+# instead it just set autocommit = false & let driver handle the txn
+
+# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> rollback
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4797 VALUES (1)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES ('a')
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLExecDirectW))~~
+
+INSERT INTO babel_4797 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4797
+~~START~~
+int
+~~END~~
+
+
+# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> commit
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4797 VALUES (1)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES ('a')
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLExecDirectW))~~
+
+INSERT INTO babel_4797 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4797
+~~START~~
+int
+2
+3
+~~END~~
+
+DELETE FROM babel_4797
+~~ROW COUNT: 2~~
+
+
+# begin tran -> error in proc (should rollback txn) -> driver should implicitly spawn new txn -> commit
+CREATE PROCEDURE babel_4797_p AS INSERT INTO babel_4797 VALUES (10); INSERT INTO babel_4797 VALUES ('a'); INSERT INTO babel_4797 VALUES (20);
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4797 VALUES (1)
+~~ROW COUNT: 1~~
+
+EXEC babel_4797_p
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]invalid input syntax for type integer: "a" (33557097) (SQLMoreResults))~~
+
+INSERT INTO babel_4797 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4797;
+~~START~~
+int
+2
+3
+~~END~~
+
+DELETE FROM babel_4797;
+~~ROW COUNT: 2~~
+
+
+DROP PROCEDURE babel_4797_p;
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+# begin tran -> error in proc (should rollback txn) -> driver should implicitly spawn new txn -> commit
+# Using a mapped transaction aborting error inside a procedure
+
+CREATE PROCEDURE babel_4797_p AS BEGIN TRY INSERT INTO babel_4797 VALUES (10); SET IDENTITY_INSERT babel_4797 ON; INSERT INTO babel_4797 VALUES (20); END TRY BEGIN CATCH SELECT 'in exception block'; END CATCH;
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4797 VALUES (1)
+~~ROW COUNT: 1~~
+
+EXEC babel_4797_p
+~~ROW COUNT: 1~~
+
+~~START~~
+str
+in exception block
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Uncommittable transaction is detected at the end of the batch. The transaction is rolled back. (33557097) (SQLMoreResults))~~
+
+INSERT INTO babel_4797 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4797
+~~START~~
+int
+2
+3
+~~END~~
+
+
+DELETE FROM babel_4797;
+~~ROW COUNT: 2~~
+
+
+DROP PROCEDURE babel_4797_p;
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+# begin tran -> error in proc (statement abort error) -> commit
+# Using a mapped statement aborting error inside a procedure
+
+CREATE PROCEDURE babel_4797_p AS BEGIN TRY INSERT INTO babel_4797 VALUES (10); SELECT 1/0; INSERT INTO babel_4797 VALUES (20); END TRY BEGIN CATCH SELECT 'in exception block'; END CATCH;
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+INSERT INTO babel_4797 VALUES (1)
+~~ROW COUNT: 1~~
+
+EXEC babel_4797_p
+~~ROW COUNT: 1~~
+
+~~START~~
+str
+in exception block
+~~END~~
+
+INSERT INTO babel_4797 VALUES (2)
+~~ROW COUNT: 1~~
+
+INSERT INTO babel_4797 VALUES (3)
+~~ROW COUNT: 1~~
+
+SELECT @@trancount
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM babel_4797
+~~START~~
+int
+1
+10
+2
+3
+~~END~~
+
+
+DROP TABLE babel_4797;
+
+DROP PROCEDURE babel_4797_p;
+
+SELECT @@trancount
+~~START~~
+int
+0
+~~END~~
+

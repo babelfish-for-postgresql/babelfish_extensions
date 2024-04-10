@@ -120,6 +120,7 @@ BABEL-405
 BABEL-4078
 BABEL-4098
 BABEL-4214
+BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
@@ -224,6 +225,7 @@ fulltextserviceproperty
 FULLTEXT_INDEX
 fts-contains
 fts-contains-utils
+BABEL-4785
 get_tds_id
 HAS_DBACCESS
 identity_function
@@ -503,6 +505,7 @@ TestDatatypeAggSort
 babel_index_nulls_order
 BABEL-2999
 BABEL-4606
+BABEL-4672
 permission_restrictions_from_pg
 BABEL-4529
 sys_availability_groups
@@ -512,3 +515,5 @@ BABEL-730
 babel-4475
 babel-3254
 babel-4517
+babel_table_type
+1_GRANT_SCHEMA

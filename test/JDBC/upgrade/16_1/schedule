@@ -120,6 +120,7 @@ BABEL-405
 BABEL-4078
 BABEL-4098
 BABEL-4214
+BABEL-4516
 babel_417
 BABEL-493
 BABEL_539
@@ -491,9 +492,12 @@ TestDatatypeAggSort
 babel_index_nulls_order
 BABEL-2999
 BABEL-4606
+BABEL-4672
 permission_restrictions_from_pg
 BABEL-4529-before-15_6-or-14_11
 BABEL-730-before-15_6-or-16_1
 babel-4475
 babel-4517
 BABEL_4553
+GRANT_SCHEMA-before-15_7-16_3
+BABEL-4815

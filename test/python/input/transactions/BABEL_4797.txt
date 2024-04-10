@@ -1,0 +1,102 @@
+CREATE TABLE babel_4797(ID INT);
+
+# default value of autcommit is false in python test framework
+# txn#!#begin does not actually run begin tran
+# instead it just set autocommit = false & let driver handle the txn
+
+# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> rollback
+txn#!#begin
+SELECT @@trancount
+INSERT INTO babel_4797 VALUES (1)
+INSERT INTO babel_4797 VALUES ('a')
+INSERT INTO babel_4797 VALUES (2)
+INSERT INTO babel_4797 VALUES (3)
+SELECT @@trancount
+txn#!#rollback
+
+SELECT @@trancount
+
+SELECT * FROM babel_4797
+
+# begin tran -> error (should rollback txn) -> driver should implicitly spawn new txn -> commit
+txn#!#begin
+SELECT @@trancount
+INSERT INTO babel_4797 VALUES (1)
+INSERT INTO babel_4797 VALUES ('a')
+INSERT INTO babel_4797 VALUES (2)
+INSERT INTO babel_4797 VALUES (3)
+SELECT @@trancount
+txn#!#commit
+
+SELECT @@trancount
+
+SELECT * FROM babel_4797
+DELETE FROM babel_4797
+
+# begin tran -> error in proc (should rollback txn) -> driver should implicitly spawn new txn -> commit
+CREATE PROCEDURE babel_4797_p AS INSERT INTO babel_4797 VALUES (10); INSERT INTO babel_4797 VALUES ('a'); INSERT INTO babel_4797 VALUES (20);
+txn#!#begin
+SELECT @@trancount
+INSERT INTO babel_4797 VALUES (1)
+EXEC babel_4797_p
+INSERT INTO babel_4797 VALUES (2)
+INSERT INTO babel_4797 VALUES (3)
+SELECT @@trancount
+txn#!#commit
+
+SELECT @@trancount
+
+SELECT * FROM babel_4797;
+DELETE FROM babel_4797;
+
+DROP PROCEDURE babel_4797_p;
+
+SELECT @@trancount
+
+# begin tran -> error in proc (should rollback txn) -> driver should implicitly spawn new txn -> commit
+# Using a mapped transaction aborting error inside a procedure
+
+CREATE PROCEDURE babel_4797_p AS BEGIN TRY INSERT INTO babel_4797 VALUES (10); SET IDENTITY_INSERT babel_4797 ON; INSERT INTO babel_4797 VALUES (20); END TRY BEGIN CATCH SELECT 'in exception block'; END CATCH;
+
+txn#!#begin
+SELECT @@trancount
+INSERT INTO babel_4797 VALUES (1)
+EXEC babel_4797_p
+INSERT INTO babel_4797 VALUES (2)
+INSERT INTO babel_4797 VALUES (3)
+SELECT @@trancount
+txn#!#commit
+
+SELECT @@trancount
+
+SELECT * FROM babel_4797
+
+DELETE FROM babel_4797;
+
+DROP PROCEDURE babel_4797_p;
+
+SELECT @@trancount
+
+# begin tran -> error in proc (statement abort error) -> commit
+# Using a mapped statement aborting error inside a procedure
+
+CREATE PROCEDURE babel_4797_p AS BEGIN TRY INSERT INTO babel_4797 VALUES (10); SELECT 1/0; INSERT INTO babel_4797 VALUES (20); END TRY BEGIN CATCH SELECT 'in exception block'; END CATCH;
+
+txn#!#begin
+SELECT @@trancount
+INSERT INTO babel_4797 VALUES (1)
+EXEC babel_4797_p
+INSERT INTO babel_4797 VALUES (2)
+INSERT INTO babel_4797 VALUES (3)
+SELECT @@trancount
+txn#!#commit
+
+SELECT @@trancount
+
+SELECT * FROM babel_4797
+
+DROP TABLE babel_4797;
+
+DROP PROCEDURE babel_4797_p;
+
+SELECT @@trancount
