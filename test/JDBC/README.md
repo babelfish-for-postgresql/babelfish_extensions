@@ -14,6 +14,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
   - [Using a transaction](#using-a-transaction)
   - [Using a cursor](#using-a-cursor)
   - [Verifying SQL Authentication test cases](#verifying-sql-authentication-test-cases)
+  - [Using DatabaseMetaData API](#using-databasemetadata-api)
   - [Intermixing queries in T-SQL and PL/pgSQL dialect](#intermixing-queries-in-t-sql-and-plpgsql-dialect-cross-dialect-test-cases)
   - [IMPORTANT](#important)
 - [Adding the test cases](#adding-the-test-cases)
@@ -240,6 +241,49 @@ To review a list of valid connection property types and values, [visit this page
 ```
 java_auth#!#databaseName|-|master
 java_auth#!#user|-|dummy#!#password|-|hello#!#databaseName|-|demo
+```
+
+Input file type: `.txt`
+
+---
+
+### Using DatabaseMetaData API
+
+To call methods from [DatabaseMetaData JDBC API](https://docs.oracle.com/en/java/javase/21/docs/api/java.sql/java/sql/DatabaseMetaData.html):
+
+```
+dbmeta#!#<method_name>#!#<arg1>|<arg2>|...|<argN>
+```
+
+The supported method names are:
+
+ - `getCatalogs`
+ - `getColumnPrivileges`
+ - `getTables`
+ - `getColumns`
+ - `getFunctions`
+ - `getFunctionColumns`
+ - `getBestRowIdentifier`
+ - `getCrossReference`
+ - `getExportedKeys`
+ - `getImportedKeys`
+ - `getIndexInfo`
+ - `getMaxConnections`
+ - `getPrimaryKeys`
+ - `getProcedureColumns`
+ - `getProcedures`
+ - `getSchemas`
+ - `getTablePrivileges`
+ - `getTypeInfo`
+ - `getUserName`
+ - `getVersionColumns`
+
+**Example**
+
+To perform the `getColumns(String catalog, String schema, String table, String column)` call:
+
+```
+dbmeta#!#getColumns#!#master|dbo|tab1|col1
 ```
 
 Input file type: `.txt`
