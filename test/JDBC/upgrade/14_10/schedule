@@ -32,7 +32,7 @@ TestSQLVariant
 TestText
 TestTime
 TestTinyInt
-TestUDD
+TestUDD-before-15_7-or-16_3
 TestUniqueIdentifier
 TestVarChar
 TestXML
@@ -85,9 +85,9 @@ sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
-BABEL-404
+BABEL-404-before-15_7-or-16_3
 BABEL-493
-BABEL-621
+BABEL-621-before-15_7-or-16_3
 BABEL-775
 BABEL-1206
 BABEL-1251
@@ -431,3 +431,4 @@ GRANT_SCHEMA-before-15_7-16_3
 babel-4475
 babel-3254
 babel-4517
+BABEL_3571-before-15-5

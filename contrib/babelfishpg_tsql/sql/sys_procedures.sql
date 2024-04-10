@@ -137,7 +137,11 @@ BEGIN
 
   SELECT COUNT(*) INTO cnt FROM sys.babelfish_configurations_view where name collate "C" like normalized_name;
   IF cnt = 0 THEN 
-    RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+    IF LOWER(normalized_name) = 'babelfishpg_tsql.escape_hatch_unique_constraint' COLLATE C THEN
+      CALl sys.printarg('Config option babelfishpg_tsql.escape_hatch_unique_constraint has been deprecated, babelfish now supports unique constraints on nullable columns');
+    ELSE
+      RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+    END IF;
   ELSIF cnt > 1 AND (lower("@option_value") != 'ignore' AND lower("@option_value") != 'strict' 
                 AND lower("@option_value") != 'default') THEN
     RAISE EXCEPTION 'unvalid option: %', lower("@option_value");
