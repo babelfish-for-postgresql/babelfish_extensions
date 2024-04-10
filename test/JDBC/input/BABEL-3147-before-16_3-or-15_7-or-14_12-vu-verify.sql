@@ -1,3 +1,6 @@
+INSERT INTO BABEL_3147_before_16_3_or_15_7_vu_prepare_t_1 VALUES(1)
+GO
+
 SELECT c_comp FROM BABEL_3147_before_16_3_or_15_7_vu_prepare_t_1
 GO
 
