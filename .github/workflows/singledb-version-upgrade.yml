@@ -34,7 +34,7 @@ jobs:
         if: |
           always() && steps.setup-base-version.outcome == 'success' 
           && steps.check-babelfish-inconsistency.outcome == 'success' 
-          && steps.check-babelfish-inconsistency.outputs.check_result == 'f'
+          && steps.check-babelfish-inconsistency.outputs.check_result == 0
         uses: ./.github/composite-actions/major-version-upgrade-util
         with:
           engine_branch: latest
