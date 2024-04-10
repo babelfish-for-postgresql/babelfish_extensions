@@ -36,5 +36,5 @@ DROP TABLE IF EXISTS upper_lower_ntext;
 GO
 DROP TABLE IF EXISTS upper_lower_image;
 GO
-DROP VIEW IF EXISTS dep_view_lower1
+DROP VIEW IF EXISTS dep_view_lower1;
 GO
