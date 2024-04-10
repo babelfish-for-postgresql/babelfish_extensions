@@ -526,17 +526,6 @@ order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- After upgrade, always run analyze for all babelfish catalogs.
-CALL sys.analyze_babelfish_catalogs();
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-
 CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 	in_table_name sys.nvarchar(384) = '',
 	in_table_owner sys.nvarchar(384) = '', 
