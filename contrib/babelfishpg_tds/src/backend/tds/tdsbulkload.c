@@ -34,6 +34,7 @@ void		ProcessBCPRequest(TDSRequest request);
 static void FetchMoreBcpData(StringInfo *message, int dataLenToRead, bool freeMessageData);
 static void FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead);
 static int	ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request);
+static void FreePlpToken(ParameterToken token);
 uint64_t	offset = 0;
 
 #define COLUMNMETADATA_HEADER_LEN			sizeof(uint32_t) + sizeof(uint16) + 1
@@ -698,14 +699,14 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 							{
 								rowData->isNull[i] = true;
 								i++;
-								token->isNull = false;
+								FreePlpToken(token);
 								continue;
 							}
 
 							/* Free the previously allocated temp. */
 							pfree(temp);
 							temp = TdsGetPlpStringInfoBufferFromToken(message->data, token);
-							pfree(token);
+							FreePlpToken(token);
 						}
 
 						/*
@@ -835,7 +836,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 						 * for the next iteration.
 						 */
 						pfree(temp->data);
-						pfree(token);
+						FreePlpToken(token);
 					}
 					break;
 				case TDS_TYPE_SQLVARIANT:
@@ -1128,4 +1129,19 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 	}
 
 	return STATUS_OK;
+}
+
+static void
+FreePlpToken(ParameterToken token)
+{
+	Plp			temp = token->plp,
+				next;
+
+	while (temp != NULL)
+	{
+		next = temp->next;
+		pfree(temp);
+		temp = next;
+	}
+	pfree(token);
 }
