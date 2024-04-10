@@ -994,10 +994,10 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 		DECLARE opt_view sys.varchar(16) = '';
 		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
 	BEGIN
-		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''TABLE''' OR upper(trim(unnest)) = '''''''TABLE''''''') >= 1 THEN
+		IF upper(cs_as_in_table_type) LIKE '%''TABLE''%' THEN
 			opt_table = 'TABLE';
 		END IF;
-		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = '''VIEW''' OR upper(trim(unnest)) = '''''''VIEW''''''') >= 1 THEN
+		IF upper(cs_as_in_table_type) LIKE '%''VIEW''%' THEN
 			opt_view = 'VIEW';
 		END IF;
 		IF in_fusepattern = 1 THEN
