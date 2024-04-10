@@ -47,7 +47,7 @@ Query Text: EXEC test_int_numeric_p2
   Query Text: select count(*) from test_int_numeric_vu where a <> 5.0
   ->  Aggregate
         ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric <> 5.0)
+              Filter: (a <> 5.0)
 ~~END~~
 
 exec test_int_numeric_p3;
@@ -58,7 +58,7 @@ Query Text: EXEC test_int_numeric_p3
   Query Text: select count(*) from test_int_numeric_vu where 5.0 <> a
   ->  Aggregate
         ->  Seq Scan on test_int_numeric_vu
-              Filter: (5.0 <> (a)::numeric)
+              Filter: (5.0 <> a)
 ~~END~~
 
 exec test_int_numeric_p4;
@@ -68,8 +68,8 @@ text
 Query Text: EXEC test_int_numeric_p4
   Query Text: select count(*) from test_int_numeric_vu where a < 5.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric < 5.0)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < 5.0)
 ~~END~~
 
 exec test_int_numeric_p5;
@@ -79,8 +79,8 @@ text
 Query Text: EXEC test_int_numeric_p5
   Query Text: select count(*) from test_int_numeric_vu where 5.0 > a
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: (5.0 > (a)::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < 5.0)
 ~~END~~
 
 exec test_int_numeric_p6;
@@ -90,8 +90,8 @@ text
 Query Text: EXEC test_int_numeric_p6
   Query Text: select count(*) from test_int_numeric_vu where a < -2147483648.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric < '-2147483648.0'::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < '-2147483648.0'::numeric)
 ~~END~~
 
 exec test_int_numeric_p7;
@@ -101,8 +101,8 @@ text
 Query Text: EXEC test_int_numeric_p7
   Query Text: select count(*) from test_int_numeric_vu where -2147483648.0 > a
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ('-2147483648.0'::numeric > (a)::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a < '-2147483648.0'::numeric)
 ~~END~~
 
 exec test_int_numeric_p8;
@@ -112,8 +112,8 @@ text
 Query Text: EXEC test_int_numeric_p8
   Query Text: select count(*) from test_int_numeric_vu where a <= 5.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric <= 5.0)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a <= 5.0)
 ~~END~~
 
 exec test_int_numeric_p9;
@@ -123,8 +123,8 @@ text
 Query Text: EXEC test_int_numeric_p9
   Query Text: select count(*) from test_int_numeric_vu where 5.0 >= a
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: (5.0 >= (a)::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a <= 5.0)
 ~~END~~
 
 exec test_int_numeric_p10;
@@ -134,8 +134,8 @@ text
 Query Text: EXEC test_int_numeric_p10
   Query Text: select count(*) from test_int_numeric_vu where a > 999995.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric > 999995.0)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a > 999995.0)
 ~~END~~
 
 exec test_int_numeric_p11;
@@ -145,8 +145,8 @@ text
 Query Text: EXEC test_int_numeric_p11
   Query Text: select count(*) from test_int_numeric_vu where 999995.0 < a
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: (999995.0 < (a)::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a > 999995.0)
 ~~END~~
 
 exec test_int_numeric_p12;
@@ -156,8 +156,8 @@ text
 Query Text: EXEC test_int_numeric_p12
   Query Text: select count(*) from test_int_numeric_vu where a >= 999995.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric >= 999995.0)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a >= 999995.0)
 ~~END~~
 
 exec test_int_numeric_p13;
@@ -167,8 +167,8 @@ text
 Query Text: EXEC test_int_numeric_p13
   Query Text: select count(*) from test_int_numeric_vu where 999995.0 <= a
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: (999995.0 <= (a)::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a >= 999995.0)
 ~~END~~
 
 exec test_int_numeric_p14;
@@ -178,8 +178,8 @@ text
 Query Text: EXEC test_int_numeric_p14
   Query Text: select count(*) from test_int_numeric_vu where a > 2147483647.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric > 2147483647.0)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a > 2147483647.0)
 ~~END~~
 
 exec test_int_numeric_p15;
@@ -189,8 +189,8 @@ text
 Query Text: EXEC test_int_numeric_p15
   Query Text: select count(*) from test_int_numeric_vu where 2147483647.0 < a
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: (2147483647.0 < (a)::numeric)
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: (a > 2147483647.0)
 ~~END~~
 
 exec test_int_numeric_p16;
@@ -201,7 +201,7 @@ Query Text: EXEC test_int_numeric_p16
   Query Text: select count(*) from test_int_numeric_vu where a > 5.0
   ->  Aggregate
         ->  Seq Scan on test_int_numeric_vu
-              Filter: ((a)::numeric > 5.0)
+              Filter: (a > 5.0)
 ~~END~~
 
 exec test_int_numeric_p17;
@@ -212,7 +212,7 @@ Query Text: EXEC test_int_numeric_p17
   Query Text: select count(*) from test_int_numeric_vu where 5.0 < a
   ->  Aggregate
         ->  Seq Scan on test_int_numeric_vu
-              Filter: (5.0 < (a)::numeric)
+              Filter: (5.0 < a)
 ~~END~~
 
 exec test_int_numeric_p18;
@@ -222,8 +222,8 @@ text
 Query Text: EXEC test_int_numeric_p18
   Query Text: select count(*) from test_int_numeric_vu where a between 5.0 and 10.0
   ->  Aggregate
-        ->  Seq Scan on test_int_numeric_vu
-              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 10.0))
+        ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
+              Index Cond: ((a >= 5.0) AND (a <= 10.0))
 ~~END~~
 
 exec test_int_numeric_p19;
@@ -234,7 +234,7 @@ Query Text: EXEC test_int_numeric_p19
   Query Text: select count(*) from test_int_numeric_vu where a between 5.0 and 999999.0
   ->  Aggregate
         ->  Seq Scan on test_int_numeric_vu
-              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+              Filter: ((a >= 5.0) AND (a <= 999999.0))
 ~~END~~
 
 exec test_int_numeric_p20;
@@ -245,8 +245,7 @@ Query Text: EXEC test_int_numeric_p20
   Query Text: select count(*) from test_int_numeric_vu where (a between 5.0 and 999999.0) and a = 10
   ->  Aggregate
         ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
-              Index Cond: (a = 10)
-              Filter: (((a)::numeric >= 5.0) AND ((a)::numeric <= 999999.0))
+              Index Cond: ((a >= 5.0) AND (a <= 999999.0) AND (a = 10))
 ~~END~~
 
 exec test_int_numeric_p21;
@@ -257,8 +256,7 @@ Query Text: EXEC test_int_numeric_p21
   Query Text: select count(*) from test_int_numeric_vu where a > 5.0 and a < 7
   ->  Aggregate
         ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
-              Index Cond: (a < 7)
-              Filter: ((a)::numeric > 5.0)
+              Index Cond: ((a > 5.0) AND (a < 7))
 ~~END~~
 
 exec test_int_numeric_p22;
@@ -269,8 +267,7 @@ Query Text: EXEC test_int_numeric_p22
   Query Text: select count(*) from test_int_numeric_vu where 5.0 < a and 7 > a
   ->  Aggregate
         ->  Index Only Scan using test_int_numeric_vu_idxtest_inte1ff6152578049829de2a4411ab5b45e on test_int_numeric_vu
-              Index Cond: (a < 7)
-              Filter: (5.0 < (a)::numeric)
+              Index Cond: ((a > 5.0) AND (a < 7))
 ~~END~~
 
 exec test_int_numeric_p23;
