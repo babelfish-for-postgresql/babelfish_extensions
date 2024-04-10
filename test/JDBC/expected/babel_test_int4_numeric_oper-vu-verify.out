@@ -1,5 +1,5 @@
 -- psql
-analyse test_int_numeric_vu;
+analyse master_dbo.test_int_numeric_vu;
 GO
 
 -- tsql
